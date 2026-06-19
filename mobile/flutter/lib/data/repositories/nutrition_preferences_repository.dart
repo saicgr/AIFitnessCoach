@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/nutrition_preferences.dart';
+import '../models/meal_macro_targets.dart';
 import '../../utils/tz.dart';
 import '../services/api_client.dart';
 
@@ -166,6 +167,62 @@ class NutritionPreferencesRepository {
       return NutritionPreferences.fromJson(response.data);
     } catch (e) {
       debugPrint('❌ [NutritionPrefs] Error recalculating targets: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Per-Meal Targets Preferences (Phase 1c)
+  // ============================================
+
+  /// Read the two per-meal-targets preference fields straight off the raw
+  /// `/nutrition/preferences/{user_id}` response. `NutritionPreferences` is a
+  /// `@JsonSerializable` (codegen) model we cannot extend without running
+  /// build_runner, so these two fields live OUTSIDE it and are read raw.
+  ///
+  /// Returns a holder with:
+  ///  - `enabled` — `per_meal_targets_enabled` (defaults false on absence)
+  ///  - `macroTargets` — the raw `per_meal_macro_targets` object
+  ///    (`{mode, split, overrides}`), or null when absent.
+  Future<PerMealTargetsPrefs> getPerMealTargetsPrefs(String userId) async {
+    try {
+      final response = await _client.get('/nutrition/preferences/$userId');
+      final data = response.data;
+      if (data is! Map) return const PerMealTargetsPrefs();
+      return PerMealTargetsPrefs(
+        enabled: data['per_meal_targets_enabled'] == true,
+        macroTargets: data['per_meal_macro_targets'] is Map
+            ? Map<String, dynamic>.from(data['per_meal_macro_targets'] as Map)
+            : null,
+      );
+    } catch (e) {
+      if (e.toString().contains('404')) return const PerMealTargetsPrefs();
+      debugPrint('❌ [NutritionPrefs] Error reading per-meal prefs: $e');
+      rethrow;
+    }
+  }
+
+  /// PUT the two per-meal-targets preference fields. Merges them onto the
+  /// existing `NutritionPreferences.toJson()` so the PUT carries the full
+  /// preferences body the backend expects (the endpoint upserts the whole
+  /// row). `macroTargets` is sent verbatim (`{mode, split, overrides}`); pass
+  /// null to clear it (e.g. when disabling).
+  Future<void> updatePerMealTargetsPrefs({
+    required String userId,
+    required NutritionPreferences basePreferences,
+    required bool enabled,
+    Map<String, dynamic>? macroTargets,
+  }) async {
+    try {
+      debugPrint(
+          '💾 [NutritionPrefs] Updating per-meal targets prefs (enabled=$enabled)');
+      final body = Map<String, dynamic>.from(basePreferences.toJson());
+      body['per_meal_targets_enabled'] = enabled;
+      body['per_meal_macro_targets'] = macroTargets;
+      await _client.put('/nutrition/preferences/$userId', data: body);
+      debugPrint('✅ [NutritionPrefs] Per-meal targets prefs saved');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error saving per-meal prefs: $e');
       rethrow;
     }
   }
@@ -706,6 +763,15 @@ class DynamicNutritionTargets {
   /// UI (e.g. "Higher hunger is typical in your luteal phase").
   final String? cycleAdjustmentReason;
 
+  // ── Per-meal targets (Phase 1c) ─────────────────────────────────────────
+
+  /// Auto-derived (or user-overridden) P/C/F + calorie target for each active
+  /// meal type on THIS day, keyed by meal type
+  /// (`breakfast`/`lunch`/`dinner`/`snacks`). Null when the user has the
+  /// per-meal-targets feature disabled. Reflects the same day as the headline
+  /// targets, so a past-date fetch returns that date's split.
+  final Map<String, MealMacroTargets>? perMealTargets;
+
   const DynamicNutritionTargets({
     this.targetCalories,
     this.targetProteinG,
@@ -721,6 +787,7 @@ class DynamicNutritionTargets {
     this.cyclePhase,
     this.cycleCalorieAdjustment = 0,
     this.cycleAdjustmentReason,
+    this.perMealTargets,
   });
 
   factory DynamicNutritionTargets.fromJson(Map<String, dynamic> json) {
@@ -747,6 +814,7 @@ class DynamicNutritionTargets {
       cycleCalorieAdjustment:
           asInt(json['cycle_calorie_adjustment'], 0),
       cycleAdjustmentReason: json['cycle_adjustment_reason'] as String?,
+      perMealTargets: MealMacroTargets.parseMap(json['per_meal_targets']),
     );
   }
 
@@ -765,7 +833,46 @@ class DynamicNutritionTargets {
         'cycle_phase': cyclePhase,
         'cycle_calorie_adjustment': cycleCalorieAdjustment,
         'cycle_adjustment_reason': cycleAdjustmentReason,
+        if (perMealTargets != null)
+          'per_meal_targets':
+              perMealTargets!.map((k, v) => MapEntry(k, v.toJson())),
       };
+}
+
+/// Lightweight holder for the two per-meal-targets preference fields that live
+/// outside the `@JsonSerializable` `NutritionPreferences` model (so we never
+/// need to run build_runner to add them). `macroTargets` is the raw
+/// `{mode: 'auto'|'custom', split: {...}, overrides: {breakfast: {...}, ...}}`
+/// object — the edit sheet reads/writes it directly.
+class PerMealTargetsPrefs {
+  final bool enabled;
+  final Map<String, dynamic>? macroTargets;
+
+  const PerMealTargetsPrefs({
+    this.enabled = false,
+    this.macroTargets,
+  });
+
+  /// `mode` from `macroTargets` — `'auto'` (default) or `'custom'`.
+  String get mode => (macroTargets?['mode'] as String?) ?? 'auto';
+
+  /// The `overrides` sub-object: meal type → `{protein_g, carbs_g, fat_g}`.
+  /// Empty map when none. Tolerates nested maps with non-String keys.
+  Map<String, Map<String, num>> get overrides {
+    final raw = macroTargets?['overrides'];
+    if (raw is! Map) return {};
+    final out = <String, Map<String, num>>{};
+    raw.forEach((meal, vals) {
+      if (meal is String && vals is Map) {
+        final m = <String, num>{};
+        vals.forEach((k, v) {
+          if (v is num) m[k.toString()] = v;
+        });
+        out[meal] = m;
+      }
+    });
+    return out;
+  }
 }
 
 // AdaptiveCalculation class is imported from '../models/nutrition_preferences.dart'

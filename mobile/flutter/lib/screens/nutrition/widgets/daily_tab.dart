@@ -618,6 +618,19 @@ class _DailyTabState extends ConsumerState<DailyTab>
                   ),
                 Builder(builder: (ctx) {
                   final prefs = ref.watch(nutritionPreferencesProvider);
+                  // Per-meal targets for the VIEWED date (Phase 1c). Today
+                  // short-circuits to the loaded singleton; other dates fetch
+                  // that day's split. Only consult when configured + enabled.
+                  final perMealTargets = (prefs.hasConfiguredTargets &&
+                          prefs.perMealTargetsEnabled &&
+                          widget.userId.isNotEmpty)
+                      ? ref
+                          .watch(perMealTargetsForDateProvider((
+                            userId: widget.userId,
+                            date: nutritionKeyFor(widget.selectedDate),
+                          )))
+                          .valueOrNull
+                      : null;
                   return LoggedMealsSection(
                     meals: widget.summary?.meals ?? [],
                     onDeleteMeal: widget.onDeleteMeal,
@@ -663,6 +676,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     consumedFat: widget.summary?.totalFatG ?? 0,
                     onEditTargets: widget.calmMode ? null : () => _showEditTargetsSheet(context),
                     onShareDay: widget.onShareDay,
+                    perMealTargets: perMealTargets,
                   );
                 }),
                 const SizedBox(height: 12),

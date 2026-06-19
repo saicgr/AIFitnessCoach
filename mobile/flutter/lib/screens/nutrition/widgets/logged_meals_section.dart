@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition.dart';
+import '../../../data/models/meal_macro_targets.dart';
 import '../../../data/services/api_client.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../utils/time_formatters.dart';
@@ -75,6 +76,12 @@ class LoggedMealsSection extends StatelessWidget {
   /// hero. Surface 3.1 — share moved off the header into the calorie card.
   final VoidCallback? onShareDay;
 
+  /// Per-meal P/C/F targets for the viewed date (Phase 1c), keyed by meal type
+  /// (`breakfast`/`lunch`/`dinner`/`snacks`). Null when the feature is
+  /// disabled or targets aren't configured. When present, each meal section
+  /// renders a compact "eaten / target" progress block under its P/C/F line.
+  final Map<String, MealMacroTargets>? perMealTargets;
+
   const LoggedMealsSection({
     super.key,
     required this.meals,
@@ -109,7 +116,13 @@ class LoggedMealsSection extends StatelessWidget {
     this.consumedFat = 0,
     this.onEditTargets,
     this.onShareDay,
+    this.perMealTargets,
   });
+
+  /// Maps a section's meal id to the backend per-meal-target key. The section
+  /// list uses `'snack'` (singular) but the contract keys snacks as `'snacks'`.
+  static String _targetKeyForMealId(String mealId) =>
+      mealId == 'snack' ? 'snacks' : mealId;
 
   static const _mealTypes = [
     {'id': 'breakfast', 'label': 'Breakfast', 'emoji': '\u{1F373}'},
@@ -464,6 +477,89 @@ class LoggedMealsSection extends StatelessWidget {
           color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
         ),
         children: spans,
+      ),
+    );
+  }
+
+  /// Per-meal "eaten / target" progress block (Phase 1c). Renders one thin
+  /// progress bar per macro (P/C/F) in its semantic color, with an
+  /// `eaten/target` readout. Over-target is non-punitive: the bar caps at full
+  /// and a muted "+N over" suffix appears (no red alarm). Returns
+  /// SizedBox.shrink when there's no target for this meal.
+  Widget _buildPerMealProgress({
+    required String mealId,
+    required double eatenProtein,
+    required double eatenCarbs,
+    required double eatenFat,
+  }) {
+    final targets = perMealTargets;
+    if (targets == null) return const SizedBox.shrink();
+    final target = targets[_targetKeyForMealId(mealId)];
+    if (target == null) return const SizedBox.shrink();
+
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final track = isDark ? AppColors.hairline : AppColorsLight.cardBorder;
+
+    Widget bar(String label, double eaten, double targetG, Color color) {
+      final tgt = targetG <= 0 ? 0.0 : targetG;
+      final value = tgt <= 0 ? 0.0 : (eaten / tgt).clamp(0.0, 1.0);
+      final over = eaten - tgt;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 12,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  value: value,
+                  minHeight: 3.5,
+                  backgroundColor: track,
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '${eaten.round()}/${tgt.round()}g',
+              style: ZType.data(9.5, color: textMuted),
+            ),
+            if (over > 0.5) ...[
+              const SizedBox(width: 4),
+              Text(
+                '+${over.round()} over',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: textMuted,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(31, 0, 10, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          bar('P', eatenProtein, target.proteinG, AppColors.macroProtein),
+          bar('C', eatenCarbs, target.carbsG, AppColors.macroCarbs),
+          bar('F', eatenFat, target.fatG, AppColors.macroFat),
+        ],
       ),
     );
   }
@@ -4165,6 +4261,15 @@ class _MealSectionState extends State<_MealSection> {
               fontSize: 11,
             ),
           ),
+        // Per-meal targets (Phase 1c): thin eaten/target progress bars under
+        // the P/C/F line. Self-hides when the feature is off or no target
+        // exists for this meal. Shows even with 0 eaten so the target reads.
+        owner._buildPerMealProgress(
+          mealId: widget.mealId,
+          eatenProtein: totalProtein,
+          eatenCarbs: totalCarbs,
+          eatenFat: totalFat,
+        ),
         // Items or empty state
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 180),

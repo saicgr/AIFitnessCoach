@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/nutrition_preferences.dart';
+import '../models/meal_macro_targets.dart';
 import '../repositories/nutrition_preferences_repository.dart';
 import '../repositories/auth_repository.dart';
 
@@ -126,6 +127,13 @@ class NutritionPreferencesState {
   final String? error;
   final bool onboardingCompleted;
 
+  /// Per-meal-targets preference state (Phase 1c). These two live OUTSIDE the
+  /// `@JsonSerializable` `NutritionPreferences` model (no build_runner), so we
+  /// track them here. `perMealMacroTargets` is the raw
+  /// `{mode, split, overrides}` object the edit sheet reads/writes.
+  final bool perMealTargetsEnabled;
+  final Map<String, dynamic>? perMealMacroTargets;
+
   /// Set when the one-time targets-recalc migration ran AND actually changed
   /// the stored daily calorie target (delta != 0). NutritionScreen reads this
   /// on mount, shows a SnackBar like "Updated your daily target: 1580 cal/day
@@ -145,6 +153,8 @@ class NutritionPreferencesState {
     this.error,
     this.onboardingCompleted = false,
     this.pendingMigrationDelta,
+    this.perMealTargetsEnabled = false,
+    this.perMealMacroTargets,
   });
 
   NutritionPreferencesState copyWith({
@@ -160,6 +170,9 @@ class NutritionPreferencesState {
     bool clearError = false,
     ({int oldCalories, int newCalories})? pendingMigrationDelta,
     bool clearPendingMigrationDelta = false,
+    bool? perMealTargetsEnabled,
+    Map<String, dynamic>? perMealMacroTargets,
+    bool clearPerMealMacroTargets = false,
   }) {
     return NutritionPreferencesState(
       preferences: preferences ?? this.preferences,
@@ -174,6 +187,11 @@ class NutritionPreferencesState {
       pendingMigrationDelta: clearPendingMigrationDelta
           ? null
           : (pendingMigrationDelta ?? this.pendingMigrationDelta),
+      perMealTargetsEnabled:
+          perMealTargetsEnabled ?? this.perMealTargetsEnabled,
+      perMealMacroTargets: clearPerMealMacroTargets
+          ? null
+          : (perMealMacroTargets ?? this.perMealMacroTargets),
     );
   }
 
@@ -215,6 +233,13 @@ class NutritionPreferencesState {
   /// Get latest weight
   double? get latestWeight =>
       weightHistory.isNotEmpty ? weightHistory.first.weightKg : null;
+
+  /// Per-meal targets for TODAY (from the dynamic-targets payload), or null
+  /// when the feature is disabled / not configured. Keyed by meal type
+  /// (`breakfast`/`lunch`/`dinner`/`snacks`). Past dates are served by the
+  /// date-keyed [perMealTargetsForDateProvider] family instead.
+  Map<String, MealMacroTargets>? get perMealTargetsToday =>
+      perMealTargetsEnabled ? dynamicTargets?.perMealTargets : null;
 }
 
 // ============================================
@@ -387,6 +412,12 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       // to the real base target), never a fake 2000.
       final dynamicFuture = _repository
           .getDynamicTargets(userId: userId, date: DateTime.now());
+      // Per-meal-targets preference fields (live outside the codegen model).
+      // Never fatal — a failure leaves the feature disabled rather than
+      // blocking the calorie ring.
+      final perMealPrefsFuture = _repository
+          .getPerMealTargetsPrefs(userId)
+          .catchError((_) => const PerMealTargetsPrefs());
       final streakFuture = _repository.getStreak(userId).catchError((_) => NutritionStreak(
             userId: userId,
             currentStreakDays: 0,
@@ -417,11 +448,15 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       }
       final wasOnboardingCompleted = state.onboardingCompleted;
       final backendOnboardingCompleted = preferences?.nutritionOnboardingCompleted ?? false;
+      final perMealPrefs = await perMealPrefsFuture;
       state = state.copyWith(
         preferences: preferences,
         dynamicTargets: dynamicTargets,
         isLoading: false,
         onboardingCompleted: wasOnboardingCompleted || backendOnboardingCompleted,
+        perMealTargetsEnabled: perMealPrefs.enabled,
+        perMealMacroTargets: perMealPrefs.macroTargets,
+        clearPerMealMacroTargets: perMealPrefs.macroTargets == null,
       );
       _nutritionPrefsInMemoryCache = state;
       // Write through to disk for the next cold start (A2) — now including the
@@ -973,6 +1008,76 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     }());
   }
 
+  /// Update the per-meal-targets preference (Phase 1c). Optimistically flips
+  /// the local flag + raw macro-targets object so the edit sheet + display
+  /// react in the same frame, then PUTs the prefs in the background and
+  /// refreshes the dynamic targets (so the freshly-derived `per_meal_targets`
+  /// split lands). Rolls back on failure.
+  ///
+  /// `enabled` → `per_meal_targets_enabled`. `macroTargets` → the raw
+  /// `{mode, split, overrides}` object (pass null to clear, e.g. on disable).
+  Future<void> updatePerMealTargets({
+    required String userId,
+    required bool enabled,
+    Map<String, dynamic>? macroTargets,
+  }) async {
+    final base = state.preferences;
+    if (base == null) {
+      debugPrint(
+          '❌ [NutritionPrefsProvider] Cannot update per-meal targets: no preferences');
+      return;
+    }
+
+    final prevEnabled = state.perMealTargetsEnabled;
+    final prevMacroTargets = state.perMealMacroTargets;
+
+    // Optimistic local update.
+    state = state.copyWith(
+      perMealTargetsEnabled: enabled,
+      perMealMacroTargets: macroTargets,
+      clearPerMealMacroTargets: macroTargets == null,
+      clearError: true,
+    );
+    _nutritionPrefsInMemoryCache = state;
+    debugPrint(
+        '🍽️ [NutritionPrefsProvider] Optimistic per-meal targets: enabled=$enabled, mode=${macroTargets?['mode']}');
+
+    unawaited(() async {
+      try {
+        await _repository.updatePerMealTargetsPrefs(
+          userId: userId,
+          basePreferences: base,
+          enabled: enabled,
+          macroTargets: macroTargets,
+        );
+        // Pull fresh dynamic targets so the backend-derived per_meal_targets
+        // split (auto, or recomputed from overrides) reaches the UI.
+        try {
+          final dyn = await _repository.getDynamicTargets(
+            userId: userId,
+            date: DateTime.now(),
+          );
+          state = state.copyWith(dynamicTargets: dyn);
+          _nutritionPrefsInMemoryCache = state;
+        } catch (e) {
+          debugPrint(
+              '⚠️ [NutritionPrefsProvider] Dynamic refresh after per-meal update failed: $e');
+        }
+        debugPrint('✅ [NutritionPrefsProvider] Per-meal targets persisted');
+      } catch (e) {
+        debugPrint(
+            '❌ [NutritionPrefsProvider] Per-meal targets persist failed, rolling back: $e');
+        state = state.copyWith(
+          perMealTargetsEnabled: prevEnabled,
+          perMealMacroTargets: prevMacroTargets,
+          clearPerMealMacroTargets: prevMacroTargets == null,
+          error: e.toString(),
+        );
+        _nutritionPrefsInMemoryCache = state;
+      }
+    }());
+  }
+
   /// Record that weekly check-in was completed
   Future<void> recordWeeklyCheckin({required String userId}) async {
     if (state.preferences == null) {
@@ -1065,6 +1170,62 @@ final nutritionStreakProvider = Provider<NutritionStreak?>((ref) {
 /// Dynamic targets provider
 final dynamicNutritionTargetsProvider = Provider<DynamicNutritionTargets?>((ref) {
   return ref.watch(nutritionPreferencesProvider).dynamicTargets;
+});
+
+/// Whether the per-meal-targets feature is enabled (Phase 1c).
+final perMealTargetsEnabledProvider = Provider<bool>((ref) {
+  return ref.watch(nutritionPreferencesProvider).perMealTargetsEnabled;
+});
+
+/// TODAY's per-meal targets (null when disabled). For other dates use
+/// [perMealTargetsForDateProvider].
+final perMealTargetsTodayProvider =
+    Provider<Map<String, MealMacroTargets>?>((ref) {
+  return ref.watch(nutritionPreferencesProvider).perMealTargetsToday;
+});
+
+/// Per-meal targets for a SPECIFIC date (`yyyy-MM-dd`). The dynamic-targets
+/// endpoint returns `per_meal_targets` for the requested day, so a past or
+/// future date shows that day's split (training/rest/fasting/cycle adjusted).
+///
+/// Returns null when the per-meal feature is disabled — gated on the
+/// preference flag so we don't fire a network call for users who never
+/// enabled it. The TODAY case short-circuits to the already-loaded singleton
+/// (no extra round-trip) by reading from the prefs state.
+final perMealTargetsForDateProvider = FutureProvider.autoDispose
+    .family<Map<String, MealMacroTargets>?, ({String userId, String date})>(
+        (ref, args) async {
+  // Feature gate — don't fetch when disabled.
+  final enabled = ref.watch(perMealTargetsEnabledProvider);
+  if (!enabled || args.userId.isEmpty) return null;
+
+  // Today → reuse the singleton already loaded by the prefs notifier (no
+  // duplicate fetch, and it reflects optimistic edits).
+  final todayKey = () {
+    final n = DateTime.now();
+    return '${n.year.toString().padLeft(4, '0')}-'
+        '${n.month.toString().padLeft(2, '0')}-'
+        '${n.day.toString().padLeft(2, '0')}';
+  }();
+  if (args.date == todayKey) {
+    return ref.watch(nutritionPreferencesProvider).perMealTargetsToday;
+  }
+
+  final repo = ref.watch(nutritionPreferencesRepositoryProvider);
+  DateTime? parsed;
+  try {
+    parsed = DateTime.parse(args.date);
+  } catch (_) {
+    parsed = null;
+  }
+  try {
+    final dyn = await repo.getDynamicTargets(userId: args.userId, date: parsed);
+    return dyn.perMealTargets;
+  } catch (e) {
+    debugPrint(
+        '⚠️ [perMealTargetsForDate] fetch failed for ${args.date}: $e');
+    return null;
+  }
 });
 
 // ============================================

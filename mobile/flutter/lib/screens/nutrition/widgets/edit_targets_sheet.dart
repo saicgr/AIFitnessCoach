@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
@@ -103,6 +104,22 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
   MacroPreset _selectedPreset =
       MacroPreset.recommended;
 
+  // ── Per-meal targets (Phase 1c) ────────────────────────────────────────
+  // Master toggle + mode ('auto' | 'custom') + per-meal grams overrides.
+  // Editing any meal's P/C/F flips mode → 'custom' and records that meal in
+  // `_perMealOverrides`. "Reset to auto" clears overrides + mode → 'auto'.
+  bool _perMealEnabled = false;
+  String _perMealMode = 'auto';
+  // meal type ('breakfast'/'lunch'/'dinner'/'snacks') → {p, c, f} grams.
+  final Map<String, ({int p, int c, int f})> _perMealOverrides = {};
+  // Auto-split weights (re-normalized across the active meals).
+  static const Map<String, double> _perMealSplitWeights = {
+    'breakfast': 0.25,
+    'lunch': 0.30,
+    'dinner': 0.35,
+    'snacks': 0.10,
+  };
+
   // B10: snapshot of the four macro fields + rate + preset taken when the
   // sheet opens, so the "Reset" action can revert to exactly that state.
   late final String _initialCalories;
@@ -131,6 +148,30 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     );
 
     _selectedRate = prefs?.rateOfChange;
+
+    // Seed per-meal-targets state from the provider (loaded at app start).
+    final prefsState = ref.read(nutritionPreferencesProvider);
+    _perMealEnabled = prefsState.perMealTargetsEnabled;
+    final rawMeal = prefsState.perMealMacroTargets;
+    if (rawMeal != null) {
+      _perMealMode = (rawMeal['mode'] as String?) ?? 'auto';
+      final overrides = rawMeal['overrides'];
+      if (overrides is Map) {
+        overrides.forEach((meal, vals) {
+          if (meal is String && vals is Map) {
+            int g(String k) {
+              final v = vals[k];
+              if (v is num) return v.round();
+              if (v is String) return int.tryParse(v) ?? 0;
+              return 0;
+            }
+
+            _perMealOverrides[meal] =
+                (p: g('protein_g'), c: g('carbs_g'), f: g('fat_g'));
+          }
+        });
+      }
+    }
 
     // B-rebalance-on-commit: FocusNodes drive the rebalance on focus-loss.
     _proteinFocus = FocusNode();
@@ -743,6 +784,347 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     }
   }
 
+  // ──────────────────────────────────────────────────────────────────────
+  // Per-meal targets (Phase 1c) — helpers + section
+  // ──────────────────────────────────────────────────────────────────────
+
+  /// Active meal types for this user. Always breakfast/lunch/dinner; snacks
+  /// only when the meal pattern implies ≥4 eating occasions
+  /// (`MealPattern.typicalMeals >= 4`). 3-meal users never see the snacks row.
+  List<String> get _activeMeals {
+    final prefs = ref.read(nutritionPreferencesProvider).preferences;
+    final typical = prefs?.mealPatternEnum.typicalMeals ?? 3;
+    return typical >= 4
+        ? const ['breakfast', 'lunch', 'dinner', 'snacks']
+        : const ['breakfast', 'lunch', 'dinner'];
+  }
+
+  static const Map<String, String> _mealLabels = {
+    'breakfast': 'Breakfast',
+    'lunch': 'Lunch',
+    'dinner': 'Dinner',
+    'snacks': 'Snacks',
+  };
+
+  /// The auto-derived P/C/F grams for one meal: the daily target × that meal's
+  /// weight, re-normalized across only the active meals (so a 3-meal user's
+  /// weights .25/.30/.35 renormalize to sum 1.0, not 0.90).
+  ({int p, int c, int f}) _autoSplitFor(String meal) {
+    final dailyP = int.tryParse(_proteinController.text) ?? 0;
+    final dailyC = int.tryParse(_carbsController.text) ?? 0;
+    final dailyF = int.tryParse(_fatController.text) ?? 0;
+    final meals = _activeMeals;
+    final weightSum = meals.fold<double>(
+        0, (s, m) => s + (_perMealSplitWeights[m] ?? 0));
+    if (weightSum <= 0) return (p: 0, c: 0, f: 0);
+    final w = (_perMealSplitWeights[meal] ?? 0) / weightSum;
+    return (
+      p: (dailyP * w).round(),
+      c: (dailyC * w).round(),
+      f: (dailyF * w).round(),
+    );
+  }
+
+  /// What to SHOW for a meal: the user's override when present (custom mode),
+  /// otherwise the auto-derived split.
+  ({int p, int c, int f}) _displaySplitFor(String meal) {
+    return _perMealOverrides[meal] ?? _autoSplitFor(meal);
+  }
+
+  /// Record an edit to one meal's macro → flip mode to custom + store the
+  /// (now-fully-explicit) triplet for that meal. We snapshot the currently
+  /// displayed values for the other two macros so an override is a complete
+  /// {p,c,f} for that meal.
+  void _setMealMacro(String meal, _MacroField field, int value) {
+    final current = _displaySplitFor(meal);
+    final next = switch (field) {
+      _MacroField.protein => (p: value, c: current.c, f: current.f),
+      _MacroField.carbs => (p: current.p, c: value, f: current.f),
+      _MacroField.fat => (p: current.p, c: current.c, f: value),
+    };
+    setState(() {
+      _perMealMode = 'custom';
+      _perMealOverrides[meal] = next;
+    });
+  }
+
+  /// Clear all per-meal overrides → back to auto-derived split.
+  void _resetPerMealToAuto() {
+    setState(() {
+      _perMealMode = 'auto';
+      _perMealOverrides.clear();
+    });
+  }
+
+  /// Assemble the `per_meal_macro_targets` JSON for persistence:
+  /// `{mode, split, overrides}`. `split` carries the active-meal weights so
+  /// the backend can reproduce the auto split; `overrides` carries only
+  /// user-edited meals (empty in auto mode).
+  Map<String, dynamic> _buildPerMealMacroTargetsJson() {
+    final meals = _activeMeals;
+    final split = <String, double>{
+      for (final m in meals) m: _perMealSplitWeights[m] ?? 0,
+    };
+    final overrides = <String, dynamic>{};
+    if (_perMealMode == 'custom') {
+      _perMealOverrides.forEach((meal, v) {
+        // Only persist overrides for meals that are still active.
+        if (meals.contains(meal)) {
+          overrides[meal] = {
+            'protein_g': v.p,
+            'carbs_g': v.c,
+            'fat_g': v.f,
+          };
+        }
+      });
+    }
+    return {
+      'mode': overrides.isEmpty ? 'auto' : 'custom',
+      'split': split,
+      'overrides': overrides,
+    };
+  }
+
+  /// The whole "Per-meal targets" section: a master toggle, then (when on) a
+  /// row per active meal with P/C/F sliders, plus a "Reset to auto" control
+  /// once any meal has been customized.
+  Widget _buildPerMealSection(
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color surface,
+    Color accent,
+    Color proteinColor,
+    Color carbsColor,
+    Color fatColor,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Master toggle row.
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PER-MEAL TARGETS',
+                    style:
+                        ZType.lbl(12, color: textPrimary, letterSpacing: 1.4),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Split your daily macros across each meal',
+                    style: TextStyle(fontSize: 11.5, color: textMuted),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: _perMealEnabled,
+              activeThumbColor: accent,
+              onChanged: (v) {
+                HapticFeedback.selectionClick();
+                setState(() => _perMealEnabled = v);
+              },
+            ),
+          ],
+        ),
+        if (_perMealEnabled) ...[
+          const SizedBox(height: 4),
+          // Mode + reset row.
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.cardBorder),
+                ),
+                child: Text(
+                  _perMealMode == 'custom' ? 'Custom split' : 'Auto split',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                    color: textMuted,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (_perMealOverrides.isNotEmpty)
+                TextButton.icon(
+                  onPressed: _resetPerMealToAuto,
+                  icon: Icon(Icons.restart_alt_rounded,
+                      size: 14, color: accent),
+                  label: Text(
+                    'Reset to auto',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: accent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ..._activeMeals.map((meal) => _buildPerMealRow(
+                meal,
+                isDark,
+                textPrimary,
+                textMuted,
+                surface,
+                proteinColor,
+                carbsColor,
+                fatColor,
+              )),
+        ],
+      ],
+    );
+  }
+
+  /// One meal's editable P/C/F. Header (meal name + auto/edited tag + total
+  /// kcal), then a slider per macro with the gram value shown inline.
+  Widget _buildPerMealRow(
+    String meal,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color surface,
+    Color proteinColor,
+    Color carbsColor,
+    Color fatColor,
+  ) {
+    final split = _displaySplitFor(meal);
+    final isOverridden = _perMealOverrides.containsKey(meal);
+    final kcal = split.p * 4 + split.c * 4 + split.f * 9;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                _mealLabels[meal] ?? meal,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: textMuted.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isOverridden ? 'EDITED' : 'AUTO',
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                    color: textMuted,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$kcal kcal',
+                style: ZType.data(11.5, color: textMuted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          _buildPerMealMacroSlider(
+              meal, _MacroField.protein, 'P', split.p, 200, proteinColor),
+          _buildPerMealMacroSlider(
+              meal, _MacroField.carbs, 'C', split.c, 350, carbsColor),
+          _buildPerMealMacroSlider(
+              meal, _MacroField.fat, 'F', split.f, 120, fatColor),
+        ],
+      ),
+    );
+  }
+
+  /// A single macro slider for a meal (per feedback_increment_ui — a drag
+  /// slider, NOT chip buttons). Label + gram value on the left, slider fills
+  /// the rest. Editing flips the meal to custom mode.
+  Widget _buildPerMealMacroSlider(
+    String meal,
+    _MacroField field,
+    String label,
+    int value,
+    int max,
+    Color color,
+  ) {
+    // Keep max above the current value so an auto value near the top still
+    // shows the thumb in range.
+    final sliderMax = (value + 20 > max ? value + 20 : max).toDouble();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 54,
+            child: Text(
+              '$label  ${value}g',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ),
+          Expanded(
+            child: SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 3,
+                activeTrackColor: color,
+                inactiveTrackColor: color.withValues(alpha: 0.18),
+                thumbColor: color,
+                overlayColor: color.withValues(alpha: 0.15),
+                thumbShape:
+                    const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape:
+                    const RoundSliderOverlayShape(overlayRadius: 12),
+              ),
+              child: Slider(
+                value: value.toDouble().clamp(0, sliderMax),
+                min: 0,
+                max: sliderMax,
+                onChanged: (v) {
+                  if (!mounted) return;
+                  _setMealMacro(meal, field, v.round());
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _save() async {
     final calories = int.tryParse(_caloriesController.text);
     if (calories == null || calories <= 0) return;
@@ -791,6 +1173,18 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             customCarbPercent: customCarbPct,
             customFatPercent: customFatPct,
             rateOfChange: _selectedRate,
+          ),
+    );
+
+    // Persist the per-meal-targets preference alongside the daily targets.
+    // Fire-and-forget (optimistic in the provider); send null macroTargets
+    // when disabled so the backend clears any stored split.
+    unawaited(
+      ref.read(nutritionPreferencesProvider.notifier).updatePerMealTargets(
+            userId: widget.userId,
+            enabled: _perMealEnabled,
+            macroTargets:
+                _perMealEnabled ? _buildPerMealMacroTargetsJson() : null,
           ),
     );
 
@@ -1128,6 +1522,20 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             _buildRateSelector(isDark, textPrimary, textMuted, accent),
             const SizedBox(height: 8),
           ],
+
+          // Per-meal targets (Phase 1c) — below the daily targets.
+          const ZealovaRule(margin: EdgeInsets.symmetric(vertical: 8)),
+          _buildPerMealSection(
+            isDark,
+            textPrimary,
+            textMuted,
+            surface,
+            accent,
+            proteinColor,
+            carbsColor,
+            fatColor,
+          ),
+          const SizedBox(height: 4),
                 ],
               ),
             ),
