@@ -193,6 +193,24 @@ def get_strength_pattern(name: Optional[str], equipment: Optional[str] = None) -
     return DEFAULT_PATTERN
 
 
+def matched_known_pattern(name: Optional[str], equipment: Optional[str] = None) -> bool:
+    """True when the name/equipment matched a real movement-pattern keyword.
+
+    Used by the population-percentile layer to decide whether the exercise has a
+    REAL standard to compare against (exact pattern hit) vs only the conservative
+    isolation_upper safety-net fallback (in which case we omit the percentile rather
+    than fabricate one for a genuinely unknown movement).
+    """
+    haystack = f"{(name or '').strip().lower()} {(equipment or '').strip().lower()}"
+    if not haystack.strip():
+        return False
+    for _pattern, keywords in _PATTERN_KEYWORDS:
+        for kw in keywords:
+            if kw in haystack:
+                return True
+    return False
+
+
 def standards_for(name: Optional[str], equipment: Optional[str] = None) -> Dict[str, float]:
     """Return the beginner..elite bodyweight-ratio ladder for an exercise's pattern.
 

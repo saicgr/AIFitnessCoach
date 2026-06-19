@@ -64,6 +64,17 @@ def _norm_key(name: str) -> str:
     return (name or "").strip().lower()
 
 
+def _lib_equipment(name: str, library_index: Optional[Dict[str, Any]]) -> Optional[str]:
+    """Equipment token for an exercise from the library index (fail-open → None)."""
+    if not library_index:
+        return None
+    try:
+        from services.exercise_muscle_resolver import lookup_library_equipment
+        return lookup_library_equipment(name, library_index)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _days_between(later: datetime, earlier: Optional[Any]) -> Optional[float]:
     """Days between an aware `later` and a stored timestamp (str/datetime), or None."""
     if not earlier:
@@ -128,6 +139,7 @@ def _gather_muscle_context(
     previous_scores: Dict[str, Any],
     bests_by_muscle: Dict[str, Dict[str, Any]],
     now: datetime,
+    library_index: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Build per-muscle composite context from the 90d logs + bests + trend.
 
@@ -167,7 +179,9 @@ def _gather_muscle_context(
             ex_name = el.get("name") or el.get("exercise_name") or ""
             if not ex_name:
                 continue
-            muscles = strength_service.get_exercise_muscle_groups(ex_name, exercise_data=el)
+            muscles = strength_service.get_exercise_muscle_groups(
+                ex_name, exercise_data=el, library_index=library_index
+            )
             for mg in muscles:
                 distinct_ex.setdefault(mg, set()).add(_norm_key(ex_name))
                 if cdt is not None:
@@ -205,6 +219,7 @@ def _upsert_exercise_bests(
     all_logs: List[Dict[str, Any]],
     strength_service: StrengthCalculatorService,
     now: datetime,
+    library_index: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Upsert strength_exercise_bests from the 90d logs and return per-muscle effective 1RMs.
 
@@ -285,7 +300,10 @@ def _upsert_exercise_bests(
                 logger.warning(f"bests write failed for {key}: {e2}")
 
         # Roll up to per-muscle effective 1RM (carry-forward = freshly trained best here).
-        muscles = strength_service.get_exercise_muscle_groups(fb["name"])
+        muscles = strength_service.get_exercise_muscle_groups(
+            fb["name"], library_index=library_index
+        )
+        equipment = _lib_equipment(fb["name"], library_index)
         for mg in muscles:
             cur = bests_by_muscle.get(mg)
             eff = record["effective_1rm_kg"]
@@ -293,7 +311,7 @@ def _upsert_exercise_bests(
                 bests_by_muscle[mg] = {
                     "effective_1rm_kg": eff,
                     "exercise_key": fb["name"],
-                    "equipment": None,
+                    "equipment": equipment,
                 }
 
     # Also fold in stored exercises NOT trained this window — apply decay so a long-rested
@@ -306,14 +324,15 @@ def _upsert_exercise_bests(
         eff = _decayed_effective_1rm(atb, days)
         if eff <= 0:
             continue
-        muscles = strength_service.get_exercise_muscle_groups(key)
+        muscles = strength_service.get_exercise_muscle_groups(key, library_index=library_index)
+        equipment = _lib_equipment(key, library_index)
         for mg in muscles:
             cur = bests_by_muscle.get(mg)
             if cur is None or eff > cur["effective_1rm_kg"]:
                 bests_by_muscle[mg] = {
                     "effective_1rm_kg": eff,
                     "exercise_key": key,
-                    "equipment": None,
+                    "equipment": equipment,
                 }
 
     return bests_by_muscle
@@ -374,6 +393,17 @@ def _recompute_strength_for_user(
     all_logs = logs_response.data or []
     workout_data = _flatten_logs_for_strength(all_logs)
 
+    # Strength-Score breadth (2026-06): one-shot exercise-library muscle index so
+    # machine/cable/accessory logs (no AI muscle metadata, not in the static map)
+    # attribute to a muscle and finally count. Built once here and threaded through
+    # every get_exercise_muscle_groups call below. Fail-open: {} on any error.
+    try:
+        from services.exercise_muscle_resolver import build_library_muscle_index
+        library_index = build_library_muscle_index(supabase)
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"library muscle index build failed (non-fatal): {e}")
+        library_index = {}
+
     # FEATURE 4 context: bests carry-forward + bodyweight trend + per-muscle context.
     bw_trend = _bodyweight_trend_pct(supabase, user_id, now)
     bests_by_muscle = _upsert_exercise_bests(
@@ -382,6 +412,7 @@ def _recompute_strength_for_user(
         all_logs=all_logs,
         strength_service=strength_service,
         now=now,
+        library_index=library_index,
     )
 
     # Previous combined scores (for trend + previous_score).
@@ -404,11 +435,12 @@ def _recompute_strength_for_user(
         previous_scores=previous_scores,
         bests_by_muscle=bests_by_muscle,
         now=now,
+        library_index=library_index,
     )
 
     # Compute combined scores with per-muscle context.
     muscle_scores = _calculate_all_with_context(
-        strength_service, workout_data, bodyweight, gender, muscle_ctx
+        strength_service, workout_data, bodyweight, gender, muscle_ctx, library_index
     )
 
     period_end = today
@@ -468,6 +500,8 @@ def _recompute_strength_for_user(
             "is_establishing": score.is_establishing,
             "score_range_low": score.score_range_low,
             "score_range_high": score.score_range_high,
+            # 2026-06 additive column (migration 2278).
+            "population_percentile": score.population_percentile,
         }
         supabase.table("strength_scores").insert(record_data).execute()
 
@@ -503,7 +537,8 @@ def _recompute_strength_for_user(
             if not gym_workout_data:
                 continue
             gym_muscle_scores = _calculate_all_with_context(
-                strength_service, gym_workout_data, bodyweight, gender, muscle_ctx
+                strength_service, gym_workout_data, bodyweight, gender, muscle_ctx,
+                library_index,
             )
 
             prev_gym_resp = (
@@ -554,6 +589,7 @@ def _recompute_strength_for_user(
                     "is_establishing": score.is_establishing,
                     "score_range_low": score.score_range_low,
                     "score_range_high": score.score_range_high,
+                    "population_percentile": score.population_percentile,
                 }).execute()
             gym_count += 1
     except Exception as e:  # noqa: BLE001
@@ -573,6 +609,7 @@ def _calculate_all_with_context(
     bodyweight: float,
     gender: str,
     muscle_ctx: Dict[str, Dict[str, Any]],
+    library_index: Optional[Dict[str, Any]] = None,
 ):
     """Like calculate_all_muscle_scores but threads the per-muscle composite context.
 
@@ -585,7 +622,7 @@ def _calculate_all_with_context(
     for exercise in workout_data:
         exercise_name = exercise.get("exercise_name", "")
         muscle_groups = strength_service.get_exercise_muscle_groups(
-            exercise_name, exercise_data=exercise
+            exercise_name, exercise_data=exercise, library_index=library_index
         )
         for i, mg in enumerate(muscle_groups):
             if mg in muscle_exercises:

@@ -337,6 +337,29 @@ class AllStrengthScoresResponse(BaseModel):
     calculated_at: datetime
 
 
+class ContributingExercise(BaseModel):
+    """One exercise that feeds a muscle's strength score (explainability)."""
+    exercise_name: str
+    best_e1rm_kg: float
+    weekly_sets: int
+    contribution_pct: float  # share of this muscle's exercise-1RM signal (0-100)
+    is_machine_derived: bool = False
+
+
+# Most-effective compound to suggest when a muscle has no contributing exercises yet
+# (the "never-empty" hint). One per scored group; deliberately common, equipment-light.
+_SUGGESTED_LIFT_FOR_MUSCLE: Dict[str, str] = {
+    "chest": "bench press", "back": "a row or pulldown", "shoulders": "overhead press",
+    "rear_delts": "a reverse fly or face pull", "biceps": "a bicep curl",
+    "triceps": "a tricep extension", "forearms": "a wrist curl or farmer's carry",
+    "quads": "a squat or leg press", "hamstrings": "a Romanian deadlift or leg curl",
+    "glutes": "a hip thrust", "adductors": "a hip adduction or sumo squat",
+    "calves": "a calf raise", "core": "a plank or crunch",
+    "obliques": "a Russian twist or side plank", "lower_back": "a back extension",
+    "traps": "a shrug or face pull",
+}
+
+
 class StrengthDetailResponse(BaseModel):
     """Response model for detailed muscle group strength."""
     muscle_group: str
@@ -352,6 +375,11 @@ class StrengthDetailResponse(BaseModel):
     is_establishing: bool = False
     score_range_low: Optional[int] = None
     score_range_high: Optional[int] = None
+    # 2026-06 explainability — "which exercises feed this score" + never-empty hint.
+    contributing_exercises: List[ContributingExercise] = []
+    empty_state_hint: Optional[str] = None
+    population_percentile: Optional[float] = None
+    best_is_machine: bool = False
 
 
 # ============================================================================
@@ -1004,9 +1032,73 @@ async def get_strength_detail(
             "muscle_group", muscle_group.lower()
         ).maybe_single().execute()))
 
-    # Get exercises for this muscle group from workout history
-    # This is simplified - in production, would query workout logs
-    exercises = []
+    # Contributing exercises (explainability): which logged exercises feed THIS
+    # muscle's score, ranked by their best estimated-1RM share. This is the
+    # "which exercises feed this / never-empty" fix — including machine/cable work
+    # via the library-index attribution tier.
+    from services.exercise_muscle_resolver import (
+        build_library_muscle_index, lookup_library_equipment, is_machine_equipment,
+    )
+
+    now_utc = datetime.now(timezone.utc)
+    cutoff_90 = (now_utc - timedelta(days=90)).isoformat()
+    logs_q = db.client.table("workout_logs").select(
+        "sets_json, gym_profile_id"
+    ).eq("user_id", user_id).eq("status", "completed").gte("completed_at", cutoff_90)
+    if gym_profile_id:
+        logs_q = logs_q.eq("gym_profile_id", gym_profile_id)
+    logs_resp = await run_db(lambda: logs_q.execute())
+    library_index = await run_db(lambda: build_library_muscle_index(db.client))
+    flattened = _flatten_logs_for_strength(logs_resp.data or [])
+
+    contributing: List[ContributingExercise] = []
+    raw_rows: List[Dict[str, Any]] = []
+    for entry in flattened:
+        name = entry.get("exercise_name", "")
+        if not name:
+            continue
+        muscles = strength_service.get_exercise_muscle_groups(
+            name, exercise_data=entry, library_index=library_index
+        )
+        if muscle_group.lower() not in [str(m).lower() for m in muscles]:
+            continue
+        weight = float(entry.get("weight_kg", 0) or 0)
+        reps = int(entry.get("reps", 0) or 0)
+        sets = int(entry.get("sets", 0) or 0)
+        e1rm = strength_service.calculate_1rm_average(weight, reps) if reps > 0 else 0.0
+        equipment = lookup_library_equipment(name, library_index)
+        raw_rows.append({
+            "exercise_name": name,
+            "best_e1rm_kg": round(e1rm, 1),
+            # ~13 weeks in the 90d window; show approximate weekly working sets.
+            "weekly_sets": max(0, round(sets / 13.0)),
+            "_e1rm_for_share": e1rm,
+            "is_machine_derived": is_machine_equipment(equipment),
+        })
+
+    total_signal = sum(r["_e1rm_for_share"] for r in raw_rows) or 0.0
+    raw_rows.sort(key=lambda r: r["_e1rm_for_share"], reverse=True)
+    for r in raw_rows:
+        contributing.append(ContributingExercise(
+            exercise_name=r["exercise_name"],
+            best_e1rm_kg=r["best_e1rm_kg"],
+            weekly_sets=r["weekly_sets"],
+            contribution_pct=round((r["_e1rm_for_share"] / total_signal * 100.0), 1)
+            if total_signal > 0 else 0.0,
+            is_machine_derived=r["is_machine_derived"],
+        ))
+
+    # Never-empty hint: when nothing feeds this muscle yet, tell the user the single
+    # most effective move to start scoring it (no fabricated data).
+    empty_state_hint = None
+    if not contributing:
+        empty_state_hint = (
+            f"Log one set of {_SUGGESTED_LIFT_FOR_MUSCLE.get(muscle_group.lower(), 'any ' + muscle_group + ' exercise')}"
+            f" to start scoring your {muscle_group.replace('_', ' ')}."
+        )
+
+    # Keep `exercises` (legacy field) populated for older clients.
+    exercises = [c.model_dump() for c in contributing]
 
     # Get trend data (historical scores). Per-gym scopes to that gym's rows;
     # combined uses the NULL-gym rows so the overall trend is unchanged.
@@ -1053,6 +1145,11 @@ async def get_strength_detail(
         is_establishing=bool(score_data.get("is_establishing") or False),
         score_range_low=score_data.get("score_range_low"),
         score_range_high=score_data.get("score_range_high"),
+        # 2026-06 explainability + percentile (additive).
+        contributing_exercises=contributing,
+        empty_state_hint=empty_state_hint,
+        population_percentile=score_data.get("population_percentile"),
+        best_is_machine=bool(contributing and contributing[0].is_machine_derived),
     )
 
 

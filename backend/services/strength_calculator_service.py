@@ -37,8 +37,13 @@ VOLUME_LANDMARKS: Dict[str, Dict[str, float]] = {
     "glutes":     {"mev": 4,  "mav": 10, "mrv": 16},   # "8-12"
     "core":       {"mev": 4,  "mav": 12, "mrv": 20},   # Abs "8-16"
     "traps":      {"mev": 6,  "mav": 16, "mrv": 26},   # "12-20"
-    # Lower Back maps to a generic posterior fallback for muscles without a row.
     "forearms":   {"mev": 6,  "mav": 12, "mrv": 18},   # not in client table; conservative
+    # 2026-06 additions (16-group expansion). Conservative landmarks; KEEP IN SYNC
+    # with the Flutter volumeGuidelinesTable in muscle_status.dart.
+    "rear_delts": {"mev": 6,  "mav": 12, "mrv": 20},   # small, high-frequency tolerant
+    "obliques":   {"mev": 4,  "mav": 10, "mrv": 16},   # like core, slightly lower
+    "adductors":  {"mev": 4,  "mav": 10, "mrv": 16},   # accessory of lower compounds
+    "lower_back": {"mev": 4,  "mav": 9,  "mrv": 14},   # high systemic fatigue → low MRV
 }
 # Fallback when a muscle group isn't in the table (e.g. "lower_back").
 _DEFAULT_LANDMARK = {"mev": 6, "mav": 12, "mrv": 18}
@@ -54,18 +59,28 @@ class StrengthLevel(str, Enum):
 
 
 class MuscleGroup(str, Enum):
-    """Supported muscle groups for scoring."""
+    """Supported muscle groups for scoring.
+
+    Expanded 2026-06 from 12 → 16: added REAR_DELTS, OBLIQUES, ADDUCTORS, LOWER_BACK
+    so the score (and the radar) reflect finer training breadth. These four degrade
+    gracefully — they read ``is_establishing`` until a user has enough signal and
+    never blank (the empty-state hint covers them).
+    """
     CHEST = "chest"
     BACK = "back"
     SHOULDERS = "shoulders"
+    REAR_DELTS = "rear_delts"
     BICEPS = "biceps"
     TRICEPS = "triceps"
     FOREARMS = "forearms"
     QUADS = "quads"
     HAMSTRINGS = "hamstrings"
     GLUTES = "glutes"
+    ADDUCTORS = "adductors"
     CALVES = "calves"
     CORE = "core"
+    OBLIQUES = "obliques"
+    LOWER_BACK = "lower_back"
     TRAPS = "traps"
 
 
@@ -292,6 +307,29 @@ EXERCISE_MUSCLE_GROUPS: Dict[str, List[str]] = {
     "tricep_extension": ["triceps"],
     "skull_crusher": ["triceps"],
 
+    # Shoulders — rear delt isolations (2026-06 expansion)
+    "reverse_fly": ["rear_delts"],
+    "rear_delt_fly": ["rear_delts"],
+    "face_pull": ["rear_delts", "traps"],
+    "bent_over_lateral_raise": ["rear_delts"],
+
+    # Adductors / inner thigh (2026-06 expansion)
+    "hip_adduction": ["adductors"],
+    "adductor_machine": ["adductors"],
+    "copenhagen_plank": ["adductors", "core"],
+    "sumo_deadlift": ["hamstrings", "glutes", "adductors", "back"],
+
+    # Lower back / posterior chain (2026-06 expansion)
+    "back_extension": ["lower_back"],
+    "hyperextension": ["lower_back"],
+    "good_morning": ["lower_back", "hamstrings", "glutes"],
+
+    # Obliques (2026-06 expansion)
+    "russian_twist": ["obliques", "core"],
+    "side_plank": ["obliques", "core"],
+    "woodchopper": ["obliques", "core"],
+    "side_bend": ["obliques"],
+
     # Other
     "calf_raise": ["calves"],
     "plank": ["core"],
@@ -330,6 +368,11 @@ class StrengthScore:
     score_range_low: Optional[int] = None
     score_range_high: Optional[int] = None
     composite_breakdown: Optional[Dict[str, Any]] = None
+    # 2026-06 — population percentile ("stronger than X% of comparable lifters"),
+    # null when the muscle's best lift has no real population standard or is
+    # machine-derived (brands vary too much for an honest cross-user claim).
+    population_percentile: Optional[float] = None
+    best_is_machine: bool = False
 
 
 class StrengthCalculatorService:
@@ -683,6 +726,8 @@ class StrengthCalculatorService:
         best_equipment: Optional[str] = None
         total_sets = 0
         total_volume = 0.0
+        # Per-exercise best 1RM (for the breadth blend, A2). Keyed on exercise name.
+        per_exercise_best: Dict[str, Dict[str, Any]] = {}
 
         # Lazy import to avoid an import cycle (muscle_balance imports filters which
         # is fine; strength service must not pull RAG at module load).
@@ -710,6 +755,14 @@ class StrengthCalculatorService:
                 best_exercise = exercise_name
                 best_equipment = equipment
 
+            key = (exercise_name or "").strip().lower()
+            if key:
+                prev = per_exercise_best.get(key)
+                if prev is None or one_rm > prev["one_rm"]:
+                    per_exercise_best[key] = {
+                        "one_rm": one_rm, "name": exercise_name, "equipment": equipment,
+                    }
+
             total_sets += sets
             total_volume += effective_weight * reps * sets
 
@@ -725,6 +778,33 @@ class StrengthCalculatorService:
         level, ratio, s1 = self.classify_strength_level(
             best_exercise, best_1rm, bodyweight_kg, gender, equipment=best_equipment
         )
+
+        # ── S1 breadth bonus (A2) — a BROAD base of moderate lifts should count,
+        # not just the single strongest lift. Blend the S1 of the top-3 distinct
+        # exercises by their own 1RM, then take max(single_best_s1, blended) so the
+        # score can ONLY rise from this — no existing user's number can drop.
+        # Fail-open: any error keeps the original single-best s1.
+        s1_breadth_exercises = 0
+        try:
+            ranked = sorted(
+                per_exercise_best.values(), key=lambda d: d["one_rm"], reverse=True
+            )[:3]
+            s1_breadth_exercises = len([r for r in ranked if r["one_rm"] > 0])
+            if len(ranked) >= 2:
+                weights = [0.6, 0.3, 0.1][: len(ranked)]
+                wsum = sum(weights)
+                blend_acc = 0.0
+                for w, r in zip(weights, ranked):
+                    _, _, r_s1 = self.classify_strength_level(
+                        r["name"], r["one_rm"], bodyweight_kg, gender,
+                        equipment=r.get("equipment"),
+                    )
+                    blend_acc += w * r_s1
+                s1_blend = blend_acc / wsum if wsum > 0 else s1
+                # 85% blended + 15% single-best, but never below the single-best s1.
+                s1 = max(s1, 0.85 * s1_blend + 0.15 * s1)
+        except Exception:  # noqa: BLE001 - breadth bonus must never break the score
+            pass
 
         # ── S2 volume tolerance ──────────────────────────────────────────────
         weekly_sets = float(ctx.get("weekly_sets", total_sets) or 0)
@@ -771,6 +851,28 @@ class StrengthCalculatorService:
         # Re-derive level from the FINAL composite so the badge matches the number.
         final_level = self._level_from_score(composite)
 
+        # ── Population percentile (A4) + machine flag ─────────────────────────
+        # "Stronger than X% of comparable lifters" for the muscle's best lift —
+        # ONLY when that lift has a real standard and isn't machine-derived.
+        best_is_machine = False
+        population_percentile: Optional[float] = None
+        try:
+            from services.exercise_muscle_resolver import is_machine_equipment
+            from services.strength_movement_patterns import matched_known_pattern
+            from services.strength_population_standards import ratio_to_percentile
+
+            best_is_machine = is_machine_equipment(best_equipment)
+            norm_best = self._normalize_exercise_name(best_exercise)
+            has_exact = norm_best in STRENGTH_STANDARDS
+            has_real_standard = has_exact or matched_known_pattern(best_exercise, best_equipment)
+            if best_1rm > 0 and ratio > 0 and has_real_standard and not best_is_machine:
+                ladder = self._resolve_standards(best_exercise, best_equipment)
+                if gender == "female":
+                    ladder = {k: v * 0.65 for k, v in ladder.items()}
+                population_percentile = ratio_to_percentile(ladder, ratio)
+        except Exception:  # noqa: BLE001 - percentile is additive, never break the score
+            population_percentile = None
+
         return StrengthScore(
             muscle_group=muscle_group,
             strength_score=composite,
@@ -791,7 +893,11 @@ class StrengthCalculatorService:
                 "s2_vol_tolerance": round(s2, 1),
                 "s3_consistency": round(s3, 1),
                 "bw_context_delta": bw_delta,
+                "s1_breadth_exercises": s1_breadth_exercises,
+                "best_is_machine": best_is_machine,
             },
+            population_percentile=population_percentile,
+            best_is_machine=best_is_machine,
         )
 
     @staticmethod
@@ -971,19 +1077,24 @@ class StrengthCalculatorService:
     def get_exercise_muscle_groups(
         exercise_name: str,
         exercise_data: Optional[Dict[str, Any]] = None,
+        *,
+        library_index: Optional[Dict[str, Any]] = None,
     ) -> List[str]:
         """Get muscle groups targeted by an exercise.
 
-        Lookup order:
+        Lookup order (each tier wins on first hit — fast, hand-curated tiers first):
           1. Static map keyed on the normalized name (substring fallback).
-          2. Optional `exercise_data` dict (e.g. the source workout's
-             `exercises_json` entry) — read `muscle_groups`, `primary_muscle`,
-             or `muscle_group` so AI-generated bodyweight moves like "Kabaddi
-             Squat Jumps" / "Above Head Chest Stretch" still attribute to
-             the muscle the AI declared, instead of dropping out of muscle
-             analytics + strength score entirely.
-          3. Empty list (caller decides whether to bucket under generic
+          2. Caller-provided `exercise_data` muscle metadata (AI plan JSON).
+          3. Library index (2026-06): the app's ``exercise_library_cleaned`` muscle
+             data, normalized to canonical groups by ``exercise_muscle_resolver``.
+             This tier is what makes machine/cable/accessory exercises (whose logs
+             carry no AI muscle fields and aren't in the static map) finally count
+             toward the strength score — the core "my exercise isn't reflected" fix.
+          4. Empty list (caller decides whether to bucket under generic
              "full_body" or skip).
+
+        `library_index` is optional and defaults to None → tier 3 is a no-op and
+        behavior is byte-identical to before (fail-open).
         """
         normalized = StrengthCalculatorService._normalize_exercise_name(exercise_name)
 
@@ -1006,6 +1117,16 @@ class StrengthCalculatorService:
             primary = exercise_data.get("primary_muscle") or exercise_data.get("muscle_group")
             if isinstance(primary, str) and primary.strip():
                 return [primary.strip().lower()]
+
+        # 3. Library index (data-driven breadth tier).
+        if library_index:
+            try:
+                from services.exercise_muscle_resolver import lookup_library_muscles
+                lib_muscles = lookup_library_muscles(exercise_name, library_index)
+                if lib_muscles:
+                    return lib_muscles
+            except Exception:  # noqa: BLE001 - never let attribution break the score
+                pass
 
         return []
 

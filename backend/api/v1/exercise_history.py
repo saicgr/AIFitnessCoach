@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
 from enum import Enum
@@ -530,6 +530,73 @@ async def get_exercise_history(
         raise safe_internal_error(e, "exercise_history")
 
 
+def build_exercise_series(
+    db,
+    user_id: str,
+    exercise_name: str,
+    start_date: str,
+    gym_id: Optional[str] = None,
+) -> Tuple[List[ExerciseChartDataPoint], ExerciseChartTrend]:
+    """Build (data_points, trend) for one exercise from exercise_workout_history.
+
+    Shared by the per-exercise /chart endpoint AND the Progressive Overload Dashboard
+    (DRY — one place computes the weekly series + start/current/1RM trend). Synchronous
+    (callers wrap it in run_in_executor); reads the exercise_workout_history view.
+    """
+    query = db.client.from_("exercise_workout_history") \
+        .select("*") \
+        .eq("user_id", user_id) \
+        .ilike("exercise_name", exercise_name.lower()) \
+        .gte("workout_date", start_date) \
+        .order("workout_date", desc=False)
+    if gym_id:
+        query = query.eq("gym_profile_id", gym_id)
+    data = (query.execute().data) or []
+
+    data_points: List[ExerciseChartDataPoint] = []
+    for row in data:
+        data_points.append(ExerciseChartDataPoint(
+            date=row.get("workout_date", ""),
+            max_weight_kg=float(row.get("max_weight_kg", 0) or 0),
+            avg_weight_kg=float(row.get("avg_weight_kg", 0) or 0),
+            volume_kg=float(row.get("total_volume_kg", 0) or 0),
+            total_reps=int(row.get("total_reps", 0) or 0),
+            estimated_1rm_kg=float(row.get("estimated_1rm_kg", 0) or 0) if row.get("estimated_1rm_kg") else None,
+            is_pr=False,
+        ))
+
+    if len(data_points) >= 2:
+        first, last = data_points[0], data_points[-1]
+        start_weight = first.max_weight_kg
+        current_weight = last.max_weight_kg
+        start_1rm = first.estimated_1rm_kg or 0
+        current_1rm = last.estimated_1rm_kg or 0
+        percent_change = (
+            round(((current_weight - start_weight) / start_weight) * 100, 1)
+            if start_weight > 0 else 0
+        )
+        if percent_change > 5:
+            direction = "improving"
+        elif percent_change < -5:
+            direction = "declining"
+        else:
+            direction = "maintaining"
+        trend = ExerciseChartTrend(
+            direction=direction,
+            percent_change=percent_change,
+            start_weight=round(start_weight, 2),
+            current_weight=round(current_weight, 2),
+            start_1rm=round(start_1rm, 2),
+            current_1rm=round(current_1rm, 2),
+        )
+    else:
+        trend = ExerciseChartTrend(
+            direction="no_data", percent_change=0, start_weight=0,
+            current_weight=0, start_1rm=0, current_1rm=0,
+        )
+    return data_points, trend
+
+
 @router.get("/{exercise_name}/chart", response_model=ExerciseChartDataResponse)
 async def get_exercise_chart_data(
     request: Request,
@@ -564,71 +631,10 @@ async def get_exercise_chart_data(
             db, user_id, exercise_name, gym_profile_id, scope
         )
 
-        # Query history data
-        query = db.client.from_("exercise_workout_history") \
-            .select("*") \
-            .eq("user_id", user_id) \
-            .ilike("exercise_name", exercise_name.lower()) \
-            .gte("workout_date", start_date) \
-            .order("workout_date", desc=False)
-        if eff_gym_id:
-            query = query.eq("gym_profile_id", eff_gym_id)
-
-        result = query.execute()
-        data = result.data or []
-
-        # Build data points
-        data_points = []
-        for row in data:
-            data_points.append(ExerciseChartDataPoint(
-                date=row.get("workout_date", ""),
-                max_weight_kg=float(row.get("max_weight_kg", 0) or 0),
-                avg_weight_kg=float(row.get("avg_weight_kg", 0) or 0),
-                volume_kg=float(row.get("total_volume_kg", 0) or 0),
-                total_reps=int(row.get("total_reps", 0) or 0),
-                estimated_1rm_kg=float(row.get("estimated_1rm_kg", 0) or 0) if row.get("estimated_1rm_kg") else None,
-                is_pr=False,  # Could enhance with PR detection
-            ))
-
-        # Calculate trend
-        if len(data_points) >= 2:
-            first = data_points[0]
-            last = data_points[-1]
-
-            start_weight = first.max_weight_kg
-            current_weight = last.max_weight_kg
-            start_1rm = first.estimated_1rm_kg or 0
-            current_1rm = last.estimated_1rm_kg or 0
-
-            if start_weight > 0:
-                percent_change = round(((current_weight - start_weight) / start_weight) * 100, 1)
-            else:
-                percent_change = 0
-
-            if percent_change > 5:
-                direction = "improving"
-            elif percent_change < -5:
-                direction = "declining"
-            else:
-                direction = "maintaining"
-
-            trend = ExerciseChartTrend(
-                direction=direction,
-                percent_change=percent_change,
-                start_weight=round(start_weight, 2),
-                current_weight=round(current_weight, 2),
-                start_1rm=round(start_1rm, 2),
-                current_1rm=round(current_1rm, 2),
-            )
-        else:
-            trend = ExerciseChartTrend(
-                direction="no_data",
-                percent_change=0,
-                start_weight=0,
-                current_weight=0,
-                start_1rm=0,
-                current_1rm=0,
-            )
+        # Build data points + trend via the shared helper (DRY with the dashboard).
+        data_points, trend = build_exercise_series(
+            db, user_id, exercise_name, start_date, eff_gym_id
+        )
 
         gym_breakdown = _build_gym_breakdown(db, user_id, exercise_name)
 

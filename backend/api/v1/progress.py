@@ -690,6 +690,357 @@ async def get_progress_summary(
         raise safe_internal_error(e, "progress")
 
 
+# ============================================================================
+# Progressive Overload Dashboard (2026-06)
+# ============================================================================
+# ONE curated payload for the dashboard so the client makes a single call instead
+# of fanning out across /strength, /strength-over-time, /volume-over-time, the
+# per-exercise /chart endpoints, and /personal-records. Every DB read is offloaded
+# to the thread pool and gathered (never a sync .execute() in the async body).
+
+class OverloadSparklinePoint(BaseModel):
+    date: str
+    score: int
+
+
+class OverloadOverall(BaseModel):
+    score: int
+    level: str
+    percentile: Optional[float] = None
+    delta_30d: Optional[int] = None
+    delta_365d: Optional[int] = None
+    sparkline: List[OverloadSparklinePoint] = []
+
+
+class OverloadSeriesPoint(BaseModel):
+    date: str
+    value: float
+
+
+class OverloadMuscle(BaseModel):
+    muscle_group: str
+    current_score: int
+    score_change: Optional[int] = None
+    is_establishing: bool = False
+    population_percentile: Optional[float] = None
+    score_series: List[OverloadSeriesPoint] = []
+    volume_series: List[OverloadSeriesPoint] = []
+
+
+class OverloadExercisePoint(BaseModel):
+    date: str
+    e1rm_kg: float
+    volume_kg: float
+
+
+class OverloadTopExercise(BaseModel):
+    exercise_name: str
+    starting_weight: float
+    current_weight: float
+    starting_e1rm: float
+    current_e1rm: float
+    all_time_best_e1rm: float
+    trend: str
+    e1rm_series: List[OverloadExercisePoint] = []
+
+
+class OverloadMuscleDelta(BaseModel):
+    muscle_group: str
+    score_change: int
+
+
+class OverloadLastWorkout(BaseModel):
+    completed_at: Optional[str] = None
+    muscle_deltas: List[OverloadMuscleDelta] = []
+
+
+class OverloadDashboardResponse(BaseModel):
+    user_id: str
+    time_range: str
+    overall: OverloadOverall
+    muscles: List[OverloadMuscle] = []
+    top_exercises: List[OverloadTopExercise] = []
+    recent_prs: List[Dict[str, Any]] = []
+    last_workout: OverloadLastWorkout = OverloadLastWorkout()
+
+
+@router.get("/overload-dashboard", response_model=OverloadDashboardResponse)
+async def get_overload_dashboard(
+    user_id: str = Query(..., description="User ID"),
+    time_range: str = Query("12_weeks", description="1_day..all_time / 6_months / 1_year"),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter to a specific gym profile (per-gym progress)."),
+    current_user: dict = Depends(get_current_user),
+):
+    """Curated Progressive Overload Dashboard payload (offloaded fan-out)."""
+    if str(current_user.get("id")) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    try:
+        # exercise_history owns the richer TimeRange (incl. 6mo/1yr) + day mapping
+        # + the shared per-exercise series builder. Reuse rather than duplicate.
+        from api.v1.exercise_history import (
+            TimeRange as ExTimeRange, get_days_for_time_range, build_exercise_series,
+        )
+        try:
+            ex_range = ExTimeRange(time_range)
+        except ValueError:
+            ex_range = ExTimeRange.TWELVE_WEEKS
+        days_back = get_days_for_time_range(ex_range)
+
+        db = get_supabase_db()
+        loop = asyncio.get_event_loop()
+        now_utc = datetime.now(timezone.utc)
+        start_date = (now_utc - timedelta(days=days_back)).date().isoformat()
+        d30 = (now_utc - timedelta(days=30)).isoformat()
+        d365 = (now_utc - timedelta(days=365)).isoformat()
+        latest_view = (
+            "latest_strength_scores_by_gym" if gym_profile_id else "latest_strength_scores"
+        )
+
+        def _fetch_latest_scores():
+            q = db.client.table(latest_view).select("*").eq("user_id", user_id)
+            if gym_profile_id:
+                q = q.eq("gym_profile_id", gym_profile_id)
+            return q.execute()
+
+        def _fetch_score_history():
+            # All per-muscle score rows in the window → per-muscle score_series +
+            # 30d/365d overall deltas. Scoped to combined (NULL gym) or the gym.
+            q = db.client.table("strength_scores").select(
+                "muscle_group, strength_score, calculated_at"
+            ).eq("user_id", user_id).gte("calculated_at", d365).order(
+                "calculated_at", desc=False
+            )
+            if gym_profile_id:
+                q = q.eq("gym_profile_id", gym_profile_id)
+            else:
+                q = q.is_("gym_profile_id", "null")
+            return q.execute()
+
+        def _fetch_volume():
+            view = _MUSCLE_WEEKLY_BY_GYM if gym_profile_id else "muscle_group_weekly_volume"
+            q = db.client.table(view).select(
+                "muscle_group, week_start, total_volume_kg"
+            ).eq("user_id", user_id).gte("week_start", start_date).order(
+                "week_start", desc=False
+            )
+            if gym_profile_id:
+                q = q.eq("gym_profile_id", gym_profile_id)
+            return q.execute()
+
+        def _fetch_top_names():
+            # Most-performed exercises in the window (drives top_exercises).
+            q = db.client.from_("exercise_workout_history").select(
+                "exercise_name, workout_date"
+            ).eq("user_id", user_id).gte("workout_date", start_date)
+            if gym_profile_id:
+                q = q.eq("gym_profile_id", gym_profile_id)
+            return q.execute()
+
+        def _fetch_recent_prs():
+            return db.client.table("personal_records").select(
+                "exercise_name, weight_kg, reps, estimated_1rm_kg, achieved_at"
+            ).eq("user_id", user_id).gte("achieved_at", d30).order(
+                "achieved_at", desc=True
+            ).limit(8).execute()
+
+        def _fetch_last_workout():
+            return db.client.table("workout_logs").select(
+                "completed_at"
+            ).eq("user_id", user_id).eq("status", "completed").order(
+                "completed_at", desc=True
+            ).limit(1).execute()
+
+        (
+            latest_res, hist_res, vol_res, names_res, prs_res, last_res,
+        ) = await asyncio.gather(
+            loop.run_in_executor(_db_executor, _fetch_latest_scores),
+            loop.run_in_executor(_db_executor, _fetch_score_history),
+            loop.run_in_executor(_db_executor, _fetch_volume),
+            loop.run_in_executor(_db_executor, _fetch_top_names),
+            loop.run_in_executor(_db_executor, _fetch_recent_prs),
+            loop.run_in_executor(_db_executor, _fetch_last_workout),
+        )
+
+        # ── Overall = median of per-muscle current scores (robust to one weak group)
+        latest_rows = latest_res.data or []
+        by_muscle = {r["muscle_group"]: r for r in latest_rows}
+        scores_now = sorted(int(r.get("strength_score") or 0) for r in latest_rows)
+        if scores_now:
+            mid = len(scores_now) // 2
+            overall_score = (
+                scores_now[mid] if len(scores_now) % 2
+                else round((scores_now[mid - 1] + scores_now[mid]) / 2)
+            )
+        else:
+            overall_score = 0
+        overall_level = _level_label(overall_score)
+        # Overall percentile = mean of available per-muscle percentiles.
+        pcts = [float(r["population_percentile"]) for r in latest_rows
+                if r.get("population_percentile") is not None]
+        overall_pct = round(sum(pcts) / len(pcts), 1) if pcts else None
+
+        # ── Per-muscle score history → series + overall sparkline/deltas ─────
+        hist_rows = hist_res.data or []
+        score_series_by_muscle: Dict[str, List[OverloadSeriesPoint]] = {}
+        overall_by_date: Dict[str, List[int]] = {}
+        for r in hist_rows:
+            mg = r.get("muscle_group")
+            sc = int(r.get("strength_score") or 0)
+            cal = r.get("calculated_at") or ""
+            day = cal[:10]
+            score_series_by_muscle.setdefault(mg, []).append(
+                OverloadSeriesPoint(date=day, value=sc)
+            )
+            overall_by_date.setdefault(day, []).append(sc)
+        # Overall sparkline = daily median across muscles (sorted by date).
+        sparkline: List[OverloadSparklinePoint] = []
+        for day in sorted(overall_by_date.keys()):
+            vals = sorted(overall_by_date[day])
+            m = len(vals) // 2
+            med = vals[m] if len(vals) % 2 else round((vals[m - 1] + vals[m]) / 2)
+            sparkline.append(OverloadSparklinePoint(date=day, score=med))
+        delta_30d = _delta_since(sparkline, overall_score, now_utc, 30)
+        delta_365d = _delta_since(sparkline, overall_score, now_utc, 365)
+
+        # ── Per-muscle volume series ─────────────────────────────────────────
+        vol_by_muscle: Dict[str, List[OverloadSeriesPoint]] = {}
+        for r in vol_res.data or []:
+            vol_by_muscle.setdefault(r["muscle_group"], []).append(
+                OverloadSeriesPoint(
+                    date=str(r.get("week_start") or "")[:10],
+                    value=float(r.get("total_volume_kg") or 0),
+                )
+            )
+
+        muscles: List[OverloadMuscle] = []
+        all_mgs = set(by_muscle) | set(score_series_by_muscle) | set(vol_by_muscle)
+        for mg in sorted(all_mgs):
+            row = by_muscle.get(mg, {})
+            muscles.append(OverloadMuscle(
+                muscle_group=mg,
+                current_score=int(row.get("strength_score") or 0),
+                score_change=row.get("score_change"),
+                is_establishing=bool(row.get("is_establishing") or False),
+                population_percentile=row.get("population_percentile"),
+                score_series=score_series_by_muscle.get(mg, []),
+                volume_series=vol_by_muscle.get(mg, []),
+            ))
+
+        # ── Top exercises (by frequency) → per-exercise series via shared helper
+        freq: Dict[str, int] = {}
+        for r in names_res.data or []:
+            nm = (r.get("exercise_name") or "").strip()
+            if nm:
+                freq[nm] = freq.get(nm, 0) + 1
+        top_names = [n for n, _ in sorted(freq.items(), key=lambda x: x[1], reverse=True)[:6]]
+
+        def _build_one(name: str):
+            points, trend = build_exercise_series(db, user_id, name, start_date, gym_profile_id)
+            return name, points, trend
+
+        series_results = await asyncio.gather(*[
+            loop.run_in_executor(_db_executor, _build_one, nm) for nm in top_names
+        ]) if top_names else []
+
+        top_exercises: List[OverloadTopExercise] = []
+        for name, points, trend in series_results:
+            e1rm_pts = [
+                OverloadExercisePoint(
+                    date=p.date, e1rm_kg=p.estimated_1rm_kg or 0.0, volume_kg=p.volume_kg
+                ) for p in points
+            ]
+            all_time_best = max((p.estimated_1rm_kg or 0.0) for p in points) if points else 0.0
+            top_exercises.append(OverloadTopExercise(
+                exercise_name=name,
+                starting_weight=trend.start_weight,
+                current_weight=trend.current_weight,
+                starting_e1rm=trend.start_1rm,
+                current_e1rm=trend.current_1rm,
+                all_time_best_e1rm=round(all_time_best, 2),
+                trend=trend.direction,
+                e1rm_series=e1rm_pts,
+            ))
+
+        # ── Recent PRs (passthrough shape) ───────────────────────────────────
+        recent_prs = [
+            {
+                "exercise_name": r.get("exercise_name"),
+                "weight_kg": float(r.get("weight_kg") or 0),
+                "reps": int(r.get("reps") or 0),
+                "estimated_1rm_kg": float(r.get("estimated_1rm_kg") or 0),
+                "achieved_at": r.get("achieved_at"),
+            }
+            for r in (prs_res.data or [])
+        ]
+
+        # ── Last-workout "what changed" — persisted score_change per muscle ──
+        last_completed = None
+        if last_res.data:
+            last_completed = last_res.data[0].get("completed_at")
+        muscle_deltas = [
+            OverloadMuscleDelta(muscle_group=r["muscle_group"], score_change=int(r["score_change"]))
+            for r in latest_rows
+            if r.get("score_change") not in (None, 0)
+        ]
+        muscle_deltas.sort(key=lambda d: abs(d.score_change), reverse=True)
+
+        return OverloadDashboardResponse(
+            user_id=user_id,
+            time_range=ex_range.value,
+            overall=OverloadOverall(
+                score=overall_score,
+                level=overall_level,
+                percentile=overall_pct,
+                delta_30d=delta_30d,
+                delta_365d=delta_365d,
+                sparkline=sparkline,
+            ),
+            muscles=muscles,
+            top_exercises=top_exercises,
+            recent_prs=recent_prs,
+            last_workout=OverloadLastWorkout(
+                completed_at=last_completed, muscle_deltas=muscle_deltas[:4]
+            ),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get overload dashboard: {e}", exc_info=True)
+        raise safe_internal_error(e, "progress")
+
+
+def _level_label(score: int) -> str:
+    if score >= 90:
+        return "elite"
+    if score >= 70:
+        return "advanced"
+    if score >= 50:
+        return "intermediate"
+    if score >= 25:
+        return "novice"
+    return "beginner"
+
+
+def _delta_since(
+    sparkline: List["OverloadSparklinePoint"], current: int, now_utc: datetime, days: int
+) -> Optional[int]:
+    """Overall score delta vs the closest sparkline point ~`days` ago (None if absent)."""
+    if not sparkline:
+        return None
+    cutoff = (now_utc - timedelta(days=days)).date().isoformat()
+    # First point on/after the cutoff is our baseline.
+    baseline = None
+    for p in sparkline:
+        if p.date >= cutoff:
+            baseline = p.score
+            break
+    if baseline is None:
+        return None
+    return int(current - baseline)
+
+
 @router.post("/log-view")
 async def log_chart_view(request: ChartViewLogRequest,
     current_user: dict = Depends(get_current_user),
