@@ -77,138 +77,33 @@ class _QuickAddSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final electricBlue =
-        isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
-    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader(title: AppLocalizations.of(context).hydrationTabPartQuickAddWater, isDark: isDark),
         const SizedBox(height: 12),
-        Row(
+        // v2 hairline pills in a Wrap — responsive, never overflows SE.
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
             // Preset amounts (first 3 only to make room for custom)
             ...amounts.take(3).map((amount) {
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: _QuickAddButton(
-                    amount: amount,
-                    onTap: () => onAdd(amount.ml),
-                    isDark: isDark,
-                  ),
-                ),
+              return ZealovaChip(
+                icon: Icons.add,
+                label: amount.label,
+                onTap: () => onAdd(amount.ml),
               );
             }),
-            // Custom button
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: GestureDetector(
-                  onTap: onCustom,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: cardBorder),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.edit_outlined,
-                          color: electricBlue,
-                          size: 20,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          AppLocalizations.of(context).hydrationTabPartCustom,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                        ),
-                        Text(
-                          AppLocalizations.of(context).hydrationTabPartAnyMl,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            // Custom amount pill
+            ZealovaChip(
+              icon: Icons.edit_outlined,
+              label: AppLocalizations.of(context).hydrationTabPartCustom,
+              onTap: onCustom,
             ),
           ],
         ),
       ],
-    );
-  }
-}
-
-
-class _QuickAddButton extends StatelessWidget {
-  final QuickAmountUnit amount;
-  final VoidCallback onTap;
-  final bool isDark;
-
-  const _QuickAddButton({
-    required this.amount,
-    required this.onTap,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final electricBlue = isDark
-        ? AppColors.waterBlue
-        : AppColorsLight.waterBlue;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Column(
-          children: [
-            Icon(Icons.add_circle_outline, color: electricBlue, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              amount.label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            if (amount.description != null)
-              Text(
-                amount.description!,
-                style: TextStyle(fontSize: 10, color: textMuted),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }

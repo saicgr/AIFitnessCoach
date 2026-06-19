@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/services/custom_bottle_store.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton_box.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
@@ -11,6 +10,7 @@ import '../../../core/services/posthog_service.dart';
 import '../../../data/models/hydration.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../widgets/liquid_body_hydration.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -228,55 +228,60 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
   }
 
   Widget _buildHeader() {
-    final textPrimary = widget.isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final textMuted = widget.isDark
-        ? AppColors.textMuted
-        : AppColorsLight.textMuted;
-    final elevated = widget.isDark
-        ? AppColors.elevated
-        : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Settings button
+        // Settings gear — plain hairline icon button (transparent, muted icon).
         IconButton(
-          icon: Icon(Icons.settings_outlined, color: textMuted),
+          icon: Icon(Icons.settings_outlined, color: tc.textMuted, size: 20),
           onPressed: () => _showGoalSettings(),
           tooltip: AppLocalizations.of(context).hydrationHydrationSettings,
         ),
 
-        // Unit selector
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: BorderRadius.circular(20),
+        // Unit selector — v2 hairline pill (current unit + chevron). Opens the
+        // same unit-selection logic via a popup menu over HydrationUnit.values.
+        PopupMenuButton<HydrationUnit>(
+          initialValue: _selectedUnit,
+          color: tc.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: AppColors.cardBorder),
           ),
-          child: DropdownButton<HydrationUnit>(
-            value: _selectedUnit,
-            underline: const SizedBox.shrink(),
-            isDense: true,
-            dropdownColor: elevated,
-            style: TextStyle(
-              color: textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          onSelected: (unit) => setState(() => _selectedUnit = unit),
+          itemBuilder: (ctx) => HydrationUnit.values.map((unit) {
+            return PopupMenuItem<HydrationUnit>(
+              value: unit,
+              child: Text(
+                unit.label.toUpperCase(),
+                style: ZType.lbl(
+                  12,
+                  color: unit == _selectedUnit ? tc.accent : tc.textPrimary,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            );
+          }).toList(),
+          child: Container(
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: BorderRadius.circular(999),
             ),
-            icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 20),
-            items: HydrationUnit.values.map((unit) {
-              return DropdownMenuItem(
-                value: unit,
-                child: Text(unit.label.toUpperCase()),
-              );
-            }).toList(),
-            onChanged: (unit) {
-              if (unit != null) {
-                setState(() => _selectedUnit = unit);
-              }
-            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _selectedUnit.label.toUpperCase(),
+                  style: ZType.lbl(10, color: tc.textPrimary, letterSpacing: 1.5),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.keyboard_arrow_down,
+                    color: tc.textMuted, size: 16),
+              ],
+            ),
           ),
         ),
       ],
@@ -313,20 +318,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.waterBlue
         : AppColorsLight.waterBlue;
 
-    return Container(
+    return ZealovaCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            electricBlue.withValues(alpha: 0.15),
-            electricBlue.withValues(alpha: 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: electricBlue.withValues(alpha: 0.3)),
-      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -341,7 +334,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           Container(
             width: 1,
             height: 40,
-            color: electricBlue.withValues(alpha: 0.3),
+            color: AppColors.cardBorder,
           ),
           _StatItem(
             label: AppLocalizations.of(context).challengeCreateFieldGoal,
@@ -354,7 +347,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           Container(
             width: 1,
             height: 40,
-            color: electricBlue.withValues(alpha: 0.3),
+            color: AppColors.cardBorder,
           ),
           _StatItem(
             label: AppLocalizations.of(context).hydrationRemaining,
@@ -395,29 +388,18 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
   /// an "Add bottle" chip. Long-press a chip to remove it. Width-adaptive Wrap
   /// so it never overflows SE→iPad.
   Widget _buildCustomBottles() {
-    final textPrimary =
-        widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted =
-        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated =
-        widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final blue =
-        widget.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
+    final tc = ThemeColors.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.local_drink_outlined, size: 18, color: textMuted),
+            Icon(Icons.local_drink_outlined, size: 16, color: tc.textMuted),
             const SizedBox(width: 8),
             Text(
-              'Your bottles',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-              ),
+              'Your bottles'.toUpperCase(),
+              style: ZType.lbl(12, color: tc.textMuted),
             ),
           ],
         ),
@@ -427,66 +409,23 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           runSpacing: 8,
           children: [
             for (final b in _customBottles)
+              // Hairline v2 chip; label folds in the saved volume. Long-press
+              // still removes the saved bottle (ZealovaChip wraps tap only, so
+              // the GestureDetector adds the long-press affordance).
               GestureDetector(
-                onTap: () => _quickLog(b.ml),
                 onLongPress: () => _confirmDeleteBottle(b),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: blue.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: blue.withValues(alpha: 0.30)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.water_drop_rounded, size: 14, color: blue),
-                      const SizedBox(width: 6),
-                      Text(
-                        b.label,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _selectedUnit.format(b.ml) + _selectedUnit.label,
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                    ],
-                  ),
+                child: ZealovaChip(
+                  icon: Icons.water_drop_rounded,
+                  label:
+                      '${b.label} · ${_selectedUnit.format(b.ml)}${_selectedUnit.label}',
+                  onTap: () => _quickLog(b.ml),
                 ),
               ),
             // Add-bottle chip
-            GestureDetector(
+            ZealovaChip(
+              icon: Icons.add,
+              label: _customBottles.isEmpty ? 'Save a bottle' : 'Add bottle',
               onTap: _showAddBottleDialog,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: textMuted.withValues(alpha: 0.30)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add, size: 16, color: textMuted),
-                    const SizedBox(width: 6),
-                    Text(
-                      _customBottles.isEmpty ? 'Save a bottle' : 'Add bottle',
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:muscle_selector/muscle_selector.dart';
 import 'package:muscle_selector/src/parser.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 /// Animated anatomical muscle body with liquid water fill effect and wave animation.
@@ -162,12 +163,13 @@ class _LiquidBodyHydrationState extends State<LiquidBodyHydration>
                   children: [
                     Text(
                       AppLocalizations.of(context)!.liquidBodyHydrationValue(percentage),
-                      style: TextStyle(
-                        fontSize: widget.width * 0.18,
-                        fontWeight: FontWeight.bold,
+                      // Anton hero numeral on the hairline body surface.
+                      style: ZType.disp(
+                        widget.width * 0.18,
                         color: fillValue > 0.4
                             ? Colors.white.withValues(alpha: 0.95)
                             : textColor,
+                      ).copyWith(
                         shadows: fillValue > 0.4
                             ? [
                                 Shadow(
@@ -180,15 +182,17 @@ class _LiquidBodyHydrationState extends State<LiquidBodyHydration>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'hydrated',
-                      style: TextStyle(
-                        fontSize: widget.width * 0.07,
-                        fontWeight: FontWeight.w600,
+                      'HYDRATED',
+                      // Barlow Condensed uppercase caption.
+                      style: ZType.lbl(
+                        widget.width * 0.07,
                         color: fillValue > 0.4
                             ? Colors.white.withValues(alpha: 0.8)
                             : (widget.isDark
                                 ? AppColors.textMuted
                                 : AppColorsLight.textMuted),
+                        letterSpacing: 1.5,
+                      ).copyWith(
                         shadows: fillValue > 0.4
                             ? [
                                 Shadow(
