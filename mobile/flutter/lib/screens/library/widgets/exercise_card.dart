@@ -3,18 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/providers/avoided_provider.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
-import '../../../core/providers/favorites_provider.dart';
-import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../utils/tz.dart';
-import 'info_badge.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 
@@ -66,81 +64,47 @@ class ExerciseCard extends ConsumerWidget {
     );
   }
 
-  void _showAddToWorkoutSheet(BuildContext context, WidgetRef ref) {
-    HapticService.light();
-    showGlassSheet(
-      context: context,
-      builder: (context) => GlassSheet(
-        child: _AddToWorkoutSheet(
-          exerciseName: exercise.name,
-        ),
-      ),
-    );
-  }
-
-  void _toggleFavorite(WidgetRef ref) {
-    HapticFeedback.lightImpact();
-    ref.read(favoritesProvider.notifier).toggleFavorite(exercise.name);
-  }
-
-  void _toggleQueue(WidgetRef ref) {
-    HapticFeedback.lightImpact();
-    ref.read(exerciseQueueProvider.notifier).toggleQueue(
-      exercise.name,
-      targetMuscleGroup: exercise.muscleGroup,
-    );
-  }
-
-  void _toggleAvoided(WidgetRef ref) {
-    HapticFeedback.lightImpact();
-    ref.read(avoidedProvider.notifier).toggleAvoided(exercise.name);
-  }
-
-  void _toggleStaple(WidgetRef ref) {
-    HapticFeedback.lightImpact();
-    ref.read(staplesProvider.notifier).toggleStaple(
-      exercise.name,
-      muscleGroup: exercise.muscleGroup,
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textMuted = tc.textMuted;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final hasVideo = exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty;
 
-    // Watch favorites, queue, avoided, and staples state
-    final favoritesState = ref.watch(favoritesProvider);
-    final queueState = ref.watch(exerciseQueueProvider);
-    final avoidedState = ref.watch(avoidedProvider);
-    final staplesState = ref.watch(staplesProvider);
-    final isFavorite = favoritesState.isFavorite(exercise.name);
-    final isQueued = queueState.isQueued(exercise.name);
-    final isAvoided = avoidedState.isAvoided(exercise.name);
-    final isStaple = staplesState.isStaple(exercise.name);
+    // Compact metadata line — MUSCLE · DIFFICULTY · EQUIPMENT (signature-v2
+    // `.nl-exrow .bx`). Only non-empty parts are joined so a sparse exercise
+    // never shows dangling separators.
+    final metaParts = <String>[
+      if (exercise.muscleGroup != null && exercise.muscleGroup!.isNotEmpty)
+        exercise.muscleGroup!,
+      if (exercise.difficulty != null && exercise.difficulty!.isNotEmpty)
+        DifficultyUtils.getDisplayName(exercise.difficulty!),
+      if (exercise.equipment.isNotEmpty) exercise.equipment.first,
+    ];
 
     return GestureDetector(
       onTap: () => _showExerciseDetail(context),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(16),
-          border:
-              isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+        // Dense list spacing with a hairline divider — reads as a compact row,
+        // not a tall card. Inline favorite/add actions moved to the detail
+        // sheet (its floating action bar) on tap.
+        padding: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: AppColors.cardBorder),
+          ),
         ),
         child: Row(
           children: [
-            // Thumbnail with image or icon fallback
+            // Thumbnail with image or icon fallback — 56×56, all corners rounded.
             Hero(
               tag: 'exercise-image-${exercise.name}',
               child: Container(
-                width: 90,
-                height: 90,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -150,10 +114,8 @@ class ExerciseCard extends ConsumerWidget {
                       cyan.withOpacity(0.2),
                     ],
                   ),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    bottomLeft: Radius.circular(16),
-                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.cardBorder),
                 ),
                 child: Stack(
                   alignment: Alignment.center,
@@ -161,23 +123,20 @@ class ExerciseCard extends ConsumerWidget {
                     // Exercise image or body part icon fallback
                     if (exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty)
                       ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          bottomLeft: Radius.circular(16),
-                        ),
+                        borderRadius: BorderRadius.circular(12),
                         child: CachedNetworkImage(
                           imageUrl: exercise.imageUrl!,
-                          width: 90,
-                          height: 90,
+                          width: 56,
+                          height: 56,
                           fit: BoxFit.cover,
                           placeholder: (context, url) => Icon(
                             _getBodyPartIcon(exercise.bodyPart),
-                            size: 36,
+                            size: 24,
                             color: purple.withOpacity(0.8),
                           ),
                           errorWidget: (context, url, error) => Icon(
                             _getBodyPartIcon(exercise.bodyPart),
-                            size: 36,
+                            size: 24,
                             color: purple.withOpacity(0.8),
                           ),
                         ),
@@ -185,23 +144,23 @@ class ExerciseCard extends ConsumerWidget {
                     else
                       Icon(
                         _getBodyPartIcon(exercise.bodyPart),
-                        size: 36,
+                        size: 24,
                         color: purple.withOpacity(0.8),
                       ),
                     // Video play indicator
                     if (hasVideo)
                       Positioned(
-                        bottom: 6,
-                        right: 6,
+                        bottom: 4,
+                        right: 4,
                         child: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
                             color: cyan,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Icon(
                             Icons.play_arrow,
-                            size: 14,
+                            size: 10,
                             color: Colors.black,
                           ),
                         ),
@@ -211,126 +170,97 @@ class ExerciseCard extends ConsumerWidget {
               ),
             ),
 
-            // Info
+            const SizedBox(width: 12),
+
+            // Info — title (+ NEW chip) over the muted metadata line.
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          exercise.name,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // NEW badge for exercises new this week
+                      Builder(
+                        builder: (context) {
+                          final isNew = ref.watch(isExerciseNewThisWeekProvider(exercise.name));
+                          if (!isNew) return const SizedBox.shrink();
+                          return Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.cyan,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'NEW',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  if (metaParts.isNotEmpty) ...[
+                    const SizedBox(height: 5),
                     Row(
                       children: [
+                        // Tiny difficulty dot prefix (matches the v2 spec's
+                        // colored `.dif` marker) when a difficulty is present.
+                        if (exercise.difficulty != null &&
+                            exercise.difficulty!.isNotEmpty) ...[
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: DifficultyUtils.getColor(
+                                  exercise.difficulty!),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         Expanded(
                           child: Text(
-                            exercise.name,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                            maxLines: 2,
+                            metaParts.join(' · ').toUpperCase(),
+                            style: ZType.lbl(
+                              10,
+                              color: textMuted,
+                              letterSpacing: 1.0,
+                            ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        // NEW badge for exercises new this week
-                        Builder(
-                          builder: (context) {
-                            final isNew = ref.watch(isExerciseNewThisWeekProvider(exercise.name));
-                            if (!isNew) return const SizedBox.shrink();
-                            return Container(
-                              margin: const EdgeInsets.only(left: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.cyan,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'NEW',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        if (exercise.muscleGroup != null)
-                          InfoBadge(
-                            icon: Icons.accessibility_new,
-                            text: exercise.muscleGroup!,
-                            color: purple,
-                          ),
-                        if (exercise.difficulty != null)
-                          InfoBadge(
-                            icon: Icons.signal_cellular_alt,
-                            text: DifficultyUtils.getDisplayName(exercise.difficulty!),
-                            color: DifficultyUtils.getColor(exercise.difficulty!),
-                          ),
-                      ],
-                    ),
-                    if (exercise.equipment.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        exercise.equipment.take(2).join(', '),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: textMuted,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
             ),
 
-            // Compact action buttons — only favorite + add + chevron inline
-            // Full actions available in the detail sheet on tap
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Favorite button
-                  GestureDetector(
-                    onTap: () => _toggleFavorite(ref),
-                    child: Padding(
-                      padding: const EdgeInsets.all(6),
-                      child: Icon(
-                        isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite ? AppColors.error : textMuted,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  // Add to workout button
-                  GestureDetector(
-                    onTap: () => _showAddToWorkoutSheet(context, ref),
-                    child: Padding(
-                      padding: const EdgeInsets.all(6),
-                      child: Icon(
-                        Icons.add_circle_outline,
-                        color: AppColors.success,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  // Arrow
-                  Icon(
-                    Icons.chevron_right,
-                    color: textMuted,
-                    size: 20,
-                  ),
-                ],
-              ),
+            const SizedBox(width: 8),
+
+            // Trailing chevron — full actions live in the detail sheet on tap.
+            Icon(
+              Icons.chevron_right,
+              color: textMuted,
+              size: 18,
             ),
           ],
         ),

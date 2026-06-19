@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
@@ -259,9 +260,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
                 const SizedBox(height: 12),
 
-                // Tab selector pills. Flex each pill so the four share the row
-                // width evenly — fixed-width pills overflowed narrow screens by
-                // ~4.5px (issue 9). Equal Expanded cells adapt SE..Pro Max.
+                // Tab selector pills (signature-v2 `.nl-ltab`). Flex each pill
+                // so the four share the row width evenly — fixed-width pills
+                // overflowed narrow screens by ~4.5px (issue 9). Equal Expanded
+                // cells adapt SE..Pro Max. Active pill = solid accent fill +
+                // dark text; inactive = hairline border + muted label.
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -270,7 +273,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       return Expanded(
                         child: Padding(
                           padding: EdgeInsetsDirectional.only(
-                            end: index < _tabLabels.length - 1 ? 8 : 0,
+                            end: index < _tabLabels.length - 1 ? 6 : 0,
                           ),
                           child: GestureDetector(
                             onTap: () {
@@ -279,18 +282,17 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
+                              height: 30,
                               alignment: Alignment.center,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 9,
-                              ),
                               decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: isSelected
-                                        ? accentColor
-                                        : AppColors.hairline,
-                                    width: isSelected ? 2 : 1,
-                                  ),
+                                color: isSelected
+                                    ? accentColor
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(7),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? accentColor
+                                      : AppColors.cardBorder,
                                 ),
                               ),
                               child: Text(
@@ -298,11 +300,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: ZType.lbl(
-                                  12.5,
+                                  11,
+                                  // Active pill rides the accent fill, so the
+                                  // label flips to the dark-on-orange tone.
                                   color: isSelected
-                                      ? tc.textPrimary
+                                      ? const Color(0xFF160B03)
                                       : textMuted,
-                                  letterSpacing: 1.2,
+                                  letterSpacing: 1.3,
                                 ),
                               ),
                             ),
@@ -325,6 +329,56 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       const WorkoutsTab(),
                       const MyLibraryTab(),
                     ],
+                  ),
+                ),
+
+                // Docked "BUILD A WORKOUT" CTA (signature-v2 `.rh-cta`) — the
+                // single orange action on this screen. Routes to the custom
+                // workout builder (`/workout/build`, same route the Workouts
+                // tab's Builder + CUSTOM chip use).
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    8,
+                    16,
+                    8 + MediaQuery.of(context).padding.bottom,
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      context.push('/workout/build');
+                    },
+                    child: Container(
+                      height: 46,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.construction_rounded,
+                            size: 18,
+                            color: Color(0xFF160B03),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            AppLocalizations.of(context)
+                                .customWorkoutBuilderBuildCustomWorkout
+                                .toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: ZType.lbl(
+                              16,
+                              color: const Color(0xFF160B03),
+                              letterSpacing: 2.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],

@@ -9,6 +9,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart' as skel;
 import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/empty_state.dart';
+import '../models/filter_option.dart';
 import '../providers/library_providers.dart';
 import '../widgets/exercise_search_bar.dart';
 import '../widgets/filter_button.dart';
@@ -61,6 +62,21 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
       context: context,
       builder: (context) => const ExerciseFilterSheet(),
     );
+  }
+
+  /// The muscle-group labels shown in the inline quick-filter chip row.
+  ///
+  /// Prefer the authoritative body-part list from `filterOptionsProvider` (kept
+  /// in the order the backend returns) so the chips always reflect the real
+  /// catalog. Falls back to a curated ordered set only while filter options are
+  /// still loading or if the API hasn't returned any body parts.
+  List<String> _muscleChipOptions(
+    AsyncValue<ExerciseFilterOptions> filterOptions,
+  ) {
+    const fallback = ['Chest', 'Back', 'Legs', 'Shoulders', 'Core', 'Arms'];
+    final bodyParts = filterOptions.valueOrNull?.bodyParts;
+    if (bodyParts == null || bodyParts.isEmpty) return fallback;
+    return bodyParts.map((o) => o.name).toList();
   }
 
   @override
@@ -159,6 +175,17 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
               ),
             ],
           ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Inline muscle-group chip row (signature-v2 `.nl-chips`). Quick-toggle
+        // the most-used body parts without opening the advanced filter sheet —
+        // selecting/deselecting mutates `selectedMuscleGroupsProvider`, which
+        // the build above watches and refreshes the list against (lines ~91).
+        _MuscleChipRow(
+          options: _muscleChipOptions(filterOptions),
+          selected: selectedMuscles,
         ),
 
         const SizedBox(height: 12),
@@ -372,6 +399,60 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Horizontally-scrolling quick-filter chip row for muscle groups
+/// (signature-v2 `.nl-chips`). Each chip toggles its label in
+/// `selectedMuscleGroupsProvider` — case-insensitively, mirroring the advanced
+/// filter sheet's `_MuscleImageGrid.onToggle` so the two surfaces stay in sync.
+class _MuscleChipRow extends ConsumerWidget {
+  final List<String> options;
+  final Set<String> selected;
+
+  const _MuscleChipRow({
+    required this.options,
+    required this.selected,
+  });
+
+  void _toggle(WidgetRef ref, String value) {
+    final newSet = Set<String>.from(selected);
+    // Match case-insensitively so a provider value seeded from a deep-link
+    // (e.g. 'Chest') still toggles off against the chip's label.
+    final existing = newSet.firstWhere(
+      (v) => v.toLowerCase() == value.toLowerCase(),
+      orElse: () => '',
+    );
+    if (existing.isNotEmpty) {
+      newSet.remove(existing);
+    } else {
+      newSet.add(value);
+    }
+    ref.read(selectedMuscleGroupsProvider.notifier).state = newSet;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SizedBox(
+      height: 28,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: options.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final name = options[index];
+          final isSelected = selected.any(
+            (v) => v.toLowerCase() == name.toLowerCase(),
+          );
+          return ZealovaChip(
+            label: name,
+            selected: isSelected,
+            onTap: () => _toggle(ref, name),
+          );
+        },
+      ),
     );
   }
 }
