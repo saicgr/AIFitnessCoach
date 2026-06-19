@@ -883,10 +883,13 @@ class _FastingScreenRedesignedState
                   style: ZType.lbl(10, color: colors.textMuted),
                 ),
                 const SizedBox(height: 3),
-                // Date + time, no ellipsis truncation.
+                // Date + time, no ellipsis truncation. Uses the Barlow
+                // condensed label face (not Space Mono / ZType.data, which is
+                // reserved for live numeric telemetry like the fast timer) so
+                // the schedule cards read consistent with the rest of the app.
                 Text(
                   '$dateLabel $timeLabel',
-                  style: ZType.data(13, color: colors.textPrimary),
+                  style: ZType.lbl(13, color: colors.textPrimary, letterSpacing: 0.3),
                   softWrap: false,
                 ),
               ],
