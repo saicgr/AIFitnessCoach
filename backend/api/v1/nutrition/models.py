@@ -546,6 +546,12 @@ class NutritionPreferencesResponse(BaseModel):
     intermittent_fasting_enabled: bool = False
     eating_window_start_hour: Optional[int] = None
     eating_window_end_hour: Optional[int] = None
+    # Per-meal P/C/F targets (migration 2275). When enabled, the dynamic-targets
+    # endpoint splits the daily target across the user's active meals. The JSONB
+    # carries {"mode":"auto"|"custom", "split":{...}?, "overrides":{...}?}; see
+    # _compute_per_meal_targets in preferences.py for the contract.
+    per_meal_targets_enabled: bool = False
+    per_meal_macro_targets: Optional[dict] = None
 
 
 class NutritionPreferencesUpdate(BaseModel):
@@ -589,6 +595,10 @@ class NutritionPreferencesUpdate(BaseModel):
     intermittent_fasting_enabled: Optional[bool] = None
     eating_window_start_hour: Optional[int] = None
     eating_window_end_hour: Optional[int] = None
+    # Per-meal P/C/F targets (migration 2275). Master toggle + the JSONB config
+    # (mode/split/overrides). Passed straight through to nutrition_preferences.
+    per_meal_targets_enabled: Optional[bool] = None
+    per_meal_macro_targets: Optional[dict] = None
 
 
 class DynamicTargetsResponse(BaseModel):
@@ -613,6 +623,13 @@ class DynamicTargetsResponse(BaseModel):
     cycle_phase: Optional[str] = None
     cycle_calorie_adjustment: int = 0
     cycle_adjustment_reason: Optional[str] = None
+    # ── Per-meal P/C/F targets (migration 2275) ──────────────────────────
+    # null when per_meal_targets_enabled is false/unset. Otherwise a dict keyed
+    # by active meal type ("breakfast"/"lunch"/"dinner"/"snacks") → per-meal
+    # {target_protein_g, target_carbs_g, target_fat_g, target_calories} ints.
+    # These inherit the daily dynamic adjustments above automatically since
+    # they're derived from the post-adjustment daily target.
+    per_meal_targets: Optional[dict] = None
 
 
 # ── Weight Tracking Models ───────────────────────────────────────

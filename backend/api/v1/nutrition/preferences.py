@@ -117,6 +117,9 @@ async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(g
             sugar_limit_g=data.get("sugar_limit_g", 36),
             caffeine_limit_mg=data.get("caffeine_limit_mg", 400),
             alcohol_limit_units=data.get("alcohol_limit_units", 2),
+            # Per-meal P/C/F targets (migration 2275).
+            per_meal_targets_enabled=data.get("per_meal_targets_enabled", False),
+            per_meal_macro_targets=data.get("per_meal_macro_targets"),
         )
 
     except Exception as e:
@@ -198,6 +201,178 @@ async def update_nutrition_preferences(user_id: str, request: NutritionPreferenc
     except Exception as e:
         logger.error(f"Failed to update nutrition preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
+
+
+# ─── Per-meal P/C/F targets (migration 2275) ──────────────────────────────────
+# Default per-meal calorie weights. Filtered to the user's ACTIVE meals and
+# re-normalized to sum to 1.0 (so 3-meal users get ~0.30/0.35/0.35).
+_DEFAULT_MEAL_SPLIT = {
+    "breakfast": 0.25,
+    "lunch": 0.30,
+    "dinner": 0.35,
+    "snacks": 0.10,
+}
+_ALL_MEAL_TYPES = ["breakfast", "lunch", "dinner", "snacks"]
+
+
+def _active_meal_types(prefs: dict) -> List[str]:
+    """Resolve the user's active meal types from nutrition_preferences.
+
+    Reads `meals_per_day` (int) first, then `meal_pattern` (e.g. "3_meals",
+    "4_meals", "5_meals"). 4+ meals include snacks; 3 meals do not. Defaults to
+    4 meals (with snacks) when nothing is set. Always returns meal types in the
+    canonical breakfast→lunch→dinner→snacks order.
+    """
+    n: Optional[int] = None
+
+    raw_n = prefs.get("meals_per_day")
+    if raw_n is not None:
+        try:
+            n = int(raw_n)
+        except (TypeError, ValueError):
+            n = None
+
+    if n is None:
+        pattern = prefs.get("meal_pattern")
+        if isinstance(pattern, str):
+            # Pull the leading integer out of patterns like "3_meals"/"4 meals".
+            digits = "".join(ch for ch in pattern if ch.isdigit())
+            if digits:
+                try:
+                    n = int(digits)
+                except ValueError:
+                    n = None
+
+    if n is None:
+        n = 4  # default: full breakfast/lunch/dinner/snacks split
+
+    if n >= 4:
+        return list(_ALL_MEAL_TYPES)            # breakfast, lunch, dinner, snacks
+    # 3 (or fewer) meals → no snacks bucket.
+    return ["breakfast", "lunch", "dinner"]
+
+
+def _normalized_split(active_meals: List[str], stored_split: Optional[dict]) -> dict:
+    """Build a per-meal weight map summing to 1.0 over the active meals.
+
+    Uses `stored_split` when present (a JSONB `split`), else the default split.
+    Filters to active meals and re-normalizes. Falls back to an even split if
+    the source weights sum to zero (e.g. all-zero or missing keys).
+    """
+    source = stored_split if isinstance(stored_split, dict) and stored_split else _DEFAULT_MEAL_SPLIT
+
+    raw: dict = {}
+    for meal in active_meals:
+        try:
+            raw[meal] = float(source.get(meal, 0) or 0)
+        except (TypeError, ValueError):
+            raw[meal] = 0.0
+
+    total = sum(raw.values())
+    if total <= 0:
+        # No usable weights — split evenly so we never divide by zero.
+        even = 1.0 / len(active_meals) if active_meals else 0.0
+        return {meal: even for meal in active_meals}
+
+    return {meal: raw[meal] / total for meal in active_meals}
+
+
+def _compute_per_meal_targets(daily: dict, prefs: dict) -> Optional[dict]:
+    """Split a daily dynamic target into per-meal P/C/F + calorie targets.
+
+    Args:
+        daily: the already-computed daily target with keys
+            target_protein_g / target_carbs_g / target_fat_g / target_calories
+            (ints, AFTER the training/fasting/cycle adjustments).
+        prefs: the nutrition_preferences row (dict). Reads
+            per_meal_targets_enabled, per_meal_macro_targets (the JSONB config),
+            and meals_per_day/meal_pattern to resolve active meals.
+
+    Returns:
+        None when the feature is disabled. Otherwise a dict keyed by active meal
+        type → {target_protein_g, target_carbs_g, target_fat_g, target_calories}
+        (all ints, floored at 0).
+
+    Modes (from per_meal_macro_targets.mode):
+        "auto" (or null config): each macro is split across active meals by the
+            re-normalized per-meal weight.
+        "custom": meals listed in `overrides` use those explicit P/C/F grams
+            (calories derived 4·P + 4·C + 9·F). The remaining daily macros (daily
+            minus the override sums, floored at 0) are auto-split across the
+            active meals WITHOUT an override, by their re-normalized weights.
+    """
+    if not prefs.get("per_meal_targets_enabled"):
+        return None
+
+    active_meals = _active_meal_types(prefs)
+    if not active_meals:
+        return None
+
+    daily_protein = float(daily.get("target_protein_g") or 0)
+    daily_carbs = float(daily.get("target_carbs_g") or 0)
+    daily_fat = float(daily.get("target_fat_g") or 0)
+
+    config = prefs.get("per_meal_macro_targets")
+    if not isinstance(config, dict):
+        config = {}
+    mode = config.get("mode") or "auto"
+    stored_split = config.get("split")
+    overrides = config.get("overrides") if isinstance(config.get("overrides"), dict) else {}
+
+    weights = _normalized_split(active_meals, stored_split)
+
+    def _meal_entry(protein: float, carbs: float, fat: float) -> dict:
+        p = max(0, int(round(protein)))
+        c = max(0, int(round(carbs)))
+        f = max(0, int(round(fat)))
+        return {
+            "target_protein_g": p,
+            "target_carbs_g": c,
+            "target_fat_g": f,
+            "target_calories": 4 * p + 4 * c + 9 * f,
+        }
+
+    result: dict = {}
+
+    if mode == "custom" and overrides:
+        # 1) Honor explicit overrides for the active meals that have one.
+        used_protein = used_carbs = used_fat = 0.0
+        override_meals = []
+        for meal in active_meals:
+            ov = overrides.get(meal)
+            if isinstance(ov, dict):
+                p = float(ov.get("protein_g") or 0)
+                c = float(ov.get("carbs_g") or 0)
+                f = float(ov.get("fat_g") or 0)
+                result[meal] = _meal_entry(p, c, f)
+                used_protein += p
+                used_carbs += c
+                used_fat += f
+                override_meals.append(meal)
+
+        # 2) Auto-split the REMAINING daily macros across the active meals that
+        #    have no override, by their weights re-normalized over JUST those
+        #    meals (floored at 0 so an over-allocating override can't go negative).
+        remaining_meals = [m for m in active_meals if m not in override_meals]
+        if remaining_meals:
+            rem_protein = max(0.0, daily_protein - used_protein)
+            rem_carbs = max(0.0, daily_carbs - used_carbs)
+            rem_fat = max(0.0, daily_fat - used_fat)
+            rem_weights = _normalized_split(remaining_meals, stored_split)
+            for meal in remaining_meals:
+                w = rem_weights[meal]
+                result[meal] = _meal_entry(
+                    rem_protein * w, rem_carbs * w, rem_fat * w
+                )
+    else:
+        # Auto mode — split each macro by the per-meal weight.
+        for meal in active_meals:
+            w = weights[meal]
+            result[meal] = _meal_entry(
+                daily_protein * w, daily_carbs * w, daily_fat * w
+            )
+
+    return result
 
 
 @router.get("/dynamic-targets/{user_id}", response_model=DynamicTargetsResponse)
@@ -390,6 +565,29 @@ async def get_dynamic_nutrition_targets(
             cycle_calorie_adjustment = 0
             cycle_adjustment_reason = None
 
+        # Per-meal P/C/F targets (migration 2275). Derived from the FINAL daily
+        # target so it automatically inherits every training/fasting/cycle
+        # adjustment above. None unless the user opted in. Fail-open: a fault in
+        # the split must never break the daily targets the whole nutrition tab
+        # depends on.
+        per_meal_targets = None
+        try:
+            per_meal_targets = _compute_per_meal_targets(
+                {
+                    "target_protein_g": target_protein,
+                    "target_carbs_g": target_carbs,
+                    "target_fat_g": target_fat,
+                    "target_calories": target_calories,
+                },
+                prefs,
+            )
+        except Exception as meal_err:
+            logger.warning(
+                f"Per-meal target split skipped for user {user_id}: {meal_err}",
+                exc_info=True,
+            )
+            per_meal_targets = None
+
         return DynamicTargetsResponse(
             target_calories=target_calories,
             target_protein_g=target_protein,
@@ -405,6 +603,7 @@ async def get_dynamic_nutrition_targets(
             cycle_phase=cycle_phase,
             cycle_calorie_adjustment=cycle_calorie_adjustment,
             cycle_adjustment_reason=cycle_adjustment_reason,
+            per_meal_targets=per_meal_targets,
         )
 
     except Exception as e:
