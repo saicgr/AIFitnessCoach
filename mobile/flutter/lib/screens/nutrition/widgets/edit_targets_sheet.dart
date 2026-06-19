@@ -9,10 +9,12 @@ import '../../../core/services/posthog_service.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/weight_utils.dart';
+import '../../../utils/macro_rebalance.dart' as rebalance;
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../widgets/design_system/zealova.dart';
+import 'ai_recommendation_sheet.dart';
 import '../../onboarding/widgets/calorie_macro_estimator.dart';
 import 'nutrition_goals_card.dart' show showNutritionCalculationSheet;
 
@@ -20,6 +22,9 @@ import '../../../l10n/generated/app_localizations.dart';
 /// Identifies which macro field the user just edited, so the lock-calories
 /// balance pass knows which two OTHER fields to recompute.
 enum _MacroField { protein, carbs, fat }
+
+/// The three editor modes the segmented switcher toggles between.
+enum _TargetTab { daily, perMeal, byDay }
 
 class EditTargetsSheet extends ConsumerStatefulWidget {
   final String userId;
@@ -109,7 +114,6 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
   // Editing any meal's P/C/F flips mode → 'custom' and records that meal in
   // `_perMealOverrides`. "Reset to auto" clears overrides + mode → 'auto'.
   bool _perMealEnabled = false;
-  String _perMealMode = 'auto';
   // meal type ('breakfast'/'lunch'/'dinner'/'snacks') → {p, c, f} grams.
   final Map<String, ({int p, int c, int f})> _perMealOverrides = {};
   // Auto-split weights (re-normalized across the active meals).
@@ -119,6 +123,42 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     'dinner': 0.35,
     'snacks': 0.10,
   };
+
+  // Which editor pane is showing (segmented switcher under the header).
+  _TargetTab _activeTab = _TargetTab.daily;
+
+  // ── Per-meal calorie lock ──────────────────────────────────────────────
+  // Per-meal lock flag (default ON). When locked, dragging one macro holds the
+  // meal's CAPTURED `_perMealLockedKcal` budget and rebalances the other two
+  // (rebalance.rebalanceLocked). When unlocked, calories follow the macros.
+  final Map<String, bool> _perMealLock = {};
+  // The meal's kcal budget, captured ONCE — when the lock is toggled on, when
+  // per-meal is enabled, or when targets first load. NEVER recomputed per
+  // drag (that was the mockup drift bug).
+  final Map<String, int> _perMealLockedKcal = {};
+
+  // ── Daily-pane workout/rest boost toggles ──────────────────────────────
+  // Mirror the backend `adjust_calories_for_training` / `_for_rest` flags
+  // (training default ON, rest default OFF) — surfaced here for the first time.
+  bool _adjustForTraining = true;
+  bool _adjustForRest = false;
+
+  // ── By-Day (per-weekday) targets ───────────────────────────────────────
+  bool _byDayEnabled = false;
+  // When true, "high" days follow the user's workout schedule
+  // (gym_profiles.workout_days) instead of the fixed `_highDays` chips.
+  bool _bindToTrainingDays = false;
+  // High weekdays as Python weekday ints (Mon=0 … Sun=6) — matches the backend
+  // dynamic-targets compare (target_date.weekday()) and gym_profiles.workout_days.
+  final Set<int> _highDays = {};
+  // High-day macro grams.
+  int _byDayHighP = 0;
+  int _byDayHighC = 0;
+  int _byDayHighF = 0;
+  // Base-day macro grams.
+  int _byDayBaseP = 0;
+  int _byDayBaseC = 0;
+  int _byDayBaseF = 0;
 
   // B10: snapshot of the four macro fields + rate + preset taken when the
   // sheet opens, so the "Reset" action can revert to exactly that state.
@@ -152,9 +192,11 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     // Seed per-meal-targets state from the provider (loaded at app start).
     final prefsState = ref.read(nutritionPreferencesProvider);
     _perMealEnabled = prefsState.perMealTargetsEnabled;
+    // Daily-pane boost toggles from the persisted preferences.
+    _adjustForTraining = prefs?.adjustCaloriesForTraining ?? true;
+    _adjustForRest = prefs?.adjustCaloriesForRest ?? false;
     final rawMeal = prefsState.perMealMacroTargets;
     if (rawMeal != null) {
-      _perMealMode = (rawMeal['mode'] as String?) ?? 'auto';
       final overrides = rawMeal['overrides'];
       if (overrides is Map) {
         overrides.forEach((meal, vals) {
@@ -171,6 +213,41 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           }
         });
       }
+      // Seed per-meal lock flags (additive/optional — default ON).
+      final locks = rawMeal['locks'];
+      if (locks is Map) {
+        locks.forEach((meal, v) {
+          if (meal is String) _perMealLock[meal] = v == true;
+        });
+      }
+    }
+
+    // Seed the By-Day weekday config.
+    final rawWeekday = prefsState.perWeekdayTargets;
+    if (rawWeekday != null) {
+      _byDayEnabled = rawWeekday['enabled'] == true;
+      _bindToTrainingDays = rawWeekday['bind_to_training_days'] == true;
+      final hd = rawWeekday['high_days'];
+      if (hd is List) {
+        for (final d in hd) {
+          if (d is num) _highDays.add(d.toInt());
+        }
+      }
+      int g(Map? m, String k) {
+        final v = m?[k];
+        if (v is num) return v.round();
+        if (v is String) return int.tryParse(v) ?? 0;
+        return 0;
+      }
+
+      final high = rawWeekday['high'] is Map ? rawWeekday['high'] as Map : null;
+      final base = rawWeekday['base'] is Map ? rawWeekday['base'] as Map : null;
+      _byDayHighP = g(high, 'protein_g');
+      _byDayHighC = g(high, 'carbs_g');
+      _byDayHighF = g(high, 'fat_g');
+      _byDayBaseP = g(base, 'protein_g');
+      _byDayBaseC = g(base, 'carbs_g');
+      _byDayBaseF = g(base, 'fat_g');
     }
 
     // B-rebalance-on-commit: FocusNodes drive the rebalance on focus-loss.
@@ -204,6 +281,25 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
 
     _computeRecommended();
     _recalculate();
+
+    // Default the By-Day macro editors to the daily targets when no config
+    // was persisted yet, so the high/base sliders open on sensible numbers.
+    if (_byDayBaseP == 0 && _byDayBaseC == 0 && _byDayBaseF == 0) {
+      _byDayBaseP = int.tryParse(_proteinController.text) ?? 0;
+      _byDayBaseC = int.tryParse(_carbsController.text) ?? 0;
+      _byDayBaseF = int.tryParse(_fatController.text) ?? 0;
+    }
+    if (_byDayHighP == 0 && _byDayHighC == 0 && _byDayHighF == 0) {
+      // High day defaults to a +10% protein / +15% carbs lift over base — the
+      // same shape as the automatic workout-day boost it replaces.
+      _byDayHighP = (_byDayBaseP * 1.10).round();
+      _byDayHighC = (_byDayBaseC * 1.15).round();
+      _byDayHighF = _byDayBaseF;
+    }
+
+    // Capture each active meal's locked-kcal budget once, from the values
+    // showing now (overrides or auto split). Locks default ON.
+    _seedPerMealLockedKcal();
 
     // B4: ensure the latest body-fat measurement is available so the
     // lean-body-mass protein anchor can trigger. `measurementsProvider`'s
@@ -831,63 +927,155 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     return _perMealOverrides[meal] ?? _autoSplitFor(meal);
   }
 
-  /// Record an edit to one meal's macro → flip mode to custom + store the
-  /// (now-fully-explicit) triplet for that meal. We snapshot the currently
-  /// displayed values for the other two macros so an override is a complete
-  /// {p,c,f} for that meal.
+  /// Whether a meal's calorie lock is on (default true).
+  bool _isMealLocked(String meal) => _perMealLock[meal] ?? true;
+
+  /// Capture each active meal's locked-kcal budget from its CURRENTLY-displayed
+  /// split. Called once on open / when per-meal is enabled. Never overwrites an
+  /// already-captured value (so toggling the tab doesn't re-anchor a budget).
+  void _seedPerMealLockedKcal() {
+    for (final meal in _activeMeals) {
+      _perMealLock.putIfAbsent(meal, () => true);
+      _perMealLockedKcal.putIfAbsent(meal, () {
+        final s = _displaySplitFor(meal);
+        return rebalance.kcalOf(s.p, s.c, s.f);
+      });
+    }
+  }
+
+  /// Toggle a meal's calorie lock. Turning it ON re-captures the budget from
+  /// the meal's current macros (so it locks to "what it is right now").
+  void _toggleMealLock(String meal) {
+    setState(() {
+      final next = !_isMealLocked(meal);
+      _perMealLock[meal] = next;
+      if (next) {
+        final s = _displaySplitFor(meal);
+        _perMealLockedKcal[meal] = rebalance.kcalOf(s.p, s.c, s.f);
+      }
+    });
+  }
+
+  /// Record an edit to one meal's macro. When the meal is LOCKED, run the
+  /// calorie-lock rebalance so the other two macros adapt and the meal's kcal
+  /// holds at its captured budget. When UNLOCKED, calories simply follow the
+  /// edited macro. Either way the edit flips the meal to a full explicit
+  /// override and the mode to custom.
   void _setMealMacro(String meal, _MacroField field, int value) {
     final current = _displaySplitFor(meal);
-    final next = switch (field) {
-      _MacroField.protein => (p: value, c: current.c, f: current.f),
-      _MacroField.carbs => (p: current.p, c: value, f: current.f),
-      _MacroField.fat => (p: current.p, c: current.c, f: value),
-    };
+    ({int p, int c, int f}) next;
+    if (_isMealLocked(meal)) {
+      final locked = _perMealLockedKcal[meal] ??
+          rebalance.kcalOf(current.p, current.c, current.f);
+      final changed = switch (field) {
+        _MacroField.protein => rebalance.MacroField.protein,
+        _MacroField.carbs => rebalance.MacroField.carbs,
+        _MacroField.fat => rebalance.MacroField.fat,
+      };
+      final r = rebalance.rebalanceLocked(
+        p: current.p,
+        c: current.c,
+        f: current.f,
+        lockedKcal: locked,
+        changed: changed,
+        newValue: value,
+      );
+      next = (p: r.p, c: r.c, f: r.f);
+    } else {
+      next = switch (field) {
+        _MacroField.protein => (p: value, c: current.c, f: current.f),
+        _MacroField.carbs => (p: current.p, c: value, f: current.f),
+        _MacroField.fat => (p: current.p, c: current.c, f: value),
+      };
+    }
     setState(() {
-      _perMealMode = 'custom';
       _perMealOverrides[meal] = next;
     });
   }
 
-  /// Clear all per-meal overrides → back to auto-derived split.
+  /// Live daily total = sum of every ACTIVE meal's displayed split (kcal/P/C/F).
+  /// Drives the banner at the top of the Per Meal pane.
+  ({int p, int c, int f, int kcal}) _perMealDailyTotal() {
+    int p = 0, c = 0, f = 0;
+    for (final meal in _activeMeals) {
+      final s = _displaySplitFor(meal);
+      p += s.p;
+      c += s.c;
+      f += s.f;
+    }
+    return (p: p, c: c, f: f, kcal: rebalance.kcalOf(p, c, f));
+  }
+
+  /// Clear all per-meal overrides → back to auto-derived split, and re-capture
+  /// each meal's locked budget from the fresh auto split.
   void _resetPerMealToAuto() {
     setState(() {
-      _perMealMode = 'auto';
       _perMealOverrides.clear();
+      for (final meal in _activeMeals) {
+        final s = _autoSplitFor(meal);
+        _perMealLockedKcal[meal] = rebalance.kcalOf(s.p, s.c, s.f);
+        _perMealLock[meal] = true;
+      }
     });
   }
 
   /// Assemble the `per_meal_macro_targets` JSON for persistence:
-  /// `{mode, split, overrides}`. `split` carries the active-meal weights so
-  /// the backend can reproduce the auto split; `overrides` carries only
-  /// user-edited meals (empty in auto mode).
+  /// `{mode, split, overrides, locks}`.
+  ///
+  /// "Meals drive the day": when per-meal is enabled we persist EXPLICIT
+  /// overrides for ALL active meals (not just edited ones) so the backend
+  /// returns exactly the user's numbers and the daily headline sum matches the
+  /// live banner. `split` keeps the weights for reference; `locks` is additive.
   Map<String, dynamic> _buildPerMealMacroTargetsJson() {
     final meals = _activeMeals;
     final split = <String, double>{
       for (final m in meals) m: _perMealSplitWeights[m] ?? 0,
     };
+    // Explicit override for every active meal — its displayed split (override
+    // or auto). This makes the day's total deterministic = the banner sum.
     final overrides = <String, dynamic>{};
-    if (_perMealMode == 'custom') {
-      _perMealOverrides.forEach((meal, v) {
-        // Only persist overrides for meals that are still active.
-        if (meals.contains(meal)) {
-          overrides[meal] = {
-            'protein_g': v.p,
-            'carbs_g': v.c,
-            'fat_g': v.f,
-          };
-        }
-      });
+    final locks = <String, dynamic>{};
+    for (final meal in meals) {
+      final s = _displaySplitFor(meal);
+      overrides[meal] = {
+        'protein_g': s.p,
+        'carbs_g': s.c,
+        'fat_g': s.f,
+      };
+      locks[meal] = _isMealLocked(meal);
     }
     return {
-      'mode': overrides.isEmpty ? 'auto' : 'custom',
+      'mode': 'custom',
       'split': split,
       'overrides': overrides,
+      'locks': locks,
     };
   }
 
-  /// The whole "Per-meal targets" section: a master toggle, then (when on) a
-  /// row per active meal with P/C/F sliders, plus a "Reset to auto" control
-  /// once any meal has been customized.
+  /// Assemble the `per_weekday_targets` JSON for persistence, or null when the
+  /// By-Day feature is disabled (so the backend clears it).
+  Map<String, dynamic>? _buildWeekdayTargetsJson() {
+    if (!_byDayEnabled) return null;
+    return {
+      'enabled': true,
+      'bind_to_training_days': _bindToTrainingDays,
+      'high_days': (_highDays.toList()..sort()),
+      'high': {
+        'protein_g': _byDayHighP,
+        'carbs_g': _byDayHighC,
+        'fat_g': _byDayHighF,
+      },
+      'base': {
+        'protein_g': _byDayBaseP,
+        'carbs_g': _byDayBaseC,
+        'fat_g': _byDayBaseF,
+      },
+    };
+  }
+
+  /// The per-meal editor body: a row per active meal with P/C/F sliders + a
+  /// calorie-lock control. The master toggle + daily-total banner live in the
+  /// Per Meal pane in `build`.
   Widget _buildPerMealSection(
     bool isDark,
     Color textPrimary,
@@ -901,113 +1089,125 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Master toggle row.
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PER-MEAL TARGETS',
-                    style:
-                        ZType.lbl(12, color: textPrimary, letterSpacing: 1.4),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Split your daily macros across each meal',
-                    style: TextStyle(fontSize: 11.5, color: textMuted),
-                  ),
-                ],
-              ),
-            ),
-            Switch.adaptive(
-              value: _perMealEnabled,
-              activeThumbColor: accent,
-              onChanged: (v) {
-                HapticFeedback.selectionClick();
-                setState(() => _perMealEnabled = v);
-              },
-            ),
-          ],
-        ),
-        if (_perMealEnabled) ...[
-          const SizedBox(height: 4),
-          // Mode + reset row.
-          Row(
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: surface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.cardBorder),
-                ),
-                child: Text(
-                  _perMealMode == 'custom' ? 'Custom split' : 'Auto split',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                    color: textMuted,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              if (_perMealOverrides.isNotEmpty)
-                TextButton.icon(
-                  onPressed: _resetPerMealToAuto,
-                  icon: Icon(Icons.restart_alt_rounded,
-                      size: 14, color: accent),
-                  label: Text(
-                    'Reset to auto',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: accent,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ..._activeMeals.map((meal) => _buildPerMealRow(
-                meal,
-                isDark,
-                textPrimary,
-                textMuted,
-                surface,
-                proteinColor,
-                carbsColor,
-                fatColor,
-              )),
-        ],
+        ..._activeMeals.map((meal) => _buildPerMealRow(
+              meal,
+              isDark,
+              textPrimary,
+              textMuted,
+              surface,
+              accent,
+              proteinColor,
+              carbsColor,
+              fatColor,
+            )),
       ],
     );
   }
 
-  /// One meal's editable P/C/F. Header (meal name + auto/edited tag + total
-  /// kcal), then a slider per macro with the gram value shown inline.
+  /// The live daily-total banner at the top of the Per Meal pane — the sum of
+  /// every meal's kcal/P/C/F, recomputed on every drag. This is the "meals
+  /// drive the day" headline number.
+  Widget _buildPerMealDailyTotalBanner(
+    Color textPrimary,
+    Color textMuted,
+    Color accent,
+    Color proteinColor,
+    Color carbsColor,
+    Color fatColor,
+  ) {
+    final t = _perMealDailyTotal();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [accent.withValues(alpha: 0.10), Colors.transparent],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'DAILY TOTAL — SUM OF MEALS',
+                  style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2),
+                ),
+                const SizedBox(height: 3),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    _bannerMacro('P', t.p, proteinColor),
+                    _bannerMacro('C', t.c, carbsColor),
+                    _bannerMacro('F', t.f, fatColor),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                NumberFormat.decimalPattern().format(t.kcal),
+                style: ZType.disp(28, color: textPrimary),
+              ),
+              Text(
+                'KCAL',
+                style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bannerMacro(String label, int grams, Color color) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: '$label '),
+          TextSpan(
+            text: '${grams}g',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ],
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  /// One meal's editable P/C/F. Header (meal name + auto/edited tag + meal kcal
+  /// readout), a calorie-lock toggle, then a slider per macro.
   Widget _buildPerMealRow(
     String meal,
     bool isDark,
     Color textPrimary,
     Color textMuted,
     Color surface,
+    Color accent,
     Color proteinColor,
     Color carbsColor,
     Color fatColor,
   ) {
     final split = _displaySplitFor(meal);
     final isOverridden = _perMealOverrides.containsKey(meal);
-    final kcal = split.p * 4 + split.c * 4 + split.f * 9;
+    final locked = _isMealLocked(meal);
+    // When locked, the readout is the captured budget (the macros rebalance to
+    // hold it); when unlocked, calories follow the live macros.
+    final kcal = locked
+        ? (_perMealLockedKcal[meal] ??
+            rebalance.kcalOf(split.p, split.c, split.f))
+        : rebalance.kcalOf(split.p, split.c, split.f);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1054,6 +1254,53 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                 style: ZType.data(11.5, color: textMuted),
               ),
             ],
+          ),
+          // Calorie-lock toggle. Locked = the meal's calories stay fixed while
+          // the other two macros rebalance; unlocked = calories follow macros.
+          Align(
+            alignment: Alignment.centerRight,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                _toggleMealLock(meal);
+              },
+              child: Container(
+                margin: const EdgeInsets.only(top: 2, bottom: 2),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: locked
+                      ? accent.withValues(alpha: 0.08)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: locked
+                        ? accent.withValues(alpha: 0.5)
+                        : AppColors.cardBorder,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      locked ? Icons.lock_rounded : Icons.lock_open_rounded,
+                      size: 12,
+                      color: locked ? accent : textMuted,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      locked ? 'Calories locked' : 'Calories follow',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: locked ? accent : textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 2),
           _buildPerMealMacroSlider(
@@ -1125,6 +1372,510 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     );
   }
 
+  // ── AI Recommend Targets button ────────────────────────────────────────
+
+  /// The ✨ AI Recommend Targets entry point. Pinned above the scroll so it's
+  /// visible on every tab; opens the AI recommendation sheet, which analyzes the
+  /// user's last 14 days and lets them apply Daily / Per-Meal / Per-Day targets
+  /// through the same save path as the manual editors below.
+  Widget _buildAiRecommendButton(Color textMuted, Color accent) {
+    final accentContrast = ThemeColors.of(context).accentContrast;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _isSaving
+                ? null
+                : () {
+                    HapticFeedback.selectionClick();
+                    showAiRecommendationSheet(context, userId: widget.userId);
+                  },
+            icon: const Text('✨', style: TextStyle(fontSize: 15)),
+            label: Text(
+              'AI Recommend Targets',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+                fontSize: 13,
+                color: accentContrast,
+              ),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: accent,
+              foregroundColor: accentContrast,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(26),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          'Analyzes your last 14 days — profile, weight trend, what & when you log, and your training days.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 11.5,
+            height: 1.4,
+            color: textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Segmented tab switcher ─────────────────────────────────────────────
+
+  /// The Daily · Per Meal · By Day segmented control under the pinned header.
+  Widget _buildTabSwitcher(Color textMuted, Color accent, Color surface) {
+    Widget seg(String label, _TargetTab tab) {
+      final selected = _activeTab == tab;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () {
+            if (_activeTab == tab) return;
+            HapticFeedback.selectionClick();
+            FocusScope.of(context).unfocus();
+            setState(() => _activeTab = tab);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            margin: const EdgeInsets.all(2),
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? accent : Colors.transparent,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Text(
+              label.toUpperCase(),
+              style: ZType.lbl(
+                11.5,
+                color: selected
+                    ? ThemeColors.of(context).accentContrast
+                    : textMuted,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          seg('Daily', _TargetTab.daily),
+          seg('Per Meal', _TargetTab.perMeal),
+          seg('By Day', _TargetTab.byDay),
+        ],
+      ),
+    );
+  }
+
+  /// A small reset-to-recommended pill used at the top of each tab.
+  Widget _buildResetToRecommendedPill(Color accent, VoidCallback onTap) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(Icons.restart_alt_rounded, size: 15, color: accent),
+      label: Text(
+        'Reset to recommended',
+        style: TextStyle(
+          fontSize: 12,
+          color: accent,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+
+  /// A labelled master toggle row (used for the Per Meal + By Day panes).
+  Widget _buildMasterToggle({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color surface,
+    required Color accent,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: ZType.lbl(12, color: textPrimary, letterSpacing: 1.2)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style: TextStyle(fontSize: 11.5, color: textMuted)),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            activeThumbColor: accent,
+            onChanged: (v) {
+              HapticFeedback.selectionClick();
+              onChanged(v);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A workout/rest-day calorie-boost toggle for the Daily pane.
+  Widget _buildBoostToggle({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color surface,
+    required Color accent,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style: TextStyle(fontSize: 11.5, color: textMuted)),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            activeThumbColor: accent,
+            onChanged: (v) {
+              HapticFeedback.selectionClick();
+              onChanged(v);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── By-Day (per-weekday) pane ──────────────────────────────────────────
+
+  /// Reset the By-Day editors to recommended: high days = the user's workout
+  /// days unset (cleared), base macros = the daily targets, high = +10%P/+15%C.
+  void _resetByDayToRecommended() {
+    setState(() {
+      _highDays.clear();
+      _bindToTrainingDays = false;
+      _byDayBaseP = int.tryParse(_proteinController.text) ?? 0;
+      _byDayBaseC = int.tryParse(_carbsController.text) ?? 0;
+      _byDayBaseF = int.tryParse(_fatController.text) ?? 0;
+      _byDayHighP = (_byDayBaseP * 1.10).round();
+      _byDayHighC = (_byDayBaseC * 1.15).round();
+      _byDayHighF = _byDayBaseF;
+    });
+  }
+
+  /// A standalone macro slider editing an int value via a setter callback
+  /// (used by the By-Day high/base editors, which aren't meal-scoped).
+  Widget _buildValueMacroSlider(
+    String label,
+    int value,
+    int max,
+    Color color,
+    ValueChanged<int> onChanged,
+  ) {
+    final sliderMax = (value + 20 > max ? value + 20 : max).toDouble();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 54,
+            child: Text(
+              '$label  ${value}g',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ),
+          Expanded(
+            child: SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 3,
+                activeTrackColor: color,
+                inactiveTrackColor: color.withValues(alpha: 0.18),
+                thumbColor: color,
+                overlayColor: color.withValues(alpha: 0.15),
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              ),
+              child: Slider(
+                value: value.toDouble().clamp(0, sliderMax),
+                min: 0,
+                max: sliderMax,
+                onChanged: (v) {
+                  if (!mounted) return;
+                  onChanged(v.round());
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A high/base macro day-card for the By-Day pane.
+  Widget _buildDayMacroCard({
+    required String title,
+    required bool isHigh,
+    required Color titleColor,
+    required Color textMuted,
+    required Color surface,
+    required Color proteinColor,
+    required Color carbsColor,
+    required Color fatColor,
+  }) {
+    final p = isHigh ? _byDayHighP : _byDayBaseP;
+    final c = isHigh ? _byDayHighC : _byDayBaseC;
+    final f = isHigh ? _byDayHighF : _byDayBaseF;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(title,
+                    style:
+                        ZType.lbl(11, color: titleColor, letterSpacing: 1.1)),
+              ),
+              Text('${rebalance.kcalOf(p, c, f)} kcal',
+                  style: ZType.data(11.5, color: textMuted)),
+            ],
+          ),
+          const SizedBox(height: 2),
+          _buildValueMacroSlider('P', p, 300, proteinColor, (v) {
+            setState(() => isHigh ? _byDayHighP = v : _byDayBaseP = v);
+          }),
+          _buildValueMacroSlider('C', c, 400, carbsColor, (v) {
+            setState(() => isHigh ? _byDayHighC = v : _byDayBaseC = v);
+          }),
+          _buildValueMacroSlider('F', f, 150, fatColor, (v) {
+            setState(() => isHigh ? _byDayHighF = v : _byDayBaseF = v);
+          }),
+        ],
+      ),
+    );
+  }
+
+  /// The Mon-Sun chip row marking high days.
+  Widget _buildWeekdayChips(Color textMuted, Color accent, Color surface) {
+    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']; // Mon..Sun
+    return Row(
+      children: List.generate(7, (i) {
+        final day = i; // Python weekday: Mon=0 … Sun=6 (matches backend)
+        final on = _highDays.contains(day);
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: i < 6 ? 6 : 0),
+            child: GestureDetector(
+              onTap: _bindToTrainingDays
+                  ? null
+                  : () {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        if (on) {
+                          _highDays.remove(day);
+                        } else {
+                          _highDays.add(day);
+                        }
+                      });
+                    },
+              child: Opacity(
+                opacity: _bindToTrainingDays ? 0.4 : 1,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: on
+                        ? accent.withValues(alpha: 0.16)
+                        : surface,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(
+                      color: on
+                          ? accent.withValues(alpha: 0.5)
+                          : AppColors.cardBorder,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(labels[i],
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: on ? accent : textMuted,
+                          )),
+                      Text(on ? 'HIGH' : 'base',
+                          style: TextStyle(
+                            fontSize: 7.5,
+                            letterSpacing: 0.4,
+                            fontWeight: FontWeight.w700,
+                            color: on
+                                ? accent
+                                : textMuted.withValues(alpha: 0.7),
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// The whole By-Day pane body (shown when the master toggle is on).
+  Widget _buildByDaySection(
+    Color textPrimary,
+    Color textMuted,
+    Color surface,
+    Color accent,
+    Color proteinColor,
+    Color carbsColor,
+    Color fatColor,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        Text(
+          '"200g protein on some days" — tap the days that use the higher '
+          'target. Built on the training/rest-day engine.',
+          style: TextStyle(fontSize: 11.5, color: textMuted, height: 1.4),
+        ),
+        const SizedBox(height: 10),
+        _buildWeekdayChips(textMuted, accent, surface),
+        const SizedBox(height: 6),
+        // Bind-to-training-days option.
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Follow my workout schedule (auto high days)',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary),
+              ),
+            ),
+            Switch.adaptive(
+              value: _bindToTrainingDays,
+              activeThumbColor: accent,
+              onChanged: (v) {
+                HapticFeedback.selectionClick();
+                setState(() => _bindToTrainingDays = v);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _buildDayMacroCard(
+          title: 'High days',
+          isHigh: true,
+          titleColor: accent,
+          textMuted: textMuted,
+          surface: surface,
+          proteinColor: proteinColor,
+          carbsColor: carbsColor,
+          fatColor: fatColor,
+        ),
+        _buildDayMacroCard(
+          title: 'Base days',
+          isHigh: false,
+          titleColor: textMuted,
+          textMuted: textMuted,
+          surface: surface,
+          proteinColor: proteinColor,
+          carbsColor: carbsColor,
+          fatColor: fatColor,
+        ),
+        // Inline replace-the-boost warning.
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.warning_amber_rounded,
+                  size: 14, color: Colors.orange),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'While By-Day is on, the automatic workout-day boost is '
+                  'replaced by your day targets — today shows exactly what you '
+                  'set, never a surprise number.',
+                  style: const TextStyle(
+                      fontSize: 11.5, color: Colors.orange, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _save() async {
     final calories = int.tryParse(_caloriesController.text);
     if (calories == null || calories <= 0) return;
@@ -1173,6 +1924,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             customCarbPercent: customCarbPct,
             customFatPercent: customFatPct,
             rateOfChange: _selectedRate,
+            adjustCaloriesForTraining: _adjustForTraining,
+            adjustCaloriesForRest: _adjustForRest,
           ),
     );
 
@@ -1185,6 +1938,14 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             enabled: _perMealEnabled,
             macroTargets:
                 _perMealEnabled ? _buildPerMealMacroTargetsJson() : null,
+          ),
+    );
+
+    // Persist the By-Day (per-weekday) targets. Null when disabled clears it.
+    unawaited(
+      ref.read(nutritionPreferencesProvider.notifier).updateWeekdayTargets(
+            userId: widget.userId,
+            weekdayTargets: _buildWeekdayTargetsJson(),
           ),
     );
 
@@ -1294,12 +2055,29 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           // sheet is framed by what they're working toward.
           _buildGoalBanner(textPrimary, textMuted, accent),
           const SizedBox(height: 8),
+          // Segmented switcher: Daily · Per Meal · By Day. Each tab is its own
+          // pane below — stays pinned above the scroll so switching is one tap.
+          _buildTabSwitcher(textMuted, accent, surface),
+          const SizedBox(height: 12),
+          // ✨ AI Recommend Targets — pinned above the scroll so it's visible on
+          // ALL tabs. AUGMENTS the manual editors below (never replaces them):
+          // opens the AI recommendation sheet, which applies via the same save
+          // path. (feedback_augment_dont_replace_ui)
+          _buildAiRecommendButton(textMuted, accent),
+          const SizedBox(height: 12),
           Flexible(
             child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
               child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // ════════════════ DAILY PANE ════════════════
+          if (_activeTab == _TargetTab.daily) ...[
+          // Reset-to-recommended for the Daily tab.
+          Align(
+            alignment: Alignment.centerRight,
+            child: _buildResetToRecommendedPill(accent, _useRecommended),
+          ),
           // Baseline-vs-today banner. When today's dynamic target differs
           // from the stored baseline (training/rest/fasting day), tell the
           // user they're editing the BASELINE and what today's adjusted
@@ -1523,19 +2301,145 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             const SizedBox(height: 8),
           ],
 
-          // Per-meal targets (Phase 1c) — below the daily targets.
+          // Workout / rest-day calorie-boost toggles (the existing backend
+          // training/rest flags, surfaced for the first time). When By-Day is
+          // on these are replaced by the day targets (see the By-Day warning).
           const ZealovaRule(margin: EdgeInsets.symmetric(vertical: 8)),
-          _buildPerMealSection(
-            isDark,
-            textPrimary,
-            textMuted,
-            surface,
-            accent,
-            proteinColor,
-            carbsColor,
-            fatColor,
+          _buildBoostToggle(
+            title: 'Boost calories on workout days',
+            subtitle: 'Adds +200 kcal · +10% protein · +15% carbs on days you train',
+            value: _adjustForTraining,
+            onChanged: (v) => setState(() => _adjustForTraining = v),
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+            surface: surface,
+            accent: accent,
           ),
+          _buildBoostToggle(
+            title: 'Reduce calories on rest days',
+            subtitle: 'Trims calories on non-training days for a flatter weekly average',
+            value: _adjustForRest,
+            onChanged: (v) => setState(() => _adjustForRest = v),
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+            surface: surface,
+            accent: accent,
+          ),
+          if (_byDayEnabled)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'By-Day targets are on — these boosts are replaced by your '
+                'per-day targets.',
+                style: TextStyle(
+                    fontSize: 11, color: Colors.orange, height: 1.4),
+              ),
+            ),
           const SizedBox(height: 4),
+          ], // end Daily pane
+
+          // ════════════════ PER MEAL PANE ════════════════
+          if (_activeTab == _TargetTab.perMeal) ...[
+          _buildMasterToggle(
+            title: 'PER-MEAL TARGETS',
+            subtitle: 'Split your daily macros across each meal',
+            value: _perMealEnabled,
+            onChanged: (v) {
+              setState(() {
+                _perMealEnabled = v;
+                if (v) _seedPerMealLockedKcal();
+              });
+            },
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+            surface: surface,
+            accent: accent,
+          ),
+          if (_perMealEnabled) ...[
+            const SizedBox(height: 12),
+            // Live daily-total banner = sum of every meal.
+            _buildPerMealDailyTotalBanner(
+                textPrimary, textMuted, accent, proteinColor, carbsColor,
+                fatColor),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Drag a macro. With the lock on, the meal\'s calories stay '
+                    'fixed and the other two rebalance.',
+                    style: TextStyle(
+                        fontSize: 11, color: textMuted, height: 1.4),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                _buildResetToRecommendedPill(accent, _resetPerMealToAuto),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _buildPerMealSection(
+              isDark,
+              textPrimary,
+              textMuted,
+              surface,
+              accent,
+              proteinColor,
+              carbsColor,
+              fatColor,
+            ),
+          ] else ...[
+            const SizedBox(height: 10),
+            Text(
+              'Per-meal targets are off — using your daily target.',
+              style: TextStyle(fontSize: 12, color: textMuted),
+            ),
+          ],
+          const SizedBox(height: 4),
+          ], // end Per Meal pane
+
+          // ════════════════ BY DAY PANE ════════════════
+          if (_activeTab == _TargetTab.byDay) ...[
+          Row(
+            children: [
+              Expanded(
+                child: _buildMasterToggle(
+                  title: 'BY-DAY TARGETS',
+                  subtitle: 'Different macros on different days of the week',
+                  value: _byDayEnabled,
+                  onChanged: (v) => setState(() => _byDayEnabled = v),
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  surface: surface,
+                  accent: accent,
+                ),
+              ),
+            ],
+          ),
+          if (_byDayEnabled) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: _buildResetToRecommendedPill(
+                  accent, _resetByDayToRecommended),
+            ),
+            _buildByDaySection(
+              textPrimary,
+              textMuted,
+              surface,
+              accent,
+              proteinColor,
+              carbsColor,
+              fatColor,
+            ),
+          ] else ...[
+            const SizedBox(height: 10),
+            Text(
+              'By-day targets are off — using your daily target every day.',
+              style: TextStyle(fontSize: 12, color: textMuted),
+            ),
+          ],
+          const SizedBox(height: 4),
+          ], // end By Day pane
                 ],
               ),
             ),

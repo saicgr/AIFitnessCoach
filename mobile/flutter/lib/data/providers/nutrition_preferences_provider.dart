@@ -134,6 +134,13 @@ class NutritionPreferencesState {
   final bool perMealTargetsEnabled;
   final Map<String, dynamic>? perMealMacroTargets;
 
+  /// Per-weekday-targets config (the "By Day" feature — different macros on
+  /// different days of the week). Raw `per_weekday_targets` JSONB, also
+  /// OUTSIDE the codegen `NutritionPreferences` model. Null when never set.
+  /// Shape: `{enabled, bind_to_training_days, high_days:[int 1..7],
+  /// high:{protein_g, carbs_g, fat_g}, base:{...}}`.
+  final Map<String, dynamic>? perWeekdayTargets;
+
   /// Set when the one-time targets-recalc migration ran AND actually changed
   /// the stored daily calorie target (delta != 0). NutritionScreen reads this
   /// on mount, shows a SnackBar like "Updated your daily target: 1580 cal/day
@@ -155,6 +162,7 @@ class NutritionPreferencesState {
     this.pendingMigrationDelta,
     this.perMealTargetsEnabled = false,
     this.perMealMacroTargets,
+    this.perWeekdayTargets,
   });
 
   NutritionPreferencesState copyWith({
@@ -173,6 +181,8 @@ class NutritionPreferencesState {
     bool? perMealTargetsEnabled,
     Map<String, dynamic>? perMealMacroTargets,
     bool clearPerMealMacroTargets = false,
+    Map<String, dynamic>? perWeekdayTargets,
+    bool clearPerWeekdayTargets = false,
   }) {
     return NutritionPreferencesState(
       preferences: preferences ?? this.preferences,
@@ -192,6 +202,9 @@ class NutritionPreferencesState {
       perMealMacroTargets: clearPerMealMacroTargets
           ? null
           : (perMealMacroTargets ?? this.perMealMacroTargets),
+      perWeekdayTargets: clearPerWeekdayTargets
+          ? null
+          : (perWeekdayTargets ?? this.perWeekdayTargets),
     );
   }
 
@@ -457,6 +470,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         perMealTargetsEnabled: perMealPrefs.enabled,
         perMealMacroTargets: perMealPrefs.macroTargets,
         clearPerMealMacroTargets: perMealPrefs.macroTargets == null,
+        perWeekdayTargets: perMealPrefs.weekdayTargets,
+        clearPerWeekdayTargets: perMealPrefs.weekdayTargets == null,
       );
       _nutritionPrefsInMemoryCache = state;
       // Write through to disk for the next cold start (A2) — now including the
@@ -884,6 +899,10 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     int? customCarbPercent,
     int? customFatPercent,
     String? rateOfChange,
+    // Daily-pane workout/rest-day boost toggles (the existing backend
+    // training/rest calorie-adjust flags, finally surfaced in the editor).
+    bool? adjustCaloriesForTraining,
+    bool? adjustCaloriesForRest,
   }) async {
     if (state.preferences == null) {
       debugPrint('❌ [NutritionPrefsProvider] Cannot update targets: no preferences loaded');
@@ -906,6 +925,10 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       customFatPercent:
           customFatPercent ?? previousPreferences.customFatPercent,
       rateOfChange: rateOfChange ?? previousPreferences.rateOfChange,
+      adjustCaloriesForTraining: adjustCaloriesForTraining ??
+          previousPreferences.adjustCaloriesForTraining,
+      adjustCaloriesForRest:
+          adjustCaloriesForRest ?? previousPreferences.adjustCaloriesForRest,
     );
 
     // Apply the same calorie/macro delta to the cached dynamic targets so
@@ -1078,6 +1101,71 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     }());
   }
 
+  /// Update the per-weekday-targets config (the "By Day" feature). Mirrors
+  /// [updatePerMealTargets]: optimistically flips the local raw config so the
+  /// edit sheet reacts in the same frame, PUTs in the background, refreshes the
+  /// dynamic targets (so today's weekday override lands), and rolls back on
+  /// failure.
+  ///
+  /// `weekdayTargets` → the raw `per_weekday_targets` object (pass null to
+  /// clear, e.g. when the master By-Day toggle is turned off entirely).
+  Future<void> updateWeekdayTargets({
+    required String userId,
+    Map<String, dynamic>? weekdayTargets,
+  }) async {
+    final base = state.preferences;
+    if (base == null) {
+      debugPrint(
+          '❌ [NutritionPrefsProvider] Cannot update weekday targets: no preferences');
+      return;
+    }
+
+    final prevWeekday = state.perWeekdayTargets;
+
+    // Optimistic local update.
+    state = state.copyWith(
+      perWeekdayTargets: weekdayTargets,
+      clearPerWeekdayTargets: weekdayTargets == null,
+      clearError: true,
+    );
+    _nutritionPrefsInMemoryCache = state;
+    debugPrint(
+        '📆 [NutritionPrefsProvider] Optimistic weekday targets: enabled=${weekdayTargets?['enabled']}');
+
+    unawaited(() async {
+      try {
+        await _repository.updateWeekdayTargetsPrefs(
+          userId: userId,
+          basePreferences: base,
+          weekdayTargets: weekdayTargets,
+        );
+        // Pull fresh dynamic targets so the backend-applied weekday override
+        // (and the suppressed training/rest bump) reaches the UI for today.
+        try {
+          final dyn = await _repository.getDynamicTargets(
+            userId: userId,
+            date: DateTime.now(),
+          );
+          state = state.copyWith(dynamicTargets: dyn);
+          _nutritionPrefsInMemoryCache = state;
+        } catch (e) {
+          debugPrint(
+              '⚠️ [NutritionPrefsProvider] Dynamic refresh after weekday update failed: $e');
+        }
+        debugPrint('✅ [NutritionPrefsProvider] Weekday targets persisted');
+      } catch (e) {
+        debugPrint(
+            '❌ [NutritionPrefsProvider] Weekday targets persist failed, rolling back: $e');
+        state = state.copyWith(
+          perWeekdayTargets: prevWeekday,
+          clearPerWeekdayTargets: prevWeekday == null,
+          error: e.toString(),
+        );
+        _nutritionPrefsInMemoryCache = state;
+      }
+    }());
+  }
+
   /// Record that weekly check-in was completed
   Future<void> recordWeeklyCheckin({required String userId}) async {
     if (state.preferences == null) {
@@ -1175,6 +1263,18 @@ final dynamicNutritionTargetsProvider = Provider<DynamicNutritionTargets?>((ref)
 /// Whether the per-meal-targets feature is enabled (Phase 1c).
 final perMealTargetsEnabledProvider = Provider<bool>((ref) {
   return ref.watch(nutritionPreferencesProvider).perMealTargetsEnabled;
+});
+
+/// Raw `per_weekday_targets` config (the "By Day" feature), or null when never
+/// configured. Shape documented on [NutritionPreferencesState.perWeekdayTargets].
+final perWeekdayTargetsProvider = Provider<Map<String, dynamic>?>((ref) {
+  return ref.watch(nutritionPreferencesProvider).perWeekdayTargets;
+});
+
+/// Whether the By-Day weekday targets feature is enabled.
+final perWeekdayTargetsEnabledProvider = Provider<bool>((ref) {
+  final w = ref.watch(nutritionPreferencesProvider).perWeekdayTargets;
+  return w != null && w['enabled'] == true;
 });
 
 /// TODAY's per-meal targets (null when disabled). For other dates use

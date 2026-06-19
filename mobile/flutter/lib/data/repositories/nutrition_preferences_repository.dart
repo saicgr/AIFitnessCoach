@@ -194,6 +194,9 @@ class NutritionPreferencesRepository {
         macroTargets: data['per_meal_macro_targets'] is Map
             ? Map<String, dynamic>.from(data['per_meal_macro_targets'] as Map)
             : null,
+        weekdayTargets: data['per_weekday_targets'] is Map
+            ? Map<String, dynamic>.from(data['per_weekday_targets'] as Map)
+            : null,
       );
     } catch (e) {
       if (e.toString().contains('404')) return const PerMealTargetsPrefs();
@@ -223,6 +226,29 @@ class NutritionPreferencesRepository {
       debugPrint('✅ [NutritionPrefs] Per-meal targets prefs saved');
     } catch (e) {
       debugPrint('❌ [NutritionPrefs] Error saving per-meal prefs: $e');
+      rethrow;
+    }
+  }
+
+  /// PUT the `per_weekday_targets` JSONB config (the "By Day" / "200g protein
+  /// on some days" feature). Merges onto the existing preferences body like
+  /// [updatePerMealTargetsPrefs]. `weekdayTargets` is sent verbatim
+  /// (`{enabled, bind_to_training_days, high_days:[int], high:{...}, base:{...}}`);
+  /// pass null to clear it.
+  Future<void> updateWeekdayTargetsPrefs({
+    required String userId,
+    required NutritionPreferences basePreferences,
+    Map<String, dynamic>? weekdayTargets,
+  }) async {
+    try {
+      debugPrint(
+          '💾 [NutritionPrefs] Updating per-weekday targets (enabled=${weekdayTargets?['enabled']})');
+      final body = Map<String, dynamic>.from(basePreferences.toJson());
+      body['per_weekday_targets'] = weekdayTargets;
+      await _client.put('/nutrition/preferences/$userId', data: body);
+      debugPrint('✅ [NutritionPrefs] Per-weekday targets prefs saved');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error saving per-weekday prefs: $e');
       rethrow;
     }
   }
@@ -848,9 +874,17 @@ class PerMealTargetsPrefs {
   final bool enabled;
   final Map<String, dynamic>? macroTargets;
 
+  /// The raw `per_weekday_targets` JSONB config (the "By Day" feature), or
+  /// null when absent. Shape:
+  /// `{enabled, bind_to_training_days, high_days:[int 1..7], high:{protein_g,
+  /// carbs_g, fat_g}, base:{...}}`. Lives outside the codegen model exactly
+  /// like [macroTargets].
+  final Map<String, dynamic>? weekdayTargets;
+
   const PerMealTargetsPrefs({
     this.enabled = false,
     this.macroTargets,
+    this.weekdayTargets,
   });
 
   /// `mode` from `macroTargets` — `'auto'` (default) or `'custom'`.
