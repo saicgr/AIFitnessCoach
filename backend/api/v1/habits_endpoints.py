@@ -33,6 +33,7 @@ import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user, verify_user_ownership
 from core.db import get_supabase_db
+from core.db_executor import run_db, gather_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.exceptions import safe_internal_error
 from models.habits import (
@@ -121,9 +122,11 @@ async def get_all_streaks(
         verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
-        result = db.client.table("habit_streaks").select("*").eq(
-            "user_id", user_id
-        ).order("current_streak", desc=True).execute()
+        result = await run_db(
+            lambda: db.client.table("habit_streaks").select("*").eq(
+                "user_id", user_id
+            ).order("current_streak", desc=True).execute()
+        )
 
         logger.info(f"✅ Found {len(result.data)} streaks for user={user_id}")
         return result.data
@@ -155,9 +158,9 @@ async def get_habit_streak(
         verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
-        result = db.client.table("habit_streaks").select("*").eq(
+        result = (await run_db(lambda: db.client.table("habit_streaks").select("*").eq(
             "habit_id", habit_id
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Streak not found")
@@ -195,7 +198,7 @@ async def get_habits_summary(
     try:
         verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Get today's habits response
@@ -203,9 +206,9 @@ async def get_habits_summary(
         today_response = await get_today_habits(user_id, request)
 
         # Get all streaks to calculate averages
-        streaks = db.client.table("habit_streaks").select(
+        streaks = (await run_db(lambda: db.client.table("habit_streaks").select(
             "current_streak, longest_streak, habit_id"
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         # Calculate streak stats
         streak_values = [s.get("current_streak", 0) or 0 for s in streaks.data]
@@ -266,13 +269,13 @@ async def get_weekly_summary(
     try:
         verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         user_today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Use the weekly summary view
-        result = db.client.table("habit_weekly_summary_view").select("*").eq(
+        result = (await run_db(lambda: db.client.table("habit_weekly_summary_view").select("*").eq(
             "user_id", user_id
-        ).execute()
+        ).execute()))
 
         summaries = []
         for row in result.data:
@@ -321,13 +324,13 @@ async def get_habits_calendar(
     try:
         verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id) if request else "UTC"
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id))) if request else "UTC"
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Get habit info
-        habit = db.client.table("habits").select("name, frequency, target_days").eq(
+        habit = (await run_db(lambda: db.client.table("habits").select("name, frequency, target_days").eq(
             "id", habit_id
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         if not habit.data:
             raise HTTPException(status_code=404, detail="Habit not found")
@@ -335,19 +338,19 @@ async def get_habits_calendar(
         habit_info = habit.data[0]
 
         # Get logs for date range
-        logs = db.client.table("habit_logs").select("*").eq(
+        logs = (await run_db(lambda: db.client.table("habit_logs").select("*").eq(
             "habit_id", habit_id
         ).gte("log_date", start_date.isoformat()).lte(
             "log_date", end_date.isoformat()
-        ).execute()
+        ).execute()))
 
         # Build log lookup
         log_by_date = {log["log_date"]: log for log in logs.data}
 
         # Get streak info
-        streak = db.client.table("habit_streaks").select("*").eq(
+        streak = (await run_db(lambda: db.client.table("habit_streaks").select("*").eq(
             "habit_id", habit_id
-        ).execute()
+        ).execute()))
 
         # Build calendar data
         calendar_data = []
@@ -432,7 +435,7 @@ async def get_habit_templates(
 
         query = query.order("sort_order")
 
-        result = query.execute()
+        result = (await run_db(lambda: query.execute()))
 
         logger.info(f"✅ Found {len(result.data)} templates")
         return result.data
@@ -472,15 +475,15 @@ async def create_habit_from_template(
             is_uuid = False
 
         if is_uuid:
-            template = db.client.table("habit_templates").select("*").eq(
+            template = (await run_db(lambda: db.client.table("habit_templates").select("*").eq(
                 "id", template_id
-            ).execute()
+            ).execute()))
         else:
             # Slug-style ID (e.g. 'weigh_in') — search by name case-insensitively
             search_name = template_id.replace("_", " ")
-            template = db.client.table("habit_templates").select("*").ilike(
+            template = (await run_db(lambda: db.client.table("habit_templates").select("*").ilike(
                 "name", f"%{search_name}%"
-            ).limit(1).execute()
+            ).limit(1).execute()))
 
         if not template.data:
             raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
@@ -537,16 +540,16 @@ async def get_ai_suggestions(
 
         # Get user context
         db = get_supabase_db()
-        user_data = db.client.table("users").select(
+        user_data = (await run_db(lambda: db.client.table("users").select(
             "fitness_level, workout_frequency, goals"
-        ).eq("id", user_id).execute()
+        ).eq("id", user_id).execute()))
 
         user_context = user_data.data[0] if user_data.data else {}
 
         # Get existing habits
-        existing = db.client.table("habits").select("name").eq(
+        existing = (await run_db(lambda: db.client.table("habits").select("name").eq(
             "user_id", user_id
-        ).eq("is_active", True).execute()
+        ).eq("is_active", True).execute()))
 
         current_habits = [h["name"] for h in existing.data] if existing.data else []
 
@@ -688,11 +691,11 @@ async def reorder_habits(
             raise HTTPException(status_code=400, detail="No order map provided")
 
         for habit_id, sort_order in order_map.items():
-            db.client.table("habits") \
+            (await run_db(lambda: db.client.table("habits") \
                 .update({"sort_order": sort_order}) \
                 .eq("id", habit_id) \
                 .eq("user_id", user_id) \
-                .execute()
+                .execute()))
 
         logger.info(f"✅ Reordered {len(order_map)} habits for user={user_id}")
         return {"success": True, "message": f"Reordered {len(order_map)} habits"}

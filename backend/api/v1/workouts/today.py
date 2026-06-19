@@ -31,6 +31,7 @@ from core.logger import get_logger
 from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
 from services.user_context_service import user_context_service
 from core.redis_cache import RedisCache
+from core.db_executor import run_db, gather_db
 
 from .utils import parse_json_field, get_workout_focus, resolve_training_split, infer_workout_type_from_focus, get_recently_used_exercises
 
@@ -591,7 +592,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             ).eq(
                 "status", "generating"
             )
-            generating_check = gen_query.execute()
+            generating_check = await run_db(lambda q=gen_query: q.execute())
             if generating_check.data:
                 # Check if placeholder is stuck (older than 5 minutes)
                 from datetime import timezone
@@ -606,7 +607,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
                         if age_seconds > 300:  # 5 minutes
                             is_stuck = True
                             logger.warning(f"[BG-GEN] Stuck placeholder {placeholder['id']} is {age_seconds:.0f}s old, deleting it")
-                            db.client.table("workouts").delete().eq("id", placeholder["id"]).execute()
+                            await run_db(lambda pid=placeholder["id"]: db.client.table("workouts").delete().eq("id", pid).execute())
                     except Exception:
                         pass
                 if not is_stuck:
@@ -624,16 +625,16 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
                 profile_focus_areas = []
                 day_focus_override = {}
                 if gym_profile_id:
-                    profile = db.client.table("gym_profiles").select(
+                    profile = await run_db(lambda gpid=gym_profile_id: db.client.table("gym_profiles").select(
                         "training_split, focus_areas, day_focus_override"
-                    ).eq("id", gym_profile_id).single().execute()
+                    ).eq("id", gpid).single().execute())
                     if profile.data:
                         training_split = profile.data.get("training_split")
                         profile_focus_areas = profile.data.get("focus_areas") or []
                         day_focus_override = profile.data.get("day_focus_override") or {}
                 else:
                     # Fallback: get split from user record
-                    user_record = db.get_user(user_id)
+                    user_record = await run_db(lambda: db.get_user(user_id))
                     training_split = user_record.get("training_split") if user_record else None
                     day_focus_override = {}
                 resolved_split = resolve_training_split(training_split, len(selected_days))
@@ -904,7 +905,8 @@ async def get_today_workout(
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        # resolve_timezone does a sync DB read — offload so it doesn't block the loop.
+        user_tz = await run_db(lambda: resolve_timezone(request, db, user_id))
         today_str = get_user_today(user_tz)
         # Resolve display locale for workout titles. Non-en users get the
         # cached translation when present and a lazy background fill on
@@ -917,7 +919,8 @@ async def get_today_workout(
         if cached_user:
             user = cached_user
         else:
-            user = db.get_user(user_id)
+            # Cache miss: offload the blocking DB read off the event loop.
+            user = await run_db(lambda: db.get_user(user_id))
             if user:
                 await _user_record_cache.set(user_id, user)
         if not user:
@@ -932,7 +935,8 @@ async def get_today_workout(
         # alongside _gym_profile_cache later if it shows up in profiling.
         active_profile_row: Optional[dict] = None
         if active_profile_id:
-            active_profile_row = _get_active_gym_profile(db, user_id)
+            # Sync DB read — offload off the event loop.
+            active_profile_row = await run_db(lambda: _get_active_gym_profile(db, user_id))
 
         # Check cache before running expensive DB queries
         cache_key = f"{user_id}:{active_profile_id or 'none'}:{today_str}"

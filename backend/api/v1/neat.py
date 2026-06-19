@@ -29,6 +29,7 @@ import logging
 import random
 
 from core.db import get_supabase_db
+from core.db_executor import run_db, gather_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from models.neat import (
@@ -361,9 +362,9 @@ async def get_neat_goals(
         # .maybe_single() also returns None / a None-.data response when there's
         # no row yet — guard before reading .data.
         try:
-            goals_response = db.client.table("neat_goals").select("*").eq(
+            goals_response = (await run_db(lambda: db.client.table("neat_goals").select("*").eq(
                 "user_id", user_id
-            ).maybe_single().execute()
+            ).maybe_single().execute()))
         except Exception:
             goals_response = None
 
@@ -378,9 +379,9 @@ async def get_neat_goals(
             # CHECK constraint `neat_goals_goal_type_check` (e.g. 'moderate' is
             # NOT an allowed value — the column is a goal *kind*, not an
             # adjustment strategy), which raised 23514 and crashed this endpoint.
-            insert_response = db.client.table("neat_goals").insert(
+            insert_response = (await run_db(lambda: db.client.table("neat_goals").insert(
                 {"user_id": user_id}
-            ).execute()
+            ).execute()))
             if not insert_response or not insert_response.data:
                 raise safe_internal_error(ValueError("Failed to create default NEAT goals"), "neat")
             goal = NEATGoal(**_neat_goal_row_to_model(insert_response.data[0]))
@@ -388,9 +389,9 @@ async def get_neat_goals(
         # Get today's activity — .maybe_single() can return None or raise on 0 rows.
         today = user_today_date(request).isoformat()
         try:
-            activity_response = db.client.table("daily_activity").select(
+            activity_response = (await run_db(lambda: db.client.table("daily_activity").select(
                 "steps"
-            ).eq("user_id", user_id).eq("activity_date", today).maybe_single().execute()
+            ).eq("user_id", user_id).eq("activity_date", today).maybe_single().execute()))
         except Exception:
             activity_response = None
 
@@ -406,9 +407,9 @@ async def get_neat_goals(
         # real columns are hour / steps / is_sedentary. Derive "movement breaks"
         # from non-sedentary hours that also cleared the per-hour step floor —
         # the closest real signal available in this table.
-        hourly_response = db.client.table("neat_hourly_activity").select(
+        hourly_response = (await run_db(lambda: db.client.table("neat_hourly_activity").select(
             "hour, steps, is_sedentary"
-        ).eq("user_id", user_id).eq("activity_date", today).execute()
+        ).eq("user_id", user_id).eq("activity_date", today).execute()))
 
         active_hours = 0
         movement_breaks = 0
@@ -512,9 +513,9 @@ async def update_neat_goals(
 
         update_data["updated_at"] = datetime.now().isoformat()
 
-        response = db.client.table("neat_goals").update(update_data).eq(
+        response = (await run_db(lambda: db.client.table("neat_goals").update(update_data).eq(
             "user_id", user_id
-        ).execute()
+        ).execute()))
 
         if not response.data:
             raise HTTPException(status_code=404, detail="NEAT goals not found for user")
@@ -561,9 +562,9 @@ async def calculate_progressive_goal(
 
         # Get current goal — user may not have a goal yet.
         try:
-            goal_response = db.client.table("neat_goals").select(
+            goal_response = (await run_db(lambda: db.client.table("neat_goals").select(
                 "daily_step_goal"
-            ).eq("user_id", user_id).maybe_single().execute()
+            ).eq("user_id", user_id).maybe_single().execute()))
         except Exception:
             goal_response = None
 
@@ -575,9 +576,9 @@ async def calculate_progressive_goal(
 
         # Get historical step data
         start_date = (user_today_date(http_request) - timedelta(days=request.look_back_days)).isoformat()
-        history_response = db.client.table("daily_activity").select(
+        history_response = (await run_db(lambda: db.client.table("daily_activity").select(
             "steps, activity_date"
-        ).eq("user_id", user_id).gte("activity_date", start_date).execute()
+        ).eq("user_id", user_id).gte("activity_date", start_date).execute()))
 
         if not history_response.data:
             return ProgressiveGoalResponse(
@@ -675,9 +676,9 @@ async def record_hourly_activity(
 
         # Get user's min steps per hour setting — may not have a goal row yet.
         try:
-            goal_response = db.client.table("neat_goals").select(
+            goal_response = (await run_db(lambda: db.client.table("neat_goals").select(
                 "min_steps_per_hour"
-            ).eq("user_id", user_id).maybe_single().execute()
+            ).eq("user_id", user_id).maybe_single().execute()))
         except Exception:
             goal_response = None
 
@@ -706,10 +707,10 @@ async def record_hourly_activity(
         }
 
         # Upsert based on user_id, activity_date, and hour
-        response = db.client.table("neat_hourly_activity").upsert(
+        response = (await run_db(lambda: db.client.table("neat_hourly_activity").upsert(
             data,
             on_conflict="user_id,activity_date,hour"
-        ).execute()
+        ).execute()))
 
         if not response.data:
             raise safe_internal_error(ValueError("Failed to record hourly activity"), "neat")
@@ -740,9 +741,9 @@ async def get_hourly_breakdown(
     try:
         logger.info(f"Fetching hourly breakdown for user {user_id} on {activity_date}")
 
-        response = db.client.table("neat_hourly_activity").select("*").eq(
+        response = (await run_db(lambda: db.client.table("neat_hourly_activity").select("*").eq(
             "user_id", user_id
-        ).eq("activity_date", activity_date.isoformat()).order("hour").execute()
+        ).eq("activity_date", activity_date.isoformat()).order("hour").execute()))
 
         # NOTE: the live neat_hourly_activity table columns differ from the
         # HourlyActivityRecord model. Real columns: is_sedentary, calories_burned,
@@ -826,9 +827,9 @@ async def batch_sync_hourly_activity(
 
         # Get user's min steps per hour setting — may not have a goal row yet.
         try:
-            goal_response = db.client.table("neat_goals").select(
+            goal_response = (await run_db(lambda: db.client.table("neat_goals").select(
                 "min_steps_per_hour"
-            ).eq("user_id", user_id).maybe_single().execute()
+            ).eq("user_id", user_id).maybe_single().execute()))
         except Exception:
             goal_response = None
 
@@ -861,10 +862,10 @@ async def batch_sync_hourly_activity(
                     "created_at": datetime.now().isoformat(),
                 }
 
-                db.client.table("neat_hourly_activity").upsert(
+                (await run_db(lambda: db.client.table("neat_hourly_activity").upsert(
                     data,
                     on_conflict="user_id,activity_date,hour"
-                ).execute()
+                ).execute()))
 
                 results.append({
                     "date": activity.activity_date.isoformat(),
@@ -917,9 +918,9 @@ async def get_today_neat_score(user_id: str,
         # when there's no score row for today — return None gracefully
         # (response_model is Optional[NEATScore]) instead of crashing.
         try:
-            response = db.client.table("neat_scores").select("*").eq(
+            response = (await run_db(lambda: db.client.table("neat_scores").select("*").eq(
                 "user_id", user_id
-            ).eq("score_date", today).maybe_single().execute()
+            ).eq("score_date", today).maybe_single().execute()))
         except Exception:
             response = None
 
@@ -985,7 +986,7 @@ async def get_neat_score_history(
         if isinstance(end_date, date):
             query = query.lte("score_date", end_date.isoformat())
 
-        response = query.order("score_date", desc=True).limit(limit).execute()
+        response = (await run_db(lambda: query.order("score_date", desc=True).limit(limit).execute()))
 
         scores = []
         grade_counts: Dict[str, int] = defaultdict(int)
@@ -1079,9 +1080,9 @@ async def calculate_neat_score(
         # Check if already calculated today (unless force recalculate)
         if not request.force_recalculate:
             try:
-                existing = db.client.table("neat_scores").select("id").eq(
+                existing = (await run_db(lambda: db.client.table("neat_scores").select("id").eq(
                     "user_id", user_id
-                ).eq("score_date", today_str).maybe_single().execute()
+                ).eq("score_date", today_str).maybe_single().execute()))
             except Exception:
                 existing = None
 
@@ -1091,9 +1092,9 @@ async def calculate_neat_score(
 
         # Get goals — user may not have a goals row yet.
         try:
-            goal_response = db.client.table("neat_goals").select("*").eq(
+            goal_response = (await run_db(lambda: db.client.table("neat_goals").select("*").eq(
                 "user_id", user_id
-            ).maybe_single().execute()
+            ).maybe_single().execute()))
         except Exception:
             goal_response = None
 
@@ -1109,9 +1110,9 @@ async def calculate_neat_score(
             min_steps_per_hour = 250
 
         # Get hourly data
-        hourly_response = db.client.table("neat_hourly_activity").select("*").eq(
+        hourly_response = (await run_db(lambda: db.client.table("neat_hourly_activity").select("*").eq(
             "user_id", user_id
-        ).eq("activity_date", today_str).order("hour").execute()
+        ).eq("activity_date", today_str).order("hour").execute()))
 
         hourly_data = hourly_response.data or []
 
@@ -1157,10 +1158,10 @@ async def calculate_neat_score(
             "calculated_at": datetime.now().isoformat(),
         }
 
-        response = db.client.table("neat_scores").upsert(
+        response = (await run_db(lambda: db.client.table("neat_scores").upsert(
             score_data,
             on_conflict="user_id,score_date"
-        ).execute()
+        ).execute()))
 
         if not response.data:
             raise safe_internal_error(ValueError("Failed to save NEAT score"), "neat")
@@ -1204,9 +1205,9 @@ async def get_neat_streaks(user_id: str,
     db = get_supabase_db()
 
     try:
-        response = db.client.table("neat_streaks").select("*").eq(
+        response = (await run_db(lambda: db.client.table("neat_streaks").select("*").eq(
             "user_id", user_id
-        ).execute()
+        ).execute()))
 
         # NOTE: the neat_streaks table stores streak lengths as current_streak /
         # longest_streak, but the NEATStreak model fields are current_length /
@@ -1274,12 +1275,12 @@ async def get_neat_trends(
         span = days if days > 0 else 1825
         start_date = (today - timedelta(days=span - 1)).isoformat()
 
-        response = db.client.table("neat_daily_scores").select(
+        response = (await run_db(lambda: db.client.table("neat_daily_scores").select(
             "score_date,neat_score,total_steps,goal_at_time,"
             "step_goal_achieved,active_hours,sedentary_hours"
         ).eq("user_id", user_id).gte(
             "score_date", start_date
-        ).lte("score_date", today.isoformat()).order("score_date").execute()
+        ).lte("score_date", today.isoformat()).order("score_date").execute()))
         rows = response.data or []
 
         daily_series = []

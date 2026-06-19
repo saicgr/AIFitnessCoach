@@ -3,6 +3,7 @@ XP Events API - Daily Login, Streaks, Double XP Events
 """
 from core import branding
 from core.db import get_supabase_db
+from core.db_executor import run_db, gather_db
 
 from .xp_models import *  # noqa: F401, F403
 from .xp_endpoints import router as _endpoints_router
@@ -50,13 +51,13 @@ async def process_daily_login(
         logger.info(f"[XP] daily-login called for user_id: {user_id}, auth_id: {current_user.get('auth_id')}")
 
         # Resolve user timezone and pass their local date to RPC
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         user_today = get_user_today(user_tz)
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "process_daily_login",
             {"p_user_id": user_id, "p_user_date": user_today}
-        ).execute()
+        ).execute()))
 
         if result.data:
             data = result.data
@@ -141,16 +142,16 @@ async def use_streak_freeze(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         user_today = get_user_today(user_tz)
 
         # Read current balance. Defaults to 2 (matches schema default).
         balance_row = (
-            db.client.table("users")
+            (await run_db(lambda: db.client.table("users")
             .select("xp_streak_freezes_available")
             .eq("id", user_id)
             .limit(1)
-            .execute()
+            .execute()))
         )
         current_balance = 2
         if balance_row.data:
@@ -167,15 +168,15 @@ async def use_streak_freeze(
         new_balance = current_balance - 1
 
         # Decrement the freeze count.
-        db.client.table("users").update(
+        (await run_db(lambda: db.client.table("users").update(
             {"xp_streak_freezes_available": new_balance}
-        ).eq("id", user_id).execute()
+        ).eq("id", user_id).execute()))
 
         # Stamp the login-streak row so the same-day guard fires on a re-call.
         try:
-            db.client.table("user_login_streaks").update(
+            (await run_db(lambda: db.client.table("user_login_streaks").update(
                 {"last_freeze_used_at": str(user_today)}
-            ).eq("user_id", user_id).execute()
+            ).eq("user_id", user_id).execute()))
         except Exception as e:
             # Per-feature graceful degradation — schema may not have been
             # migrated yet on a transient stale connection.
@@ -360,9 +361,9 @@ async def get_streak_freeze_status(
         # Read current streak.
         current_streak = 0
         try:
-            streak_res = db.client.rpc(
+            streak_res = (await run_db(lambda: db.client.rpc(
                 "get_login_streak", {"p_user_id": user_id}
-            ).execute()
+            ).execute()))
             if streak_res.data:
                 current_streak = int(streak_res.data.get("current_streak") or 0)
         except Exception as e:
@@ -374,12 +375,12 @@ async def get_streak_freeze_status(
         recent: list = []
         try:
             led = (
-                db.client.table("xp_streak_freeze_ledger")
+                (await run_db(lambda: db.client.table("xp_streak_freeze_ledger")
                 .select("delta, reason, balance_after, streak_day, event_date, created_at")
                 .eq("user_id", user_id)
                 .order("created_at", desc=True)
                 .limit(20)
-                .execute()
+                .execute()))
             )
             recent = led.data or []
         except Exception as e:
@@ -421,7 +422,7 @@ async def get_streak_timeframe(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today = date.fromisoformat(get_user_today(user_tz))
 
         if timeframe == "month":
@@ -441,11 +442,11 @@ async def get_streak_timeframe(
         active_dates: set = set()
         try:
             tx = (
-                db.client.table("xp_transactions")
+                (await run_db(lambda: db.client.table("xp_transactions")
                 .select("created_at")
                 .eq("user_id", user_id)
                 .gte("created_at", start_iso)
-                .execute()
+                .execute()))
             )
             for row in (tx.data or []):
                 ts = row.get("created_at")
@@ -464,12 +465,12 @@ async def get_streak_timeframe(
         freezes_used = 0
         try:
             led = (
-                db.client.table("xp_streak_freeze_ledger")
+                (await run_db(lambda: db.client.table("xp_streak_freeze_ledger")
                 .select("reason, event_date")
                 .eq("user_id", user_id)
                 .lt("delta", 0)
                 .gte("event_date", str(window_start))
-                .execute()
+                .execute()))
             )
             for row in (led.data or []):
                 ed = row.get("event_date")
@@ -500,9 +501,9 @@ async def get_streak_timeframe(
         current_streak = 0
         longest_streak = 0
         try:
-            streak_res = db.client.rpc(
+            streak_res = (await run_db(lambda: db.client.rpc(
                 "get_login_streak", {"p_user_id": user_id}
-            ).execute()
+            ).execute()))
             if streak_res.data:
                 current_streak = int(streak_res.data.get("current_streak") or 0)
                 longest_streak = int(streak_res.data.get("longest_streak") or 0)
@@ -531,10 +532,10 @@ async def get_login_streak(
     """Get user's login streak information."""
     try:
         db = get_supabase_db()
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "get_login_streak",
             {"p_user_id": current_user["id"]}
-        ).execute()
+        ).execute()))
 
         if result.data:
             return LoginStreakInfo(**result.data)
@@ -557,7 +558,7 @@ async def get_active_events(
     """Get all currently active XP events (Double XP, etc.)."""
     try:
         db = get_supabase_db()
-        result = db.client.rpc("get_active_xp_events").execute()
+        result = (await run_db(lambda: db.client.rpc("get_active_xp_events").execute()))
         return result.data or []
 
     except Exception as e:
@@ -577,7 +578,7 @@ async def get_all_events(
         if not include_inactive:
             query = query.eq("is_active", True)
 
-        result = query.execute()
+        result = (await run_db(lambda: query.execute()))
         return result.data or []
 
     except Exception as e:
@@ -596,7 +597,7 @@ async def enable_double_xp_event(
     """
     try:
         db = get_supabase_db()
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "enable_double_xp_event",
             {
                 "p_event_name": request.event_name,
@@ -605,7 +606,7 @@ async def enable_double_xp_event(
                 "p_duration_hours": request.duration_hours,
                 "p_admin_id": current_user["id"]
             }
-        ).execute()
+        ).execute()))
 
         return {
             "event_id": result.data,
@@ -625,10 +626,10 @@ async def disable_event(
     """Disable/end an XP event early (admin only)."""
     try:
         db = get_supabase_db()
-        result = db.client.table("xp_events").update({
+        result = (await run_db(lambda: db.client.table("xp_events").update({
             "is_active": False,
             "end_at": datetime.utcnow().isoformat()
-        }).eq("id", event_id).execute()
+        }).eq("id", event_id).execute()))
 
         return {"message": "Event disabled", "event_id": event_id}
 
@@ -643,7 +644,7 @@ async def get_bonus_templates(
     """Get all XP bonus templates (for reference/admin)."""
     try:
         db = get_supabase_db()
-        result = db.client.table("xp_bonus_templates").select("*").order("bonus_type").execute()
+        result = (await run_db(lambda: db.client.table("xp_bonus_templates").select("*").order("bonus_type").execute()))
         return result.data or []
 
     except Exception as e:
@@ -660,10 +661,10 @@ async def update_bonus_template(
     """Update an XP bonus template (admin only)."""
     try:
         db = get_supabase_db()
-        result = db.client.table("xp_bonus_templates").update({
+        result = (await run_db(lambda: db.client.table("xp_bonus_templates").update({
             "base_xp": base_xp,
             "is_active": is_active
-        }).eq("bonus_type", bonus_type).execute()
+        }).eq("bonus_type", bonus_type).execute()))
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Bonus template not found")
@@ -688,10 +689,10 @@ async def get_checkpoint_progress(
         user_id = current_user["id"]
 
         # Initialize checkpoint progress if needed and get current status
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "init_user_checkpoint_progress",
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         if result.data:
             data = result.data
@@ -710,7 +711,7 @@ async def get_checkpoint_progress(
                 }
 
         # Fallback if RPC doesn't return expected data (uses default 5 days/week)
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today = date.fromisoformat(get_user_today(user_tz))
         default_days_per_week = 5
         if checkpoint_type == "weekly":
@@ -761,10 +762,10 @@ async def get_all_checkpoint_progress(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "init_user_checkpoint_progress",
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         if result.data:
             return result.data
@@ -791,10 +792,10 @@ async def increment_checkpoint_workout(
 
         logger.info(f"[XP] Incrementing checkpoint workout for user {user_id}")
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "increment_checkpoint_workout",
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         if result.data:
             data = result.data
@@ -847,7 +848,7 @@ async def award_goal_xp(
         logger.info(f"[XP] award-goal-xp called: user_id={user_id}, goal_type={request.goal_type}")
 
         # Resolve user timezone and get today's UTC range
-        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
         today_str = get_user_today(user_tz)
         today_start_iso, today_end_iso = local_date_to_utc_range(today_str, user_tz)
         logger.info(f"[XP] Checking existing claims from {today_start_iso} to {today_end_iso}")
@@ -886,19 +887,19 @@ async def award_goal_xp(
 
         # Ensure user has a user_xp record (critical for award_xp function to work)
         try:
-            db.client.table("user_xp").upsert({
+            (await run_db(lambda: db.client.table("user_xp").upsert({
                 "user_id": user_id,
                 "total_xp": 0,
                 "current_level": 1,
                 "title": "Novice",
                 "trust_level": 1
-            }, on_conflict="user_id", ignore_duplicates=True).execute()
+            }, on_conflict="user_id", ignore_duplicates=True).execute()))
             logger.info(f"[XP] Ensured user_xp record exists for user {user_id}")
         except Exception as init_err:
             logger.warning(f"[XP] Could not ensure user_xp record: {init_err}", exc_info=True)
 
         # Check if already awarded today (prevent double claiming)
-        existing = db.client.table("xp_transactions").select("id").eq(
+        existing = (await run_db(lambda: db.client.table("xp_transactions").select("id").eq(
             "user_id", user_id
         ).eq(
             "source", source
@@ -906,7 +907,7 @@ async def award_goal_xp(
             "created_at", today_start_iso
         ).lt(
             "created_at", today_end_iso
-        ).execute()
+        ).execute()))
         logger.info(f"[XP] Existing claims found: {len(existing.data) if existing.data else 0}")
 
         if existing.data and len(existing.data) > 0:
@@ -920,7 +921,7 @@ async def award_goal_xp(
 
         # Award XP using the award_xp function
         logger.info(f"[XP] Calling award_xp RPC with amount={xp_amount}, source={source}")
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "award_xp",
             {
                 "p_user_id": user_id,
@@ -934,7 +935,7 @@ async def award_goal_xp(
                 ),
                 "p_is_verified": False
             }
-        ).execute()
+        ).execute()))
         logger.info(f"[XP] award_xp RPC result: {result.data}")
 
         # Get actual XP awarded from the result (accounts for trust_level multiplier)
@@ -943,11 +944,11 @@ async def award_goal_xp(
             # The award_xp function returns the updated user_xp record
             # We need to check xp_transactions for the actual amount
             try:
-                recent_tx = db.client.table("xp_transactions").select("xp_amount").eq(
+                recent_tx = (await run_db(lambda: db.client.table("xp_transactions").select("xp_amount").eq(
                     "user_id", user_id
                 ).eq(
                     "source", source
-                ).order("created_at", desc=True).limit(1).execute()
+                ).order("created_at", desc=True).limit(1).execute()))
                 if recent_tx.data and len(recent_tx.data) > 0:
                     actual_xp_awarded = recent_tx.data[0].get("xp_amount", xp_amount)
             except Exception as tx_err:
@@ -995,17 +996,17 @@ async def get_daily_goals_status(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today_str = get_user_today(user_tz)
         today_start_iso, today_end_iso = local_date_to_utc_range(today_str, user_tz)
 
-        result = db.client.table("xp_transactions").select("source").eq(
+        result = (await run_db(lambda: db.client.table("xp_transactions").select("source").eq(
             "user_id", user_id
         ).gte(
             "created_at", today_start_iso
         ).lt(
             "created_at", today_end_iso
-        ).execute()
+        ).execute()))
 
         sources = [r.get("source", "") for r in (result.data or [])]
 
@@ -1089,11 +1090,11 @@ async def award_first_time_bonus(
         xp_amount = FIRST_TIME_BONUSES[bonus_type]
 
         # Check if already awarded
-        existing = db.client.table("user_first_time_bonuses").select("id").eq(
+        existing = (await run_db(lambda: db.client.table("user_first_time_bonuses").select("id").eq(
             "user_id", user_id
         ).eq(
             "bonus_type", bonus_type
-        ).execute()
+        ).execute()))
 
         if existing.data and len(existing.data) > 0:
             logger.warning(f"[XP] First-time bonus {bonus_type} already awarded to user {user_id}")
@@ -1106,25 +1107,25 @@ async def award_first_time_bonus(
 
         # Ensure user has a user_xp record
         try:
-            db.client.table("user_xp").upsert({
+            (await run_db(lambda: db.client.table("user_xp").upsert({
                 "user_id": user_id,
                 "total_xp": 0,
                 "current_level": 1,
                 "title": "Novice",
                 "trust_level": 1
-            }, on_conflict="user_id", ignore_duplicates=True).execute()
+            }, on_conflict="user_id", ignore_duplicates=True).execute()))
         except Exception as init_err:
             logger.warning(f"[XP] Could not ensure user_xp record: {init_err}", exc_info=True)
 
         # Record the bonus
-        db.client.table("user_first_time_bonuses").insert({
+        (await run_db(lambda: db.client.table("user_first_time_bonuses").insert({
             "user_id": user_id,
             "bonus_type": bonus_type,
             "xp_awarded": xp_amount
-        }).execute()
+        }).execute()))
 
         # Award XP using the award_xp function
-        db.client.rpc(
+        (await run_db(lambda: db.client.rpc(
             "award_xp",
             {
                 "p_user_id": user_id,
@@ -1134,7 +1135,7 @@ async def award_first_time_bonus(
                 "p_description": f"First-time bonus: {bonus_type.replace('_', ' ')}",
                 "p_is_verified": False
             }
-        ).execute()
+        ).execute()))
 
         logger.info(f"[XP] Awarded {xp_amount} XP for first-time bonus: {bonus_type}")
         return FirstTimeBonusResponse(
@@ -1173,11 +1174,11 @@ async def complete_onboarding_challenge(
         xp_amount = FIRST_TIME_BONUSES[BONUS_TYPE]
 
         # Already completed? -> idempotent no-op.
-        existing = db.client.table("user_first_time_bonuses").select("id").eq(
+        existing = (await run_db(lambda: db.client.table("user_first_time_bonuses").select("id").eq(
             "user_id", user_id
         ).eq(
             "bonus_type", BONUS_TYPE
-        ).execute()
+        ).execute()))
 
         if existing.data and len(existing.data) > 0:
             logger.info(f"[XP] Onboarding challenge already completed for user {user_id}")
@@ -1191,26 +1192,26 @@ async def complete_onboarding_challenge(
 
         # Ensure user has a user_xp record (mirrors award_first_time_bonus).
         try:
-            db.client.table("user_xp").upsert({
+            (await run_db(lambda: db.client.table("user_xp").upsert({
                 "user_id": user_id,
                 "total_xp": 0,
                 "current_level": 1,
                 "title": "Novice",
                 "trust_level": 1
-            }, on_conflict="user_id", ignore_duplicates=True).execute()
+            }, on_conflict="user_id", ignore_duplicates=True).execute()))
         except Exception as init_err:
             logger.warning(f"[XP] Could not ensure user_xp record: {init_err}", exc_info=True)
 
         # Record the completion bonus (the unique (user_id, bonus_type) row is
         # what makes this idempotent).
-        db.client.table("user_first_time_bonuses").insert({
+        (await run_db(lambda: db.client.table("user_first_time_bonuses").insert({
             "user_id": user_id,
             "bonus_type": BONUS_TYPE,
             "xp_awarded": xp_amount
-        }).execute()
+        }).execute()))
 
         # Award the completion XP.
-        db.client.rpc(
+        (await run_db(lambda: db.client.rpc(
             "award_xp",
             {
                 "p_user_id": user_id,
@@ -1220,16 +1221,16 @@ async def complete_onboarding_challenge(
                 "p_description": "Completed the Get Started Challenge",
                 "p_is_verified": False
             }
-        ).execute()
+        ).execute()))
 
         # Grant the reward crate as an openable consumable. Best-effort: a crate
         # failure must not roll back the (already-awarded) XP, so we don't raise.
         crate_granted = False
         try:
-            db.client.rpc(
+            (await run_db(lambda: db.client.rpc(
                 "add_consumable",
                 {"p_user_id": user_id, "p_item_type": CRATE_TYPE, "p_quantity": 1}
-            ).execute()
+            ).execute()))
             crate_granted = True
         except Exception as crate_err:
             logger.error(f"[XP] Onboarding crate grant failed for user {user_id}: {crate_err}", exc_info=True)
@@ -1261,11 +1262,11 @@ async def get_first_time_bonuses(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.table("user_first_time_bonuses").select(
+        result = (await run_db(lambda: db.client.table("user_first_time_bonuses").select(
             "bonus_type", "xp_awarded", "awarded_at"
         ).eq(
             "user_id", user_id
-        ).order("awarded_at", desc=True).execute()
+        ).order("awarded_at", desc=True).execute()))
 
         return [
             FirstTimeBonusInfo(
@@ -1293,11 +1294,11 @@ async def get_available_first_time_bonuses(
         user_id = current_user["id"]
 
         # Get already awarded bonuses
-        result = db.client.table("user_first_time_bonuses").select(
+        result = (await run_db(lambda: db.client.table("user_first_time_bonuses").select(
             "bonus_type"
         ).eq(
             "user_id", user_id
-        ).execute()
+        ).execute()))
 
         awarded = {r["bonus_type"] for r in (result.data or [])}
 
@@ -1333,17 +1334,17 @@ async def get_consumables(
         user_id = current_user["id"]
 
         # Get consumables via RPC (initializes if needed)
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "get_user_consumables",
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         consumables = result.data or {}
 
         # Check if 2x XP is active
-        xp_result = db.client.table("user_xp").select(
+        xp_result = (await run_db(lambda: db.client.table("user_xp").select(
             "active_2x_token_until"
-        ).eq("user_id", user_id).single().execute()
+        ).eq("user_id", user_id).single().execute()))
 
         active_until = None
         if xp_result.data and xp_result.data.get("active_2x_token_until"):
@@ -1404,9 +1405,9 @@ async def get_weekly_xp_summary(
         now = datetime.utcnow()
         start_14d = (now - timedelta(days=14)).isoformat()
 
-        result = db.client.table("xp_transactions").select(
+        result = (await run_db(lambda: db.client.table("xp_transactions").select(
             "xp_amount, created_at"
-        ).eq("user_id", target_user_id).gte("created_at", start_14d).execute()
+        ).eq("user_id", target_user_id).gte("created_at", start_14d).execute()))
 
         rows = result.data or []
 
@@ -1445,17 +1446,17 @@ async def get_weekly_xp_summary(
         try:
             # Check if user has any food log today
             start_today = datetime.combine(today, datetime.min.time()).isoformat()
-            food_res = db.client.table("food_logs").select(
+            food_res = (await run_db(lambda: db.client.table("food_logs").select(
                 "id", count="exact"
-            ).eq("user_id", target_user_id).gte("logged_at", start_today).limit(1).execute()
+            ).eq("user_id", target_user_id).gte("logged_at", start_today).limit(1).execute()))
             logged_food_today = (food_res.count or 0) > 0
             if not logged_food_today:
                 nudge = "log_breakfast"
             else:
                 # Fall through: check if they logged a workout today
-                wk_res = db.client.table("workout_logs").select(
+                wk_res = (await run_db(lambda: db.client.table("workout_logs").select(
                     "id", count="exact"
-                ).eq("user_id", target_user_id).gte("completed_at", start_today).limit(1).execute()
+                ).eq("user_id", target_user_id).gte("completed_at", start_today).limit(1).execute()))
                 if (wk_res.count or 0) == 0:
                     nudge = "log_workout"
         except Exception as e:
@@ -1548,9 +1549,9 @@ async def get_next_level_preview(
         if target_user_id != current_user["id"]:
             raise HTTPException(status_code=403, detail="Cannot read another user's XP")
 
-        result = db.client.table("user_xp").select(
+        result = (await run_db(lambda: db.client.table("user_xp").select(
             "current_level, xp_in_current_level, xp_to_next_level"
-        ).eq("user_id", target_user_id).single().execute()
+        ).eq("user_id", target_user_id).single().execute()))
 
         row = result.data or {}
         level = int(row.get("current_level") or 1)

@@ -26,6 +26,7 @@ from models.schemas import (
 from models.nutrition import _normalize_hydration_source
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.db_executor import run_db
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -90,22 +91,22 @@ async def persist_hydration_entry(
     # either missing column (`local_date` or `source`).
     try:
         log_data["local_date"] = local_date
-        result = db.client.table("hydration_logs").insert(log_data).execute()
+        result = await run_db(lambda: db.client.table("hydration_logs").insert(log_data).execute())
     except Exception as insert_err:
         err_str = str(insert_err)
         if "local_date" in err_str:
             log_data.pop("local_date", None)
             try:
-                result = db.client.table("hydration_logs").insert(log_data).execute()
+                result = await run_db(lambda: db.client.table("hydration_logs").insert(log_data).execute())
             except Exception as e2:
                 if "source" in str(e2):
                     log_data.pop("source", None)
-                    result = db.client.table("hydration_logs").insert(log_data).execute()
+                    result = await run_db(lambda: db.client.table("hydration_logs").insert(log_data).execute())
                 else:
                     raise
         elif "source" in err_str:
             log_data.pop("source", None)
-            result = db.client.table("hydration_logs").insert(log_data).execute()
+            result = await run_db(lambda: db.client.table("hydration_logs").insert(log_data).execute())
         else:
             raise
 
@@ -142,7 +143,7 @@ async def log_hydration(
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(http_request, db, data.user_id)
+        user_tz = await run_db(lambda: resolve_timezone(http_request, db, data.user_id))
 
         # Use client's local date if provided, otherwise derive from user timezone
         local_date = data.local_date or get_user_today(user_tz)
@@ -199,7 +200,7 @@ async def get_daily_hydration(
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz = await run_db(lambda: resolve_timezone(http_request, db, user_id))
 
         # Parse date or use today in user's timezone
         if date_str:
@@ -292,7 +293,7 @@ async def get_hydration_logs(
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz = await run_db(lambda: resolve_timezone(http_request, db, user_id))
 
         # Calculate date range based on user's timezone
         today = date.fromisoformat(get_user_today(user_tz))
@@ -307,7 +308,7 @@ async def get_hydration_logs(
         if workout_id:
             query = query.eq("workout_id", workout_id)
 
-        result = query.order("logged_at", desc=True).limit(limit).execute()
+        result = await run_db(lambda: query.order("logged_at", desc=True).limit(limit).execute())
 
         return [row_to_hydration_log(row) for row in (result.data or [])]
 
@@ -327,7 +328,7 @@ async def delete_hydration_log(
     try:
         db = get_supabase_db()
 
-        result = db.client.table("hydration_logs").delete().eq("id", log_id).execute()
+        result = await run_db(lambda: db.client.table("hydration_logs").delete().eq("id", log_id).execute())
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Hydration log not found")
@@ -356,9 +357,9 @@ async def get_user_hydration_goal(user_id: str) -> int:
     try:
         db = get_supabase_db()
 
-        result = db.client.table("user_settings").select("hydration_goal_ml").eq(
+        result = await run_db(lambda: db.client.table("user_settings").select("hydration_goal_ml").eq(
             "user_id", user_id
-        ).single().execute()
+        ).single().execute())
 
         if result.data and result.data.get("hydration_goal_ml"):
             return result.data["hydration_goal_ml"]
@@ -391,11 +392,11 @@ async def update_hydration_goal(
         db = get_supabase_db()
 
         # Upsert into user_settings
-        result = db.client.table("user_settings").upsert({
+        result = await run_db(lambda: db.client.table("user_settings").upsert({
             "user_id": user_id,
             "hydration_goal_ml": data.daily_goal_ml,
             "updated_at": datetime.utcnow().isoformat(),
-        }, on_conflict="user_id").execute()
+        }, on_conflict="user_id").execute())
 
         # Bust the home bootstrap cache — its HydrationSummary.target_ml is
         # derived from this goal, so a stale cache would show the old target.

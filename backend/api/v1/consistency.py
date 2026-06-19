@@ -21,6 +21,7 @@ import asyncio
 import logging
 
 from core.db import get_supabase_db
+from core.db_executor import run_db, gather_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
@@ -202,9 +203,9 @@ async def get_consistency_insights(
     # each query to the executor; the CPU processing between them is trivial
     # (loops over a few hundred rows), so it's fine to leave on the loop.
     loop = asyncio.get_event_loop()
-    user_tz = resolve_timezone(request, db, user_id)
+    user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
     today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
-    starts_sunday = get_week_starts_sunday(db, user_id)
+    starts_sunday = (await run_db(lambda: get_week_starts_sunday(db, user_id)))
 
     try:
         logger.info(f"Fetching consistency insights for user {user_id}")
@@ -520,9 +521,9 @@ async def get_consistency_patterns(
 
         # Get workout time patterns. Defensively guarded — table may not exist.
         try:
-            patterns_response = db.client.table("workout_time_patterns").select(
+            patterns_response = (await run_db(lambda: db.client.table("workout_time_patterns").select(
                 "day_of_week, hour_of_day, completion_count, skip_count, updated_at"
-            ).eq("user_id", user_id).execute()
+            ).eq("user_id", user_id).execute()))
         except Exception as _e:
             logger.debug(f"workout_time_patterns missing or failed: {_e}")
             patterns_response = type("R", (), {"data": []})()
@@ -610,9 +611,9 @@ async def get_consistency_patterns(
         # to display, not a 500-worthy error.
         history_response = type("R", (), {"data": []})()
         try:
-            history_response = db.client.table("streak_history").select("*").eq(
+            history_response = (await run_db(lambda: db.client.table("streak_history").select("*").eq(
                 "user_id", user_id
-            ).order("ended_at", desc=True).limit(20).execute()
+            ).order("ended_at", desc=True).limit(20).execute()))
         except Exception as _e:
             logger.debug(f"streak_history missing or failed: {_e}")
 
@@ -688,7 +689,7 @@ async def get_calendar_heatmap(
 
     try:
         # Calculate date range based on parameters
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         if start_date_param and end_date_param:
@@ -889,7 +890,7 @@ async def get_day_detail(
 
     try:
         target_date = date.fromisoformat(date_str)
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Determine base status
@@ -906,13 +907,13 @@ async def get_day_detail(
         # Get scheduled workout for this date
         # Use date range to properly match timestamp column
         # Prioritize completed workouts, then most recent
-        workout_response = db.client.table("workouts").select(
+        workout_response = (await run_db(lambda: db.client.table("workouts").select(
             "id, name, type, difficulty, duration_minutes, exercises_json, is_completed, generation_method"
         ).eq("user_id", user_id).gte(
             "scheduled_date", f"{date_str}T00:00:00"
         ).lt(
             "scheduled_date", f"{date_str}T23:59:59"
-        ).order("is_completed", desc=True).order("created_at", desc=True).limit(1).execute()
+        ).order("is_completed", desc=True).order("created_at", desc=True).limit(1).execute()))
 
         if not workout_response.data or len(workout_response.data) == 0:
             return {
@@ -984,9 +985,9 @@ async def get_day_detail(
             # NOTE: performance_logs has NO is_pr column (it lives on
             # strength_records). Selecting it 500s with 42703. PR status is
             # resolved per-exercise from strength_records below.
-            perf_response = db.client.table("performance_logs").select(
+            perf_response = (await run_db(lambda: db.client.table("performance_logs").select(
                 "exercise_name, exercise_id, set_number, reps_completed, weight_kg, rpe, rir, set_type"
-            ).eq("workout_log_id", workout_log_id).order("exercise_name").order("set_number").execute()
+            ).eq("workout_log_id", workout_log_id).order("exercise_name").order("set_number").execute()))
 
             # Group by exercise
             exercise_sets = defaultdict(list)
@@ -996,9 +997,9 @@ async def get_day_detail(
             # Get exercise details for muscle groups
             exercise_names = list(exercise_sets.keys())
             if exercise_names:
-                ex_details_response = db.client.table("exercises").select(
+                ex_details_response = (await run_db(lambda: db.client.table("exercises").select(
                     "name, primary_muscles, secondary_muscles"
-                ).in_("name", exercise_names).execute()
+                ).in_("name", exercise_names).execute()))
 
                 exercise_muscles = {}
                 for ex in (ex_details_response.data or []):
@@ -1013,13 +1014,13 @@ async def get_day_detail(
             completed_at = log_data.get("completed_at")
             if exercise_names and completed_at:
                 day = str(completed_at)[:10]
-                pr_response = db.client.table("strength_records").select(
+                pr_response = (await run_db(lambda: db.client.table("strength_records").select(
                     "exercise_name, achieved_at"
                 ).eq("user_id", user_id).eq("is_pr", True).in_(
                     "exercise_name", exercise_names
                 ).gte("achieved_at", f"{day}T00:00:00").lte(
                     "achieved_at", f"{day}T23:59:59.999999"
-                ).execute()
+                ).execute()))
                 for pr in (pr_response.data or []):
                     exercise_prs[pr["exercise_name"]] = "weight"
 
@@ -1088,9 +1089,9 @@ async def get_day_detail(
         # Get shared images if any
         shared_images = []
         if workout_log_id:
-            share_response = db.client.table("workout_shares").select(
+            share_response = (await run_db(lambda: db.client.table("workout_shares").select(
                 "image_url"
-            ).eq("workout_log_id", workout_log_id).execute()
+            ).eq("workout_log_id", workout_log_id).execute()))
             shared_images = [s["image_url"] for s in (share_response.data or []) if s.get("image_url")]
 
         logger.info("coach_feedback not yet implemented for day detail (user=%s, date=%s)", user_id, date_str)

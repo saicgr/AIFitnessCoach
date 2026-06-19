@@ -18,6 +18,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from pydantic import BaseModel
 
 from core.activity_logger import log_user_activity, log_user_error
+from core.db_executor import run_db, gather_db
 from services.gemini_service import gemini_service
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
@@ -115,16 +116,21 @@ async def get_user_insights(
             end_dt = datetime.combine(end_date, datetime.max.time()).isoformat()
             query = query.lte("generated_at", end_dt)
 
-        result = query.order("priority", desc=True).order("generated_at", desc=True).limit(limit).execute()
+        query = query.order("priority", desc=True).order("generated_at", desc=True).limit(limit)
+        result, today = await gather_db(
+            lambda q=query: q.execute(),
+            lambda: user_today_date(request, db, user_id),
+        )
         insights = result.data if result.data else []
 
         # Get current week's progress
-        today = user_today_date(request, db, user_id)
         week_start = today - timedelta(days=today.weekday())  # Monday
 
-        progress_result = db.client.table("weekly_program_progress").select("*").eq(
-            "user_id", user_id
-        ).eq("week_start_date", week_start.isoformat()).execute()
+        progress_result = await run_db(
+            lambda: db.client.table("weekly_program_progress").select("*").eq(
+                "user_id", user_id
+            ).eq("week_start_date", week_start.isoformat()).execute()
+        )
 
         weekly_progress = progress_result.data[0] if progress_result.data else None
 
@@ -156,27 +162,33 @@ async def generate_insights(
         # Check for recent insights (within last 24 hours)
         if not force_refresh:
             yesterday = (datetime.utcnow() - timedelta(hours=24)).isoformat()
-            recent = db.client.table("user_insights").select("id").eq(
-                "user_id", user_id
-            ).gt("generated_at", yesterday).limit(1).execute()
+            recent = await run_db(
+                lambda: db.client.table("user_insights").select("id").eq(
+                    "user_id", user_id
+                ).gt("generated_at", yesterday).limit(1).execute()
+            )
 
             if recent.data:
                 logger.info(f"Recent insights exist for user {user_id}, skipping generation")
                 return {"message": "Insights are up to date", "generated": False}
 
-        # Gather user data for insight generation
-        user_result = db.client.table("users").select("*").eq("id", user_id).execute()
+        # Gather user data for insight generation (user + today are independent)
+        user_result, today = await gather_db(
+            lambda: db.client.table("users").select("*").eq("id", user_id).execute(),
+            lambda: user_today_date(request, db, user_id),
+        )
         if not user_result.data:
             raise HTTPException(status_code=404, detail="User not found")
 
         user = user_result.data[0]
 
         # Get workout history (last 30 days)
-        today = user_today_date(request, db, user_id)
         thirty_days_ago = (today - timedelta(days=30)).isoformat()
-        workouts_result = db.client.table("workouts").select("*").eq(
-            "user_id", user_id
-        ).gte("scheduled_date", thirty_days_ago).execute()
+        workouts_result = await run_db(
+            lambda: db.client.table("workouts").select("*").eq(
+                "user_id", user_id
+            ).gte("scheduled_date", thirty_days_ago).execute()
+        )
 
         workouts = workouts_result.data if workouts_result.data else []
         completed_workouts = [w for w in workouts if w.get("is_completed")]
@@ -274,15 +286,15 @@ async def generate_insights(
                 break
 
         # Deactivate old insights
-        db.client.table("user_insights").update({
+        (await run_db(lambda: db.client.table("user_insights").update({
             "is_active": False
-        }).eq("user_id", user_id).execute()
+        }).eq("user_id", user_id).execute()))
 
         # Insert new insights
         for insight in insights_to_create:
             insight["generated_at"] = datetime.utcnow().isoformat()
             insight["expires_at"] = (datetime.utcnow() + timedelta(days=7)).isoformat()
-            db.client.table("user_insights").insert(insight).execute()
+            (await run_db(lambda: db.client.table("user_insights").insert(insight).execute()))
 
         logger.info(f"Generated {len(insights_to_create)} insights for user {user_id}")
 
@@ -308,9 +320,9 @@ async def dismiss_insight(
     try:
         db = get_supabase_db()
 
-        result = db.client.table("user_insights").update({
+        result = (await run_db(lambda: db.client.table("user_insights").update({
             "is_active": False
-        }).eq("id", insight_id).eq("user_id", user_id).execute()
+        }).eq("id", insight_id).eq("user_id", user_id).execute()))
 
         return {"message": "Insight dismissed"}
 
@@ -328,9 +340,9 @@ async def get_weekly_progress(
     try:
         db = get_supabase_db()
 
-        result = db.client.table("weekly_program_progress").select("*").eq(
+        result = (await run_db(lambda: db.client.table("weekly_program_progress").select("*").eq(
             "user_id", user_id
-        ).order("week_start_date", desc=True).limit(weeks).execute()
+        ).order("week_start_date", desc=True).limit(weeks).execute()))
 
         return {"weeks": result.data if result.data else []}
 
@@ -358,7 +370,7 @@ async def update_weekly_progress(
         week_end = week_start + timedelta(days=6)  # Sunday
 
         # Get user preferences for target
-        user_result = db.client.table("users").select("preferences").eq("id", user_id).execute()
+        user_result = (await run_db(lambda: db.client.table("users").select("preferences").eq("id", user_id).execute()))
         target_workouts = 4  # Default
         if user_result.data and user_result.data[0].get("preferences"):
             prefs = user_result.data[0]["preferences"]
@@ -366,9 +378,9 @@ async def update_weekly_progress(
                 target_workouts = prefs.get("days_per_week", 4)
 
         # Get workouts for this week
-        workouts_result = db.client.table("workouts").select("*").eq("user_id", user_id).gte(
+        workouts_result = (await run_db(lambda: db.client.table("workouts").select("*").eq("user_id", user_id).gte(
             "scheduled_date", week_start.isoformat()
-        ).lte("scheduled_date", week_end.isoformat()).execute()
+        ).lte("scheduled_date", week_end.isoformat()).execute()))
 
         workouts = workouts_result.data if workouts_result.data else []
         completed = [w for w in workouts if w.get("is_completed")]
@@ -402,16 +414,16 @@ async def update_weekly_progress(
         }
 
         # Check if exists
-        existing = db.client.table("weekly_program_progress").select("id").eq(
+        existing = (await run_db(lambda: db.client.table("weekly_program_progress").select("id").eq(
             "user_id", user_id
-        ).eq("week_start_date", week_start.isoformat()).execute()
+        ).eq("week_start_date", week_start.isoformat()).execute()))
 
         if existing.data:
-            db.client.table("weekly_program_progress").update(progress_data).eq(
+            (await run_db(lambda: db.client.table("weekly_program_progress").update(progress_data).eq(
                 "id", existing.data[0]["id"]
-            ).execute()
+            ).execute()))
         else:
-            db.client.table("weekly_program_progress").insert(progress_data).execute()
+            (await run_db(lambda: db.client.table("weekly_program_progress").insert(progress_data).execute()))
 
         return {
             "message": "Weekly progress updated",
@@ -533,16 +545,16 @@ async def get_weight_insight(
         # Check cache first
         cache_key = f"weight_insight_{user_id}"
         if not force_refresh:
-            cached = db.client.table("ai_insight_cache").select("*").eq(
+            cached = (await run_db(lambda: db.client.table("ai_insight_cache").select("*").eq(
                 "cache_key", cache_key
-            ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+            ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()))
 
             if cached.data:
                 logger.info(f"Returning cached weight insight for {user_id}")
                 return {"insight": cached.data[0]["insight"], "cached": True}
 
         # Get user profile
-        user_result = db.client.table("users").select("*").eq("id", user_id).execute()
+        user_result = (await run_db(lambda: db.client.table("users").select("*").eq("id", user_id).execute()))
         if not user_result.data:
             raise HTTPException(status_code=404, detail="User not found")
         user = user_result.data[0]
@@ -550,9 +562,9 @@ async def get_weight_insight(
         # Get weight history (last 14 days)
         today = user_today_date(request, db, user_id)
         fourteen_days_ago = (today - timedelta(days=14)).isoformat()
-        weight_result = db.client.table("weight_logs").select("*").eq(
+        weight_result = (await run_db(lambda: db.client.table("weight_logs").select("*").eq(
             "user_id", user_id
-        ).gte("logged_at", fourteen_days_ago).order("logged_at", desc=True).execute()
+        ).gte("logged_at", fourteen_days_ago).order("logged_at", desc=True).execute()))
 
         weights = weight_result.data if weight_result.data else []
 
@@ -631,25 +643,25 @@ async def get_daily_tip(
         cache_key = f"daily_tip_{user_id}_{today_str}"
 
         if not force_refresh:
-            cached = db.client.table("ai_insight_cache").select("*").eq(
+            cached = (await run_db(lambda: db.client.table("ai_insight_cache").select("*").eq(
                 "cache_key", cache_key
-            ).limit(1).execute()
+            ).limit(1).execute()))
 
             if cached.data:
                 logger.info(f"Returning cached daily tip for {user_id}")
                 return {"tip": cached.data[0]["insight"], "cached": True}
 
         # Get user profile
-        user_result = db.client.table("users").select("*").eq("id", user_id).execute()
+        user_result = (await run_db(lambda: db.client.table("users").select("*").eq("id", user_id).execute()))
         if not user_result.data:
             raise HTTPException(status_code=404, detail="User not found")
         user = user_result.data[0]
 
         # Get recent workout data
         seven_days_ago = (today - timedelta(days=7)).isoformat()
-        workouts_result = db.client.table("workouts").select("*").eq(
+        workouts_result = (await run_db(lambda: db.client.table("workouts").select("*").eq(
             "user_id", user_id
-        ).gte("scheduled_date", seven_days_ago).order("scheduled_date", desc=True).execute()
+        ).gte("scheduled_date", seven_days_ago).order("scheduled_date", desc=True).execute()))
 
         workouts = workouts_result.data if workouts_result.data else []
         completed = [w for w in workouts if w.get("is_completed")]
@@ -663,7 +675,7 @@ async def get_daily_tip(
 
         # Time of day (in user's timezone)
         from zoneinfo import ZoneInfo
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         hour = datetime.now(ZoneInfo(user_tz)).hour
         time_of_day = "morning" if hour < 12 else "afternoon" if hour < 17 else "evening"
 
@@ -725,9 +737,9 @@ async def get_habit_suggestions(
         # Check cache
         cache_key = f"habit_suggestions_{user_id}"
         if not force_refresh:
-            cached = db.client.table("ai_insight_cache").select("*").eq(
+            cached = (await run_db(lambda: db.client.table("ai_insight_cache").select("*").eq(
                 "cache_key", cache_key
-            ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+            ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()))
 
             if cached.data:
                 try:
@@ -737,15 +749,15 @@ async def get_habit_suggestions(
                     logger.debug(f"Failed to parse cached suggestions: {e}")
 
         # Get user profile
-        user_result = db.client.table("users").select("*").eq("id", user_id).execute()
+        user_result = (await run_db(lambda: db.client.table("users").select("*").eq("id", user_id).execute()))
         if not user_result.data:
             raise HTTPException(status_code=404, detail="User not found")
         user = user_result.data[0]
 
         # Get current habits
-        habits_result = db.client.table("habits").select("name").eq(
+        habits_result = (await run_db(lambda: db.client.table("habits").select("name").eq(
             "user_id", user_id
-        ).eq("is_active", True).execute()
+        ).eq("is_active", True).execute()))
 
         current_habits = [h["name"] for h in (habits_result.data or [])]
 
@@ -876,9 +888,9 @@ async def analyze_trends(
             ).hexdigest()[:16]
         )
         db = get_supabase_db()
-        cached = db.client.table("ai_insight_cache").select("*").eq(
+        cached = (await run_db(lambda: db.client.table("ai_insight_cache").select("*").eq(
             "cache_key", cache_key
-        ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+        ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()))
         if cached.data:
             return {"insight": cached.data[0]["insight"], "cached": True}
 
@@ -976,9 +988,9 @@ async def analyze_fasting(
             + hashlib.sha1(shape.encode()).hexdigest()[:16]
         )
         db = get_supabase_db()
-        cached = db.client.table("ai_insight_cache").select("*").eq(
+        cached = (await run_db(lambda: db.client.table("ai_insight_cache").select("*").eq(
             "cache_key", cache_key
-        ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+        ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()))
         if cached.data:
             return {"insight": cached.data[0]["insight"], "cached": True}
 
@@ -1334,9 +1346,9 @@ async def get_smart_insights(
         # entry (cross-metric only) must not be served as if complete.
         cache_key = f"smart_insights_v2_{user_id}_w{window_days}"
         if not force_refresh:
-            cached = db.client.table("ai_insight_cache").select("*").eq(
+            cached = (await run_db(lambda: db.client.table("ai_insight_cache").select("*").eq(
                 "cache_key", cache_key
-            ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+            ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()))
             if cached.data:
                 try:
                     payload = json.loads(cached.data[0]["insight"])
@@ -1712,13 +1724,13 @@ async def get_day_of_week_skip(
         today_iso = datetime.utcnow().date().isoformat()
 
         resp = (
-            db.client.table("workouts")
+            (await run_db(lambda: db.client.table("workouts")
             .select("scheduled_date,is_completed")
             .eq("user_id", user_id)
             .gte("scheduled_date", cutoff_date)
             .lte("scheduled_date", today_iso)
             .not_.is_("scheduled_date", "null")
-            .execute()
+            .execute()))
         )
         rows = resp.data or []
 
@@ -1804,11 +1816,11 @@ async def get_macro_pattern(
 
         # Pull protein target from users table (single source of truth).
         target_resp = (
-            db.client.table("users")
+            (await run_db(lambda: db.client.table("users")
             .select("daily_protein_target_g")
             .eq("id", user_id)
             .limit(1)
-            .execute()
+            .execute()))
         )
         target = 0.0
         if target_resp.data:
@@ -1830,12 +1842,12 @@ async def get_macro_pattern(
 
         # Pull food_logs in window. The timestamp column is `logged_at`.
         log_resp = (
-            db.client.table("food_logs")
+            (await run_db(lambda: db.client.table("food_logs")
             .select("protein_g,logged_at")
             .eq("user_id", user_id)
             .gte("logged_at", cutoff)
             .lt("logged_at", end_exclusive)
-            .execute()
+            .execute()))
         )
         rows = log_resp.data or []
 

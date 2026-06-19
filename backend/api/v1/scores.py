@@ -33,6 +33,7 @@ from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
 from core.db import get_supabase_db
+from core.db_executor import run_db, gather_db
 from services.strength_calculator_service import (
     StrengthCalculatorService,
     StrengthLevel,
@@ -551,10 +552,10 @@ async def submit_readiness_checkin(
     }
 
     # Upsert (update if exists for today)
-    response = db.client.table("readiness_scores").upsert(
+    response = (await run_db(lambda: db.client.table("readiness_scores").upsert(
         record_data,
         on_conflict="user_id,score_date",
-    ).execute()
+    ).execute()))
 
     if not response.data:
         raise safe_internal_error(ValueError("Failed to save readiness check-in"), "scores")
@@ -562,7 +563,7 @@ async def submit_readiness_checkin(
     record = response.data[0]
 
     # Generate AI recommendation in background and update record
-    tz_str = resolve_timezone(http_request, db, request.user_id)
+    tz_str = (await run_db(lambda: resolve_timezone(http_request, db, request.user_id)))
     background_tasks.add_task(
         generate_ai_readiness_insight,
         user_id=request.user_id,
@@ -618,13 +619,13 @@ async def get_readiness_history(
 
     start_date = (user_today_date(http_request, db, user_id) - timedelta(days=days)).isoformat()
 
-    response = db.client.table("readiness_scores").select("*").eq(
+    response = (await run_db(lambda: db.client.table("readiness_scores").select("*").eq(
         "user_id", user_id
     ).gte(
         "score_date", start_date
     ).order(
         "score_date", desc=True
-    ).execute()
+    ).execute()))
 
     records = response.data or []
 
@@ -680,11 +681,11 @@ async def get_readiness_for_date(
     verify_user_ownership(current_user, user_id)
     db = get_supabase_db()
 
-    response = db.client.table("readiness_scores").select("*").eq(
+    response = (await run_db(lambda: db.client.table("readiness_scores").select("*").eq(
         "user_id", user_id
     ).eq(
         "score_date", score_date.isoformat()
-    ).maybe_single().execute()
+    ).maybe_single().execute()))
 
     if not response or not response.data:
         return None
@@ -734,9 +735,9 @@ async def get_all_strength_scores(
     strength_service = StrengthCalculatorService()
 
     # Get user's bodyweight and gender (check column first, then preferences JSON)
-    user_response = db.client.table("users").select("weight_kg, gender, preferences").eq(
+    user_response = (await run_db(lambda: db.client.table("users").select("weight_kg, gender, preferences").eq(
         "id", user_id
-    ).maybe_single().execute()
+    ).maybe_single().execute()))
 
     if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
@@ -746,13 +747,13 @@ async def get_all_strength_scores(
     # Get latest strength scores from database. Per-gym → the by-gym view
     # filtered to the requested gym; combined → the (now NULL-gym-only) view.
     if gym_profile_id:
-        scores_response = db.client.table("latest_strength_scores_by_gym").select("*").eq(
+        scores_response = (await run_db(lambda: db.client.table("latest_strength_scores_by_gym").select("*").eq(
             "user_id", user_id
-        ).eq("gym_profile_id", gym_profile_id).execute()
+        ).eq("gym_profile_id", gym_profile_id).execute()))
     else:
-        scores_response = db.client.table("latest_strength_scores").select("*").eq(
+        scores_response = (await run_db(lambda: db.client.table("latest_strength_scores").select("*").eq(
             "user_id", user_id
-        ).execute()
+        ).execute()))
 
     muscle_scores = {}
 
@@ -838,7 +839,7 @@ async def get_e1rm_trend(
     verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
 
         from zoneinfo import ZoneInfo
         tz = ZoneInfo(user_tz) if user_tz else timezone.utc
@@ -860,7 +861,7 @@ async def get_e1rm_trend(
         )
         if gym_profile_id:
             e1rm_query = e1rm_query.eq("gym_profile_id", gym_profile_id)
-        rows = e1rm_query.execute()
+        rows = (await run_db(lambda: e1rm_query.execute()))
 
         # Ordered list of week-start ISO keys (oldest→newest).
         bucket_order: List[str] = [
@@ -978,9 +979,9 @@ async def get_strength_detail(
         raise HTTPException(status_code=400, detail=f"Invalid muscle group: {muscle_group}")
 
     # Get user info (check column first, then preferences JSON)
-    user_response = db.client.table("users").select("weight_kg, gender, preferences").eq(
+    user_response = (await run_db(lambda: db.client.table("users").select("weight_kg, gender, preferences").eq(
         "id", user_id
-    ).maybe_single().execute()
+    ).maybe_single().execute()))
 
     if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
@@ -989,19 +990,19 @@ async def get_strength_detail(
 
     # Get latest strength score (per-gym view when a gym is requested).
     if gym_profile_id:
-        score_response = db.client.table("latest_strength_scores_by_gym").select("*").eq(
+        score_response = (await run_db(lambda: db.client.table("latest_strength_scores_by_gym").select("*").eq(
             "user_id", user_id
         ).eq(
             "muscle_group", muscle_group.lower()
         ).eq(
             "gym_profile_id", gym_profile_id
-        ).maybe_single().execute()
+        ).maybe_single().execute()))
     else:
-        score_response = db.client.table("latest_strength_scores").select("*").eq(
+        score_response = (await run_db(lambda: db.client.table("latest_strength_scores").select("*").eq(
             "user_id", user_id
         ).eq(
             "muscle_group", muscle_group.lower()
-        ).maybe_single().execute()
+        ).maybe_single().execute()))
 
     # Get exercises for this muscle group from workout history
     # This is simplified - in production, would query workout logs
@@ -1020,9 +1021,9 @@ async def get_strength_detail(
         trend_query = trend_query.eq("gym_profile_id", gym_profile_id)
     else:
         trend_query = trend_query.is_("gym_profile_id", "null")
-    trend_response = trend_query.order(
+    trend_response = (await run_db(lambda: trend_query.order(
         "calculated_at", desc=True
-    ).limit(12).execute()
+    ).limit(12).execute()))
 
     trend_data = [
         {
@@ -1069,12 +1070,12 @@ async def calculate_strength_scores(
     """
     db = get_supabase_db()
     today = user_today_date(http_request, db, user_id)
-    tz = resolve_timezone(http_request, db, user_id)
+    tz = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
 
     # Verify the user exists before recomputing (keeps the 404 contract).
-    user_response = db.client.table("users").select("id").eq(
+    user_response = (await run_db(lambda: db.client.table("users").select("id").eq(
         "id", user_id
-    ).maybe_single().execute()
+    ).maybe_single().execute()))
     if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -1128,9 +1129,9 @@ async def get_personal_records(
     )
     if gym_profile_id:
         pr_query = pr_query.eq("gym_profile_id", gym_profile_id)
-    response = pr_query.order(
+    response = (await run_db(lambda: pr_query.order(
         "achieved_at", desc=True
-    ).execute()
+    ).execute()))
 
     all_prs = response.data or []
 
@@ -1219,7 +1220,7 @@ async def get_volume_trend(
     verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
 
         from zoneinfo import ZoneInfo
         tz = ZoneInfo(user_tz) if user_tz else timezone.utc
@@ -1245,7 +1246,7 @@ async def get_volume_trend(
         )
         if gym_profile_id:
             vol_query = vol_query.eq("gym_profile_id", gym_profile_id)
-        rows = vol_query.execute()
+        rows = (await run_db(lambda: vol_query.execute()))
 
         # Build the zero-filled bucket scaffold keyed on each week's Monday ISO.
         buckets: Dict[str, Dict[str, Any]] = {}
@@ -1343,11 +1344,11 @@ async def weekly_volume_per_muscle(current_user: dict = Depends(get_current_user
 
         # Latest strength_scores row per muscle_group. Supabase-Python has no
         # DISTINCT-ON; order + group in app code.
-        rows = db.client.table("strength_scores").select(
+        rows = (await run_db(lambda: db.client.table("strength_scores").select(
             "muscle_group, weekly_sets, weekly_volume_kg, calculated_at"
         ).eq("user_id", user_id).order(
             "calculated_at", desc=True
-        ).execute()
+        ).execute()))
         latest_by_muscle: Dict[str, Dict[str, Any]] = {}
         for row in rows.data or []:
             mg = row.get("muscle_group")
@@ -1356,9 +1357,9 @@ async def weekly_volume_per_muscle(current_user: dict = Depends(get_current_user
 
         caps: Dict[str, int] = {}
         try:
-            cap_rows = db.client.table("muscle_volume_caps").select(
+            cap_rows = (await run_db(lambda: db.client.table("muscle_volume_caps").select(
                 "muscle_group, max_weekly_sets"
-            ).eq("user_id", user_id).execute()
+            ).eq("user_id", user_id).execute()))
             for c in cap_rows.data or []:
                 caps[c["muscle_group"]] = int(c["max_weekly_sets"] or 0)
         except Exception:
@@ -1415,7 +1416,7 @@ async def get_wellbeing_trends(
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
         today = date.fromisoformat(get_user_today(user_tz))
         # 0 ⇒ all history (cap ~5y so the query stays bounded).
         span = days if days > 0 else 1825
@@ -1437,41 +1438,41 @@ async def get_wellbeing_trends(
                 "overall_day_rating": None,
             })
 
-        fit = db.client.table("fitness_scores").select(
+        fit = (await run_db(lambda: db.client.table("fitness_scores").select(
             "calculated_date,overall_fitness_score"
         ).eq("user_id", user_id).gte(
             "calculated_date", start_date
-        ).lte("calculated_date", end_date).execute()
+        ).lte("calculated_date", end_date).execute()))
         for r in (fit.data or []):
             d = r.get("calculated_date")
             if d:
                 _point(d)["fitness_score"] = r.get("overall_fitness_score")
 
-        rdy = db.client.table("readiness_scores").select(
+        rdy = (await run_db(lambda: db.client.table("readiness_scores").select(
             "score_date,readiness_score"
         ).eq("user_id", user_id).gte(
             "score_date", start_date
-        ).lte("score_date", end_date).execute()
+        ).lte("score_date", end_date).execute()))
         for r in (rdy.data or []):
             d = r.get("score_date")
             if d:
                 _point(d)["readiness_score"] = r.get("readiness_score")
 
-        fst = db.client.table("fasting_scores").select(
+        fst = (await run_db(lambda: db.client.table("fasting_scores").select(
             "score_date,score"
         ).eq("user_id", user_id).gte(
             "score_date", start_date
-        ).lte("score_date", end_date).execute()
+        ).lte("score_date", end_date).execute()))
         for r in (fst.data or []):
             d = r.get("score_date")
             if d:
                 _point(d)["fasting_score"] = r.get("score")
 
-        chk = db.client.table("daily_subjective_checkin").select(
+        chk = (await run_db(lambda: db.client.table("daily_subjective_checkin").select(
             "check_date,morning_mood,morning_energy,evening_mood,overall_day_rating"
         ).eq("user_id", user_id).gte(
             "check_date", start_date
-        ).lte("check_date", end_date).execute()
+        ).lte("check_date", end_date).execute()))
         for r in (chk.data or []):
             d = r.get("check_date")
             if d:
@@ -1484,11 +1485,11 @@ async def get_wellbeing_trends(
         daily_series = [merged[d] for d in sorted(merged.keys())]
 
         # ── Weekly table: nutrition_scores ──────────────────────────────────
-        ntr = db.client.table("nutrition_scores").select(
+        ntr = (await run_db(lambda: db.client.table("nutrition_scores").select(
             "week_start,week_end,nutrition_score,adherence_percent"
         ).eq("user_id", user_id).gte(
             "week_end", start_date
-        ).lte("week_start", end_date).order("week_start").execute()
+        ).lte("week_start", end_date).order("week_start").execute()))
         weekly_nutrition_series = [{
             "week_start": r.get("week_start"),
             "week_end": r.get("week_end"),

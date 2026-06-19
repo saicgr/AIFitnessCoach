@@ -12,6 +12,7 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.exceptions import safe_internal_error
+from core.db_executor import run_db, gather_db
 
 from .xp_models import (
     DailyLoginResponse,
@@ -67,10 +68,10 @@ async def use_consumable(
 
         if item_type == "xp_token_2x":
             # Activate 2x XP token
-            result = db.client.rpc(
+            result = await run_db(lambda: db.client.rpc(
                 "activate_2x_token",
                 {"p_user_id": user_id}
-            ).execute()
+            ).execute())
 
             if result.data:
                 logger.info(f"[XP] 2x XP token activated for user {user_id}")
@@ -89,10 +90,10 @@ async def use_consumable(
 
         else:
             # Generic consumable use
-            result = db.client.rpc(
+            result = await run_db(lambda: db.client.rpc(
                 "use_consumable",
                 {"p_user_id": user_id, "p_item_type": item_type}
-            ).execute()
+            ).execute())
 
             if result.data:
                 return {
@@ -153,10 +154,10 @@ async def open_crate(
             raise HTTPException(status_code=400, detail=f"Invalid crate type: {crate_type}")
 
         # Check if user has the crate
-        result = db.client.rpc(
+        result = await run_db(lambda: db.client.rpc(
             "use_consumable",
             {"p_user_id": user_id, "p_item_type": crate_type}
-        ).execute()
+        ).execute())
 
         if not result.data:
             return {
@@ -183,7 +184,7 @@ async def open_crate(
 
         if reward_type == "xp":
             # Award XP
-            db.client.rpc(
+            await run_db(lambda: db.client.rpc(
                 "award_xp",
                 {
                     "p_user_id": user_id,
@@ -193,13 +194,13 @@ async def open_crate(
                     "p_description": f"Reward from {crate_type.replace('_', ' ')}",
                     "p_is_verified": False
                 }
-            ).execute()
+            ).execute())
         else:
             # Award consumable
-            db.client.rpc(
+            await run_db(lambda: db.client.rpc(
                 "add_consumable",
                 {"p_user_id": user_id, "p_item_type": reward_type, "p_quantity": reward_amount}
-            ).execute()
+            ).execute())
 
         logger.info(f"[XP] Crate reward: {reward_amount} {reward_type}")
 
@@ -243,13 +244,13 @@ async def get_daily_crates(
         user_id = current_user["id"]
 
         # Resolve user timezone and pass their local date to RPC
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today_str = get_user_today(user_tz)
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "init_daily_crates",
             {"p_user_id": user_id, "p_user_date": today_str}
-        ).execute()
+        ).execute()))
 
         if result.data:
             data = result.data
@@ -287,13 +288,13 @@ async def get_unclaimed_crates(
         user_id = current_user["id"]
 
         # Pass user's local date so unclaimed crates are filtered correctly
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today_str = get_user_today(user_tz)
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "get_unclaimed_crates",
             {"p_user_id": user_id, "p_user_date": today_str}
-        ).execute()
+        ).execute()))
 
         unclaimed_list = result.data or []
         items = [
@@ -335,7 +336,7 @@ async def claim_daily_crate(
         crate_type = request.crate_type
 
         # Resolve user timezone for date validation and default
-        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
         today_str = get_user_today(user_tz)
 
         crate_date = request.crate_date  # Optional ISO date string
@@ -379,10 +380,10 @@ async def claim_daily_crate(
 
         rpc_params = {"p_user_id": user_id, "p_crate_type": crate_type, "p_crate_date": crate_date}
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "claim_daily_crate",
             rpc_params,
-        ).execute()
+        ).execute()))
 
         if result.data:
             data = result.data
@@ -476,13 +477,13 @@ async def unlock_activity_crate(
         user_id = current_user["id"]
 
         # Pass user's local date so activity crate unlocks for correct day
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today_str = get_user_today(user_tz)
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "update_activity_crate_availability",
             {"p_user_id": user_id, "p_user_date": today_str}
-        ).execute()
+        ).execute()))
 
         if result.data:
             logger.info(f"[XP] Activity crate unlocked for user {user_id}")
@@ -525,10 +526,10 @@ async def get_weekly_checkpoints(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "get_full_weekly_progress",
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         if not result.data:
             raise ValueError("get_full_weekly_progress returned no data")
@@ -623,10 +624,10 @@ async def increment_weekly_checkpoint(
         if checkpoint_type not in rpc_map:
             raise HTTPException(status_code=400, detail=f"Invalid checkpoint type: {checkpoint_type}")
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             rpc_map[checkpoint_type],
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         return result.data if result.data else {"success": True}
 
@@ -650,10 +651,10 @@ async def update_weekly_habits(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "update_weekly_habits",
             {"p_user_id": user_id, "p_completion_percent": completion_percent}
-        ).execute()
+        ).execute()))
 
         return result.data if result.data else {"success": True, "completion_percent": completion_percent}
 
@@ -694,16 +695,16 @@ async def get_monthly_achievements(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "get_monthly_achievements_progress",
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         if result.data:
             return result.data
 
         # Fallback if RPC doesn't exist yet
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today_str = get_user_today(user_tz)
         return {
             "month": today_str[:7],  # "YYYY-MM"
@@ -751,15 +752,15 @@ async def increment_monthly_achievement(
         }
 
         if achievement_type == "social_interaction":
-            result = db.client.rpc(
+            result = (await run_db(lambda: db.client.rpc(
                 "increment_monthly_social_interaction",
                 {"p_user_id": user_id, "p_type": interaction_type}
-            ).execute()
+            ).execute()))
         elif achievement_type in rpc_map:
-            result = db.client.rpc(
+            result = (await run_db(lambda: db.client.rpc(
                 rpc_map[achievement_type],
                 {"p_user_id": user_id}
-            ).execute()
+            ).execute()))
         else:
             raise HTTPException(status_code=400, detail=f"Invalid achievement type: {achievement_type}")
 
@@ -785,10 +786,10 @@ async def update_monthly_goal_progress(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "update_monthly_goal_progress",
             {"p_user_id": user_id, "p_progress": progress}
-        ).execute()
+        ).execute()))
 
         return result.data if result.data else {"success": True, "progress": progress}
 
@@ -812,7 +813,7 @@ async def update_monthly_consistency(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "update_monthly_consistency",
             {
                 "p_user_id": user_id,
@@ -820,7 +821,7 @@ async def update_monthly_consistency(
                 "p_completed": completed,
                 "p_missed": missed
             }
-        ).execute()
+        ).execute()))
 
         return result.data if result.data else {"success": True}
 
@@ -842,10 +843,10 @@ async def update_monthly_weight_status(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "update_monthly_weight_status",
             {"p_user_id": user_id, "p_on_track": on_track}
-        ).execute()
+        ).execute()))
 
         return result.data if result.data else {"success": True, "on_track": on_track}
 
@@ -867,10 +868,10 @@ async def update_monthly_habits_endpoint(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "update_monthly_habits",
             {"p_user_id": user_id, "p_completion_percent": completion_percent}
-        ).execute()
+        ).execute()))
 
         return result.data if result.data else {"success": True, "completion_percent": completion_percent}
 
@@ -896,10 +897,10 @@ async def evaluate_month_end(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "evaluate_monthly_achievements",
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         return result.data if result.data else {"success": True, "total_xp_awarded": 0}
 
@@ -932,16 +933,16 @@ async def get_daily_social_xp(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "get_daily_social_xp_status",
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         if result.data:
             return result.data
 
         # Fallback if RPC doesn't exist
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today_str = get_user_today(user_tz)
         return {
             "date": today_str,
@@ -988,10 +989,10 @@ async def award_social_xp(
         if action_type not in rpc_map:
             raise HTTPException(status_code=400, detail=f"Invalid action type: {action_type}")
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             rpc_map[action_type],
             {"p_user_id": user_id}
-        ).execute()
+        ).execute()))
 
         if result.data:
             return result.data
@@ -1207,7 +1208,7 @@ async def get_all_levels(
     # Query XP thresholds from DB function (single source of truth)
     try:
         db = get_supabase_db()
-        result = db.client.rpc("get_all_level_xp_thresholds").execute()
+        result = (await run_db(lambda: db.client.rpc("get_all_level_xp_thresholds").execute()))
         db_levels = {row["lvl"]: row["xp_required"] for row in (result.data or [])}
     except Exception as e:
         logger.warning(f"[XP] Failed to fetch level thresholds from DB, using Python fallback: {e}")
@@ -1351,7 +1352,7 @@ async def list_merch_claims(current_user=Depends(get_current_user)):
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc("get_user_merch_claims", {"p_user_id": user_id}).execute()
+        result = (await run_db(lambda: db.client.rpc("get_user_merch_claims", {"p_user_id": user_id}).execute()))
         rows = result.data or []
 
         claims = [MerchClaim(**row) for row in rows]
@@ -1378,7 +1379,7 @@ async def get_referrals_summary(current_user=Depends(get_current_user)):
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        result = db.client.rpc("get_referral_summary", {"p_user_id": user_id}).execute()
+        result = (await run_db(lambda: db.client.rpc("get_referral_summary", {"p_user_id": user_id}).execute()))
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to load referral summary")
         data = result.data[0] if isinstance(result.data, list) else result.data
@@ -1404,10 +1405,10 @@ async def apply_referral(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "apply_referral_code",
             {"p_user_id": user_id, "p_code": request.code},
-        ).execute()
+        ).execute()))
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Referral RPC returned no data")
@@ -1435,11 +1436,11 @@ async def get_cosmetics_catalog(current_user=Depends(get_current_user)):
     try:
         db = get_supabase_db()
         result = (
-            db.client.table("cosmetics")
+            (await run_db(lambda: db.client.table("cosmetics")
             .select("id,type,display_name,description,emoji,color_hex,gradient_hex,tier,is_animated,unlock_level")
             .eq("is_active", True)
             .order("unlock_level")
-            .execute()
+            .execute()))
         )
         return {"cosmetics": result.data or []}
     except Exception as e:
@@ -1454,10 +1455,10 @@ async def get_my_cosmetics(current_user=Depends(get_current_user)):
         db = get_supabase_db()
         user_id = current_user["id"]
         owned = (
-            db.client.table("user_cosmetics")
+            (await run_db(lambda: db.client.table("user_cosmetics")
             .select("cosmetic_id,unlocked_at,unlocked_at_level,is_equipped")
             .eq("user_id", user_id)
-            .execute()
+            .execute()))
         )
         return {"cosmetics": owned.data or []}
     except Exception as e:
@@ -1478,10 +1479,10 @@ async def equip_cosmetic_endpoint(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "equip_cosmetic",
             {"p_user_id": user_id, "p_cosmetic_id": request.cosmetic_id},
-        ).execute()
+        ).execute()))
         data = result.data[0] if isinstance(result.data, list) else result.data
         return data or {"cosmetic_id": request.cosmetic_id, "is_equipped": True}
     except Exception as e:
@@ -1498,10 +1499,10 @@ async def unequip_cosmetic_endpoint(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        db.client.rpc(
+        (await run_db(lambda: db.client.rpc(
             "unequip_cosmetic",
             {"p_user_id": user_id, "p_cosmetic_id": request.cosmetic_id},
-        ).execute()
+        ).execute()))
         return {"cosmetic_id": request.cosmetic_id, "is_equipped": False}
     except Exception as e:
         logger.error(f"[Cosmetics] Error unequipping: {e}", exc_info=True)
@@ -1524,12 +1525,12 @@ async def list_unacknowledged_level_ups(current_user=Depends(get_current_user)):
         user_id = current_user["id"]
 
         result = (
-            db.client.table("level_up_events")
+            (await run_db(lambda: db.client.table("level_up_events")
             .select("id,level_reached,is_milestone,merch_type,rewards_snapshot,created_at")
             .eq("user_id", user_id)
             .is_("acknowledged_at", "null")
             .order("level_reached", desc=False)
-            .execute()
+            .execute()))
         )
         rows = result.data or []
         return {"events": rows, "count": len(rows)}
@@ -1555,10 +1556,10 @@ async def acknowledge_level_ups(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "acknowledge_level_up_events",
             {"p_user_id": user_id, "p_event_ids": request.event_ids},
-        ).execute()
+        ).execute()))
 
         count = result.data if isinstance(result.data, int) else 0
         if isinstance(result.data, list) and result.data:
@@ -1580,11 +1581,11 @@ async def list_referrals(current_user=Depends(get_current_user)):
 
         # Fetch referrals + joined user names
         result = (
-            db.client.table("referral_tracking")
+            (await run_db(lambda: db.client.table("referral_tracking")
             .select("id,referred_id,status,workouts_completed,created_at,updated_at")
             .eq("referrer_id", user_id)
             .order("created_at", desc=True)
-            .execute()
+            .execute()))
         )
 
         rows = result.data or []
@@ -1608,10 +1609,10 @@ async def accept_merch_claim_endpoint(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "accept_merch_claim",
             {"p_claim_id": claim_id, "p_user_id": user_id},
-        ).execute()
+        ).execute()))
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Merch claim not found or not acceptable")
@@ -1644,12 +1645,12 @@ async def submit_merch_address(
 
         # Look up the claim to validate size requirements
         existing = (
-            db.client.table("merch_claims")
+            (await run_db(lambda: db.client.table("merch_claims")
             .select("merch_type,status")
             .eq("id", claim_id)
             .eq("user_id", user_id)
             .limit(1)
-            .execute()
+            .execute()))
         )
         if not existing.data:
             raise HTTPException(status_code=404, detail="Merch claim not found")
@@ -1684,7 +1685,7 @@ async def submit_merch_address(
             "p_sizes": request.sizes,
             "p_notes": request.notes,
         }
-        result = db.client.rpc("submit_merch_claim_address", rpc_params).execute()
+        result = (await run_db(lambda: db.client.rpc("submit_merch_claim_address", rpc_params).execute()))
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to submit address")
@@ -1711,10 +1712,10 @@ async def cancel_merch_claim_endpoint(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
+        result = (await run_db(lambda: db.client.rpc(
             "cancel_merch_claim",
             {"p_claim_id": claim_id, "p_user_id": user_id},
-        ).execute()
+        ).execute()))
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Merch claim not found or not cancellable")

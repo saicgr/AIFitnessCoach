@@ -29,6 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
+from core.db_executor import run_db, gather_db
 from core.exceptions import safe_internal_error
 from services.strength_calculator_service import StrengthCalculatorService, StrengthLevel
 from services.personal_records_service import PersonalRecordsService
@@ -71,13 +72,13 @@ async def get_exercise_pr_history(
     pr_service = PersonalRecordsService()
 
     # Get all PRs for this exercise
-    response = db.client.table("personal_records").select("*").eq(
+    response = (await run_db(lambda: db.client.table("personal_records").select("*").eq(
         "user_id", user_id
     ).ilike(
         "exercise_name", f"%{exercise}%"
     ).order(
         "achieved_at", desc=True
-    ).execute()
+    ).execute()))
 
     all_prs = response.data or []
 
@@ -117,9 +118,9 @@ async def get_dots_score(
     db = get_supabase_db()
 
     # Get user body info
-    user_response = db.client.table("users").select(
+    user_response = (await run_db(lambda: db.client.table("users").select(
         "weight_kg, gender, preferences"
-    ).eq("id", user_id).single().execute()
+    ).eq("id", user_id).single().execute()))
 
     if not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
@@ -128,9 +129,9 @@ async def get_dots_score(
     bodyweight_kg, gender = get_user_body_info(user_response.data)
 
     # Get stored 1RMs for the big three lifts
-    one_rm_response = db.client.table("user_exercise_1rm").select(
+    one_rm_response = (await run_db(lambda: db.client.table("user_exercise_1rm").select(
         "exercise_name, estimated_1rm_kg"
-    ).eq("user_id", user_id).execute()
+    ).eq("user_id", user_id).execute()))
 
     stored_1rms = {
         row["exercise_name"].lower().replace(" ", "_"): float(row["estimated_1rm_kg"])
@@ -211,17 +212,17 @@ async def get_nutrition_score(
 
     # Determine week range — user-local via device X-User-Timezone header.
     if week_start is None:
-        tz_str = resolve_timezone(http_request, db, user_id)
+        tz_str = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
         week_start, week_end = nutrition_service.get_current_week_range(tz_str)
     else:
         week_end = week_start + timedelta(days=6)
 
     # Try to get cached score from database
-    score_response = db.client.table("nutrition_scores").select("*").eq(
+    score_response = (await run_db(lambda: db.client.table("nutrition_scores").select("*").eq(
         "user_id", user_id
     ).eq(
         "week_start", week_start.isoformat()
-    ).maybe_single().execute()
+    ).maybe_single().execute()))
 
     if score_response and score_response.data:
         record = score_response.data
@@ -272,7 +273,7 @@ async def calculate_nutrition_score(
     """
     db = get_supabase_db()
     nutrition_service = NutritionCalculatorService()
-    tz_str = resolve_timezone(http_request, db, request.user_id)
+    tz_str = (await run_db(lambda: resolve_timezone(http_request, db, request.user_id)))
 
     # Determine week range — user-local via device X-User-Timezone header.
     if request.week_start is None:
@@ -282,9 +283,9 @@ async def calculate_nutrition_score(
         week_end = week_start + timedelta(days=6)
 
     # Get user's nutrition targets
-    user_response = db.client.table("users").select(
+    user_response = (await run_db(lambda: db.client.table("users").select(
         "id, daily_calories, protein_g, carbs_g, fat_g, fiber_g"
-    ).eq("id", request.user_id).maybe_single().execute()
+    ).eq("id", request.user_id).maybe_single().execute()))
 
     if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
@@ -299,13 +300,13 @@ async def calculate_nutrition_score(
     )
 
     # Get food logs for the week
-    food_logs_response = db.client.table("food_logs").select("*").eq(
+    food_logs_response = (await run_db(lambda: db.client.table("food_logs").select("*").eq(
         "user_id", request.user_id
     ).gte(
         "log_date", week_start.isoformat()
     ).lte(
         "log_date", week_end.isoformat()
-    ).execute()
+    ).execute()))
 
     food_logs = food_logs_response.data or []
 
@@ -356,13 +357,13 @@ async def calculate_nutrition_score(
     # Get previous week's score for comparison (user-local week).
     previous_week_start, previous_week_end = nutrition_service.get_previous_week_range(tz_str)
     try:
-        previous_response = db.client.table("nutrition_scores").select(
+        previous_response = (await run_db(lambda: db.client.table("nutrition_scores").select(
             "nutrition_score"
         ).eq(
             "user_id", request.user_id
         ).eq(
             "week_start", previous_week_start.isoformat()
-        ).maybe_single().execute()
+        ).maybe_single().execute()))
     except Exception:
         previous_response = None
 
@@ -390,10 +391,10 @@ async def calculate_nutrition_score(
     }
 
     # Upsert (update if exists for this week)
-    response = db.client.table("nutrition_scores").upsert(
+    response = (await run_db(lambda: db.client.table("nutrition_scores").upsert(
         record_data,
         on_conflict="user_id,week_start",
-    ).execute()
+    ).execute()))
 
     if not response.data:
         raise safe_internal_error(ValueError("Failed to save nutrition score"), "scores_endpoints")
@@ -440,11 +441,11 @@ async def get_fitness_score(
     fitness_service = FitnessScoreCalculatorService()
 
     # Get the latest fitness score from database
-    score_response = db.client.table("fitness_scores").select("*").eq(
+    score_response = (await run_db(lambda: db.client.table("fitness_scores").select("*").eq(
         "user_id", user_id
     ).order(
         "calculated_at", desc=True
-    ).limit(1).maybe_single().execute()
+    ).limit(1).maybe_single().execute()))
 
     if score_response and score_response.data:
         record = score_response.data
@@ -521,9 +522,9 @@ async def calculate_fitness_score(
     today = user_today_date(http_request, db, user_id)
 
     # 1. Get strength score (overall)
-    strength_response = db.client.table("latest_strength_scores").select(
+    strength_response = (await run_db(lambda: db.client.table("latest_strength_scores").select(
         "muscle_group, strength_score"
-    ).eq("user_id", user_id).execute()
+    ).eq("user_id", user_id).execute()))
 
     if strength_response and strength_response.data:
         score_objects = {
@@ -539,17 +540,17 @@ async def calculate_fitness_score(
     thirty_days_ago = (today - timedelta(days=30)).isoformat()
 
     # Count scheduled workouts
-    scheduled_response = db.client.table("workouts").select(
+    scheduled_response = (await run_db(lambda: db.client.table("workouts").select(
         "id", count="exact"
     ).eq(
         "user_id", user_id
     ).gte(
         "scheduled_date", thirty_days_ago
-    ).execute()
+    ).execute()))
     scheduled_count = scheduled_response.count or 0
 
     # Count completed workouts
-    completed_response = db.client.table("workouts").select(
+    completed_response = (await run_db(lambda: db.client.table("workouts").select(
         "id", count="exact"
     ).eq(
         "user_id", user_id
@@ -557,7 +558,7 @@ async def calculate_fitness_score(
         "completed", True
     ).gte(
         "scheduled_date", thirty_days_ago
-    ).execute()
+    ).execute()))
     completed_count = completed_response.count or 0
 
     consistency_score = fitness_service.calculate_consistency_score(
@@ -566,18 +567,18 @@ async def calculate_fitness_score(
     )
 
     # 3. Get nutrition score (current week) — user-local via device X-User-Timezone header.
-    tz_str = resolve_timezone(http_request, db, user_id)
+    tz_str = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
     from services.nutrition_calculator_service import nutrition_calculator_service
     week_start, week_end = nutrition_calculator_service.get_current_week_range(tz_str)
 
     try:
-        nutrition_response = db.client.table("nutrition_scores").select(
+        nutrition_response = (await run_db(lambda: db.client.table("nutrition_scores").select(
             "nutrition_score"
         ).eq(
             "user_id", user_id
         ).eq(
             "week_start", week_start.isoformat()
-        ).maybe_single().execute()
+        ).maybe_single().execute()))
     except Exception:
         nutrition_response = None
 
@@ -585,26 +586,26 @@ async def calculate_fitness_score(
 
     # 4. Get readiness score (7-day average)
     seven_days_ago = (today - timedelta(days=7)).isoformat()
-    readiness_response = db.client.table("readiness_scores").select(
+    readiness_response = (await run_db(lambda: db.client.table("readiness_scores").select(
         "readiness_score"
     ).eq(
         "user_id", user_id
     ).gte(
         "score_date", seven_days_ago
-    ).execute()
+    ).execute()))
 
     readiness_scores = [r["readiness_score"] for r in (readiness_response.data or [])]
     readiness_score = round(sum(readiness_scores) / len(readiness_scores)) if readiness_scores else 50
 
     # 5. Get previous fitness score
     try:
-        previous_response = db.client.table("fitness_scores").select(
+        previous_response = (await run_db(lambda: db.client.table("fitness_scores").select(
             "overall_fitness_score"
         ).eq(
             "user_id", user_id
         ).order(
             "calculated_at", desc=True
-        ).limit(1).maybe_single().execute()
+        ).limit(1).maybe_single().execute()))
     except Exception:
         previous_response = None
 
@@ -642,7 +643,7 @@ async def calculate_fitness_score(
         "calculated_at": datetime.now().isoformat(),
     }
 
-    response = db.client.table("fitness_scores").insert(record_data).execute()
+    response = (await run_db(lambda: db.client.table("fitness_scores").insert(record_data).execute()))
 
     if not response.data:
         raise safe_internal_error(ValueError("Failed to save fitness score"), "scores_endpoints")
@@ -716,7 +717,7 @@ async def get_scores_overview(
     thirty_days_ago = (_today - timedelta(days=30)).isoformat()
     seven_days_ago = (_today - timedelta(days=7)).isoformat()
     # User-local timezone for any week-boundary math below.
-    tz_str = resolve_timezone(http_request, db, user_id)
+    tz_str = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
 
     def _q_readiness():
         try:
@@ -918,7 +919,7 @@ async def generate_ai_readiness_insight(
         # Get today's scheduled workout if any
         from core.timezone_utils import get_user_today
         today = get_user_today(timezone_str)
-        workout_response = db.client.table("workouts").select(
+        workout_response = (await run_db(lambda: db.client.table("workouts").select(
             "name, type, duration_minutes"
         ).eq(
             "user_id", user_id
@@ -926,7 +927,7 @@ async def generate_ai_readiness_insight(
             "scheduled_date", today
         ).eq(
             "is_completed", False
-        ).maybe_single().execute()
+        ).maybe_single().execute()))
 
         scheduled_workout = None
         if workout_response and workout_response.data:
@@ -938,9 +939,9 @@ async def generate_ai_readiness_insight(
             }
 
         # Get user profile
-        user_response = db.client.table("users").select(
+        user_response = (await run_db(lambda: db.client.table("users").select(
             "display_name, fitness_level, goals"
-        ).eq("id", user_id).maybe_single().execute()
+        ).eq("id", user_id).maybe_single().execute()))
 
         user_profile = {}
         if user_response and user_response.data:
@@ -960,9 +961,9 @@ async def generate_ai_readiness_insight(
         )
 
         # Update record with AI insight
-        db.client.table("readiness_scores").update({
+        (await run_db(lambda: db.client.table("readiness_scores").update({
             "ai_insight": ai_recommendation,
-        }).eq("id", record_id).execute()
+        }).eq("id", record_id).execute()))
 
         logger.info(f"AI readiness insight saved for user {user_id}")
 

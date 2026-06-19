@@ -18,6 +18,7 @@ import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
+from core.db_executor import run_db, gather_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.exceptions import safe_internal_error
 from models.consistency import StreakRecoveryRequest, StreakRecoveryResponse, RecoveryType
@@ -46,19 +47,19 @@ async def search_exercise_history(
     db = get_supabase_db()
 
     try:
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         start_date = today - timedelta(days=weeks * 7)
 
         # Search performance logs for this exercise
         # Use ILIKE for case-insensitive partial matching
-        perf_response = db.client.table("performance_logs").select(
+        perf_response = (await run_db(lambda: db.client.table("performance_logs").select(
             "workout_log_id, exercise_name, exercise_id, set_number, reps_completed, weight_kg, rpe, rir, is_pr, recorded_at"
         ).eq("user_id", user_id).ilike(
             "exercise_name", f"%{exercise_name}%"
         ).gte(
             "recorded_at", start_date.isoformat()
-        ).order("recorded_at", desc=True).execute()
+        ).order("recorded_at", desc=True).execute()))
 
         if not perf_response.data:
             return {
@@ -72,17 +73,17 @@ async def search_exercise_history(
         workout_log_ids = list(set(row["workout_log_id"] for row in perf_response.data if row.get("workout_log_id")))
 
         # Get workout logs with workout info
-        log_response = db.client.table("workout_logs").select(
+        log_response = (await run_db(lambda: db.client.table("workout_logs").select(
             "id, workout_id, completed_at"
-        ).in_("id", workout_log_ids).execute()
+        ).in_("id", workout_log_ids).execute()))
 
         log_map = {log["id"]: log for log in (log_response.data or [])}
 
         # Get workout names
         workout_ids = list(set(log["workout_id"] for log in (log_response.data or []) if log.get("workout_id")))
-        workout_response = db.client.table("workouts").select(
+        workout_response = (await run_db(lambda: db.client.table("workouts").select(
             "id, name, scheduled_date"
-        ).in_("id", workout_ids).execute()
+        ).in_("id", workout_ids).execute()))
 
         workout_map = {w["id"]: w for w in (workout_response.data or [])}
 
@@ -194,15 +195,15 @@ async def get_exercise_suggestions(
         # Get distinct exercise names from user's performance logs
         # with count of how many times performed
         if query:
-            perf_response = db.client.table("performance_logs").select(
+            perf_response = (await run_db(lambda: db.client.table("performance_logs").select(
                 "exercise_name, recorded_at"
             ).eq("user_id", user_id).ilike(
                 "exercise_name", f"%{query}%"
-            ).execute()
+            ).execute()))
         else:
-            perf_response = db.client.table("performance_logs").select(
+            perf_response = (await run_db(lambda: db.client.table("performance_logs").select(
                 "exercise_name, recorded_at"
-            ).eq("user_id", user_id).execute()
+            ).eq("user_id", user_id).execute()))
 
         if not perf_response.data:
             return []
@@ -269,13 +270,13 @@ async def initiate_streak_recovery(
         # table doesn't carry `current_streak` / `last_workout_date` columns
         # (Sentry PYTHON-FASTAPI-2X: "column users.current_streak does not
         # exist") — derive from the workouts table instead.
-        last_workout_resp = db.client.table("workouts").select(
+        last_workout_resp = (await run_db(lambda: db.client.table("workouts").select(
             "scheduled_date"
         ).eq(
             "user_id", user_id
         ).eq(
             "is_completed", True
-        ).order("scheduled_date", desc=True).limit(1).execute()
+        ).order("scheduled_date", desc=True).limit(1).execute()))
 
         last_workout_date = None
         previous_streak = 0
@@ -291,7 +292,7 @@ async def initiate_streak_recovery(
                 )
 
         # Calculate days since last workout
-        user_tz = resolve_timezone(http_request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(http_request, db, user_id)))
         user_today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         days_since = 0
         if last_workout_date:
@@ -301,9 +302,9 @@ async def initiate_streak_recovery(
         # Defensively guarded — streak_history table may not exist on this
         # environment (Sentry PYTHON-FASTAPI-35).
         try:
-            history_response = db.client.table("streak_history").select(
+            history_response = (await run_db(lambda: db.client.table("streak_history").select(
                 "streak_length"
-            ).eq("user_id", user_id).order("ended_at", desc=True).limit(1).execute()
+            ).eq("user_id", user_id).order("ended_at", desc=True).limit(1).execute()))
             if history_response.data:
                 previous_streak = history_response.data[0]["streak_length"]
         except Exception as _e:
@@ -329,9 +330,9 @@ async def initiate_streak_recovery(
             "created_at": datetime.now().isoformat(),
         }
 
-        attempt_response = db.client.table("streak_recovery_attempts").insert(
+        attempt_response = (await run_db(lambda: db.client.table("streak_recovery_attempts").insert(
             attempt_data
-        ).execute()
+        ).execute()))
 
         if not attempt_response.data:
             raise safe_internal_error(ValueError("Failed to create recovery attempt"), "consistency")
@@ -388,9 +389,9 @@ async def complete_streak_recovery(
         if workout_id:
             update_data["recovery_workout_id"] = workout_id
 
-        response = db.client.table("streak_recovery_attempts").update(
+        response = (await run_db(lambda: db.client.table("streak_recovery_attempts").update(
             update_data
-        ).eq("id", attempt_id).eq("user_id", user_id).execute()
+        ).eq("id", attempt_id).eq("user_id", user_id).execute()))
 
         if not response.data:
             raise HTTPException(status_code=404, detail="Recovery attempt not found")

@@ -39,6 +39,7 @@ __init__ so its literals always win over any dynamic sibling.
 """
 
 from __future__ import annotations
+from core.db_executor import run_db, gather_db
 
 from datetime import date as date_type, datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -591,16 +592,16 @@ async def compat_celebrate(
     updated = 0
     for aid in body.achievement_ids:
         try:
-            db.client.table("user_neat_achievements").update(
+            (await run_db(lambda: db.client.table("user_neat_achievements").update(
                 {"is_celebrated": True}
-            ).eq("user_id", body.user_id).eq("achievement_id", aid).execute()
+            ).eq("user_id", body.user_id).eq("achievement_id", aid).execute()))
             updated += 1
         except Exception:
             # Row may key on the user_neat_achievements primary id instead.
             try:
-                db.client.table("user_neat_achievements").update(
+                (await run_db(lambda: db.client.table("user_neat_achievements").update(
                     {"is_celebrated": True}
-                ).eq("id", aid).execute()
+                ).eq("id", aid).execute()))
                 updated += 1
             except Exception:
                 pass

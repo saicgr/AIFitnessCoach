@@ -80,6 +80,110 @@ async def timed_get(client: httpx.AsyncClient, url: str, **kw) -> tuple[float, h
     return (time.perf_counter() - t0) * 1000, resp
 
 
+# ── Home-open fan-out burst ────────────────────────────────────────────────
+# The real set of authenticated endpoints the app fires (roughly concurrently)
+# when Home opens/resumes. Param styles verified against the Dart repositories.
+# {uid}/{date} are substituted at runtime. This reproduces the burst that a
+# single user creates on app open — the thing that matters, not isolated curls.
+def fanout_endpoints(uid: str, date: str) -> list[tuple[str, str]]:
+    return [
+        ("home_bootstrap",      f"/api/v1/home/bootstrap?user_id={uid}"),
+        ("workouts_today",      "/api/v1/workouts/today"),
+        ("stats_overview",      f"/api/v1/stats/overview/{uid}"),
+        ("stats_quick",         f"/api/v1/stats/quick/{uid}"),
+        ("xp",                  f"/api/v1/progress/xp/{uid}"),
+        ("xp_summary",          f"/api/v1/progress/xp/{uid}/summary"),
+        ("consistency_insights", f"/api/v1/consistency/insights?user_id={uid}"),
+        ("consistency_calendar", f"/api/v1/consistency/calendar?user_id={uid}"),
+        ("scores_readiness",    f"/api/v1/scores/readiness/{date}?user_id={uid}"),
+        ("training_load_today", "/api/v1/training-load/today"),
+        ("training_load_current", "/api/v1/training-load/current"),
+        ("neat_scores_today",   f"/api/v1/neat/scores/today?user_id={uid}"),
+        ("neat_streaks",        f"/api/v1/neat/streaks?user_id={uid}"),
+        ("habits_today",        f"/api/v1/habits/{uid}/today"),
+        ("habits_streaks",      f"/api/v1/habits/{uid}/streaks"),
+        ("habits_summary",      f"/api/v1/habits/{uid}/summary"),
+        ("hydration_daily",     f"/api/v1/hydration/daily/{uid}"),
+        ("nutrition_daily",     f"/api/v1/nutrition/summary/daily/{uid}"),
+    ]
+
+
+async def fanout_probe(client: httpx.AsyncClient, uid: str, rounds: int = 3) -> dict:
+    """Fire the home-open burst concurrently `rounds` times while sampling
+    /health. If the event loop blocks under fan-out, /health p95 spikes far
+    above its idle baseline — the same signal as health_during_stats but under
+    a realistic multi-endpoint burst against the DEPLOYED backend."""
+    from datetime import date as _date, timedelta
+    today = (_date.today()).isoformat()
+    endpoints = fanout_endpoints(uid, today)
+
+    # Idle /health baseline (includes network RTT to the deployed region).
+    idle = []
+    for _ in range(8):
+        t, r = await timed_get(client, "/health")
+        idle.append(t)
+        await asyncio.sleep(0.05)
+
+    # Per-endpoint latency + status under concurrency, plus /health-during-burst.
+    per_ep: dict[str, list[float]] = {name: [] for name, _ in endpoints}
+    statuses: dict[str, set] = {name: set() for name, _ in endpoints}
+    health_during: list[float] = []
+
+    async def hit(name: str, path: str):
+        try:
+            t, r = await timed_get(client, path)
+            per_ep[name].append(t)
+            statuses[name].add(r.status_code)
+        except Exception as e:  # noqa: BLE001 — record, don't crash the probe
+            statuses[name].add(f"ERR:{type(e).__name__}")
+
+    async def health_sampler(stop: asyncio.Event):
+        while not stop.is_set():
+            try:
+                t, r = await timed_get(client, "/health")
+                health_during.append(t)
+            except Exception:
+                pass
+            await asyncio.sleep(0.04)
+
+    for _ in range(rounds):
+        stop = asyncio.Event()
+        sampler = asyncio.create_task(health_sampler(stop))
+        await asyncio.gather(*(hit(n, p) for n, p in endpoints))
+        stop.set()
+        await sampler
+        await asyncio.sleep(0.3)
+
+    ep_summary = {
+        name: {
+            **summarize(per_ep[name]),
+            "status": sorted(str(s) for s in statuses[name]),
+        }
+        for name, _ in endpoints
+    }
+    # Endpoints that actually 200'd (the real burst); 4xx may short-circuit
+    # before DB and understate blocking — flag them.
+    ok = [n for n in ep_summary if ep_summary[n]["status"] == ["200"]]
+    slowest = sorted(
+        (n for n in ok if ep_summary[n]["p95_ms"]),
+        key=lambda n: ep_summary[n]["p95_ms"], reverse=True,
+    )[:5]
+    return {
+        "rounds": rounds,
+        "n_endpoints": len(endpoints),
+        "endpoints_200": ok,
+        "endpoints_non200": [n for n in ep_summary if n not in ok],
+        "health_idle": summarize(idle),
+        "health_during_fanout": summarize(health_during),
+        "stall_ratio_p95": (
+            round(summarize(health_during)["p95_ms"] / summarize(idle)["p95_ms"], 1)
+            if idle and summarize(idle)["p95_ms"] else None
+        ),
+        "slowest_endpoints_p95": [(n, ep_summary[n]["p95_ms"]) for n in slowest],
+        "per_endpoint": ep_summary,
+    }
+
+
 async def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://127.0.0.1:8765")
@@ -87,6 +191,11 @@ async def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--iters", type=int, default=10)
     ap.add_argument("--skip-logtext", action="store_true")
+    ap.add_argument("--fanout", action="store_true",
+                    help="Run the home-open concurrent fan-out burst (use with "
+                         "--base pointing at the DEPLOYED backend).")
+    ap.add_argument("--fanout-only", action="store_true",
+                    help="Only run the fan-out burst (skip stats/stall/logtext).")
     args = ap.parse_args()
 
     jwt = get_jwt()
@@ -97,6 +206,24 @@ async def main() -> None:
     async with httpx.AsyncClient(base_url=args.base, headers=headers, timeout=60) as client:
         # Warmup (token cache, connection, any first-hit caches) — excluded.
         await client.get("/health")
+
+        if args.fanout or args.fanout_only:
+            results["fanout"] = await fanout_probe(client, USER_ID)
+            if args.fanout_only:
+                out = Path(args.out)
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_text(json.dumps(results, indent=2))
+                fo = results["fanout"]
+                print(f"\n=== fan-out probe [{args.label}] @ {args.base} ===")
+                print(f"endpoints 200: {len(fo['endpoints_200'])}/{fo['n_endpoints']}"
+                      f"  non-200: {fo['endpoints_non200']}")
+                print(f"health idle    p50={fo['health_idle']['p50_ms']}ms p95={fo['health_idle']['p95_ms']}ms")
+                print(f"health in-burst p50={fo['health_during_fanout']['p50_ms']}ms "
+                      f"p95={fo['health_during_fanout']['p95_ms']}ms  "
+                      f"STALL RATIO p95 = {fo['stall_ratio_p95']}x")
+                print(f"slowest (p95): {fo['slowest_endpoints_p95']}")
+                print(f"saved → {out}")
+                return
         warm = await client.get(f"/api/v1/stats/overview/{USER_ID}")
         warm.raise_for_status()
 
