@@ -27,6 +27,7 @@ Endpoints:
 - GET /{user_id}/insights - Get AI-generated insights
 """
 from core.db import get_supabase_db
+from core.db_executor import run_db, gather_db
 from .habits_endpoints import router as _endpoints_router
 
 
@@ -113,7 +114,7 @@ async def get_habits(
 
         query = query.order("created_at", desc=False)
 
-        result = query.execute()
+        result = (await run_db(lambda: query.execute()))
 
         logger.info(f"✅ Found {len(result.data)} habits for user={user_id}")
         return result.data
@@ -146,13 +147,13 @@ async def get_today_habits(
     try:
         verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Get habits with today's status from view
-        result = db.client.table("today_habits_view").select("*").eq(
+        result = (await run_db(lambda: db.client.table("today_habits_view").select("*").eq(
             "user_id", user_id
-        ).order("habit_created_at", desc=False).execute()
+        ).order("habit_created_at", desc=False).execute()))
 
         if not result.data:
             return TodayHabitsResponse(
@@ -170,11 +171,11 @@ async def get_today_habits(
             habit_id = habit_data["habit_id"]
 
             # Get 7-day logs for this habit
-            logs_result = db.client.table("habit_logs").select("completed").eq(
+            logs_result = (await run_db(lambda: db.client.table("habit_logs").select("completed").eq(
                 "habit_id", habit_id
             ).gte("log_date", week_ago.isoformat()).lte(
                 "log_date", today.isoformat()
-            ).execute()
+            ).execute()))
 
             # Calculate 7-day completion rate
             total_days = len(logs_result.data) if logs_result.data else 0
@@ -277,7 +278,7 @@ async def create_habit(
             "is_suggested": False,
         }
 
-        result = db.client.table("habits").insert(habit_data).execute()
+        result = (await run_db(lambda: db.client.table("habits").insert(habit_data).execute()))
 
         if not result.data:
             raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
@@ -326,9 +327,9 @@ async def update_habit(
         db = get_supabase_db()
 
         # Verify ownership
-        existing = db.client.table("habits").select("id").eq(
+        existing = (await run_db(lambda: db.client.table("habits").select("id").eq(
             "id", habit_id
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         if not existing.data:
             raise HTTPException(status_code=404, detail="Habit not found")
@@ -365,9 +366,9 @@ async def update_habit(
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
 
-        result = db.client.table("habits").update(update_data).eq(
+        result = (await run_db(lambda: db.client.table("habits").update(update_data).eq(
             "id", habit_id
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         if not result.data:
             raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
@@ -406,9 +407,9 @@ async def delete_habit(
         db = get_supabase_db()
 
         # Verify ownership
-        existing = db.client.table("habits").select("id, name").eq(
+        existing = (await run_db(lambda: db.client.table("habits").select("id, name").eq(
             "id", habit_id
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         if not existing.data:
             raise HTTPException(status_code=404, detail="Habit not found")
@@ -417,15 +418,15 @@ async def delete_habit(
 
         if hard_delete:
             # Permanently delete
-            db.client.table("habits").delete().eq(
+            (await run_db(lambda: db.client.table("habits").delete().eq(
                 "id", habit_id
-            ).eq("user_id", user_id).execute()
+            ).eq("user_id", user_id).execute()))
             message = f"Habit '{habit_name}' permanently deleted"
         else:
             # Soft delete
-            db.client.table("habits").update({"is_active": False}).eq(
+            (await run_db(lambda: db.client.table("habits").update({"is_active": False}).eq(
                 "id", habit_id
-            ).eq("user_id", user_id).execute()
+            ).eq("user_id", user_id).execute()))
             message = f"Habit '{habit_name}' archived"
 
         await log_user_activity(user_id, "habit_deleted", {
@@ -492,15 +493,15 @@ async def log_habit(
         db = get_supabase_db()
 
         # Verify habit ownership
-        habit = db.client.table("habits").select("id, name").eq(
+        habit = (await run_db(lambda: db.client.table("habits").select("id, name").eq(
             "id", str(log.habit_id)
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         if not habit.data:
             raise HTTPException(status_code=404, detail="Habit not found")
 
         # Prevent logging future dates (use user's local today)
-        user_tz = resolve_timezone(request, db, user_id) if request else "UTC"
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id))) if request else "UTC"
         user_today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         if log.log_date > user_today:
             raise HTTPException(status_code=400, detail="Cannot log habits for future dates")
@@ -519,10 +520,10 @@ async def log_habit(
         }
 
         # Upsert the log (insert or update if exists for same habit+date)
-        result = db.client.table("habit_logs").upsert(
+        result = (await run_db(lambda: db.client.table("habit_logs").upsert(
             log_data,
             on_conflict="habit_id,log_date"
-        ).execute()
+        ).execute()))
 
         if not result.data:
             raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
@@ -572,9 +573,9 @@ async def update_habit_log(
         db = get_supabase_db()
 
         # Verify ownership
-        existing = db.client.table("habit_logs").select("id").eq(
+        existing = (await run_db(lambda: db.client.table("habit_logs").select("id").eq(
             "id", log_id
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         if not existing.data:
             raise HTTPException(status_code=404, detail="Habit log not found")
@@ -599,9 +600,9 @@ async def update_habit_log(
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
 
-        result = db.client.table("habit_logs").update(update_data).eq(
+        result = (await run_db(lambda: db.client.table("habit_logs").update(update_data).eq(
             "id", log_id
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         if not result.data:
             raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
@@ -645,27 +646,27 @@ async def get_habit_logs(
         db = get_supabase_db()
 
         # Default date range (timezone-aware)
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         if end_date is None:
             end_date = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         if start_date is None:
             start_date = end_date - timedelta(days=30)
 
         # Verify habit ownership
-        habit = db.client.table("habits").select("id").eq(
+        habit = (await run_db(lambda: db.client.table("habits").select("id").eq(
             "id", habit_id
-        ).eq("user_id", user_id).execute()
+        ).eq("user_id", user_id).execute()))
 
         if not habit.data:
             raise HTTPException(status_code=404, detail="Habit not found")
 
-        result = db.client.table("habit_logs").select("*").eq(
+        result = (await run_db(lambda: db.client.table("habit_logs").select("*").eq(
             "habit_id", habit_id
         ).eq("user_id", user_id).gte(
             "log_date", start_date.isoformat()
         ).lte(
             "log_date", end_date.isoformat()
-        ).order("log_date", desc=True).execute()
+        ).order("log_date", desc=True).execute()))
 
         logger.info(f"✅ Found {len(result.data)} logs for habit={habit_id}")
         return result.data
@@ -704,17 +705,17 @@ async def get_habit_trends(
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         # 0 ⇒ all history (cap ~5y so the query stays bounded).
         span = days if days > 0 else 1825
         start_date = today - timedelta(days=span - 1)
 
-        result = db.client.table("habit_logs").select(
+        result = (await run_db(lambda: db.client.table("habit_logs").select(
             "log_date,completed,skipped"
         ).eq("user_id", user_id).gte(
             "log_date", start_date.isoformat()
-        ).lte("log_date", today.isoformat()).order("log_date").execute()
+        ).lte("log_date", today.isoformat()).order("log_date").execute()))
         rows = result.data or []
 
         # Bucket per local date. Skipped logs count toward tracked total but

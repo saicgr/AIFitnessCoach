@@ -201,9 +201,15 @@ async def get_habits_summary(
         user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
-        # Get today's habits response
+        # Get today's habits response. Pass the already-resolved current_user
+        # explicitly — get_today_habits is a FastAPI route handler whose
+        # current_user defaults to Depends(get_current_user); called directly
+        # (not via routing) that default stays an unresolved Depends object,
+        # which then 500s with "'Depends' object is not subscriptable".
         from .habits import get_today_habits
-        today_response = await get_today_habits(user_id, request)
+        today_response = await get_today_habits(
+            user_id, request, current_user=current_user
+        )
 
         # Get all streaks to calculate averages
         streaks = (await run_db(lambda: db.client.table("habit_streaks").select(

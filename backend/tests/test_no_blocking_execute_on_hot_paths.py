@@ -48,9 +48,11 @@ HOT_PATH_FILES = [
     "api/v1/neat.py",
     "api/v1/neat_compat.py",
     "api/v1/habits_endpoints.py",
+    "api/v1/habits.py",
     "api/v1/scores.py",
     "api/v1/scores_endpoints.py",
     "api/v1/hydration.py",
+    "api/v1/nutrition/summaries.py",
 ]
 
 

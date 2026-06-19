@@ -1,6 +1,7 @@
 """Daily/weekly nutrition summaries and targets endpoints."""
 import asyncio
 from core.db import get_supabase_db
+from core.db_executor import run_db, gather_db
 from datetime import datetime, timedelta, date, timezone
 from typing import List, Optional, Set
 
@@ -113,7 +114,7 @@ async def get_daily_summary(
         # cold start before prefs are loaded). Header still takes priority via
         # resolve_timezone; we only use `tz` if resolution would otherwise fall
         # back to UTC.
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         if user_tz == "UTC" and tz:
             from core.timezone_utils import _is_valid_tz  # type: ignore[attr-defined]
             if _is_valid_tz(tz):
@@ -243,7 +244,7 @@ async def get_optional_trackers(
     daily `series` (oldest→newest) for the per-tracker detail screen."""
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         if user_tz == "UTC" and tz:
             from core.timezone_utils import _is_valid_tz  # type: ignore[attr-defined]
             if _is_valid_tz(tz):
@@ -343,7 +344,7 @@ async def get_weekly_summary(
     """
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
 
         if start_date is None:
             from datetime import timedelta
@@ -556,7 +557,7 @@ async def get_training_vs_rest(
         verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
         if user_tz == "UTC" and tz:
             from core.timezone_utils import _is_valid_tz  # type: ignore[attr-defined]
             if _is_valid_tz(tz):
