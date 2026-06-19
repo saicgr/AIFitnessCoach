@@ -247,15 +247,11 @@ class EasyFocalColumn extends StatelessWidget {
                 children: [
                   Text(
                     AppLocalizations.of(context).easyFocalColumnHold,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          (Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white
-                                  : Colors.black)
-                              .withValues(alpha: 0.62),
-                      letterSpacing: 0.2,
+                    style: ZType.lbl(
+                      13,
+                      color: colors.textSecondary,
+                      weight: FontWeight.w600,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ],
@@ -290,15 +286,11 @@ class EasyFocalColumn extends StatelessWidget {
                 children: [
                   Text(
                     AppLocalizations.of(context).workoutSummaryAdvancedWeight,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          (Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white
-                                  : Colors.black)
-                              .withValues(alpha: 0.62),
-                      letterSpacing: 0.2,
+                    style: ZType.lbl(
+                      13,
+                      color: colors.textSecondary,
+                      weight: FontWeight.w600,
+                      letterSpacing: 1.2,
                     ),
                   ),
                   const Spacer(),

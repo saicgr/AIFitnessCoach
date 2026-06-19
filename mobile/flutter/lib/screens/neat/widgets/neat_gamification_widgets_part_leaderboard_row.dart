@@ -13,7 +13,7 @@ class _LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -21,7 +21,7 @@ class _LeaderboardRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: isCurrentUser
             ? AppColors.cyan.withOpacity(0.1)
-            : colorScheme.surface,
+            : tc.surface,
         borderRadius: BorderRadius.circular(12),
         border: isCurrentUser
             ? Border.all(color: AppColors.cyan.withOpacity(0.3))
@@ -41,10 +41,7 @@ class _LeaderboardRow extends StatelessWidget {
               entry.displayName.isNotEmpty
                   ? entry.displayName[0].toUpperCase()
                   : '?',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: entry.level.color,
-              ),
+              style: ZType.disp(16, color: entry.level.color),
             ),
           ),
           const SizedBox(width: 12),
@@ -58,27 +55,22 @@ class _LeaderboardRow extends StatelessWidget {
                   children: [
                     Text(
                       entry.displayName,
-                      style: TextStyle(
-                        fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.w500,
-                        color: colorScheme.onSurface,
+                      style: ZType.ser(
+                        15,
+                        color: tc.textPrimary,
+                        weight: isCurrentUser ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
                     if (isCurrentUser)
                       Text(
                         ' (${AppLocalizations.of(context)!.commonYou})',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.cyan,
-                        ),
+                        style: ZType.lbl(11, color: tc.accent, letterSpacing: 0.6),
                       ),
                   ],
                 ),
                 Text(
                   entry.level.localizedName(AppLocalizations.of(context)!),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: entry.level.color,
-                  ),
+                  style: ZType.lbl(11, color: entry.level.color, letterSpacing: 1.0),
                 ),
               ],
             ),
@@ -90,18 +82,11 @@ class _LeaderboardRow extends StatelessWidget {
             children: [
               Text(
                 '${entry.weeklyScore}',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: colorScheme.onSurface,
-                ),
+                style: ZType.disp(20, color: tc.textPrimary, letterSpacing: 0),
               ),
               Text(
                 AppLocalizations.of(context)!.neatGamificationWidgetsNeatPts,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.4),
               ),
             ],
           ),
@@ -158,10 +143,7 @@ class _RankBadge extends StatelessWidget {
       child: Center(
         child: Text(
           '$rank',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: badgeColor,
-          ),
+          style: ZType.disp(14, color: badgeColor, letterSpacing: 0),
         ),
       ),
     );
@@ -202,11 +184,7 @@ class _ShareButton extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
+              style: ZType.lbl(14, color: Colors.white, letterSpacing: 0.8),
             ),
           ],
         ),
@@ -302,7 +280,7 @@ class _CompactStatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -320,18 +298,11 @@ class _CompactStatItem extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
+                style: ZType.disp(20, color: tc.textPrimary, letterSpacing: 0),
               ),
               Text(
                 subValue,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.0),
               ),
             ],
           ),
@@ -340,7 +311,7 @@ class _CompactStatItem extends StatelessWidget {
           Container(
             height: 3,
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHigh,
+              color: tc.cardBorder,
               borderRadius: BorderRadius.circular(1.5),
             ),
             child: FractionallySizedBox(

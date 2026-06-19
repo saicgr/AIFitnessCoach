@@ -14,6 +14,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
@@ -90,12 +91,8 @@ class CoachBriefingCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 _isEvening ? 'EVENING RECAP' : 'MORNING BRIEFING',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
-                  color: accent,
-                ),
+                style: ZType.lbl(11, color: accent, weight: FontWeight.w800,
+                    letterSpacing: 1.1),
               ),
               const Spacer(),
               Icon(Icons.auto_awesome, size: 14, color: accent.withValues(alpha: 0.7)),
@@ -107,12 +104,8 @@ class CoachBriefingCard extends StatelessWidget {
           if (insight.headline.trim().isNotEmpty)
             Text(
               insight.headline.trim(),
-              style: TextStyle(
-                fontSize: 18,
-                height: 1.25,
-                fontWeight: FontWeight.w800,
-                color: c.textPrimary,
-              ),
+              style: ZType.ser(20, color: c.textPrimary,
+                  weight: FontWeight.w600, height: 1.25),
             ),
           if (insight.headline.trim().isNotEmpty && lines.isNotEmpty)
             const SizedBox(height: 10),
@@ -214,11 +207,9 @@ class _BodyLine extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.35,
-                color: colors.textPrimary.withValues(alpha: 0.92),
-              ),
+              style: ZType.ser(14,
+                  color: colors.textPrimary.withValues(alpha: 0.92),
+                  height: 1.35),
             ),
           ),
         ],
@@ -241,12 +232,8 @@ class _BodyLine extends StatelessWidget {
             Expanded(
               child: Text(
                 line,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  height: 1.35,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textPrimary,
-                ),
+                style: ZType.ser(13.5, color: colors.textPrimary,
+                    weight: FontWeight.w600, height: 1.35),
               ),
             ),
           ],
@@ -259,23 +246,15 @@ class _BodyLine extends StatelessWidget {
     if (isQuestion) {
       return Text(
         line,
-        style: TextStyle(
-          fontSize: 14.5,
-          height: 1.35,
-          fontWeight: FontWeight.w700,
-          color: accent,
-        ),
+        style: ZType.ser(14.5, color: accent, weight: FontWeight.w700,
+            height: 1.35),
       );
     }
 
     // Plain recap line (first line, with real numbers).
     return Text(
       line,
-      style: TextStyle(
-        fontSize: 14,
-        height: 1.4,
-        color: colors.textSecondary,
-      ),
+      style: ZType.ser(14, color: colors.textSecondary, height: 1.4),
     );
   }
 }
@@ -340,11 +319,7 @@ class _BriefingChip extends StatelessWidget {
             ],
             Text(
               chip.label,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: accent,
-              ),
+              style: ZType.lbl(13, color: accent, letterSpacing: 0.6),
             ),
           ],
         ),

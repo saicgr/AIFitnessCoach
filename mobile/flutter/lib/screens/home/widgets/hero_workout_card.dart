@@ -705,7 +705,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
             // Background image or gradient - fills the card
             Positioned.fill(child: _buildBackground(isDark)),
 
-            // Gradient overlay for readability - different for light/dark mode
+            // Gradient overlay for readability - different for light/dark mode.
+            // The text block (title + meta line + START) lives in the bottom
+            // ~45% of the card, so the scrim ramps to a strong opaque band
+            // there: the meta/subtitle was near-invisible over a light
+            // exercise illustration (issue A4). A 4-stop ramp keeps the upper
+            // illustration visible while guaranteeing legible text below.
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -715,15 +720,17 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     colors: isDark
                         ? [
                             Colors.black.withValues(alpha: 0.4),
-                            Colors.black.withValues(alpha: 0.3),
-                            Colors.black.withValues(alpha: 0.85),
+                            Colors.black.withValues(alpha: 0.28),
+                            Colors.black.withValues(alpha: 0.72),
+                            Colors.black.withValues(alpha: 0.92),
                           ]
                         : [
-                            Colors.white.withValues(alpha: 0.5),
-                            Colors.white.withValues(alpha: 0.3),
-                            Colors.white.withValues(alpha: 0.9),
+                            Colors.white.withValues(alpha: 0.45),
+                            Colors.white.withValues(alpha: 0.35),
+                            Colors.white.withValues(alpha: 0.82),
+                            Colors.white.withValues(alpha: 0.97),
                           ],
-                    stops: const [0.0, 0.35, 1.0],
+                    stops: const [0.0, 0.3, 0.62, 1.0],
                   ),
                 ),
               ),
@@ -800,15 +807,17 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       26,
                       color: isDark ? Colors.white : Colors.black87,
                     ).copyWith(
-                      shadows: isDark
-                          ? [
-                              const Shadow(
-                                color: Colors.black54,
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ]
-                          : null,
+                      // A4: shadow in BOTH modes — in light mode a white halo
+                      // keeps the dark title crisp over a light illustration.
+                      shadows: [
+                        Shadow(
+                          color: isDark
+                              ? Colors.black54
+                              : Colors.white.withValues(alpha: 0.85),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -821,20 +830,22 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       workout.description!,
                       style: TextStyle(
                         color: isDark
-                            ? Colors.white.withValues(alpha: 0.7)
-                            : Colors.black45,
+                            ? Colors.white.withValues(alpha: 0.78)
+                            : Colors.black.withValues(alpha: 0.62),
                         fontSize: 13,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         height: 1.3,
-                        shadows: isDark
-                            ? [
-                                const Shadow(
-                                  color: Colors.black38,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 1),
-                                ),
-                              ]
-                            : null,
+                        // A4: shadow in BOTH modes so the description reads over
+                        // a light illustration too (was dark-mode only).
+                        shadows: [
+                          Shadow(
+                            color: isDark
+                                ? Colors.black38
+                                : Colors.white.withValues(alpha: 0.8),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -863,9 +874,23 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
+                        // A4: the meta line ("TOMORROW · UPPER · 60m · 6
+                        // exercises") was near-invisible — same legibility
+                        // treatment as the title now (a soft shadow in BOTH
+                        // modes so it reads over a light illustration too).
                         color: isDark ? Colors.white : Colors.black87,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                        shadows: [
+                          Shadow(
+                            color: isDark
+                                ? Colors.black.withValues(alpha: 0.55)
+                                : Colors.white.withValues(alpha: 0.85),
+                            blurRadius: 6,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
                     );
                   }),

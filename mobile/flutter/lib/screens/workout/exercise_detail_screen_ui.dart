@@ -30,12 +30,12 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                   const SizedBox(height: 12),
                   Text(
                     AppLocalizations.of(context).exerciseDetailScreenNoStatsForThis,
-                    style: TextStyle(color: textMuted, fontSize: 14),
+                    style: ZType.ser(14, color: textMuted),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     AppLocalizations.of(context).exerciseDetailScreenCompleteAWorkoutTo,
-                    style: TextStyle(color: textMuted.withValues(alpha: 0.6), fontSize: 12),
+                    style: ZType.ser(12, color: textMuted.withValues(alpha: 0.6)),
                   ),
                 ],
               ),
@@ -157,14 +157,11 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          p[0],
+                          p[0].toUpperCase(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.textMuted,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: ZType.lbl(11, color: colors.textMuted,
+                              weight: FontWeight.w600, letterSpacing: 0.8),
                         ),
                       ),
                     ],
@@ -174,11 +171,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                     p[1],
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                    ),
+                    style: ZType.data(16, color: colors.textPrimary),
                   ),
                 ],
               ),
@@ -212,22 +205,19 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       child: InkWell(
         onTap: openSheet,
         borderRadius: BorderRadius.circular(14),
-        child: const SizedBox(
+        child: SizedBox(
           height: 52,
           child: Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.sports_gymnastics_rounded,
+                const Icon(Icons.sports_gymnastics_rounded,
                     color: Colors.white, size: 20),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Text(
-                  'Analyze my form',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
+                  'ANALYZE MY FORM',
+                  style: ZType.lbl(15, color: Colors.white, weight: FontWeight.w800,
+                      letterSpacing: 1.5),
                 ),
               ],
             ),
@@ -251,7 +241,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             child: Center(
               child: Text(
                 'Could not load your form history.',
-                style: TextStyle(color: textMuted, fontSize: 13),
+                style: ZType.ser(13, color: textMuted),
               ),
             ),
           ),
@@ -267,15 +257,12 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                       const SizedBox(height: 12),
                       Text(
                         'No form check yet',
-                        style: TextStyle(color: textMuted, fontSize: 14),
+                        style: ZType.ser(14, color: textMuted),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Record a set above and track your form over time.',
-                        style: TextStyle(
-                          color: textMuted.withValues(alpha: 0.6),
-                          fontSize: 12,
-                        ),
+                        style: ZType.ser(12, color: textMuted.withValues(alpha: 0.6)),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -288,12 +275,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
               children: [
                 Text(
                   '${items.length} FORM CHECK${items.length == 1 ? '' : 'S'}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: textMuted,
-                    letterSpacing: 1.5,
-                  ),
+                  style: ZType.lbl(12, color: textMuted, letterSpacing: 1.5),
                 ),
                 const SizedBox(height: 12),
                 for (final item in items)
@@ -355,11 +337,12 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
               ),
               const SizedBox(height: 4),
               Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                label.toUpperCase(),
+                style: ZType.lbl(
+                  11,
                   color: active ? activeColor : textMuted,
+                  weight: active ? FontWeight.w700 : FontWeight.w500,
+                  letterSpacing: 0.8,
                 ),
               ),
             ],
@@ -457,13 +440,8 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppLocalizations.of(context).exerciseDetailScreenCoachingCues,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: textMuted,
-            letterSpacing: 1.5,
-          ),
+          AppLocalizations.of(context).exerciseDetailScreenCoachingCues.toUpperCase(),
+          style: ZType.lbl(12, color: textMuted, letterSpacing: 1.5),
         ),
         const SizedBox(height: 12),
         Container(
@@ -487,21 +465,14 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              cues[i].label,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: textPrimary,
-                              ),
+                              cues[i].label.toUpperCase(),
+                              style: ZType.lbl(12, color: textPrimary,
+                                  letterSpacing: 1.0),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               cues[i].text,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textSecondary,
-                                height: 1.4,
-                              ),
+                              style: ZType.ser(14, color: textSecondary, height: 1.4),
                             ),
                           ],
                         ),
@@ -553,13 +524,8 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppLocalizations.of(context).exerciseDetailScreenExerciseInfo,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: textMuted,
-            letterSpacing: 1.5,
-          ),
+          AppLocalizations.of(context).exerciseDetailScreenExerciseInfo.toUpperCase(),
+          style: ZType.lbl(12, color: textMuted, letterSpacing: 1.5),
         ),
         const SizedBox(height: 12),
         Container(
@@ -583,21 +549,14 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              items[i].label,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: textPrimary,
-                              ),
+                              items[i].label.toUpperCase(),
+                              style: ZType.lbl(12, color: textPrimary,
+                                  letterSpacing: 1.0),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               items[i].text,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textSecondary,
-                                height: 1.4,
-                              ),
+                              style: ZType.ser(14, color: textSecondary, height: 1.4),
                             ),
                           ],
                         ),
@@ -672,11 +631,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
               child: Center(
                 child: Text(
                   setLabel,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: isWarmup ? textMuted : textPrimary,
-                  ),
+                  style: ZType.data(13, color: isWarmup ? textMuted : textPrimary),
                 ),
               ),
             ),
@@ -694,10 +649,10 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                 // Weight x Reps
                 Text(
                   previousDisplay,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: ZType.data(
+                    13,
                     color: previousDisplay == '-' ? textMuted : textSecondary,
-                    fontWeight: previousDisplay != '-' ? FontWeight.w500 : FontWeight.normal,
+                    weight: previousDisplay != '-' ? FontWeight.w500 : FontWeight.w400,
                   ),
                 ),
                 // RIR pill (if available)
@@ -711,11 +666,8 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                     ),
                     child: Text(
                       'RIR ${previousData.rir}',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: _getRirColor(previousData.rir!),
-                      ),
+                      style: ZType.lbl(9, color: _getRirColor(previousData.rir!),
+                          letterSpacing: 0.6),
                     ),
                   ),
                 ],
@@ -733,10 +685,10 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                 // Target weight x reps
                 Text(
                   targetDisplay,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: ZType.data(
+                    13,
                     color: targetDisplay == '-' ? textMuted : textPrimary,
-                    fontWeight: targetDisplay != '-' ? FontWeight.w600 : FontWeight.normal,
+                    weight: targetDisplay != '-' ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
                 // Target RIR pill
@@ -750,11 +702,8 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                     ),
                     child: Text(
                       'RIR $targetRir',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: _getRirColor(targetRir),
-                      ),
+                      style: ZType.lbl(9, color: _getRirColor(targetRir),
+                          letterSpacing: 0.6),
                     ),
                   ),
                 ],

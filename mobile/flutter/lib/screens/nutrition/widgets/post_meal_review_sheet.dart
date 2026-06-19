@@ -31,27 +31,37 @@ Future<void> showPostMealReviewSheet(
   if (prefs.getBool(_kHidePostMealReviewKey) == true) return;
 
   if (!context.mounted) return;
-  showGlassSheet<void>(
-    context: context,
-    // Stickier: explicit Skip / Don't-show-again actions only — no tap-outside
-    // or swipe-down dismissals. This keeps the sheet on screen long enough for
-    // users to actually fill it in (live data showed 1/78 recent logs had mood
-    // filled — mostly because the sheet was getting dismissed too easily).
-    isDismissible: false,
-    enableDrag: false,
-    builder: (context) => GlassSheet(
-      showHandle: false,
-      child: _PostMealReviewSheet(
-        foodNames: foodNames,
-        totalCalories: totalCalories,
-        isDark: isDark,
-        userId: userId,
-        foodLogId: foodLogId,
-        saveFuture: saveFuture,
-        getSavedLogId: getSavedLogId,
+
+  // Duplicate-GlobalKey guard: this sheet is presented right after logging,
+  // often from inside ANOTHER sheet's callback while that sheet is still
+  // mid-dismiss. Presenting synchronously then mounts a second GlassSheet
+  // whose internal key collides with the still-attached prior one ("Multiple
+  // widgets used the same GlobalKey"). Deferring to a post-frame callback lets
+  // the prior route finish popping before this one is pushed.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!context.mounted) return;
+    showGlassSheet<void>(
+      context: context,
+      // Stickier: explicit Skip / Don't-show-again actions only — no tap-outside
+      // or swipe-down dismissals. This keeps the sheet on screen long enough for
+      // users to actually fill it in (live data showed 1/78 recent logs had mood
+      // filled — mostly because the sheet was getting dismissed too easily).
+      isDismissible: false,
+      enableDrag: false,
+      builder: (context) => GlassSheet(
+        showHandle: false,
+        child: _PostMealReviewSheet(
+          foodNames: foodNames,
+          totalCalories: totalCalories,
+          isDark: isDark,
+          userId: userId,
+          foodLogId: foodLogId,
+          saveFuture: saveFuture,
+          getSavedLogId: getSavedLogId,
+        ),
       ),
-    ),
-  );
+    );
+  });
 }
 
 class _PostMealReviewSheet extends ConsumerStatefulWidget {
@@ -139,46 +149,56 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-              // Success header
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppLocalizations.of(context).postMealReviewMealLogged,
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textPrimary),
-                        ),
-                        Text(
-                          AppLocalizations.of(context)!.postMealReviewSheetKcal(foodSummary, extraCount, widget.totalCalories),
-                          style: TextStyle(fontSize: 12, color: textMuted),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Skip button
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(AppLocalizations.of(context).onboardingSkip, style: TextStyle(fontSize: 13, color: textMuted)),
-                  ),
-                ],
+          // Success header — pinned above the scroll area so the meal name
+          // and Skip stay visible while the check-in body scrolls.
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.check_circle, color: Colors.green, size: 20),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context).postMealReviewMealLogged,
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textPrimary),
+                    ),
+                    Text(
+                      AppLocalizations.of(context)!.postMealReviewSheetKcal(foodSummary, extraCount, widget.totalCalories),
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              // Skip button
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(AppLocalizations.of(context).onboardingSkip, style: TextStyle(fontSize: 13, color: textMuted)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
 
-              // Quick review prompt
-              Text(
+          // Scrollable body — the check-in content (~960px) far exceeds the
+          // bounded GlassSheet height (~724px), so it scrolls instead of
+          // throwing a RenderFlex Column overflow.
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Quick review prompt
+                  Text(
                 AppLocalizations.of(context).postMealReviewQuickCheckInOptional,
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
               ),
@@ -440,9 +460,13 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                   ),
                 ),
               ),
-            ],
+                ],
+              ),
+            ),
           ),
-        );
+        ],
+      ),
+    );
   }
 
   Future<void> _saveMoodReview(Color teal) async {
@@ -451,15 +475,17 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
     // the PATCH needs it, but every other path is fire-and-forget.
     String? logId = widget.foodLogId;
     if (logId == null && widget.saveFuture != null) {
-      setState(() => _isSaving = true);
+      if (mounted) setState(() => _isSaving = true);
       try {
         await widget.saveFuture;
       } catch (_) {}
+      // The save can outlive this sheet — bail before touching context/state.
+      if (!mounted) return;
       logId = widget.getSavedLogId?.call();
     }
     if (logId == null) {
       debugPrint('⚠️ [PostMealReview] No foodLogId, skipping backend save');
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
       return;
     }
 

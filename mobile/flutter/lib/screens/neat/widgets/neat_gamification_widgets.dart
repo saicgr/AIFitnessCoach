@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -64,7 +66,6 @@ class _NeatLevelBadgeState extends State<NeatLevelBadge>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isHighLevel = widget.level.index >= NeatLevel.neatEnthusiast.index;
 
     return GestureDetector(
@@ -142,18 +143,20 @@ class _NeatLevelBadgeState extends State<NeatLevelBadge>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        widget.level.localizedName(AppLocalizations.of(context)!),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                        widget.level.localizedName(AppLocalizations.of(context)),
+                        style: ZType.lbl(
+                          14.5,
                           color: widget.level.color,
+                          weight: FontWeight.w800,
+                          letterSpacing: 0.8,
                         ),
                       ),
                       Text(
-                        AppLocalizations.of(context)!.neatGamificationWidgetsLevel(widget.level.index + 1),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colorScheme.onSurfaceVariant,
+                        AppLocalizations.of(context).neatGamificationWidgetsLevel(widget.level.index + 1),
+                        style: ZType.lbl(
+                          11,
+                          color: ThemeColors.of(context).textMuted,
+                          letterSpacing: 1.2,
                         ),
                       ),
                     ],

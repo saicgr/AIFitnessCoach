@@ -35,6 +35,7 @@ import '../../../data/providers/sub_card_shown_today_provider.dart';
 import '../../../data/services/health_service.dart' show healthSyncProvider;
 import '../../../widgets/coach/coach_contextual_nudge_row.dart';
 import '../../../widgets/coach/sub_card_ranker.dart';
+import '../../../core/widgets/skeleton/skeleton_box.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/health_connect_sheet.dart';
 import '../../chat/widgets/generic_blocks_renderer.dart';
@@ -639,18 +640,22 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   }
 
   Widget _skeleton(ThemeColors c, {bool isMinimized = false}) {
-    // No placeholder skeleton bars while the daily insight loads — a flashing
-    // grey block reads as "broken" (the briefing resolves in ~1-3s anyway).
-    // We paint just the real header, and — when expanded — the nudge stack,
-    // which reads nutrition/hydration/workout providers directly and so is
-    // ready on the first frame. The briefing text simply appears (fades in via
-    // `_content`) once it resolves, rather than morphing out of grey bars.
+    // A1: a TRUE shimmer skeleton that matches the briefing layout — header
+    // (real, instant) + a headline line + a 2-line body + two task rows. The
+    // previous loading state rendered `_CoachNudgeStack` (generic contextual
+    // nudges like "Peak window now"), which read as REAL tasks and then
+    // vanished when the briefing resolved (the "pre-rendered tasks" report).
+    // A shimmer placeholder can never be mistaken for content, and the disk
+    // cache (see dailyCoachInsightProvider) usually paints the last briefing
+    // instantly so this is only ever seen on a genuine first cold load.
     if (isMinimized) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           _eyebrow(c, false, isMinimized: true),
+          const SizedBox(height: 8),
+          const SkeletonBox(width: 180, height: 14, radius: 7),
         ],
       );
     }
@@ -658,8 +663,29 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _eyebrow(c, false),
-        const SizedBox(height: 8),
-        const _CoachNudgeStack(),
+        const SizedBox(height: 10),
+        // Headline placeholder.
+        const SkeletonBox(width: 210, height: 15, radius: 7),
+        const SizedBox(height: 10),
+        // Body placeholder (2 lines).
+        const SkeletonText(lines: 2, lineHeight: 12, spacing: 7),
+        const SizedBox(height: 16),
+        // "TO DO TODAY" label placeholder.
+        const SkeletonBox(width: 84, height: 9, radius: 5),
+        const SizedBox(height: 10),
+        // Two task-row placeholders mirroring the _TodoCard height.
+        for (var i = 0; i < 2; i++) ...[
+          if (i > 0) const SizedBox(height: 8),
+          SkeletonShimmer(
+            child: Container(
+              height: 54,
+              decoration: BoxDecoration(
+                color: c.cardBorder,
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -824,6 +850,7 @@ class _TodoTask {
   final String detail;
   final String actionLabel;
   final VoidCallback onTap;
+
   const _TodoTask({
     required this.icon,
     required this.done,
@@ -1152,12 +1179,128 @@ class _TodoCarouselState extends State<_TodoCarousel> {
   }
 }
 
-/// A single TO-DO card matching the coach action-card look: an icon tile, the
-/// task label + detail line, and a CTA pill (or the progress value once done).
-/// Tapping anywhere fires the task's action.
+/// A single TO-DO card matching the signature-v2 checklist row (proof line
+/// 537): a leading CHECKBOX (empty rounded square / filled accent ✓ when the
+/// target is met), the task label + detail line (struck through when done),
+/// and a trailing CTA pill (or the progress value once done).
+///
+/// Interactions (A2 — user chose "checkbox + open detail sheet"):
+///   * Tapping the row BODY opens a task-detail [GlassSheet] (title, fuller
+///     why, live progress, and a button that fires the deep-link action).
+///   * The trailing CTA pill fires the quick action directly (unchanged).
+///   * The checkbox toggles done for user-completable tasks (`onToggle` set);
+///     for derived-progress tasks it is a read-only indicator that fills when
+///     the target is met.
 class _TodoCard extends StatelessWidget {
   final _TodoTask task;
   const _TodoCard({required this.task});
+
+  /// Leading checkbox (signature-v2 proof line 537) — an empty rounded square
+  /// when the target isn't met, a filled accent square with a ✓ when it is.
+  /// The current coach tasks (protein / water / workout / sleep) are all
+  /// DERIVED-progress, so this is a read-only indicator that fills when the
+  /// target is met (per A2); user-completable tasks would make it interactive.
+  Widget _checkbox(ThemeColors c) {
+    final done = task.done;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      width: 22,
+      height: 22,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: done ? c.accent : Colors.transparent,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: done ? c.accent : c.textMuted.withValues(alpha: 0.55),
+          width: 1.6,
+        ),
+      ),
+      child: done
+          ? Icon(Icons.check_rounded, size: 15, color: c.accentContrast)
+          : null,
+    );
+  }
+
+  void _openDetailSheet(BuildContext context) {
+    final c = ThemeColors.of(context);
+    showGlassSheet<void>(
+      context: context,
+      builder: (sheetCtx) => GlassSheet(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: task.done
+                        ? AppColors.green.withValues(alpha: 0.16)
+                        : c.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(task.icon,
+                      size: 20,
+                      color: task.done ? AppColors.green : c.accent),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    task.label,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                ),
+                Text(task.trailing,
+                    style: ZType.data(13, color: c.textMuted)),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              task.detail,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.45,
+                color: c.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  Navigator.of(sheetCtx).pop();
+                  task.onTap();
+                },
+                child: Container(
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: c.accent,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    task.actionLabel.toUpperCase(),
+                    style: ZType.lbl(13,
+                        color: c.accentContrast, letterSpacing: 1.5),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1165,7 +1308,9 @@ class _TodoCard extends StatelessWidget {
     final done = task.done;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: task.onTap,
+      // Row body opens the detail sheet (A2); the trailing CTA pill below
+      // wins the gesture arena for the direct action.
+      onTap: () => _openDetailSheet(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
@@ -1175,21 +1320,7 @@ class _TodoCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 34,
-              height: 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: done
-                    ? AppColors.green.withValues(alpha: 0.16)
-                    : c.accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: done
-                  ? const Icon(Icons.check_rounded,
-                      size: 18, color: AppColors.green)
-                  : Icon(task.icon, size: 17, color: c.accent),
-            ),
+            _checkbox(c),
             const SizedBox(width: 11),
             Expanded(
               child: Column(
@@ -1224,17 +1355,22 @@ class _TodoCard extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             if (!done)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: c.accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: c.accent.withValues(alpha: 0.34)),
-                ),
-                child: Text(
-                  task.actionLabel,
-                  style: ZType.lbl(11, color: c.accent, letterSpacing: 0.5),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: task.onTap,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: c.accent.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(999),
+                    border:
+                        Border.all(color: c.accent.withValues(alpha: 0.34)),
+                  ),
+                  child: Text(
+                    task.actionLabel,
+                    style: ZType.lbl(11, color: c.accent, letterSpacing: 0.5),
+                  ),
                 ),
               )
             else

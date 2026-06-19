@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Represents different streak milestones with their properties
@@ -278,12 +279,8 @@ class _StreakBadgesState extends State<StreakBadges>
                     Row(
                       children: [
                         Text(
-                          '${widget.currentStreak} Day Streak',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
-                          ),
+                          '${widget.currentStreak} DAY STREAK',
+                          style: ZType.disp(20, color: textPrimary),
                         ),
                         if (_isPersonalBest) ...[
                           const SizedBox(width: 8),
@@ -295,27 +292,18 @@ class _StreakBadgesState extends State<StreakBadges>
                     if (milestone != null)
                       Text(
                         milestone.title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: milestone.color,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: ZType.lbl(14, color: milestone.color,
+                            weight: FontWeight.w700, letterSpacing: 1.2),
                       )
                     else if (widget.currentStreak > 0)
                       Text(
                         '${3 - widget.currentStreak} more days to Bronze!',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textSecondary,
-                        ),
+                        style: ZType.ser(13, color: textSecondary),
                       )
                     else
                       Text(
                         AppLocalizations.of(context).streakBadgesHitYourGoalTo,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textMuted,
-                        ),
+                        style: ZType.ser(13, color: textMuted),
                       ),
                     if (widget.longestStreak > 0) ...[
                       const SizedBox(height: 8),
@@ -329,10 +317,7 @@ class _StreakBadgesState extends State<StreakBadges>
                           const SizedBox(width: 4),
                           Text(
                             'Best: ${widget.longestStreak} days',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: textMuted,
-                            ),
+                            style: ZType.data(12, color: textMuted),
                           ),
                         ],
                       ),
@@ -437,11 +422,7 @@ class _StreakBadge extends StatelessWidget {
             if (streak > 0)
               Text(
                 streak.toString(),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+                style: ZType.disp(14, color: color, letterSpacing: 0),
               ),
           ],
         ),
@@ -523,12 +504,8 @@ class _PersonalBestBadgeState extends State<_PersonalBestBadge>
                 SizedBox(width: 4),
                 Text(
                   AppLocalizations.of(context).streakBadgesNewBest,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
+                  style: ZType.lbl(10, color: Colors.white, weight: FontWeight.w800,
+                      letterSpacing: 1.0),
                 ),
               ],
             ),

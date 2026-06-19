@@ -128,22 +128,12 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                   if (widget.newLevel != null)
                     Text(
                       AppLocalizations.of(context)!.neatGamificationWidgetsLevelUp,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.yellow,
-                        letterSpacing: 4,
-                      ),
+                      style: ZType.lbl(16, color: AppColors.yellow, letterSpacing: 4),
                     )
                   else
                     Text(
                       AppLocalizations.of(context)!.neatGamificationWidgetsAchievementUnlocked,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: accentColor,
-                        letterSpacing: 4,
-                      ),
+                      style: ZType.lbl(16, color: accentColor, letterSpacing: 4),
                     ),
 
                   const SizedBox(height: 32),
@@ -202,11 +192,7 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                   // Title
                   Text(
                     widget.title,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: ZType.disp(30, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
 
@@ -218,10 +204,7 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                     child: Text(
                       widget.description,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
+                      style: ZType.ser(16, color: Colors.white.withOpacity(0.8)),
                     ),
                   ),
 
@@ -248,11 +231,7 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                         const SizedBox(width: 8),
                         Text(
                           '+${widget.xpEarned} XP',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.yellow,
-                          ),
+                          style: ZType.data(16, color: AppColors.yellow),
                         ),
                       ],
                     ),
@@ -295,10 +274,8 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                             ),
                             child: Text(
                               AppLocalizations.of(context)!.buttonContinue,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: ZType.lbl(16, color: Colors.white,
+                                  weight: FontWeight.w800, letterSpacing: 1.5),
                             ),
                           ),
                         ),
@@ -342,7 +319,7 @@ class CompactNeatStatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     final stepProgress = (todaySteps / stepGoal).clamp(0.0, 1.0);
     final activeProgress = (activeHours / targetActiveHours).clamp(0.0, 1.0);
 
@@ -356,7 +333,7 @@ class CompactNeatStatsCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
+          color: tc.surface,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -375,7 +352,7 @@ class CompactNeatStatsCard extends StatelessWidget {
             Container(
               height: 40,
               width: 1,
-              color: colorScheme.outline.withOpacity(0.2),
+              color: tc.cardBorder,
             ),
             // Active hours
             Expanded(
@@ -391,7 +368,7 @@ class CompactNeatStatsCard extends StatelessWidget {
             Container(
               height: 40,
               width: 1,
-              color: colorScheme.outline.withOpacity(0.2),
+              color: tc.cardBorder,
             ),
             // NEAT score
             Expanded(

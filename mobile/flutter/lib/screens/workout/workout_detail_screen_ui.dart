@@ -94,19 +94,20 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '$label: ',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
+            '${label.toUpperCase()}: ',
+            style: ZType.lbl(
+              10,
               color: labelColor,
+              letterSpacing: 1.0,
             ),
           ),
           Text(
-            value,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
+            value.toUpperCase(),
+            style: ZType.lbl(
+              10,
               color: color,
+              weight: FontWeight.w800,
+              letterSpacing: 1.0,
             ),
           ),
         ],
@@ -170,10 +171,9 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                     children: [
                       Flexible(
                         child: Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                          title.toUpperCase(),
+                          style: ZType.lbl(
+                            12,
                             color: textMuted,
                             letterSpacing: 1.5,
                           ),
@@ -189,10 +189,10 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                         ),
                         child: Text(
                           '$itemCount',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                          style: ZType.data(
+                            11,
                             color: color,
+                            weight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -202,8 +202,8 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: ZType.ser(
+                        12,
                         color: textMuted.withValues(alpha: 0.8),
                       ),
                     ),
@@ -317,11 +317,11 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              AppLocalizations.of(context).workoutDetailScreenChallenge,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                              AppLocalizations.of(context).workoutDetailScreenChallenge.toUpperCase(),
+                              style: ZType.lbl(
+                                10,
                                 color: color,
+                                weight: FontWeight.w800,
                                 letterSpacing: 1,
                               ),
                             ),
@@ -330,9 +330,10 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                             const SizedBox(width: 8),
                             Text(
                               exercise.difficulty!.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10,
+                              style: ZType.lbl(
+                                10,
                                 color: textMuted,
+                                letterSpacing: 1.0,
                               ),
                             ),
                           ],
@@ -341,10 +342,10 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                       const SizedBox(height: 6),
                       Text(
                         exercise.name,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                        style: ZType.ser(
+                          17,
                           color: textPrimary,
+                          weight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -354,9 +355,10 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                           const SizedBox(width: 4),
                           Text(
                             exercise.setsRepsDisplay,
-                            style: TextStyle(
-                              fontSize: 13,
+                            style: ZType.data(
+                              12,
                               color: textMuted,
+                              weight: FontWeight.w400,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -365,9 +367,10 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                             const SizedBox(width: 4),
                             Text(
                               '${exercise.restSeconds}s rest',
-                              style: TextStyle(
-                                fontSize: 13,
+                              style: ZType.data(
+                                12,
                                 color: textMuted,
+                                weight: FontWeight.w400,
                               ),
                             ),
                           ],
@@ -397,10 +400,10 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                 Expanded(
                   child: Text(
                     AppLocalizations.of(context).workoutDetailScreenThisIsAnOptional,
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: ZType.ser(
+                      13,
                       color: textMuted,
-                      fontStyle: FontStyle.italic,
+                      style: FontStyle.italic,
                     ),
                   ),
                 ),
@@ -446,8 +449,8 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
           Expanded(
             child: Text(
               item['name'] ?? '',
-              style: TextStyle(
-                fontSize: 14,
+              style: ZType.ser(
+                15,
                 color: textPrimary,
               ),
             ),
@@ -460,10 +463,10 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
             ),
             child: Text(
               item['duration'] ?? '',
-              style: TextStyle(
-                fontSize: 12,
+              style: ZType.data(
+                11,
                 color: color,
-                fontWeight: FontWeight.w500,
+                weight: FontWeight.w700,
               ),
             ),
           ),

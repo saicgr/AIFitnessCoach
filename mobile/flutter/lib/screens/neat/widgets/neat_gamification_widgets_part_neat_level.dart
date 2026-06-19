@@ -210,7 +210,7 @@ class _NeatProgressBarState extends State<NeatProgressBar>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     final nextLevel = widget.currentLevel.nextLevel;
     final xpToNext = nextLevel != null
         ? nextLevel.minXP - widget.currentXP
@@ -226,28 +226,17 @@ class _NeatProgressBarState extends State<NeatProgressBar>
             children: [
               Text(
                 l10n.neatGamificationWidgetsCurrentXp(widget.currentXP),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
-                ),
+                style: ZType.data(13, color: tc.textPrimary),
               ),
               if (nextLevel != null)
                 Text(
                   l10n.neatGamificationWidgetsXpToNext(xpToNext, nextLevel.localizedName(l10n)),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 0.6),
                 )
               else
                 Text(
                   l10n.neatGamificationWidgetsMaxLevel,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.yellow,
-                  ),
+                  style: ZType.lbl(12, color: AppColors.yellow, letterSpacing: 1.0),
                 ),
             ],
           ),
@@ -257,7 +246,7 @@ class _NeatProgressBarState extends State<NeatProgressBar>
         Container(
           height: widget.height,
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
+            color: tc.cardBorder,
             borderRadius: BorderRadius.circular(widget.height / 2),
           ),
           child: AnimatedBuilder(
@@ -334,15 +323,15 @@ class NeatLeaderboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
+          color: tc.cardBorder,
         ),
       ),
       child: Column(
@@ -361,11 +350,8 @@ class NeatLeaderboardCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     AppLocalizations.of(context)!.neatGamificationWidgetsWeeklyLeaderboard,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: ZType.lbl(16, color: tc.textPrimary, weight: FontWeight.w800,
+                        letterSpacing: 1.0),
                   ),
                 ],
               ),
@@ -377,11 +363,7 @@ class NeatLeaderboardCard extends StatelessWidget {
                   },
                   child: Text(
                     AppLocalizations.of(context)!.neatGamificationWidgetsViewAll,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
-                    ),
+                    style: ZType.lbl(13, color: tc.accent, letterSpacing: 1.0),
                   ),
                 ),
             ],
@@ -395,9 +377,7 @@ class NeatLeaderboardCard extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 child: Text(
                   AppLocalizations.of(context)!.neatGamificationWidgetsNoRankingsYetThis,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: ZType.ser(13.5, color: tc.textMuted),
                 ),
               ),
             )
@@ -511,7 +491,7 @@ class _DailyChallengeState extends State<DailyChallenge>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     final progress = (widget.currentValue / widget.targetValue).clamp(0.0, 1.0);
     final isCompleted = widget.currentValue >= widget.targetValue;
 
@@ -564,20 +544,15 @@ class _DailyChallengeState extends State<DailyChallenge>
                   children: [
                     Text(
                       AppLocalizations.of(context)!.neatGamificationWidgetsDailyChallenge,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isCompleted ? AppColors.green : AppColors.purple,
-                        letterSpacing: 0.5,
+                      style: ZType.lbl(
+                        11,
+                        color: isCompleted ? AppColors.green : tc.accent,
+                        letterSpacing: 1.4,
                       ),
                     ),
                     Text(
                       widget.title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
+                      style: ZType.ser(16, color: tc.textPrimary, weight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -586,7 +561,7 @@ class _DailyChallengeState extends State<DailyChallenge>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: colorScheme.surface,
+                  color: tc.surface,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -595,16 +570,12 @@ class _DailyChallengeState extends State<DailyChallenge>
                     Icon(
                       Icons.timer_outlined,
                       size: 14,
-                      color: colorScheme.onSurfaceVariant,
+                      color: tc.textMuted,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       _formatTimeRemaining(l10n),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      style: ZType.data(11, color: tc.textMuted, weight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -616,10 +587,7 @@ class _DailyChallengeState extends State<DailyChallenge>
           // Description
           Text(
             widget.description,
-            style: TextStyle(
-              fontSize: 13,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: ZType.ser(13.5, color: tc.textMuted),
           ),
           const SizedBox(height: 16),
 
@@ -632,19 +600,12 @@ class _DailyChallengeState extends State<DailyChallenge>
                 children: [
                   Text(
                     '${widget.currentValue} / ${widget.targetValue} ${widget.unit}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: ZType.data(13, color: tc.textPrimary),
                   ),
                   Text(
                     '${(progress * 100).toInt()}%',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: isCompleted ? AppColors.green : AppColors.purple,
-                    ),
+                    style: ZType.data(13,
+                        color: isCompleted ? AppColors.green : tc.accent),
                   ),
                 ],
               ),
@@ -652,7 +613,7 @@ class _DailyChallengeState extends State<DailyChallenge>
               Container(
                 height: 8,
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
+                  color: tc.cardBorder,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Stack(
@@ -701,11 +662,7 @@ class _DailyChallengeState extends State<DailyChallenge>
                     const SizedBox(width: 6),
                     Text(
                       '+${widget.xpReward} XP',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.yellow,
-                      ),
+                      style: ZType.data(13, color: AppColors.yellow),
                     ),
                   ],
                 ),
@@ -731,7 +688,7 @@ class _DailyChallengeState extends State<DailyChallenge>
                   ),
                   child: Text(
                     AppLocalizations.of(context)!.neatGamificationWidgetsClaimReward,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: ZType.lbl(13, color: Colors.white, letterSpacing: 1.0),
                   ),
                 )
               else if (widget.onAccept != null && widget.currentValue == 0)
@@ -741,8 +698,8 @@ class _DailyChallengeState extends State<DailyChallenge>
                     widget.onAccept!();
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.purple,
-                    side: BorderSide(color: AppColors.purple),
+                    foregroundColor: tc.accent,
+                    side: BorderSide(color: tc.accent),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 10,
@@ -753,7 +710,7 @@ class _DailyChallengeState extends State<DailyChallenge>
                   ),
                   child: Text(
                     AppLocalizations.of(context)!.neatGamificationWidgetsAccept,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: ZType.lbl(13, color: tc.accent, letterSpacing: 1.0),
                   ),
                 ),
             ],

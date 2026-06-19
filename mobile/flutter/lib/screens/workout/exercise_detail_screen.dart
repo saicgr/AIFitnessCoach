@@ -665,12 +665,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                   const SizedBox(height: 12),
                   Text(
                     AppLocalizations.of(context).exerciseDetailNoHistoryForThis,
-                    style: TextStyle(color: textMuted, fontSize: 14),
+                    style: ZType.ser(14, color: textMuted),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     AppLocalizations.of(context).exerciseDetailYourSessionsWillAppear,
-                    style: TextStyle(color: textMuted.withValues(alpha: 0.6), fontSize: 12),
+                    style: ZType.ser(12, color: textMuted.withValues(alpha: 0.6)),
                   ),
                 ],
               ),
@@ -711,12 +711,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
             ],
             Text(
               '${sessions.length} SESSION${sessions.length == 1 ? '' : 'S'}',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: 1.5,
-              ),
+              style: ZType.lbl(12, color: textMuted, letterSpacing: 1.5),
             ),
             const SizedBox(height: 12),
             ...sessions.map((session) => ExerciseSessionCard(session: session)),
@@ -824,10 +819,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                         const SizedBox(width: 4),
                         Text(
                           _showVideo ? AppLocalizations.of(context).exerciseDetailImage : AppLocalizations.of(context).workoutShowcaseVideo,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                          ),
+                          style: ZType.lbl(12, color: Colors.white, letterSpacing: 0.8),
                         ),
                       ],
                     ),

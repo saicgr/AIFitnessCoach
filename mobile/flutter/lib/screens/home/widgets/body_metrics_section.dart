@@ -31,7 +31,15 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
     if (userId != null) {
-      ref.read(scoresProvider.notifier).loadScoresOverview(userId: userId);
+      final notifier = ref.read(scoresProvider.notifier);
+      // Paint last-known overview + strength bars instantly from disk before
+      // the network call resolves (the Home strength breakdown reads
+      // `muscleScoresProvider`, populated only by loadStrengthScores).
+      notifier.seedFromDisk(userId: userId);
+      notifier.loadScoresOverview(userId: userId);
+      // Home's strength breakdown needs muscle scores too — fold the load into
+      // the same prefetch so the bars aren't empty until the user opens /stats.
+      notifier.loadStrengthScores(userId: userId);
     }
   }
 

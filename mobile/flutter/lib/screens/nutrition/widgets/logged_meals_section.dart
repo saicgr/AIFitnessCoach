@@ -12,6 +12,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../utils/time_formatters.dart';
 import '../../../widgets/fullscreen_image_viewer.dart';
 import '../../../widgets/glass_sheet.dart';
+import 'food_detail_sheet.dart';
 import 'food_report_dialog.dart';
 import 'food_source_indicator.dart';
 import 'inflammation_chip.dart';
@@ -323,7 +324,7 @@ class LoggedMealsSection extends StatelessWidget {
         return false;
       },
       child: InkWell(
-        onTap: () => _showMealDetails(context, meal),
+        onTap: () => showFoodDetailSheet(context, meal),
         onLongPress: () {
           HapticFeedback.mediumImpact();
           _showQuickActionsMenu(context, meal);
@@ -504,7 +505,97 @@ class LoggedMealsSection extends StatelessWidget {
   }
 
   // ============================================
-  // Meal Details Sheet (tap)
+  // Signature food-detail sheet (tap) — issue 11
+  // ============================================
+
+  /// Builds the "1 bowl · 420 g" serving label shown on the dotted underline.
+  /// Prefers the single item's amount; otherwise the item count + total weight.
+  String _servingLabelFor(FoodLog meal) {
+    if (meal.foodItems.length == 1) {
+      final item = meal.foodItems.first;
+      final amount = item.amount?.trim();
+      final w = item.weightG;
+      final parts = <String>[];
+      if (amount != null && amount.isNotEmpty && amount != '1' && amount != '1.0') {
+        parts.add(amount);
+      }
+      if (w != null && w > 0) parts.add('${w.round()} g');
+      if (parts.isNotEmpty) return parts.join(' · ');
+      return '1 serving';
+    }
+    final n = meal.foodItems.length;
+    final totalW = meal.foodItems
+        .fold<double>(0, (s, i) => s + (i.weightG ?? 0));
+    final base = '$n ${n == 1 ? 'item' : 'items'}';
+    return totalW > 0 ? '$base · ${totalW.round()} g' : base;
+  }
+
+  /// Opens the signature-v2 [FoodDetailSheet], delegating every behavior to the
+  /// existing audited flows (edit re-derives macros via the portion sheets,
+  /// duplicate / log-again copy the log, remove deletes, scores explain).
+  void showFoodDetailSheet(BuildContext context, FoodLog meal) {
+    showGlassSheet<void>(
+      context: context,
+      builder: (ctx) => FoodDetailSheet(
+        meal: meal,
+        servingLabel: _servingLabelFor(meal),
+        renderEmoji: _getMealEmoji(meal.mealType),
+        onShare: () => onShareMeal(meal),
+        onEdit: () {
+          // Single-item → per-item portion editor (macros editable, audited,
+          // re-derives from the new weight). Multi-item → the detailed editor
+          // (_showMealDetails) which carries the per-item inline-editable
+          // kcal/P/C/F list + edit history, so each component can be adjusted
+          // independently rather than via one whole-meal multiplier.
+          if (meal.foodItems.length == 1) {
+            _showEditItemPortionSheet(context, meal, 0);
+          } else {
+            _showMealDetails(context, meal);
+          }
+        },
+        // Duplicate / Log again both re-log the meal into the same meal type
+        // (NutritionScreen._copyMeal copies with a fresh timestamp onto the
+        // viewed date — exactly a "log it again" for the user).
+        onDuplicate: () => onCopyMeal(meal.id, meal.mealType),
+        onLogAgain: () => onCopyMeal(meal.id, meal.mealType),
+        onRemove: () => onDeleteMeal(meal.id),
+        onAddToSaved: () => onSaveFoodToFavorites(meal),
+        onExplainHealth: meal.healthScore != null
+            ? () => ScoreExplainSheet.showHealth(
+                  context,
+                  score: meal.healthScore,
+                  reasons: healthReasonsFromSignals(
+                    aiReasons: meal.healthScoreReasons,
+                    calories: meal.totalCalories,
+                    proteinG: meal.proteinG,
+                    fiberG: meal.fiberG,
+                    sugarG: meal.sugarG,
+                    isUltraProcessed: meal.isUltraProcessed,
+                    inflammationScore: meal.inflammationScore,
+                  ),
+                )
+            : null,
+        onExplainInflammation: meal.inflammationScore != null
+            ? () => ScoreExplainSheet.show(
+                  context,
+                  kind: ScoreKind.inflammation,
+                  value: meal.inflammationScore,
+                  reason: meal.aiFeedback,
+                )
+            : null,
+        onExplainGl: meal.glycemicLoad != null
+            ? () => ScoreExplainSheet.show(
+                  context,
+                  kind: ScoreKind.glycemicLoad,
+                  value: meal.glycemicLoad,
+                )
+            : null,
+      ),
+    );
+  }
+
+  // ============================================
+  // Meal Details Sheet (tap) — legacy, retained as a fallback delegate.
   // ============================================
 
   void _showMealDetails(BuildContext context, FoodLog meal) {
@@ -4016,43 +4107,13 @@ class _MealSectionState extends State<_MealSection> {
                         ),
                         if (totalCal > 0) ...[
                           const SizedBox(width: 8),
+                          // "· 222 cal" on line 1. The P/C/F triplet moved to
+                          // its own line below the header so nothing truncates
+                          // (was an inline RichText that ellipsed to "11P…").
                           Text(
-                            '$totalCal',
+                            '$totalCal cal',
                             style: ZType.data(11.5, color: textPrimary),
                           ),
-                          // Macros BESIDE the calories, each in its semantic
-                          // macro color (protein violet · carbs cyan · fat
-                          // orange). Only when there are macros to show.
-                          if ((totalProtein + totalCarbs + totalFat) > 0) ...[
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: RichText(
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                text: TextSpan(
-                                  style: ZType.data(11.5),
-                                  children: [
-                                    TextSpan(
-                                      text: '·  ',
-                                      style: TextStyle(color: textMuted),
-                                    ),
-                                    TextSpan(
-                                      text: '${totalProtein.round()}P',
-                                      style: TextStyle(color: AppColors.macroProtein),
-                                    ),
-                                    TextSpan(
-                                      text: '  ${totalCarbs.round()}C',
-                                      style: TextStyle(color: AppColors.macroCarbs),
-                                    ),
-                                    TextSpan(
-                                      text: '  ${totalFat.round()}F',
-                                      style: TextStyle(color: AppColors.macroFat),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                         const Spacer(),
                         if (countLabel != null)
@@ -4090,9 +4151,20 @@ class _MealSectionState extends State<_MealSection> {
             ],
           ),
         ),
-        // Per-meal P/C/F now lives BESIDE the calorie total in the header row
-        // above (semantic macro colors), so the separate muted line was
-        // removed — the macros read at a glance on one line.
+        // Per-meal P/C/F on its OWN line below the header (full triplet in
+        // semantic macro colors — protein violet · carbs cyan · fat orange).
+        // Sharing the header row truncated it to "11P…" on narrow screens, so
+        // it now gets a dedicated line that never has to compete for width.
+        if (totalCal > 0 && (totalProtein + totalCarbs + totalFat) > 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(31, 0, 6, 8),
+            child: owner._macroTriplet(
+              proteinG: totalProtein,
+              carbsG: totalCarbs,
+              fatG: totalFat,
+              fontSize: 11,
+            ),
+          ),
         // Items or empty state
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 180),
@@ -4269,7 +4341,7 @@ class _FoodGroup extends StatelessWidget {
             return false;
           },
           child: InkWell(
-            onTap: () => owner._showMealDetails(context, meal),
+            onTap: () => owner.showFoodDetailSheet(context, meal),
             onLongPress: () {
               HapticFeedback.mediumImpact();
               owner._showQuickActionsMenu(context, meal);
@@ -4411,7 +4483,7 @@ class _FoodGroup extends StatelessWidget {
         return false;
       },
       child: InkWell(
-        onTap: () => owner._showMealDetails(context, parent),
+        onTap: () => owner.showFoodDetailSheet(context, parent),
         onLongPress: () {
           HapticFeedback.mediumImpact();
           // Per-item menu (Adjust portion, Copy/Move to other meal, Remove)

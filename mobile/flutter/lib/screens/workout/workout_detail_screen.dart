@@ -410,20 +410,18 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                               Expanded(
                                 child: Text(
                                   _refreshError!,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: isDark
-                                        ? Colors.white
-                                        : AppColorsLight.textPrimary,
+                                  style: ZType.ser(
+                                    13,
+                                    color: ThemeColors.of(context).textPrimary,
                                   ),
                                 ),
                               ),
                               Text(
-                                AppLocalizations.of(context).buttonRetry,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                                AppLocalizations.of(context).buttonRetry.toUpperCase(),
+                                style: ZType.lbl(
+                                  12,
                                   color: accentColor,
+                                  letterSpacing: 1.2,
                                 ),
                               ),
                               const SizedBox(width: 4),
@@ -636,11 +634,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                           child: Padding(
                             padding: const EdgeInsets.only(right: 12),
                             child: Text(
-                              AppLocalizations.of(context).workoutDetailRevert,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                              AppLocalizations.of(context).workoutDetailRevert.toUpperCase(),
+                              style: ZType.lbl(
+                                12,
                                 color: Colors.orange,
+                                letterSpacing: 1.2,
                               ),
                             ),
                           ),
@@ -649,11 +647,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                       GestureDetector(
                         onTap: () => _showEditEquipmentSheet(workout),
                         child: Text(
-                          AppLocalizations.of(context).commonEdit,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                          AppLocalizations.of(context).commonEdit.toUpperCase(),
+                          style: ZType.lbl(
+                            12,
                             color: accentColor,
+                            letterSpacing: 1.2,
                           ),
                         ),
                       ),
@@ -739,9 +737,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                                   if (_saunaLog!.estimatedCalories != null)
                                     Text(
                                       '~${_saunaLog!.estimatedCalories} cal burned',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                                      style: ZType.data(
+                                        11,
+                                        color: ThemeColors.of(context).textMuted,
+                                        weight: FontWeight.w400,
                                       ),
                                     ),
                                 ],
@@ -847,12 +846,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                             const SizedBox(width: 4),
                             Text(
                               (_useKgOverride ?? ref.watch(useKgForWorkoutProvider))
-                                  ? 'kg'
-                                  : 'lbs',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                  ? 'KG'
+                                  : 'LBS',
+                              style: ZType.lbl(
+                                12,
                                 color: accentColor,
+                                letterSpacing: 1.0,
                               ),
                             ),
                           ],
@@ -1185,10 +1184,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                       Flexible(
                         child: Text(
                           workout.name ?? AppLocalizations.of(context).navWorkout,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                          style: ZType.ser(
+                            16,
+                            color: ThemeColors.of(context).textPrimary,
+                            weight: FontWeight.w600,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

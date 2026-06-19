@@ -1072,7 +1072,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                               : AppLocalizations.of(
                                   context,
                                 ).workoutCompleteDoMore,
-                          style: const TextStyle(fontSize: 13),
+                          style: ZType.lbl(
+                            13,
+                            color: textSecondary,
+                            letterSpacing: 0.6,
+                          ),
                         ),
                         style: TextButton.styleFrom(
                           foregroundColor: textSecondary,
@@ -1095,7 +1099,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                               : AppLocalizations.of(
                                   context,
                                 ).workoutCompleteSauna,
-                          style: const TextStyle(fontSize: 13),
+                          style: ZType.lbl(
+                            13,
+                            color: textSecondary,
+                            letterSpacing: 0.6,
+                          ),
                         ),
                         style: TextButton.styleFrom(
                           foregroundColor: textSecondary,
@@ -1112,7 +1120,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           icon: const Icon(Icons.summarize_outlined, size: 16),
                           label: Text(
                             AppLocalizations.of(context).workoutCompleteSummary,
-                            style: TextStyle(fontSize: 13),
+                            style: ZType.lbl(
+                              13,
+                              color: textSecondary,
+                              letterSpacing: 0.6,
+                            ),
                           ),
                           style: TextButton.styleFrom(
                             foregroundColor: textSecondary,
@@ -1134,7 +1146,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                               : AppLocalizations.of(
                                   context,
                                 ).workoutCompleteGiveDetailedFeedback,
-                          style: const TextStyle(fontSize: 13),
+                          style: ZType.lbl(
+                            13,
+                            color: textSecondary,
+                            letterSpacing: 0.6,
+                          ),
                         ),
                         style: TextButton.styleFrom(
                           foregroundColor: textSecondary,
@@ -1211,9 +1227,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 AppLocalizations.of(context).homeMore,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textMuted,
+                                style: ZType.lbl(
+                                  13,
+                                  color: ThemeColors.of(context).textMuted,
+                                  letterSpacing: 0.6,
                                 ),
                               ),
                             ],

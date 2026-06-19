@@ -16,6 +16,8 @@ const String _scoresOverviewCacheKey =
     '${DataCacheService.statsKeyPrefix}scores';
 const String _readinessHistoryCacheKey =
     '${DataCacheService.statsKeyPrefix}readiness_history';
+const String _strengthScoresCacheKey =
+    '${DataCacheService.statsKeyPrefix}strength_scores';
 
 /// Tracks the user_id this static cache belongs to, so we can flush it on a
 /// real account switch (sign-out → sign-in different account) and avoid the
@@ -182,7 +184,8 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
     // Only seed slices we don't already have in memory.
     final needOverview = state.overview == null;
     final needHistory = state.readinessHistory == null;
-    if (!needOverview && !needHistory) return;
+    final needStrength = state.strengthScores == null;
+    if (!needOverview && !needHistory && !needStrength) return;
 
     try {
       if (needOverview) {
@@ -213,6 +216,20 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
           );
           _scoresInMemoryCache = state;
           debugPrint('⚡ [ScoresProvider] Seeded readiness history from disk');
+        }
+      }
+      if (needStrength) {
+        final cached = await DataCacheService.instance.getCached(
+          _strengthScoresCacheKey,
+          userId: uid,
+          returnExpiredOnMiss: true,
+        );
+        if (cached != null && state.strengthScores == null) {
+          state = state.copyWith(
+            strengthScores: AllStrengthScores.fromJson(cached),
+          );
+          _scoresInMemoryCache = state;
+          debugPrint('⚡ [ScoresProvider] Seeded strength scores from disk');
         }
       }
     } catch (e) {
@@ -370,6 +387,13 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
         strengthScores: scores,
         isLoading: false,
       );
+      _scoresInMemoryCache = state;
+      // Write-through to disk so the Home strength bars paint instantly from
+      // cache on the next cold start (the breakdown widget reads
+      // `muscleScoresProvider`, which is only populated here — without this it
+      // showed an empty bar list until a /stats round-trip).
+      await DataCacheService.instance
+          .cache(_strengthScoresCacheKey, scores.toJson(), userId: uid);
       debugPrint('✅ [ScoresProvider] Loaded strength scores');
     } catch (e) {
       debugPrint('❌ [ScoresProvider] Error loading strength scores: $e');
