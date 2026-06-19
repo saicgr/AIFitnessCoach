@@ -72,10 +72,14 @@ class _UserCardState extends ConsumerState<UserCard> {
     final userName =
         user?.displayName ?? user?.name ?? user?.username ?? 'You';
     final userEmail = user?.email ?? '';
-    final userId = user?.id ?? '';
+    // Shareable Zealova handle (unique, indexed on users.username) — surfaced
+    // instead of the raw UUID so the value is human-friendly AND usable for
+    // future social/add-by-handle. Falls back to nothing (we never show the
+    // bare UUID).
+    final handle = user?.username ?? '';
     final photoUrl = user?.photoUrl;
     // The Overview tab mounts this as a read-only glance; identity details
-    // (email + unique ID) live only on the editable Profile sub-tab so the
+    // (email + handle) live only on the editable Profile sub-tab so the
     // hub doesn't show the same email twice.
     final showIdentityDetails = widget.editable;
     // Signature monogram fallback — the spec's `.ny-av` rounded-square avatar
@@ -170,9 +174,9 @@ class _UserCardState extends ConsumerState<UserCard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                      if (showIdentityDetails && userId.isNotEmpty) ...[
+                      if (showIdentityDetails && handle.isNotEmpty) ...[
                         const SizedBox(height: 5),
-                        _UserIdChip(userId: userId),
+                        _UserHandleChip(handle: handle),
                       ],
                     ],
                   ),
@@ -214,21 +218,22 @@ void _copyToClipboard(BuildContext context, String text, String message) {
   );
 }
 
-/// Tap-to-copy unique user ID pill shown only on the Profile sub-tab. Styled
-/// as an explicit bordered button (background + copy icon) so it reads as
-/// interactive — useful for support requests where the user needs their id.
-class _UserIdChip extends StatelessWidget {
-  const _UserIdChip({required this.userId});
+/// Tap-to-copy Zealova handle pill shown only on the Profile sub-tab. Shows the
+/// user's unique `@username` (not the raw UUID) — human-friendly and shareable,
+/// ready for future social/add-by-handle. Styled as an explicit bordered button
+/// (background + copy icon) so it reads as interactive.
+class _UserHandleChip extends StatelessWidget {
+  const _UserHandleChip({required this.handle});
 
-  final String userId;
+  final String handle;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
-      // Own gesture so tapping the id copies it instead of opening the editor.
+      // Own gesture so tapping the handle copies it instead of opening the editor.
       behavior: HitTestBehavior.opaque,
-      onTap: () => _copyToClipboard(context, userId, 'User ID copied'),
+      onTap: () => _copyToClipboard(context, handle, 'Zealova ID copied'),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
@@ -242,11 +247,10 @@ class _UserIdChip extends StatelessWidget {
           children: [
             Flexible(
               child: Text(
-                'ID $userId',
+                '@$handle',
                 style: const TextStyle(
                   fontSize: 11,
                   color: AppColors.textMuted,
-                  fontFeatures: [FontFeature.tabularFigures()],
                   letterSpacing: 0.1,
                 ),
                 overflow: TextOverflow.ellipsis,

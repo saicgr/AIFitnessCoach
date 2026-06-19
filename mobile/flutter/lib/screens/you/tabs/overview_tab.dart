@@ -37,7 +37,6 @@ import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_service.dart';
 import '../../../data/services/you_overview_prewarmer.dart';
 import '../you_hub_screen.dart' show kYouHubBodyBottomInset;
-import '../../profile/widgets/user_card.dart';
 import '../../../widgets/xp_hero_tile.dart';
 import '../../home/widgets/habits_section.dart';
 import '../widgets/health_overview_card.dart';
@@ -340,21 +339,12 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
         // composite + habits section self-pad internally).
         padding: EdgeInsets.fromLTRB(0, 16, 0, bottomInset),
         children: [
-          // ─── 1. USER CARD — moved from Profile (Surface 5.B.4). The
-          // "you, at a glance" header was a better home for the avatar +
-          // bio than the Profile tab, which now starts straight into the
-          // Training section.
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            // Shared widget — same UserCard also renders at the top of the
-            // Profile sub-tab, which owns the edit affordance. Here it's a
-            // read-only glance (editable: false) so the hub doesn't show two
-            // redundant "edit profile" entry points.
-            child: UserCard(editable: false),
-          ),
-          const SizedBox(height: 16),
+          // NOTE: The read-only UserCard (avatar + name) was removed from the
+          // Overview tab — the "YOU" header already establishes identity, so
+          // repeating the name here was redundant. The editable UserCard still
+          // lives at the top of the Profile sub-tab.
 
-          // ─── 2. HEALTH OVERVIEW — single composite card (Surface
+          // ─── HEALTH OVERVIEW — single composite card (Surface
           // 5.A.2). Replaces the previous TodaysHealthCard +
           // LastNightSleepCard + CombinedHealthCard triple. Each section
           // self-hides when its data isn't connected.
