@@ -4289,6 +4289,7 @@ class _MealSectionState extends State<_MealSection> {
               if (hasMealTarget) ...[
                 const SizedBox(width: 8),
                 _MacroChip(
+                  label: 'P',
                   eaten: totalProtein,
                   target: mealTarget.proteinG,
                   color: isDark
@@ -4298,6 +4299,7 @@ class _MealSectionState extends State<_MealSection> {
                 ),
                 const SizedBox(width: 5),
                 _MacroChip(
+                  label: 'C',
                   eaten: totalCarbs,
                   target: mealTarget.carbsG,
                   color: isDark
@@ -4307,6 +4309,7 @@ class _MealSectionState extends State<_MealSection> {
                 ),
                 const SizedBox(width: 5),
                 _MacroChip(
+                  label: 'F',
                   eaten: totalFat,
                   target: mealTarget.fatG,
                   color:
@@ -4976,12 +4979,14 @@ class _RingPainter extends CustomPainter {
 // ============================================
 
 class _MacroChip extends StatelessWidget {
+  final String label; // 'P' / 'C' / 'F' — which macro this chip is
   final double eaten;
   final double target;
   final Color color;
   final bool isDark;
 
   const _MacroChip({
+    required this.label,
     required this.eaten,
     required this.target,
     required this.color,
@@ -5003,6 +5008,12 @@ class _MacroChip extends StatelessWidget {
       child: Text.rich(
         TextSpan(
           children: [
+            // Macro letter so the colour isn't a guessing game (P/C/F).
+            TextSpan(
+              text: '$label ',
+              style: TextStyle(
+                  color: color, fontWeight: FontWeight.w800, fontSize: 10.5),
+            ),
             TextSpan(
               text: '${eaten.round()}',
               style: TextStyle(

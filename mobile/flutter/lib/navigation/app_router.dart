@@ -53,6 +53,7 @@ import '../screens/onboarding/workout_showcase_screen.dart';
 import '../screens/onboarding/nutrition_showcase_screen.dart';
 import '../screens/onboarding/founder_note_sheet.dart';
 import '../screens/onboarding/capability_and_community_screen.dart';
+import '../screens/onboarding/science_grounding_screen.dart';
 import '../screens/onboarding/commitment_pact_screen.dart';
 import '../screens/onboarding/onboarding_why_screen.dart';
 import '../screens/onboarding/onboarding_reflect_screen.dart';

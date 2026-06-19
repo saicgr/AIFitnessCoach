@@ -1,0 +1,366 @@
+{
+  "label": "prod-fanout-AFTER-deploy",
+  "base": "https://aifitnesscoach-zqi3.onrender.com",
+  "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+  "timestamp": "2026-06-19T13:46:11",
+  "fanout": {
+    "rounds": 3,
+    "n_endpoints": 18,
+    "endpoints_200": [
+      "home_bootstrap",
+      "workouts_today",
+      "stats_overview",
+      "stats_quick",
+      "xp",
+      "consistency_insights",
+      "consistency_calendar",
+      "scores_readiness",
+      "training_load_today",
+      "training_load_current",
+      "neat_scores_today",
+      "neat_streaks",
+      "habits_today",
+      "habits_streaks",
+      "hydration_daily",
+      "nutrition_daily"
+    ],
+    "endpoints_non200": [
+      "xp_summary",
+      "habits_summary"
+    ],
+    "health_idle": {
+      "n": 8,
+      "p50_ms": 246.3,
+      "p95_ms": 294.5,
+      "min_ms": 238.3,
+      "max_ms": 294.5,
+      "raw_ms": [
+        253.3,
+        253.8,
+        294.5,
+        244.7,
+        248.0,
+        238.3,
+        241.7,
+        244.5
+      ]
+    },
+    "health_during_fanout": {
+      "n": 13,
+      "p50_ms": 628.6,
+      "p95_ms": 4999.7,
+      "min_ms": 240.3,
+      "max_ms": 5568.5,
+      "raw_ms": [
+        303.4,
+        5568.5,
+        628.6,
+        260.7,
+        249.2,
+        240.3,
+        268.6,
+        927.3,
+        2731.6,
+        2889.5,
+        1113.4,
+        4999.7,
+        523.8
+      ]
+    },
+    "stall_ratio_p95": 17.0,
+    "slowest_endpoints_p95": [
+      [
+        "workouts_today",
+        8289.0
+      ],
+      [
+        "consistency_insights",
+        7986.9
+      ],
+      [
+        "nutrition_daily",
+        6669.0
+      ],
+      [
+        "home_bootstrap",
+        6665.2
+      ],
+      [
+        "stats_overview",
+        6585.1
+      ]
+    ],
+    "per_endpoint": {
+      "home_bootstrap": {
+        "n": 3,
+        "p50_ms": 6162.5,
+        "p95_ms": 6665.2,
+        "min_ms": 5566.1,
+        "max_ms": 6665.2,
+        "raw_ms": [
+          6665.2,
+          6162.5,
+          5566.1
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "workouts_today": {
+        "n": 3,
+        "p50_ms": 6285.6,
+        "p95_ms": 8289.0,
+        "min_ms": 5490.4,
+        "max_ms": 8289.0,
+        "raw_ms": [
+          8289.0,
+          6285.6,
+          5490.4
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "stats_overview": {
+        "n": 3,
+        "p50_ms": 6152.4,
+        "p95_ms": 6585.1,
+        "min_ms": 5029.4,
+        "max_ms": 6585.1,
+        "raw_ms": [
+          6585.1,
+          6152.4,
+          5029.4
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "stats_quick": {
+        "n": 3,
+        "p50_ms": 6359.1,
+        "p95_ms": 6583.6,
+        "min_ms": 5043.6,
+        "max_ms": 6583.6,
+        "raw_ms": [
+          6583.6,
+          6359.1,
+          5043.6
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "xp": {
+        "n": 3,
+        "p50_ms": 4411.4,
+        "p95_ms": 4998.1,
+        "min_ms": 3036.1,
+        "max_ms": 4998.1,
+        "raw_ms": [
+          4411.4,
+          3036.1,
+          4998.1
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "xp_summary": {
+        "n": 3,
+        "p50_ms": 4516.2,
+        "p95_ms": 5013.3,
+        "min_ms": 2120.4,
+        "max_ms": 5013.3,
+        "raw_ms": [
+          2120.4,
+          4516.2,
+          5013.3
+        ],
+        "status": [
+          "404"
+        ]
+      },
+      "consistency_insights": {
+        "n": 3,
+        "p50_ms": 6159.5,
+        "p95_ms": 7986.9,
+        "min_ms": 5466.8,
+        "max_ms": 7986.9,
+        "raw_ms": [
+          7986.9,
+          6159.5,
+          5466.8
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "consistency_calendar": {
+        "n": 3,
+        "p50_ms": 4997.3,
+        "p95_ms": 6231.0,
+        "min_ms": 4516.0,
+        "max_ms": 6231.0,
+        "raw_ms": [
+          6231.0,
+          4516.0,
+          4997.3
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "scores_readiness": {
+        "n": 3,
+        "p50_ms": 5914.0,
+        "p95_ms": 6251.5,
+        "min_ms": 4566.3,
+        "max_ms": 6251.5,
+        "raw_ms": [
+          5914.0,
+          6251.5,
+          4566.3
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "training_load_today": {
+        "n": 3,
+        "p50_ms": 4971.5,
+        "p95_ms": 5912.2,
+        "min_ms": 4573.9,
+        "max_ms": 5912.2,
+        "raw_ms": [
+          5912.2,
+          4971.5,
+          4573.9
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "training_load_current": {
+        "n": 3,
+        "p50_ms": 4995.4,
+        "p95_ms": 5905.1,
+        "min_ms": 4260.0,
+        "max_ms": 5905.1,
+        "raw_ms": [
+          5905.1,
+          4260.0,
+          4995.4
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "neat_scores_today": {
+        "n": 3,
+        "p50_ms": 4576.6,
+        "p95_ms": 5926.9,
+        "min_ms": 4390.4,
+        "max_ms": 5926.9,
+        "raw_ms": [
+          5926.9,
+          4390.4,
+          4576.6
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "neat_streaks": {
+        "n": 3,
+        "p50_ms": 5922.8,
+        "p95_ms": 6165.6,
+        "min_ms": 4576.5,
+        "max_ms": 6165.6,
+        "raw_ms": [
+          5922.8,
+          6165.6,
+          4576.5
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "habits_today": {
+        "n": 3,
+        "p50_ms": 5912.3,
+        "p95_ms": 6354.3,
+        "min_ms": 4572.3,
+        "max_ms": 6354.3,
+        "raw_ms": [
+          5912.3,
+          6354.3,
+          4572.3
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "habits_streaks": {
+        "n": 3,
+        "p50_ms": 3588.8,
+        "p95_ms": 4562.6,
+        "min_ms": 3314.6,
+        "max_ms": 4562.6,
+        "raw_ms": [
+          3588.8,
+          3314.6,
+          4562.6
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "habits_summary": {
+        "n": 3,
+        "p50_ms": 5012.0,
+        "p95_ms": 6249.4,
+        "min_ms": 4391.4,
+        "max_ms": 6249.4,
+        "raw_ms": [
+          4391.4,
+          6249.4,
+          5012.0
+        ],
+        "status": [
+          "500"
+        ]
+      },
+      "hydration_daily": {
+        "n": 3,
+        "p50_ms": 5920.0,
+        "p95_ms": 6270.2,
+        "min_ms": 5006.1,
+        "max_ms": 6270.2,
+        "raw_ms": [
+          5920.0,
+          6270.2,
+          5006.1
+        ],
+        "status": [
+          "200"
+        ]
+      },
+      "nutrition_daily": {
+        "n": 3,
+        "p50_ms": 6329.1,
+        "p95_ms": 6669.0,
+        "min_ms": 5557.3,
+        "max_ms": 6669.0,
+        "raw_ms": [
+          6669.0,
+          6329.1,
+          5557.3
+        ],
+        "status": [
+          "200"
+        ]
+      }
+    }
+  }
+}
