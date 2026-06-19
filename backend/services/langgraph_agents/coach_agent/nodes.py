@@ -210,8 +210,8 @@ ADDITIONAL ACTIONS:
 - action: "complete_workout", workout_id: ID - Mark workout as done
 - action: "schedule_reminder" - Schedule a local device reminder. You do NOT
   build this payload yourself; the system resolves the time from the user's
-  request against their timezone and emits {title, body, trigger_time_iso8601,
-  recurrence ('once'|'daily'|'weekly'), reminder_id}. Just confirm naturally
+  request against their timezone and emits {{title, body, trigger_time_iso8601,
+  recurrence ('once'|'daily'|'weekly'), reminder_id}}. Just confirm naturally
   what was set ("Done — I'll remind you to take creatine every day at 8 AM").
   If no time was given the action comes back unsuccessful — then ASK the user
   when they'd like the reminder.
