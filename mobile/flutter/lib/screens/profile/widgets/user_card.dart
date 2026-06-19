@@ -10,9 +10,11 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'edit_personal_info_sheet.dart';
 
-/// Shared "User Card" — avatar + display name + email + bio + edit pencil.
+/// Shared "User Card" — avatar + display name + bio, plus (on the editable
+/// Profile sub-tab only) the email + tap-to-copy unique user ID + edit pencil.
 /// Mounted at the top of both the You-hub Overview tab AND the Profile sub-
-/// tab so the same edit affordance is reachable from either entry point.
+/// tab. The Overview mount is a read-only glance (name only) so the email
+/// isn't shown redundantly on both surfaces.
 ///
 /// Tapping anywhere opens [EditPersonalInfoSheet]; on save it refreshes the
 /// auth-state user and re-fetches the bio so the card stays in sync.
@@ -70,7 +72,12 @@ class _UserCardState extends ConsumerState<UserCard> {
     final userName =
         user?.displayName ?? user?.name ?? user?.username ?? 'You';
     final userEmail = user?.email ?? '';
+    final userId = user?.id ?? '';
     final photoUrl = user?.photoUrl;
+    // The Overview tab mounts this as a read-only glance; identity details
+    // (email + unique ID) live only on the editable Profile sub-tab so the
+    // hub doesn't show the same email twice.
+    final showIdentityDetails = widget.editable;
     // Signature monogram fallback — the spec's `.ny-av` rounded-square avatar
     // carrying the first initial when there's no photo.
     final initial =
@@ -136,16 +143,25 @@ class _UserCardState extends ConsumerState<UserCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        userName,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
-                          color: fg,
+                      GestureDetector(
+                        // Long-press the name to copy the username; tap still
+                        // bubbles up to the card's edit gesture.
+                        behavior: HitTestBehavior.opaque,
+                        onLongPress: showIdentityDetails
+                            ? () => _copyToClipboard(
+                                context, userName, 'Username copied')
+                            : null,
+                        child: Text(
+                          userName,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
+                            color: fg,
+                          ),
                         ),
                       ),
-                      if (userEmail.isNotEmpty) ...[
+                      if (showIdentityDetails && userEmail.isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Text(
                           userEmail,
@@ -153,6 +169,10 @@ class _UserCardState extends ConsumerState<UserCard> {
                               fontSize: 12.5, color: AppColors.textMuted),
                           overflow: TextOverflow.ellipsis,
                         ),
+                      ],
+                      if (showIdentityDetails && userId.isNotEmpty) ...[
+                        const SizedBox(height: 5),
+                        _UserIdChip(userId: userId),
                       ],
                     ],
                   ),
@@ -174,6 +194,67 @@ class _UserCardState extends ConsumerState<UserCard> {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Copies [text] to the clipboard with a haptic tick + confirmation snackbar.
+void _copyToClipboard(BuildContext context, String text, String message) {
+  HapticFeedback.selectionClick();
+  Clipboard.setData(ClipboardData(text: text));
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      duration: const Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
+/// Tap-to-copy unique user ID pill shown only on the Profile sub-tab. Styled
+/// as an explicit bordered button (background + copy icon) so it reads as
+/// interactive — useful for support requests where the user needs their id.
+class _UserIdChip extends StatelessWidget {
+  const _UserIdChip({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      // Own gesture so tapping the id copies it instead of opening the editor.
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _copyToClipboard(context, userId, 'User ID copied'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                'ID $userId',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                  letterSpacing: 0.1,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(Icons.copy_rounded,
+                size: 13, color: AppColors.textMuted),
           ],
         ),
       ),
