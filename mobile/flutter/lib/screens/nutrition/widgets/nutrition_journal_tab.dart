@@ -143,6 +143,11 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
   bool _loadingLogs = true;
   bool _logsError = false;
   String? _scrollToDateKey; // set when a calendar day is tapped → Feed scroll
+  // When non-null, the Feed is scoped to ONLY this yyyy-MM-dd day (set by
+  // tapping a Calendar day). This OVERRIDES the `_range` filter so the user
+  // sees exactly the day they tapped, with a "Showing <day>" banner + a
+  // "Show all" affordance to return to the normal range view.
+  String? _selectedDayKey;
 
   // Log IDs whose photo upload is in flight — drives the per-card loading state
   // on the "Add a photo" affordance so the user gets instant feedback.
@@ -307,8 +312,8 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
   void _onDayTapped(String dayKey) {
     HapticService.medium();
     setState(() {
-      _scrollToDateKey = dayKey;
-      _range = _JournalRange.all; // ensure the tapped day is in range
+      _selectedDayKey = dayKey; // scope the Feed to ONLY this day
+      _scrollToDateKey = dayKey; // one-shot highlight of the matching card
       _view = 1; // jump to Feed
     });
   }
@@ -535,15 +540,25 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
       );
     }
 
-    // Apply range filter.
-    final (fromStr, toStr) = _range.params();
-    final from = fromStr != null ? DateTime.tryParse(fromStr) : null;
-    final filtered = _logs.where((l) {
-      if (from == null) return true;
-      final d = l.loggedAt.isUtc ? l.loggedAt.toLocal() : l.loggedAt;
-      return !d.isBefore(DateTime(from.year, from.month, from.day));
-    }).toList()
-      ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+    // Filter the feed. When a Calendar day is selected we scope to ONLY that
+    // day (ignoring `_range` entirely) — that is the calendar→feed contract.
+    // Otherwise apply the normal range filter.
+    final List<FoodLog> filtered;
+    if (_selectedDayKey != null) {
+      filtered = _logs
+          .where((l) => _dayKey(l.loggedAt) == _selectedDayKey)
+          .toList()
+        ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+    } else {
+      final (fromStr, toStr) = _range.params();
+      final from = fromStr != null ? DateTime.tryParse(fromStr) : null;
+      filtered = _logs.where((l) {
+        if (from == null) return true;
+        final d = l.loggedAt.isUtc ? l.loggedAt.toLocal() : l.loggedAt;
+        return !d.isBefore(DateTime(from.year, from.month, from.day));
+      }).toList()
+        ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+    }
 
     // Group by day, newest first.
     final groups = <String, List<FoodLog>>{};
@@ -554,13 +569,27 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
 
     return Column(
       children: [
-        _RangeChips(
-          range: _range,
-          onChanged: (r) {
-            HapticService.light();
-            setState(() => _range = r);
-          },
-        ),
+        // Single-day mode shows a dismissible banner in place of the range
+        // chips; range mode shows the chips exactly as before.
+        if (_selectedDayKey != null)
+          _SelectedDayBanner(
+            label: _selectedDayLabel(_selectedDayKey!),
+            onClear: () {
+              HapticService.light();
+              setState(() => _selectedDayKey = null);
+            },
+          )
+        else
+          _RangeChips(
+            range: _range,
+            onChanged: (r) {
+              HapticService.light();
+              setState(() {
+                _range = r;
+                _selectedDayKey = null; // picking a range exits single-day mode
+              });
+            },
+          ),
         Expanded(
           child: (filtered.isEmpty)
               ? ListView(
@@ -620,6 +649,21 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
       return 'Yesterday · ${DateFormat('MMM d').format(dt)}';
     }
     return DateFormat('EEE, MMM d').format(dt);
+  }
+
+  /// Compact Today/Yesterday/`EEE, MMM d` label for the selected-day banner,
+  /// derived from the yyyy-MM-dd `_selectedDayKey` (parsed back to a date).
+  String _selectedDayLabel(String dayKey) {
+    final parsed = DateTime.tryParse(dayKey);
+    if (parsed == null) return dayKey;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final d = DateTime(parsed.year, parsed.month, parsed.day);
+    if (d == today) return 'Today, ${DateFormat('MMM d').format(parsed)}';
+    if (d == today.subtract(const Duration(days: 1))) {
+      return 'Yesterday, ${DateFormat('MMM d').format(parsed)}';
+    }
+    return DateFormat('EEE, MMM d').format(parsed);
   }
 
   // ── My Foods grid ──────────────────────────────────────────────────────────
@@ -1017,6 +1061,63 @@ class _RangeChips extends StatelessWidget {
             const SizedBox(width: 8),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Single-day scope banner shown atop the Feed when a Calendar day is tapped.
+/// Reads "Showing [day]" with a tappable ✕ / "Show all" affordance that
+/// returns the Feed to the normal range view.
+class _SelectedDayBanner extends StatelessWidget {
+  final String label;
+  final VoidCallback onClear;
+  const _SelectedDayBanner({required this.label, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+        decoration: BoxDecoration(
+          color: tc.accent.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: tc.accent.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.event_outlined, size: 14, color: tc.accent),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Showing $label',
+                style: ZType.lbl(11, color: tc.accent, letterSpacing: 0.8),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: onClear,
+              borderRadius: BorderRadius.circular(999),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('SHOW ALL',
+                        style: ZType.lbl(10,
+                            color: tc.accent, letterSpacing: 1.2)),
+                    const SizedBox(width: 4),
+                    Icon(Icons.close, size: 13, color: tc.accent),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

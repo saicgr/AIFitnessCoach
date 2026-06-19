@@ -45,6 +45,12 @@ class FoodBrowserPanel extends ConsumerStatefulWidget {
   final VoidCallback onFoodLogged;
   final DateTime? selectedDate;
 
+  /// Builds the "⚡ Quick log" tab body. The ranked one-tap smart pills live on
+  /// the parent sheet's state (with their private models + tap handlers), so
+  /// the host threads that content in here as a builder rather than this
+  /// (separate) widget re-implementing it. Null → the tab renders nothing.
+  final WidgetBuilder? quickLogBuilder;
+
   const FoodBrowserPanel({
     super.key,
     required this.userId,
@@ -55,6 +61,7 @@ class FoodBrowserPanel extends ConsumerStatefulWidget {
     required this.onFilterChanged,
     required this.onFoodLogged,
     this.selectedDate,
+    this.quickLogBuilder,
   });
 
   @override
@@ -469,7 +476,10 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         totalProtein: totalP.round(),
         totalCarbs: totalC.round(),
         totalFat: totalF.round(),
-        sourceType: 'recent',
+        // Re-logging a past entry. The DB CHECK constraint only allows
+        // text/image/barcode/restaurant/menu/buffet/watch/history/manual —
+        // 'recent' is not valid (23514 → 500), so use 'history'.
+        sourceType: 'history',
         imageUrl: source.imageUrl,
         loggedAt: _loggedAtIso,
       );
@@ -521,45 +531,72 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    return Column(
-      children: [
-        // Source sub-filter chips
-        _SourceDropdownPill(
-          selected: _selectedDbSource,
-          onChanged: (source) {
-            setState(() => _selectedDbSource = source);
-            ref.read(search.foodSearchServiceProvider).setSource(source);
-          },
-          isDark: widget.isDark,
-        ),
-        const SizedBox(height: 24),
-        // Prompt to search
-        Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.search, color: textMuted, size: 40),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Search 528,000+ foods from USDA, Canadian, Indian & more databases',
-                    style: TextStyle(color: textSecondary, fontSize: 13),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Start typing above...',
-                    style: TextStyle(color: textMuted, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
+    // FIX 5b — this view sits inside the browse-mode `AnimatedSwitcher` (a
+    // Stack), which can hand the child loose / momentarily-unbounded vertical
+    // constraints during a tab cross-fade. A `Column` + `Expanded` REQUIRES a
+    // bounded height, so under an unbounded constraint it blew past the box
+    // (RenderFlex bottom overflow) — and the same flex fragility surfaced as
+    // the sub-pixel "0.1px" stripe on device when the box was bounded but the
+    // flex distribution rounded off.
+    //
+    // Fix: only use the centring `Expanded` when the incoming height is finite
+    // (the normal on-device case — visual design unchanged: chips on top,
+    // prompt centred below). When the height is unbounded, fall back to a
+    // shrink-wrapping Column inside a scroll view so it can never overflow.
+    final chips = _SourceDropdownPill(
+      selected: _selectedDbSource,
+      onChanged: (source) {
+        setState(() => _selectedDbSource = source);
+        ref.read(search.foodSearchServiceProvider).setSource(source);
+      },
+      isDark: widget.isDark,
+    );
+    final prompt = Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.search, color: textMuted, size: 40),
+          const SizedBox(height: 12),
+          Text(
+            'Search 528,000+ foods from USDA, Canadian, Indian & more databases',
+            style: TextStyle(color: textSecondary, fontSize: 13),
+            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            'Start typing above...',
+            style: TextStyle(color: textMuted, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxHeight.isFinite) {
+          // Bounded (device) path — unchanged look, but the Column is given an
+          // explicit max height so the flex layout can't spill by a sub-pixel.
+          return SizedBox(
+            height: constraints.maxHeight,
+            child: Column(
+              children: [
+                chips,
+                const SizedBox(height: 24),
+                Expanded(child: Center(child: prompt)),
+              ],
+            ),
+          );
+        }
+        // Unbounded path — shrink-wrap inside a scroll view; never overflows.
+        return SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [chips, const SizedBox(height: 24), prompt],
+          ),
+        );
+      },
     );
   }
 

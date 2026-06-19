@@ -344,8 +344,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   bool _showMealDetails = false;
 
   // Food browser state. Initial value comes from LastUsedService in
-  // initState — defaults to .recent when no prior choice persisted.
-  FoodBrowserFilter _browserFilter = FoodBrowserFilter.recent;
+  // initState; when nothing is persisted we default to the new "Quick log"
+  // tab (the ranked one-tap smart-pill list). Smart pills load async after
+  // open, so we default optimistically — the tab's own empty-state covers
+  // the brief loading gap and the "no quick meals yet" case.
+  FoodBrowserFilter _browserFilter = FoodBrowserFilter.quickLog;
   String _searchQuery = '';
 
   // Scroll/focus
@@ -373,11 +376,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       // Slot was filled purely by the time-of-day prediction.
       _predictedMealSlot = predicted;
     }
+    // Honour the user's last-used browser filter if persisted (quickLog is a
+    // valid remembered value now). With no prior choice, the field default
+    // (FoodBrowserFilter.quickLog) stands.
     final lastBrowserKey = lastUsed.get(_kFoodBrowserLastUsedKey);
     if (lastBrowserKey != null) {
       _browserFilter = FoodBrowserFilter.values.firstWhere(
         (f) => f.name == lastBrowserKey,
-        orElse: () => FoodBrowserFilter.recent,
+        orElse: () => FoodBrowserFilter.quickLog,
       );
     }
     _selectedTime = TimeOfDay.now();
@@ -1162,11 +1168,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     final screenHeight = MediaQuery.of(context).size.height;
     final keyboardVisible = keyboardHeight > 0;
 
+    // Non-keyboard sheet is a tall 0.92 (was 0.85 for the input state) so the
+    // Recent/Saved/Food-DB browser gets real scroll room under the fixed chrome
+    // (quick-log rail + search field + tabs above, action row + Analyze + macro
+    // bar below) — at 0.85 it only showed ~3 rows.
     final sheetHeight = keyboardVisible
         ? screenHeight - keyboardHeight - MediaQuery.of(context).padding.top - 20
-        : _analyzedResponse != null
-            ? screenHeight * 0.92
-            : screenHeight * 0.85;
+        : screenHeight * 0.92;
 
     return PopScope(
       canPop: _analyzedResponse == null || _hasLoggedThisSession,

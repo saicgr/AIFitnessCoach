@@ -79,7 +79,10 @@ class _BrowseFilterTabs extends StatelessWidget {
       );
     }
 
-    return Padding(
+    // 4 pills can get tight on a narrow phone — let the row scroll
+    // horizontally so it never overflows.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
@@ -88,6 +91,8 @@ class _BrowseFilterTabs extends StatelessWidget {
           tab(FoodBrowserFilter.saved, 'Saved', Icons.bookmark_outline),
           const SizedBox(width: 8),
           tab(FoodBrowserFilter.foodDb, 'Food DB', Icons.storage_outlined),
+          const SizedBox(width: 8),
+          tab(FoodBrowserFilter.quickLog, 'Quick log', Icons.bolt_rounded),
         ],
       ),
     );

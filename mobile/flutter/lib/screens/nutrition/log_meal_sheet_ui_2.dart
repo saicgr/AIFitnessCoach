@@ -620,14 +620,11 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
 
     return Column(
       children: [
-        // WS6 — ranked smart quick-log pills (leftovers / yesterday / usual /
-        // frequent) sit at the very top so a repeat meal is a single tap away.
-        // L2 — meal-slot prediction hint + one-tap re-log strip below it.
-        if (!_isListening) ...[
-          _buildQuickLogPills(isDark),
-          _buildMealSlotPredictionHint(isDark),
-          _buildFrequentMealsStrip(isDark),
-        ],
+        // The standalone "⚡ QUICK LOG" rail that used to sit here has been
+        // merged INTO the food-browser filter pills as a 4th "Quick log" tab
+        // (see `quickLogBuilder` on FoodBrowserPanel below). The ranked
+        // smart-pill list now renders inside that tab. `_buildQuickLogPills`
+        // is kept intact because the voice panel still renders the rail.
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: Column(
@@ -637,7 +634,9 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                 controller: _descriptionController,
                 focusNode: _textFieldFocusNode,
                 maxLines: null,
-                minLines: 2,
+                // Single line by default (still auto-grows as you type) — the
+                // forced 2 lines stole a row from the Recent browser below.
+                minLines: 1,
                 textInputAction: TextInputAction.search,
                 onSubmitted: (_) => _triggerImmediateSearch(),
                 style: TextStyle(color: textPrimary, fontSize: 18, height: 1.4),
@@ -720,6 +719,9 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                       .load(widget.userId);
                 },
                 selectedDate: widget.selectedDate,
+                // Thread the ranked one-tap smart-pill list (owned by this
+                // sheet) into the browser's "Quick log" filter tab.
+                quickLogBuilder: (ctx) => _buildQuickLogList(isDark),
               ),
             ),
           ),

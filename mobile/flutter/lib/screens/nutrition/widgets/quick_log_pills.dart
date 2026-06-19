@@ -653,7 +653,75 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
     );
   }
 
-  Widget _buildSmartPill(bool isDark, _SmartPill pill, bool busy) {
+  /// Vertical "Quick log" list for the food-browser `quickLog` filter tab.
+  /// Renders the SAME ranked pills as the old horizontal rail, but as
+  /// full-width rows, reusing the identical tap handlers (`_onSmartPillTap`
+  /// → exact one-tap log vs. fuzzy re-analyse) so behaviour is unchanged.
+  ///
+  /// States mirror the rail: skeleton while the first source resolves, a
+  /// small empty-state once loaded with no ranked pills, else the list.
+  Widget _buildQuickLogList(bool isDark) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // Skeleton while the first source resolves (same gate as the rail).
+    if (!_smartPillsLoaded && !_frequentMealsLoaded) {
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(4, 4, 4, 120),
+        children: [
+          for (int i = 0; i < 5; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                height: 60,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surface : AppColorsLight.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                      color: isDark
+                          ? AppColors.cardBorder
+                          : AppColorsLight.cardBorder),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    final pills = _rankedSmartPills();
+    if (pills.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.bolt_rounded, color: textMuted, size: 40),
+              const SizedBox(height: 12),
+              Text(
+                "No quick meals yet — log a meal and it'll show up here",
+                style: TextStyle(color: textMuted, fontSize: 14, height: 1.4),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final busy =
+        _isAnalyzing || _describeAnalyzing || _isLoading || _smartPillLogging;
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 120),
+      itemCount: pills.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (_, i) => _buildSmartPill(isDark, pills[i], busy,
+          fullWidth: true),
+    );
+  }
+
+  Widget _buildSmartPill(bool isDark, _SmartPill pill, bool busy,
+      {bool fullWidth = false}) {
     final accent = AccentColorScope.of(context).getColor(isDark);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -675,7 +743,9 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
         behavior: HitTestBehavior.opaque,
         onTap: busy ? null : () => _onSmartPillTap(pill),
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 230),
+          width: fullWidth ? double.infinity : null,
+          constraints:
+              fullWidth ? null : const BoxConstraints(maxWidth: 230),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
             color: surface,
@@ -684,7 +754,7 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
                 color: edge, width: (expiring || pill.isExact) ? 1.2 : 1),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
             children: [
               Text(pill.glyph, style: const TextStyle(fontSize: 17)),
               const SizedBox(width: 8),

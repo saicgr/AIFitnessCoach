@@ -37,6 +37,11 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
         return _buildSavedOnlyView();
       case FoodBrowserFilter.foodDb:
         return _buildFoodDbView();
+      case FoodBrowserFilter.quickLog:
+        // The ranked one-tap "Quick log" list is owned by the host sheet
+        // (it holds the smart-pill models + tap handlers). It's threaded in
+        // via [quickLogBuilder]; absent → render nothing.
+        return widget.quickLogBuilder?.call(context) ?? const SizedBox.shrink();
     }
   }
 
