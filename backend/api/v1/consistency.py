@@ -217,18 +217,41 @@ async def get_consistency_insights(
         # completed workouts on demand. Pull the last 90 days of completed
         # workouts ordered by scheduled_date DESC, then walk backwards from
         # `today` counting consecutive completed days.
-        recent_completed = await loop.run_in_executor(
-            None,
+        # Fire the independent reads CONCURRENTLY instead of one-at-a-time. On
+        # prod each round-trip is ~100-300ms; serially these 4 cost ~1-2.5s, in
+        # parallel ~one round-trip. (recent_completed + the monthly/weekly
+        # all_workouts read used to be separate sequential awaits.) The
+        # longest-streak streak_history fallback is rare and handled below only
+        # if the RPC errors.
+        month_start = today.replace(day=1)
+        current_week_start = week_start_for(today, starts_sunday)
+        oldest_week_start = current_week_start - timedelta(days=3 * 7)  # 4 weeks back
+        range_start = min(month_start, oldest_week_start)
+
+        recent_completed, longest_raw, patterns_raw, all_workouts_resp = await gather_db(
             lambda: db.client.table("workouts").select(
                 "scheduled_date"
-            ).eq(
-                "user_id", user_id
-            ).eq(
-                "is_completed", True
-            ).gte(
+            ).eq("user_id", user_id).eq("is_completed", True).gte(
                 "scheduled_date", (today - timedelta(days=90)).isoformat()
             ).order("scheduled_date", desc=True).limit(120).execute(),
+            lambda: db.client.rpc("get_longest_streak", {"p_user_id": user_id}).execute(),
+            lambda: db.client.table("workout_time_patterns").select(
+                "day_of_week, hour_of_day, completion_count, skip_count"
+            ).eq("user_id", user_id).execute(),
+            lambda: db.client.table("workouts").select(
+                "scheduled_date, is_completed"
+            ).eq("user_id", user_id).gte(
+                "scheduled_date", range_start.isoformat()
+            ).lte("scheduled_date", today.isoformat()).execute(),
+            return_exceptions=True,
         )
+
+        # recent_completed + all_workouts are core reads — a failure should
+        # surface (matches the original un-guarded behavior → 500).
+        if isinstance(recent_completed, Exception):
+            raise recent_completed
+        if isinstance(all_workouts_resp, Exception):
+            raise all_workouts_resp
 
         completed_dates: set = set()
         for row in (recent_completed.data or []):
@@ -260,19 +283,11 @@ async def get_consistency_insights(
         # Any combination of missing infra defaults to current_streak rather
         # than 500-ing the whole endpoint.
         longest_streak = current_streak
-        try:
-            longest_response = await loop.run_in_executor(
-                None,
-                lambda: db.client.rpc(
-                    "get_longest_streak",
-                    {"p_user_id": user_id}
-                ).execute(),
-            )
-            longest_streak = longest_response.data or current_streak
-        except Exception:
+        if not isinstance(longest_raw, Exception):
+            longest_streak = longest_raw.data or current_streak
+        else:
             try:
-                history_response = await loop.run_in_executor(
-                    None,
+                history_response = await run_db(
                     lambda: db.client.table("streak_history").select(
                         "streak_length"
                     ).eq("user_id", user_id).order("streak_length", desc=True).limit(1).execute(),
@@ -295,16 +310,11 @@ async def get_consistency_insights(
         # Get workout time patterns. Defensively guarded — workout_time_patterns
         # is an analytics aggregation table that may not exist on all
         # environments; missing table degrades to empty patterns rather than 500.
-        try:
-            patterns_response = await loop.run_in_executor(
-                None,
-                lambda: db.client.table("workout_time_patterns").select(
-                    "day_of_week, hour_of_day, completion_count, skip_count"
-                ).eq("user_id", user_id).execute(),
-            )
-        except Exception as _e:
-            logger.debug(f"workout_time_patterns missing or failed: {_e}")
+        if isinstance(patterns_raw, Exception):
+            logger.debug(f"workout_time_patterns missing or failed: {patterns_raw}")
             patterns_response = type("R", (), {"data": []})()
+        else:
+            patterns_response = patterns_raw
 
         # Aggregate by day of week
         day_totals = defaultdict(lambda: {"completions": 0, "skips": 0})
@@ -394,26 +404,8 @@ async def get_consistency_insights(
                     p.is_preferred = True
                     break
 
-        # Get monthly + weekly stats in ONE query instead of 10 separate ones.
-        # Weekly buckets are calendar-aligned to the user's first-day-of-week
-        # preference (B11): the current week starts at `current_week_start`,
-        # and we walk back 3 more full weeks for a 4-week window.
-        month_start = today.replace(day=1)
-        current_week_start = week_start_for(today, starts_sunday)
-        oldest_week_start = current_week_start - timedelta(days=3 * 7)  # 4 weeks back
-        range_start = min(month_start, oldest_week_start)
-
-        all_workouts_resp = await loop.run_in_executor(
-            None,
-            lambda: db.client.table("workouts").select(
-                "scheduled_date, is_completed"
-            ).eq("user_id", user_id).gte(
-                "scheduled_date", range_start.isoformat()
-            ).lte(
-                "scheduled_date", today.isoformat()
-            ).execute(),
-        )
-
+        # Monthly + weekly stats from all_workouts_resp (fetched concurrently in
+        # the gather above; month_start / current_week_start computed up top).
         all_workouts = all_workouts_resp.data or []
 
         # Parse dates once
