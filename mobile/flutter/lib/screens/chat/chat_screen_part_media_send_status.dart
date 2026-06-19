@@ -383,6 +383,15 @@ class _InputBarState extends State<_InputBar> {
               ],
             ),
           ),
+          // Medical disclaimer — INSIDE the composer container, above its
+          // safe-area/nav-clearance bottom padding. In the embedded Coach tab
+          // this lets it fill the space above the floating nav (and stay
+          // readable) instead of being stranded below the padding, behind the
+          // nav bar — which left the composer floating with a big empty gap.
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: MedicalDisclaimerBanner(),
+          ),
         ],
       ),
     );

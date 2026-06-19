@@ -978,9 +978,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   /// Signature masthead for the embedded Coach tab (2026-06 redesign — maps to
   /// the signature-v2 "nav-coach" frame). Composition, top → bottom:
-  ///   • eyebrow row — "Zealova" (brand) ··· "Day N" (login-streak day count)
   ///   • Anton "COACH" display + the ⌛ History / + New session chip pair
-  ///   • Fraunces serif subtitle — "Your corner, always open."
+  ///   • Fraunces serif subtitle — "Your corner, always open." with the
+  ///     login-streak "Day N" inlined on its right (no separate eyebrow line)
   ///   • a hairline rule that separates the masthead from the thread
   ///
   /// Every affordance is wired to the SAME logic the old floating pill used:
@@ -1006,28 +1006,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Eyebrow (signature-v2): wordmark on the LEFT, program day-count on
-          // the RIGHT — both on ONE line. The row is ALWAYS rendered so the
-          // masthead never reflows when `xpCurrentStreakProvider` resolves
-          // async: previously the lone right-aligned "Day N" was the only
-          // eyebrow child, so before the streak loaded it was absent (no line),
-          // then popped onto its own line once it arrived — the jarring shift
-          // the user saw between the first paint and the loaded state.
-          Row(
-            children: [
-              Text(
-                'Zealova',
-                style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.6),
-              ),
-              const Spacer(),
-              if (dayCount > 0)
-                Text(
-                  l10n.chatScreenMastheadDay(dayCount),
-                  style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.6),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
+          // No eyebrow line — the "Zealova" wordmark is gone (user request) and
+          // the program day-count is inlined into the subtitle row below, so it
+          // never occupies its own full-width line.
           // Anton display masthead + the History / New chip pair.
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1099,6 +1080,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                // Program day-count — inlined on the subtitle row (right side),
+                // so it never takes its own full-width line. The expanding
+                // subtitle above pushes it to the right edge, beside the ⋯.
+                if (dayCount > 0) ...[
+                  const SizedBox(width: 10),
+                  Text(
+                    l10n.chatScreenMastheadDay(dayCount),
+                    style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.4),
+                  ),
+                ],
                 const SizedBox(width: 8),
                 // 3-dot overflow (usage info, change coach, clear, about) +
                 // the "messages running low" warning dot — relocated here from
@@ -1686,7 +1677,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             isLoading: _isLoading,
           ),
 
-          // Input bar
+          // Input bar (the medical disclaimer now lives INSIDE this, above its
+          // bottom safe-area/nav-clearance padding — see _InputBar).
           _InputBar(
             controller: _textController,
             focusNode: _focusNode,
@@ -1698,10 +1690,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             isOffline: offlineChatState.isAvailable,
             modelName: offlineChatState.modelName,
           ),
-
-          // Medical disclaimer — sits at the very bottom under the input bar
-          // (moved here from above the quick pills to match the reference).
-          const MedicalDisclaimerBanner(),
         ],
       ),
 
