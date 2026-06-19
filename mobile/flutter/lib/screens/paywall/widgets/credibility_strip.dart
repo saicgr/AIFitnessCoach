@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/config/social_proof_config.dart';
+import '../../../core/config/science_citations.dart';
+import '../../../widgets/citation_link.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 /// Standard gold used for rating stars across app stores.
@@ -124,15 +127,25 @@ class PaywallCredibilityStrip extends StatelessWidget {
   Widget _chips() {
     // Compact surfaces show the two strongest signals only; full mode
     // shows all three. Every claim here is true and needs no traction.
+    //
+    // The third element of each tuple is an optional [ScienceCitation]: when
+    // present the chip becomes tappable and opens the primary source
+    // ("verify-me beats trust-me"). Only the NSCA/NASM grounding chip carries
+    // one (full mode) — the tech-credibility and injury-aware chips stay
+    // non-tappable and unchanged.
     final items = compact
-        ? const <(IconData, String)>[
-            (Icons.auto_awesome, 'Powered by Google Gemini'),
-            (Icons.health_and_safety_outlined, 'Injury-aware'),
+        ? const <(IconData, String, ScienceCitation?)>[
+            (Icons.auto_awesome, 'Powered by Google Gemini', null),
+            (Icons.health_and_safety_outlined, 'Injury-aware', null),
           ]
-        : const <(IconData, String)>[
-            (Icons.auto_awesome, 'Powered by Google Gemini'),
-            (Icons.school_outlined, 'Grounded in NSCA & NASM standards'),
-            (Icons.health_and_safety_outlined, 'Injury-aware programming'),
+        : <(IconData, String, ScienceCitation?)>[
+            (Icons.auto_awesome, 'Powered by Google Gemini', null),
+            (
+              Icons.school_outlined,
+              'Grounded in NSCA & NASM standards',
+              ScienceCitations.progressiveOverload,
+            ),
+            (Icons.health_and_safety_outlined, 'Injury-aware programming', null),
           ];
     return Wrap(
       alignment: WrapAlignment.center,
@@ -144,6 +157,7 @@ class PaywallCredibilityStrip extends StatelessWidget {
                 label: it.$2,
                 colors: colors,
                 accent: accent,
+                citation: it.$3,
               ))
           .toList(),
     );
@@ -213,42 +227,90 @@ class PaywallCredibilityStrip extends StatelessWidget {
 }
 
 /// A single rounded credibility pill: small icon + short label.
-class _CredChip extends StatelessWidget {
+///
+/// When [citation] is non-null the pill becomes tappable: a tiny "↗" affords
+/// the tap, and pressing opens the primary source with a subtle scale +
+/// haptic, consistent with [CitationLink]. Non-citation pills render exactly
+/// as before (no decoration / interaction change).
+class _CredChip extends StatefulWidget {
   final IconData icon;
   final String label;
   final ThemeColors colors;
   final Color accent;
+  final ScienceCitation? citation;
 
   const _CredChip({
     required this.icon,
     required this.label,
     required this.colors,
     required this.accent,
+    this.citation,
   });
 
   @override
+  State<_CredChip> createState() => _CredChipState();
+}
+
+class _CredChipState extends State<_CredChip> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
+    final tappable = widget.citation != null;
+    final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
+        color: widget.accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
+        border: Border.all(color: widget.accent.withValues(alpha: 0.18)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: accent),
+          Icon(widget.icon, size: 13, color: widget.accent),
           const SizedBox(width: 5),
           Text(
-            label,
+            widget.label,
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              color: colors.textSecondary,
+              color: widget.colors.textSecondary,
             ),
           ),
+          if (tappable) ...[
+            const SizedBox(width: 4),
+            Text(
+              '↗',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: widget.accent,
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+
+    if (!tappable) return chip;
+
+    return Semantics(
+      link: true,
+      label: '${widget.citation!.source}. Opens the source in your browser.',
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          openCitation(widget.citation!);
+        },
+        child: AnimatedScale(
+          scale: _pressed ? 0.96 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          child: chip,
+        ),
       ),
     );
   }

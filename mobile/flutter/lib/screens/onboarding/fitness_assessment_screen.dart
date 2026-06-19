@@ -8,6 +8,7 @@ import '../../core/providers/window_mode_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../core/services/posthog_service.dart';
+import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 
@@ -146,9 +147,9 @@ class _FitnessAssessmentScreenState
       },
     );
 
-    // Navigate directly to paywall features
+    // Navigate forward (science-grounding gate, then capability-and-community)
     if (mounted) {
-      context.go('/capability-and-community');
+      context.go(_nextRoute());
     }
   }
 
@@ -156,9 +157,17 @@ class _FitnessAssessmentScreenState
     HapticFeedback.mediumImpact();
     // Skip without saving fitness data — defaults will be used
     if (mounted) {
-      context.go('/capability-and-community');
+      context.go(_nextRoute());
     }
   }
+
+  /// Forward destination. Routes through the science-grounding screen only
+  /// when the default-OFF `onboarding_science_screen` experiment is on
+  /// (primed sync into [OnboardingExperiments.scienceScreen]); otherwise goes
+  /// straight to /capability-and-community — today's exact flow.
+  String _nextRoute() => OnboardingExperiments.scienceScreen
+      ? '/science-grounding'
+      : '/capability-and-community';
 
   Widget _buildAssessmentInfo(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
     final items = [

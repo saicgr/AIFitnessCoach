@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
+import '../../core/config/science_citations.dart';
 import '../../core/services/posthog_service.dart';
+import '../../widgets/citation_link.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Trust & Expectations — Onboarding v5.1
@@ -91,6 +93,9 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                       detail:
                           "By day 14-21 your body has adapted. That's when "
                           "most users see visible progress.",
+                      // Verify-me: the "adds load each week" mechanism behind
+                      // real, compounding change is progressive overload.
+                      citation: ScienceCitations.progressiveOverload,
                     ),
                     const SizedBox(height: 8),
                     _Bullet(
@@ -267,12 +272,18 @@ class _Bullet extends StatelessWidget {
   final BulletTone tone;
   final String title;
   final String detail;
+
+  /// Optional primary-source citation. When present, a small tappable
+  /// [CitationLink] renders under the detail text (indented to align with
+  /// the copy) so the user can verify the claim's basis.
+  final ScienceCitation? citation;
   const _Bullet({
     required this.delay,
     required this.isDark,
     required this.tone,
     required this.title,
     required this.detail,
+    this.citation,
   });
 
   @override
@@ -326,6 +337,14 @@ class _Bullet extends StatelessWidget {
                     height: 1.35,
                   ),
                 ),
+                if (citation != null) ...[
+                  const SizedBox(height: 6),
+                  CitationLink(
+                    citation: citation!,
+                    accent: accent,
+                    fontSize: 11,
+                  ),
+                ],
               ],
             ),
           ),

@@ -61,6 +61,25 @@ class OnboardingExperiments {
   /// dead code until the flag is set — zero prod risk.
   static const String flagValueCadence = 'onboarding_value_cadence';
 
+  /// Authority/citations experiment (Pattern 1, 2026-06): a short
+  /// "Your plan is built on real science" screen inserted post-assessment,
+  /// pre `/capability-and-community`, surfacing peer-reviewed methodology
+  /// citations the user can tap through to the primary source.
+  ///
+  /// DEFAULT-OFF (A/B in) — resolved via [isEnabledDefaultOff]: an *absent*
+  /// flag keeps the screen DARK, only an explicit truthy value shows it.
+  /// `fitness_assessment_screen` reads the sync cache [scienceScreen] (primed
+  /// by [primeFlowFlags]) to decide whether to route through it. Zero prod
+  /// risk until the flag is flipped on.
+  static const String flagScienceScreen =
+      'onboarding_science_screen'; // default OFF
+
+  /// Sync-readable cache of [flagScienceScreen]. The assessment screen's
+  /// forward navigation must read it synchronously, so it is primed once per
+  /// session by [primeFlowFlags]. Defaults FALSE = science screen NOT shown
+  /// (today's exact flow), so the insertion is dead code until flipped on.
+  static bool scienceScreen = false;
+
   /// Sync-readable cache of [flagValueCadence] (router + quiz read it
   /// synchronously). Primed once per session by [primeFlowFlags].
   static String valueCadence = 'control';
@@ -130,6 +149,10 @@ class OnboardingExperiments {
         valueCadence = v;
       }
     }
+
+    // Science-grounding screen: default-OFF, only an explicit truthy value
+    // inserts it into the funnel. Absent / unreadable → stays FALSE.
+    scienceScreen = await isEnabledDefaultOff(posthog, flagScienceScreen);
   }
 
   /// True unless [flagKey] is explicitly configured to a disabling value.

@@ -450,4 +450,16 @@ List<RouteBase> _preAuthRoutes() => [
         builder: (context, state) => const CapabilityAndCommunityScreen(),
       ),
 
+      // Authority/citations (Pattern 1, 2026-06) — "Your plan is built on real
+      // science". Inserted post fitness-assessment, pre
+      // /capability-and-community, gated by the default-OFF
+      // `onboarding_science_screen` flag (fitness_assessment_screen routes here
+      // only when OnboardingExperiments.scienceScreen is true; the screen's CTA
+      // always continues to /capability-and-community). NOT in the pre-auth
+      // whitelist — its neighbors are post-auth.
+      GoRoute(
+        path: ScienceGroundingScreen.routePath,
+        builder: (context, state) => const ScienceGroundingScreen(),
+      ),
+
 ];
