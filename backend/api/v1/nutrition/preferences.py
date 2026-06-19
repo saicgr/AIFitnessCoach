@@ -120,6 +120,8 @@ async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(g
             # Per-meal P/C/F targets (migration 2275).
             per_meal_targets_enabled=data.get("per_meal_targets_enabled", False),
             per_meal_macro_targets=data.get("per_meal_macro_targets"),
+            # Per-weekday (high/base day) targets (migration 2276).
+            per_weekday_targets=data.get("per_weekday_targets"),
         )
 
     except Exception as e:
@@ -375,6 +377,79 @@ def _compute_per_meal_targets(daily: dict, prefs: dict) -> Optional[dict]:
     return result
 
 
+# ─── Per-weekday (high/base day) targets (migration 2276) ─────────────────────
+def _resolve_weekday_target(
+    prefs: dict,
+    target_weekday: int,
+    has_workout: bool,
+) -> Optional[dict]:
+    """Resolve the per-weekday override for a date, if enabled.
+
+    Args:
+        prefs: the nutrition_preferences row (dict). Reads `per_weekday_targets`.
+        target_weekday: target_date.weekday() (0=Mon..6=Sun).
+        has_workout: whether the date is a training day (scheduled OR logged) —
+            reused to bind "high" days to the workout schedule.
+
+    Returns:
+        None when the feature is off (NULL config, not a dict, or enabled is
+        falsy) → the caller keeps the existing training/rest behavior unchanged.
+        Otherwise a dict:
+            {protein_g, carbs_g, fat_g, calories, is_high_day, target_source}
+        with the absolute macros for the resolved day type (calories derived
+        4·P + 4·C + 9·F) and the attribution flags. This REPLACES the automatic
+        training/rest calorie bump for the date.
+
+    Fail-open: any parsing fault returns None (caller falls back to the
+    existing day-type logic), never raises.
+    """
+    config = prefs.get("per_weekday_targets")
+    if not isinstance(config, dict):
+        return None
+    if not config.get("enabled"):
+        return None
+
+    bind = bool(config.get("bind_to_training_days"))
+    if bind:
+        is_high = bool(has_workout)
+    else:
+        high_days_raw = config.get("high_days")
+        high_days = []
+        if isinstance(high_days_raw, list):
+            for d in high_days_raw:
+                try:
+                    high_days.append(int(d))
+                except (TypeError, ValueError):
+                    continue
+        is_high = target_weekday in high_days
+
+    macros = config.get("high") if is_high else config.get("base")
+    if not isinstance(macros, dict):
+        # Enabled but the relevant day-type block is missing/malformed — fall
+        # back to existing behavior rather than zeroing the user's targets.
+        return None
+
+    try:
+        p = max(0, int(round(float(macros.get("protein_g") or 0))))
+        c = max(0, int(round(float(macros.get("carbs_g") or 0))))
+        f = max(0, int(round(float(macros.get("fat_g") or 0))))
+    except (TypeError, ValueError):
+        return None
+
+    # An all-zero override is meaningless — treat as not configured.
+    if p == 0 and c == 0 and f == 0:
+        return None
+
+    return {
+        "protein_g": p,
+        "carbs_g": c,
+        "fat_g": f,
+        "calories": 4 * p + 4 * c + 9 * f,
+        "is_high_day": is_high,
+        "target_source": "weekday_high" if is_high else "weekday_base",
+    }
+
+
 @router.get("/dynamic-targets/{user_id}", response_model=DynamicTargetsResponse)
 async def get_dynamic_nutrition_targets(
     request: Request,
@@ -468,33 +543,72 @@ async def get_dynamic_nutrition_targets(
                 day_name = target_date.strftime("%A").lower()
                 is_fasting_day = day_name in [d.lower() for d in fasting_days]
 
+        # ── Per-weekday (high/base day) override (migration 2276) ──────────
+        # Resolved FIRST so it can REPLACE the automatic training/rest calorie
+        # bump for this date — the weekday override is the absolute target, so
+        # there's no double-count and today never shows a surprise number. Fasting
+        # + cycle adjustments still layer on after (existing order). Fail-open:
+        # _resolve_weekday_target returns None on any fault → unchanged behavior.
+        weekday_override = None
+        is_high_day = None
+        target_source = None
+        try:
+            weekday_override = _resolve_weekday_target(
+                prefs, target_date.weekday(), has_workout
+            )
+        except Exception as wd_err:
+            logger.warning(
+                f"Per-weekday target resolution skipped for user {user_id}: {wd_err}",
+                exc_info=True,
+            )
+            weekday_override = None
+
         # Calculate adjustments
         calorie_adjustment = 0
         adjustment_reason = None
 
-        if is_fasting_day:
-            # Fasting day: significant calorie reduction
-            calorie_adjustment = -int(base_calories * 0.75)  # 25% of normal
-            adjustment_reason = "Fasting day - reduced calories"
-        elif has_workout and adjust_for_training:
-            # Training day: increase calories
-            calorie_adjustment = 200
-            adjustment_reason = "Training day - extra fuel for workout and recovery"
-        elif not has_workout and adjust_for_rest:
-            # Rest day: slight decrease
-            calorie_adjustment = -100
-            adjustment_reason = "Rest day - slightly reduced intake"
+        if weekday_override is not None:
+            # Weekday override sets the day's base macros directly and REPLACES
+            # the training/rest calorie bump. Fasting still reduces from here.
+            base_protein = weekday_override["protein_g"]
+            base_carbs = weekday_override["carbs_g"]
+            base_fat = weekday_override["fat_g"]
+            base_calories = weekday_override["calories"]
+            is_high_day = weekday_override["is_high_day"]
+            target_source = weekday_override["target_source"]
+
+            if is_fasting_day:
+                calorie_adjustment = -int(base_calories * 0.75)  # 25% of normal
+                adjustment_reason = "Fasting day - reduced calories"
+        else:
+            if is_fasting_day:
+                # Fasting day: significant calorie reduction
+                calorie_adjustment = -int(base_calories * 0.75)  # 25% of normal
+                adjustment_reason = "Fasting day - reduced calories"
+            elif has_workout and adjust_for_training:
+                # Training day: increase calories
+                calorie_adjustment = 200
+                adjustment_reason = "Training day - extra fuel for workout and recovery"
+                target_source = "training"
+            elif not has_workout and adjust_for_rest:
+                # Rest day: slight decrease
+                calorie_adjustment = -100
+                adjustment_reason = "Rest day - slightly reduced intake"
+                target_source = "rest"
+            else:
+                target_source = "base"
 
         target_calories = base_calories + calorie_adjustment
 
-        # Adjust protein on training days
+        # Adjust protein on training days — SKIPPED when a weekday override is
+        # active (the override's absolute macros already encode the day type).
         target_protein = base_protein
-        if has_workout and adjust_for_training:
+        if weekday_override is None and has_workout and adjust_for_training:
             target_protein = int(base_protein * 1.1)  # 10% more protein
 
-        # Adjust carbs on training days
+        # Adjust carbs on training days — SKIPPED under a weekday override.
         target_carbs = base_carbs
-        if has_workout and adjust_for_training:
+        if weekday_override is None and has_workout and adjust_for_training:
             target_carbs = int(base_carbs * 1.15)  # 15% more carbs for glycogen
 
         target_fat = base_fat
@@ -604,6 +718,8 @@ async def get_dynamic_nutrition_targets(
             cycle_calorie_adjustment=cycle_calorie_adjustment,
             cycle_adjustment_reason=cycle_adjustment_reason,
             per_meal_targets=per_meal_targets,
+            is_high_day=is_high_day,
+            target_source=target_source,
         )
 
     except Exception as e:
