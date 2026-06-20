@@ -92,18 +92,39 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
         if request.difficulty is not None:
             updated_prefs["intensity_preference"] = request.difficulty
         if request.duration_minutes is not None:
-            updated_prefs["workout_duration"] = request.duration_minutes
+            # D1 — enforce a minimum session length so a 0/short value can't
+            # drive future generation toward 0 exercises. Sane values unchanged.
+            from .utils import clamp_session_minutes
+            _clamped_dur = clamp_session_minutes(request.duration_minutes)
+            if _clamped_dur != request.duration_minutes:
+                logger.info(
+                    f"[D1] Clamped workout_duration {request.duration_minutes} → {_clamped_dur}"
+                )
+            updated_prefs["workout_duration"] = _clamped_dur
         if request.workout_type is not None:
             updated_prefs["training_split"] = request.workout_type
         if request.workout_days is not None:
-            # Store both days_per_week and workout_days
-            updated_prefs["days_per_week"] = len(request.workout_days)
             # Convert day names to indices (Mon=0, Tue=1, etc.)
             day_map = {"Mon": 0, "Tue": 1, "Wed": 2, "Thu": 3, "Fri": 4, "Sat": 5, "Sun": 6}
             selected_indices = [day_map.get(d, 0) for d in request.workout_days]
+            # D1 — request-boundary schedule clamp. Reconcile the weekday list
+            # and days_per_week BEFORE persisting so future lazy generation
+            # (via /today → auto_generate_workout → /generate) can never be
+            # driven by 7 hard sessions or a malformed/empty schedule. A sane
+            # 1-6 day schedule passes through unchanged (fail-open).
+            from .utils import reconcile_workout_days, clamp_days_per_week
+            reconciled_days = reconcile_workout_days(
+                selected_indices, len(selected_indices)
+            )
+            updated_prefs["days_per_week"] = clamp_days_per_week(len(reconciled_days))
             # Store as workout_days for consistency across backend and Flutter
-            updated_prefs["workout_days"] = sorted(selected_indices)
-            logger.info(f"Storing workout_days: {sorted(selected_indices)} (0=Mon, 6=Sun)")
+            updated_prefs["workout_days"] = reconciled_days
+            if reconciled_days != sorted(selected_indices):
+                logger.info(
+                    f"[D1] Clamped workout_days {sorted(selected_indices)} → "
+                    f"{reconciled_days} (days_per_week={updated_prefs['days_per_week']})"
+                )
+            logger.info(f"Storing workout_days: {reconciled_days} (0=Mon, 6=Sun)")
         if request.dumbbell_count is not None:
             updated_prefs["dumbbell_count"] = request.dumbbell_count
         if request.kettlebell_count is not None:
@@ -116,11 +137,46 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
 
         if request.equipment is not None:
             update_data["equipment"] = request.equipment
+        # E3 — detect an injury change so we can invalidate stale future
+        # workouts after the write (a newly-flagged injury must not leave
+        # unsafe scheduled sessions on the calendar).
+        _injuries_changed = False
         if request.injuries is not None:
             update_data["active_injuries"] = request.injuries
+            try:
+                from .utils import parse_json_field as _pjf
+                _prev_injuries = _pjf(user.get("active_injuries"), []) or []
+                _prev_set = {str(i).strip().lower() for i in _prev_injuries}
+                _new_set = {str(i).strip().lower() for i in (request.injuries or [])}
+                _injuries_changed = _prev_set != _new_set
+            except Exception:
+                # If we can't diff, assume changed — safer to regenerate.
+                _injuries_changed = True
 
         db.update_user(request.user_id, update_data)
         logger.info(f"Updated preferences for user {request.user_id}")
+
+        # E3 — when injuries changed, invalidate not-started today + upcoming
+        # workouts so the next /today read regenerates them against the new
+        # injury set. update_program already deletes ALL future incomplete
+        # workouts below, so this is belt-and-suspenders / makes the invariant
+        # explicit and survives any future refactor of the bulk-delete block.
+        if _injuries_changed:
+            try:
+                from .utils import invalidate_workouts_after_injury_change
+                from core.timezone_utils import resolve_timezone
+                _inj_tz = resolve_timezone(http_request, db, request.user_id)
+                _inj_res = invalidate_workouts_after_injury_change(
+                    request.user_id, timezone_str=_inj_tz
+                )
+                logger.info(
+                    f"[E3] Injury change invalidation: {_inj_res} for user {request.user_id}"
+                )
+            except Exception as _inj_err:
+                logger.warning(
+                    f"[E3] Injury-change invalidation failed (non-fatal): {_inj_err}",
+                    exc_info=True,
+                )
 
         # Delete only future incomplete workouts
         # CRITICAL: Never delete completed workouts or past workouts

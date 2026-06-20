@@ -431,11 +431,12 @@ async def report_injury(
 
         recommended_exercises = _get_recommended_rehab_exercises(request.body_part)
 
-        # Invalidate upcoming workouts so they regenerate without the injured area
-        from api.v1.workouts.utils import invalidate_upcoming_workouts
+        # Invalidate not-started today + upcoming workouts so they regenerate
+        # without the injured area (E3 — also clears a not-started TODAY row).
+        from api.v1.workouts.utils import invalidate_workouts_after_injury_change
         from core.timezone_utils import resolve_timezone
         tz_str = resolve_timezone(http_request, supabase, user_id)
-        invalidate_upcoming_workouts(user_id, reason=f"injury reported: {request.body_part}", timezone_str=tz_str)
+        invalidate_workouts_after_injury_change(user_id, timezone_str=tz_str)
 
         logger.info(f"Injury reported: {result.data[0]['id']}")
 
@@ -593,6 +594,14 @@ async def update_injury(
 
         injury = _parse_injury(result.data[0])
 
+        # E3: an updated injury (status/affected areas) can change which exercises
+        # are safe — clear not-started future workouts so they regenerate. Fail-open.
+        try:
+            from api.v1.workouts.utils import invalidate_workouts_after_injury_change
+            invalidate_workouts_after_injury_change(result.data[0].get("user_id"))
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"injury-update workout invalidation failed: {e}")
+
         return {"success": True, "message": "Injury updated", "injury": injury}
 
     except HTTPException:
@@ -635,6 +644,14 @@ async def mark_injury_healed(
         }
 
         supabase.client.table("user_injuries").update(update_data).eq("id", injury_id).execute()
+
+        # E3: resolving an injury frees exercises back up — clear not-started
+        # future workouts so they regenerate with the area available. Fail-open.
+        try:
+            from api.v1.workouts.utils import invalidate_workouts_after_injury_change
+            invalidate_workouts_after_injury_change(current_injury.get("user_id"))
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"injury-heal workout invalidation failed: {e}")
 
         return {
             "success": True,

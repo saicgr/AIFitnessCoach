@@ -284,6 +284,339 @@ def invalidate_workouts_after_schedule_change(
     }
 
 
+def invalidate_workouts_after_injury_change(
+    user_id: str,
+    timezone_str: str = None,
+) -> dict:
+    """Delete the user's not-yet-started today + upcoming workouts so the next
+    `/today` read regenerates them against the user's CURRENT injuries.
+
+    E3 — a newly-flagged (or resolved) injury must not leave stale, potentially
+    unsafe future workouts on the calendar. The predicate is identical to the
+    equipment-change helper ("always delete future incomplete, leave history /
+    in-progress alone") because an injury change can affect ANY scheduled day's
+    safety, not just a subset of weekdays. Reuses the same status guards:
+
+      - Today not started   → delete (regenerate safe on next /today read)
+      - Today in progress   → leave alone (don't yank a workout mid-set)
+      - Today completed      → never touch history
+      - Tomorrow / upcoming → delete via invalidate_upcoming_workouts
+      - Past                 → never touch history
+
+    Returns {today_deleted, upcoming_deleted}. Safe under partial failure: if
+    the today-delete step throws, the upcoming-delete step still runs. The
+    dedicated injury-report endpoint (api/v1/injuries.py::report_injury) already
+    calls invalidate_upcoming_workouts; this sibling additionally clears a
+    not-started TODAY row and is the canonical call for any injury write site
+    that updates active_injuries (e.g. program.py::update_program).
+    """
+    today_deleted = 0
+    upcoming_deleted = 0
+
+    try:
+        db = get_supabase_db()
+        today_str = get_user_today(timezone_str) if timezone_str else get_user_today("UTC")
+
+        today_rows = db.client.table("workouts").select(
+            "id, status, is_completed"
+        ).eq("user_id", user_id).eq("scheduled_date", today_str).execute()
+
+        ids_to_delete = [
+            r["id"] for r in (today_rows.data or [])
+            if not r.get("is_completed")
+            and r.get("status") not in ("generating", "in_progress")
+        ]
+        if ids_to_delete:
+            res = db.client.table("workouts").delete().in_(
+                "id", ids_to_delete
+            ).execute()
+            today_deleted = len(res.data) if res.data else 0
+            logger.info(
+                f"[INVALIDATE-INJURY] Deleted {today_deleted} today workouts "
+                f"for user {user_id}"
+            )
+    except Exception as e:
+        logger.warning(
+            f"[INVALIDATE-INJURY] Failed to delete today's workout for "
+            f"user {user_id}: {e}",
+            exc_info=True,
+        )
+
+    upcoming_deleted = invalidate_upcoming_workouts(
+        user_id, reason="injury_change", timezone_str=timezone_str
+    )
+
+    return {
+        "today_deleted": today_deleted,
+        "upcoming_deleted": upcoming_deleted,
+    }
+
+
+# ============================================================================
+# Request-boundary safety clamps (Phase D) — pure, deterministic, in-memory.
+#
+# These run at every generation entry point BEFORE generation so a bad request
+# (7-day-a-week schedule, a goal weight implying a sub-floor BMI, a "kg" body
+# weight that's clearly a lb value, a 0-minute session) can never drive the
+# generator into unsafe or degenerate output. FAIL-OPEN by construction: a
+# normal sane request passes through with values unchanged. No DB, no I/O.
+# ============================================================================
+
+# Schedule bounds. 6 hard sessions/week is the safe ceiling; a 7th day must be
+# rest / active-recovery. 1 is the floor (0 days = no plan at all).
+DAYS_PER_WEEK_MIN = 1
+DAYS_PER_WEEK_MAX = 6
+# A session shorter than this isn't a workout — clamp up so duration→exercise
+# math downstream never divides toward 0 exercises.
+MIN_SESSION_MINUTES = 10
+# Body-measurement sanity bounds (metric). Used only to reject absurd/zero
+# values and pick a sane default — never to "correct" a plausible measurement.
+_MIN_HEIGHT_CM = 120.0
+_MAX_HEIGHT_CM = 230.0
+_MIN_WEIGHT_KG = 30.0
+_MAX_WEIGHT_KG = 250.0
+_DEFAULT_HEIGHT_CM = 170.0
+_DEFAULT_WEIGHT_KG = 70.0
+# NHS / clinical safe weekly weight-change rate (kg/week). Mirrors the bound the
+# goal-projection already references; clamped here before it can drive volume.
+_MAX_SAFE_WEEKLY_RATE_KG = 0.9
+# BMI floor — a goal weight implying a BMI below this is unsafe; clamp the goal
+# up to the weight that yields exactly this BMI for the user's height.
+_MIN_SAFE_BMI = 18.5
+
+
+def clamp_days_per_week(days_per_week: Any) -> int:
+    """Clamp days_per_week into [1, 6]. Non-int / None / <=0 → 1.
+
+    7 is intentionally clamped to 6: the 7th day must remain rest /
+    active-recovery, never a 7th hard session (see reconcile_workout_days).
+    """
+    n = _coerce_positive_int(days_per_week)
+    if n is None:
+        return DAYS_PER_WEEK_MIN
+    return max(DAYS_PER_WEEK_MIN, min(DAYS_PER_WEEK_MAX, n))
+
+
+def reconcile_workout_days(
+    workout_days: Optional[List[int]],
+    days_per_week: Optional[int],
+) -> List[int]:
+    """Return a clean weekday list (0=Mon..6=Sun) reconciled with days_per_week.
+
+    Guarantees:
+      - every entry is an int in [0,6], de-duplicated, sorted;
+      - at most 6 training days (a 7th weekday is dropped so it stays rest);
+      - the count matches the clamped days_per_week when that is supplied:
+        too many → trim the tail; too few → leave as-is (caller fills via the
+        normal split logic — we never invent arbitrary days here);
+      - empty / malformed input with a positive days_per_week → the first N
+        weekdays (Mon-first) so generation never sees 0 days.
+    """
+    capped_dpw = clamp_days_per_week(days_per_week) if days_per_week is not None else None
+
+    cleaned: List[int] = []
+    seen: set = set()
+    for d in (workout_days or []):
+        di = _coerce_day_index(d)
+        if di is not None and di not in seen:
+            seen.add(di)
+            cleaned.append(di)
+    cleaned.sort()
+
+    # Never allow 7 hard days — drop the overflow so day 7 stays rest.
+    if len(cleaned) > DAYS_PER_WEEK_MAX:
+        cleaned = cleaned[:DAYS_PER_WEEK_MAX]
+
+    if capped_dpw is not None:
+        if not cleaned:
+            # Backfill the first N weekdays so generation has a schedule.
+            cleaned = list(range(capped_dpw))
+        elif len(cleaned) > capped_dpw:
+            cleaned = cleaned[:capped_dpw]
+    return cleaned
+
+
+def _coerce_day_index(value: Any) -> Optional[int]:
+    """Coerce a weekday value to int in [0,6], else None."""
+    try:
+        di = int(value)
+    except (TypeError, ValueError):
+        return None
+    return di if 0 <= di <= 6 else None
+
+
+def clamp_session_minutes(duration_minutes: Any, default: int = 45) -> int:
+    """Clamp a session length up to MIN_SESSION_MINUTES; 0/None/garbage → default.
+
+    Never returns below MIN_SESSION_MINUTES so the duration→exercise-count math
+    downstream can't collapse to 0 exercises on a degenerate request.
+    """
+    n = _coerce_positive_int(duration_minutes)
+    if n is None:
+        n = default
+    return max(MIN_SESSION_MINUTES, n)
+
+
+def normalize_body_measurements(
+    height_cm: Any,
+    weight_kg: Any,
+) -> Dict[str, float]:
+    """Guard + sanity-check height/weight before any BMR/BMI/duration math.
+
+    Returns {"height_cm", "weight_kg", "weight_normalized"} with:
+      - missing / zero / out-of-range height → _DEFAULT_HEIGHT_CM;
+      - missing / zero weight → _DEFAULT_WEIGHT_KG;
+      - a "kg" weight that's clearly a lb value (e.g. 200 "kg" for a 175cm
+        person) divided by 2.20462 and flagged via weight_normalized=True. We
+        only convert when the raw value is above the human-kg ceiling AND the
+        lb→kg conversion lands in a plausible kg range — never touch a value
+        that's already plausible as kg.
+    """
+    h = _coerce_float(height_cm)
+    w = _coerce_float(weight_kg)
+
+    if h is None or h <= 0 or h < _MIN_HEIGHT_CM or h > _MAX_HEIGHT_CM:
+        h = _DEFAULT_HEIGHT_CM
+
+    weight_normalized = False
+    if w is None or w <= 0:
+        w = _DEFAULT_WEIGHT_KG
+    elif w > _MAX_WEIGHT_KG:
+        # Possibly a lb value mislabeled kg. Convert and accept only if the
+        # result is a plausible human kg; otherwise clamp to the kg ceiling.
+        as_kg = w / 2.20462
+        if _MIN_WEIGHT_KG <= as_kg <= _MAX_WEIGHT_KG:
+            w = round(as_kg, 1)
+            weight_normalized = True
+        else:
+            w = _MAX_WEIGHT_KG
+    elif w < _MIN_WEIGHT_KG:
+        w = _MIN_WEIGHT_KG
+
+    return {"height_cm": h, "weight_kg": w, "weight_normalized": weight_normalized}
+
+
+def clamp_goal_and_rate(
+    current_weight_kg: Any,
+    goal_weight_kg: Any,
+    weekly_rate_kg: Any,
+    height_cm: Any = None,
+) -> Dict[str, Any]:
+    """Clamp a goal weight + weekly change rate to clinically safe bounds.
+
+    - weekly_rate magnitude is capped at _MAX_SAFE_WEEKLY_RATE_KG (NHS rule),
+      preserving sign (gain vs loss);
+    - a goal weight implying BMI < _MIN_SAFE_BMI is raised to the weight that
+      yields exactly _MIN_SAFE_BMI for the given height (when height is usable).
+
+    Returns {"goal_weight_kg", "weekly_rate_kg", "goal_clamped", "rate_clamped"}.
+    Any field that's missing/unusable is returned as-is (None) and not clamped —
+    fail-open: a request that doesn't carry a goal is untouched.
+    """
+    goal = _coerce_float(goal_weight_kg)
+    rate = _coerce_float(weekly_rate_kg)
+    cur = _coerce_float(current_weight_kg)
+    h = _coerce_float(height_cm)
+
+    rate_clamped = False
+    if rate is not None:
+        capped = max(-_MAX_SAFE_WEEKLY_RATE_KG, min(_MAX_SAFE_WEEKLY_RATE_KG, rate))
+        if capped != rate:
+            rate_clamped = True
+        rate = capped
+
+    goal_clamped = False
+    if goal is not None and h is not None and _MIN_HEIGHT_CM <= h <= _MAX_HEIGHT_CM:
+        h_m = h / 100.0
+        min_safe_weight = _MIN_SAFE_BMI * h_m * h_m
+        if goal < min_safe_weight:
+            goal = round(min_safe_weight, 1)
+            goal_clamped = True
+
+    return {
+        "goal_weight_kg": goal,
+        "weekly_rate_kg": rate,
+        "goal_clamped": goal_clamped,
+        "rate_clamped": rate_clamped,
+    }
+
+
+def _coerce_float(value: Any) -> Optional[float]:
+    """Coerce a value to float, or None if not parseable."""
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+# ============================================================================
+# Generation idempotency (Phase E2) — short-lived in-process dedupe.
+#
+# A rapid double-tap "generate"/"regenerate" must not create two workouts.
+# We hash the request signature (user + target window + the few fields that
+# change output) and hold the hash for a short TTL. The SECOND call within the
+# window sees the in-flight marker and the caller returns the just-created
+# result instead of generating again. In-process only (mirrors the
+# auto_generate_workout per-worker set); the cross-worker DB unique index
+# (workouts_one_current_per_user_day) remains the durable backstop.
+# ============================================================================
+
+import hashlib as _hashlib
+import threading as _threading
+
+_GEN_IDEMPOTENCY_TTL_SECONDS = 8.0
+_gen_idempotency_lock = _threading.Lock()
+# request_hash -> inserted_at (monotonic seconds)
+_gen_idempotency_seen: Dict[str, float] = {}
+
+
+def generation_request_hash(user_id: str, *parts: Any) -> str:
+    """Stable hash of a generation request's identity-bearing fields.
+
+    `parts` should be the fields that determine the OUTPUT slot — typically the
+    target date/window and the workout_id (regenerate) or scheduled_date
+    (generate). Order-stable; None-safe.
+    """
+    raw = "|".join([str(user_id)] + [("" if p is None else str(p)) for p in parts])
+    return _hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def claim_generation_slot(request_hash: str, ttl_seconds: float = _GEN_IDEMPOTENCY_TTL_SECONDS) -> bool:
+    """Try to claim a generation slot for `request_hash`.
+
+    Returns True if this caller is the FIRST within the TTL window (proceed with
+    generation); False if a duplicate is already in-flight (caller should return
+    the existing/just-created result instead of generating again). Evicts
+    expired entries on each call so the map stays small. Fail-open: any internal
+    error returns True (never blocks a legitimate generation).
+    """
+    try:
+        now = time.monotonic()
+        with _gen_idempotency_lock:
+            # Evict expired.
+            expired = [k for k, t in _gen_idempotency_seen.items() if now - t > ttl_seconds]
+            for k in expired:
+                _gen_idempotency_seen.pop(k, None)
+            if request_hash in _gen_idempotency_seen:
+                return False
+            _gen_idempotency_seen[request_hash] = now
+            return True
+    except Exception:
+        return True
+
+
+def release_generation_slot(request_hash: str) -> None:
+    """Release a previously claimed slot (e.g. on generation failure so a retry
+    isn't suppressed). Best-effort; safe to call with an unknown hash."""
+    try:
+        with _gen_idempotency_lock:
+            _gen_idempotency_seen.pop(request_hash, None)
+    except Exception:
+        pass
+
+
 def parse_json_field(value, default):
     """Parse a field that could be a JSON string or already parsed."""
     if value is None:

@@ -298,6 +298,22 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             training_split = user.get("training_split")
             workout_days = parse_json_field(user.get("workout_days"), [])
 
+        # D1 — request-boundary schedule clamp. A stored 7-day-a-week schedule
+        # must never drive a plan of 7 hard sessions; reconcile the weekday list
+        # to at most 6 training days (the 7th stays rest/active-recovery) and
+        # drop malformed weekday indices. The workout_days list here feeds the
+        # generator's per-day split + workout_day_overrides — clamping it at the
+        # entry point makes the invariant hold for EVERY generation, not just
+        # those that came through /update-program. Sane 1-6 day schedules pass
+        # through unchanged (fail-open).
+        if workout_days:
+            _orig_days = workout_days
+            workout_days = reconcile_workout_days(workout_days, None)
+            if workout_days != _orig_days:
+                logger.info(
+                    f"[D1] Clamped generation workout_days {_orig_days} → {workout_days}"
+                )
+
         # Use explicit intensity_preference if set, otherwise derive from fitness level.
         intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
 

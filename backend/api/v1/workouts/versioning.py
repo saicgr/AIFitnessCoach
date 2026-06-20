@@ -442,6 +442,33 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
         _regen_tz = resolve_timezone(None, db, request.user_id)
         target_scheduled_date = _resolve_regenerate_target_date(request, existing, user, _regen_tz)
 
+        # E2 — idempotency: short-circuit a rapid double-tap regenerate for the
+        # same workout+date so we don't run two full Gemini generations. Claim a
+        # short-lived in-process slot; the duplicate gets a clean 409 it can
+        # ignore. Fail-open (claim returns True on internal error). Released on
+        # any failure below via the outer except so a retry isn't suppressed.
+        from .utils import (
+            generation_request_hash,
+            claim_generation_slot,
+            release_generation_slot,
+        )
+        _regen_hash = generation_request_hash(
+            request.user_id, "regen", request.workout_id,
+            (target_scheduled_date or "")[:10],
+        )
+        if not claim_generation_slot(_regen_hash):
+            logger.info(
+                f"[E2] Duplicate in-flight regenerate for user={request.user_id} "
+                f"workout={request.workout_id} — returning 409"
+            )
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error": "duplicate_in_flight",
+                    "message": "A regeneration is already in progress for this workout.",
+                },
+            )
+
         # Determine generation parameters
         # Use user-selected settings if provided, otherwise fall back to user profile
         fitness_level = request.fitness_level or user.get("fitness_level") or "intermediate"
@@ -604,6 +631,52 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
             # Apply difficulty scaling to exercises (non-medium only)
             if user_difficulty and user_difficulty.lower() != "medium":
                 exercises = _apply_difficulty_scaling(exercises, user_difficulty)
+
+            # ============================================================
+            # A4 — UNIFORM COMPLETENESS ENFORCEMENT (regenerate, non-stream).
+            # ============================================================
+            # Same terminal completeness stage as /generate + /regenerate-stream
+            # so this path can't ship below its duration/type floor either.
+            # FAIL OPEN: any error keeps the pre-stage list.
+            try:
+                from services.workout_completeness import completeness_enabled
+                if exercises and completeness_enabled(str(request.user_id)):
+                    from api.v1.workouts.exercise_target import (
+                        target_exercise_count,
+                        min_exercise_floor,
+                    )
+                    from services.workout_completeness import ensure_complete_workout
+
+                    _re_hell = (user_difficulty or "").lower() == "hell"
+                    _re_wtype = workout_type_override or workout_type or "strength"
+                    _re_target = target_exercise_count(
+                        target_duration, fitness_level, _re_wtype, is_hell_mode=_re_hell
+                    )
+                    _re_floor = min_exercise_floor(target_duration, fitness_level, _re_wtype)
+                    exercises, _re_degraded = await ensure_complete_workout(
+                        exercises,
+                        target=_re_target,
+                        floor=_re_floor,
+                        focus_area=focus_area,
+                        equipment=equipment if isinstance(equipment, list) else [],
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        workout_type=_re_wtype,
+                        injuries=injuries if injuries else None,
+                        candidate_pool_size=len(rag_exercises) if rag_exercises else None,
+                        user_id=str(request.user_id),
+                        rag_service=exercise_rag,
+                    )
+                    if _re_degraded:
+                        logger.warning(
+                            f"[Regen] [Completeness] degraded ship reason={_re_degraded} "
+                            f"exercises={len(exercises)} focus={focus_area}"
+                        )
+            except Exception as _re_ce:  # noqa: BLE001 — fail open
+                logger.warning(
+                    f"[Regen] [Completeness] stage raised, keeping pre-stage exercises: {_re_ce}",
+                    exc_info=True,
+                )
 
         except Exception as ai_error:
             logger.error(f"AI workout regeneration failed: {ai_error}", exc_info=True)
@@ -868,6 +941,14 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
         raise
     except Exception as e:
         logger.error(f"Failed to regenerate workout: {e}", exc_info=True)
+        # E2 — release the idempotency slot on a real failure so the user's
+        # retry isn't blocked by the just-failed in-flight marker. The 409
+        # duplicate path re-raises via HTTPException above and does NOT release
+        # (the first request still owns the slot).
+        try:
+            release_generation_slot(_regen_hash)  # type: ignore[name-defined]
+        except Exception:
+            pass
         raise safe_internal_error(e, "versioning")
 
 
@@ -936,6 +1017,30 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             except HTTPException as gate_err:
                 detail = gate_err.detail if isinstance(gate_err.detail, dict) else {"error": str(gate_err.detail)}
                 yield f"event: error\ndata: {json.dumps({'type': 'error', 'error': 'not_a_workout_day', 'detail': detail, 'elapsed_ms': elapsed_ms()})}\n\n"
+                return
+
+            # E2 — idempotency: a rapid double-tap "regenerate" must not run two
+            # full Gemini generations for the same workout+date. Claim a short-
+            # lived in-process slot keyed by (user, workout_id, target date).
+            # The second concurrent call within the TTL window short-circuits
+            # with a structured event the client can ignore (its first request
+            # is already in flight). Fail-open: claim returns True on any error,
+            # so a legitimate regenerate is never blocked. Released in `finally`.
+            from .utils import (
+                generation_request_hash,
+                claim_generation_slot,
+                release_generation_slot,
+            )
+            _regen_hash = generation_request_hash(
+                body.user_id, "regen-stream", body.workout_id,
+                (target_scheduled_date or "")[:10],
+            )
+            if not claim_generation_slot(_regen_hash):
+                logger.info(
+                    f"[STREAM] [E2] Duplicate in-flight regenerate for user={body.user_id} "
+                    f"workout={body.workout_id} — short-circuiting"
+                )
+                yield f"event: error\ndata: {json.dumps({'type': 'error', 'error': 'duplicate_in_flight', 'message': 'A regeneration is already in progress for this workout.', 'elapsed_ms': elapsed_ms()})}\n\n"
                 return
 
             # Parse user data
@@ -1312,6 +1417,61 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                     f"{len(exercises)} from RAG tail to meet floor={_post_min}"
                 )
 
+            # ============================================================
+            # A4 — UNIFORM COMPLETENESS ENFORCEMENT (regenerate-stream).
+            # ============================================================
+            # Previously this path enforced only a loose MIN_EXERCISES=4 +
+            # pad-from-tail. Now it runs the SAME terminal completeness stage
+            # as /generate (generation_endpoints.py) so no regenerate can ship
+            # below its duration/type floor. Restores toward target from the
+            # post-Gemini list, degrades truthfully if the real pool is too
+            # small. On by default (completeness_enabled, user-flagged); a
+            # no-op when the workout already meets target. FAIL OPEN: any error
+            # keeps the pre-stage list — regeneration is never blocked.
+            stream_degraded_reason: Optional[str] = None
+            try:
+                from services.workout_completeness import completeness_enabled
+                if exercises and completeness_enabled(str(body.user_id)):
+                    from api.v1.workouts.exercise_target import (
+                        target_exercise_count,
+                        min_exercise_floor,
+                    )
+                    from services.workout_completeness import ensure_complete_workout
+
+                    _rs_hell = (user_difficulty or "").lower() == "hell"
+                    _rs_wtype = workout_type_override or "strength"
+                    _rs_target = target_exercise_count(
+                        target_duration, fitness_level, _rs_wtype, is_hell_mode=_rs_hell
+                    )
+                    _rs_floor = min_exercise_floor(
+                        target_duration, fitness_level, _rs_wtype
+                    )
+                    exercises, stream_degraded_reason = await ensure_complete_workout(
+                        exercises,
+                        target=_rs_target,
+                        floor=_rs_floor,
+                        focus_area=(focus_areas[0] if focus_areas else (workout_type_override or "full_body")),
+                        equipment=equipment if isinstance(equipment, list) else [],
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        workout_type=_rs_wtype,
+                        injuries=injuries if injuries else None,
+                        candidate_pool_size=len(rag_exercises) if rag_exercises else None,
+                        user_id=str(body.user_id),
+                        rag_service=exercise_rag,
+                    )
+                    if stream_degraded_reason:
+                        logger.warning(
+                            f"[STREAM] [Completeness] degraded ship reason={stream_degraded_reason} "
+                            f"exercises={len(exercises)} focus={focus_areas}"
+                        )
+            except Exception as _rs_ce:  # noqa: BLE001 — fail open
+                logger.warning(
+                    f"[STREAM] [Completeness] stage raised, keeping pre-stage exercises: {_rs_ce}",
+                    exc_info=True,
+                )
+                stream_degraded_reason = None
+
             # Canonical reorder for CNS-demand cascade (validation harness
             # 2026-05-08). Mirrors /generate-stream + /generate.
             from api.v1.workouts.validation_utils import reorder_exercises_canonically
@@ -1564,6 +1724,13 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
 
         except Exception as e:
             logger.error(f"[STREAM] Regeneration error: {e}", exc_info=True)
+            # E2 — release the idempotency slot on failure so the user's retry
+            # isn't suppressed by the just-failed in-flight marker. Best-effort;
+            # _regen_hash may be unbound if we failed before claiming.
+            try:
+                release_generation_slot(_regen_hash)  # type: ignore[name-defined]
+            except Exception:
+                pass
             yield send_error(str(e))
 
     return StreamingResponse(
