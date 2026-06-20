@@ -310,7 +310,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
             ),
           ).animate().fadeIn(delay: 200.ms),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Form area takes all remaining vertical space so the CTA pair
           // (Quick start + Fine-tune) is always pinned at the bottom of
@@ -355,7 +355,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                     ],
                   ).animate().fadeIn(delay: 300.ms),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
                   // Stacked metric cards (Whoop / Centr style): tiny
                   // uppercase label on top, large number below, segmented
@@ -750,7 +750,7 @@ class _MetricCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: t.borderDefault),
       ),
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 12, 10),
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 12, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -780,7 +780,7 @@ class _MetricCard extends StatelessWidget {
             ],
           ),
           if (rulerChild != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             rulerChild!,
           ],
         ],
@@ -900,7 +900,7 @@ class _RulerStrip extends StatefulWidget {
 class _RulerStripState extends State<_RulerStrip> {
   // Pixel width of one tick slot.
   static const double _tickSpacing = 14.0;
-  static const double _height = 52.0;
+  static const double _height = 40.0;
 
   late ScrollController _controller;
   double _viewportHalf = 0;
