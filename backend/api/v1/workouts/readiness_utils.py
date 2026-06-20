@@ -44,6 +44,43 @@ INJURY_TO_AVOIDED_MUSCLES = {
 }
 
 
+# Body-map muscle vocabulary (from the onboarding injury/limitations body map).
+# The limitations list may now contain RAW muscle-group names (the user tapped a
+# muscle on the body map) in addition to injury chip ids + free text. These are
+# NOT injuries — each maps to itself (avoid exercises targeting that muscle).
+#
+# Each entry expands a body-map name to the library substring token(s) that
+# actually appear in exercise_library_cleaned.target_muscle / body_part — those
+# are free-text strings like "upper back (trapezius, rhomboids)" or
+# "abdominals (rectus abdominis)", matched downstream by substring contains
+# (filter_by_avoided_muscles). So we must reconcile naming:
+#   - underscores -> spaces: "upper_back" -> "upper back" (library never stores
+#     the underscore form, so the raw token would match nothing)
+#   - synonyms the library prefers: "abs" -> "abdominals"+"core",
+#     "lats" -> "latissimus dorsi"(+"lats"), "traps" -> "trapezius"(+"traps")
+# Tokens are lowercase; downstream lowercases both sides before matching.
+BODY_MAP_MUSCLE_NORMALIZATION = {
+    "chest": ["chest"],
+    "shoulders": ["shoulders"],
+    "obliques": ["obliques"],
+    "abs": ["abdominals", "abs", "core"],
+    "abductors": ["abductors"],
+    "biceps": ["biceps"],
+    "calves": ["calves"],
+    "forearms": ["forearms"],
+    "glutes": ["glutes"],
+    "hamstrings": ["hamstrings"],
+    "lats": ["latissimus dorsi", "lats"],
+    "upper_back": ["upper back"],
+    "quadriceps": ["quadriceps"],
+    "traps": ["trapezius", "traps"],
+    "triceps": ["triceps"],
+    "adductors": ["adductors"],
+    "lower_back": ["lower back", "erector spinae"],
+    "core": ["core"],
+}
+
+
 async def get_user_readiness_score(user_id: str) -> Optional[int]:
     """Get the user's latest readiness score (0-100) or None if not available."""
     try:
@@ -120,26 +157,68 @@ async def get_user_latest_mood(user_id: str) -> Optional[dict]:
 
 
 def get_muscles_to_avoid_from_injuries(injuries: List[str]) -> List[str]:
-    """Convert injury body parts to muscles that should be avoided."""
+    """Convert a mixed injuries/limitations list into muscles to avoid.
+
+    The input list may now contain THREE kinds of entries, all flowing through
+    the same `limitations`/`injuries` field (quiz -> preferences -> generation):
+      1. Injury chip ids (knee, shoulder, lower_back, ...) -> mapped to the
+         muscles they implicate via INJURY_TO_AVOIDED_MUSCLES. (Unchanged.)
+      2. RAW muscle-group names from the onboarding body map (chest, abs, lats,
+         upper_back, ...) -> the user tapped that muscle; avoid exercises that
+         target it. Normalized to the library's token spellings via
+         BODY_MAP_MUSCLE_NORMALIZATION (underscore->space, abs->abdominals/core,
+         lats->latissimus dorsi, traps->trapezius).
+      3. 'none' / 'other' / free text -> ignored for muscle avoidance.
+
+    Fail-open: empty / unrecognized entries contribute nothing; an unknown entry
+    is logged and skipped (never raises). Injury-id behavior is preserved exactly
+    (checked first), so this never regresses existing injury avoidance.
+    """
     if not injuries:
         return []
+
+    # Free-text / sentinel tokens that must never drive muscle avoidance.
+    IGNORED_TOKENS = {"none", "other", "", "n/a", "na"}
 
     muscles_to_avoid = set()
 
     for injury in injuries:
+        if not injury or not isinstance(injury, str):
+            continue
         injury_lower = injury.lower().strip()
 
+        if injury_lower in IGNORED_TOKENS:
+            continue
+
+        # 1. Injury chip id -> implicated muscles (exact). Checked FIRST so the
+        #    existing injury-avoidance behavior is unchanged.
         if injury_lower in INJURY_TO_AVOIDED_MUSCLES:
             muscles_to_avoid.update(INJURY_TO_AVOIDED_MUSCLES[injury_lower])
             logger.info(f"🔍 [Injury Mapping] {injury} -> avoiding: {INJURY_TO_AVOIDED_MUSCLES[injury_lower]}")
-        else:
-            for injury_key, muscles in INJURY_TO_AVOIDED_MUSCLES.items():
-                if injury_key in injury_lower or injury_lower in injury_key:
-                    muscles_to_avoid.update(muscles)
-                    logger.info(f"🔍 [Injury Mapping] {injury} (partial match: {injury_key}) -> avoiding: {muscles}")
-                    break
-            else:
-                logger.warning(f"⚠️ [Injury Mapping] Unknown injury type: {injury}, no muscle mapping found")
+            continue
+
+        # 2. Raw body-map muscle name -> normalized library tokens (avoid that
+        #    muscle directly). Also tolerate a space form of the underscored key.
+        muscle_key = injury_lower.replace(" ", "_")
+        if muscle_key in BODY_MAP_MUSCLE_NORMALIZATION:
+            tokens = BODY_MAP_MUSCLE_NORMALIZATION[muscle_key]
+            muscles_to_avoid.update(tokens)
+            logger.info(f"🔍 [Body-map Muscle] {injury} -> avoiding tokens: {tokens}")
+            continue
+
+        # 3. Substring fallback against the injury map (e.g. "left knee").
+        matched = False
+        for injury_key, muscles in INJURY_TO_AVOIDED_MUSCLES.items():
+            if injury_key in injury_lower or injury_lower in injury_key:
+                muscles_to_avoid.update(muscles)
+                logger.info(f"🔍 [Injury Mapping] {injury} (partial match: {injury_key}) -> avoiding: {muscles}")
+                matched = True
+                break
+        if matched:
+            continue
+
+        # 4. Free text we can't map -> skip (fail-open; no muscle avoidance).
+        logger.warning(f"⚠️ [Injury Mapping] Unmapped limitation: {injury!r}, no muscle avoidance applied")
 
     result = list(muscles_to_avoid)
     logger.info(f"✅ [Injury Mapping] Total muscles to avoid: {result}")
