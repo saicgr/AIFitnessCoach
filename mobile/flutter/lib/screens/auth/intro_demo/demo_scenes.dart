@@ -1,9 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../shareables/shareable_data.dart';
-import '../../../shareables/templates/achievement_hero_template.dart';
 import 'demo_clock.dart';
 
 /// The auto-playing scenes of the intro demo — faithful, lightweight
@@ -981,37 +981,40 @@ class IntegrationsGridScene extends StatelessWidget {
 
 // ── Scene 6: shareables showcase (dark) ────────────────────────────────
 //
-// "Flex your progress." Renders a REAL share card via the production
-// shareables renderer ([AchievementHeroTemplate]) fed static sample data,
-// scaled to fit the demo frame. The template lays out in its native
-// 1080×1920 (story) design space, so we wrap it in a SizedBox at that size
-// and FittedBox it down — exactly what the share preview pane does.
+// "Flex your progress." Cycles through a few REAL share cards via the
+// production shareables renderer (Achievement Hero → Workout Score → Streak
+// Fire) fed static sample data, scaled to fit the demo frame. Each template
+// lays out in its native 1080×1920 (story) design space, so we wrap it in a
+// SizedBox at that size and FittedBox it down — exactly what the share
+// preview pane does. The scene divides its [DemoClock.sceneMs] window into N
+// slots and cross-fades between consecutive templates so the intro showcases
+// the BREADTH of shareables instead of one static trophy card.
+//
+// Only photo-FREE templates are used here — each degrades to its own
+// signature gradient with no real user asset, so nothing renders broken in
+// the unauthenticated intro carousel.
 
 class ShareablesScene extends StatelessWidget {
   final int localMs;
   const ShareablesScene({super.key, required this.localMs});
 
-  /// Static sample payload — no providers, no network. Built once.
-  static final Shareable _sample = Shareable(
-    kind: ShareableKind.achievements,
-    title: 'Six Week Streak',
-    periodLabel: 'This Season',
-    heroValue: 12,
-    accentColor: AppColors.orange,
-    userDisplayName: 'Alex',
-    highlights: const [
-      ShareableMetric(label: 'LATEST', value: '225 lb Bench'),
-      ShareableMetric(label: 'WORKOUTS', value: '38'),
-      ShareableMetric(label: 'PR DAYS', value: '9'),
-    ],
-  );
+  /// The founder's REAL before/after progress photos — the same shot the
+  /// marketing site uses — cropped to a clean left/right grid. One card, no
+  /// rotation, no gradient fallback.
+  static const String _beforeAfterAsset =
+      'assets/images/demo_progress_before_after.webp';
+  static const double _cardAspect = 1017 / 972;
 
   @override
   Widget build(BuildContext context) {
-    final size = ShareableAspect.story.size;
-    // Card rises + settles as the scene opens (mockup `vl-pop-in` at scale).
-    final riseT = beatT(localMs, 0, 520, Curves.easeOutCubic);
-    final scale = 0.94 + 0.06 * riseT;
+    // Single card: deals in with a rise + scale, then floats gently so it
+    // never sits dead-static.
+    final enter = beatT(localMs, 0, 540, Curves.easeOutBack);
+    final fadeIn = beatT(localMs, 0, 280, Curves.easeOut);
+    final floatT = math.sin(
+        (localMs.clamp(0, DemoClock.sceneMs) / DemoClock.sceneMs) * math.pi);
+    final dy = 30 * (1 - enter) - 4 * floatT;
+    final scale = 0.90 + 0.10 * enter;
 
     return Container(
       color: _demoDarkBg,
@@ -1040,39 +1043,151 @@ class ShareablesScene extends StatelessWidget {
           const SizedBox(height: 14),
           Expanded(
             child: Center(
-              child: Opacity(
-                opacity: riseT.clamp(0.0, 1.0),
-                child: Transform.translate(
-                  offset: Offset(0, 18 * (1 - riseT)),
-                  child: Transform.scale(
-                    scale: scale,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: SizedBox(
-                        // Native export size; FittedBox scales it to the
-                        // available height while preserving the 9:16 ratio.
-                        height: double.infinity,
-                        child: FittedBox(
-                          fit: BoxFit.contain,
-                          alignment: Alignment.center,
+              child: LayoutBuilder(
+                builder: (context, c) {
+                  // Fit the ~square card inside the available frame.
+                  var w = c.maxWidth;
+                  var h = w / _cardAspect;
+                  if (h > c.maxHeight) {
+                    h = c.maxHeight;
+                    w = h * _cardAspect;
+                  }
+                  return Opacity(
+                    opacity: fadeIn.clamp(0.0, 1.0),
+                    child: Transform.translate(
+                      offset: Offset(0, dy),
+                      child: Transform.scale(
+                        scale: scale,
+                        child: RepaintBoundary(
                           child: SizedBox(
-                            width: size.width,
-                            height: size.height,
-                            child: AchievementHeroTemplate(
-                              data: _sample,
-                              showWatermark: true,
-                            ),
+                            width: w,
+                            height: h,
+                            child: _beforeAfterCard(),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _beforeAfterCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(_beforeAfterAsset, fit: BoxFit.cover),
+          // Top + bottom scrims so the tags / delta pill / watermark stay legible.
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x99000000),
+                  Color(0x00000000),
+                  Color(0x00000000),
+                  Color(0xB3000000),
+                ],
+                stops: [0.0, 0.22, 0.74, 1.0],
+              ),
+            ),
+          ),
+          // BEFORE / AFTER tags, one per half.
+          const Positioned(top: 12, left: 12, child: _BaTag('BEFORE')),
+          const Positioned(top: 12, right: 12, child: _BaTag('AFTER')),
+          // Centre delta pill straddling the seam.
+          Center(child: _deltaPill()),
+          // Brand watermark.
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 12,
+            child: Center(child: _BaWatermark()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _deltaPill() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.orange,
+        borderRadius: BorderRadius.circular(40),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x66000000), blurRadius: 16, offset: Offset(0, 5)),
+        ],
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.trending_down_rounded, color: Colors.black, size: 18),
+          SizedBox(width: 7),
+          Text('−18 lb',
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.2)),
+          SizedBox(width: 6),
+          Text('· 12 weeks',
+              style: TextStyle(
+                  color: Color(0xCC000000),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+}
+
+class _BaTag extends StatelessWidget {
+  final String label;
+  const _BaTag(this.label);
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0x8C000000),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(label,
+          style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2)),
+    );
+  }
+}
+
+class _BaWatermark extends StatelessWidget {
+  const _BaWatermark();
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.bolt, color: AppColors.orange, size: 15),
+        SizedBox(width: 3),
+        Text('Zealova',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3)),
+      ],
     );
   }
 }

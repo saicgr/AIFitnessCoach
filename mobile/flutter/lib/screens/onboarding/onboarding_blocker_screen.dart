@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -240,17 +242,21 @@ class _OnboardingBlockerScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 28),
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: AppColors.onboardingAccent.withValues(alpha: 0.16),
-            borderRadius: BorderRadius.circular(15),
+        // Focal animated emblem — the per-blocker icon inside a living orbit
+        // of pulsing rings + a slow sweep, signalling "your plan handles this".
+        Center(
+          child: RepaintBoundary(
+            child: _AcknowledgmentEmblem(
+              icon: option.icon,
+              accent: AppColors.onboardingAccent,
+            ),
           ),
-          child: Icon(option.icon,
-              color: AppColors.onboardingAccent, size: 28),
-        ).animate().scale(duration: 360.ms, curve: Curves.easeOutBack),
-        const SizedBox(height: 18),
+        ).animate().fadeIn(duration: 420.ms).scaleXY(
+              begin: 0.7,
+              curve: Curves.easeOutBack,
+              duration: 480.ms,
+            ),
+        const SizedBox(height: 22),
         Text(
           AppLocalizations.of(context).onboardingBlockerThatMakesSense,
           style: TextStyle(
@@ -259,7 +265,7 @@ class _OnboardingBlockerScreenState
             color: t.textPrimary,
             letterSpacing: -0.5,
           ),
-        ).animate().fadeIn(delay: 120.ms).slideY(begin: -0.1),
+        ).animate().fadeIn(delay: 160.ms).slideY(begin: -0.1),
         const SizedBox(height: 18),
         Expanded(
           child: ListView(
@@ -282,7 +288,14 @@ class _OnboardingBlockerScreenState
                     letterSpacing: -0.1,
                   ),
                 ),
-              ).animate().fadeIn(delay: 240.ms).slideY(begin: 0.06),
+              ).animate().fadeIn(delay: 280.ms).slideY(begin: 0.06),
+              const SizedBox(height: 14),
+              // Reassurance strip — a quiet "the plan carries this for you"
+              // line with a softly breathing shield so the lower half is alive.
+              _PlanHandlesStrip(accent: AppColors.onboardingAccent)
+                  .animate()
+                  .fadeIn(delay: 440.ms)
+                  .slideY(begin: 0.06),
             ],
           ),
         ),
@@ -291,7 +304,7 @@ class _OnboardingBlockerScreenState
           label: AppLocalizations.of(context).onboardingBlockerLetSDoIt,
           enabled: true,
           onTap: _finish,
-        ).animate().fadeIn(delay: 360.ms).slideY(begin: 0.1),
+        ).animate().fadeIn(delay: 560.ms).slideY(begin: 0.1),
         const SizedBox(height: 12),
       ],
     );
@@ -436,6 +449,184 @@ class _PrimaryButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Focal animated emblem for the acknowledgment stage. The chosen blocker
+/// icon sits in a soft orange tile, ringed by two slow-pulsing halos and a
+/// single dot that orbits once per ~6s — a calm "the plan has this handled"
+/// motif. One controller drives everything; isolated by a RepaintBoundary.
+class _AcknowledgmentEmblem extends StatefulWidget {
+  final IconData icon;
+  final Color accent;
+  const _AcknowledgmentEmblem({required this.icon, required this.accent});
+
+  @override
+  State<_AcknowledgmentEmblem> createState() => _AcknowledgmentEmblemState();
+}
+
+class _AcknowledgmentEmblemState extends State<_AcknowledgmentEmblem>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 116.0;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return CustomPaint(
+            painter: _EmblemPainter(
+              t: _controller.value,
+              accent: widget.accent,
+            ),
+            child: child,
+          );
+        },
+        // The icon tile is static (child not rebuilt each tick).
+        child: Center(
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  widget.accent.withValues(alpha: 0.22),
+                  widget.accent.withValues(alpha: 0.10),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(17),
+              border: Border.all(color: widget.accent.withValues(alpha: 0.35)),
+            ),
+            child: Icon(widget.icon, color: widget.accent, size: 28),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmblemPainter extends CustomPainter {
+  /// 0..1 loop position.
+  final double t;
+  final Color accent;
+
+  _EmblemPainter({required this.t, required this.accent});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final maxR = size.width / 2;
+
+    // Two breathing halos, phase-offset so one is always expanding while the
+    // other fades — a continuous gentle pulse with no hard reset.
+    for (var i = 0; i < 2; i++) {
+      final phase = (t + i * 0.5) % 1.0;
+      final r = 30 + maxR * 0.7 * phase;
+      final alpha = (1 - phase) * 0.28;
+      canvas.drawCircle(
+        center,
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = accent.withValues(alpha: alpha),
+      );
+    }
+
+    // Static guide ring the orbit dot rides on.
+    final orbitR = maxR * 0.74;
+    canvas.drawCircle(
+      center,
+      orbitR,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = accent.withValues(alpha: 0.14),
+    );
+
+    // Single orbiting dot (with a soft glow) sweeping the guide ring.
+    final angle = t * 2 * math.pi - math.pi / 2;
+    final dot = Offset(
+      center.dx + orbitR * math.cos(angle),
+      center.dy + orbitR * math.sin(angle),
+    );
+    canvas.drawCircle(
+      dot,
+      6,
+      Paint()
+        ..color = accent.withValues(alpha: 0.30)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawCircle(dot, 3, Paint()..color = accent);
+  }
+
+  @override
+  bool shouldRepaint(_EmblemPainter old) =>
+      old.t != t || old.accent != accent;
+}
+
+/// A quiet reassurance strip with a softly breathing shield icon. Reinforces
+/// "your plan carries this" without adding more body copy to the card.
+class _PlanHandlesStrip extends StatelessWidget {
+  final Color accent;
+  const _PlanHandlesStrip({required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: t.isDark ? 0.08 : 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.verified_user_rounded, size: 20, color: accent)
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scaleXY(
+                begin: 1.0,
+                end: 1.14,
+                duration: 1600.ms,
+                curve: Curves.easeInOut,
+              ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Your plan already accounts for this — no extra willpower required.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.35,
+                fontWeight: FontWeight.w600,
+                color: t.textSecondary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

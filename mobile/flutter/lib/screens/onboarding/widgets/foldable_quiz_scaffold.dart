@@ -10,7 +10,17 @@ class FoldableQuizScaffold extends ConsumerWidget {
   final Widget? headerExtra;
   final Widget? headerOverlay;
   final Widget? progressBar;
+
+  /// Main body. NOTE: `content` is placed inside an `Expanded` and is NOT
+  /// wrapped in a scroll view by this scaffold — it MUST manage its own
+  /// overflow (be a `SingleChildScrollView`/`ListView`/`CustomScrollView`, or
+  /// be guaranteed to fit). A fixed `Column` taller than the viewport here
+  /// will overflow and push `button` off-screen. Prefer the pinned [button]
+  /// slot for the CTA so it is always reachable above a scrollable body.
   final Widget content;
+
+  /// Pinned action rendered OUTSIDE the scrollable [content] area — always
+  /// visible at the bottom regardless of content height.
   final Widget? button;
 
   const FoldableQuizScaffold({

@@ -313,6 +313,65 @@ class _WeightProjectionScreenState
     final formattedGoalDate = DateFormat('MMM, yyyy').format(goalDate);
     final isLosingWeight = goalWeight < currentWeight;
 
+    // Chart is given a fixed (responsive) height so it can live inside a
+    // SingleChildScrollView — a `Flexible` chart here was eating all the height
+    // and pushing the Continue button off-screen (the 142px overflow blocker).
+    final screenH = MediaQuery.of(context).size.height;
+    final chartHeight = (screenH * 0.26).clamp(170.0, 240.0);
+
+    // Pinned CTA — lives in the scaffold's `button` slot (rendered OUTSIDE the
+    // scrollable body) so it is always reachable regardless of content height.
+    final continueButton = GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'onboarding_weight_goal_set',
+          properties: {
+            'goal_weight_kg': goalWeight,
+            'current_weight_kg': currentWeight,
+            'direction': isLosingWeight ? 'lose' : 'gain',
+          },
+        );
+        // v5 flow: weight-projection → demo-tasks (workout
+        // + nutrition apptaste) → sign-in.
+        context.go('/demo-tasks');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.orange, Color(0xFFEA580C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.orange.withValues(alpha: 0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.rocket_launch, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              AppLocalizations.of(context).onboardingContinueButton,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2);
+
     final backButton = Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
       child: Align(
@@ -351,7 +410,9 @@ class _WeightProjectionScreenState
             weeklyRateKg: weeklyRate,
           ),
           headerOverlay: backButton,
-          content: Padding(
+          button: continueButton,
+          content: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,8 +494,9 @@ class _WeightProjectionScreenState
 
                 const SizedBox(height: 16),
 
-                // Chart — flexible to fill available space
-                Flexible(
+                // Chart — fixed responsive height (scrollable body, see chartHeight).
+                SizedBox(
+                  height: chartHeight,
                   child: _buildChart(
                     projectionData,
                     currentWeight,
@@ -476,64 +538,10 @@ class _WeightProjectionScreenState
                   ).animate().fadeIn(delay: 600.ms);
                 }),
 
-                const SizedBox(height: 20),
-
-                // CTA Button
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-
-                    // Track weight goal set
-                    ref.read(posthogServiceProvider).capture(
-                      eventName: 'onboarding_weight_goal_set',
-                      properties: {
-                        'goal_weight_kg': goalWeight,
-                        'current_weight_kg': currentWeight,
-                        'direction': isLosingWeight ? 'lose' : 'gain',
-                      },
-                    );
-
-                    // v5 flow: weight-projection → demo-tasks (workout
-                    // + nutrition apptaste) → sign-in.
-                    context.go('/demo-tasks');
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.orange, Color(0xFFEA580C)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.orange.withValues(alpha: 0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.rocket_launch, color: Colors.white, size: 20),
-                        SizedBox(width: 10),
-                        Text(
-                          AppLocalizations.of(context).onboardingContinueButton,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2),
-
-                const SizedBox(height: 24),
+                // CTA moved to the scaffold's pinned `button:` slot so it can
+                // never be pushed off-screen. Trailing space keeps the last
+                // card clear of the pinned button when scrolled to the bottom.
+                const SizedBox(height: 12),
               ],
             ),
           ),

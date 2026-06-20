@@ -29969,7 +29969,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return 'Days selected $arg0 $arg1';
+    return '$arg0 of $arg1 days selected';
   }
 
   @override
@@ -29996,7 +29996,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
-    return 'Select n days $arg0';
+    return 'Pick $arg0 days that work for you';
   }
 
   @override
@@ -30027,7 +30027,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quizEquipmentBodyweightOnly => 'Bodyweight only';
 
   @override
-  String get quizEquipmentBodyweightOnly2 => 'Quiz equipment bodyweight only';
+  String get quizEquipmentBodyweightOnly2 => 'Bodyweight only';
 
   @override
   String get quizEquipmentBodyweightPullUpBar => 'Bodyweight + Pull-up Bar';
@@ -30295,19 +30295,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quizFastingYesLetSTry => 'Yes, let\'s try it';
 
   @override
-  String get quizFitnessLevel2To5Years => 'Quiz fitness level to years';
+  String get quizFitnessLevel2To5Years => '2 – 5 years';
 
   @override
-  String get quizFitnessLevel5PlusYears => 'Quiz fitness level plus years';
+  String get quizFitnessLevel5PlusYears => '5+ years';
 
   @override
-  String get quizFitnessLevel6MonTo2Yrs => 'Quiz fitness level mon to yrs';
+  String get quizFitnessLevel6MonTo2Yrs => '6 months – 2 years';
 
   @override
   String get quizFitnessLevelAdvanced => 'Advanced';
 
   @override
-  String get quizFitnessLevelAdvancedDesc => 'Advanced desc';
+  String get quizFitnessLevelAdvancedDesc => 'Years in, dialed-in technique';
 
   @override
   String get quizFitnessLevelBeHonestWeLl =>
@@ -30317,7 +30317,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quizFitnessLevelBeginner => 'Beginner';
 
   @override
-  String get quizFitnessLevelBeginnerDesc => 'Beginner desc';
+  String get quizFitnessLevelBeginnerDesc => 'New to training or coming back';
 
   @override
   String get quizFitnessLevelBrandNewToLifting => 'Brand new to lifting';
@@ -30341,26 +30341,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quizFitnessLevelIntermediate => 'Intermediate';
 
   @override
-  String get quizFitnessLevelIntermediateDesc => 'Intermediate desc';
+  String get quizFitnessLevelIntermediateDesc =>
+      'Train regularly, know the basics';
 
   @override
   String get quizFitnessLevelJustGettingStarted => 'Just getting started';
 
   @override
-  String get quizFitnessLevelLessThan6Months =>
-      'Quiz fitness level less than months';
+  String get quizFitnessLevelLessThan6Months => 'Less than 6 months';
 
   @override
   String get quizFitnessLevelLight => 'Light';
 
   @override
-  String get quizFitnessLevelLightDesc => 'Light desc';
+  String get quizFitnessLevelLightDesc => 'On your feet sometimes';
 
   @override
   String get quizFitnessLevelModerate => 'Moderate';
 
   @override
-  String get quizFitnessLevelModerateDesc => 'Moderate desc';
+  String get quizFitnessLevelModerateDesc => 'Active job or regular movement';
 
   @override
   String get quizFitnessLevelNever => 'Never';
@@ -30369,7 +30369,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quizFitnessLevelSedentary => 'Sedentary';
 
   @override
-  String get quizFitnessLevelSedentaryDesc => 'Sedentary desc';
+  String get quizFitnessLevelSedentaryDesc => 'Desk job, little movement';
 
   @override
   String get quizFitnessLevelSolidFoundation => 'Solid foundation';
@@ -30382,7 +30382,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quizFitnessLevelVeryActive => 'Very active';
 
   @override
-  String get quizFitnessLevelVeryActiveDesc => 'Very active desc';
+  String get quizFitnessLevelVeryActiveDesc => 'Physical job, always moving';
 
   @override
   String get quizFitnessLevelVeteranLifter => 'Veteran lifter';
@@ -42456,10 +42456,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workoutShowcaseAskCoach => 'Ask coach';
 
   @override
-  String get workoutShowcaseAutoDesc => 'Auto desc';
+  String get workoutShowcaseAutoDesc =>
+      'Adjusts load to how you perform each day';
 
   @override
-  String get workoutShowcaseAutoLabel => 'Auto label';
+  String get workoutShowcaseAutoLabel => 'Auto-regulated';
 
   @override
   String get workoutShowcaseBarbellSquat => 'Barbell Squat';
@@ -42562,10 +42563,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workoutShowcaseLR => 'L/R';
 
   @override
-  String get workoutShowcaseLinearDesc => 'Linear desc';
+  String get workoutShowcaseLinearDesc => 'Add weight steadily each week';
 
   @override
-  String get workoutShowcaseLinearLabel => 'Linear label';
+  String get workoutShowcaseLinearLabel => 'Linear';
 
   @override
   String get workoutShowcaseLogAllSets => 'All sets';
@@ -42604,10 +42605,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workoutShowcaseProgressionModel => 'Progression model';
 
   @override
-  String get workoutShowcasePyramidDesc => 'Pyramid desc';
+  String get workoutShowcasePyramidDesc => 'Ramp weight up, reps down each set';
 
   @override
-  String get workoutShowcasePyramidLabel => 'Pyramid label';
+  String get workoutShowcasePyramidLabel => 'Pyramid';
 
   @override
   String get workoutShowcaseRare => '★ RARE';
@@ -42707,10 +42708,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workoutShowcaseTime => 'Time';
 
   @override
-  String get workoutShowcaseUndulatingDesc => 'Undulating desc';
+  String get workoutShowcaseUndulatingDesc => 'Vary intensity across sessions';
 
   @override
-  String get workoutShowcaseUndulatingLabel => 'Undulating label';
+  String get workoutShowcaseUndulatingLabel => 'Undulating';
 
   @override
   String get workoutShowcaseUpNextBenchPress => 'Up next: Bench Press';

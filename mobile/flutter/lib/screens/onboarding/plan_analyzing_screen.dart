@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -227,37 +228,12 @@ class _PlanAnalyzingScreenState extends ConsumerState<PlanAnalyzingScreen>
 
               const SizedBox(height: 26),
 
-              // Slim progress bar tied to the step sequence.
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: Container(
-                  height: 5,
-                  color: isDark
-                      ? const Color(0xFF1A1A1D)
-                      : AppColorsLight.elevated,
-                  child: AnimatedFractionallySizedBox(
-                    duration: const Duration(milliseconds: 700),
-                    curve: Curves.easeOutCubic,
-                    alignment: AlignmentDirectional.centerStart,
-                    widthFactor:
-                        ((_currentStep) / _steps.length).clamp(0.06, 1.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [
-                          Color(0xFFFFB366),
-                          AppColors.orange,
-                        ]),
-                        borderRadius: BorderRadius.circular(3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.orange.withValues(alpha: 0.5),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              // Slim progress bar tied to the step sequence, with a live
+              // shimmer sweep racing across the filled portion so the bar
+              // reads as actively "assembling", not just statically filling.
+              _ShimmerProgressBar(
+                progress: ((_currentStep) / _steps.length).clamp(0.06, 1.0),
+                isDark: isDark,
               ),
 
               const SizedBox(height: 26),
@@ -298,14 +274,69 @@ class _AnalysisStep {
   const _AnalysisStep({required this.icon, required this.label});
 }
 
-class _StepRow extends StatelessWidget {
+class _StepRow extends StatefulWidget {
   final _AnalysisStep step;
   final _StepState state;
   final bool isDark;
-  const _StepRow({required this.step, required this.state, required this.isDark});
+  const _StepRow(
+      {required this.step, required this.state, required this.isDark});
+
+  @override
+  State<_StepRow> createState() => _StepRowState();
+}
+
+class _StepRowState extends State<_StepRow> with TickerProviderStateMixin {
+  // Drives the slow continuous spin + glow breathe while the row is active.
+  late final AnimationController _activeCtrl;
+  // Fires once when the row flips to done → drives the green check pop +
+  // the radial spark burst.
+  late final AnimationController _burstCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    _burstCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    if (widget.state == _StepState.active) _activeCtrl.repeat();
+    if (widget.state == _StepState.done) _burstCtrl.value = 1;
+  }
+
+  @override
+  void didUpdateWidget(covariant _StepRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.state != oldWidget.state) {
+      if (widget.state == _StepState.active) {
+        _activeCtrl.repeat();
+      } else {
+        _activeCtrl.stop();
+      }
+      // Trigger the spark burst on the idle/active → done transition.
+      if (widget.state == _StepState.done &&
+          oldWidget.state != _StepState.done) {
+        _burstCtrl.forward(from: 0);
+        HapticFeedback.selectionClick();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _activeCtrl.dispose();
+    _burstCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final step = widget.step;
+    final state = widget.state;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -315,13 +346,13 @@ class _StepRow extends StatelessWidget {
     final isActive = state == _StepState.active;
     final isIdle = state == _StepState.idle;
 
-    final accentColor =
-        isDone ? const Color(0xFF2ECC71) : AppColors.onboardingAccent;
+    const doneColor = Color(0xFF2ECC71);
+    final accentColor = isDone ? doneColor : AppColors.onboardingAccent;
     final iconBg = isIdle
         ? (isDark ? AppColors.elevated : AppColorsLight.elevated)
         : accentColor.withValues(alpha: 0.15);
 
-    return AnimatedContainer(
+    final row = AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -330,46 +361,99 @@ class _StepRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isActive
-              ? AppColors.onboardingAccent.withValues(alpha: 0.4)
-              : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-          width: isActive ? 1.5 : 1,
+              ? AppColors.onboardingAccent.withValues(alpha: 0.55)
+              : (isDone
+                  ? doneColor.withValues(alpha: 0.35)
+                  : (isDark
+                      ? AppColors.cardBorder
+                      : AppColorsLight.cardBorder)),
+          width: isActive ? 1.6 : 1,
         ),
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: AppColors.onboardingAccent.withValues(alpha: 0.22),
+                  blurRadius: 18,
+                  spreadRadius: -2,
+                ),
+              ]
+            : null,
       ),
       child: Row(
         children: [
-          Container(
+          // Icon medallion — spins + glow-breathes while active, pops a
+          // radial spark burst the instant it flips to done.
+          SizedBox(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: isDone
-                  ? const Icon(Icons.check_rounded,
-                      color: Color(0xFF2ECC71), size: 20)
-                  : (isActive
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.onboardingAccent,
-                          ),
-                        )
-                      : Icon(step.icon,
-                          color: isDark
-                              ? AppColors.textMuted
-                              : AppColorsLight.textMuted,
-                          size: 18)),
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: Listenable.merge([_activeCtrl, _burstCtrl]),
+                builder: (_, __) {
+                  final glow = isActive
+                      ? 0.25 + (math.sin(_activeCtrl.value * math.pi * 2) +
+                                  1) /
+                              2 *
+                              0.35
+                      : 0.0;
+                  return CustomPaint(
+                    painter: _SparkBurstPainter(
+                      progress: _burstCtrl.value,
+                      color: doneColor,
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: iconBg,
+                        shape: BoxShape.circle,
+                        boxShadow: glow > 0
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.onboardingAccent
+                                      .withValues(alpha: glow),
+                                  blurRadius: 12,
+                                  spreadRadius: 1,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Center(
+                        child: isDone
+                            ? Transform.scale(
+                                // Overshoot pop as the check lands.
+                                scale: 0.6 +
+                                    Curves.elasticOut
+                                            .transform(_burstCtrl.value) *
+                                        0.4,
+                                child: const Icon(Icons.check_rounded,
+                                    color: doneColor, size: 20),
+                              )
+                            : (isActive
+                                ? Transform.rotate(
+                                    angle: _activeCtrl.value * math.pi * 2,
+                                    child: Icon(step.icon,
+                                        color: AppColors.onboardingAccent,
+                                        size: 18),
+                                  )
+                                : Icon(step.icon,
+                                    color: isDark
+                                        ? AppColors.textMuted
+                                        : AppColorsLight.textMuted,
+                                    size: 18)),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              step.label,
+            child: _CountUpLabel(
               // v7 receipts read as terminal output — Space Mono is already
-              // bundled for shareables.
+              // bundled for shareables. Embedded numbers tick up as the row
+              // activates so the receipt feels computed, not pre-printed.
+              label: step.label,
+              animateNumbers: isActive || isDone,
               style: TextStyle(
                 fontFamily: 'Space Mono',
                 fontSize: 13,
@@ -380,16 +464,157 @@ class _StepRow extends StatelessWidget {
           ),
         ],
       ),
-    ).animate(target: isDone ? 1 : 0).fadeIn();
+    );
+
+    // Dramatic reveal: idle rows sit dim + nudged down; activation slides
+    // them up, scales past 1, and fades the label in.
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 350),
+      opacity: isIdle ? 0.45 : 1.0,
+      child: row
+          .animate(target: isIdle ? 0 : 1)
+          .slideX(begin: 0.04, end: 0, duration: 320.ms, curve: Curves.easeOut)
+          .scaleXY(
+              begin: 0.97,
+              end: 1,
+              duration: 320.ms,
+              curve: Curves.easeOutBack),
+    );
   }
 }
 
-class _PulsingAiOrb extends StatefulWidget {
+/// Renders a label whose embedded numeric tokens (e.g. "1,700+", "178 cm",
+/// "4 days") tick up from zero to their final value as the row activates.
+/// Non-numeric labels render statically — never invents or mangles copy.
+class _CountUpLabel extends StatefulWidget {
+  final String label;
+  final bool animateNumbers;
+  final TextStyle style;
+  const _CountUpLabel({
+    required this.label,
+    required this.animateNumbers,
+    required this.style,
+  });
+
   @override
-  State<_PulsingAiOrb> createState() => _PulsingAiOrbState();
+  State<_CountUpLabel> createState() => _CountUpLabelState();
 }
 
-class _PulsingAiOrbState extends State<_PulsingAiOrb>
+class _CountUpLabelState extends State<_CountUpLabel>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  // Matches integers with optional thousands separators: 1,700 / 178 / 4.
+  static final RegExp _numberRe = RegExp(r'\d[\d,]*');
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    if (widget.animateNumbers) _ctrl.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant _CountUpLabel old) {
+    super.didUpdateWidget(old);
+    if (widget.animateNumbers && !old.animateNumbers) _ctrl.forward(from: 0);
+    if (widget.label != old.label && widget.animateNumbers) {
+      _ctrl.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  String _render(double t) {
+    if (!_numberRe.hasMatch(widget.label)) return widget.label;
+    return widget.label.replaceAllMapped(_numberRe, (m) {
+      final raw = m.group(0)!;
+      final target = int.tryParse(raw.replaceAll(',', ''));
+      if (target == null) return raw;
+      final current = (target * t).round();
+      // Preserve the original thousands-separator formatting.
+      final hadComma = raw.contains(',');
+      return hadComma ? _withThousands(current) : current.toString();
+    });
+  }
+
+  String _withThousands(int value) {
+    final s = value.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.animateNumbers) {
+      return Text(widget.label, style: widget.style);
+    }
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        final t = Curves.easeOutCubic.transform(_ctrl.value);
+        return Text(_render(t), style: widget.style);
+      },
+    );
+  }
+}
+
+/// Radial spark burst painted behind the icon medallion the instant a step
+/// flips to done. Fades + expands outward over [progress] 0→1.
+class _SparkBurstPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  const _SparkBurstPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0 || progress >= 1) return;
+    final center = size.center(Offset.zero);
+    final maxR = size.width * 0.95;
+    const sparks = 8;
+    final eased = Curves.easeOut.transform(progress);
+    final opacity = (1 - progress).clamp(0.0, 1.0);
+    final paint = Paint()
+      ..color = color.withValues(alpha: opacity)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+
+    for (int i = 0; i < sparks; i++) {
+      final angle = (i / sparks) * math.pi * 2;
+      final inner = size.width * 0.4 + eased * maxR * 0.3;
+      final outer = inner + (8 + eased * 10);
+      final dir = Offset(math.cos(angle), math.sin(angle));
+      canvas.drawLine(center + dir * inner, center + dir * outer, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SparkBurstPainter old) =>
+      old.progress != progress || old.color != color;
+}
+
+/// Slim progress bar with a continuous shimmer highlight sweeping across the
+/// filled portion — reads as active assembly rather than a static fill.
+class _ShimmerProgressBar extends StatefulWidget {
+  final double progress;
+  final bool isDark;
+  const _ShimmerProgressBar({required this.progress, required this.isDark});
+
+  @override
+  State<_ShimmerProgressBar> createState() => _ShimmerProgressBarState();
+}
+
+class _ShimmerProgressBarState extends State<_ShimmerProgressBar>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
 
@@ -398,8 +623,8 @@ class _PulsingAiOrbState extends State<_PulsingAiOrb>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
+      duration: const Duration(milliseconds: 1300),
+    )..repeat();
   }
 
   @override
@@ -410,37 +635,223 @@ class _PulsingAiOrbState extends State<_PulsingAiOrb>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) {
-        // Zealova brand mark — the asset already has its own rounded
-        // squircle, so wrapping it in another white circle produced a
-        // visible "icon-inside-a-container" stack. Render the icon
-        // directly with just the brand-orange glow pulsing behind it.
-        return Container(
-          width: 104,
-          height: 104,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.onboardingAccent
-                    .withValues(alpha: 0.35 + (_ctrl.value * 0.2)),
-                blurRadius: 28 + (_ctrl.value * 12),
-                spreadRadius: 2,
-                offset: const Offset(0, 10),
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(3),
+        child: Container(
+          height: 5,
+          color: widget.isDark
+              ? const Color(0xFF1A1A1D)
+              : AppColorsLight.elevated,
+          child: AnimatedFractionallySizedBox(
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.easeOutCubic,
+            alignment: AlignmentDirectional.centerStart,
+            widthFactor: widget.progress,
+            child: AnimatedBuilder(
+              animation: _ctrl,
+              builder: (_, child) {
+                return ShaderMask(
+                  blendMode: BlendMode.srcATop,
+                  shaderCallback: (rect) {
+                    // A bright band travelling left→right across the fill.
+                    final t = _ctrl.value;
+                    return LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: const [
+                        Colors.transparent,
+                        Colors.white,
+                        Colors.transparent,
+                      ],
+                      stops: [
+                        (t - 0.18).clamp(0.0, 1.0),
+                        t.clamp(0.0, 1.0),
+                        (t + 0.18).clamp(0.0, 1.0),
+                      ],
+                    ).createShader(rect);
+                  },
+                  child: child,
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [
+                    Color(0xFFFFB366),
+                    AppColors.orange,
+                  ]),
+                  borderRadius: BorderRadius.circular(3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.orange.withValues(alpha: 0.5),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Image.asset(
-              'assets/images/app_icon.png',
-              fit: BoxFit.cover,
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
+}
+
+class _PulsingAiOrb extends StatefulWidget {
+  @override
+  State<_PulsingAiOrb> createState() => _PulsingAiOrbState();
+}
+
+class _PulsingAiOrbState extends State<_PulsingAiOrb>
+    with TickerProviderStateMixin {
+  // Slow breathe for the glow + brand-mark scale.
+  late final AnimationController _breathe;
+  // Continuous rotation for the orbiting accent ring + travelling spark.
+  late final AnimationController _orbit;
+
+  @override
+  void initState() {
+    super.initState();
+    _breathe = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _orbit = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3600),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _breathe.dispose();
+    _orbit.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: SizedBox(
+        width: 140,
+        height: 140,
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_breathe, _orbit]),
+          builder: (_, __) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                // Orbiting accent ring + a single spark travelling around it,
+                // giving the hero a sense of the AI "working" around the mark.
+                CustomPaint(
+                  size: const Size(140, 140),
+                  painter: _OrbitRingPainter(
+                    angle: _orbit.value * math.pi * 2,
+                    breathe: _breathe.value,
+                  ),
+                ),
+                // Zealova brand mark — the asset already has its own rounded
+                // squircle, so wrapping it in another white circle produced a
+                // visible "icon-inside-a-container" stack. Render the icon
+                // directly with just the brand-orange glow breathing behind it.
+                Transform.scale(
+                  scale: 0.97 + (_breathe.value * 0.06),
+                  child: Container(
+                    width: 104,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.onboardingAccent
+                              .withValues(alpha: 0.35 + (_breathe.value * 0.25)),
+                          blurRadius: 28 + (_breathe.value * 16),
+                          spreadRadius: 2,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.asset(
+                        'assets/images/app_icon.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Rotating dashed accent ring with one bright travelling spark, drawn around
+/// the hero brand mark to signal active AI work.
+class _OrbitRingPainter extends CustomPainter {
+  final double angle;
+  final double breathe;
+  const _OrbitRingPainter({required this.angle, required this.breathe});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width * 0.46;
+
+    // Faint full ring.
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..color = AppColors.onboardingAccent.withValues(alpha: 0.18),
+    );
+
+    // A glowing arc that sweeps around with the rotation.
+    final sweepPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round
+      ..shader = SweepGradient(
+        startAngle: angle,
+        endAngle: angle + math.pi,
+        colors: [
+          AppColors.onboardingAccent.withValues(alpha: 0.0),
+          AppColors.onboardingAccent.withValues(alpha: 0.85),
+        ],
+        transform: GradientRotation(angle),
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      angle,
+      math.pi * 0.55,
+      false,
+      sweepPaint,
+    );
+
+    // Bright travelling spark dot at the leading edge of the arc.
+    final sparkAngle = angle + math.pi * 0.55;
+    final spark =
+        center + Offset(math.cos(sparkAngle), math.sin(sparkAngle)) * radius;
+    canvas.drawCircle(
+      spark,
+      3 + breathe * 1.2,
+      Paint()
+        ..color = AppColors.orange
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+    );
+    canvas.drawCircle(
+      spark,
+      2.2,
+      Paint()..color = Colors.white.withValues(alpha: 0.9),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _OrbitRingPainter old) =>
+      old.angle != angle || old.breathe != breathe;
 }

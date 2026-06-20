@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_data.dart';
+import 'weight_projection_screen.dart' show WeightProjectionCalculator;
 import 'widgets/onboarding_theme.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -230,13 +231,22 @@ class _OnboardingReflectScreenState
                             ],
                           ),
                         ).animate().fadeIn(delay: 420.ms).slideY(begin: 0.06),
+                        const SizedBox(height: 18),
+                        // "We're building it for you" — an animated trajectory
+                        // preview (current → goal) plus a staggered chip cluster
+                        // of the inputs the plan is shaped around. Reinforces the
+                        // reciprocity beat without adding more prose.
+                        _PlanPreview(quiz: quiz)
+                            .animate()
+                            .fadeIn(delay: 560.ms)
+                            .slideY(begin: 0.06),
                       ],
                     ),
                   ),
                   const SizedBox(height: 8),
                   _ReflectContinueButton(onTap: _continue)
                       .animate()
-                      .fadeIn(delay: 560.ms)
+                      .fadeIn(delay: 720.ms)
                       .slideY(begin: 0.1),
                   const SizedBox(height: 12),
                 ],
@@ -299,4 +309,391 @@ class _ReflectContinueButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The "your plan is being built for you" visual under the echo cards.
+///
+/// When the quiz carries a real weight delta it shows an animated
+/// current → goal trajectory curve; otherwise it falls back to the chip
+/// cluster alone (no fabricated curve). Either way it ends in a staggered
+/// row of chips echoing the inputs the plan is shaped around.
+class _PlanPreview extends StatelessWidget {
+  final PreAuthQuizData quiz;
+  const _PlanPreview({required this.quiz});
+
+  /// Build the trajectory points (0..1 normalized) from the same calculator
+  /// the projection screen uses, so the preview matches the real curve.
+  List<double>? _normalizedCurve() {
+    final cur = quiz.weightKg;
+    final goal = quiz.goalWeightKg;
+    if (cur == null || goal == null || cur <= 0 || goal <= 0) return null;
+    if ((cur - goal).abs() < 0.5) return null; // maintain → no curve
+
+    final goalDate = WeightProjectionCalculator.calculateGoalDate(
+      currentWeight: cur,
+      goalWeight: goal,
+      workoutDaysPerWeek: quiz.daysPerWeek ?? 4,
+      weightChangeRate: quiz.weightChangeRate,
+    );
+    final pts = WeightProjectionCalculator.generateProjectionCurve(
+      currentWeight: cur,
+      goalWeight: goal,
+      goalDate: goalDate,
+    );
+    if (pts.length < 2) return null;
+
+    // Normalize weights to 0..1 of the (current, goal) span so the painter
+    // is unit-agnostic. y=0 sits at the start weight, y=1 at the goal.
+    final span = goal - cur;
+    if (span.abs() < 1e-6) return null;
+    return [for (final p in pts) ((p.weight - cur) / span).clamp(0.0, 1.0)];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+    final accent = AppColors.onboardingAccent;
+    final curve = _normalizedCurve();
+    final losing =
+        (quiz.goalWeightKg ?? 0) < (quiz.weightKg ?? 0) && curve != null;
+
+    final chips = _planChips(quiz);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: t.isDark ? 0.10 : 0.07),
+            accent.withValues(alpha: 0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, size: 16, color: accent),
+              const SizedBox(width: 8),
+              Text(
+                "We're building it around you",
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: t.textPrimary,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ],
+          ),
+          if (curve != null) ...[
+            const SizedBox(height: 14),
+            RepaintBoundary(
+              child: _TrajectorySparkline(
+                normalized: curve,
+                losing: losing,
+                accent: accent,
+                trackColor: t.textSecondary.withValues(alpha: 0.18),
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < chips.length; i++)
+                _GoalChip(icon: chips[i].$1, label: chips[i].$2, accent: accent)
+                    .animate()
+                    .fadeIn(delay: (700 + i * 90).ms, duration: 320.ms)
+                    .scaleXY(begin: 0.85, curve: Curves.easeOutBack),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// (icon, label) pairs for the chip cluster — only chips we actually have
+  /// data for. No placeholders.
+  List<(IconData, String)> _planChips(PreAuthQuizData quiz) {
+    final out = <(IconData, String)>[];
+    final goalPhrase =
+        _OnboardingReflectScreenState._goalPhrases[quiz.goal];
+    if (goalPhrase != null) {
+      // Capitalize the verb phrase for chip form ("Build muscle").
+      final cap = goalPhrase[0].toUpperCase() + goalPhrase.substring(1);
+      out.add((Icons.flag_rounded, cap));
+    }
+    final days = quiz.daysPerWeek;
+    if (days != null && days > 0) {
+      out.add((Icons.event_available_rounded,
+          '$days ${days == 1 ? 'day' : 'days'}/week'));
+    }
+    final cur = quiz.weightKg;
+    final goal = quiz.goalWeightKg;
+    if (cur != null && goal != null && cur > 0 && goal > 0) {
+      final delta = (goal - cur).abs();
+      if (delta >= 0.5) {
+        final unit = quiz.useMetricUnits ? 'kg' : 'lb';
+        final amt = quiz.useMetricUnits
+            ? delta.round()
+            : (delta * 2.20462).round();
+        if (amt > 0) {
+          final dir = goal < cur ? '−' : '+';
+          out.add((Icons.monitor_weight_rounded, '$dir$amt $unit goal'));
+        }
+      }
+    }
+    return out;
+  }
+}
+
+/// A small rounded "input" chip in the plan-preview cluster.
+class _GoalChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color accent;
+  const _GoalChip(
+      {required this.icon, required this.label, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: t.cardFill,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: accent),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: t.textPrimary,
+              letterSpacing: -0.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lightweight animated current → goal trajectory line. Drives a single
+/// self-contained controller (isolated from the screen) and draws the curve
+/// progressively with a glowing leading dot and a soft gradient fill.
+class _TrajectorySparkline extends StatefulWidget {
+  /// Normalized weights (0 = start, 1 = goal), already direction-correct.
+  final List<double> normalized;
+  final bool losing;
+  final Color accent;
+  final Color trackColor;
+
+  const _TrajectorySparkline({
+    required this.normalized,
+    required this.losing,
+    required this.accent,
+    required this.trackColor,
+  });
+
+  @override
+  State<_TrajectorySparkline> createState() => _TrajectorySparklineState();
+}
+
+class _TrajectorySparklineState extends State<_TrajectorySparkline>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _draw;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    _draw = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    // Start after the card itself has slid in.
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 72,
+      width: double.infinity,
+      child: AnimatedBuilder(
+        animation: _draw,
+        builder: (context, _) => CustomPaint(
+          painter: _TrajectoryPainter(
+            normalized: widget.normalized,
+            progress: _draw.value,
+            accent: widget.accent,
+            trackColor: widget.trackColor,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TrajectoryPainter extends CustomPainter {
+  final List<double> normalized;
+  final double progress;
+  final Color accent;
+  final Color trackColor;
+
+  _TrajectoryPainter({
+    required this.normalized,
+    required this.progress,
+    required this.accent,
+    required this.trackColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (normalized.length < 2) return;
+
+    const padX = 10.0;
+    const padTop = 12.0;
+    const padBottom = 12.0;
+    final w = size.width - padX * 2;
+    final h = size.height - padTop - padBottom;
+
+    // Map normalized progress (0=start weight, 1=goal weight) to a y where the
+    // START sits visually high-ish and the GOAL lands at the opposite end, so
+    // the line always *descends toward* the goal for a loss and *rises toward*
+    // it for a gain — reads as forward motion either way.
+    Offset pointAt(int i) {
+      final x = padX + w * (i / (normalized.length - 1));
+      final n = normalized[i]; // 0..1 toward goal
+      // For losing: start high (y small), goal low isn't ideal visually; we
+      // want a calm downward slope. yFrac: 0 → top region, 1 → bottom region.
+      final yFrac = 0.15 + 0.7 * n;
+      final y = padTop + h * yFrac;
+      return Offset(x, y);
+    }
+
+    // Build a smooth path through all points (Catmull-Rom-ish via quadratic).
+    final fullPath = Path();
+    final pts = [for (var i = 0; i < normalized.length; i++) pointAt(i)];
+    fullPath.moveTo(pts.first.dx, pts.first.dy);
+    for (var i = 0; i < pts.length - 1; i++) {
+      final p0 = pts[i];
+      final p1 = pts[i + 1];
+      final mid = Offset((p0.dx + p1.dx) / 2, (p0.dy + p1.dy) / 2);
+      fullPath.quadraticBezierTo(p0.dx, p0.dy, mid.dx, mid.dy);
+    }
+    fullPath.lineTo(pts.last.dx, pts.last.dy);
+
+    // Faint full-length track (the "destination" the line is filling in).
+    final trackPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..color = trackColor;
+    canvas.drawPath(fullPath, trackPaint);
+
+    // Progressive reveal via PathMetric.
+    final metrics = fullPath.computeMetrics().toList();
+    if (metrics.isEmpty) return;
+    final metric = metrics.first;
+    final drawLen = metric.length * progress.clamp(0.0, 1.0);
+    final drawnPath = metric.extractPath(0, drawLen);
+
+    // Gradient fill under the drawn portion.
+    final tangent = metric.getTangentForOffset(drawLen);
+    final headPoint = tangent?.position ?? pts.first;
+    final fillPath = Path.from(drawnPath)
+      ..lineTo(headPoint.dx, size.height - padBottom)
+      ..lineTo(pts.first.dx, size.height - padBottom)
+      ..close();
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          accent.withValues(alpha: 0.22),
+          accent.withValues(alpha: 0.0),
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawPath(fillPath, fillPaint);
+
+    // The accent line itself.
+    final linePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..shader = LinearGradient(
+        colors: [accent, const Color(0xFFEA580C)],
+      ).createShader(Offset.zero & size);
+    canvas.drawPath(drawnPath, linePaint);
+
+    // Start anchor dot.
+    canvas.drawCircle(
+      pts.first,
+      3.5,
+      Paint()..color = trackColor.withValues(alpha: 0.9),
+    );
+
+    // Glowing leading head dot.
+    canvas.drawCircle(
+      headPoint,
+      8,
+      Paint()
+        ..color = accent.withValues(alpha: 0.22)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
+    canvas.drawCircle(headPoint, 4.5, Paint()..color = accent);
+    canvas.drawCircle(
+      headPoint,
+      4.5,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = Colors.white,
+    );
+
+    // Goal flag marker once the line is essentially complete.
+    if (progress > 0.92) {
+      final goalAlpha = ((progress - 0.92) / 0.08).clamp(0.0, 1.0);
+      final goalPt = pts.last;
+      canvas.drawCircle(
+        goalPt,
+        9 + 3 * (1 - goalAlpha),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = accent.withValues(alpha: 0.6 * goalAlpha),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TrajectoryPainter old) =>
+      old.progress != progress ||
+      old.normalized != normalized ||
+      old.accent != accent;
 }

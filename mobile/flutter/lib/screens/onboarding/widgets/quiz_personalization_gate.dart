@@ -169,19 +169,30 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
           }());
     final double min = _heightInCm ? 120 : 47; // 120 cm / 3'11"
     final double max = _heightInCm ? 220 : 86; // 220 cm / 7'2"
+    // Write the snapped value into the SAME controller the TextField reads.
+    // The TextField repaints itself off the controller (a ChangeNotifier), so
+    // the big number tracks the drag live with NO parent rebuild.
+    void writeHeight(double v) {
+      if (_heightInCm) {
+        _heightCtrl.text = v.round().toString();
+      } else {
+        final total = v.round();
+        _heightCtrl.text = (total ~/ 12).toString();
+        _heightInchesCtrl.text = (total % 12).toString();
+      }
+    }
+
     return _RulerStrip(
       t: t,
       min: min,
       max: max,
       value: current.clamp(min, max),
+      // Live, per-tick: update the controller only (no setState) so the
+      // displayed number is fluid without rebuilding the whole gate.
+      onLiveChanged: writeHeight,
+      // On settle: write + one setState to refresh CTA validity / re-seat.
       onChanged: (v) {
-        if (_heightInCm) {
-          _heightCtrl.text = v.round().toString();
-        } else {
-          final total = v.round();
-          _heightCtrl.text = (total ~/ 12).toString();
-          _heightInchesCtrl.text = (total % 12).toString();
-        }
+        writeHeight(v);
         setState(() {});
       },
     );
@@ -198,6 +209,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
       min: min,
       max: max,
       value: current.clamp(min, max),
+      onLiveChanged: (v) => _weightCtrl.text = v.round().toString(),
       onChanged: (v) {
         _weightCtrl.text = v.round().toString();
         setState(() {});
@@ -216,6 +228,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
       min: min,
       max: max,
       value: current.clamp(min, max),
+      onLiveChanged: (v) => _goalWeightCtrl.text = v.round().toString(),
       onChanged: (v) {
         _goalWeightCtrl.text = v.round().toString();
         setState(() {});
@@ -859,6 +872,16 @@ class _RulerStrip extends StatefulWidget {
   final double min;
   final double max;
   final double value;
+
+  /// Fired on EVERY integer tick crossed during an active drag. The parent
+  /// writes the new value into the field's TextEditingController WITHOUT a
+  /// setState — the bound TextField repaints itself, so the big number tracks
+  /// the finger fluidly while the whole gate stays put.
+  final ValueChanged<double> onLiveChanged;
+
+  /// Fired once when the drag settles (ScrollEndNotification). The parent does
+  /// the single full setState here — refreshing CTA validity and re-seating —
+  /// so the expensive rebuild happens exactly once per gesture, not per pixel.
   final ValueChanged<double> onChanged;
 
   const _RulerStrip({
@@ -866,6 +889,7 @@ class _RulerStrip extends StatefulWidget {
     required this.min,
     required this.max,
     required this.value,
+    required this.onLiveChanged,
     required this.onChanged,
   });
 
@@ -880,7 +904,12 @@ class _RulerStripState extends State<_RulerStrip> {
 
   late ScrollController _controller;
   double _viewportHalf = 0;
+  // True while a programmatic jump/settle-animate is in flight, so the scroll
+  // listener doesn't treat our own correction as user input.
   bool _suppress = false;
+  // The last integer value we emitted to the parent during this drag. Drives
+  // haptics + onLiveChanged dedupe, and is the value we settle-snap onto.
+  int? _lastEmitted;
 
   int get _tickCount => (widget.max - widget.min).round() + 1;
 
@@ -896,6 +925,7 @@ class _RulerStripState extends State<_RulerStrip> {
     // On a unit toggle the bounds change — re-seat on the new value without
     // echoing onChanged back to the parent.
     if (old.min != widget.min || old.max != widget.max) {
+      _lastEmitted = null;
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _jumpToValue(widget.value));
     }
@@ -923,12 +953,44 @@ class _RulerStripState extends State<_RulerStrip> {
     _suppress = false;
   }
 
-  void _onScroll() {
-    if (_suppress) return;
-    final snapped =
-        _valueForOffset(_controller.offset).roundToDouble().clamp(widget.min, widget.max);
-    if (snapped != widget.value) {
+  /// Live per-frame handler. Emits the snapped integer (haptic + controller
+  /// write) without ever rebuilding the parent gate.
+  void _onScrollUpdate() {
+    if (_suppress || !_controller.hasClients) return;
+    final snapped = _valueForOffset(_controller.offset)
+        .roundToDouble()
+        .clamp(widget.min, widget.max);
+    final snappedInt = snapped.round();
+    if (snappedInt != (_lastEmitted ?? widget.value.round())) {
+      _lastEmitted = snappedInt;
       HapticFeedback.selectionClick();
+      widget.onLiveChanged(snapped); // controller-only, no setState
+    }
+  }
+
+  /// Settle handler. Animates the strip onto the exact tick, then commits the
+  /// final value to the parent with a single setState.
+  void _onScrollEnd() {
+    if (_suppress || !_controller.hasClients) return;
+    final snapped = _valueForOffset(_controller.offset)
+        .roundToDouble()
+        .clamp(widget.min, widget.max);
+    final target = _offsetForValue(snapped).clamp(
+      _controller.position.minScrollExtent,
+      _controller.position.maxScrollExtent,
+    );
+    // Snap-on-settle: land precisely on the tick. Skip if already aligned.
+    if ((_controller.offset - target).abs() > 0.5) {
+      _suppress = true;
+      _controller
+          .animateTo(target,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut)
+          .whenComplete(() => _suppress = false);
+    }
+    _lastEmitted = null;
+    // Commit once: this is the only full-gate rebuild per gesture.
+    if (snapped != widget.value) {
       widget.onChanged(snapped);
     }
   }
@@ -949,8 +1011,11 @@ class _RulerStripState extends State<_RulerStrip> {
         builder: (context, constraints) {
           _viewportHalf = constraints.maxWidth / 2;
           // Seat the strip on the current value each layout (no-op once aligned).
+          // Skip entirely while the user is dragging or the strip is settling —
+          // re-seating mid-gesture would fight the finger.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted || !_controller.hasClients) return;
+            if (_controller.position.isScrollingNotifier.value) return;
             final target = _offsetForValue(widget.value).clamp(
               _controller.position.minScrollExtent,
               _controller.position.maxScrollExtent,
@@ -964,31 +1029,35 @@ class _RulerStripState extends State<_RulerStrip> {
             children: [
               NotificationListener<ScrollNotification>(
                 onNotification: (n) {
-                  if (n is ScrollUpdateNotification ||
-                      n is ScrollEndNotification) {
-                    _onScroll();
+                  if (n is ScrollUpdateNotification) {
+                    _onScrollUpdate();
+                  } else if (n is ScrollEndNotification) {
+                    _onScrollEnd();
                   }
                   return false;
                 },
-                child: ListView.builder(
-                  controller: _controller,
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: _viewportHalf),
-                  itemExtent: _tickSpacing,
-                  itemCount: _tickCount,
-                  itemBuilder: (context, i) {
-                    final value = widget.min + i;
-                    final isMajor = value % 5 == 0;
-                    final isLabeled = value % 10 == 0;
-                    return _RulerTick(
-                      isMajor: isMajor,
-                      label: isLabeled ? value.round().toString() : null,
-                      tickColor: tickColor,
-                      majorTickColor: majorTickColor,
-                      labelColor: t.textMuted,
-                    );
-                  },
+                // Isolate the ruler's painting from the rest of the gate.
+                child: RepaintBoundary(
+                  child: ListView.builder(
+                    controller: _controller,
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: _viewportHalf),
+                    itemExtent: _tickSpacing,
+                    itemCount: _tickCount,
+                    itemBuilder: (context, i) {
+                      final value = widget.min + i;
+                      final isMajor = value % 5 == 0;
+                      final isLabeled = value % 10 == 0;
+                      return _RulerTick(
+                        isMajor: isMajor,
+                        label: isLabeled ? value.round().toString() : null,
+                        tickColor: tickColor,
+                        majorTickColor: majorTickColor,
+                        labelColor: t.textMuted,
+                      );
+                    },
+                  ),
                 ),
               ),
               // Center indicator.

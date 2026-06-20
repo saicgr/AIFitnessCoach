@@ -50741,7 +50741,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizDaysSelectorDaysSelected.
   ///
   /// In en, this message translates to:
-  /// **'Days selected {arg0} {arg1}'**
+  /// **'{arg0} of {arg1} days selected'**
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1);
 
   /// No description provided for @quizDaysSelectorForYourWorkouts.
@@ -50789,7 +50789,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizDaysSelectorSelectNDays.
   ///
   /// In en, this message translates to:
-  /// **'Select n days {arg0}'**
+  /// **'Pick {arg0} days that work for you'**
   String quizDaysSelectorSelectNDays(Object arg0);
 
   /// No description provided for @quizDaysSelectorSun.
@@ -50849,7 +50849,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentBodyweightOnly2.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment bodyweight only'**
+  /// **'Bodyweight only'**
   String get quizEquipmentBodyweightOnly2;
 
   /// No description provided for @quizEquipmentBodyweightPullUpBar.
@@ -51299,19 +51299,19 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevel2To5Years.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level to years'**
+  /// **'2 – 5 years'**
   String get quizFitnessLevel2To5Years;
 
   /// No description provided for @quizFitnessLevel5PlusYears.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level plus years'**
+  /// **'5+ years'**
   String get quizFitnessLevel5PlusYears;
 
   /// No description provided for @quizFitnessLevel6MonTo2Yrs.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level mon to yrs'**
+  /// **'6 months – 2 years'**
   String get quizFitnessLevel6MonTo2Yrs;
 
   /// No description provided for @quizFitnessLevelAdvanced.
@@ -51323,7 +51323,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelAdvancedDesc.
   ///
   /// In en, this message translates to:
-  /// **'Advanced desc'**
+  /// **'Years in, dialed-in technique'**
   String get quizFitnessLevelAdvancedDesc;
 
   /// No description provided for @quizFitnessLevelBeHonestWeLl.
@@ -51341,7 +51341,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelBeginnerDesc.
   ///
   /// In en, this message translates to:
-  /// **'Beginner desc'**
+  /// **'New to training or coming back'**
   String get quizFitnessLevelBeginnerDesc;
 
   /// No description provided for @quizFitnessLevelBrandNewToLifting.
@@ -51383,7 +51383,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelIntermediateDesc.
   ///
   /// In en, this message translates to:
-  /// **'Intermediate desc'**
+  /// **'Train regularly, know the basics'**
   String get quizFitnessLevelIntermediateDesc;
 
   /// No description provided for @quizFitnessLevelJustGettingStarted.
@@ -51395,7 +51395,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelLessThan6Months.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level less than months'**
+  /// **'Less than 6 months'**
   String get quizFitnessLevelLessThan6Months;
 
   /// No description provided for @quizFitnessLevelLight.
@@ -51407,7 +51407,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelLightDesc.
   ///
   /// In en, this message translates to:
-  /// **'Light desc'**
+  /// **'On your feet sometimes'**
   String get quizFitnessLevelLightDesc;
 
   /// No description provided for @quizFitnessLevelModerate.
@@ -51419,7 +51419,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelModerateDesc.
   ///
   /// In en, this message translates to:
-  /// **'Moderate desc'**
+  /// **'Active job or regular movement'**
   String get quizFitnessLevelModerateDesc;
 
   /// No description provided for @quizFitnessLevelNever.
@@ -51437,7 +51437,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelSedentaryDesc.
   ///
   /// In en, this message translates to:
-  /// **'Sedentary desc'**
+  /// **'Desk job, little movement'**
   String get quizFitnessLevelSedentaryDesc;
 
   /// No description provided for @quizFitnessLevelSolidFoundation.
@@ -51461,7 +51461,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelVeryActiveDesc.
   ///
   /// In en, this message translates to:
-  /// **'Very active desc'**
+  /// **'Physical job, always moving'**
   String get quizFitnessLevelVeryActiveDesc;
 
   /// No description provided for @quizFitnessLevelVeteranLifter.
@@ -71906,13 +71906,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseAutoDesc.
   ///
   /// In en, this message translates to:
-  /// **'Auto desc'**
+  /// **'Adjusts load to how you perform each day'**
   String get workoutShowcaseAutoDesc;
 
   /// No description provided for @workoutShowcaseAutoLabel.
   ///
   /// In en, this message translates to:
-  /// **'Auto label'**
+  /// **'Auto-regulated'**
   String get workoutShowcaseAutoLabel;
 
   /// No description provided for @workoutShowcaseBarbellSquat.
@@ -72116,13 +72116,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseLinearDesc.
   ///
   /// In en, this message translates to:
-  /// **'Linear desc'**
+  /// **'Add weight steadily each week'**
   String get workoutShowcaseLinearDesc;
 
   /// No description provided for @workoutShowcaseLinearLabel.
   ///
   /// In en, this message translates to:
-  /// **'Linear label'**
+  /// **'Linear'**
   String get workoutShowcaseLinearLabel;
 
   /// No description provided for @workoutShowcaseLogAllSets.
@@ -72194,13 +72194,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcasePyramidDesc.
   ///
   /// In en, this message translates to:
-  /// **'Pyramid desc'**
+  /// **'Ramp weight up, reps down each set'**
   String get workoutShowcasePyramidDesc;
 
   /// No description provided for @workoutShowcasePyramidLabel.
   ///
   /// In en, this message translates to:
-  /// **'Pyramid label'**
+  /// **'Pyramid'**
   String get workoutShowcasePyramidLabel;
 
   /// No description provided for @workoutShowcaseRare.
@@ -72348,13 +72348,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseUndulatingDesc.
   ///
   /// In en, this message translates to:
-  /// **'Undulating desc'**
+  /// **'Vary intensity across sessions'**
   String get workoutShowcaseUndulatingDesc;
 
   /// No description provided for @workoutShowcaseUndulatingLabel.
   ///
   /// In en, this message translates to:
-  /// **'Undulating label'**
+  /// **'Undulating'**
   String get workoutShowcaseUndulatingLabel;
 
   /// No description provided for @workoutShowcaseUpNextBenchPress.
