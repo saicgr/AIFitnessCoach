@@ -1097,22 +1097,25 @@ class _RulerTick extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           width: isMajor ? 2 : 1,
-          height: isMajor ? 20 : 12,
+          height: isMajor ? 15 : 9,
           decoration: BoxDecoration(
             color: isMajor ? majorTickColor : tickColor,
             borderRadius: BorderRadius.circular(1),
           ),
         ),
         if (label != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             label!,
+            textScaler: TextScaler.noScaling,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
+              height: 1.0,
               fontWeight: FontWeight.w500,
               color: labelColor,
             ),
