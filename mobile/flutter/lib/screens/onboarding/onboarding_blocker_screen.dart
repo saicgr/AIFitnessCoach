@@ -35,7 +35,11 @@ class _BlockerOption {
   final String label;
   final IconData icon;
   final String acknowledgment;
-  const _BlockerOption(this.id, this.label, this.icon, this.acknowledgment);
+  // 3 concrete "how the plan carries this" points (icon + short line) shown
+  // under the acknowledgment so the lower half reads as substance, not space.
+  final List<(IconData, String)> supports;
+  const _BlockerOption(
+      this.id, this.label, this.icon, this.acknowledgment, this.supports);
 }
 
 class _OnboardingBlockerScreenState
@@ -49,6 +53,11 @@ class _OnboardingBlockerScreenState
       'Time is the one nobody beats with willpower. Your plan is built '
           'around the exact days and session length you picked, and if you '
           'miss one the coach reshapes the week instead of piling on guilt.',
+      [
+        (Icons.event_available_rounded, 'Locked to the days & length you chose'),
+        (Icons.autorenew_rounded, 'Miss one? The week reshapes — no pileup'),
+        (Icons.bolt_rounded, 'Sessions trimmed to fit, never padded'),
+      ],
     ),
     _BlockerOption(
       'lost_motivation',
@@ -57,6 +66,12 @@ class _OnboardingBlockerScreenState
       'Motivation comes and goes for everyone. That is why the plan runs '
           'on a set schedule and small weekly wins, so showing up does not '
           'depend on feeling motivated that day.',
+      [
+        (Icons.event_repeat_rounded, 'Set schedule — no daily willpower call'),
+        (Icons.emoji_events_rounded, 'Small weekly wins you can actually see'),
+        (Icons.local_fire_department_rounded,
+            'Streaks keep momentum on the low days'),
+      ],
     ),
     _BlockerOption(
       'no_results',
@@ -65,6 +80,11 @@ class _OnboardingBlockerScreenState
       'No results usually means the plan stopped progressing. Yours adds '
           'a little every week with progressive overload, and the coach '
           'changes course when something stalls.',
+      [
+        (Icons.trending_up_rounded, 'Progressive overload adds a little weekly'),
+        (Icons.alt_route_rounded, 'Coach changes course the moment you stall'),
+        (Icons.insights_rounded, 'Every lift tracked — progress in numbers'),
+      ],
     ),
     _BlockerOption(
       'unsure',
@@ -73,6 +93,11 @@ class _OnboardingBlockerScreenState
       'Not knowing what to do is a real wall. Every session here is laid '
           'out for you, with form guidance on each move, so there is no '
           'guesswork before you start.',
+      [
+        (Icons.checklist_rounded, 'Every set & rep laid out before you start'),
+        (Icons.play_circle_outline_rounded, 'Form cues on each move'),
+        (Icons.chat_bubble_outline_rounded, 'Ask the coach anything, anytime'),
+      ],
     ),
     _BlockerOption(
       'injury',
@@ -81,6 +106,11 @@ class _OnboardingBlockerScreenState
       'Injury and burnout are setbacks, not the end. Your plan works '
           'around the limitations you told us about and builds intensity '
           'gradually instead of all at once.',
+      [
+        (Icons.shield_outlined, 'Works around the areas you flagged'),
+        (Icons.trending_up_rounded, 'Builds intensity gradually, not all at once'),
+        (Icons.swap_horiz_rounded, 'Swaps any move that aggravates it'),
+      ],
     ),
     _BlockerOption(
       'first_time',
@@ -89,6 +119,11 @@ class _OnboardingBlockerScreenState
       'A first real attempt is a strong place to begin. The plan meets '
           'you where you are today and builds up slowly, so nothing about '
           'week one is overwhelming.',
+      [
+        (Icons.spa_rounded, 'Starts exactly where you are today'),
+        (Icons.stairs_rounded, 'Builds up slowly — week one is easy'),
+        (Icons.flag_rounded, 'One clear next step, every day'),
+      ],
     ),
   ];
 
@@ -296,6 +331,29 @@ class _OnboardingBlockerScreenState
                   .animate()
                   .fadeIn(delay: 440.ms)
                   .slideY(begin: 0.06),
+              const SizedBox(height: 24),
+              // 3 concrete "how your plan carries this" points — fills the
+              // lower half with substance instead of empty space.
+              Text(
+                'HOW YOUR PLAN CARRIES THIS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.4,
+                  color: t.textSecondary,
+                ),
+              ).animate().fadeIn(delay: 520.ms),
+              const SizedBox(height: 12),
+              for (int i = 0; i < option.supports.length; i++) ...[
+                _SupportRow(
+                  icon: option.supports[i].$1,
+                  text: option.supports[i].$2,
+                  accent: AppColors.onboardingAccent,
+                ).animate().fadeIn(delay: (580 + i * 90).ms).slideX(begin: 0.05),
+                if (i != option.supports.length - 1)
+                  const SizedBox(height: 10),
+              ],
+              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -586,6 +644,45 @@ class _EmblemPainter extends CustomPainter {
   @override
   bool shouldRepaint(_EmblemPainter old) =>
       old.t != t || old.accent != accent;
+}
+
+/// One "how your plan carries this" point — accent icon puck + concise line.
+class _SupportRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color accent;
+  const _SupportRow(
+      {required this.icon, required this.text, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: accent),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 14.5,
+              height: 1.3,
+              fontWeight: FontWeight.w600,
+              color: t.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// A quiet reassurance strip with a softly breathing shield icon. Reinforces
