@@ -108,7 +108,13 @@ class _QuizLimitationsState extends State<QuizLimitations> {
     final muscles = <String>{};
     for (final id in widget.selectedLimitations) {
       final mapped = _injuryToMuscles[id];
-      if (mapped != null) muscles.addAll(mapped);
+      if (mapped != null) {
+        muscles.addAll(mapped);
+      } else if (id != 'none' && id != 'other') {
+        // A muscle group selected directly on the body map (no injury chip,
+        // e.g. abs/chest/lats). Stored verbatim as the backend muscle name.
+        muscles.add(id);
+      }
     }
     return muscles;
   }
@@ -160,10 +166,13 @@ class _QuizLimitationsState extends State<QuizLimitations> {
   /// injury for that muscle (see [_muscleToInjury]). Muscles with no injury
   /// equivalent (none should occur given our highlight set) are ignored.
   void _onBodyMuscleToggle(String muscle) {
-    final injury = _muscleToInjury[muscle];
-    if (injury == null) return;
     HapticFeedback.selectionClick();
-    _toggleInjury(injury);
+    // If the muscle maps to a joint chip (knees, shoulders…), toggle that chip.
+    // Otherwise toggle the muscle group itself as a first-class "avoid this
+    // area" limitation — so it clears "None" and is sent to generation, instead
+    // of leaving an orphan body highlight with "None" still selected.
+    final injury = _muscleToInjury[muscle];
+    _toggleInjury(injury ?? muscle);
   }
 
   @override
