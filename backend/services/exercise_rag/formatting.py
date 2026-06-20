@@ -11,7 +11,12 @@ Handles:
 from typing import Dict, List, Optional, Any
 
 from core.logger import get_logger
-from core.weight_utils import get_starting_weight, detect_equipment_type
+from core.weight_utils import (
+    get_starting_weight,
+    detect_equipment_type,
+    snap_to_weight_list,
+    lbs_to_kg_gym,
+)
 
 from .utils import (
     canonicalize_exercise_name,
@@ -36,6 +41,71 @@ logger = get_logger(__name__)
 # ceiling we reset reps near the floor and cue a harder variant. NSCA progression
 # guidance for bodyweight = small rep increments per session; +2 keeps it achievable.
 REPS_PROGRESSION_STEP = 2
+
+
+# ---------------------------------------------------------------------------
+# Equipment-weights snapping (user owns a discrete set of weights)
+# ---------------------------------------------------------------------------
+# The client may send `equipment_weights`: a map of canonical equipment id ->
+# the SORTED list of weights the user actually owns, in the user's WORKOUT
+# weight unit (lbs by default). When present, prescribed set weights snap to
+# the nearest weight the user owns for that equipment, so the plan never
+# prescribes a load the user can't load.
+#
+# `detect_equipment_type()` (weight_utils) returns granular internal types
+# (e.g. "dumbbell", "smith_machine"); the client keys are canonical equipment
+# ids ("dumbbells", "barbell", ...). This maps the internal type to the client
+# key so we look up the right list. Returns None when there's no sensible
+# loadable mapping (bodyweight, bands, etc.) — snapping is then skipped.
+_EQUIPMENT_TYPE_TO_CANONICAL_KEY: Dict[str, str] = {
+    "dumbbell": "dumbbells",
+    "dumbbells": "dumbbells",
+    "adjustable_dumbbell": "dumbbells",
+    "barbell": "barbell",
+    "ez_bar": "barbell",
+    "trap_bar": "barbell",
+    "smith_machine": "barbell",
+    "kettlebell": "kettlebell",
+    "cable": "cable",
+    "machine": "machine",
+}
+
+
+def _resolve_available_kg_list(
+    equipment_type: str,
+    equipment_weights: Optional[Dict[str, List[float]]],
+    weight_unit: str,
+) -> Optional[List[float]]:
+    """Resolve the user's available weights (in kg) for an equipment type.
+
+    Returns a kg list suitable for `snap_to_weight_list`, or None when no
+    explicit list applies (fail-open => caller keeps current behavior).
+
+    Units bridge: `equipment_weights` values are opaque numbers in the user's
+    workout unit (lbs by default) — we never mutate that list. We only derive a
+    kg copy here (gym-aware lbs->kg so 135lb->60kg) so the kg-internal engine
+    can snap against it. When the unit is already kg the numbers pass through.
+    """
+    if not equipment_weights:
+        return None
+    key = _EQUIPMENT_TYPE_TO_CANONICAL_KEY.get((equipment_type or "").lower().strip())
+    if not key:
+        return None
+    raw = equipment_weights.get(key)
+    # Tolerate a couple of obvious client-key spellings without inventing a
+    # whitelist: the dumbbell singular/plural is the common slip.
+    if raw is None and key == "dumbbells":
+        raw = equipment_weights.get("dumbbell")
+    if not raw:
+        return None
+    unit = (weight_unit or "lbs").lower().strip()
+    is_lbs = unit in ("lb", "lbs", "pound", "pounds", "imperial")
+    kg_list: List[float] = []
+    for w in raw:
+        if not isinstance(w, (int, float)) or w <= 0:
+            continue
+        kg_list.append(lbs_to_kg_gym(float(w)) if is_lbs else round(float(w), 2))
+    return kg_list or None
 
 
 def detect_unilateral(exercise_name: str, metadata: dict = None) -> bool:
@@ -78,6 +148,8 @@ def format_exercise_for_workout(
     strength_history: Optional[Dict[str, Dict]] = None,
     progression_pace: str = "medium",
     goals: Optional[List[str]] = None,
+    equipment_weights: Optional[Dict[str, List[float]]] = None,
+    weight_unit: str = "lbs",
 ) -> Dict:
     """
     Format an exercise for inclusion in a workout.
@@ -192,6 +264,23 @@ def format_exercise_for_workout(
             )
             weight_source = "generic"
 
+    # Snap the base/starting weight to the user's owned weights for this
+    # equipment (when the client supplied an explicit list). Fail-open: when
+    # no list applies the value is unchanged. Snapping the base here means the
+    # warmup and every working set built off it stay inside the owned set.
+    available_kg_list = _resolve_available_kg_list(
+        equipment_type, equipment_weights, weight_unit
+    )
+    if available_kg_list and starting_weight > 0:
+        snapped = snap_to_weight_list(starting_weight, available_kg_list, equipment_type)
+        if snapped != starting_weight:
+            logger.info(
+                f"[EquipWeights] Snapped starting weight for {exercise_name}: "
+                f"{starting_weight}kg -> {snapped}kg (owned weights for {equipment_type})"
+            )
+        starting_weight = snapped
+        weight_source = "owned_equipment"
+
     # Goal-aware rep / rest overrides (Fix 7 / H4 from
     # peppy-conjuring-valley.md). Without these the engine emits 12-rep
     # working sets for strength goals (the audit found 9 strength workouts
@@ -265,6 +354,7 @@ def format_exercise_for_workout(
         exercise_type=exercise_type, equipment_type=equipment_type,
         equipment=equipment, exercise_name=exercise_name,
         goals=goals,
+        available_kg_list=available_kg_list,
     )
 
     if is_timed and hold_seconds:
@@ -323,6 +413,7 @@ def _build_set_targets(
     exercise_type: str, equipment_type: str, equipment: str,
     exercise_name: str,
     goals: Optional[List[str]] = None,
+    available_kg_list: Optional[List[float]] = None,
 ) -> List[Dict]:
     """Build the set_targets array with warmup + working sets.
 
@@ -368,12 +459,29 @@ def _build_set_targets(
 
         Lower RIR (closer to failure) → higher weight via multiplier.
         Guarantees at least +1 equipment increment when multiplier > 1.0.
+
+        When the user supplied an explicit owned-weights list for this
+        equipment, the result snaps to the nearest weight they actually own
+        (and, for an intended increase, to the next OWNED weight up rather than
+        a generic increment) so the prescription never lands off-rack.
         """
         if base_weight <= 0:
             return 0
         rir_multipliers = {2: 1.00, 1: 1.05, 0: 1.10}
         multiplier = rir_multipliers.get(target_rir, 1.0)
         raw_weight = base_weight * multiplier
+
+        # Explicit owned weights win over generic increment rounding.
+        if available_kg_list:
+            snapped = snap_to_weight_list(raw_weight, available_kg_list, eq_type)
+            base_snapped = snap_to_weight_list(base_weight, available_kg_list, eq_type)
+            # Minimum-step guarantee: an intended increase that snapped back to
+            # the base load moves to the next heavier owned weight (if any).
+            if multiplier > 1.0 and snapped <= base_snapped:
+                heavier = [w for w in available_kg_list if w > base_snapped]
+                if heavier:
+                    snapped = round(min(heavier), 2)
+            return snapped
 
         increment = {
             "dumbbell": 2.0, "dumbbells": 2.0, "barbell": 2.5,
@@ -413,11 +521,16 @@ def _build_set_targets(
     )
     set_number = 1
     if add_warmup:
+        warmup_weight = starting_weight * 0.5
+        if available_kg_list:
+            warmup_weight = snap_to_weight_list(warmup_weight, available_kg_list, equipment_type)
+        else:
+            warmup_weight = round(warmup_weight, 1)
         set_targets.append({
             "set_number": set_number,
             "set_type": "warmup",
             "target_reps": min(reps + 2, 15),
-            "target_weight_kg": round(starting_weight * 0.5, 1),
+            "target_weight_kg": warmup_weight,
             "target_rpe": 5,
             "target_rir": 5,
         })

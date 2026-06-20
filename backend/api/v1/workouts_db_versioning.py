@@ -84,6 +84,17 @@ async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, b
         dumbbell_count = body.dumbbell_count if body.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
         kettlebell_count = body.kettlebell_count if body.kettlebell_count is not None else preferences.get("kettlebell_count", 1)
 
+        # Per-equipment owned weights (canonical id -> sorted loads in the
+        # user's WORKOUT weight unit, lbs by default). Request wins; else fall
+        # back to the value persisted by /update-program into prefs. Optional /
+        # fail-open: when absent, prescription behaves exactly as before. We
+        # pass the numbers through untouched and let the formatter snap
+        # prescribed set weights to the user's owned set.
+        equipment_weights = body.equipment_weights
+        if equipment_weights is None and isinstance(preferences, dict):
+            equipment_weights = preferences.get("equipment_weights")
+        workout_weight_unit = user.get("workout_weight_unit") or user.get("weight_unit") or "lbs"
+
         user_age = user.get("age")
         user_activity_level = user.get("activity_level")
         user_dob = user.get("date_of_birth")
@@ -142,6 +153,8 @@ async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, b
                 injuries=injuries if injuries else None,
                 dumbbell_count=dumbbell_count,
                 kettlebell_count=kettlebell_count,
+                equipment_weights=equipment_weights,
+                weight_unit=workout_weight_unit,
             )
 
             if rag_exercises:
@@ -690,6 +703,13 @@ async def update_program(request: Request, body: UpdateProgramRequest,
             updated_prefs["dumbbell_count"] = body.dumbbell_count
         if body.kettlebell_count is not None:
             updated_prefs["kettlebell_count"] = body.kettlebell_count
+        # Persist per-equipment owned weights (canonical id -> sorted loads in
+        # the user's WORKOUT unit) so the later background/today generation can
+        # snap prescribed set weights to the user's owned set. /update-program
+        # itself only deletes future workouts + saves prefs (no inline regen),
+        # so this is where the request-time list becomes durable. Fail-open.
+        if body.equipment_weights is not None:
+            updated_prefs["equipment_weights"] = body.equipment_weights
 
         update_data = {"preferences": updated_prefs}
         if body.equipment is not None:

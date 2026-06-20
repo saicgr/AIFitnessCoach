@@ -458,6 +458,15 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
         dumbbell_count = request.dumbbell_count if request.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
         kettlebell_count = request.kettlebell_count if request.kettlebell_count is not None else preferences.get("kettlebell_count", 1)
 
+        # Per-equipment owned weights (canonical id -> sorted loads in the
+        # user's WORKOUT unit, lbs by default). Request wins; else fall back to
+        # the value persisted by /update-program into prefs. Optional /
+        # fail-open: prescribed set weights snap to this set when present.
+        equipment_weights = request.equipment_weights
+        if equipment_weights is None and isinstance(preferences, dict):
+            equipment_weights = preferences.get("equipment_weights")
+        workout_weight_unit = user.get("workout_weight_unit") or user.get("weight_unit") or "lbs"
+
         # Get age and activity level for personalized workouts
         user_age = user.get("age")
         user_activity_level = user.get("activity_level")
@@ -548,6 +557,8 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
                 injuries=injuries if injuries else None,
                 dumbbell_count=dumbbell_count,
                 kettlebell_count=kettlebell_count,
+                equipment_weights=equipment_weights,
+                weight_unit=workout_weight_unit,
             )
 
             if rag_exercises:
@@ -946,6 +957,13 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             preferences = parse_json_field(user.get("preferences"), {})
             dumbbell_count = body.dumbbell_count if body.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
             kettlebell_count = body.kettlebell_count if body.kettlebell_count is not None else preferences.get("kettlebell_count", 1)
+            # Per-equipment owned weights (canonical id -> sorted loads in the
+            # user's WORKOUT unit, lbs by default). Request wins; else fall back
+            # to the value persisted by /update-program into prefs. Fail-open.
+            equipment_weights = body.equipment_weights
+            if equipment_weights is None and isinstance(preferences, dict):
+                equipment_weights = preferences.get("equipment_weights")
+            workout_weight_unit = user.get("workout_weight_unit") or user.get("weight_unit") or "lbs"
             user_age = user.get("age")
             user_activity_level = user.get("activity_level")
             user_difficulty = body.difficulty
@@ -1112,6 +1130,8 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                     user_id=str(body.user_id),
                     workout_type_preference=(workout_type_override or "strength"),
                     min_floor=4,
+                    equipment_weights=equipment_weights,
+                    weight_unit=workout_weight_unit,
                 )
                 cascade_tier_per_area[area] = tier_reason
                 for ex in area_results or []:

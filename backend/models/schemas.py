@@ -256,6 +256,15 @@ class GenerateWorkoutRequest(BaseModel):
     batch_offset: int = Field(default=0, ge=0, description="Offset index for batch generation to ensure exercise variety across days")
     force_non_preferred_day: bool = Field(default=False, description="Set True when the user deliberately chose a date outside their preferred workout days (e.g., 'do this today' on a rest day). Bypasses the preferred-day gate.")
     cardio_finisher: bool = Field(default=False, description="Append a 5-10 min cardio finisher to a strength/hypertrophy workout (cardio-in-split). Ignored for pure cardio/mobility types.")
+    # Per-equipment available weights the user actually owns. Each key is a
+    # canonical equipment id ("dumbbells", "kettlebell", "barbell", ...) and
+    # each value is the SORTED list of available loads, already expanded from
+    # min/max/increment on the client. Units are the user's WORKOUT weight unit
+    # (lbs by default) — treated as opaque pass-through numbers, never converted
+    # by the API layer. When provided, prescribed set weights snap to / stay
+    # within this set for the matching equipment. Fully optional / fail-open:
+    # absent => identical behavior to before this field existed.
+    equipment_weights: Optional[Dict[str, List[float]]] = Field(default=None, description="Per-equipment available weights (canonical id -> sorted weights in the user's workout unit).")
 
 
 class GenerateWeeklyRequest(BaseModel):
@@ -379,6 +388,11 @@ class RegenerateWorkoutRequest(BaseModel):
     new_scheduled_date: Optional[str] = Field(default=None, max_length=20, description="If set (YYYY-MM-DD), move the regenerated workout to this date instead of keeping the original's date. Used by 'Do this today' in the Regenerate sheet.")
     force_non_preferred_day: bool = Field(default=False, description="Required to be True when new_scheduled_date falls outside the user's preferred workout days.")
     cardio_finisher: bool = Field(default=False, description="Append a 5-10 min cardio finisher to a strength/hypertrophy regeneration (cardio-in-split). Ignored for pure cardio/mobility types.")
+    # Per-equipment available weights the user actually owns (canonical id ->
+    # sorted weights in the user's workout unit, lbs by default). Opaque
+    # pass-through; prescribed set weights snap to this set when present.
+    # Fully optional / fail-open. See GenerateWorkoutRequest.equipment_weights.
+    equipment_weights: Optional[Dict[str, List[float]]] = Field(default=None, description="Per-equipment available weights (canonical id -> sorted weights in the user's workout unit).")
 
     @field_validator("difficulty", mode="before")
     @classmethod
@@ -403,6 +417,11 @@ class UpdateProgramRequest(BaseModel):
     kettlebell_count: Optional[int] = Field(default=1, ge=1, le=10)  # 1 or 2 kettlebells
     custom_program_description: Optional[str] = Field(default=None, max_length=500)  # For custom programs
     workout_environment: Optional[str] = Field(default=None, max_length=50)  # commercial_gym, home_gym, home, etc.
+    # Per-equipment available weights the user actually owns (canonical id ->
+    # sorted weights in the user's workout unit, lbs by default). Opaque
+    # pass-through; prescribed set weights snap to this set when present.
+    # Fully optional / fail-open. See GenerateWorkoutRequest.equipment_weights.
+    equipment_weights: Optional[Dict[str, List[float]]] = Field(default=None, description="Per-equipment available weights (canonical id -> sorted weights in the user's workout unit).")
 
 
 class UpdateProgramResponse(BaseModel):

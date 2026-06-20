@@ -691,6 +691,16 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 queued_exercises=exercise_queue if exercise_queue else None,
                 batch_offset=body.batch_offset,
                 very_recently_used_exercises=very_recently_used_exercises,
+                # Per-equipment owned weights (canonical id -> sorted loads in
+                # the user's workout unit). Request body wins; otherwise fall
+                # back to the value persisted by /update-program into prefs.
+                # Optional / fail-open: when absent, prescription is unchanged.
+                equipment_weights=(
+                    body.equipment_weights
+                    if body.equipment_weights is not None
+                    else (preferences.get("equipment_weights") if isinstance(preferences, dict) else None)
+                ),
+                weight_unit=(user.get("workout_weight_unit") or user.get("weight_unit") or "lbs"),
             )
             # Phase A: if primary RAG returns < 4, escalate to the broadening
             # cascade so we never ship a 1-exercise workout. The cascade

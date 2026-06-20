@@ -182,6 +182,10 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             workout_variety=request.workout_variety,
             # Focus areas
             focus_areas=request.focus_areas,
+            # Per-equipment owned weights (canonical id -> sorted weights in the
+            # user's workout unit). Persisted so the INITIAL server-side plan
+            # generation can snap prescribed set weights to the owned set.
+            equipment_weights=request.equipment_weights,
         )
         update_data["preferences"] = final_preferences
 

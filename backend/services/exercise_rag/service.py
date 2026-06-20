@@ -941,8 +941,10 @@ class ExerciseRAGService:
         count: int = 6,
         avoid_exercises: Optional[List[str]] = None,
         injuries: Optional[List[str]] = None,
-        dumbbell_count: int = 2,
-        kettlebell_count: int = 1,
+        # None => "not specified": derive from equipment_weights when present,
+        # else fall back to the historical defaults (dumbbell=2, kettlebell=1).
+        dumbbell_count: Optional[int] = None,
+        kettlebell_count: Optional[int] = None,
         workout_params: Optional[Dict] = None,
         user_id: Optional[str] = None,
         strength_history: Optional[Dict[str, Dict]] = None,
@@ -962,6 +964,8 @@ class ExerciseRAGService:
         workout_environment: Optional[str] = None,
         very_recently_used_exercises: Optional[List[str]] = None,
         fast: bool = False,
+        equipment_weights: Optional[Dict[str, List[float]]] = None,
+        weight_unit: str = "lbs",
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -1004,6 +1008,36 @@ class ExerciseRAGService:
         logger.info(f"Equipment: {equipment}, Dumbbells: {dumbbell_count}, Kettlebells: {kettlebell_count}")
         logger.info(f"Consistency mode: {consistency_mode}, Variation: {variation_percentage}%")
         logger.info(f"Progression pace: {progression_pace}, Workout type preference: {workout_type_preference}")
+
+        # Per-equipment available weights (canonical id -> sorted owned loads in
+        # the user's workout unit). Stash on the instance for the duration of
+        # this selection so the many `_format_exercise_for_workout` call sites
+        # below pick it up without threading an extra arg through each one.
+        # Fail-open: when None, formatting behaves exactly as before.
+        self._equipment_weights = equipment_weights
+        self._weight_unit = weight_unit or "lbs"
+
+        # Derive single/double counts from the owned-weights map when the
+        # explicit count wasn't provided. A single distinct weight implies a
+        # single implement (single_*_friendly filter); >1 implies a pair. This
+        # NEVER overrides an explicit count and is a no-op without the map.
+        if equipment_weights:
+            db_weights = equipment_weights.get("dumbbells") or equipment_weights.get("dumbbell")
+            if dumbbell_count is None and db_weights:
+                distinct = {w for w in db_weights if isinstance(w, (int, float)) and w > 0}
+                dumbbell_count = 2 if len(distinct) > 1 else 1
+            kb_weights = equipment_weights.get("kettlebell") or equipment_weights.get("kettlebells")
+            if kettlebell_count is None and kb_weights:
+                distinct = {w for w in kb_weights if isinstance(w, (int, float)) and w > 0}
+                kettlebell_count = 2 if len(distinct) > 1 else 1
+
+        # Defaults so downstream filters (single_*_friendly) behave as before
+        # when neither an explicit count nor a derivable owned-weights list set
+        # them. Matches the pre-change parameter defaults (dumbbell=2, kb=1).
+        if dumbbell_count is None:
+            dumbbell_count = 2
+        if kettlebell_count is None:
+            kettlebell_count = 1
 
         # Adjust equipment based on workout environment.
         #
@@ -1923,6 +1957,8 @@ class ExerciseRAGService:
         user_id: Optional[str] = None,
         workout_type_preference: str = "strength",
         min_floor: int = 4,
+        equipment_weights: Optional[Dict[str, List[float]]] = None,
+        weight_unit: str = "lbs",
     ) -> Tuple[List[Dict[str, Any]], str]:
         """
         Phase A — 5-tier broadening cascade. Always returns ≥``min_floor``
@@ -1943,6 +1979,15 @@ class ExerciseRAGService:
         injuries = injuries or []
         equipment = equipment or []
 
+        # Stash owned-weights context up front so EVERY tier — including tier 2
+        # (`_fetch_by_name_substrings`) and the tier 5 safety-mode pool, which
+        # format exercises without going back through select_exercises_for_workout
+        # — snaps prescribed set weights to the user's owned weights. The inner
+        # select_exercises_for_workout calls re-set these to the same values.
+        # Fail-open: when None, formatting behaves exactly as before.
+        self._equipment_weights = equipment_weights
+        self._weight_unit = weight_unit or "lbs"
+
         # ---- Tier 0: original RAG call --------------------------------------
         try:
             tier0 = await self.select_exercises_for_workout(
@@ -1957,6 +2002,8 @@ class ExerciseRAGService:
                 kettlebell_count=kettlebell_count,
                 user_id=user_id,
                 workout_type_preference=workout_type_preference,
+                equipment_weights=equipment_weights,
+                weight_unit=weight_unit,
             )
         except Exception as e:  # noqa: BLE001
             logger.warning(f"⚠️ [Cascade] tier0 RAG raised: {e}")
@@ -1982,6 +2029,8 @@ class ExerciseRAGService:
                 kettlebell_count=kettlebell_count,
                 user_id=user_id,
                 workout_type_preference=workout_type_preference,
+                equipment_weights=equipment_weights,
+                weight_unit=weight_unit,
             )
         except Exception as e:  # noqa: BLE001
             logger.warning(f"⚠️ [Cascade] tier1 RAG raised: {e}")
@@ -2037,6 +2086,8 @@ class ExerciseRAGService:
                 kettlebell_count=kettlebell_count,
                 user_id=user_id,
                 workout_type_preference=workout_type_preference,
+                equipment_weights=equipment_weights,
+                weight_unit=weight_unit,
             )
         except Exception as e:  # noqa: BLE001
             logger.warning(f"⚠️ [Cascade] tier3 RAG raised: {e}")
@@ -2507,9 +2558,16 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         strength_history: Optional[Dict[str, Dict]] = None,
         progression_pace: str = "medium",
     ) -> Dict:
-        """Format an exercise for inclusion in a workout. Delegates to formatting module."""
+        """Format an exercise for inclusion in a workout. Delegates to formatting module.
+
+        Picks up `equipment_weights` / `weight_unit` stashed on the instance by
+        `select_exercises_for_workout` so prescribed set weights snap to the
+        user's owned weights. Fail-open: when unset, behaves as before.
+        """
         return format_exercise_for_workout(
-            exercise, fitness_level, workout_params, strength_history, progression_pace
+            exercise, fitness_level, workout_params, strength_history, progression_pace,
+            equipment_weights=getattr(self, "_equipment_weights", None),
+            weight_unit=getattr(self, "_weight_unit", "lbs"),
         )
 
     async def select_challenge_exercise(

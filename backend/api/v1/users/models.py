@@ -3,7 +3,7 @@ Pydantic models and helper functions for user endpoints.
 """
 import json
 import re
-from typing import Optional, List
+from typing import Optional, List, Dict
 from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
@@ -151,6 +151,14 @@ class UserPreferencesRequest(BaseModel):
     # Equipment
     equipment: Optional[List[str]] = None
     custom_equipment: Optional[List[str]] = None
+    # Per-equipment available weights the user owns (canonical equipment id ->
+    # SORTED list of weights, already expanded from min/max/increment on the
+    # client). Units are the user's WORKOUT weight unit (lbs by default) —
+    # stored as-is (opaque pass-through), never converted. Persisted into the
+    # preferences JSON blob so server-side INITIAL plan generation (which reads
+    # saved prefs, not a request body) can snap prescribed set weights to the
+    # user's owned set. Optional / backward-compatible.
+    equipment_weights: Optional[Dict[str, List[float]]] = None
 
     # Training Preferences
     training_split: Optional[str] = None
@@ -460,6 +468,9 @@ def merge_extended_fields_into_preferences(
     inflammation_sensitivity: Optional[int] = None,
     meal_budget_usd: Optional[float] = None,
     daily_food_budget_usd: Optional[float] = None,
+    # Per-equipment owned weights (canonical id -> sorted weights in the user's
+    # workout unit). Stored as-is so server-side generation can snap to it.
+    equipment_weights: Optional[Dict[str, List[float]]] = None,
 ) -> dict:
     """Merge extended onboarding fields into preferences dict."""
     try:
@@ -545,5 +556,10 @@ def merge_extended_fields_into_preferences(
         prefs["meal_budget_usd"] = meal_budget_usd
     if daily_food_budget_usd is not None:
         prefs["daily_food_budget_usd"] = daily_food_budget_usd
+
+    # Per-equipment owned weights (canonical id -> sorted weights, user's
+    # workout unit). Stored verbatim; server-side generation snaps to it.
+    if equipment_weights is not None:
+        prefs["equipment_weights"] = equipment_weights
 
     return prefs
