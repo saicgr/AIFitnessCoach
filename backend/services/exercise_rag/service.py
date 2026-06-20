@@ -79,6 +79,7 @@ from .selection_pipeline import (
     extract_staple_exercises,
     extract_queued_exercises,
     adjust_workout_params_for_readiness,
+    apply_capacity_aware_regression,
 )
 
 settings = get_settings()
@@ -966,6 +967,7 @@ class ExerciseRAGService:
         fast: bool = False,
         equipment_weights: Optional[Dict[str, List[float]]] = None,
         weight_unit: str = "lbs",
+        capacity: Optional[Dict[str, int]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -1466,6 +1468,16 @@ class ExerciseRAGService:
         candidates = cap_bodyweight_exercises(candidates, equipment)
         _stage_counts.append(("after_cap_bodyweight", len(candidates)))
 
+        # C (robustness): capacity-aware regression/progression re-rank. When the
+        # user can't do a movement's baseline (0 push-ups but the pool has
+        # standard push-ups) prefer an easier same-pattern variant ALREADY in the
+        # pool; advanced + capable users bias to harder variants. Pure in-memory
+        # re-rank — fail-open when no capacity is supplied.
+        if capacity:
+            candidates = apply_capacity_aware_regression(
+                candidates, capacity, validated_fitness_level
+            )
+
         # Phase 3K — SQL-based injury filter replaces the legacy substring matcher.
         # ``fetch_safe_candidates`` is the authoritative injury gate; the legacy
         # ``apply_injury_filter`` call is intentionally NOT invoked here.
@@ -1565,7 +1577,12 @@ class ExerciseRAGService:
                     validated_fitness_level, dropped,
                 )
 
-        candidates = apply_avoided_muscles_filter(candidates, avoided_muscles)
+        # Pass the desired count as ``target`` so the avoided-muscles filter is
+        # FAIL-SOFT: when every candidate hits an avoided muscle it keeps the
+        # least-bad ones down-ranked rather than emptying the pool (A1 guard).
+        candidates = apply_avoided_muscles_filter(
+            candidates, avoided_muscles, target=count
+        )
         _stage_counts.append(("after_avoided_muscles", len(candidates)))
 
         # B6/B7 — Excluded-muscle hard opt-out + score-freshness soft bias.
@@ -1959,11 +1976,22 @@ class ExerciseRAGService:
         min_floor: int = 4,
         equipment_weights: Optional[Dict[str, List[float]]] = None,
         weight_unit: str = "lbs",
+        duration_minutes: Optional[int] = None,
+        capacity: Optional[Dict[str, int]] = None,
     ) -> Tuple[List[Dict[str, Any]], str]:
         """
         Phase A — 5-tier broadening cascade. Always returns ≥``min_floor``
         candidates (or, in the worst case, the safety-mode mobility pool).
         NEVER raises and NEVER returns < min_floor (caller relies on this).
+
+        ``duration_minutes`` (optional, backward-compatible) is passed through
+        to the tier-5 safety-mode pool so its density-aware exercise count
+        reflects the user's REAL requested duration rather than a hardcoded 20.
+        After tier 5, if the merged pool is STILL below ``min_floor``, it is
+        deterministically PADDED from the safety-mode last-resort universal
+        mobility/core set so the "NEVER returns < min_floor" contract holds even
+        when safety_mode itself raises (e.g. DB outage). Padded items carry a
+        ``_padded: True`` marker so completeness can mark the workout degraded.
 
         Returns: (candidates, tier_reason) where tier_reason is one of:
             "rag_primary"          — tier 0 succeeded
@@ -2004,6 +2032,7 @@ class ExerciseRAGService:
                 workout_type_preference=workout_type_preference,
                 equipment_weights=equipment_weights,
                 weight_unit=weight_unit,
+                capacity=capacity,
             )
         except Exception as e:  # noqa: BLE001
             logger.warning(f"⚠️ [Cascade] tier0 RAG raised: {e}")
@@ -2031,6 +2060,7 @@ class ExerciseRAGService:
                 workout_type_preference=workout_type_preference,
                 equipment_weights=equipment_weights,
                 weight_unit=weight_unit,
+                capacity=capacity,
             )
         except Exception as e:  # noqa: BLE001
             logger.warning(f"⚠️ [Cascade] tier1 RAG raised: {e}")
@@ -2088,6 +2118,7 @@ class ExerciseRAGService:
                 workout_type_preference=workout_type_preference,
                 equipment_weights=equipment_weights,
                 weight_unit=weight_unit,
+                capacity=capacity,
             )
         except Exception as e:  # noqa: BLE001
             logger.warning(f"⚠️ [Cascade] tier3 RAG raised: {e}")
@@ -2116,7 +2147,9 @@ class ExerciseRAGService:
             )
             sm = await _safety_plan(
                 ctx=sm_ctx,
-                duration_minutes=20,
+                # Pass the user's REAL duration (not a hardcoded 20) so the
+                # mobility pool's density-aware count matches the session.
+                duration_minutes=int(duration_minutes) if duration_minutes else 20,
                 focus_areas=[focus_area] if focus_area else None,
             )
             for ex in sm.get("exercises", []):
@@ -2127,8 +2160,39 @@ class ExerciseRAGService:
         except Exception as e:  # noqa: BLE001
             logger.error(f"❌ [Cascade] tier5 safety_mode raised: {e}")
 
-        # If even safety_mode failed (extremely rare — would mean DB outage),
-        # return whatever we have. Caller will pad with safe defaults.
+        # ---- Final deterministic padding -----------------------------------
+        # Make the "NEVER returns < min_floor" docstring TRUE even when
+        # safety_mode itself raised (DB outage) and merged is still short. Pad
+        # from the universal last-resort mobility/core set — these load no joint
+        # and are injury-safe for ANY injury, so they're always admissible.
+        if len(merged) < min_floor:
+            try:
+                from services.exercise_rag.safety_mode import (
+                    _LAST_RESORT_EXERCISES as _LAST_RESORT,
+                )
+            except Exception:  # noqa: BLE001 — never let an import break the floor
+                _LAST_RESORT = []
+            for ex in _LAST_RESORT:
+                if len(merged) >= min_floor:
+                    break
+                n = (ex.get("name") or "").strip().lower()
+                if n and n not in merged_names:
+                    padded = dict(ex)
+                    padded["_padded"] = True  # completeness marks this degraded
+                    merged.append(padded)
+                    merged_names.add(n)
+            if len(merged) < min_floor:
+                logger.error(
+                    f"❌ [Cascade] still below floor after padding: "
+                    f"{len(merged)} < {min_floor} (last-resort set exhausted)"
+                )
+            else:
+                logger.warning(
+                    f"⚠️ [Cascade] padded merged pool to floor with "
+                    f"{sum(1 for e in merged if e.get('_padded'))} last-resort "
+                    f"mobility/core exercise(s)"
+                )
+
         return merged[: max(count, min_floor)], "safety_mode_fallback"
 
     async def _fetch_by_name_substrings(

@@ -299,6 +299,50 @@ def format_exercise_for_workout(
         reps = max(reps, 15)
         rest = min(rest, 60)
 
+    # B (robustness): the owned-weight snap above can land a load far OUTSIDE a
+    # sane working range for the movement + level — the user owns only 50 lb
+    # dumbbells so a beginner lateral raise snapped to 50 lb, or owns only 5 lb
+    # so a squat snapped to 5 lb. We don't prescribe an off-rack weight (this IS
+    # the closest they own); instead we deterministically adjust reps to make the
+    # load sane and surface a one-line note. Runs AFTER the goal override so the
+    # physical reality of the only-loadable weight wins over the goal's rep
+    # scheme (you can't do a heavy 3-6 strength scheme with a 5 lb squat).
+    # Pure arithmetic + constants. Fail-open: only engages when a band exists for
+    # the pattern×level AND the owned load is genuinely out of band.
+    sane_load_note: Optional[str] = None
+    if (
+        weight_source == "owned_equipment"
+        and available_kg_list
+        and starting_weight > 0
+    ):
+        from .sane_ranges import classify_movement_pattern, sane_weight_range_kg
+        _pattern = classify_movement_pattern(exercise_name)
+        _band = sane_weight_range_kg(_pattern, validated_level)
+        if _band:
+            _lo, _hi = _band
+            _eq_label = (equipment_type or "weight").replace("_", " ")
+            if starting_weight > _hi:
+                # Heavier than ideal → fewer reps, stay further from failure.
+                reps = max(min_reps, min(reps, 6))
+                sane_load_note = (
+                    f"The lightest {_eq_label} you own ({round(starting_weight, 1)}kg) "
+                    f"is heavier than ideal for {exercise_name} at your level — keep "
+                    f"reps low ({reps}), move slowly, and stop 2-3 reps shy of failure."
+                )
+            elif starting_weight < _lo:
+                # Lighter than ideal → higher reps + slower tempo to keep tension.
+                reps = min(max(reps, max_reps), 25)
+                sane_load_note = (
+                    f"The heaviest {_eq_label} you own ({round(starting_weight, 1)}kg) "
+                    f"is lighter than ideal for {exercise_name} — bump reps to {reps} "
+                    f"and use a slow 3-second lowering tempo to keep tension."
+                )
+            if sane_load_note:
+                logger.info(
+                    f"[SaneLoad] {exercise_name}: owned {round(starting_weight, 1)}kg "
+                    f"out of band {_band} ({_pattern}/{validated_level}); reps->{reps}"
+                )
+
     is_unilateral = detect_unilateral(exercise_name, exercise)
     is_timed = exercise.get("is_timed", False)
     hold_seconds = exercise.get("default_hold_seconds")
@@ -373,6 +417,9 @@ def format_exercise_for_workout(
     # FEATURE 3A: prepend the harder-variant cue when the user has maxed reps.
     if harder_variant_note:
         _notes = f"{harder_variant_note}\n\n{_notes}"
+    # B: prepend the sane-load cue when the only owned weight is off-range.
+    if sane_load_note:
+        _notes = f"{sane_load_note}\n\n{_notes}"
 
     return {
         "name": exercise_name,

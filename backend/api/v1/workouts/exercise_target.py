@@ -26,7 +26,7 @@ modules) so both can depend on it.
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 # Circuit-style types run higher exercise density (shorter work, more moves).
 _CIRCUIT_TYPES = frozenset(
@@ -126,6 +126,86 @@ def target_exercise_count(
 
     floor = min_exercise_floor(duration_minutes, fitness_level, workout_type)
     return max(target, floor)
+
+
+# ---------------------------------------------------------------------------
+# Time-adequacy estimation (A3) — cheap arithmetic, no I/O.
+# ---------------------------------------------------------------------------
+# Seconds spent per rep when no explicit per-rep tempo is given. A controlled
+# rep (eccentric + concentric + brief pause) is ~3-4s; 3.5 is a good average
+# across compound + isolation work. Timed holds use their duration directly.
+_SECONDS_PER_REP = 3.5
+# Transition between exercises (rack change, walk, setup). Mirrors the 30s used
+# by truncate_exercises_to_duration so the two estimators agree.
+_TRANSITION_SECONDS = 30
+
+
+def _coerce_int(value: Any, default: int) -> int:
+    """Best-effort int coercion for messy set/rep/rest fields (str '8-12' etc.)."""
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, str):
+        s = value.strip()
+        if "-" in s:
+            s = s.split("-")[-1].strip()
+        try:
+            return int(float(s))
+        except (ValueError, TypeError):
+            return default
+    return default
+
+
+def estimate_exercise_seconds(exercise: Dict[str, Any]) -> float:
+    """Estimate the wall-clock seconds a single exercise consumes.
+
+    work_per_set = (timed hold ? duration_seconds : reps * SECONDS_PER_REP)
+    total = sets * (work_per_set + rest_seconds)
+
+    Prefers explicit ``set_targets`` (per-set reps/rest) when present so a
+    warmup + heavier working sets are costed individually; otherwise falls back
+    to the top-level sets/reps/rest. Pure arithmetic — never raises.
+    """
+    if not isinstance(exercise, dict):
+        return 0.0
+
+    duration_seconds = exercise.get("duration_seconds") or exercise.get("hold_seconds")
+    is_timed = bool(exercise.get("is_timed")) or bool(duration_seconds)
+
+    set_targets = exercise.get("set_targets")
+    if isinstance(set_targets, list) and set_targets:
+        total = 0.0
+        for st in set_targets:
+            if not isinstance(st, dict):
+                continue
+            rest = _coerce_int(st.get("rest_seconds", exercise.get("rest_seconds", 60)), 60)
+            if is_timed and duration_seconds:
+                work = float(_coerce_int(duration_seconds, 30))
+            else:
+                reps = _coerce_int(st.get("target_reps", exercise.get("reps", 10)), 10)
+                work = reps * _SECONDS_PER_REP
+            total += work + rest
+        if total > 0:
+            return total
+
+    sets = max(1, _coerce_int(exercise.get("sets", 3), 3))
+    rest = _coerce_int(exercise.get("rest_seconds", 60), 60)
+    if is_timed and duration_seconds:
+        work_per_set = float(_coerce_int(duration_seconds, 30))
+    else:
+        reps = _coerce_int(exercise.get("reps", 10), 10)
+        work_per_set = reps * _SECONDS_PER_REP
+    return sets * (work_per_set + rest)
+
+
+def estimate_total_minutes(exercises: List[Dict[str, Any]]) -> float:
+    """Estimate total workout minutes = Σ exercise seconds + transitions, /60."""
+    if not exercises:
+        return 0.0
+    total = sum(estimate_exercise_seconds(ex) for ex in exercises)
+    total += _TRANSITION_SECONDS * max(0, len(exercises) - 1)
+    return total / 60.0
 
 
 def min_exercise_floor(

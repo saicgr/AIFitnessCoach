@@ -754,6 +754,202 @@ async def validate_and_repair(
 
 
 # ---------------------------------------------------------------------------
+# E1 — deterministic IN-MEMORY post-generation pass
+# ---------------------------------------------------------------------------
+# A lightweight, NO-I/O complement to validate_and_repair. Operates entirely on
+# the exercises plus the already-loaded candidate/library pool — no DB queries,
+# no LLM. Catches the SINGLE-slip failures the heavier 50%-threshold
+# safety_mode handoff would miss, plus hallucinations / unavailable equipment /
+# duplicates. Fail-open: anything it can't confidently fix is left untouched.
+
+
+def _name_key(name: Optional[str]) -> str:
+    return _normalize_name(name)
+
+
+def _coarse_pattern(name: Optional[str]) -> str:
+    """Coarse pattern for in-memory same-pattern swaps (shared with sane_ranges)."""
+    try:
+        from services.exercise_rag.sane_ranges import classify_movement_pattern
+        return classify_movement_pattern(name)
+    except Exception:  # noqa: BLE001
+        return "other"
+
+
+def _equipment_available_in_memory(
+    ex: Dict[str, Any], equipment: Optional[List[str]]
+) -> bool:
+    """Hard-equipment check against the user's available list (no I/O)."""
+    if not equipment:
+        return True
+    try:
+        from services.exercise_rag.filters import filter_by_equipment
+        from services.exercise_rag.utils import infer_equipment_from_name
+        ex_equip = (ex.get("equipment") or "").strip()
+        ex_name = ex.get("name") or ex.get("exercise_name") or ""
+        if not ex_equip or ex_equip.lower() in ("bodyweight", "body weight", "none", ""):
+            ex_equip = infer_equipment_from_name(ex_name)
+        return filter_by_equipment(ex_equip, equipment, ex_name)
+    except Exception:  # noqa: BLE001
+        return True  # fail-open
+
+
+def _injury_muscles_for(injuries: Optional[List[str]]) -> set:
+    """Map normalized injury joints to the muscle/body-part tokens to avoid."""
+    if not injuries:
+        return set()
+    try:
+        from services.exercise_rag.filters import INJURY_CONTRAINDICATIONS  # type: ignore
+    except Exception:  # noqa: BLE001
+        INJURY_CONTRAINDICATIONS = {}
+    out: set = set()
+    for inj in injuries:
+        key = (inj or "").strip().lower()
+        # The contraindication map keys use spaces ("lower back"); normalized
+        # injury joints use underscores ("lower_back"). Try both.
+        for variant in (key, key.replace("_", " ")):
+            for token in INJURY_CONTRAINDICATIONS.get(variant, []) or []:
+                out.add(str(token).lower())
+    return out
+
+
+def validate_in_memory(
+    exercises: List[Dict[str, Any]],
+    *,
+    library_pool: Optional[List[Dict[str, Any]]] = None,
+    equipment: Optional[List[str]] = None,
+    injuries: Optional[List[str]] = None,
+) -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Deterministic single-pass in-memory cleanup of a generated exercise list.
+
+    NO DB, NO LLM. Given the generated ``exercises`` and the already-loaded
+    ``library_pool`` (the RAG candidate set), in one pass it:
+
+      (a) DROPS hallucinations — an exercise whose name+id is absent from the
+          library pool is removed (replaced from the pool when a same-pattern
+          available substitute exists);
+      (b) SWAPS equipment-unavailable moves for a same-pattern available move
+          from the pool;
+      (c) catches SINGLE injury slips — a contraindicated move is swapped for a
+          safe same-pattern pool move (this fires below the 50% safety_mode
+          threshold, so a lone slip never ships);
+      (d) DE-DUPLICATES by canonical name + library id.
+
+    Returns ``(cleaned_exercises, notes)`` where notes are human-readable
+    one-liners describing each action. Fail-open: when ``library_pool`` is empty
+    the hallucination/equipment swaps are skipped (we can't substitute without a
+    pool) but dedupe + a drop of clearly-unavailable moves still run.
+    """
+    if not exercises:
+        return exercises, []
+
+    pool = library_pool or []
+    pool_by_name: Dict[str, Dict[str, Any]] = {}
+    pool_by_id: Dict[str, Dict[str, Any]] = {}
+    pool_by_pattern: Dict[str, List[Dict[str, Any]]] = {}
+    for p in pool:
+        nk = _name_key(p.get("name") or p.get("exercise_name"))
+        if nk and nk not in pool_by_name:
+            pool_by_name[nk] = p
+        pid = str(p.get("id") or p.get("exercise_id") or "").strip()
+        if pid:
+            pool_by_id[pid] = p
+        pat = _coarse_pattern(p.get("name") or p.get("exercise_name"))
+        pool_by_pattern.setdefault(pat, []).append(p)
+
+    injury_muscles = _injury_muscles_for(injuries)
+
+    def _is_injury_safe(ex: Dict[str, Any]) -> bool:
+        if not injury_muscles:
+            return True
+        muscle = (
+            (ex.get("muscle_group") or ex.get("target_muscle") or "")
+            + " "
+            + (ex.get("body_part") or "")
+            + " "
+            + (ex.get("name") or "")
+        ).lower()
+        return not any(m and m in muscle for m in injury_muscles)
+
+    used_names: set = set()
+    used_ids: set = set()
+    notes: List[str] = []
+    cleaned: List[Dict[str, Any]] = []
+
+    def _find_pool_substitute(pattern: str) -> Optional[Dict[str, Any]]:
+        for cand in pool_by_pattern.get(pattern, []):
+            ck = _name_key(cand.get("name") or cand.get("exercise_name"))
+            cid = str(cand.get("id") or cand.get("exercise_id") or "").strip()
+            if ck in used_names or (cid and cid in used_ids):
+                continue
+            if not _equipment_available_in_memory(cand, equipment):
+                continue
+            if not _is_injury_safe(cand):
+                continue
+            return cand
+        return None
+
+    for ex in exercises:
+        nk = _name_key(ex.get("name") or ex.get("exercise_name"))
+        eid = str(ex.get("exercise_id") or ex.get("id") or "").strip()
+
+        # (d) dedupe — skip an exercise already represented.
+        if (nk and nk in used_names) or (eid and eid in used_ids):
+            notes.append(f"dropped duplicate: {ex.get('name')}")
+            continue
+
+        in_library = bool(pool) and (
+            (eid and eid in pool_by_id) or (nk and nk in pool_by_name)
+        )
+        equip_ok = _equipment_available_in_memory(ex, equipment)
+        injury_ok = _is_injury_safe(ex)
+
+        needs_swap_reason = None
+        if pool and not in_library:
+            needs_swap_reason = "hallucinated (not in library)"
+        elif not equip_ok:
+            needs_swap_reason = "equipment unavailable"
+        elif not injury_ok:
+            needs_swap_reason = "injury contraindication"
+
+        if needs_swap_reason is None:
+            cleaned.append(ex)
+            if nk:
+                used_names.add(nk)
+            if eid:
+                used_ids.add(eid)
+            continue
+
+        # Try a same-pattern substitute from the pool.
+        pattern = _coarse_pattern(ex.get("name") or ex.get("exercise_name"))
+        sub = _find_pool_substitute(pattern)
+        if sub is not None:
+            cleaned.append(sub)
+            sk = _name_key(sub.get("name") or sub.get("exercise_name"))
+            sid = str(sub.get("id") or sub.get("exercise_id") or "").strip()
+            if sk:
+                used_names.add(sk)
+            if sid:
+                used_ids.add(sid)
+            notes.append(
+                f"swapped {ex.get('name')} ({needs_swap_reason}) -> {sub.get('name')}"
+            )
+        else:
+            # No in-memory substitute. For an equipment/injury problem we DROP
+            # (shipping it would be wrong); for a hallucination with no pool we
+            # also drop. The completeness/floor stage backfills afterward.
+            notes.append(f"dropped {ex.get('name')} ({needs_swap_reason}, no pool substitute)")
+
+    if notes:
+        logger.info(
+            "🛡️  [InMemoryValidator] %d action(s): %s",
+            len(notes),
+            "; ".join(notes[:6]) + ("…" if len(notes) > 6 else ""),
+        )
+    return cleaned, notes
+
+
+# ---------------------------------------------------------------------------
 # Smoke test — run directly:  python -m services.workout_safety_validator
 # ---------------------------------------------------------------------------
 

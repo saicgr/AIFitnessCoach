@@ -48,7 +48,8 @@ def _library_candidates():
 def _avoid(limitations):
     """Mirror the generation call site: derive avoid muscles, run the filter."""
     avoided = {"avoid": get_muscles_to_avoid_from_injuries(limitations), "reduce": []}
-    kept, primary, secondary = filter_by_avoided_muscles(_library_candidates(), avoided)
+    # Default floor=0 ⇒ legacy hard-exclude (4th tuple element = pool_collapsed).
+    kept, primary, secondary, _collapsed = filter_by_avoided_muscles(_library_candidates(), avoided)
     return {c["name"] for c in kept}, primary, secondary
 
 

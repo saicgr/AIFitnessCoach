@@ -128,6 +128,110 @@ def apply_difficulty_scoring(candidates: List[Dict], validated_fitness_level: st
     )
 
 
+# Multipliers for the capacity-aware regression/progression re-rank (C).
+# Strong enough to reorder within a pattern but bounded so the pool's overall
+# ranking (similarity, favorites, etc.) is otherwise preserved.
+_REGRESSION_BOOST = 1.6     # easier same-pattern variant for a can't-do-baseline user
+_TOO_HARD_PENALTY = 0.4     # the can't-do baseline move itself, deranked
+_PROGRESSION_BOOST = 1.4    # harder variant for an advanced+capable bodyweight user
+
+
+def apply_capacity_aware_regression(
+    candidates: List[Dict],
+    capacity: Optional[Dict[str, int]],
+    fitness_level: str,
+) -> List[Dict]:
+    """Bias the in-memory pool toward capacity-appropriate bodyweight variants (C).
+
+    Deterministic, in-memory, no I/O. Using the user's reported capacity fields
+    (pushup / pullup / plank / squat) and the static REGRESSION/PROGRESSION maps:
+
+      * If the user can't do a movement's baseline (e.g. 0 push-ups but the pool
+        has standard push-ups), BOOST any easier same-pattern regression already
+        in the pool (wall / incline / knee push-up) and DERANK the can't-do
+        movement so a regression outranks it.
+      * If the user is advanced at the movement (e.g. 40+ push-ups) AND is an
+        advanced-level user, BOOST harder same-pattern progressions in the pool.
+
+    This only RE-RANKS exercises that already passed every safety/equipment
+    filter — it never fetches new ones. Fail-open: no capacity ⇒ no-op; if no
+    regression/progression candidate exists in the pool, nothing changes.
+    """
+    if not candidates or not capacity:
+        return candidates
+
+    from .sane_ranges import (
+        classify_movement_pattern,
+        REGRESSION_PATTERNS,
+        PROGRESSION_PATTERNS,
+        CAPACITY_BASELINE,
+        CAPACITY_ADVANCED,
+        PATTERN_CAPACITY_FIELD,
+        BODYWEIGHT_PATTERNS,
+    )
+
+    level = (fitness_level or "").strip().lower()
+    is_advanced_user = level == "advanced"
+
+    # Determine, per bodyweight pattern, whether the user is below baseline or
+    # above the advanced threshold. Missing/None capacity ⇒ no decision.
+    below_baseline: set = set()
+    above_advanced: set = set()
+    for pattern, field in PATTERN_CAPACITY_FIELD.items():
+        val = capacity.get(field)
+        if not isinstance(val, (int, float)):
+            continue
+        if val < CAPACITY_BASELINE.get(pattern, 0):
+            below_baseline.add(pattern)
+        elif val >= CAPACITY_ADVANCED.get(pattern, 10 ** 9):
+            above_advanced.add(pattern)
+
+    if not below_baseline and not above_advanced:
+        return candidates
+
+    touched = 0
+    for cand in candidates:
+        name = (cand.get("name") or "")
+        pattern = classify_movement_pattern(name)
+        if pattern not in BODYWEIGHT_PATTERNS:
+            continue
+        name_lower = name.lower()
+        sim = cand.get("similarity", 0.5)
+
+        if pattern in below_baseline:
+            regressions = REGRESSION_PATTERNS.get(pattern, [])
+            # Index of this exercise in the easiest→harder list; lower = easier.
+            idx = next(
+                (i for i, sub in enumerate(regressions) if sub in name_lower), None
+            )
+            if idx is not None and idx <= len(regressions) // 2:
+                # An easier-half variant — boost it.
+                cand["similarity"] = sim * _REGRESSION_BOOST
+                cand["capacity_regression_boost"] = True
+                touched += 1
+            else:
+                # The baseline (or harder) movement the user can't do — derank.
+                cand["similarity"] = sim * _TOO_HARD_PENALTY
+                cand["capacity_too_hard"] = True
+                touched += 1
+
+        elif pattern in above_advanced and is_advanced_user:
+            progressions = PROGRESSION_PATTERNS.get(pattern, [])
+            if any(sub in name_lower for sub in progressions):
+                cand["similarity"] = sim * _PROGRESSION_BOOST
+                cand["capacity_progression_boost"] = True
+                touched += 1
+
+    if touched:
+        candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+        logger.info(
+            f"💪 [Capacity] Re-ranked {touched} bodyweight candidate(s) "
+            f"(below_baseline={sorted(below_baseline)}, "
+            f"above_advanced={sorted(above_advanced) if is_advanced_user else []})"
+        )
+    return candidates
+
+
 def boost_equipment_matches(candidates: List[Dict], equipment: List[str]):
     """Boost exercises matching user's selected (non-bodyweight) equipment."""
     _BW_EQUIPMENT = {"bodyweight", "body weight", "none", ""}
@@ -233,20 +337,32 @@ def apply_injury_filter(candidates: List[Dict], injuries: List[str]) -> List[Dic
     return []
 
 
-def apply_avoided_muscles_filter(candidates: List[Dict], avoided_muscles: Dict) -> List[Dict]:
-    """Filter by avoided muscles."""
+def apply_avoided_muscles_filter(
+    candidates: List[Dict],
+    avoided_muscles: Dict,
+    min_floor: int = 0,
+    target: int = 0,
+) -> List[Dict]:
+    """Filter by avoided muscles.
+
+    ``min_floor`` / ``target`` (default 0 ⇒ legacy hard-exclude) engage the
+    fail-soft rescue in ``filter_by_avoided_muscles``: rather than empty the
+    pool, the least-bad avoided exercises are kept down-ranked so a
+    fully-avoided candidate set still yields a workout.
+    """
     if not avoided_muscles:
         return candidates
 
     original_count = len(candidates)
-    candidates, primary_filtered, secondary_filtered = filter_by_avoided_muscles(
-        candidates, avoided_muscles
+    candidates, primary_filtered, secondary_filtered, pool_collapsed = filter_by_avoided_muscles(
+        candidates, avoided_muscles, min_floor=min_floor, target=target
     )
 
     if primary_filtered > 0 or secondary_filtered > 0:
         logger.info(
             f"Avoided muscles filter: {original_count} -> {len(candidates)} exercises "
-            f"(primary: {primary_filtered}, secondary: {secondary_filtered} filtered)"
+            f"(primary: {primary_filtered}, secondary: {secondary_filtered} filtered"
+            f"{', POOL COLLAPSED — kept avoided down-ranked' if pool_collapsed else ''})"
         )
 
     candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)

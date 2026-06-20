@@ -1054,10 +1054,21 @@ def check_secondary_muscles_for_reduced(
     return False, None, 1.0
 
 
+# Down-rank penalty applied to an avoided exercise that we KEEP (rather than
+# drop) to avoid collapsing the pool below the floor. Strong enough that any
+# non-avoided candidate outranks it, but it stays selectable as a last resort.
+# Secondary-only avoidance is less bad than a primary hit, so it gets a milder
+# penalty (it ranks ahead of the primary-avoided keeps).
+AVOIDED_KEEP_PRIMARY_PENALTY = 0.05
+AVOIDED_KEEP_SECONDARY_PENALTY = 0.15
+
+
 def filter_by_avoided_muscles(
     candidates: List[Dict],
     avoided_muscles: Dict[str, List[str]],
-) -> Tuple[List[Dict], int, int]:
+    min_floor: int = 0,
+    target: int = 0,
+) -> Tuple[List[Dict], int, int, bool]:
     """
     Filter exercises based on avoided muscles, including secondary muscles.
 
@@ -1068,20 +1079,43 @@ def filter_by_avoided_muscles(
 
     For "reduce" muscles, it applies a penalty to similarity scores instead of filtering.
 
+    FAIL-SOFT (robustness guard): hard-excluding avoided exercises can empty the
+    pool when the user's whole candidate set hits an avoided muscle. When the
+    number of survivors would fall below ``max(min_floor, 2 * target)``, we do
+    NOT drop the least-bad avoided exercises — instead we KEEP them, heavily
+    down-ranked (via a ``similarity`` penalty + an ``avoided_muscle_downranked``
+    marker), preferring exercises where the avoided muscle is only SECONDARY.
+    The pool therefore never goes empty from this filter alone when candidates
+    existed. ``min_floor=0`` and ``target=0`` (the defaults) reproduce the
+    original hard-exclude behavior exactly (fail-open / backward-compatible).
+
     Args:
         candidates: List of exercise candidates
         avoided_muscles: Dict with 'avoid' and 'reduce' lists
+        min_floor: Absolute minimum survivors to protect (0 ⇒ legacy behavior).
+        target: Desired exercise count; the soft floor is max(min_floor, 2*target).
 
     Returns:
-        Tuple of (filtered_candidates, primary_filtered_count, secondary_filtered_count)
+        Tuple of (filtered_candidates, primary_filtered_count,
+                  secondary_filtered_count, pool_collapsed).
+        ``pool_collapsed`` is True when the soft-floor rescue had to keep
+        avoided exercises (the genuinely-constrained signal for completeness).
     """
     avoid_muscles_list = [m.lower() for m in avoided_muscles.get("avoid", [])]
     reduce_muscles_list = [m.lower() for m in avoided_muscles.get("reduce", [])]
 
     if not avoid_muscles_list and not reduce_muscles_list:
-        return candidates, 0, 0
+        return candidates, 0, 0, False
+
+    # Soft floor below which we keep (down-ranked) rather than drop avoided
+    # exercises. 0 ⇒ disabled ⇒ exact legacy hard-exclude behavior.
+    soft_floor = max(int(min_floor or 0), 2 * int(target or 0))
 
     filtered_candidates = []
+    # Avoided exercises held back for possible rescue, with their severity so we
+    # can prefer the least-bad (secondary-only) when refilling toward the floor.
+    # Each: (candidate, is_primary_hit, filter_reason)
+    avoided_holdback: List[Tuple[Dict, bool, str]] = []
     primary_filtered_count = 0
     secondary_filtered_count = 0
 
@@ -1094,6 +1128,7 @@ def filter_by_avoided_muscles(
         secondary_muscles = parse_secondary_muscles(secondary_muscles_raw)
 
         should_filter = False
+        is_primary_hit = False
         filter_reason = None
 
         if avoid_muscles_list:
@@ -1101,6 +1136,7 @@ def filter_by_avoided_muscles(
             for avoided in avoid_muscles_list:
                 if avoided in target_muscle or avoided in body_part:
                     should_filter = True
+                    is_primary_hit = True
                     filter_reason = f"primary muscle: {avoided}"
                     primary_filtered_count += 1
                     break
@@ -1116,6 +1152,7 @@ def filter_by_avoided_muscles(
 
         if should_filter:
             logger.debug(f"Filtered out '{candidate.get('name')}' - targets avoided {filter_reason}")
+            avoided_holdback.append((candidate, is_primary_hit, filter_reason or ""))
             continue
 
         # Apply reduce penalties (don't filter, just penalize)
@@ -1149,4 +1186,42 @@ def filter_by_avoided_muscles(
 
         filtered_candidates.append(candidate)
 
-    return filtered_candidates, primary_filtered_count, secondary_filtered_count
+    # ---- Fail-soft rescue ---------------------------------------------------
+    # If hard exclusion dropped the survivors below the soft floor, refill from
+    # the held-back avoided exercises (least-bad first: secondary-only before
+    # primary), keeping them DOWN-RANKED instead of removed. This guarantees the
+    # filter never empties a non-empty pool when a floor is requested.
+    pool_collapsed = False
+    if soft_floor > 0 and len(filtered_candidates) < soft_floor and avoided_holdback:
+        deficit = soft_floor - len(filtered_candidates)
+        # Sort holdback so SECONDARY hits (is_primary_hit=False) come first;
+        # within each, preserve original (similarity-descending) order.
+        rescue_order = sorted(avoided_holdback, key=lambda t: (1 if t[1] else 0))
+        rescued = 0
+        for candidate, is_primary_hit, reason in rescue_order:
+            if rescued >= deficit:
+                break
+            penalty = (
+                AVOIDED_KEEP_PRIMARY_PENALTY if is_primary_hit
+                else AVOIDED_KEEP_SECONDARY_PENALTY
+            )
+            original_sim = candidate.get("similarity", 1.0)
+            candidate["similarity"] = original_sim * penalty
+            candidate["avoided_muscle_downranked"] = True
+            candidate["avoided_muscle_reason"] = reason
+            filtered_candidates.append(candidate)
+            rescued += 1
+            pool_collapsed = True
+        if rescued:
+            logger.warning(
+                f"⚠️ [AvoidMuscles] Pool would collapse to "
+                f"{len(filtered_candidates) - rescued} < soft floor {soft_floor}; "
+                f"kept {rescued} avoided exercise(s) DOWN-RANKED (least-bad first) "
+                f"rather than emptying the pool."
+            )
+            # Re-sort so the down-ranked keeps land at the END by similarity.
+            filtered_candidates.sort(
+                key=lambda c: c.get("similarity", 0), reverse=True
+            )
+
+    return filtered_candidates, primary_filtered_count, secondary_filtered_count, pool_collapsed
