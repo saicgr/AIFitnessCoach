@@ -284,6 +284,18 @@ def _build_context(
 
     injuries = _fetch_active_injuries(sb, user_id)
 
+    # Captured-but-unused onboarding signals (motivations / past_blockers /
+    # sleep_quality / workout_variety). Qualitative framing the briefing MAY
+    # reference — NOT numbers. Fail-open: returns the empty/default shape on any
+    # error, and `_prune` drops empty/None so the prompt is unchanged when no
+    # signal exists.
+    onboarding_signals: Dict[str, Any] = {}
+    try:
+        from services.coach.holistic_context import get_onboarding_signals
+        onboarding_signals = get_onboarding_signals(user_id) or {}
+    except Exception as e:
+        logger.debug(f"[smart_briefing] onboarding signals skipped for {user_id}: {e}")
+
     # Multi-day pattern facts (steps under goal streak, RHR elevated streak,
     # short-sleep streak) so the model can cite a PATTERN, not just today.
     pattern = _build_pattern_context(
@@ -337,6 +349,8 @@ def _build_context(
             else None
         ),
         "injuries": injuries,
+        # Qualitative onboarding framing (no numbers). Pruned away if empty.
+        "onboarding_signals": onboarding_signals,
         "open_loops": [
             {"content": o.get("content"), "check_in": o.get("resolution_prompt")}
             for o in open_loops

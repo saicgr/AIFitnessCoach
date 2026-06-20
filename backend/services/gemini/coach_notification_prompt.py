@@ -79,6 +79,13 @@ _BASE_STYLE = (
     "'Xh ago') and ``recovery_signal.recovery_days_suggested`` ('give it about "
     "N days') since both are in DATA. Do not invent an effort or number the "
     "object does not list.\n"
+    "11. ONBOARDING FRAMING: if DATA carries an ``onboarding_signals`` object "
+    "(the user's motivations, past_blockers, sleep_quality, workout_variety from "
+    "onboarding), you MAY reference it QUALITATIVELY to make the message feel "
+    "personal (for example tie a nudge to what motivates them, or be gentle "
+    "about a past blocker). These are framing, NOT numbers: the numbers-only "
+    "rule still holds for every stat, and you must never turn a signal into a "
+    "fabricated metric.\n"
 )
 
 _MOMENT_GUIDANCE = {

@@ -111,6 +111,65 @@ def resolve_dietary_constraints(user_id: str, db: Any = None) -> Dict[str, Any]:
     }
 
 
+def get_onboarding_signals(user_id: str, db: Any = None) -> Dict[str, Any]:
+    """Read the captured-but-unused onboarding signals from preferences JSONB.
+
+    Returns ``{sleep_quality, obstacles, motivations, workout_variety,
+    past_blockers}`` with safe defaults (None for the scalar, [] for the lists).
+    Never raises — a failure returns the empty/default shape so every caller
+    fails open (output byte-identical to today when no signal is present).
+
+    Note: ``workout_variety`` is stored in preferences under the
+    ``exercise_consistency`` key (see ``merge_extended_fields_into_preferences``),
+    so we read that first and fall back to a raw ``workout_variety`` key.
+    """
+    empty: Dict[str, Any] = {
+        "sleep_quality": None,
+        "obstacles": [],
+        "motivations": [],
+        "workout_variety": None,
+        "past_blockers": [],
+    }
+    db = db or get_supabase_db()
+    try:
+        user = db.get_user(user_id) or {}
+    except Exception as e:
+        logger.debug(f"[holistic] onboarding signals read failed for {user_id}: {e}")
+        return dict(empty)
+
+    prefs = user.get("preferences")
+    if isinstance(prefs, str):
+        try:
+            import json as _json
+            prefs = _json.loads(prefs)
+        except (ValueError, TypeError):
+            prefs = {}
+    if not isinstance(prefs, dict):
+        prefs = {}
+
+    def _as_list(value: Any) -> List[str]:
+        if isinstance(value, list):
+            return [str(v) for v in value if v is not None and str(v).strip()]
+        if isinstance(value, str) and value.strip():
+            return [value.strip()]
+        return []
+
+    def _as_str(value: Any) -> Optional[str]:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        return None
+
+    return {
+        "sleep_quality": _as_str(prefs.get("sleep_quality")),
+        "obstacles": _as_list(prefs.get("obstacles")),
+        "motivations": _as_list(prefs.get("motivations")),
+        "workout_variety": _as_str(
+            prefs.get("exercise_consistency") or prefs.get("workout_variety")
+        ),
+        "past_blockers": _as_list(prefs.get("past_blockers")),
+    }
+
+
 async def build_holistic_context(
     user_id: str,
     timezone_str: str = "UTC",

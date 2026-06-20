@@ -1083,12 +1083,70 @@ This assessment data reflects the user's ACTUAL capabilities - use it to create 
                     "the user's favorite compound movements; vary accessories and isolation work."
                 )
 
+        # Onboarding "User context" — captured-but-unused signals (workout_variety,
+        # sleep_quality, motivations/obstacles/past_blockers) folded into a compact
+        # framing block. Self-fetched from preferences so callers stay untouched.
+        # FAIL-OPEN: any missing field is omitted; no signals → empty string →
+        # prompt is byte-identical to today. Injuries are handled separately via
+        # active_injuries → avoided_muscles, so we do NOT duplicate them here.
+        user_context_instruction = ""
+        if user_id:
+            try:
+                from services.coach.holistic_context import get_onboarding_signals
+                _sig = get_onboarding_signals(user_id)
+                _lines: List[str] = []
+
+                _variety = (_sig.get("workout_variety") or "").lower()
+                if _variety == "consistent":
+                    _lines.append(
+                        "- Exercise variety: the user prefers CONSISTENT routines — keep the core "
+                        "exercises stable week to week so they can track progress on familiar lifts."
+                    )
+                elif _variety == "varied":
+                    _lines.append(
+                        "- Exercise variety: the user likes VARIETY — rotate accessory and isolation "
+                        "movements to keep sessions fresh."
+                    )
+
+                _sleep = (_sig.get("sleep_quality") or "").lower()
+                if _sleep in ("poor", "fair"):
+                    _lines.append(
+                        f"- Sleep quality is {_sleep}: keep total volume modest and lean toward "
+                        "recovery-friendly programming (adequate rest, controlled intensity)."
+                    )
+
+                _motivations = _sig.get("motivations") or []
+                _obstacles = _sig.get("obstacles") or []
+                _past_blockers = _sig.get("past_blockers") or []
+                _framing_bits: List[str] = []
+                if _motivations:
+                    _framing_bits.append("motivated by " + ", ".join(_motivations[:3]))
+                if _obstacles:
+                    _framing_bits.append("usual obstacles: " + ", ".join(_obstacles[:3]))
+                if _past_blockers:
+                    _framing_bits.append(
+                        "what's stopped them before: " + ", ".join(_past_blockers[:3])
+                    )
+                if _framing_bits:
+                    _lines.append(
+                        "- The user is " + "; ".join(_framing_bits)
+                        + ". Keep the plan realistic and encouraging given this."
+                    )
+
+                if _lines:
+                    user_context_instruction = (
+                        "\n\n🧭 USER CONTEXT (personalize tone + structure, do not over-index):\n"
+                        + "\n".join(_lines)
+                    )
+            except Exception as _ctx_err:
+                logger.debug(f"[Gemini Service] onboarding user-context skipped: {_ctx_err}")
+
         prompt = f"""Generate a {duration_text}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Available Equipment: {safe_join_list(equipment, 'Bodyweight only')}
 - Focus Areas: {safe_join_list(focus_areas, 'Full body')}
-- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{per_day_overrides_instruction}{ai_user_focus_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{progression_pace_instruction}{weekly_variety_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}{body_analyzer_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{per_day_overrides_instruction}{ai_user_focus_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{progression_pace_instruction}{weekly_variety_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}{body_analyzer_instruction}{user_context_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
 {focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}

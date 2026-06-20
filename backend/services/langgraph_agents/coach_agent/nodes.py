@@ -473,6 +473,51 @@ def format_dietary_and_nutrition_context(state: Dict[str, Any]) -> List[str]:
     return out
 
 
+def format_onboarding_preferences(user_id: Optional[str]) -> str:
+    """Captured-but-unused onboarding signals as a short coach-prompt block.
+
+    Reads motivations / past_blockers / sleep_quality / workout_variety via
+    ``get_onboarding_signals`` and returns ONE compact "ONBOARDING CONTEXT" line
+    the coach MAY reference qualitatively (framing, never fabricated numbers).
+
+    FAIL-OPEN: returns "" when no signal is present or on any error, so nothing
+    is appended and the prompt is byte-identical to today.
+    """
+    if not user_id:
+        return ""
+    try:
+        from services.coach.holistic_context import get_onboarding_signals
+        sig = get_onboarding_signals(user_id)
+    except Exception as e:  # pragma: no cover - defensive
+        logger.debug(f"[coach] onboarding signals skipped for {user_id}: {e}")
+        return ""
+
+    bits: List[str] = []
+    motivations = sig.get("motivations") or []
+    if motivations:
+        bits.append("motivated by " + ", ".join(motivations[:3]))
+    past_blockers = sig.get("past_blockers") or []
+    if past_blockers:
+        bits.append("past blockers: " + ", ".join(past_blockers[:3]))
+    sleep_quality = sig.get("sleep_quality")
+    if sleep_quality:
+        bits.append(f"sleep quality {sleep_quality}")
+    variety = sig.get("workout_variety")
+    if variety:
+        bits.append(
+            "prefers consistent routines" if variety.lower() == "consistent"
+            else "prefers varied workouts" if variety.lower() == "varied"
+            else f"variety preference {variety}"
+        )
+
+    if not bits:
+        return ""
+    return (
+        "\nONBOARDING CONTEXT (background framing — reference qualitatively, "
+        "never as a number or a hard rule): " + "; ".join(bits) + "."
+    )
+
+
 def format_profile_extras(profile: Dict[str, Any]) -> List[str]:
     """Gap 17 — extra USER PROFILE lines (age/sex/size + weight goal).
 
@@ -1321,6 +1366,12 @@ def _build_coach_response_prompt(state: CoachAgentState):
     # `coach_response_node`; edit in `format_dietary_and_nutrition_context`. ===
     context_parts.extend(format_dietary_and_nutrition_context(state))
 
+    # === Onboarding context (captured-but-unused signals) — mirrors
+    # `coach_response_node`. Returns "" when no signal so nothing is added. ===
+    _onboarding_block = format_onboarding_preferences(state.get("user_id"))
+    if _onboarding_block:
+        context_parts.append(_onboarding_block)
+
     context = "\n".join(context_parts)
 
     ai_settings = state.get("ai_settings")
@@ -1510,6 +1561,12 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
     # === Dietary constraints + today's nutrition (Gap 7/17) — mirrors
     # `_build_coach_response_prompt`; edit in `format_dietary_and_nutrition_context`. ===
     context_parts.extend(format_dietary_and_nutrition_context(state))
+
+    # === Onboarding context (captured-but-unused signals) — mirrors
+    # `_build_coach_response_prompt`. Returns "" when no signal so nothing is added. ===
+    _onboarding_block = format_onboarding_preferences(state.get("user_id"))
+    if _onboarding_block:
+        context_parts.append(_onboarding_block)
 
     context = "\n".join(context_parts)
 

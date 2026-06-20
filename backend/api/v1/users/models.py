@@ -173,6 +173,16 @@ class UserPreferencesRequest(BaseModel):
     # Lifestyle
     sleep_quality: Optional[str] = None
     obstacles: Optional[List[str]] = None
+    # Past blockers — what has gotten in the way of training before
+    # (onboarding "what's stopped you before?"). Captured-but-unused signal
+    # wired into the 3 AI surfaces. Stored in the preferences JSONB.
+    past_blockers: Optional[List[str]] = None
+    # Onboarding injuries/limitations. The frontend POSTs onboarding injuries
+    # under this JSON key; persisted into the `active_injuries` users column so
+    # the existing injury-avoidance path filters the FIRST generated plan.
+    # Accepts joint ids (knees, shoulders…) AND raw body-map muscle names
+    # (abs, glutes, lats…) — the avoidance code normalizes both.
+    limitations: Optional[List[str]] = None
 
     # Nutrition
     nutrition_goals: Optional[List[str]] = None
@@ -440,6 +450,7 @@ def merge_extended_fields_into_preferences(
     # Enhanced pre-auth quiz fields
     sleep_quality: Optional[str] = None,
     obstacles: Optional[List[str]] = None,
+    past_blockers: Optional[List[str]] = None,
     dietary_restrictions: Optional[List[str]] = None,
     meals_per_day: Optional[int] = None,
     weight_direction: Optional[str] = None,
@@ -510,6 +521,8 @@ def merge_extended_fields_into_preferences(
         prefs["sleep_quality"] = sleep_quality
     if obstacles is not None:
         prefs["obstacles"] = obstacles
+    if past_blockers is not None:
+        prefs["past_blockers"] = past_blockers
     if dietary_restrictions is not None:
         prefs["dietary_restrictions"] = dietary_restrictions
     if meals_per_day is not None:

@@ -139,6 +139,17 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
         if request.gender is not None:
             update_data["gender"] = request.gender
 
+        # Onboarding injuries/limitations → active_injuries column.
+        # The frontend POSTs onboarding injuries under the `limitations` key.
+        # `active_injuries` is a real users column (set to [] for new users at
+        # onboarding.py creation). Storing the list as-is lets the existing
+        # injury-avoidance path (get_active_injuries_with_muscles →
+        # get_muscles_to_avoid_from_injuries → filter_by_avoided_muscles) skip
+        # the affected muscles in the FIRST generated plan. The avoidance code
+        # normalizes both joint ids (knees…) and body-map muscle names (abs…).
+        if request.limitations is not None:
+            update_data["active_injuries"] = request.limitations
+
         # Merge into preferences JSON
         current_prefs = existing.get("preferences", {})
         if isinstance(current_prefs, str):
@@ -180,6 +191,9 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             request.workout_duration_max,
             # Exercise consistency preference
             workout_variety=request.workout_variety,
+            # Past blockers — captured-but-unused signal now persisted to prefs
+            # JSONB and read by the 3 AI surfaces.
+            past_blockers=request.past_blockers,
             # Focus areas
             focus_areas=request.focus_areas,
             # Per-equipment owned weights (canonical id -> sorted weights in the
