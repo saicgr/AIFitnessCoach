@@ -103,6 +103,10 @@ class PreAuthQuizBackupService {
         payload['date_of_birth'] = quizData.dateOfBirth!.toIso8601String().split('T').first;
       }
       if (quizData.isTrainer != null) payload['is_trainer'] = quizData.isTrainer;
+      // Multi-select "what held you back" — persisted + fed to the AI coach/card.
+      if (quizData.pastBlockers != null && quizData.pastBlockers!.isNotEmpty) {
+        payload['past_blockers'] = quizData.pastBlockers;
+      }
       // Fitbod-style available weights: expand the per-equipment
       // {min,max,increment} specs into the {id: [sorted weights]} shape the
       // backend generator snaps prescribed set weights to.

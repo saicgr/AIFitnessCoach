@@ -44,7 +44,7 @@ class _BlockerOption {
 
 class _OnboardingBlockerScreenState
     extends ConsumerState<OnboardingBlockerScreen> {
-  // IDs are stable storage keys for `preAuth_pastBlocker` — do not rename.
+  // IDs are stable storage keys for `preAuth_pastBlockers` — do not rename.
   static const List<_BlockerOption> _options = [
     _BlockerOption(
       'no_time',
@@ -129,12 +129,14 @@ class _OnboardingBlockerScreenState
 
   /// 0 = question, 1 = acknowledgment.
   int _stage = 0;
-  String? _selected;
+  // Multi-select: people are usually held back by more than one thing. All
+  // picks are saved + fed to the AI; the acknowledgment is keyed to the first.
+  final Set<String> _selected = {};
 
   @override
   void initState() {
     super.initState();
-    _selected = ref.read(preAuthQuizProvider).pastBlocker;
+    _selected.addAll(ref.read(preAuthQuizProvider).pastBlockers ?? const []);
     _maybeSkip();
   }
 
@@ -148,26 +150,32 @@ class _OnboardingBlockerScreenState
     }
   }
 
+  // The acknowledgment + support points key to the FIRST picked blocker (in
+  // the canonical option order), so the screen stays focused while all picks
+  // are saved.
   _BlockerOption? get _selectedOption {
-    if (_selected == null) return null;
+    if (_selected.isEmpty) return null;
     for (final o in _options) {
-      if (o.id == _selected) return o;
+      if (_selected.contains(o.id)) return o;
     }
     return null;
   }
 
   void _select(String id) {
     HapticFeedback.selectionClick();
-    setState(() => _selected = id);
+    setState(() {
+      if (!_selected.add(id)) _selected.remove(id);
+    });
   }
 
   Future<void> _toAcknowledgment() async {
-    if (_selected == null) return;
+    if (_selected.isEmpty) return;
     HapticFeedback.mediumImpact();
-    await ref.read(preAuthQuizProvider.notifier).setPastBlocker(_selected!);
+    final picks = _selected.toList();
+    await ref.read(preAuthQuizProvider.notifier).setPastBlockers(picks);
     ref.read(posthogServiceProvider).capture(
       eventName: 'onboarding_blocker_answered',
-      properties: {'blocker': _selected!},
+      properties: {'blockers': picks},
     );
     if (mounted) setState(() => _stage = 1);
   }
@@ -231,7 +239,7 @@ class _OnboardingBlockerScreenState
         ).animate().fadeIn().slideY(begin: -0.1),
         const SizedBox(height: 6),
         Text(
-          AppLocalizations.of(context).onboardingBlockerNoJudgmentKnowingThe,
+          '${AppLocalizations.of(context).onboardingBlockerNoJudgmentKnowingThe} Pick all that apply.',
           style: TextStyle(
             fontSize: 14,
             height: 1.4,
@@ -248,7 +256,7 @@ class _OnboardingBlockerScreenState
               final o = _options[i];
               return _BlockerOptionCard(
                 option: o,
-                selected: _selected == o.id,
+                selected: _selected.contains(o.id),
                 onTap: () => _select(o.id),
               )
                   .animate()
@@ -260,7 +268,7 @@ class _OnboardingBlockerScreenState
         const SizedBox(height: 8),
         _PrimaryButton(
           label: AppLocalizations.of(context).onboardingContinueButton,
-          enabled: _selected != null,
+          enabled: _selected.isNotEmpty,
           onTap: _toAcknowledgment,
         ).animate().fadeIn(delay: 640.ms).slideY(begin: 0.1),
         const SizedBox(height: 12),

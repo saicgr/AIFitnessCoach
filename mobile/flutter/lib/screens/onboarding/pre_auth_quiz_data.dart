@@ -98,7 +98,7 @@ class PreAuthQuizData {
   // are optional; the "why" screen is skippable so every consumer must
   // tolerate a null value.
   final String? primaryWhy;    // emotional "why" answer id (e.g. 'keep_up')
-  final String? pastBlocker;   // "what held you back" answer id (e.g. 'no_time')
+  final List<String>? pastBlockers;  // "what held you back" answer ids (multi-select)
   final int? goalConfidence;   // self-reported confidence, 1-10
 
   /// Computed age from dateOfBirth
@@ -169,7 +169,7 @@ class PreAuthQuizData {
     this.coachName,
     this.goalTargetDate,
     this.primaryWhy,
-    this.pastBlocker,
+    this.pastBlockers,
     this.goalConfidence,
   });
 
@@ -244,7 +244,7 @@ class PreAuthQuizData {
     String? coachName,
     String? goalTargetDate,
     String? primaryWhy,
-    String? pastBlocker,
+    List<String>? pastBlockers,
     int? goalConfidence,
   }) {
     return PreAuthQuizData(
@@ -303,7 +303,7 @@ class PreAuthQuizData {
       coachName: coachName ?? this.coachName,
       goalTargetDate: goalTargetDate ?? this.goalTargetDate,
       primaryWhy: primaryWhy ?? this.primaryWhy,
-      pastBlocker: pastBlocker ?? this.pastBlocker,
+      pastBlockers: pastBlockers ?? this.pastBlockers,
       goalConfidence: goalConfidence ?? this.goalConfidence,
     );
   }
@@ -365,7 +365,7 @@ class PreAuthQuizData {
         'coachName': coachName,
         'goalTargetDate': goalTargetDate,
         'primaryWhy': primaryWhy,
-        'pastBlocker': pastBlocker,
+        'pastBlockers': pastBlockers,
         'goalConfidence': goalConfidence,
       };
 
@@ -430,7 +430,7 @@ class PreAuthQuizData {
         coachName: json['coachName'] as String?,
         goalTargetDate: json['goalTargetDate'] as String?,
         primaryWhy: json['primaryWhy'] as String?,
-        pastBlocker: json['pastBlocker'] as String?,
+        pastBlockers: (json['pastBlockers'] as List<dynamic>?)?.cast<String>(),
         goalConfidence: (json['goalConfidence'] as num?)?.toInt(),
       );
 }
@@ -581,7 +581,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final coachName = prefs.getString('preAuth_coachName');
     final goalTargetDate = prefs.getString('preAuth_goalTargetDate');
     final primaryWhy = prefs.getString('preAuth_primaryWhy');
-    final pastBlocker = prefs.getString('preAuth_pastBlocker');
+    final pastBlockers = prefs.getStringList('preAuth_pastBlockers');
     final goalConfidence = prefs.getInt('preAuth_goalConfidence');
 
     _suppressTouch = true;
@@ -642,7 +642,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
         coachName: coachName,
         goalTargetDate: goalTargetDate,
         primaryWhy: primaryWhy,
-        pastBlocker: pastBlocker,
+        pastBlockers: pastBlockers,
         goalConfidence: goalConfidence,
       );
     } finally {
@@ -1103,7 +1103,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       'preAuth_referralCode', 'preAuth_coachName',
       'preAuth_goalTargetDate',
       // Onboarding conversion v6 — engagement-only fields
-      'preAuth_primaryWhy', 'preAuth_pastBlocker', 'preAuth_goalConfidence',
+      'preAuth_primaryWhy', 'preAuth_pastBlockers', 'preAuth_goalConfidence',
     ];
     for (final key in keysToRemove) {
       await prefs.remove(key);
@@ -1210,10 +1210,10 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     }
   }
 
-  Future<void> setPastBlocker(String blocker) async {
+  Future<void> setPastBlockers(List<String> blockers) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('preAuth_pastBlocker', blocker);
-    state = state.copyWith(pastBlocker: blocker);
+    await prefs.setStringList('preAuth_pastBlockers', blockers);
+    state = state.copyWith(pastBlockers: blockers);
   }
 
   Future<void> setGoalConfidence(int confidence) async {
