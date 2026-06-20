@@ -75,6 +75,7 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
     String? workoutName,
     int? dumbbellCount,
     int? kettlebellCount,
+    Map<String, List<double>>? equipmentWeights,
     String? newScheduledDate,
     bool forceNonPreferredDay = false,
     bool cardioFinisher = false,
@@ -126,6 +127,8 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
           if (workoutName != null && workoutName.isNotEmpty) 'workout_name': workoutName,
           if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,
           if (kettlebellCount != null) 'kettlebell_count': kettlebellCount,
+          if (equipmentWeights != null && equipmentWeights.isNotEmpty)
+            'equipment_weights': equipmentWeights,
           if (newScheduledDate != null) 'new_scheduled_date': newScheduledDate,
           if (forceNonPreferredDay) 'force_non_preferred_day': true,
           if (cardioFinisher) 'cardio_finisher': true,
@@ -787,6 +790,7 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
     List<String>? workoutDays,
     int? dumbbellCount,
     int? kettlebellCount,
+    Map<String, List<double>>? equipmentWeights,
     String? customProgramDescription,
   }) async {
     try {
@@ -818,6 +822,8 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
           if (workoutDays != null && workoutDays.isNotEmpty) 'workout_days': workoutDays,
           if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,
           if (kettlebellCount != null) 'kettlebell_count': kettlebellCount,
+          if (equipmentWeights != null && equipmentWeights.isNotEmpty)
+            'equipment_weights': equipmentWeights,
           if (customProgramDescription != null && customProgramDescription.isNotEmpty)
             'custom_program_description': customProgramDescription,
         },

@@ -76,4 +76,35 @@ const Map<String, String> _svg = {
       '1.6-3.4.4 1.8 1.9 1.7 1.9-4.6z"/></svg>',
   'help': '$_h<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.4 2.4 0 '
       '014.6.9c0 1.6-2.2 2-2.2 3.5M12 17h.01"/></svg>',
+  // ── Equipment set ─────────────────────────────────────────────────────
+  // Hand-authored in the shared stroked style so the whole equipment grid
+  // reads as ONE consistent icon vocabulary (Material/FontAwesome have no
+  // real gym set). Stylized but uniform.
+  'eq_dumbbell': '$_h<path d="M9 12h6 M6.5 8.5v7 M8.5 7v10 M15.5 7v10 '
+      'M17.5 8.5v7"/></svg>',
+  'eq_barbell': '$_h<path d="M3 12h18 M6.5 8v8 M9 9.5v5 M15 9.5v5 '
+      'M17.5 8v8"/></svg>',
+  'eq_kettlebell': '$_h<circle cx="12" cy="15.5" r="5"/>'
+      '<path d="M9 12.5V11a3 3 0 016 0v1.5"/></svg>',
+  'eq_medicine_ball': '$_h<circle cx="12" cy="12" r="8.5"/>'
+      '<path d="M4.2 9.5c5 2.4 10.6 2.4 15.6 0 M4.2 14.5c5-2.4 10.6-2.4 15.6 0"/>'
+      '</svg>',
+  'eq_bench': '$_h<rect x="3.5" y="8.5" width="17" height="3" rx="1.5"/>'
+      '<path d="M6.5 11.5v5 M17.5 11.5v5 M5 16.5h3 M16 16.5h3"/></svg>',
+  'eq_squat_rack': '$_h<path d="M6 4v16 M18 4v16 M3 9h18 M4.5 20h3 M16.5 20h3 '
+      'M6 7.5h2 M16 7.5h2"/></svg>',
+  'eq_cable_machine': '$_h<path d="M6 4v16 M6 5h9 M16 6.6v6 M14 12.5h4 '
+      'M4.8 13h2.4 M4.8 16h2.4 M4.8 19h2.4"/><circle cx="16" cy="5.3" r="1.3"/>'
+      '</svg>',
+  'eq_resistance_band': '$_h<circle cx="5" cy="12" r="2.3"/>'
+      '<circle cx="19" cy="12" r="2.3"/>'
+      '<path d="M7.3 12c1.8-2.3 3.6-2.3 4.7 0 1.1 2.3 2.9 2.3 4.7 0"/></svg>',
+  'eq_pull_up_bar': '$_h<path d="M3 8.5h18 M7 8.5V5 M17 8.5V5 M5 5h4 '
+      'M15 5h4"/></svg>',
+  'eq_trx': '$_h<path d="M12 4v1.5 M12 5.5L8.5 14 M12 5.5L15.5 14 M7 14h3 '
+      'M14 14h3 M8.5 14v2.6 M15.5 14v2.6"/></svg>',
+  'eq_bodyweight': '$_h<circle cx="12" cy="5" r="2.2"/>'
+      '<path d="M12 7.4v6 M6.5 10.5h11 M12 13.4l-3.2 6 M12 13.4l3.2 6"/></svg>',
+  'eq_full_gym': '$_h<path d="M4 20V8.5l8-4.5 8 4.5V20 M3 20h18 '
+      'M9.5 20v-5h5v5"/></svg>',
 };

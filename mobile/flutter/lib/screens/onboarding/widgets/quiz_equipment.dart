@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/line_icon.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
@@ -54,7 +56,8 @@ class _WorkoutEnvironmentOption {
 /// "Bands & accessories"). Groups related [items] under one band.
 class _EquipmentCategory {
   final String title;
-  final IconData icon;
+  // LineIcon name (see line_icon.dart `_svg`) for a consistent icon vocabulary.
+  final String icon;
   final List<_VisualItem> items;
 
   const _EquipmentCategory({
@@ -64,13 +67,14 @@ class _EquipmentCategory {
   });
 }
 
-/// A single tappable equipment tile in the visual picker. [id] is the
-/// canonical equipment id shared with the chip mode, so selection state is
-/// identical regardless of which mode rendered the tile.
+/// A single equipment row in the visual picker. [id] is the canonical
+/// equipment id shared with the chip mode, so selection state is identical
+/// regardless of which mode rendered the row.
 class _VisualItem {
   final String id;
   final String label;
-  final IconData icon;
+  // LineIcon name (see line_icon.dart `_svg`).
+  final String icon;
 
   const _VisualItem({
     required this.id,
@@ -122,6 +126,15 @@ class QuizEquipment extends StatefulWidget {
   /// resulting selection is identical regardless of mode.
   final bool visualMode;
 
+  /// Fired when the user taps the "edit weights" affordance on a selected
+  /// weight-bearing item (dumbbells/kettlebell/barbell). The parent opens the
+  /// available-weights editor sheet. When null, the affordance is hidden.
+  final void Function(String equipmentId)? onEditWeights;
+
+  /// Per-equipment available-weights summary string (e.g. "5–50 lb · 5 lb")
+  /// shown under the row name. Null/absent ⇒ no summary yet ("Set weights").
+  final Map<String, String>? equipmentWeightSummaries;
+
   const QuizEquipment({
     super.key,
     required this.selectedEquipment,
@@ -138,6 +151,8 @@ class QuizEquipment extends StatefulWidget {
     this.showHeader = true,
     this.onPresetSelected,
     this.visualMode = true,
+    this.onEditWeights,
+    this.equipmentWeightSummaries,
   });
 
   static List<_WorkoutEnvironmentOption> _buildEnvironments(AppLocalizations l10n) => [
@@ -252,16 +267,16 @@ class QuizEquipment extends StatefulWidget {
   static List<Map<String, Object>> _buildEquipment(AppLocalizations l10n) => [
     {'id': 'full_gym', 'label': l10n.quizEquipmentFullGymAccess, 'icon': Icons.store},
     {'id': 'bodyweight', 'label': l10n.quizEquipmentBodyweightOnly2, 'icon': Icons.accessibility_new},
-    {'id': 'dumbbells', 'label': l10n.quizEquipmentDumbbells, 'icon': Icons.fitness_center, 'hasQuantity': true},
-    {'id': 'barbell', 'label': l10n.quizEquipmentBarbell, 'icon': Icons.line_weight},
-    {'id': 'bench', 'label': l10n.quizEquipmentFlatBench, 'icon': Icons.weekend, 'subtitle': l10n.quizEquipmentEnablesChestPress},
-    {'id': 'squat_rack', 'label': l10n.quizEquipmentSquatRack, 'icon': Icons.fitness_center, 'subtitle': l10n.quizEquipmentNeededForBarbell},
-    {'id': 'resistance_bands', 'label': l10n.quizEquipmentResistanceBands, 'icon': Icons.cable},
+    {'id': 'dumbbells', 'label': l10n.quizEquipmentDumbbells, 'icon': FontAwesomeIcons.dumbbell, 'hasQuantity': true},
+    {'id': 'barbell', 'label': l10n.quizEquipmentBarbell, 'icon': Icons.fitness_center},
+    {'id': 'bench', 'label': l10n.quizEquipmentFlatBench, 'icon': Icons.airline_seat_flat_rounded, 'subtitle': l10n.quizEquipmentEnablesChestPress},
+    {'id': 'squat_rack', 'label': l10n.quizEquipmentSquatRack, 'icon': Icons.view_week_rounded, 'subtitle': l10n.quizEquipmentNeededForBarbell},
+    {'id': 'resistance_bands', 'label': l10n.quizEquipmentResistanceBands, 'icon': Icons.all_inclusive_rounded},
     {'id': 'pull_up_bar', 'label': l10n.quizEquipmentPullUpBar, 'icon': Icons.sports_gymnastics},
-    {'id': 'kettlebell', 'label': l10n.quizEquipmentKettlebell, 'icon': Icons.sports_handball, 'hasQuantity': true},
-    {'id': 'cable_machine', 'label': l10n.quizEquipmentCableMachine, 'icon': Icons.settings_ethernet},
-    {'id': 'medicine_ball', 'label': l10n.quizEquipmentMedicineBall, 'icon': Icons.circle},
-    {'id': 'trx', 'label': l10n.quizEquipmentTrxSuspension, 'icon': Icons.swap_vert},
+    {'id': 'kettlebell', 'label': l10n.quizEquipmentKettlebell, 'icon': FontAwesomeIcons.weightHanging, 'hasQuantity': true},
+    {'id': 'cable_machine', 'label': l10n.quizEquipmentCableMachine, 'icon': Icons.cable_rounded},
+    {'id': 'medicine_ball', 'label': l10n.quizEquipmentMedicineBall, 'icon': Icons.sports_volleyball},
+    {'id': 'trx', 'label': l10n.quizEquipmentTrxSuspension, 'icon': Icons.linear_scale_rounded},
   ];
 
   /// Visual-mode category grouping. Each section is a titled band of
@@ -271,47 +286,45 @@ class QuizEquipment extends StatefulWidget {
   /// chip mode would. `full_gym` is intentionally surfaced as its own
   /// "Quick access" entry — selecting it collapses to a full-gym setup via
   /// the existing `_hasFullGym` logic.
+  // NOTE: the old "Essentials" band (Gym access / Bodyweight only) was removed
+  // — both were exact duplicates of the `preset_full_gym` and
+  // `preset_bodyweight_only` Quick Presets rendered directly above this grid,
+  // which read as confusing/redundant. The grid is now purely for adding
+  // individual equipment on top of a base; the base cases (full gym /
+  // bodyweight only) are one tap each in the Quick Presets row.
   static List<_EquipmentCategory> _buildVisualCategories(AppLocalizations l10n) => [
     _EquipmentCategory(
-      title: 'Essentials',
-      icon: Icons.star_outline,
-      items: [
-        _VisualItem(id: 'full_gym', label: l10n.quizEquipmentFullGymAccess, icon: Icons.store),
-        _VisualItem(id: 'bodyweight', label: l10n.quizEquipmentBodyweightOnly2, icon: Icons.accessibility_new),
-      ],
-    ),
-    _EquipmentCategory(
       title: 'Free weights',
-      icon: Icons.fitness_center,
+      icon: 'eq_dumbbell',
       items: [
-        _VisualItem(id: 'dumbbells', label: l10n.quizEquipmentDumbbells, icon: Icons.fitness_center),
-        _VisualItem(id: 'barbell', label: l10n.quizEquipmentBarbell, icon: Icons.line_weight),
-        _VisualItem(id: 'kettlebell', label: l10n.quizEquipmentKettlebell, icon: Icons.sports_handball),
-        _VisualItem(id: 'medicine_ball', label: l10n.quizEquipmentMedicineBall, icon: Icons.circle),
+        _VisualItem(id: 'dumbbells', label: l10n.quizEquipmentDumbbells, icon: 'eq_dumbbell'),
+        _VisualItem(id: 'barbell', label: l10n.quizEquipmentBarbell, icon: 'eq_barbell'),
+        _VisualItem(id: 'kettlebell', label: l10n.quizEquipmentKettlebell, icon: 'eq_kettlebell'),
+        _VisualItem(id: 'medicine_ball', label: l10n.quizEquipmentMedicineBall, icon: 'eq_medicine_ball'),
       ],
     ),
     _EquipmentCategory(
       title: 'Benches & racks',
-      icon: Icons.weekend,
+      icon: 'eq_bench',
       items: [
-        _VisualItem(id: 'bench', label: l10n.quizEquipmentFlatBench, icon: Icons.weekend),
-        _VisualItem(id: 'squat_rack', label: l10n.quizEquipmentSquatRack, icon: Icons.grid_on),
+        _VisualItem(id: 'bench', label: l10n.quizEquipmentFlatBench, icon: 'eq_bench'),
+        _VisualItem(id: 'squat_rack', label: l10n.quizEquipmentSquatRack, icon: 'eq_squat_rack'),
       ],
     ),
     _EquipmentCategory(
       title: 'Machines & cables',
-      icon: Icons.settings_ethernet,
+      icon: 'eq_cable_machine',
       items: [
-        _VisualItem(id: 'cable_machine', label: l10n.quizEquipmentCableMachine, icon: Icons.settings_ethernet),
+        _VisualItem(id: 'cable_machine', label: l10n.quizEquipmentCableMachine, icon: 'eq_cable_machine'),
       ],
     ),
     _EquipmentCategory(
       title: 'Bands & accessories',
-      icon: Icons.cable,
+      icon: 'eq_resistance_band',
       items: [
-        _VisualItem(id: 'resistance_bands', label: l10n.quizEquipmentResistanceBands, icon: Icons.cable),
-        _VisualItem(id: 'pull_up_bar', label: l10n.quizEquipmentPullUpBar, icon: Icons.sports_gymnastics),
-        _VisualItem(id: 'trx', label: l10n.quizEquipmentTrxSuspension, icon: Icons.swap_vert),
+        _VisualItem(id: 'resistance_bands', label: l10n.quizEquipmentResistanceBands, icon: 'eq_resistance_band'),
+        _VisualItem(id: 'pull_up_bar', label: l10n.quizEquipmentPullUpBar, icon: 'eq_pull_up_bar'),
+        _VisualItem(id: 'trx', label: l10n.quizEquipmentTrxSuspension, icon: 'eq_trx'),
       ],
     ),
   ];
@@ -492,84 +505,87 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
 
+    // The WHOLE screen scrolls as one unit. Previously only the grid lived in
+    // an Expanded scroll window while the header → env → snap → presets →
+    // search stack stayed pinned above it — on a tall phone that squeezed the
+    // grid to ~1.5 rows. Scrolling everything together gives the grid its full
+    // height; the Continue CTA stays pinned by the parent quiz scaffold.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.showHeader) ...[
-            _buildTitle(context, t),
-            const SizedBox(height: 6),
-            _buildSubtitle(context, t),
-            const SizedBox(height: 12),
-          ],
-          // Environment quick selection chips
-          if (widget.onEnvironmentChanged != null) ...[
-            _buildEnvironmentSection(context, t),
-            const SizedBox(height: 12),
-          ],
-          // Snap-your-gym tile: opens the existing EquipmentSnapFlow in
-          // identify mode, then maps identified canonical equipment names
-          // into the onboarding preset IDs. Only shown when the parent
-          // opted into preset/replace semantics — same gate as the preset
-          // row so legacy callers (edit screens) stay unaffected.
-          if (widget.onPresetSelected != null) ...[
-            _buildSnapGymTile(context, t),
-            const SizedBox(height: 12),
-          ],
-          // Quick-preset chips: one tap to pick a common combo. Hidden
-          // when the parent didn't opt in via [onPresetSelected]. Kept on
-          // TOP in BOTH modes — the fast path always wins.
-          if (widget.onPresetSelected != null) ...[
-            _buildPresetSection(context, t),
-            const SizedBox(height: 12),
-          ],
-          // Always-visible search (visual mode only). Promotes the
-          // formerly sheet-only search to the surface, Gravl-style.
-          if (widget.visualMode) ...[
-            _buildSearchField(context, t),
-            const SizedBox(height: 12),
-          ],
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.zero,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Visual categorized grid vs. legacy two-column chips.
-                  // Both bind to the SAME selection set + callbacks.
-                  if (widget.visualMode)
-                    _buildVisualGrid(context, t)
-                  else
-                    _buildTwoColumnGrid(context, t),
-                  // Quantity selectors shown below the grid when applicable
-                  if (widget.selectedEquipment.contains('dumbbells') && !_hasFullGym) ...[
-                    const SizedBox(height: 12),
-                    _QuantityRow(
-                      label: AppLocalizations.of(context)!.quizEquipmentDumbbells,
-                      isSingle: widget.dumbbellCount == 1,
-                      onSingle: () => widget.onDumbbellCountChanged(1),
-                      onMultiple: () => widget.onDumbbellCountChanged(2),
-                      onInfo: () => widget.onInfoTap(context, 'dumbbells', true),
-                      icon: Icons.fitness_center,
-                    ),
-                  ],
-                  if (widget.selectedEquipment.contains('kettlebell') && !_hasFullGym) ...[
-                    const SizedBox(height: 8),
-                    _QuantityRow(
-                      label: AppLocalizations.of(context)!.quizEquipmentKettlebell,
-                      isSingle: widget.kettlebellCount == 1,
-                      onSingle: () => widget.onKettlebellCountChanged(1),
-                      onMultiple: () => widget.onKettlebellCountChanged(2),
-                      onInfo: () => widget.onInfoTap(context, 'kettlebell', true),
-                      icon: Icons.sports_handball,
-                    ),
-                  ],
-                ],
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.showHeader) ...[
+              _buildTitle(context, t),
+              const SizedBox(height: 4),
+              _buildSubtitle(context, t),
+              const SizedBox(height: 10),
+            ],
+            // Environment quick selection chips
+            if (widget.onEnvironmentChanged != null) ...[
+              _buildEnvironmentSection(context, t),
+              const SizedBox(height: 8),
+            ],
+            // Snap-your-gym tile: opens the existing EquipmentSnapFlow in
+            // identify mode, then maps identified canonical equipment names
+            // into the onboarding preset IDs. Only shown when the parent
+            // opted into preset/replace semantics — same gate as the preset
+            // row so legacy callers (edit screens) stay unaffected.
+            if (widget.onPresetSelected != null) ...[
+              _buildSnapGymTile(context, t),
+              const SizedBox(height: 8),
+            ],
+            // Quick-preset chips: one tap to pick a common combo. Hidden
+            // when the parent didn't opt in via [onPresetSelected].
+            if (widget.onPresetSelected != null) ...[
+              _buildPresetSection(context, t),
+              const SizedBox(height: 8),
+            ],
+            // Always-visible search (visual mode only).
+            if (widget.visualMode) ...[
+              _buildSearchField(context, t),
+              const SizedBox(height: 8),
+            ],
+            // Visual categorized grid vs. legacy two-column chips.
+            // Both bind to the SAME selection set + callbacks.
+            if (widget.visualMode)
+              _buildVisualGrid(context, t)
+            else
+              _buildTwoColumnGrid(context, t),
+            // Legacy single/multiple quantity toggles — only when the richer
+            // tap-to-edit-weights editor is NOT wired (onEditWeights == null).
+            // In onboarding the editor (Part C) supersedes these.
+            if (widget.onEditWeights == null &&
+                widget.selectedEquipment.contains('dumbbells') &&
+                !_hasFullGym) ...[
+              const SizedBox(height: 12),
+              _QuantityRow(
+                label: AppLocalizations.of(context)!.quizEquipmentDumbbells,
+                isSingle: widget.dumbbellCount == 1,
+                onSingle: () => widget.onDumbbellCountChanged(1),
+                onMultiple: () => widget.onDumbbellCountChanged(2),
+                onInfo: () => widget.onInfoTap(context, 'dumbbells', true),
+                icon: Icons.fitness_center,
               ),
-            ),
-          ),
-        ],
+            ],
+            if (widget.onEditWeights == null &&
+                widget.selectedEquipment.contains('kettlebell') &&
+                !_hasFullGym) ...[
+              const SizedBox(height: 8),
+              _QuantityRow(
+                label: AppLocalizations.of(context)!.quizEquipmentKettlebell,
+                isSingle: widget.kettlebellCount == 1,
+                onSingle: () => widget.onKettlebellCountChanged(1),
+                onMultiple: () => widget.onKettlebellCountChanged(2),
+                onInfo: () => widget.onInfoTap(context, 'kettlebell', true),
+                icon: Icons.sports_handball,
+              ),
+            ],
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -640,7 +656,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               .toList();
       if (items.isEmpty) continue;
       visibleItemCount += items.length;
-      if (sections.isNotEmpty) sections.add(const SizedBox(height: 16));
+      if (sections.isNotEmpty) sections.add(const SizedBox(height: 12));
       sections.add(_buildCategorySection(context, t, category, items));
     }
 
@@ -653,7 +669,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         // matches, this becomes the primary call-to-action so nothing is
         // a dead end.
         if (widget.onOtherTap != null) ...[
-          if (sections.isNotEmpty) const SizedBox(height: 16),
+          if (sections.isNotEmpty) const SizedBox(height: 12),
           _buildOtherSection(context, t, noCanonicalMatch: visibleItemCount == 0),
         ] else if (visibleItemCount == 0) ...[
           const SizedBox(height: 24),
@@ -662,6 +678,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
       ],
     );
   }
+
+  // Equipment ids that support a Fitbod-style "available weights" editor.
+  static const _weightBearing = {'dumbbells', 'kettlebell', 'barbell'};
 
   Widget _buildCategorySection(
     BuildContext context,
@@ -673,11 +692,11 @@ class _QuizEquipmentState extends State<QuizEquipment> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 10, left: 2),
+          padding: const EdgeInsets.only(bottom: 8, left: 2),
           child: Row(
             children: [
-              Icon(category.icon, size: 15, color: t.textSecondary),
-              const SizedBox(width: 6),
+              LineIcon(category.icon, size: 15, color: t.textSecondary),
+              const SizedBox(width: 7),
               Text(
                 category.title,
                 style: TextStyle(
@@ -690,147 +709,187 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             ],
           ),
         ),
-        // Wrap (not a fixed Row) so tiles reflow on an iPhone SE without
-        // overflowing. Each tile is a fixed-aspect icon thumbnail + label.
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: items
-              .map((item) => _buildVisualTile(context, t, item))
-              .toList(),
-        ),
+        for (final item in items)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _buildEquipmentRow(context, t, item),
+          ),
       ],
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildVisualTile(
+  /// One full-width equipment row: icon puck + name (+ weight summary) + an
+  /// optional "edit weights" affordance + a select indicator. Denser and
+  /// uniform vs. the old tile grid.
+  Widget _buildEquipmentRow(
     BuildContext context,
     OnboardingTheme t,
     _VisualItem item,
   ) {
     final isFullGymOption = item.id == 'full_gym';
-    final isSelected =
-        isFullGymOption ? _hasFullGym : widget.selectedEquipment.contains(item.id);
+    final isSelected = isFullGymOption
+        ? _hasFullGym
+        : widget.selectedEquipment.contains(item.id);
     final recommended = _isRecommended(item.id);
-
-    // 3-up on the narrowest phone: (screen - 40 padding - 2*10 spacing) / 3.
-    final tileWidth = (MediaQuery.of(context).size.width - 40 - 20) / 3;
+    final canEditWeights = isSelected &&
+        _weightBearing.contains(item.id) &&
+        widget.onEditWeights != null;
+    final weightSummary = widget.equipmentWeightSummaries?[item.id];
 
     return GestureDetector(
       onTap: () => _handleChipTap(item.id),
-      child: SizedBox(
-        width: tileWidth,
-        child: Stack(
-          clipBehavior: Clip.none,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: t.cardSelectedGradient,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : t.cardFill,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected
+                ? t.borderSelected
+                : recommended
+                    ? t.checkBorderUnselected
+                    : t.borderDefault,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                  decoration: BoxDecoration(
-                    gradient: isSelected
-                        ? LinearGradient(
-                            colors: t.cardSelectedGradient,
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : null,
-                    color: isSelected ? null : t.cardFill,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isSelected
-                          ? t.borderSelected
-                          : recommended
-                              ? t.checkBorderUnselected
-                              : t.borderDefault,
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+            // Icon puck.
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? t.selectionAccent.withValues(alpha: 0.18)
+                    : t.textSecondary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Center(
+                child: LineIcon(
+                  item.icon,
+                  size: 21,
+                  color: isSelected ? t.selectionAccent : t.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Name + optional weight summary.
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
                     children: [
-                      // Icon thumbnail puck.
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? t.selectionAccent.withValues(alpha: 0.18)
-                              : t.textSecondary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          item.icon,
-                          size: 22,
-                          color: isSelected
-                              ? t.selectionAccent
-                              : t.textSecondary,
+                      Flexible(
+                        child: Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight:
+                                isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: t.textPrimary,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      if (recommended && !isSelected) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: t.badgeBg,
+                            borderRadius: BorderRadius.circular(7),
+                            border: Border.all(
+                              color: t.selectionAccent.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Text(
+                            AppLocalizations.of(context).quizEquipmentRecommended,
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w700,
+                              color: t.badgeText,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (canEditWeights && weightSummary != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      weightSummary,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: t.selectionAccent,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // "Edit weights" affordance (its own tap target).
+            if (canEditWeights) ...[
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => widget.onEditWeights!.call(item.id),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: t.selectionAccent.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tune_rounded,
+                          size: 14, color: t.selectionAccent),
+                      const SizedBox(width: 4),
                       Text(
-                        item.label,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        weightSummary == null ? 'Set weights' : 'Edit',
                         style: TextStyle(
-                          fontSize: 11.5,
-                          height: 1.15,
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
-                          color: t.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: t.selectionAccent,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
+            ],
+            const SizedBox(width: 10),
+            // Select indicator.
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: isSelected ? t.checkBg : Colors.transparent,
+                shape: BoxShape.circle,
+                border: isSelected
+                    ? null
+                    : Border.all(
+                        color: t.textSecondary.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+              ),
+              child: isSelected
+                  ? Icon(Icons.check, color: t.checkIcon, size: 14)
+                  : null,
             ),
-            // Selected check badge, top-right.
-            if (isSelected)
-              Positioned(
-                top: 6,
-                right: 6,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: t.checkBg,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.check, color: t.checkIcon, size: 13),
-                ),
-              ),
-            // "Recommended" badge for follow-up suggestions.
-            if (recommended && !isSelected)
-              Positioned(
-                top: -6,
-                right: 4,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: t.badgeBg,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: t.selectionAccent.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context).quizEquipmentRecommended,
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: t.badgeText,
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -1099,7 +1158,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [

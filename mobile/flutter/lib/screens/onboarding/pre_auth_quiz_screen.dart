@@ -7,7 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/user_provider.dart';
+import '../../models/equipment_item.dart';
 import '../../widgets/glass_sheet.dart';
+import 'widgets/equipment_weight_sheet.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/posthog_service.dart';
 import 'onboarding_experiments.dart';
@@ -162,6 +165,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   final List<String> _customEquipment = [];  // User-added equipment not in predefined list
   int _dumbbellCount = 2;
   int _kettlebellCount = 1;
+  // Fitbod-style available-weights spec per equipment id:
+  // {id: {min, max, increment, unit}}.
+  final Map<String, dynamic> _equipmentWeights = {};
   String? _selectedEnvironment;  // Workout environment (home, home_gym, commercial_gym, hotel)
   // Question 6: Training Preferences (Split + Workout Type + Variety + Progression Pace)
   String? _selectedTrainingSplit;
@@ -215,6 +221,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       duration: const Duration(milliseconds: 500),
     );
     _questionController.forward();
+
+    // Restore any previously-set available-weights specs (back-nav / resume).
+    final savedWeights = ref.read(preAuthQuizProvider).equipmentWeights;
+    if (savedWeights != null) {
+      _equipmentWeights.addAll(savedWeights);
+    }
 
     // Resolve the (default-OFF) step-counter A/B treatment once. Fail-open to
     // the existing "~2 min left" estimate if PostHog is unreachable.
@@ -966,7 +978,65 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             ..addAll(ids);
         });
       },
+      onEditWeights: _openEquipmentWeightSheet,
+      equipmentWeightSummaries: _buildEquipmentWeightSummaries(),
     );
+  }
+
+  /// Per-equipment "5–50 lb" summary for the row subtitle.
+  Map<String, String> _buildEquipmentWeightSummaries() {
+    final out = <String, String>{};
+    _equipmentWeights.forEach((id, spec) {
+      if (spec is Map) {
+        final min = (spec['min'] as num?)?.toDouble();
+        final max = (spec['max'] as num?)?.toDouble();
+        final unit = spec['unit'] as String? ?? 'lb';
+        if (min != null && max != null) {
+          String f(double v) => v.truncateToDouble() == v
+              ? v.toStringAsFixed(0)
+              : v.toStringAsFixed(1);
+          out[id] = '${f(min)}–${f(max)} $unit';
+        }
+      }
+    });
+    return out;
+  }
+
+  Future<void> _openEquipmentWeightSheet(String id) async {
+    const labels = {
+      'dumbbells': 'Dumbbells',
+      'kettlebell': 'Kettlebell',
+      'barbell': 'Barbell',
+    };
+    const icons = {
+      'dumbbells': 'eq_dumbbell',
+      'kettlebell': 'eq_kettlebell',
+      'barbell': 'eq_barbell',
+    };
+    final workoutUnit = ref.read(workoutWeightUnitProvider);
+    final spec = await showEquipmentWeightSheet(
+      context,
+      equipmentId: id,
+      label: labels[id] ?? id,
+      lineIcon: icons[id] ?? 'eq_dumbbell',
+      initial: _equipmentWeights[id] as Map<String, dynamic>?,
+      defaultMetric: workoutUnit == 'kg',
+    );
+    if (spec == null || !mounted) return;
+    setState(() {
+      _equipmentWeights[id] = spec;
+      // Derive single/multiple count from the set (>1 distinct weight ⇒ pair).
+      final weights = EquipmentItem.expandRange(
+        (spec['min'] as num).toDouble(),
+        (spec['max'] as num).toDouble(),
+        (spec['increment'] as num).toDouble(),
+      );
+      if (id == 'dumbbells') _dumbbellCount = weights.length > 1 ? 2 : 1;
+      if (id == 'kettlebell') _kettlebellCount = weights.length > 1 ? 2 : 1;
+    });
+    await ref
+        .read(preAuthQuizProvider.notifier)
+        .setEquipmentWeights(id, spec);
   }
 
   Widget _buildTrainingPreferences() {

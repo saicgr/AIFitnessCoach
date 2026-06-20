@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../models/equipment_item.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../models/ai_profile_payload.dart';
 import '../repositories/auth_repository.dart';
@@ -102,6 +103,24 @@ class PreAuthQuizBackupService {
         payload['date_of_birth'] = quizData.dateOfBirth!.toIso8601String().split('T').first;
       }
       if (quizData.isTrainer != null) payload['is_trainer'] = quizData.isTrainer;
+      // Fitbod-style available weights: expand the per-equipment
+      // {min,max,increment} specs into the {id: [sorted weights]} shape the
+      // backend generator snaps prescribed set weights to.
+      final ew = quizData.equipmentWeights;
+      if (ew != null && ew.isNotEmpty) {
+        final expanded = <String, List<double>>{};
+        ew.forEach((id, spec) {
+          if (spec is Map) {
+            final list = EquipmentItem.expandRange(
+              (spec['min'] as num?)?.toDouble(),
+              (spec['max'] as num?)?.toDouble(),
+              (spec['increment'] as num?)?.toDouble(),
+            );
+            if (list.isNotEmpty) expanded[id] = list;
+          }
+        });
+        if (expanded.isNotEmpty) payload['equipment_weights'] = expanded;
+      }
 
       final apiClient = _ref.read(apiClientProvider);
       await apiClient.post(

@@ -35,6 +35,10 @@ class PreAuthQuizData {
   final List<String>? motivations;
   final int? dumbbellCount;
   final int? kettlebellCount;
+  /// Per-equipment available-weights config (Fitbod-style). Shape:
+  /// `{ '<equipmentId>': {'min': double, 'max': double, 'increment': double,
+  /// 'unit': 'lb'|'kg'} }`. Drives prescribed set weights during generation.
+  final Map<String, dynamic>? equipmentWeights;
   // Workout type preference (strength, cardio, mixed)
   final String? workoutTypePreference;
   // Workout variety preference (consistent, varied)
@@ -136,6 +140,7 @@ class PreAuthQuizData {
     this.motivations,
     this.dumbbellCount,
     this.kettlebellCount,
+    this.equipmentWeights,
     this.workoutTypePreference,
     this.workoutVariety,
     this.progressionPace,
@@ -210,6 +215,7 @@ class PreAuthQuizData {
     List<String>? motivations,
     int? dumbbellCount,
     int? kettlebellCount,
+    Map<String, dynamic>? equipmentWeights,
     String? workoutTypePreference,
     String? workoutVariety,
     String? progressionPace,
@@ -266,6 +272,7 @@ class PreAuthQuizData {
       workoutEnvironment: workoutEnvironment ?? this.workoutEnvironment,
       trainingSplit: trainingSplit ?? this.trainingSplit,
       motivations: motivations ?? this.motivations,
+      equipmentWeights: equipmentWeights ?? this.equipmentWeights,
       dumbbellCount: dumbbellCount ?? this.dumbbellCount,
       kettlebellCount: kettlebellCount ?? this.kettlebellCount,
       workoutTypePreference: workoutTypePreference ?? this.workoutTypePreference,
@@ -328,6 +335,7 @@ class PreAuthQuizData {
         'trainingSplit': trainingSplit,
         'motivations': motivations,
         'motivation': motivation,
+        'equipmentWeights': equipmentWeights,
         'dumbbellCount': dumbbellCount,
         'kettlebellCount': kettlebellCount,
         'workoutTypePreference': workoutTypePreference,
@@ -392,6 +400,7 @@ class PreAuthQuizData {
             (json['motivation'] != null ? [json['motivation'] as String] : null),
         dumbbellCount: json['dumbbellCount'] as int?,
         kettlebellCount: json['kettlebellCount'] as int?,
+        equipmentWeights: (json['equipmentWeights'] as Map?)?.cast<String, dynamic>(),
         workoutTypePreference: json['workoutTypePreference'] as String?,
         progressionPace: json['progressionPace'] as String?,
         sleepQuality: json['sleepQuality'] as String?,
@@ -521,6 +530,16 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final motivations = prefs.getStringList('preAuth_motivations');
     final dumbbellCount = prefs.getInt('preAuth_dumbbellCount');
     final kettlebellCount = prefs.getInt('preAuth_kettlebellCount');
+    final equipmentWeightsStr = prefs.getString('preAuth_equipmentWeights');
+    Map<String, dynamic>? equipmentWeights;
+    if (equipmentWeightsStr != null && equipmentWeightsStr.isNotEmpty) {
+      try {
+        equipmentWeights =
+            (jsonDecode(equipmentWeightsStr) as Map).cast<String, dynamic>();
+      } catch (_) {
+        equipmentWeights = null;
+      }
+    }
     final workoutTypePref = prefs.getString('preAuth_workoutTypePreference');
     final workoutVariety = prefs.getString('preAuth_workoutVariety');
     final progressionPace = prefs.getString('preAuth_progressionPace');
@@ -594,6 +613,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
         motivations: motivations,
         dumbbellCount: dumbbellCount,
         kettlebellCount: kettlebellCount,
+        equipmentWeights: equipmentWeights,
         workoutTypePreference: workoutTypePref,
         workoutVariety: workoutVariety,
         progressionPace: progressionPace,
@@ -925,6 +945,22 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     );
   }
 
+  /// Persist the Fitbod-style available-weights config for one equipment id.
+  /// [spec] = {'min':double,'max':double,'increment':double,'unit':'lb'|'kg'},
+  /// or null to clear that equipment's config.
+  Future<void> setEquipmentWeights(
+      String equipmentId, Map<String, dynamic>? spec) async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = Map<String, dynamic>.from(state.equipmentWeights ?? {});
+    if (spec == null) {
+      current.remove(equipmentId);
+    } else {
+      current[equipmentId] = spec;
+    }
+    await prefs.setString('preAuth_equipmentWeights', jsonEncode(current));
+    state = state.copyWith(equipmentWeights: current);
+  }
+
   Future<void> setTrainingSplit(String split) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('preAuth_trainingSplit', split);
@@ -1052,6 +1088,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       'preAuth_workoutDurationMin', 'preAuth_workoutDurationMax',
       'preAuth_equipment', 'preAuth_customEquipment', 'preAuth_workoutEnvironment',
       'preAuth_trainingSplit', 'preAuth_motivations', 'preAuth_dumbbellCount',
+      'preAuth_equipmentWeights',
       'preAuth_kettlebellCount', 'preAuth_workoutTypePreference',
       'preAuth_progressionPace', 'preAuth_sleepQuality', 'preAuth_obstacles',
       'preAuth_nutritionGoals', 'preAuth_dietaryRestrictions', 'preAuth_mealsPerDay',
