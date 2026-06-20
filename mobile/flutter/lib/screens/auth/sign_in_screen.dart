@@ -672,7 +672,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             children: [
               Expanded(
                 child: Text(
-                  'Your $goalDisplay Plan · ${quizData.daysPerWeek ?? 3} days/week',
+                  // Non-breaking "2 days/week" (NBSP + word-joiners around "/")
+                  // so it never splits mid-token as "2 days/" / "week"; it
+                  // wraps cleanly before the phrase instead.
+                  'Your $goalDisplay Plan · '
+                  '${quizData.daysPerWeek ?? 3} days⁠/⁠week',
                   style: TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w800,
