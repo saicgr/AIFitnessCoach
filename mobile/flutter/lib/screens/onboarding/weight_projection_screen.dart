@@ -123,7 +123,7 @@ class _WeightProjectionScreenState
 
     final divider = Container(
       width: 1,
-      height: 34,
+      height: 26,
       color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.07),
     );
 
@@ -132,8 +132,28 @@ class _WeightProjectionScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(height: 4),
+            // Label + tiny icon on one line, value below — compact 2-row cell.
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 11, color: color),
+                const SizedBox(width: 3),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w500,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
             Text(
               value,
               maxLines: 1,
@@ -142,17 +162,6 @@ class _WeightProjectionScreenState
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 1),
-            Text(
-              label,
-              maxLines: 1,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w500,
-                color: textSecondary,
               ),
             ),
           ],
@@ -165,7 +174,7 @@ class _WeightProjectionScreenState
     // above already states it). Keeps all four data points in ~⅓ the height so
     // the whole screen fits without scrolling, dashboard-style.
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.05)
@@ -178,6 +187,7 @@ class _WeightProjectionScreenState
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           cell(
             Icons.monitor_weight_outlined,
@@ -295,7 +305,7 @@ class _WeightProjectionScreenState
     // SingleChildScrollView — a `Flexible` chart here was eating all the height
     // and pushing the Continue button off-screen (the 142px overflow blocker).
     final screenH = MediaQuery.of(context).size.height;
-    final chartHeight = (screenH * 0.19).clamp(140.0, 166.0);
+    final chartHeight = (screenH * 0.175).clamp(130.0, 150.0);
 
     // Pinned CTA — lives in the scaffold's `button` slot (rendered OUTSIDE the
     // scrollable body) so it is always reachable regardless of content height.
@@ -504,7 +514,7 @@ class _WeightProjectionScreenState
                 _buildSpeedRow(speed, isDark, textPrimary, textSecondary)
                     .animate().fadeIn(delay: 500.ms),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
                 // Weight summary stats (phone only — foldable shows in header)
                 Consumer(builder: (context, ref, _) {
@@ -524,9 +534,9 @@ class _WeightProjectionScreenState
                 }),
 
                 // CTA moved to the scaffold's pinned `button:` slot so it can
-                // never be pushed off-screen. Trailing space keeps the last
-                // card clear of the pinned button when scrolled to the bottom.
-                const SizedBox(height: 12),
+                // never be pushed off-screen. Small trailing gap keeps the strip
+                // clear of the pinned button (scaffold adds its own padding too).
+                const SizedBox(height: 6),
               ],
             ),
               ),
