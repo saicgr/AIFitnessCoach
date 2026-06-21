@@ -352,6 +352,105 @@ def invalidate_workouts_after_injury_change(
     }
 
 
+def _normalize_injury_body_parts(value) -> list:
+    """Normalize an active_injuries value (list of strings or {body_part} dicts,
+    or a JSON string) to a deduped, lowercased list of body-part slugs."""
+    import json as _json
+    if isinstance(value, str):
+        try:
+            value = _json.loads(value)
+        except (ValueError, TypeError):
+            value = [value] if value else []
+    if not isinstance(value, list):
+        return []
+    out = []
+    for item in value:
+        if isinstance(item, dict):
+            bp = item.get("body_part") or item.get("name") or ""
+        else:
+            bp = str(item or "")
+        bp = bp.strip().lower()
+        if bp and bp not in ("none", ""):
+            out.append(bp)
+    # preserve first-seen order, deduped
+    seen = set()
+    return [b for b in out if not (b in seen or seen.add(b))]
+
+
+def sync_active_injuries_to_history(user_id: str, active_injuries) -> dict:
+    """Mirror a user's ``active_injuries`` into the ``injury_history`` table so the
+    COACH (which reads injury_history, not active_injuries/user_injuries) finally
+    sees onboarding + profile-pill injuries — the unifier that makes "AI remembers
+    your injury and offers to remove it" actually work (injury-2026-06 Phase 3).
+
+    On ADD  → insert an active injury_history row (reported_at=now) if none active.
+    On REMOVE → mark the active row(s) is_active=false + actual_recovery_date=now,
+                which is what the coach's recovery/resolution nudges key off.
+
+    Idempotent and fail-soft: never raises (an injury_history sync failure must
+    not block the user-facing profile/onboarding write). Returns a small summary.
+    """
+    added, resolved = [], []
+    try:
+        db = get_supabase_db()
+        desired = set(_normalize_injury_body_parts(active_injuries))
+
+        existing_rows = db.client.table("injury_history").select(
+            "id, body_part, is_active"
+        ).eq("user_id", user_id).eq("is_active", True).execute()
+        active_now = {}
+        for r in (existing_rows.data or []):
+            bp = (r.get("body_part") or "").strip().lower()
+            if bp:
+                active_now.setdefault(bp, []).append(r["id"])
+
+        # ADD: desired injuries with no active history row.
+        for bp in desired:
+            if bp not in active_now:
+                try:
+                    db.client.table("injury_history").insert({
+                        "user_id": user_id,
+                        "body_part": bp,
+                        "is_active": True,
+                    }).execute()
+                    added.append(bp)
+                except Exception as ins_err:
+                    logger.warning(
+                        f"[InjurySync] insert failed for {user_id}/{bp}: {ins_err}",
+                        exc_info=True,
+                    )
+
+        # REMOVE: active history rows no longer in the desired set → resolved.
+        from datetime import datetime, timezone as _tz
+        _now = datetime.now(_tz.utc).isoformat()
+        for bp, ids in active_now.items():
+            if bp not in desired:
+                payload = {"is_active": False}
+                if _now:
+                    payload["actual_recovery_date"] = _now
+                try:
+                    db.client.table("injury_history").update(payload).in_(
+                        "id", ids
+                    ).execute()
+                    resolved.append(bp)
+                except Exception as upd_err:
+                    logger.warning(
+                        f"[InjurySync] resolve failed for {user_id}/{bp}: {upd_err}",
+                        exc_info=True,
+                    )
+
+        if added or resolved:
+            logger.info(
+                f"[InjurySync] user={user_id} added={added} resolved={resolved}"
+            )
+    except Exception as e:
+        logger.warning(
+            f"[InjurySync] sync failed for user {user_id} (fail-soft): {e}",
+            exc_info=True,
+        )
+    return {"added": added, "resolved": resolved}
+
+
 # ============================================================================
 # Request-boundary safety clamps (Phase D) — pure, deterministic, in-memory.
 #

@@ -147,8 +147,28 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
         # get_muscles_to_avoid_from_injuries → filter_by_avoided_muscles) skip
         # the affected muscles in the FIRST generated plan. The avoidance code
         # normalizes both joint ids (knees…) and body-map muscle names (abs…).
+        injuries_changed = False
         if request.limitations is not None:
             update_data["active_injuries"] = request.limitations
+            # Injury-change → workout-invalidation hook (injury-2026-06 Phase 2):
+            # mirror equipment_changed so changing injuries post-onboarding
+            # regenerates upcoming workouts under the new safety constraints.
+            def _norm_inj(v):
+                import json as _json
+                if isinstance(v, str):
+                    try:
+                        v = _json.loads(v)
+                    except (ValueError, TypeError):
+                        v = [v] if v else []
+                if not isinstance(v, list):
+                    v = []
+                out = []
+                for it in v:
+                    bp = it.get("body_part", "") if isinstance(it, dict) else str(it)
+                    if bp:
+                        out.append(str(bp).strip().lower())
+                return sorted(set(out))
+            injuries_changed = _norm_inj(request.limitations) != _norm_inj(existing.get("active_injuries"))
 
         # Merge into preferences JSON
         current_prefs = existing.get("preferences", {})
@@ -241,6 +261,44 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
                     logger.warning(
                         f"[Equipment-Change] Invalidation failed for user "
                         f"{actual_user_id}: {inval_err}",
+                        exc_info=True,
+                    )
+
+            # Injury-change → workout-invalidation hook (injury-2026-06 Phase 2).
+            # Skip the initial onboarding write (nothing generated yet).
+            if injuries_changed and existing.get("onboarding_completed"):
+                try:
+                    from api.v1.workouts.utils import (
+                        invalidate_workouts_after_injury_change,
+                    )
+                    from core.timezone_utils import resolve_timezone
+
+                    tz = resolve_timezone(existing.get("timezone"))
+                    counts = invalidate_workouts_after_injury_change(
+                        user_id=actual_user_id, timezone_str=tz,
+                    )
+                    logger.info(
+                        f"[Injury-Change] User {actual_user_id}: invalidated "
+                        f"{counts.get('today_deleted', 0)} today + "
+                        f"{counts.get('upcoming_deleted', 0)} upcoming workouts"
+                    )
+                except Exception as inval_err:
+                    logger.warning(
+                        f"[Injury-Change] Invalidation failed for user "
+                        f"{actual_user_id}: {inval_err}",
+                        exc_info=True,
+                    )
+
+            # Coach-sync (injury-2026-06 Phase 3): mirror active_injuries into
+            # injury_history so the coach sees onboarding injuries from day one
+            # (fires even before onboarding_completed). Fail-soft.
+            if injuries_changed:
+                try:
+                    from api.v1.workouts.utils import sync_active_injuries_to_history
+                    sync_active_injuries_to_history(actual_user_id, request.limitations)
+                except Exception as sync_err:
+                    logger.warning(
+                        f"[InjurySync] onboarding sync failed for {actual_user_id}: {sync_err}",
                         exc_info=True,
                     )
 

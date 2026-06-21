@@ -669,8 +669,21 @@ async def update_user(user_id: str, user: UserUpdate,
         if user.custom_equipment is not None:
             update_data["custom_equipment"] = _parse_list_field(user.custom_equipment)
             logger.info(f"Updating custom_equipment for user {user_id}")
+        injuries_changed = False
         if user.active_injuries is not None:
             update_data["active_injuries"] = _parse_list_field(user.active_injuries)
+            # Injury-change → workout-invalidation hook (injury-2026-06 Phase 2):
+            # changing injuries from the profile pill must regenerate upcoming
+            # workouts under the new safety constraints, mirroring equipment.
+            def _norm_inj(v):
+                v = _parse_list_field(v) if not isinstance(v, list) else v
+                out = []
+                for it in (v or []):
+                    bp = it.get("body_part", "") if isinstance(it, dict) else str(it)
+                    if bp:
+                        out.append(str(bp).strip().lower())
+                return sorted(set(out))
+            injuries_changed = _norm_inj(user.active_injuries) != _norm_inj(existing.get("active_injuries"))
         if user.onboarding_completed is not None:
             update_data["onboarding_completed"] = user.onboarding_completed
             # Set timestamp when onboarding is marked as completed
@@ -913,6 +926,43 @@ async def update_user(user_id: str, user: UserUpdate,
                     logger.warning(
                         f"[Equipment-Change] Invalidation failed for user "
                         f"{user_id}: {inval_err}",
+                        exc_info=True,
+                    )
+
+            # Injury-change → workout-invalidation hook (injury-2026-06 Phase 2).
+            if injuries_changed:
+                try:
+                    from api.v1.workouts.utils import (
+                        invalidate_workouts_after_injury_change,
+                    )
+                    from core.timezone_utils import resolve_timezone
+
+                    tz = resolve_timezone(existing.get("timezone"))
+                    counts = invalidate_workouts_after_injury_change(
+                        user_id=user_id,
+                        timezone_str=tz,
+                    )
+                    logger.info(
+                        f"[Injury-Change] User {user_id}: invalidated "
+                        f"{counts.get('today_deleted', 0)} today + "
+                        f"{counts.get('upcoming_deleted', 0)} upcoming workouts"
+                    )
+                except Exception as inval_err:
+                    logger.warning(
+                        f"[Injury-Change] Invalidation failed for user "
+                        f"{user_id}: {inval_err}",
+                        exc_info=True,
+                    )
+
+            # Coach-sync (injury-2026-06 Phase 3): mirror active_injuries into
+            # injury_history so the coach sees profile-pill injury edits. Fail-soft.
+            if injuries_changed:
+                try:
+                    from api.v1.workouts.utils import sync_active_injuries_to_history
+                    sync_active_injuries_to_history(user_id, user.active_injuries)
+                except Exception as sync_err:
+                    logger.warning(
+                        f"[InjurySync] profile sync failed for {user_id}: {sync_err}",
                         exc_info=True,
                     )
 
