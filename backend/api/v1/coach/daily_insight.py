@@ -216,7 +216,22 @@ def _build_greeting(
     else:
         pool.append({"label": "🏋️ Build me a workout for today"})
     if injury.get("body_part"):
-        pool.append({"label": f"🩹 How's my {injury['body_part']} feeling?"})
+        _bp = injury["body_part"]
+        # Mature injury (past ~2/3 of its expected recovery window) → proactively
+        # offer to RESOLVE or EXTEND it via actionable chips the coach card
+        # dispatches to POST /coach/injury-action (injury-2026-06 Phase 3). Acute/
+        # subacute injuries keep the gentle label-only check-in. Pinned near the
+        # front so a stale injury actually surfaces in the top-3 chips.
+        if injury.get("phase") in ("recovery", "reintroduction"):
+            # body_part at TOP LEVEL — the Dart InsightChip.fromJson harvests
+            # actionContext from top-level scalar keys, not a nested dict.
+            pool.insert(1, {
+                "label": f"🩹 Is my {_bp} better now?",
+                "action": "injury_resolved",
+                "body_part": _bp,
+            })
+        else:
+            pool.append({"label": f"🩹 How's my {_bp} feeling?"})
     if not nourish.get("calories_logged"):
         pool.append({"label": "🍽️ Log what I ate and break it down"})
     if sleep.get("applicable", True) and sleep.get("total_minutes"):
@@ -301,6 +316,13 @@ class ChipModel(BaseModel):
     label: str
     route: Optional[str] = None
     action: Optional[str] = None
+    # Action context for injury check-in chips (injury-2026-06 Phase 3): the
+    # client harvests these top-level scalars into the chip's actionContext and
+    # forwards them to POST /coach/injury-action. Without declaring them here
+    # Pydantic strips them from the response and the action call fails its
+    # "body_part or injury_id required" guard.
+    body_part: Optional[str] = None
+    injury_id: Optional[str] = None
 
 
 class DailyInsightResponse(BaseModel):
