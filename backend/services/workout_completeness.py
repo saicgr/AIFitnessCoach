@@ -203,7 +203,7 @@ async def ensure_complete_workout(
                         ("name", "movement_pattern", "category", "target_muscle")).lower()
         return "stretch" in blob or "mobility" in blob
 
-    def _admit(cand: Dict[str, Any]) -> bool:
+    def _admit(cand: Dict[str, Any], allow_stretch: Optional[bool] = None) -> bool:
         k = _key(cand)
         if not k or k in seen:
             return False
@@ -212,7 +212,8 @@ async def ensure_complete_workout(
             return False
         if (cand.get("name") or "").strip().lower() in avoided_lower:
             return False
-        if not _allow_stretch and _is_stretch_cand(cand):
+        _stretch_ok = _allow_stretch if allow_stretch is None else allow_stretch
+        if not _stretch_ok and _is_stretch_cand(cand):
             return False
         if not _is_injury_safe(cand, injury_muscles):
             return False
@@ -272,6 +273,26 @@ async def ensure_complete_workout(
                 f"🧩 [Completeness] Backfilled {added} from RAG cascade "
                 f"(tier={tier}, now {distinct_count(exercises)}/{target})"
             )
+            # injury-2026-06 FM-3b — last-resort stretch top-up: if a heavily
+            # injury-constrained user (e.g. bodyweight + 3 injuries) still can't
+            # reach the FLOOR with real movements, add safe stretches as a final
+            # cooldown block so the session is never absurdly thin. Real work is
+            # already maximized above; this only fires below floor and only on a
+            # strength/non-mobility workout (mobility already allowed stretches).
+            if not _allow_stretch and distinct_count(exercises) < floor:
+                topped = 0
+                for cand in (cascade or []):
+                    if distinct_count(exercises) >= floor:
+                        break
+                    if _admit(cand, allow_stretch=True):
+                        _add(cand)
+                        topped += 1
+                if topped:
+                    logger.info(
+                        f"🧩 [Completeness] Stretch top-up: added {topped} safe "
+                        f"mobility move(s) to reach floor {floor} "
+                        f"(now {distinct_count(exercises)}) — real-safe pool exhausted"
+                    )
         except Exception as e:  # noqa: BLE001 — fail open, keep what we have
             logger.warning(f"⚠️ [Completeness] RAG backfill raised, keeping current: {e}")
 
