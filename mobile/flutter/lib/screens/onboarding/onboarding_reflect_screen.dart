@@ -109,7 +109,11 @@ class _OnboardingReflectScreenState
   List<TextSpan> _echoSpans(PreAuthQuizData quiz, TextStyle base) {
     final bold = base.copyWith(fontWeight: FontWeight.w800);
     final goalPhrase = _goalPhrases[quiz.goal] ?? 'reach your goal';
-    final why = quiz.primaryWhy != null ? _whyPhrases[quiz.primaryWhy] : null;
+    // Echo the user's primary (first-picked) "why".
+    final whyId = (quiz.primaryWhys != null && quiz.primaryWhys!.isNotEmpty)
+        ? quiz.primaryWhys!.first
+        : null;
+    final why = whyId != null ? _whyPhrases[whyId] : null;
     final days = quiz.daysPerWeek;
 
     final spans = <TextSpan>[

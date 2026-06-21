@@ -59,13 +59,15 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
         Icons.wb_sunny_rounded, Color(0xFF14B8A6)),
   ];
 
-  String? _selected;
+  // Multi-select: people are usually driven by more than one reason. All picks
+  // are saved + fed to the AI coach so it can speak to every motivation.
+  final Set<String> _selected = {};
 
   @override
   void initState() {
     super.initState();
     // Prefill for a returning user replaying onboarding.
-    _selected = ref.read(preAuthQuizProvider).primaryWhy;
+    _selected.addAll(ref.read(preAuthQuizProvider).primaryWhys ?? const []);
     _maybeSkip();
   }
 
@@ -83,16 +85,19 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
 
   void _select(String id) {
     HapticFeedback.selectionClick();
-    setState(() => _selected = id);
+    setState(() {
+      if (!_selected.add(id)) _selected.remove(id);
+    });
   }
 
   Future<void> _continue() async {
-    if (_selected == null) return;
+    if (_selected.isEmpty) return;
     HapticFeedback.mediumImpact();
-    await ref.read(preAuthQuizProvider.notifier).setPrimaryWhy(_selected);
+    final picks = _selected.toList();
+    await ref.read(preAuthQuizProvider.notifier).setPrimaryWhys(picks);
     ref.read(posthogServiceProvider).capture(
       eventName: 'onboarding_why_answered',
-      properties: {'why': _selected!},
+      properties: {'whys': picks},
     );
     if (mounted) context.push('/pre-auth-quiz');
   }
@@ -100,7 +105,7 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
   Future<void> _skip() async {
     HapticFeedback.lightImpact();
     // Clear any stale value so a skipped screen does not leave a why on file.
-    await ref.read(preAuthQuizProvider.notifier).setPrimaryWhy(null);
+    await ref.read(preAuthQuizProvider.notifier).setPrimaryWhys(const []);
     ref.read(posthogServiceProvider).capture(
           eventName: 'onboarding_why_skipped',
         );
@@ -167,7 +172,7 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                   const SizedBox(height: 6),
                   Text(
                     'Your reason matters more than any workout plan. '
-                    "We'll keep it in sight as you go.",
+                    "We'll keep it in sight as you go. Pick all that apply.",
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.4,
@@ -184,7 +189,7 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                         final o = _options[i];
                         return _WhyOptionCard(
                           option: o,
-                          selected: _selected == o.id,
+                          selected: _selected.contains(o.id),
                           onTap: () => _select(o.id),
                         )
                             .animate()
@@ -195,7 +200,7 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                   ),
                   const SizedBox(height: 8),
                   _ContinueButton(
-                    enabled: _selected != null,
+                    enabled: _selected.isNotEmpty,
                     onTap: _continue,
                   ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1),
                   const SizedBox(height: 4),

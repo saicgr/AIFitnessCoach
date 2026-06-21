@@ -97,7 +97,7 @@ class PreAuthQuizData {
   // personalize later copy (reflect screen, paywall headline). All three
   // are optional; the "why" screen is skippable so every consumer must
   // tolerate a null value.
-  final String? primaryWhy;    // emotional "why" answer id (e.g. 'keep_up')
+  final List<String>? primaryWhys;  // emotional "why" answer ids (multi-select)
   final List<String>? pastBlockers;  // "what held you back" answer ids (multi-select)
   final int? goalConfidence;   // self-reported confidence, 1-10
 
@@ -168,7 +168,7 @@ class PreAuthQuizData {
     this.referralCode,
     this.coachName,
     this.goalTargetDate,
-    this.primaryWhy,
+    this.primaryWhys,
     this.pastBlockers,
     this.goalConfidence,
   });
@@ -243,7 +243,7 @@ class PreAuthQuizData {
     String? referralCode,
     String? coachName,
     String? goalTargetDate,
-    String? primaryWhy,
+    List<String>? primaryWhys,
     List<String>? pastBlockers,
     int? goalConfidence,
   }) {
@@ -302,7 +302,7 @@ class PreAuthQuizData {
       referralCode: referralCode ?? this.referralCode,
       coachName: coachName ?? this.coachName,
       goalTargetDate: goalTargetDate ?? this.goalTargetDate,
-      primaryWhy: primaryWhy ?? this.primaryWhy,
+      primaryWhys: primaryWhys ?? this.primaryWhys,
       pastBlockers: pastBlockers ?? this.pastBlockers,
       goalConfidence: goalConfidence ?? this.goalConfidence,
     );
@@ -364,7 +364,7 @@ class PreAuthQuizData {
         'referralCode': referralCode,
         'coachName': coachName,
         'goalTargetDate': goalTargetDate,
-        'primaryWhy': primaryWhy,
+        'primaryWhys': primaryWhys,
         'pastBlockers': pastBlockers,
         'goalConfidence': goalConfidence,
       };
@@ -429,7 +429,7 @@ class PreAuthQuizData {
         referralCode: json['referralCode'] as String?,
         coachName: json['coachName'] as String?,
         goalTargetDate: json['goalTargetDate'] as String?,
-        primaryWhy: json['primaryWhy'] as String?,
+        primaryWhys: (json['primaryWhys'] as List<dynamic>?)?.cast<String>(),
         pastBlockers: (json['pastBlockers'] as List<dynamic>?)?.cast<String>(),
         goalConfidence: (json['goalConfidence'] as num?)?.toInt(),
       );
@@ -580,7 +580,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final referralCode = prefs.getString('preAuth_referralCode');
     final coachName = prefs.getString('preAuth_coachName');
     final goalTargetDate = prefs.getString('preAuth_goalTargetDate');
-    final primaryWhy = prefs.getString('preAuth_primaryWhy');
+    final primaryWhys = prefs.getStringList('preAuth_primaryWhys');
     final pastBlockers = prefs.getStringList('preAuth_pastBlockers');
     final goalConfidence = prefs.getInt('preAuth_goalConfidence');
 
@@ -641,7 +641,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
         referralCode: referralCode,
         coachName: coachName,
         goalTargetDate: goalTargetDate,
-        primaryWhy: primaryWhy,
+        primaryWhys: primaryWhys,
         pastBlockers: pastBlockers,
         goalConfidence: goalConfidence,
       );
@@ -1103,7 +1103,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       'preAuth_referralCode', 'preAuth_coachName',
       'preAuth_goalTargetDate',
       // Onboarding conversion v6 — engagement-only fields
-      'preAuth_primaryWhy', 'preAuth_pastBlockers', 'preAuth_goalConfidence',
+      'preAuth_primaryWhys', 'preAuth_pastBlockers', 'preAuth_goalConfidence',
     ];
     for (final key in keysToRemove) {
       await prefs.remove(key);
@@ -1199,14 +1199,14 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
 
   /// Persist the emotional "why" answer. Pass null when the user skips the
   /// screen so a stale value from an earlier attempt does not linger.
-  Future<void> setPrimaryWhy(String? why) async {
+  Future<void> setPrimaryWhys(List<String> whys) async {
     final prefs = await SharedPreferences.getInstance();
-    if (why == null || why.isEmpty) {
-      await prefs.remove('preAuth_primaryWhy');
-      state = state.copyWith(primaryWhy: null);
+    if (whys.isEmpty) {
+      await prefs.remove('preAuth_primaryWhys');
+      state = state.copyWith(primaryWhys: null);
     } else {
-      await prefs.setString('preAuth_primaryWhy', why);
-      state = state.copyWith(primaryWhy: why);
+      await prefs.setStringList('preAuth_primaryWhys', whys);
+      state = state.copyWith(primaryWhys: whys);
     }
   }
 

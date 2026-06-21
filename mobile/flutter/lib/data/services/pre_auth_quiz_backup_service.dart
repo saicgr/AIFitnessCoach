@@ -103,6 +103,10 @@ class PreAuthQuizBackupService {
         payload['date_of_birth'] = quizData.dateOfBirth!.toIso8601String().split('T').first;
       }
       if (quizData.isTrainer != null) payload['is_trainer'] = quizData.isTrainer;
+      // Multi-select "what's driving this" — persisted + fed to the AI coach/card.
+      if (quizData.primaryWhys != null && quizData.primaryWhys!.isNotEmpty) {
+        payload['primary_whys'] = quizData.primaryWhys;
+      }
       // Multi-select "what held you back" — persisted + fed to the AI coach/card.
       if (quizData.pastBlockers != null && quizData.pastBlockers!.isNotEmpty) {
         payload['past_blockers'] = quizData.pastBlockers;

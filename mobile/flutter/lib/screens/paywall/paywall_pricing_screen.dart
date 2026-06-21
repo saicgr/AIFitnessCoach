@@ -107,7 +107,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       final posthog = ref.read(posthogServiceProvider);
       // Onboarding conversion v6: attribute the view to the user's "why"
       // so the personalized-headline variant can be measured.
-      final primaryWhy = ref.read(preAuthQuizProvider).primaryWhy;
+      final primaryWhys = ref.read(preAuthQuizProvider).primaryWhys;
+      final primaryWhy = (primaryWhys != null && primaryWhys.isNotEmpty)
+          ? primaryWhys.first
+          : null;
       posthog.capture(
         eventName: 'paywall_pricing_viewed',
         properties: primaryWhy != null ? {'primary_why': primaryWhy} : null,
@@ -1256,7 +1259,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         'feel_strong': 'Your plan to feel strong and capable',
         'energy': 'Your plan for more energy, less stress',
       };
-      final why = quizData.primaryWhy;
+      final whys = quizData.primaryWhys;
+      final why = (whys != null && whys.isNotEmpty) ? whys.first : null;
       if (why != null && whyHeadlines.containsKey(why)) {
         return whyHeadlines[why]!;
       }
