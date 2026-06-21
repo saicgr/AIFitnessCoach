@@ -28,7 +28,14 @@ logger = get_logger(__name__)
 INJURY_TO_AVOIDED_MUSCLES = {
     "shoulder": ["shoulders", "chest", "triceps", "delts", "anterior_delts", "lateral_delts", "rear_delts"],
     "back": ["back", "lats", "lower_back", "traps", "rhomboids", "erector_spinae"],
-    "lower_back": ["lower_back", "back", "erector_spinae", "glutes", "hamstrings"],
+    # Directly-injured region ONLY. The vetted `lower_back_safe` tag in
+    # exercise_safety_index is the safety authority (it already excludes loaded
+    # hinge / spinal flexion / loaded rotation), so avoiding the whole posterior
+    # chain (back/glutes/hamstrings) here was redundant AND harmful — it
+    # down-ranked every vetted-safe loaded leg/back exercise (machine leg press,
+    # lat pulldown, leg extension), leaving an injured full-gym user with only
+    # stretches. Keep avoidance to the lumbar region; let the index gate the rest.
+    "lower_back": ["lower_back", "erector_spinae"],
     "knee": ["quads", "hamstrings", "calves", "legs", "quadriceps", "glutes"],
     "wrist": ["forearms", "biceps", "triceps", "grip"],
     "ankle": ["calves", "legs", "tibialis", "soleus", "gastrocnemius"],

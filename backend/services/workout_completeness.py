@@ -78,7 +78,8 @@ def _key(ex: Dict[str, Any]) -> str:
 
 
 def _lib_key(ex: Dict[str, Any]) -> str:
-    return (ex.get("library_id") or ex.get("exercise_id") or "").strip()
+    # str(): exercise_id can be a native asyncpg UUID — .strip() on it would 500.
+    return str(ex.get("library_id") or ex.get("exercise_id") or "").strip()
 
 
 def distinct_count(exercises: List[Dict[str, Any]]) -> int:

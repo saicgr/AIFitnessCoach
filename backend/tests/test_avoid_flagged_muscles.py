@@ -102,10 +102,14 @@ def test_injury_id_knee_still_avoids_quads_and_calves():
     assert "Back Squat" not in _avoid(["knee"])[0]
 
 
-def test_injury_id_lower_back_unchanged():
-    # lower_back is an injury-map key -> existing broad posterior-chain set.
+def test_injury_id_lower_back_right_sized():
+    # lower_back avoidance is now the lumbar region ONLY (the vetted
+    # `lower_back_safe` index tag gates the rest). The old broad posterior-chain
+    # set (back/glutes/hamstrings) discarded every vetted-safe loaded exercise.
     muscles = set(get_muscles_to_avoid_from_injuries(["lower_back"]))
     assert muscles == set(INJURY_TO_AVOIDED_MUSCLES["lower_back"])
+    assert muscles == {"lower_back", "erector_spinae"}
+    assert not muscles & {"glutes", "hamstrings", "back", "lats"}
 
 
 # --- fail-open / fail-soft -------------------------------------------------

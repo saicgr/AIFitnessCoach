@@ -306,7 +306,14 @@ async def build_plan(
         async with engine.connect() as conn:
             res = await conn.execute(text(sql), params)
             for r in res.fetchall():
-                rows.append({k: v for k, v in r._mapping.items()})
+                row = {k: v for k, v in r._mapping.items()}
+                # asyncpg UUID columns come back as native UUIDs; stringify id
+                # fields so downstream string ops never crash (generation 500).
+                for _id_key in ("exercise_id", "library_id", "id"):
+                    v = row.get(_id_key)
+                    if v is not None and not isinstance(v, str):
+                        row[_id_key] = str(v)
+                rows.append(row)
     except Exception as e:
         logger.error(
             "❌ [SafetyMode] query failed user=%s: %s", ctx.user_id, e

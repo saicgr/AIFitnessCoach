@@ -256,8 +256,17 @@ async def fetch_safe_candidates(
         normalized_focuses = [str(f).lower().strip().replace(" ", "_") for f in focus_areas]
         # full_body / general / unknown focuses keep the original lenient
         # ILIKE behavior — they're meant to be permissive.
-        is_full_body = any(f in ("full_body", "fullbody", "full body", "general", "")
-                           for f in normalized_focuses)
+        # COMPOUND full-body focuses (full_body_push / full_body_pull / …) MUST
+        # count as full-body here: the SAFETY gate should return the broad
+        # injury-safe set; push/pull EMPHASIS is applied later by ranking. The
+        # old exact-match treated "full_body_push" as an unknown focus and
+        # queried a literal "%full_body_push%" against body_part → 0 rows →
+        # empty pool → safety-mode stretches.
+        is_full_body = any(
+            f.startswith("full_body") or f.startswith("fullbody")
+            or f in ("full body", "general", "")
+            for f in normalized_focuses
+        )
         anchored = [f for f in normalized_focuses if f in _FOCUS_SYNONYMS]
 
         if anchored and not is_full_body:
@@ -334,14 +343,18 @@ async def fetch_safe_candidates(
         )
         return []
 
-    # Convert RowMapping to plain dicts.
+    # Convert RowMapping to plain dicts. asyncpg returns UUID columns as native
+    # UUID objects; stringify id fields here so downstream string ops (.strip(),
+    # dedupe keys) never crash on a UUID (the source of a generation 500).
     out: List[Dict[str, Any]] = []
     for row in rows:
         mapping = getattr(row, "_mapping", None)
-        if mapping is not None:
-            out.append(dict(mapping))
-        else:
-            out.append(dict(row))
+        d = dict(mapping) if mapping is not None else dict(row)
+        for _id_key in ("exercise_id", "library_id", "id"):
+            v = d.get(_id_key)
+            if v is not None and not isinstance(v, str):
+                d[_id_key] = str(v)
+        out.append(d)
 
     logger.info(
         "✅ [RAGService] fetch_safe_candidates: %d safe exercises "
@@ -1528,6 +1541,59 @@ class ExerciseRAGService:
                             "%d -> %d candidates (%d removed, injuries=%s)",
                             before_count, len(candidates), dropped, injuries,
                         )
+                    # ── Use the vetted-safe pool DIRECTLY when the semantic
+                    # intersection is thin. ChromaDB's top-K is ranked by
+                    # RELEVANCE, not safety, so for an injured user its hits
+                    # (e.g. Burpees for a lower-back injury) are frequently all
+                    # UNSAFE → intersection collapses to 0, even though dozens of
+                    # vetted-safe LOADED exercises (machine presses, leg press,
+                    # lat pulldown, curls) exist. fetch_safe_candidates IS the
+                    # authoritative injury gate, so BACKFILL from it (shaped as
+                    # candidates; media enriches downstream by id) — the user
+                    # gets a REAL injury-safe workout instead of empty → stretches.
+                    safe_floor = max(12, 2 * int(count or 0))
+                    if len(candidates) < safe_floor:
+                        have_ids = {
+                            str(c.get("id") or c.get("exercise_id") or "").strip()
+                            for c in candidates
+                        }
+                        have_names = {
+                            (c.get("name") or "").strip().lower() for c in candidates
+                        }
+                        added = 0
+                        pool_before = len(candidates)
+                        for r in safe_rows:
+                            if len(candidates) >= safe_floor:
+                                break
+                            rid = str(r.get("exercise_id") or "").strip()
+                            rname = (r.get("name") or "").strip().lower()
+                            if (rid and rid in have_ids) or (rname and rname in have_names):
+                                continue
+                            candidates.append({
+                                "id": rid,
+                                "exercise_id": rid,
+                                "name": r.get("name"),
+                                "target_muscle": r.get("target_muscle"),
+                                "body_part": r.get("body_part"),
+                                "equipment": r.get("equipment"),
+                                "movement_pattern": r.get("movement_pattern"),
+                                "secondary_muscles": [],
+                                # Below ChromaDB semantic hits but clearly
+                                # selectable — these are vetted injury-safe.
+                                "similarity": 0.35,
+                                "from_safe_pool": True,
+                            })
+                            have_ids.add(rid)
+                            have_names.add(rname)
+                            added += 1
+                        if added:
+                            logger.info(
+                                "🛡️  [RAGService] Backfilled %d vetted-safe "
+                                "exercises (pool %d < floor %d) so an injured "
+                                "user gets a real workout, not stretches "
+                                "(injuries=%s).",
+                                added, pool_before, safe_floor, injuries,
+                            )
             except Exception as exc:
                 # Surface the error rather than silently falling back to the
                 # unsafe legacy filter.  The caller can decide to abort or

@@ -1325,7 +1325,9 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     nm = ex.get("name") or ""
                     canon = canonicalize_exercise_name(nm) or nm.lower().strip()
                     canon_key = canon.lower().strip()
-                    lib_id = (ex.get("library_id") or ex.get("exercise_id") or "").strip()
+                    # str(): exercise_id can be a native asyncpg UUID (safety/SQL
+                    # path builds dicts from row._mapping) — .strip() on a UUID 500s.
+                    lib_id = str(ex.get("library_id") or ex.get("exercise_id") or "").strip()
                     if canon_key and canon_key in _seen_canonical:
                         logger.warning(
                             f"[ExerciseDedup] Dropped duplicate canonical name {canon!r}"
