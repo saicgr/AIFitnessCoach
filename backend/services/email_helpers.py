@@ -15,6 +15,13 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from core import branding
 from models.email import TimeBand, ScheduleState, CoachStyle, UserStats
+from services import email_signature_template as _sig
+
+# Mood word → Lucide icon key (Signature zero-emoji rule; replaces the old mood emoji).
+_MOOD_ICON = {
+    "Nudging": "message", "Concerned": "alert", "Disappointed": "x_circle",
+    "Watching": "user", "Proud": "trophy", "Impressed": "flame", "Unimpressed": "user",
+}
 
 
 def lifecycle_open_url(backend_url: str, campaign: str) -> str:
@@ -253,7 +260,7 @@ def build_social_footer_html(
         category_line = (
             f'<p style="margin:0 0 8px;font-size:12px;color:#71717a;">'
             f'Getting too many of these? '
-            f'<a href="{unsubscribe_url}" style="color:#06b6d4;text-decoration:none;">'
+            f'<a href="{unsubscribe_url}" style="color:#F0531E;text-decoration:none;">'
             f"Turn off {category_name}"
             f"</a>"
             f"</p>"
@@ -318,15 +325,16 @@ def build_persona_signature_html(stats: UserStats, context: str = "lifecycle") -
     if context == "cancel":
         return build_achievement_recap_html(stats)
 
-    emoji, mood = persona_mood(stats)
+    _emoji, mood = persona_mood(stats)
+    icon = _sig._icon(_MOOD_ICON.get(mood, "user"), 22, "#F0531E")
     return f"""<tr>
-      <td align="center" style="padding:24px 40px 0;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background:#0f2733;border-radius:12px;">
+      <td style="padding:18px 22px 0;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background:#141417;border:1px solid #1f1f25;border-left:3px solid #F0531E;border-radius:0;">
           <tr>
-            <td style="font-size:22px;padding:12px 0 12px 18px;vertical-align:middle;">{emoji}</td>
-            <td style="padding:12px 18px 12px 10px;vertical-align:middle;">
-              <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#06b6d4;">{stats.coach_name}</p>
-              <p style="margin:0;font-size:13px;color:#a1a1aa;">{mood}</p>
+            <td style="padding:13px 0 13px 16px;vertical-align:middle;">{icon}</td>
+            <td style="padding:13px 18px 13px 11px;vertical-align:middle;">
+              <p style="margin:0;font-family:{_sig.F_LBL};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a8a90;">{stats.coach_name}</p>
+              <p style="margin:0;font-family:{_sig.F_LBL};font-size:13px;letter-spacing:.5px;color:#F0531E;">{mood}</p>
             </td>
           </tr>
         </table>
@@ -380,7 +388,7 @@ def build_achievement_recap_html(stats: UserStats) -> str:
     cell_width_pct = 100 // len(cells)
     cells_html = "".join(
         f'<td width="{cell_width_pct}%" align="center" style="padding:10px 6px;">'
-        f'<p style="margin:0 0 4px;font-size:22px;font-weight:800;color:#ffffff;line-height:1.1;">{value}</p>'
+        f'<p style="margin:0 0 4px;font-family:{_sig.F_DISP};font-size:24px;color:#ffffff;line-height:1.1;">{value}</p>'
         f'<p style="margin:0;font-size:10px;color:#a1a1aa;letter-spacing:1.4px;text-transform:uppercase;">{label}</p>'
         f"</td>"
         for value, label in cells
@@ -388,10 +396,10 @@ def build_achievement_recap_html(stats: UserStats) -> str:
 
     return f"""<tr>
       <td align="center" style="padding:24px 32px 0;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#0f2733;border-radius:14px;border:1px solid #1e3a47;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#141417;border-radius:14px;border:1px solid #1f1f25;">
           <tr>
             <td style="padding:16px 18px 4px;">
-              <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#06b6d4;text-align:center;">Here's what you built</p>
+              <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#F0531E;text-align:center;">Here's what you built</p>
             </td>
           </tr>
           <tr>
@@ -419,9 +427,9 @@ def build_zero_state_row_html(stats: UserStats) -> str:
         color = "#3f3f46" if muted else "#ffffff"
         return (
             f'<td width="50%" style="padding:8px;">'
-            f'<div style="background:#0f2733;border-radius:12px;padding:18px 14px;text-align:center;border:1px solid #1e3a47;">'
+            f'<div style="background:#141417;border-radius:12px;padding:18px 14px;text-align:center;border:1px solid #1f1f25;">'
             f'<p style="margin:0 0 4px;font-size:22px;font-weight:800;color:{color};line-height:1.1;">{value}</p>'
-            f'<p style="margin:0;font-size:11px;color:#71717a;letter-spacing:0.5px;text-transform:uppercase;">{label}</p>'
+            f'<p style="margin:0;font-family:{_sig.F_LBL};font-size:11px;color:#8a8a90;letter-spacing:0.8px;text-transform:uppercase;">{label}</p>'
             f"</div>"
             f"</td>"
         )
@@ -444,16 +452,16 @@ def build_stats_grid_html(stats: UserStats) -> str:
     collapses.
     """
     workouts = str(stats.workouts_total) if stats.workouts_total else "—"
-    streak = f"{stats.current_streak_days} 🔥" if stats.current_streak_days else "—"
+    streak = f"{stats.current_streak_days}" if stats.current_streak_days else "—"
     meals = f"{stats.nutrition_days_logged_this_week}/7 d" if stats.nutrition_days_logged_this_week else "—"
     calories = f"{stats.nutrition_avg_calories_week:,}" if stats.nutrition_avg_calories_week else "—"
 
     def _cell(value: str, label: str) -> str:
         return (
             f'<td width="50%" style="padding:8px;">'
-            f'<div style="background:#0f2733;border-radius:12px;padding:18px 14px;text-align:center;border:1px solid #1e3a47;">'
-            f'<p style="margin:0 0 4px;font-size:22px;font-weight:800;color:#ffffff;line-height:1.1;">{value}</p>'
-            f'<p style="margin:0;font-size:11px;color:#71717a;letter-spacing:0.5px;text-transform:uppercase;">{label}</p>'
+            f'<div style="background:#141417;border-radius:12px;padding:18px 14px;text-align:center;border:1px solid #1f1f25;">'
+            f'<p style="margin:0 0 4px;font-family:{_sig.F_DISP};font-size:24px;color:#ffffff;line-height:1.1;">{value}</p>'
+            f'<p style="margin:0;font-family:{_sig.F_LBL};font-size:11px;color:#8a8a90;letter-spacing:0.8px;text-transform:uppercase;">{label}</p>'
             f"</div>"
             f"</td>"
         )
@@ -539,7 +547,7 @@ def build_first_workout_stats_grid(
     """
     # Top row mirrors the weekly grid: workouts + streak.
     workouts = str(stats.workouts_total) if stats.workouts_total else "—"
-    streak = f"{stats.current_streak_days} 🔥" if stats.current_streak_days else "—"
+    streak = f"{stats.current_streak_days}" if stats.current_streak_days else "—"
 
     # Bottom-left: meals this week. EDGE CASE — a brand-new user almost
     # certainly has 0 meals logged on day 1; "0/7" reads as "you failed at
@@ -566,9 +574,9 @@ def build_first_workout_stats_grid(
     def _cell(value: str, label: str) -> str:
         return (
             f'<td width="50%" style="padding:8px;">'
-            f'<div style="background:#0f2733;border-radius:12px;padding:18px 14px;text-align:center;border:1px solid #1e3a47;">'
-            f'<p style="margin:0 0 4px;font-size:22px;font-weight:800;color:#ffffff;line-height:1.1;">{value}</p>'
-            f'<p style="margin:0;font-size:11px;color:#71717a;letter-spacing:0.5px;text-transform:uppercase;">{label}</p>'
+            f'<div style="background:#141417;border-radius:12px;padding:18px 14px;text-align:center;border:1px solid #1f1f25;">'
+            f'<p style="margin:0 0 4px;font-family:{_sig.F_DISP};font-size:24px;color:#ffffff;line-height:1.1;">{value}</p>'
+            f'<p style="margin:0;font-family:{_sig.F_LBL};font-size:11px;color:#8a8a90;letter-spacing:0.8px;text-transform:uppercase;">{label}</p>'
             f"</div>"
             f"</td>"
         )
@@ -597,7 +605,7 @@ def build_nutrition_grid_html(stats: UserStats) -> str:
         # Not using the feature yet — surface a gentle prompt, not an empty grid.
         return f"""<tr>
       <td style="padding:20px 32px 0;">
-        <div style="background:#0f2733;border-radius:12px;padding:18px 16px;border:1px dashed #1e3a47;text-align:center;">
+        <div style="background:#141417;border-radius:12px;padding:18px 16px;border:1px dashed #1f1f25;text-align:center;">
           <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#ffffff;">Nutrition is blank</p>
           <p style="margin:0;font-size:12px;color:#71717a;line-height:1.5;">
             {stats.coach_name} can only coach what you log. Tap Nutrition in the app to start — photo, barcode, or typing all work.
@@ -614,16 +622,16 @@ def build_nutrition_grid_html(stats: UserStats) -> str:
     def _cell(value: str, label: str) -> str:
         return (
             f'<td width="50%" style="padding:8px;">'
-            f'<div style="background:#0f2733;border-radius:12px;padding:18px 14px;text-align:center;border:1px solid #1e3a47;">'
-            f'<p style="margin:0 0 4px;font-size:22px;font-weight:800;color:#ffffff;line-height:1.1;">{value}</p>'
-            f'<p style="margin:0;font-size:11px;color:#71717a;letter-spacing:0.5px;text-transform:uppercase;">{label}</p>'
+            f'<div style="background:#141417;border-radius:12px;padding:18px 14px;text-align:center;border:1px solid #1f1f25;">'
+            f'<p style="margin:0 0 4px;font-family:{_sig.F_DISP};font-size:24px;color:#ffffff;line-height:1.1;">{value}</p>'
+            f'<p style="margin:0;font-family:{_sig.F_LBL};font-size:11px;color:#8a8a90;letter-spacing:0.8px;text-transform:uppercase;">{label}</p>'
             f"</div>"
             f"</td>"
         )
 
     return f"""<tr>
       <td style="padding:6px 32px 0;">
-        <p style="margin:0 0 4px;font-size:11px;color:#06b6d4;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;">Nutrition · Last 7 days</p>
+        <p style="margin:0 0 4px;font-size:11px;color:#F0531E;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;">Nutrition · Last 7 days</p>
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tr>{_cell(days, "Days logged")}{_cell(cal, "Avg cal/day")}</tr>
           <tr>{_cell(prot, "Avg protein")}{_cell(today, "Logged today")}</tr>
