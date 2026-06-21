@@ -139,10 +139,14 @@ class _OnboardingValueScreenState
                       color: t.textSecondary,
                     ),
                   ).animate().fadeIn(delay: 120.ms),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+                  // Only the competitor "problem" rows + total live in the
+                  // scroll region — they're the anchor, not the sell. They
+                  // almost always fit; on a tiny phone they scroll WITHOUT ever
+                  // hiding the answer below.
                   Expanded(
                     child: ListView(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 4),
                       children: [
                         // Competitor price rows.
                         for (var i = 0; i < _competitors.length; i++)
@@ -163,36 +167,38 @@ class _OnboardingValueScreenState
                           reduceMotion: reduceMotion,
                           money: _money,
                         ).animate().fadeIn(delay: 440.ms),
-                        const SizedBox(height: 18),
-                        // The Zealova replacement card.
-                        _ZealovaCard(
-                          priceLabel: _money(_zealovaUsd),
-                        ).animate().fadeIn(delay: 560.ms).slideY(begin: 0.06),
-                        const SizedBox(height: 14),
-                        // Saving line.
-                        Center(
-                          child: Text(
-                            'That is ${_money(saving)} less every month.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: t.selectionAccent,
-                            ),
-                          ),
-                        ).animate().fadeIn(delay: 680.ms),
-                        const SizedBox(height: 12),
-                        Text(
-                          footnote,
-                          style: TextStyle(
-                            fontSize: 11,
-                            height: 1.4,
-                            color: t.textMuted,
-                          ),
-                        ).animate().fadeIn(delay: 760.ms),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  // ── PINNED SELL ── the Zealova answer + saving + CTA never
+                  // scroll off-screen, so the price anchor always lands before
+                  // the paywall. (Was inside the ListView → below the fold on
+                  // small phones, which hid the whole value prop.)
+                  const SizedBox(height: 14),
+                  _ZealovaCard(
+                    priceLabel: _money(_zealovaUsd),
+                  ).animate().fadeIn(delay: 560.ms).slideY(begin: 0.06),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Text(
+                      'That is ${_money(saving)} less every month.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: t.selectionAccent,
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 680.ms),
+                  const SizedBox(height: 10),
+                  Text(
+                    footnote,
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.4,
+                      color: t.textMuted,
+                    ),
+                  ).animate().fadeIn(delay: 760.ms),
+                  const SizedBox(height: 12),
                   _ValueContinueButton(onTap: _continue)
                       .animate()
                       .fadeIn(delay: 820.ms)

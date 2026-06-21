@@ -1440,7 +1440,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               letterSpacing: -0.4,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
 
           // ⚡ N× FASTER comparison hero — VALUE-FIRST placement: the derived
           // per-user multiplier hits immediately after the headline, before
@@ -1462,10 +1462,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 accent: _paywallAccent,
               );
             }),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
           ],
 
-          const SizedBox(height: 6),
+          const SizedBox(height: 2),
           _TimelineNode(
             icon: Icons.lock_open_rounded,
             iconBg: _paywallAccent.withValues(alpha: 0.15),
@@ -1499,7 +1499,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             isLast: true,
             colors: colors,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
 
           // Plan selection is driven entirely by the two cards below — no
           // trial TOGGLE. Apple's Jan 2026 Guideline 3.1.2c enforcement
