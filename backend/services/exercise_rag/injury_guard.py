@@ -58,6 +58,13 @@ _INJURY_NAME_KEYWORDS: Dict[str, Tuple[str, ...]] = {
 }
 
 
+def _looks_like_stretch(cand: Dict[str, Any]) -> bool:
+    """Heuristic: is this candidate a stretch/mobility move (not real loaded work)?"""
+    blob = " ".join(str(cand.get(k) or "") for k in ("name", "movement_pattern",
+                                                      "target_muscle", "body_part")).lower()
+    return "stretch" in blob or "mobility" in blob
+
+
 def _name_keyword_banned(name_lc: str, injuries: List[str]) -> bool:
     """True if the exercise name contains a contraindicated keyword for any injury."""
     for inj in injuries:
@@ -186,18 +193,27 @@ async def enforce_injury_safety(
             difficulty_ceiling=difficulty_ceiling,
             k=len(dropped) + 25,
         )
-        for cand in cands:
+        # Two passes: REAL loaded movements first, stretches only if the real-safe
+        # pool can't cover the drops. Prevents replacing a dropped squat with a hip
+        # stretch when real safe options (glute bridges, machines) exist.
+        for stretch_pass in (False, True):
+            for cand in cands:
+                if len(added) >= len(dropped):
+                    break
+                cn = (cand.get("name") or "").strip()
+                if not cn or cn.lower() in present:
+                    continue
+                if _name_keyword_banned(cn.lower(), injuries):
+                    continue  # never backfill a canonically-contraindicated movement
+                is_stretch = _looks_like_stretch(cand)
+                if is_stretch and not stretch_pass:
+                    continue  # defer stretches to the fallback pass
+                present.add(cn.lower())
+                repl = _build_replacement(template, cand)
+                safe.append(repl)
+                added.append(cn)
             if len(added) >= len(dropped):
                 break
-            cn = (cand.get("name") or "").strip()
-            if not cn or cn.lower() in present:
-                continue
-            if _name_keyword_banned(cn.lower(), injuries):
-                continue  # never backfill a canonically-contraindicated movement
-            present.add(cn.lower())
-            repl = _build_replacement(template, cand)
-            safe.append(repl)
-            added.append(cn)
 
         logger.warning(
             "🛡️  [InjuryGuard] user=%s injuries=%s dropped %d unsafe (%s), "

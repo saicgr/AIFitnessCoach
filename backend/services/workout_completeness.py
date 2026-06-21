@@ -191,6 +191,18 @@ async def ensure_complete_workout(
     if avoided_muscles and avoided_muscles.get("avoid"):
         injury_muscles |= {m.strip().lower() for m in avoided_muscles["avoid"] if m}
 
+    # injury-2026-06 FM-3b: don't backfill a STRENGTH workout with stretches.
+    # When the injury-safe pool is stretch-heavy (a multi-injury user), the cascade
+    # would otherwise pad the duration target with hip/adductor stretches instead of
+    # real loaded work. Stretches are still allowed for mobility/recovery sessions.
+    _wt = (workout_type or "strength").lower()
+    _allow_stretch = _wt in ("mobility", "recovery", "stretch", "yoga", "cooldown")
+
+    def _is_stretch_cand(cand: Dict[str, Any]) -> bool:
+        blob = " ".join(str(cand.get(k) or "") for k in
+                        ("name", "movement_pattern", "category", "target_muscle")).lower()
+        return "stretch" in blob or "mobility" in blob
+
     def _admit(cand: Dict[str, Any]) -> bool:
         k = _key(cand)
         if not k or k in seen:
@@ -199,6 +211,8 @@ async def ensure_complete_workout(
         if lib and lib in seen_lib:
             return False
         if (cand.get("name") or "").strip().lower() in avoided_lower:
+            return False
+        if not _allow_stretch and _is_stretch_cand(cand):
             return False
         if not _is_injury_safe(cand, injury_muscles):
             return False
