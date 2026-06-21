@@ -42,19 +42,15 @@ def test_dedupe_strip_pattern_handles_uuid():
 # 2. lower_back avoidance is right-sized to the lumbar region only.
 # ---------------------------------------------------------------------------
 
-def test_lower_back_avoidance_is_right_sized():
+def test_lower_back_avoidance_covers_loaded_hinge_muscles():
+    # SAFETY: the /generate-stream path filters injury risk ONLY by avoided
+    # muscles (no vetted-tag gate), so lower_back avoidance must include the
+    # posterior chain (glutes/hamstrings/back) — otherwise loaded hinges
+    # (Barbell Deadlift, Kettlebell Swing, Good Morning) leak into the plan.
     from api.v1.workouts.readiness_utils import get_muscles_to_avoid_from_injuries
 
     avoided = set(get_muscles_to_avoid_from_injuries(["lower_back"]))
-    assert "lower_back" in avoided
-    assert "erector_spinae" in avoided
-    # The over-broad muscles that collapsed the pool must be GONE — the vetted
-    # `lower_back_safe` index tag handles those, not blunt muscle avoidance.
-    for over_broad in ("glutes", "hamstrings", "back", "lats"):
-        assert over_broad not in avoided, (
-            f"{over_broad!r} should not be avoided for a lower_back injury — "
-            "it discarded vetted-safe loaded exercises"
-        )
+    assert {"lower_back", "erector_spinae", "glutes", "hamstrings", "back"} <= avoided
 
 
 def test_other_injuries_still_resolve():

@@ -28,14 +28,15 @@ logger = get_logger(__name__)
 INJURY_TO_AVOIDED_MUSCLES = {
     "shoulder": ["shoulders", "chest", "triceps", "delts", "anterior_delts", "lateral_delts", "rear_delts"],
     "back": ["back", "lats", "lower_back", "traps", "rhomboids", "erector_spinae"],
-    # Directly-injured region ONLY. The vetted `lower_back_safe` tag in
-    # exercise_safety_index is the safety authority (it already excludes loaded
-    # hinge / spinal flexion / loaded rotation), so avoiding the whole posterior
-    # chain (back/glutes/hamstrings) here was redundant AND harmful — it
-    # down-ranked every vetted-safe loaded leg/back exercise (machine leg press,
-    # lat pulldown, leg extension), leaving an injured full-gym user with only
-    # stretches. Keep avoidance to the lumbar region; let the index gate the rest.
-    "lower_back": ["lower_back", "erector_spinae"],
+    # KEEP THE BROAD POSTERIOR-CHAIN SET. The /generate-stream path (the main
+    # onboarding generation) has NO vetted `lower_back_safe` index gate — it
+    # generates via Gemini and relies ENTIRELY on this avoided-muscle list to
+    # filter out contraindicated movements. Narrowing it to the lumbar region
+    # let loaded hinges (Barbell Deadlift, Kettlebell Swing, Good Mornings —
+    # whose PRIMARY muscles are glutes/hamstrings, not lower_back) leak into an
+    # injured user's plan. The RAG path's over-rejection is handled by the
+    # vetted-safe backfill in service.py, not by narrowing this set.
+    "lower_back": ["lower_back", "back", "erector_spinae", "glutes", "hamstrings"],
     "knee": ["quads", "hamstrings", "calves", "legs", "quadriceps", "glutes"],
     "wrist": ["forearms", "biceps", "triceps", "grip"],
     "ankle": ["calves", "legs", "tibialis", "soleus", "gastrocnemius"],
