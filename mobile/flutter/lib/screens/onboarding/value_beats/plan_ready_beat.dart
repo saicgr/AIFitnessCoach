@@ -65,11 +65,18 @@ class PlanReadyFlair extends StatelessWidget {
   final bool compact;
   final bool showHeadline;
 
+  /// When false, the large check seal is dropped entirely and a small ✓ is
+  /// folded into the stat pill instead. Lets a dense host screen (the
+  /// weight-projection reveal) keep the celebratory note without spending
+  /// ~110px of prime above-the-fold space on a decorative seal.
+  final bool showSeal;
+
   const PlanReadyFlair({
     super.key,
     required this.daysPerWeek,
     this.compact = false,
     this.showHeadline = true,
+    this.showSeal = true,
   });
 
   /// "N days/week = M planned workouts/month" using a 4-week month. Guards a
@@ -89,42 +96,44 @@ class PlanReadyFlair extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: sealBox,
-          width: sealBox,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              if (!compact)
-                _Confetti(t: t)
+        if (showSeal) ...[
+          SizedBox(
+            height: sealBox,
+            width: sealBox,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (!compact)
+                  _Confetti(t: t)
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: 150.ms),
+                _Seal(t: t, size: compact ? 52 : 88)
                     .animate()
-                    .fadeIn(duration: 500.ms, delay: 150.ms),
-              _Seal(t: t, size: compact ? 52 : 88)
-                  .animate()
-                  .scale(
-                    begin: const Offset(0.4, 0.4),
-                    end: const Offset(1, 1),
-                    duration: 600.ms,
-                    curve: Curves.elasticOut,
-                  )
-                  .fadeIn(duration: 250.ms),
-            ],
-          ),
-        ),
-        if (showHeadline) ...[
-          const SizedBox(height: 28),
-          Text(
-            'Your plan is ready',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 34,
-              fontWeight: FontWeight.bold,
-              height: 1.15,
-              color: t.textPrimary,
+                    .scale(
+                      begin: const Offset(0.4, 0.4),
+                      end: const Offset(1, 1),
+                      duration: 600.ms,
+                      curve: Curves.elasticOut,
+                    )
+                    .fadeIn(duration: 250.ms),
+              ],
             ),
-          ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.1),
+          ),
+          if (showHeadline) ...[
+            const SizedBox(height: 28),
+            Text(
+              'Your plan is ready',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.bold,
+                height: 1.15,
+                color: t.textPrimary,
+              ),
+            ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.1),
+          ],
+          SizedBox(height: compact ? 14 : 16),
         ],
-        SizedBox(height: compact ? 14 : 16),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
@@ -135,14 +144,25 @@ class PlanReadyFlair extends StatelessWidget {
               width: 1,
             ),
           ),
-          child: Text(
-            _subStat,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: t.accent,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!showSeal) ...[
+                Icon(Icons.check_circle_rounded, size: 17, color: t.accent),
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: Text(
+                  _subStat,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: t.accent,
+                  ),
+                ),
+              ),
+            ],
           ),
         ).animate().fadeIn(delay: 500.ms).scale(begin: const Offset(0.9, 0.9)),
       ],

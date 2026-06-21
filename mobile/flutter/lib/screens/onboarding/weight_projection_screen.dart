@@ -341,7 +341,7 @@ class _WeightProjectionScreenState
     // SingleChildScrollView — a `Flexible` chart here was eating all the height
     // and pushing the Continue button off-screen (the 142px overflow blocker).
     final screenH = MediaQuery.of(context).size.height;
-    final chartHeight = (screenH * 0.26).clamp(170.0, 240.0);
+    final chartHeight = (screenH * 0.205).clamp(150.0, 200.0);
 
     // Pinned CTA — lives in the scaffold's `button` slot (rendered OUTSIDE the
     // scrollable body) so it is always reachable regardless of content height.
@@ -450,11 +450,15 @@ class _WeightProjectionScreenState
                 // screen (a duplicate preview step was deliberately removed).
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 0, bottom: 10),
+                    padding: const EdgeInsets.only(top: 4, bottom: 8),
                     child: PlanReadyFlair(
                       daysPerWeek: workoutDays,
                       compact: true,
                       showHeadline: false,
+                      // Drop the big celebration seal here — it ate ~110px of
+                      // the fold and pushed the "N× faster" proof off-screen.
+                      // A small ✓ in the pill keeps the celebratory beat.
+                      showSeal: false,
                     ),
                   ),
                 ),
@@ -486,7 +490,7 @@ class _WeightProjectionScreenState
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.1);
                 }),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Rate selection chips
                 Text(
@@ -519,7 +523,7 @@ class _WeightProjectionScreenState
                   },
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
 
                 // Chart — fixed responsive height (scrollable body, see chartHeight).
                 SizedBox(
@@ -546,7 +550,7 @@ class _WeightProjectionScreenState
                 _buildSpeedRow(speed, isDark, textPrimary, textSecondary)
                     .animate().fadeIn(delay: 500.ms),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Weight summary stats (phone only — foldable shows in header)
                 Consumer(builder: (context, ref, _) {
