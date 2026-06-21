@@ -295,7 +295,7 @@ class _WeightProjectionScreenState
     // SingleChildScrollView — a `Flexible` chart here was eating all the height
     // and pushing the Continue button off-screen (the 142px overflow blocker).
     final screenH = MediaQuery.of(context).size.height;
-    final chartHeight = (screenH * 0.2).clamp(148.0, 184.0);
+    final chartHeight = (screenH * 0.19).clamp(140.0, 166.0);
 
     // Pinned CTA — lives in the scaffold's `button` slot (rendered OUTSIDE the
     // scrollable body) so it is always reachable regardless of content height.
@@ -404,7 +404,7 @@ class _WeightProjectionScreenState
                 // screen (a duplicate preview step was deliberately removed).
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 8),
+                    padding: const EdgeInsets.only(top: 2, bottom: 6),
                     child: PlanReadyFlair(
                       daysPerWeek: workoutDays,
                       compact: true,
@@ -425,10 +425,10 @@ class _WeightProjectionScreenState
                   return RichText(
                     text: TextSpan(
                       style: TextStyle(
-                        fontSize: 26,
+                        fontSize: 25,
                         fontWeight: FontWeight.bold,
                         color: textPrimary,
-                        height: 1.3,
+                        height: 1.18,
                       ),
                       children: [
                         const TextSpan(text: "At this rate you'll reach your goal by "),
@@ -444,7 +444,7 @@ class _WeightProjectionScreenState
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.1);
                 }),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
                 // Rate selection chips
                 Text(
@@ -477,7 +477,7 @@ class _WeightProjectionScreenState
                   },
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
                 // Chart — fixed responsive height (scrollable body, see chartHeight).
                 SizedBox(
@@ -496,7 +496,7 @@ class _WeightProjectionScreenState
                   ),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
                 // Legend + "⚡ N× faster than going solo" chip + safe-rate
                 // citation. The multiplier is the user's own plan-vs-solo
@@ -504,7 +504,7 @@ class _WeightProjectionScreenState
                 _buildSpeedRow(speed, isDark, textPrimary, textSecondary)
                     .animate().fadeIn(delay: 500.ms),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // Weight summary stats (phone only — foldable shows in header)
                 Consumer(builder: (context, ref, _) {
@@ -1108,32 +1108,20 @@ class _WeightProjectionScreenState
           ),
         ],
         const SizedBox(height: 8),
+        // One compact disclaimer line: the estimate caveat is folded into the
+        // tappable safe-rate citation (the shaded band is self-evident), saving
+        // a whole row so the summary strip clears the fold.
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(Icons.info_outline_rounded,
                 size: 13, color: textSecondary.withValues(alpha: 0.7)),
             const SizedBox(width: 6),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Shaded band is an estimated range — actual results vary.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      height: 1.35,
-                      color: textSecondary.withValues(alpha: 0.85),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  CitationLink(
-                    citation: ScienceCitations.safeRate,
-                    accent: textSecondary,
-                    fontSize: 11,
-                    leading: 'Safe rate: ',
-                  ),
-                ],
+            Flexible(
+              child: CitationLink(
+                citation: ScienceCitations.safeRate,
+                accent: textSecondary,
+                fontSize: 11,
+                leading: 'Estimated range · Safe rate: ',
               ),
             ),
           ],
