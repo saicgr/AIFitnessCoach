@@ -158,6 +158,10 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             except json.JSONDecodeError:
                 current_prefs = {}
 
+        # ALL quiz fields passed BY NAME (the signature is keyword-only past
+        # gym_name). This is what makes onboarding answers persist reliably —
+        # a positional version of this call silently shifted every field and
+        # 500'd the whole save. Never convert these back to positional.
         final_preferences = merge_extended_fields_into_preferences(
             current_prefs,
             request.days_per_week,
@@ -169,32 +173,32 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             request.workout_type,
             request.workout_environment,  # Where they train: commercial_gym, home_gym, home, outdoors
             None,  # gym_name - not used in this endpoint (quick updates)
-            # Enhanced pre-auth quiz fields
-            request.sleep_quality,
-            request.obstacles,
-            request.dietary_restrictions,
-            request.meals_per_day,
-            request.weight_direction,
-            request.weight_change_amount,
-            request.motivations,
-            request.nutrition_goals,
-            request.interested_in_fasting,
-            request.fasting_protocol,
-            request.coach_id,
-            request.training_experience,
-            request.selected_days,
-            # Sleep schedule for fasting optimization
-            request.wake_time,
-            request.sleep_time,
-            # Duration range for flexible workout generation
-            request.workout_duration_min,
-            request.workout_duration_max,
-            # Exercise consistency preference
-            workout_variety=request.workout_variety,
-            # Past blockers — captured-but-unused signal now persisted to prefs
-            # JSONB and read by the 3 AI surfaces.
+            # ── keyword-only quiz fields ──
+            sleep_quality=request.sleep_quality,
+            obstacles=request.obstacles,
+            # Past blockers + why — captured signals persisted to prefs JSONB and
+            # read by the 3 AI surfaces.
             past_blockers=request.past_blockers,
             primary_whys=request.primary_whys,
+            dietary_restrictions=request.dietary_restrictions,
+            meals_per_day=request.meals_per_day,
+            weight_direction=request.weight_direction,
+            weight_change_amount=request.weight_change_amount,
+            motivations=request.motivations,
+            nutrition_goals=request.nutrition_goals,
+            interested_in_fasting=request.interested_in_fasting,
+            fasting_protocol=request.fasting_protocol,
+            coach_id=request.coach_id,
+            training_experience=request.training_experience,
+            workout_days=request.selected_days,
+            # Sleep schedule for fasting optimization
+            wake_time=request.wake_time,
+            sleep_time=request.sleep_time,
+            # Duration range for flexible workout generation
+            workout_duration_min=request.workout_duration_min,
+            workout_duration_max=request.workout_duration_max,
+            # Exercise consistency preference
+            workout_variety=request.workout_variety,
             # Focus areas
             focus_areas=request.focus_areas,
             # Per-equipment owned weights (canonical id -> sorted weights in the

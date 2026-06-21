@@ -450,6 +450,13 @@ def merge_extended_fields_into_preferences(
     workout_type_preference: Optional[str] = None,
     workout_environment: Optional[str] = None,
     gym_name: Optional[str] = None,
+    # ── KEYWORD-ONLY from here on. ──────────────────────────────────────────
+    # Everything below MUST be passed by name. A positional insertion in this
+    # block once shifted every later arg by one and 500'd the entire onboarding
+    # preferences save with "multiple values for argument 'past_blockers'" —
+    # silently losing the user's quiz answers. The `*` makes that class of bug
+    # impossible: no field can ever land in the wrong slot positionally again.
+    *,
     # Enhanced pre-auth quiz fields
     sleep_quality: Optional[str] = None,
     obstacles: Optional[List[str]] = None,

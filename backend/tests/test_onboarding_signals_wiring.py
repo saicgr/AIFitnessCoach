@@ -180,3 +180,60 @@ def test_format_onboarding_preferences_empty_when_no_signals(monkeypatch):
     # No user_id → empty (fail-open).
     assert nodes.format_onboarding_preferences(None) == ""
     assert nodes.format_onboarding_preferences("") == ""
+
+
+# ---------------------------------------------------------------------------
+# Regression: the REAL onboarding.py call site (positional head + keyword tail).
+# A previous all-keyword unit missed that inserting `past_blockers`/`primary_whys`
+# mid-signature shifted onboarding.py's positional args by one → 500 "got
+# multiple values for argument 'past_blockers'" → onboarding answers never saved.
+# ---------------------------------------------------------------------------
+
+def test_merge_matches_onboarding_call_site_and_persists_all_answers():
+    from api.v1.users.models import merge_extended_fields_into_preferences
+
+    # Mirrors api/v1/users/onboarding.py::save_user_preferences exactly:
+    # 10 positional args (through gym_name) then keyword-only quiz fields.
+    prefs = merge_extended_fields_into_preferences(
+        "{}",
+        3,            # days_per_week
+        45,           # workout_duration
+        "full_body",  # training_split
+        None,         # intensity_preference
+        None,         # preferred_time
+        "moderate",   # progression_pace
+        "strength",   # workout_type
+        "home_gym",   # workout_environment
+        None,         # gym_name
+        sleep_quality="fair",
+        obstacles=["travel"],
+        past_blockers=["no time"],
+        primary_whys=["confidence"],
+        dietary_restrictions=["vegan"],
+        workout_days=[0, 2, 4],
+        workout_variety="consistent",
+    )
+    # The user's answers must land in the RIGHT keys (not shifted).
+    assert prefs["days_per_week"] == 3
+    assert prefs["workout_duration"] == 45
+    assert prefs["training_split"] == "full_body"
+    assert prefs["workout_days"] == [0, 2, 4]
+    assert prefs["sleep_quality"] == "fair"
+    assert prefs["obstacles"] == ["travel"]
+    assert prefs["past_blockers"] == ["no time"]
+    assert prefs["primary_whys"] == ["confidence"]
+    assert prefs["dietary_restrictions"] == ["vegan"]
+    assert prefs["exercise_consistency"] == "consistent"
+
+
+def test_quiz_fields_are_keyword_only_guard():
+    """The `*` guard: quiz fields CANNOT be passed positionally (that's how they
+    got mis-mapped). An 11th positional arg must raise, not silently shift."""
+    from api.v1.users.models import merge_extended_fields_into_preferences
+
+    with pytest.raises(TypeError):
+        merge_extended_fields_into_preferences(
+            "{}", 3, 45, "full_body", None, None,
+            "moderate", "strength", "home_gym", None,
+            "fair",  # would-be positional sleep_quality → must be rejected
+        )
