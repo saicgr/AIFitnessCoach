@@ -178,16 +178,26 @@ class QuizDaysSelector extends StatelessWidget {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      option['label'] as String,
-                                      maxLines: 1,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        color: t.textPrimary,
-                                        letterSpacing: -0.3,
+                                  // Fixed-height label box. A bare FittedBox
+                                  // scales long labels ("30-45") down in BOTH
+                                  // dimensions, so the short "<30" rendered
+                                  // taller → an uneven row of chips. Pinning the
+                                  // height makes every chip identical; the inner
+                                  // FittedBox still guards against overflow on
+                                  // very narrow phones.
+                                  SizedBox(
+                                    height: 19,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        option['label'] as String,
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w800,
+                                          color: t.textPrimary,
+                                          letterSpacing: -0.3,
+                                        ),
                                       ),
                                     ),
                                   ),
