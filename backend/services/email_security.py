@@ -15,6 +15,7 @@ import resend
 
 from core import branding
 from core.logger import get_logger
+from services import email_signature_template as sig
 
 logger = get_logger(__name__)
 
@@ -46,7 +47,6 @@ class EmailSecurityMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = get_settings().email_logo_url
         # Sign-out URL is opaque to the email; the backend resolves the
         # device_id token from the link. None → hide the button rather than
         # ship a broken link.
@@ -56,123 +56,41 @@ class EmailSecurityMixin:
             "%B %-d, %-I:%M%p UTC"
         )
         display_name = (first_name or "there").split()[0]
-        platform_label = (platform or "").lower()
-        device_emoji = (
-            "&#128241;" if platform_label in ("ios", "android") else "&#128187;"
-        )
         safe_device = device_label or "Unknown device"
         safe_location = location or "Unknown location"
         safe_ip = ip or "Unknown IP"
 
         subject = f"New sign-in to your {branding.APP_NAME} account, {display_name}"
 
-        revoke_block = ""
+        # Signature design — centered Anton hero + key/value detail card. The
+        # detail rows mirror the original (Device / Location / IP / When); the
+        # revoke CTA renders only when we have a working link.
+        detail_rows = [
+            ("Device", safe_device),
+            ("Location", safe_location),
+            ("IP", safe_ip),
+            ("When", when),
+        ]
+        body_html = sig.detail_block(detail_rows)
         if revoke_url:
-            revoke_block = f"""
-            <tr>
-              <td align="center" style="padding:8px 40px 32px;">
-                <a href="{revoke_url}"
-                   style="display:inline-block;padding:14px 28px;background:#ef4444;color:#ffffff;
-                          text-decoration:none;font-size:14px;font-weight:600;border-radius:10px;">
-                  Sign out of this device
-                </a>
-                <p style="margin:14px 0 0;font-size:12px;color:#71717a;line-height:1.5;">
-                  If the link doesn't work, open the {branding.APP_NAME} app → Settings → Security → Manage devices.
-                </p>
-              </td>
-            </tr>"""
+            body_html += sig.pill_cta(
+                "This wasn't me — secure my account", revoke_url
+            )
 
-        html_content = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New sign-in to your {branding.APP_NAME} account</title>
-</head>
-<body style="margin:0;padding:0;background-color:#000000;
-             font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-         style="background-color:#000000;min-height:100vh;">
-    <tr>
-      <td align="center" style="padding:40px 16px;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-               style="max-width:560px;background-color:#0f0f0f;border-radius:20px;
-                      overflow:hidden;border:1px solid #1a1a1a;">
-          <tr>
-            <td style="background:linear-gradient(135deg,#dc2626 0%,#f97316 100%);
-                       height:4px;font-size:0;line-height:0;">&nbsp;</td>
-          </tr>
-          <tr>
-            <td align="center" style="padding:36px 40px 12px;">
-              <img src="{logo_url}" alt="{branding.APP_NAME}" width="64" height="64"
-                   style="display:block;border-radius:14px;border:0;width:64px;height:64px;object-fit:cover;">
-              <p style="margin:14px 0 0;font-size:11px;font-weight:700;letter-spacing:3px;
-                        text-transform:uppercase;color:#a1a1aa;">ZEALOVA &middot; SECURITY</p>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding:8px 40px 24px;">
-              <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">
-                New sign-in to your account
-              </h1>
-              <p style="margin:14px 0 0;font-size:14px;color:#a1a1aa;line-height:1.6;">
-                Hi {display_name}, a new device just signed into your {branding.APP_NAME} account.
-                If this was you, no action is needed. If you don't recognize it,
-                sign out below and change your password.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 32px 24px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                     style="background-color:#171717;border-radius:14px;border:1px solid #262626;">
-                <tr>
-                  <td style="padding:18px 22px;">
-                    <p style="margin:0 0 4px;font-size:11px;color:#71717a;
-                              letter-spacing:1.5px;text-transform:uppercase;font-weight:600;">Device</p>
-                    <p style="margin:0;font-size:15px;color:#ffffff;font-weight:600;">
-                      {device_emoji} &nbsp; {safe_device}
-                    </p>
-                  </td>
-                </tr>
-                <tr><td style="padding:0 22px;"><div style="height:1px;background:#262626;"></div></td></tr>
-                <tr>
-                  <td style="padding:18px 22px;">
-                    <p style="margin:0 0 4px;font-size:11px;color:#71717a;
-                              letter-spacing:1.5px;text-transform:uppercase;font-weight:600;">Location</p>
-                    <p style="margin:0;font-size:15px;color:#ffffff;">{safe_location}</p>
-                    <p style="margin:6px 0 0;font-size:12px;color:#71717a;font-family:monospace;">{safe_ip}</p>
-                  </td>
-                </tr>
-                <tr><td style="padding:0 22px;"><div style="height:1px;background:#262626;"></div></td></tr>
-                <tr>
-                  <td style="padding:18px 22px;">
-                    <p style="margin:0 0 4px;font-size:11px;color:#71717a;
-                              letter-spacing:1.5px;text-transform:uppercase;font-weight:600;">When</p>
-                    <p style="margin:0;font-size:15px;color:#ffffff;">{when}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {revoke_block}
-          <tr>
-            <td style="padding:0 40px 28px;">
-              <p style="margin:0;font-size:12px;color:#52525b;line-height:1.6;">
-                You're receiving this because we detected a sign-in from a device that hadn't
-                accessed your {branding.APP_NAME} account before. Security alerts can't be turned off — they
-                protect your account. Questions? Reach us on
-                <a href="{branding.DISCORD_URL}" style="color:#a1a1aa;">Discord</a> or
-                <a href="{branding.INSTAGRAM_URL}" style="color:#a1a1aa;">Instagram</a>.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>"""
+        html_content = sig.signature_email(
+            header_tag="Security",
+            hero_title="New sign-in",
+            hero_sub=(
+                f"Hi {display_name}, a new device just signed into your "
+                f"{branding.APP_NAME} account. If this was you, you're all set — "
+                "if not, secure your account below and change your password."
+            ),
+            hero_icon="shield_check",
+            body_html=body_html,
+            footer_kind="security",
+            footer_note="Security alerts are always sent and can't be turned off.",
+            preheader=f"New sign-in to your {branding.APP_NAME} account",
+        )
 
         try:
             params: Dict[str, Any] = {

@@ -17,7 +17,7 @@ import resend
 
 from core import branding
 from core.logger import get_logger
-from services.email_helpers import build_social_footer_html
+from services import email_signature_template as sig
 
 logger = get_logger(__name__)
 
@@ -78,11 +78,11 @@ def _prettify_key(key: str) -> str:
 
 
 def _build_result_rows_html(result_summary: Optional[Dict[str, Any]]) -> str:
-    """Render the result_summary dict as a flat 2-column HTML table.
+    """Render the result_summary dict as a signature key/value detail block.
 
     Skips nested objects / arrays past 4 items to keep the email compact.
     Caller is trusted to pass a flat shape from the tool's
-    `emailCaptureResult` prop.
+    `emailCaptureResult` prop. Returns a signature `<tr>` fragment (or "").
     """
     if not result_summary:
         return ""
@@ -104,21 +104,9 @@ def _build_result_rows_html(result_summary: Optional[Dict[str, Any]]) -> str:
         else:
             display = str(value)
 
-        rows.append(
-            '<tr>'
-            f'<td style="padding:10px 16px;border-bottom:1px solid #1f2937;color:#9ca3af;font-size:13px;letter-spacing:0.5px;text-transform:uppercase;">{_prettify_key(key)}</td>'
-            f'<td style="padding:10px 16px;border-bottom:1px solid #1f2937;color:#fafafa;font-size:15px;font-weight:600;text-align:right;">{display}</td>'
-            '</tr>'
-        )
+        rows.append((_prettify_key(key), display))
 
-    return (
-        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
-        'style="width:100%;border-collapse:collapse;background:#09090b;'
-        'border:1px solid #1f2937;border-radius:12px;overflow:hidden;'
-        'margin:24px 0;">'
-        + "".join(rows)
-        + "</table>"
-    )
+    return sig.detail_block(rows)
 
 
 class EmailFreeToolsMixin:
@@ -166,70 +154,34 @@ class EmailFreeToolsMixin:
             f"&referrer=utm_source%3Demail%26utm_medium%3Dfreetool%26utm_content%3D{tool_slug}"
         )
 
-        social_footer = build_social_footer_html()
+        body_html = (
+            sig.callout(
+                "You asked us to save this so you wouldn't lose it. Here it is. "
+                "No spam, no drip campaigns. One follow-up if Zealova for iOS launches."
+            )
+            + result_table
+            + sig.callout(
+                "The math is the same in the Zealova app, but it runs against your "
+                "real training and food logs and adjusts automatically.",
+                link_text="Recompute",
+                link_url=tool_url,
+            )
+            + sig.pill_cta("Get Zealova for Android", play_store_url)
+            + sig.callout(
+                "7-day free trial. $7.99/mo or $59.99/yr after. iOS launching soon."
+            )
+        )
 
-        html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{copy['subject']}</title>
-</head>
-<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0a0a0a;">
-    <tr>
-      <td align="center" style="padding:40px 20px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;background:#0a0a0a;">
-          <tr>
-            <td style="padding:0 0 32px 0;">
-              <p style="margin:0;color:#10b981;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Zealova</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 0 8px 0;">
-              <p style="margin:0;color:#10b981;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">{copy['headline']}</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 0 16px 0;">
-              <h1 style="margin:0;color:#fafafa;font-size:28px;line-height:1.25;font-weight:800;letter-spacing:-0.5px;">Hi {first_name_fallback}, here's your result.</h1>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 0 8px 0;">
-              <p style="margin:0;color:#a1a1aa;font-size:15px;line-height:1.6;">
-                You asked us to save this so you wouldn't lose it. Here it is. No spam, no drip campaigns. One follow-up if Zealova for iOS launches.
-              </p>
-            </td>
-          </tr>
-          {result_table}
-          <tr>
-            <td style="padding:8px 0 24px 0;">
-              <p style="margin:0;color:#a1a1aa;font-size:14px;line-height:1.6;">
-                Open <a href="{tool_url}" style="color:#34d399;text-decoration:none;font-weight:600;">{copy['headline']}</a> any time to recompute. The math is the same in the Zealova app, but it runs against your real training and food logs and adjusts automatically.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 0 12px 0;">
-              <a href="{play_store_url}" style="display:inline-block;padding:14px 28px;background:#10b981;color:#0a0a0a;font-size:15px;font-weight:700;text-decoration:none;border-radius:12px;">Get Zealova for Android</a>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 0 32px 0;">
-              <p style="margin:0;color:#52525b;font-size:12px;line-height:1.6;">
-                7-day free trial. $7.99/mo or $59.99/yr after. iOS launching soon.
-              </p>
-            </td>
-          </tr>
-          {social_footer}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>"""
+        html_content = sig.signature_email(
+            header_tag="Your result",
+            hero_title=f"Hi {first_name_fallback}, here's your result.",
+            hero_sub=copy["headline"],
+            hero_icon="activity",
+            body_html=body_html,
+            footer_kind="transactional",
+            footer_note="You received this because you used a free Zealova tool.",
+            preheader=copy["subject"],
+        )
 
         try:
             params = {
