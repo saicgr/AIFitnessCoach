@@ -4,6 +4,8 @@
 
 **Parsed:** 2026-06-18 from the board screenshots, then cross-checked against actual Zealova code by 5 parallel codebase-verification agents (Flutter `mobile/flutter/lib/` + `backend/`), then synthesised + de-duplicated here.
 
+**2026-06-20 Reddit addendum (§8):** a second, deeper demand source — **two Reddit threads about Gravl with their full comment sections** (dev replies from `juliang8`): (1) a detailed **Strength Score critique** and (2) a **Bodyweight-only / Travel-mode + community-gym-catalog** request. Re-verified against actual Zealova code by 3 parallel Explore agents on 2026-06-20. These threads go far deeper than the board's one-line votes and let us compare *mechanism-to-mechanism* — and they confirm Zealova already ships the exact fixes the Gravl dev only *proposes*. The §8 findings also **supersede three now-stale board entries** (travel mode marked 🔴 GAP on 2026-06-18 actually shipped the same day in the "Four-feature build 2026-06").
+
 **Why this matters:** Gravl's board is the cleanest available read on what workout-AI users actually want from a competitor we directly fight for the same users. Pairs with `gravl_roadmap.md` (their shipped-feature tracking) and the nutrition-side `amy_feature_requests_audit.md` / `macrofactor_roadmap.md`.
 
 **Headline finding:** Zealova **already matches or beats the overwhelming majority of Gravl's most-requested features — including Gravl's #1 most-voted request of all time, Injury Recognition (797 votes), which we ship end-to-end and deeper.** Every flagship beg on their board (sick mode, reassign-don't-skip, custom equipment, AI chat, body-photo analysis, automatic deload, recovery editing) is already live in Zealova, frequently with more depth. So this is **not a build-list** — it is (1) a **confidence doc** (we are ahead of our primary workout rival on their own users' top demands), (2) a **short list of genuine net-new gaps**, and (3) **positioning wedges**. The genuine gaps are narrow and mostly integration-shaped (Apple Watch app, Zepp, half-reps, travel mode, calendar sync).
@@ -33,6 +35,7 @@ Same scheme as `caloriii_competitor_audit.md` / `amy_feature_requests_audit.md`:
 | **Monetization gaps** | Lifetime + Family plan (we're single-tier monthly/yearly per `project_pricing`). |
 | **Where we clearly win** | Injury-aware programming (their #1!), periodization depth, recovery/readiness check-ins, gym profiles + AI equipment-photo import, native Wear OS app, the **entire nutrition + meal-planning category** Gravl lacks, real in-app social + buddy workouts, AI body scan, multi-agent chat coach, 36 locales. |
 | **Their cons / regression-guards** | They are still *building* injury features (Injury Recognition listed as their #1 unmet beg) that Zealova already ships; their board shows many unmet basic begs (bodyweight workouts, cardio in routine, rep ranges) that are table stakes for us. |
+| **2026-06-20 Reddit signal (§8)** | Two deep Reddit threads reinforce the lead. Gravl's most-detailed public **Strength Score critique** (narrow whitelist, 90-day collapse, 1RM-only, recomp blindness, new-user confusion) is **point-for-point already solved** in Zealova — library resolver (machines count), decay floor, composite volume+consistency+breadth, recomp delta, establishing-zone range. Their **bodyweight/travel/community-catalog** thread is **also shipped** (one-tap Travel Mode, anti-ab-cap bodyweight gen, rep-PRs, community consensus catalog). **Net residual = one infra gap: the community catalog isn't pre-seeded (`GOOGLE_MAPS_API_KEY` is a placeholder → catalog-only).** A third signal (2026-06-18) — a Gravl user begging Gravl's dev for an **HR-aware rest timer** (rest longer when heart rate is still elevated) — is a 🟡 [WIRE] for us: both adaptive rest and live in-workout HR already ship; we're now bridging them (§4.4) on a stack deeper than Gravl's wearable integration. |
 
 ### Pros / cons at a glance
 
@@ -125,7 +128,7 @@ Almost entirely shipped, often deeper than Gravl. Two true gaps: half/fractional
 - [x] **[VERIFY · BACKEND] Low-rep compounds / high-rep isolations** — ✅ SHIPS. Exercise-subcategory rep ranges (5-8 compound / 8-15 isolation). _Added 2026-06-18._
 - [x] **[VERIFY · UI · BACKEND] Strength & hypertrophy goals + powerlifting + periodic training** — ✅ SHIPS. `primary_goal`/`training_style` + 12-week "Ultimate Strength Builder" (powerlifting/periodization tags, 3 variants). _Added 2026-06-18._
 - [x] **[VERIFY · UI · BACKEND] Progressive-overload dashboard + after-success show planned increases** — ✅ SHIPS. `progressive_overload_service` + `stats/widgets/strength_tab.dart` + `exercise_progressions_screen.dart`. _Added 2026-06-18._
-- [x] **[VERIFY · UI · BACKEND] Strength Score + more exercises contributing** — ✅ SHIPS. `strength_score` + `strength_score_card.dart` + per-exercise drill-down. _Added 2026-06-18._
+- [x] **[VERIFY · UI · BACKEND] Strength Score + more exercises contributing** — ✅ SHIPS, ⭐ WE WIN. `strength_score` + `strength_score_card.dart` + per-exercise drill-down. **Deep-verified 2026-06-20 against Gravl's public Strength-Score critique (see §8.1): library-driven muscle resolver (machines/accessories count, not a whitelist), 90-day decay floor (rotation doesn't crater the score), composite of relative-strength + volume-tolerance + consistency + breadth (not 1RM-only), recomp delta, and an establishing-zone score range — Zealova already ships the exact fixes Gravl's dev only proposes.** _Added 2026-06-18; deep-verified 2026-06-20._
 - [x] **[VERIFY · AI · BACKEND] Bodyweight-only workouts + progression (7 votes)** — ✅ SHIPS. Bodyweight detection + `skill_progression.py`. _Added 2026-06-18._
 - [x] **[VERIFY · AI · BACKEND] Warm-ups / more warmup sets / mobility / static stretch (11 votes)** — ✅ SHIPS. WarmupResponse/StretchResponse + warmup_duration/stretch_duration prefs + mobility test. _Added 2026-06-18._
 - [x] **[VERIFY · UI · BACKEND] Multi-week periodized programs (Week X of N)** — ✅ SHIPS. `duration_weeks` + periodization; "Week X of N" chip shipped (per caloriii audit). _Added 2026-06-18._
@@ -133,7 +136,7 @@ Almost entirely shipped, often deeper than Gravl. Two true gaps: half/fractional
 - [ ] **[CHANGE · UI · BACKEND] Save changes applied to next workouts (10 votes)** — 🟡 PARTIAL. Edits log to the current session, not auto-propagated forward. Net-new "apply this change to future sessions" propagation; ties to `feedback_logged_data_durability`. _Added 2026-06-18._
 - [ ] **[NEW · AI · BACKEND] Asymmetrical / unilateral generation + workout symmetry** — 🟡 PARTIAL. `symmetry_score` + `priority_muscles` from body scan exist, but no explicit asymmetric-generation mode. _Added 2026-06-18._
 - [ ] **[NEW · AI · DATA] Sport-specific programs (golf / team sports)** — 🟡 PARTIAL. `generate_sports_programs.py` exists but is not in the live catalog; only basketball logging today. Promote to live catalog. _Added 2026-06-18._
-- [ ] **[CHANGE · AI · UI] Explanation of why score increases/decreases** — 🟡 PARTIAL. `progress_narrative` exists; strength-score-delta explanation is not surfaced on the score card. _Added 2026-06-18._
+- [ ] **[CHANGE · AI · UI] Explanation of why score increases/decreases** — 🟡 PARTIAL. `progress_narrative` exists; strength-score-delta explanation is not surfaced on the score card. **Reinforced by §8.1: Gravl's #1 strength-score frustration is a score dropping during a recomp despite PRs — the backend already computes the recomp delta and establishing flag; this is purely a surfacing job ("maintaining strength while leaner").** _Added 2026-06-18; reinforced 2026-06-20._
 
 ### 4.4 Integrations / Wearables
 
@@ -150,6 +153,7 @@ Strongest cluster of genuine gaps — and the most strategically interesting, be
 - [ ] **[NEW · BACKEND] Runna / TrainingPeaks / RingConn integrations** — 🔴 GAP (low individual votes; cluster signal). _Added 2026-06-18._
 - [ ] **[NEW · BACKEND] Import workouts from social-media video / blogs / PDFs** — 🟡 GAP. PDF/CSV import ships; social-media VIDEO parsing does not. _Added 2026-06-18._
 - [ ] **[NEW · UI] Bluetooth HR strap live on iPhone (see HR while exercising)** — 🟡 PARTIAL. Wear OS live HR ships; iPhone BLE strap does not. _Added 2026-06-18._
+- [~] **[WIRE · AI · UI · BACKEND] HR-aware rest timer (longer rest when heart rate is still elevated)** — 🟡 [WIRE], NOW BUILDING. Both halves already shipped independently but were never connected: adaptive rest (`rest_duration_policy.dart` RIR/RPE+fatigue, `/workouts/rest-suggestion`, `adjustRestTime()` ±s/600s cap, Beast Mode formulas) and live in-workout HR (`liveHeartRateProvider`: BLE chest strap + Wear OS + Health Connect/HealthKit, zones, animated BPM, post-workout HR graph, `calculateMaxHR(age)`). Rest logic never read HR; at t=0 the app auto-advanced with no cardiovascular check; `RestSuggestionRequest` had no HR field. Now being bridged via a deterministic local `HrRecoveryPolicy` (layered target: HRR/Karvonen → zone-based → relative-drop), with a Beast-Mode setting Off / **Suggest** (default, non-blocking "❤️ still elevated — rest a bit longer? +30s / Start" nudge) / Recovery-gate (Polar-style hold + auto-advance on recovery, "I'm ready" override, safety cap). On by default whenever a HR source is connected (silent no-op otherwise); `/workouts/rest-suggestion` now takes optional HR fields and nudges suggestion + reasoning. v1 = between-SET rest. Exactly the feature a Gravl user is begging Gravl's dev for (Reddit, 2026-06-18 — pairs with the iPhone-BLE row above; precedent = Polar "Work-Rest Guide" + Garmin recovery-HR, but those live on the watch — Zealova does it in-app off BLE/Health Connect). _Added 2026-06-21._
 - [ ] **[NEW · BACKEND] Import to calendar / iCal / Google Calendar link** — 🔴 GAP. No calendar export. _Added 2026-06-18._
 
 ### 4.5 Cardio
@@ -210,7 +214,7 @@ Mostly shipped; one true locale gap and the narrated-video polish gap.
 - [x] **[VERIFY · UI · BACKEND] Use both kg and lbs (5 votes)** — ✅ SHIPS. lbs/kg with separation (`feedback_weight_unit_separation`). _Added 2026-06-18._
 - [ ] **[NEW · DATA] Hungarian language (1 vote)** — 🔴 GAP. 36 locales ship; Hungarian is a single net-new locale add. _Added 2026-06-18._
 - [ ] **[NEW · AI · UI] Audio-narrated exercise videos** — 🟡 PARTIAL. TTS announcements exist; no narrated video track. (Gravl has "audio guidance in exercise videos" planned.) _Added 2026-06-18._
-- [ ] **[NEW · UI] Travel mode (dedicated)** — 🔴 GAP. Bodyweight exists, but no dedicated travel-mode surface (no-equipment-while-traveling profile). _Added 2026-06-18._
+- [x] **[VERIFY · UI · BACKEND] Travel mode (dedicated)** — ✅ SHIPS (entry was stale — flipped 2026-06-20, see §8.2). One-tap Travel Mode shipped in the "Four-feature build 2026-06": `mobile/flutter/lib/screens/gym_profile/widgets/travel_mode_tile.dart` + `POST /gym-profiles/travel-mode/activate` (find-or-restore-or-create, idempotent), migration 2243 (`is_travel_managed` + partial unique index). Bodyweight+bands, copies your workout schedule, remembers your home gym. _Added 2026-06-18 as GAP; corrected to SHIPS 2026-06-20._
 
 ### 4.11 Monetization
 
@@ -233,7 +237,8 @@ Everything in §4 marked 🔴/🟡 distilled to a single actionable list. This i
 
 **Features:**
 8. **Half / fractional reps** logging.
-9. **Travel mode** (dedicated no-equipment profile).
+8b. **HR-aware rest timer** (🟡 [WIRE], now building) — at t=0, when live HR is available, gate/nudge rest on cardiovascular recovery via the new local `HrRecoveryPolicy` (Suggest default / Recovery-gate option). Both halves (adaptive rest + live in-workout HR) already shipped independently and were never connected. The exact feature a Gravl user is begging Gravl's dev for (Reddit, 2026-06-18); our live-HR-inside-the-workout stack (§4.4) is deeper than Gravl's. _Added 2026-06-21._
+9. ~~**Travel mode** (dedicated no-equipment profile).~~ — ✅ **SHIPPED** (mig 2243 + `travel_mode_tile.dart`); corrected 2026-06-20, see §8.2.
 10. **Save-changes-forward** (propagate an edit to future sessions) — 10 votes; ties to `feedback_logged_data_durability`.
 11. **Asymmetrical / unilateral generation** mode.
 12. **Sport-specific programs** promoted to the live catalog (golf, team sports).
@@ -243,6 +248,12 @@ Everything in §4 marked 🔴/🟡 distilled to a single actionable list. This i
 16. **External workouts auto-count the main streak** (verify/wire).
 17. **Hungarian locale** (single add).
 18. **Audio-narrated exercise videos.**
+
+**New from the 2026-06-20 Reddit threads (§8):**
+20. **Pre-seed the community gym catalog** — set `GOOGLE_MAPS_API_KEY` in Render (currently a placeholder → catalog degrades to catalog-only) and/or seed the `gyms` table. The only genuine residual in the bodyweight/travel thread; matches Gravl's "60K+ Google-Maps gyms" claim. Infra fix, not a feature build (`feedback_infra_root_cause`).
+21. **Fatigue / exercise-order awareness in the strength score** — capture within-session set position so a lift moved later under fatigue isn't misread as strength loss (Gravl's #4 strength-score complaint; we only soften it via "best lift in 90d" + decay today).
+22. **Wire captured RIR/RPE into the composite strength score** — `target_rpe`/`target_rir` are already logged per-set + post-workout but don't yet feed the score. Closes Gravl's "overvalues 1RM, undervalues RIR" complaint with data we already collect.
+23. **Make the establishing-zone UI Oura-explicit** — backend already returns `is_establishing` + a `score_range_low/high` band; surface it as "still learning your strength — showing a range" so new users don't read early calibration as regression (the exact fix Gravl's dev only proposes).
 
 **Pricing research (not a build task):**
 19. **Lifetime + Family plan** SKU decision.
@@ -269,16 +280,18 @@ Everything in §4 marked 🔴/🟡 distilled to a single actionable list. This i
 1. **~6 missing machines** — `add_exercises.py` data adds + instruction-quality gate. Cheapest possible parity win; 3 of these Gravl is still building.
 2. **Half / fractional reps** logging — narrow schema + set-logger change.
 3. **Save-changes-forward** propagation (10 votes) — ties to durable-data invariant work.
-4. **Travel mode** surface (bodyweight engine already exists — mostly a profile + entry point).
+4. ~~**Travel mode** surface~~ — ✅ **SHIPPED** (mig 2243; see §8.2). *New small item in its place:* **set `GOOGLE_MAPS_API_KEY` in Render** so the already-built community gym catalog stops degrading to catalog-only (matches Gravl's "preloaded gyms" claim) — infra config, ~60s.
+5. **Surface the strength-score "why it changed" explanation** — recomp delta + establishing range are already computed; this is purely a score-card UI job that defuses Gravl's #1 strength-score frustration (see §8.1).
 
 **Bigger investments (decide, then build):**
-5. **Native Apple Watch app** — the one large gap begged on both boards; default to a package-first path for v1.
-6. **Automatic / background cardio tracking** + **calendar sync** — the next-most-cited integration gaps.
-7. **Sport-specific programs** to the live catalog (generator already exists).
+6. **Native Apple Watch app** — the one large gap begged on both boards; default to a package-first path for v1.
+7. **Automatic / background cardio tracking** + **calendar sync** — the next-most-cited integration gaps.
+8. **Sport-specific programs** to the live catalog (generator already exists).
+9. **Strength-score fatigue/order + RIR awareness** (§8.1, §8.3 items 21–22) — capture within-session set position and feed already-logged RIR into the composite; closes Gravl's deepest strength-score complaints with data we mostly already have.
 
 **Research, don't build blind:**
-8. **Lifetime + Family plan** SKUs — pricing decision, not a feature (`project_pricing`, `feedback_single_tier_paid`).
-9. **Zepp/Amazfit, Runna, TrainingPeaks, RingConn** — validate per-integration demand before committing engineering.
+10. **Lifetime + Family plan** SKUs — pricing decision, not a feature (`project_pricing`, `feedback_single_tier_paid`).
+11. **Zepp/Amazfit, Runna, TrainingPeaks, RingConn** — validate per-integration demand before committing engineering.
 
 **Positioning / marketing wedges (don't build — message):**
 - "Zealova already ships Gravl's #1 most-requested feature (Injury Recognition) — and we do it deeper." This is the headline competitive line.
@@ -288,4 +301,52 @@ Everything in §4 marked 🔴/🟡 distilled to a single actionable list. This i
 
 ---
 
-**Maintained for:** Zealova workout + product roadmap. Pairs with `caloriii_competitor_audit.md` (all-in-one rival), `amy_feature_requests_audit.md` (text-AI nutrition demand), `gravl_roadmap.md` (Gravl shipped-feature tracking), and `macrofactor_roadmap.md` (nutrition rival). _Created 2026-06-18._
+## 8. Reddit demand signals (2026-06-20) — mechanism-deep, not vote counts
+
+Two Reddit threads about Gravl (with their full comment sections, incl. dev replies from `juliang8`). Unlike the Canny board's one-line votes, these threads expose Gravl's *implementation* in detail — which lets us compare **mechanism-to-mechanism**. The headline: **Zealova already ships the exact fixes Gravl's own dev only describes as future work.** Re-verified by 3 parallel Explore agents against `backend/` + `mobile/flutter/lib/` on 2026-06-20.
+
+### 8.1 Strength Score critique (Reddit: 4 upvotes + long dev thread)
+
+The OP (a 51-yo lifter in a recomp/cut) details how Gravl's Strength Score *misleads* once you leave beginner programming. The Gravl dev (`juliang8`) confirms the design and floats fixes. **Every complaint maps to a mechanism Zealova already shipped** in the "Four-feature build 2026-06" (composite scorer, mig 2244/2278).
+
+| Gravl Strength-Score complaint (Reddit) | Zealova | Evidence (verified) |
+|---|---|---|
+| **Only a narrow hardcoded list of "strength score exercises" counts** per muscle (quads = back squat / DB Bulgarian split squat / DB lunge / front squat); leg press, hack squat, pendulum squat, leg extension **don't count at all** | ⭐ **WE WIN** | Not a whitelist. `services/exercise_muscle_resolver.py` `lookup_library_muscles()` maps **any** library exercise to canonical muscles via priority-ordered text normalization (`text_to_muscles()`), reading the full `exercise_library_cleaned` view. Tiered resolver `strength_calculator_service.py:1077` (`get_exercise_muscle_groups`): static fast-map → AI metadata → **library normalization** → conservative fallback. Leg press / hack squat / pendulum / leg extension all resolve to `quads` and **count toward the composite**. |
+| **90-day rolling window: a lift rotating out >90 days drops the score** even while training improves | ⭐ **WE WIN** | `strength_recalc.py` `_decayed_effective_1rm()` — `_DECAY_GRACE_DAYS=21`, `_DECAY_HALF_LIFE_DAYS=120`, `_DECAY_FLOOR_FRACTION=0.65`. `strength_exercise_bests` (mig 2244) carries each exercise's all-time best forward; a rested lift still contributes a decayed (never <65%) value via `_upsert_exercise_bests()`. Deloads/periodization don't crater the score. |
+| **Overvalues estimated-1RM snapshots; undervalues consistency, workload tolerance, rep quality, autoregulation** | ⭐ **WE WIN** (mostly) | Composite is **not** 1RM-only: `compute_composite_muscle_score()` (`strength_calculator_service.py:674`) = `0.60·S1 (relative strength) + 0.25·S2 (volume tolerance vs MEV/MAV/MRV) + 0.15·S3 (consistency = frequency×recency) + bwDelta`, plus a **non-decreasing breadth bonus** (top-3 distinct lifts blended 60/30/10, can only raise). Over-/under-training are scored (S2 overreaching penalty). *Residual:* rep-quality / RIR not yet fed in (see §8.3). |
+| **Recomp/cut: score dropped despite high volume (16 wkts, 405 sets, 440K lbs), PRs, getting leaner, better fatigue mgmt** | ✅ **SHIPS** (surfacing residual) | `_bodyweight_context_delta()` gives **+5 when strength holds/improves while bodyweight drops >1.5%** (the recomp win) and −3 if gains are mostly mass. FFMI/LBM tracked in `/metrics`; volume/consistency/PRs all surfaced in the **Overload Dashboard** (`/progress/overload-dashboard`, 30d/365d deltas, per-muscle trend "improving/maintaining/declining"). *Residual:* the **explanation** isn't on the score card yet (§5 #14 / §8.3). |
+| **Fatigue & exercise-order: a lift moved later drops under fatigue → read as strength loss**, not context | 🟡 **PARTIAL GAP** | Softened the same way Gravl does — the score uses your **best lift in the 90-day window** (+ decay), so one fatigued session doesn't tank it. But within-session **order/position is not captured** (sets are flattened across the window), so true fatigue-context weighting isn't modeled. Genuine residual (§8.3 #2). |
+| **New users confused during the "establishing" phase** (dev's idea: an Oura-style "silent zone" / show a range / "still being established") | ⭐ **WE WIN** (we already built the dev's proposal) | `compute_composite_muscle_score()` (`strength_calculator_service.py:831`) sets `is_establishing` true until **≥3 sessions/28d AND ≥2 distinct lifts AND ≥14 days** since first set, and emits `score_range_low/high` = composite ±8. The backend literally returns the "show a range while establishing" behavior the Gravl dev says he still needs to design. *Residual:* make the UI copy as explicit as Oura's (§8.3 #5). |
+
+**Dev-thread parity notes (`juliang8`'s stated rationales → how Zealova compares):**
+- *"We lean on free weights because machines aren't comparable across gyms/brands."* → Zealova agrees **only for the honest population-percentile claim**: machine-derived bests are excluded from `population_percentile` via `is_machine_equipment()` (mig 2278). But machines **still fully count** toward the 0–100 composite. Best of both: comparable percentile + machine-inclusive personal score.
+- *"We use your best lift in the last 90 days, not your latest."* → Zealova does this **and** adds carry-forward decay so the score survives beyond 90 days.
+- *"You don't need to do every exercise in the list — no penalty."* → Zealova's breadth bonus is **non-decreasing**: focusing on one lift never lowers your score; doing more *only* raises it.
+- *Dramatic_Tea_/Oura "silent zone" idea* → already implemented as the establishing-zone range (above).
+
+### 8.2 Bodyweight-only / Travel mode + community gym catalog (Reddit: 10 upvotes + dev thread)
+
+OP (Renji7) wants a zero-equipment travel profile; the Gravl dev calls it a long-standing backlog item ("4–6 bodyweight workouts to choose from"); Mo7y proposes **community-maintained gym profiles**; the dev reveals Gravl has **60K+ Google-Maps gym locations as a hidden feature** they want to turn into preloaded equipment profiles; RealNameScott reports the no-equipment workaround **"logs 0 weight"** and is **sometimes ab-heavy**. **Zealova already ships this entire thread** (Four-feature build 2026-06; migs 2241/2242/2243). **This supersedes the stale §4.10/§5/§7 "travel mode = GAP" entries.**
+
+| Gravl bodyweight/travel request (Reddit) | Zealova | Evidence (verified) |
+|---|---|---|
+| **Zero-equipment / bodyweight-only profile for travel** | ✅ **SHIPS** | One-tap **Travel Mode**: `mobile/flutter/lib/screens/gym_profile/widgets/travel_mode_tile.dart` + `POST /gym-profiles/travel-mode/activate` (find-or-restore-or-create, idempotent, mig 2243 `is_travel_managed` + partial unique index). Bodyweight+bands, hotel env, copies your workout days, remembers your home gym for "back to my gym." |
+| **Generate *full* bodyweight workouts, not mostly ab work** (RealNameScott's "two ab exercises" gripe) | ⭐ **WE WIN** | `services/exercise_rag/muscle_balance.py` `enforce_core_cap()` caps core at **2** and `balance_candidate_window()` guarantees push/pull/legs balance before core fills. Directly prevents the ab-stack Gravl's own workaround produces. |
+| **Count toward overall progress/history** (RealNameScott's "logs 0 weight" gripe) | ⭐ **WE WIN** | `muscle_balance.bodyweight_proxy_load_kg()` converts reps→kg-equivalent (pull-up 1.00×BW, push-up 0.65×, squat 0.60×; never fakes, never 0-pads) so bodyweight volume + e1RM are real. `pr_type='reps'` rep-PRs (mig 2241) tracked separately, with first-bodyweight celebration. Identical completion → strength-recalc → PR → trophy path as weighted (`crud_completion.py`). |
+| **Easy switching between gym profiles** | ✅ **SHIPS** | `mobile/flutter/lib/screens/home/widgets/gym_profile_switcher.dart` — one-tap horizontal strip, invalidates `todayWorkoutProvider` to regenerate. |
+| **Community-maintained gym equipment profiles** (Mo7y: "if 10 people report the same equipment, it's probably correct") | ✅ **SHIPS** (infra) | `gyms` + `gym_equipment_reports` + `gym_equipment_consensus` view (mig 2242). One report per (user, gym); **`confirmed = reporter_count ≥ 3`** (`CONSENSUS_MIN_REPORTERS`). `/community-gyms/{id}/report` (upsert), `/{id}/adopt` (create a profile prefilled from consensus, `confirmed_only` option), `/nearby` (consensus-backed). Exactly Mo7y's design. |
+| **Preloaded from a big Google-Maps gym DB** (Gravl's "60,000+ locations") | 🔴 **GAP** (the one genuine residual) | The catalog **grows organically** (each `/nearby` Places hit upserts into `gyms`) but is **not pre-seeded**, and `GOOGLE_MAPS_API_KEY` is a placeholder (`backend/.env:140` = `YOUR_GOOGLE_MAPS_API_KEY_HERE`; `community_gyms.py:68` explicitly short-circuits `YOUR_*` keys → `catalog_only=true`). So today it degrades to catalog-only with no Places lookups and an empty starting catalog. **Action: set the key in Render (+ optionally seed the `gyms` table).** Infra config, not a feature build. |
+
+### 8.3 Net-new residual gaps from these threads (the only real build list from §8)
+
+1. **Pre-seed the community gym catalog** — set `GOOGLE_MAPS_API_KEY` in Render (placeholder today → catalog degrades to catalog-only) and/or seed `gyms`. Matches Gravl's "60K+ preloaded gyms." Infra (`feedback_infra_root_cause`), ~60s + optional seed job.
+2. **Fatigue / exercise-order awareness in the strength score** — capture within-session set position so a deliberately-late lift isn't read as regression.
+3. **Wire captured RIR/RPE into the composite score** — `target_rpe`/`target_rir` already logged per-set + post-workout; not yet scored.
+4. **Surface the strength-score "why it changed" explanation on the score card** — recomp delta + establishing flag are already computed; defuses Gravl's #1 strength-score frustration ("maintaining strength while leaner"). (= §5 #14.)
+5. **Make the establishing-zone UI Oura-explicit** — backend already returns `is_establishing` + `score_range_low/high`; surface "still learning your strength — showing a range."
+
+**Everything else in both threads is already shipped, frequently deeper than Gravl** — which is the same pattern as the rest of this audit.
+
+---
+
+**Maintained for:** Zealova workout + product roadmap. Pairs with `caloriii_competitor_audit.md` (all-in-one rival), `amy_feature_requests_audit.md` (text-AI nutrition demand), `gravl_roadmap.md` (Gravl shipped-feature tracking), and `macrofactor_roadmap.md` (nutrition rival). _Created 2026-06-18; §8 Reddit addendum (Strength-Score critique + Bodyweight/Travel) added 2026-06-20._

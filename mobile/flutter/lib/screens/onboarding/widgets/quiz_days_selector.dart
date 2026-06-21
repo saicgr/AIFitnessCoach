@@ -146,8 +146,14 @@ class QuizDaysSelector extends StatelessWidget {
                             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 14, horizontal: 4),
+                              // Fixed height + centered content so NOTHING
+                              // changes a chip's size: not the label length and
+                              // not the selected border (a 2px border vs 1px
+                              // grows a Container, which made the selected chip
+                              // taller than the rest). All five are identical.
+                              height: 62,
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
                               decoration: BoxDecoration(
                                 gradient: isSelected
                                     ? LinearGradient(

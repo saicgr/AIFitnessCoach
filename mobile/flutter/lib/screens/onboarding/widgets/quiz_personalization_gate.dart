@@ -195,6 +195,12 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
         writeHeight(v);
         setState(() {});
       },
+      // Imperial: ticks are inches, but LABEL whole feet (5', 6', …) at each
+      // foot boundary so the scale reads as height, not raw "70" inches that
+      // don't match the "5 ft 10 in" readout. Metric keeps cm numbers.
+      majorEvery: _heightInCm ? 5 : 6,
+      labelEvery: _heightInCm ? 10 : 12,
+      labelBuilder: _heightInCm ? null : (v) => "${v ~/ 12}'",
     );
   }
 
@@ -884,6 +890,14 @@ class _RulerStrip extends StatefulWidget {
   /// so the expensive rebuild happens exactly once per gesture, not per pixel.
   final ValueChanged<double> onChanged;
 
+  /// Tick cadence + label formatting so the scale reads in the SELECTED unit.
+  /// Defaults (major every 5, label every 10, raw number) suit cm / kg / lb.
+  /// Imperial height overrides them to label whole FEET (5', 6', …) so the
+  /// scale matches the "ft / in" readout instead of showing raw inches.
+  final int majorEvery;
+  final int labelEvery;
+  final String Function(int)? labelBuilder;
+
   const _RulerStrip({
     required this.t,
     required this.min,
@@ -891,6 +905,9 @@ class _RulerStrip extends StatefulWidget {
     required this.value,
     required this.onLiveChanged,
     required this.onChanged,
+    this.majorEvery = 5,
+    this.labelEvery = 10,
+    this.labelBuilder,
   });
 
   @override
@@ -1052,12 +1069,15 @@ class _RulerStripState extends State<_RulerStrip> {
                     itemExtent: _tickSpacing,
                     itemCount: _tickCount,
                     itemBuilder: (context, i) {
-                      final value = widget.min + i;
-                      final isMajor = value % 5 == 0;
-                      final isLabeled = value % 10 == 0;
+                      final value = (widget.min + i).round();
+                      final isMajor = value % widget.majorEvery == 0;
+                      final isLabeled = value % widget.labelEvery == 0;
                       return _RulerTick(
                         isMajor: isMajor,
-                        label: isLabeled ? value.round().toString() : null,
+                        label: isLabeled
+                            ? (widget.labelBuilder?.call(value) ??
+                                value.toString())
+                            : null,
                         tickColor: tickColor,
                         majorTickColor: majorTickColor,
                         labelColor: t.textMuted,
@@ -1119,21 +1139,28 @@ class _RulerTick extends StatelessWidget {
           // A 3-digit label ("170") is wider than the 14px tick slot, so a
           // plain Text wraps it to "17" / "0". Let it render full-width on ONE
           // line, centered over the tick, by lifting the slot's width clamp.
-          OverflowBox(
-            minWidth: 0,
-            maxWidth: 48,
-            alignment: Alignment.center,
-            child: Text(
-              label!,
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.visible,
-              textScaler: TextScaler.noScaling,
-              style: TextStyle(
-                fontSize: 9,
-                height: 1.0,
-                fontWeight: FontWeight.w500,
-                color: labelColor,
+          // The OverflowBox MUST sit inside a fixed-height SizedBox: in a Column
+          // the incoming height is unbounded, and a bare OverflowBox would try
+          // to size to Size(14, Infinity) and throw. The SizedBox bounds it.
+          SizedBox(
+            height: 11,
+            child: OverflowBox(
+              minWidth: 0,
+              maxWidth: 48,
+              maxHeight: 11,
+              alignment: Alignment.center,
+              child: Text(
+                label!,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.visible,
+                textScaler: TextScaler.noScaling,
+                style: TextStyle(
+                  fontSize: 9,
+                  height: 1.0,
+                  fontWeight: FontWeight.w500,
+                  color: labelColor,
+                ),
               ),
             ),
           ),

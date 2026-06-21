@@ -16,6 +16,7 @@ import '../../../l10n/generated/app_localizations.dart';
 /// `none` and `other` have no anatomical region on the body map, so they stay
 /// chip-only and are intentionally absent here.
 const Map<String, List<String>> _injuryToMuscles = {
+  // ── Joint chips → the adjacent muscle region(s) to highlight for feedback.
   // Knees sit between the quads and calves — highlight both.
   'knees': ['quadriceps', 'calves'],
   'shoulders': ['shoulders'],
@@ -28,23 +29,76 @@ const Map<String, List<String>> _injuryToMuscles = {
   'hips': ['glutes', 'adductors'],
   'ankles': ['calves'],
   'neck': ['traps'],
+  // ── Muscle chips → themselves (1:1 with the body map). Tapping the muscle
+  // selects the same chip (see _muscleToInjury), so the two controls stay in
+  // sync. Names must be the backend muscle ids the body map supports (see
+  // packageGroupToBackendMuscle in body_muscle_selector.dart).
+  'upper_back': ['upper_back', 'lats', 'traps'],
+  'chest': ['chest'],
+  'biceps': ['biceps'],
+  'triceps': ['triceps'],
+  'forearms': ['forearms'],
+  'abs': ['abs', 'obliques'],
+  'glutes': ['glutes'],
+  'groin': ['adductors'],
+  'quads': ['quadriceps'],
+  'hamstrings': ['hamstrings'],
+  'calves': ['calves'],
 };
 
-/// Reverse map: backend muscle-group name → the SINGLE injury chip a body tap
-/// should toggle. Because several injuries share a muscle (knees & ankles both
-/// touch `calves`; wrists & elbows both touch `forearms`), a body tap is
-/// resolved to one canonical, unambiguous injury per muscle.
+/// Reverse map: backend muscle-group name → the injury chip a body tap should
+/// toggle. Each muscle now resolves to its DEDICATED muscle chip (the literal
+/// tap target). Joint chips (knees, elbows, wrists, ankles, hips, neck) are
+/// selected from the chip row — you can't tap a "joint" on a muscle map — so
+/// they intentionally have no reverse entry.
 const Map<String, String> _muscleToInjury = {
-  'quadriceps': 'knees',
-  'calves': 'ankles', // calves alone ⇒ ankles; knees still reachable via the chip
+  'quadriceps': 'quads',
+  'hamstrings': 'hamstrings',
+  'glutes': 'glutes',
+  'calves': 'calves',
+  'adductors': 'groin',
+  'abductors': 'groin',
+  'chest': 'chest',
   'shoulders': 'shoulders',
+  'biceps': 'biceps',
+  'triceps': 'triceps',
+  'forearms': 'forearms',
+  'abs': 'abs',
+  'obliques': 'abs',
+  'core': 'abs',
+  'lats': 'upper_back',
+  'upper_back': 'upper_back',
+  'traps': 'upper_back',
   'lower_back': 'lower_back',
-  'forearms': 'wrists', // forearm alone ⇒ wrists; elbows still reachable via the chip
-  'triceps': 'elbows',
-  'glutes': 'hips',
-  'adductors': 'hips',
-  'traps': 'neck',
 };
+
+/// Head-to-toe limitation chip options. `none`/`other` bookend the list; the
+/// middle is ordered top→bottom so the chip grid scans anatomically. Joints +
+/// muscle groups are interleaved by body region. Labels are plain English (the
+/// existing chips were too — not localized).
+const List<(String, String)> _limitationOptions = [
+  ('none', 'None'),
+  ('neck', 'Neck'),
+  ('shoulders', 'Shoulders'),
+  ('upper_back', 'Upper Back'),
+  ('chest', 'Chest'),
+  ('biceps', 'Biceps'),
+  ('triceps', 'Triceps'),
+  ('elbows', 'Elbows'),
+  ('forearms', 'Forearms'),
+  ('wrists', 'Wrists'),
+  ('abs', 'Abs'),
+  ('lower_back', 'Lower Back'),
+  ('hips', 'Hips'),
+  ('glutes', 'Glutes'),
+  ('groin', 'Groin'),
+  ('quads', 'Quads'),
+  ('hamstrings', 'Hamstrings'),
+  ('knees', 'Knees'),
+  ('calves', 'Calves'),
+  ('ankles', 'Ankles'),
+  ('other', 'Other'),
+];
 
 /// Physical limitations selection widget (moved from QuizProgressionConstraints).
 ///
@@ -212,21 +266,16 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                 _buildBodyMap(t),
                 const SizedBox(height: 20),
 
-                // Limitation chips (canonical, complete control)
+                // Limitation chips (canonical, complete control). Built from
+                // _limitationOptions so the head-to-toe set + stagger delays
+                // stay in one place.
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    _buildLimitationChip(t, 'none', 'None', 300.ms),
-                    _buildLimitationChip(t, 'knees', 'Knees', 325.ms),
-                    _buildLimitationChip(t, 'shoulders', 'Shoulders', 350.ms),
-                    _buildLimitationChip(t, 'lower_back', 'Lower Back', 375.ms),
-                    _buildLimitationChip(t, 'wrists', 'Wrists', 400.ms),
-                    _buildLimitationChip(t, 'elbows', 'Elbows', 425.ms),
-                    _buildLimitationChip(t, 'hips', 'Hips', 450.ms),
-                    _buildLimitationChip(t, 'ankles', 'Ankles', 475.ms),
-                    _buildLimitationChip(t, 'neck', 'Neck', 500.ms),
-                    _buildLimitationChip(t, 'other', 'Other', 525.ms),
+                    for (final (i, opt) in _limitationOptions.indexed)
+                      _buildLimitationChip(
+                          t, opt.$1, opt.$2, (300 + i * 18).ms),
                   ],
                 ),
                 const SizedBox(height: 16),

@@ -132,6 +132,29 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
                 ),
               ),
 
+            // HR-aware rest banner: shown when a between-set rest has elapsed
+            // but live heart rate is still elevated. Floats above the rest UI;
+            // owns its own recovery detection + actions (start now / +30s).
+            if ((this as TimerRestMixin).isHrGating)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(_ctx).padding.bottom + 24,
+                child: RepaintBoundary(
+                  child: Builder(builder: (_) {
+                    final rest = this as TimerRestMixin;
+                    return HrRecoveryBanner(
+                      mode: rest.hrRestMode,
+                      peakHr: rest.hrRestPeakBpm,
+                      age: rest.userAgeForHr,
+                      restingHr: rest.restingHrForHr,
+                      onReady: rest.onHrGateReady,
+                      onExtend: rest.onHrGateExtend,
+                    );
+                  }),
+                ),
+              ),
+
             // Fatigue alert modal (AI-powered)
             if (showFatigueAlert && fatigueAlertData != null)
               Positioned.fill(

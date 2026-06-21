@@ -191,6 +191,31 @@ class User extends Equatable {
   /// Check if paywall has been completed (shown/dismissed)
   bool get isPaywallComplete => paywallCompleted == true;
 
+  /// SERVER-truth mirror of `PreAuthQuizData.isComplete`: did the backend
+  /// already capture this user's pre-auth quiz answers? The local quiz state
+  /// (SharedPreferences) can be wiped on an account-switch or reinstall, so the
+  /// router must NOT rely on it alone to decide whether to show the quiz — that
+  /// bounced users who'd just finished pre-onboarding back to step 1. If the
+  /// server has goals / equipment / the quiz's preference keys, the quiz was
+  /// done; never re-route them to it. A brand-new user (no quiz) has none of
+  /// these, so they still see the quiz correctly.
+  bool get hasCompletedPreAuthQuiz {
+    if (goalsList.isNotEmpty) return true;
+    if (equipmentList.isNotEmpty) return true;
+    if (preferences != null && preferences!.isNotEmpty) {
+      try {
+        final p = jsonDecode(preferences!);
+        if (p is Map &&
+            (p['days_per_week'] != null ||
+                p['workout_days'] != null ||
+                p['training_split'] != null)) {
+          return true;
+        }
+      } catch (_) {}
+    }
+    return false;
+  }
+
   /// Check if user is an admin
   bool get isAdmin => role == 'admin' || role == 'super_admin';
 

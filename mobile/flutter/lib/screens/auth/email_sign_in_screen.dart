@@ -118,6 +118,26 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                 email,
                 password,
               );
+          // If that sign-in didn't log them in, the email is registered but
+          // this password doesn't open it — commonly because the account was
+          // created with Google/Apple (no password at all). Surface that
+          // directly: "could not create the account, try a different password"
+          // is misleading and sends them in circles. Returning users who typed
+          // the RIGHT password sign in cleanly and skip this branch.
+          final afterFlip = ref.read(authStateProvider);
+          if (afterFlip.status == AuthStatus.error || afterFlip.user == null) {
+            debugPrint('🟡 [Auth] Email already registered, password mismatch — '
+                'likely a social (Google/Apple) account');
+            if (mounted) {
+              setState(() {
+                _errorMessage =
+                    'This email already has an account. If you first signed up '
+                    'with Google or Apple, go back and continue with that — '
+                    'otherwise tap Sign In to log in with your password.';
+              });
+            }
+            return;
+          }
         }
       } else {
         await ref.read(authStateProvider.notifier).signInWithEmail(

@@ -68,6 +68,24 @@ class RestSuggestionRequest(BaseModel):
     user_goals: List[str] = Field(default=[], description="User's fitness goals")
     muscle_group: Optional[str] = Field(None, description="Primary muscle group being worked")
 
+    # Optional heart-rate context. All default None so existing callers that
+    # never send HR data behave exactly as before (byte-for-byte identical).
+    current_hr: Optional[int] = Field(
+        None, ge=30, le=250, description="Live BPM at the moment the rest timer hit zero"
+    )
+    peak_hr: Optional[int] = Field(
+        None, ge=30, le=250, description="Peak BPM during the just-finished set"
+    )
+    resting_hr: Optional[int] = Field(
+        None, ge=30, le=250, description="User's resting heart rate, if known"
+    )
+    max_hr: Optional[int] = Field(
+        None, ge=30, le=250, description="User's estimated max heart rate, if known"
+    )
+    hr_recovered: Optional[bool] = Field(
+        None, description="Client's local determination of whether HR has recovered to target"
+    )
+
 
 class RestSuggestionResponse(BaseModel):
     """AI-generated rest time suggestion response."""
@@ -76,6 +94,63 @@ class RestSuggestionResponse(BaseModel):
     quick_option_seconds: int = Field(..., description="Shorter rest option for time-pressed users")
     rest_category: str = Field(..., description="Category of rest (short, moderate, long)")
     ai_powered: bool = Field(default=True, description="Whether this suggestion used AI")
+
+
+def _hr_is_elevated(request: "RestSuggestionRequest") -> Optional[bool]:
+    """
+    Decide whether heart rate is still meaningfully elevated.
+
+    Returns:
+        True  - HR is still up; the lifter should rest longer.
+        False - HR has settled; the RPE-based suggestion stands.
+        None  - No usable HR signal was sent; caller should ignore HR entirely.
+
+    Determination order (most explicit signal first):
+    1. The client's own `hr_recovered` flag, when provided, is authoritative.
+    2. Otherwise, if `current_hr` plus a recovery reference is available, compare
+       against the higher of two thresholds:
+         - 70% of max HR, and
+         - the Karvonen target: resting + 0.6 * (max - resting)  [reserve method]
+       HR above the applicable threshold => still elevated.
+    """
+    if request.hr_recovered is not None:
+        return not request.hr_recovered
+
+    if request.current_hr is None:
+        return None
+
+    thresholds = []
+    if request.max_hr is not None and request.max_hr > 0:
+        thresholds.append(request.max_hr * 0.70)
+        if request.resting_hr is not None and request.max_hr > request.resting_hr:
+            # Heart-rate reserve (Karvonen) target.
+            thresholds.append(
+                request.resting_hr + 0.6 * (request.max_hr - request.resting_hr)
+            )
+
+    if not thresholds:
+        # current_hr alone, without max_hr, isn't enough to judge recovery.
+        return None
+
+    threshold = max(thresholds)
+    return request.current_hr > threshold
+
+
+# Deterministically-chosen, human-varying phrasings for the "HR still up" case.
+# Chosen by current_hr % len so the same input always yields the same line, but
+# repeated sets with drifting HR rotate through variants instead of repeating.
+_HR_ELEVATED_REASONS = [
+    "Your heart rate's still up around {hr} bpm — give it ~{extra}s more to settle.",
+    "HR is sitting near {hr} bpm, so I've added about {extra}s to let it come down.",
+    "You're still elevated at roughly {hr} bpm; a little extra rest (~{extra}s) here pays off.",
+    "Pulse is hovering around {hr} bpm — stretching this rest by ~{extra}s keeps the next set strong.",
+]
+
+_HR_SETTLED_REASONS = [
+    "HR's already settled — you're good to go.",
+    "Your heart rate has come back down, so no need to wait around.",
+    "Pulse looks recovered — you're clear to start the next set.",
+]
 
 
 def get_rest_category(seconds: int) -> str:
@@ -156,6 +231,34 @@ def generate_rule_based_suggestion(request: RestSuggestionRequest) -> RestSugges
         reasoning += f", with {request.sets_remaining} sets still to go"
 
     reasoning += ". This rest duration optimizes muscle recovery while maintaining workout momentum."
+
+    # --- Optional heart-rate adjustment -------------------------------------
+    # Only runs when HR data was actually sent. With no HR fields, hr_elevated is
+    # None and this block is skipped entirely, so behavior is unchanged.
+    hr_elevated = _hr_is_elevated(request)
+    if hr_elevated is True:
+        # Nudge rest UP modestly (~20-40s) and bump the quick option a touch.
+        # Scale the bump a little by how far over threshold we are when we have a
+        # current_hr, otherwise default to a sensible ~30s.
+        extra = 30
+        if request.current_hr is not None and request.max_hr is not None and request.max_hr > 0:
+            over_frac = max(0.0, (request.current_hr / request.max_hr) - 0.70)
+            extra = int(min(40, max(20, 20 + over_frac * 200)))
+        extra = round(extra / 5) * 5  # clean 5s steps
+
+        suggested_seconds += extra
+        suggested_seconds = round(suggested_seconds / 15) * 15
+        quick_option = min(suggested_seconds, quick_option + 15)
+
+        hr_for_copy = request.current_hr if request.current_hr is not None else request.peak_hr
+        variant = _HR_ELEVATED_REASONS[(hr_for_copy or 0) % len(_HR_ELEVATED_REASONS)]
+        hr_sentence = variant.format(hr=hr_for_copy if hr_for_copy is not None else "elevated", extra=extra)
+        reasoning = f"{hr_sentence} {reasoning}"
+    elif hr_elevated is False:
+        # HR has recovered: keep the RPE-based suggestion, add a reassuring note.
+        hr_for_copy = request.current_hr if request.current_hr is not None else request.peak_hr
+        settled = _HR_SETTLED_REASONS[(hr_for_copy or 0) % len(_HR_SETTLED_REASONS)]
+        reasoning = f"{settled} {reasoning}"
 
     return RestSuggestionResponse(
         suggested_seconds=suggested_seconds,

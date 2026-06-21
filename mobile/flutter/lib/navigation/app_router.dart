@@ -351,7 +351,11 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
   // and also handles users who signed up before the pre-auth quiz existed
   if (!user.isCoachSelected && !user.isPaywallComplete) {
     final quizData = ref.read(preAuthQuizProvider);
-    if (!quizData.isComplete) {
+    // Trust SERVER truth as well as local state. The local quiz is wiped on an
+    // account-switch / reinstall (and on the delete-recreate test loop), which
+    // bounced users who'd JUST finished pre-onboarding back to step 1. If the
+    // backend already has their quiz answers, never re-route them to the quiz.
+    if (!quizData.isComplete && !user.hasCompletedPreAuthQuiz) {
       return '/pre-auth-quiz';
     }
   }

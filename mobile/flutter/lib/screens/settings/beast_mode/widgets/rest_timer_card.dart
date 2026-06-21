@@ -119,8 +119,80 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
           ],
           const SizedBox(height: 12),
           _buildPreview(config, t),
+          const SizedBox(height: 16),
+          Divider(color: t.cardBorder, height: 1),
+          const SizedBox(height: 14),
+          _buildHrRestSection(config, notifier, t),
         ],
       ),
+    );
+  }
+
+  /// Heart-rate-aware rest: when the timer hits zero but live HR is still
+  /// elevated, either nudge the lifter to rest longer or hold until recovered.
+  /// Active only when a heart-rate source (BLE strap / watch) is connected.
+  Widget _buildHrRestSection(
+      BeastModeConfig config, BeastModeConfigNotifier notifier, BeastThemeData t) {
+    const modes = <String, String>{
+      'off': 'Off',
+      'suggest': 'Suggest',
+      'gate': 'Recovery gate',
+    };
+    final descriptions = <String, String>{
+      'off': 'Plain timer — heart rate is ignored.',
+      'suggest':
+          'When rest ends with your heart rate still up, nudge you to rest a bit longer (you can start anytime).',
+      'gate':
+          'Hold at zero and auto-advance the moment your heart rate settles — with an “I’m ready” override.',
+    };
+    final selected = config.hrRestMode;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.monitor_heart_outlined,
+                size: 16, color: AppColors.orange),
+            const SizedBox(width: 6),
+            Text('Heart-rate-aware rest',
+                style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w600, color: t.textPrimary)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text('Active when a heart-rate monitor (chest strap or watch) is connected.',
+            style: TextStyle(fontSize: 11, color: t.textMuted)),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: modes.entries.map((e) {
+            final isSelected = selected == e.key;
+            return ChoiceChip(
+              label: Text(e.value),
+              selected: isSelected,
+              selectedColor: AppColors.orange.withValues(alpha: 0.2),
+              labelStyle: TextStyle(
+                color: isSelected ? AppColors.orange : t.textMuted,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 12,
+              ),
+              side: BorderSide(
+                  color: isSelected
+                      ? AppColors.orange.withValues(alpha: 0.5)
+                      : t.cardBorder),
+              onSelected: (_) {
+                HapticService.selection();
+                notifier.updateHrRestMode(e.key);
+              },
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 8),
+        Text(descriptions[selected] ?? '',
+            style: TextStyle(fontSize: 11, color: t.textMuted, height: 1.35)),
+      ],
     );
   }
 

@@ -67,6 +67,13 @@ class BeastModeConfig {
   final double restTimerMultiplier;
   final String restTimerCustomFormula;
 
+  /// Heart-rate-aware rest behavior when the timer hits zero but live HR is
+  /// still elevated: 'off' (plain timer), 'suggest' (non-blocking "rest a bit
+  /// longer?" nudge — the default), or 'gate' (Polar-style hold that
+  /// auto-advances once HR recovers). Active only when a live HR source is
+  /// connected; a silent no-op otherwise.
+  final String hrRestMode;
+
   // --- Volume Progression ---
   final String progressionModel; // 'linear', 'step', 'undulating', 'custom'
   final double progressionRate; // % per week
@@ -94,6 +101,7 @@ class BeastModeConfig {
     this.restTimerBaseRest = 90.0,
     this.restTimerMultiplier = 1.0,
     this.restTimerCustomFormula = 'base * (rpe / 7) * multiplier',
+    this.hrRestMode = 'suggest',
     this.progressionModel = 'linear',
     this.progressionRate = 5.0,
     this.progressionStepWeeks = 4,
@@ -149,6 +157,7 @@ class BeastModeConfig {
     double? restTimerBaseRest,
     double? restTimerMultiplier,
     String? restTimerCustomFormula,
+    String? hrRestMode,
     String? progressionModel,
     double? progressionRate,
     int? progressionStepWeeks,
@@ -169,6 +178,7 @@ class BeastModeConfig {
       restTimerBaseRest: restTimerBaseRest ?? this.restTimerBaseRest,
       restTimerMultiplier: restTimerMultiplier ?? this.restTimerMultiplier,
       restTimerCustomFormula: restTimerCustomFormula ?? this.restTimerCustomFormula,
+      hrRestMode: hrRestMode ?? this.hrRestMode,
       progressionModel: progressionModel ?? this.progressionModel,
       progressionRate: progressionRate ?? this.progressionRate,
       progressionStepWeeks: progressionStepWeeks ?? this.progressionStepWeeks,
@@ -192,6 +202,7 @@ class BeastModeConfig {
       'rest_timer_base_rest': restTimerBaseRest,
       'rest_timer_multiplier': restTimerMultiplier,
       'rest_timer_custom_formula': restTimerCustomFormula,
+      'hr_rest_mode': hrRestMode,
       'progression_model': progressionModel,
       'progression_rate': progressionRate,
       'progression_step_weeks': progressionStepWeeks,
@@ -218,6 +229,7 @@ class BeastModeConfig {
       restTimerMultiplier: (json['rest_timer_multiplier'] as num?)?.toDouble() ?? 1.0,
       restTimerCustomFormula:
           json['rest_timer_custom_formula'] as String? ?? 'base * (rpe / 7) * multiplier',
+      hrRestMode: json['hr_rest_mode'] as String? ?? 'suggest',
       progressionModel: json['progression_model'] as String? ?? 'linear',
       progressionRate: (json['progression_rate'] as num?)?.toDouble() ?? 5.0,
       progressionStepWeeks: (json['progression_step_weeks'] as num?)?.toInt() ?? 4,
@@ -580,6 +592,11 @@ class BeastModeConfigNotifier extends StateNotifier<BeastModeConfig> {
 
   void updateRestTimerCustomFormula(String formula) {
     _update((c) => c.copyWith(restTimerCustomFormula: formula));
+  }
+
+  /// Set heart-rate-aware rest behavior: 'off' | 'suggest' | 'gate'.
+  void updateHrRestMode(String mode) {
+    _update((c) => c.copyWith(hrRestMode: mode));
   }
 
   // --- Volume Progression ---

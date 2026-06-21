@@ -14,6 +14,11 @@ import '../../../core/providers/sound_preferences_provider.dart';
 import '../../../core/providers/tts_provider.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/providers/beast_mode_provider.dart';
+import '../../../data/providers/recovery_provider.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../core/providers/heart_rate_provider.dart';
+import '../widgets/hr_recovery_policy.dart';
 import '../../../utils/tz.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../controllers/workout_timer_controller.dart';
@@ -83,13 +88,142 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
   List<int> getSupersetIndices(int groupId);
   bool isExerciseCompleted(int exerciseIndex);
 
+  // ── HR-aware rest state (owned directly by this mixin) ──
+  //
+  // Bridges the live in-workout heart-rate stream into the rest timer: when a
+  // between-set rest elapses but HR is still elevated, hold (gate) or nudge
+  // (suggest) instead of auto-advancing. Active only when a live HR source is
+  // connected; a silent no-op otherwise. v1 = between-SET rest only.
+
+  /// Peak BPM captured during the just-finished set — basis for the recovery
+  /// target + the recovery progress bar. Null when no HR source.
+  int? hrRestPeakBpm;
+
+  /// True while we're holding rest open waiting for HR to settle (drives the
+  /// [HrRecoveryBanner] in the UI builder).
+  bool isHrGating = false;
+
+  /// How many +30s extensions the lifter has taken this rest — caps the
+  /// suggest-mode nudge so it never nags indefinitely.
+  int hrGateExtensions = 0;
+
+  /// Effective HR-aware rest mode from Beast Mode config: 'off'|'suggest'|'gate'.
+  String get hrRestMode => ref.read(beastModeConfigProvider).hrRestMode;
+
+  /// User age (for max HR), when known.
+  int? get userAgeForHr => ref.read(authStateProvider).user?.age;
+
+  /// User resting HR (for the Karvonen target), best-effort — null if the
+  /// recovery score hasn't loaded or the metric is unavailable.
+  int? get restingHrForHr => ref.read(recoveryProvider).asData?.value?.restingHR;
+
+  /// Capture the set's peak HR at rest start: max BPM in the last ~60s of
+  /// session history, falling back to the latest live reading. Resets gate
+  /// state for the new rest.
+  void captureRestPeakHr() {
+    int? peak;
+    try {
+      final history = ref.read(workoutHeartRateHistoryProvider);
+      final now = DateTime.now();
+      for (final r in history) {
+        if (now.difference(r.timestamp).inSeconds <= 60) {
+          if (peak == null || r.bpm > peak) peak = r.bpm;
+        }
+      }
+      peak ??= ref.read(liveHeartRateProvider).value?.bpm;
+    } catch (_) {
+      peak = null;
+    }
+    hrRestPeakBpm = peak;
+    isHrGating = false;
+    hrGateExtensions = 0;
+  }
+
+  /// Decide, when a between-set rest hits zero, whether to hold for heart-rate
+  /// recovery. Returns true if we entered a hold (caller must NOT advance).
+  /// Fails open: any missing/stale data ⇒ false ⇒ today's behavior.
+  bool maybeGateForHr() {
+    // v1: between SETS only; never re-enter while already gating.
+    if (isHrGating || isRestingBetweenExercises) return false;
+    final mode = hrRestMode;
+    if (mode != 'suggest' && mode != 'gate') return false; // 'off'
+
+    final reading = ref.read(liveHeartRateProvider).value;
+    // Need a FRESH reading — stale/absent HR ⇒ behave exactly as today.
+    if (reading == null ||
+        DateTime.now().difference(reading.timestamp).inSeconds > 12) {
+      return false;
+    }
+
+    final target = HrRecoveryPolicy.recoveryTarget(
+      age: userAgeForHr,
+      restingHr: restingHrForHr,
+      peakHr: hrRestPeakBpm,
+      minHrThisRest: reading.bpm,
+    );
+    if (target == null) return false; // not computable
+    if (HrRecoveryPolicy.isRecovered(reading.bpm, target.targetBpm)) {
+      return false; // already settled — advance normally
+    }
+    // Suggest-mode cap: after enough +30s extensions, stop nudging.
+    if (mode == 'suggest' && hrGateExtensions >= 3) return false;
+
+    setState(() {
+      isHrGating = true;
+      showInlineRest = false; // banner replaces the inline row
+    });
+    return true;
+  }
+
+  /// HrRecoveryBanner → start the next set now (recovered, override, or cap).
+  void onHrGateReady() {
+    _logHrGateOutcome();
+    _advanceAfterRest();
+  }
+
+  /// HrRecoveryBanner → rest [seconds] more, then re-check (suggest +30s path).
+  void onHrGateExtend(int seconds) {
+    hrGateExtensions++;
+    setState(() {
+      isHrGating = false;
+      showInlineRest = true;
+      inlineRestDuration = seconds;
+    });
+    // Restart a short between-set rest; when it elapses, handleRestComplete
+    // re-evaluates HR (bounded by hrGateExtensions cap).
+    timerController.startRestTimer(seconds);
+    restIntervals.add({
+      'exercise_id': exercises[currentExerciseIndex].id,
+      'exercise_name': exercises[currentExerciseIndex].name,
+      'prescribed_rest_seconds': seconds,
+      'rest_seconds': seconds,
+      'rest_type': 'between_sets',
+      'recorded_at': Tz.timestamp(),
+    });
+  }
+
+  /// Attach HR-recovery telemetry to the last rest interval at advance time.
+  void _logHrGateOutcome() {
+    if (restIntervals.isEmpty) return;
+    final reading = ref.read(liveHeartRateProvider).value;
+    final target = HrRecoveryPolicy.recoveryTarget(
+      age: userAgeForHr,
+      restingHr: restingHrForHr,
+      peakHr: hrRestPeakBpm,
+      minHrThisRest: reading?.bpm,
+    );
+    restIntervals.last['peak_hr'] = hrRestPeakBpm;
+    restIntervals.last['hr_at_advance'] = reading?.bpm;
+    restIntervals.last['recovery_target_hr'] = target?.targetBpm;
+    restIntervals.last['recovery_method'] =
+        target != null ? HrRecoveryPolicy.methodLabel(target.method) : null;
+    restIntervals.last['hr_extensions'] = hrGateExtensions;
+  }
+
   // ── Timer/Rest Methods ──
 
   /// Handle rest timer completion
   void handleRestComplete() {
-    final currentExercise = exercises[currentExerciseIndex];
-    final groupId = currentExercise.supersetGroup;
-
     // Track actual rest taken (captured before timer zeroed remaining)
     final actualRest = timerController.actualRestElapsed;
     actualRestDurations[currentExerciseIndex] ??= [];
@@ -105,6 +239,21 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       restIntervals.last['rest_seconds'] = actualRest;
     }
 
+    // HR-aware rest: if enabled and live HR is still elevated, hold instead of
+    // advancing. The HrRecoveryBanner then drives the rest of the flow
+    // (onHrGateReady / onHrGateExtend). Fails open — no/stale HR ⇒ advance.
+    if (maybeGateForHr()) return;
+
+    _advanceAfterRest();
+  }
+
+  /// Finish the rest and move on to the next set/exercise. Extracted from
+  /// [handleRestComplete] so the HR gate can defer it until the lifter is
+  /// recovered (or overrides).
+  void _advanceAfterRest() {
+    final currentExercise = exercises[currentExerciseIndex];
+    final groupId = currentExercise.supersetGroup;
+
     // Mark start time for the next set
     currentSetStartTime = DateTime.now();
 
@@ -112,6 +261,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       isResting = false;
       isRestingBetweenExercises = false;
       showInlineRest = false;
+      isHrGating = false;
       inlineRestAiTip = null;
       inlineRestAchievementPrompt = null;
       inlineRestAdaptationFeedback = null;
@@ -140,6 +290,9 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
     final restSeconds = overrideDuration?.inSeconds
         ?? exercise.restSeconds
         ?? (betweenExercises ? 120 : 90);
+
+    // Snapshot the set's peak HR now (start of rest) for HR-aware rest.
+    captureRestPeakHr();
 
     ref.read(posthogServiceProvider).capture(
       eventName: 'rest_started',
@@ -663,6 +816,26 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
         return;
       }
 
+      // HR context (optional) so the backend can nudge the suggestion when the
+      // lifter's heart rate is still elevated. All fields optional + fail-open.
+      final hrReading = ref.read(liveHeartRateProvider).value;
+      final currentHr = (hrReading != null &&
+              DateTime.now().difference(hrReading.timestamp).inSeconds <= 12)
+          ? hrReading.bpm
+          : null;
+      final age = userAgeForHr;
+      final maxHr =
+          (age != null && age > 0) ? HrRecoveryPolicy.maxHrForAge(age) : null;
+      final hrTarget = HrRecoveryPolicy.recoveryTarget(
+        age: age,
+        restingHr: restingHrForHr,
+        peakHr: hrRestPeakBpm,
+        minHrThisRest: currentHr,
+      );
+      final hrRecovered = (currentHr != null && hrTarget != null)
+          ? HrRecoveryPolicy.isRecovered(currentHr, hrTarget.targetBpm)
+          : null;
+
       final response = await apiClient.dio.post(
         '/workouts/rest-suggestion',
         data: {
@@ -673,6 +846,11 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
           'sets_completed': completedSetsList.length,
           'is_compound': isCompound,
           'muscle_group': exercise.muscleGroup ?? exercise.primaryMuscle,
+          if (currentHr != null) 'current_hr': currentHr,
+          if (hrRestPeakBpm != null) 'peak_hr': hrRestPeakBpm,
+          if (restingHrForHr != null) 'resting_hr': restingHrForHr,
+          if (maxHr != null) 'max_hr': maxHr,
+          if (hrRecovered != null) 'hr_recovered': hrRecovered,
         },
       );
 
