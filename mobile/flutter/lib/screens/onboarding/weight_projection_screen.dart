@@ -45,6 +45,25 @@ class _WeightProjectionScreenState
   /// replays the draw (smooth recompute) rather than hard-cutting.
   String? _lastDrawnRate;
 
+  /// Drives the "more below" scroll cue. The conversion content — the "N×
+  /// faster than going solo" proof, the evidence citations and the
+  /// Current/Goal/To-lose/Per-week stat cards — sits under the fold on small
+  /// phones. We pulse a labeled chevron until the user scrolls into it so the
+  /// sell never goes unseen.
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollHint = false;
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    // Show while the content overflows and the user is more than ~24px from the
+    // bottom (i.e. the proof section isn't fully on screen yet).
+    final more = pos.maxScrollExtent - pos.pixels > 24;
+    if (more != _showScrollHint && mounted) {
+      setState(() => _showScrollHint = more);
+    }
+  }
+
   /// Replays the line-draw animation and gives a tactile tick — called when
   /// the user drags to a new pace so the curve, goal date and multiplier all
   /// re-animate together (Cal-AI-grade live recompute).
@@ -72,10 +91,15 @@ class _WeightProjectionScreenState
         _animationController.forward();
       }
     });
+
+    // Seed + drive the "more below" scroll cue once the body has laid out.
+    _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onScroll());
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -411,7 +435,10 @@ class _WeightProjectionScreenState
           ),
           headerOverlay: backButton,
           button: continueButton,
-          content: SingleChildScrollView(
+          content: Stack(
+            children: [
+              SingleChildScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
@@ -423,7 +450,7 @@ class _WeightProjectionScreenState
                 // screen (a duplicate preview step was deliberately removed).
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 18),
+                    padding: const EdgeInsets.only(top: 0, bottom: 10),
                     child: PlanReadyFlair(
                       daysPerWeek: workoutDays,
                       compact: true,
@@ -544,6 +571,27 @@ class _WeightProjectionScreenState
                 const SizedBox(height: 12),
               ],
             ),
+              ),
+              // "More below" cue — the proof ("N× faster"), the evidence
+              // citations and the stat cards that actually sell the plan sit
+              // under the fold on small phones; pulse a labeled chevron so the
+              // user scrolls into them instead of bouncing on the chart. Fades
+              // out the moment the proof section reaches the screen.
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 6,
+                child: IgnorePointer(
+                  child: Center(
+                    child: AnimatedOpacity(
+                      opacity: _showScrollHint ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 220),
+                      child: const _ScrollMoreCue(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1192,5 +1240,64 @@ class _WeightProjectionScreenState
         ],
       ),
     ).animate(delay: delayMs.ms).fadeIn().slideX(begin: 0.1);
+  }
+}
+
+/// Floating "more below" cue for the projection screen. The plan's proof —
+/// the "N× faster than going solo" chip, the cited evidence and the stat cards
+/// — lives under the fold on small phones; this labeled, gently-bobbing chevron
+/// tells the user there's something worth scrolling to (not just "scroll").
+/// Rendered inside an [IgnorePointer] + [AnimatedOpacity] by the host, so it
+/// never blocks taps and fades the instant the proof reaches the screen.
+class _ScrollMoreCue extends StatelessWidget {
+  const _ScrollMoreCue();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.58),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.orange.withValues(alpha: 0.55)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Text(
+            'See why it works',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.orange,
+            ),
+          ),
+          SizedBox(width: 4),
+          _BobbingChevron(),
+        ],
+      ),
+    );
+  }
+}
+
+class _BobbingChevron extends StatelessWidget {
+  const _BobbingChevron();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Icon(
+      Icons.keyboard_arrow_down_rounded,
+      color: AppColors.orange,
+      size: 18,
+    )
+        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .moveY(begin: -2, end: 3, duration: 650.ms, curve: Curves.easeInOut);
   }
 }
