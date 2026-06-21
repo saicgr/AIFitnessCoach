@@ -18,6 +18,23 @@ import resend
 from core import branding
 from core.logger import get_logger
 from services.email_helpers import build_social_footer_html
+from services import email_signature_template as sig
+
+# Emoji → Lucide icon key for the Signature design (zero-emoji rule). Callers pass
+# feature rows as (emoji, title, detail); the chokepoint rewrites the emoji to a
+# monoline Lucide glyph. Keyed by HTML entity AND raw char; unknown → "sparkles".
+EMOJI_TO_ICON = {
+    "&#127947;": "dumbbell", "&#128170;": "dumbbell",        # 🏋 💪
+    "&#129303;": "message", "&#128172;": "message", "&#129309;": "message",  # 🤗 💬 🤝
+    "&#128202;": "bars", "&#128200;": "trending_up",         # 📊 📈
+    "&#128293;": "flame", "&#127942;": "trophy", "&#127941;": "medal", "&#127881;": "sparkles",  # 🔥 🏆 🏅 🎉
+    "&#127873;": "gift", "&#128230;": "gift", "&#128229;": "mail",  # 🎁 📦 📥
+    "&#127919;": "zap", "&#128640;": "zap", "&#128279;": "zap",     # 🎯 🚀 🔗
+    "&#128241;": "smartphone", "&#128274;": "lock", "&#128276;": "bell",  # 📱 🔒 🔔
+    "&#128737;": "shield", "&#128064;": "user", "&#128104;": "user",      # 🛡 👀 👨
+    "&#128179;": "credit_card", "&#127939;": "activity", "&#9888;": "alert",
+    "🎁": "gift", "🏆": "trophy", "🏅": "medal", "🎉": "sparkles", "🙄": "user", "💪": "dumbbell",
+}
 
 # Import mixins (defined in sibling files)
 from services.email_lifecycle import EmailLifecycleMixin
@@ -165,56 +182,40 @@ class EmailService(
             headline = "Hey,"
             subject = f"Your {branding.APP_NAME} plan is ready."
 
-        # ── 4. Macro grid (4 pills, only if all four values present) ─────────
-        macros_html = ""
+        # ── 4. Macro grid (Signature 4-up card, only if all four present) ────
+        macros_inner = ""
         if all(v is not None for v in (daily_calories, protein_g, carbs_g, fat_g)):
-            pill = (
-                "display:inline-block;background:#1a1a1a;border:1px solid #2a2a2a;"
-                "border-radius:14px;padding:14px 6px;text-align:center;width:22%;"
-                "box-sizing:border-box;margin:0 1%;vertical-align:top;"
+            def _mt(value: str, label: str) -> str:
+                return (
+                    f'<td width="25%" style="padding:4px;"><div style="background:{sig.CARD};'
+                    f'border:1px solid {sig.LINE};border-radius:14px;padding:14px 4px;text-align:center;">'
+                    f'<div style="font-family:{sig.F_DISP};font-size:20px;color:{sig.INK};">{value}</div>'
+                    f'<div style="font-family:{sig.F_LBL};text-transform:uppercase;letter-spacing:1px;'
+                    f'font-size:10px;color:{sig.GREY};margin-top:4px;">{label}</div></div></td>'
+                )
+            macros_inner = (
+                '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
+                f'{_mt(str(daily_calories), "Cal")}{_mt(f"{protein_g}g", "Protein")}'
+                f'{_mt(f"{carbs_g}g", "Carbs")}{_mt(f"{fat_g}g", "Fat")}</tr></table>'
             )
-            label_style = "margin:0;font-size:11px;color:#71717a;letter-spacing:1.2px;text-transform:uppercase;"
-            value_style = "margin:4px 0 0;font-size:18px;font-weight:800;color:#ffffff;"
-            macros_html = f"""
-          <tr>
-            <td style="padding:0 32px 8px;">
-              <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#F97316;letter-spacing:1.5px;text-transform:uppercase;text-align:center;">Your daily targets</p>
-              <div style="text-align:center;font-size:0;">
-                <div style="{pill}">
-                  <p style="{value_style}">{daily_calories}</p>
-                  <p style="{label_style}">cal</p>
-                </div>
-                <div style="{pill}">
-                  <p style="{value_style}">{protein_g}g</p>
-                  <p style="{label_style}">protein</p>
-                </div>
-                <div style="{pill}">
-                  <p style="{value_style}">{carbs_g}g</p>
-                  <p style="{label_style}">carbs</p>
-                </div>
-                <div style="{pill}">
-                  <p style="{value_style}">{fat_g}g</p>
-                  <p style="{label_style}">fat</p>
-                </div>
-              </div>
-            </td>
-          </tr>"""
 
-        # ── 5. Tomorrow's workout block (skip if no name) ────────────────────
-        tomorrow_html = ""
+        # ── 5. Tomorrow's workout card + full-list (for the accordion) ───────
+        tomorrow_inner = ""
+        full_workout_inner = ""
         if first_workout_name:
-            duration_part = (
-                f" ({first_workout_duration} min)"
-                if first_workout_duration
-                else ""
+            dur = f" · {first_workout_duration} min" if first_workout_duration else ""
+            tomorrow_inner = (
+                f'<div style="background:{sig.CARD};border:1px solid {sig.LINE};border-radius:16px;'
+                f'padding:18px 20px;">'
+                f'<div style="font-family:{sig.F_LBL};text-transform:uppercase;letter-spacing:2px;'
+                f'font-size:11px;color:{sig.ACCENT};margin-bottom:6px;">Tomorrow</div>'
+                f'<div style="font-family:{sig.F_DISP};font-size:20px;color:{sig.INK};'
+                f'letter-spacing:.4px;">{first_workout_name}{dur}</div></div>'
             )
-            ex_lines_html = ""
-            for i, ex in enumerate((first_workout_exercises or [])[:3], start=1):
-                if not isinstance(ex, dict):
-                    continue
+            exs = [e for e in (first_workout_exercises or []) if isinstance(e, dict)]
+            for i, ex in enumerate(exs, start=1):
                 ename = ex.get("name") or "Exercise"
-                sets = ex.get("sets")
-                reps = ex.get("reps")
+                sets, reps = ex.get("sets"), ex.get("reps")
                 if sets and reps:
                     detail = f"{sets} × {reps}"
                 elif reps:
@@ -223,26 +224,12 @@ class EmailService(
                     detail = f"{sets} sets"
                 else:
                     detail = ""
-                detail_html = (
-                    f' <span style="color:#71717a;">· {detail}</span>'
-                    if detail
-                    else ""
+                det = f' <span style="color:{sig.GREY};">· {detail}</span>' if detail else ""
+                full_workout_inner += (
+                    f'<div style="font-family:{sig.F_LBL};font-size:14.5px;color:#e4e4e7;'
+                    f'line-height:1.95;letter-spacing:.3px;">'
+                    f'<span style="color:{sig.ACCENT};font-weight:700;">{i}.</span> {ename}{det}</div>'
                 )
-                ex_lines_html += (
-                    f'<p style="margin:6px 0;font-size:14px;color:#e4e4e7;line-height:1.55;">'
-                    f'<span style="color:#F97316;font-weight:700;">{i}.</span> '
-                    f'{ename}{detail_html}</p>'
-                )
-            tomorrow_html = f"""
-          <tr>
-            <td style="padding:8px 32px 8px;">
-              <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:16px;padding:20px 22px;">
-                <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#FB923C;letter-spacing:1.5px;text-transform:uppercase;">Tomorrow</p>
-                <h3 style="margin:0 0 12px;font-size:18px;font-weight:800;color:#ffffff;line-height:1.3;">{first_workout_name}{duration_part}</h3>
-                {ex_lines_html or '<p style="margin:0;font-size:14px;color:#71717a;">Open the app to see the full workout.</p>'}
-              </div>
-            </td>
-          </tr>"""
 
         # ── 6. 7-day schedule strip (skip if no training_days) ───────────────
         schedule_html = ""
@@ -269,121 +256,69 @@ class EmailService(
             for key, label in zip(day_keys, day_labels):
                 if key in normalised:
                     style = (
-                        "display:inline-block;background:#F97316;color:#000000;"
-                        "font-weight:800;width:36px;height:36px;line-height:36px;"
-                        "border-radius:50%;text-align:center;font-size:14px;margin:0 3px;"
+                        f"display:inline-block;background:{sig.ACCENT};color:{sig.BG};"
+                        f"font-family:{sig.F_DISP};width:34px;height:34px;line-height:34px;"
+                        "border-radius:50%;text-align:center;font-size:13px;margin:0 3px;"
                     )
                 else:
                     style = (
-                        "display:inline-block;background:transparent;color:#52525b;"
-                        "font-weight:600;width:36px;height:36px;line-height:34px;"
-                        "border-radius:50%;text-align:center;font-size:14px;margin:0 3px;"
-                        "border:1px solid #2a2a2a;"
+                        f"display:inline-block;color:{sig.FAINT};font-family:{sig.F_LBL};"
+                        "font-weight:700;width:34px;height:34px;line-height:32px;"
+                        f"border-radius:50%;text-align:center;font-size:13px;margin:0 3px;"
+                        f"border:1px solid {sig.TRACK};"
                     )
                 pills.append(f'<span style="{style}">{label}</span>')
-            schedule_html = f"""
-          <tr>
-            <td align="center" style="padding:8px 32px 4px;">
-              <p style="margin:0 0 12px;font-size:11px;font-weight:700;color:#71717a;letter-spacing:1.5px;text-transform:uppercase;">Your week</p>
-              <div style="text-align:center;font-size:0;">{''.join(pills)}</div>
-            </td>
-          </tr>"""
+            week_inner = (
+                '<div style="text-align:center;padding:6px 0 2px;font-size:0;">'
+                f'{"".join(pills)}</div>'
+            )
+        else:
+            week_inner = ""
 
-        # ── 7. Coach quote (always shown) ────────────────────────────────────
-        # TODO: read users.ai_coach_persona to personalise the voice. For now
-        # use a generic Zealova line so the email never ships without a quote.
-        coach_quote_html = """
-          <tr>
-            <td align="center" style="padding:20px 40px 8px;">
-              <p style="margin:0;font-size:14px;font-style:italic;color:#a1a1aa;line-height:1.6;text-align:center;">&ldquo;Show up tomorrow. Future-you is watching.&rdquo;</p>
-            </td>
-          </tr>"""
+        # ── 7. Coach quote (always shown; generic Zealova voice for now) ─────
+        coach_quote = "Show up tomorrow. Future-you is watching."
 
-        # ── 8. Final HTML assembly ───────────────────────────────────────────
-        html_content = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{subject}</title>
-</head>
-<body style="margin:0;padding:0;background-color:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#000000;min-height:100vh;">
-    <tr>
-      <td align="center" style="padding:40px 16px;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background-color:#0f0f0f;border-radius:20px;overflow:hidden;border:1px solid #1a1a1a;">
-          <tr>
-            <td style="background:linear-gradient(135deg,#FB923C 0%,#F97316 50%,#EA580C 100%);height:4px;font-size:0;line-height:0;">&nbsp;</td>
-          </tr>
-          <tr>
-            <td align="center" style="padding:48px 40px 24px;">
-              <img src="{logo_url}" alt="{branding.APP_NAME}" width="88" height="88" style="display:block;border-radius:20px;border:0;width:88px;height:88px;object-fit:cover;">
-              <p style="margin:18px 0 0;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#F97316;">{branding.APP_NAME.upper()}</p>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding:0 40px 8px;">
-              <h1 style="margin:0;font-size:36px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">{headline}</h1>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding:8px 48px 24px;">
-              <p style="margin:0;font-size:16px;line-height:1.65;color:#a1a1aa;text-align:center;">{lead_text}</p>
-            </td>
-          </tr>
-          {macros_html}
-          {tomorrow_html}
-          {schedule_html}
-          {coach_quote_html}
-          <tr>
-            <td align="center" style="padding:24px 40px 40px;">
-              <a href="{open_url}" style="display:inline-block;background:#F97316;color:#000000;font-size:16px;font-weight:800;text-decoration:none;padding:16px 44px;border-radius:50px;letter-spacing:0.2px;">Open {branding.APP_NAME}</a>
-            </td>
-          </tr>
-          <tr><td style="padding:0 32px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
-          <tr>
-            <td style="padding:36px 40px 16px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:24px;"><tr><td width="48" valign="top"><div style="width:40px;height:40px;background:#2a1505;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">&#127947;</div></td><td style="padding-left:16px;" valign="top"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Your workout plan, built for you</p><p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Personalised monthly plans built around your goals, schedule, and equipment.</p></td></tr></table>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:24px;"><tr><td width="48" valign="top"><div style="width:40px;height:40px;background:#2a1505;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">&#129303;</div></td><td style="padding-left:16px;" valign="top"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Your 24/7 coach</p><p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Ask anything &mdash; form tips, nutrition advice, or swap an exercise &mdash; anytime.</p></td></tr></table>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:8px;"><tr><td width="48" valign="top"><div style="width:40px;height:40px;background:#2a1505;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">&#128200;</div></td><td style="padding-left:16px;" valign="top"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Track your evolution</p><p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Log sets, see your strength curve, and watch your body transform week by week.</p></td></tr></table>
-            </td>
-          </tr>
-          <tr><td style="padding:24px 40px 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
-          <tr>
-            <td align="center" style="padding:24px 40px 12px;">
-              <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#ffffff;">Join the community</p>
-              <p style="margin:0 0 20px;font-size:14px;color:#71717a;line-height:1.5;">Get help, share progress, and hang out with other {branding.APP_NAME} users.</p>
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
-                <tr>
-                  <td style="padding:0 6px;">
-                    <a href="https://discord.gg/WAYNZpVgsK" style="display:inline-block;background:#5865F2;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:10px 22px;border-radius:50px;line-height:20px;">
-                      <img src="https://cdn.simpleicons.org/discord/ffffff" alt="" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:8px;border:0;" />
-                      <span style="vertical-align:middle;">Discord</span>
-                    </a>
-                  </td>
-                  <td style="padding:0 6px;">
-                    <a href="{branding.INSTAGRAM_URL}" style="display:inline-block;background:linear-gradient(135deg,#833AB4,#FD1D1D,#FCB045);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:10px 22px;border-radius:50px;line-height:20px;">
-                      <img src="https://cdn.simpleicons.org/instagram/ffffff" alt="" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:8px;border:0;" />
-                      <span style="vertical-align:middle;">Instagram</span>
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr><td style="padding:24px 40px 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
-          <tr>
-            <td align="center" style="padding:24px 40px 40px;">
-              <p style="margin:0 0 4px;font-size:12px;color:#3f3f46;">{branding.APP_NAME} &mdash; Your Personal Training Assistant</p>
-              <p style="margin:0;font-size:12px;color:#3f3f46;">You received this because you finished onboarding your {branding.APP_NAME} account.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>"""
+        # ── 8. Final HTML assembly (Signature design) ────────────────────────
+        panels = []
+        if tomorrow_inner:
+            panels.append(("Today", tomorrow_inner))
+        if macros_inner:
+            panels.append(("Nutrition", macros_inner))
+        if week_inner:
+            panels.append(("This week", week_inner))
+
+        body = sig.callout(lead_text)
+        # Interactive tabs when ≥2 sections exist; single section renders plain;
+        # both degrade gracefully (Gmail/Outlook stack all panels — see KINETIC_CSS).
+        if len(panels) >= 2:
+            body += sig.tabs(panels, uid="wel")
+        elif panels:
+            body += f'<tr><td style="padding:14px 22px 0;">{panels[0][1]}</td></tr>'
+        if full_workout_inner:
+            body += sig.accordion("See full workout", full_workout_inner, "welwk")
+        body += sig.coach_card("Zealova", coach_quote)
+        body += sig.info_rows([
+            ("dumbbell", "Your workout plan, built for you",
+             "Personalised monthly plans built around your goals, schedule, and equipment."),
+            ("message", "Your 24/7 coach",
+             "Ask anything — form tips, nutrition advice, or swap an exercise — anytime."),
+            ("trending_up", "Track your evolution",
+             "Log sets, see your strength curve, and watch your body transform week by week."),
+        ])
+        body += sig.pill_cta(f"Open {branding.APP_NAME}", open_url)
+
+        greeting_line = f"Hey, {display_first}." if display_first else "Hey there."
+        html_content = sig.signature_email(
+            header_tag="Welcome",
+            greeting=greeting_line,
+            greeting_sub="Your plan is ready",
+            avatar=(display_first[:1] if display_first else "Z"),
+            body_html=body,
+            preheader=lead_text,
+            footer_kind="transactional",
+            footer_note=f"You received this because you finished onboarding your {branding.APP_NAME} account.",
+            footer_socials=True,
+        )
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
@@ -495,7 +430,8 @@ class EmailService(
                 ("&#128200;", "Advanced analytics", "Deep performance metrics, strength curves, and body composition tracking."),
             ],
             footer_text=f"You received this because you upgraded your {branding.APP_NAME} plan.",
-            category_name="billing & account",
+            header_tag="Receipt",
+            hero_icon="check_circle",
         )
 
         try:
@@ -532,7 +468,8 @@ class EmailService(
                 ("&#128737;", "Your data is safe", "All workout history, progress photos, and plans are saved and waiting."),
             ],
             footer_text="You received this because your payment failed.",
-            category_name="billing & account",
+            header_tag="Billing",
+            hero_icon="alert",
         )
 
         try:
@@ -582,6 +519,8 @@ class EmailService(
                 f"email on {branding.APP_NAME}. If that was not you, you can "
                 f"safely ignore this message."
             ),
+            header_tag="Account",
+            hero_icon="mail",
         )
 
         try:
@@ -593,6 +532,11 @@ class EmailService(
             logger.error(f"Failed to send verification email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
+    @staticmethod
+    def _feature_icon(emoji: str) -> str:
+        """Map a feature-row emoji (HTML entity or raw char) to a Lucide key."""
+        return EMOJI_TO_ICON.get((emoji or "").strip(), "sparkles")
+
     def _build_standard_email(
         self, logo_url: str, open_url: str, title: str, subtitle: str,
         cta_text: str, features: List[tuple], footer_text: str,
@@ -601,65 +545,54 @@ class EmailService(
         stats_row_html: str = "",
         unsubscribe_url: Optional[str] = None,
         category_name: Optional[str] = None,
+        header_tag: str = "",
+        hero_icon: str = "",
     ) -> str:
-        """Build a standard Zealova email template with consistent styling.
+        """Build a standard Zealova email on the **Signature design**.
+
+        This is the chokepoint every standard email routes through — verification,
+        billing, purchase, workout reminder, and all lifecycle / cancel-ladder /
+        engagement / standard-marketing emails. Rewriting it here converts them all
+        to the Signature look at once (orange rail, ZEALOVA lockup, Anton hero,
+        Barlow/Fraunces, monoline Lucide icons, zero emoji) via
+        `email_signature_template` (`sig`).
+
+        The parameter shape is unchanged so callers don't change. Mapping:
+          - title/subtitle → centered Anton hero (`sig.hero`).
+          - features (emoji, title, desc) → `sig.info_rows`, emoji rewritten to Lucide.
+          - cta_text + open_url → `sig.pill_cta` (with :hover).
+          - persona_signature_html / stats_row_html → injected as-is (re-paletted in
+            email_helpers to match the Signature chrome).
+          - footer: opt-out variant when unsubscribe_url+category_name are given
+            (lifecycle/marketing), else a transactional note (footer_text).
 
         Args:
-            logo_url: URL to the Zealova logo
-            open_url: URL for CTA button
-            title: Email headline
-            subtitle: Email subheadline
-            cta_text: CTA button text
-            features: List of (emoji_code, feature_title, feature_desc) tuples
-            footer_text: Footer explanation text
-            persona_signature_html: Optional <tr> from build_persona_signature_html;
-                motivational emails inject a coach-name + mood card here.
-            stats_row_html: Optional <tr> with a zero-state line or 2x2 stats grid.
-            unsubscribe_url: Optional per-category unsubscribe link for the footer.
-            category_name: Human label ("streak alerts") for the unsubscribe line.
-
-        Returns:
-            Complete HTML email string.
+            logo_url: retained for back-compat; unused (Signature uses the typographic
+                ZEALOVA lockup, not an 88px logo image).
+            header_tag: short top-right tag ("Account", "Billing"); defaults from
+                category_name or "Account".
+            hero_icon: optional Lucide key for the hero icon chip.
         """
-        features_html = ""
-        for i, (emoji, feat_title, feat_desc) in enumerate(features):
-            margin = "margin-bottom:28px;" if i < len(features) - 1 else "margin-bottom:8px;"
-            features_html += f"""
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="{margin}">
-                <tr>
-                  <td width="48" valign="top">
-                    <div style="width:40px;height:40px;background:#2a1708;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">{emoji}</div>
-                  </td>
-                  <td style="padding-left:16px;" valign="top">
-                    <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">{feat_title}</p>
-                    <p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">{feat_desc}</p>
-                  </td>
-                </tr>
-              </table>"""
+        rows = [(self._feature_icon(emoji), t, d) for (emoji, t, d) in features]
 
-        return f"""<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background-color:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#000000;min-height:100vh;">
-    <tr><td align="center" style="padding:40px 16px;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background-color:#0f0f0f;border-radius:20px;overflow:hidden;border:1px solid #1a1a1a;">
-          <tr><td style="background:linear-gradient(135deg,#FB923C 0%,#F97316 50%,#EA580C 100%);height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
-          <tr><td align="center" style="padding:48px 40px 24px;"><img src="{logo_url}" alt="{branding.APP_NAME}" width="88" height="88" style="display:block;border-radius:20px;border:0;width:88px;height:88px;object-fit:cover;"><p style="margin:20px 0 0;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#F97316;">{branding.APP_NAME.upper()}</p></td></tr>
-          {persona_signature_html}
-          <tr><td align="center" style="padding:24px 40px 12px;"><h1 style="margin:0;font-size:36px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">{title}</h1></td></tr>
-          <tr><td align="center" style="padding:0 48px 20px;"><p style="margin:0;font-size:16px;line-height:1.65;color:#a1a1aa;text-align:center;">{subtitle}</p></td></tr>
-          {stats_row_html}
-          <tr><td align="center" style="padding:28px 40px 40px;"><a href="{open_url}" style="display:inline-block;background:#F97316;color:#000000;font-size:16px;font-weight:800;text-decoration:none;padding:16px 44px;border-radius:50px;letter-spacing:0.2px;">{cta_text}</a></td></tr>
-          <tr><td style="padding:0 32px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
-          <tr><td style="padding:40px 40px 16px;">{features_html}</td></tr>
-          {build_social_footer_html(unsubscribe_url=unsubscribe_url, category_name=category_name)}
-          <tr><td align="center" style="padding:28px 40px 40px;"><p style="margin:0 0 4px;font-size:12px;color:#3f3f46;">{branding.APP_NAME} &mdash; Your Personal Training Assistant</p><p style="margin:0;font-size:12px;color:#3f3f46;">{footer_text}</p></td></tr>
-        </table>
-    </td></tr>
-  </table>
-</body>
-</html>"""
+        body = persona_signature_html + stats_row_html
+        if cta_text and open_url:
+            body += sig.pill_cta(cta_text, open_url)
+        body += sig.info_rows(rows)
+
+        is_pref = bool(unsubscribe_url and category_name)
+        tag = header_tag or (category_name.title() if category_name else "Account")
+        return sig.signature_email(
+            header_tag=tag,
+            hero_title=title,
+            hero_sub=subtitle,
+            hero_icon=hero_icon,
+            body_html=body,
+            unsubscribe_url=unsubscribe_url,
+            category_label=category_name or "updates",
+            footer_kind="preference" if is_pref else "transactional",
+            footer_note="" if is_pref else footer_text,
+        )
 
     # Lifecycle email methods (cancellation_retention, trial_expired, trial_ending,
     # streak_at_risk, day3_activation, onboarding_incomplete) are inherited from
