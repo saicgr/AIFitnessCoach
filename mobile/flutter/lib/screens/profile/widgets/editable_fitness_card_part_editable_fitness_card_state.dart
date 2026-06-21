@@ -47,16 +47,8 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
   static const _goalOptions = ['Build Muscle', 'Lose Weight', 'Increase Endurance', 'Stay Active'];
   static const _levelOptions = ['Beginner', 'Intermediate', 'Advanced'];
   static const _warmupStretchOptions = [3, 5, 7, 10, 15]; // Common warmup/stretch durations
-  static const _injuryOptions = [
-    'Lower Back',
-    'Shoulder',
-    'Knee',
-    'Neck',
-    'Wrist',
-    'Ankle',
-    'Hip',
-    'Elbow',
-  ];
+  // Injury chips come from the canonical shared list (kInjuryOptions); see
+  // core/constants/injury_options.dart. Stored as ids so backend safety matches.
 
   @override
   void initState() {
@@ -69,7 +61,9 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
       _selectedLevel = widget.user.fitnessLevel ?? 'Intermediate';
       _selectedGoal = widget.user.fitnessGoal ?? 'Build Muscle';
       _selectedDays = List<int>.from(widget.user.workoutDays ?? []);
-      _selectedInjuries = List<String>.from(widget.user.injuriesList ?? []);
+      // Normalize legacy Title-Case labels ('Lower Back') → canonical ids
+      // ('lower_back') so old profile-edited data matches the backend resolver.
+      _selectedInjuries = normalizeInjuryList(widget.user.injuriesList ?? []);
     }
     // Load duration range from active gym profile
     final activeProfile = ref.read(activeGymProfileProvider);
@@ -325,7 +319,9 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             icon: Icons.healing,
             iconColor: AppColors.error,
             label: l10n.editableFitnessCardInjuries,
-            value: _selectedInjuries.isEmpty ? l10n.editableFitnessCardNone : _selectedInjuries.join(', '),
+            value: _selectedInjuries.isEmpty
+                ? l10n.editableFitnessCardNone
+                : _selectedInjuries.map(injuryLabelFor).join(', '),
             isEditing: _isEditing,
             editWidget: _buildInjurySelector(cardBorder, textSecondary),
             isDark: isDark,
@@ -740,20 +736,31 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
   }
 
   Widget _buildInjurySelector(Color cardBorder, Color textSecondary) {
+    // Preserve any custom/free-text injuries the user already has that aren't in
+    // the standard chip set (e.g. an onboarding 'other') so editing never drops
+    // them — render them as selected chips alongside the canonical options.
+    final knownIds = kInjuryOptions.map((o) => o.$1).toSet();
+    final extras = _selectedInjuries.where((id) => !knownIds.contains(id)).toList();
+    final entries = <(String, String)>[
+      ...kInjuryOptions,
+      for (final id in extras) (id, injuryLabelFor(id)),
+    ];
     return Wrap(
       spacing: 6,
       runSpacing: 6,
-      children: _injuryOptions.map((injury) {
-        final isSelected = _selectedInjuries.contains(injury);
+      children: entries.map((opt) {
+        final id = opt.$1;
+        final label = opt.$2;
+        final isSelected = _selectedInjuries.contains(id);
         return GestureDetector(
           onTap: _isSaving
               ? null
               : () {
                   _updateField(() {
                     if (isSelected) {
-                      _selectedInjuries.remove(injury);
+                      _selectedInjuries.remove(id);
                     } else {
-                      _selectedInjuries.add(injury);
+                      _selectedInjuries.add(id);
                     }
                   });
                 },
@@ -765,7 +772,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
               border: Border.all(color: isSelected ? AppColors.error : cardBorder),
             ),
             child: Text(
-              injury,
+              label,
               style: TextStyle(
                 fontSize: 12,
                 color: isSelected ? AppColors.error : textSecondary,

@@ -39,8 +39,10 @@ import '../widgets/exercise_thumbnail_strip_v2.dart';
 import '../widgets/breathing_guide_sheet.dart';
 import '../widgets/exercise_info_sheet.dart';
 import '../widgets/fatigue_alert_modal.dart';
+import '../widgets/hr_recovery_banner.dart';
 import '../widgets/hydration_quick_actions.dart';
 import '../widgets/rest_timer_overlay.dart';
+import 'timer_rest_mixin.dart';
 import '../widgets/progression_strip.dart';
 import '../widgets/session_detail_sheet.dart';
 import '../widgets/set_tracking_overlay.dart';
@@ -53,6 +55,7 @@ import '../widgets/workout_top_overlay.dart';
 import '../../../core/providers/window_mode_provider.dart';
 import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../core/models/set_progression.dart';
+import '../../../widgets/injury_limitations_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 part 'workout_ui_builders_mixin_part_drag_action_zone.dart';

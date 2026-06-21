@@ -76,6 +76,12 @@ class WorkoutTopBarV2 extends ConsumerWidget {
   /// Optional "Skip exercise" overflow action. Skips to the next exercise.
   final VoidCallback? onSkipExercise;
 
+  /// Optional "Limitations" overflow action — opens the injury limitations sheet
+  /// so the user can add/remove an injury mid-session. Saving regenerates the
+  /// UPCOMING plan under the new safety constraints (the current session is left
+  /// intact; we never yank a workout mid-set).
+  final VoidCallback? onLimitationsTap;
+
   const WorkoutTopBarV2({
     super.key,
     required this.workoutSeconds,
@@ -93,6 +99,7 @@ class WorkoutTopBarV2 extends ConsumerWidget {
     this.isFavorite = false,
     this.onCompleteWorkoutNow,
     this.onSkipExercise,
+    this.onLimitationsTap,
   });
 
   @override
@@ -216,8 +223,8 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                     ),
                   ),
 
-                  // Overflow menu — Skip exercise + Complete workout now
-                  if (onCompleteWorkoutNow != null || onSkipExercise != null) ...[
+                  // Overflow menu — Skip exercise + Limitations + Complete now
+                  if (onCompleteWorkoutNow != null || onSkipExercise != null || onLimitationsTap != null) ...[
                     const SizedBox(width: 4),
                     SizedBox(
                       width: 36,
@@ -237,6 +244,8 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                           HapticFeedback.selectionClick();
                           if (v == 'skip_exercise') {
                             onSkipExercise?.call();
+                          } else if (v == 'limitations') {
+                            onLimitationsTap?.call();
                           } else if (v == 'complete_now') {
                             onCompleteWorkoutNow?.call();
                           }
@@ -253,7 +262,18 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                                   Text(l.workoutTopBarSkipExercise),
                                 ]),
                               ),
-                            if (onCompleteWorkoutNow != null && onSkipExercise != null)
+                            if (onLimitationsTap != null)
+                              PopupMenuItem<String>(
+                                value: 'limitations',
+                                child: Row(children: [
+                                  const Icon(Icons.healing_rounded,
+                                      size: 18, color: AppColors.error),
+                                  const SizedBox(width: 10),
+                                  Text(l.editableFitnessCardInjuries),
+                                ]),
+                              ),
+                            if (onCompleteWorkoutNow != null &&
+                                (onSkipExercise != null || onLimitationsTap != null))
                               const PopupMenuDivider(),
                             if (onCompleteWorkoutNow != null)
                               PopupMenuItem<String>(

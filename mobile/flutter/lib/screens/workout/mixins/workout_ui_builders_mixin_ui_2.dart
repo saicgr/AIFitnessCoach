@@ -102,6 +102,10 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                         isFavorite: isFavorite,
                         onCompleteWorkoutNow: completeWorkoutNow,
                         onSkipExercise: skipExercise,
+                        // Mid-session injury check-in. Saving regenerates the
+                        // UPCOMING plan (Phase-2 invalidation); the in-progress
+                        // session is left intact.
+                        onLimitationsTap: () => showInjuryLimitationsSheet(context),
                       );
                     },
                   ),
@@ -665,6 +669,30 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                   onAcceptSuggestion: handleAcceptFatigueSuggestion,
                   onContinueAsPlanned: handleDismissFatigueAlert,
                   onStopExercise: skipExercise,
+                ),
+              ),
+
+            // HR-aware rest banner: between-set rest elapsed but live heart
+            // rate is still elevated. Floats above the set list; owns its own
+            // recovery detection + actions (start now / +30s). Sits above the
+            // coach FAB so it reads as the primary call-to-action.
+            if ((this as TimerRestMixin).isHrGating)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).padding.bottom + 100,
+                child: RepaintBoundary(
+                  child: Builder(builder: (_) {
+                    final rest = this as TimerRestMixin;
+                    return HrRecoveryBanner(
+                      mode: rest.hrRestMode,
+                      peakHr: rest.hrRestPeakBpm,
+                      age: rest.userAgeForHr,
+                      restingHr: rest.restingHrForHr,
+                      onReady: rest.onHrGateReady,
+                      onExtend: rest.onHrGateExtend,
+                    );
+                  }),
                 ),
               ),
 
