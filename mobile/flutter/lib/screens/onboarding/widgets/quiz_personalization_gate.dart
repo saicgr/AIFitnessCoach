@@ -937,11 +937,17 @@ class _RulerStripState extends State<_RulerStrip> {
     super.dispose();
   }
 
+  // Each tick LINE is centered inside its `_tickSpacing`-wide slot (the
+  // _RulerTick Column centers on its cross axis), so the tick for `value` sits
+  // half a slot past the slot's leading edge. The `+ _tickSpacing / 2` term
+  // lines the centered indicator up with the centered tick — without it the
+  // scale reads 7px (half a tick) to the right of the orange line.
   double _offsetForValue(double value) =>
-      (value - widget.min) * _tickSpacing;
+      (value - widget.min) * _tickSpacing + _tickSpacing / 2;
 
   double _valueForOffset(double offset) =>
-      (widget.min + offset / _tickSpacing).clamp(widget.min, widget.max);
+      (widget.min + (offset - _tickSpacing / 2) / _tickSpacing)
+          .clamp(widget.min, widget.max);
 
   void _jumpToValue(double value) {
     if (!_controller.hasClients) return;
