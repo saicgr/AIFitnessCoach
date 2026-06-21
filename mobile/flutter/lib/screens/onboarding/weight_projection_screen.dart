@@ -53,12 +53,16 @@ class _WeightProjectionScreenState
   final ScrollController _scrollController = ScrollController();
   bool _showScrollHint = false;
 
+  // Below this much hidden content the cue stays OFF. The screen is tuned to
+  // fit on common phones, so a trivial residual overflow (a few px absorbed by
+  // the bounce) must NOT nag — only show the cue when a meaningful chunk (≈ a
+  // whole element, e.g. the stats strip) is genuinely below the fold.
+  static const double _scrollHintThreshold = 64.0;
+
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final pos = _scrollController.position;
-    // Show while the content overflows and the user is more than ~24px from the
-    // bottom (i.e. the proof section isn't fully on screen yet).
-    final more = pos.maxScrollExtent - pos.pixels > 24;
+    final more = pos.maxScrollExtent - pos.pixels > _scrollHintThreshold;
     if (more != _showScrollHint && mounted) {
       setState(() => _showScrollHint = more);
     }
@@ -536,7 +540,7 @@ class _WeightProjectionScreenState
                 // CTA moved to the scaffold's pinned `button:` slot so it can
                 // never be pushed off-screen. Small trailing gap keeps the strip
                 // clear of the pinned button (scaffold adds its own padding too).
-                const SizedBox(height: 6),
+                const SizedBox(height: 3),
               ],
             ),
               ),
