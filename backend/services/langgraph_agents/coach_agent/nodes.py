@@ -499,6 +499,9 @@ def format_onboarding_preferences(user_id: Optional[str]) -> str:
     past_blockers = sig.get("past_blockers") or []
     if past_blockers:
         bits.append("past blockers: " + ", ".join(past_blockers[:3]))
+    primary_whys = sig.get("primary_whys") or []
+    if primary_whys:
+        bits.append("driven by: " + ", ".join(primary_whys[:3]))
     sleep_quality = sig.get("sleep_quality")
     if sleep_quality:
         bits.append(f"sleep quality {sleep_quality}")

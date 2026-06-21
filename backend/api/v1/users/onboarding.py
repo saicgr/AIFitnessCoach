@@ -194,6 +194,7 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             # Past blockers — captured-but-unused signal now persisted to prefs
             # JSONB and read by the 3 AI surfaces.
             past_blockers=request.past_blockers,
+            primary_whys=request.primary_whys,
             # Focus areas
             focus_areas=request.focus_areas,
             # Per-equipment owned weights (canonical id -> sorted weights in the

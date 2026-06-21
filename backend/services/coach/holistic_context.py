@@ -129,6 +129,7 @@ def get_onboarding_signals(user_id: str, db: Any = None) -> Dict[str, Any]:
         "motivations": [],
         "workout_variety": None,
         "past_blockers": [],
+        "primary_whys": [],
     }
     db = db or get_supabase_db()
     try:
@@ -167,6 +168,7 @@ def get_onboarding_signals(user_id: str, db: Any = None) -> Dict[str, Any]:
             prefs.get("exercise_consistency") or prefs.get("workout_variety")
         ),
         "past_blockers": _as_list(prefs.get("past_blockers")),
+        "primary_whys": _as_list(prefs.get("primary_whys")),
     }
 
 

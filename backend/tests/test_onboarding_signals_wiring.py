@@ -129,6 +129,7 @@ def test_get_onboarding_signals_fail_open_empty():
         "motivations": [],
         "workout_variety": None,
         "past_blockers": [],
+        "primary_whys": [],
     }
 
     # get_user raises → still the empty/default shape.

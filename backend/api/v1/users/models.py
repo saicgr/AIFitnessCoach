@@ -177,6 +177,9 @@ class UserPreferencesRequest(BaseModel):
     # (onboarding "what's stopped you before?"). Captured-but-unused signal
     # wired into the 3 AI surfaces. Stored in the preferences JSONB.
     past_blockers: Optional[List[str]] = None
+    # Multi-select "what's driving this?" (onboarding why). Same treatment as
+    # past_blockers — persisted to the preferences JSONB + fed to the AI surfaces.
+    primary_whys: Optional[List[str]] = None
     # Onboarding injuries/limitations. The frontend POSTs onboarding injuries
     # under this JSON key; persisted into the `active_injuries` users column so
     # the existing injury-avoidance path filters the FIRST generated plan.
@@ -451,6 +454,7 @@ def merge_extended_fields_into_preferences(
     sleep_quality: Optional[str] = None,
     obstacles: Optional[List[str]] = None,
     past_blockers: Optional[List[str]] = None,
+    primary_whys: Optional[List[str]] = None,
     dietary_restrictions: Optional[List[str]] = None,
     meals_per_day: Optional[int] = None,
     weight_direction: Optional[str] = None,
@@ -523,6 +527,8 @@ def merge_extended_fields_into_preferences(
         prefs["obstacles"] = obstacles
     if past_blockers is not None:
         prefs["past_blockers"] = past_blockers
+    if primary_whys is not None:
+        prefs["primary_whys"] = primary_whys
     if dietary_restrictions is not None:
         prefs["dietary_restrictions"] = dietary_restrictions
     if meals_per_day is not None:
