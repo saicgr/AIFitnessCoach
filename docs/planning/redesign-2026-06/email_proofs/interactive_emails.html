@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova — Interactive (CSS-kinetic) Email Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700&family=Fraunces:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#F0531E; --accent-bg:rgba(240,83,30,.16);
+    --bg:#0b0b0c; --card:#141417; --chip:#1c1c22; --line:#1f1f25;
+    --ink:#f3f3f4; --grey:#8a8a90; --faint:#5b5b62; --track:#232328;
+    --f-disp:'Anton',Impact,sans-serif; --f-lbl:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+    --f-serif:'Fraunces',Georgia,serif;
+  }
+  body{margin:0;background:#060607;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+  .page-head{max-width:1080px;margin:0 auto;padding:44px 24px 4px;}
+  .page-head h1{font-family:var(--f-disp);font-weight:400;font-size:38px;letter-spacing:1px;margin:0 0 10px;}
+  .page-head p{color:var(--grey);font-size:15px;line-height:1.6;max-width:780px;margin:0 0 8px;}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 0;}
+  .legend span{font-family:var(--f-lbl);text-transform:uppercase;letter-spacing:1px;font-size:11px;font-weight:700;color:var(--ink);background:#141417;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:7px;padding:7px 11px;}
+  .fallback{max-width:1080px;margin:22px auto 0;padding:16px 18px;background:#0e0e10;border:1px solid var(--line);border-radius:12px;color:var(--grey);font-size:13.5px;line-height:1.6;}
+  .fallback b{color:var(--ink);}
+  .gallery{display:flex;flex-wrap:wrap;gap:40px 36px;justify-content:center;padding:30px 24px 90px;max-width:1320px;margin:0 auto;}
+  .slot{width:600px;max-width:100%;}
+  .slot .cap{font-family:var(--f-lbl);text-transform:uppercase;letter-spacing:2px;font-size:13px;color:var(--accent);font-weight:700;padding:0 4px 12px;}
+  .email{width:600px;max-width:100%;background:var(--bg);border:1px solid var(--line);overflow:hidden;}
+  hr.rail{height:3px;border:0;background:var(--accent);margin:0;}
+  hr.hair{height:1px;border:0;background:var(--line);margin:0;}
+
+  /* ════ KINETIC — hover ════ */
+  a.cta{transition:filter .18s ease, transform .18s ease;}
+  a.cta:hover{filter:brightness(1.10);transform:translateY(-1px);}
+
+  /* ════ KINETIC — tabs (radio :checked) ════ */
+  .tabin{position:absolute;opacity:0;height:0;width:0;}
+  .tab-panel{display:block;}                                   /* fallback: all panels visible */
+  #wt1:checked~.wbody .tp2,#wt1:checked~.wbody .tp3{display:none;}
+  #wt2:checked~.wbody .tp1,#wt2:checked~.wbody .tp3{display:none;}
+  #wt3:checked~.wbody .tp1,#wt3:checked~.wbody .tp2{display:none;}
+  .tab-bar{display:flex;gap:6px;padding:16px 22px 4px;}
+  .tab-bar label{flex:1;text-align:center;cursor:pointer;font-family:var(--f-lbl);text-transform:uppercase;letter-spacing:1.5px;font-size:12px;font-weight:700;color:var(--grey);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:9px 6px;transition:all .15s ease;}
+  .tab-bar label:hover{color:var(--ink);}
+  #wt1:checked~.wbody .tab-bar label[for=wt1],
+  #wt2:checked~.wbody .tab-bar label[for=wt2],
+  #wt3:checked~.wbody .tab-bar label[for=wt3]{color:#0b0b0c;background:var(--accent);border-color:var(--accent);}
+
+  /* ════ KINETIC — accordion (checkbox :checked) ════ */
+  .accin{position:absolute;opacity:0;height:0;width:0;}
+  .acc-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+    font-family:var(--f-lbl);text-transform:uppercase;letter-spacing:1.5px;font-size:13px;font-weight:700;color:var(--ink);
+    background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+  .acc-head .chev{color:var(--accent);font-size:14px;transition:transform .3s ease;}
+  .acc-panel{max-height:600px;overflow:hidden;transition:max-height .35s ease;}  /* fallback: OPEN */
+  @media screen and (-webkit-min-device-pixel-ratio:0){
+    .acc-panel{max-height:0;}                                 /* webkit (Apple/iOS Mail): collapsed by default */
+    .accin:checked~.acc-panel{max-height:700px;}
+  }
+  .accin:checked~.acc-head .chev{transform:rotate(90deg);}
+
+  /* ════ KINETIC — carousel (scroll-snap) ════ */
+  .caro{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:4px 22px 14px;}
+  .caro::-webkit-scrollbar{height:6px;}
+  .caro::-webkit-scrollbar-thumb{background:var(--track);border-radius:3px;}
+  .caro .ccard{flex:0 0 78%;scroll-snap-align:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 18px 20px;}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>INTERACTIVE EMAIL — CSS KINETIC</h1>
+  <p>These are <b>real, sendable email techniques</b> (no JavaScript — email strips it). Click the tabs,
+     tap the accordion header, hover the buttons, and drag the carousel. They render live in
+     <b>Apple Mail + iOS Mail</b> (where most opens happen) and Samsung Mail.</p>
+  <div class="legend">
+    <span>Hover · CTAs</span><span>Tap · Accordion</span><span>Switch · Tabs</span><span>Swipe · Carousel</span>
+  </div>
+  <div class="fallback">
+    <b>Graceful fallback (Gmail / Outlook):</b> the interactive widgets quietly become the static design you already
+    approved — tab panels render <b>stacked</b> (all content shown), accordions render <b>expanded</b>, the carousel
+    becomes a <b>scroll row</b>. Nobody ever loses content; the kinetic layer only adds polish where it's supported.
+    <br>AMP for Email (Gmail-native interactivity) is a separate infra track — see <b>AMP_TRACK.md</b>.
+  </div>
+</div>
+
+<div class="gallery">
+
+  <!-- ════════ WELCOME — tabs + accordion + carousel + hover ════════ -->
+  <div class="slot">
+    <div class="cap">Welcome · plan ready <small style="color:#5b5b62">— tabs + accordion + carousel</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Welcome</td>
+      </tr></table>
+      <hr class="hair">
+      <!-- greeting -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:22px 28px 2px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td width="54" valign="middle"><div style="width:42px;height:42px;background:#F0531E;border-radius:50%;text-align:center;line-height:42px;font-family:'Anton',sans-serif;font-size:19px;color:#0b0b0c;">C</div></td>
+          <td valign="middle" style="padding-left:13px;">
+            <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:24px;color:#f3f3f4;">Hey, Chetan.</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:12px;color:#5b5b62;margin-top:2px;">Your plan is ready</div>
+          </td></tr></table>
+      </td></tr></table>
+
+      <!-- KINETIC TABS: radios precede the .wbody container -->
+      <input class="tabin" type="radio" name="wtab" id="wt1" checked>
+      <input class="tabin" type="radio" name="wtab" id="wt2">
+      <input class="tabin" type="radio" name="wtab" id="wt3">
+      <div class="wbody">
+        <div class="tab-bar">
+          <label for="wt1">Today</label><label for="wt2">Nutrition</label><label for="wt3">This week</label>
+        </div>
+
+        <!-- TAB 1 — TODAY (with accordion) -->
+        <div class="tab-panel tp1">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:14px 22px 0;">
+            <div style="background:#141417;border:1px solid #1f1f25;border-radius:16px;padding:18px 20px;">
+              <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#F0531E;margin-bottom:8px;">Tomorrow</div>
+              <div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;letter-spacing:.4px;margin-bottom:6px;">Full Body A · 45 min</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#8a8a90;letter-spacing:.3px;">6 exercises · ~3,200 lb total volume</div>
+            </div>
+          </td></tr></table>
+          <!-- ACCORDION inside Today -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:12px 22px 0;">
+            <input class="accin" type="checkbox" id="acc1">
+            <label class="acc-head" for="acc1">See full workout <span class="chev">&#9656;</span></label>
+            <div class="acc-panel">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:14.5px;color:#e4e4e7;line-height:2;letter-spacing:.3px;padding:12px 4px 2px;">
+                <span style="color:#F0531E;font-weight:700;">1.</span> Goblet Squat <span style="color:#8a8a90;">· 3 × 10</span><br>
+                <span style="color:#F0531E;font-weight:700;">2.</span> Incline DB Press <span style="color:#8a8a90;">· 3 × 12</span><br>
+                <span style="color:#F0531E;font-weight:700;">3.</span> Lat Pulldown <span style="color:#8a8a90;">· 3 × 12</span><br>
+                <span style="color:#F0531E;font-weight:700;">4.</span> Romanian Deadlift <span style="color:#8a8a90;">· 3 × 10</span><br>
+                <span style="color:#F0531E;font-weight:700;">5.</span> Seated Row <span style="color:#8a8a90;">· 3 × 12</span><br>
+                <span style="color:#F0531E;font-weight:700;">6.</span> Plank <span style="color:#8a8a90;">· 3 × 45s</span>
+              </div>
+            </div>
+          </td></tr></table>
+        </div>
+
+        <!-- TAB 2 — NUTRITION (macro grid) -->
+        <div class="tab-panel tp2">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:16px 18px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+              <td width="25%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:14px;padding:14px 4px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;">1,840</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:4px;">Cal</div></div></td>
+              <td width="25%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:14px;padding:14px 4px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;">155g</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:4px;">Protein</div></div></td>
+              <td width="25%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:14px;padding:14px 4px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;">170g</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:4px;">Carbs</div></div></td>
+              <td width="25%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:14px;padding:14px 4px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;">61g</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:4px;">Fat</div></div></td>
+            </tr></table>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#8a8a90;letter-spacing:.3px;padding:12px 6px 0;text-align:center;">Tuned to drop 14&nbsp;lb at ~1&nbsp;lb/week. Adjusts as you log.</div>
+          </td></tr></table>
+        </div>
+
+        <!-- TAB 3 — THIS WEEK (carousel) -->
+        <div class="tab-panel tp3">
+          <div class="caro">
+            <div class="ccard"><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#F0531E;">Mon</div><div style="font-family:'Anton',sans-serif;font-size:19px;color:#f3f3f4;margin-top:6px;">Full Body A</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#8a8a90;margin-top:4px;">45 min · 6 exercises</div></div>
+            <div class="ccard"><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#F0531E;">Wed</div><div style="font-family:'Anton',sans-serif;font-size:19px;color:#f3f3f4;margin-top:6px;">Full Body B</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#8a8a90;margin-top:4px;">50 min · 7 exercises</div></div>
+            <div class="ccard"><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#F0531E;">Fri</div><div style="font-family:'Anton',sans-serif;font-size:19px;color:#f3f3f4;margin-top:6px;">Conditioning</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#8a8a90;margin-top:4px;">30 min · intervals</div></div>
+          </div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#5b5b62;letter-spacing:1px;text-transform:uppercase;text-align:center;padding:0 22px 6px;">Swipe →</div>
+        </div>
+      </div><!-- /.wbody -->
+
+      <!-- CTA (hover) -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:18px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a class="cta" href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Open Zealova</a>
+          </td></tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:18px 28px 24px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;font-size:11px;">Welcome to Zealova. &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+  <!-- ════════ WORKOUT REMINDER — accordion + hover ════════ -->
+  <div class="slot">
+    <div class="cap">Workout reminder <small style="color:#5b5b62">— accordion + hover</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Today</td>
+      </tr></table>
+      <hr class="hair">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:20px 28px 2px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td width="54" valign="middle"><div style="width:42px;height:42px;background:#F0531E;border-radius:50%;text-align:center;line-height:42px;font-family:'Anton',sans-serif;font-size:19px;color:#0b0b0c;">C</div></td>
+          <td valign="middle" style="padding-left:13px;">
+            <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:23px;color:#f3f3f4;">Ready when you are, Chetan.</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:12px;color:#5b5b62;margin-top:2px;">Push Day · 48 min</div>
+          </td></tr></table>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:18px 28px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141417" style="background:#141417;border:1px solid #1f1f25;border-left:3px solid #F0531E;"><tr>
+          <td width="50" valign="top" style="padding:15px 0 15px 14px;"><div style="width:34px;height:34px;background:#F0531E;text-align:center;line-height:34px;font-family:'Anton',sans-serif;font-size:15px;color:#0b0b0c;">M</div></td>
+          <td valign="top" style="padding:15px 16px 15px 11px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:11px;color:#8a8a90;margin-bottom:4px;">Coach Mara</div>
+            <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:15px;line-height:1.45;color:#f3f3f4;">Three sets stand between you and a 6-day streak. Twenty minutes is enough — let's bank it.</div>
+          </td></tr></table>
+      </td></tr></table>
+      <!-- ACCORDION -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:16px 28px 0;">
+        <input class="accin" type="checkbox" id="acc2">
+        <label class="acc-head" for="acc2">See full workout <span class="chev">&#9656;</span></label>
+        <div class="acc-panel">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14.5px;color:#e4e4e7;line-height:2;letter-spacing:.3px;padding:12px 4px 2px;">
+            <span style="color:#F0531E;font-weight:700;">1.</span> Barbell Bench Press <span style="color:#8a8a90;">· 4 × 6</span><br>
+            <span style="color:#F0531E;font-weight:700;">2.</span> Overhead Press <span style="color:#8a8a90;">· 3 × 8</span><br>
+            <span style="color:#F0531E;font-weight:700;">3.</span> Incline DB Press <span style="color:#8a8a90;">· 3 × 10</span><br>
+            <span style="color:#F0531E;font-weight:700;">4.</span> Lateral Raise <span style="color:#8a8a90;">· 3 × 15</span><br>
+            <span style="color:#F0531E;font-weight:700;">5.</span> Triceps Pushdown <span style="color:#8a8a90;">· 3 × 12</span>
+          </div>
+        </div>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:20px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a class="cta" href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Start today's workout</a>
+          </td></tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:18px 28px 24px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;font-size:11px;">You're getting this because workout reminders are on.<br><a href="#" style="color:#5b5b62;text-decoration:underline;">Turn off workout reminders</a> &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

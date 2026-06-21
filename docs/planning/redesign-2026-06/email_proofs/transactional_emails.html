@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova — Transactional & Lifecycle Email Mockups (Signature design)</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700&family=Fraunces:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  /* ── Gallery chrome only — the email blocks themselves stay inline-styled like real email HTML ── */
+  :root{
+    --accent:#F0531E; --accent-bg:#2a1712; --accent-track:#3a1f12;
+    --bg:#0b0b0c; --card:#141417; --chip:#1c1c22; --line:#1f1f25;
+    --ink:#f3f3f4; --grey:#8a8a90; --faint:#5b5b62; --track:#232328;
+    --f-disp:'Anton',Impact,'Arial Narrow Bold',sans-serif;
+    --f-lbl:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+    --f-serif:'Fraunces',Georgia,'Times New Roman',serif;
+  }
+  body{margin:0;background:#060607;color:var(--ink);
+       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
+  .page-head{max-width:1280px;margin:0 auto;padding:44px 24px 8px;}
+  .page-head h1{font-family:var(--f-disp);font-weight:400;font-size:40px;letter-spacing:1px;margin:0 0 8px;}
+  .page-head p{color:var(--grey);font-size:15px;line-height:1.6;max-width:760px;margin:0 0 6px;}
+  .page-head .tokens{color:var(--faint);font-size:12.5px;font-family:var(--f-lbl);letter-spacing:1.2px;text-transform:uppercase;margin-top:14px;}
+  .gallery{display:flex;flex-wrap:wrap;gap:40px 36px;justify-content:center;align-items:flex-start;padding:32px 24px 80px;max-width:1320px;margin:0 auto;}
+  .slot{width:600px;max-width:100%;}
+  .slot .cap{font-family:var(--f-lbl);text-transform:uppercase;letter-spacing:2px;font-size:13px;
+             color:var(--accent);font-weight:700;padding:0 4px 12px;display:flex;align-items:baseline;gap:10px;}
+  .slot .cap small{color:var(--faint);font-weight:600;letter-spacing:1px;font-size:11px;}
+  /* The email envelope — mirrors email_signature_template.signature_email() outer table */
+  .email{width:600px;max-width:100%;background:var(--bg);border:1px solid var(--line);overflow:hidden;}
+  hr.rail{height:3px;border:0;background:var(--accent);margin:0;}
+  hr.hair{height:1px;border:0;background:var(--line);margin:0;}
+</style>
+<style>
+  /* ── Interactive control bar ── */
+  :root{--surface:#060607;}
+  body{background:var(--surface);padding-top:74px;}
+  .controls{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;
+    padding:12px 20px;background:rgba(10,10,12,.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+  .controls .grp{display:flex;align-items:center;gap:9px;}
+  .controls label{font-family:var(--f-lbl);text-transform:uppercase;letter-spacing:1.5px;font-size:11px;color:var(--faint);font-weight:700;}
+  .controls input[type=text]{background:#141417;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 10px;font-size:13px;width:120px;outline:none;}
+  .controls input[type=color]{width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:none;padding:0;cursor:pointer;}
+  .controls select{background:#141417;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 8px;font-size:13px;outline:none;cursor:pointer;}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .seg button{background:#141417;color:var(--grey);border:0;padding:7px 12px;font-size:11px;cursor:pointer;font-family:var(--f-lbl);text-transform:uppercase;letter-spacing:1px;}
+  .seg button.on{background:var(--accent);color:#0b0b0c;font-weight:700;}
+  .sw{display:inline-flex;gap:6px;}
+  .sw i{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;display:inline-block;box-sizing:border-box;}
+  .sw i.on{border-color:var(--ink);}
+  .controls .reset{margin-left:auto;background:none;border:1px solid var(--line);color:var(--grey);border-radius:8px;padding:7px 13px;font-size:12px;cursor:pointer;font-family:var(--f-lbl);text-transform:uppercase;letter-spacing:1px;}
+  body.single .gallery{flex-direction:column;align-items:center;}
+  body.phone .slot,body.phone .email{width:375px;}
+  @media(max-width:760px){.controls{gap:9px 14px;}}
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <div class="grp"><label>Name</label><input id="c-name" type="text" value="Chetan"></div>
+  <div class="grp"><label>Accent</label><input id="c-accent" type="color" value="#F0531E">
+    <span class="sw" id="c-presets">
+      <i data-c="#F0531E" style="background:#F0531E" class="on"></i>
+      <i data-c="#22C55E" style="background:#22C55E"></i>
+      <i data-c="#3B82F6" style="background:#3B82F6"></i>
+      <i data-c="#A855F7" style="background:#A855F7"></i>
+      <i data-c="#EAB308" style="background:#EAB308"></i>
+    </span></div>
+  <div class="grp"><label>Coach mood</label><select id="c-mood">
+    <option value="nudge">Nudging</option><option value="concerned">Concerned</option><option value="firm">Disappointed</option></select></div>
+  <div class="grp"><label>Width</label><span class="seg" id="c-width"><button data-w="desktop" class="on">Desktop</button><button data-w="phone">Mobile</button></span></div>
+  <div class="grp"><label>Cols</label><span class="seg" id="c-cols"><button data-k="two" class="on">Two</button><button data-k="one">One</button></span></div>
+  <button class="reset" id="c-reset">Reset</button>
+</div>
+
+<div class="page-head">
+  <h1>ZEALOVA EMAIL — SIGNATURE DESIGN</h1>
+  <p>Phase&nbsp;0 visual proof. Every backend-sent email rebuilt on the same chrome as the weekly-progress
+     email (<code>email_signature_template.py</code>): 3px orange rail, typographic <b>ZEALOVA</b> lockup,
+     Anton display, Barlow Condensed uppercase labels, Fraunces italic, monoline Lucide icons, <b>zero emoji</b>,
+     single accent <span style="color:#F0531E">#F0531E</span> on near-black.</p>
+  <p style="color:#8a8a90"><b style="color:#f3f3f4">The first card is the "Verify your email" you flagged</b> — compare it to the screenshot.</p>
+  <div class="tokens">#0b0b0c bg · #141417 card · #1f1f25 hairline · #F0531E accent · Anton / Barlow&nbsp;Condensed / Fraunces</div>
+</div>
+
+<div class="gallery">
+
+  <!-- ════════════════════════════ 1 · VERIFY EMAIL ════════════════════════════ -->
+  <div class="slot">
+    <div class="cap">1 · Verify your email <small>transactional · the flagged screen</small></div>
+    <div class="email">
+      <hr class="rail">
+      <!-- header lockup -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Account</td>
+      </tr></table>
+      <hr class="hair">
+      <!-- hero -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:40px 36px 8px;">
+        <div style="width:56px;height:56px;border-radius:16px;background:#2a1712;line-height:56px;margin:0 auto 20px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </div>
+        <div style="font-family:'Anton',sans-serif;font-size:42px;line-height:1.04;color:#f3f3f4;letter-spacing:.5px;text-transform:uppercase;">Verify your email</div>
+        <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:18px;color:#8a8a90;margin-top:14px;line-height:1.5;max-width:420px;margin-left:auto;margin-right:auto;">
+          Confirm this is your inbox, Chetan — it keeps your account secure and makes sure your trial reminders and coaching updates actually reach you.</div>
+      </td></tr></table>
+      <!-- CTA -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:28px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Verify my email</a>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <!-- info rows -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:22px 28px 4px;">
+        <!-- row: lock -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141417" style="background:#141417;border:1px solid #1f1f25;border-left:3px solid #F0531E;margin-bottom:8px;"><tr>
+          <td width="46" align="center" valign="middle" style="padding:14px 0 14px 14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></td>
+          <td valign="middle" style="padding:14px 16px 14px 12px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:14px;font-weight:700;color:#f3f3f4;">Keeps your account secure</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#8a8a90;margin-top:2px;letter-spacing:.3px;">Confirms this inbox is yours, so a password reset always reaches you.</div>
+          </td></tr></table>
+        <!-- row: bell -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141417" style="background:#141417;border:1px solid #1f1f25;border-left:3px solid #F0531E;"><tr>
+          <td width="46" align="center" valign="middle" style="padding:14px 0 14px 14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></td>
+          <td valign="middle" style="padding:14px 16px 14px 12px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:14px;font-weight:700;color:#f3f3f4;">Never miss a reminder</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#8a8a90;margin-top:2px;letter-spacing:.3px;">Trial reminders and coaching updates land in the right inbox.</div>
+          </td></tr></table>
+      </td></tr></table>
+      <!-- footer (transactional variant — no opt-out) -->
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:20px 28px 26px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr>
+          <td style="padding:0 9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#8a8a90"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></td>
+          <td style="padding:0 9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#8a8a90"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.015 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.015 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></td>
+          <td style="padding:0 9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#8a8a90"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701z"/></svg></td>
+        </tr></table>
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;padding-top:12px;font-size:11px;">
+          You received this because an account was created with this email on Zealova.<br>If that wasn't you, you can safely ignore this message. &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ 2 · BILLING ISSUE ════════════════════════════ -->
+  <div class="slot">
+    <div class="cap">2 · Billing issue <small>transactional</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Billing</td>
+      </tr></table>
+      <hr class="hair">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:40px 36px 8px;">
+        <div style="width:56px;height:56px;border-radius:16px;background:#2a1712;line-height:56px;margin:0 auto 20px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        </div>
+        <div style="font-family:'Anton',sans-serif;font-size:38px;line-height:1.05;color:#f3f3f4;letter-spacing:.5px;text-transform:uppercase;">Your access is paused</div>
+        <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:18px;color:#8a8a90;margin-top:14px;line-height:1.5;max-width:430px;margin-left:auto;margin-right:auto;">
+          Chetan, we couldn't process your last payment, so your Premium is on hold. Update your card and everything switches back on instantly.</div>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:28px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Update payment method</a>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:22px 28px 4px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141417" style="background:#141417;border:1px solid #1f1f25;border-left:3px solid #F0531E;"><tr>
+          <td width="46" align="center" valign="middle" style="padding:14px 0 14px 14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></td>
+          <td valign="middle" style="padding:14px 16px 14px 12px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:14px;font-weight:700;color:#f3f3f4;">Nothing is lost</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:#8a8a90;margin-top:2px;letter-spacing:.3px;">Your plan, history and streak are saved. Updating restores access immediately.</div>
+          </td></tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:20px 28px 26px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;font-size:11px;">
+          You received this because you have a Zealova subscription. &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ 3 · PURCHASE CONFIRMATION ════════════════════════════ -->
+  <div class="slot">
+    <div class="cap">3 · Purchase confirmation <small>transactional</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Receipt</td>
+      </tr></table>
+      <hr class="hair">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:40px 36px 8px;">
+        <div style="width:56px;height:56px;border-radius:16px;background:#2a1712;line-height:56px;margin:0 auto 20px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+        </div>
+        <div style="font-family:'Anton',sans-serif;font-size:46px;line-height:1.02;color:#f3f3f4;letter-spacing:.5px;text-transform:uppercase;">You're in</div>
+        <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:18px;color:#8a8a90;margin-top:14px;line-height:1.5;max-width:420px;margin-left:auto;margin-right:auto;">
+          Zealova Premium (annual) is active, Chetan. Every workout, the AI coach, nutrition and progress — all unlocked.</div>
+      </td></tr></table>
+      <!-- receipt strip -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:24px 28px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141417" style="background:#141417;border:1px solid #1f1f25;border-radius:14px;"><tr>
+          <td width="50%" align="center" style="padding:18px 8px;border-right:1px solid #1f1f25;">
+            <div style="font-family:'Anton',sans-serif;font-size:22px;color:#f3f3f4;">$59.99</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:11px;color:#8a8a90;margin-top:5px;">Per year</div></td>
+          <td width="50%" align="center" style="padding:18px 8px;">
+            <div style="font-family:'Anton',sans-serif;font-size:22px;color:#f3f3f4;">Jun 21</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:11px;color:#8a8a90;margin-top:5px;">Renews 2027</div></td>
+        </tr></table>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:24px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Open Zealova</a>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:20px 28px 26px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;font-size:11px;">
+          This is your receipt for a Zealova Premium purchase. &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ 4 · WORKOUT REMINDER (motivational, persona) ════════════════════════════ -->
+  <div class="slot">
+    <div class="cap">4 · Workout reminder <small>motivational · avatar greeting + coach card + stats</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Today</td>
+      </tr></table>
+      <hr class="hair">
+      <!-- avatar greeting -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:20px 28px 2px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td width="54" valign="middle"><div style="width:42px;height:42px;background:#F0531E;border-radius:50%;text-align:center;line-height:42px;font-family:'Anton',sans-serif;font-size:19px;color:#0b0b0c;">C</div></td>
+          <td valign="middle" style="padding-left:13px;">
+            <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:23px;color:#f3f3f4;">Ready when you are, Chetan.</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:12px;color:#5b5b62;margin-top:2px;">Push Day · 48 min</div>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <!-- coach card -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:18px 28px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141417" style="background:#141417;border:1px solid #1f1f25;border-left:3px solid #F0531E;"><tr>
+          <td width="50" valign="top" style="padding:15px 0 15px 14px;"><div style="width:34px;height:34px;background:#F0531E;text-align:center;line-height:34px;font-family:'Anton',sans-serif;font-size:15px;color:#0b0b0c;">M</div></td>
+          <td valign="top" style="padding:15px 16px 15px 11px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:11px;color:#8a8a90;margin-bottom:4px;">Coach Mara</div>
+            <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:15px;line-height:1.45;color:#f3f3f4;">Three sets stand between you and a 6-day streak. Twenty minutes is enough — let's bank it.</div>
+          </td></tr></table>
+      </td></tr></table>
+      <!-- stats grid (re-paletted) -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:16px 24px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="50%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:15px;padding:16px 8px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:24px;color:#f3f3f4;">12</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:11px;color:#8a8a90;margin-top:5px;">Workouts</div></div></td>
+            <td width="50%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:15px;padding:16px 8px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:24px;color:#f3f3f4;">5</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:11px;color:#8a8a90;margin-top:5px;">Day streak</div></div></td>
+          </tr>
+        </table>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:22px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Start today's workout</a>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:20px 28px 26px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;font-size:11px;">
+          You're getting this because workout reminders are on.<br><a href="#" style="color:#5b5b62;text-decoration:underline;">Turn off workout reminders</a> &middot; <a href="#" style="color:#5b5b62;text-decoration:underline;">Unsubscribe</a> &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ 5 · WELCOME (rich) ════════════════════════════ -->
+  <div class="slot">
+    <div class="cap">5 · Welcome (plan ready) <small>onboarding · macros + tomorrow + schedule + coach</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Welcome</td>
+      </tr></table>
+      <hr class="hair">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:22px 28px 2px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td width="54" valign="middle"><div style="width:42px;height:42px;background:#F0531E;border-radius:50%;text-align:center;line-height:42px;font-family:'Anton',sans-serif;font-size:19px;color:#0b0b0c;">C</div></td>
+          <td valign="middle" style="padding-left:13px;">
+            <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:24px;color:#f3f3f4;">Hey, Chetan.</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:12px;color:#5b5b62;margin-top:2px;">Your plan is ready</div>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:16px 28px 0;">
+        <div style="border-left:2px solid #F0531E;padding:4px 0 4px 14px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;line-height:1.45;color:#f3f3f4;letter-spacing:.3px;">I built your plan to drop 14&nbsp;lb. Save it and let's start tomorrow.</div></div>
+      </td></tr></table>
+      <!-- macro grid -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:18px 22px 8px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#8a8a90;">Your daily targets</td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 18px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td width="25%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:14px;padding:14px 4px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;">1,840</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:4px;">Cal</div></div></td>
+          <td width="25%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:14px;padding:14px 4px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;">155g</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:4px;">Protein</div></div></td>
+          <td width="25%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:14px;padding:14px 4px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;">170g</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:4px;">Carbs</div></div></td>
+          <td width="25%" style="padding:4px;"><div style="background:#141417;border:1px solid #1f1f25;border-radius:14px;padding:14px 4px;text-align:center;"><div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;">61g</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:4px;">Fat</div></div></td>
+        </tr></table>
+      </td></tr></table>
+      <!-- tomorrow card -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:14px 22px 0;">
+        <div style="background:#141417;border:1px solid #1f1f25;border-radius:16px;padding:18px 20px;">
+          <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#F0531E;margin-bottom:8px;">Tomorrow</div>
+          <div style="font-family:'Anton',sans-serif;font-size:20px;color:#f3f3f4;letter-spacing:.4px;margin-bottom:10px;">Full Body A · 45 min</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#e4e4e7;line-height:1.7;letter-spacing:.3px;">
+            <span style="color:#F0531E;font-weight:700;">1.</span> Goblet Squat <span style="color:#8a8a90;">· 3 × 10</span><br>
+            <span style="color:#F0531E;font-weight:700;">2.</span> Incline DB Press <span style="color:#8a8a90;">· 3 × 12</span><br>
+            <span style="color:#F0531E;font-weight:700;">3.</span> Lat Pulldown <span style="color:#8a8a90;">· 3 × 12</span></div>
+        </div>
+      </td></tr></table>
+      <!-- schedule strip -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:18px 22px 4px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#8a8a90;margin-bottom:12px;">Your week</div>
+        <div style="font-size:0;">
+          <span style="display:inline-block;background:#F0531E;color:#0b0b0c;font-family:'Anton',sans-serif;width:34px;height:34px;line-height:34px;border-radius:50%;text-align:center;font-size:13px;margin:0 3px;">M</span>
+          <span style="display:inline-block;color:#5b5b62;font-family:'Barlow Condensed',sans-serif;font-weight:700;width:34px;height:34px;line-height:32px;border-radius:50%;text-align:center;font-size:13px;margin:0 3px;border:1px solid #232328;">T</span>
+          <span style="display:inline-block;background:#F0531E;color:#0b0b0c;font-family:'Anton',sans-serif;width:34px;height:34px;line-height:34px;border-radius:50%;text-align:center;font-size:13px;margin:0 3px;">W</span>
+          <span style="display:inline-block;color:#5b5b62;font-family:'Barlow Condensed',sans-serif;font-weight:700;width:34px;height:34px;line-height:32px;border-radius:50%;text-align:center;font-size:13px;margin:0 3px;border:1px solid #232328;">T</span>
+          <span style="display:inline-block;background:#F0531E;color:#0b0b0c;font-family:'Anton',sans-serif;width:34px;height:34px;line-height:34px;border-radius:50%;text-align:center;font-size:13px;margin:0 3px;">F</span>
+          <span style="display:inline-block;color:#5b5b62;font-family:'Barlow Condensed',sans-serif;font-weight:700;width:34px;height:34px;line-height:32px;border-radius:50%;text-align:center;font-size:13px;margin:0 3px;border:1px solid #232328;">S</span>
+          <span style="display:inline-block;color:#5b5b62;font-family:'Barlow Condensed',sans-serif;font-weight:700;width:34px;height:34px;line-height:32px;border-radius:50%;text-align:center;font-size:13px;margin:0 3px;border:1px solid #232328;">S</span>
+        </div>
+      </td></tr></table>
+      <!-- coach quote -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:18px 28px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141417" style="background:#141417;border:1px solid #1f1f25;border-left:3px solid #F0531E;"><tr>
+          <td width="50" valign="top" style="padding:15px 0 15px 14px;"><div style="width:34px;height:34px;background:#F0531E;text-align:center;line-height:34px;font-family:'Anton',sans-serif;font-size:15px;color:#0b0b0c;">M</div></td>
+          <td valign="top" style="padding:15px 16px 15px 11px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:11px;color:#8a8a90;margin-bottom:4px;">Coach Mara</div>
+            <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:15px;line-height:1.45;color:#f3f3f4;">Show up tomorrow. Future-you is watching.</div>
+          </td></tr></table>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:22px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Open Zealova</a>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:18px 28px 24px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr>
+          <td style="padding:0 9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#8a8a90"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></td>
+          <td style="padding:0 9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#8a8a90"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.015 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.015 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></td>
+          <td style="padding:0 9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#8a8a90"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701z"/></svg></td>
+        </tr></table>
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;padding-top:12px;font-size:11px;">Welcome to Zealova. &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ 6 · LIFECYCLE — OVERDUE NUDGE ════════════════════════════ -->
+  <div class="slot">
+    <div class="cap">6 · Lifecycle · overdue nudge <small>motivational · coach mood (no emoji)</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Check-in</td>
+      </tr></table>
+      <hr class="hair">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:20px 28px 2px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td width="54" valign="middle"><div style="width:42px;height:42px;background:#F0531E;border-radius:50%;text-align:center;line-height:42px;font-family:'Anton',sans-serif;font-size:19px;color:#0b0b0c;">C</div></td>
+          <td valign="middle" style="padding-left:13px;">
+            <div class="lc-greet" style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:23px;color:#f3f3f4;">It's been a minute, Chetan.</div>
+            <div class="lc-sub" style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:12px;color:#5b5b62;margin-top:2px;">Coach Mara · Nudging</div>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:18px 28px 0;">
+        <div style="border-left:2px solid #F0531E;padding:4px 0 4px 14px;"><div class="lc-body" style="font-family:'Barlow Condensed',sans-serif;font-size:15px;line-height:1.45;color:#f3f3f4;letter-spacing:.3px;">Your last session was 4 days ago. No guilt — the plan's still here and one workout puts you right back on track.</div></div>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:22px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Pick up where you left off</a>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:20px 28px 26px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;font-size:11px;">
+          You're getting this because check-ins are on.<br><a href="#" style="color:#5b5b62;text-decoration:underline;">Turn off check-ins</a> &middot; <a href="#" style="color:#5b5b62;text-decoration:underline;">Unsubscribe</a> &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ 7 · CANCEL LADDER ════════════════════════════ -->
+  <div class="slot">
+    <div class="cap">7 · Cancellation · win-back <small>achievement recap, never guilt</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Membership</td>
+      </tr></table>
+      <hr class="hair">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:36px 36px 4px;">
+        <div style="font-family:'Anton',sans-serif;font-size:34px;line-height:1.08;color:#f3f3f4;letter-spacing:.5px;text-transform:uppercase;">Look what you built</div>
+        <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:17px;color:#8a8a90;margin-top:12px;line-height:1.5;max-width:420px;margin-left:auto;margin-right:auto;">Your access stays active until Jul 14, Chetan. Here's what you put together while you were here.</div>
+      </td></tr></table>
+      <!-- recap -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:24px 24px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141417" style="background:#141417;border:1px solid #1f1f25;border-radius:14px;"><tr>
+          <td width="33%" align="center" style="padding:18px 6px;border-right:1px solid #1f1f25;"><div style="font-family:'Anton',sans-serif;font-size:24px;color:#f3f3f4;">48</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:5px;">Workouts</div></td>
+          <td width="34%" align="center" style="padding:18px 6px;border-right:1px solid #1f1f25;"><div style="font-family:'Anton',sans-serif;font-size:24px;color:#f3f3f4;">9,240</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:5px;">XP earned</div></td>
+          <td width="33%" align="center" style="padding:18px 6px;"><div style="font-family:'Anton',sans-serif;font-size:24px;color:#f3f3f4;">21</div><div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#8a8a90;margin-top:5px;">Best streak</div></td>
+        </tr></table>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:24px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Reactivate Premium</a>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:20px 28px 26px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;font-size:11px;">
+          You received this because your Zealova subscription was cancelled. &middot; <a href="#" style="color:#5b5b62;text-decoration:underline;">Unsubscribe</a> &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ 8 · ENGAGEMENT — STREAK AT RISK ════════════════════════════ -->
+  <div class="slot">
+    <div class="cap">8 · Engagement · streak at risk <small>flame is a Lucide icon, not 🔥</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Streak</td>
+      </tr></table>
+      <hr class="hair">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:38px 36px 6px;">
+        <div style="width:56px;height:56px;border-radius:16px;background:#2a1712;line-height:56px;margin:0 auto 18px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+        </div>
+        <div style="font-family:'Anton',sans-serif;font-size:64px;line-height:1;color:#f3f3f4;">11</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2.5px;font-size:13px;color:#8a8a90;margin-top:6px;">Day streak · ending tonight</div>
+        <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:17px;color:#8a8a90;margin-top:14px;line-height:1.5;max-width:420px;margin-left:auto;margin-right:auto;">One short session keeps it alive, Chetan. Don't let 11 days slip on day 12.</div>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:24px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">Keep my streak</a>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:20px 28px 26px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;font-size:11px;">
+          You're getting this because streak alerts are on.<br><a href="#" style="color:#5b5b62;text-decoration:underline;">Turn off streak alerts</a> &middot; <a href="#" style="color:#5b5b62;text-decoration:underline;">Unsubscribe</a> &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ 9 · SECURITY — NEW DEVICE ════════════════════════════ -->
+  <div class="slot">
+    <div class="cap">9 · New-device sign-in <small>security</small></div>
+    <div class="email">
+      <hr class="rail">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="padding:24px 28px 16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-size:16px;color:#f3f3f4;font-weight:700;">Zealova</td>
+        <td style="padding:24px 28px 16px;text-align:right;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#5b5b62;font-weight:600;">Security</td>
+      </tr></table>
+      <hr class="hair">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:40px 36px 8px;">
+        <div style="width:56px;height:56px;border-radius:16px;background:#2a1712;line-height:56px;margin:0 auto 20px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <div style="font-family:'Anton',sans-serif;font-size:36px;line-height:1.06;color:#f3f3f4;letter-spacing:.5px;text-transform:uppercase;">New sign-in</div>
+        <div style="font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:17px;color:#8a8a90;margin-top:14px;line-height:1.5;max-width:430px;margin-left:auto;margin-right:auto;">We noticed a sign-in to your Zealova account from a new device. If this was you, you're all set.</div>
+      </td></tr></table>
+      <!-- device detail block -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:24px 28px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#141417" style="background:#141417;border:1px solid #1f1f25;border-radius:14px;">
+          <tr><td style="padding:14px 18px;border-bottom:1px solid #1f1f25;">
+            <span style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:11px;color:#8a8a90;">Device</span>
+            <span style="float:right;font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#f3f3f4;">iPhone 15 · iOS 18</span></td></tr>
+          <tr><td style="padding:14px 18px;border-bottom:1px solid #1f1f25;">
+            <span style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:11px;color:#8a8a90;">When</span>
+            <span style="float:right;font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#f3f3f4;">Jun 21, 2:14 PM CDT</span></td></tr>
+          <tr><td style="padding:14px 18px;">
+            <span style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:11px;color:#8a8a90;">Location</span>
+            <span style="float:right;font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#f3f3f4;">Dallas, TX, US</span></td></tr>
+        </table>
+      </td></tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:24px 28px 6px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#F0531E" style="background:#F0531E;border-radius:999px;">
+            <a href="#" style="display:block;padding:16px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:15px;font-weight:700;color:#0b0b0c;text-decoration:none;">This wasn't me — secure my account</a>
+          </td>
+        </tr></table>
+      </td></tr></table>
+      <hr class="hair" style="margin-top:22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:20px 28px 26px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;color:#5b5b62;line-height:1.7;font-size:11px;">
+          Security alerts are always sent and can't be turned off. &middot; Zealova</div>
+      </td></tr></table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const root=document.querySelector('.gallery');
+
+  // 1. Make the accent live: rewrite hard-coded #F0531E / #2a1712 to CSS vars.
+  root.querySelectorAll('[style]').forEach(el=>{
+    const s=el.getAttribute('style');
+    const ns=s.replace(/#F0531E/gi,'var(--accent)').replace(/#2a1712/gi,'var(--accent-bg)');
+    if(ns!==s) el.setAttribute('style',ns);
+  });
+  root.querySelectorAll('[bgcolor]').forEach(el=>{ if((el.getAttribute('bgcolor')||'').toUpperCase()==='#F0531E') el.style.background='var(--accent)'; });
+  root.querySelectorAll('svg[stroke]').forEach(el=>{ if((el.getAttribute('stroke')||'').toUpperCase()==='#F0531E') el.style.stroke='var(--accent)'; });
+
+  // 2. Collect name-bearing text nodes (excluding the lifecycle copy, which is mood-driven).
+  const nameNodes=[]; const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  let n; while(n=tw.nextNode()){
+    if(n.nodeValue.indexOf('Chetan')>-1){
+      const p=n.parentElement;
+      if(p&&p.closest('.lc-greet,.lc-sub,.lc-body')) continue;
+      nameNodes.push({node:n,tpl:n.nodeValue});
+    }
+  }
+  const avatarEls=[...root.querySelectorAll('div')].filter(d=>{
+    const s=d.getAttribute('style')||''; return /width:42px/.test(s)&&/border-radius:50%/.test(s)&&d.textContent.trim().length===1;
+  });
+  const lcGreet=root.querySelector('.lc-greet'),lcSub=root.querySelector('.lc-sub'),lcBody=root.querySelector('.lc-body');
+  const mood={
+    nudge:{greet:"It's been a minute, {n}.",sub:"Coach Mara · Nudging",body:"Your last session was 4 days ago. No guilt — the plan's still here and one workout puts you right back on track."},
+    concerned:{greet:"Let's not lose this, {n}.",sub:"Coach Mara · Concerned",body:"It's been over a week. Your streak and momentum are slipping — but one session today turns it around."},
+    firm:{greet:"We need to talk, {n}.",sub:"Coach Mara · Disappointed",body:"Two weeks, zero sessions. You set this goal for a reason — today's the day you prove it still matters."}
+  };
+
+  let NAME='Chetan', MOOD='nudge';
+  function render(){
+    const nm=(NAME.trim()||'there');
+    nameNodes.forEach(o=>o.node.nodeValue=o.tpl.split('Chetan').join(nm));
+    avatarEls.forEach(d=>d.textContent=(nm[0]||'Z').toUpperCase());
+    const m=mood[MOOD];
+    if(lcGreet) lcGreet.textContent=m.greet.replace('{n}',nm);
+    if(lcSub)   lcSub.textContent=m.sub;
+    if(lcBody)  lcBody.textContent=m.body.replace('{n}',nm);
+  }
+  function setAccent(hex){
+    document.documentElement.style.setProperty('--accent',hex);
+    const c=parseInt(hex.slice(1),16),r=(c>>16)&255,g=(c>>8)&255,b=c&255;
+    document.documentElement.style.setProperty('--accent-bg',`rgba(${r},${g},${b},0.16)`);
+  }
+  function presetSync(hex){document.querySelectorAll('#c-presets i').forEach(i=>i.classList.toggle('on',i.dataset.c.toUpperCase()===hex.toUpperCase()));}
+
+  const nameI=document.getElementById('c-name'); nameI.addEventListener('input',e=>{NAME=e.target.value;render();});
+  const accI=document.getElementById('c-accent'); accI.addEventListener('input',e=>{setAccent(e.target.value);presetSync(e.target.value);});
+  document.querySelectorAll('#c-presets i').forEach(i=>i.addEventListener('click',()=>{setAccent(i.dataset.c);accI.value=i.dataset.c;presetSync(i.dataset.c);}));
+  document.getElementById('c-mood').addEventListener('change',e=>{MOOD=e.target.value;render();});
+  document.querySelectorAll('#c-width button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#c-width button').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.body.classList.toggle('phone',b.dataset.w==='phone');}));
+  document.querySelectorAll('#c-cols button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#c-cols button').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.body.classList.toggle('single',b.dataset.k==='one');}));
+  document.getElementById('c-reset').addEventListener('click',()=>{
+    NAME='Chetan';MOOD='nudge';nameI.value='Chetan';accI.value='#F0531E';document.getElementById('c-mood').value='nudge';
+    setAccent('#F0531E');presetSync('#F0531E');document.body.classList.remove('phone','single');
+    document.querySelectorAll('#c-width button').forEach(x=>x.classList.toggle('on',x.dataset.w==='desktop'));
+    document.querySelectorAll('#c-cols button').forEach(x=>x.classList.toggle('on',x.dataset.k==='two'));
+    render();
+  });
+
+  setAccent('#F0531E'); render();
+})();
+</script>
+</body>
+</html>
