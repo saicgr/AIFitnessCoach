@@ -27,6 +27,67 @@ from services.gemini.utils import (
 logger = logging.getLogger("gemini")
 
 
+# Injury → contraindicated movements, for the Gemini prompt (prevention layer).
+# The deterministic enforce_injury_safety post-filter is the GUARANTEE; this just
+# steers Gemini away from the obvious leaks so the post-filter rarely has to fire.
+# Keyed by substring so "knees"→"knee", "shoulders"→"shoulder" all match.
+_INJURY_PROMPT_BANS: Dict[str, str] = {
+    "lower_back": "deadlifts, barbell/Romanian/stiff-leg deadlifts, good mornings, "
+                  "kettlebell swings, bent-over barbell rows, heavy hip hinges, "
+                  "loaded spinal flexion/rotation",
+    "back":       "deadlifts, good mornings, heavy hip hinges, loaded spinal flexion",
+    "knee":       "deep squats, barbell back/front squats, lunges, leg press, "
+                  "jump/plyometric movements, pistol squats",
+    "shoulder":   "overhead presses, military/push press, behind-the-neck work, "
+                  "upright rows, dips, wide-grip bench, overhead pull-ups",
+    "elbow":      "heavy curls, skullcrushers, dips, close-grip bench, weighted "
+                  "chin-ups, end-range elbow extension under load",
+    "wrist":      "barbell pressing, push-ups on flat palms, front squats, cleans, "
+                  "heavy gripping/holds, planks on hands",
+    "ankle":      "jumping/plyometrics, running drills, deep lunges, calf-raise "
+                  "ballistics, standing calf jumps",
+    "hip":        "deep squats, heavy hip hinges, wide-stance loaded work, "
+                  "high-impact jumps, deep lunges",
+    "neck":       "overhead loading, shrugs, behind-the-neck movements, bridges, "
+                  "loaded neck flexion/extension",
+}
+
+
+def build_injury_prompt_constraint(injuries: Optional[List[str]]) -> str:
+    """Return a hard prompt block banning contraindicated movements per injury.
+
+    Empty string when there are no recognized injuries. Used by both the cached
+    and non-cached streaming generators so /generate-stream never *generates* an
+    unsafe exercise in the first place.
+    """
+    if not injuries:
+        return ""
+    seen: set = set()
+    lines: List[str] = []
+    for inj in injuries:
+        key = str(inj or "").strip().lower()
+        if not key:
+            continue
+        for needle, bans in _INJURY_PROMPT_BANS.items():
+            if needle in key and needle not in seen:
+                # Avoid the "lower_back" → also-matches-"back" double line: the
+                # more-specific lumbar ban already covers it.
+                if needle == "back" and "lower_back" in key:
+                    continue
+                seen.add(needle)
+                lines.append(f"  • {needle.replace('_', ' ').title()} injury — NEVER include: {bans}.")
+    if not lines:
+        # An injury we don't have a movement map for (e.g. a muscle-area chip) —
+        # still tell the model to train around it conservatively.
+        joined = ", ".join(str(i) for i in injuries if i)
+        return (f"\n\n🩹 ACTIVE INJURIES ({joined}): choose only pain-free, "
+                f"joint-friendly movements; avoid loading the injured area.")
+    body = "\n".join(lines)
+    return ("\n\n🩹 ACTIVE INJURIES — HARD SAFETY CONSTRAINT (these movements are "
+            "MEDICALLY CONTRAINDICATED; do NOT include any of them, choose a safe "
+            f"alternative that trains the same goal):\n{body}")
+
+
 class WorkoutStreamingMixin:
     """Mixin providing streaming workout generation methods for GeminiService."""
 
@@ -47,6 +108,9 @@ class WorkoutStreamingMixin:
         custom_prompt_override: Optional[str] = None,
         avoided_exercises: Optional[List[str]] = None,
         avoided_muscles: Optional[Dict] = None,
+        # Active injuries (injury-2026-06): hard-ban contraindicated movements in
+        # the prompt. Paired with the deterministic enforce_injury_safety guard.
+        injuries: Optional[List[str]] = None,
         staple_exercises: Optional[List[str]] = None,
         progression_philosophy: Optional[str] = None,
         exercise_count: int = 6,
@@ -149,6 +213,13 @@ class WorkoutStreamingMixin:
                     preference_constraints += f"\n🚫 MUSCLES TO AVOID (injury/preference): {', '.join(avoid_completely)}"
                 if reduce_usage:
                     preference_constraints += f"\n⚠️ MUSCLES TO MINIMIZE: {', '.join(reduce_usage)}"
+
+            # Active-injury hard ban (prevention layer; post-filter is the guarantee).
+            if injuries:
+                _inj_block = build_injury_prompt_constraint(injuries)
+                if _inj_block:
+                    logger.info(f"🩹 [Streaming] Injecting injury constraint for: {injuries}")
+                    preference_constraints += _inj_block
 
             if staple_exercises and len(staple_exercises) > 0:
                 logger.info(f"⭐ [Streaming] User has {len(staple_exercises)} MANDATORY staple exercises for this day")
@@ -513,6 +584,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         intensity_preference: Optional[str] = None,
         avoided_exercises: Optional[List[str]] = None,
         avoided_muscles: Optional[Dict] = None,
+        injuries: Optional[List[str]] = None,
         staple_exercises: Optional[List[str]] = None,
         progression_philosophy: Optional[str] = None,
         exercise_count: int = 6,
@@ -574,6 +646,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 intensity_preference=intensity_preference,
                 avoided_exercises=avoided_exercises,
                 avoided_muscles=avoided_muscles,
+                injuries=injuries,
                 staple_exercises=staple_exercises,
                 progression_philosophy=progression_philosophy,
                 exercise_count=exercise_count,
@@ -604,6 +677,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             intensity_preference=intensity_preference,
             avoided_exercises=avoided_exercises,
             avoided_muscles=avoided_muscles,
+            injuries=injuries,
             staple_exercises=staple_exercises,
             progression_philosophy=progression_philosophy,
             exercise_count=exercise_count,
@@ -736,6 +810,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 intensity_preference=intensity_preference,
                 avoided_exercises=avoided_exercises,
                 avoided_muscles=avoided_muscles,
+                injuries=injuries,
                 staple_exercises=staple_exercises,
                 progression_philosophy=progression_philosophy,
                 exercise_count=exercise_count,
@@ -761,6 +836,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         intensity_preference: Optional[str],
         avoided_exercises: Optional[List[str]],
         avoided_muscles: Optional[Dict],
+        injuries: Optional[List[str]],
         staple_exercises: Optional[List[str]],
         progression_philosophy: Optional[str],
         exercise_count: int,
@@ -845,6 +921,12 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 user_context_parts.append(f"🚫 AVOID muscles (injury/preference): {', '.join(avoid_completely)}")
             if reduce_usage:
                 user_context_parts.append(f"⚠️ MINIMIZE muscles: {', '.join(reduce_usage)}")
+
+        # Active-injury hard ban (prevention layer; post-filter is the guarantee).
+        if injuries:
+            _inj_block = build_injury_prompt_constraint(injuries)
+            if _inj_block:
+                user_context_parts.append(_inj_block.strip())
 
         if staple_exercises and len(staple_exercises) > 0:
             user_context_parts.append(f"⭐ MUST INCLUDE these staple exercises (pre-filtered for this day): {', '.join(staple_exercises)}")

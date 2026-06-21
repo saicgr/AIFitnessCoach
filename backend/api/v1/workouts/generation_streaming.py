@@ -356,6 +356,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     logger.debug(f"[Streaming] No AI coach settings found, using defaults: {e}")
                     return None
 
+            # Injury safety (injury-2026-06): read the UNIFIED active-injury list
+            # (user_injuries table + users.active_injuries) so the streaming path —
+            # the primary onboarding generator — finally has injury context. Used
+            # both to constrain the Gemini prompt and to drive the terminal
+            # enforce_injury_safety guard below.
+            from api.v1.workouts.readiness_utils import get_active_injuries_with_muscles
+
             (
                 avoided_exercises,
                 avoided_muscles,
@@ -368,6 +375,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 favorite_exercises,
                 exercise_queue,
                 recovery_signal,
+                injury_context,
             ) = await asyncio.gather(
                 get_user_avoided_exercises(body.user_id),
                 get_user_avoided_muscles(body.user_id),
@@ -383,7 +391,11 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 # no-wearable / no-consent / stale / optimal+good users — in
                 # which case generation stays byte-identical to a pre-B3 run.
                 get_recovery_workout_signal(body.user_id),
+                get_active_injuries_with_muscles(body.user_id),
             )
+            active_injuries = (injury_context or {}).get("injuries", []) or []
+            if active_injuries:
+                logger.info(f"🩹 [Streaming] User has {len(active_injuries)} active injuries: {active_injuries}")
 
             # Log fetched preferences
             if avoided_exercises:
@@ -536,6 +548,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     "intensity_preference": intensity_preference,
                     "avoided_exercises": avoided_exercises if avoided_exercises else None,
                     "avoided_muscles": avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
+                    # Injury prevention: hard-ban contraindicated movements per
+                    # active injury in the prompt (the deterministic post-filter
+                    # below is the guarantee; this reduces how often it must fire).
+                    "injuries": active_injuries if active_injuries else None,
                     "staple_exercises": staple_names,
                     "progression_philosophy": combined_context if combined_context else None,
                     "exercise_count": exercise_count,
@@ -1187,6 +1203,30 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     "equipment": equipment if isinstance(equipment, list) else [],
                 }
                 exercises = validate_set_targets_strict(exercises, user_context)
+
+                # ── TERMINAL INJURY-SAFETY GUARD (injury-2026-06) ──────────────
+                # The streaming path had NO injury gate; Phase-0 testing showed it
+                # shipped contraindicated movements (deadlifts→lower_back,
+                # squats→knees, overhead press→shoulders) in 30/50 scenarios.
+                # This drops any index-confirmed-unsafe exercise for an active
+                # joint injury and backfills a vetted-safe replacement, so the
+                # user gets a full, injury-safe workout — never an unsafe one and
+                # never a thinned one. Fail-open (keeps the list on any error).
+                if exercises and active_injuries:
+                    from services.exercise_rag.injury_guard import enforce_injury_safety
+                    exercises, _inj_dropped, _inj_added = await enforce_injury_safety(
+                        exercises,
+                        active_injuries,
+                        equipment=equipment if isinstance(equipment, list) else [],
+                        focus_areas=(body.focus_areas or []),
+                        difficulty_ceiling=(fitness_level or "beginner"),
+                        user_id=str(body.user_id),
+                    )
+                    if _inj_dropped:
+                        logger.info(
+                            f"🩹 [Streaming InjuryGuard] dropped {len(_inj_dropped)} "
+                            f"unsafe → added {len(_inj_added)} safe for {active_injuries}"
+                        )
 
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse streaming response: {e}", exc_info=True)

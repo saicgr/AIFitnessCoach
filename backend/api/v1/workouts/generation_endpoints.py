@@ -224,6 +224,9 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         primary_goal = None
         muscle_focus_points = None
         training_split = None
+        # Active injuries (set from the parallel fetch below); pre-bound so the
+        # terminal injury guard never hits an UnboundLocalError on a fast path.
+        injury_names = None
 
         # Initialize fitness assessment fields
         pushup_capacity = None
@@ -1656,6 +1659,27 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         _generation_method = "rag_first" if rag_exercises else "ai"
         _generation_source = "library" if rag_exercises else "gemini_generation"
 
+        # ── TERMINAL INJURY-SAFETY GUARD (injury-2026-06) ─────────────────────
+        # Belt-and-suspenders over the RAG candidate gate: drop any exercise the
+        # safety index marks unsafe for an active joint injury and backfill a
+        # vetted-safe replacement, so even a mis-tagged library row or a free-form
+        # Gemini fallback can never ship a contraindicated movement. Fail-open.
+        if exercises and injury_names:
+            from services.exercise_rag.injury_guard import enforce_injury_safety
+            exercises, _rag_dropped, _rag_added = await enforce_injury_safety(
+                exercises,
+                injury_names,
+                equipment=equipment if isinstance(equipment, list) else [],
+                focus_areas=focus_areas or [],
+                difficulty_ceiling=(fitness_level or "beginner"),
+                user_id=str(body.user_id),
+            )
+            if _rag_dropped:
+                logger.info(
+                    f"🩹 [RAG InjuryGuard] dropped {len(_rag_dropped)} unsafe → "
+                    f"added {len(_rag_added)} safe for {injury_names}"
+                )
+
         workout_db_data = {
             "user_id": body.user_id,
             "gym_profile_id": gym_profile_id,  # Link workout to gym profile
@@ -1705,9 +1729,16 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 ).execute()
                 # Refetch the now-updated row so downstream code has the
                 # full record (including server-assigned timestamps etc.).
-                created = db.client.table("workouts").select("*").eq(
+                # RESILIENCE (injury-2026-06 FM-4): use a non-.single() read and
+                # fall back to the in-memory payload on 0 rows. A concurrent
+                # generation (or a delete-between-runs) can remove the placeholder
+                # between our UPDATE and this SELECT; .single() then raised
+                # PGRST116 → a spurious 500 that surfaced as a stuck onboarding.
+                _refetch = db.client.table("workouts").select("*").eq(
                     "id", placeholder_id
-                ).single().execute().data
+                ).limit(1).execute().data
+                created = (_refetch[0] if _refetch
+                           else {**update_payload, "id": placeholder_id})
                 logger.info(
                     f"🔄 [Dedup] Updated placeholder {placeholder_id} with real workout"
                 )
@@ -1723,9 +1754,11 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     db.client.table("workouts").update(update_payload).eq(
                         "id", placeholder_id
                     ).execute()
-                    created = db.client.table("workouts").select("*").eq(
+                    _refetch = db.client.table("workouts").select("*").eq(
                         "id", placeholder_id
-                    ).single().execute().data
+                    ).limit(1).execute().data
+                    created = (_refetch[0] if _refetch
+                               else {**update_payload, "id": placeholder_id})
                     placeholder_id = None
                 else:
                     raise

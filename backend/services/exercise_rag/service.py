@@ -269,7 +269,22 @@ async def fetch_safe_candidates(
         )
         anchored = [f for f in normalized_focuses if f in _FOCUS_SYNONYMS]
 
-        if anchored and not is_full_body:
+        if is_full_body:
+            # COMPOUND / explicit full-body focus (full_body, full_body_upper,
+            # full_body_push, general, …) → apply NO body-part restriction. The
+            # SAFETY gate returns the broad injury-safe set; push/pull/upper/lower
+            # EMPHASIS is applied later by ranking.
+            #
+            # injury-2026-06 FM-3 root cause: previously `is_full_body` only gated
+            # the anchored branch (`anchored and not is_full_body`). A focus like
+            # "full_body_upper" is NOT in _FOCUS_SYNONYMS → anchored=[] → it fell
+            # through to the lenient `elif focus_areas` branch below, which ran a
+            # literal `t.body_part ILIKE '%full_body_upper%'` and matched ZERO
+            # rows → empty safe pool → injured users collapsed to a stretches-only
+            # "workout". Skipping the focus filter entirely for full-body focuses
+            # restores the hundreds of injury-safe candidates that exist.
+            pass
+        elif anchored:
             # Build OR clauses across each anchored focus.
             exact_bp: List[str] = []
             wildcard_tm: List[str] = []
