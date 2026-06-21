@@ -313,7 +313,7 @@ class EmailService(
       <td align="center" style="padding:40px 16px;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background-color:#0f0f0f;border-radius:20px;overflow:hidden;border:1px solid #1a1a1a;">
           <tr>
-            <td style="background:linear-gradient(135deg,#06b6d4 0%,#FB923C 50%,#F97316 100%);height:4px;font-size:0;line-height:0;">&nbsp;</td>
+            <td style="background:linear-gradient(135deg,#FB923C 0%,#F97316 50%,#EA580C 100%);height:4px;font-size:0;line-height:0;">&nbsp;</td>
           </tr>
           <tr>
             <td align="center" style="padding:48px 40px 24px;">
@@ -628,7 +628,7 @@ class EmailService(
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="{margin}">
                 <tr>
                   <td width="48" valign="top">
-                    <div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">{emoji}</div>
+                    <div style="width:40px;height:40px;background:#2a1708;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">{emoji}</div>
                   </td>
                   <td style="padding-left:16px;" valign="top">
                     <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">{feat_title}</p>
@@ -644,13 +644,13 @@ class EmailService(
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#000000;min-height:100vh;">
     <tr><td align="center" style="padding:40px 16px;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background-color:#0f0f0f;border-radius:20px;overflow:hidden;border:1px solid #1a1a1a;">
-          <tr><td style="background:linear-gradient(135deg,#0891b2 0%,#06b6d4 50%,#22d3ee 100%);height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
-          <tr><td align="center" style="padding:48px 40px 24px;"><img src="{logo_url}" alt="{branding.APP_NAME}" width="88" height="88" style="display:block;border-radius:20px;border:0;width:88px;height:88px;object-fit:cover;"><p style="margin:20px 0 0;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#06b6d4;">{branding.APP_NAME.upper()}</p></td></tr>
+          <tr><td style="background:linear-gradient(135deg,#FB923C 0%,#F97316 50%,#EA580C 100%);height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
+          <tr><td align="center" style="padding:48px 40px 24px;"><img src="{logo_url}" alt="{branding.APP_NAME}" width="88" height="88" style="display:block;border-radius:20px;border:0;width:88px;height:88px;object-fit:cover;"><p style="margin:20px 0 0;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#F97316;">{branding.APP_NAME.upper()}</p></td></tr>
           {persona_signature_html}
           <tr><td align="center" style="padding:24px 40px 12px;"><h1 style="margin:0;font-size:36px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">{title}</h1></td></tr>
           <tr><td align="center" style="padding:0 48px 20px;"><p style="margin:0;font-size:16px;line-height:1.65;color:#a1a1aa;text-align:center;">{subtitle}</p></td></tr>
           {stats_row_html}
-          <tr><td align="center" style="padding:28px 40px 40px;"><a href="{open_url}" style="display:inline-block;background:#06b6d4;color:#000000;font-size:16px;font-weight:700;text-decoration:none;padding:16px 44px;border-radius:50px;letter-spacing:0.2px;">{cta_text}</a></td></tr>
+          <tr><td align="center" style="padding:28px 40px 40px;"><a href="{open_url}" style="display:inline-block;background:#F97316;color:#000000;font-size:16px;font-weight:800;text-decoration:none;padding:16px 44px;border-radius:50px;letter-spacing:0.2px;">{cta_text}</a></td></tr>
           <tr><td style="padding:0 32px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
           <tr><td style="padding:40px 40px 16px;">{features_html}</td></tr>
           {build_social_footer_html(unsubscribe_url=unsubscribe_url, category_name=category_name)}
