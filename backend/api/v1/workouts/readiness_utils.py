@@ -41,6 +41,25 @@ INJURY_TO_AVOIDED_MUSCLES = {
     "quad": ["quads", "quadriceps", "legs", "knee"],
     "calf": ["calves", "legs", "ankle"],
     "rotator_cuff": ["shoulders", "chest", "delts", "rotator_cuff"],
+    # Muscle-area limitations — the onboarding head-to-toe quick chips (Abs,
+    # Chest, Upper Back, Biceps, Triceps, Forearms, Glutes, Groin, Quads,
+    # Hamstrings, Calves) and direct body-map taps. Unlike the joint entries
+    # above (which avoid a whole region), these are SURGICAL: a sore biceps
+    # should skip biceps work, not nuke all leg/push training. Tokens use the
+    # library's spellings (see BODY_MAP_MUSCLE_NORMALIZATION) so
+    # filter_by_avoided_muscles matches. Keyed by the exact chip id (plural),
+    # checked before the singular substring fallback.
+    "abs": ["abdominals", "abs", "core", "obliques"],
+    "core": ["core", "abdominals", "abs"],
+    "obliques": ["obliques", "abdominals", "core"],
+    "upper_back": ["upper back", "lats", "latissimus dorsi", "traps", "trapezius", "rhomboids"],
+    "biceps": ["biceps", "brachialis"],
+    "triceps": ["triceps"],
+    "forearms": ["forearms", "grip"],
+    "glutes": ["glutes"],
+    "quads": ["quadriceps", "quads"],
+    "hamstrings": ["hamstrings"],
+    "calves": ["calves", "soleus", "gastrocnemius"],
 }
 
 
