@@ -330,11 +330,23 @@ async def fetch_safe_candidates(
             FROM public.exercise_safety_index_mat t
             WHERE {where_sql}
         )
-        SELECT *
+        SELECT *,
+            (CASE WHEN lower(name) LIKE '%stretch%'
+                    OR lower(name) LIKE '%mobility%'
+                    OR lower(coalesce(movement_pattern, '')) LIKE '%stretch%'
+                    OR lower(coalesce(body_part, '')) LIKE '%stretch%'
+                    OR lower(coalesce(target_muscle, '')) LIKE '%stretch%'
+                  THEN 1 ELSE 0 END) AS is_stretch
         FROM safe_pool
         WHERE safety_difficulty_rank IS NOT NULL
           AND safety_difficulty_rank <= :ceiling_rank
-        ORDER BY name
+        -- injury-2026-06 FM-3b: REAL loaded movements first, stretches only as a
+        -- last resort. The triple-injury safe pool is ~159 stretches vs ~75 real
+        -- exercises; name-sorting floated stretches to the top and produced an
+        -- all-stretches "workout". Stretch-last ordering fills the duration's
+        -- exercise target with real work and only falls back to stretches when
+        -- the real-safe pool is genuinely exhausted (never returns empty).
+        ORDER BY is_stretch ASC, name
         LIMIT :k
     """)
     params["k"] = k
