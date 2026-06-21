@@ -121,140 +121,94 @@ class _WeightProjectionScreenState
         ? (useMetric ? weeklyRateKg : weeklyRateKg * 2.205)
         : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Weight stats row
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                label: AppLocalizations.of(context).workoutPlanDrawerCurrent,
-                value: '${displayCurrent.round()} $unit',
-                icon: Icons.monitor_weight_outlined,
-                color: textSecondary,
-                isDark: isDark,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildStatCard(
-                label: AppLocalizations.of(context).challengeCreateFieldGoal,
-                value: '${displayGoal.round()} $unit',
-                icon: Icons.flag_outlined,
-                color: AppColors.green,
-                isDark: isDark,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                label: isLosingWeight ? AppLocalizations.of(context).weightProjectionToLose : AppLocalizations.of(context).weightProjectionToGain,
-                value: '${diff.round()} $unit',
-                icon: isLosingWeight ? Icons.trending_down : Icons.trending_up,
-                color: AppColors.orange,
-                isDark: isDark,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildStatCard(
-                label: AppLocalizations.of(context).weightProjectionPerWeek,
-                value: displayWeeklyRate != null
-                    ? '${displayWeeklyRate.toStringAsFixed(1)} $unit'
-                    : '$workoutDays days/wk',
-                icon: Icons.speed_rounded,
-                color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                isDark: isDark,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // Tip
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.green.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: AppColors.green.withValues(alpha: 0.15),
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.eco_rounded, size: 16, color: AppColors.green),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  isLosingWeight
-                      ? AppLocalizations.of(context).weightProjectionSafeRate05
-                      : 'Lean gain: 0.25–0.5 kg/week. Slow and steady builds quality muscle.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    final divider = Container(
+      width: 1,
+      height: 34,
+      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.07),
     );
-  }
 
-  Widget _buildStatCard({
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required bool isDark,
-  }) {
+    Widget cell(IconData icon, Color color, String label, String value) {
+      return Expanded(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              label,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w500,
+                color: textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Single compact summary strip — replaces the old 2×2 stat cards + the
+    // duplicate green safe-rate banner (the "Safe rate: NHS" citation right
+    // above already states it). Keeps all four data points in ~⅓ the height so
+    // the whole screen fits without scrolling, dashboard-style.
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.05)
             : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.08)
               : Colors.black.withValues(alpha: 0.06),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                ),
-              ),
-            ],
+          cell(
+            Icons.monitor_weight_outlined,
+            textSecondary,
+            AppLocalizations.of(context).workoutPlanDrawerCurrent,
+            '${displayCurrent.round()} $unit',
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-            ),
+          divider,
+          cell(
+            Icons.flag_outlined,
+            AppColors.green,
+            AppLocalizations.of(context).challengeCreateFieldGoal,
+            '${displayGoal.round()} $unit',
+          ),
+          divider,
+          cell(
+            isLosingWeight ? Icons.trending_down : Icons.trending_up,
+            AppColors.orange,
+            isLosingWeight
+                ? AppLocalizations.of(context).weightProjectionToLose
+                : AppLocalizations.of(context).weightProjectionToGain,
+            '${diff.round()} $unit',
+          ),
+          divider,
+          cell(
+            Icons.speed_rounded,
+            isDark ? AppColors.cyan : AppColorsLight.cyan,
+            AppLocalizations.of(context).weightProjectionPerWeek,
+            displayWeeklyRate != null
+                ? '${displayWeeklyRate.toStringAsFixed(1)} $unit'
+                : '$workoutDays days/wk',
           ),
         ],
       ),
@@ -341,7 +295,7 @@ class _WeightProjectionScreenState
     // SingleChildScrollView — a `Flexible` chart here was eating all the height
     // and pushing the Continue button off-screen (the 142px overflow blocker).
     final screenH = MediaQuery.of(context).size.height;
-    final chartHeight = (screenH * 0.205).clamp(150.0, 200.0);
+    final chartHeight = (screenH * 0.2).clamp(148.0, 184.0);
 
     // Pinned CTA — lives in the scaffold's `button` slot (rendered OUTSIDE the
     // scrollable body) so it is always reachable regardless of content height.

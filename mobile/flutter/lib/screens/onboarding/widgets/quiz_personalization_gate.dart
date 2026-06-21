@@ -1116,14 +1116,25 @@ class _RulerTick extends StatelessWidget {
         ),
         if (label != null) ...[
           const SizedBox(height: 3),
-          Text(
-            label!,
-            textScaler: TextScaler.noScaling,
-            style: TextStyle(
-              fontSize: 9,
-              height: 1.0,
-              fontWeight: FontWeight.w500,
-              color: labelColor,
+          // A 3-digit label ("170") is wider than the 14px tick slot, so a
+          // plain Text wraps it to "17" / "0". Let it render full-width on ONE
+          // line, centered over the tick, by lifting the slot's width clamp.
+          OverflowBox(
+            minWidth: 0,
+            maxWidth: 48,
+            alignment: Alignment.center,
+            child: Text(
+              label!,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              textScaler: TextScaler.noScaling,
+              style: TextStyle(
+                fontSize: 9,
+                height: 1.0,
+                fontWeight: FontWeight.w500,
+                color: labelColor,
+              ),
             ),
           ),
         ],
