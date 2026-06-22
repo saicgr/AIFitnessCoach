@@ -233,21 +233,21 @@ async def validate_and_filter_focus_mismatches(
         else:
             mismatched_exercises.append(ex)
             warnings.append(f"⚠️ [{workout_name}] Mismatch: '{exercise_name}' ({muscle_group}) - {validation['reason']}")
-            logger.warning(f"🚨 [Focus Validation] {validation['reason']}")
+            # DEBUG-level only: this is detection, not the outcome. The CALLER
+            # (generation_endpoints) decides whether to filter these out (the usual
+            # case) or keep them, and emits the appropriately-leveled log at that
+            # decision point — so warning/error here just produced redundant scary
+            # logs for mismatches that were actually corrected. See plan
+            # after-yesterdays-extensive-testing-whimsical-truffle.md (Fix 3).
+            logger.debug(f"[Focus Validation] mismatch detected: {validation['reason']}")
 
     mismatch_count = len(mismatched_exercises)
 
     if mismatch_count > 0:
-        logger.warning(
-            f"🚨 [Focus Validation] Workout '{workout_name}' has {mismatch_count}/{len(exercises)} "
-            f"exercises that don't match the '{focus_area}' focus!"
+        logger.debug(
+            f"[Focus Validation] Workout '{workout_name}' has {mismatch_count}/{len(exercises)} "
+            f"exercises that don't match the '{focus_area}' focus (caller decides disposition)."
         )
-
-        if mismatch_count > len(exercises) / 2:
-            logger.error(
-                f"❌ [Focus Validation] CRITICAL: Majority of exercises in '{workout_name}' "
-                f"don't match '{focus_area}' focus! This is likely an AI generation error."
-            )
 
     return {
         "valid_exercises": valid_exercises,

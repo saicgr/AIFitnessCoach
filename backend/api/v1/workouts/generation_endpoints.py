@@ -1215,7 +1215,10 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             if exercises:
                 logger.info(f"✅ [Validation] Final workout has {len(exercises)} exercises after preference validation")
             else:
-                logger.error(f"❌ [Validation] All exercises were filtered out! Regenerating without strict filtering...")
+                logger.error(
+                    "❌ [Validation] All exercises filtered out by preference filters; "
+                    "falling back to the pre-filter exercise list (no regeneration)."
+                )
                 # If all exercises were filtered, fall back to original (better than empty workout)
                 exercises = workout_data.get("exercises", [])
 
