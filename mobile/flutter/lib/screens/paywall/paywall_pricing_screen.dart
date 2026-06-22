@@ -1628,9 +1628,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   // COMPLIANCE: the headline stays the REAL renewal price
                   // ($7.99/mo); the "$1 first month" intro is the small
                   // ribbon, never the other way around (Cal AI was pulled for
-                  // the inverse). Ribbon only when the $1-intro A/B is on AND
-                  // the store offering exists (flag `paywall_monthly_intro`,
-                  // default OFF — dormant until then).
+                  // the inverse). ⚠️ Ribbon now defaults ON for pre-launch
+                  // VISUAL PREVIEW (flag `paywall_monthly_intro`, default TRUE
+                  // — see paywall_experiments.dart). The `onboarding_intro_monthly`
+                  // SKU does NOT exist yet, so checkout still charges $7.99 —
+                  // build + wire the SKU before selling to real users.
                   price: monthlyPrice,
                   unit: '/mo',
                   isSelected: _selectedBillingCycle == 'monthly',

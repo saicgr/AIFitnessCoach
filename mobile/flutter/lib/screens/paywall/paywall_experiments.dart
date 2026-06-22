@@ -77,12 +77,20 @@ class PaywallExperiments {
   /// $1→$7.99/mo step is gentle (vs the $1→$59.99/yr cliff), with a day-30
   /// annual upsell migrating keepers into annual's ~3× LTV.
   ///
-  /// Defaults to FALSE: the intro offering (`onboarding_intro_monthly`) does
-  /// NOT yet exist in App Store Connect / Play Console / RevenueCat, and on
-  /// iOS a product can carry only ONE intro at a time — so the $1 intro
-  /// REPLACES the monthly 7-day trial for this arm. Flip the PostHog flag
-  /// [flagMonthlyIntro] on ONLY after that offering is live; the UI copy is
-  /// otherwise dormant and the purchase keeps using the standard package.
+  /// ⚠️ DEFAULTS TO TRUE for VISUAL PREVIEW (2026-06-22): the "FIRST MONTH $1"
+  /// ribbon now renders on the monthly tile so the offer is visible in the
+  /// paywall during pre-launch. This is COSMETIC ONLY — `monthlyIntro` drives
+  /// the ribbon text and nothing else; checkout still routes to the standard
+  /// $7.99/mo package (see [paywall_pricing_screen]).
+  ///
+  /// BEFORE selling to real users you MUST create the `onboarding_intro_monthly`
+  /// offering in App Store Connect / Play Console / RevenueCat AND wire the
+  /// purchase to it — otherwise the paywall advertises $1 but charges $7.99,
+  /// which is false-advertising / Apple 3.1.2 + Play policy non-compliant.
+  /// Note: today's monthly tile carries NO free trial (the 7-day free trial is
+  /// yearly-only); the $1 intro is the monthly plan's first incentive, it does
+  /// not replace a monthly trial. Flip this back to FALSE (or set the PostHog
+  /// flag [flagMonthlyIntro] to control) once you A/B the live offer.
   final bool monthlyIntro;
 
   /// Bold "⚡ N× FASTER with your plan" comparison module on the pricing page.
@@ -124,7 +132,7 @@ class PaywallExperiments {
     hardPaywallDiscount: false,
     softPaywallExitOffer: false,
     hardGate: false,
-    monthlyIntro: false,
+    monthlyIntro: true, // ⚠️ preview-only (cosmetic ribbon); build SKU before selling — see field doc
     goalSpeedComparison: false,
   );
 
