@@ -252,39 +252,46 @@ class FounderNoteSheet extends ConsumerWidget {
                       //  Hardcoded English (NOT routed through app_en.arb).
                       //  Flexible so it shrinks before the layout overflows.
                       // ─────────────────────────────────────────────────
-                      Flexible(
-                        child: RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: textPrimary,
-                              height: 1.5,
-                            ),
-                            children: [
-                              const TextSpan(
-                                text:
-                                    "I built the coach I wished I had — one that adapts to your week, not a rigid template. ",
-                              ),
-                              if (firstName != 'there') ...[
-                                TextSpan(
-                                  text: firstName,
-                                  style: const TextStyle(
-                                    color: AppColors.orange,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const TextSpan(text: ', if'),
-                              ] else
-                                const TextSpan(text: 'If'),
-                              const TextSpan(
-                                text:
-                                    " something feels off, find me on Discord or Instagram below — I read every message myself.",
-                              ),
-                            ],
+                      // The body is the core content and must ALWAYS render in
+                      // full — it is intentionally NOT wrapped in Flexible. It
+                      // previously shared flex with the surrounding Spacers
+                      // (flex 2+1+2 vs the body's 1), so it was squeezed to ~1/6
+                      // of the free space and clipped mid-sentence at "find me
+                      // on". At natural size the Spacers absorb slack and
+                      // collapse first when space is tight, so the text never
+                      // clips. Copy is link-agnostic ("find me below") so it
+                      // stays correct as the social row changes.
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: textPrimary,
+                            height: 1.5,
                           ),
-                        ).animate().fadeIn(delay: 480.ms),
-                      ),
+                          children: [
+                            const TextSpan(
+                              text:
+                                  "I built the coach I wished I had — one that adapts to your week, not a rigid template. ",
+                            ),
+                            if (firstName != 'there') ...[
+                              TextSpan(
+                                text: firstName,
+                                style: const TextStyle(
+                                  color: AppColors.orange,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const TextSpan(text: ', if'),
+                            ] else
+                              const TextSpan(text: 'If'),
+                            const TextSpan(
+                              text:
+                                  " something feels off, find me below — I read every message myself.",
+                            ),
+                          ],
+                        ),
+                      ).animate().fadeIn(delay: 480.ms),
 
                       const SizedBox(height: 14),
 
@@ -329,8 +336,13 @@ class FounderNoteSheet extends ConsumerWidget {
               //    the body content is short.
               Padding(
                 padding: const EdgeInsets.fromLTRB(28, 0, 28, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                // Wrap (not Row) so the four links lay out gracefully — they
+                // fit one line on wide phones and wrap to a second centered line
+                // on narrower ones instead of overflowing horizontally.
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 22,
+                  runSpacing: 10,
                   children: [
                     _InlineSocialLink(
                       icon: FontAwesomeIcons.discord,
@@ -338,14 +350,18 @@ class FounderNoteSheet extends ConsumerWidget {
                       color: const Color(0xFF5865F2),
                       onTap: () => _open(AppLinks.discord),
                     ),
-                    const SizedBox(width: 22),
+                    _InlineSocialLink(
+                      icon: FontAwesomeIcons.reddit,
+                      label: 'Reddit',
+                      color: const Color(0xFFFF4500),
+                      onTap: () => _open(AppLinks.reddit),
+                    ),
                     _InlineSocialLink(
                       icon: FontAwesomeIcons.instagram,
                       label: AppLocalizations.of(context).wrappedShareInstagram,
                       color: const Color(0xFFE1306C),
                       onTap: () => _open(AppLinks.instagram),
                     ),
-                    const SizedBox(width: 22),
                     _InlineSocialLink(
                       icon: FontAwesomeIcons.mapLocationDot,
                       label: AppLocalizations.of(context).founderNoteRoadmap,
