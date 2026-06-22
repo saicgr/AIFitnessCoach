@@ -89,20 +89,16 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
     Color textSecondary,
   ) {
     final goalDisplay = _formatGoal(quizData.goal ?? 'build_muscle');
+    final surface = isDark ? const Color(0xFF141416) : AppColorsLight.elevated;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.cyan.withOpacity(0.15),
-            AppColors.teal.withOpacity(0.1),
-          ],
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+        color: surface,
+        borderRadius: BorderRadius.circular(14),
+        // Signature v2: top-only orange hairline (a non-uniform 4-side border
+        // + radius throws at paint — see capability_and_community_screen).
+        border: const Border(top: BorderSide(color: _kSigAccent, width: 1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,12 +108,12 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: AppColors.cyanGradient,
+                  color: _kSigAccent.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.person_outline,
-                  color: Colors.white,
+                  color: _kSigAccent,
                   size: 24,
                 ),
               ),
