@@ -27260,7 +27260,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return 'Days per week $arg0';
+    return '$arg0 days / week';
   }
 
   @override
@@ -27306,7 +27306,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String planPreviewScreenWeekNumber(Object arg0) {
-    return 'Week number $arg0';
+    return 'Week $arg0';
   }
 
   @override

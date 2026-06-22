@@ -46050,7 +46050,7 @@ abstract class AppLocalizations {
   /// No description provided for @planPreviewScreenDaysPerWeek.
   ///
   /// In en, this message translates to:
-  /// **'Days per week {arg0}'**
+  /// **'{arg0} days / week'**
   String planPreviewScreenDaysPerWeek(Object arg0);
 
   /// No description provided for @planPreviewScreenDesignedBasedOnYour.
@@ -46122,7 +46122,7 @@ abstract class AppLocalizations {
   /// No description provided for @planPreviewScreenWeekNumber.
   ///
   /// In en, this message translates to:
-  /// **'Week number {arg0}'**
+  /// **'Week {arg0}'**
   String planPreviewScreenWeekNumber(Object arg0);
 
   /// No description provided for @planPreviewScreenWhatYouLlAchieve.

@@ -155,29 +155,23 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildSummaryChip(
-                Icons.flag_outlined,
-                goalDisplay,
-                AppColors.cyan,
-              ),
+              _buildSummaryChip(Icons.flag_outlined, goalDisplay, _kSigAccent),
               _buildSummaryChip(
                 Icons.calendar_today,
                 AppLocalizations.of(
                   context,
                 )!.planPreviewScreenDaysPerWeek(quizData.daysPerWeek ?? 3),
-                AppColors.purple,
+                _kSigAccent,
               ),
               _buildSummaryChip(
                 Icons.trending_up,
                 _formatLevel(quizData.fitnessLevel ?? 'intermediate'),
-                AppColors.orange,
+                _kSigAccent,
               ),
               _buildSummaryChip(
                 Icons.fitness_center,
-                AppLocalizations.of(context)!.planPreviewScreenEquipmentCount(
-                  quizData.equipment?.length ?? 3,
-                ),
-                AppColors.teal,
+                _formatEquipment(quizData.equipment?.length ?? 0),
+                _kSigAccent,
               ),
             ],
           ),
@@ -307,33 +301,25 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
 
   Widget _buildAchievementsSection(
     bool isDark,
+    PreAuthQuizData quizData,
     Color textPrimary,
     Color textSecondary,
     Color elevatedColor,
     Color borderColor,
   ) {
-    final l10n = AppLocalizations.of(context)!;
+    // Goal-aware 4-week narrative — the card claims "This is YOUR Personalized
+    // Plan", so the milestones must reflect the user's actual goal (an
+    // endurance plan should not promise "Build strength foundation").
+    final milestones = _milestonesForGoal(quizData.goal ?? 'build_muscle');
+    final icons = [
+      Icons.school,
+      Icons.foundation,
+      Icons.trending_up,
+      Icons.emoji_events,
+    ];
     final achievements = [
-      {
-        'week': 1,
-        'text': l10n.planPreviewScreenMasterTheMovement,
-        'icon': Icons.school,
-      },
-      {
-        'week': 2,
-        'text': l10n.planPreviewScreenBuildStrengthFoundation,
-        'icon': Icons.foundation,
-      },
-      {
-        'week': 3,
-        'text': l10n.planPreviewScreenIncreaseIntensityVolume,
-        'icon': Icons.trending_up,
-      },
-      {
-        'week': 4,
-        'text': l10n.planPreviewScreenPeakPerformanceWeek,
-        'icon': Icons.emoji_events,
-      },
+      for (var i = 0; i < milestones.length; i++)
+        {'week': i + 1, 'text': milestones[i], 'icon': icons[i]},
     ];
 
     return Container(

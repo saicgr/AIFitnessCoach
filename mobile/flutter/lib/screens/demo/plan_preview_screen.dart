@@ -17,6 +17,7 @@ part 'plan_preview_screen_ui.dart';
 /// kickers/labels/CTAs, single orange accent (AppColors.orange ≈ #F97316).
 const String _kSigDisplay = 'Anton';
 const String _kSigLabel = 'Barlow Condensed';
+const Color _kSigAccent = Color(0xFFF97316);
 
 /// Full Plan Preview Screen
 /// Shows the user's complete personalized 4-week workout plan BEFORE asking them to subscribe
@@ -205,6 +206,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
                   // higher-converting order for a pre-paywall plan preview.
                   _buildAchievementsSection(
                     isDark,
+                    quizData,
                     textPrimary,
                     textSecondary,
                     elevatedColor,
@@ -367,22 +369,27 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
   }
 
   Widget _buildSummaryChip(IconData icon, String text, Color color) {
+    // Signature v2: one accent across every chip (no rainbow). Callers pass
+    // [_kSigAccent]; the param stays for the demo-screen's own reuse.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.30)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 7),
           Text(
             text,
             style: TextStyle(
-              fontSize: 12,
+              fontFamily: _kSigLabel,
+              fontSize: 13.5,
               fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
               color: color,
             ),
           ),
@@ -1408,6 +1415,65 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
         return 'Advanced';
       default:
         return 'Intermediate';
+    }
+  }
+
+  /// Human, adaptive equipment summary — never the robotic "Equipment count 83".
+  String _formatEquipment(int count) {
+    if (count <= 0) return 'Bodyweight only';
+    if (count >= 15) return 'Full gym access';
+    if (count == 1) return '1 piece of kit';
+    return '$count pieces of kit';
+  }
+
+  /// Goal-aware 4-week milestone narrative for the "What You'll Achieve" card.
+  /// Keeps the personalized promise honest — an endurance plan reads as an
+  /// endurance arc, not a generic strength one.
+  List<String> _milestonesForGoal(String goal) {
+    switch (goal) {
+      case 'improve_endurance':
+        return [
+          'Build your aerobic base',
+          'Extend your stamina',
+          'Push your threshold',
+          'Peak conditioning week',
+        ];
+      case 'lose_weight':
+        return [
+          'Build the habit',
+          'Ramp up the burn',
+          'Push the intensity',
+          'Peak fat-burn week',
+        ];
+      case 'increase_strength':
+        return [
+          'Groove the main lifts',
+          'Build your strength base',
+          'Intensify the load',
+          'Peak strength week',
+        ];
+      case 'stay_active':
+        return [
+          'Find your rhythm',
+          'Build consistency',
+          'Add a challenge',
+          'Hit your stride',
+        ];
+      case 'athletic_performance':
+        return [
+          'Build your base',
+          'Develop power',
+          'Sharpen & intensify',
+          'Peak performance week',
+        ];
+      case 'build_muscle':
+      default:
+        return [
+          'Master the movements',
+          'Build your foundation',
+          'Add volume & intensity',
+          'Peak hypertrophy week',
+        ];
     }
   }
 }
