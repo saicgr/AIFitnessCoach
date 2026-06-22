@@ -264,9 +264,13 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                 // icon when the library has no illustration.
                 ExerciseImage(
                   exerciseName: exercise['name'] as String,
+                  exerciseId: exercise['id'] as String?,
                   width: 44,
                   height: 44,
                   borderRadius: 10,
+                  // A wrong equipment icon reads worse than a clean brand mark
+                  // on this "real plan" surface.
+                  brandFallback: true,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

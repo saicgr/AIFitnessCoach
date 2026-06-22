@@ -71,6 +71,12 @@ class ExerciseImage extends ConsumerStatefulWidget {
   /// display name, the wrong dupe wins" class of bugs.
   final String? exerciseId;
 
+  /// When true, an exercise with no resolvable illustration renders the
+  /// Zealova mark on black instead of a guessed equipment icon. Use on
+  /// surfaces (e.g. the plan preview) where a wrong icon reads worse than a
+  /// clean brand placeholder.
+  final bool brandFallback;
+
   const ExerciseImage({
     super.key,
     required this.exerciseName,
@@ -83,6 +89,7 @@ class ExerciseImage extends ConsumerStatefulWidget {
     this.fit = BoxFit.cover,
     this.equipmentHint,
     this.exerciseId,
+    this.brandFallback = false,
   });
 
   @override
@@ -204,10 +211,13 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = widget.backgroundColor ??
-        (isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF5F5F5));
-    final fallbackIconColor = widget.iconColor ??
-        (isDark ? Colors.white38 : Colors.black38);
+    final bgColor =
+        widget.backgroundColor ??
+        (widget.brandFallback
+            ? const Color(0xFF0A0A0B)
+            : (isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF5F5F5)));
+    final fallbackIconColor =
+        widget.iconColor ?? (isDark ? Colors.white38 : Colors.black38);
 
     return Container(
       width: widget.width,
@@ -218,6 +228,19 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
       ),
       clipBehavior: Clip.hardEdge,
       child: _buildContent(fallbackIconColor),
+    );
+  }
+
+  /// Zealova mark on black — the brand placeholder when there's no
+  /// illustration and [ExerciseImage.brandFallback] is set.
+  Widget _brandMark() {
+    return Center(
+      child: Image.asset(
+        'assets/icon/splash_logo.png',
+        width: widget.width.isFinite ? widget.width * 0.58 : 34,
+        height: widget.height.isFinite ? widget.height * 0.58 : 34,
+        fit: BoxFit.contain,
+      ),
     );
   }
 
@@ -238,13 +261,19 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
 
   Widget _buildContent(Color fallbackIconColor) {
     // While resolving the URL, show the layout-matched placeholder (icon),
-    // not a spinner — keeps the box stable from first to final frame.
+    // not a spinner — keeps the box stable from first to final frame. In
+    // brand-fallback mode show a plain black box while loading (no logo
+    // flash before the real image fades in).
     if (_isLoading) {
-      return _placeholder(fallbackIconColor);
+      return widget.brandFallback
+          ? const SizedBox.expand()
+          : _placeholder(fallbackIconColor);
     }
 
     if (_hasError || _imageUrl == null) {
-      return _placeholder(fallbackIconColor);
+      return widget.brandFallback
+          ? _brandMark()
+          : _placeholder(fallbackIconColor);
     }
 
     return CachedNetworkImage(
@@ -261,15 +290,22 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
       cacheKey: widget.exerciseName.isNotEmpty ? widget.exerciseName : null,
       fit: widget.fit,
       // Perf fix 2.2: constrain decoded image size in memory cache
-      memCacheWidth: widget.width.isFinite ? (widget.width * 2).toInt().clamp(100, 400) : null,
-      memCacheHeight: widget.height.isFinite ? (widget.height * 2).toInt().clamp(100, 400) : null,
+      memCacheWidth: widget.width.isFinite
+          ? (widget.width * 2).toInt().clamp(100, 400)
+          : null,
+      memCacheHeight: widget.height.isFinite
+          ? (widget.height * 2).toInt().clamp(100, 400)
+          : null,
       // Plan A9: gentle fade so a cold-cache load doesn't pop. A disk-cache
       // hit decodes synchronously and skips the fade entirely.
       fadeInDuration: const Duration(milliseconds: 220),
       fadeOutDuration: const Duration(milliseconds: 120),
       // Layout-matched placeholder (icon), not a spinner — no layout shift.
-      placeholder: (_, __) => _placeholder(fallbackIconColor),
-      errorWidget: (_, __, ___) => _placeholder(fallbackIconColor),
+      placeholder: (_, __) => widget.brandFallback
+          ? const SizedBox.expand()
+          : _placeholder(fallbackIconColor),
+      errorWidget: (_, __, ___) =>
+          widget.brandFallback ? _brandMark() : _placeholder(fallbackIconColor),
     );
   }
 }
@@ -291,9 +327,15 @@ IconData _fallbackIconForEquipment(String? equipmentHint, String exerciseName) {
   if (h('bike') || h('cycle')) return Icons.directions_bike;
   if (h('row')) return Icons.rowing;
   if (h('plate')) return Icons.album;
-  if (h('bodyweight') || h('push-up') || h('pushup') ||
-      h('pull-up') || h('pullup') || h('squat') || h('plank') ||
-      h('lunge') || h('burpee')) {
+  if (h('bodyweight') ||
+      h('push-up') ||
+      h('pushup') ||
+      h('pull-up') ||
+      h('pullup') ||
+      h('squat') ||
+      h('plank') ||
+      h('lunge') ||
+      h('burpee')) {
     return Icons.accessibility_new;
   }
   if (h('dumbbell')) return Icons.fitness_center;
