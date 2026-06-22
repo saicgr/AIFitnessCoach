@@ -24,6 +24,7 @@ import '../../core/services/posthog_service.dart';
 import 'widgets/inline_referral_expander.dart';
 import 'widgets/credibility_strip.dart';
 import 'widgets/goal_speed_comparison.dart';
+import 'widgets/value_reel.dart';
 import '../onboarding/goal_speed_calculator.dart';
 import 'paywall_experiments.dart';
 import '../onboarding/onboarding_experiments.dart';
@@ -32,7 +33,6 @@ import '../../widgets/glass_back_button.dart';
 import '../../widgets/plan_portability_badge.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import 'package:fitwiz/core/constants/branding.dart';
-
 
 import '../../l10n/generated/app_localizations.dart';
 part 'paywall_pricing_screen_part_accent_border_card.dart';
@@ -46,7 +46,6 @@ const _paywallAccent = Color(0xFFFC4C02);
 // BetterMe, Noom) uses pure white at weight 700.
 const _paywallAccentContrast = Color(0xFFFFFFFF);
 
-
 /// Paywall/Membership Screen
 /// Shows current plan status and upgrade/downgrade options
 /// Now includes "Preview Your Plan" to show users their personalized workout plan before subscribing
@@ -57,7 +56,8 @@ class PaywallPricingScreen extends ConsumerStatefulWidget {
   const PaywallPricingScreen({super.key, this.showPlanPreview = true});
 
   @override
-  ConsumerState<PaywallPricingScreen> createState() => _PaywallPricingScreenState();
+  ConsumerState<PaywallPricingScreen> createState() =>
+      _PaywallPricingScreenState();
 }
 
 class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
@@ -76,7 +76,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   // because the intro framing doesn't apply to them.
   late final PageController _pageController;
   int _currentPage = 0;
-  static const int _totalPages = 3;
+  // Page 0 is the auto-advancing value reel (its own controls); pages 1-3 are
+  // the founder/hero → reminder → timeline-offer flow. The reel is excluded
+  // from the standard top-bar / bottom-CTA / dot wayfinding — those operate on
+  // the three "real" intro pages only.
+  static const int _totalPages = 4;
+  static const int _reelPage = 0;
+  // Index of the notification-primer (reminder) page after the reel shift.
+  static const int _reminderPage = 2;
 
   // Skip ("Maybe later") visibility — platform-aware.
   //
@@ -137,9 +144,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   /// the post-onboarding /notifications-prime chain auto-skips.
   Future<void> _requestNotificationPermissionFromReminderPage() async {
     try {
-      await ref
-          .read(notificationServiceProvider)
-          .requestPermissionWhenReady();
+      await ref.read(notificationServiceProvider).requestPermissionWhenReady();
     } catch (e) {
       debugPrint('🔔 [Paywall] notification permission request failed: $e');
     }
@@ -166,6 +171,18 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     });
   }
 
+  /// Reel finished (or the user tapped Skip) → jump straight to the
+  /// timeline-offer page (the last page). The reel sits before the
+  /// founder/reminder beats, so a skip is an explicit "show me the offer".
+  void _skipReelToOffer() {
+    if (!mounted) return;
+    _pageController.animateToPage(
+      _totalPages - 1,
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   void _goToNextPage() {
     HapticFeedback.lightImpact();
     if (_currentPage < _totalPages - 1) {
@@ -178,13 +195,16 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   void _goToPreviousPage() {
     HapticFeedback.selectionClick();
-    if (_currentPage > 0) {
+    // Back from any interactive page (2+) steps one page; back from the first
+    // interactive page (page 1, the founder/hero beat) bails out of the
+    // paywall rather than replaying the value reel.
+    if (_currentPage > 1) {
       _pageController.previousPage(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
       );
     } else {
-      // Page 0 → bail out of the paywall entirely.
+      // First interactive page → bail out of the paywall entirely.
       //
       // Bug fix: `context.pop()` (go_router) only pops a single
       // sub-route inside the paywall's nested Navigator, which on
@@ -263,17 +283,20 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     double monthlyPrice = 7.99;
     if (offerings?.current != null) {
       for (final pkg in offerings!.current!.availablePackages) {
-        if (pkg.storeProduct.identifier == SubscriptionNotifier.premiumYearlyId) {
+        if (pkg.storeProduct.identifier ==
+            SubscriptionNotifier.premiumYearlyId) {
           yearlyPrice = pkg.storeProduct.price;
         }
-        if (pkg.storeProduct.identifier == SubscriptionNotifier.premiumMonthlyId) {
+        if (pkg.storeProduct.identifier ==
+            SubscriptionNotifier.premiumMonthlyId) {
           monthlyPrice = pkg.storeProduct.price;
         }
       }
     }
     final monthlyAnnualized = monthlyPrice * 12;
     if (monthlyAnnualized <= 0) return 0;
-    return ((monthlyAnnualized - yearlyPrice) / monthlyAnnualized * 100).round();
+    return ((monthlyAnnualized - yearlyPrice) / monthlyAnnualized * 100)
+        .round();
   }
 
   /// Personalized headline from onboarding goal. When the goal is weight-
@@ -289,10 +312,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       final goalKg = quizData.goalWeightKg;
       final useMetric = quizData.useMetricUnits;
 
-      if (currentKg != null &&
-          goalKg != null &&
-          currentKg > 0 &&
-          goalKg > 0) {
+      if (currentKg != null && goalKg != null && currentKg > 0 && goalKg > 0) {
         final deltaKg = goalKg - currentKg;
         final absDeltaKg = deltaKg.abs();
         if (absDeltaKg >= 0.5) {
@@ -334,7 +354,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     final currentTier = subscriptionState.tier;
     final isSubscribed = currentTier != SubscriptionTier.free;
     final windowState = ref.watch(windowModeProvider);
-    final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
+    final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(
+      windowState,
+    );
     final hPad = isFoldable ? 14.0 : 20.0;
 
     // Non-subscribed (post-onboarding) users get the Cal AI-style 3-page
@@ -353,9 +375,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             padding: const EdgeInsets.all(16),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: GlassBackButton(
-                onTap: () => context.pop(),
-              ),
+              child: GlassBackButton(onTap: () => context.pop()),
             ),
           ),
           headerExtra: _buildPricingLeftPane(colors, isSubscribed),
@@ -397,15 +417,30 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         Icon(Icons.check_circle, color: Colors.green, size: 16),
                         const SizedBox(width: 6),
                         Text(
-                          AppLocalizations.of(context).paywallPricing7DayFreeTrial,
-                          style: TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.w600),
+                          AppLocalizations.of(
+                            context,
+                          ).paywallPricing7DayFreeTrial,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.green,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(width: 12),
-                        Icon(Icons.cancel_outlined, color: colors.textSecondary, size: 16),
+                        Icon(
+                          Icons.cancel_outlined,
+                          color: colors.textSecondary,
+                          size: 16,
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                          AppLocalizations.of(context).paywallPricingCancelAnytime,
-                          style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                          AppLocalizations.of(
+                            context,
+                          ).paywallPricingCancelAnytime,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: colors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -433,9 +468,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   child: Row(
                     children: [
                       _BillingTab(
-                        label: AppLocalizations.of(context).paywallPricingYearly,
-                        sublabel: AppLocalizations.of(context).paywallPricingBestValue,
-                        badge: 'SAVE ${_getSavingsPercent(offerings: subscriptionState.offerings)}%',
+                        label: AppLocalizations.of(
+                          context,
+                        ).paywallPricingYearly,
+                        sublabel: AppLocalizations.of(
+                          context,
+                        ).paywallPricingBestValue,
+                        badge:
+                            'SAVE ${_getSavingsPercent(offerings: subscriptionState.offerings)}%',
                         // Phase C: louder savings badge on the value plan.
                         prominentBadge: _experiments.pricingPsychology,
                         isSelected: _selectedBillingCycle == 'yearly',
@@ -444,16 +484,22 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                             _selectedBillingCycle = 'yearly';
                             _selectedPlan = 'premium_yearly';
                           });
-                          ref.read(posthogServiceProvider).capture(
-                            eventName: 'paywall_plan_selected',
-                            properties: {'plan_name': 'premium_yearly', 'billing_cycle': 'yearly'},
-                          );
+                          ref
+                              .read(posthogServiceProvider)
+                              .capture(
+                                eventName: 'paywall_plan_selected',
+                                properties: {
+                                  'plan_name': 'premium_yearly',
+                                  'billing_cycle': 'yearly',
+                                },
+                              );
                         },
                         colors: colors,
                       ),
                       _BillingTab(
                         label: AppLocalizations.of(context).xpGoalsMonthly,
-                        sublabel: '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumMonthlyId, fallback: '\$7.99')}/mo',
+                        sublabel:
+                            '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumMonthlyId, fallback: '\$7.99')}/mo',
                         // Phase C: quieter monthly tab so the annual + trial
                         // path reads as the obvious default.
                         deEmphasized: _experiments.pricingPsychology,
@@ -463,10 +509,15 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                             _selectedBillingCycle = 'monthly';
                             _selectedPlan = 'premium_monthly';
                           });
-                          ref.read(posthogServiceProvider).capture(
-                            eventName: 'paywall_plan_selected',
-                            properties: {'plan_name': 'premium_monthly', 'billing_cycle': 'monthly'},
-                          );
+                          ref
+                              .read(posthogServiceProvider)
+                              .capture(
+                                eventName: 'paywall_plan_selected',
+                                properties: {
+                                  'plan_name': 'premium_monthly',
+                                  'billing_cycle': 'monthly',
+                                },
+                              );
                         },
                         colors: colors,
                       ),
@@ -482,7 +533,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   colors: colors,
                   accentOverride: _paywallAccent,
                   child: _TierPlanCard(
-                    planId: _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly',
+                    planId: _selectedBillingCycle == 'yearly'
+                        ? 'premium_yearly'
+                        : 'premium_monthly',
                     tierName: 'Premium',
                     // Badge moved to the Yearly tab pill; keep empty here
                     // so the price doesn't fight a sibling badge.
@@ -497,13 +550,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     anchorPrice: _selectedBillingCycle == 'yearly'
                         ? _getDynamicPrice(
                             offerings: subscriptionState.offerings,
-                            productId:
-                                SubscriptionNotifier.premiumMonthlyId,
+                            productId: SubscriptionNotifier.premiumMonthlyId,
                             fallback: '\$7.99',
                           )
                         : null,
                     price: _selectedBillingCycle == 'yearly'
-                        ? _getMonthlyEquivalent(offerings: subscriptionState.offerings)
+                        ? _getMonthlyEquivalent(
+                            offerings: subscriptionState.offerings,
+                          )
                         : _getDynamicPrice(
                             offerings: subscriptionState.offerings,
                             productId: SubscriptionNotifier.premiumMonthlyId,
@@ -547,7 +601,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          AppLocalizations.of(context).paywallPricingLessThanThePrice,
+                          AppLocalizations.of(
+                            context,
+                          ).paywallPricingLessThanThePrice,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 12,
@@ -595,7 +651,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          AppLocalizations.of(context).paywallPricingNoPaymentDueNow,
+                          AppLocalizations.of(
+                            context,
+                          ).paywallPricingNoPaymentDueNow,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
@@ -616,8 +674,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     height: 54,
                     child: ElevatedButton(
                       onPressed: subscriptionState.isLoading
-                        ? null
-                        : () => _handleAction(context, ref, isSubscribed, currentTier),
+                          ? null
+                          : () => _handleAction(
+                              context,
+                              ref,
+                              isSubscribed,
+                              currentTier,
+                            ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _paywallAccent,
                         foregroundColor: _paywallAccentContrast,
@@ -627,23 +690,25 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         elevation: 0,
                       ),
                       child: subscriptionState.isLoading
-                        ? SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: const AlwaysStoppedAnimation(_paywallAccentContrast),
+                          ? SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: const AlwaysStoppedAnimation(
+                                  _paywallAccentContrast,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              _getButtonText(isSubscribed, currentTier),
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.2,
+                                color: _paywallAccentContrast,
+                              ),
                             ),
-                          )
-                        : Text(
-                            _getButtonText(isSubscribed, currentTier),
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.2,
-                              color: _paywallAccentContrast,
-                            ),
-                          ),
                     ),
                   ),
                 ),
@@ -707,7 +772,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       Flexible(
                         child: Text(
                           Platform.isIOS
-                              ? AppLocalizations.of(context).paywallPricingBilledSecurelyThroughThe
+                              ? AppLocalizations.of(
+                                  context,
+                                ).paywallPricingBilledSecurelyThroughThe
                               : 'Billed securely through Google Play',
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -746,23 +813,48 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   children: [
                     GestureDetector(
                       onTap: () => _restorePurchases(context, ref),
-                      child: Text(AppLocalizations.of(context).paywallPricingRestore, style: TextStyle(fontSize: 13, color: colors.cyan)),
+                      child: Text(
+                        AppLocalizations.of(context).paywallPricingRestore,
+                        style: TextStyle(fontSize: 13, color: colors.cyan),
+                      ),
                     ),
-                    Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: colors.textMuted)),
+                    Text(
+                      AppLocalizations.of(context).programLibrary,
+                      style: TextStyle(color: colors.textMuted),
+                    ),
                     GestureDetector(
                       onTap: () => _openTermsOfService(),
-                      child: Text(AppLocalizations.of(context).paywallPricingTerms, style: TextStyle(fontSize: 13, color: colors.textMuted)),
+                      child: Text(
+                        AppLocalizations.of(context).paywallPricingTerms,
+                        style: TextStyle(fontSize: 13, color: colors.textMuted),
+                      ),
                     ),
-                    Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: colors.textMuted)),
+                    Text(
+                      AppLocalizations.of(context).programLibrary,
+                      style: TextStyle(color: colors.textMuted),
+                    ),
                     GestureDetector(
                       onTap: () => _openPrivacyPolicy(),
-                      child: Text(AppLocalizations.of(context).settingsPrivacySection, style: TextStyle(fontSize: 13, color: colors.textMuted)),
+                      child: Text(
+                        AppLocalizations.of(context).settingsPrivacySection,
+                        style: TextStyle(fontSize: 13, color: colors.textMuted),
+                      ),
                     ),
-                    if (isSubscribed && currentTier != SubscriptionTier.lifetime) ...[
-                      Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: colors.textMuted)),
+                    if (isSubscribed &&
+                        currentTier != SubscriptionTier.lifetime) ...[
+                      Text(
+                        AppLocalizations.of(context).programLibrary,
+                        style: TextStyle(color: colors.textMuted),
+                      ),
                       GestureDetector(
                         onTap: () => _openSubscriptionSettings(),
-                        child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(fontSize: 13, color: Colors.red.shade400)),
+                        child: Text(
+                          AppLocalizations.of(context).buttonCancel,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.red.shade400,
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -785,10 +877,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     );
   }
 
-
   String _getButtonText(bool isSubscribed, SubscriptionTier currentTier) {
     if (!isSubscribed) {
-      return _selectedPlan.contains('yearly') ? 'Start Free Trial' : 'Subscribe Now';
+      return _selectedPlan.contains('yearly')
+          ? 'Start Free Trial'
+          : 'Subscribe Now';
     }
     return 'Change Plan';
   }
@@ -813,7 +906,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           },
           child: Column(
             children: [
-              _buildIntroTopBar(colors, context, ref),
+              // The reel is full-bleed with its own Skip + progress bars, so the
+              // standard top bar (back/restore) is suppressed while it shows.
+              if (_currentPage != _reelPage)
+                _buildIntroTopBar(colors, context, ref),
               Expanded(
                 child: PageView(
                   controller: _pageController,
@@ -824,17 +920,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     // the timer that fades the "Maybe later" skip in.
                     if (i == _totalPages - 1) _scheduleSkipReveal();
                     // v7: per-page funnel visibility (which beat loses
-                    // people: proof → reminder → offer).
-                    ref.read(posthogServiceProvider).capture(
-                      eventName: 'paywall_intro_page_viewed',
-                      properties: {
-                        'page': i,
-                        'variant':
-                            _founderPageEnabled ? 'v7_founder' : 'hero',
-                      },
-                    );
+                    // people: reel → proof → reminder → offer).
+                    ref
+                        .read(posthogServiceProvider)
+                        .capture(
+                          eventName: 'paywall_intro_page_viewed',
+                          properties: {
+                            'page': i,
+                            'variant': _founderPageEnabled
+                                ? 'v7_founder'
+                                : 'hero',
+                          },
+                        );
                   },
                   children: [
+                    // Page 0 — auto-advancing value reel. Skip / finish jumps
+                    // straight to the timeline-offer page (the last page).
+                    PaywallValueReel(onSkip: _skipReelToOffer),
                     if (_founderPageEnabled)
                       _buildIntroPageFounder(colors)
                     else
@@ -844,11 +946,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   ],
                 ),
               ),
-              _buildIntroBottomBar(
-                colors,
-                subscriptionState,
-                currentTier,
-              ),
+              // The reel owns the bottom region (its own controls); the
+              // standard CTA + dots bottom bar shows only on pages 1-3.
+              if (_currentPage != _reelPage)
+                _buildIntroBottomBar(colors, subscriptionState, currentTier),
             ],
           ),
         ),
@@ -857,7 +958,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   Widget _buildIntroTopBar(
-      ThemeColors colors, BuildContext context, WidgetRef ref) {
+    ThemeColors colors,
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Row(
@@ -871,8 +975,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             child: _currentPage > 0
                 ? IconButton(
                     splashRadius: 22,
-                    icon: Icon(Icons.chevron_left,
-                        size: 28, color: colors.textPrimary),
+                    icon: Icon(
+                      Icons.chevron_left,
+                      size: 28,
+                      color: colors.textPrimary,
+                    ),
                     onPressed: _goToPreviousPage,
                   )
                 : null,
@@ -881,8 +988,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           GestureDetector(
             onTap: () => _restorePurchases(context, ref),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Text(
                 AppLocalizations.of(context).paywallPricingRestore,
                 style: TextStyle(
@@ -905,13 +1011,15 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   ) {
     final isLast = _currentPage == _totalPages - 1;
     final label = switch (_currentPage) {
-      0 => 'Try for \$0.00',
-      // v7: page 1 IS the notification primer — the CTA asks for the
-      // reminder, and tapping it fires the OS permission prompt.
-      1 => AppLocalizations.of(context).paywallRemindMeCta,
-      _ => _selectedPlan.contains('yearly')
-          ? 'Start My 7-Day Free Trial'
-          : 'Subscribe Now',
+      // Page 1 = founder/hero proof beat.
+      1 => 'Try for \$0.00',
+      // Page 2 IS the notification primer — the CTA asks for the reminder,
+      // and tapping it fires the OS permission prompt.
+      _reminderPage => AppLocalizations.of(context).paywallRemindMeCta,
+      _ =>
+        _selectedPlan.contains('yearly')
+            ? 'Start My 7-Day Free Trial'
+            : 'Subscribe Now',
     };
     return Padding(
       // Bottom padding kept tight: the enclosing SafeArea already insets
@@ -924,8 +1032,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.check_rounded,
-                  size: 16, color: colors.textSecondary),
+              Icon(Icons.check_rounded, size: 16, color: colors.textSecondary),
               const SizedBox(width: 6),
               Text(
                 AppLocalizations.of(context).paywallPricingNoPaymentDueNow2,
@@ -946,16 +1053,16 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   ? null
                   : () {
                       if (isLast) {
-                        _handleAction(
-                            context, ref, false, currentTier);
+                        _handleAction(context, ref, false, currentTier);
                       } else {
-                        // Page 1 → request notification permission so the
-                        // day-5 reminder promise can actually be kept.
+                        // Reminder page → request notification permission so
+                        // the day-5 reminder promise can actually be kept.
                         // Fire-and-forget: page advance never blocks on
                         // the OS prompt.
-                        if (_currentPage == 1) {
+                        if (_currentPage == _reminderPage) {
                           unawaited(
-                              _requestNotificationPermissionFromReminderPage());
+                            _requestNotificationPermissionFromReminderPage(),
+                          );
                         }
                         _goToNextPage();
                       }
@@ -975,15 +1082,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation(
-                            _paywallAccentContrast),
+                          _paywallAccentContrast,
+                        ),
                       ),
                     )
                   : Text(
-                      label,
+                      label.toUpperCase(),
                       style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
+                        fontFamily: 'Barlow Condensed',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.8,
                         color: _paywallAccentContrast,
                       ),
                     ),
@@ -991,11 +1100,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
           const SizedBox(height: 8),
           // Page-position dots — quiet wayfinding so users feel the
-          // 3-step shape rather than wondering how deep the flow is.
+          // 3-step shape rather than wondering how deep the flow is. Only the
+          // three "real" intro pages get dots; the reel (page 0) is excluded
+          // since it carries its own progress bars.
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(_totalPages, (i) {
-              final selected = i == _currentPage;
+            children: List.generate(_totalPages - 1, (i) {
+              // Dot index 0..2 maps to page index 1..3.
+              final selected = (i + 1) == _currentPage;
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -1087,7 +1199,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               color: colors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: colors.textMuted.withValues(alpha: 0.15)),
+                color: colors.textMuted.withValues(alpha: 0.15),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1152,13 +1265,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ).animate().fadeIn(delay: 180.ms).slideY(begin: 0.08),
           const SizedBox(height: 10),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
             decoration: BoxDecoration(
               color: colors.surface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                  color: colors.textMuted.withValues(alpha: 0.15)),
+                color: colors.textMuted.withValues(alpha: 0.15),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1175,10 +1288,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 const SizedBox(height: 5),
                 Text(
                   l10n.paywallTesterName,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 11, color: colors.textMuted),
                 ),
               ],
             ),
@@ -1187,10 +1297,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           Center(
             child: Text(
               l10n.paywallEarlyAccess,
-              style: TextStyle(
-                fontSize: 11,
-                color: colors.textMuted,
-              ),
+              style: TextStyle(fontSize: 11, color: colors.textMuted),
             ),
           ).animate().fadeIn(delay: 380.ms),
           const SizedBox(height: 12),
@@ -1350,8 +1457,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                           hz: 4,
                           rotation: 0.12,
                         ),
-                        const ThenEffect(
-                            delay: Duration(milliseconds: 1700)),
+                        const ThenEffect(delay: Duration(milliseconds: 1700)),
                       ],
                       child: Icon(
                         Icons.notifications_rounded,
@@ -1363,39 +1469,41 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     Positioned(
                       top: 30,
                       right: 50,
-                      child: Container(
-                        width: 46,
-                        height: 46,
-                        alignment: Alignment.center,
-                        decoration: const BoxDecoration(
-                          color: _paywallAccent,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x33000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Text(
-                          '1',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )
-                          .animate()
-                          .scale(
-                            begin: const Offset(0, 0),
-                            end: const Offset(1, 1),
-                            duration: const Duration(milliseconds: 420),
-                            curve: Curves.elasticOut,
-                          )
-                          .fadeIn(
-                              duration: const Duration(milliseconds: 220)),
+                      child:
+                          Container(
+                                width: 46,
+                                height: 46,
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(
+                                  color: _paywallAccent,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0x33000000),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  '1',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                              .animate()
+                              .scale(
+                                begin: const Offset(0, 0),
+                                end: const Offset(1, 1),
+                                duration: const Duration(milliseconds: 420),
+                                curve: Curves.elasticOut,
+                              )
+                              .fadeIn(
+                                duration: const Duration(milliseconds: 220),
+                              ),
                     ),
                   ],
                 ),
@@ -1409,21 +1517,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   // ── Page 3: timeline + plans ─────────────────────────────────────
   Widget _buildIntroPageTimeline(
-      ThemeColors colors, SubscriptionState subscriptionState) {
+    ThemeColors colors,
+    SubscriptionState subscriptionState,
+  ) {
     final monthlyPrice = _getDynamicPrice(
       offerings: subscriptionState.offerings,
       productId: SubscriptionNotifier.premiumMonthlyId,
       fallback: '\$7.99',
     );
-    final yearlyMonthly =
-        _getMonthlyEquivalent(offerings: subscriptionState.offerings);
+    final yearlyMonthly = _getMonthlyEquivalent(
+      offerings: subscriptionState.offerings,
+    );
     final yearlyTotal = _getDynamicPrice(
       offerings: subscriptionState.offerings,
       productId: SubscriptionNotifier.premiumYearlyId,
       fallback: '\$59.99',
     );
-    final savings =
-        _getSavingsPercent(offerings: subscriptionState.offerings);
+    final savings = _getSavingsPercent(offerings: subscriptionState.offerings);
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -1431,13 +1541,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         children: [
           const SizedBox(height: 4),
           Text(
-            AppLocalizations.of(context).paywallPricingStartYour7Day,
+            AppLocalizations.of(
+              context,
+            ).paywallPricingStartYour7Day.toUpperCase(),
             style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              height: 1.2,
+              fontFamily: 'Anton',
+              fontSize: 30,
+              height: 1.05,
               color: colors.textPrimary,
-              letterSpacing: -0.4,
             ),
           ),
           const SizedBox(height: 12),
@@ -1449,19 +1560,21 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           // is the PostHog flag `paywall_goal_speed_comparison`. Degrades to a
           // cited "~2× more likely" line when body metrics are missing.
           if (_experiments.goalSpeedComparison) ...[
-            Builder(builder: (context) {
-              final quiz = ref.read(preAuthQuizProvider);
-              final proj = GoalSpeedCalculator.compute(
-                currentWeightKg: quiz.weightKg ?? 0,
-                goalWeightKg: quiz.goalWeightKg ?? 0,
-                weightChangeRate: quiz.weightChangeRate,
-              );
-              return GoalSpeedComparison(
-                projection: proj,
-                colors: colors,
-                accent: _paywallAccent,
-              );
-            }),
+            Builder(
+              builder: (context) {
+                final quiz = ref.read(preAuthQuizProvider);
+                final proj = GoalSpeedCalculator.compute(
+                  currentWeightKg: quiz.weightKg ?? 0,
+                  goalWeightKg: quiz.goalWeightKg ?? 0,
+                  weightChangeRate: quiz.weightChangeRate,
+                );
+                return GoalSpeedComparison(
+                  projection: proj,
+                  colors: colors,
+                  accent: _paywallAccent,
+                );
+              },
+            ),
             const SizedBox(height: 14),
           ],
 
@@ -1471,8 +1584,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             iconBg: _paywallAccent.withValues(alpha: 0.15),
             iconColor: _paywallAccent,
             title: AppLocalizations.of(context).todayScoreCardToday,
-            subtitle:
-                AppLocalizations.of(context).paywallPricingUnlockUnlimitedAiWorkouts,
+            subtitle: AppLocalizations.of(
+              context,
+            ).paywallPricingUnlockUnlimitedAiWorkouts,
             isFirst: true,
             isLast: false,
             colors: colors,
@@ -1560,13 +1674,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             child: Text(
               _selectedBillingCycle == 'yearly'
                   ? 'Your 7-day free trial is free — cancel before it ends and '
-                    'you won’t be charged. After the trial, the subscription '
-                    'auto-renews at the price above unless cancelled at least '
-                    '24 hours before the period ends. Cancel anytime in your '
-                    'device account settings.'
+                        'you won’t be charged. After the trial, the subscription '
+                        'auto-renews at the price above unless cancelled at least '
+                        '24 hours before the period ends. Cancel anytime in your '
+                        'device account settings.'
                   : 'Subscription auto-renews at the price above unless '
-                    'cancelled at least 24 hours before the end of the current '
-                    'period. Cancel anytime in your device account settings.',
+                        'cancelled at least 24 hours before the end of the current '
+                        'period. Cancel anytime in your device account settings.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
@@ -1581,18 +1695,21 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             children: [
               GestureDetector(
                 onTap: _openTermsOfService,
-                child: Text(AppLocalizations.of(context).paywallPricingTerms,
-                    style: TextStyle(
-                        fontSize: 12, color: colors.textMuted)),
+                child: Text(
+                  AppLocalizations.of(context).paywallPricingTerms,
+                  style: TextStyle(fontSize: 12, color: colors.textMuted),
+                ),
               ),
-              Text('  ·  ',
-                  style: TextStyle(
-                      fontSize: 12, color: colors.textMuted)),
+              Text(
+                '  ·  ',
+                style: TextStyle(fontSize: 12, color: colors.textMuted),
+              ),
               GestureDetector(
                 onTap: _openPrivacyPolicy,
-                child: Text(AppLocalizations.of(context).settingsPrivacySection,
-                    style: TextStyle(
-                        fontSize: 12, color: colors.textMuted)),
+                child: Text(
+                  AppLocalizations.of(context).settingsPrivacySection,
+                  style: TextStyle(fontSize: 12, color: colors.textMuted),
+                ),
               ),
             ],
           ),
@@ -1607,23 +1724,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     HapticFeedback.selectionClick();
     setState(() {
       _selectedBillingCycle = cycle;
-      _selectedPlan =
-          cycle == 'yearly' ? 'premium_yearly' : 'premium_monthly';
+      _selectedPlan = cycle == 'yearly' ? 'premium_yearly' : 'premium_monthly';
     });
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'paywall_plan_selected',
-      properties: {
-        'plan_name': _selectedPlan,
-        'billing_cycle': cycle,
-      },
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'paywall_plan_selected',
+          properties: {'plan_name': _selectedPlan, 'billing_cycle': cycle},
+        );
   }
 
   void _handleMaybeLater(BuildContext context, WidgetRef ref) async {
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'paywall_skip_tapped',
-      properties: {'has_shown_discount': _hasShownDiscount},
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'paywall_skip_tapped',
+          properties: {'has_shown_discount': _hasShownDiscount},
+        );
 
     // 25% retention discount popup (soft-paywall exit intent). Gated on
     // the `premium_yearly_25off` SKU existing in Play Console + RevenueCat
@@ -1634,44 +1751,58 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     final retentionDiscountEnabled = _experiments.softPaywallExitOffer;
     if (retentionDiscountEnabled && !_hasShownDiscount) {
       _hasShownDiscount = true;
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'paywall_discount_shown',
-        properties: {'discount_percent': 25},
-      );
+      ref
+          .read(posthogServiceProvider)
+          .capture(
+            eventName: 'paywall_discount_shown',
+            properties: {'discount_percent': 25},
+          );
       final accepted = await _showDiscountPopup(context);
       if (accepted == true) {
-        ref.read(posthogServiceProvider).capture(
-          eventName: 'paywall_discount_accepted',
-          properties: {'discount_percent': 25},
-        );
+        ref
+            .read(posthogServiceProvider)
+            .capture(
+              eventName: 'paywall_discount_accepted',
+              properties: {'discount_percent': 25},
+            );
         // User accepted the 25% discount — purchase discounted yearly.
         // GUARD: if the `premium_yearly_25off` SKU isn't in the current
         // RevenueCat offering (it must be created in Play Console first),
         // fall back to the standard yearly product instead of crashing
         // with "Product not found".
         final offerings = ref.read(subscriptionProvider).offerings;
-        final discountSkuAvailable = offerings?.current?.availablePackages
-                .any((p) =>
-                    p.storeProduct.identifier == 'premium_yearly_25off') ??
+        final discountSkuAvailable =
+            offerings?.current?.availablePackages.any(
+              (p) => p.storeProduct.identifier == 'premium_yearly_25off',
+            ) ??
             false;
         final discountSku = discountSkuAvailable
             ? 'premium_yearly_25off'
             : SubscriptionNotifier.premiumYearlyId;
         if (!discountSkuAvailable) {
           debugPrint(
-              '⚠️ [Paywall] premium_yearly_25off missing from offerings — '
-              'falling back to premium_yearly');
+            '⚠️ [Paywall] premium_yearly_25off missing from offerings — '
+            'falling back to premium_yearly',
+          );
         }
-        final success = await ref.read(subscriptionProvider.notifier).purchase(discountSku);
+        final success = await ref
+            .read(subscriptionProvider.notifier)
+            .purchase(discountSku);
         if (success && context.mounted) {
           // Trial started — keep the day-5 reminder promise.
-          unawaited(ref
-              .read(notificationServiceProvider)
-              .scheduleTrialEndReminder());
-          final isReturning = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
+          unawaited(
+            ref.read(notificationServiceProvider).scheduleTrialEndReminder(),
+          );
+          final isReturning =
+              ref.read(authStateProvider).user?.isPaywallComplete ?? false;
           if (isReturning) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(AppLocalizations.of(context).paywallPricingYouReAllSet), behavior: SnackBarBehavior.floating),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context).paywallPricingYouReAllSet,
+                ),
+                behavior: SnackBarBehavior.floating,
+              ),
             );
             context.go('/home');
           } else {
@@ -1689,10 +1820,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     // navigation still ran. That looked like "skip → store popup → minimize →
     // app advances anyway" and also pulled trial activations from users who
     // never opted in. Keep skip cleanly free.
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'paywall_skipped_no_purchase',
-      properties: {},
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(eventName: 'paywall_skipped_no_purchase', properties: {});
 
     // If this paywall view was triggered by the lapsed-user router branch
     // (see `_maybeRouteLapsedUser` in app_router.dart), fire a dedicated
@@ -1703,14 +1833,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     if (gateMs != null) {
       final ageMs = DateTime.now().millisecondsSinceEpoch - gateMs;
       if (ageMs < const Duration(hours: 1).inMilliseconds) {
-        ref.read(posthogServiceProvider).capture(
-          eventName: 'paywall_routed_lapsed_user_dismissed',
-          properties: {'age_ms_since_route': ageMs},
-        );
+        ref
+            .read(posthogServiceProvider)
+            .capture(
+              eventName: 'paywall_routed_lapsed_user_dismissed',
+              properties: {'age_ms_since_route': ageMs},
+            );
       }
     }
 
-    final isReturningUser = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
+    final isReturningUser =
+        ref.read(authStateProvider).user?.isPaywallComplete ?? false;
     if (!context.mounted) return;
     if (isReturningUser) {
       if (context.canPop()) {
@@ -1740,7 +1873,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       debugPrint('❌ [Paywall] Failed to persist paywall_completed pref: $e');
     }
     // Both onboarding + paywall complete — (re)schedule notifications.
-    ref.read(notificationPreferencesProvider.notifier).rescheduleNotifications();
+    ref
+        .read(notificationPreferencesProvider.notifier)
+        .rescheduleNotifications();
     // Server sync is deferred: the local flag + hard paywall already gate
     // everything, so the UI never waits on this network call.
     unawaited(() async {
@@ -1761,7 +1896,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   /// Navigate to subscription success screen after paywall completion
-  Future<void> _navigateAfterPaywall(BuildContext context, WidgetRef ref) async {
+  Future<void> _navigateAfterPaywall(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     if (!context.mounted) return;
     // EXPERIMENT (default OFF): when personal-info was moved to after the
     // paywall, collect name + DOB now (before the commitment pact). Otherwise
@@ -1788,42 +1926,60 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     );
   }
 
-  Future<void> _handleAction(BuildContext context, WidgetRef ref, bool isSubscribed, SubscriptionTier currentTier) async {
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'paywall_cta_tapped',
-      properties: {'selected_plan': _selectedPlan},
-    );
+  Future<void> _handleAction(
+    BuildContext context,
+    WidgetRef ref,
+    bool isSubscribed,
+    SubscriptionTier currentTier,
+  ) async {
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'paywall_cta_tapped',
+          properties: {'selected_plan': _selectedPlan},
+        );
     // If user is already subscribed, show plan change confirmation dialog
     if (isSubscribed && currentTier != SubscriptionTier.free) {
       final confirmed = await _showPlanChangeConfirmation(context, currentTier);
       if (confirmed != true) return;
     }
 
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'paywall_purchase_initiated',
-      properties: {'selected_plan': _selectedPlan},
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'paywall_purchase_initiated',
+          properties: {'selected_plan': _selectedPlan},
+        );
 
-    final success = await ref.read(subscriptionProvider.notifier).purchase(_selectedPlan);
+    final success = await ref
+        .read(subscriptionProvider.notifier)
+        .purchase(_selectedPlan);
     // After awaiting purchase the user may have closed the paywall. Reading
     // `ref` after the State is disposed throws "Cannot use ref after dispose".
     // Guard with mounted before subsequent ref.read calls.
     if (!mounted) return;
-    final isReturningUser = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
+    final isReturningUser =
+        ref.read(authStateProvider).user?.isPaywallComplete ?? false;
 
     if (success && context.mounted) {
       // v7: yearly purchases start a 7-day trial — schedule the promised
       // day-5 reminder (one-off local notification, exact-ID replaceable).
       if (_selectedPlan.contains('yearly')) {
-        unawaited(ref
-            .read(notificationServiceProvider)
-            .scheduleTrialEndReminder());
+        unawaited(
+          ref.read(notificationServiceProvider).scheduleTrialEndReminder(),
+        );
       }
       if (isSubscribed || isReturningUser) {
         // Existing user upgrading — snackbar + go home
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSubscribed ? AppLocalizations.of(context).paywallPricingPlanUpdatedSuccessfully : AppLocalizations.of(context).paywallPricingYouReAllSet),
+            content: Text(
+              isSubscribed
+                  ? AppLocalizations.of(
+                      context,
+                    ).paywallPricingPlanUpdatedSuccessfully
+                  : AppLocalizations.of(context).paywallPricingYouReAllSet,
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1897,7 +2053,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       case SubscriptionTier.premium:
       case SubscriptionTier.premiumPlus: // Legacy — treat as premium
         return state.subscriptionEndDate != null &&
-                state.subscriptionEndDate!.difference(DateTime.now()).inDays > 60
+                state.subscriptionEndDate!.difference(DateTime.now()).inDays >
+                    60
             ? 'premium_yearly'
             : 'premium_monthly';
       default:
@@ -1906,7 +2063,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   /// Show plan change confirmation dialog
-  Future<bool?> _showPlanChangeConfirmation(BuildContext context, SubscriptionTier currentTier) {
+  Future<bool?> _showPlanChangeConfirmation(
+    BuildContext context,
+    SubscriptionTier currentTier,
+  ) {
     // Use ref.colors(context) for dynamic accent color
     final colors = ref.colors(context);
     final subscriptionState = ref.read(subscriptionProvider);
@@ -1922,7 +2082,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     if (isSameTier) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).paywallPricingYouAreAlreadyOn),
+          content: Text(
+            AppLocalizations.of(context).paywallPricingYouAreAlreadyOn,
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1930,7 +2092,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     }
 
     // Calculate effective date (next billing cycle for downgrades, immediate for upgrades)
-    final effectiveDate = isDowngrade && subscriptionState.subscriptionEndDate != null
+    final effectiveDate =
+        isDowngrade && subscriptionState.subscriptionEndDate != null
         ? subscriptionState.subscriptionEndDate!
         : DateTime.now();
 
@@ -1951,11 +2114,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   Future<void> _restorePurchases(BuildContext context, WidgetRef ref) async {
-    final success = await ref.read(subscriptionProvider.notifier).restorePurchases();
+    final success = await ref
+        .read(subscriptionProvider.notifier)
+        .restorePurchases();
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success ? AppLocalizations.of(context).paywallPricingPurchasesRestored : AppLocalizations.of(context).paywallPricingNoPurchasesFound),
+          content: Text(
+            success
+                ? AppLocalizations.of(context).paywallPricingPurchasesRestored
+                : AppLocalizations.of(context).paywallPricingNoPurchasesFound,
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1964,8 +2133,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   Future<void> _openSubscriptionSettings() async {
     final url = Platform.isIOS
-      ? 'https://apps.apple.com/account/subscriptions'
-      : 'https://play.google.com/store/account/subscriptions';
+        ? 'https://apps.apple.com/account/subscriptions'
+        : 'https://play.google.com/store/account/subscriptions';
 
     try {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
@@ -1974,13 +2143,19 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   Future<void> _openTermsOfService() async {
     try {
-      await launchUrl(Uri.parse(AppLinks.termsOfService), mode: LaunchMode.externalApplication);
+      await launchUrl(
+        Uri.parse(AppLinks.termsOfService),
+        mode: LaunchMode.externalApplication,
+      );
     } catch (_) {}
   }
 
   Future<void> _openPrivacyPolicy() async {
     try {
-      await launchUrl(Uri.parse(AppLinks.privacyPolicy), mode: LaunchMode.externalApplication);
+      await launchUrl(
+        Uri.parse(AppLinks.privacyPolicy),
+        mode: LaunchMode.externalApplication,
+      );
     } catch (_) {}
   }
 
@@ -1990,7 +2165,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       children: [
         // Title
         Text(
-          isSubscribed ? AppLocalizations.of(context).paywallPricingChangePlan : AppLocalizations.of(context).paywallPricingYourAiCoach,
+          isSubscribed
+              ? AppLocalizations.of(context).paywallPricingChangePlan
+              : AppLocalizations.of(context).paywallPricingYourAiCoach,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
@@ -2022,9 +2199,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: colors.accent.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: colors.accent.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
@@ -2056,17 +2231,41 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        _LeftPaneFeature(icon: Icons.auto_fix_high, text: 'Unlimited AI workouts', colors: colors),
+        _LeftPaneFeature(
+          icon: Icons.auto_fix_high,
+          text: 'Unlimited AI workouts',
+          colors: colors,
+        ),
         const SizedBox(height: 6),
-        _LeftPaneFeature(icon: Icons.camera_alt_outlined, text: 'Food photo scanning', colors: colors),
+        _LeftPaneFeature(
+          icon: Icons.camera_alt_outlined,
+          text: 'Food photo scanning',
+          colors: colors,
+        ),
         const SizedBox(height: 6),
-        _LeftPaneFeature(icon: Icons.restaurant_menu, text: 'Full nutrition tracking', colors: colors),
+        _LeftPaneFeature(
+          icon: Icons.restaurant_menu,
+          text: 'Full nutrition tracking',
+          colors: colors,
+        ),
         const SizedBox(height: 6),
-        _LeftPaneFeature(icon: Icons.local_fire_department, text: 'Hell Mode & supersets', colors: colors),
+        _LeftPaneFeature(
+          icon: Icons.local_fire_department,
+          text: 'Hell Mode & supersets',
+          colors: colors,
+        ),
         const SizedBox(height: 6),
-        _LeftPaneFeature(icon: Icons.healing_outlined, text: 'Injury-aware workouts', colors: colors),
+        _LeftPaneFeature(
+          icon: Icons.healing_outlined,
+          text: 'Injury-aware workouts',
+          colors: colors,
+        ),
         const SizedBox(height: 6),
-        _LeftPaneFeature(icon: Icons.fitness_center, text: '52 skill progressions', colors: colors),
+        _LeftPaneFeature(
+          icon: Icons.fitness_center,
+          text: '52 skill progressions',
+          colors: colors,
+        ),
         const SizedBox(height: 14),
 
         // Trial reassurance
@@ -2100,7 +2299,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       ],
     );
   }
-
 }
 
 /// Three-row reassurance strip rendered under the CTA. Mirrors the
@@ -2116,14 +2314,15 @@ class _TrustStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = <(IconData, String)>[
       (Icons.lock_open_rounded, 'No commitment — cancel anytime'),
-      (Icons.notifications_active_outlined,
-          'Reminder before your trial ends'),
+      (Icons.notifications_active_outlined, 'Reminder before your trial ends'),
       (Icons.payments_outlined, 'No charge today'),
       // "Yours forever" wedge — Apple-safe phrasing per Option C (export, not
       // free post-trial access). Settings → Export Data ships the CSV / JSON
       // export for Hevy, Strong, Fitbod, and generic targets, paywall-free.
-      (Icons.file_download_outlined,
-          'Your data is yours — export anytime, even after canceling'),
+      (
+        Icons.file_download_outlined,
+        'Your data is yours — export anytime, even after canceling',
+      ),
     ];
     return Column(
       children: rows.map((r) {
@@ -2276,7 +2475,9 @@ class _WorkoutMockCard extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.22),
                         borderRadius: BorderRadius.circular(8),
@@ -2292,8 +2493,11 @@ class _WorkoutMockCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    const Icon(Icons.bolt_rounded,
-                        color: Colors.white, size: 16),
+                    const Icon(
+                      Icons.bolt_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -2307,7 +2511,9 @@ class _WorkoutMockCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  AppLocalizations.of(context).paywallPricingChestShouldersTriceps,
+                  AppLocalizations.of(
+                    context,
+                  ).paywallPricingChestShouldersTriceps,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -2346,8 +2552,7 @@ class _WorkoutMockCard extends StatelessWidget {
           (e) => Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
                 color: colors.surface,
                 borderRadius: BorderRadius.circular(10),
@@ -2392,11 +2597,14 @@ class _WorkoutMockCard extends StatelessWidget {
   }
 
   Widget _miniStat(
-      ThemeColors colors, String emoji, String value, String label) {
+    ThemeColors colors,
+    String emoji,
+    String value,
+    String label,
+  ) {
     return Expanded(
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(10),
@@ -2583,9 +2791,7 @@ class _PlanTile extends StatelessWidget {
                       height: 20,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isSelected
-                            ? _paywallAccent
-                            : Colors.transparent,
+                        color: isSelected ? _paywallAccent : Colors.transparent,
                         border: Border.all(
                           color: isSelected
                               ? _paywallAccent
@@ -2594,8 +2800,11 @@ class _PlanTile extends StatelessWidget {
                         ),
                       ),
                       child: isSelected
-                          ? const Icon(Icons.check_rounded,
-                              size: 14, color: Colors.white)
+                          ? const Icon(
+                              Icons.check_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            )
                           : null,
                     ),
                   ],

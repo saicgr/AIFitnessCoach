@@ -9,6 +9,10 @@ import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
+/// Signature v2 single orange accent.
+const Color _kSigAccent = Color(0xFFF97316);
+
 /// Paywall Screen 2: Trial Timeline
 /// Shows users what to expect during their free trial
 class PaywallTimelineScreen extends ConsumerWidget {
@@ -18,14 +22,16 @@ class PaywallTimelineScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Track paywall timeline screen view
     Future.microtask(() {
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'paywall_timeline_viewed',
-      );
+      ref
+          .read(posthogServiceProvider)
+          .capture(eventName: 'paywall_timeline_viewed');
     });
 
     final colors = ref.colors(context);
     final windowState = ref.watch(windowModeProvider);
-    final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
+    final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(
+      windowState,
+    );
     final now = DateTime.now();
     final chargeDate = now.add(const Duration(days: 7));
     final dateFormat = DateFormat('MMMM d');
@@ -39,9 +45,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             child: Align(
               alignment: AlignmentDirectional.centerStart,
-              child: GlassBackButton(
-                onTap: () => context.pop(),
-              ),
+              child: GlassBackButton(onTap: () => context.pop()),
             ),
           ),
           headerExtra: Column(
@@ -49,12 +53,14 @@ class PaywallTimelineScreen extends ConsumerWidget {
             children: [
               // Title
               Text(
-                AppLocalizations.of(context).paywallTimelineHowYourFreeTrial,
+                AppLocalizations.of(
+                  context,
+                ).paywallTimelineHowYourFreeTrial.toUpperCase(),
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Anton',
+                  fontSize: 26,
                   color: colors.textPrimary,
-                  height: 1.3,
+                  height: 1.1,
                 ),
               ),
               const SizedBox(height: 16),
@@ -101,7 +107,11 @@ class PaywallTimelineScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        AppLocalizations.of(context)!.paywallTimelineScreenFirstCharge(dateFormat.format(chargeDate)),
+                        AppLocalizations.of(
+                          context,
+                        )!.paywallTimelineScreenFirstCharge(
+                          dateFormat.format(chargeDate),
+                        ),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -127,11 +137,17 @@ class PaywallTimelineScreen extends ConsumerWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.check_circle_outline, size: 18, color: colors.success),
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 18,
+                      color: colors.success,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        AppLocalizations.of(context).paywallTimelineCancelAnytimeDuringOr,
+                        AppLocalizations.of(
+                          context,
+                        ).paywallTimelineCancelAnytimeDuringOr,
                         style: TextStyle(
                           fontSize: 12,
                           color: colors.textSecondary,
@@ -174,19 +190,27 @@ class PaywallTimelineScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    AppLocalizations.of(context).paywallTimelineHowYourFree,
+                    AppLocalizations.of(
+                      context,
+                    ).paywallTimelineHowYourFree.toUpperCase(),
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Anton',
+                      fontSize: 28,
+                      height: 1.05,
                       color: colors.textPrimary,
                     ),
                   ),
                   Text(
-                    AppLocalizations.of(context).paywallTimelineTrialWorks,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
+                    AppLocalizations.of(
+                      context,
+                    ).paywallTimelineTrialWorks.toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Anton',
+                      fontSize: 28,
+                      height: 1.05,
+                      color: _kSigAccent,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -197,18 +221,22 @@ class PaywallTimelineScreen extends ConsumerWidget {
                 // Timeline
                 _TimelineItem(
                   icon: Icons.card_giftcard,
-                  iconColor: colors.accent,
+                  iconColor: _kSigAccent,
                   title: AppLocalizations.of(context).todayScoreCardToday,
-                  subtitle: AppLocalizations.of(context).paywallTimelineUnlimitedWorkoutsFoodScann,
+                  subtitle: AppLocalizations.of(
+                    context,
+                  ).paywallTimelineUnlimitedWorkoutsFoodScann,
                   isFirst: true,
                   isLast: false,
                   colors: colors,
                 ),
                 _TimelineItem(
                   icon: Icons.notifications_outlined,
-                  iconColor: colors.accent,
+                  iconColor: _kSigAccent,
                   title: AppLocalizations.of(context).paywallTimelineIn5Days,
-                  subtitle: AppLocalizations.of(context).paywallTimelineWeLlRemindYou,
+                  subtitle: AppLocalizations.of(
+                    context,
+                  ).paywallTimelineWeLlRemindYou,
                   isFirst: false,
                   isLast: false,
                   colors: colors,
@@ -217,7 +245,10 @@ class PaywallTimelineScreen extends ConsumerWidget {
                   icon: Icons.credit_card_outlined,
                   iconColor: colors.textSecondary,
                   title: AppLocalizations.of(context).paywallTimelineIn7Days,
-                  subtitle: AppLocalizations.of(context)!.paywallTimelineScreenYouLlBeCharged(dateFormat.format(chargeDate)),
+                  subtitle: AppLocalizations.of(context)!
+                      .paywallTimelineScreenYouLlBeCharged(
+                        dateFormat.format(chargeDate),
+                      ),
                   isFirst: false,
                   isLast: true,
                   colors: colors,
@@ -235,18 +266,23 @@ class PaywallTimelineScreen extends ConsumerWidget {
               child: ElevatedButton(
                 onPressed: () => context.push('/paywall-pricing'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.accent,
-                  foregroundColor: colors.accentContrast,
+                  backgroundColor: _kSigAccent,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 0,
                 ),
                 child: Text(
-                  AppLocalizations.of(context).onboardingContinueButton,
-                  style: TextStyle(
+                  AppLocalizations.of(
+                    context,
+                  ).onboardingContinueButton.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: 'Barlow Condensed',
                     fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 2,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -303,11 +339,7 @@ class _TimelineItem extends StatelessWidget {
                     color: iconColor.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    icon,
-                    color: iconColor,
-                    size: 22,
-                  ),
+                  child: Icon(icon, color: iconColor, size: 22),
                 ),
                 // Bottom line
                 if (!isLast)
@@ -370,7 +402,7 @@ class _TrustItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: colors.accent),
+        Icon(icon, size: 18, color: _kSigAccent),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
