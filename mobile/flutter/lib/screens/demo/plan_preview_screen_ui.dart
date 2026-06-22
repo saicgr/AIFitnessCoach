@@ -472,7 +472,9 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
             child: ElevatedButton(
               onPressed: () {
                 HapticFeedback.mediumImpact();
-                context.go('/onboarding-value');
+                // → signature-v2 paywall (marquee + honest price anchor),
+                // replacing the orphaned /onboarding-value "$X stack".
+                context.go('/paywall-features');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.onboardingAccent,

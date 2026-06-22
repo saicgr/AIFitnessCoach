@@ -91,7 +91,10 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       OnboardingExperiments.flagPlanPreview,
     );
     if (!enabled && mounted) {
-      context.go('/onboarding-value');
+      // Onboarding paywall: the signature-v2 features screen (marquee + honest
+      // price anchor + Future ceiling). Replaces the legacy /onboarding-value
+      // "$X stack" anchor, which is now orphaned.
+      context.go('/paywall-features');
     }
   }
 
