@@ -365,7 +365,7 @@ const List<_Feat> _marqueeRowTop = [
   (Icons.local_drink_outlined, 'Fasting + water'),
   (Icons.emoji_events_outlined, '52+ skill progressions'),
   (Icons.calculate_outlined, 'Adaptive TDEE engine'),
-  (Icons.movie_outlined, '1,722 exercises w/ video'),
+  (Icons.movie_outlined, '1,722 exercises · HD video demos'),
   (Icons.local_offer_outlined, 'Streak freezes'),
   (Icons.event_note_outlined, 'Weekly recap'),
   (Icons.qr_code_scanner, 'Barcode scan'),
