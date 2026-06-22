@@ -3,16 +3,26 @@
 # Zealova — Pricing Reference
 
 > **Source of truth:** `docs/pricing/PRICING_ANALYSIS_2026.md` — this file is a quick-reference summary.
-> **Last Updated:** 2026-05-14
+> **Last Updated:** 2026-06-22
 
 ---
 
 ## Current Live Pricing (as of 2026-05-14)
 
-| Plan | Price | Billing | Trial | Status |
-|------|-------|---------|-------|--------|
-| **Premium Monthly** | $7.99/mo | Monthly | ✅ 7 days | ✅ **Live** |
-| **Premium Yearly** | $59.99/yr (~$5.00/mo, 37% off monthly) | Yearly | ✅ 7 days | ✅ **Live** |
+| Plan | Price | Billing | Intro / Trial | Status |
+|------|-------|---------|---------------|--------|
+| **Premium Monthly** | $7.99/mo | Monthly | None live today (see $1-intro below) | ✅ **Live** |
+| **Premium Yearly** | $59.99/yr (~$5.00/mo, 37% off monthly) | Yearly | ✅ 7-day free trial | ✅ **Live** |
+
+> **Trial reality (verified in code 2026-06-22):** the 7-day **free trial is on the YEARLY plan only**. The live paywall (`paywall_pricing_screen.dart:1656`) renders `7 DAYS FREE` on the yearly tile; the monthly tile has no trial. The earlier note that the trial was "extended to both SKUs" (Apr 30) is **not reflected in the shipping UI** — treat monthly as no-trial until the store config is confirmed.
+
+### $1 first-month intro (monthly) — VISIBLE in paywall, NOT yet sellable
+
+- **What:** the monthly tile shows a **"FIRST MONTH $1"** ribbon; headline price stays the real $7.99/mo (compliance — Cal AI was pulled for inverting this).
+- **Status (2026-06-22):** ribbon turned **ON by default for pre-launch visual preview** (`paywall_experiments.dart` → `monthlyIntro: true`). This is **cosmetic only** — checkout still routes to the standard $7.99/mo package.
+- **⚠️ Before selling:** create the `onboarding_intro_monthly` offering in App Store Connect + Play Console + RevenueCat **and** wire the purchase to it. Until then the paywall advertises $1 but charges $7.99 (false-advertising / Apple 3.1.2 + Play non-compliant).
+- **Toggle:** PostHog flag `paywall_monthly_intro` (falls back to the `true` default when unset). Flip the default back to `false` once you A/B the live offer.
+- **Rationale:** $1 is the monthly plan's first incentive (it does not replace a monthly trial — there isn't one). Low paid intro lifts conversion ~38% and self-selects intent; gentle $1→$7.99/mo step feeds the day-30 annual upsell. Keep it $1 first **month**, not week — a week charges full price before the fitness habit forms.
 
 **Not currently sold:** Premium Plus (Ultra), Lifetime, Family, Duo, Free-with-limits — all deferred. See PRICING_ANALYSIS_2026.md for detailed rationale.
 
@@ -217,5 +227,6 @@ Comparison page `/vs/google-health` is live and current with this positioning.
 - **Apr 30, 2026:** Price increase shipped in code — $7.99/mo and $59.99/yr (US). 7-day trial extended to BOTH SKUs (was yearly only). Retention popup at $47.99/yr added for cancel attempts.
 - **2026-05-14:** This refresh — confirmed live store rollout of the $7.99/$59.99 pricing. Regional PPP values flagged as stale and need proportional re-set in App Store Connect / Play Console.
 - **2026-05-18:** Google Health Coach launched at $9.99/$99 (Apple's coach shelved). Decision: hold $7.99/$59.99, differentiate rather than discount. See "Competitive Response" section above. Fasting added to the app as a feature.
+- **2026-06-22:** Verified in code that the 7-day free trial is **yearly-only** (corrected the stale "both SKUs" claim). Turned the **"FIRST MONTH $1"** ribbon ON by default for pre-launch visual preview (`monthlyIntro: true`) — cosmetic only, checkout still charges $7.99 until the `onboarding_intro_monthly` SKU is built + wired. Decision discussion: $1-first-**month** (not week) as the monthly plan's first incentive; intro is a conversion lever, not a discovery lever — needs a marketing channel (ASO/GEO/Reddit) to matter pre-installs.
 
 *Source of truth for all rationale: `docs/pricing/PRICING_ANALYSIS_2026.md`*
