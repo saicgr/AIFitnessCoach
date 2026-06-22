@@ -267,6 +267,9 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                   ExerciseImage(
                     exerciseName: exercise['name'] as String,
                     exerciseId: exercise['id'] as String?,
+                    // Baked illustration → instant; falls back to network then
+                    // Zealova brand mark.
+                    assetPath: previewAssetForId(exercise['id'] as String?),
                     width: 44,
                     height: 44,
                     borderRadius: 10,

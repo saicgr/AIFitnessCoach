@@ -253,6 +253,7 @@ flutter:
 
   assets:
     - assets/icon/
+    - assets/preview_exercises/
     - assets/images/
     - assets/images/workout_types/
     - assets/images/intro/

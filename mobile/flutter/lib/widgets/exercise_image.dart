@@ -77,6 +77,11 @@ class ExerciseImage extends ConsumerStatefulWidget {
   /// clean brand placeholder.
   final bool brandFallback;
 
+  /// Optional bundled-asset path (e.g. a baked preview illustration). When set
+  /// it is shown FIRST — instant, offline, no network — and falls back to the
+  /// normal URL-resolution flow if the asset is missing.
+  final String? assetPath;
+
   const ExerciseImage({
     super.key,
     required this.exerciseName,
@@ -90,6 +95,7 @@ class ExerciseImage extends ConsumerStatefulWidget {
     this.equipmentHint,
     this.exerciseId,
     this.brandFallback = false,
+    this.assetPath,
   });
 
   @override
@@ -227,7 +233,16 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
         borderRadius: BorderRadius.circular(widget.borderRadius),
       ),
       clipBehavior: Clip.hardEdge,
-      child: _buildContent(fallbackIconColor),
+      child: widget.assetPath != null
+          ? Image.asset(
+              widget.assetPath!,
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit,
+              // Baked asset missing → fall back to URL resolution / brand mark.
+              errorBuilder: (_, __, ___) => _buildContent(fallbackIconColor),
+            )
+          : _buildContent(fallbackIconColor),
     );
   }
 
