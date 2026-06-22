@@ -110,7 +110,13 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
   @override
   void initState() {
     super.initState();
-    _loadImageUrl();
+    // A baked asset is the source of truth — don't fire the (slow) network
+    // resolve at all; the asset's errorBuilder falls back to the brand mark.
+    if (widget.assetPath != null) {
+      _isLoading = false;
+    } else {
+      _loadImageUrl();
+    }
   }
 
   @override
