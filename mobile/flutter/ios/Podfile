@@ -60,6 +60,38 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # permission_handler (iOS) compiles each permission behind an `#if
+    # PERMISSION_X` guard. An UNDEFINED macro evaluates to 0, so without this
+    # block every permission handler is compiled OUT and `.request()` returns
+    # `denied` INSTANTLY with no OS prompt. That's exactly what was happening on
+    # the permissions-primer screen: camera/photos/microphone never prompted
+    # (notifications still worked because they go through Firebase/APNs, not
+    # permission_handler). Enable the permissions the app actually uses (Info.plist
+    # carries the matching usage strings) and explicitly disable the rest so their
+    # code is stripped for App Store review hygiene.
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_CAMERA=1',
+        'PERMISSION_PHOTOS=1',
+        'PERMISSION_MICROPHONE=1',
+        'PERMISSION_SPEECH_RECOGNIZER=1',
+        'PERMISSION_NOTIFICATIONS=1',
+        'PERMISSION_LOCATION=1',
+        'PERMISSION_APP_TRACKING_TRANSPARENCY=1',
+        # Disabled (unused) — keep their code out of the binary.
+        'PERMISSION_EVENTS=0',
+        'PERMISSION_EVENTS_FULL_ACCESS=0',
+        'PERMISSION_REMINDERS=0',
+        'PERMISSION_CONTACTS=0',
+        'PERMISSION_SENSORS=0',
+        'PERMISSION_BLUETOOTH=0',
+        'PERMISSION_MEDIA_LIBRARY=0',
+        'PERMISSION_ASSISTANT=0',
+        'PERMISSION_CRITICAL_ALERTS=0',
+      ]
+    end
   end
 
   # Strip flutter_gemma from GeneratedPluginRegistrant.m since the pod isn't installed
