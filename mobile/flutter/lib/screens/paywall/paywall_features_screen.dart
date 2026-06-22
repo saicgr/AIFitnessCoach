@@ -137,28 +137,45 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
                 // left+right edge fade for the "infinite rail" feel. Occupies the
                 // flexible middle region; only the chips animate horizontally —
                 // the page itself never scrolls.
+                // The two marquee rows have a fixed min height (38 + 12 + 38 =
+                // 88px). On short viewports the phone title block + price
+                // comparison squeeze this Expanded below 88px, which used to
+                // overflow (RenderFlex +19px). Scale the block DOWN to the
+                // available height instead — a no-op at normal heights (scale
+                // 1.0, pixel-identical to before), graceful uniform shrink when
+                // tight. The SizedBox pins the marquees' width (otherwise
+                // unbounded inside FittedBox's intrinsic-size measure) to the
+                // available content width.
                 Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _Marquee(
-                          chips: _marqueeRowTop,
-                          // ~13 px/s — slow, calm, premium glide.
-                          pixelsPerSecond: 13,
-                          reverse: false,
-                          colors: colors,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: SizedBox(
+                          width: constraints.maxWidth,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _Marquee(
+                                chips: _marqueeRowTop,
+                                // ~13 px/s — slow, calm, premium glide.
+                                pixelsPerSecond: 13,
+                                reverse: false,
+                                colors: colors,
+                              ),
+                              const SizedBox(height: 12),
+                              _Marquee(
+                                chips: _marqueeRowBottom,
+                                // Slightly different speed so the two rows never
+                                // sync into a visible "block" moving together.
+                                pixelsPerSecond: 16,
+                                reverse: true,
+                                colors: colors,
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        _Marquee(
-                          chips: _marqueeRowBottom,
-                          // Slightly different speed so the two rows never sync
-                          // into a visible "block" moving together.
-                          pixelsPerSecond: 16,
-                          reverse: true,
-                          colors: colors,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
