@@ -34,6 +34,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
   static const _rivals = <_Rival>[
     _Rival('MyFitnessPal', 'nutrition', 19.99, 79.99),
     _Rival('Fitbod', 'workouts', 15.99, 95.99),
+    _Rival('Gravl', 'AI workouts', 14.99, 69.99),
     _Rival('Noom', 'coaching', 17.42, 209.00),
     _Rival('MacroFactor', 'macros', 11.99, 71.99),
     _Rival('Cronometer', 'micros', 10.99, 59.88),
@@ -100,7 +101,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
                         color: colors.textSecondary,
                       ),
                       children: const [
-                        TextSpan(text: 'A 1-on-1 coach like '),
+                        TextSpan(text: 'Online 1-on-1 coaching like '),
                         TextSpan(
                           text: 'Future',
                           style: TextStyle(fontWeight: FontWeight.w800),
@@ -108,6 +109,14 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
                         TextSpan(text: ' runs '),
                         TextSpan(
                           text: '\$149–199/mo',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: _accent,
+                          ),
+                        ),
+                        TextSpan(text: '; an in-person trainer is '),
+                        TextSpan(
+                          text: '\$60–100+/session',
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             color: _accent,

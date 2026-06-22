@@ -40,6 +40,9 @@ void main() {
     // Premium comparable apps (each does one job).
     expect(find.text('MyFitnessPal'), findsOneWidget);
     expect(find.text('Fitbod'), findsOneWidget);
+    expect(find.text('Gravl'), findsOneWidget);
+    // Future anchor distinguishes online coaching from in-person training.
+    expect(find.textContaining('in-person'), findsOneWidget);
     expect(find.text('Noom'), findsOneWidget);
     expect(find.text('MacroFactor'), findsOneWidget);
     expect(find.text('Cronometer'), findsOneWidget);

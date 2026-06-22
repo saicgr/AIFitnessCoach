@@ -408,14 +408,11 @@ class _FeatureChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(13),
-        // Top hairline accent over a hairline outline — the signature-v2
-        // "card with a top hairline" applied to a pill.
-        border: Border(
-          top: BorderSide(color: _kSigAccent.withValues(alpha: 0.35)),
-          left: BorderSide(color: colors.cardBorder),
-          right: BorderSide(color: colors.cardBorder),
-          bottom: BorderSide(color: colors.cardBorder),
-        ),
+        // Uniform outline — a NON-uniform Border (accent top + gray sides) plus
+        // borderRadius throws "borderRadius can only be given on borders with
+        // uniform colors" at paint time. Tint the whole hairline with the
+        // accent for the signature-v2 look without the crash.
+        border: Border.all(color: _kSigAccent.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
