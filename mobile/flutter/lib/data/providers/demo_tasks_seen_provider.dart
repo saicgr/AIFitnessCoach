@@ -17,7 +17,17 @@ class DemoTasksSeenNotifier extends StateNotifier<bool> {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    state = prefs.getBool(_prefsKey) ?? false;
+    // MONOTONIC: only ever flip seen → true. The constructor's _load() races
+    // with demo_tasks_screen's post-frame markSeen() (which sets state=true and
+    // writes prefs). If _load() resolves AFTER that markSeen() but reads the
+    // pre-write `false`, an unconditional assign would clobber it back to false.
+    // That intermittently left demoTasksSeen=false at signup, so the router
+    // redirect computed /demo-tasks while the auth screen force-navigated to
+    // /personal-info — two competing destinations → a duplicated/flickered
+    // personal-info render. Never downgrade true→false here.
+    if (prefs.getBool(_prefsKey) ?? false) {
+      state = true;
+    }
   }
 
   Future<void> markSeen() async {
