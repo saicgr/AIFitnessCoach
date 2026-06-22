@@ -27,37 +27,44 @@ void main() {
     ),
   );
 
-  testWidgets('price anchor lists competitor prices and Zealova', (
+  testWidgets('collapsed shows AI-coach rivals + Zealova; expand reveals all', (
     tester,
   ) async {
     await tester.pumpWidget(buildPrice());
     await tester.pumpAndSettle();
 
     expect(find.text('WHAT APPS LIKE THESE CHARGE'), findsOneWidget);
-    // Premium "ceiling" anchor — a human coach (positions Zealova as value).
+    // Premium "ceiling" anchor — a human coach (positions Zealova as value),
+    // distinguishing online coaching from in-person training.
     expect(find.textContaining('Future'), findsOneWidget);
     expect(find.textContaining(r'$149'), findsOneWidget);
-    // Premium comparable apps (each does one job).
-    expect(find.text('MyFitnessPal'), findsOneWidget);
-    expect(find.text('Fitbod'), findsOneWidget);
-    expect(find.text('Gravl'), findsOneWidget);
-    // Future anchor distinguishes online coaching from in-person training.
     expect(find.textContaining('in-person'), findsOneWidget);
-    expect(find.text('Noom'), findsOneWidget);
-    expect(find.text('MacroFactor'), findsOneWidget);
-    expect(find.text('Cronometer'), findsOneWidget);
-    // AI-coach rivals lead the lineup.
+
+    // Collapsed by default: the three AI-coach rivals + Zealova show…
+    expect(find.text('Gravl'), findsOneWidget);
     expect(find.text('Google Health'), findsOneWidget);
     expect(find.text('Bevel'), findsOneWidget);
-    // Default = MONTHLY prices (struck-through).
-    expect(find.text(r'$19.99'), findsOneWidget);
-    expect(find.text(r'$15.99'), findsOneWidget);
-    expect(find.text(r'$11.99'), findsOneWidget);
-    // Zealova anchored low, doing it all.
     expect(find.text('Zealova'), findsOneWidget);
     expect(find.text(r'$7.99'), findsOneWidget);
     expect(find.text('all of it'), findsOneWidget);
-    // The Monthly/Yearly toggle is present.
+    // …but the rest stay hidden until expanded (keeps the screen non-scroll).
+    expect(find.text('MyFitnessPal'), findsNothing);
+    expect(find.text('Cronometer'), findsNothing);
+
+    // Expand to compare every single-job app, incl. fasting + hydration.
+    expect(find.text('See all 10 apps'), findsOneWidget);
+    await tester.tap(find.text('See all 10 apps'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('MyFitnessPal'), findsOneWidget);
+    expect(find.text('Fitbod'), findsOneWidget);
+    expect(find.text('Noom'), findsOneWidget);
+    expect(find.text('MacroFactor'), findsOneWidget);
+    expect(find.text('Cronometer'), findsOneWidget);
+    expect(find.text('Zero'), findsOneWidget); // fasting
+    expect(find.text('WaterMinder'), findsOneWidget); // hydration
+    expect(find.text('Show fewer'), findsOneWidget);
+
     expect(find.text('MO'), findsOneWidget);
     expect(find.text('YR'), findsOneWidget);
   });
@@ -66,15 +73,14 @@ void main() {
     await tester.pumpWidget(buildPrice());
     await tester.pumpAndSettle();
 
-    expect(find.text(r'$19.99'), findsOneWidget); // monthly MFP
+    // Gravl is visible while collapsed (monthly).
+    expect(find.text(r'$14.99'), findsWidgets); // Gravl & Bevel share 14.99/mo
     await tester.tap(find.text('YR'));
     await tester.pumpAndSettle();
 
-    // Annual prices now shown.
-    expect(find.text(r'$79.99'), findsOneWidget); // MFP yearly
-    expect(find.text(r'$209'), findsOneWidget); // Noom yearly
+    // Annual prices now shown for the visible rivals.
+    expect(find.text(r'$69.99'), findsOneWidget); // Gravl yearly
     expect(find.text(r'$59.99'), findsOneWidget); // Zealova yearly
-    expect(find.text(r'$19.99'), findsNothing); // monthly gone
   });
 
   testWidgets('benefit strip renders the four non-attributed benefits', (

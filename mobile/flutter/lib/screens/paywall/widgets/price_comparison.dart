@@ -41,7 +41,14 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
     _Rival('Noom', 'coaching', 17.42, 209.00),
     _Rival('MacroFactor', 'macros', 11.99, 71.99),
     _Rival('Cronometer', 'micros', 10.99, 59.88),
+    _Rival('Zero', 'fasting', 9.99, 69.99),
+    _Rival('WaterMinder', 'hydration', 4.99, 4.99),
   ];
+
+  /// Collapsed by default — only the top AI-coach rivals show, keeping the
+  /// screen non-scrolling. Users can expand to compare every single-job app.
+  static const int _collapsedCount = 3;
+  bool _expanded = false;
   static const double _zMonthly = 7.99;
   static const double _zYearly = 59.99;
 
@@ -156,18 +163,34 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
             style: TextStyle(fontSize: 10.5, color: colors.textMuted),
           ),
           const SizedBox(height: 8),
-          // Compact rows so the full single-job lineup (incl. fasting +
-          // hydration) fits without scrolling.
-          for (final r in _rivals) ...[
-            _bar(
-              name: r.name,
-              note: r.note,
-              price: _fmt(_price(r)),
-              frac: _price(r) / max,
-              isZealova: false,
+          // Collapsed by default (top AI-coach rivals) → non-scrolling. The
+          // marquee above sits in an Expanded that shrinks to absorb growth, so
+          // expanding the full lineup doesn't overflow the page.
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final r
+                    in (_expanded
+                        ? _rivals
+                        : _rivals.take(_collapsedCount))) ...[
+                  _bar(
+                    name: r.name,
+                    note: r.note,
+                    price: _fmt(_price(r)),
+                    frac: _price(r) / max,
+                    isZealova: false,
+                  ),
+                  const SizedBox(height: 4),
+                ],
+              ],
             ),
-            const SizedBox(height: 4),
-          ],
+          ),
+          _expandToggle(),
+          const SizedBox(height: 6),
           _bar(
             name: 'Zealova',
             note: 'all of it',
@@ -186,6 +209,42 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// "See all N apps ⌄" / "Show fewer ⌃" — reveals the full single-job lineup.
+  Widget _expandToggle() {
+    final hidden = _rivals.length - _collapsedCount;
+    if (hidden <= 0) return const SizedBox.shrink();
+    return GestureDetector(
+      onTap: () => setState(() => _expanded = !_expanded),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _expanded ? 'Show fewer' : 'See all ${_rivals.length} apps',
+              style: const TextStyle(
+                fontFamily: 'Barlow Condensed',
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5,
+                letterSpacing: 1,
+                color: _accent,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              _expanded
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: _accent,
+            ),
+          ],
+        ),
       ),
     );
   }
