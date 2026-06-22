@@ -6,12 +6,35 @@ import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
+import '../onboarding/pre_auth_quiz_screen.dart';
 import 'widgets/price_comparison.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 
 /// Signature v2 single orange accent — used for the headline + CTA styling.
 const Color _kSigAccent = Color(0xFFF97316);
+
+/// Goal-mirrored headline line 2 — reflecting the user's own quiz goal back at
+/// them converts far better than a generic capability line (2026 paywall
+/// research: surface the goal from step 1 directly in the paywall headline).
+String _goalHeadline(String? goal) {
+  switch (goal) {
+    case 'lose_weight':
+      return 'TO LOSE THE WEIGHT';
+    case 'increase_strength':
+      return 'TO GET STRONGER';
+    case 'improve_endurance':
+      return 'TO GO THE DISTANCE';
+    case 'stay_active':
+      return 'TO STAY CONSISTENT';
+    case 'athletic_performance':
+      return 'TO PERFORM AT YOUR PEAK';
+    case 'build_muscle':
+      return 'TO BUILD MUSCLE';
+    default:
+      return 'TO REACH YOUR GOAL';
+  }
+}
 
 /// Paywall Screen 1: Feature Highlights
 /// Shows the key features users get with premium
@@ -85,7 +108,7 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'UNLOCK EVERYTHING',
+                    'EVERYTHING YOU NEED',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Anton',
@@ -94,10 +117,10 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
                       color: colors.textPrimary,
                     ),
                   ),
-                  const Text(
-                    'YOUR COACH CAN DO',
+                  Text(
+                    _goalHeadline(ref.watch(preAuthQuizProvider).goal),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'Anton',
                       fontSize: 24,
                       height: 1.05,
@@ -249,9 +272,9 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Title
+        // Title — goal-mirrored (reflects the user's quiz goal).
         Text(
-          'UNLOCK EVERYTHING',
+          'EVERYTHING YOU NEED',
           style: TextStyle(
             fontFamily: 'Anton',
             fontSize: 28,
@@ -259,9 +282,9 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
             color: colors.textPrimary,
           ),
         ),
-        const Text(
-          'YOUR COACH CAN DO',
-          style: TextStyle(
+        Text(
+          _goalHeadline(ref.watch(preAuthQuizProvider).goal),
+          style: const TextStyle(
             fontFamily: 'Anton',
             fontSize: 28,
             height: 1.05,

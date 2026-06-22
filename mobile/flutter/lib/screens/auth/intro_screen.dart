@@ -17,8 +17,11 @@ import 'package:fitwiz/core/constants/branding.dart';
 ///
 /// The screen IS the product: a 10-second auto-playing loop of four real
 /// app surfaces (program builder → live logging → food scan → menu
-/// analysis with live re-sort), with the pitch rising out of a scrim:
-/// "YOUR COACH IS ALREADY {TYPING/SPOTTING/COUNTING/CHOOSING}."
+/// analysis with live re-sort), with the pitch rising out of a scrim — a
+/// you-centric, demo-narrating line: "ALREADY {BUILDING YOUR PLAN / TRACKING
+/// YOUR LIFTS / COUNTING YOUR MACROS / READING YOUR MENU}." (Reframed from the
+/// old coach-centric "your coach is already typing" — leads with the user's
+/// outcome, which the demo literally shows.)
 ///
 /// Navigation is byte-identical to v5/v6:
 ///   - Primary CTA → /onboarding-why (the emotional-anchor funnel entry)
@@ -81,10 +84,12 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
     );
     _maybeFallBack();
     _resolveOptionalScenes();
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'onboarding_intro_viewed',
-      properties: {'variant': 'v7_demo'},
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'onboarding_intro_viewed',
+          properties: {'variant': 'v7_demo'},
+        );
     PackageInfo.fromPlatform().then((info) {
       if (mounted) setState(() => _appVersion = info.version);
     });
@@ -172,7 +177,8 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
         final activeKind = _scenes[scene.clamp(0, _scenes.length - 1)];
         // Program-builder & food-scan have light backgrounds at the top of
         // the screen; every other scene (incl. the two new ones) is dark.
-        final lightScene = activeKind == _DemoScene.programBuilder ||
+        final lightScene =
+            activeKind == _DemoScene.programBuilder ||
             activeKind == _DemoScene.foodScan;
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -240,58 +246,41 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                               color: Color(0xFFFAFAFA),
                             ),
                           ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                '${l10n.introV7HeadlineAlready} ',
-                                style: const TextStyle(
-                                  fontFamily: 'Anton',
-                                  fontSize: 42,
-                                  height: 1.02,
-                                  color: Color(0xFFFAFAFA),
-                                ),
+                          // The rotating, you-centric line — describes what the
+                          // demo is doing FOR the user right now (program build /
+                          // logging / scan / menu), full-width so 2-3 word
+                          // phrases wrap cleanly under "ALREADY".
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 320),
+                            layoutBuilder: (current, previous) => Stack(
+                              alignment: AlignmentDirectional.topStart,
+                              children: [
+                                ...previous,
+                                if (current != null) current,
+                              ],
+                            ),
+                            transitionBuilder: (child, anim) => FadeTransition(
+                              opacity: anim,
+                              child: SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(0, 0.5),
+                                  end: Offset.zero,
+                                ).animate(anim),
+                                child: child,
                               ),
-                              Expanded(
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 320),
-                                  // Start-aligned: the default layoutBuilder
-                                  // centers the word, leaving a gap after
-                                  // "ALREADY".
-                                  layoutBuilder: (current, previous) => Stack(
-                                    alignment: AlignmentDirectional.centerStart,
-                                    children: [
-                                      ...previous,
-                                      if (current != null) current,
-                                    ],
-                                  ),
-                                  transitionBuilder: (child, anim) =>
-                                      FadeTransition(
-                                    opacity: anim,
-                                    child: SlideTransition(
-                                      position: Tween<Offset>(
-                                        begin: const Offset(0, 0.5),
-                                        end: Offset.zero,
-                                      ).animate(anim),
-                                      child: child,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    _wordFor(scene, l10n),
-                                    key: ValueKey(scene),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontFamily: 'Anton',
-                                      fontSize: 42,
-                                      height: 1.02,
-                                      color: AppColors.orange,
-                                    ),
-                                  ),
-                                ),
+                            ),
+                            child: Text(
+                              _wordFor(scene, l10n),
+                              key: ValueKey(scene),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: 'Anton',
+                                fontSize: 32,
+                                height: 1.0,
+                                color: AppColors.orange,
                               ),
-                            ],
+                            ),
                           ),
                           const SizedBox(height: 16),
                           GestureDetector(
@@ -304,8 +293,9 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                                 borderRadius: BorderRadius.circular(6),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.orange
-                                        .withValues(alpha: 0.35),
+                                    color: AppColors.orange.withValues(
+                                      alpha: 0.35,
+                                    ),
                                     blurRadius: 26,
                                     offset: const Offset(0, 10),
                                   ),
@@ -330,11 +320,11 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                               onTap: _onSignIn,
                               behavior: HitTestBehavior.opaque,
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 5,
+                                ),
                                 child: Text(
-                                  l10n.introIAlreadyHaveAnAccount
-                                      .toUpperCase(),
+                                  l10n.introIAlreadyHaveAnAccount.toUpperCase(),
                                   style: const TextStyle(
                                     fontFamily: 'Barlow Condensed',
                                     fontSize: 13.5,
@@ -369,8 +359,8 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
       _DemoScene.liveLogging => l10n.introV7WordSpotting,
       _DemoScene.foodScan => l10n.introV7WordCounting,
       _DemoScene.menuAnalysis => l10n.introV7WordChoosing,
-      _DemoScene.integrations => 'ADAPTING',
-      _DemoScene.shareables => 'FLEXING',
+      _DemoScene.integrations => 'SYNCING YOUR DATA',
+      _DemoScene.shareables => 'SHARING YOUR WINS',
     };
   }
 
@@ -445,10 +435,12 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
   Widget _buildLegacy(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -563,10 +555,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                       ),
                     );
                   },
-                ).animate().scale(
-                      duration: 700.ms,
-                      curve: Curves.elasticOut,
-                    ),
+                ).animate().scale(duration: 700.ms, curve: Curves.elasticOut),
                 const SizedBox(height: 36),
                 Text(
                   l10n.introYourBody,
@@ -601,8 +590,10 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                 ).animate().fadeIn(delay: 600.ms),
                 const Spacer(flex: 3),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? AppColors.glassSurface.withValues(alpha: 0.5)
@@ -724,8 +715,9 @@ class _StatPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
