@@ -12,8 +12,12 @@ Design system (see `feedback_email_design_system`):
   one pill CTA. Everything else white/grey on near-black. ZERO emoji — Lucide
   monoline icons only.
 
-Day rings + tile icons are inline SVG (renders in Apple Mail/iOS/modern Gmail;
-falls back gracefully in Outlook — accepted per the user's call).
+Tile/feature/hero/social icons are HOSTED PNGs served from S3 (`_icon` + `_footer`
+emit `<img>`). Gmail — web and app, the majority of recipients — STRIPS inline
+`<svg>`, so the previous inline-SVG icons rendered as empty boxes there; PNGs render
+everywhere. Regenerate the asset set with `scripts/generate_email_icons.py` after
+adding any key to `ICON_PATHS` / `_SOCIAL`. (Day rings remain inline SVG — they are
+dynamic progress arcs and appear only in stats/workout emails, never transactional.)
 """
 from __future__ import annotations
 
@@ -117,11 +121,29 @@ _SOCIAL = {
 _RING_C = 94.25  # circumference for r=15
 
 
+# Color hex → S3 palette folder (see scripts/generate_email_icons.py). Only the
+# two palette colors are ever passed to `_icon`; anything else falls back to accent.
+_ICON_FOLDER = {ACCENT.lower(): "accent", GREY.lower(): "grey"}
+
+
+def _icon_base() -> str:
+    """Public S3 base for the email icon PNGs (lazy so import never needs settings)."""
+    from core.config import get_settings
+    return get_settings().email_icon_base_url.rstrip("/")
+
+
 def _icon(key: str, size: int, color: str) -> str:
-    inner = ICON_PATHS.get(key, ICON_PATHS["activity"])
-    return (f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" '
-            f'stroke="{color}" stroke-width="1.6" stroke-linecap="round" '
-            f'stroke-linejoin="round">{inner}</svg>')
+    """Hosted-PNG monoline icon. Renders in Gmail (inline SVG does NOT — see module
+    docstring). Inline-block + vertical-align:middle so it centers inside the chip
+    wrappers (which carry text-align:center + line-height)."""
+    if key not in ICON_PATHS:
+        key = "activity"
+    folder = _ICON_FOLDER.get((color or "").lower(), "accent")
+    return (
+        f'<img src="{_icon_base()}/{folder}/{key}.png" width="{size}" height="{size}" '
+        f'alt="" style="display:inline-block;vertical-align:middle;border:0;outline:none;'
+        f'text-decoration:none;-ms-interpolation-mode:bicubic;">'
+    )
 
 
 def _ring(steps: Optional[int], goal: int, best: bool = False) -> str:
@@ -173,7 +195,7 @@ def hero_card(*, icon: str, big: str, caption: str, pills: List[Tuple[str, str]]
         f'style="background:{CARD};border:1px solid {LINE};border-radius:18px;">'
         '<tr><td align="center" style="padding:26px 18px;">'
         f'<div style="width:48px;height:48px;border-radius:14px;background:{ACCENT_BG};'
-        'line-height:48px;margin:0 auto 14px;">'
+        'line-height:48px;text-align:center;margin:0 auto 14px;">'
         f'{_icon(icon, 26, ACCENT)}</div>'
         f'<div style="font-family:{F_DISP};font-size:54px;line-height:1;color:{INK};">{big}</div>'
         f'<div style="{_lbl(caption, size=13, ls=2.5)}margin-top:6px;">{caption}</div>'
@@ -210,7 +232,7 @@ def _metric_card(icon: str, value: str, label: str, delta: str, d: str) -> str:
         f'<div style="background:{CARD};border:1px solid {LINE};border-radius:15px;'
         'padding:18px 8px;text-align:center;">'
         f'<div style="width:40px;height:40px;border-radius:11px;background:{CHIP};'
-        f'line-height:40px;margin:0 auto 11px;">{_icon(icon, 20, GREY)}</div>'
+        f'line-height:40px;text-align:center;margin:0 auto 11px;">{_icon(icon, 20, GREY)}</div>'
         f'<div style="font-family:{F_DISP};font-size:24px;color:{INK};">{value}</div>'
         f'<div style="{_lbl(label, size=11, ls=1.0)}margin-top:5px;">{label}</div>'
         f'{pill}</div>'
@@ -304,7 +326,7 @@ def hero(*, title: str, sub: str = "", icon: str = "") -> str:
     """Centered Anton hero for transactional emails (no persona/avatar greeting)."""
     icon_html = (
         f'<div style="width:56px;height:56px;border-radius:16px;background:{ACCENT_BG};'
-        f'line-height:56px;margin:0 auto 20px;">{_icon(icon, 28, ACCENT)}</div>'
+        f'line-height:56px;text-align:center;margin:0 auto 20px;">{_icon(icon, 28, ACCENT)}</div>'
     ) if icon else ""
     sub_html = (
         f'<div style="font-family:{F_SERIF};font-style:italic;font-size:18px;color:{GREY};'
@@ -339,6 +361,32 @@ def info_rows(items: List[Tuple[str, str, str]]) -> str:
         return ""
     inner = "".join(info_row(i, t, d) for i, t, d in items)
     return f'<tr><td style="padding:22px 22px 4px;">{inner}</td></tr>'
+
+
+def plan_recap(items: List[Tuple[str, str, str]], *, heading: str = "Your plan so far") -> str:
+    """Onboarding-answer recap card — (icon_key, label, value) rows in a single
+    accent-railed card. Rendered in the verification email so the user sees the
+    plan they just built. Returns "" when empty (no card, no heading)."""
+    if not items:
+        return ""
+    rows = ""
+    for i, (icon, label, value) in enumerate(items):
+        border = "" if i == len(items) - 1 else f"border-bottom:1px solid {LINE};"
+        rows += (
+            f'<tr><td width="44" align="center" valign="middle" '
+            f'style="padding:13px 0 13px 14px;{border}">{_icon(icon, 20, ACCENT)}</td>'
+            f'<td valign="middle" style="padding:13px 16px;{border}">'
+            f'<span style="{_lbl(label, size=11, ls=1.2)}">{label}</span>'
+            f'<span style="float:right;font-family:{F_LBL};font-size:14px;color:{INK};'
+            f'font-weight:700;letter-spacing:.3px;">{value}</span></td></tr>'
+        )
+    return (
+        section_label(heading) +
+        f'<tr><td style="padding:0 22px;"><table role="presentation" width="100%" '
+        f'cellpadding="0" cellspacing="0" border="0" bgcolor="{CARD}" style="background:{CARD};'
+        f'border:1px solid {LINE};border-left:3px solid {ACCENT};border-radius:14px;">'
+        f'{rows}</table></td></tr>'
+    )
 
 
 def detail_block(rows: List[Tuple[str, str]]) -> str:
@@ -433,14 +481,23 @@ def _footer(unsubscribe_url: Optional[str], category_label: str, *,
     """
     socials = ""
     if show_socials:
-        # Real destinations only (the app has Discord + Instagram); no dead links.
-        social_urls = [("discord", branding.DISCORD_URL), ("instagram", branding.INSTAGRAM_URL)]
+        # Real destinations only; no dead links. Hosted-PNG glyphs (inline SVG is
+        # stripped by Gmail — see module docstring).
+        base = _icon_base()
+        social_urls = [
+            ("discord", branding.DISCORD_URL),
+            ("instagram", branding.INSTAGRAM_URL),
+            ("reddit", branding.REDDIT_URL),
+        ]
         for name, url in social_urls:
-            socials += (f'<td style="padding:0 9px;"><a href="{url}" style="color:{GREY};">'
-                        f'<svg width="20" height="20" viewBox="0 0 24 24" fill="{GREY}">'
-                        f'{_SOCIAL[name]}</svg></a></td>')
-        socials = ('<table role="presentation" cellpadding="0" cellspacing="0" border="0">'
-                   f'<tr>{socials}</tr></table>')
+            socials += (
+                f'<td style="padding:0 9px;"><a href="{url}">'
+                f'<img src="{base}/social/{name}.png" width="20" height="20" '
+                f'alt="{name.title()}" style="display:block;border:0;outline:none;'
+                f'text-decoration:none;-ms-interpolation-mode:bicubic;"></a></td>'
+            )
+        socials = ('<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
+                   'align="center"><tr>' + socials + '</tr></table>')
     unsub = unsubscribe_url or "#"
     if kind == "preference":
         line = (

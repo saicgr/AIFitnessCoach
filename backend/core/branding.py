@@ -41,6 +41,7 @@ UPGRADE_URL: str = f"{WEBSITE_URL}/upgrade"
 # ── Social (mirror Flutter AppLinks) ──────────────────────────────────────
 INSTAGRAM_URL: str = "https://instagram.com/getzealova"
 DISCORD_URL: str = "https://discord.gg/WAYNZpVgsK"
+REDDIT_URL: str = "https://reddit.com/r/zealova"
 
 # ── Locked identifiers (informational; never change post-launch) ──────────
 PACKAGE_ID_ANDROID: str = "com.aifitnesscoach.app"

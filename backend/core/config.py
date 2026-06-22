@@ -196,6 +196,11 @@ class Settings(BaseSettings):
     # Override via EMAIL_LOGO_URL env var if the asset moves.
     email_logo_url: str = "https://ai-fitness-coach.s3.us-east-1.amazonaws.com/static/logo.png"
 
+    # Base URL for the hosted email icon PNGs (Gmail strips inline SVG — see
+    # services/email_signature_template + scripts/generate_email_icons.py).
+    # Override via EMAIL_ICON_BASE_URL if the assets move.
+    email_icon_base_url: str = "https://ai-fitness-coach.s3.us-east-1.amazonaws.com/static/email-icons"
+
     # ── Public contact channels (rendered as chips in chat "need help") ───
     # Override via env (DISCORD_URL, SUPPORT_EMAIL, INSTAGRAM_URL).
     # The Discord invite is intentionally a generic landing page until the
