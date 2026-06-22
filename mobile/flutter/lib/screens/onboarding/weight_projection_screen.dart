@@ -41,6 +41,11 @@ class _WeightProjectionScreenState
   late AnimationController _animationController;
   late Animation<double> _lineAnimation;
 
+  /// True while the user is actively touching a chart point (tooltip showing).
+  /// The 🎯 goal-date chip fades out while this is true so it never sits on top
+  /// of a tooltip popped over a point near the top-right endpoint.
+  bool _chartTouched = false;
+
   /// Tracks the last rate the curves were drawn for, so changing the pace
   /// replays the draw (smooth recompute) rather than hard-cutting.
   String? _lastDrawnRate;
@@ -672,6 +677,15 @@ class _WeightProjectionScreenState
                 lineTouchData: LineTouchData(
                   enabled: true,
                   handleBuiltInTouches: true,
+                  // Fade the goal-date chip out of the way while a point is
+                  // touched, so its tooltip is never obscured near the endpoint.
+                  touchCallback: (event, response) {
+                    final touched = event.isInterestedForInteractions &&
+                        (response?.lineBarSpots?.isNotEmpty ?? false);
+                    if (touched != _chartTouched) {
+                      setState(() => _chartTouched = touched);
+                    }
+                  },
                   // Generous hit-area so taps land easily anywhere near a point.
                   touchSpotThreshold: 26,
                   // Touch indicator: a soft guide line + an enlarged dot on the
@@ -955,12 +969,18 @@ class _WeightProjectionScreenState
             ),
           ),
             ),
-            // 🎯 goal-date chip — lands where the line ends.
+            // 🎯 goal-date chip — lands where the line ends. Never intercepts
+            // touches (IgnorePointer), and fades out while a point is touched so
+            // it doesn't sit on top of that point's tooltip.
             if (chipT > 0)
               PositionedDirectional(
                 top: 6,
                 end: 6,
-                child: Transform.scale(
+                child: IgnorePointer(
+                  child: AnimatedOpacity(
+                    opacity: _chartTouched ? 0.0 : 1.0,
+                    duration: const Duration(milliseconds: 150),
+                    child: Transform.scale(
                   scale: 0.6 + 0.4 * chipT,
                   alignment: AlignmentDirectional.topEnd,
                   child: Opacity(
@@ -988,6 +1008,8 @@ class _WeightProjectionScreenState
                           color: Color(0xFF160B03),
                         ),
                       ),
+                    ),
+                  ),
                     ),
                   ),
                 ),
