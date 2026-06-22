@@ -39,6 +39,25 @@ class ApiConstants {
   /// trips the existing force-sign-out → re-auth path instead.
   static const Duration tokenRefreshTimeout = Duration(seconds: 10);
 
+  /// Hard cap on any single secure-storage (Keychain) read/write.
+  /// FlutterSecureStorage serializes every operation through ONE platform
+  /// channel; under contention an op can STALL (hang, not throw), and there is
+  /// no native timeout. The token + user-id writes that EVERY auth path runs
+  /// (`setUserId`/`setAuthToken` — Google/Apple/email/restore) sit on the
+  /// critical path before the auth state can flip to authenticated, so one
+  /// stalled write wedges sign-in forever with an infinite spinner and NO
+  /// exception (invisible to Sentry/backend). This cap turns a stall into a
+  /// SharedPreferences fallback so the auth flow always proceeds. A storage op
+  /// is normally <100ms; 4s is a generous ceiling.
+  static const Duration secureStorageOpTimeout = Duration(seconds: 4);
+
+  /// Hard cap on a full repository sign-in/sign-up call inside the auth
+  /// notifier (defense-in-depth). Even with [secureStorageOpTimeout], no auth
+  /// notifier should ever sit in `loading` indefinitely — on timeout we flip to
+  /// a visible, retryable error instead of a dead screen. 20s comfortably
+  /// exceeds Supabase signUp + `/auth/sync` + capped storage writes.
+  static const Duration authOpTimeout = Duration(seconds: 20);
+
   /// Chat media upload (presign + S3 PUT). Default 30s `receiveTimeout` was
   /// being hit by phone-recorded videos on cellular and surfaced as
   /// "Failed to send media: Request timed out". 3 minutes covers a 60s
@@ -53,8 +72,10 @@ class ApiConstants {
   static const String googleWebClientId = EnvironmentConfig.googleWebClientId;
 
   /// RevenueCat API Keys — driven by EnvironmentConfig
-  static const String revenueCatAppleApiKey = EnvironmentConfig.revenueCatAppleApiKey;
-  static const String revenueCatGoogleApiKey = EnvironmentConfig.revenueCatGoogleApiKey;
+  static const String revenueCatAppleApiKey =
+      EnvironmentConfig.revenueCatAppleApiKey;
+  static const String revenueCatGoogleApiKey =
+      EnvironmentConfig.revenueCatGoogleApiKey;
 
   /// Google Maps API Key (for gym location picker)
   /// To set up:
@@ -133,7 +154,8 @@ class ApiConstants {
 
   /// `GET /coach/sessions/{id}/messages?limit=&offset=` — oldest-first
   /// `chat_history` rows for a single session.
-  static String coachSessionMessages(String id) => '$coachSessions/$id/messages';
+  static String coachSessionMessages(String id) =>
+      '$coachSessions/$id/messages';
 
   // Hormonal / cycle tracking (Phase B — 2026-05-22).
   // Base router prefix mounted by `backend/api/v1/hormonal_health.py`.

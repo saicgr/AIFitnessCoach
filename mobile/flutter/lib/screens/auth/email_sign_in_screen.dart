@@ -8,12 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../onboarding/onboarding_experiments.dart';
 import '../onboarding/pre_auth_quiz_data.dart';
 import '../onboarding/widgets/onboarding_theme.dart';
 import 'widgets/pre_auth_referral_chip.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
 /// Glassmorphic email sign-in screen
 class EmailSignInScreen extends ConsumerStatefulWidget {
   const EmailSignInScreen({super.key});
@@ -51,7 +53,8 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     // Returning users hitting this screen from settings/login won't
     // have quiz data and stay in sign-in mode.
     final quiz = ref.read(preAuthQuizProvider);
-    final cameFromOnboarding = quiz.weightKg != null ||
+    final cameFromOnboarding =
+        quiz.weightKg != null ||
         quiz.goalWeightKg != null ||
         quiz.daysPerWeek != null ||
         (quiz.goals != null && quiz.goals!.isNotEmpty) ||
@@ -86,7 +89,9 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
       _errorMessage = null;
     });
 
-    debugPrint('🔵 [Auth] Auth attempt: email=$email startingMode=${_isSignUp ? "signup" : "signin"}');
+    debugPrint(
+      '🔵 [Auth] Auth attempt: email=$email startingMode=${_isSignUp ? "signup" : "signin"}',
+    );
 
     try {
       // ── Smart auth ──────────────────────────────────────────────────
@@ -113,11 +118,12 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
         if (!didSignUp) {
           // Supabase says the email is already registered. Try the
           // password they typed against the existing account.
-          debugPrint('🟡 [Auth] Email exists — trying sign-in with same password');
-          await ref.read(authStateProvider.notifier).signInWithEmail(
-                email,
-                password,
-              );
+          debugPrint(
+            '🟡 [Auth] Email exists — trying sign-in with same password',
+          );
+          await ref
+              .read(authStateProvider.notifier)
+              .signInWithEmail(email, password);
           // If that sign-in didn't log them in, the email is registered but
           // this password doesn't open it — commonly because the account was
           // created with Google/Apple (no password at all). Surface that
@@ -126,8 +132,10 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
           // the RIGHT password sign in cleanly and skip this branch.
           final afterFlip = ref.read(authStateProvider);
           if (afterFlip.status == AuthStatus.error || afterFlip.user == null) {
-            debugPrint('🟡 [Auth] Email already registered, password mismatch — '
-                'likely a social (Google/Apple) account');
+            debugPrint(
+              '🟡 [Auth] Email already registered, password mismatch — '
+              'likely a social (Google/Apple) account',
+            );
             if (mounted) {
               setState(() {
                 _errorMessage =
@@ -140,12 +148,12 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
           }
         }
       } else {
-        await ref.read(authStateProvider.notifier).signInWithEmail(
-              email,
-              password,
-            );
+        await ref
+            .read(authStateProvider.notifier)
+            .signInWithEmail(email, password);
         final auth1 = ref.read(authStateProvider);
-        final isCredsErr = auth1.status == AuthStatus.error &&
+        final isCredsErr =
+            auth1.status == AuthStatus.error &&
             _looksLikeCredentialsError(auth1.errorMessage ?? '');
         if (isCredsErr) {
           // Could be wrong password OR no account. Try signup —
@@ -189,11 +197,41 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
       debugPrint('🟢 [Auth] Sign-in success: userId=${auth.user?.id}');
 
       final user = auth.user;
-      if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
+      if (user != null &&
+          user.isFirstLogin &&
+          user.hasSupportFriend &&
+          mounted) {
         _showSupportFriendWelcome();
       }
       // Founder sheet is shown on MainShell (the actual destination) — showing
       // it here would race with the GoRouter redirect and tear down under us.
+
+      // CRITICAL: this screen is PUSHED (`context.push('/email-sign-in')` from
+      // sign_in_screen), so it sits on top of the navigation stack. GoRouter's
+      // refreshListenable redirect operates on the BASE go-route underneath the
+      // push — NOT the pushed route — so when auth flips to authenticated the
+      // redirect rewrites the base but never pops THIS screen. Without an
+      // explicit hand-off the user is stranded on "Create Account" forever even
+      // though sign-up fully succeeded (the "account creates but never moves
+      // forward" bug). We navigate UNCONDITIONALLY here — NO route-path guard.
+      // A previous version copied sign_in_screen's `if (loc == '/sign-in')`
+      // guard, but on this DOUBLY-pushed screen the live router path is
+      // unreliable, so the guard silently skipped navigation and the user stayed
+      // stuck. `context.go` replaces the stack with the next onboarding step;
+      // the router redirect then rewrites to the user's TRUE next step (so this
+      // is safe even for a returning, fully-onboarded user → it resolves to
+      // home). Guarded only on mounted + authenticated.
+      if (auth.status == AuthStatus.authenticated && user != null && mounted) {
+        debugPrint(
+          '🧭 [EmailSignIn] Auth success on pushed Create Account '
+          'screen — force-navigating forward (router rewrites to true step)',
+        );
+        context.go(
+          OnboardingExperiments.personalInfoAfterPaywall
+              ? '/coach-selection'
+              : '/personal-info',
+        );
+      }
     } catch (e) {
       debugPrint('🔴 [Auth] Sign-in threw exception: $e');
       final errorMsg = _extractErrorText(e).replaceAll('Exception: ', '');
@@ -235,7 +273,9 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     };
 
     try {
-      await ref.read(authStateProvider.notifier).signUpWithEmail(
+      await ref
+          .read(authStateProvider.notifier)
+          .signUpWithEmail(
             email,
             password,
             name: resolvedName.isNotEmpty ? resolvedName : null,
@@ -360,9 +400,26 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(AppLocalizations.of(context)!.emailSignInScreenWelcomeTo(Branding.appName), style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                  Text(
+                    AppLocalizations.of(
+                      context,
+                    )!.emailSignInScreenWelcomeTo(Branding.appName),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(AppLocalizations.of(context)!.emailSignInScreenSupportIsNowYour(Branding.appName), style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                  Text(
+                    AppLocalizations.of(
+                      context,
+                    )!.emailSignInScreenSupportIsNowYour(Branding.appName),
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -410,410 +467,500 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: t.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      body: OnboardingBackground(
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: [
-                      // Glassmorphic back button — force readable contrast in light mode
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: t.isDark
-                                    ? Colors.white.withValues(alpha: 0.10)
-                                    : Colors.black.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(22),
-                                border: Border.all(
+        backgroundColor: Colors.transparent,
+        extendBodyBehindAppBar: true,
+        body: OnboardingBackground(
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        // Glassmorphic back button — force readable contrast in light mode
+                        GestureDetector(
+                          onTap: () => context.pop(),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(22),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
                                   color: t.isDark
-                                      ? Colors.white.withValues(alpha: 0.18)
-                                      : Colors.black.withValues(alpha: 0.15),
+                                      ? Colors.white.withValues(alpha: 0.10)
+                                      : Colors.black.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(
+                                    color: t.isDark
+                                        ? Colors.white.withValues(alpha: 0.18)
+                                        : Colors.black.withValues(alpha: 0.15),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.arrow_back_ios_rounded,
+                                  color: t.textPrimary,
+                                  size: 18,
                                 ),
                               ),
-                              child: Icon(Icons.arrow_back_ios_rounded, color: t.textPrimary, size: 18),
                             ),
                           ),
                         ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        _isSignUp ? AppLocalizations.of(context).emailSignInCreateAccount : AppLocalizations.of(context).emailSignInSignIn,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: t.textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      const SizedBox(width: 44),
-                    ],
-                  ),
-                ).animate().fadeIn(duration: 300.ms),
-
-                const SizedBox(height: 32),
-
-                // Logo — glassmorphic container
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: t.cardFill,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: t.borderDefault),
-                        boxShadow: [
-                          BoxShadow(
-                            color: t.textPrimary.withOpacity(0.1),
-                            blurRadius: 16,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.asset(
-                          'assets/images/app_icon.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Icon(
-                            Icons.fitness_center,
+                        const Spacer(),
+                        Text(
+                          _isSignUp
+                              ? AppLocalizations.of(
+                                  context,
+                                ).emailSignInCreateAccount
+                              : AppLocalizations.of(context).emailSignInSignIn,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
                             color: t.textPrimary,
-                            size: 40,
                           ),
                         ),
-                      ),
+                        const Spacer(),
+                        const SizedBox(width: 44),
+                      ],
                     ),
-                  ),
-                ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.8, 0.8)),
+                  ).animate().fadeIn(duration: 300.ms),
 
-                const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-                // Form — v7: sits directly on the canvas (the floating
-                // glass card is gone; fields carry their own fills).
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Email field
-                            TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              autocorrect: false,
-                              style: TextStyle(
-                                color: t.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              decoration: InputDecoration(
-                                labelText: AppLocalizations.of(context).authEmailHint,
-                                labelStyle: TextStyle(
-                                  color: t.textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                  // Logo — glassmorphic container
+                  ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: t.cardFill,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: t.borderDefault),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: t.textPrimary.withOpacity(0.1),
+                                  blurRadius: 16,
+                                  spreadRadius: 2,
                                 ),
-                                floatingLabelStyle: TextStyle(
-                                  color: t.borderSelected,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                hintText: AppLocalizations.of(context).emailSignInYouExampleCom,
-                                hintStyle: TextStyle(
-                                  color: t.textMuted.withValues(alpha: 0.7),
-                                  fontSize: 15,
-                                ),
-                                prefixIcon: Icon(Icons.email_outlined,
-                                    color: t.textPrimary, size: 22),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 18),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                      color: t.borderDefault, width: 1.5),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                      color: t.borderSelected, width: 2.5),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                      color: AppColors.error, width: 1.5),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                      color: AppColors.error, width: 2.5),
-                                ),
-                                filled: true,
-                                fillColor: t.cardFill,
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) return 'Please enter your email';
-                                if (!value.contains('@') || !value.contains('.')) return 'Please enter a valid email';
-                                return null;
-                              },
+                              ],
                             ),
-
-                            const SizedBox(height: 16),
-
-                            // Password field
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              style: TextStyle(
-                                color: t.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Image.asset(
+                                'assets/images/app_icon.png',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Icon(
+                                      Icons.fitness_center,
+                                      color: t.textPrimary,
+                                      size: 40,
+                                    ),
                               ),
-                              decoration: InputDecoration(
-                                labelText: AppLocalizations.of(context).authPasswordHint,
-                                labelStyle: TextStyle(
+                            ),
+                          ),
+                        ),
+                      )
+                      .animate()
+                      .fadeIn(delay: 200.ms)
+                      .scale(begin: const Offset(0.8, 0.8)),
+
+                  const SizedBox(height: 32),
+
+                  // Form — v7: sits directly on the canvas (the floating
+                  // glass card is gone; fields carry their own fills).
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Email field
+                              TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                autocorrect: false,
+                                style: TextStyle(
                                   color: t.textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                floatingLabelStyle: TextStyle(
-                                  color: t.borderSelected,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                hintText: _isSignUp
-                                    ? AppLocalizations.of(context).emailSignInAtLeast8Characters
-                                    : 'Enter your password',
-                                hintStyle: TextStyle(
-                                  color: t.textMuted.withValues(alpha: 0.7),
-                                  fontSize: 15,
-                                ),
-                                prefixIcon: Icon(Icons.lock_outline,
-                                    color: t.textPrimary, size: 22),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
+                                decoration: InputDecoration(
+                                  labelText: AppLocalizations.of(
+                                    context,
+                                  ).authEmailHint,
+                                  labelStyle: TextStyle(
+                                    color: t.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  floatingLabelStyle: TextStyle(
+                                    color: t.borderSelected,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  hintText: AppLocalizations.of(
+                                    context,
+                                  ).emailSignInYouExampleCom,
+                                  hintStyle: TextStyle(
+                                    color: t.textMuted.withValues(alpha: 0.7),
+                                    fontSize: 15,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.email_outlined,
                                     color: t.textPrimary,
                                     size: 22,
                                   ),
-                                  onPressed: () => setState(
-                                      () => _obscurePassword = !_obscurePassword),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 18),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                      color: t.borderDefault, width: 1.5),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                      color: t.borderSelected, width: 2.5),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                      color: AppColors.error, width: 1.5),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                      color: AppColors.error, width: 2.5),
-                                ),
-                                filled: true,
-                                fillColor: t.cardFill,
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) return 'Please enter your password';
-                                if (_isSignUp) {
-                                  if (value.length < 8) return 'Password must be at least 8 characters';
-                                  if (!RegExp(r'[a-zA-Z]').hasMatch(value)) return 'Password must contain at least one letter';
-                                  if (!RegExp(r'[0-9]').hasMatch(value)) return 'Password must contain at least one number';
-                                }
-                                return null;
-                              },
-                            ),
-
-                            // Forgot password
-                            if (!_isSignUp) ...[
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: AlignmentDirectional.centerEnd,
-                                child: GestureDetector(
-                                  onTap: _forgotPassword,
-                                  child: Text(
-                                    AppLocalizations.of(context).emailSignInForgotPassword,
-                                    style: TextStyle(
-                                      color: t.textSecondary,
-                                      fontSize: 14,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 18,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: t.borderDefault,
+                                      width: 1.5,
                                     ),
                                   ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: t.borderSelected,
+                                      width: 2.5,
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.error,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.error,
+                                      width: 2.5,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: t.cardFill,
                                 ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty)
+                                    return 'Please enter your email';
+                                  if (!value.contains('@') ||
+                                      !value.contains('.'))
+                                    return 'Please enter a valid email';
+                                  return null;
+                                },
                               ),
-                            ],
 
-                            // Error message
-                            if (_errorMessage != null) ...[
                               const SizedBox(height: 16),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.error.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.error.withOpacity(0.4)),
+
+                              // Password field
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                style: TextStyle(
+                                  color: t.textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.error_outline, color: AppColors.error, size: 20),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        _errorMessage!,
-                                        style: const TextStyle(color: AppColors.error, fontSize: 14),
+                                decoration: InputDecoration(
+                                  labelText: AppLocalizations.of(
+                                    context,
+                                  ).authPasswordHint,
+                                  labelStyle: TextStyle(
+                                    color: t.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  floatingLabelStyle: TextStyle(
+                                    color: t.borderSelected,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  hintText: _isSignUp
+                                      ? AppLocalizations.of(
+                                          context,
+                                        ).emailSignInAtLeast8Characters
+                                      : 'Enter your password',
+                                  hintStyle: TextStyle(
+                                    color: t.textMuted.withValues(alpha: 0.7),
+                                    fontSize: 15,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.lock_outline,
+                                    color: t.textPrimary,
+                                    size: 22,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                      color: t.textPrimary,
+                                      size: 22,
+                                    ),
+                                    onPressed: () => setState(
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 18,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: t.borderDefault,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: t.borderSelected,
+                                      width: 2.5,
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.error,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.error,
+                                      width: 2.5,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: t.cardFill,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty)
+                                    return 'Please enter your password';
+                                  if (_isSignUp) {
+                                    if (value.length < 8)
+                                      return 'Password must be at least 8 characters';
+                                    if (!RegExp(r'[a-zA-Z]').hasMatch(value))
+                                      return 'Password must contain at least one letter';
+                                    if (!RegExp(r'[0-9]').hasMatch(value))
+                                      return 'Password must contain at least one number';
+                                  }
+                                  return null;
+                                },
+                              ),
+
+                              // Forgot password
+                              if (!_isSignUp) ...[
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: AlignmentDirectional.centerEnd,
+                                  child: GestureDetector(
+                                    onTap: _forgotPassword,
+                                    child: Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      ).emailSignInForgotPassword,
+                                      style: TextStyle(
+                                        color: t.textSecondary,
+                                        fontSize: 14,
                                       ),
                                     ),
-                                  ],
+                                  ),
+                                ),
+                              ],
+
+                              // Error message
+                              if (_errorMessage != null) ...[
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.error.withOpacity(0.4),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: AppColors.error,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _errorMessage!,
+                                          style: const TextStyle(
+                                            color: AppColors.error,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+
+                              const SizedBox(height: 24),
+
+                              // Submit button — warm brand orange so it
+                              // doesn't read as a disabled glassmorphic card
+                              // on light backgrounds. Spinner stays white so
+                              // it remains visible against the gradient.
+                              GestureDetector(
+                                onTap: _isLoading ? null : _signIn,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: AlignmentDirectional.topStart,
+                                      end: AlignmentDirectional.bottomEnd,
+                                      colors: _isLoading
+                                          ? [
+                                              AppColors.orange.withValues(
+                                                alpha: 0.55,
+                                              ),
+                                              const Color(
+                                                0xFFFFB366,
+                                              ).withValues(alpha: 0.55),
+                                            ]
+                                          : const [
+                                              Color(0xFFFFB366),
+                                              AppColors.orange,
+                                            ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: _isLoading
+                                        ? null
+                                        : [
+                                            BoxShadow(
+                                              color: AppColors.orange
+                                                  .withValues(alpha: 0.35),
+                                              blurRadius: 14,
+                                              offset: const Offset(0, 6),
+                                            ),
+                                          ],
+                                  ),
+                                  child: Center(
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    Colors.white,
+                                                  ),
+                                            ),
+                                          )
+                                        : Text(
+                                            _isSignUp
+                                                ? AppLocalizations.of(
+                                                    context,
+                                                  ).emailSignInCreateAccount
+                                                : AppLocalizations.of(
+                                                    context,
+                                                  ).emailSignInSignIn,
+                                            style: const TextStyle(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                  ),
                                 ),
                               ),
                             ],
-
-                            const SizedBox(height: 24),
-
-                            // Submit button — warm brand orange so it
-                            // doesn't read as a disabled glassmorphic card
-                            // on light backgrounds. Spinner stays white so
-                            // it remains visible against the gradient.
-                            GestureDetector(
-                              onTap: _isLoading ? null : _signIn,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                height: 54,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: AlignmentDirectional.topStart,
-                                    end: AlignmentDirectional.bottomEnd,
-                                    colors: _isLoading
-                                        ? [
-                                            AppColors.orange.withValues(alpha: 0.55),
-                                            const Color(0xFFFFB366).withValues(alpha: 0.55),
-                                          ]
-                                        : const [
-                                            Color(0xFFFFB366),
-                                            AppColors.orange,
-                                          ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: _isLoading
-                                      ? null
-                                      : [
-                                          BoxShadow(
-                                            color: AppColors.orange
-                                                .withValues(alpha: 0.35),
-                                            blurRadius: 14,
-                                            offset: const Offset(0, 6),
-                                          ),
-                                        ],
-                                ),
-                                child: Center(
-                                  child: _isLoading
-                                      ? const SizedBox(
-                                          width: 22,
-                                          height: 22,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2.5,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                    Colors.white),
-                                          ),
-                                        )
-                                      : Text(
-                                          _isSignUp ? AppLocalizations.of(context).emailSignInCreateAccount : AppLocalizations.of(context).emailSignInSignIn,
-                                          style: const TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w800,
-                                            color: Colors.white,
-                                            letterSpacing: 0.2,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
-
-                const SizedBox(height: 24),
-
-                // Toggle sign in / sign up
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _isSignUp ? AppLocalizations.of(context).emailSignInAlreadyHaveAnAccount : AppLocalizations.of(context).emailSignInDonTHaveAn,
-                      style: TextStyle(color: t.textMuted, fontSize: 14),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isSignUp = !_isSignUp;
-                          _errorMessage = null;
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                        child: Text(
-                          _isSignUp ? AppLocalizations.of(context).emailSignInSignIn : AppLocalizations.of(context).mainShellPartSignUp,
-                          style: TextStyle(
-                            color: t.textPrimary.withValues(alpha: 0.9),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ),
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+
+                  const SizedBox(height: 24),
+
+                  // Toggle sign in / sign up
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _isSignUp
+                            ? AppLocalizations.of(
+                                context,
+                              ).emailSignInAlreadyHaveAnAccount
+                            : AppLocalizations.of(
+                                context,
+                              ).emailSignInDonTHaveAn,
+                        style: TextStyle(color: t.textMuted, fontSize: 14),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isSignUp = !_isSignUp;
+                            _errorMessage = null;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 8,
+                          ),
+                          child: Text(
+                            _isSignUp
+                                ? AppLocalizations.of(context).emailSignInSignIn
+                                : AppLocalizations.of(
+                                    context,
+                                  ).mainShellPartSignUp,
+                            style: TextStyle(
+                              color: t.textPrimary.withValues(alpha: 0.9),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn(delay: 500.ms),
+
+                  // Optional: user can enter a referral code; stored pre-auth
+                  // and applied automatically after sign-up completes.
+                  if (_isSignUp) ...[
+                    const SizedBox(height: 8),
+                    const PreAuthReferralChip(),
                   ],
-                ).animate().fadeIn(delay: 500.ms),
 
-                // Optional: user can enter a referral code; stored pre-auth
-                // and applied automatically after sign-up completes.
-                if (_isSignUp) ...[
-                  const SizedBox(height: 8),
-                  const PreAuthReferralChip(),
+                  const SizedBox(height: 24),
                 ],
-
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }

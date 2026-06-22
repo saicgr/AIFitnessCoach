@@ -137,8 +137,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 /// Auth state provider
-final authStateProvider =
-    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final repository = ref.watch(authRepositoryProvider);
   return AuthNotifier(repository, ref);
 });
@@ -151,11 +150,11 @@ class AuthRepository {
   final SupabaseClient _supabase;
 
   AuthRepository(this._apiClient, this._db)
-      : _googleSignIn = GoogleSignIn(
-          scopes: ['email', 'profile'],
-          serverClientId: ApiConstants.googleWebClientId,
-        ),
-        _supabase = Supabase.instance.client;
+    : _googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+        serverClientId: ApiConstants.googleWebClientId,
+      ),
+      _supabase = Supabase.instance.client;
 
   /// Sign in with Google via Supabase
   Future<app_user.User> signInWithGoogle() async {
@@ -197,21 +196,30 @@ class AuthRepository {
       }
 
       final supabaseAccessToken = response.session!.accessToken;
-      debugPrint('✅ [Auth] Supabase auth success, authenticating with backend...');
+      debugPrint(
+        '✅ [Auth] Supabase auth success, authenticating with backend...',
+      );
 
       // Authenticate with backend using Supabase access token
       final backendResponse = await _apiClient.post(
         ApiConstants.auth,
-        data: app_user.GoogleAuthRequest(accessToken: supabaseAccessToken).toJson(),
+        data: app_user.GoogleAuthRequest(
+          accessToken: supabaseAccessToken,
+        ).toJson(),
       );
 
-      if (backendResponse.statusCode == 200 || backendResponse.statusCode == 201) {
-        final user = app_user.User.fromJson(backendResponse.data as Map<String, dynamic>);
+      if (backendResponse.statusCode == 200 ||
+          backendResponse.statusCode == 201) {
+        final user = app_user.User.fromJson(
+          backendResponse.data as Map<String, dynamic>,
+        );
         debugPrint('✅ [Auth] Backend auth success: ${user.id}');
 
         // Log if new user with support friend
         if (user.isFirstLogin && user.hasSupportFriend) {
-          debugPrint('🎉 [Auth] New user signed up! ${Branding.appName} Support auto-added as friend');
+          debugPrint(
+            '🎉 [Auth] New user signed up! ${Branding.appName} Support auto-added as friend',
+          );
         }
 
         // Save user ID and token
@@ -266,7 +274,9 @@ class AuthRepository {
         throw Exception('Apple Sign-In failed: missing identity token');
       }
 
-      debugPrint('✅ [Auth] Apple credential received, exchanging with Supabase...');
+      debugPrint(
+        '✅ [Auth] Apple credential received, exchanging with Supabase...',
+      );
 
       final response = await _supabase.auth.signInWithIdToken(
         provider: OAuthProvider.apple,
@@ -279,7 +289,9 @@ class AuthRepository {
       }
 
       final supabaseAccessToken = response.session!.accessToken;
-      debugPrint('✅ [Auth] Supabase auth success, authenticating with backend...');
+      debugPrint(
+        '✅ [Auth] Supabase auth success, authenticating with backend...',
+      );
 
       // Backend's /auth/google endpoint accepts any Supabase access token
       // regardless of upstream IdP. We additionally forward Apple-only
@@ -304,12 +316,17 @@ class AuthRepository {
         data: backendBody,
       );
 
-      if (backendResponse.statusCode == 200 || backendResponse.statusCode == 201) {
-        final user = app_user.User.fromJson(backendResponse.data as Map<String, dynamic>);
+      if (backendResponse.statusCode == 200 ||
+          backendResponse.statusCode == 201) {
+        final user = app_user.User.fromJson(
+          backendResponse.data as Map<String, dynamic>,
+        );
         debugPrint('✅ [Auth] Backend auth success: ${user.id}');
 
         if (user.isFirstLogin && user.hasSupportFriend) {
-          debugPrint('🎉 [Auth] New user signed up via Apple! ${Branding.appName} Support auto-added as friend');
+          debugPrint(
+            '🎉 [Auth] New user signed up via Apple! ${Branding.appName} Support auto-added as friend',
+          );
         }
 
         await _apiClient.setUserId(user.id);
@@ -335,9 +352,13 @@ class AuthRepository {
 
   /// Cryptographically secure nonce for Sign in with Apple.
   String _generateAppleNonce([int length = 32]) {
-    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._';
+    const charset =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._';
     final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
   }
 
   /// Sign in with email and password
@@ -356,7 +377,9 @@ class AuthRepository {
       }
 
       final supabaseAccessToken = response.session!.accessToken;
-      debugPrint('✅ [Auth] Supabase email auth success, authenticating with backend...');
+      debugPrint(
+        '✅ [Auth] Supabase email auth success, authenticating with backend...',
+      );
 
       // Authenticate with backend
       final backendResponse = await _apiClient.post(
@@ -364,8 +387,11 @@ class AuthRepository {
         data: {'email': email, 'password': password},
       );
 
-      if (backendResponse.statusCode == 200 || backendResponse.statusCode == 201) {
-        final user = app_user.User.fromJson(backendResponse.data as Map<String, dynamic>);
+      if (backendResponse.statusCode == 200 ||
+          backendResponse.statusCode == 201) {
+        final user = app_user.User.fromJson(
+          backendResponse.data as Map<String, dynamic>,
+        );
         debugPrint('✅ [Auth] Backend auth success: ${user.id}');
 
         // Save user ID and token
@@ -422,7 +448,9 @@ class AuthRepository {
       );
 
       if (response.user == null) {
-        throw Exception('Failed to create account. Email may already be in use.');
+        throw Exception(
+          'Failed to create account. Email may already be in use.',
+        );
       }
 
       final supabaseAccessToken = response.session?.accessToken;
@@ -431,7 +459,9 @@ class AuthRepository {
         throw Exception('Please check your email to verify your account.');
       }
 
-      debugPrint('✅ [Auth] Supabase signup success, syncing user to backend...');
+      debugPrint(
+        '✅ [Auth] Supabase signup success, syncing user to backend...',
+      );
 
       // Ensure the public.users row exists via /auth/sync. It is idempotent
       // and, on first create, fires the verification email + Discord signup
@@ -442,13 +472,25 @@ class AuthRepository {
         '${ApiConstants.users}/auth/sync',
       );
 
-      if (backendResponse.statusCode == 200 || backendResponse.statusCode == 201) {
-        final user = app_user.User.fromJson(backendResponse.data as Map<String, dynamic>);
-        debugPrint('✅ [Auth] Backend user synced: ${user.id}');
+      if (backendResponse.statusCode == 200 ||
+          backendResponse.statusCode == 201) {
+        final user = app_user.User.fromJson(
+          backendResponse.data as Map<String, dynamic>,
+        );
+        debugPrint(
+          '✅ [Auth] Backend user synced: ${user.id} — persisting credentials...',
+        );
 
-        // Save user ID and token
+        // Save user ID and token. These secure-storage writes are now
+        // timeout-capped (ApiConstants.secureStorageOpTimeout) — a stalled
+        // Keychain channel used to hang HERE, before the repo returned, wedging
+        // the auth state in `loading` forever. The setUserId/setAuthToken stage
+        // logs print exactly when each write starts/finishes.
         await _apiClient.setUserId(user.id);
         await _apiClient.setAuthToken(supabaseAccessToken);
+        debugPrint(
+          '✅ [Auth] Credentials persisted — returning user to notifier',
+        );
 
         return user;
       } else {
@@ -499,7 +541,10 @@ class AuthRepository {
   /// not yet initialized on first launch) cannot halt the rest of the
   /// orchestration. Emits a structured `🚪 [SignOut] step=X ok=… ms=N`
   /// line in debug builds so we can audit the order from device logs.
-  Future<void> _runSignOutStep(String name, Future<void> Function() body) async {
+  Future<void> _runSignOutStep(
+    String name,
+    Future<void> Function() body,
+  ) async {
     final sw = Stopwatch()..start();
     var ok = true;
     try {
@@ -510,7 +555,9 @@ class AuthRepository {
     } finally {
       sw.stop();
       if (kDebugMode) {
-        debugPrint('🚪 [SignOut] step=$name ok=$ok ms=${sw.elapsedMilliseconds}');
+        debugPrint(
+          '🚪 [SignOut] step=$name ok=$ok ms=${sw.elapsedMilliseconds}',
+        );
       }
     }
   }
@@ -539,13 +586,13 @@ class AuthRepository {
       // sign-out never blocks longer than a couple of seconds on a flaky
       // APNS handshake.
       await FirebaseMessaging.instance.deleteToken().timeout(
-            const Duration(seconds: 3),
-            onTimeout: () {
-              if (kDebugMode) {
-                debugPrint('⚠️ [SignOut] FCM deleteToken timed out — continuing');
-              }
-            },
-          );
+        const Duration(seconds: 3),
+        onTimeout: () {
+          if (kDebugMode) {
+            debugPrint('⚠️ [SignOut] FCM deleteToken timed out — continuing');
+          }
+        },
+      );
     });
     await _runSignOutStep('revenuecat.logOut', () async {
       // If the SDK was never configured (e.g. a build shipped without the
@@ -556,7 +603,9 @@ class AuthRepository {
       // configured flag and skip entirely when unconfigured.
       if (!SubscriptionNotifier.isRevenueCatReady) {
         if (kDebugMode) {
-          debugPrint('ℹ️ [SignOut] RevenueCat not configured — skipping logOut');
+          debugPrint(
+            'ℹ️ [SignOut] RevenueCat not configured — skipping logOut',
+          );
         }
         return;
       }
@@ -644,7 +693,9 @@ class AuthRepository {
   Future<void> _wipeDriftForUser(String? outgoingUserId) async {
     if (outgoingUserId == null || outgoingUserId.isEmpty) {
       if (kDebugMode) {
-        debugPrint('⚠️ [SignOut] _wipeDriftForUser called with null/empty id — skipping');
+        debugPrint(
+          '⚠️ [SignOut] _wipeDriftForUser called with null/empty id — skipping',
+        );
       }
       return;
     }
@@ -707,7 +758,9 @@ class AuthRepository {
     try {
       await _supabase.auth.signOut();
     } catch (e) {
-      debugPrint('❌ [Auth] Supabase signOut failed — aborting local cleanup: $e');
+      debugPrint(
+        '❌ [Auth] Supabase signOut failed — aborting local cleanup: $e',
+      );
       throw Exception(
         "Couldn't sign out. Check your connection and try again.",
       );
@@ -835,19 +888,24 @@ class AuthRepository {
     String? refreshToken,
   }) {
     // Fire and forget - don't block login flow
-    WearableService.instance.syncUserCredentials(
-      userId: userId,
-      authToken: authToken,
-      refreshToken: refreshToken,
-    ).then((success) {
-      if (success) {
-        debugPrint('✅ [Auth] Credentials synced to watch');
-      } else {
-        debugPrint('⚠️ [Auth] Watch credential sync skipped (not connected)');
-      }
-    }).catchError((e) {
-      debugPrint('⚠️ [Auth] Watch credential sync failed: $e');
-    });
+    WearableService.instance
+        .syncUserCredentials(
+          userId: userId,
+          authToken: authToken,
+          refreshToken: refreshToken,
+        )
+        .then((success) {
+          if (success) {
+            debugPrint('✅ [Auth] Credentials synced to watch');
+          } else {
+            debugPrint(
+              '⚠️ [Auth] Watch credential sync skipped (not connected)',
+            );
+          }
+        })
+        .catchError((e) {
+          debugPrint('⚠️ [Auth] Watch credential sync failed: $e');
+        });
   }
 
   /// Get current user from backend
@@ -859,7 +917,9 @@ class AuthRepository {
       final response = await _apiClient.get('${ApiConstants.users}/$userId');
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
-        debugPrint('🔍 [Auth] User data from API: onboarding_completed=${data['onboarding_completed']}, coach_selected=${data['coach_selected']}, paywall_completed=${data['paywall_completed']}');
+        debugPrint(
+          '🔍 [Auth] User data from API: onboarding_completed=${data['onboarding_completed']}, coach_selected=${data['coach_selected']}, paywall_completed=${data['paywall_completed']}',
+        );
         final user = app_user.User.fromJson(data);
 
         // Cache user for faster app startup
@@ -940,11 +1000,15 @@ class AuthRepository {
           lookupStatus = response.statusCode;
 
           if (response.statusCode == 200) {
-            final user = app_user.User.fromJson(response.data as Map<String, dynamic>);
+            final user = app_user.User.fromJson(
+              response.data as Map<String, dynamic>,
+            );
 
             // NOW set the correct user ID (from users table, not auth)
             await _apiClient.setUserId(user.id);
-            debugPrint('✅ [Auth] Set correct user ID: ${user.id} (auth_id was: $authId)');
+            debugPrint(
+              '✅ [Auth] Set correct user ID: ${user.id} (auth_id was: $authId)',
+            );
 
             // Cache user for faster app startup
             await _cacheUser(user);
@@ -962,16 +1026,22 @@ class AuthRepository {
           }
         } catch (e) {
           // Dio throws on non-2xx by default — extract the status code.
-          final match = RegExp(r'status code of (\d+)').firstMatch(e.toString());
+          final match = RegExp(
+            r'status code of (\d+)',
+          ).firstMatch(e.toString());
           if (match != null) lookupStatus = int.tryParse(match.group(1) ?? '');
-          debugPrint('❌ [Auth] by-auth lookup failed (status=$lookupStatus): $e');
+          debugPrint(
+            '❌ [Auth] by-auth lookup failed (status=$lookupStatus): $e',
+          );
         }
 
         // 404 means the Supabase Auth account exists but the backend `users`
         // row was deleted (or never created — orphan auth user). Clear the
         // stale session so we don't hit the same 404 on every cold start.
         if (lookupStatus == 404) {
-          debugPrint('⚠️ [Auth] No backend user for auth_id=$authId — clearing stale Supabase session');
+          debugPrint(
+            '⚠️ [Auth] No backend user for auth_id=$authId — clearing stale Supabase session',
+          );
           try {
             await _supabase.auth.signOut();
           } catch (_) {}
@@ -1020,7 +1090,8 @@ class AuthRepository {
   /// Restore session with cache-first pattern for instant auth
   ///
   /// Returns cached user immediately if available, then fetches fresh in background
-  Future<({app_user.User? cached, Future<app_user.User?> fresh})> restoreSessionWithCache() async {
+  Future<({app_user.User? cached, Future<app_user.User?> fresh})>
+  restoreSessionWithCache() async {
     // Step 0: Validate cache against the live Supabase session BEFORE
     // surfacing the cached user. Without this guard, a prior account's
     // user (sitting in SharedPreferences from a previous install or a
@@ -1036,7 +1107,9 @@ class AuthRepository {
     final liveSession = _supabase.auth.currentSession;
     if (liveSession == null) {
       if (await _getCachedUser() != null) {
-        debugPrint('🧹 [Auth] Cache rejected: no live Supabase session — clearing stale user cache');
+        debugPrint(
+          '🧹 [Auth] Cache rejected: no live Supabase session — clearing stale user cache',
+        );
         // No session → no auth_id to scope by. Wipe via clearAll's
         // prefix-walk so EVERY user's profile cache on this device gets
         // dropped (logout-equivalent).
@@ -1055,8 +1128,12 @@ class AuthRepository {
       // by-auth lookup before painting any UI.
       final sessionEmail = liveSession.user.email?.toLowerCase().trim();
       final cachedEmail = cachedUser.email?.toLowerCase().trim();
-      if (sessionEmail != null && cachedEmail != null && sessionEmail != cachedEmail) {
-        debugPrint('🧹 [Auth] Cache rejected: account switch detected ($cachedEmail → $sessionEmail)');
+      if (sessionEmail != null &&
+          cachedEmail != null &&
+          sessionEmail != cachedEmail) {
+        debugPrint(
+          '🧹 [Auth] Cache rejected: account switch detected ($cachedEmail → $sessionEmail)',
+        );
         // Drop both accounts' caches to be safe — the cached user is the
         // outgoing account, the incoming account has its own slot scoped
         // by liveSession.user.id.
@@ -1066,7 +1143,9 @@ class AuthRepository {
         );
         return (cached: null, fresh: restoreSession());
       }
-      debugPrint('⚡ [Auth] Loaded user from cache instantly: ${cachedUser.name}');
+      debugPrint(
+        '⚡ [Auth] Loaded user from cache instantly: ${cachedUser.name}',
+      );
 
       // Step 1.5: Set user ID in secure storage from cached user
       // This ensures getUserId() works even before restoreSession() completes
@@ -1082,7 +1161,9 @@ class AuthRepository {
       final session = _supabase.auth.currentSession;
       if (session != null) {
         await _apiClient.setAuthToken(session.accessToken);
-        debugPrint('⚡ [Auth] Eagerly set auth token from live Supabase session');
+        debugPrint(
+          '⚡ [Auth] Eagerly set auth token from live Supabase session',
+        );
       }
     }
 
@@ -1127,10 +1208,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         (data) async {
           if (data.event != AuthChangeEvent.signedOut) return;
           if (_userInitiatedSignOutInFlight) {
-            debugPrint('🚪 [Auth] Ignoring signedOut event — user-initiated path already running');
+            debugPrint(
+              '🚪 [Auth] Ignoring signedOut event — user-initiated path already running',
+            );
             return;
           }
-          debugPrint('🚪 [Auth] Server-side signedOut detected — running full cleanup');
+          debugPrint(
+            '🚪 [Auth] Server-side signedOut detected — running full cleanup',
+          );
           try {
             // Reach into the repository's private helpers via the
             // server-revocation path. We can't call `_repository.signOut`
@@ -1190,36 +1275,68 @@ class AuthNotifier extends StateNotifier<AuthState> {
   ///    backend's saved preferences (re-install / cross-device case).
   ///
   /// All errors are caught and logged — never fail sign-in over quiz sync.
+  /// Best-effort, explicitly NON-FATAL post-auth side-quest: quiz backup /
+  /// hydration. It runs on the critical path of every sign-in/sign-up
+  /// notifier BEFORE the `loading → authenticated` state flip, so it MUST be
+  /// time-bounded. The awaited backend POST inside ([_backupQuizToBackend])
+  /// has no per-call ceiling and, under HTTP connection-pool pressure (slow
+  /// concurrent AI calls holding every slot), can queue indefinitely — the
+  /// Dio receive-timeout doesn't start counting until the request is actually
+  /// in-flight. A queued-forever POST would wedge the auth notifier in
+  /// `loading` permanently with NO thrown exception (so nothing surfaces in
+  /// Sentry; `/auth/sync` already returned 200 so nothing surfaces in backend
+  /// logs either) — the account is fully created in Supabase + the backend,
+  /// yet the app never leaves the Create Account screen.
+  ///
+  /// The hard overall timeout below guarantees every caller reaches
+  /// state=authenticated within [_quizSyncTimeout]. The quiz POST is
+  /// idempotently re-submitted at coach selection, so dropping it here on a
+  /// slow network costs nothing.
+  static const Duration _quizSyncTimeout = Duration(seconds: 6);
+
   Future<void> _syncQuizAfterSignIn(app_user.User user) async {
     try {
-      final sp = await SharedPreferences.getInstance();
-      final previousUserId = sp.getString(_lastAuthUserIdKey);
-
-      if (previousUserId != null && previousUserId != user.id) {
-        debugPrint('🔄 [Auth] Account switch detected ($previousUserId → ${user.id}), clearing stale quiz');
-        await _clearPreAuthQuiz();
-      }
-      await sp.setString(_lastAuthUserIdKey, user.id);
-
-      // User has finished onboarding — quiz state no longer relevant.
-      if (user.isPaywallComplete) return;
-
-      final notifier = _ref.read(preAuthQuizProvider.notifier);
-      final quizData = await notifier.ensureLoaded();
-
-      if (quizData.isComplete) {
-        // Local has quiz answers — back them up to the server now so they
-        // survive an uninstall/reinstall mid-onboarding. coach_selection's
-        // POST will re-submit later (idempotent), so this is best-effort.
-        await _backupQuizToBackend(user.id, quizData);
-      } else {
-        // Local quiz is empty but user is mid-onboarding. Try to recover
-        // their previously-saved answers from the backend.
-        await notifier.hydrateFromUserPreferences(user.toJson());
-        debugPrint('💧 [Auth] Hydrated pre-auth quiz from backend preferences for ${user.id}');
-      }
+      await _syncQuizAfterSignInImpl(user).timeout(_quizSyncTimeout);
+    } on TimeoutException {
+      debugPrint(
+        '⚠️ [Auth] _syncQuizAfterSignIn timed out after '
+        '${_quizSyncTimeout.inSeconds}s (non-fatal) — proceeding to authenticated',
+      );
     } catch (e) {
       debugPrint('⚠️ [Auth] _syncQuizAfterSignIn failed (non-fatal): $e');
+    }
+  }
+
+  Future<void> _syncQuizAfterSignInImpl(app_user.User user) async {
+    final sp = await SharedPreferences.getInstance();
+    final previousUserId = sp.getString(_lastAuthUserIdKey);
+
+    if (previousUserId != null && previousUserId != user.id) {
+      debugPrint(
+        '🔄 [Auth] Account switch detected ($previousUserId → ${user.id}), clearing stale quiz',
+      );
+      await _clearPreAuthQuiz();
+    }
+    await sp.setString(_lastAuthUserIdKey, user.id);
+
+    // User has finished onboarding — quiz state no longer relevant.
+    if (user.isPaywallComplete) return;
+
+    final notifier = _ref.read(preAuthQuizProvider.notifier);
+    final quizData = await notifier.ensureLoaded();
+
+    if (quizData.isComplete) {
+      // Local has quiz answers — back them up to the server now so they
+      // survive an uninstall/reinstall mid-onboarding. coach_selection's
+      // POST will re-submit later (idempotent), so this is best-effort.
+      await _backupQuizToBackend(user.id, quizData);
+    } else {
+      // Local quiz is empty but user is mid-onboarding. Try to recover
+      // their previously-saved answers from the backend.
+      await notifier.hydrateFromUserPreferences(user.toJson());
+      debugPrint(
+        '💧 [Auth] Hydrated pre-auth quiz from backend preferences for ${user.id}',
+      );
     }
   }
 
@@ -1227,7 +1344,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Non-blocking failure — coach_selection_screen retries the same POST after
   /// the user picks a coach. This early POST exists purely for resilience to
   /// uninstall/reinstall during onboarding.
-  Future<void> _backupQuizToBackend(String userId, PreAuthQuizData quizData) async {
+  Future<void> _backupQuizToBackend(
+    String userId,
+    PreAuthQuizData quizData,
+  ) async {
     try {
       final payload = AIProfilePayloadBuilder.buildPayload(quizData);
       // Personal info fields not in AI payload but accepted by /preferences endpoint
@@ -1235,8 +1355,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (quizData.age != null) payload['age'] = quizData.age;
       if (quizData.heightCm != null) payload['height_cm'] = quizData.heightCm;
       if (quizData.weightKg != null) payload['weight_kg'] = quizData.weightKg;
-      if (quizData.workoutDays != null) payload['workout_days'] = quizData.workoutDays;
-      if (quizData.activityLevel != null) payload['activity_level'] = quizData.activityLevel;
+      if (quizData.workoutDays != null)
+        payload['workout_days'] = quizData.workoutDays;
+      if (quizData.activityLevel != null)
+        payload['activity_level'] = quizData.activityLevel;
 
       await _repository._apiClient.post(
         '${ApiConstants.users}/$userId/preferences',
@@ -1244,7 +1366,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       debugPrint('✅ [Auth] Pre-auth quiz backed up to backend for $userId');
     } catch (e) {
-      debugPrint('⚠️ [Auth] Quiz backup POST failed (will retry at coach selection): $e');
+      debugPrint(
+        '⚠️ [Auth] Quiz backup POST failed (will retry at coach selection): $e',
+      );
     }
   }
 
@@ -1324,19 +1448,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Fire prewarmers BEFORE the state flip so their fetches overlap with
         // the router redirect → home mount frame (~16ms head start).
         _firePrewarmers();
-        state = AuthState(status: AuthStatus.authenticated, user: result.cached);
+        state = AuthState(
+          status: AuthStatus.authenticated,
+          user: result.cached,
+        );
         _updateDeviceInfo(result.cached!.id);
 
         // Step 2: Fetch fresh data in background and update silently
-        result.fresh.then((freshUser) {
-          if (freshUser != null && mounted) {
-            debugPrint('🔄 [Auth] Updated with fresh user data');
-            state = AuthState(status: AuthStatus.authenticated, user: freshUser);
-          }
-        }).catchError((e) {
-          debugPrint('⚠️ [Auth] Background refresh failed: $e');
-          // Keep cached user, don't show error
-        });
+        result.fresh
+            .then((freshUser) {
+              if (freshUser != null && mounted) {
+                debugPrint('🔄 [Auth] Updated with fresh user data');
+                state = AuthState(
+                  status: AuthStatus.authenticated,
+                  user: freshUser,
+                );
+              }
+            })
+            .catchError((e) {
+              debugPrint('⚠️ [Auth] Background refresh failed: $e');
+              // Keep cached user, don't show error
+            });
       } else {
         // No cache - show loading and wait for API
         state = state.copyWith(status: AuthStatus.loading);
@@ -1357,7 +1489,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signInWithGoogle() async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      final user = await _repository.signInWithGoogle();
+      // Hard ceiling on the whole repo call (defense-in-depth): even though the
+      // secure-storage layer is now timeout-capped, the notifier must NEVER sit
+      // in `loading` forever. On timeout we surface a retryable error below.
+      final user = await _repository.signInWithGoogle().timeout(
+        ApiConstants.authOpTimeout,
+      );
       // Quiz sync (account-switch detection, backup, hydrate) runs BEFORE
       // state flips to authenticated so the router sees correct quiz state
       // on its next redirect. See _syncQuizAfterSignIn for the 3 jobs.
@@ -1373,6 +1510,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
       _updateDeviceInfo(user.id);
       // Fire-and-forget referral flush — never block auth UX on this.
       unawaited(_flushPendingReferral());
+    } on TimeoutException {
+      state = const AuthState(
+        status: AuthStatus.error,
+        errorMessage: 'Signing in is taking too long — please try again.',
+      );
     } catch (e) {
       // User dismissing the Google account picker is not an error — don't
       // render a red error pill on a deliberate cancellation. Same for
@@ -1392,13 +1534,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signInWithApple() async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      final user = await _repository.signInWithApple();
+      final user = await _repository.signInWithApple().timeout(
+        ApiConstants.authOpTimeout,
+      );
       await _syncQuizAfterSignIn(user);
       _firePrewarmers();
       state = AuthState(status: AuthStatus.authenticated, user: user);
       await _repository._cacheUser(user);
       _updateDeviceInfo(user.id);
       unawaited(_flushPendingReferral());
+    } on TimeoutException {
+      state = const AuthState(
+        status: AuthStatus.error,
+        errorMessage: 'Signing in is taking too long — please try again.',
+      );
     } catch (e) {
       if (_isUserCancellation(e)) {
         state = const AuthState(status: AuthStatus.unauthenticated);
@@ -1437,10 +1586,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
         l.contains('timeout')) {
       return "Can't reach the server. Check your connection and try again.";
     }
-    if (l.contains('429') || l.contains('rate limit') || l.contains('too many')) {
+    if (l.contains('429') ||
+        l.contains('rate limit') ||
+        l.contains('too many')) {
       return 'Too many attempts. Wait a minute and try again.';
     }
-    if (l.contains('500') || l.contains('502') || l.contains('503') || l.contains('504')) {
+    if (l.contains('500') ||
+        l.contains('502') ||
+        l.contains('503') ||
+        l.contains('504')) {
       return "Our servers had a hiccup. Please try again in a moment.";
     }
     if (l.contains('id token') || l.contains('idtoken')) {
@@ -1453,13 +1607,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signInWithEmail(String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      final user = await _repository.signInWithEmail(email, password);
+      final user = await _repository
+          .signInWithEmail(email, password)
+          .timeout(ApiConstants.authOpTimeout);
       await _syncQuizAfterSignIn(user);
       _firePrewarmers();
       state = AuthState(status: AuthStatus.authenticated, user: user);
       await _repository._cacheUser(user);
       _updateDeviceInfo(user.id, isFreshSignin: true);
       unawaited(_flushPendingReferral());
+    } on TimeoutException {
+      state = const AuthState(
+        status: AuthStatus.error,
+        errorMessage: 'Signing in is taking too long — please try again.',
+      );
     } catch (e) {
       // Email-screen has its own _humanizeAuthError that runs on
       // state.errorMessage, so we keep the original string here for
@@ -1467,7 +1628,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // etc.). Only swap network-class noise into something readable.
       state = AuthState(
         status: AuthStatus.error,
-        errorMessage: _isNetworkException(e) ? _humanizeAuthException(e) : e.toString(),
+        errorMessage: _isNetworkException(e)
+            ? _humanizeAuthException(e)
+            : e.toString(),
       );
     }
   }
@@ -1496,22 +1659,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      final user = await _repository.signUpWithEmail(
-        email,
-        password,
-        name: name,
-        quizMetadata: quizMetadata,
-      );
+      final user = await _repository
+          .signUpWithEmail(
+            email,
+            password,
+            name: name,
+            quizMetadata: quizMetadata,
+          )
+          .timeout(ApiConstants.authOpTimeout);
       await _syncQuizAfterSignIn(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
       await _repository._cacheUser(user);
       _updateDeviceInfo(user.id, isFreshSignin: true);
       unawaited(_flushPendingReferral());
-    } catch (e) {
-      state = AuthState(
+    } on TimeoutException {
+      state = const AuthState(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage:
+            'Creating your account is taking too long — please try again.',
       );
+    } catch (e) {
+      state = AuthState(status: AuthStatus.error, errorMessage: e.toString());
     }
   }
 
@@ -1556,10 +1724,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       state = const AuthState(status: AuthStatus.unauthenticated);
     } catch (e) {
-      state = AuthState(
-        status: AuthStatus.error,
-        errorMessage: e.toString(),
-      );
+      state = AuthState(status: AuthStatus.error, errorMessage: e.toString());
     } finally {
       // Release the gate after a short delay so any signedOut event
       // queued by Supabase's stream is observed-and-ignored, not
@@ -1656,8 +1821,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final userId = previousUser.id;
 
     // Apply locally first so the UI reflects the change immediately.
-    state =
-        state.copyWith(user: _applyOverrides(previousUser, updates));
+    state = state.copyWith(user: _applyOverrides(previousUser, updates));
 
     unawaited(() async {
       try {
@@ -1688,10 +1852,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Also drives the optimistic-update path in [updateUserProfile] —
   /// every key the UI can edit should be mapped here so the local state
   /// reflects the change synchronously.
-  app_user.User _applyOverrides(
-    app_user.User u,
-    Map<String, dynamic> updates,
-  ) {
+  app_user.User _applyOverrides(app_user.User u, Map<String, dynamic> updates) {
     var next = u;
     String? asStr(Object? v) => v?.toString();
     double? asDouble(Object? v) {
@@ -1700,6 +1861,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (v is String) return double.tryParse(v);
       return null;
     }
+
     int? asInt(Object? v) {
       if (v == null) return null;
       if (v is int) return v;
@@ -1707,6 +1869,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (v is String) return int.tryParse(v);
       return null;
     }
+
     String? asJson(Object? v) {
       if (v == null) return null;
       if (v is String) return v;
@@ -1715,7 +1878,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     // ── Unit / vacation toggles (original set) ─────────────────────────
     if (updates.containsKey('workout_weight_unit')) {
-      next = next.copyWith(workoutWeightUnit: asStr(updates['workout_weight_unit']));
+      next = next.copyWith(
+        workoutWeightUnit: asStr(updates['workout_weight_unit']),
+      );
     }
     if (updates.containsKey('weight_unit')) {
       next = next.copyWith(weightUnit: asStr(updates['weight_unit']));
@@ -1724,15 +1889,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
       next = next.copyWith(measurementUnit: asStr(updates['measurement_unit']));
     }
     if (updates.containsKey('in_vacation_mode')) {
-      next = next.copyWith(inVacationMode: updates['in_vacation_mode'] as bool?);
+      next = next.copyWith(
+        inVacationMode: updates['in_vacation_mode'] as bool?,
+      );
     }
     if (updates.containsKey('vacation_start_date')) {
       final raw = asStr(updates['vacation_start_date']);
-      next = next.copyWith(vacationStartDate: (raw == null || raw.isEmpty) ? null : raw);
+      next = next.copyWith(
+        vacationStartDate: (raw == null || raw.isEmpty) ? null : raw,
+      );
     }
     if (updates.containsKey('vacation_end_date')) {
       final raw = asStr(updates['vacation_end_date']);
-      next = next.copyWith(vacationEndDate: (raw == null || raw.isEmpty) ? null : raw);
+      next = next.copyWith(
+        vacationEndDate: (raw == null || raw.isEmpty) ? null : raw,
+      );
     }
     // ── Life stage (nutrition settings → micronutrient RDA targets) ────
     if (updates.containsKey('is_pregnant')) {
@@ -1758,7 +1929,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       next = next.copyWith(weightKg: asDouble(updates['weight_kg']));
     }
     if (updates.containsKey('target_weight_kg')) {
-      next = next.copyWith(targetWeightKg: asDouble(updates['target_weight_kg']));
+      next = next.copyWith(
+        targetWeightKg: asDouble(updates['target_weight_kg']),
+      );
     }
     if (updates.containsKey('date_of_birth')) {
       next = next.copyWith(dateOfBirth: asStr(updates['date_of_birth']));

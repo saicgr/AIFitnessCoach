@@ -42,17 +42,31 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
 /// documents `SharedPreferencesLocalStorage` as the supported fallback.
 class _ResilientSecureStorage extends FlutterSecureStorage {
   _ResilientSecureStorage()
-      : super(
-          aOptions: const AndroidOptions(encryptedSharedPreferences: true),
-          iOptions: const IOSOptions(
-              accessibility: KeychainAccessibility.first_unlock),
-        );
+    : super(
+        aOptions: const AndroidOptions(encryptedSharedPreferences: true),
+        iOptions: const IOSOptions(
+          accessibility: KeychainAccessibility.first_unlock,
+        ),
+      );
 
   bool _shouldFallback(Object e) {
     final msg = e.toString();
     return msg.contains('-34018') ||
         msg.contains('errSecMissingEntitlement') ||
         msg.contains('required entitlement');
+  }
+
+  /// Persist a value to SharedPreferences under the `secure.` namespace — the
+  /// same shadow store the `-34018` and timeout fallbacks use, so a later
+  /// [read] (which checks SharedPreferences when the Keychain is empty/slow)
+  /// stays consistent regardless of which path wrote it.
+  Future<void> _writeFallback(String key, String? value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value == null) {
+      await prefs.remove('secure.$key');
+    } else {
+      await prefs.setString('secure.$key', value);
+    }
   }
 
   @override
@@ -67,26 +81,36 @@ class _ResilientSecureStorage extends FlutterSecureStorage {
     WindowsOptions? wOptions,
   }) async {
     try {
-      await super.write(
-        key: key,
-        value: value,
-        iOptions: iOptions,
-        aOptions: aOptions,
-        lOptions: lOptions,
-        webOptions: webOptions,
-        mOptions: mOptions,
-        wOptions: wOptions,
+      // Hard timeout: FlutterSecureStorage serializes ops through one platform
+      // channel and a write can STALL forever under contention (no native
+      // timeout). Since `setUserId`/`setAuthToken` run on the auth critical
+      // path for EVERY provider, an un-capped stall here wedges sign-in with an
+      // infinite spinner and no exception. On timeout we abandon the (possibly
+      // still-pending) native call and persist to SharedPreferences instead.
+      await super
+          .write(
+            key: key,
+            value: value,
+            iOptions: iOptions,
+            aOptions: aOptions,
+            lOptions: lOptions,
+            webOptions: webOptions,
+            mOptions: mOptions,
+            wOptions: wOptions,
+          )
+          .timeout(ApiConstants.secureStorageOpTimeout);
+    } on TimeoutException {
+      debugPrint(
+        '⚠️ [SecureStorage] Keychain write STALLED >${ApiConstants.secureStorageOpTimeout.inSeconds}s, '
+        'falling back to SharedPreferences for "$key"',
       );
+      await _writeFallback(key, value);
     } catch (e) {
       if (!_shouldFallback(e)) rethrow;
       debugPrint(
-          '⚠️ [SecureStorage] Keychain write failed (-34018), using SharedPreferences for "$key"');
-      final prefs = await SharedPreferences.getInstance();
-      if (value == null) {
-        await prefs.remove('secure.$key');
-      } else {
-        await prefs.setString('secure.$key', value);
-      }
+        '⚠️ [SecureStorage] Keychain write failed (-34018), using SharedPreferences for "$key"',
+      );
+      await _writeFallback(key, value);
     }
   }
 
@@ -101,19 +125,32 @@ class _ResilientSecureStorage extends FlutterSecureStorage {
     WindowsOptions? wOptions,
   }) async {
     try {
-      final fromKeychain = await super.read(
-        key: key,
-        iOptions: iOptions,
-        aOptions: aOptions,
-        lOptions: lOptions,
-        webOptions: webOptions,
-        mOptions: mOptions,
-        wOptions: wOptions,
-      );
+      // Same single-platform-channel stall hazard as `write` — a read on the
+      // auth interceptor's hot path (every request fetches the token) must not
+      // hang the request forever. On timeout fall back to the SharedPreferences
+      // shadow copy.
+      final fromKeychain = await super
+          .read(
+            key: key,
+            iOptions: iOptions,
+            aOptions: aOptions,
+            lOptions: lOptions,
+            webOptions: webOptions,
+            mOptions: mOptions,
+            wOptions: wOptions,
+          )
+          .timeout(ApiConstants.secureStorageOpTimeout);
       // Migration aid: if Keychain has nothing but SharedPreferences does
       // (because an earlier write fell back), surface the SharedPreferences
       // copy so reads stay consistent.
       if (fromKeychain != null) return fromKeychain;
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('secure.$key');
+    } on TimeoutException {
+      debugPrint(
+        '⚠️ [SecureStorage] Keychain read STALLED >${ApiConstants.secureStorageOpTimeout.inSeconds}s, '
+        'falling back to SharedPreferences for "$key"',
+      );
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString('secure.$key');
     } catch (e) {
@@ -315,9 +352,15 @@ class ApiClient with WidgetsBindingObserver {
         // Check if token is expired or about to expire (within 30s buffer)
         final expiresAt = session.expiresAt;
         if (expiresAt != null) {
-          final expiresAtDate = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
-          if (DateTime.now().isAfter(expiresAtDate.subtract(const Duration(seconds: 30)))) {
-            debugPrint('⚠️ [API] Token expired/expiring, refreshing inline before request...');
+          final expiresAtDate = DateTime.fromMillisecondsSinceEpoch(
+            expiresAt * 1000,
+          );
+          if (DateTime.now().isAfter(
+            expiresAtDate.subtract(const Duration(seconds: 30)),
+          )) {
+            debugPrint(
+              '⚠️ [API] Token expired/expiring, refreshing inline before request...',
+            );
             try {
               // Hard timeout: a hung refresh must NOT block the request path
               // forever (see ApiConstants.tokenRefreshTimeout). On timeout we
@@ -331,8 +374,10 @@ class ApiClient with WidgetsBindingObserver {
                 return refreshed.session!.accessToken;
               }
             } on TimeoutException {
-              debugPrint('❌ [API] Inline token refresh timed out after '
-                  '${ApiConstants.tokenRefreshTimeout.inSeconds}s — using stale token, 401 path will recover');
+              debugPrint(
+                '❌ [API] Inline token refresh timed out after '
+                '${ApiConstants.tokenRefreshTimeout.inSeconds}s — using stale token, 401 path will recover',
+              );
             } catch (e) {
               debugPrint('❌ [API] Inline token refresh failed: $e');
               // Return the expired token — the 401 interceptor will retry
@@ -447,10 +492,12 @@ class ApiClient with WidgetsBindingObserver {
             final redirectUrl = response.headers['location']!.first;
             final options = response.requestOptions;
             options.path = _resolveRedirectPath(redirectUrl);
-            _dio.fetch(options).then(
-              (r) => handler.resolve(r),
-              onError: (e) => handler.reject(e as DioException),
-            );
+            _dio
+                .fetch(options)
+                .then(
+                  (r) => handler.resolve(r),
+                  onError: (e) => handler.reject(e as DioException),
+                );
             return;
           }
           handler.next(response);
@@ -460,14 +507,15 @@ class ApiClient with WidgetsBindingObserver {
               (error.response!.statusCode == 307 ||
                   error.response!.statusCode == 308) &&
               error.response!.headers['location'] != null) {
-            final redirectUrl =
-                error.response!.headers['location']!.first;
+            final redirectUrl = error.response!.headers['location']!.first;
             final options = error.requestOptions;
             options.path = _resolveRedirectPath(redirectUrl);
-            _dio.fetch(options).then(
-              (r) => handler.resolve(r),
-              onError: (e) => handler.reject(e as DioException),
-            );
+            _dio
+                .fetch(options)
+                .then(
+                  (r) => handler.resolve(r),
+                  onError: (e) => handler.reject(e as DioException),
+                );
             return;
           }
           handler.next(error);
@@ -534,16 +582,18 @@ class ApiClient with WidgetsBindingObserver {
               error.type == DioExceptionType.connectionTimeout;
           final isOverloaded = error.response?.statusCode == 503;
           final isIdempotent = opts.method.toUpperCase() == 'GET';
-          final retryable =
-              isConnectTimeout || (isOverloaded && isIdempotent);
+          final retryable = isConnectTimeout || (isOverloaded && isIdempotent);
           if (retryable && attempt < 2) {
             opts.extra['_transientRetry'] = attempt + 1;
             // Exponential backoff (~0.5s, ~1s) + up to 400ms random jitter.
             final baseMs = 500 * (1 << attempt);
-            final delay = Duration(milliseconds: baseMs + Random().nextInt(400));
+            final delay = Duration(
+              milliseconds: baseMs + Random().nextInt(400),
+            );
             debugPrint(
-                '🔄 [API] Transient failure (${error.type}/${error.response?.statusCode}), '
-                'retry ${attempt + 1}/2 in ${delay.inMilliseconds}ms...');
+              '🔄 [API] Transient failure (${error.type}/${error.response?.statusCode}), '
+              'retry ${attempt + 1}/2 in ${delay.inMilliseconds}ms...',
+            );
             await Future.delayed(delay);
             try {
               final retryResponse = await _dio.fetch(opts);
@@ -593,7 +643,8 @@ class ApiClient with WidgetsBindingObserver {
               if (!_userDeletedSignOutInFlight) {
                 _userDeletedSignOutInFlight = true;
                 debugPrint(
-                    '🚪 [API] JWT_USER_DELETED detected — auth user gone server-side, forcing sign-out');
+                  '🚪 [API] JWT_USER_DELETED detected — auth user gone server-side, forcing sign-out',
+                );
                 // Fire-and-forget: we still want to reject this request below
                 // so the caller's UI gets an error frame instead of hanging
                 // on a Future that never completes. The signOut triggers the
@@ -603,13 +654,16 @@ class ApiClient with WidgetsBindingObserver {
                   try {
                     await Supabase.instance.client.auth.signOut();
                   } catch (e) {
-                    debugPrint('❌ [API] Forced sign-out after JWT_USER_DELETED failed: $e');
+                    debugPrint(
+                      '❌ [API] Forced sign-out after JWT_USER_DELETED failed: $e',
+                    );
                     await clearAuth();
                   }
                 }());
               } else {
                 debugPrint(
-                    '🚪 [API] JWT_USER_DELETED already handled — dropping duplicate 401 from ${error.requestOptions.path}');
+                  '🚪 [API] JWT_USER_DELETED already handled — dropping duplicate 401 from ${error.requestOptions.path}',
+                );
               }
               // Replace the noisy 401 bad-response with a benign cancel —
               // callers' catch handlers will see a cancellation instead of
@@ -631,8 +685,15 @@ class ApiClient with WidgetsBindingObserver {
             // password and returns 401 on wrong password. Treating that as
             // "expired session" makes us refresh + sign out, leaving the user
             // with no JWT for the retry → "Authorization header required".
-            final isFullReset = method == 'DELETE' && path.contains('/users/') && path.endsWith('/reset');
-            if (path.contains('/users/auth/') || path.contains('/auth/email') || path.contains('/auth/signup') || path.contains('/auth/password') || isFullReset) {
+            final isFullReset =
+                method == 'DELETE' &&
+                path.contains('/users/') &&
+                path.endsWith('/reset');
+            if (path.contains('/users/auth/') ||
+                path.contains('/auth/email') ||
+                path.contains('/auth/signup') ||
+                path.contains('/auth/password') ||
+                isFullReset) {
               return handler.next(error);
             }
             // Loop-prevention tag: once a request has been retried after a
@@ -648,7 +709,8 @@ class ApiClient with WidgetsBindingObserver {
             if (!alreadyRetried && retryCount < 2) {
               try {
                 debugPrint(
-                    '🔄 [API] 401 received (attempt ${retryCount + 1}/2), refreshing token...');
+                  '🔄 [API] 401 received (attempt ${retryCount + 1}/2), refreshing token...',
+                );
 
                 // Coalesce parallel 401s onto a single in-flight refresh.
                 // Otherwise N concurrent failed requests would each call
@@ -662,22 +724,24 @@ class ApiClient with WidgetsBindingObserver {
                 // latch, so every subsequent 401 coalesced onto a dead future
                 // and the whole app wedged. `_refreshOnce()` is now time-capped,
                 // and the latch can no longer get stuck regardless.
-                final refreshFuture = _refreshInFlight ??=
-                    _refreshOnce().whenComplete(() => _refreshInFlight = null);
+                final refreshFuture = _refreshInFlight ??= _refreshOnce()
+                    .whenComplete(() => _refreshInFlight = null);
                 final ok = await refreshFuture;
 
                 if (ok) {
                   final newToken = await _getCurrentAccessToken();
                   if (newToken != null) {
                     debugPrint(
-                        '✅ [API] Token refreshed, retrying request (attempt ${retryCount + 1})...');
+                      '✅ [API] Token refreshed, retrying request (attempt ${retryCount + 1})...',
+                    );
                     error.requestOptions.headers['Authorization'] =
                         'Bearer $newToken';
                     error.requestOptions.headers['X-Auth-Retry'] = '1';
                     error.requestOptions.extra['authRetried'] = true;
                     error.requestOptions.extra['_retryCount'] = retryCount + 1;
-                    final retryResponse =
-                        await _dio.fetch(error.requestOptions);
+                    final retryResponse = await _dio.fetch(
+                      error.requestOptions,
+                    );
                     return handler.resolve(retryResponse);
                   }
                 }
@@ -688,7 +752,8 @@ class ApiClient with WidgetsBindingObserver {
                 // `_refreshInFlight` is cleared by the future's whenComplete —
                 // no manual reset here (avoids nulling a newer in-flight latch).
                 debugPrint(
-                    '❌ [API] Retry ${retryCount + 1} refresh failed: $refreshError');
+                  '❌ [API] Retry ${retryCount + 1} refresh failed: $refreshError',
+                );
                 // Dead session — e.g. Supabase returns "Session from session_id
                 // claim in JWT does not exist" (403) when the session was
                 // terminated server-side (admin action, user signed out on
@@ -710,7 +775,8 @@ class ApiClient with WidgetsBindingObserver {
             // hanging on a Future that never completes.
             if (refreshFailedFatally || alreadyRetried || retryCount >= 2) {
               debugPrint(
-                  '🚪 [API] Session unrecoverable, signing out to reset auth state');
+                '🚪 [API] Session unrecoverable, signing out to reset auth state',
+              );
               try {
                 SentryService.addBreadcrumb(
                   category: 'auth.401',
@@ -841,8 +907,10 @@ class ApiClient with WidgetsBindingObserver {
 
         if (session != null &&
             (event == AuthChangeEvent.tokenRefreshed ||
-             event == AuthChangeEvent.signedIn)) {
-          debugPrint('🔄 [API] Auth state changed ($event), updating stored token');
+                event == AuthChangeEvent.signedIn)) {
+          debugPrint(
+            '🔄 [API] Auth state changed ($event), updating stored token',
+          );
           // New session means we're past any prior JWT_USER_DELETED storm —
           // re-arm the flag so a future server-side deletion is handled.
           _userDeletedSignOutInFlight = false;
@@ -850,10 +918,12 @@ class ApiClient with WidgetsBindingObserver {
           // Re-schedule proactive refresh whenever we get a new token
           _scheduleProactiveRefresh();
           // Attach the auth user id to Sentry events for this session.
-          unawaited(SentryService.setUser(
-            id: session.user.id,
-            email: session.user.email,
-          ));
+          unawaited(
+            SentryService.setUser(
+              id: session.user.id,
+              email: session.user.email,
+            ),
+          );
           // Backfill `public.users` row for sessions that came in via paths
           // other than the explicit signUp/signIn methods — most importantly
           // the email-confirmation deep-link flow, where Supabase mints a
@@ -898,9 +968,7 @@ class ApiClient with WidgetsBindingObserver {
     try {
       await _dio.post(
         '${ApiConstants.users}/auth/sync',
-        options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
       debugPrint('✅ [API] auth/sync ensured public.users row');
     } catch (e) {
@@ -924,32 +992,39 @@ class ApiClient with WidgetsBindingObserver {
     if (expiresAt == null) return;
 
     final expiresAtDate = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
-    final refreshAt = expiresAtDate.subtract(Duration(minutes: _refreshBufferMinutes));
+    final refreshAt = expiresAtDate.subtract(
+      Duration(minutes: _refreshBufferMinutes),
+    );
     final delay = refreshAt.difference(DateTime.now());
 
     if (delay.isNegative) {
       // Already past the proactive refresh window -- refresh immediately
-      debugPrint('⚠️ [Auth] Token expires soon or already expired, refreshing now...');
+      debugPrint(
+        '⚠️ [Auth] Token expires soon or already expired, refreshing now...',
+      );
       Supabase.instance.client.auth
           .refreshSession()
           .timeout(ApiConstants.tokenRefreshTimeout)
           .then((_) {
-        debugPrint('✅ [Auth] Immediate proactive refresh succeeded');
-        // The onAuthStateChange listener will re-schedule
-      }).catchError((e) {
-        // Includes TimeoutException — a hung background refresh must not pin
-        // a never-completing future. The 401 interceptor remains the backstop.
-        debugPrint('❌ [Auth] Immediate proactive refresh failed: $e');
-      });
+            debugPrint('✅ [Auth] Immediate proactive refresh succeeded');
+            // The onAuthStateChange listener will re-schedule
+          })
+          .catchError((e) {
+            // Includes TimeoutException — a hung background refresh must not pin
+            // a never-completing future. The 401 interceptor remains the backstop.
+            debugPrint('❌ [Auth] Immediate proactive refresh failed: $e');
+          });
       return;
     }
 
-    debugPrint('🔄 [Auth] Proactive refresh scheduled in ${delay.inMinutes}m ${delay.inSeconds % 60}s');
+    debugPrint(
+      '🔄 [Auth] Proactive refresh scheduled in ${delay.inMinutes}m ${delay.inSeconds % 60}s',
+    );
     _tokenRefreshTimer = Timer(delay, () async {
       try {
-        await Supabase.instance.client.auth
-            .refreshSession()
-            .timeout(ApiConstants.tokenRefreshTimeout);
+        await Supabase.instance.client.auth.refreshSession().timeout(
+          ApiConstants.tokenRefreshTimeout,
+        );
         debugPrint('✅ [Auth] Proactively refreshed token before expiry');
         // The onAuthStateChange listener will call _scheduleProactiveRefresh again
       } catch (e) {
@@ -982,14 +1057,20 @@ class ApiClient with WidgetsBindingObserver {
       final expiresAt = session.expiresAt;
       if (expiresAt == null) return;
 
-      final expiresAtDate = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
-      final bufferThreshold = expiresAtDate.subtract(Duration(minutes: _refreshBufferMinutes));
+      final expiresAtDate = DateTime.fromMillisecondsSinceEpoch(
+        expiresAt * 1000,
+      );
+      final bufferThreshold = expiresAtDate.subtract(
+        Duration(minutes: _refreshBufferMinutes),
+      );
 
       if (DateTime.now().isAfter(bufferThreshold)) {
-        debugPrint('🔄 [Auth] App resumed, token near/past expiry -- refreshing...');
-        await Supabase.instance.client.auth
-            .refreshSession()
-            .timeout(ApiConstants.tokenRefreshTimeout);
+        debugPrint(
+          '🔄 [Auth] App resumed, token near/past expiry -- refreshing...',
+        );
+        await Supabase.instance.client.auth.refreshSession().timeout(
+          ApiConstants.tokenRefreshTimeout,
+        );
         debugPrint('✅ [Auth] Token refreshed on app resume');
       } else {
         debugPrint('✅ [Auth] App resumed, token still valid');
@@ -1056,7 +1137,9 @@ class ApiClient with WidgetsBindingObserver {
 
   /// Save auth token
   Future<void> setAuthToken(String token) async {
+    if (kDebugMode) debugPrint('🔐 [API] setAuthToken → writing token...');
     await _storage.write(key: _tokenKey, value: token);
+    if (kDebugMode) debugPrint('🔐 [API] setAuthToken ← done');
   }
 
   /// In-memory cache + coalescing latch for the user id.
@@ -1077,7 +1160,9 @@ class ApiClient with WidgetsBindingObserver {
   /// Save user ID
   Future<void> setUserId(String userId) async {
     _cachedUserId = userId;
+    if (kDebugMode) debugPrint('🔐 [API] setUserId → writing user id...');
     await _storage.write(key: _userIdKey, value: userId);
+    if (kDebugMode) debugPrint('🔐 [API] setUserId ← done');
   }
 
   /// Get stored user ID (memory-cached, coalesced, timeout-capped).
@@ -1225,9 +1310,7 @@ class ApiClient with WidgetsBindingObserver {
   ) async {
     final res = await _dio.post<dynamic>(
       '/workouts/$workoutId/swap-variant',
-      data: <String, dynamic>{
-        'target_intensity': targetIntensity,
-      },
+      data: <String, dynamic>{'target_intensity': targetIntensity},
     );
     final body = res.data;
     if (body is Map<String, dynamic>) {
@@ -1284,19 +1367,14 @@ class ApiClient with WidgetsBindingObserver {
   }) async {
     final fileName = file.path.split('/').last;
     final formData = FormData.fromMap({
-      fieldName: await MultipartFile.fromFile(
-        file.path,
-        filename: fileName,
-      ),
+      fieldName: await MultipartFile.fromFile(file.path, filename: fileName),
       if (extraFields != null) ...extraFields,
     });
 
     return _dio.post(
       path,
       data: formData,
-      options: options ?? Options(
-        contentType: 'multipart/form-data',
-      ),
+      options: options ?? Options(contentType: 'multipart/form-data'),
     );
   }
 }
