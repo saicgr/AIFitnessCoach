@@ -511,8 +511,22 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
         _generationStartedAt = null;
       }
 
-      // Handle auto-generation trigger
-      if (response?.needsGeneration == true && response?.nextWorkoutDate != null) {
+      // Handle auto-generation trigger.
+      // GATE: never auto-generate while the user is still mid-onboarding (before
+      // coach-selection sets onboarding_completed). The heavy /generate-stream
+      // call would otherwise saturate the backend during the /personal-info save,
+      // making that PUT take ~8s. `onboarding_completed` flips true at
+      // coach-selection and the router only routes to /home once onboarding is
+      // done — so being at home implies this is true and home generation is
+      // unaffected. Gen still runs through the post-coach funnel to pre-warm home.
+      final onboardingComplete =
+          _ref.read(authStateProvider).user?.onboardingCompleted ?? false;
+      if (response?.needsGeneration == true &&
+          !onboardingComplete) {
+        debugPrint('⏸️ [Auto-Gen] Skipped — user still onboarding '
+            '(onboarding_completed=false)');
+      } else if (response?.needsGeneration == true &&
+          response?.nextWorkoutDate != null) {
         final hasAnyWorkout = response!.todayWorkout != null || response.nextWorkout != null;
 
         // Cooldown gate: if we recently failed (especially on 429), don't

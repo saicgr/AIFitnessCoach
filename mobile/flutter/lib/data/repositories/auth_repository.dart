@@ -1766,6 +1766,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Optimistically mark personal-info as complete in the in-memory user so the
+  /// router's `isPersonalInfoComplete` gate (name + DOB + gender + height +
+  /// weight) passes immediately. This lets `/personal-info` advance to
+  /// `/coach-selection` WITHOUT waiting on the backend PUT — which can take
+  /// several seconds when the server is busy (e.g. workout generation). The real
+  /// values are persisted in the background and re-submitted at coach-selection;
+  /// `refreshUser()` later reconciles. Mirrors [markOnboardingComplete].
+  Future<void> markPersonalInfoComplete({
+    required String name,
+    required String dateOfBirth,
+    required String gender,
+    required double heightCm,
+    required double weightKg,
+  }) async {
+    if (state.user != null) {
+      final updatedUser = state.user!.copyWith(
+        name: name,
+        dateOfBirth: dateOfBirth,
+        gender: gender,
+        heightCm: heightCm,
+        weightKg: weightKg,
+      );
+      state = state.copyWith(user: updatedUser);
+      debugPrint('✅ [Auth] Marked personal-info complete (in-memory)');
+    }
+  }
+
   /// Mark coach as selected
   Future<void> markCoachSelected() async {
     if (state.user != null) {

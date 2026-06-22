@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -206,18 +207,58 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
   /// Upload the optional avatar to the same endpoint the profile editor uses.
   /// Best-effort — a failure must NOT block onboarding completion.
-  Future<void> _uploadPhotoIfAny(String userId) async {
-    if (_selectedPhotoFile == null) return;
+  /// Persists name/DOB/body-metrics (+ optional avatar) to the backend AFTER the
+  /// user has already advanced to coach-selection. Uses CAPTURED singletons
+  /// (`apiClient`, `authNotifier`) — never `ref` — so it stays valid once this
+  /// screen disposes on navigation. `refreshUser()` runs ONLY after a successful
+  /// PUT, so a failed PUT can't clear the optimistic name and bounce the user
+  /// back to /personal-info. A total failure is still recoverable because
+  /// coach-selection re-submits name + DOB.
+  Future<void> _persistPersonalInfo({
+    required ApiClient apiClient,
+    required AuthNotifier authNotifier,
+    required String userId,
+    required String name,
+    required String dobIso,
+    required String gender,
+    required double heightCm,
+    required double weightKg,
+    required double targetWeightKg,
+  }) async {
     try {
-      final apiClient = ref.read(apiClientProvider);
-      await apiClient.uploadFile(
-        '${ApiConstants.users}/$userId/photo',
-        _selectedPhotoFile!,
-        fieldName: 'file',
+      await apiClient.put(
+        '${ApiConstants.users}/$userId',
+        data: {
+          'name': name,
+          'date_of_birth': dobIso,
+          'gender': gender,
+          'height_cm': heightCm,
+          'weight_kg': weightKg,
+          'target_weight_kg': targetWeightKg,
+        },
       );
-      debugPrint('✅ [PersonalInfo] Avatar uploaded');
-    } catch (e) {
-      debugPrint('⚠️ [PersonalInfo] Avatar upload failed (non-blocking): $e');
+      debugPrint('✅ [PersonalInfo] Saved name + DOB + body metrics (background)');
+
+      if (_selectedPhotoFile != null) {
+        try {
+          await apiClient.uploadFile(
+            '${ApiConstants.users}/$userId/photo',
+            _selectedPhotoFile!,
+            fieldName: 'file',
+          );
+          debugPrint('✅ [PersonalInfo] Avatar uploaded (background)');
+        } catch (e) {
+          debugPrint('⚠️ [PersonalInfo] Avatar upload failed (non-blocking): $e');
+        }
+      }
+
+      // Reconcile from the server only AFTER a successful PUT.
+      await authNotifier.refreshUser();
+    } catch (e, st) {
+      debugPrint(
+        '❌ [PersonalInfo] Background persist failed (optimistic state kept; '
+        'coach-selection re-persists): $e\n$st',
+      );
     }
   }
 
@@ -271,27 +312,35 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         throw Exception('Missing user id — sign-in did not complete.');
       }
 
-      // Single PUT writes name + DOB (this screen) + the quiz body
-      // metrics so User.isPersonalInfoComplete flips true on the next
-      // refresh and the router advances to /coach-selection.
-      await apiClient.put(
-        '${ApiConstants.users}/$userId',
-        data: {
-          'name': name,
-          'date_of_birth': _dateOfBirth!.toIso8601String().split('T').first,
-          'gender': quizData.gender,
-          'height_cm': quizData.heightCm,
-          'weight_kg': quizData.weightKg,
-          'target_weight_kg': quizData.goalWeightKg ?? quizData.weightKg,
-        },
-      );
-      debugPrint('✅ [PersonalInfo] Saved name + DOB + body metrics');
+      final dobIso = _dateOfBirth!.toIso8601String().split('T').first;
 
-      // Optional avatar — uploaded before the refresh so the new photo is
-      // already on the user record when the profile reads it. Best-effort.
-      await _uploadPhotoIfAny(userId);
+      // OPTIMISTIC: flip the router's isPersonalInfoComplete gate true NOW so we
+      // advance to coach-selection instantly. The backend PUT (which can take
+      // ~8s when the server is busy with workout generation) no longer blocks
+      // navigation — it runs in the background below.
+      await ref.read(authStateProvider.notifier).markPersonalInfoComplete(
+            name: name,
+            dateOfBirth: dobIso,
+            gender: quizData.gender!,
+            heightCm: quizData.heightCm!,
+            weightKg: quizData.weightKg!,
+          );
 
-      await ref.read(authStateProvider.notifier).refreshUser();
+      // Persist name + DOB + body metrics (+ optional avatar) to the backend in
+      // the BACKGROUND. Captures singletons (not `ref`) so it stays valid after
+      // this screen disposes on navigation. coach-selection re-submits name+DOB,
+      // so a failure here is recoverable.
+      unawaited(_persistPersonalInfo(
+        apiClient: apiClient,
+        authNotifier: ref.read(authStateProvider.notifier),
+        userId: userId,
+        name: name,
+        dobIso: dobIso,
+        gender: quizData.gender!,
+        heightCm: quizData.heightCm!,
+        weightKg: quizData.weightKg!,
+        targetWeightKg: quizData.goalWeightKg ?? quizData.weightKg!,
+      ));
 
       ref
           .read(posthogServiceProvider)
