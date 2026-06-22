@@ -95,11 +95,12 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border(
+                        // NOTE: top-only accent border. A non-uniform Border
+                        // (different colors per side) + borderRadius throws
+                        // "borderRadius can only be given on borders with
+                        // uniform colors" at paint time.
+                        border: const Border(
                           top: BorderSide(color: _accent, width: 1),
-                          left: BorderSide(color: border),
-                          right: BorderSide(color: border),
-                          bottom: BorderSide(color: border),
                         ),
                       ),
                       padding: const EdgeInsets.symmetric(
@@ -146,11 +147,12 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border(
+                        // NOTE: top-only accent border. A non-uniform Border
+                        // (different colors per side) + borderRadius throws
+                        // "borderRadius can only be given on borders with
+                        // uniform colors" at paint time.
+                        border: const Border(
                           top: BorderSide(color: _accent, width: 1),
-                          left: BorderSide(color: border),
-                          right: BorderSide(color: border),
-                          bottom: BorderSide(color: border),
                         ),
                       ),
                       child: Column(
