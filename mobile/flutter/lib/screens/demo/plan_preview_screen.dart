@@ -9,8 +9,14 @@ import '../onboarding/onboarding_experiments.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../widgets/exercise_image.dart';
 part 'plan_preview_screen_ui.dart';
 
+/// Signature v2 type system (docs/planning/app-redesign-2026-06/signature-v2.html):
+/// Anton = uppercase display headings, Barlow Condensed = letter-spaced
+/// kickers/labels/CTAs, single orange accent (AppColors.orange ≈ #F97316).
+const String _kSigDisplay = 'Anton';
+const String _kSigLabel = 'Barlow Condensed';
 
 /// Full Plan Preview Screen
 /// Shows the user's complete personalized 4-week workout plan BEFORE asking them to subscribe
@@ -63,9 +69,9 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
     // kill-switch and log the view.
     if (widget.fromOnboarding) {
       _maybeSkipForOnboarding();
-      ref.read(posthogServiceProvider).capture(
-            eventName: 'onboarding_plan_preview_viewed',
-          );
+      ref
+          .read(posthogServiceProvider)
+          .capture(eventName: 'onboarding_plan_preview_viewed');
     }
 
     // Simulate loading the personalized plan
@@ -98,9 +104,15 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final quizData = ref.watch(preAuthQuizProvider);
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
+    final backgroundColor = isDark
+        ? AppColors.pureBlack
+        : AppColorsLight.pureWhite;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -121,20 +133,28 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       children: steps.map((step) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.check_circle, color: AppColors.success, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                step['text'] as String,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textSecondary,
-                ),
-              ),
-            ],
-          ).animate(delay: Duration(milliseconds: (step['delay'] as num).toInt())).fadeIn(),
+          child:
+              Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: AppColors.success,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        step['text'] as String,
+                        style: TextStyle(fontSize: 14, color: textSecondary),
+                      ),
+                    ],
+                  )
+                  .animate(
+                    delay: Duration(
+                      milliseconds: (step['delay'] as num).toInt(),
+                    ),
+                  )
+                  .fadeIn(),
         );
       }).toList(),
     );
@@ -147,7 +167,9 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
     Color textSecondary,
   ) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final borderColor = isDark
+        ? AppColors.cardBorder
+        : AppColorsLight.cardBorder;
 
     return SafeArea(
       child: Column(
@@ -168,17 +190,38 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
                   const SizedBox(height: 16),
 
                   // "This is YOUR personalized plan" header
-                  _buildPersonalizedHeader(isDark, quizData, textPrimary, textSecondary),
+                  _buildPersonalizedHeader(
+                    isDark,
+                    quizData,
+                    textPrimary,
+                    textSecondary,
+                  ),
 
                   const SizedBox(height: 20),
 
-                  // Weekly workouts
-                  ..._buildWeeklyWorkouts(isDark, quizData, textPrimary, textSecondary, elevatedColor, borderColor),
+                  // What you'll achieve section — lead with the 4-week outcome
+                  // arc (master → build → intensity → peak) BEFORE the day-by-day
+                  // mechanics. Leading with the transformation/outcome is the
+                  // higher-converting order for a pre-paywall plan preview.
+                  _buildAchievementsSection(
+                    isDark,
+                    textPrimary,
+                    textSecondary,
+                    elevatedColor,
+                    borderColor,
+                  ),
 
                   const SizedBox(height: 24),
 
-                  // What you'll achieve section
-                  _buildAchievementsSection(isDark, textPrimary, textSecondary, elevatedColor, borderColor),
+                  // Weekly workouts (the concrete proof, shown after the arc)
+                  ..._buildWeeklyWorkouts(
+                    isDark,
+                    quizData,
+                    textPrimary,
+                    textSecondary,
+                    elevatedColor,
+                    borderColor,
+                  ),
 
                   const SizedBox(height: 120), // Space for CTAs
                 ],
@@ -207,8 +250,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color:
-                      isDark ? AppColors.elevated : AppColorsLight.elevated,
+                  color: isDark ? AppColors.elevated : AppColorsLight.elevated,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -225,17 +267,23 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context).planPreviewYour4WeekPlan,
+                  AppLocalizations.of(
+                    context,
+                  ).planPreviewYour4WeekPlan.toUpperCase(),
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontFamily: _kSigDisplay,
+                    fontSize: 27,
+                    letterSpacing: 0.5,
                     color: textPrimary,
                   ),
                 ),
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(6),
@@ -248,8 +296,10 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
                           Text(
                             AppLocalizations.of(context).planPreviewFreePreview,
                             style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                              fontFamily: _kSigLabel,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2,
                               color: Colors.green,
                             ),
                           ),
@@ -266,7 +316,12 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
     ).animate().fadeIn(duration: 300.ms);
   }
 
-  Widget _buildWeekTabs(bool isDark, Color textPrimary, Color textSecondary, Color elevatedColor) {
+  Widget _buildWeekTabs(
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    Color elevatedColor,
+  ) {
     return Container(
       height: 48,
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -286,16 +341,20 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.cyan : Colors.transparent,
+                  color: isSelected ? AppColors.orange : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
                   child: Text(
-                    'Week ${index + 1}',
+                    'Week ${index + 1}'.toUpperCase(),
                     style: TextStyle(
+                      fontFamily: _kSigLabel,
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected ? Colors.white : textSecondary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                      color: isSelected
+                          ? const Color(0xFF160B03)
+                          : textSecondary,
                     ),
                   ),
                 ),
@@ -341,13 +400,27 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
     Color borderColor,
   ) {
     final daysPerWeek = quizData.daysPerWeek ?? 3;
-    final workoutDays = quizData.workoutDays ?? [0, 2, 4]; // Default Mon, Wed, Fri
+    final workoutDays =
+        quizData.workoutDays ?? [0, 2, 4]; // Default Mon, Wed, Fri
     final goal = quizData.goal ?? 'build_muscle';
 
     // Generate workout schedule based on quiz answers
-    final workouts = _generateWorkoutSchedule(goal, daysPerWeek, workoutDays, _selectedWeek);
+    final workouts = _generateWorkoutSchedule(
+      goal,
+      daysPerWeek,
+      workoutDays,
+      _selectedWeek,
+    );
 
-    final dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final dayNames = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
 
     return List.generate(7, (dayIndex) {
       final workout = workouts[dayIndex];
@@ -355,27 +428,42 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: elevatedColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isWorkoutDay ? (workout['color'] as Color).withOpacity(0.3) : borderColor,
-            ),
-          ),
-          child: isWorkoutDay
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildWorkoutDayCard(dayNames[dayIndex], workout, textPrimary, textSecondary),
-                    // Gravl-gap: primary muscle groups this session trains,
-                    // derived from its exercises (kill-switch gated).
-                    if (_showSplitRationale)
-                      _buildSessionMuscleChips(workout, textSecondary),
-                  ],
+        child:
+            Container(
+                  decoration: BoxDecoration(
+                    color: elevatedColor,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isWorkoutDay
+                          ? (workout['color'] as Color).withOpacity(0.3)
+                          : borderColor,
+                    ),
+                  ),
+                  child: isWorkoutDay
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildWorkoutDayCard(
+                              dayNames[dayIndex],
+                              workout,
+                              textPrimary,
+                              textSecondary,
+                            ),
+                            // Gravl-gap: primary muscle groups this session trains,
+                            // derived from its exercises (kill-switch gated).
+                            if (_showSplitRationale)
+                              _buildSessionMuscleChips(workout, textSecondary),
+                          ],
+                        )
+                      : _buildRestDayCard(
+                          dayNames[dayIndex],
+                          textPrimary,
+                          textSecondary,
+                        ),
                 )
-              : _buildRestDayCard(dayNames[dayIndex], textPrimary, textSecondary),
-        ).animate(delay: Duration(milliseconds: 250 + dayIndex * 50)).fadeIn().slideX(begin: 0.02),
+                .animate(delay: Duration(milliseconds: 250 + dayIndex * 50))
+                .fadeIn()
+                .slideX(begin: 0.02),
       );
     });
   }
@@ -385,9 +473,13 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
   /// (e.g. Push → Chest, Shoulders, Triceps). Splits compound tags like
   /// "Chest/Triceps" so each group reads as its own chip, and caps at 6 to keep
   /// the collapsed card tidy on small screens.
-  Widget _buildSessionMuscleChips(Map<String, dynamic> workout, Color textSecondary) {
+  Widget _buildSessionMuscleChips(
+    Map<String, dynamic> workout,
+    Color textSecondary,
+  ) {
     final color = workout['color'] as Color;
-    final exercises = (workout['exercises'] as List).cast<Map<String, dynamic>>();
+    final exercises = (workout['exercises'] as List)
+        .cast<Map<String, dynamic>>();
 
     final muscles = <String>[];
     for (final ex in exercises) {
@@ -414,22 +506,29 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               spacing: 6,
               runSpacing: 6,
               children: shown
-                  .map((m) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: color.withValues(alpha: 0.25)),
+                  .map(
+                    (m) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.25),
                         ),
-                        child: Text(
-                          m,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: color,
-                          ),
+                      ),
+                      child: Text(
+                        m,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: color,
                         ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -438,7 +537,11 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
     );
   }
 
-  Widget _buildRestDayCard(String dayName, Color textPrimary, Color textSecondary) {
+  Widget _buildRestDayCard(
+    String dayName,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -450,11 +553,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               color: Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              Icons.self_improvement,
-              color: Colors.grey,
-              size: 22,
-            ),
+            child: Icon(Icons.self_improvement, color: Colors.grey, size: 22),
           ),
           const SizedBox(width: 14),
           Column(
@@ -470,10 +569,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               ),
               Text(
                 AppLocalizations.of(context).planPreviewRestRecovery,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
           ),
@@ -509,71 +605,235 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
         'icon': workoutType['icon'],
         'color': workoutType['color'],
         'duration': 45 + (weekIndex * 5), // Progressive duration
-        'exercises': _getExercisesForWorkout(workoutType['id'] as String, weekIndex),
+        'exercises': _getExercisesForWorkout(
+          workoutType['id'] as String,
+          weekIndex,
+        ),
       };
     }
 
     return schedule;
   }
 
-  List<Map<String, dynamic>> _getWorkoutTypesForGoal(String goal, int daysPerWeek) {
+  List<Map<String, dynamic>> _getWorkoutTypesForGoal(
+    String goal,
+    int daysPerWeek,
+  ) {
     switch (goal) {
       case 'build_muscle':
       case 'increase_strength':
         if (daysPerWeek >= 4) {
           return [
-            {'id': 'push', 'name': 'Push', 'icon': Icons.fitness_center, 'color': AppColors.purple},
-            {'id': 'pull', 'name': 'Pull', 'icon': Icons.fitness_center, 'color': AppColors.electricBlue},
-            {'id': 'legs', 'name': 'Legs', 'icon': Icons.directions_walk, 'color': AppColors.teal},
-            {'id': 'upper', 'name': 'Upper', 'icon': Icons.fitness_center, 'color': AppColors.purple},
-            {'id': 'lower', 'name': 'Lower', 'icon': Icons.directions_walk, 'color': AppColors.teal},
-            {'id': 'full', 'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.orange},
-            {'id': 'arms', 'name': 'Arms', 'icon': Icons.fitness_center, 'color': AppColors.coral},
+            {
+              'id': 'push',
+              'name': 'Push',
+              'icon': Icons.fitness_center,
+              'color': AppColors.purple,
+            },
+            {
+              'id': 'pull',
+              'name': 'Pull',
+              'icon': Icons.fitness_center,
+              'color': AppColors.electricBlue,
+            },
+            {
+              'id': 'legs',
+              'name': 'Legs',
+              'icon': Icons.directions_walk,
+              'color': AppColors.teal,
+            },
+            {
+              'id': 'upper',
+              'name': 'Upper',
+              'icon': Icons.fitness_center,
+              'color': AppColors.purple,
+            },
+            {
+              'id': 'lower',
+              'name': 'Lower',
+              'icon': Icons.directions_walk,
+              'color': AppColors.teal,
+            },
+            {
+              'id': 'full',
+              'name': 'Full Body',
+              'icon': Icons.accessibility_new,
+              'color': AppColors.orange,
+            },
+            {
+              'id': 'arms',
+              'name': 'Arms',
+              'icon': Icons.fitness_center,
+              'color': AppColors.coral,
+            },
           ];
         } else {
           return [
-            {'id': 'upper', 'name': 'Upper Body', 'icon': Icons.fitness_center, 'color': AppColors.purple},
-            {'id': 'lower', 'name': 'Lower Body', 'icon': Icons.directions_walk, 'color': AppColors.teal},
-            {'id': 'full', 'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.orange},
+            {
+              'id': 'upper',
+              'name': 'Upper Body',
+              'icon': Icons.fitness_center,
+              'color': AppColors.purple,
+            },
+            {
+              'id': 'lower',
+              'name': 'Lower Body',
+              'icon': Icons.directions_walk,
+              'color': AppColors.teal,
+            },
+            {
+              'id': 'full',
+              'name': 'Full Body',
+              'icon': Icons.accessibility_new,
+              'color': AppColors.orange,
+            },
           ];
         }
 
       case 'lose_weight':
         return [
-          {'id': 'hiit', 'name': 'HIIT', 'icon': Icons.flash_on, 'color': AppColors.coral},
-          {'id': 'strength', 'name': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.purple},
-          {'id': 'cardio', 'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
-          {'id': 'hiit', 'name': 'HIIT', 'icon': Icons.flash_on, 'color': AppColors.coral},
-          {'id': 'full', 'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.teal},
-          {'id': 'recovery', 'name': 'Active Recovery', 'icon': Icons.self_improvement, 'color': AppColors.success},
-          {'id': 'cardio', 'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
+          {
+            'id': 'hiit',
+            'name': 'HIIT',
+            'icon': Icons.flash_on,
+            'color': AppColors.coral,
+          },
+          {
+            'id': 'strength',
+            'name': 'Strength',
+            'icon': Icons.fitness_center,
+            'color': AppColors.purple,
+          },
+          {
+            'id': 'cardio',
+            'name': 'Cardio',
+            'icon': Icons.directions_run,
+            'color': AppColors.orange,
+          },
+          {
+            'id': 'hiit',
+            'name': 'HIIT',
+            'icon': Icons.flash_on,
+            'color': AppColors.coral,
+          },
+          {
+            'id': 'full',
+            'name': 'Full Body',
+            'icon': Icons.accessibility_new,
+            'color': AppColors.teal,
+          },
+          {
+            'id': 'recovery',
+            'name': 'Active Recovery',
+            'icon': Icons.self_improvement,
+            'color': AppColors.success,
+          },
+          {
+            'id': 'cardio',
+            'name': 'Cardio',
+            'icon': Icons.directions_run,
+            'color': AppColors.orange,
+          },
         ];
 
       case 'improve_endurance':
         return [
-          {'id': 'cardio', 'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
-          {'id': 'intervals', 'name': 'Intervals', 'icon': Icons.timer, 'color': AppColors.coral},
-          {'id': 'endurance', 'name': 'Endurance', 'icon': Icons.directions_bike, 'color': AppColors.teal},
-          {'id': 'tempo', 'name': 'Tempo', 'icon': Icons.speed, 'color': AppColors.electricBlue},
-          {'id': 'long', 'name': 'Long Run', 'icon': Icons.directions_run, 'color': AppColors.orange},
-          {'id': 'recovery', 'name': 'Recovery', 'icon': Icons.self_improvement, 'color': AppColors.success},
-          {'id': 'cross', 'name': 'Cross Train', 'icon': Icons.pool, 'color': AppColors.purple},
+          {
+            'id': 'cardio',
+            'name': 'Cardio',
+            'icon': Icons.directions_run,
+            'color': AppColors.orange,
+          },
+          {
+            'id': 'intervals',
+            'name': 'Intervals',
+            'icon': Icons.timer,
+            'color': AppColors.coral,
+          },
+          {
+            'id': 'endurance',
+            'name': 'Endurance',
+            'icon': Icons.directions_bike,
+            'color': AppColors.teal,
+          },
+          {
+            'id': 'tempo',
+            'name': 'Tempo',
+            'icon': Icons.speed,
+            'color': AppColors.electricBlue,
+          },
+          {
+            'id': 'long',
+            'name': 'Long Run',
+            'icon': Icons.directions_run,
+            'color': AppColors.orange,
+          },
+          {
+            'id': 'recovery',
+            'name': 'Recovery',
+            'icon': Icons.self_improvement,
+            'color': AppColors.success,
+          },
+          {
+            'id': 'cross',
+            'name': 'Cross Train',
+            'icon': Icons.pool,
+            'color': AppColors.purple,
+          },
         ];
 
       default:
         return [
-          {'id': 'full', 'name': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.purple},
-          {'id': 'cardio', 'name': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
-          {'id': 'strength', 'name': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.electricBlue},
-          {'id': 'flexibility', 'name': 'Flexibility', 'icon': Icons.self_improvement, 'color': AppColors.teal},
-          {'id': 'hiit', 'name': 'HIIT', 'icon': Icons.flash_on, 'color': AppColors.coral},
-          {'id': 'active', 'name': 'Active', 'icon': Icons.directions_walk, 'color': AppColors.success},
-          {'id': 'core', 'name': 'Core', 'icon': Icons.circle_outlined, 'color': AppColors.purple},
+          {
+            'id': 'full',
+            'name': 'Full Body',
+            'icon': Icons.accessibility_new,
+            'color': AppColors.purple,
+          },
+          {
+            'id': 'cardio',
+            'name': 'Cardio',
+            'icon': Icons.directions_run,
+            'color': AppColors.orange,
+          },
+          {
+            'id': 'strength',
+            'name': 'Strength',
+            'icon': Icons.fitness_center,
+            'color': AppColors.electricBlue,
+          },
+          {
+            'id': 'flexibility',
+            'name': 'Flexibility',
+            'icon': Icons.self_improvement,
+            'color': AppColors.teal,
+          },
+          {
+            'id': 'hiit',
+            'name': 'HIIT',
+            'icon': Icons.flash_on,
+            'color': AppColors.coral,
+          },
+          {
+            'id': 'active',
+            'name': 'Active',
+            'icon': Icons.directions_walk,
+            'color': AppColors.success,
+          },
+          {
+            'id': 'core',
+            'name': 'Core',
+            'icon': Icons.circle_outlined,
+            'color': AppColors.purple,
+          },
         ];
     }
   }
 
-  List<Map<String, dynamic>> _getExercisesForWorkout(String workoutId, int weekIndex) {
+  List<Map<String, dynamic>> _getExercisesForWorkout(
+    String workoutId,
+    int weekIndex,
+  ) {
     // Base sets and reps that progress each week
     final baseSets = 3 + (weekIndex ~/ 2);
     final baseReps = 10 + weekIndex;
@@ -583,41 +843,85 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       // Week 1 - Foundation
       [
         {'name': 'Flat Bench Press', 'setsReps': '3 x 10', 'muscle': 'Chest'},
-        {'name': 'Dumbbell Shoulder Press', 'setsReps': '3 x 10', 'muscle': 'Shoulders'},
-        {'name': 'Incline Push-Ups', 'setsReps': '3 x 12', 'muscle': 'Upper Chest'},
+        {
+          'name': 'Dumbbell Shoulder Press',
+          'setsReps': '3 x 10',
+          'muscle': 'Shoulders',
+        },
+        {
+          'name': 'Incline Push-Ups',
+          'setsReps': '3 x 12',
+          'muscle': 'Upper Chest',
+        },
         {'name': 'Tricep Pushdowns', 'setsReps': '3 x 12', 'muscle': 'Triceps'},
         {'name': 'Lateral Raises', 'setsReps': '3 x 15', 'muscle': 'Shoulders'},
       ],
       // Week 2 - Volume Increase
       [
-        {'name': 'Incline Dumbbell Press', 'setsReps': '4 x 10', 'muscle': 'Upper Chest'},
-        {'name': 'Barbell Overhead Press', 'setsReps': '3 x 8', 'muscle': 'Shoulders'},
-        {'name': 'Flat Dumbbell Flyes', 'setsReps': '3 x 12', 'muscle': 'Chest'},
+        {
+          'name': 'Incline Dumbbell Press',
+          'setsReps': '4 x 10',
+          'muscle': 'Upper Chest',
+        },
+        {
+          'name': 'Barbell Overhead Press',
+          'setsReps': '3 x 8',
+          'muscle': 'Shoulders',
+        },
+        {
+          'name': 'Flat Dumbbell Flyes',
+          'setsReps': '3 x 12',
+          'muscle': 'Chest',
+        },
         {'name': 'Skull Crushers', 'setsReps': '3 x 12', 'muscle': 'Triceps'},
         {'name': 'Front Raises', 'setsReps': '3 x 12', 'muscle': 'Shoulders'},
       ],
       // Week 3 - Intensity
       [
-        {'name': 'Decline Bench Press', 'setsReps': '4 x 8', 'muscle': 'Lower Chest'},
+        {
+          'name': 'Decline Bench Press',
+          'setsReps': '4 x 8',
+          'muscle': 'Lower Chest',
+        },
         {'name': 'Arnold Press', 'setsReps': '4 x 10', 'muscle': 'Shoulders'},
         {'name': 'Cable Crossovers', 'setsReps': '3 x 15', 'muscle': 'Chest'},
-        {'name': 'Overhead Tricep Ext.', 'setsReps': '4 x 10', 'muscle': 'Triceps'},
-        {'name': 'Cable Lateral Raises', 'setsReps': '3 x 15', 'muscle': 'Shoulders'},
+        {
+          'name': 'Overhead Tricep Ext.',
+          'setsReps': '4 x 10',
+          'muscle': 'Triceps',
+        },
+        {
+          'name': 'Cable Lateral Raises',
+          'setsReps': '3 x 15',
+          'muscle': 'Shoulders',
+        },
       ],
       // Week 4 - Peak
       [
         {'name': 'Flat Barbell Press', 'setsReps': '5 x 5', 'muscle': 'Chest'},
         {'name': 'Push Press', 'setsReps': '4 x 6', 'muscle': 'Shoulders'},
-        {'name': 'Incline DB Press', 'setsReps': '4 x 8', 'muscle': 'Upper Chest'},
+        {
+          'name': 'Incline DB Press',
+          'setsReps': '4 x 8',
+          'muscle': 'Upper Chest',
+        },
         {'name': 'Close Grip Bench', 'setsReps': '4 x 8', 'muscle': 'Triceps'},
-        {'name': 'Rear Delt Flyes', 'setsReps': '3 x 15', 'muscle': 'Rear Delts'},
+        {
+          'name': 'Rear Delt Flyes',
+          'setsReps': '3 x 15',
+          'muscle': 'Rear Delts',
+        },
       ],
     ];
 
     final pullExercises = [
       // Week 1
       [
-        {'name': 'Conventional Deadlift', 'setsReps': '3 x 8', 'muscle': 'Back'},
+        {
+          'name': 'Conventional Deadlift',
+          'setsReps': '3 x 8',
+          'muscle': 'Back',
+        },
         {'name': 'Lat Pulldowns', 'setsReps': '3 x 12', 'muscle': 'Lats'},
         {'name': 'Seated Cable Rows', 'setsReps': '3 x 12', 'muscle': 'Back'},
         {'name': 'Face Pulls', 'setsReps': '3 x 15', 'muscle': 'Rear Delts'},
@@ -627,7 +931,11 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       [
         {'name': 'Barbell Rows', 'setsReps': '4 x 8', 'muscle': 'Back'},
         {'name': 'Pull-Ups', 'setsReps': '3 x 8', 'muscle': 'Lats'},
-        {'name': 'Single Arm DB Row', 'setsReps': '3 x 10 each', 'muscle': 'Back'},
+        {
+          'name': 'Single Arm DB Row',
+          'setsReps': '3 x 10 each',
+          'muscle': 'Back',
+        },
         {'name': 'Reverse Flyes', 'setsReps': '3 x 15', 'muscle': 'Rear Delts'},
         {'name': 'Hammer Curls', 'setsReps': '3 x 12', 'muscle': 'Biceps'},
       ],
@@ -636,7 +944,11 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
         {'name': 'Sumo Deadlift', 'setsReps': '4 x 6', 'muscle': 'Back/Legs'},
         {'name': 'Weighted Pull-Ups', 'setsReps': '4 x 6', 'muscle': 'Lats'},
         {'name': 'T-Bar Rows', 'setsReps': '4 x 8', 'muscle': 'Mid Back'},
-        {'name': 'Cable Face Pulls', 'setsReps': '4 x 12', 'muscle': 'Rear Delts'},
+        {
+          'name': 'Cable Face Pulls',
+          'setsReps': '4 x 12',
+          'muscle': 'Rear Delts',
+        },
         {'name': 'Incline DB Curls', 'setsReps': '3 x 10', 'muscle': 'Biceps'},
       ],
       // Week 4
@@ -644,7 +956,11 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
         {'name': 'Rack Pulls', 'setsReps': '4 x 5', 'muscle': 'Back'},
         {'name': 'Chin-Ups', 'setsReps': '4 x 8', 'muscle': 'Lats/Biceps'},
         {'name': 'Pendlay Rows', 'setsReps': '4 x 6', 'muscle': 'Back'},
-        {'name': 'Rear Delt Machine', 'setsReps': '4 x 12', 'muscle': 'Rear Delts'},
+        {
+          'name': 'Rear Delt Machine',
+          'setsReps': '4 x 12',
+          'muscle': 'Rear Delts',
+        },
         {'name': 'Barbell Curls', 'setsReps': '4 x 8', 'muscle': 'Biceps'},
       ],
     ];
@@ -653,7 +969,11 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       // Week 1
       [
         {'name': 'Back Squats', 'setsReps': '3 x 10', 'muscle': 'Quads'},
-        {'name': 'Romanian Deadlift', 'setsReps': '3 x 10', 'muscle': 'Hamstrings'},
+        {
+          'name': 'Romanian Deadlift',
+          'setsReps': '3 x 10',
+          'muscle': 'Hamstrings',
+        },
         {'name': 'Leg Press', 'setsReps': '3 x 12', 'muscle': 'Legs'},
         {'name': 'Walking Lunges', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
         {'name': 'Calf Raises', 'setsReps': '4 x 15', 'muscle': 'Calves'},
@@ -661,26 +981,54 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       // Week 2
       [
         {'name': 'Front Squats', 'setsReps': '4 x 8', 'muscle': 'Quads'},
-        {'name': 'Stiff Leg Deadlift', 'setsReps': '3 x 10', 'muscle': 'Hamstrings'},
+        {
+          'name': 'Stiff Leg Deadlift',
+          'setsReps': '3 x 10',
+          'muscle': 'Hamstrings',
+        },
         {'name': 'Hack Squats', 'setsReps': '3 x 12', 'muscle': 'Quads'},
-        {'name': 'Bulgarian Split Squats', 'setsReps': '3 x 8 each', 'muscle': 'Legs'},
-        {'name': 'Seated Calf Raises', 'setsReps': '4 x 15', 'muscle': 'Calves'},
+        {
+          'name': 'Bulgarian Split Squats',
+          'setsReps': '3 x 8 each',
+          'muscle': 'Legs',
+        },
+        {
+          'name': 'Seated Calf Raises',
+          'setsReps': '4 x 15',
+          'muscle': 'Calves',
+        },
       ],
       // Week 3
       [
         {'name': 'Pause Squats', 'setsReps': '4 x 6', 'muscle': 'Quads'},
         {'name': 'Good Mornings', 'setsReps': '3 x 10', 'muscle': 'Hamstrings'},
         {'name': 'Leg Extensions', 'setsReps': '4 x 12', 'muscle': 'Quads'},
-        {'name': 'Lying Leg Curls', 'setsReps': '4 x 10', 'muscle': 'Hamstrings'},
-        {'name': 'Standing Calf Raises', 'setsReps': '5 x 12', 'muscle': 'Calves'},
+        {
+          'name': 'Lying Leg Curls',
+          'setsReps': '4 x 10',
+          'muscle': 'Hamstrings',
+        },
+        {
+          'name': 'Standing Calf Raises',
+          'setsReps': '5 x 12',
+          'muscle': 'Calves',
+        },
       ],
       // Week 4
       [
         {'name': 'Heavy Back Squats', 'setsReps': '5 x 5', 'muscle': 'Quads'},
         {'name': 'Sumo Deadlift', 'setsReps': '4 x 6', 'muscle': 'Hams/Glutes'},
-        {'name': 'Single Leg Press', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
+        {
+          'name': 'Single Leg Press',
+          'setsReps': '3 x 10 each',
+          'muscle': 'Legs',
+        },
         {'name': 'Step Ups', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
-        {'name': 'Donkey Calf Raises', 'setsReps': '4 x 15', 'muscle': 'Calves'},
+        {
+          'name': 'Donkey Calf Raises',
+          'setsReps': '4 x 15',
+          'muscle': 'Calves',
+        },
       ],
     ];
 
@@ -689,13 +1037,21 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       [
         {'name': 'Flat Bench Press', 'setsReps': '3 x 10', 'muscle': 'Chest'},
         {'name': 'Barbell Rows', 'setsReps': '3 x 10', 'muscle': 'Back'},
-        {'name': 'DB Shoulder Press', 'setsReps': '3 x 10', 'muscle': 'Shoulders'},
+        {
+          'name': 'DB Shoulder Press',
+          'setsReps': '3 x 10',
+          'muscle': 'Shoulders',
+        },
         {'name': 'Lat Pulldowns', 'setsReps': '3 x 12', 'muscle': 'Lats'},
         {'name': 'Dips', 'setsReps': '3 x 10', 'muscle': 'Chest/Triceps'},
       ],
       // Week 2
       [
-        {'name': 'Incline DB Press', 'setsReps': '4 x 10', 'muscle': 'Upper Chest'},
+        {
+          'name': 'Incline DB Press',
+          'setsReps': '4 x 10',
+          'muscle': 'Upper Chest',
+        },
         {'name': 'Seated Cable Rows', 'setsReps': '4 x 10', 'muscle': 'Back'},
         {'name': 'Arnold Press', 'setsReps': '3 x 10', 'muscle': 'Shoulders'},
         {'name': 'Pull-Ups', 'setsReps': '3 x 8', 'muscle': 'Lats'},
@@ -715,7 +1071,11 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
         {'name': 'Pendlay Rows', 'setsReps': '5 x 5', 'muscle': 'Back'},
         {'name': 'Push Press', 'setsReps': '4 x 6', 'muscle': 'Shoulders'},
         {'name': 'Chin-Ups', 'setsReps': '4 x 8', 'muscle': 'Lats/Biceps'},
-        {'name': 'Weighted Dips', 'setsReps': '4 x 6', 'muscle': 'Chest/Triceps'},
+        {
+          'name': 'Weighted Dips',
+          'setsReps': '4 x 6',
+          'muscle': 'Chest/Triceps',
+        },
       ],
     ];
 
@@ -740,15 +1100,27 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       [
         {'name': 'Sumo Squats', 'setsReps': '4 x 10', 'muscle': 'Legs'},
         {'name': 'Pike Push-Ups', 'setsReps': '3 x 10', 'muscle': 'Shoulders'},
-        {'name': 'Single Arm Rows', 'setsReps': '4 x 10 each', 'muscle': 'Back'},
-        {'name': 'Bulgarian Split Squats', 'setsReps': '3 x 8 each', 'muscle': 'Legs'},
+        {
+          'name': 'Single Arm Rows',
+          'setsReps': '4 x 10 each',
+          'muscle': 'Back',
+        },
+        {
+          'name': 'Bulgarian Split Squats',
+          'setsReps': '3 x 8 each',
+          'muscle': 'Legs',
+        },
         {'name': 'Bicycle Crunches', 'setsReps': '3 x 20', 'muscle': 'Core'},
       ],
       // Week 4
       [
         {'name': 'Jump Squats', 'setsReps': '4 x 10', 'muscle': 'Legs'},
         {'name': 'Diamond Push-Ups', 'setsReps': '3 x 12', 'muscle': 'Triceps'},
-        {'name': 'Renegade Rows', 'setsReps': '3 x 8 each', 'muscle': 'Back/Core'},
+        {
+          'name': 'Renegade Rows',
+          'setsReps': '3 x 8 each',
+          'muscle': 'Back/Core',
+        },
         {'name': 'Walking Lunges', 'setsReps': '3 x 12 each', 'muscle': 'Legs'},
         {'name': 'Hollow Body Hold', 'setsReps': '3 x 30s', 'muscle': 'Core'},
       ],
@@ -776,7 +1148,11 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
         {'name': 'Box Jumps', 'setsReps': '30s x 5', 'muscle': 'Power'},
         {'name': 'Battle Ropes', 'setsReps': '30s x 5', 'muscle': 'Full Body'},
         {'name': 'Kettlebell Swings', 'setsReps': '30s x 5', 'muscle': 'Hips'},
-        {'name': 'Burpee Box Jumps', 'setsReps': '30s x 4', 'muscle': 'Full Body'},
+        {
+          'name': 'Burpee Box Jumps',
+          'setsReps': '30s x 4',
+          'muscle': 'Full Body',
+        },
         {'name': 'Bear Crawls', 'setsReps': '30s x 4', 'muscle': 'Core'},
       ],
       // Week 4
@@ -784,7 +1160,11 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
         {'name': 'Devil Press', 'setsReps': '40s x 4', 'muscle': 'Full Body'},
         {'name': 'Assault Bike', 'setsReps': '40s x 4', 'muscle': 'Cardio'},
         {'name': 'Thrusters', 'setsReps': '40s x 4', 'muscle': 'Full Body'},
-        {'name': 'Rowing Sprints', 'setsReps': '40s x 4', 'muscle': 'Full Body'},
+        {
+          'name': 'Rowing Sprints',
+          'setsReps': '40s x 4',
+          'muscle': 'Full Body',
+        },
         {'name': 'Sled Push', 'setsReps': '40s x 4', 'muscle': 'Legs'},
       ],
     ];
@@ -798,14 +1178,22 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       ],
       // Week 2
       [
-        {'name': 'Incline Treadmill Walk', 'setsReps': '25 min', 'muscle': 'Cardio'},
+        {
+          'name': 'Incline Treadmill Walk',
+          'setsReps': '25 min',
+          'muscle': 'Cardio',
+        },
         {'name': 'Elliptical', 'setsReps': '15 min', 'muscle': 'Full Body'},
         {'name': 'Stair Climber', 'setsReps': '10 min', 'muscle': 'Legs'},
       ],
       // Week 3
       [
         {'name': 'Tempo Run', 'setsReps': '25 min', 'muscle': 'Cardio'},
-        {'name': 'Rowing Intervals', 'setsReps': '15 min', 'muscle': 'Full Body'},
+        {
+          'name': 'Rowing Intervals',
+          'setsReps': '15 min',
+          'muscle': 'Full Body',
+        },
         {'name': 'Jump Rope', 'setsReps': '10 min', 'muscle': 'Cardio'},
       ],
       // Week 4
@@ -829,12 +1217,24 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
         {'name': 'Dumbbell Press', 'setsReps': '3 x 10', 'muscle': 'Chest'},
       ],
       [
-        {'name': 'Romanian Deadlift', 'setsReps': '4 x 10', 'muscle': 'Hamstrings'},
+        {
+          'name': 'Romanian Deadlift',
+          'setsReps': '4 x 10',
+          'muscle': 'Hamstrings',
+        },
         {'name': 'Cable Rows', 'setsReps': '4 x 10', 'muscle': 'Back'},
-        {'name': 'Incline Press', 'setsReps': '3 x 10', 'muscle': 'Upper Chest'},
+        {
+          'name': 'Incline Press',
+          'setsReps': '3 x 10',
+          'muscle': 'Upper Chest',
+        },
       ],
       [
-        {'name': 'Bulgarian Split Squats', 'setsReps': '4 x 8 each', 'muscle': 'Legs'},
+        {
+          'name': 'Bulgarian Split Squats',
+          'setsReps': '4 x 8 each',
+          'muscle': 'Legs',
+        },
         {'name': 'Pull-Ups', 'setsReps': '3 x 8', 'muscle': 'Back'},
         {'name': 'Overhead Press', 'setsReps': '4 x 8', 'muscle': 'Shoulders'},
       ],
@@ -844,7 +1244,11 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
     final recoveryExercises = [
       [
         {'name': 'Foam Rolling', 'setsReps': '10 min', 'muscle': 'Full Body'},
-        {'name': 'Hip Flexor Stretch', 'setsReps': '2 x 30s each', 'muscle': 'Hips'},
+        {
+          'name': 'Hip Flexor Stretch',
+          'setsReps': '2 x 30s each',
+          'muscle': 'Hips',
+        },
         {'name': 'Cat-Cow Stretch', 'setsReps': '3 x 10', 'muscle': 'Spine'},
       ],
       [
@@ -853,13 +1257,33 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
         {'name': 'Child\'s Pose', 'setsReps': '3 x 30s', 'muscle': 'Back'},
       ],
       [
-        {'name': 'Dynamic Stretching', 'setsReps': '10 min', 'muscle': 'Full Body'},
-        {'name': 'Shoulder Stretch', 'setsReps': '2 x 30s each', 'muscle': 'Shoulders'},
-        {'name': 'Hamstring Stretch', 'setsReps': '2 x 30s each', 'muscle': 'Hamstrings'},
+        {
+          'name': 'Dynamic Stretching',
+          'setsReps': '10 min',
+          'muscle': 'Full Body',
+        },
+        {
+          'name': 'Shoulder Stretch',
+          'setsReps': '2 x 30s each',
+          'muscle': 'Shoulders',
+        },
+        {
+          'name': 'Hamstring Stretch',
+          'setsReps': '2 x 30s each',
+          'muscle': 'Hamstrings',
+        },
       ],
       [
-        {'name': 'Mobility Circuit', 'setsReps': '15 min', 'muscle': 'Full Body'},
-        {'name': 'World\'s Greatest Stretch', 'setsReps': '3 x 5 each', 'muscle': 'Full Body'},
+        {
+          'name': 'Mobility Circuit',
+          'setsReps': '15 min',
+          'muscle': 'Full Body',
+        },
+        {
+          'name': 'World\'s Greatest Stretch',
+          'setsReps': '3 x 5 each',
+          'muscle': 'Full Body',
+        },
         {'name': 'Meditation', 'setsReps': '5 min', 'muscle': 'Mind'},
       ],
     ];
@@ -878,8 +1302,16 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       ],
       [
         {'name': 'Incline DB Curls', 'setsReps': '4 x 10', 'muscle': 'Biceps'},
-        {'name': 'Overhead Tricep Ext', 'setsReps': '4 x 10', 'muscle': 'Triceps'},
-        {'name': 'Concentration Curls', 'setsReps': '3 x 12', 'muscle': 'Biceps'},
+        {
+          'name': 'Overhead Tricep Ext',
+          'setsReps': '4 x 10',
+          'muscle': 'Triceps',
+        },
+        {
+          'name': 'Concentration Curls',
+          'setsReps': '3 x 12',
+          'muscle': 'Biceps',
+        },
       ],
       [
         {'name': 'EZ Bar Curls', 'setsReps': '4 x 8', 'muscle': 'Biceps'},

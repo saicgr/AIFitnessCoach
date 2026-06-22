@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
 /// Onboarding v5 — Body Metrics + Fast-Path Fork
 ///
 /// Replaces the legacy "Want better results? + 4 benefit cards" gate with a
@@ -19,8 +20,8 @@ import '../../../l10n/generated/app_localizations.dart';
 /// pre-signup goal projection always has real data.
 class QuizPersonalizationGate extends StatefulWidget {
   // Existing fork callbacks
-  final VoidCallback onPersonalize;  // Continue to muscle focus / training style
-  final VoidCallback onSkip;         // Fast-path: jump to plan-analyzing
+  final VoidCallback onPersonalize; // Continue to muscle focus / training style
+  final VoidCallback onSkip; // Fast-path: jump to plan-analyzing
 
   // Initial values (pre-fill from PreAuthQuizData)
   final String? initialGender;
@@ -51,7 +52,8 @@ class QuizPersonalizationGate extends StatefulWidget {
     required double weightKg,
     required double goalWeightKg,
     required bool useMetric,
-  }) onSaveBodyMetrics;
+  })
+  onSaveBodyMetrics;
 
   const QuizPersonalizationGate({
     super.key,
@@ -116,16 +118,18 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
       }
     }
     if (widget.initialWeightKg != null) {
-      _weightCtrl.text = (_weightInKg
-              ? widget.initialWeightKg!
-              : (widget.initialWeightKg! * 2.20462))
-          .toStringAsFixed(0);
+      _weightCtrl.text =
+          (_weightInKg
+                  ? widget.initialWeightKg!
+                  : (widget.initialWeightKg! * 2.20462))
+              .toStringAsFixed(0);
     }
     if (widget.initialGoalWeightKg != null) {
-      _goalWeightCtrl.text = (_weightInKg
-              ? widget.initialGoalWeightKg!
-              : (widget.initialGoalWeightKg! * 2.20462))
-          .toStringAsFixed(0);
+      _goalWeightCtrl.text =
+          (_weightInKg
+                  ? widget.initialGoalWeightKg!
+                  : (widget.initialGoalWeightKg! * 2.20462))
+              .toStringAsFixed(0);
     }
   }
 
@@ -298,7 +302,9 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
         children: [
           const SizedBox(height: 4),
           Text(
-            AppLocalizations.of(context).quizPersonalizationGateAFewQuickMeasurements,
+            AppLocalizations.of(
+              context,
+            ).quizPersonalizationGateAFewQuickMeasurements,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -309,11 +315,10 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
           ).animate().fadeIn(delay: 100.ms),
           const SizedBox(height: 2),
           Text(
-            AppLocalizations.of(context).quizPersonalizationGateUsedToPersonalizeYour,
-            style: TextStyle(
-              fontSize: 13,
-              color: t.textSecondary,
-            ),
+            AppLocalizations.of(
+              context,
+            ).quizPersonalizationGateUsedToPersonalizeYour,
+            style: TextStyle(fontSize: 13, color: t.textSecondary),
           ).animate().fadeIn(delay: 200.ms),
 
           const SizedBox(height: 8),
@@ -332,21 +337,26 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── Gender
-                  _SectionLabel(text: 'Gender', t: t)
-                      .animate()
-                      .fadeIn(delay: 250.ms),
+                  _SectionLabel(
+                    text: 'Gender',
+                    t: t,
+                  ).animate().fadeIn(delay: 250.ms),
                   const SizedBox(height: 6),
                   Row(
                     children: [
                       _GenderChip(
-                        label: AppLocalizations.of(context).quizPersonalizationGateMale,
+                        label: AppLocalizations.of(
+                          context,
+                        ).quizPersonalizationGateMale,
                         selected: _gender == 'male',
                         onTap: () => setState(() => _gender = 'male'),
                         t: t,
                       ),
                       const SizedBox(width: 8),
                       _GenderChip(
-                        label: AppLocalizations.of(context).quizPersonalizationGateFemale,
+                        label: AppLocalizations.of(
+                          context,
+                        ).quizPersonalizationGateFemale,
                         selected: _gender == 'female',
                         onTap: () => setState(() => _gender = 'female'),
                         t: t,
@@ -368,7 +378,9 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                   // unit toggle at the bottom. Same shape for all three
                   // fields so the section reads as a tidy column of cards.
                   _MetricCard(
-                    label: AppLocalizations.of(context).quizPersonalizationGateHeight,
+                    label: AppLocalizations.of(
+                      context,
+                    ).quizPersonalizationGateHeight,
                     units: const ['cm', 'in'],
                     selectedUnit: _heightInCm ? 'cm' : 'in',
                     onUnitChanged: (u) {
@@ -376,8 +388,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                       if (toCm == _heightInCm) return;
                       setState(() {
                         if (toCm) {
-                          final ft =
-                              double.tryParse(_heightCtrl.text) ?? 0;
+                          final ft = double.tryParse(_heightCtrl.text) ?? 0;
                           final inches =
                               double.tryParse(_heightInchesCtrl.text) ?? 0;
                           final totalInches = ft * 12 + inches;
@@ -390,8 +401,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                           if (cm != null && cm > 0) {
                             final totalInches = cm / 2.54;
                             final feet = totalInches ~/ 12;
-                            final inches =
-                                (totalInches - feet * 12).round();
+                            final inches = (totalInches - feet * 12).round();
                             _heightCtrl.text = feet.toString();
                             _heightInchesCtrl.text = inches.toString();
                           } else {
@@ -438,7 +448,9 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                   const SizedBox(height: 8),
 
                   _MetricCard(
-                    label: AppLocalizations.of(context).quizPersonalizationGateCurrentWeight,
+                    label: AppLocalizations.of(
+                      context,
+                    ).quizPersonalizationGateCurrentWeight,
                     units: const ['kg', 'lb'],
                     selectedUnit: _weightInKg ? 'kg' : 'lb',
                     onUnitChanged: (u) {
@@ -473,7 +485,9 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                   const SizedBox(height: 8),
 
                   _MetricCard(
-                    label: AppLocalizations.of(context).quizPersonalizationGateGoalWeight,
+                    label: AppLocalizations.of(
+                      context,
+                    ).quizPersonalizationGateGoalWeight,
                     units: const ['kg', 'lb'],
                     selectedUnit: _weightInKg ? 'kg' : 'lb',
                     onUnitChanged: (u) {
@@ -501,7 +515,9 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                       suffix: _weightInKg ? 'kg' : 'lb',
                       t: t,
                     ),
-                    rulerChild: widget.dialInputs ? _buildGoalWeightRuler(t) : null,
+                    rulerChild: widget.dialInputs
+                        ? _buildGoalWeightRuler(t)
+                        : null,
                     t: t,
                   ).animate().fadeIn(delay: 500.ms),
                 ],
@@ -520,7 +536,9 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
           // Same ClipRRect + BackdropFilter + buttonGradient + buttonBorder
           // + accent text + sparkle icon, just labeled "Quick start".
           GestureDetector(
-            onTap: _isValid && !_saving ? () => _proceed(fineTune: false) : null,
+            onTap: _isValid && !_saving
+                ? () => _proceed(fineTune: false)
+                : null,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(28),
               child: BackdropFilter(
@@ -549,25 +567,31 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: t.buttonText),
+                              strokeWidth: 2,
+                              color: t.buttonText,
+                            ),
                           ),
                         )
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              AppLocalizations.of(context).quizPersonalizationGateQuickStart,
+                              AppLocalizations.of(
+                                context,
+                              ).quizPersonalizationGateQuickStart,
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
-                                color:
-                                    _isValid ? t.buttonText : t.textDisabled,
+                                color: _isValid ? t.buttonText : t.textDisabled,
                               ),
                             ),
                             if (_isValid) ...[
                               const SizedBox(width: 8),
-                              Icon(Icons.auto_awesome_rounded,
-                                  size: 20, color: t.buttonText),
+                              Icon(
+                                Icons.auto_awesome_rounded,
+                                size: 20,
+                                color: t.buttonText,
+                              ),
                             ],
                           ],
                         ),
@@ -579,8 +603,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
           const SizedBox(height: 8),
 
           GestureDetector(
-            onTap:
-                _isValid && !_saving ? () => _proceed(fineTune: true) : null,
+            onTap: _isValid && !_saving ? () => _proceed(fineTune: true) : null,
             child: SizedBox(
               width: double.infinity,
               height: 44,
@@ -589,7 +612,9 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      AppLocalizations.of(context).quizPersonalizationGateFineTune2Min,
+                      AppLocalizations.of(
+                        context,
+                      ).quizPersonalizationGateFineTune2Min,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -616,7 +641,6 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
       ),
     );
   }
-
 }
 
 class _SectionLabel extends StatelessWidget {
@@ -706,8 +730,7 @@ class _GenderChip extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight:
-                      selected ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   color: t.textPrimary,
                 ),
               ),
@@ -718,7 +741,6 @@ class _GenderChip extends StatelessWidget {
     );
   }
 }
-
 
 // ─────────────────────────────────────────────────────────────────────
 // Stacked metric card — the Whoop / Centr / Apple Health pattern.
@@ -734,6 +756,7 @@ class _MetricCard extends StatelessWidget {
   final ValueChanged<String> onUnitChanged;
   final Widget valueChild;
   final OnboardingTheme t;
+
   /// Optional tactile ruler rendered beneath the number row. Null when the
   /// dial-inputs kill-switch is off (TextField-only fallback).
   final Widget? rulerChild;
@@ -785,10 +808,7 @@ class _MetricCard extends StatelessWidget {
               ),
             ],
           ),
-          if (rulerChild != null) ...[
-            const SizedBox(height: 6),
-            rulerChild!,
-          ],
+          if (rulerChild != null) ...[const SizedBox(height: 6), rulerChild!],
         ],
       ),
     );
@@ -817,8 +837,7 @@ class _BigNumberInput extends StatelessWidget {
           child: TextField(
             controller: controller,
             onChanged: (_) => onChanged(),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textAlign: TextAlign.start,
             style: TextStyle(
               fontSize: 26,
@@ -943,8 +962,9 @@ class _RulerStripState extends State<_RulerStrip> {
     // echoing onChanged back to the parent.
     if (old.min != widget.min || old.max != widget.max) {
       _lastEmitted = null;
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _jumpToValue(widget.value));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _jumpToValue(widget.value),
+      );
     }
   }
 
@@ -963,16 +983,20 @@ class _RulerStripState extends State<_RulerStrip> {
       (value - widget.min) * _tickSpacing + _tickSpacing / 2;
 
   double _valueForOffset(double offset) =>
-      (widget.min + (offset - _tickSpacing / 2) / _tickSpacing)
-          .clamp(widget.min, widget.max);
+      (widget.min + (offset - _tickSpacing / 2) / _tickSpacing).clamp(
+        widget.min,
+        widget.max,
+      );
 
   void _jumpToValue(double value) {
     if (!_controller.hasClients) return;
     _suppress = true;
-    _controller.jumpTo(_offsetForValue(value).clamp(
-      _controller.position.minScrollExtent,
-      _controller.position.maxScrollExtent,
-    ));
+    _controller.jumpTo(
+      _offsetForValue(value).clamp(
+        _controller.position.minScrollExtent,
+        _controller.position.maxScrollExtent,
+      ),
+    );
     _suppress = false;
   }
 
@@ -980,9 +1004,9 @@ class _RulerStripState extends State<_RulerStrip> {
   /// write) without ever rebuilding the parent gate.
   void _onScrollUpdate() {
     if (_suppress || !_controller.hasClients) return;
-    final snapped = _valueForOffset(_controller.offset)
-        .roundToDouble()
-        .clamp(widget.min, widget.max);
+    final snapped = _valueForOffset(
+      _controller.offset,
+    ).roundToDouble().clamp(widget.min, widget.max);
     final snappedInt = snapped.round();
     if (snappedInt != (_lastEmitted ?? widget.value.round())) {
       _lastEmitted = snappedInt;
@@ -991,13 +1015,49 @@ class _RulerStripState extends State<_RulerStrip> {
     }
   }
 
+  /// Tap-to-position. The user tapped the scale at viewport-local x `localDx`;
+  /// translate that into the value sitting under the finger and glide there.
+  /// The tapped point is `(localDx - _viewportHalf)` pixels off the centered
+  /// indicator, so its content offset is the current scroll offset plus that
+  /// delta — feed it through `_valueForOffset` (same mapping the drag uses).
+  void _onTapAt(double localDx) {
+    if (!_controller.hasClients) return;
+    final tapped = _valueForOffset(
+      _controller.offset + (localDx - _viewportHalf),
+    );
+    final snapped = tapped.roundToDouble().clamp(widget.min, widget.max);
+    if (snapped == widget.value.roundToDouble()) return;
+    final target = _offsetForValue(snapped).clamp(
+      _controller.position.minScrollExtent,
+      _controller.position.maxScrollExtent,
+    );
+    // Suppress the scroll listener so our own glide isn't read as a drag (which
+    // would re-commit on ScrollEnd). Commit once here instead.
+    _suppress = true;
+    _lastEmitted = null;
+    HapticFeedback.selectionClick();
+    _controller
+        .animateTo(
+          target,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+        )
+        .whenComplete(() {
+          if (mounted) _suppress = false;
+        });
+    // Track the big number to the new value immediately, then do the single
+    // full-gate commit — mirroring the drag's onLiveChanged + onChanged split.
+    widget.onLiveChanged(snapped);
+    widget.onChanged(snapped);
+  }
+
   /// Settle handler. Animates the strip onto the exact tick, then commits the
   /// final value to the parent with a single setState.
   void _onScrollEnd() {
     if (_suppress || !_controller.hasClients) return;
-    final snapped = _valueForOffset(_controller.offset)
-        .roundToDouble()
-        .clamp(widget.min, widget.max);
+    final snapped = _valueForOffset(
+      _controller.offset,
+    ).roundToDouble().clamp(widget.min, widget.max);
     final target = _offsetForValue(snapped).clamp(
       _controller.position.minScrollExtent,
       _controller.position.maxScrollExtent,
@@ -1006,9 +1066,11 @@ class _RulerStripState extends State<_RulerStrip> {
     if ((_controller.offset - target).abs() > 0.5) {
       _suppress = true;
       _controller
-          .animateTo(target,
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut)
+          .animateTo(
+            target,
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+          )
           .whenComplete(() => _suppress = false);
     }
     _lastEmitted = null;
@@ -1061,28 +1123,36 @@ class _RulerStripState extends State<_RulerStrip> {
                 },
                 // Isolate the ruler's painting from the rest of the gate.
                 child: RepaintBoundary(
-                  child: ListView.builder(
-                    controller: _controller,
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: _viewportHalf),
-                    itemExtent: _tickSpacing,
-                    itemCount: _tickCount,
-                    itemBuilder: (context, i) {
-                      final value = (widget.min + i).round();
-                      final isMajor = value % widget.majorEvery == 0;
-                      final isLabeled = value % widget.labelEvery == 0;
-                      return _RulerTick(
-                        isMajor: isMajor,
-                        label: isLabeled
-                            ? (widget.labelBuilder?.call(value) ??
-                                value.toString())
-                            : null,
-                        tickColor: tickColor,
-                        majorTickColor: majorTickColor,
-                        labelColor: t.textMuted,
-                      );
-                    },
+                  // Tap anywhere on the scale to jump straight to that value.
+                  // The ListView's horizontal-drag recognizer and this tap
+                  // recognizer share the gesture arena: a stationary press
+                  // resolves to the tap, a moving press to the scroll — so
+                  // dragging the strip is unaffected.
+                  child: GestureDetector(
+                    onTapUp: (d) => _onTapAt(d.localPosition.dx),
+                    child: ListView.builder(
+                      controller: _controller,
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.symmetric(horizontal: _viewportHalf),
+                      itemExtent: _tickSpacing,
+                      itemCount: _tickCount,
+                      itemBuilder: (context, i) {
+                        final value = (widget.min + i).round();
+                        final isMajor = value % widget.majorEvery == 0;
+                        final isLabeled = value % widget.labelEvery == 0;
+                        return _RulerTick(
+                          isMajor: isMajor,
+                          label: isLabeled
+                              ? (widget.labelBuilder?.call(value) ??
+                                    value.toString())
+                              : null,
+                          tickColor: tickColor,
+                          majorTickColor: majorTickColor,
+                          labelColor: t.textMuted,
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -1204,8 +1274,7 @@ class _SegmentedUnitToggle extends StatelessWidget {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 160),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? LinearGradient(colors: t.cardSelectedGradient)
