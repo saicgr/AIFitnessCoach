@@ -198,6 +198,9 @@ class QuizWeightRateChips extends StatelessWidget {
                   ),
                   Text(
                     rate.rateLabel,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
@@ -205,14 +208,23 @@ class QuizWeightRateChips extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 1),
-                  Text(
-                    rate.calorieLabel,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.orange.withValues(alpha: 0.9),
+                  // FittedBox keeps "~2,241 cal/day" on ONE line regardless of the
+                  // ~1px inner-width change between the unselected (1px) and
+                  // selected (1.5px) borders — which otherwise wrapped "day".
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      rate.calorieLabel,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.85)
+                            : AppColors.orange.withValues(alpha: 0.9),
+                      ),
                     ),
                   ),
                 ],
