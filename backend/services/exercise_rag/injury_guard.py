@@ -57,6 +57,22 @@ _INJURY_NAME_KEYWORDS: Dict[str, Tuple[str, ...]] = {
     "neck":       ("behind the neck", "behind-the-neck", "neck bridge"),
 }
 
+# Primary-target backstop. The name/index gates above catch exercises BY NAME, but a
+# movement whose PRIMARY target IS the injured region (e.g. a back extension /
+# hyperextension / superman tagged lower_back_safe=TRUE, or a neck curl) directly
+# loads the injured area and should never reach an injured user — even when the index
+# marks it "safe" and its name carries no banned keyword. Matched ONLY against the
+# exercise's PRIMARY target fields (target_muscle / muscle_group / body_part), NEVER
+# secondary muscles: secondary involvement (e.g. erectors as a stabilizer in a leg
+# press) is a normal part of compound work and is handled by `avoided_muscles`
+# down-ranking upstream — matching it here would over-drop nearly every loaded lift.
+# Kept deliberately tight + region-specific so it never false-positives on leg/upper
+# work. Keyed by injury substring (same needle-matching as the name keywords).
+_INJURY_TARGET_MUSCLE_KEYWORDS: Dict[str, Tuple[str, ...]] = {
+    "lower_back": ("lower back", "erector spinae", "erector", "spinae", "lumbar"),
+    "neck":       ("neck", "sternocleidomastoid", "cervical"),
+}
+
 
 def _looks_like_stretch(cand: Dict[str, Any]) -> bool:
     """Heuristic: is this candidate a stretch/mobility move (not real loaded work)?"""
@@ -75,6 +91,38 @@ def _name_keyword_banned(name_lc: str, injuries: List[str]) -> bool:
             if needle in key and any(kw in name_lc for kw in kws):
                 if needle == "back" and "lower_back" in key:
                     continue  # already covered by lower_back set
+                return True
+    return False
+
+
+def _primary_target_blob(item: Dict[str, Any]) -> str:
+    """Lowercased blob of an exercise's PRIMARY target fields only.
+
+    Deliberately excludes `secondary_muscles` — secondary involvement is normal in
+    compound work and is governed by `avoided_muscles` down-ranking upstream.
+    """
+    return " ".join(
+        str(item.get(k) or "")
+        for k in ("target_muscle", "muscle_group", "body_part")
+    ).lower()
+
+
+def _targets_injured_region(item: Dict[str, Any], injuries: List[str]) -> bool:
+    """True if the exercise's PRIMARY target is the injured region itself.
+
+    Backstop for index rows mistakenly tagged ``<joint>_safe=TRUE`` even though the
+    movement directly loads the injured area (e.g. a back extension for a lower_back
+    user). Tight + region-specific so leg/upper work never false-positives.
+    """
+    blob = _primary_target_blob(item)
+    if not blob.strip():
+        return False
+    for inj in injuries:
+        key = str(inj or "").strip().lower()
+        if not key:
+            continue
+        for needle, kws in _INJURY_TARGET_MUSCLE_KEYWORDS.items():
+            if needle in key and any(kw in blob for kw in kws):
                 return True
     return False
 
@@ -170,12 +218,19 @@ async def enforce_injury_safety(
 
         safe: List[Dict[str, Any]] = []
         dropped: List[str] = []
+        dropped_by_muscle: List[str] = []
         for ex, nm in zip(exercises, names):
             nm_lc = nm.lower() if nm else ""
             # Drop if the index confirms it unsafe OR a canonical-movement keyword
             # matches (backstop for index name-variant misses).
             if nm and (nm_lc in unsafe or _name_keyword_banned(nm_lc, injuries)):
                 dropped.append(nm)
+            # Backstop: PRIMARY target IS the injured region (e.g. erector-spinae
+            # work for a lower_back user) even though the index/name gates passed.
+            elif _targets_injured_region(ex, injuries):
+                label = nm or "(unnamed)"
+                dropped.append(label)
+                dropped_by_muscle.append(label)
             else:
                 safe.append(ex)
 
@@ -205,6 +260,8 @@ async def enforce_injury_safety(
                     continue
                 if _name_keyword_banned(cn.lower(), injuries):
                     continue  # never backfill a canonically-contraindicated movement
+                if _targets_injured_region(cand, injuries):
+                    continue  # never backfill a movement that loads the injured region
                 is_stretch = _looks_like_stretch(cand)
                 if is_stretch and not stretch_pass:
                     continue  # defer stretches to the fallback pass
@@ -216,9 +273,10 @@ async def enforce_injury_safety(
                 break
 
         logger.warning(
-            "🛡️  [InjuryGuard] user=%s injuries=%s dropped %d unsafe (%s), "
-            "added %d safe replacements (%s)",
-            user_id, injuries, len(dropped), dropped, len(added), added,
+            "🛡️  [InjuryGuard] user=%s injuries=%s dropped %d unsafe (%s) "
+            "[%d by primary-target: %s], added %d safe replacements (%s)",
+            user_id, injuries, len(dropped), dropped,
+            len(dropped_by_muscle), dropped_by_muscle, len(added), added,
         )
         return safe, dropped, added
 

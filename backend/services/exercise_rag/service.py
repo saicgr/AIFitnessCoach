@@ -241,6 +241,19 @@ async def fetch_safe_candidates(
         "upper_body": (("back", "chest", "shoulders", "upper arms", "lower arms"),
                        ("%lat%", "%pectoralis%", "%delt%", "%biceps%",
                         "%triceps%", "%trap%", "%rhomboid%", "%forearm%")),
+        # injury-2026-06 follow-up: 'lower'/'upper' are real focus values that reach
+        # this gate verbatim (e.g. "Inferred workout type 'legs' from focus 'lower'").
+        # They were NOT anchored, so they fell to the lenient `%lower%`/`%upper%`
+        # ILIKE branch below — which matched "Lower Back"/"Lower Back (Erector
+        # Spinae)" for a leg request (same class as Fix 4's 'ull' ⊂ 'Full'),
+        # polluting an injured user's "lower" pool with lower-back exercises.
+        # Anchor them to the same sets as lower_body / upper_body.
+        "lower": (("upper legs", "lower legs"),
+                  ("%quadriceps%", "%hamstring%", "%glute%", "%calf%",
+                   "%calves%", "%adductor%", "%abductor%")),
+        "upper": (("back", "chest", "shoulders", "upper arms", "lower arms"),
+                  ("%lat%", "%pectoralis%", "%delt%", "%biceps%",
+                   "%triceps%", "%trap%", "%rhomboid%", "%forearm%")),
         "core":  (("waist", "abdominals"),
                   ("%abdominis%", "%oblique%", "%core%", "%transverse%")),
         "cardio": (("cardio",),
