@@ -112,7 +112,8 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.person_outline,
+                  // Spark reads "personalized by AI", not a generic person.
+                  Icons.auto_awesome,
                   color: _kSigAccent,
                   size: 24,
                 ),
@@ -125,19 +126,27 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                     Text(
                       AppLocalizations.of(
                         context,
-                      )!.planPreviewScreenThisIsYourPersonalized,
+                      )!.planPreviewScreenThisIsYourPersonalized.toUpperCase(),
                       style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
+                        fontFamily: _kSigDisplay,
+                        fontSize: 19,
+                        height: 1.05,
+                        letterSpacing: 0.3,
                         color: textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     Text(
                       AppLocalizations.of(
                         context,
-                      )!.planPreviewScreenDesignedBasedOnYour,
-                      style: TextStyle(fontSize: 13, color: textSecondary),
+                      )!.planPreviewScreenDesignedBasedOnYour.toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: _kSigLabel,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.4,
+                        color: textSecondary,
+                      ),
                     ),
                   ],
                 ),
