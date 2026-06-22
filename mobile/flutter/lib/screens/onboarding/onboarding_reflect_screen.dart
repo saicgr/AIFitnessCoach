@@ -445,13 +445,15 @@ class _PlanPreview extends StatelessWidget {
       final delta = (goal - cur).abs();
       if (delta >= 0.5) {
         final unit = quiz.useMetricUnits ? 'kg' : 'lb';
-        final amt = quiz.useMetricUnits
-            ? delta.round()
-            : (delta * 2.20462).round();
-        if (amt > 0) {
-          final dir = goal < cur ? '−' : '+';
-          out.add((Icons.monitor_weight_rounded, '$dir$amt $unit goal'));
-        }
+        // Show the GOAL WEIGHT (e.g. "Goal 119 kg") — matches the projection
+        // screen + personal-info. The old chip showed the DELTA labeled "goal"
+        // ("+89 kg goal"), which contradicted "Goal 119 kg" elsewhere and read
+        // as a different number. The body copy already frames the delta ("gain
+        // 89 kg"), so the chip carries the target.
+        final goalDisp = quiz.useMetricUnits
+            ? goal.round()
+            : (goal * 2.20462).round();
+        out.add((Icons.monitor_weight_rounded, 'Goal $goalDisp $unit'));
       }
     }
     return out;
@@ -555,6 +557,7 @@ class _TrajectorySparklineState extends State<_TrajectorySparkline>
             progress: _draw.value,
             accent: widget.accent,
             trackColor: widget.trackColor,
+            losing: widget.losing,
           ),
         ),
       ),
@@ -567,12 +570,14 @@ class _TrajectoryPainter extends CustomPainter {
   final double progress;
   final Color accent;
   final Color trackColor;
+  final bool losing;
 
   _TrajectoryPainter({
     required this.normalized,
     required this.progress,
     required this.accent,
     required this.trackColor,
+    required this.losing,
   });
 
   @override
@@ -592,9 +597,11 @@ class _TrajectoryPainter extends CustomPainter {
     Offset pointAt(int i) {
       final x = padX + w * (i / (normalized.length - 1));
       final n = normalized[i]; // 0..1 toward goal
-      // For losing: start high (y small), goal low isn't ideal visually; we
-      // want a calm downward slope. yFrac: 0 → top region, 1 → bottom region.
-      final yFrac = 0.15 + 0.7 * n;
+      // Direction-correct: a LOSS descends toward the goal (start high → end
+      // low), a GAIN rises toward it (start low → end high). yFrac: 0 → top
+      // region, 1 → bottom region. (Previously always descended, so a gain
+      // goal drew a downward line.)
+      final yFrac = losing ? (0.15 + 0.7 * n) : (0.85 - 0.7 * n);
       final y = padTop + h * yFrac;
       return Offset(x, y);
     }
@@ -699,5 +706,6 @@ class _TrajectoryPainter extends CustomPainter {
   bool shouldRepaint(_TrajectoryPainter old) =>
       old.progress != progress ||
       old.normalized != normalized ||
-      old.accent != accent;
+      old.accent != accent ||
+      old.losing != losing;
 }
