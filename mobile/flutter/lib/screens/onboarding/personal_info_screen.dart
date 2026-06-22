@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
@@ -14,6 +17,7 @@ import 'cycle_onboarding_sheet.dart';
 import 'pre_auth_quiz_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
 /// Personal Info — name + date-of-birth, collected post-sign-in.
 ///
 /// Onboarding v5.1.1: Name and DOB are the only fields that genuinely need
@@ -34,6 +38,12 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   String? _nameError;
   DateTime? _dateOfBirth;
   bool _saving = false;
+
+  // Optional profile photo. Picked here, uploaded on save to the SAME
+  // `POST /users/{id}/photo` endpoint the profile editor uses — so it persists
+  // and shows up on the profile automatically. Never blocks onboarding.
+  final ImagePicker _imagePicker = ImagePicker();
+  File? _selectedPhotoFile;
 
   @override
   void initState() {
@@ -59,7 +69,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     if (dob == null) return null;
     final now = DateTime.now();
     int age = now.year - dob.year;
-    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
       age--;
     }
     return age;
@@ -73,9 +84,24 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       return 'Please enter a real name';
     }
     const fakes = {
-      'test', 'fake', 'user', 'name', 'noname', 'n/a', 'na', 'none',
-      'unknown', 'anon', 'anonymous', 'admin', 'temp', 'demo',
-      'asdf', 'qwerty', 'zxcv', 'abcd',
+      'test',
+      'fake',
+      'user',
+      'name',
+      'noname',
+      'n/a',
+      'na',
+      'none',
+      'unknown',
+      'anon',
+      'anonymous',
+      'admin',
+      'temp',
+      'demo',
+      'asdf',
+      'qwerty',
+      'zxcv',
+      'abcd',
     };
     if (fakes.contains(trimmed.toLowerCase())) {
       return 'Please enter your real name';
@@ -107,6 +133,94 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     }
   }
 
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        setState(() => _selectedPhotoFile = File(image.path));
+      }
+    } catch (e) {
+      debugPrint('❌ [PersonalInfo] Error picking image: $e');
+    }
+  }
+
+  void _showPhotoSourceSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    HapticFeedback.selectionClick();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(
+                Icons.camera_alt_outlined,
+                color: AppColors.orange,
+              ),
+              title: const Text('Take a photo'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppColors.orange,
+              ),
+              title: const Text('Choose from gallery'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+            if (_selectedPhotoFile != null)
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.error,
+                ),
+                title: const Text('Remove photo'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  setState(() => _selectedPhotoFile = null);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Upload the optional avatar to the same endpoint the profile editor uses.
+  /// Best-effort — a failure must NOT block onboarding completion.
+  Future<void> _uploadPhotoIfAny(String userId) async {
+    if (_selectedPhotoFile == null) return;
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.uploadFile(
+        '${ApiConstants.users}/$userId/photo',
+        _selectedPhotoFile!,
+        fieldName: 'file',
+      );
+      debugPrint('✅ [PersonalInfo] Avatar uploaded');
+    } catch (e) {
+      debugPrint('⚠️ [PersonalInfo] Avatar upload failed (non-blocking): $e');
+    }
+  }
+
   Future<void> _save() async {
     if (!_canContinue) return;
 
@@ -125,7 +239,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).personalInfoPleaseCompleteTheBody)),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).personalInfoPleaseCompleteTheBody,
+            ),
+          ),
         );
         context.go('/pre-auth-quiz');
       }
@@ -135,7 +253,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     try {
       // Persist locally so a re-entry (e.g. the user back-buttons here
       // before coach-selection completes) re-prefills name + DOB.
-      await ref.read(preAuthQuizProvider.notifier).setBodyMetrics(
+      await ref
+          .read(preAuthQuizProvider.notifier)
+          .setBodyMetrics(
             name: name,
             dateOfBirth: _dateOfBirth,
             gender: quizData.gender,
@@ -167,15 +287,21 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       );
       debugPrint('✅ [PersonalInfo] Saved name + DOB + body metrics');
 
+      // Optional avatar — uploaded before the refresh so the new photo is
+      // already on the user record when the profile reads it. Best-effort.
+      await _uploadPhotoIfAny(userId);
+
       await ref.read(authStateProvider.notifier).refreshUser();
 
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'onboarding_personal_info_completed',
-        properties: <String, Object>{
-          'has_dob': _dateOfBirth != null,
-          if (_age != null) 'age': _age!,
-        },
-      );
+      ref
+          .read(posthogServiceProvider)
+          .capture(
+            eventName: 'onboarding_personal_info_completed',
+            properties: <String, Object>{
+              'has_dob': _dateOfBirth != null,
+              if (_age != null) 'age': _age!,
+            },
+          );
 
       // Optional cycle-tracking setup — offered right after the gender
       // question per the cycle plan's gender-gating table. female → auto;
@@ -190,9 +316,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         // EXPERIMENT (default OFF): in the post-paywall treatment, personal-info
         // is the last step before the commitment pact (coach-selection + paywall
         // already happened). Otherwise it precedes coach-selection as before.
-        context.go(OnboardingExperiments.personalInfoAfterPaywall
-            ? '/commitment-pact'
-            : '/coach-selection');
+        context.go(
+          OnboardingExperiments.personalInfoAfterPaywall
+              ? '/commitment-pact'
+              : '/coach-selection',
+        );
       }
     } catch (e, st) {
       debugPrint('❌ [PersonalInfo] Save failed: $e\n$st');
@@ -231,8 +359,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         builder: (ctx) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
           return AlertDialog(
-            backgroundColor:
-                isDark ? AppColors.surface : AppColorsLight.surface,
+            backgroundColor: isDark
+                ? AppColors.surface
+                : AppColorsLight.surface,
             title: Text(AppLocalizations.of(context).personalInfoDoYouTrackA),
             content: const Text(
               'Zealova can predict your cycle and adapt workouts and '
@@ -246,7 +375,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
               ),
               FilledButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text(AppLocalizations.of(context).personalInfoYesSetItUp),
+                child: Text(
+                  AppLocalizations.of(context).personalInfoYesSetItUp,
+                ),
               ),
             ],
           );
@@ -260,9 +391,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     final completed = await CycleOnboardingSheet.show(context, userId: userId);
     if (completed == true) {
       // Content-free event name only — never any cycle data.
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'cycle_onboarding_completed',
-      );
+      ref
+          .read(posthogServiceProvider)
+          .capture(eventName: 'cycle_onboarding_completed');
     }
   }
 
@@ -270,7 +401,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   /// from the pre-auth quiz so the user sees we already know them. Empty
   /// when the quiz was skipped (returning users) — renders nothing.
   List<Widget> _buildQuizConfirmChips(
-      Color textSecondary, Color fill, Color border) {
+    Color textSecondary,
+    Color fill,
+    Color border,
+  ) {
     final quiz = ref.read(preAuthQuizProvider);
     final l10n = AppLocalizations.of(context);
 
@@ -280,26 +414,26 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
     final chips = <Widget>[];
     void addChip(String label, {bool accent = false}) {
-      chips.add(Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-        decoration: BoxDecoration(
-          color: accent ? AppColors.orange.withValues(alpha: 0.12) : fill,
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(
-            color: accent
-                ? AppColors.orange.withValues(alpha: 0.4)
-                : border,
+      chips.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          decoration: BoxDecoration(
+            color: accent ? AppColors.orange.withValues(alpha: 0.12) : fill,
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(
+              color: accent ? AppColors.orange.withValues(alpha: 0.4) : border,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: accent ? AppColors.orange : textSecondary,
+            ),
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
-            color: accent ? AppColors.orange : textSecondary,
-          ),
-        ),
-      ));
+      );
     }
 
     final g = quiz.gender;
@@ -317,8 +451,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     }
     if (quiz.weightKg != null) addChip(formatWeight(quiz.weightKg!));
     if (quiz.goalWeightKg != null) {
-      addChip(l10n.personalInfoGoalChip(formatWeight(quiz.goalWeightKg!)),
-          accent: true);
+      addChip(
+        l10n.personalInfoGoalChip(formatWeight(quiz.goalWeightKg!)),
+        accent: true,
+      );
     }
 
     if (chips.isEmpty) return const [];
@@ -334,21 +470,25 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         ),
       ).animate().fadeIn(delay: 330.ms),
       const SizedBox(height: 10),
-      Wrap(spacing: 8, runSpacing: 8, children: chips)
-          .animate()
-          .fadeIn(delay: 360.ms),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: chips,
+      ).animate().fadeIn(delay: 360.ms),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final fill = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final border = isDark
-        ? AppColors.cardBorder
-        : AppColorsLight.cardBorder;
+    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -370,131 +510,235 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context).personalInfoACoupleFinalDetails,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: textPrimary,
-                  height: 1.15,
-                  letterSpacing: -0.5,
-                ),
-              ).animate().fadeIn(),
-              const SizedBox(height: 6),
-              Text(
-                AppLocalizations.of(context).personalInfoWeUseTheseTo,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textSecondary,
-                  height: 1.4,
-                ),
-              ).animate().fadeIn(delay: 100.ms),
+                      const SizedBox(height: 8),
+                      Text(
+                        AppLocalizations.of(
+                          context,
+                        ).personalInfoACoupleFinalDetails,
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: textPrimary,
+                          height: 1.15,
+                          letterSpacing: -0.5,
+                        ),
+                      ).animate().fadeIn(),
+                      const SizedBox(height: 6),
+                      Text(
+                        AppLocalizations.of(context).personalInfoWeUseTheseTo,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: textSecondary,
+                          height: 1.4,
+                        ),
+                      ).animate().fadeIn(delay: 100.ms),
 
-              const SizedBox(height: 28),
+                      const SizedBox(height: 22),
 
-              // ── Name
-              Text(
-                AppLocalizations.of(context).personalInfoYourName,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _nameCtrl,
-                textCapitalization: TextCapitalization.words,
-                onChanged: (v) {
-                  setState(() {
-                    _nameError = v.isEmpty ? null : _validateName(v);
-                  });
-                },
-                style: TextStyle(
-                  fontSize: 16,
-                  color: textPrimary,
-                ),
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context).personalInfoFirstName,
-                  hintStyle: TextStyle(color: textSecondary, fontSize: 16),
-                  filled: true,
-                  fillColor: fill,
-                  errorText: _nameError,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.orange, width: 1.5),
-                  ),
-                ),
-              ).animate().fadeIn(delay: 200.ms),
-
-              const SizedBox(height: 20),
-
-              // ── Date of birth
-              Text(
-                AppLocalizations.of(context).personalInfoDateOfBirth,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: _pickDateOfBirth,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: fill,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: border),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today_outlined, color: textSecondary, size: 18),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _dateOfBirth == null
-                              ? 'Pick your birth date'
-                              : '${_dateOfBirth!.month}/${_dateOfBirth!.day}/${_dateOfBirth!.year}'
-                                  '${_age != null ? "  ·  age $_age" : ""}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: _dateOfBirth == null ? textSecondary : textPrimary,
+                      // ── Optional profile photo
+                      Center(
+                        child: GestureDetector(
+                          onTap: _showPhotoSourceSheet,
+                          behavior: HitTestBehavior.opaque,
+                          child: Column(
+                            children: [
+                              Stack(
+                                children: [
+                                  Container(
+                                    width: 88,
+                                    height: 88,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: fill,
+                                      border: Border.all(
+                                        color: _selectedPhotoFile != null
+                                            ? AppColors.orange
+                                            : border,
+                                        width: 2,
+                                      ),
+                                      image: _selectedPhotoFile != null
+                                          ? DecorationImage(
+                                              image: FileImage(
+                                                _selectedPhotoFile!,
+                                              ),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: _selectedPhotoFile == null
+                                        ? Icon(
+                                            Icons.person_outline,
+                                            color: textSecondary,
+                                            size: 36,
+                                          )
+                                        : null,
+                                  ),
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.orange,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: isDark
+                                              ? AppColors.pureBlack
+                                              : AppColorsLight.pureWhite,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        _selectedPhotoFile == null
+                                            ? Icons.add_a_photo
+                                            : Icons.edit,
+                                        color: Colors.white,
+                                        size: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _selectedPhotoFile == null
+                                    ? 'Add a photo (optional)'
+                                    : 'Tap to change',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      ).animate().fadeIn(delay: 150.ms),
+
+                      const SizedBox(height: 26),
+
+                      // ── Name
+                      Text(
+                        AppLocalizations.of(context).personalInfoYourName,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                          color: textSecondary,
+                        ),
                       ),
-                      Icon(Icons.chevron_right, color: textSecondary),
-                    ],
-                  ),
-                ),
-              ).animate().fadeIn(delay: 280.ms),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _nameCtrl,
+                        textCapitalization: TextCapitalization.words,
+                        onChanged: (v) {
+                          setState(() {
+                            _nameError = v.isEmpty ? null : _validateName(v);
+                          });
+                        },
+                        style: TextStyle(fontSize: 16, color: textPrimary),
+                        decoration: InputDecoration(
+                          hintText: AppLocalizations.of(
+                            context,
+                          ).personalInfoFirstName,
+                          hintStyle: TextStyle(
+                            color: textSecondary,
+                            fontSize: 16,
+                          ),
+                          filled: true,
+                          fillColor: fill,
+                          errorText: _nameError,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.orange,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 200.ms),
 
-              if (_dateOfBirth != null && (_age ?? 0) < 16) ...[
-                const SizedBox(height: 8),
-                Text(
-                  AppLocalizations.of(context).personalInfoYouMustBeAt,
-                  style: TextStyle(fontSize: 13, color: AppColors.error),
-                ),
-              ],
+                      const SizedBox(height: 20),
 
-              // ── v7: quiz answers echoed as confirm-chips instead of
-              // re-asking. Display only — the values still come from the
-              // quiz provider and are written by _save exactly as before.
-              ..._buildQuizConfirmChips(textSecondary, fill, border),
+                      // ── Date of birth
+                      Text(
+                        AppLocalizations.of(context).personalInfoDateOfBirth,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                          color: textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: _pickDateOfBirth,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: fill,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: border),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                color: textSecondary,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _dateOfBirth == null
+                                      ? 'Pick your birth date'
+                                      : '${_dateOfBirth!.month}/${_dateOfBirth!.day}/${_dateOfBirth!.year}'
+                                            '${_age != null ? "  ·  age $_age" : ""}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: _dateOfBirth == null
+                                        ? textSecondary
+                                        : textPrimary,
+                                  ),
+                                ),
+                              ),
+                              Icon(Icons.chevron_right, color: textSecondary),
+                            ],
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 280.ms),
+
+                      if (_dateOfBirth != null && (_age ?? 0) < 16) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          AppLocalizations.of(context).personalInfoYouMustBeAt,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ],
+
+                      // ── v7: quiz answers echoed as confirm-chips instead of
+                      // re-asking. Display only — the values still come from the
+                      // quiz provider and are written by _save exactly as before.
+                      ..._buildQuizConfirmChips(textSecondary, fill, border),
 
                       // Bottom breathing room inside the scroll area so the
                       // last field doesn't sit flush against the pinned button.
@@ -511,7 +755,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                   onPressed: _canContinue ? _save : null,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.orange,
-                    disabledBackgroundColor: AppColors.orange.withValues(alpha: 0.3),
+                    disabledBackgroundColor: AppColors.orange.withValues(
+                      alpha: 0.3,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
