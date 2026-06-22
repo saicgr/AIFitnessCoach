@@ -80,8 +80,12 @@ def dump(name: str, coro):
 
 print("rendering backend emails →", os.path.relpath(OUT))
 
+# Real signup case: name NOT yet collected (asked on the next screen), but the
+# onboarding answers ARE available → no greeting fallback + plan recap card.
 dump("verification", es.send_verification_email(
-    "t@x.com", "Chetan", "https://zealova.com/verify?token=abc"))
+    "t@x.com", "", "https://zealova.com/verify?token=abc",
+    plan={"goal": "build_muscle", "fitness_level": "beginner",
+          "days_per_week": 4, "weight_direction": "lose", "goal_weight_kg": 72}))
 dump("billing_issue", es.send_billing_issue("t@x.com", "Chetan", "premium_annual"))
 dump("purchase_confirmation", es.send_purchase_confirmation(
     "t@x.com", "Chetan", "premium_annual", 59.99, "USD"))

@@ -18,6 +18,26 @@ from api.v1.auth.email_verification import issue_and_send_verification
 from services.discord_webhooks import notify_signup
 from services.apple_auth_revocation import exchange_authorization_code
 
+
+# Onboarding answers the Flutter client forwards into Supabase user_metadata at
+# signup (see email_sign_in_screen.dart `quizMetadata`). Surfaced into the
+# verification email's "Your plan so far" recap card.
+_PLAN_METADATA_KEYS = (
+    "goal", "days_per_week", "fitness_level",
+    "weight_kg", "goal_weight_kg", "weight_direction",
+)
+
+
+def _plan_from_metadata(metadata: dict | None) -> dict:
+    """Pull the onboarding-plan fields out of Supabase user_metadata (best-effort)."""
+    md = metadata or {}
+    plan: dict = {}
+    for key in _PLAN_METADATA_KEYS:
+        val = md.get(key)
+        if val not in (None, "", []):
+            plan[key] = val
+    return plan
+
 from api.v1.users.models import (
     GoogleAuthRequest,
     EmailAuthRequest,
@@ -395,6 +415,7 @@ async def email_signup(request: Request, body: EmailSignupRequest,
         background_tasks.add_task(
             issue_and_send_verification,
             user_id=created["id"], email=email or "", name=full_name,
+            plan=_plan_from_metadata(verified_token.get("user_metadata")),
         )
 
         # NOTE: Welcome email moved to onboarding-complete handler — see
@@ -498,6 +519,7 @@ async def auth_sync(request: Request,
         background_tasks.add_task(
             issue_and_send_verification,
             user_id=created["id"], email=email or "", name=full_name,
+            plan=_plan_from_metadata(metadata),
         )
         background_tasks.add_task(
             notify_signup, email=email or "", user_id=created["id"],

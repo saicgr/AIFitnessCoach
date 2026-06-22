@@ -46,15 +46,54 @@ def _new_token() -> tuple[str, str]:
 
 
 def _first_name(name: str | None) -> str:
-    return (name or "").strip().split(" ")[0] if (name or "").strip() else "there"
+    # Empty (not "there") when no name — at email-signup the name isn't collected
+    # yet, and send_verification_email drops the greeting rather than show a wrong
+    # fallback. See email_service.send_verification_email.
+    return (name or "").strip().split(" ")[0] if (name or "").strip() else ""
+
+
+def _plan_from_user_row(user: dict) -> dict:
+    """Best-effort onboarding-plan dict from a `public.users` row, for the recap
+    card on RESEND (the signup path passes the plan from JWT metadata instead).
+    Reads defensively — only includes keys whose columns exist + are populated."""
+    import json
+
+    plan: dict = {}
+    goals = user.get("goals")
+    if isinstance(goals, str):
+        try:
+            goals = json.loads(goals)
+        except (ValueError, TypeError):
+            goals = None
+    if isinstance(goals, list) and goals:
+        plan["goal"] = goals[0]
+    elif user.get("primary_goal"):
+        plan["goal"] = user["primary_goal"]
+
+    if user.get("fitness_level"):
+        plan["fitness_level"] = user["fitness_level"]
+
+    days = user.get("workouts_per_week") or user.get("days_per_week")
+    if days:
+        plan["days_per_week"] = days
+
+    if user.get("goal_weight_kg"):
+        plan["goal_weight_kg"] = user.get("goal_weight_kg")
+    if user.get("weight_direction"):
+        plan["weight_direction"] = user.get("weight_direction")
+    return plan
 
 
 async def issue_and_send_verification(
-    *, user_id: str, email: str, name: str | None = None
+    *, user_id: str, email: str, name: str | None = None,
+    plan: dict | None = None,
 ) -> None:
     """Mint a fresh verification token for [user_id], store its hash, and email
     the branded verification link. Never raises — a failed send must not break
     signup; the banner + Resend recover it.
+
+    `plan` (optional) carries the onboarding answers (goal / experience / days /
+    weight target) so the email can render a "Your plan so far" recap card.
     """
     try:
         raw, token_hash = _new_token()
@@ -70,6 +109,7 @@ async def issue_and_send_verification(
             to_email=email,
             first_name=_first_name(name),
             verify_url=verify_url,
+            plan=plan,
         )
         logger.info(f"Verification email issued for user {user_id}")
     except Exception as e:  # noqa: BLE001 — verification is best-effort
@@ -194,9 +234,11 @@ async def resend_verification(
         return {"sent": False, "reason": "no_subject"}
 
     sb = get_supabase().client
+    # select("*") avoids schema-drift 500s and lets us read whatever onboarding
+    # columns exist to rebuild the plan recap (the row is populated by resend time).
     res = (
         sb.table("users")
-        .select("id, email, name, email_verified, email_verification_sent_at")
+        .select("*")
         .eq("auth_id", auth_id)
         .limit(1)
         .execute()
@@ -221,5 +263,6 @@ async def resend_verification(
 
     await issue_and_send_verification(
         user_id=user["id"], email=user["email"], name=user.get("name"),
+        plan=_plan_from_user_row(user),
     )
     return {"sent": True}

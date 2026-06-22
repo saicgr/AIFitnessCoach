@@ -483,11 +483,17 @@ class EmailService(
 
     async def send_verification_email(
         self, to_email: str, first_name: str, verify_url: str,
+        plan: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Branded email-verification email.
 
         Transactional/security mail — it is sent regardless of notification
         preferences (there is no opt-out for verifying your own account).
+
+        `plan` (optional) carries the onboarding answers the user gave before the
+        email step (goal / experience / days / weight target). When present, a
+        "Your plan so far" recap card is rendered so the email reinforces value,
+        not just asks for a verification tap.
         """
         if not self.is_configured():
             return {"error": "Email service not configured"}
@@ -495,9 +501,14 @@ class EmailService(
         from core.config import get_settings
         logo_url = get_settings().email_logo_url
 
-        name = first_name or "there"
+        # At email-signup the name isn't collected yet (we ask it on the next
+        # screen), so first_name is empty / the legacy "there" placeholder. A
+        # wrong fallback name reads worse than none — drop it entirely.
+        name = (first_name or "").strip()
+        if name.lower() in ("", "there", "user"):
+            name = ""
         subject = f"Verify your {branding.APP_NAME} email"
-        title = f"Verify your email, {name}"
+        title = f"Verify your email, {name}" if name else "Verify your email"
         subtitle = (
             "Tap the button below to confirm this is your email. It keeps your "
             "account secure and makes sure your trial reminders and coaching "
@@ -509,11 +520,13 @@ class EmailService(
             ("&#128276;", "Never miss a reminder",
              "Trial reminders and coaching updates land in the right inbox."),
         ]
+        plan_card = sig.plan_recap(self._plan_recap_rows(plan))
         html_content = self._build_standard_email(
             logo_url=logo_url, open_url=verify_url,
             title=title, subtitle=subtitle,
             cta_text="Verify my email",
             features=features,
+            body_after_cta_html=plan_card,
             footer_text=(
                 f"You received this because an account was created with this "
                 f"email on {branding.APP_NAME}. If that was not you, you can "
@@ -532,6 +545,72 @@ class EmailService(
             logger.error(f"Failed to send verification email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
+    # Humanized labels for the common goal keys. Unknown keys fall back to a
+    # Title-cased version of the raw key (no brittle whitelist — display-only).
+    _GOAL_LABELS = {
+        "build_muscle": "Build muscle", "gain_muscle": "Build muscle",
+        "muscle_gain": "Build muscle", "hypertrophy": "Build muscle",
+        "lose_weight": "Lose weight", "weight_loss": "Lose weight",
+        "lose_fat": "Lose fat", "fat_loss": "Lose fat",
+        "get_stronger": "Get stronger", "strength": "Get stronger",
+        "build_strength": "Get stronger", "gain_strength": "Get stronger",
+        "improve_endurance": "Improve endurance", "endurance": "Improve endurance",
+        "cardio": "Improve endurance", "general_fitness": "General fitness",
+        "stay_fit": "Stay fit", "tone_up": "Tone up", "toning": "Tone up",
+        "athletic_performance": "Athletic performance", "performance": "Athletic performance",
+        "flexibility": "Flexibility & mobility", "mobility": "Flexibility & mobility",
+    }
+
+    @staticmethod
+    def _plan_recap_rows(plan: Optional[Dict[str, Any]]) -> List[tuple]:
+        """Map onboarding answers → (icon_key, label, value) rows for `sig.plan_recap`.
+        Best-effort: only includes rows whose data is present; returns [] when there
+        is nothing usable (so the recap card is omitted entirely)."""
+        if not plan:
+            return []
+        rows: List[tuple] = []
+
+        goal = str(plan.get("goal") or "").strip()
+        if goal:
+            gl = goal.lower()
+            label = EmailService._GOAL_LABELS.get(
+                gl, goal.replace("_", " ").replace("-", " ").strip().title()
+            )
+            icon = "dumbbell"
+            if "lose" in gl or "fat" in gl or ("weight" in gl and "loss" in gl):
+                icon = "flame"
+            elif "endur" in gl or "cardio" in gl or "run" in gl:
+                icon = "activity"
+            elif "flex" in gl or "mobil" in gl:
+                icon = "leaf"
+            rows.append((icon, "Goal", label))
+
+        level = str(plan.get("fitness_level") or "").strip()
+        if level:
+            rows.append(("trending_up", "Experience", level.replace("_", " ").title()))
+
+        days = plan.get("days_per_week")
+        try:
+            days = int(days) if days is not None else None
+        except (TypeError, ValueError):
+            days = None
+        if days and days > 0:
+            unit = "day" if days == 1 else "days"
+            rows.append(("calendar", "Training", f"{days} {unit} / week"))
+
+        # Weight target in lb (US-dominant audience / app's primary display unit).
+        # Only when a lose/gain direction + a target weight are both present.
+        direction = str(plan.get("weight_direction") or "").strip().lower()
+        goal_kg = plan.get("goal_weight_kg")
+        try:
+            goal_kg = float(goal_kg) if goal_kg is not None else None
+        except (TypeError, ValueError):
+            goal_kg = None
+        if direction in ("lose", "gain") and goal_kg and goal_kg > 0:
+            rows.append(("scale", "Target weight", f"{round(goal_kg * 2.2046)} lb"))
+
+        return rows
+
     @staticmethod
     def _feature_icon(emoji: str) -> str:
         """Map a feature-row emoji (HTML entity or raw char) to a Lucide key."""
@@ -543,6 +622,7 @@ class EmailService(
         *,
         persona_signature_html: str = "",
         stats_row_html: str = "",
+        body_after_cta_html: str = "",
         unsubscribe_url: Optional[str] = None,
         category_name: Optional[str] = None,
         header_tag: str = "",
@@ -578,6 +658,7 @@ class EmailService(
         body = persona_signature_html + stats_row_html
         if cta_text and open_url:
             body += sig.pill_cta(cta_text, open_url)
+        body += body_after_cta_html
         body += sig.info_rows(rows)
 
         is_pref = bool(unsubscribe_url and category_name)
