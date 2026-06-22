@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onboarding-tail redesign — BEFORE → AFTER (signature v2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0B; --surface:#141416; --surface2:#0F0F11; --border:#26262B; --rule:#2A2A2E;
+    --txt:#FAFAFA; --mut:#9D9DA6; --faint:#5C5C64; --accent:#F97316; --rust:#C2410C; --ember:#7C2D12;
+    --cyan:#06B6D4; --green:#2ECC71; --purple:#A855F7; --r:14px;
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:#08080a;color:var(--txt);font-family:Inter,-apple-system,sans-serif;padding:40px 28px 90px}
+  .anton{font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.5px;font-weight:400}
+  .cond{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+  .ser{font-family:Fraunces,Georgia,serif}
+  h1.page{font-family:Anton,sans-serif;text-transform:uppercase;font-size:38px;letter-spacing:.5px;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:14px;margin:0 0 28px;max-width:820px;line-height:1.5}
+  .kick{color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;font-size:13px;text-transform:uppercase}
+
+  .surface-h{font-family:Anton,sans-serif;text-transform:uppercase;font-size:24px;letter-spacing:.5px;margin:46px 0 4px;border-top:1px solid #1c1c20;padding-top:30px}
+  .surface-h:first-of-type{border-top:0}
+  .changed{color:var(--mut);font-size:13px;margin:0 0 18px;line-height:1.5;max-width:780px}
+  .changed b{color:#fff}
+
+  .pair{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+  .col{display:flex;flex-direction:column;align-items:center}
+  .tag{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:12px;margin-bottom:9px;padding:3px 12px;border-radius:6px}
+  .tag.before{color:#8a8a92;border:1px solid #2a2a2e}
+  .tag.after{color:#160B03;background:var(--accent)}
+  .arrow{align-self:center;color:var(--faint);font-size:30px;margin:0 2px;padding-top:240px}
+
+  /* phone */
+  .phone{width:300px;height:640px;border-radius:42px;padding:5px;background:linear-gradient(150deg,#5d5d66,#1e1e23 22%,#0b0b0d 50%,#2a2a30 78%,#4e4e57);box-shadow:0 24px 56px -22px rgba(0,0,0,.8)}
+  .phone.dim{filter:saturate(.55) brightness(.82)}
+  .screen{width:100%;height:100%;border-radius:38px;overflow:hidden;position:relative;background:var(--bg);display:flex;flex-direction:column}
+  .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:96px;height:22px;background:#000;border-radius:13px;z-index:40}
+  .stat{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:12px;font-weight:600;color:#fff;flex:0 0 auto}
+  .body{flex:1;overflow:hidden;padding:0 16px}
+
+  .card{background:var(--surface2);border-top:1px solid var(--rule);border-radius:var(--r);padding:12px 13px;position:relative}
+  .pill{display:inline-flex;align-items:center;gap:5px;height:21px;padding:0 9px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
+  .cta{height:46px;border-radius:13px;background:var(--accent);color:#160B03;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:2.5px;text-transform:uppercase}
+  .cta.old{background:#2a2a2e;color:#fff;font-family:Inter;text-transform:none;letter-spacing:0;font-weight:700;border-radius:13px}
+  .feat{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px}
+  .ficon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex:0 0 auto;background:rgba(249,115,22,.14)}
+  .ft{font-size:12.5px;font-weight:700;color:#fff;line-height:1.12}
+  .fs{font-size:10px;color:var(--mut);line-height:1.28;margin-top:2px}
+  .thumb{width:36px;height:36px;border-radius:9px;background:#1b1b1f;display:flex;align-items:center;justify-content:center;font-size:15px;color:#6a6a73}
+  table.cmp{width:100%;border-collapse:collapse;margin-top:6px;background:var(--surface2);border-radius:var(--r);overflow:hidden;border-top:1px solid var(--accent)}
+  table.cmp th,table.cmp td{padding:6px 4px;text-align:center;font-size:10px;border-bottom:1px solid var(--rule)}
+  table.cmp th{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;color:var(--mut);font-weight:800;font-size:9px}
+  table.cmp td:first-child,table.cmp th:first-child{text-align:left;color:#fff;font-weight:600;font-size:10px;padding-left:9px}
+  .colZ{background:rgba(249,115,22,.08)} .yes{color:var(--accent);font-weight:800} .no{color:#3f3f46}
+  .seg{display:flex;gap:5px;margin-top:12px}.seg i{flex:1;height:3px;border-radius:2px;background:#26262b}.seg i.on{background:var(--accent)}
+  .daydot{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1}
+  .daydot .d{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--faint);font-size:10px}
+  .daydot .o{width:11px;height:11px;border-radius:50%;border:1.5px solid #34343a}
+  .daydot.on .o{background:var(--accent);border-color:var(--accent)}.daydot.on .d{color:var(--accent)}
+  .ring{width:20px;height:20px;border-radius:50%;border:3px solid rgba(22,11,3,.25);border-top-color:#160B03;border-right-color:#160B03;transform:rotate(60deg)}
+  .holdbtn{height:52px;border-radius:14px;position:relative;overflow:hidden;background:rgba(249,115,22,.28);display:flex;align-items:center;justify-content:center}
+  .holdbtn .fill{position:absolute;inset:0;width:62%;background:linear-gradient(90deg,#F97316,#FF6B00)}
+  .holdbtn.old{background:#211a14}.holdbtn.old .fill{display:none}
+  .holdbtn .lbl{position:relative;z-index:2;display:flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#160B03;font-size:14px}
+  .holdbtn.old .lbl{color:#8a6a4a;font-family:Inter;text-transform:none;letter-spacing:0}
+  .glow{position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,.16),transparent 70%);pointer-events:none}
+  .gt{background:var(--surface2);border-top:1px solid var(--rule);border-radius:12px;padding:11px 6px 9px;text-align:center;position:relative}
+  .gt.new::after{content:'NEW';position:absolute;top:5px;right:6px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:7px;letter-spacing:.5px;color:var(--accent)}
+  .gi{font-size:19px;margin-bottom:5px}
+  .gl{font-size:10.5px;font-weight:700;color:#fff;line-height:1.12}
+  .gt.new .gl{color:var(--accent)}
+  .mq{overflow:hidden;position:relative;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+  .mqrow{display:flex;gap:8px;width:max-content;animation:mqL 46s linear infinite}
+  .mqrow.r{animation:mqR 54s linear infinite}
+  @keyframes mqL{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @keyframes mqR{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+  .chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:12px;background:var(--surface2);border-top:1px solid var(--rule);white-space:nowrap;flex:0 0 auto}
+  .chip .cl{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:10.5px;color:#fff}
+  .ms{font-family:'Material Symbols Outlined';font-size:16px;line-height:1;color:var(--accent);font-weight:400}
+  .seg{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:1px;padding:2px 8px;border-radius:5px;color:var(--mut);cursor:pointer;user-select:none}
+  .seg.on{background:var(--accent);color:#160B03}
+  .prow{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .prow .pn{width:78px}
+  .prow .pnn{font-size:11.5px;font-weight:700;color:var(--mut);line-height:1.1}
+  .prow .pnt{font-size:9px;color:var(--faint)}
+  .prow .pb{flex:1}
+  .prow .pbf{height:10px;border-radius:6px;background:rgba(157,157,166,.35);transition:width .35s ease}
+  .prow .pp{width:56px;text-align:right;color:var(--faint);text-decoration:line-through;font-size:12px}
+  .prow.z .pnn{color:#fff;font-weight:800}.prow.z .pnt{color:var(--accent)}.prow.z .pbf{background:var(--accent)}.prow.z .pp{text-decoration:none}.prow.z .pp .v{font-family:Anton;color:var(--accent);font-size:17px}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#0d1117;border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;border-top:1px solid #1e2630}
+</style>
+</head>
+<body>
+<div class="kick">Zealova · signature v2</div>
+<h1 class="page">Onboarding tail — before → after</h1>
+<p class="sub">Left = what shipped before (dimmed). Right = the new signature-v2 build (Anton display / Barlow labels / single orange #F97316 / dark surfaces). These mirror the live Flutter widgets (implemented, analyze-clean, 25 tests passing).</p>
+
+<!-- PAYWALL -->
+<div class="surface-h">1 · Paywall (features)</div>
+<p class="changed"><b>Before:</b> app icon + plain bold headline + 6 feature rows + a methodology credibility strip. <b>After:</b> a <b>true single screen, no scroll</b> — Anton headline, a premium <b>auto-scrolling feature marquee</b> (two rows of icon chips gliding in opposite directions with edge fades — shows real breadth: 52+ skill progressions, 1,722 exercises w/ video, adaptive TDEE…), an honest <b>price anchor with a MO/YR toggle</b> — topped by a premium <b>"ceiling"</b> callout (a 1-on-1 human coach like <b>Future</b> runs $149–199/mo) so Zealova reads as <em>premium value, not cheap</em>, then real 2026 prices for 5 single-job apps — MyFitnessPal, Fitbod, Noom, MacroFactor, Cronometer — with Zealova at $7.99/mo · $59.99/yr doing all of it; no fake "$60 stack". <em>Click the toggle in the proof.</em>), and a clear pinned <b>CONTINUE →</b> CTA (was missing before). Only the marquee animates horizontally; the page never scrolls.</p>
+<div class="pair">
+  <div class="col"><div class="tag before">Before</div>
+    <div class="phone dim"><div class="screen"><div class="notch"></div>
+      <div class="stat"><span>8:22</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="overflow-y:auto">
+        <div style="text-align:center;margin:8px 0 14px">
+          <div style="width:54px;height:54px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(140deg,#F97316,#7C2D12)"></div>
+          <div style="font-weight:800;font-size:21px;line-height:1.1">Unlock everything<br><span style="color:#F97316">your coach can do</span></div>
+        </div>
+        <div class="feat"><div class="ficon" style="background:rgba(168,85,247,.14)">🪄</div><div><div class="ft">Unlimited AI workouts</div><div class="fs">Personalized plans for any goal</div></div></div>
+        <div class="feat"><div class="ficon" style="background:rgba(6,182,212,.14)">💬</div><div><div class="ft">AI Coach chat</div><div class="fs">Nutrition, form, recovery</div></div></div>
+        <div class="feat"><div class="ficon">📷</div><div><div class="ft">Food photo scanning</div><div class="fs">Snap a photo, get macros</div></div></div>
+        <div class="feat"><div class="ficon" style="background:rgba(255,107,107,.14)">🩹</div><div><div class="ft">Injury-aware training</div><div class="fs">Auto-adapts around injuries</div></div></div>
+        <div class="feat"><div class="ficon" style="background:rgba(46,204,113,.14)">📊</div><div><div class="ft">Progress tracking & analytics</div><div class="fs">Charts, heatmaps & detail</div></div></div>
+        <div class="feat"><div class="ficon" style="background:rgba(231,76,60,.14)">🔥</div><div><div class="ft">Hell Mode & skill progressions</div><div class="fs">Push past every plateau</div></div></div>
+        <div class="card" style="margin-top:12px;text-align:center"><div class="fs">⚙ Powered by Google Gemini · NSCA-based · Injury-aware</div></div>
+      </div>
+    </div></div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="col"><div class="tag after">After · signature v2</div>
+    <div class="phone"><div class="screen"><div class="notch"></div><div class="glow"></div>
+      <div class="stat"><span>8:22</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="overflow-y:auto">
+        <div style="text-align:center;margin:6px 0 12px">
+          <div style="width:52px;height:52px;border-radius:50%;margin:0 auto 9px;background:linear-gradient(140deg,#F97316,#7C2D12)"></div>
+          <div class="anton" style="font-size:21px;line-height:1.04">Unlock everything<br><span style="color:var(--accent)">your coach can do</span></div>
+        </div>
+        <div style="margin-top:4px">
+          <div class="mq" style="margin-bottom:8px"><div class="mqrow">
+            <span class="chip"><span class="ms">fitness_center</span><span class="cl">AI workouts</span></span><span class="chip"><span class="ms">chat</span><span class="cl">Coach chat</span></span><span class="chip"><span class="ms">menu_book</span><span class="cl">Menu scan</span></span><span class="chip"><span class="ms">videocam</span><span class="cl">Form check</span></span><span class="chip"><span class="ms">receipt_long</span><span class="cl">Recipe import</span></span><span class="chip"><span class="ms">timer</span><span class="cl">Fasting + water</span></span><span class="chip"><span class="ms">photo_camera</span><span class="cl">Food photo</span></span><span class="chip"><span class="ms">healing</span><span class="cl">Injury-safe</span></span><span class="chip"><span class="ms">repeat</span><span class="cl">Superset builder</span></span><span class="chip"><span class="ms">insights</span><span class="cl">RPE / RIR logging</span></span><span class="chip"><span class="ms">qr_code_scanner</span><span class="cl">Barcode scan</span></span><span class="chip"><span class="ms">mic</span><span class="cl">Voice logging</span></span>
+            <span class="chip"><span class="ms">fitness_center</span><span class="cl">AI workouts</span></span><span class="chip"><span class="ms">chat</span><span class="cl">Coach chat</span></span><span class="chip"><span class="ms">menu_book</span><span class="cl">Menu scan</span></span><span class="chip"><span class="ms">videocam</span><span class="cl">Form check</span></span><span class="chip"><span class="ms">receipt_long</span><span class="cl">Recipe import</span></span><span class="chip"><span class="ms">timer</span><span class="cl">Fasting + water</span></span><span class="chip"><span class="ms">photo_camera</span><span class="cl">Food photo</span></span><span class="chip"><span class="ms">healing</span><span class="cl">Injury-safe</span></span><span class="chip"><span class="ms">repeat</span><span class="cl">Superset builder</span></span><span class="chip"><span class="ms">insights</span><span class="cl">RPE / RIR logging</span></span><span class="chip"><span class="ms">qr_code_scanner</span><span class="cl">Barcode scan</span></span><span class="chip"><span class="ms">mic</span><span class="cl">Voice logging</span></span>
+          </div></div>
+          <div class="mq"><div class="mqrow r">
+            <span class="chip"><span class="ms">trending_up</span><span class="cl">52+ skill progressions</span></span><span class="chip"><span class="ms">groups</span><span class="cl">5 AI coach personas</span></span><span class="chip"><span class="ms">calculate</span><span class="cl">Adaptive TDEE engine</span></span><span class="chip"><span class="ms">map</span><span class="cl">Muscle heatmap</span></span><span class="chip"><span class="ms">movie</span><span class="cl">1,722 exercises w/ video</span></span><span class="chip"><span class="ms">watch</span><span class="cl">Wearable sync</span></span><span class="chip"><span class="ms">ac_unit</span><span class="cl">Streak freezes</span></span><span class="chip"><span class="ms">monitor_heart</span><span class="cl">Recovery score</span></span><span class="chip"><span class="ms">directions_run</span><span class="cl">Rest-day cardio</span></span><span class="chip"><span class="ms">local_fire_department</span><span class="cl">Hell Mode</span></span><span class="chip"><span class="ms">card_giftcard</span><span class="cl">7-day free trial</span></span><span class="chip"><span class="ms">bar_chart</span><span class="cl">Weekly recap</span></span>
+            <span class="chip"><span class="ms">trending_up</span><span class="cl">52+ skill progressions</span></span><span class="chip"><span class="ms">groups</span><span class="cl">5 AI coach personas</span></span><span class="chip"><span class="ms">calculate</span><span class="cl">Adaptive TDEE engine</span></span><span class="chip"><span class="ms">map</span><span class="cl">Muscle heatmap</span></span><span class="chip"><span class="ms">movie</span><span class="cl">1,722 exercises w/ video</span></span><span class="chip"><span class="ms">watch</span><span class="cl">Wearable sync</span></span><span class="chip"><span class="ms">ac_unit</span><span class="cl">Streak freezes</span></span><span class="chip"><span class="ms">monitor_heart</span><span class="cl">Recovery score</span></span><span class="chip"><span class="ms">directions_run</span><span class="cl">Rest-day cardio</span></span><span class="chip"><span class="ms">local_fire_department</span><span class="cl">Hell Mode</span></span><span class="chip"><span class="ms">card_giftcard</span><span class="cl">7-day free trial</span></span><span class="chip"><span class="ms">bar_chart</span><span class="cl">Weekly recap</span></span>
+          </div></div>
+        </div>
+        <div class="card" style="margin-top:12px;border-top:1px solid var(--accent)">
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.22);border-radius:9px;padding:7px 10px;margin-bottom:11px">
+            <span class="ms" style="font-size:16px;color:var(--accent)">workspace_premium</span>
+            <div style="font-size:11.5px;line-height:1.3;color:var(--mut)">A 1-on-1 coach like <b>Future</b> runs <b style="color:var(--accent)">$149–199/mo</b>. You get a coach + all of this:</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1px">
+            <div class="kick">What apps like these charge</div>
+            <div style="display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:2px"><span class="seg on" data-seg="mo">MO</span><span class="seg" data-seg="yr">YR</span></div>
+          </div>
+          <div class="fs" style="font-size:9px;margin-bottom:9px">each does one job</div>
+          <div class="prow"><div class="pn"><div class="pnn">MyFitnessPal</div><div class="pnt">nutrition</div></div><div class="pb"><div class="pbf" data-mow="100%" data-yrw="38%"></div></div><div class="pp"><span class="v" data-mo="$19.99" data-yr="$79.99">$19.99</span></div></div>
+          <div class="prow"><div class="pn"><div class="pnn">Fitbod</div><div class="pnt">workouts</div></div><div class="pb"><div class="pbf" data-mow="80%" data-yrw="46%"></div></div><div class="pp"><span class="v" data-mo="$15.99" data-yr="$95.99">$15.99</span></div></div>
+          <div class="prow"><div class="pn"><div class="pnn">Noom</div><div class="pnt">coaching</div></div><div class="pb"><div class="pbf" data-mow="87%" data-yrw="100%"></div></div><div class="pp"><span class="v" data-mo="$17.42" data-yr="$209">$17.42</span></div></div>
+          <div class="prow"><div class="pn"><div class="pnn">MacroFactor</div><div class="pnt">macros</div></div><div class="pb"><div class="pbf" data-mow="60%" data-yrw="34%"></div></div><div class="pp"><span class="v" data-mo="$11.99" data-yr="$71.99">$11.99</span></div></div>
+          <div class="prow"><div class="pn"><div class="pnn">Cronometer</div><div class="pnt">micros</div></div><div class="pb"><div class="pbf" data-mow="55%" data-yrw="29%"></div></div><div class="pp"><span class="v" data-mo="$10.99" data-yr="$59.88">$10.99</span></div></div>
+          <div class="prow z"><div class="pn"><div class="pnn">Zealova</div><div class="pnt">all of it</div></div><div class="pb"><div class="pbf" data-mow="40%" data-yrw="29%"></div></div><div class="pp"><span class="v" data-mo="$7.99" data-yr="$59.99">$7.99</span></div></div>
+          <div class="fs" style="margin-top:9px;line-height:1.4">Each app does one job. Zealova does all of them — plus recipe import, barcode scan &amp; more.</div>
+        </div>
+        <div class="cta" style="margin-top:12px">Continue →</div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- VALUE REEL (NEW) -->
+<div class="surface-h">2 · Pre-paywall value reel <span style="font-family:Inter;text-transform:none;font-size:13px;color:var(--accent);letter-spacing:0">(this is "the video one")</span></div>
+<p class="changed"><b>Brand new</b> — there was nothing here before (paywall opened straight to the offer). A short 3-beat animated reel (Builds your plan → Snaps your food → Reads any menu), auto-advancing, always-skippable, then the paywall. Reuses animated scenes (no heavy MP4).</p>
+<div class="pair">
+  <div class="col"><div class="tag before">Before · none</div>
+    <div class="phone dim"><div class="screen"><div class="notch"></div>
+      <div class="stat"><span>8:22</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="display:flex;align-items:center;justify-content:center;color:var(--faint);text-align:center;font-size:13px">(straight to the<br>pricing offer)</div>
+    </div></div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="col"><div class="tag after">After · value reel (page 0)</div>
+    <div class="phone"><div class="screen"><div class="notch"></div><div class="glow"></div>
+      <div class="stat"><span>8:22</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="display:flex;flex-direction:column;padding-top:6px;padding-bottom:16px">
+        <div style="display:flex;justify-content:flex-end"><span class="cond" style="color:var(--mut);font-weight:700;font-size:11px;letter-spacing:2px">Skip ›</span></div>
+        <div class="seg"><i class="on"></i><i></i><i></i></div>
+        <div style="flex:1;margin-top:14px;border-radius:16px;border-top:1px solid var(--rule);background:var(--surface2);display:flex;align-items:center;justify-content:center"><div style="width:150px;height:180px;border-radius:12px;background:#141416;display:flex;align-items:center;justify-content:center;font-size:36px">🗓️</div></div>
+        <div class="anton" style="font-size:27px;margin-top:16px">Builds your plan</div>
+        <div style="color:var(--mut);font-size:12.5px;margin-top:6px;line-height:1.4">A full week, around your goal, gear and days.</div>
+        <div style="height:14px"></div>
+        <div class="cta">Continue</div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- COMMIT -->
+<div class="surface-h">3 · Commit screen</div>
+<p class="changed"><b>Before:</b> the body scrolled (CTA could push off-screen), the session card was text-only, the hold button had a subtle/easy-to-miss fill. <b>After:</b> <b>fits one screen (no scroll)</b>, real exercise <b>thumbnails</b> on the first-session card, and a punchy <b>hold-to-commit</b> (progress ring + bright fill → "Committed ✓").</p>
+<div class="pair">
+  <div class="col"><div class="tag before">Before</div>
+    <div class="phone dim"><div class="screen"><div class="notch"></div>
+      <div class="stat"><span>8:23</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="display:flex;flex-direction:column;padding-top:6px;overflow-y:auto">
+        <div class="anton" style="font-size:22px;text-align:center;line-height:1.05">SaiSai, can you commit to week 1?</div>
+        <div style="display:flex;margin-top:14px;gap:2px">
+          <div class="daydot"><span class="d">M</span><span class="o"></span></div><div class="daydot on"><span class="d">T</span><span class="o"></span></div><div class="daydot"><span class="d">W</span><span class="o"></span></div><div class="daydot"><span class="d">T</span><span class="o"></span></div><div class="daydot"><span class="d">F</span><span class="o"></span></div><div class="daydot on"><span class="d">S</span><span class="o"></span></div><div class="daydot on"><span class="d">S</span><span class="o"></span></div>
+        </div>
+        <div class="card" style="margin-top:12px;border:1px solid #3a2a18">
+          <span class="pill" style="background:#3a2a18;color:var(--accent)">First session · Tue</span>
+          <div style="font-weight:800;font-size:18px;margin-top:7px">Upper Body Push</div>
+          <div style="color:var(--mut);font-size:11px;margin-top:7px">45–60 min · Chest · Shoulders · Triceps</div>
+          <div style="color:var(--mut);font-size:11px;margin-top:3px">Full Gym & Bodyweight +81 more</div>
+        </div>
+        <div class="fs" style="margin:13px 0 5px">OTHER WORKOUT DAYS</div>
+        <div class="card" style="margin-bottom:6px">Sat · Upper Body Pull</div>
+        <div class="card" style="margin-bottom:6px">Sun · Lower Body</div>
+        <div class="card" style="margin-bottom:6px">Recovery: Mon · Wed · Thu · Fri</div>
+        <div class="card">Week 1 of your 19 kg plan.</div>
+        <div class="holdbtn old" style="margin-top:12px"><div class="lbl">🔒 Hold to commit</div></div>
+      </div>
+    </div></div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="col"><div class="tag after">After · no scroll</div>
+    <div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="stat"><span>8:23</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="display:flex;flex-direction:column;padding-top:6px;padding-bottom:14px">
+        <div style="text-align:center"><span class="ser" style="font-style:italic;color:#CBB9A4;font-size:13px">One last thing.</span></div>
+        <div class="anton" style="font-size:23px;text-align:center;line-height:1.05;margin-top:3px">SaiSai, can you commit to week 1?</div>
+        <div style="display:flex;margin-top:13px;gap:2px">
+          <div class="daydot"><span class="d">M</span><span class="o"></span></div><div class="daydot on"><span class="d">T</span><span class="o"></span></div><div class="daydot"><span class="d">W</span><span class="o"></span></div><div class="daydot"><span class="d">T</span><span class="o"></span></div><div class="daydot"><span class="d">F</span><span class="o"></span></div><div class="daydot on"><span class="d">S</span><span class="o"></span></div><div class="daydot on"><span class="d">S</span><span class="o"></span></div>
+        </div>
+        <div class="card" style="margin-top:12px;border:1px solid var(--accent)">
+          <span class="pill" style="background:var(--accent);color:#160B03">First session · Tue</span>
+          <div class="anton" style="font-size:19px;margin-top:7px">Upper Body Push</div>
+          <div style="display:flex;gap:6px;margin-top:8px"><div class="thumb">🏋️</div><div class="thumb">💪</div><div class="thumb">🦾</div></div>
+          <div class="cond" style="color:var(--mut);font-weight:700;font-size:10px;letter-spacing:1.2px;margin-top:8px">45–60 min · Chest · Shoulders · Triceps</div>
+        </div>
+        <div class="cond" style="color:var(--faint);font-weight:700;font-size:10px;letter-spacing:2px;margin:12px 0 6px">Other workout days</div>
+        <div class="card" style="display:flex;justify-content:space-between;margin-bottom:6px"><span><b class="cond" style="color:var(--accent);font-size:12px">Sat</b> Upper Body Pull</span><span style="color:var(--mut);font-size:11px">45–60</span></div>
+        <div class="card" style="display:flex;justify-content:space-between"><span><b class="cond" style="color:var(--accent);font-size:12px">Sun</b> Lower Body</span><span style="color:var(--mut);font-size:11px">45–60</span></div>
+        <div style="flex:1"></div>
+        <div class="holdbtn"><div class="fill"></div><div class="lbl"><span class="ring"></span> Keep holding…</div></div>
+        <div style="text-align:center;color:var(--mut);font-size:12px;margin-top:10px">Maybe later</div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- FOUNDER NOTE -->
+<div class="surface-h">4 · Founder note</div>
+<p class="changed"><b>Before:</b> a scrolling wall of 4 long paragraphs (cut off at the bottom), and it could fire twice. <b>After:</b> <b>fits one screen (no scroll)</b>, 3 crisp lines, shown <b>once</b> (post-commit only), links + CTA pinned.</p>
+<div class="pair">
+  <div class="col"><div class="tag before">Before · scrolls</div>
+    <div class="phone dim"><div class="screen"><div class="notch"></div>
+      <div class="stat"><span>8:24</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:10px;overflow-y:auto">
+        <div style="width:70px;height:70px;border-radius:18px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:30px">⚡</div>
+        <div class="kick" style="margin-top:14px">A note from Chetan</div>
+        <div style="font-weight:800;font-size:22px;margin-top:8px;line-height:1.1">Hey <span style="color:#F97316">SaiSai</span> — quick story before you start.</div>
+        <div style="color:#d4d4d8;font-size:12.5px;line-height:1.5;margin-top:12px">Whether you're starting fresh or coming back from another failed try, the hard part's the same: nothing notices when you go quiet. I'd log for two weeks, then go silent. Three weeks later, reinstall something new. Apps, paper journals, sticky notes, same loop. They were ledgers, not coaches.</div>
+        <div style="color:#d4d4d8;font-size:12.5px;line-height:1.5;margin-top:10px">What I actually needed was a real coach watching, texting, adjusting. A nutritionist plus a trainer who text back runs three hundred a month, often more. Most of us never have it. So the gap between tracking and changing stays open for years. So I built the person, not the ledger. Snap any menu…</div>
+      </div>
+    </div></div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="col"><div class="tag after">After · one screen</div>
+    <div class="phone"><div class="screen"><div class="notch"></div><div class="glow"></div>
+      <div class="stat"><span>8:24</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:8px;padding-bottom:14px">
+        <div style="flex:2"></div>
+        <div style="width:74px;height:74px;border-radius:19px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:32px">⚡</div>
+        <div class="kick" style="margin-top:16px">A note from Chetan</div>
+        <div class="anton" style="font-size:24px;margin-top:8px;line-height:1.08">Hey <span style="color:var(--accent)">SaiSai</span> — quick story.</div>
+        <div style="color:#d4d4d8;font-size:13px;line-height:1.5;margin-top:13px;max-width:250px">I'd track for two weeks, then go quiet — apps, journals, same loop. They were ledgers, not coaches. So I built the person, not the ledger: snap a menu or meal and it handles it; workouts meet you where you are.</div>
+        <div class="ser" style="font-style:italic;color:#CBB9A4;font-size:14px;margin-top:11px">— Chetan</div>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:18px;margin:14px 0 11px;font-size:12px;font-weight:700"><span style="color:#5865F2">✦ Discord</span><span style="color:#E1306C">◎ Instagram</span><span style="color:var(--accent)">⚑ Roadmap</span></div>
+        <div class="cta" style="width:100%">Let's go</div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- WHAT'S NEW -->
+<div class="surface-h">5 · What's New</div>
+<p class="changed"><b>Before:</b> a brand-new user got hit by it (nothing's "new" to them), and there were <b>two</b> separate surfaces — a full-screen carousel (generic icon) AND a separate bottom sheet — so you'd see "What's New" twice. <b>After:</b> suppressed for fresh accounts, <b>one consolidated surface</b> (the score-change is folded in as a slide), and cards are <b>real-screenshot-ready</b> (icon is just the fallback).</p>
+<div class="pair">
+  <div class="col"><div class="tag before">Before · two surfaces</div>
+    <div class="phone dim"><div class="screen"><div class="notch"></div>
+      <div class="stat"><span>8:28</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="display:flex;flex-direction:column;padding-top:10px">
+        <div style="display:flex;justify-content:space-between"><span class="fs">What's new</span><span class="fs">Skip</span></div>
+        <div style="margin-top:12px;border-radius:14px;border:1px solid #1b3a4a;background:#0d2630;aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+          <div style="width:60px;height:60px;border-radius:50%;background:rgba(56,160,210,.18);display:flex;align-items:center;justify-content:center;font-size:26px">🏋️</div>
+          <div style="font-weight:800;font-size:22px;color:#fff">12</div><div class="fs">stats per session</div>
+        </div>
+        <div style="font-weight:800;font-size:20px;margin-top:14px">Workout details got richer</div>
+        <div class="fs" style="margin-top:6px">Generic illustration · blue theme</div>
+        <div class="sheet"><div style="font-weight:800;color:#5aa6e0;font-size:11px">WHAT'S NEW</div><div style="font-weight:800;font-size:16px;margin-top:4px">Sleep now counts toward your score</div><div class="fs" style="margin-top:6px">…a SECOND popup right after</div></div>
+      </div>
+    </div></div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="col"><div class="tag after">After · one surface</div>
+    <div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="stat"><span>8:28</span><span>◀ ▮ ▰</span></div>
+      <div class="body" style="display:flex;flex-direction:column;padding-top:10px;padding-bottom:14px">
+        <div style="display:flex;justify-content:space-between"><span class="cond" style="color:var(--mut);font-weight:700;letter-spacing:2px;font-size:11px">What's new</span><span class="fs">Skip</span></div>
+        <div style="margin-top:12px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;position:relative">
+          <div class="cond" style="position:absolute;top:7px;left:9px;color:var(--faint);font-size:8px;letter-spacing:1.5px">real screenshot · icon fallback</div>
+          <div style="width:60px;height:60px;border-radius:50%;background:rgba(249,115,22,.14);display:flex;align-items:center;justify-content:center;font-size:26px">🏋️</div>
+          <div class="anton" style="font-size:22px;color:#fff">12</div><div class="fs">stats per session</div>
+        </div>
+        <div class="anton" style="font-size:22px;margin-top:14px">Workout details got richer</div>
+        <div class="fs" style="margin-top:7px;font-size:11.5px">…and Sleep now counts toward your day score. (folded in — one surface)</div>
+        <div style="flex:1"></div>
+        <div style="display:flex;justify-content:center;gap:6px;margin-bottom:12px"><i style="width:16px;height:4px;border-radius:3px;background:var(--accent)"></i><i style="width:4px;height:4px;border-radius:3px;background:#34343a"></i><i style="width:4px;height:4px;border-radius:3px;background:#34343a"></i></div>
+        <div class="cta">Continue</div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<p class="sub" style="margin-top:36px"><b style="color:#fff">Note:</b> static proofs of the redesign; live Flutter widgets are implemented, analyze-clean, tests passing. The price card's <b>MO / YR toggle is interactive</b> — click it. The only remaining follow-up is capturing the 6 real What's-New screenshots + wiring <code>assets/whats_new/</code>.</p>
+<script>
+  function setMode(yr){
+    document.querySelectorAll('.seg').forEach(s=>s.classList.toggle('on',(s.dataset.seg==='yr')===yr));
+    document.querySelectorAll('.pbf').forEach(b=>{b.style.width = yr ? b.dataset.yrw : b.dataset.mow;});
+    document.querySelectorAll('.pp .v').forEach(p=>{p.textContent = yr ? p.dataset.yr : p.dataset.mo;});
+  }
+  document.querySelectorAll('.seg').forEach(s=>s.addEventListener('click',()=>setMode(s.dataset.seg==='yr')));
+  setMode(false);
+</script>
+</body>
+</html>

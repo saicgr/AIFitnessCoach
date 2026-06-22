@@ -4,13 +4,23 @@
 /// per surface. Mirrors the "announce the redesign" frame competitors use, but
 /// rendered entirely with OUR design system: [GlassCard] panels, accent tokens
 /// from [ThemeColors] / [AccentColorScope], [GlowButton] CTA, [HapticService]
-/// feedback, and subtle flutter_animate entrances. No external assets — every
-/// visual is composed from [Icons] + glass + the active accent.
+/// feedback, and subtle flutter_animate entrances.
+///
+/// Each slide can carry an optional [_Spotlight.imageAsset] — a real in-app
+/// screenshot rendered as the hero. When the asset is null (or fails to load),
+/// the slide FALLS BACK to a composed icon + stat-flourish visual so the screen
+/// is always safe to ship even before the PNGs land in `assets/whats_new/`.
+///
+/// Consolidation: this is the SINGLE What's-New surface per release. Showing it
+/// also marks the standalone score-change announcement sheet seen (via its
+/// shared SharedPreferences flag) so a returning user never sees both — the
+/// "Sleep now counts toward your score" change is folded in as one slide here.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_spacing.dart';
 import '../../core/constants/stat_typography.dart';
@@ -20,6 +30,12 @@ import '../../core/theme/theme_colors.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/glow_button.dart';
 
+/// SharedPreferences flag owned by `score_change_announcement_sheet.dart`
+/// (`_kSeenKey` there). We set it true when this carousel is shown so the
+/// standalone score-change bottom sheet — which is folded in here as a slide —
+/// won't ALSO fire for the same user. Keep this string in sync with that file.
+const String _kScoreChangeSeenKey = 'score_change_v2_seen';
+
 /// Immutable description of a single spotlight slide.
 class _Spotlight {
   /// Large bold headline.
@@ -28,19 +44,28 @@ class _Spotlight {
   /// One-line supporting caption.
   final String caption;
 
-  /// Primary iconographic visual for the slide.
+  /// Primary iconographic visual for the slide — used in the composed hero
+  /// when [imageAsset] is null or its asset fails to load.
   final IconData icon;
 
   /// A short stat-style flourish rendered in [StatNumber] type (e.g. "+6",
   /// "92"). Purely decorative — sells the "numbers come alive" tone without
-  /// inventing real data.
+  /// inventing real data. Only shown in the composed (icon) hero.
   final String statValue;
 
   /// Tiny label beneath [statValue].
   final String statLabel;
 
-  /// Secondary supporting icons arranged around the hero glyph.
+  /// Secondary supporting icons arranged around the hero glyph (composed hero
+  /// only).
   final List<IconData> supportingIcons;
+
+  /// Optional path to a real in-app screenshot (e.g.
+  /// 'assets/whats_new/workout_details.png'). When set AND the asset loads,
+  /// it becomes the hero (BoxFit.cover, rounded, subtle border). When null OR
+  /// the asset is missing, the slide falls back to the composed icon hero, so
+  /// it is always safe to ship the path before the PNG exists.
+  final String? imageAsset;
 
   const _Spotlight({
     required this.headline,
@@ -49,9 +74,14 @@ class _Spotlight {
     required this.statValue,
     required this.statLabel,
     required this.supportingIcons,
+    this.imageAsset,
   });
 }
 
+/// NOTE on assets: `imageAsset` paths point at `assets/whats_new/*.png`. Those
+/// PNGs do NOT exist yet and `assets/whats_new/` is NOT yet declared in
+/// pubspec.yaml — the errorBuilder fallback keeps every slide rendering safely
+/// until real screenshots are captured and the asset dir is wired (follow-up).
 const List<_Spotlight> _spotlights = [
   _Spotlight(
     headline: 'Workout details got richer',
@@ -65,6 +95,7 @@ const List<_Spotlight> _spotlights = [
       Icons.local_fire_department_rounded,
       Icons.bar_chart_rounded,
     ],
+    imageAsset: 'assets/whats_new/workout_details.png',
   ),
   _Spotlight(
     headline: 'Strength score, inline',
@@ -77,6 +108,24 @@ const List<_Spotlight> _spotlights = [
       Icons.emoji_events_outlined,
       Icons.straighten_rounded,
     ],
+    imageAsset: 'assets/whats_new/strength_score.png',
+  ),
+  // Folded-in score-change announcement — replaces the standalone bottom sheet
+  // so a returning user sees this change here and nowhere else.
+  _Spotlight(
+    headline: 'Sleep now counts toward your score',
+    caption:
+        'Sleep joins Train, Nourish, and Move as a fourth pillar, so a poor '
+        'night shows up and a solid one helps your day score climb.',
+    icon: Icons.bedtime_rounded,
+    statValue: '4',
+    statLabel: 'score pillars',
+    supportingIcons: [
+      Icons.fitness_center_rounded,
+      Icons.restaurant_rounded,
+      Icons.directions_walk_rounded,
+    ],
+    imageAsset: 'assets/whats_new/sleep_score.png',
   ),
   _Spotlight(
     headline: 'Streaks have a new home',
@@ -90,6 +139,7 @@ const List<_Spotlight> _spotlights = [
       Icons.leaderboard_rounded,
       Icons.calendar_view_week_rounded,
     ],
+    imageAsset: 'assets/whats_new/streaks.png',
   ),
   _Spotlight(
     headline: 'Freezes protect your streak',
@@ -103,6 +153,7 @@ const List<_Spotlight> _spotlights = [
       Icons.auto_awesome_rounded,
       Icons.local_fire_department_rounded,
     ],
+    imageAsset: 'assets/whats_new/freezes.png',
   ),
   _Spotlight(
     headline: 'Progress is easier to scan',
@@ -115,19 +166,7 @@ const List<_Spotlight> _spotlights = [
       Icons.show_chart_rounded,
       Icons.stacked_line_chart_rounded,
     ],
-  ),
-  _Spotlight(
-    headline: 'More polish everywhere',
-    caption:
-        'Warmup vs working sets, Apple Health heart rate, and numbers that come alive.',
-    icon: Icons.auto_awesome_rounded,
-    statValue: '6',
-    statLabel: 'fresh surfaces',
-    supportingIcons: [
-      Icons.favorite_rounded,
-      Icons.whatshot_rounded,
-      Icons.tune_rounded,
-    ],
+    imageAsset: 'assets/whats_new/progress.png',
   ),
 ];
 
@@ -143,6 +182,25 @@ class _WhatsNewScreenState extends State<WhatsNewScreen> {
   int _page = 0;
 
   bool get _isLast => _page >= _spotlights.length - 1;
+
+  @override
+  void initState() {
+    super.initState();
+    // Consolidate the two What's-New surfaces: now that the score-change
+    // content is a slide here, mark the standalone score-change sheet seen so
+    // it never also fires for this user. Fire-and-forget; non-fatal on error.
+    _markScoreChangeSeen();
+  }
+
+  Future<void> _markScoreChangeSeen() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kScoreChangeSeenKey, true);
+    } catch (_) {
+      // Non-fatal — the worst case is the user briefly seeing the score sheet
+      // on a later home visit; never block the carousel on a prefs write.
+    }
+  }
 
   @override
   void dispose() {
@@ -305,7 +363,8 @@ class _WhatsNewScreenState extends State<WhatsNewScreen> {
 }
 
 /// A single spotlight slide: a glass hero visual on top, headline + caption
-/// below. Composes its visual entirely from icons + accent — no assets.
+/// below. The hero is either a real screenshot (when [_Spotlight.imageAsset]
+/// loads) or a composed icon + stat flourish (fallback).
 class _SpotlightCard extends StatelessWidget {
   final _Spotlight spotlight;
   final Color accent;
@@ -336,11 +395,7 @@ class _SpotlightCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _HeroVisual(
-                spotlight: spotlight,
-                accent: accent,
-                colors: colors,
-              ),
+              _HeroVisual(spotlight: spotlight, accent: accent, colors: colors),
               const SizedBox(height: AppSpacing.xl),
               Text(
                 spotlight.headline,
@@ -376,12 +431,18 @@ class _SpotlightCard extends StatelessWidget {
     return content
         .animate()
         .fadeIn(duration: 360.ms, curve: Curves.easeOut)
-        .slideY(begin: 0.04, end: 0, duration: 420.ms, curve: Curves.easeOutCubic);
+        .slideY(
+          begin: 0.04,
+          end: 0,
+          duration: 420.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
 
-/// The glass hero block: a large accent glyph with a stat flourish and a row of
-/// supporting icons, all inside a [GlassCard].
+/// The glass hero block. Renders a real screenshot when
+/// [_Spotlight.imageAsset] is set and loads; otherwise composes a large accent
+/// glyph with a stat flourish and a row of supporting icons.
 class _HeroVisual extends StatelessWidget {
   final _Spotlight spotlight;
   final Color accent;
@@ -395,12 +456,88 @@ class _HeroVisual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final asset = spotlight.imageAsset;
     return GlassCard(
       glowColor: accent,
       isActive: true,
       glowIntensity: 0.22,
       borderRadius: AppRadius.xl,
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: EdgeInsets.all(asset != null ? AppSpacing.sm : AppSpacing.lg),
+      child: asset != null
+          ? _ScreenshotHero(
+              asset: asset,
+              accent: accent,
+              colors: colors,
+              fallback: _ComposedHero(
+                spotlight: spotlight,
+                accent: accent,
+                colors: colors,
+              ),
+            )
+          : _ComposedHero(spotlight: spotlight, accent: accent, colors: colors),
+    );
+  }
+}
+
+/// Real-screenshot hero: the PNG rendered BoxFit.cover with a rounded clip and
+/// a subtle accent border. Falls back to [fallback] (the composed icon hero) if
+/// the asset is missing or fails to decode — so a not-yet-captured screenshot
+/// path never breaks the slide.
+class _ScreenshotHero extends StatelessWidget {
+  final String asset;
+  final Color accent;
+  final ThemeColors colors;
+  final Widget fallback;
+
+  const _ScreenshotHero({
+    required this.asset,
+    required this.accent,
+    required this.colors,
+    required this.fallback,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: accent.withValues(alpha: 0.30), width: 1),
+        ),
+        child: AspectRatio(
+          aspectRatio: 4 / 3,
+          child: Image.asset(
+            asset,
+            fit: BoxFit.cover,
+            // Safe fallback while the PNGs don't exist yet (or fail to decode):
+            // render the composed icon hero instead of a broken-image box.
+            errorBuilder: (context, error, stackTrace) => fallback,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The composed (asset-free) hero: a large accent glyph with a stat flourish
+/// and a row of supporting icons. Used directly when no screenshot is set, and
+/// as the errorBuilder fallback for [_ScreenshotHero].
+class _ComposedHero extends StatelessWidget {
+  final _Spotlight spotlight;
+  final Color accent;
+  final ThemeColors colors;
+
+  const _ComposedHero({
+    required this.spotlight,
+    required this.accent,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
