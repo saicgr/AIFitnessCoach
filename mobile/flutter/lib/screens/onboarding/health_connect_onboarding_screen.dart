@@ -90,16 +90,25 @@ class _HealthConnectOnboardingScreenState
     setState(() => _isConnecting = true);
     HapticFeedback.mediumImpact();
 
+    // Capture context-bound objects BEFORE the async gaps so we never touch
+    // a possibly-unmounted BuildContext after awaiting.
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+
     ref
         .read(posthogServiceProvider)
         .capture(eventName: 'onboarding_health_connect_tapped');
 
+    var connectedOk = false;
+    String? failureMessage;
     try {
       final notifier = ref.read(healthSyncProvider.notifier);
       final available = await notifier.checkAvailability();
       if (available) {
         final connected = await notifier.connect();
         if (connected) {
+          connectedOk = true;
           // Wearable connected on-device — record the explicit opt-in so
           // the backend may store it server-side for the AI coach.
           await ref
@@ -109,27 +118,38 @@ class _HealthConnectOnboardingScreenState
           ref
               .read(posthogServiceProvider)
               .capture(eventName: 'onboarding_health_connect_succeeded');
+        } else {
+          // The platform sheet failed to grant (or never presented). Surface
+          // it instead of silently advancing (feedback_no_silent_fallbacks) so
+          // the user knows the connection didn't take and can retry or skip.
+          final err = ref.read(healthSyncProvider).error;
+          debugPrint('health-connect onboarding: not connected — ${err ?? '(no error reported)'}');
+          failureMessage = Platform.isAndroid
+              ? l10n.healthConnectOnboardingHealthConnectIsnT
+              : "Couldn't connect Apple Health. Open the Health app ▸ Sharing ▸ Apps ▸ Zealova to allow access, then try again.";
         }
-      } else if (mounted && Platform.isAndroid) {
-        // Health Connect app not installed — don't trap the user; they
-        // can connect later from Settings → Health Sync.
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(
-                context,
-              ).healthConnectOnboardingHealthConnectIsnT,
-            ),
-          ),
-        );
+      } else {
+        failureMessage = Platform.isAndroid
+            ? l10n.healthConnectOnboardingHealthConnectIsnT
+            : 'Apple Health is unavailable on this device.';
       }
     } catch (e) {
       debugPrint('health-connect onboarding: connect failed: $e');
+      failureMessage =
+          'Something went wrong connecting $_platformName. You can try again, or set it up later in Settings.';
     }
 
-    await _markShown();
     if (!mounted) return;
-    context.go('/permissions-primer');
+    setState(() => _isConnecting = false);
+
+    if (connectedOk) {
+      await _markShown();
+      router.go('/permissions-primer');
+    } else if (failureMessage != null) {
+      // Stay on the screen — the "Maybe later" button still lets them skip,
+      // so this surfaces the problem without trapping onboarding.
+      messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
+    }
   }
 
   Future<void> _skip() async {
