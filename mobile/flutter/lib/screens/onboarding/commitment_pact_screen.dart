@@ -10,8 +10,10 @@ import 'pre_auth_quiz_data.dart';
 import 'founder_note_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/hold_to_confirm_button.dart';
+import '../../widgets/exercise_image.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
 /// Commitment Pact Screen — Onboarding v5
 ///
 /// Post-paywall, pre-home. Shows the user's Week 1 schedule and asks them
@@ -58,9 +60,9 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
       debugPrint('commitment-pact: backend write failed: $e');
     }
 
-    ref.read(posthogServiceProvider).capture(
-          eventName: 'onboarding_commitment_pact_accepted',
-        );
+    ref
+        .read(posthogServiceProvider)
+        .capture(eventName: 'onboarding_commitment_pact_accepted');
 
     // Onboarding v5.1: post-paid-conversion founder note (Airbnb pattern).
     // Strongest commitment moment in the funnel — they just paid AND
@@ -85,16 +87,17 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
   Future<void> _onMaybeLaterTapped() async {
     HapticFeedback.selectionClick();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final surface =
-        isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
+    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    ref.read(posthogServiceProvider).capture(
-          eventName: 'onboarding_commitment_pact_skip_intent',
-        );
+    ref
+        .read(posthogServiceProvider)
+        .capture(eventName: 'onboarding_commitment_pact_skip_intent');
 
     final action = await showGlassSheet<String>(
       context: context,
@@ -102,82 +105,79 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
         return GlassSheet(
           opaque: true,
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 4),
-                Text(
-                  AppLocalizations.of(context).commitmentPactSkipTheCommitment,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                    color: textPrimary,
-                    letterSpacing: -0.3,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 4),
+              Text(
+                AppLocalizations.of(context).commitmentPactSkipTheCommitment,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: textPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Members who tap I'm in are 2× more likely to "
+                "actually do Week 1. You can still cancel your "
+                "trial anytime.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.4,
+                  color: textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: () => Navigator.of(sheetCtx).pop('commit'),
+                child: Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.onboardingAccent, Color(0xFFFF6B00)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    AppLocalizations.of(context).commitmentPactIMIn,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  "Members who tap I'm in are 2× more likely to "
-                  "actually do Week 1. You can still cancel your "
-                  "trial anytime.",
-                  textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.of(sheetCtx).pop('skip'),
+                child: Text(
+                  AppLocalizations.of(context).commitmentPactSkipAnyway,
                   style: TextStyle(
                     fontSize: 14,
-                    height: 1.4,
+                    fontWeight: FontWeight.w500,
                     color: textSecondary,
                   ),
                 ),
-                const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: () => Navigator.of(sheetCtx).pop('commit'),
-                  child: Container(
-                    height: 54,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          AppColors.onboardingAccent,
-                          Color(0xFFFF6B00)
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      AppLocalizations.of(context).commitmentPactIMIn,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => Navigator.of(sheetCtx).pop('skip'),
-                  child: Text(
-                    AppLocalizations.of(context).commitmentPactSkipAnyway,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
         );
       },
     );
 
     if (!mounted) return;
     if (action == 'commit') {
-      ref.read(posthogServiceProvider).capture(
-            eventName: 'onboarding_commitment_pact_skip_recovered',
-          );
+      ref
+          .read(posthogServiceProvider)
+          .capture(eventName: 'onboarding_commitment_pact_skip_recovered');
       await _commit();
     } else if (action == 'skip') {
       await _skipCommitment();
@@ -208,14 +208,16 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     }
 
     final quiz = ref.read(preAuthQuizProvider);
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'onboarding_commitment_pact_skipped',
-      properties: <String, Object>{
-        'days_per_week': quiz.daysPerWeek ?? 0,
-        'training_split': quiz.trainingSplit ?? 'unset',
-        'has_goal_weight': quiz.goalWeightKg != null,
-      },
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'onboarding_commitment_pact_skipped',
+          properties: <String, Object>{
+            'days_per_week': quiz.daysPerWeek ?? 0,
+            'training_split': quiz.trainingSplit ?? 'unset',
+            'has_goal_weight': quiz.goalWeightKg != null,
+          },
+        );
 
     // Health Connect onboarding next — connect the wearable + capture the
     // health-data consent before the unified permissions primer
@@ -234,10 +236,10 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
   /// exist yet.
   Widget _buildCommitBody() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted =
-        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     final quiz = ref.watch(preAuthQuizProvider);
 
@@ -248,10 +250,11 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     // labels backwards by one (Thu→Wed, Sat→Fri, etc) — Sentry-tagged user
     // complaint: "I picked Thu/Sat/Sun but the screen shows Wed/Fri/Sat".
     // Now treats input as 0-indexed end-to-end.
-    List<int> selected = (quiz.workoutDays ?? const <int>[])
-        .where((d) => d >= 0 && d <= 6)
-        .toList()
-      ..sort();
+    List<int> selected =
+        (quiz.workoutDays ?? const <int>[])
+            .where((d) => d >= 0 && d <= 6)
+            .toList()
+          ..sort();
     if (selected.isEmpty) {
       final n = quiz.daysPerWeek ?? 4;
       selected = _defaultDaysFor(n);
@@ -278,116 +281,134 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
 
     // Rest of the workout days as compact rows.
     final restWorkoutDays = selected.skip(1).toList();
-    final unselectedDays =
-        [0, 1, 2, 3, 4, 5, 6].where((d) => !selected.contains(d)).toList();
+    final unselectedDays = [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+    ].where((d) => !selected.contains(d)).toList();
 
     const dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _WeekDotStrip(selectedDays: selected)
-              .animate()
-              .fadeIn(delay: 380.ms),
-          const SizedBox(height: 18),
-          _FirstSessionCard(
-            dayLabel: dayShort[firstDay].toUpperCase(),
-            workoutName: firstLabel,
-            duration: durationLabel(),
-            muscles: _muscleGroupsFor(firstLabel),
-            equipmentLine: equipmentLine,
-          ).animate().fadeIn(delay: 480.ms).slideY(begin: 0.05),
-          if (restWorkoutDays.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            Padding(
-              padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
-              child: Text(
-                AppLocalizations.of(context).commitmentPactOtherWorkoutDays,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                  color: textMuted,
-                ),
+    // The feasibility line is folded into the outcome row's second line
+    // (when present) rather than its own block, so the whole body fits one
+    // screen without scrolling on common phone heights.
+    final feasibility = _feasibilityLine(quiz);
+
+    // Fixed, non-scrolling column. The only elastic region is the
+    // "other workout days" list, which gets a Flexible + an internal
+    // scroll guard for the rare 6–7-day-a-week user; everything else is
+    // intrinsically sized so the typical 3–4-day plan sits comfortably.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _WeekDotStrip(selectedDays: selected).animate().fadeIn(delay: 380.ms),
+        const SizedBox(height: 14),
+        _FirstSessionCard(
+          dayLabel: dayShort[firstDay].toUpperCase(),
+          workoutName: firstLabel,
+          duration: durationLabel(),
+          muscles: _muscleGroupsFor(firstLabel),
+          equipmentLine: equipmentLine,
+          exerciseNames: _exercisesFor(firstLabel),
+        ).animate().fadeIn(delay: 480.ms).slideY(begin: 0.05),
+        if (restWorkoutDays.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: 4, bottom: 6),
+            child: Text(
+              AppLocalizations.of(context).commitmentPactOtherWorkoutDays,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+                color: textMuted,
               ),
             ),
-            ...restWorkoutDays.asMap().entries.map((entry) {
-              final i = entry.key;
-              final dayIdx = entry.value; // 0-indexed (Mon=0..Sun=6)
-              final label = labels[(i + 1) % labels.length];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _OtherDayRow(
-                  day: dayShort[dayIdx],
-                  label: label,
-                  duration: durationLabel(),
-                ).animate(delay: (650 + i * 100).ms).fadeIn().slideX(
-                      begin: 0.04,
-                      duration: 320.ms,
-                    ),
-              );
-            }),
-          ],
-          if (unselectedDays.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            _RestPill(
-              days: unselectedDays.map((d) => dayShort[d]).toList(),
-            ).animate(delay: 1050.ms).fadeIn().slideY(begin: 0.05),
-          ],
-          const SizedBox(height: 18),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.onboardingAccent.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.onboardingAccent.withValues(alpha: 0.18),
-              ),
+          ),
+          // Flexible so a 6–7-day plan scrolls *within* this region instead
+          // of pushing the CTA off-screen; a 3–4-day plan never scrolls.
+          Flexible(
+            child: ListView.separated(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              physics: const ClampingScrollPhysics(),
+              itemCount: restWorkoutDays.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 6),
+              itemBuilder: (context, i) {
+                final dayIdx = restWorkoutDays[i]; // 0-indexed (Mon=0..Sun=6)
+                final label = labels[(i + 1) % labels.length];
+                return _OtherDayRow(
+                      day: dayShort[dayIdx],
+                      label: label,
+                      duration: durationLabel(),
+                    )
+                    .animate(delay: (650 + i * 80).ms)
+                    .fadeIn()
+                    .slideX(begin: 0.04, duration: 300.ms);
+              },
             ),
-            child: Row(
-              children: [
-                Icon(Icons.trending_up_rounded,
-                    size: 18, color: AppColors.onboardingAccent),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _outcomeLine(quiz),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      height: 1.35,
-                      color: textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.04),
-          if (_feasibilityLine(quiz) != null) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.check_circle_rounded,
-                    size: 16, color: Color(0xFF22C55E)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _feasibilityLine(quiz)!,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ).animate(delay: 1350.ms).fadeIn().slideY(begin: 0.04),
-          ],
+          ),
         ],
-      ),
+        if (unselectedDays.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _RestPill(
+            days: unselectedDays.map((d) => dayShort[d]).toList(),
+          ).animate(delay: 1050.ms).fadeIn().slideY(begin: 0.05),
+        ],
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.onboardingAccent.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.onboardingAccent.withValues(alpha: 0.18),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.trending_up_rounded,
+                size: 18,
+                color: AppColors.onboardingAccent,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _outcomeLine(quiz),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                        color: textSecondary,
+                      ),
+                    ),
+                    if (feasibility != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        feasibility,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          height: 1.25,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.04),
+      ],
     );
   }
 
@@ -431,6 +452,47 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     return ['Total Body'];
   }
 
+  /// Representative exercise names for a workout label, used only to seed
+  /// the thumbnail row on the first-session card. These are real
+  /// exercise-library display names so `ExerciseImage` resolves an
+  /// illustration (no fake AI list — these are the canonical compound lifts
+  /// a given split always trains, picked deterministically from the label).
+  List<String> _exercisesFor(String label) {
+    final l = label.toLowerCase();
+    if (l.contains('push')) {
+      return ['Bench Press', 'Overhead Press', 'Tricep Pushdown'];
+    }
+    if (l.contains('pull')) {
+      return ['Pull Up', 'Barbell Row', 'Bicep Curl'];
+    }
+    if (l.contains('lower') || l.contains('legs')) {
+      return ['Barbell Squat', 'Romanian Deadlift', 'Leg Press'];
+    }
+    if (l.contains('chest') && l.contains('back')) {
+      return ['Bench Press', 'Barbell Row', 'Lat Pulldown'];
+    }
+    if (l.contains('chest')) {
+      return ['Bench Press', 'Incline Dumbbell Press', 'Tricep Pushdown'];
+    }
+    if (l.contains('back')) {
+      return ['Pull Up', 'Barbell Row', 'Lat Pulldown'];
+    }
+    if (l.contains('shoulders') && l.contains('arms')) {
+      return ['Overhead Press', 'Lateral Raise', 'Bicep Curl'];
+    }
+    if (l.contains('shoulders')) {
+      return ['Overhead Press', 'Lateral Raise', 'Face Pull'];
+    }
+    if (l.contains('arms')) {
+      return ['Bicep Curl', 'Tricep Pushdown', 'Hammer Curl'];
+    }
+    if (l.contains('upper')) {
+      return ['Bench Press', 'Pull Up', 'Overhead Press'];
+    }
+    // Full Body / Total Body default — one big compound per region.
+    return ['Barbell Squat', 'Bench Press', 'Barbell Row'];
+  }
+
   /// Single-line equipment summary derived from quiz state. Combines
   /// `equipment` selections with `workoutEnvironment` to produce
   /// "Dumbbells & Bench at home" or "Full gym access". Falls back to
@@ -456,11 +518,14 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
       return 'Bodyweight$envSuffix';
     }
     // Title-case + show up to 2 items, with "+N more" for the rest.
-    String pretty(String s) =>
-        s.replaceAll('_', ' ').split(' ').map((w) {
+    String pretty(String s) => s
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) {
           if (w.isEmpty) return w;
           return w[0].toUpperCase() + w.substring(1).toLowerCase();
-        }).join(' ');
+        })
+        .join(' ');
     final visible = eq.take(2).map(pretty).toList();
     final extra = eq.length - visible.length;
     final list = extra > 0
@@ -481,8 +546,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
       final delta = (goal - cur).abs();
       if (delta >= 0.5) {
         final unit = useMetric ? 'kg' : 'lb';
-        final amt =
-            useMetric ? delta.round() : (delta * 2.20462).round();
+        final amt = useMetric ? delta.round() : (delta * 2.20462).round();
         if (amt > 0) {
           return goal < cur
               ? "Week 1 of your $amt $unit plan."
@@ -571,10 +635,12 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -599,27 +665,29 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
               // second line on smaller widths, which read amateur. With
               // a first name prefixed, the line is even longer, so the
               // scale-down fallback matters more.
-              Builder(builder: (_) {
-                final first = _firstNameOrEmpty();
-                final title = first.isEmpty
-                    ? 'Can you commit to week 1?'
-                    : '$first, can you commit to week 1?';
-                return FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    // v7: Anton display caps — the pact reads like a vow.
-                    title.toUpperCase(),
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontFamily: 'Anton',
-                      fontSize: 30,
-                      color: textPrimary,
-                      height: 1.05,
+              Builder(
+                builder: (_) {
+                  final first = _firstNameOrEmpty();
+                  final title = first.isEmpty
+                      ? 'Can you commit to week 1?'
+                      : '$first, can you commit to week 1?';
+                  return FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      // v7: Anton display caps — the pact reads like a vow.
+                      title.toUpperCase(),
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontFamily: 'Anton',
+                        fontSize: 30,
+                        color: textPrimary,
+                        height: 1.05,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ).animate().fadeIn(delay: 150.ms).slideY(begin: -0.1);
-              }),
+                  ).animate().fadeIn(delay: 150.ms).slideY(begin: -0.1);
+                },
+              ),
               const SizedBox(height: 6),
               Text(
                 AppLocalizations.of(context).commitmentPactWeLlHandleThe,
@@ -633,9 +701,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
               // only — no dependency on Gemini having finished generating
               // the actual session, since that workout call is still in
               // flight when this screen renders.
-              Expanded(
-                child: _buildCommitBody(),
-              ),
+              Expanded(child: _buildCommitBody()),
 
               // Pact CTA — a press-and-hold commitment gesture. Holding
               // makes committing feel chosen, not tapped past (and a
@@ -648,10 +714,12 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppColors.onboardingAccent
-                                    .withValues(alpha: 0.6),
-                                AppColors.onboardingAccent
-                                    .withValues(alpha: 0.4),
+                                AppColors.onboardingAccent.withValues(
+                                  alpha: 0.6,
+                                ),
+                                AppColors.onboardingAccent.withValues(
+                                  alpha: 0.4,
+                                ),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(16),
@@ -668,8 +736,12 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                           ),
                         )
                       : HoldToConfirmButton(
-                          label: AppLocalizations.of(context).commitmentPactHoldToCommit,
-                          accessibleLabel: AppLocalizations.of(context).commitmentPactIMIn,
+                          label: AppLocalizations.of(
+                            context,
+                          ).commitmentPactHoldToCommit,
+                          accessibleLabel: AppLocalizations.of(
+                            context,
+                          ).commitmentPactIMIn,
                           enabled: !_submitting,
                           onConfirmed: _commit,
                         ))
@@ -683,10 +755,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                 onPressed: _submitting ? null : _onMaybeLaterTapped,
                 child: Text(
                   AppLocalizations.of(context).notifsLaterButton,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 14, color: textSecondary),
                 ),
               ),
 
@@ -710,11 +779,9 @@ class _WeekDotStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final dotEmpty =
-        (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
-            .withValues(alpha: 0.25);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final dotEmpty = (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
+        .withValues(alpha: 0.25);
     // DateTime.weekday is 1..7 (Mon=1..Sun=7). Convert to our 0-indexed
     // convention (Mon=0..Sun=6) to match selectedDays from the quiz.
     final today = DateTime.now().weekday - 1; // 0..6
@@ -744,9 +811,7 @@ class _WeekDotStrip extends StatelessWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
-                  color: isToday
-                      ? AppColors.onboardingAccent
-                      : textMuted,
+                  color: isToday ? AppColors.onboardingAccent : textMuted,
                 ),
               ),
               const SizedBox(height: 8),
@@ -759,9 +824,7 @@ class _WeekDotStrip extends StatelessWidget {
                       ? AppColors.onboardingAccent
                       : Colors.transparent,
                   border: Border.all(
-                    color: isWorkout
-                        ? AppColors.onboardingAccent
-                        : dotEmpty,
+                    color: isWorkout ? AppColors.onboardingAccent : dotEmpty,
                     width: 1.5,
                   ),
                 ),
@@ -795,6 +858,7 @@ class _FirstSessionCard extends StatelessWidget {
   final String duration; // "45–60 min"
   final List<String> muscles; // ["Chest", "Shoulders", "Triceps"]
   final String equipmentLine; // "Dumbbells & Bench at home"
+  final List<String> exerciseNames; // ["Bench Press", "Overhead Press", ...]
 
   const _FirstSessionCard({
     required this.dayLabel,
@@ -802,19 +866,25 @@ class _FirstSessionCard extends StatelessWidget {
     required this.duration,
     required this.muscles,
     required this.equipmentLine,
+    required this.exerciseNames,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
+
+    // Up to 4 representative thumbnails for the session's compound lifts.
+    final thumbs = exerciseNames.take(4).toList();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.onboardingAccent.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
@@ -836,14 +906,15 @@ class _FirstSessionCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.onboardingAccent,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  AppLocalizations.of(context)!.commitmentPactScreenFirstSession(dayLabel),
+                  AppLocalizations.of(
+                    context,
+                  )!.commitmentPactScreenFirstSession(dayLabel),
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
@@ -854,15 +925,41 @@ class _FirstSessionCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            workoutName,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: textPrimary,
-              letterSpacing: -0.4,
-            ),
+          const SizedBox(height: 10),
+          // Workout name + a tasteful horizontal row of exercise thumbnails.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  workoutName,
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: textPrimary,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+              ),
+              if (thumbs.isNotEmpty) ...[
+                const SizedBox(width: 10),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < thumbs.length; i++)
+                      Padding(
+                        padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
+                        child: ExerciseImage(
+                          exerciseName: thumbs[i],
+                          width: 44,
+                          height: 44,
+                          borderRadius: 10,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 8),
           _CardMetaRow(
@@ -935,20 +1032,18 @@ class _OtherDayRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted =
-        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color:
-              isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
         ),
       ),
       child: Row(
@@ -1001,12 +1096,10 @@ class _RestPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted =
-        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     return Container(
       width: double.infinity,
-      padding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: (isDark ? AppColors.elevated : AppColorsLight.elevated)
             .withValues(alpha: 0.6),
@@ -1031,4 +1124,3 @@ class _RestPill extends StatelessWidget {
     );
   }
 }
-
