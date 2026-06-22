@@ -25,6 +25,7 @@ import '../../data/providers/secondary_tile_providers.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../widgets/first_run/first_run_gate.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/today_workout_provider.dart';
@@ -290,19 +291,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Auto-refresh when screen becomes visible
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       _autoRefreshIfNeeded();
-      // One-shot: explain the v2 score redesign (Sleep added as 4th
-      // contributor). No-op after the first show. See
-      // score_change_announcement_sheet.dart.
-      if (mounted) {
-        maybeShowScoreChangeAnnouncement(context);
+      if (!mounted) return;
+
+      // First-run popup-storm guard. A brand-new (just-onboarded) account has no
+      // prior app version, so "What's New" / score-change announcements are
+      // meaningless to them — pre-mark them seen and show NOTHING here. Only a
+      // returning user sees version-update modals, and they run one-at-a-time
+      // through FirstRunModalQueue so they never stack.
+      final user = ref.read(authStateProvider).user;
+      if (FirstRunGate.isFreshAccount(user)) {
+        await FirstRunGate.markVersionAnnouncementsSeenForFreshUser();
+        return;
       }
-      // One-shot: the Gravl-parity redesign "What's New" spotlight. Gated by a
-      // persistent seen-once flag (AppTourController.hasSeenWhatsNew) so it
-      // shows exactly once after the update, then never again.
+
+      // One-shot: explain the v2 score redesign (Sleep added as 4th
+      // contributor). No-op after the first show.
       if (mounted) {
-        _maybeShowWhatsNew();
+        FirstRunModalQueue.enqueue(
+          () => maybeShowScoreChangeAnnouncement(context),
+        );
+      }
+      // One-shot: the Gravl-parity redesign "What's New" spotlight.
+      if (mounted) {
+        FirstRunModalQueue.enqueue(() => _maybeShowWhatsNew());
       }
     });
   }
@@ -321,7 +334,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (ref.read(appTourControllerProvider).isVisible) return;
       await controller.markWhatsNewSeen();
       if (!mounted) return;
-      context.push('/whats-new');
+      // Await the push so the FirstRunModalQueue only advances once the
+      // What's New carousel is dismissed (no stacking with the next modal).
+      await context.push('/whats-new');
     } catch (e) {
       debugPrint('⚠️ [Home] What\'s New spotlight skipped: $e');
     }
@@ -456,7 +471,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (suppressed || !mounted) return;
 
     _healthPopupShownThisSession = true;
-    showHealthConnectSheet(context, ref);
+    // Through the queue so it never stacks on a What's New / level-up modal.
+    await FirstRunModalQueue.enqueue(
+      () => showHealthConnectSheet(context, ref),
+    );
   }
 
   /// Check Health Connect for unimported workout sessions and auto-import them.

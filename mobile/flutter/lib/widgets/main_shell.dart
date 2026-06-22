@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'first_run/first_run_gate.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/chrome_constants.dart';
 import '../core/constants/motion_tokens.dart';
@@ -20,7 +21,8 @@ import '../data/providers/discover_provider.dart';
 import '../data/providers/fasting_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/recipe_providers.dart';
-import '../screens/nutrition/saved_hub_screen.dart' show savedFoodsHubProvider, savedMenusHubProvider;
+import '../screens/nutrition/saved_hub_screen.dart'
+    show savedFoodsHubProvider, savedMenusHubProvider;
 import '../data/providers/guest_usage_limits_provider.dart';
 import '../data/services/deep_link_service.dart';
 import '../data/services/widget_action_service.dart';
@@ -55,7 +57,8 @@ import '../core/accessibility/accessibility_provider.dart';
 import '../l10n/generated/app_localizations.dart';
 // Tab-prewarm provider imports — warmed in build() so each tab paints from
 // cache instead of a cold network skeleton on first open.
-import '../data/providers/today_workout_provider.dart' show todayWorkoutProvider;
+import '../data/providers/today_workout_provider.dart'
+    show todayWorkoutProvider;
 import '../data/repositories/workout_repository.dart'
     show workoutsProvider, workoutScreenSummaryProvider;
 import '../data/repositories/nutrition_repository.dart'
@@ -79,7 +82,6 @@ import '../data/providers/contextual_nudge_provider.dart'
 part 'main_shell_part_edge_panel_handle.dart';
 part 'main_shell_part_guest_mode_banner.dart';
 
-
 /// Provider to control floating nav bar visibility
 final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
 
@@ -90,15 +92,15 @@ final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
 /// Persisted to SharedPreferences
 final edgeHandleEnabledProvider =
     StateNotifierProvider<EdgeHandleEnabledNotifier, bool>((ref) {
-  return EdgeHandleEnabledNotifier();
-});
+      return EdgeHandleEnabledNotifier();
+    });
 
 /// Provider to store edge handle vertical position (0.0 = top, 1.0 = bottom)
 /// Persisted to SharedPreferences
 final edgeHandlePositionProvider =
     StateNotifierProvider<EdgeHandlePositionNotifier, double>((ref) {
-  return EdgeHandlePositionNotifier();
-});
+      return EdgeHandlePositionNotifier();
+    });
 
 /// Notifier for the optional draggable floating chat-head bubble. Default
 /// OFF — the primary coach surface is now the `CoachFloatingButton`
@@ -200,7 +202,9 @@ class MainShell extends ConsumerWidget {
   }
 
   bool _isSecondaryPage(BuildContext context) {
-    final fullPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
+    final fullPath = GoRouter.of(
+      context,
+    ).routerDelegate.currentConfiguration.uri.path;
     return fullPath.startsWith('/fasting');
   }
 
@@ -217,7 +221,10 @@ class MainShell extends ConsumerWidget {
       ref.read(appTourControllerProvider.notifier).abort();
     }
     if (navigationShell != null) {
-      navigationShell!.goBranch(index, initialLocation: index == navigationShell!.currentIndex);
+      navigationShell!.goBranch(
+        index,
+        initialLocation: index == navigationShell!.currentIndex,
+      );
       return;
     }
     switch (index) {
@@ -249,20 +256,24 @@ class MainShell extends ConsumerWidget {
     ref.watch(coachRefreshCoordinatorProvider);
     final selectedIndex = _calculateSelectedIndex(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final backgroundColor = isDark
+        ? AppColors.pureBlack
+        : AppColorsLight.pureWhite;
     // Path-based hide for fasting full screens. The fasting screens live
     // inside the Nutrition StatefulShellBranch — switching branches via
     // context.go('/home') keeps them alive in the IndexedStack, so any
     // provider state they set in initState() would never be restored on
     // dispose. Decide nav-bar visibility from the current path directly.
-    final currentPath = GoRouter.of(context)
-        .routerDelegate.currentConfiguration.uri.path;
+    final currentPath = GoRouter.of(
+      context,
+    ).routerDelegate.currentConfiguration.uri.path;
     final pathWantsHidden = currentPath.startsWith('/fasting');
     final providerWantsHidden = !ref.watch(floatingNavBarVisibleProvider);
     // Coach tab: hide the nav while the keyboard is up so the chat composer
     // (which sits above the nav clearance — see CoachTabScreen) docks to the
     // keyboard like a normal chat app instead of floating above two bars.
-    final keyboardWantsHidden = _calculateSelectedIndex(context) == 2 &&
+    final keyboardWantsHidden =
+        _calculateSelectedIndex(context) == 2 &&
         MediaQuery.viewInsetsOf(context).bottom > 0;
     final isNavBarVisible =
         !(pathWantsHidden || providerWantsHidden || keyboardWantsHidden);
@@ -321,11 +332,15 @@ class MainShell extends ConsumerWidget {
     }
 
     // Listen for pending widget actions (from home screen widget deep links)
-    ref.listen<PendingWidgetAction>(pendingWidgetActionProvider, (previous, next) {
+    ref.listen<PendingWidgetAction>(pendingWidgetActionProvider, (
+      previous,
+      next,
+    ) {
       debugPrint('MainShell: Pending action changed from $previous to $next');
       if (next == PendingWidgetAction.showLogMealSheet) {
         // Clear the action immediately
-        ref.read(pendingWidgetActionProvider.notifier).state = PendingWidgetAction.none;
+        ref.read(pendingWidgetActionProvider.notifier).state =
+            PendingWidgetAction.none;
         // Show the quick log overlay after screen is fully built
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Future.delayed(const Duration(milliseconds: 300), () {
@@ -339,30 +354,35 @@ class MainShell extends ConsumerWidget {
     });
 
     // Hard-lock paywall: redirect to /hard-paywall when subscription lapses
-    ref.listen(
-      subscriptionProvider.select((s) => s.tier),
-      (previous, currentTier) {
-        if (currentTier == SubscriptionTier.free && context.mounted) {
-          // Check if user previously completed paywall (had a trial/sub that lapsed)
-          ref.read(subscriptionProvider.notifier).checkIsHardLocked().then((isLocked) {
-            if (isLocked && context.mounted) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  context.go('/hard-paywall');
-                }
-              });
-            }
-          });
-        }
-      },
-    );
+    ref.listen(subscriptionProvider.select((s) => s.tier), (
+      previous,
+      currentTier,
+    ) {
+      if (currentTier == SubscriptionTier.free && context.mounted) {
+        // Check if user previously completed paywall (had a trial/sub that lapsed)
+        ref.read(subscriptionProvider.notifier).checkIsHardLocked().then((
+          isLocked,
+        ) {
+          if (isLocked && context.mounted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                context.go('/hard-paywall');
+              }
+            });
+          }
+        });
+      }
+    });
 
     // Celebration ceremony — replay any trophies earned since the user's
     // last ack cursor. Fires on login (user becomes non-null) + on
     // explicit refresh triggers. Ack advances the cursor so the same
     // trophy never plays twice. Runs after frame so it never fights with
     // the shell's initial layout.
-    ref.listen<PendingCelebrationsState>(pendingCelebrationsProvider, (prev, next) {
+    ref.listen<PendingCelebrationsState>(pendingCelebrationsProvider, (
+      prev,
+      next,
+    ) {
       if (next.pending.isEmpty) return;
       final wasEmpty = prev == null || prev.pending.isEmpty;
       if (!wasEmpty) return; // Already showing
@@ -374,10 +394,7 @@ class MainShell extends ConsumerWidget {
       }
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!context.mounted) return;
-        await showTrophyCeremony(
-          context: context,
-          trophies: next.pending,
-        );
+        await showTrophyCeremony(context: context, trophies: next.pending);
         await ref.read(pendingCelebrationsProvider.notifier).ack();
       });
     });
@@ -403,14 +420,16 @@ class MainShell extends ConsumerWidget {
         }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
-            final showProg = ref.read(accessibilityProvider).showLevelUpProgression;
-            showLevelUpDialog(
-              context,
-              next,
-              () {
+            final showProg = ref
+                .read(accessibilityProvider)
+                .showLevelUpProgression;
+            // Through the first-run queue so a level-up celebration never stacks
+            // on top of (or under) a What's New / health-connect modal on the
+            // first home load after onboarding.
+            FirstRunModalQueue.enqueue(
+              () => showLevelUpDialog(context, next, () {
                 ref.read(xpProvider.notifier).clearLevelUp();
-              },
-              showProgression: showProg,
+              }, showProgression: showProg),
             );
           }
         });
@@ -447,11 +466,7 @@ class MainShell extends ConsumerWidget {
       if (route == null || route.isCurrent != true) return;
       _weeklyRecapFired = true;
       try {
-        await showWeeklyRecapDialog(
-          context: context,
-          recap: recap,
-          ref: ref,
-        );
+        await showWeeklyRecapDialog(context: context, recap: recap, ref: ref);
       } catch (e, st) {
         debugPrint('weeklyRecapDialog error: $e\n$st');
       }
@@ -467,7 +482,9 @@ class MainShell extends ConsumerWidget {
     // then gym finishes and we fire.
     ref.listen<AsyncValue<List<GymProfile>>>(gymProfilesProvider, (prev, next) {
       if (prev?.isLoading == true && !next.isLoading) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => tryFireWeeklyRecap());
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => tryFireWeeklyRecap(),
+        );
       }
     });
 
@@ -504,8 +521,7 @@ class MainShell extends ConsumerWidget {
             child: Column(
               children: [
                 // Guest mode banner at top
-                if (isGuestMode)
-                  _GuestModeBanner(isDark: isDark),
+                if (isGuestMode) _GuestModeBanner(isDark: isDark),
                 // Offline banner (auto-shows/hides based on connectivity)
                 const OfflineBanner(),
                 // Verify-your-email nudge (auto-shows/hides; non-blocking)
@@ -526,7 +542,8 @@ class MainShell extends ConsumerWidget {
               (selectedIndex == 0 || selectedIndex == 1 || selectedIndex == 4))
             Positioned(
               right: 24,
-              bottom: MediaQuery.of(context).padding.bottom +
+              bottom:
+                  MediaQuery.of(context).padding.bottom +
                   kMainNavBarHeight +
                   kMainNavBottomGap +
                   14,
@@ -550,7 +567,9 @@ class MainShell extends ConsumerWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.45 : 0.12,
+                        ),
                         blurRadius: 24,
                         offset: const Offset(0, 10),
                       ),
@@ -611,7 +630,6 @@ class MainShell extends ConsumerWidget {
       ),
     );
   }
-
 }
 
 // ── Staggered tab prewarm ───────────────────────────────────────────────────

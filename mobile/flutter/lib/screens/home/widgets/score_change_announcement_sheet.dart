@@ -6,6 +6,16 @@
 /// they'd see "67 yesterday → 58 today" and assume something's broken or
 /// their behaviour regressed. The sheet explains the change in one tap.
 ///
+/// CONSOLIDATION (Phase 6): the "Sleep now counts toward your score" message
+/// is ALSO folded into the full-screen What's-New carousel as a slide. To stop
+/// a returning user from seeing BOTH surfaces, this sheet now DEFERS to the
+/// carousel: [maybeShowScoreChangeAnnouncement] skips itself whenever the
+/// What's-New carousel still has to run (it's enqueued right after this sheet
+/// on home mount and marks `score_change_v2_seen` true when it opens). The
+/// sheet only ever fires as a legacy fallback — for a user who already saw the
+/// carousel before this slide existed, so the carousel won't run again but the
+/// score-change flag was never set.
+///
 /// One-shot: persisted under `score_change_v2_seen` in SharedPreferences.
 /// First call to [maybeShowScoreChangeAnnouncement] after that returns
 /// immediately without showing anything.
@@ -25,7 +35,14 @@ import '../../../widgets/glass_sheet.dart';
 import 'score_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
 const String _kSeenKey = 'score_change_v2_seen';
+
+/// The What's-New carousel's "seen" flag (owned by
+/// `app_tour_controller.dart` / `whats_new_screen.dart`). When this is still
+/// false the carousel is about to run and will explain the score change there,
+/// so this sheet stands down to avoid showing the same news twice.
+const String _kWhatsNewSeenKey = 'whats_new_seen_gravl_v1';
 
 /// Show the sheet if it hasn't been shown to this device yet. Call once from
 /// the home screen's `didChangeDependencies` (post-frame so the sheet can
@@ -34,6 +51,11 @@ Future<void> maybeShowScoreChangeAnnouncement(BuildContext context) async {
   try {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(_kSeenKey) == true) return;
+    // Defer to the What's-New carousel: if it hasn't run yet it will show the
+    // folded-in score-change slide (and mark _kSeenKey true), so showing this
+    // sheet too would be redundant. Only fall through when the carousel was
+    // already seen but the score-change flag wasn't (legacy upgrade path).
+    if (prefs.getBool(_kWhatsNewSeenKey) != true) return;
     if (!context.mounted) return;
     await showGlassSheet<void>(
       context: context,
@@ -87,11 +109,8 @@ class _TranslucentGlassPanel extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: surface,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(color: border, width: 0.5),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(top: BorderSide(color: border, width: 0.5)),
           ),
           child: SafeArea(
             top: false,
@@ -105,8 +124,9 @@ class _TranslucentGlassPanel extends StatelessWidget {
                     width: 48,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: (isDark ? Colors.white : Colors.black)
-                          .withValues(alpha: 0.45),
+                      color: (isDark ? Colors.white : Colors.black).withValues(
+                        alpha: 0.45,
+                      ),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -146,8 +166,11 @@ class _ScoreChangeBody extends StatelessWidget {
                     colors: [c.accent, c.accent.withValues(alpha: 0.70)],
                   ),
                 ),
-                child: const Icon(Icons.auto_awesome,
-                    size: 13, color: Colors.white),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  size: 13,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -163,7 +186,9 @@ class _ScoreChangeBody extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            AppLocalizations.of(context).scoreChangeAnnouncementSleepNowCountsToward,
+            AppLocalizations.of(
+              context,
+            ).scoreChangeAnnouncementSleepNowCountsToward,
             style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w800,
@@ -191,10 +216,30 @@ class _ScoreChangeBody extends StatelessWidget {
             spacing: 14,
             runSpacing: 8,
             children: [
-              _LegendChip(label: AppLocalizations.of(context).scoreChangeAnnouncementTrain, color: kTrainColor, weight: 40),
-              _LegendChip(label: AppLocalizations.of(context).scoreChangeAnnouncementNourish, color: kFuelColor, weight: 30),
-              _LegendChip(label: AppLocalizations.of(context).scoreChangeAnnouncementMove, color: kMoveColor, weight: 15),
-              _LegendChip(label: AppLocalizations.of(context).sleepDetailSleep, color: kSleepColor, weight: 15),
+              _LegendChip(
+                label: AppLocalizations.of(
+                  context,
+                ).scoreChangeAnnouncementTrain,
+                color: kTrainColor,
+                weight: 40,
+              ),
+              _LegendChip(
+                label: AppLocalizations.of(
+                  context,
+                ).scoreChangeAnnouncementNourish,
+                color: kFuelColor,
+                weight: 30,
+              ),
+              _LegendChip(
+                label: AppLocalizations.of(context).scoreChangeAnnouncementMove,
+                color: kMoveColor,
+                weight: 15,
+              ),
+              _LegendChip(
+                label: AppLocalizations.of(context).sleepDetailSleep,
+                color: kSleepColor,
+                weight: 15,
+              ),
             ],
           ),
           const SizedBox(height: 22),
@@ -207,17 +252,16 @@ class _ScoreChangeBody extends StatelessWidget {
                   backgroundColor: c.accent,
                   foregroundColor: c.accentContrast,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 22, vertical: 12),
+                    horizontal: 22,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
                 child: Text(
                   AppLocalizations.of(context).weightIncrementsGotIt,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -247,14 +291,13 @@ class _LegendChip extends StatelessWidget {
         Container(
           width: 9,
           height: 9,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
         const SizedBox(width: 6),
         Text(
-          AppLocalizations.of(context)!.scoreChangeAnnouncementSheetValue(label, weight),
+          AppLocalizations.of(
+            context,
+          )!.scoreChangeAnnouncementSheetValue(label, weight),
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.w700,
