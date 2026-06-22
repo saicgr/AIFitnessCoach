@@ -9,6 +9,7 @@ import 'glass_sheet.dart';
 import 'sheet_header.dart';
 
 import '../l10n/generated/app_localizations.dart';
+
 /// SharedPreferences key for tracking when the user last dismissed this sheet.
 const _kDismissedAtKey = 'health_connect_dismissed_at';
 
@@ -29,6 +30,14 @@ Future<void> _markDismissed() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setInt(_kDismissedAtKey, DateTime.now().millisecondsSinceEpoch);
 }
+
+/// Records that the user has already been through the dedicated Health-Connect
+/// primer (the animated `/health-connect-onboarding` step shown during
+/// onboarding). It writes the SAME dismissal timestamp the sheet uses, so the
+/// home auto-popup's [isHealthConnectPopupSuppressed] check treats the primer
+/// as a recent dismissal and won't re-prompt right after onboarding. Manual
+/// chip taps (which call [showHealthConnectSheet] directly) are unaffected.
+Future<void> markHealthPrimerSeen() => _markDismissed();
 
 /// Shows the Health Connect / Apple Health connection bottom sheet.
 Future<void> showHealthConnectSheet(BuildContext context, WidgetRef ref) {
@@ -102,18 +111,21 @@ class _HealthConnectSheetContentState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
+    final cardBorder = isDark
+        ? AppColors.cardBorder
+        : AppColorsLight.cardBorder;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    final platformName =
-        Platform.isAndroid ? 'Health Connect' : 'Apple Health';
-    final platformIcon =
-        Platform.isAndroid ? Icons.monitor_heart_outlined : Icons.favorite;
+    final platformName = Platform.isAndroid ? 'Health Connect' : 'Apple Health';
+    final platformIcon = Platform.isAndroid
+        ? Icons.monitor_heart_outlined
+        : Icons.favorite;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -146,8 +158,10 @@ class _HealthConnectSheetContentState
 
               // Platform badge
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: elevated,
                   borderRadius: BorderRadius.circular(10),
@@ -211,11 +225,16 @@ class _HealthConnectSheetContentState
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.check_circle,
-                          color: AppColors.success, size: 20),
+                      const Icon(
+                        Icons.check_circle,
+                        color: AppColors.success,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
-                        AppLocalizations.of(context).healthConnectConnectedSuccessfully,
+                        AppLocalizations.of(
+                          context,
+                        ).healthConnectConnectedSuccessfully,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -239,8 +258,11 @@ class _HealthConnectSheetContentState
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.error_outline,
-                              color: AppColors.error, size: 18),
+                          const Icon(
+                            Icons.error_outline,
+                            color: AppColors.error,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -275,8 +297,9 @@ class _HealthConnectSheetContentState
                   child: FilledButton(
                     onPressed: _isConnecting ? null : _handleConnect,
                     style: FilledButton.styleFrom(
-                      backgroundColor:
-                          isDark ? AppColors.accent : AppColorsLight.accent,
+                      backgroundColor: isDark
+                          ? AppColors.accent
+                          : AppColorsLight.accent,
                       foregroundColor: isDark
                           ? AppColors.accentContrast
                           : AppColorsLight.accentContrast,
@@ -296,7 +319,9 @@ class _HealthConnectSheetContentState
                             ),
                           )
                         : Text(
-                            AppLocalizations.of(context).unifiedHomeWidgetsConnect,
+                            AppLocalizations.of(
+                              context,
+                            ).unifiedHomeWidgetsConnect,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -312,10 +337,7 @@ class _HealthConnectSheetContentState
                     onPressed: _handleDismiss,
                     child: Text(
                       AppLocalizations.of(context).healthConnectMaybeLater,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: textSecondary,
-                      ),
+                      style: TextStyle(fontSize: 14, color: textSecondary),
                     ),
                   ),
                 ),
@@ -348,13 +370,7 @@ class _BenefitRow extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: AppColors.green),
         const SizedBox(width: 10),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 14,
-            color: textColor,
-          ),
-        ),
+        Text(text, style: TextStyle(fontSize: 14, color: textColor)),
       ],
     );
   }

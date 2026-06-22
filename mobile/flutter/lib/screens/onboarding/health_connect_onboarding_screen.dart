@@ -11,10 +11,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/health_service.dart';
+import '../../widgets/health_connect_sheet.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'onboarding_experiments.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
 /// Health Connect / Apple Health onboarding step.
 ///
 /// Shown once, post-paywall, in the `context.go` chain:
@@ -68,9 +70,16 @@ class _HealthConnectOnboardingScreenState
 
   /// Prefs flag flips the moment the screen finishes (connect or skip), so
   /// the post-paywall chain never re-shows it.
+  ///
+  /// Also marks the Health-Connect primer as seen so the home auto-popup
+  /// (`_maybeShowHealthConnectPopup`) doesn't re-prompt for the same
+  /// connection immediately after onboarding — the primer here already gave
+  /// the user the connect/skip choice. Manual "Connect Health" chip taps
+  /// elsewhere still open the sheet on demand.
   Future<void> _markShown() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(HealthConnectOnboardingScreen.prefsKey, true);
+    await markHealthPrimerSeen();
   }
 
   /// Connect the platform health store AND record the Art. 9 server-storage
@@ -81,9 +90,9 @@ class _HealthConnectOnboardingScreenState
     setState(() => _isConnecting = true);
     HapticFeedback.mediumImpact();
 
-    ref.read(posthogServiceProvider).capture(
-          eventName: 'onboarding_health_connect_tapped',
-        );
+    ref
+        .read(posthogServiceProvider)
+        .capture(eventName: 'onboarding_health_connect_tapped');
 
     try {
       final notifier = ref.read(healthSyncProvider.notifier);
@@ -97,9 +106,9 @@ class _HealthConnectOnboardingScreenState
               .read(aiSettingsProvider.notifier)
               .updateHealthDataConsent(true);
           ref.read(dailyActivityProvider.notifier).loadTodayActivity();
-          ref.read(posthogServiceProvider).capture(
-                eventName: 'onboarding_health_connect_succeeded',
-              );
+          ref
+              .read(posthogServiceProvider)
+              .capture(eventName: 'onboarding_health_connect_succeeded');
         }
       } else if (mounted && Platform.isAndroid) {
         // Health Connect app not installed — don't trap the user; they
@@ -107,7 +116,10 @@ class _HealthConnectOnboardingScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                AppLocalizations.of(context).healthConnectOnboardingHealthConnectIsnT),
+              AppLocalizations.of(
+                context,
+              ).healthConnectOnboardingHealthConnectIsnT,
+            ),
           ),
         );
       }
@@ -122,9 +134,9 @@ class _HealthConnectOnboardingScreenState
 
   Future<void> _skip() async {
     HapticFeedback.lightImpact();
-    ref.read(posthogServiceProvider).capture(
-          eventName: 'onboarding_health_connect_skipped',
-        );
+    ref
+        .read(posthogServiceProvider)
+        .capture(eventName: 'onboarding_health_connect_skipped');
     await _markShown();
     if (!mounted) return;
     context.go('/permissions-primer');
@@ -133,15 +145,16 @@ class _HealthConnectOnboardingScreenState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     const accent = AppColors.purple;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+      backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -175,7 +188,9 @@ class _HealthConnectOnboardingScreenState
                             .fadeIn(duration: 400.ms),
                         const SizedBox(height: 32),
                         Text(
-                          AppLocalizations.of(context).healthConnectOnboardingUnlockYourAiHealth,
+                          AppLocalizations.of(
+                            context,
+                          ).healthConnectOnboardingUnlockYourAiHealth,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 28,
@@ -218,43 +233,46 @@ class _HealthConnectOnboardingScreenState
                         ],
                         const SizedBox(height: 32),
                         _BenefitRow(
-                          icon: Icons.bedtime_rounded,
-                          title: AppLocalizations.of(context).healthConnectOnboardingSleepCoaching,
-                          subtitle:
-                              'A morning briefing and specific tips on the nights you sleep poorly.',
-                          accent: accent,
-                          isDark: isDark,
-                        ).animate().fadeIn(delay: 350.ms).slideX(
-                              begin: -0.05,
-                              end: 0,
-                              duration: 300.ms,
-                            ),
+                              icon: Icons.bedtime_rounded,
+                              title: AppLocalizations.of(
+                                context,
+                              ).healthConnectOnboardingSleepCoaching,
+                              subtitle:
+                                  'A morning briefing and specific tips on the nights you sleep poorly.',
+                              accent: accent,
+                              isDark: isDark,
+                            )
+                            .animate()
+                            .fadeIn(delay: 350.ms)
+                            .slideX(begin: -0.05, end: 0, duration: 300.ms),
                         const SizedBox(height: 16),
                         _BenefitRow(
-                          icon: Icons.fitness_center_rounded,
-                          title: AppLocalizations.of(context).healthConnectOnboardingRecoveryAwareWorkouts,
-                          subtitle:
-                              'Your training auto-adjusts when recovery is low — lighter days exactly when you need them.',
-                          accent: accent,
-                          isDark: isDark,
-                        ).animate().fadeIn(delay: 450.ms).slideX(
-                              begin: -0.05,
-                              end: 0,
-                              duration: 300.ms,
-                            ),
+                              icon: Icons.fitness_center_rounded,
+                              title: AppLocalizations.of(
+                                context,
+                              ).healthConnectOnboardingRecoveryAwareWorkouts,
+                              subtitle:
+                                  'Your training auto-adjusts when recovery is low — lighter days exactly when you need them.',
+                              accent: accent,
+                              isDark: isDark,
+                            )
+                            .animate()
+                            .fadeIn(delay: 450.ms)
+                            .slideX(begin: -0.05, end: 0, duration: 300.ms),
                         const SizedBox(height: 16),
                         _BenefitRow(
-                          icon: Icons.auto_awesome_rounded,
-                          title: AppLocalizations.of(context).healthConnectOnboardingACoachThatSees,
-                          subtitle:
-                              'Your AI coach factors in sleep, steps, heart rate and recovery — and spots patterns across them.',
-                          accent: accent,
-                          isDark: isDark,
-                        ).animate().fadeIn(delay: 550.ms).slideX(
-                              begin: -0.05,
-                              end: 0,
-                              duration: 300.ms,
-                            ),
+                              icon: Icons.auto_awesome_rounded,
+                              title: AppLocalizations.of(
+                                context,
+                              ).healthConnectOnboardingACoachThatSees,
+                              subtitle:
+                                  'Your AI coach factors in sleep, steps, heart rate and recovery — and spots patterns across them.',
+                              accent: accent,
+                              isDark: isDark,
+                            )
+                            .animate()
+                            .fadeIn(delay: 550.ms)
+                            .slideX(begin: -0.05, end: 0, duration: 300.ms),
                       ],
                     ),
                   ),
@@ -266,8 +284,11 @@ class _HealthConnectOnboardingScreenState
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.lock_outline_rounded,
-                          size: 14, color: textSecondary),
+                      Icon(
+                        Icons.lock_outline_rounded,
+                        size: 14,
+                        color: textSecondary,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -303,8 +324,7 @@ class _HealthConnectOnboardingScreenState
                             height: 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.2,
-                              valueColor:
-                                  AlwaysStoppedAnimation(Colors.white),
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
                         : Text(
@@ -394,8 +414,9 @@ class _PermissionSheetWalkthroughState
     final isDark = widget.isDark;
     final sheetBg = isDark ? const Color(0xFF161420) : Colors.white;
     final rowText = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final subtext =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final subtext = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final frameBorder = isDark
         ? Colors.white.withValues(alpha: 0.10)
         : Colors.black.withValues(alpha: 0.08);
@@ -429,8 +450,11 @@ class _PermissionSheetWalkthroughState
               children: [
                 Row(
                   children: [
-                    Icon(Icons.favorite_rounded,
-                        size: 18, color: widget.accent),
+                    Icon(
+                      Icons.favorite_rounded,
+                      size: 18,
+                      color: widget.accent,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -453,8 +477,8 @@ class _PermissionSheetWalkthroughState
                     Positioned.fill(
                       child: IgnorePointer(
                         child: Opacity(
-                          opacity: (0.45 * pulse) * (1 - on).clamp(0.0, 1.0) +
-                              0.12,
+                          opacity:
+                              (0.45 * pulse) * (1 - on).clamp(0.0, 1.0) + 0.12,
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
@@ -469,10 +493,13 @@ class _PermissionSheetWalkthroughState
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 11),
+                        horizontal: 12,
+                        vertical: 11,
+                      ),
                       decoration: BoxDecoration(
-                        color: widget.accent
-                            .withValues(alpha: 0.10 + 0.10 * on),
+                        color: widget.accent.withValues(
+                          alpha: 0.10 + 0.10 * on,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -596,11 +623,7 @@ class _Illustration extends StatelessWidget {
         ),
       ),
       alignment: Alignment.center,
-      child: Icon(
-        Icons.monitor_heart_rounded,
-        color: accent,
-        size: 56,
-      ),
+      child: Icon(Icons.monitor_heart_rounded, color: accent, size: 56),
     );
   }
 }
@@ -622,10 +645,12 @@ class _BenefitRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final surface = isDark
         ? Colors.white.withValues(alpha: 0.04)
         : Colors.black.withValues(alpha: 0.03);

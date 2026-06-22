@@ -14,6 +14,7 @@ import '../../data/repositories/auth_repository.dart';
 import 'pre_auth_quiz_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
 /// Founder Note Sheet — Onboarding v5.1
 ///
 /// Shown one time, immediately after a successful sign-in (Base Camp pattern,
@@ -31,15 +32,18 @@ class FounderNoteSheet extends ConsumerWidget {
   static const String _seenSubscriberKey = 'seen_founder_note_subscriber';
   static const String _founderName = 'Chetan';
 
-  /// First-login auto-trigger. Shows once per install if the user has never
-  /// seen any founder-note entry point. Used by the new-user path in
-  /// MainShell (gated upstream by `authUser.isFirstLogin`).
+  /// First-login auto-trigger — DISABLED.
+  ///
+  /// The founder note now shows exactly once, at the strongest commitment
+  /// moment, via [showAfterConversion] (post-paywall, from the commitment-pact
+  /// screen). The old first-login trigger here double-fired the note for users
+  /// who later converted, so it's been turned into a no-op rather than removed
+  /// (its MainShell caller is owned elsewhere). It still records the seen flag
+  /// so any stale gating upstream resolves cleanly.
   static Future<bool> showIfFirstTime(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    if (prefs.getBool(_seenKey) ?? false) return false;
-    return _show(context, then: () async {
-      await prefs.setBool(_seenKey, true);
-    });
+    await prefs.setBool(_seenKey, true);
+    return false;
   }
 
   /// Post-paid-conversion auto-trigger. Shows once per install at the
@@ -54,10 +58,13 @@ class FounderNoteSheet extends ConsumerWidget {
       await prefs.setBool(_seenSubscriberKey, true);
       return false;
     }
-    return _show(context, then: () async {
-      await prefs.setBool(_seenSubscriberKey, true);
-      await prefs.setBool(_seenKey, true);
-    });
+    return _show(
+      context,
+      then: () async {
+        await prefs.setBool(_seenSubscriberKey, true);
+        await prefs.setBool(_seenKey, true);
+      },
+    );
   }
 
   /// Manual-show — invoked from Settings → About → "From the founder".
@@ -104,16 +111,18 @@ class FounderNoteSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
 
     final firstName = _firstName(ref);
 
-    ref.read(posthogServiceProvider).capture(
-          eventName: 'onboarding_founder_note_shown',
-        );
+    ref
+        .read(posthogServiceProvider)
+        .capture(eventName: 'onboarding_founder_note_shown');
 
     // Explicit top clearance: device's safe-area top inset (status bar
     // + dynamic island / notch on iPhone 14+) plus a generous 32px
@@ -134,234 +143,183 @@ class FounderNoteSheet extends ConsumerWidget {
           Column(
             children: [
               Expanded(
-                // LayoutBuilder + ConstrainedBox(minHeight: viewport)
-                // lets the inner Column use mainAxisAlignment.center to
-                // vertically distribute content. When the body is short,
-                // empty space splits ABOVE and BELOW the content instead
-                // of trapping under the signature. When the body is
-                // long, ConstrainedBox simply doesn't kick in and the
-                // scroll view scrolls.
-                child: LayoutBuilder(
-                  builder: (ctx, constraints) {
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(
-                          28, topClearance, 28, 8),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight -
-                              topClearance -
-                              8,
+                // Non-scrollable, single-screen layout. A fixed Column with
+                // Spacers distributes the icon → eyebrow → greeting → body →
+                // signature so it always fits one viewport (the commit-screen
+                // pattern) — NO SingleChildScrollView/ListView. The body copy
+                // is kept to a few crisp lines so it never overflows common
+                // phone heights; if it ever does, the Flexible body shrinks
+                // gracefully rather than clipping the signature.
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(28, topClearance, 28, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Spacer(flex: 2),
+                      // ── App-icon mark replaces the founder photo.
+                      //    A face dates fast, fights the headline for
+                      //    attention, and clipped into the dynamic
+                      //    island. The squircle logo carries the brand
+                      //    without those costs and lets the body copy
+                      //    do the trust-work via signed letter format.
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(22),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.orange.withValues(alpha: 0.28),
+                              blurRadius: 24,
+                              spreadRadius: 1,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                        // ── App-icon mark replaces the founder photo.
-                        //    A face dates fast, fights the headline for
-                        //    attention, and clipped into the dynamic
-                        //    island. The squircle logo carries the brand
-                        //    without those costs and lets the body
-                        //    paragraphs do the trust-work via copy +
-                        //    signed letter format.
-                        Container(
-                          width: 88,
-                          height: 88,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(22),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.orange
-                                    .withValues(alpha: 0.28),
-                                blurRadius: 24,
-                                spreadRadius: 1,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(22),
-                            child: Image.asset(
-                              'assets/icon/app_icon.png',
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: AppColors.orange,
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  'Z',
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                  ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(22),
+                          child: Image.asset(
+                            'assets/icon/app_icon.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: AppColors.orange,
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'Z',
+                                style: TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
                           ),
-                        ).animate().scale(
-                              duration: 500.ms,
-                              curve: Curves.elasticOut,
-                            ),
+                        ),
+                      ).animate().scale(
+                        duration: 500.ms,
+                        curve: Curves.elasticOut,
+                      ),
 
-                        const SizedBox(height: 14),
+                      const SizedBox(height: 14),
 
-                        Text(
-                          'A NOTE FROM $_founderName'.toUpperCase(),
+                      Text(
+                        'A NOTE FROM $_founderName'.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.orange,
+                          letterSpacing: 1.8,
+                        ),
+                      ).animate().fadeIn(delay: 200.ms),
+
+                      const SizedBox(height: 6),
+
+                      // Headline greeting — first-name accent matches the
+                      // orange on the founder badge so the name reads as
+                      // part of the voice, not a token. Compressed to a
+                      // short "Hey <name>" so the eyebrow + greeting fit
+                      // one line each.
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.orange,
-                            letterSpacing: 1.8,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: textPrimary,
+                            letterSpacing: -0.5,
+                            height: 1.18,
                           ),
-                        ).animate().fadeIn(delay: 200.ms),
+                          children: firstName == 'there'
+                              ? const [TextSpan(text: 'Hey, quick one.')]
+                              : [
+                                  const TextSpan(text: 'Hey '),
+                                  TextSpan(
+                                    text: firstName,
+                                    style: const TextStyle(
+                                      color: AppColors.orange,
+                                    ),
+                                  ),
+                                  const TextSpan(text: '.'),
+                                ],
+                        ),
+                      ).animate().fadeIn(delay: 320.ms).slideY(begin: -0.05),
 
-                        const SizedBox(height: 6),
+                      const Spacer(),
 
-                        // Headline greeting — first-name accent matches
-                        // the orange used on the founder badge so the
-                        // name reads as part of the voice, not a token.
-                        RichText(
+                      // ─────────────────────────────────────────────────
+                      //  FOUNDER'S NOTE — compressed to ~3 crisp lines so
+                      //  the whole letter fits ONE screen with no scroll.
+                      //  Hardcoded English (NOT routed through app_en.arb).
+                      //  Flexible so it shrinks before the layout overflows.
+                      // ─────────────────────────────────────────────────
+                      Flexible(
+                        child: RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
                             style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
                               color: textPrimary,
-                              letterSpacing: -0.5,
-                              height: 1.18,
+                              height: 1.5,
                             ),
-                            children: firstName == 'there'
-                                ? const [
-                                    TextSpan(text: 'Quick story before you start.'),
-                                  ]
-                                : [
-                                    const TextSpan(text: 'Hey '),
-                                    TextSpan(
-                                      text: firstName,
-                                      style: const TextStyle(color: AppColors.orange),
-                                    ),
-                                    const TextSpan(text: ' — quick story before you start.'),
-                                  ],
-                          ),
-                        ).animate().fadeIn(delay: 320.ms).slideY(begin: -0.05),
-
-                        const SizedBox(height: 16),
-
-                        // ─────────────────────────────────────────────────
-                        //  FOUNDER'S NOTE / FOUNDERS NOTE / FOUNDER NOTE
-                        //  English source paragraphs (edit in app_en.arb,
-                        //  then re-run the translation pipeline to refresh
-                        //  the other 34 locales):
-                        //
-                        //   1. founderNoteIUsedToLog          (struggle)
-                        //   2. founderNoteTheFriendsWhoActually (realization)
-                        //   3. founderNoteSoIBuiltThe         (product pitch)
-                        //   4. RichText below with founderNoteSaiImBuildingThis
-                        //      / founderNoteCoachIcon / founderNoteAndTellMe…
-                        //      (personal invitation, name highlight)
-                        //
-                        //  Why three paragraphs: greeting → struggle →
-                        //  realization → product → invitation, with the
-                        //  user's first name woven mid-letter so it reads
-                        //  written *to* them, not at them. Locked copy
-                        //  reference:
-                        //  /Users/saichetangrandhe/.claude/plans/1-image-17-i-logged-steady-backus.md
-                        // ─────────────────────────────────────────────────
-                        Text(
-                          AppLocalizations.of(context).founderNoteIUsedToLog,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: textPrimary,
-                            height: 1.45,
+                            children: [
+                              const TextSpan(
+                                text:
+                                    "I built the coach I wished I had — one that adapts to your week, not a rigid template. ",
+                              ),
+                              if (firstName != 'there') ...[
+                                TextSpan(
+                                  text: firstName,
+                                  style: const TextStyle(
+                                    color: AppColors.orange,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const TextSpan(text: ', if'),
+                              ] else
+                                const TextSpan(text: 'If'),
+                              const TextSpan(
+                                text:
+                                    " something feels off, find me on Discord or Instagram below — I read every message myself.",
+                              ),
+                            ],
                           ),
                         ).animate().fadeIn(delay: 480.ms),
-                        const SizedBox(height: 10),
-                        Text(
-                          AppLocalizations.of(context).founderNoteTheFriendsWhoActually,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: textPrimary,
-                            height: 1.45,
-                          ),
-                        ).animate().fadeIn(delay: 540.ms),
-                        const SizedBox(height: 10),
-                        Text(
-                          AppLocalizations.of(context).founderNoteSoIBuiltThe,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: textPrimary,
-                            height: 1.45,
-                          ),
-                        ).animate().fadeIn(delay: 600.ms),
-                        const SizedBox(height: 10),
-                        RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: textPrimary,
-                              height: 1.45,
-                            ),
-                            children: firstName == 'there'
-                                ? const [
-                                    TextSpan(
-                                      text:
-                                          "I'm building this in public. Roadmap's at zealova.com/roadmap and I read every message myself. If something feels off or wrong for how you actually live, find me on Discord or Instagram below. I'll fix it or tell you why I won't.",
-                                    ),
-                                  ]
-                                : [
-                                    TextSpan(
-                                      text: firstName,
-                                      style: const TextStyle(
-                                        color: AppColors.orange,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    const TextSpan(
-                                      text:
-                                          ", I'm building this in public. Roadmap's at zealova.com/roadmap and I read every message myself. If something feels off or wrong for how you actually live, find me on Discord or Instagram below. I'll fix it or tell you why I won't.",
-                                    ),
-                                  ],
-                          ),
-                        ).animate().fadeIn(delay: 660.ms),
-
-                            const SizedBox(height: 12),
-
-                            // Quiet signature — italic orange line,
-                            // plus a muted sub-line that signals "real
-                            // human, version one" (the research finding
-                            // that founder letters convert when readers
-                            // feel the person behind them).
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '— $_founderName',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.orange,
-                                      fontStyle: FontStyle.italic,
-                                      letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    AppLocalizations.of(context).founderNoteFounderSoloStillOn,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: textSecondary,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ).animate().fadeIn(delay: 720.ms),
-                          ],
-                        ),
                       ),
-                    );
-                  },
+
+                      const SizedBox(height: 14),
+
+                      // Quiet signature — italic orange line plus a muted
+                      // sub-line that signals "real human, version one".
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            '— $_founderName',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.orange,
+                              fontStyle: FontStyle.italic,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            AppLocalizations.of(
+                              context,
+                            ).founderNoteFounderSoloStillOn,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textSecondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ).animate().fadeIn(delay: 560.ms),
+
+                      const Spacer(flex: 2),
+                    ],
+                  ),
                 ),
               ),
               // ── Pinned bottom block: social row + CTA. Lives
@@ -372,78 +330,82 @@ class FounderNoteSheet extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(28, 0, 28, 8),
                 child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _InlineSocialLink(
-                        icon: FontAwesomeIcons.discord,
-                        label: AppLocalizations.of(context).founderNoteDiscord,
-                        color: const Color(0xFF5865F2),
-                        onTap: () => _open(AppLinks.discord),
-                      ),
-                      const SizedBox(width: 22),
-                      _InlineSocialLink(
-                        icon: FontAwesomeIcons.instagram,
-                        label: AppLocalizations.of(context).wrappedShareInstagram,
-                        color: const Color(0xFFE1306C),
-                        onTap: () => _open(AppLinks.instagram),
-                      ),
-                      const SizedBox(width: 22),
-                      _InlineSocialLink(
-                        icon: FontAwesomeIcons.mapLocationDot,
-                        label: AppLocalizations.of(context).founderNoteRoadmap,
-                        color: AppColors.orange,
-                        onTap: () => _open(AppLinks.roadmap),
-                      ),
-                    ],
-                  ).animate().fadeIn(delay: 720.ms),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _InlineSocialLink(
+                      icon: FontAwesomeIcons.discord,
+                      label: AppLocalizations.of(context).founderNoteDiscord,
+                      color: const Color(0xFF5865F2),
+                      onTap: () => _open(AppLinks.discord),
+                    ),
+                    const SizedBox(width: 22),
+                    _InlineSocialLink(
+                      icon: FontAwesomeIcons.instagram,
+                      label: AppLocalizations.of(context).wrappedShareInstagram,
+                      color: const Color(0xFFE1306C),
+                      onTap: () => _open(AppLinks.instagram),
+                    ),
+                    const SizedBox(width: 22),
+                    _InlineSocialLink(
+                      icon: FontAwesomeIcons.mapLocationDot,
+                      label: AppLocalizations.of(context).founderNoteRoadmap,
+                      color: AppColors.orange,
+                      onTap: () => _open(AppLinks.roadmap),
+                    ),
+                  ],
+                ).animate().fadeIn(delay: 720.ms),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  28,
+                  8,
+                  28,
+                  MediaQuery.of(context).padding.bottom + 16,
                 ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(28, 8, 28,
-                      MediaQuery.of(context).padding.bottom + 16),
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      ref.read(posthogServiceProvider).capture(
-                            eventName:
-                                'onboarding_founder_note_dismissed',
-                          );
-                      Navigator.of(context).pop();
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFFFFB366), AppColors.orange],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                AppColors.orange.withValues(alpha: 0.4),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    ref
+                        .read(posthogServiceProvider)
+                        .capture(
+                          eventName: 'onboarding_founder_note_dismissed',
+                        );
+                    Navigator.of(context).pop();
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFFFFB366), AppColors.orange],
                       ),
-                      child: Center(
-                        child: Text(
-                          // Short universal CTA. Personalization lives
-                          // in the body copy + headline; the button
-                          // doesn't need to repeat the name.
-                          "Let's go",
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 0.2,
-                          ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.orange.withValues(alpha: 0.4),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        // Short universal CTA. Personalization lives
+                        // in the body copy + headline; the button
+                        // doesn't need to repeat the name.
+                        "Let's go",
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ),
-                  ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.1),
+                  ),
+                ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.1),
               ),
             ],
           ),
@@ -505,7 +467,6 @@ class _InlineSocialLink extends StatelessWidget {
     );
   }
 }
-
 
 /// Slow-drifting blurred orbs in the background of the founder sheet.
 ///
@@ -615,9 +576,7 @@ class _BlurredOrbFieldState extends State<_BlurredOrbField>
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withValues(alpha: 0)],
-          ),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );
