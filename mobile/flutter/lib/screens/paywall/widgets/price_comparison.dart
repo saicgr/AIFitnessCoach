@@ -32,9 +32,12 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
 
   // name, what it does, monthly, yearly (US 2026 list prices).
   static const _rivals = <_Rival>[
+    // AI-coach rivals first — the most on-message for "your coach can do".
+    _Rival('Gravl', 'AI workouts', 14.99, 69.99),
+    _Rival('Google Health', 'AI coach', 9.99, 99.00),
+    _Rival('Bevel', 'longevity', 14.99, 99.99),
     _Rival('MyFitnessPal', 'nutrition', 19.99, 79.99),
     _Rival('Fitbod', 'workouts', 15.99, 95.99),
-    _Rival('Gravl', 'AI workouts', 14.99, 69.99),
     _Rival('Noom', 'coaching', 17.42, 209.00),
     _Rival('MacroFactor', 'macros', 11.99, 71.99),
     _Rival('Cronometer', 'micros', 10.99, 59.88),
@@ -152,7 +155,9 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
             'each does one job',
             style: TextStyle(fontSize: 10.5, color: colors.textMuted),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
+          // Compact rows so the full single-job lineup (incl. fasting +
+          // hydration) fits without scrolling.
           for (final r in _rivals) ...[
             _bar(
               name: r.name,
@@ -161,7 +166,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
               frac: _price(r) / max,
               isZealova: false,
             ),
-            const SizedBox(height: 7),
+            const SizedBox(height: 4),
           ],
           _bar(
             name: 'Zealova',
@@ -170,13 +175,13 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
             frac: _zPrice / max,
             isZealova: true,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 7),
           Text(
-            'Each app does one job. Zealova does all of them — plus recipe '
-            'import, barcode scan & more.',
+            'Each app does one job. Zealova does all of them — plus fasting, '
+            'hydration, recipe import & more.',
             style: TextStyle(
-              fontSize: 11,
-              height: 1.35,
+              fontSize: 10.5,
+              height: 1.3,
               color: colors.textSecondary,
             ),
           ),
@@ -249,15 +254,19 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: 11.5,
+                  height: 1.1,
                   fontWeight: isZealova ? FontWeight.w800 : FontWeight.w700,
                   color: isZealova ? colors.textPrimary : colors.textSecondary,
                 ),
               ),
               Text(
                 note,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 9.5,
+                  fontSize: 8.5,
+                  height: 1.1,
                   color: isZealova ? _accent : colors.textMuted,
                 ),
               ),
@@ -270,12 +279,12 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
             child: FractionallySizedBox(
               widthFactor: frac.clamp(0.1, 1.0),
               child: Container(
-                height: 11,
+                height: 9,
                 decoration: BoxDecoration(
                   color: isZealova
                       ? _accent
                       : colors.textMuted.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(5),
                 ),
               ),
             ),

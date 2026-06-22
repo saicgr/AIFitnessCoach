@@ -46,6 +46,9 @@ void main() {
     expect(find.text('Noom'), findsOneWidget);
     expect(find.text('MacroFactor'), findsOneWidget);
     expect(find.text('Cronometer'), findsOneWidget);
+    // AI-coach rivals lead the lineup.
+    expect(find.text('Google Health'), findsOneWidget);
+    expect(find.text('Bevel'), findsOneWidget);
     // Default = MONTHLY prices (struck-through).
     expect(find.text(r'$19.99'), findsOneWidget);
     expect(find.text(r'$15.99'), findsOneWidget);
