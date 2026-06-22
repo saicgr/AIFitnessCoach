@@ -16,6 +16,7 @@ import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/providers/fasting_provider.dart';
+import '../../data/providers/gym_profile_provider.dart';
 import '../../data/services/notification_service.dart';
 import '../settings/sections/nutrition_fasting_section.dart';
 import '../ai_settings/ai_settings_screen.dart';
@@ -869,6 +870,16 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
             'onboarding_completed': true,
           },
         ));
+
+        // The PUT above triggers create_gym_profiles_from_onboarding() on the
+        // backend, so the user's gym profile(s) now exist server-side. But
+        // gymProfilesProvider is watched at the app root (gymAccentColorProvider)
+        // and already resolved to an EMPTY list during onboarding — before the
+        // gym existed — and nothing re-fetches it on its own. Clear its poisoned
+        // empty cache and invalidate so it refetches; otherwise the Session
+        // Details "Active Gym" row reads "No gym selected" until an app restart.
+        GymProfilesNotifier.clearCache();
+        ref.invalidate(gymProfilesProvider);
 
         // Also set in SharedPreferences so local notification scheduling works
         final prefs = await SharedPreferences.getInstance();
