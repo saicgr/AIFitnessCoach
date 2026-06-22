@@ -316,9 +316,17 @@ class User extends Equatable {
       'general_fitness': 'General Fitness',
       'tone_up': 'Tone Up',
       'gain_muscle': 'Gain Muscle',
+      'athletic_performance': 'Athletic Performance',
     };
     final firstGoal = goals.first;
-    return goalDisplayNames[firstGoal] ?? firstGoal;
+    // Fallback: never surface a raw snake_case id (e.g. an unmapped goal) —
+    // humanise it to Title Case so the UI always reads clean.
+    return goalDisplayNames[firstGoal] ??
+        firstGoal
+            .split(RegExp(r'[_\s]+'))
+            .where((w) => w.isNotEmpty)
+            .map((w) => w[0].toUpperCase() + w.substring(1))
+            .join(' ');
   }
 
   /// Get workouts per week from preferences

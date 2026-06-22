@@ -58,7 +58,10 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
 
   void _loadValues() {
     if (widget.user != null) {
-      _selectedLevel = widget.user.fitnessLevel ?? 'Intermediate';
+      // Normalize the stored level ('beginner') to the Title-Case form used by
+      // [_levelOptions] so the row reads cleanly AND the edit selector
+      // highlights the current value (a raw 'beginner' never matched 'Beginner').
+      _selectedLevel = _humanizeLevel(widget.user.fitnessLevel);
       _selectedGoal = widget.user.fitnessGoal ?? 'Build Muscle';
       _selectedDays = List<int>.from(widget.user.workoutDays ?? []);
       // Normalize legacy Title-Case labels ('Lower Back') → canonical ids
@@ -78,6 +81,19 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
 
     // Load daily steps goal from NEAT provider (backend-driven).
     _selectedStepGoal = ref.read(stepGoalProvider);
+  }
+
+  /// Map a stored fitness level (lowercase 'beginner' from onboarding, or any
+  /// freeform value) to the Title-Case label used in [_levelOptions].
+  String _humanizeLevel(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return 'Intermediate';
+    final v = raw.trim().toLowerCase();
+    const map = {
+      'beginner': 'Beginner',
+      'intermediate': 'Intermediate',
+      'advanced': 'Advanced',
+    };
+    return map[v] ?? (v[0].toUpperCase() + v.substring(1));
   }
 
   /// Format duration range for display
