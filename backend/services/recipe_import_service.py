@@ -284,6 +284,142 @@ class RecipeImportService:
             yield event
 
     # ------------------------------------------------------------------
+    # Social video import (Instagram / TikTok / YouTube / Pinterest)
+    # ------------------------------------------------------------------
+
+    async def import_social(
+        self, url: str, user_id: Optional[str] = None
+    ) -> AsyncIterator[Dict]:
+        """Import a recipe from a social video URL.
+
+        Reuses the share-pipeline fetcher (`url_content_fetcher.fetch`) which
+        already handles platform detection, yt-dlp download (IG/TikTok), the
+        official YouTube transcript API, and cookie auth. We then enrich the
+        text with on-screen-text OCR + spoken-audio transcription of the video
+        frames, and hand the combined blob to the same `_parse_text_to_recipe`
+        used by the URL/text/handwritten paths.
+
+        YouTube never downloads the bitstream (App Store compliance) — its
+        official transcript already comes back inside `SharedContent.as_text()`.
+        Pinterest and other hosts fall through to the generic web fetch.
+        """
+        from services.url_content_fetcher import detect_source, fetch
+
+        source = detect_source(url)
+        yield {"step": "fetching", "message": f"Fetching {source} post…"}
+
+        content = await fetch(url)
+        if content.locked:
+            yield {
+                "step": "error",
+                "message": content.error
+                or "This post is private or blocked. Open it in the app and tap "
+                "Share → Zealova, or paste the recipe text instead.",
+            }
+            return
+        if content.error:
+            yield {"step": "error", "message": content.error}
+            return
+
+        # Base text: title + caption + body + (YouTube) transcript.
+        base_text = content.as_text()
+
+        # Enrich IG/TikTok videos with on-screen text (OCR) + narration (audio).
+        media_text = ""
+        if content.media and content.source in ("instagram", "tiktok"):
+            yield {"step": "transcribing", "message": "Reading the video (text + narration)…"}
+            frames: List = []
+            try:
+                from services.workout_extractor import _sample_video_frames
+
+                frames = await _sample_video_frames(content)
+            except Exception as exc:
+                logger.info("[RecipeImport] frame sampling skipped: %s", exc)
+            audio_part = await self._extract_audio_part(content)
+            if frames or audio_part is not None:
+                media_text = await self.vision.extract_text_from_frames(
+                    frames, audio_part=audio_part
+                )
+
+        blob = "\n\n".join(p for p in (base_text, media_text) if p).strip()
+
+        # No silent fallback — if we couldn't read enough to be a recipe, say so.
+        if len(blob) < 40:
+            yield {
+                "step": "error",
+                "message": "Couldn't read a recipe from this video. Try a post with "
+                "the recipe in the caption or shown on-screen.",
+            }
+            return
+
+        yield {"step": "parsing", "message": "Parsing recipe content"}
+        async for event in self._parse_text_to_recipe(
+            blob, user_id, source_type=RecipeSourceType.IMPORTED_VIDEO, source_url=url
+        ):
+            yield event
+
+    async def _extract_audio_part(self, content):
+        """Extract the audio track from the downloaded social video as a Gemini
+        audio Part (16 kHz mono WAV). Best-effort: returns None when there is no
+        video asset, ffmpeg is unavailable, the clip is silent, or extraction
+        fails. Re-downloads the asset from S3 (cheap for a short reel) so it
+        stays independent of the frame sampler.
+        """
+        import os
+        import shutil
+        import tempfile
+
+        from google.genai import types
+
+        if not content.media:
+            return None
+        asset = content.media[0]
+        if getattr(asset, "type", None) != "video" or not getattr(asset, "s3_key", None):
+            return None
+        if shutil.which("ffmpeg") is None:
+            return None
+
+        try:
+            from services.s3_service import get_s3_service
+
+            video_bytes = await asyncio.to_thread(
+                get_s3_service().download_bytes, asset.s3_key
+            )
+        except Exception as exc:
+            logger.info("[RecipeImport] audio S3 download failed: %s", exc)
+            return None
+
+        tmp_dir = tempfile.mkdtemp(prefix="zealova-audio-")
+        try:
+            in_path = os.path.join(tmp_dir, "in.mp4")
+            out_path = os.path.join(tmp_dir, "out.wav")
+            with open(in_path, "wb") as fh:
+                fh.write(video_bytes)
+            proc = await asyncio.create_subprocess_exec(
+                "ffmpeg", "-y", "-i", in_path,
+                "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le",
+                out_path,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            await proc.wait()
+            # < 1 KB → no audio stream / silent clip.
+            if not os.path.exists(out_path) or os.path.getsize(out_path) < 1024:
+                return None
+            with open(out_path, "rb") as fh:
+                wav = fh.read()
+            # Cap payload (~25 MB ≈ 13 min @ 16 kHz mono) so a mis-detected long
+            # video doesn't blow up the Gemini request.
+            if len(wav) > 25 * 1024 * 1024:
+                return None
+            return types.Part.from_bytes(data=wav, mime_type="audio/wav")
+        except Exception as exc:
+            logger.info("[RecipeImport] audio extraction failed: %s", exc)
+            return None
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    # ------------------------------------------------------------------
     # Shared text → recipe with ingredient analysis
     # ------------------------------------------------------------------
 

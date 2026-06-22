@@ -1001,6 +1001,67 @@ Guidelines:
             logger.exception("[Vision] handwritten OCR failed")
             raise RuntimeError(f"Could not read handwritten recipe: {exc}") from exc
 
+    async def extract_text_from_frames(
+        self,
+        frames: "list[types.Part]",
+        audio_part: "Optional[types.Part]" = None,
+    ) -> str:
+        """Transcribe a social-video clip into plain text for recipe parsing.
+
+        One multimodal Gemini call that does BOTH jobs in a single round-trip:
+          * OCR every readable on-screen overlay across the sampled `frames`
+            (recipe title, ingredient list, step captions) — this is the
+            common TikTok/Reels case where the recipe is shown as text with
+            little or no narration, and
+          * transcribe the spoken narration from `audio_part` when provided
+            (Instagram/TikTok talk-through recipes that have no on-screen text).
+
+        Returns a single plain-text block (on-screen text first, then the
+        spoken transcript). Returns "" when there's nothing to send or the
+        call fails — the caller still has caption/transcript text to fall back
+        on, so this never raises.
+        """
+        if not frames and audio_part is None:
+            return ""
+
+        wants_audio = audio_part is not None
+        prompt = (
+            "These are sampled frames"
+            + (" and the audio track" if wants_audio else "")
+            + " from a short cooking video. Extract the recipe content as PLAIN TEXT "
+            "(no markdown, no commentary). Do BOTH of these:\n"
+            "1. ON-SCREEN TEXT: read every readable text overlay across the frames — "
+            "recipe name, ingredient list with amounts, and any step text. Preserve "
+            "line breaks and the order it appears.\n"
+            + (
+                "2. NARRATION: transcribe what the speaker says in the audio, "
+                "including any ingredient amounts or steps they call out.\n"
+                if wants_audio
+                else ""
+            )
+            + "Combine everything you find into one text block. Do not invent "
+            "ingredients or steps that aren't shown or spoken. If nothing readable "
+            "is present, return an empty response."
+        )
+        try:
+            contents: list = [prompt]
+            contents.extend(frames)
+            if audio_part is not None:
+                contents.append(audio_part)
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    temperature=0.1,
+                    max_output_tokens=2000,
+                ),
+                method_name="vision_social_video_text",
+            )
+            return (response.text or "").strip()
+        except Exception as exc:
+            logger.warning("[Vision] social video text extraction failed: %s", exc)
+            return ""
+
     async def _download_image_from_s3(self, s3_key: str) -> bytes:
         """Download an image from S3 into memory (max ~1.5MB per image).
         Retries once after 2s on NoSuchKey — covers parallel upload race condition."""

@@ -57,6 +57,7 @@ const List<String> _kImportedSources = [
   'imported_url',
   'imported_text',
   'imported_handwritten',
+  'imported_video',
 ];
 const List<String> _kImprovizedSources = ['improvized'];
 

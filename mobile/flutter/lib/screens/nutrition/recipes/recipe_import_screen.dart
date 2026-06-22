@@ -1,10 +1,12 @@
-/// Three-mode recipe import: Photo, URL, paste-text.
+/// Four-mode recipe import: Photo, URL, paste-text, and social Video
+/// (Instagram / TikTok / YouTube / Pinterest).
 /// Streams progress events from the SSE backend; offers Save → recipe_create_screen.
 library;
 
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -55,6 +57,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
   late final TabController _tab;
   final _urlCtrl = TextEditingController();
   final _textCtrl = TextEditingController();
+  final _socialCtrl = TextEditingController();
   final List<ImportProgressEvent> _events = [];
   RecipeCreate? _resultRecipe;
   bool _running = false;
@@ -63,9 +66,9 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
   void initState() {
     super.initState();
     _tab = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
-      initialIndex: widget.initialTab.clamp(0, 2),
+      initialIndex: widget.initialTab.clamp(0, 3),
     );
     _tab.addListener(_onTabChanged);
     if (widget.initialUrl != null) {
@@ -88,6 +91,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
     _tab.dispose();
     _urlCtrl.dispose();
     _textCtrl.dispose();
+    _socialCtrl.dispose();
     super.dispose();
   }
 
@@ -181,6 +185,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
               SegmentedTabItem(label: AppLocalizations.of(context).recipeImportPhoto, icon: Icons.camera_alt_rounded),
               SegmentedTabItem(label: 'URL', icon: Icons.link_rounded),
               SegmentedTabItem(label: AppLocalizations.of(context).recipeImportText, icon: Icons.text_fields_rounded),
+              SegmentedTabItem(label: 'Video', icon: Icons.play_circle_outline_rounded),
             ],
           ),
           Expanded(
@@ -190,6 +195,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
                 _photoTab(accent, text, isDark),
                 _urlTab(accent, text, isDark),
                 _textTab(accent, text, isDark),
+                _socialTab(accent, text, isDark),
               ],
             ),
           ),
@@ -242,6 +248,76 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
           onTap: _running ? null : () => _runImport('url', url: _urlCtrl.text.trim()),
         ),
       ]),
+    );
+  }
+
+  Widget _socialTab(Color accent, Color text, bool isDark) {
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // What this does — set expectations before they paste a link.
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.cardBorder, width: 1),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded, color: accent, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Paste a recipe video link. We read the caption, narration, '
+                    'and on-screen text to build the recipe.',
+                    style: TextStyle(color: text, fontSize: 12, height: 1.35),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _socialCtrl,
+            style: TextStyle(color: text),
+            keyboardType: TextInputType.url,
+            decoration: _hairlineDecoration(
+              'https://www.tiktok.com/@chef/video/...',
+              accent,
+              muted,
+            ).copyWith(
+              suffixIcon: IconButton(
+                tooltip: 'Paste',
+                icon: Icon(Icons.content_paste_rounded, color: muted, size: 20),
+                onPressed: () async {
+                  final data = await Clipboard.getData(Clipboard.kTextPlain);
+                  final pasted = data?.text?.trim();
+                  if (pasted != null && pasted.isNotEmpty && mounted) {
+                    setState(() => _socialCtrl.text = pasted);
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Works with Instagram, TikTok, YouTube & Pinterest.',
+            style: TextStyle(color: muted, fontSize: 11),
+          ),
+          const SizedBox(height: 16),
+          ZealovaButton(
+            label: 'Import from video',
+            trailingIcon: Icons.download_rounded,
+            onTap: _running
+                ? null
+                : () => _runImport('social', url: _socialCtrl.text.trim()),
+          ),
+        ],
+      ),
     );
   }
 

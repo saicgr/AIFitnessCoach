@@ -25,6 +25,7 @@ class RecipeSourceType(str, Enum):
     IMPORTED_TEXT = "imported_text"
     IMPORTED_URL = "imported_url"
     IMPORTED_HANDWRITTEN = "imported_handwritten"
+    IMPORTED_VIDEO = "imported_video"  # Social video import (IG / TikTok / YouTube / Pinterest)
     PANTRY_SUGGESTED = "pantry_suggested"
     CLONED_FROM_SHARE = "cloned_from_share"
     IMPROVIZED = "improvized"  # Forked from a curated / public recipe via the Improvize action
@@ -470,6 +471,16 @@ class ImportRecipeResponse(BaseModel):
     error: Optional[str] = None
     ingredients_found: int = 0
     ingredients_with_nutrition: int = 0
+
+
+class ImportSocialRecipeRequest(BaseModel):
+    """Import a recipe from a social video URL (Instagram / TikTok / YouTube / Pinterest).
+
+    The server downloads/transcribes the post (caption + spoken audio +
+    on-screen text via frame OCR), then parses it into a structured recipe.
+    """
+    url: str = Field(..., max_length=500)
+    servings_override: Optional[int] = Field(default=None, ge=1, le=100)
 
 
 class ImportTextRecipeRequest(BaseModel):

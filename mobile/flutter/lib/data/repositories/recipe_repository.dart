@@ -89,9 +89,9 @@ class RecipeRepository {
   // IMPORT (SSE)
   // ============================================================
 
-  /// Stream import progress events for URL/text/handwritten import.
+  /// Stream import progress events for URL/text/handwritten/social import.
   Stream<ImportProgressEvent> importStream({
-    required String mode, // 'url' | 'text' | 'handwritten'
+    required String mode, // 'url' | 'text' | 'handwritten' | 'social'
     required String userId,
     String? url,
     String? text,
@@ -101,6 +101,7 @@ class RecipeRepository {
       'url' => '/nutrition/recipes/import-url',
       'text' => '/nutrition/recipes/import-text',
       'handwritten' => '/nutrition/recipes/import-handwritten',
+      'social' => '/nutrition/recipes/import-social',
       _ => throw ArgumentError('unknown import mode: $mode'),
     };
 
@@ -108,6 +109,7 @@ class RecipeRepository {
       'url' => {'url': url ?? ''},
       'text' => {'text': text ?? ''},
       'handwritten' => {'image_b64': imageB64 ?? ''},
+      'social' => {'url': url ?? ''},
       _ => const {},
     };
 
@@ -115,7 +117,14 @@ class RecipeRepository {
       endpoint,
       queryParameters: {'user_id': userId},
       data: body,
-      options: Options(responseType: ResponseType.stream, headers: {'Accept': 'text/event-stream'}),
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+        // Social/video import (download → frame OCR → audio transcribe → parse)
+        // has a longer gap between SSE chunks than the other modes; use the AI
+        // receive timeout so a slow 'transcribing' step doesn't abort the stream.
+        receiveTimeout: ApiConstants.aiReceiveTimeout,
+      ),
     );
 
     final stream = (response.data as ResponseBody).stream;

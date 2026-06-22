@@ -13,6 +13,7 @@ from models.recipe import (
     BulkIngredientAnalyzeResponse,
     ImportHandwrittenRecipeRequest,
     ImportRecipeRequest,
+    ImportSocialRecipeRequest,
     ImportTextRecipeRequest,
     IngredientAnalyzeRequest,
     IngredientAnalyzeResponse,
@@ -89,6 +90,23 @@ async def import_recipe_text(
 
     async def stream():
         async for evt in importer.import_text(request.text, user_id=user_id):
+            yield _sse(evt)
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@router.post("/recipes/import-social")
+async def import_recipe_social(
+    request: ImportSocialRecipeRequest,
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Import a recipe from a social video (Instagram / TikTok / YouTube / Pinterest).
+    SSE-streams progress (fetching → transcribing → parsing → analyzing → done)."""
+    importer = get_recipe_import_service()
+
+    async def stream():
+        async for evt in importer.import_social(request.url, user_id=user_id):
             yield _sse(evt)
 
     return StreamingResponse(stream(), media_type="text/event-stream")
