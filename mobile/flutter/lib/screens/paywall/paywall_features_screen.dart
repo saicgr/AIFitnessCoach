@@ -396,40 +396,44 @@ typedef _Feat = (IconData, String);
 // Every chip uses a clean Material monoline glyph (Icons.*) — NEVER an emoji
 // character (emojis read as AI slop). The breadth (~15 per row) is the point:
 // the rail should feel like it never ends.
+// Both rows LEAD with the differentiators competitors lack (form check, menu
+// scan, injury-safe, AI personas, recipe import) — the moat is seen first,
+// before the marquee scrolls. Table-stakes (barcode, wearable sync, plate calc)
+// trail. No "7-day free trial" chip — that's an offer (covered by the timeline +
+// pricing), not a feature.
 const List<_Feat> _marqueeRowTop = [
   (Icons.auto_fix_high, 'AI workouts'),
-  (Icons.chat_bubble_outline, 'Coach chat'),
+  (Icons.videocam_outlined, 'AI form check'),
   (Icons.menu_book_outlined, 'Menu scan'),
-  (Icons.videocam_outlined, 'Form check'),
+  (Icons.chat_bubble_outline, 'AI coach chat'),
   (Icons.receipt_long_outlined, 'Recipe import'),
-  (Icons.local_drink_outlined, 'Fasting + water'),
-  (Icons.emoji_events_outlined, '52+ skill progressions'),
-  (Icons.calculate_outlined, 'Adaptive TDEE engine'),
+  (Icons.camera_alt_outlined, 'Photo food logging'),
   (Icons.movie_outlined, '1,722 exercises · HD video demos'),
+  (Icons.calculate_outlined, 'Adaptive TDEE engine'),
+  (Icons.emoji_events_outlined, '52+ skill progressions'),
+  (Icons.view_week_outlined, 'Superset builder'),
+  (Icons.local_drink_outlined, 'Fasting + water'),
+  (Icons.mic_none_rounded, 'Voice logging'),
+  (Icons.qr_code_scanner, 'Barcode scan'),
   (Icons.local_offer_outlined, 'Streak freezes'),
   (Icons.event_note_outlined, 'Weekly recap'),
-  (Icons.qr_code_scanner, 'Barcode scan'),
-  (Icons.mic_none_rounded, 'Voice logging'),
-  (Icons.view_week_outlined, 'Superset builder'),
-  (Icons.directions_run_rounded, 'Rest-day cardio'),
 ];
 
 const List<_Feat> _marqueeRowBottom = [
-  (Icons.camera_alt_outlined, 'Photo food logging'),
-  (Icons.healing_outlined, 'Injury-safe'),
-  (Icons.insights_rounded, 'Progress'),
+  (Icons.healing_outlined, 'Injury-safe plans'),
   (Icons.psychology_outlined, '5 AI coach personas'),
   (Icons.map_outlined, 'Muscle heatmap analysis'),
-  (Icons.watch_outlined, 'Wearable sync'),
-  (Icons.battery_charging_full_rounded, 'Recovery score'),
-  (Icons.handyman_outlined, 'Custom equipment'),
-  (Icons.scale_outlined, 'Plate calculator'),
-  (Icons.speed_outlined, 'RPE/RIR logging'),
   (Icons.restaurant_menu, 'Menu ordering'),
-  (Icons.local_fire_department, 'Hell Mode'),
+  (Icons.handyman_outlined, 'Custom equipment'),
+  (Icons.battery_charging_full_rounded, 'Recovery score'),
   (Icons.bar_chart_rounded, 'Muscle balance'),
-  (Icons.bolt_outlined, '7-day free trial'),
+  (Icons.local_fire_department, 'Hell Mode'),
+  (Icons.directions_run_rounded, 'Rest-day cardio'),
+  (Icons.watch_outlined, 'Wearable sync'),
+  (Icons.speed_outlined, 'RPE/RIR logging'),
+  (Icons.scale_outlined, 'Plate calculator'),
   (Icons.ac_unit_rounded, 'Deload weeks'),
+  (Icons.insights_rounded, 'Progress photos & charts'),
 ];
 
 /// One signature-v2 chip: a small orange icon + UPPERCASE Barlow Condensed
