@@ -17,11 +17,12 @@ import 'package:fitwiz/core/constants/branding.dart';
 ///
 /// The screen IS the product: a 10-second auto-playing loop of four real
 /// app surfaces (program builder → live logging → food scan → menu
-/// analysis with live re-sort), with the pitch rising out of a scrim — a
-/// you-centric, demo-narrating line: "ALREADY {BUILDING YOUR PLAN / TRACKING
-/// YOUR LIFTS / COUNTING YOUR MACROS / READING YOUR MENU}." (Reframed from the
-/// old coach-centric "your coach is already typing" — leads with the user's
-/// outcome, which the demo literally shows.)
+/// analysis with live re-sort), with the all-in-one pitch rising out of a
+/// scrim — "ONE APP THAT {BUILDS YOUR PLAN / TRACKS YOUR LIFTS / COUNTS YOUR
+/// MACROS / READS YOUR MENU}", the rotating clause narrating each demo scene.
+/// (Asserts the consolidation moat the paywall later proves — replacing the
+/// old coach-centric "your coach is already typing", whose "ALREADY" made no
+/// sense cold on a first screen.)
 ///
 /// Navigation is byte-identical to v5/v6:
 ///   - Primary CTA → /onboarding-why (the emotional-anchor funnel entry)
@@ -276,7 +277,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontFamily: 'Anton',
-                                fontSize: 32,
+                                fontSize: 40,
                                 height: 1.0,
                                 color: AppColors.orange,
                               ),
@@ -359,8 +360,8 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
       _DemoScene.liveLogging => l10n.introV7WordSpotting,
       _DemoScene.foodScan => l10n.introV7WordCounting,
       _DemoScene.menuAnalysis => l10n.introV7WordChoosing,
-      _DemoScene.integrations => 'SYNCING YOUR DATA',
-      _DemoScene.shareables => 'SHARING YOUR WINS',
+      _DemoScene.integrations => 'SYNCS YOUR DATA',
+      _DemoScene.shareables => 'SHARES YOUR WINS',
     };
   }
 

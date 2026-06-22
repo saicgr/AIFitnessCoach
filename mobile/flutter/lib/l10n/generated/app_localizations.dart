@@ -75334,7 +75334,7 @@ abstract class AppLocalizations {
   /// v7 intro demo / first screen
   ///
   /// In en, this message translates to:
-  /// **'ALREADY'**
+  /// **'ONE APP THAT'**
   String get introV7HeadlineLine1;
 
   /// v7 intro demo / first screen
@@ -75346,25 +75346,25 @@ abstract class AppLocalizations {
   /// v7 intro demo / first screen
   ///
   /// In en, this message translates to:
-  /// **'BUILDING YOUR PLAN'**
+  /// **'BUILDS YOUR PLAN'**
   String get introV7WordTyping;
 
   /// v7 intro demo / first screen
   ///
   /// In en, this message translates to:
-  /// **'TRACKING YOUR LIFTS'**
+  /// **'TRACKS YOUR LIFTS'**
   String get introV7WordSpotting;
 
   /// v7 intro demo / first screen
   ///
   /// In en, this message translates to:
-  /// **'COUNTING YOUR MACROS'**
+  /// **'COUNTS YOUR MACROS'**
   String get introV7WordCounting;
 
   /// v7 intro demo / first screen
   ///
   /// In en, this message translates to:
-  /// **'READING YOUR MENU'**
+  /// **'READS YOUR MENU'**
   String get introV7WordChoosing;
 
   /// v7 intro demo / first screen

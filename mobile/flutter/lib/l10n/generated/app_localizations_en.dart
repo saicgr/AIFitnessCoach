@@ -44442,22 +44442,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quizAlmostDone => 'ALMOST DONE';
 
   @override
-  String get introV7HeadlineLine1 => 'ALREADY';
+  String get introV7HeadlineLine1 => 'ONE APP THAT';
 
   @override
   String get introV7HeadlineAlready => 'ALREADY';
 
   @override
-  String get introV7WordTyping => 'BUILDING YOUR PLAN';
+  String get introV7WordTyping => 'BUILDS YOUR PLAN';
 
   @override
-  String get introV7WordSpotting => 'TRACKING YOUR LIFTS';
+  String get introV7WordSpotting => 'TRACKS YOUR LIFTS';
 
   @override
-  String get introV7WordCounting => 'COUNTING YOUR MACROS';
+  String get introV7WordCounting => 'COUNTS YOUR MACROS';
 
   @override
-  String get introV7WordChoosing => 'READING YOUR MENU';
+  String get introV7WordChoosing => 'READS YOUR MENU';
 
   @override
   String get introV7BuildMyPlan => 'Build my plan';

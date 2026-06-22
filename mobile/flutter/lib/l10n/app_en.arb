@@ -28350,7 +28350,7 @@
   "@quizAlmostDone": {
     "description": "Quiz header label for the optional (post-required) personalization steps"
   },
-  "introV7HeadlineLine1": "ALREADY",
+  "introV7HeadlineLine1": "ONE APP THAT",
   "@introV7HeadlineLine1": {
     "description": "v7 intro demo / first screen"
   },
@@ -28358,19 +28358,19 @@
   "@introV7HeadlineAlready": {
     "description": "v7 intro demo / first screen"
   },
-  "introV7WordTyping": "BUILDING YOUR PLAN",
+  "introV7WordTyping": "BUILDS YOUR PLAN",
   "@introV7WordTyping": {
     "description": "v7 intro demo / first screen"
   },
-  "introV7WordSpotting": "TRACKING YOUR LIFTS",
+  "introV7WordSpotting": "TRACKS YOUR LIFTS",
   "@introV7WordSpotting": {
     "description": "v7 intro demo / first screen"
   },
-  "introV7WordCounting": "COUNTING YOUR MACROS",
+  "introV7WordCounting": "COUNTS YOUR MACROS",
   "@introV7WordCounting": {
     "description": "v7 intro demo / first screen"
   },
-  "introV7WordChoosing": "READING YOUR MENU",
+  "introV7WordChoosing": "READS YOUR MENU",
   "@introV7WordChoosing": {
     "description": "v7 intro demo / first screen"
   },
