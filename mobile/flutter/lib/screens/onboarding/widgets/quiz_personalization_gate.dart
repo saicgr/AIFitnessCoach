@@ -256,8 +256,143 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
     return true;
   }
 
+  /// Formats a kg value in whichever body-weight unit the user has selected.
+  String _fmtWeight(double kg) =>
+      _weightInKg ? '${kg.round()} kg' : '${(kg * 2.20462).round()} lb';
+
+  /// Returns a human-readable warning when the CURRENT or GOAL weight is
+  /// physiologically implausible for the user's height, else null. The signal is
+  /// the resulting BMI — not raw % change, since a heavier user legitimately
+  /// needs a large percentage change and gating on % would nag them. Current
+  /// weight is checked first (it's the foundation of every projection); a value
+  /// far outside the human range is almost always a typo. WHO bands: <17.5
+  /// underweight (severe thinness <16), >40 class-III obesity. Only a soft
+  /// confirm — never a block.
+  ({String title, String body})? _metricsWarning() {
+    final heightCm = _resolveHeightCm();
+    if (heightCm == null || heightCm <= 0) return null;
+    final hM = heightCm / 100.0;
+
+    // Current weight first — a BMI far outside the human range is almost
+    // certainly a mis-entry, and it skews the whole projection.
+    final cRaw = double.tryParse(_weightCtrl.text);
+    if (cRaw != null) {
+      final curKg = _weightInKg ? cRaw : cRaw / 2.20462;
+      if (curKg > 0) {
+        final curBmi = curKg / (hM * hM);
+        if (curBmi < 16 || curBmi > 50) {
+          return (
+            title: 'Double-check your weight',
+            body:
+                'A current weight of ${_fmtWeight(curKg)} is outside the usual '
+                'range for your height. If that’s a typo, tap Adjust — otherwise '
+                'we’ll build your plan around it.',
+          );
+        }
+      }
+    }
+
+    // Then the goal weight.
+    final gRaw = double.tryParse(_goalWeightCtrl.text);
+    if (gRaw != null) {
+      final goalKg = _weightInKg ? gRaw : gRaw / 2.20462;
+      if (goalKg > 0) {
+        final goalBmi = goalKg / (hM * hM);
+        if (goalBmi < 17.5) {
+          return (
+            title: 'That goal looks very low',
+            body:
+                'A goal of ${_fmtWeight(goalKg)} is below a healthy weight range '
+                'for your height. We can still build your plan around it, but a '
+                'higher target is safer and far easier to sustain.',
+          );
+        }
+        if (goalBmi > 40) {
+          return (
+            title: 'That goal looks very high',
+            body:
+                'A goal of ${_fmtWeight(goalKg)} is well above a healthy weight '
+                'range for your height. We can still build your plan, but you '
+                'might set a closer first milestone and update it as you go.',
+          );
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Soft "Continue anyway?" confirmation for an out-of-range goal weight.
+  /// Returns true to proceed, false to go back and adjust.
+  Future<bool> _confirmGoal(({String title, String body}) w) async {
+    final t = OnboardingTheme.of(context);
+    HapticFeedback.heavyImpact();
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: t.isDark ? const Color(0xFF1A1411) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 8),
+        contentPadding: const EdgeInsets.fromLTRB(22, 0, 22, 4),
+        actionsPadding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: t.accent, size: 24),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                w.title,
+                style: TextStyle(
+                  color: t.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          w.body,
+          style: TextStyle(color: t.textSecondary, fontSize: 14, height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'Adjust',
+              style: TextStyle(
+                color: t.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              'Continue anyway',
+              style: TextStyle(color: t.accent, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   Future<void> _proceed({required bool fineTune}) async {
     if (!_isValid || _saving) return;
+
+    // Soft safety gate: if the current or goal weight is out of a healthy range
+    // for the user's height, confirm before continuing (never a hard block).
+    final warning = _metricsWarning();
+    if (warning != null) {
+      final go = await _confirmGoal(warning);
+      if (!go || !mounted) return;
+    }
+
     setState(() => _saving = true);
     HapticFeedback.mediumImpact();
 
