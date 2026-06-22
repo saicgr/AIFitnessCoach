@@ -14,7 +14,7 @@ class AppLinks {
   // ── Social Media ──────────────────────────────────────────────────────────
 
   static const String discord = 'https://discord.gg/WAYNZpVgsK';
-  static const String reddit = ''; // TODO: create and add subreddit URL
+  static const String reddit = 'https://reddit.com/r/zealova';
   static const String twitter = ''; // TODO: add X/Twitter profile URL
   static const String instagram = 'https://instagram.com/getzealova';
   static const String tiktok = ''; // TODO: add TikTok profile URL

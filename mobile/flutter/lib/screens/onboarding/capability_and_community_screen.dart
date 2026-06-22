@@ -211,6 +211,15 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                                   onTap: () => _open(AppLinks.instagram),
                                 ),
                               ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _SocialChip(
+                                  icon: FontAwesomeIcons.reddit,
+                                  label: 'Reddit',
+                                  color: const Color(0xFFFF4500),
+                                  onTap: () => _open(AppLinks.reddit),
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -360,25 +369,31 @@ class _SocialChip extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 46,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withValues(alpha: 0.28)),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: color,
+        // FittedBox scales icon + label down to fit narrow widths (e.g. 3 chips
+        // across on small phones) so the label never clips or overflows.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
