@@ -17,12 +17,12 @@ import 'package:fitwiz/core/constants/branding.dart';
 ///
 /// The screen IS the product: a 10-second auto-playing loop of four real
 /// app surfaces (program builder → live logging → food scan → menu
-/// analysis with live re-sort), with the all-in-one pitch rising out of a
-/// scrim — "ONE APP THAT {BUILDS YOUR PLAN / TRACKS YOUR LIFTS / COUNTS YOUR
-/// MACROS / READS YOUR MENU}", the rotating clause narrating each demo scene.
-/// (Asserts the consolidation moat the paywall later proves — replacing the
-/// old coach-centric "your coach is already typing", whose "ALREADY" made no
-/// sense cold on a first screen.)
+/// analysis with live re-sort). The pitch rising out of the scrim is a static
+/// all-in-one HERO — "ONE APP. NOT FIVE." — that lands the consolidation moat
+/// in <1s (clarity + a contrast word convert best), with a SMALL rotating sub
+/// ("› builds your plan" → "counts your macros"…) narrating each demo scene.
+/// (Replaced "your coach is already typing" → "ALREADY {…}", whose "ALREADY"
+/// made no sense cold; the paywall price anchor later proves "not five".)
 ///
 /// Navigation is byte-identical to v5/v6:
 ///   - Primary CTA → /onboarding-why (the emotional-anchor funnel entry)
@@ -238,23 +238,38 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                         children: [
                           _dots(tMs, scene),
                           const SizedBox(height: 12),
-                          Text(
-                            l10n.introV7HeadlineLine1,
-                            style: const TextStyle(
+                          // ── Hero — static, instant: the all-in-one punch.
+                          // Clarity + a contrast word ("NOT") land the moat in
+                          // <1s (the demo supplies the motion). The price anchor
+                          // on the paywall later proves the "not five" claim.
+                          const Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'ONE APP. ',
+                                  style: TextStyle(color: Color(0xFFFAFAFA)),
+                                ),
+                                TextSpan(
+                                  text: 'NOT FIVE.',
+                                  style: TextStyle(color: AppColors.orange),
+                                ),
+                              ],
+                            ),
+                            maxLines: 2,
+                            style: TextStyle(
                               fontFamily: 'Anton',
-                              fontSize: 42,
+                              fontSize: 38,
                               height: 1.02,
-                              color: Color(0xFFFAFAFA),
                             ),
                           ),
-                          // The rotating, you-centric line — describes what the
-                          // demo is doing FOR the user right now (program build /
-                          // logging / scan / menu), full-width so 2-3 word
-                          // phrases wrap cleanly under "ALREADY".
+                          const SizedBox(height: 10),
+                          // ── Sub — small, rotating: narrates the live demo
+                          // scene ("› builds your plan" → "counts your macros"…)
+                          // so the four jobs in one app read while you watch.
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 320),
                             layoutBuilder: (current, previous) => Stack(
-                              alignment: AlignmentDirectional.topStart,
+                              alignment: AlignmentDirectional.centerStart,
                               children: [
                                 ...previous,
                                 if (current != null) current,
@@ -264,22 +279,22 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                               opacity: anim,
                               child: SlideTransition(
                                 position: Tween<Offset>(
-                                  begin: const Offset(0, 0.5),
+                                  begin: const Offset(0, 0.4),
                                   end: Offset.zero,
                                 ).animate(anim),
                                 child: child,
                               ),
                             ),
                             child: Text(
-                              _wordFor(scene, l10n),
+                              '›  ${_wordFor(scene, l10n).toLowerCase()}',
                               key: ValueKey(scene),
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontFamily: 'Anton',
-                                fontSize: 40,
-                                height: 1.0,
-                                color: AppColors.orange,
+                                fontFamily: 'Barlow Condensed',
+                                fontSize: 16,
+                                letterSpacing: 0.4,
+                                color: Color(0xFFCFCFCF),
                               ),
                             ),
                           ),
