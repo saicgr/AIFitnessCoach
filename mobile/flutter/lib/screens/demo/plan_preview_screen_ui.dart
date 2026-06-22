@@ -253,58 +253,91 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
       children: [
         // Exercises list
         ...exercises.asMap().entries.map((entry) {
-          final idx = entry.key;
           final exercise = entry.value;
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: Row(
-              children: [
-                // Real exercise-library thumbnail (resolved by name via
-                // /exercise-images/{name}); falls back to an equipment-matched
-                // icon when the library has no illustration.
-                ExerciseImage(
-                  exerciseName: exercise['name'] as String,
-                  exerciseId: exercise['id'] as String?,
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  // A wrong equipment icon reads worse than a clean brand mark
-                  // on this "real plan" surface.
-                  brandFallback: true,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        exercise['name'] as String,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      Text(
-                        // setsReps · muscle, in the signature letter-spaced label
-                        '${exercise['setsReps']}  ·  ${exercise['muscle']}'
-                            .toUpperCase(),
-                        style: TextStyle(
-                          fontFamily: _kSigLabel,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
-                          color: textSecondary,
-                        ),
-                      ),
-                    ],
+            child: InkWell(
+              onTap: () => _openExerciseMedia(exercise),
+              borderRadius: BorderRadius.circular(10),
+              child: Row(
+                children: [
+                  // Real exercise-library thumbnail (resolved by name/id via
+                  // /exercise-images); Zealova brand mark when the library has
+                  // no illustration.
+                  ExerciseImage(
+                    exerciseName: exercise['name'] as String,
+                    exerciseId: exercise['id'] as String?,
+                    width: 44,
+                    height: 44,
+                    borderRadius: 10,
+                    brandFallback: true,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          exercise['name'] as String,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        Text(
+                          // setsReps · muscle, in the signature letter-spaced label
+                          '${exercise['setsReps']}  ·  ${exercise['muscle']}'
+                              .toUpperCase(),
+                          style: TextStyle(
+                            fontFamily: _kSigLabel,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Tap affordance — opens the full illustration + demo video.
+                  Icon(
+                    Icons.play_circle_outline_rounded,
+                    size: 20,
+                    color: textSecondary.withValues(alpha: 0.7),
+                  ),
+                ],
+              ),
             ),
           );
         }),
       ],
+    );
+  }
+
+  /// Opens the app's real exercise viewer (full illustration + demo video +
+  /// instructions) for a tapped preview row. Builds a minimal
+  /// [WorkoutExercise] from the demo map; the sheet resolves media by name/id
+  /// via /videos/by-exercise + /exercise-images.
+  void _openExerciseMedia(Map<String, dynamic> exercise) {
+    int? sets;
+    int? reps;
+    final m = RegExp(
+      r'(\d+)\s*[x×]\s*(\d+)',
+    ).firstMatch((exercise['setsReps'] as String?) ?? '');
+    if (m != null) {
+      sets = int.tryParse(m.group(1)!);
+      reps = int.tryParse(m.group(2)!);
+    }
+    showExerciseInfoSheet(
+      context: context,
+      exercise: WorkoutExercise(
+        nameValue: exercise['name'] as String,
+        exerciseId: exercise['id'] as String?,
+        muscleGroup: exercise['muscle'] as String?,
+        sets: sets,
+        reps: reps,
+      ),
     );
   }
 

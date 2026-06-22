@@ -10,6 +10,8 @@ import '../onboarding/pre_auth_quiz_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/exercise_image.dart';
+import '../../data/models/exercise.dart';
+import '../workout/widgets/exercise_info_sheet.dart';
 part 'plan_preview_screen_ui.dart';
 
 /// Signature v2 type system (docs/planning/app-redesign-2026-06/signature-v2.html):
