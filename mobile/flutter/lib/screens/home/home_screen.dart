@@ -510,7 +510,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           action: SnackBarAction(
             label: 'Review',
             onPressed: () {
-              if (mounted) context.push('/workouts');
+              if (mounted) context.go('/workouts'); // branch-root: go, not push (dup-GlobalKey)
             },
           ),
         ),
