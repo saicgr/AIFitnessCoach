@@ -310,6 +310,31 @@ class PerDayControls extends StatelessWidget {
                   ),
               ],
             ),
+          ]
+          // B3: with a single gym there's nothing to pick between, so the
+          // selector is hidden — but a muted hint makes the per-day-gym feature
+          // discoverable (train different days at different gyms).
+          else if (showGymSelector && gymProfiles.length == 1) ...[
+            const SizedBox(height: 14),
+            sectionLabel('Gym'),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.add_location_alt_outlined,
+                    size: 14, color: textMuted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Add a 2nd gym to train days at different gyms',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textMuted,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ],
       ],

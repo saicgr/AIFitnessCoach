@@ -264,19 +264,116 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
         !_setEquals(_selectedInjuries, _initialInjuries);
   }
 
-  /// Instant-close + background save.
+  /// Snapshot of everything a save needs, captured BEFORE the sheet is popped.
+  /// After pop the sheet's Element is gone and `ref` is invalid, so the
+  /// background save runs entirely off these locals + the root container.
+  _ProgramSavePayload _captureSavePayload(User user) {
+    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final sortedDays = _selectedDays.toList()..sort();
+    final overridesPayload = <String, dynamic>{};
+    _dayOverrides.forEach((day, override) {
+      overridesPayload[day.toString()] = override.toJson();
+    });
+    return _ProgramSavePayload(
+      userId: user.id,
+      didChange: _hasProgramChanges,
+      activeProfile: _activeProfile,
+      sortedDays: sortedDays,
+      selectedDayNames: sortedDays.map((i) => dayNames[i]).toList(),
+      difficulty: _selectedDifficulty,
+      durationMin: _selectedDurationMin.round(),
+      durationMax: _selectedDurationMax.round(),
+      injuries: _selectedInjuries.toList(),
+      equipment:
+          _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null,
+      workoutTypeSplit: _selectedProgramId == 'custom'
+          ? 'custom'
+          : (_selectedProgramId ?? 'ai_decide'),
+      dumbbellCount:
+          _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
+      kettlebellCount:
+          _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null,
+      customProgramDescription:
+          _selectedProgramId == 'custom' ? _customProgramDescription : null,
+      mergedPrefs: _mergedPreferences(user, overridesPayload),
+      workoutTypeChanged: _selectedWorkoutType != _initialWorkoutType,
+      newWorkoutType: WorkoutType.fromString(_selectedWorkoutType),
+    );
+  }
+
+  /// Persist all program preferences (the pure writes — NO regenerate). Shared
+  /// by both the "Apply now" and "Later" paths. Runs against the supplied root
+  /// [container] so it's dispose-proof.
+  Future<void> _persistProgram(
+    ProviderContainer container,
+    _ProgramSavePayload p,
+  ) async {
+    final repo = container.read(workoutRepositoryProvider);
+    // Independent writes run in parallel:
+    //   1. Gym-aware days → active profile (single source of truth shared with
+    //      Settings) when a profile exists.
+    //   2. Program preferences (pure write, NO regenerate). The update-program
+    //      endpoint also writes days to global prefs (the fallback when there's
+    //      no active gym profile). Global focusAreas are intentionally NOT sent
+    //      — per-day Focus is the only focus control now, so days on "AI decide"
+    //      fall back to split/AI.
+    //   3. Per-day overrides → user preferences JSONB (awaited dict update).
+    await Future.wait([
+      if (p.activeProfile != null)
+        container.read(gymProfilesProvider.notifier).updateProfile(
+              p.activeProfile!.id,
+              GymProfileUpdate(workoutDays: p.sortedDays),
+            ),
+      repo.updateProgram(
+        userId: p.userId,
+        difficulty: p.difficulty,
+        durationMinutesMin: p.durationMin,
+        durationMinutesMax: p.durationMax,
+        focusAreas: const [],
+        injuries: p.injuries,
+        equipment: p.equipment,
+        workoutType: p.workoutTypeSplit,
+        workoutDays: p.selectedDayNames,
+        dumbbellCount: p.dumbbellCount,
+        kettlebellCount: p.kettlebellCount,
+        customProgramDescription: p.customProgramDescription,
+        regenerate: false,
+      ),
+      container.read(authStateProvider.notifier).updateUserProfile({
+        'preferences': p.mergedPrefs,
+      }),
+      // Workout Type (Strength / Cardio / Mixed) lives on the user record via
+      // `workout_type_preference`; routes through trainingPreferences.
+      if (p.workoutTypeChanged)
+        container
+            .read(trainingPreferencesProvider.notifier)
+            .setWorkoutType(p.newWorkoutType),
+    ]);
+  }
+
+  /// Map a thrown error to a user-friendly toast message.
+  String _saveErrorMessage(Object e) {
+    final s = e.toString().toLowerCase();
+    if (s.contains('timeout') || s.contains('timed out')) {
+      return 'Request timed out. The server may be busy. Please try again.';
+    }
+    if (s.contains('connection') || s.contains('network')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+    return 'Couldn\'t update your program. Please try again.';
+  }
+
+  /// Tapping "Save program" no longer instant-closes. It opens a confirm sheet
+  /// showing the program Summary plus two explicit choices (R3 reversal of the
+  /// Round-2 instant save):
+  ///   • Apply now — persist + regenerate upcoming (today+tomorrow eager) +
+  ///     bust the stale workout-list disk cache, with an engaging multi-step
+  ///     progress narrative shown in the sheet before it closes.
+  ///   • Later — persist prefs only, NO regenerate (the new schedule applies
+  ///     when workouts are next generated).
   ///
-  /// Tapping Save closes the sheet IMMEDIATELY and persists in the background.
-  /// Because the user explicitly tapped Save, that IS the "apply now" decision —
-  /// if any program-affecting field changed we always regenerate upcoming in the
-  /// background (no separate confirm dialog). If nothing program-affecting
-  /// changed, we still persist the writes but skip the (expensive) regenerate.
-  ///
-  /// Dispose-proofing: all background work runs against the ROOT
-  /// [appProviderContainer] (captured before pop), never the sheet's `ref` —
-  /// the sheet's Element is disposed the moment we pop, so reading `ref` after
-  /// that would throw. Snapshots of the user-edited values are captured into
-  /// locals before pop too.
+  /// When nothing program-affecting changed there's nothing to regenerate, so
+  /// the confirm collapses to a single "Save" that just persists.
   Future<void> _updateProgram() async {
     if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -292,125 +389,120 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
 
     final authState = ref.read(authStateProvider);
     final user = authState.user;
-    final userId = user?.id;
-    if (userId == null) return;
+    if (user?.id == null) return;
 
-    // ── Capture everything the background save needs BEFORE we pop ──────────
-    // After pop the sheet's Element is gone, so `ref` is invalid. The root
-    // container survives the whole app session.
+    final colors = context.sheetColors;
+    final payload = _captureSavePayload(user!);
+
+    // Show the Summary + Apply-now/Later confirm. Returns:
+    //   true  → Apply now (persist + regenerate)
+    //   false → Later (persist only)
+    //   null  → dismissed (do nothing)
+    final choice = await _showApplyConfirmSheet(colors, payload);
+    if (choice == null || !mounted) return;
+
     final container = appProviderContainer;
-    final didChange = _hasProgramChanges;
-    final activeProfile = _activeProfile;
-
-    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final sortedDays = _selectedDays.toList()..sort();
-    final selectedDayNames = sortedDays.map((i) => dayNames[i]).toList();
-
-    final difficulty = _selectedDifficulty;
-    final durationMin = _selectedDurationMin.round();
-    final durationMax = _selectedDurationMax.round();
-    final injuries = _selectedInjuries.toList();
-    final equipment =
-        _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null;
-    final workoutTypeSplit =
-        _selectedProgramId == 'custom' ? 'custom' : (_selectedProgramId ?? 'ai_decide');
-    final dumbbellCount =
-        _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null;
-    final kettlebellCount =
-        _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null;
-    final customProgramDescription =
-        _selectedProgramId == 'custom' ? _customProgramDescription : null;
-    final overridesPayload = <String, dynamic>{};
-    _dayOverrides.forEach((day, override) {
-      overridesPayload[day.toString()] = override.toJson();
-    });
-    final mergedPrefs = _mergedPreferences(user, overridesPayload);
-    final workoutTypeChanged = _selectedWorkoutType != _initialWorkoutType;
-    final newWorkoutType = WorkoutType.fromString(_selectedWorkoutType);
-
-    // ── Instant close ───────────────────────────────────────────────────────
-    if (mounted) {
-      Navigator.pop(context, true);
-    }
-    // Toast via the ROOT messenger so it survives the sheet being popped.
-    rootScaffoldMessengerKey.currentState?.showSnackBar(
-      const SnackBar(content: Text('Program updated')),
-    );
-
     if (container == null) {
       debugPrint('⚠️ [EditProgram] no root container — save skipped');
       return;
     }
 
-    // ── Background persistence (dispose-proof, runs against root container) ──
-    unawaited(() async {
-      try {
-        final repo = container.read(workoutRepositoryProvider);
-
-        // Independent writes run in parallel:
-        //   1. Gym-aware days → active profile (single source of truth shared
-        //      with Settings) when a profile exists.
-        //   2. Program preferences (pure write, NO regenerate). The
-        //      update-program endpoint also writes days to global prefs (the
-        //      fallback when there's no active gym profile). Global focusAreas
-        //      are intentionally NOT sent — per-day Focus is the only focus
-        //      control now, so days on "AI decide" fall back to split/AI.
-        //   3. Per-day overrides → user preferences JSONB (awaited dict update).
-        await Future.wait([
-          if (activeProfile != null)
-            container.read(gymProfilesProvider.notifier).updateProfile(
-                  activeProfile.id,
-                  GymProfileUpdate(workoutDays: sortedDays),
-                ),
-          repo.updateProgram(
-            userId: userId,
-            difficulty: difficulty,
-            durationMinutesMin: durationMin,
-            durationMinutesMax: durationMax,
-            focusAreas: const [],
-            injuries: injuries,
-            equipment: equipment,
-            workoutType: workoutTypeSplit,
-            workoutDays: selectedDayNames,
-            dumbbellCount: dumbbellCount,
-            kettlebellCount: kettlebellCount,
-            customProgramDescription: customProgramDescription,
-            regenerate: false,
-          ),
-          container.read(authStateProvider.notifier).updateUserProfile({
-            'preferences': mergedPrefs,
-          }),
-          // Workout Type (Strength / Cardio / Mixed) lives on the user record
-          // via `workout_type_preference`; routes through trainingPreferences.
-          if (workoutTypeChanged)
-            container
-                .read(trainingPreferencesProvider.notifier)
-                .setWorkoutType(newWorkoutType),
-        ]);
-
-        // Save IS the apply: regenerate upcoming when anything program-affecting
-        // changed; skip the expensive regen otherwise.
-        if (didChange) {
-          await repo.regenerateUpcoming(userId);
-          await container.read(authStateProvider.notifier).refreshUser();
-          TodayWorkoutNotifier.resetGenerationState();
-          await refreshAfterWorkoutMutation(source: 'edit_program_save');
+    if (choice == false || !payload.didChange) {
+      // ── "Later" (or nothing program-affecting changed): persist only ──────
+      if (mounted) Navigator.pop(context, true);
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text(payload.didChange
+              ? 'Saved — your new schedule applies to upcoming workouts'
+              : 'Program updated'),
+        ),
+      );
+      unawaited(() async {
+        try {
+          await _persistProgram(container, payload);
+        } catch (e) {
+          debugPrint('⚠️ [EditProgram] persist-only save failed: $e');
+          rootScaffoldMessengerKey.currentState?.showSnackBar(
+            SnackBar(
+              content: Text(_saveErrorMessage(e)),
+              backgroundColor: AppColors.error,
+            ),
+          );
         }
-      } catch (e) {
-        debugPrint('⚠️ [EditProgram] background save failed: $e');
-        final messenger = rootScaffoldMessengerKey.currentState;
-        String msg = 'Couldn\'t update your program. Please try again.';
-        final s = e.toString().toLowerCase();
-        if (s.contains('timeout') || s.contains('timed out')) {
-          msg = 'Request timed out. The server may be busy. Please try again.';
-        } else if (s.contains('connection') || s.contains('network')) {
-          msg = 'Network error. Please check your connection and try again.';
-        }
-        messenger?.showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: AppColors.error),
-        );
-      }
-    }());
+      }());
+      return;
+    }
+
+    // ── "Apply now": persist → bust caches → regenerate, with live progress ──
+    // The progress overlay runs INSIDE a fresh sheet (it owns its own context)
+    // so the work is visible. All persistence/regen runs against the root
+    // container (dispose-proof) even after this sheet pops.
+    await _runApplyWithProgress(container, payload);
+  }
+
+  /// Drives the engaging multi-step Apply progress, then runs the real work.
+  /// Steps map honestly to the underlying operations:
+  ///   1. "Reading your preferences…"  → persist writes
+  ///   2. "Updating your schedule…"    → bust stale workout-list disk cache
+  ///   3. "Building your workouts…"    → regenerate upcoming (today+tomorrow)
+  ///   4. "Finishing up…"              → refreshUser + provider refresh
+  Future<void> _runApplyWithProgress(
+    ProviderContainer container,
+    _ProgramSavePayload payload,
+  ) async {
+    final controller = _ApplyProgressController();
+    // Open the progress sheet (non-dismissible). It reports back when the
+    // controller signals done/error.
+    final progressFuture = _showApplyProgressSheet(controller);
+
+    Object? failure;
+    try {
+      controller.setStep(0); // Reading your preferences…
+      await _persistProgram(container, payload);
+
+      controller.setStep(1); // Updating your schedule…
+      // A1: bust the stale, userId-scoped workout-list disk cache so the old
+      // week can't re-paint the carousel / week strip after regenerate.
+      await DataCacheService.instance.invalidate(
+        DataCacheService.workoutListKey,
+        userId: payload.userId,
+      );
+
+      controller.setStep(2); // Building your workouts…
+      final repo = container.read(workoutRepositoryProvider);
+      await repo.regenerateUpcoming(payload.userId);
+
+      controller.setStep(3); // Finishing up…
+      await container.read(authStateProvider.notifier).refreshUser();
+      TodayWorkoutNotifier.resetGenerationState();
+      await refreshAfterWorkoutMutation(
+        source: 'edit_program_apply_now',
+        userId: payload.userId,
+      );
+      controller.complete();
+    } catch (e) {
+      failure = e;
+      debugPrint('⚠️ [EditProgram] apply-now failed: $e');
+      controller.fail();
+    }
+
+    // Wait for the progress sheet to acknowledge done/error and close itself.
+    await progressFuture;
+
+    if (mounted) Navigator.pop(context, true);
+
+    if (failure != null) {
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text(_saveErrorMessage(failure)),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } else {
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(content: Text('Program updated')),
+      );
+    }
   }
 
   // ── Per-day override mutation helpers (used by _buildPerDayStep) ────────
@@ -761,8 +853,55 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
           accentColor: colors.success,
         ),
         // Program duration selector removed - using automatic 2-week generation
+
+        // B3: surface the Per-day tab from the Schedule tab so per-day focus /
+        // intensity / gym overrides are discoverable. Jumps to Per-day, focused
+        // on the first training day.
+        if (_selectedDays.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => _jumpToPerDay(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.tune_rounded, size: 16, color: colors.cyan),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Customize each day individually',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: colors.cyan,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded,
+                      size: 18, color: colors.cyan),
+                ],
+              ),
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  /// B3: jump to the Per-day tab, focused on a given training day (defaults to
+  /// the first scheduled day). Used by the Schedule-tab "Customize each day"
+  /// affordance and by tapping a scheduled day.
+  void _jumpToPerDay([int? day]) {
+    final trainingDays = _selectedDays.toList()..sort();
+    if (trainingDays.isEmpty) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _editingDay = (day != null && trainingDays.contains(day))
+          ? day
+          : trainingDays.first;
+    });
+    _tabController.animateTo(1);
   }
 
   void _showCustomProgramSheet(SheetColors colors) {

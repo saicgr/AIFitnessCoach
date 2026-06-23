@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -861,10 +863,15 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    AppLocalizations.of(context).heroWorkoutCarouselGeneratingWorkout,
-                    style: TextStyle(
-                      fontSize: 14,
+                  // A4: sequenced narrative instead of a single static line so a
+                  // multi-second AI generation feels alive. Phase 0 reuses the
+                  // existing localized "Generating workout…" string; the later
+                  // honest sub-phases (building → personalizing → finishing)
+                  // cycle while the real regen runs.
+                  Flexible(
+                    child: _GeneratingPhaseText(
+                      baseLabel: AppLocalizations.of(context)
+                          .heroWorkoutCarouselGeneratingWorkout,
                       color: isDark ? Colors.white54 : Colors.black45,
                     ),
                   ),
@@ -998,6 +1005,67 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
       ),
       child: Center(
         child: Text(AppLocalizations.of(context).heroWorkoutCarouselCouldNotLoadWorkouts, style: TextStyle(color: isDark ? Colors.white60 : Colors.black45)),
+      ),
+    );
+  }
+}
+
+/// A4: a small honest phase cycler for the carousel's "generating" pending card.
+///
+/// Replaces the single static "Generating workout…" line with a short rotating
+/// narrative so a multi-second AI regen reads as progress rather than a frozen
+/// spinner. Phase 0 is the caller's already-localized base label; the remaining
+/// sub-phases are intentionally generic verbs (no fabricated completion — the
+/// real generation finishes when the workout actually lands and the card swaps).
+class _GeneratingPhaseText extends StatefulWidget {
+  const _GeneratingPhaseText({required this.baseLabel, required this.color});
+
+  final String baseLabel;
+  final Color color;
+
+  @override
+  State<_GeneratingPhaseText> createState() => _GeneratingPhaseTextState();
+}
+
+class _GeneratingPhaseTextState extends State<_GeneratingPhaseText> {
+  Timer? _timer;
+  int _phase = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(milliseconds: 1600), (_) {
+      if (!mounted) return;
+      // Cap at the last phase so it never loops back to look "stuck restarting";
+      // it holds on the final phase until the real workout swaps the card.
+      setState(() => _phase = (_phase + 1).clamp(0, _phases.length - 1));
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  // Phase 0 is the localized base label; the rest are short honest verbs.
+  List<String> get _phases => <String>[
+        widget.baseLabel,
+        'Building your sets…',
+        'Personalizing for you…',
+        'Almost ready…',
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 350),
+      child: Text(
+        _phases[_phase],
+        key: ValueKey<int>(_phase),
+        style: TextStyle(fontSize: 14, color: widget.color),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

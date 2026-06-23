@@ -9,6 +9,7 @@ import '../../data/providers/muscle_analytics_provider.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/services/data_cache_service.dart';
 
 /// The app's ROOT [ProviderContainer] (the one backing the top-level
 /// `UncontrolledProviderScope`). Set once from `main.dart` right after the
@@ -62,9 +63,20 @@ Timer? _mutationDebounce;
 ///     milestones / consistency / heatmaps).
 ///
 /// [source] is logged for observability (which entry point fired the refresh).
+///
+/// [userId] — when provided, the workout-LIST disk cache
+/// (`DataCacheService.workoutListKey`, userId-scoped, 24h TTL,
+/// `returnExpiredOnMiss:true`) is busted BEFORE the silent refetch. This is the
+/// fix for the "stale week re-paints" carousel bug: after a program save /
+/// regenerate, the old week sat in SharedPreferences and `silentRefresh()`'s
+/// own empty-guard / a cold start would re-serve it. Busting the disk slot first
+/// guarantees the stale week can't re-paint once the fresh fetch lands. Callers
+/// that don't have a userId handy (completion flows) can omit it — the in-memory
+/// state refresh below still happens.
 Future<void> refreshAfterWorkoutMutation({
   required String source,
   String? workoutId,
+  String? userId,
   Duration debounce = const Duration(milliseconds: 250),
 }) async {
   final container = appProviderContainer;
@@ -77,6 +89,13 @@ Future<void> refreshAfterWorkoutMutation({
   final completer = Completer<void>();
   _mutationDebounce = Timer(debounce, () async {
     try {
+      // Bust the userId-scoped workout-list disk cache first (if we know who),
+      // so the silent refetch below can't be shadowed by a stale week that
+      // would otherwise re-paint via returnExpiredOnMiss on the next cold read.
+      if (userId != null && userId.isNotEmpty) {
+        await DataCacheService.instance
+            .invalidate(DataCacheService.workoutListKey, userId: userId);
+      }
       // Workout-tab hero + lists: silent refetch (stale-while-revalidate).
       container.read(workoutsProvider.notifier).silentRefresh();
       // Home "today": bust disk cache + silent refetch.
