@@ -247,6 +247,10 @@ class GenerateWorkoutRequest(BaseModel):
     focus_areas: Optional[List[str]] = Field(default=None, max_length=20)
     exclude_exercises: Optional[List[str]] = Field(default=None, max_length=50)
     fitness_level: Optional[str] = Field(default=None, max_length=50)
+    # Per-day intensity override (easy/moderate/hard/hell). When set, takes
+    # precedence over the user's stored intensity_preference for THIS day's
+    # generation — lets a per-day "Hell" actually drive hell mode. Optional.
+    intensity_preference: Optional[str] = Field(default=None, max_length=50)
     goals: Optional[List[str]] = Field(default=None, max_length=20)
     # No upper bound — commercial gyms legitimately have 80+ equipment items.
     equipment: Optional[List[str]] = Field(default=None)

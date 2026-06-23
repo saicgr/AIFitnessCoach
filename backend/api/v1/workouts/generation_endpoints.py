@@ -318,7 +318,14 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 )
 
         # Use explicit intensity_preference if set, otherwise derive from fitness level.
-        intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
+        # A per-day override (body.intensity_preference, set by today.py from
+        # workout_day_overrides) wins for THIS day so a per-day "Hell" actually
+        # drives hell mode instead of being a mere prompt hint.
+        intensity_preference = (
+            body.intensity_preference
+            or preferences.get("intensity_preference")
+            or get_intensity_from_fitness_level(fitness_level)
+        )
 
         # Get primary training goal and muscle focus points for workout customization
         primary_goal = user.get("primary_goal")
