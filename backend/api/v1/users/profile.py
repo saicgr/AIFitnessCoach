@@ -616,6 +616,7 @@ def _get_workout_days(base_prefs: dict, latest_regen: Optional[dict]) -> List[st
 @router.put("/{user_id}", response_model=User)
 async def update_user(user_id: str, user: UserUpdate,
     background_tasks: BackgroundTasks,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Update a user."""
@@ -910,7 +911,10 @@ async def update_user(user_id: str, user: UserUpdate,
                     )
                     from core.timezone_utils import resolve_timezone
 
-                    tz = resolve_timezone(existing.get("timezone"))
+                    # resolve_timezone expects the Request first (header
+                    # priority), then DB + user_id fallback. Passing the raw tz
+                    # string crashed: "'str' object has no attribute 'headers'".
+                    tz = resolve_timezone(request, db, user_id)
                     counts = invalidate_workouts_after_equipment_change(
                         user_id=user_id,
                         timezone_str=tz,
@@ -937,7 +941,10 @@ async def update_user(user_id: str, user: UserUpdate,
                     )
                     from core.timezone_utils import resolve_timezone
 
-                    tz = resolve_timezone(existing.get("timezone"))
+                    # resolve_timezone expects the Request first (header
+                    # priority), then DB + user_id fallback. Passing the raw tz
+                    # string crashed: "'str' object has no attribute 'headers'".
+                    tz = resolve_timezone(request, db, user_id)
                     counts = invalidate_workouts_after_injury_change(
                         user_id=user_id,
                         timezone_str=tz,
@@ -982,7 +989,10 @@ async def update_user(user_id: str, user: UserUpdate,
                 )
                 from core.timezone_utils import resolve_timezone
 
-                tz = resolve_timezone(existing.get("timezone"))
+                # resolve_timezone expects the Request first (header priority),
+                # then DB + user_id fallback. Passing the raw tz string crashed:
+                # "'str' object has no attribute 'headers'".
+                tz = resolve_timezone(request, db, user_id)
                 new_days = user.workout_days or []
 
                 def _run_schedule_invalidation():
