@@ -1060,6 +1060,41 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                         equipment.append(item)
             goals = normalize_goals_list(user.get("goals"))
             preferences = parse_json_field(user.get("preferences"), {})
+            # ── Per-day plan CHOKEPOINT (regenerate) ──────────────────────────
+            # /regenerate-stream derived focus from the EXISTING workout and
+            # intensity from the global difficulty, so tapping "Regenerate" on a
+            # day with a per-day override rebuilt it WRONG (generic full-body/
+            # easy instead of the saved Lower/90/Hell). Backfill focus/duration/
+            # intensity from workout_day_overrides for the target weekday when the
+            # caller didn't pass them. Caller wins; fail-open. (body.focus_areas
+            # is read ~L1124, body.duration_minutes ~L1165, body.difficulty ~L1074
+            # — all AFTER this point, so mutating body here flows through.)
+            _rgn_per_day_difficulty = False  # explicit per-day intensity bypasses the beginner cap
+            try:
+                from .generation_endpoints import _parse_workout_day_overrides
+                _rgn_wd = (
+                    target_scheduled_date.weekday()
+                    if hasattr(target_scheduled_date, "weekday") else None
+                )
+                if _rgn_wd is not None:
+                    _rgn_ov = (_parse_workout_day_overrides(
+                        preferences.get("workout_day_overrides")) or {}).get(_rgn_wd)
+                    if _rgn_ov:
+                        if not body.focus_areas and _rgn_ov.get("focus"):
+                            body.focus_areas = [_rgn_ov["focus"]]
+                        if body.duration_minutes is None and _rgn_ov.get("duration_min"):
+                            body.duration_minutes = _rgn_ov["duration_min"]
+                        if not body.difficulty and _rgn_ov.get("intensity"):
+                            _riv = _rgn_ov["intensity"]
+                            body.difficulty = "medium" if _riv == "moderate" else _riv
+                            _rgn_per_day_difficulty = True
+                        logger.info(
+                            f"[per-day chokepoint][regen] wd={_rgn_wd} → "
+                            f"focus={body.focus_areas} dur={body.duration_minutes} "
+                            f"difficulty={body.difficulty}"
+                        )
+            except Exception as _rgn_e:
+                logger.warning(f"[per-day chokepoint][regen] failed (fail-open): {_rgn_e}")
             dumbbell_count = body.dumbbell_count if body.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
             kettlebell_count = body.kettlebell_count if body.kettlebell_count is not None else preferences.get("kettlebell_count", 1)
             # Per-equipment owned weights (canonical id -> sorted loads in the
@@ -1078,7 +1113,10 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             # client can show "we softened this from hell to medium". Mirrors
             # checklist C and was missed for 3 sweep rows (idx 104/128/131).
             difficulty_capped_reason: Optional[str] = None
-            if (fitness_level or "").lower() == "beginner" and (user_difficulty or "").lower() in {"hard", "hell"}:
+            # An EXPLICIT per-day intensity (the user picked Hell for this day in
+            # the editor) is honored even for beginners — effort ≠ skill. Mirrors
+            # the generate path. Only cap difficulty the user didn't deliberately set.
+            if (not _rgn_per_day_difficulty) and (fitness_level or "").lower() == "beginner" and (user_difficulty or "").lower() in {"hard", "hell"}:
                 difficulty_capped_reason = (
                     f"requested_{user_difficulty.lower()}_capped_to_medium_for_beginner_fitness_level"
                 )
