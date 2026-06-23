@@ -232,7 +232,15 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
           ),
           data: (list) {
             // Seed the toggle once from the server, then trust local state.
-            ref.read(coachMemoryEnabledProvider.notifier).seed(list.enabled);
+            // Deferred to a post-frame callback: calling seed() here (during
+            // build) mutates coachMemoryEnabledProvider while this widget is
+            // watching it, which throws "listener of CoachMemoryEnabledNotifier
+            // threw an exception when the notifier tried to update its state".
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                ref.read(coachMemoryEnabledProvider.notifier).seed(list.enabled);
+              }
+            });
             final enabled = localEnabled ?? list.enabled;
             return _buildBody(context, isDark, accent, textMuted, list, enabled);
           },
