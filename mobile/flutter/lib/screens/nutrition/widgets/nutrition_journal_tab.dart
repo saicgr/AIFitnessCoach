@@ -688,13 +688,17 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
           Text(
             _kEmptyTitles[_emptySeed],
             textAlign: TextAlign.center,
-            style: ZType.ser(18, color: tc.textPrimary),
+            // Clean Archivo sans instead of the Fraunces serif — the serif read
+            // as too stylized on this empty state.
+            style: ZType.sans(19, color: tc.textPrimary, weight: FontWeight.w800)
+                .copyWith(height: 1.2),
           ),
           const SizedBox(height: 8),
           Text(
             _kEmptySubtitles[_emptySeed],
             textAlign: TextAlign.center,
-            style: ZType.ser(14, color: tc.textMuted).copyWith(height: 1.4),
+            style: ZType.sans(14, color: tc.textMuted, weight: FontWeight.w500)
+                .copyWith(height: 1.4),
           ),
         ],
       ),
@@ -1513,12 +1517,15 @@ class _MyFoodsGridState extends State<_MyFoodsGrid> {
               const SizedBox(height: 16),
               Text(widget.emptyTitle,
                   textAlign: TextAlign.center,
-                  style: ZType.ser(18, color: tc.textPrimary)),
+                  style: ZType.sans(19,
+                          color: tc.textPrimary, weight: FontWeight.w800)
+                      .copyWith(height: 1.2)),
               const SizedBox(height: 8),
               Text(
                 'Foods you save and re-log build your personal album here.',
                 textAlign: TextAlign.center,
-                style: ZType.ser(14, color: tc.textMuted).copyWith(height: 1.4),
+                style: ZType.sans(14, color: tc.textMuted, weight: FontWeight.w500)
+                    .copyWith(height: 1.4),
               ),
             ],
           ),
