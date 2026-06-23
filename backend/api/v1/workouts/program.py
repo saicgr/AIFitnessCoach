@@ -10,7 +10,7 @@ import json
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
@@ -301,6 +301,7 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
 
 @router.post("/regenerate-upcoming", response_model=QuickRegenerateResponse)
 async def regenerate_upcoming_workouts(http_request: Request, request: QuickRegenerateRequest,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Invalidate not-started today + all upcoming incomplete workouts so they
@@ -316,15 +317,52 @@ async def regenerate_upcoming_workouts(http_request: Request, request: QuickRege
     if str(current_user["id"]) != str(request.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     try:
-        from core.timezone_utils import resolve_timezone
+        from core.timezone_utils import resolve_timezone, get_user_today
         from .utils import invalidate_workouts_after_program_change
+        from .today import (
+            invalidate_today_workout_cache,
+            _get_active_gym_profile,
+            _resolve_workout_days,
+            enqueue_schedule_top_up,
+        )
         db = get_supabase_db()
         tz = resolve_timezone(http_request, db, request.user_id)
+
+        # 1. Delete not-started today + all upcoming incomplete (incl. removed days).
         counts = invalidate_workouts_after_program_change(
             request.user_id, timezone_str=tz
         )
         deleted = counts.get("today_deleted", 0) + counts.get("upcoming_deleted", 0)
         logger.info(f"[regenerate-upcoming] user {request.user_id}: {counts}")
+
+        # 2. Bust the server-side /today response cache so the next poll can't
+        #    serve a stale (deleted) workout.
+        await invalidate_today_workout_cache(request.user_id)
+
+        # 3. Eagerly regenerate ONLY the visible window (today + tomorrow) so the
+        #    carousel reflects the change fast; the rest backfills lazily on
+        #    scroll via /today + the upcoming prefetch. Runs after the response
+        #    is flushed (BackgroundTasks) so this endpoint returns immediately.
+        try:
+            user = db.get_user(request.user_id)
+            active_profile = _get_active_gym_profile(db, request.user_id)
+            workout_days = _resolve_workout_days(user, active_profile)
+            gym_profile_id = active_profile.get("id") if active_profile else None
+            background_tasks.add_task(
+                enqueue_schedule_top_up,
+                user_id=request.user_id,
+                gym_profile_id=gym_profile_id,
+                workout_days=workout_days,
+                user_tz=tz,
+                horizon_days=2,  # today + tomorrow; rest lazy (AI, visible-first)
+                today_str=get_user_today(tz),
+            )
+        except Exception as _topup_err:
+            logger.warning(
+                f"[regenerate-upcoming] eager top-up enqueue failed "
+                f"(non-fatal, lazy regen still applies): {_topup_err}"
+            )
+
         return QuickRegenerateResponse(
             success=True,
             message="Upcoming workouts will regenerate with your new program.",

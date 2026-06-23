@@ -189,11 +189,19 @@ def invalidate_workouts_after_program_change(
     upcoming_deleted = 0
 
     try:
+        from core.timezone_utils import local_date_to_utc_range
         db = get_supabase_db()
-        today_str = get_user_today(timezone_str) if timezone_str else get_user_today("UTC")
+        _tz = timezone_str or "UTC"
+        today_str = get_user_today(_tz)
+        # scheduled_date is TIMESTAMPTZ (e.g. "2026-06-23 17:00:00+00"), so an
+        # `.eq("scheduled_date", "2026-06-23")` date match NEVER matches (time
+        # component differs). Use the day's UTC range instead.
+        _start, _end = local_date_to_utc_range(today_str, _tz)
         today_rows = db.client.table("workouts").select(
             "id, status, is_completed"
-        ).eq("user_id", user_id).eq("scheduled_date", today_str).execute()
+        ).eq("user_id", user_id).gte(
+            "scheduled_date", _start
+        ).lte("scheduled_date", _end).execute()
         ids_to_delete = [
             r["id"] for r in (today_rows.data or [])
             if not r.get("is_completed")

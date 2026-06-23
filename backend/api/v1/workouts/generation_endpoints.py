@@ -895,10 +895,26 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             difficulty = workout_data.get("difficulty", intensity_preference)
             workout_description = workout_data.get("description")
 
-            # Difficulty-ceiling enforcement — mirrors generation_streaming.py.
+            # Per-day intensity override wins. When the user explicitly set a
+            # hard/hell intensity for THIS day (body.intensity_preference, from
+            # today.py's per-day overrides), honor it over BOTH Gemini's output
+            # (which tracks the global beginner level → "easy") AND the beginner
+            # difficulty-ceiling below. is_hell_mode already reflects this for
+            # volume/caps; here we fix the stored difficulty label. fitness_level
+            # (skill) is left untouched — intensity (effort) ≠ skill, so a
+            # beginner still gets level-appropriate exercise selection.
             _fl = (fitness_level or "intermediate").lower()
+            _per_day_intensity = (body.intensity_preference or "").lower()
+            if _per_day_intensity in ("hard", "hell"):
+                difficulty = _per_day_intensity
+                workout_data["difficulty"] = _per_day_intensity
+                logger.info(
+                    f"ℹ️ [PerDayIntensity] Forcing difficulty='{_per_day_intensity}' "
+                    f"(user-set per-day; fitness_level={_fl} left as-is)"
+                )
+            # Difficulty-ceiling enforcement — mirrors generation_streaming.py.
             _diff = (difficulty or "").lower()
-            if _fl == "beginner" and _diff in ("hard", "hell"):
+            if not _per_day_intensity and _fl == "beginner" and _diff in ("hard", "hell"):
                 logger.warning(
                     f"⚠️ [DifficultyCeiling] Beginner returned '{difficulty}' — forcing 'medium'"
                 )
