@@ -43,6 +43,13 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"
+      # Branded API host (api.zealova.com → this service via Squarespace CNAME +
+      # Render custom domain). Drives all backend-generated email links
+      # (security alerts, email verification) via core.config.backend_base_url,
+      # so they no longer expose the raw *.onrender.com host. The onrender
+      # subdomain stays enabled as a fallback.
+      - key: BACKEND_BASE_URL
+        value: https://api.zealova.com
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
