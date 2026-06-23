@@ -3,14 +3,13 @@ part of 'edit_program_sheet.dart';
 /// Methods extracted from _EditProgramSheetState
 extension __EditProgramSheetStateExt on _EditProgramSheetState {
 
+  /// "Vibe" / training-split section (non-scrolling — composed inside the
+  /// Schedule tab's ListView). AI Decides default card first, then presets.
   Widget _buildTrainingProgramStep(SheetColors colors) {
     final aiDecideSelected =
         _selectedProgramId == null || _selectedProgramId == 'ai_decide';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -25,9 +24,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
           // First-class card, visually distinct from the named presets so the
           // user understands "let the coach pick" vs "use this template".
           GestureDetector(
-            onTap: _isUpdating
-                ? null
-                : () => setState(() => _selectedProgramId = 'ai_decide'),
+            onTap: () => setState(() => _selectedProgramId = 'ai_decide'),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.all(16),
@@ -134,18 +131,16 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
               }
 
               return GestureDetector(
-                onTap: _isUpdating
-                    ? null
-                    : () {
-                        if (isCustom) {
-                          _showCustomProgramSheet(colors);
-                        } else {
-                          // Tapping a selected preset reverts to "AI Decides"
-                          // (the explicit let-the-coach-choose default).
-                          setState(() => _selectedProgramId =
-                              isSelected ? 'ai_decide' : program.id);
-                        }
-                      },
+                onTap: () {
+                  if (isCustom) {
+                    _showCustomProgramSheet(colors);
+                  } else {
+                    // Tapping a selected preset reverts to "AI Decides"
+                    // (the explicit let-the-coach-choose default).
+                    setState(() => _selectedProgramId =
+                        isSelected ? 'ai_decide' : program.id);
+                  }
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.all(12),
@@ -225,8 +220,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
             },
           ),
         ],
-      ),
-    );
+      );
   }
 
   // ── Per-day overrides step ─────────────────────────────────────────────
@@ -243,7 +237,8 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
       'Saturday',
       'Sunday',
     ];
-    const weekdaySingle = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    // 3-letter labels — 'M/T/W/T/F/S/S' was ambiguous (two T's, two S's).
+    const weekdaySingle = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
@@ -313,14 +308,17 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          Text(
-                            weekdaySingle[d],
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: d == editingDay
-                                  ? Colors.white
-                                  : colors.textPrimary,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              weekdaySingle[d],
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: d == editingDay
+                                    ? Colors.white
+                                    : colors.textPrimary,
+                              ),
                             ),
                           ),
                           if (_dayOverrides.containsKey(d) &&
@@ -347,13 +345,42 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
           ),
           const SizedBox(height: 16),
 
-          Text(
-            weekdayFull[editingDay],
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: colors.textPrimary,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  weekdayFull[editingDay],
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ),
+              // ── B5: Copy this day's settings to other training days ──
+              // Only useful when there's at least one OTHER training day and
+              // this day has an explicit override to copy.
+              if (trainingDays.length > 1 && override != null)
+                TextButton.icon(
+                  onPressed: () =>
+                      _showCopyDaySheet(colors, editingDay, trainingDays),
+                  icon: Icon(Icons.copy_all_rounded, size: 16, color: accent),
+                  label: Text(
+                    'Copy to…',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: accent,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 10),
 
@@ -376,6 +403,122 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
         ],
       ),
     );
+  }
+
+  /// B5: copy [sourceDay]'s focus/duration/intensity/gym override to one or more
+  /// other training days. Shows a small multi-select chooser of the OTHER
+  /// training days; on confirm, the source override is cloned to each pick.
+  Future<void> _showCopyDaySheet(
+    SheetColors colors,
+    int sourceDay,
+    List<int> trainingDays,
+  ) async {
+    const weekdayFull = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    final source = _dayOverrides[sourceDay];
+    if (source == null) return;
+
+    final targets = trainingDays.where((d) => d != sourceDay).toList();
+    final selected = <int>{};
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+
+    final apply = await showGlassSheet<bool>(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (ctx, setSheetState) => Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Copy ${weekdayFull[sourceDay]} to…',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Applies this day\'s focus, duration, intensity & gym to the days you pick.',
+                  style: TextStyle(fontSize: 13, color: colors.textMuted),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final d in targets)
+                      PerDayChip(
+                        label: weekdayFull[d],
+                        icon: selected.contains(d)
+                            ? Icons.check_rounded
+                            : null,
+                        selected: selected.contains(d),
+                        accent: accent,
+                        textPrimary: colors.textPrimary,
+                        textMuted: colors.textMuted,
+                        onTap: () => setSheetState(() {
+                          if (!selected.add(d)) selected.remove(d);
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: selected.isEmpty
+                        ? null
+                        : () => Navigator.pop(ctx, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      selected.isEmpty
+                          ? 'Pick at least one day'
+                          : 'Copy to ${selected.length} day${selected.length == 1 ? '' : 's'}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (apply == true && selected.isNotEmpty && mounted) {
+      setState(() {
+        for (final d in selected) {
+          _dayOverrides[d] = source.copyWith();
+        }
+      });
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Copied ${weekdayFull[sourceDay]} to ${selected.length} day${selected.length == 1 ? '' : 's'}',
+          ),
+        ),
+      );
+    }
   }
 
   // ── Workout Type step (Strength / Cardio / Mixed) ──────────────────────
@@ -402,10 +545,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
       ),
     ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -416,9 +556,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
           const SizedBox(height: 16),
           for (final opt in options) ...[
             GestureDetector(
-              onTap: _isUpdating
-                  ? null
-                  : () => setState(() => _selectedWorkoutType = opt.value),
+              onTap: () => setState(() => _selectedWorkoutType = opt.value),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(16),
@@ -481,8 +619,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
             ),
           ],
         ],
-      ),
-    );
+      );
   }
 
 
@@ -537,7 +674,6 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
               });
             },
             customInputController: _injuryController,
-            disabled: _isUpdating,
           ),
           const SizedBox(height: 32),
 
@@ -597,18 +733,39 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                     AppLocalizations.of(context)!.editProgramSheetEquipmentLabel,
                     _selectedEquipment.join(', '),
                   ),
-                if (_selectedFocusAreas.isNotEmpty)
-                  _buildSummaryRow(
-                    colors,
-                    AppLocalizations.of(context)!.editProgramSheetFocus,
-                    _selectedFocusAreas.join(', '),
-                  ),
                 if (_selectedInjuries.isNotEmpty)
                   _buildSummaryRow(
                     colors,
                     AppLocalizations.of(context)!.editProgramSheetInjuries,
                     _selectedInjuries.join(', '),
                   ),
+
+                // ── B4: Per-day breakdown ──
+                // Each training day → its override ("Tue · Upper · 90m · Hell")
+                // or "AI decides" when left on AI. Replaces the removed global
+                // Target Areas summary.
+                if (_selectedDays.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Per-day',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textMuted,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  for (final line in _perDaySummaryLines())
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        line,
+                        style:
+                            TextStyle(fontSize: 13, color: colors.textPrimary),
+                      ),
+                    ),
+                ],
               ],
             ),
           ),
@@ -617,4 +774,29 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
     );
   }
 
+  /// One human-readable line per training day for the summary's Per-day block.
+  /// e.g. "Tue · Upper · 90m · Hell" — or "Tue · AI decides" for no override.
+  List<String> _perDaySummaryLines() {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final focusLabels = {for (final o in kFocusOptions) o.value: o.label};
+    final intensityLabels = {
+      for (final o in kIntensityOptions) o.value: o.label,
+    };
+    final lines = <String>[];
+    for (final d in _selectedDays.toList()..sort()) {
+      final ov = _dayOverrides[d];
+      if (ov == null) {
+        lines.add('${dayNames[d]} · AI decides');
+        continue;
+      }
+      final parts = <String>[
+        focusLabels[ov.focus] ?? ov.focus,
+        if (ov.durationMin != null) '${ov.durationMin}m',
+        if (ov.intensity != null)
+          (intensityLabels[ov.intensity] ?? ov.intensity!),
+      ];
+      lines.add('${dayNames[d]} · ${parts.join(' · ')}');
+    }
+    return lines;
+  }
 }

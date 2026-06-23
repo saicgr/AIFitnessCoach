@@ -1,25 +1,23 @@
 part of 'edit_program_sheet.dart';
 
 
-class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
-  // Wizard step (0-5). The editor is now a unified, multi-section flow:
-  //   0 Schedule     (days + difficulty + duration)
-  //   1 Split        (AI Decides + AI-Powered presets)
-  //   2 Per-day      (per training-day focus / duration / intensity / gym)
-  //   3 Workout Type (Strength / Cardio / Mixed)
-  //   4 Equipment    (equipment + focus areas)
-  //   5 Health       (injuries + summary)
-  int _currentStep = 0;
-  static const int _totalSteps = 6;
+class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
+    with SingleTickerProviderStateMixin {
+  // The editor is now a TABBED layout (replacing the old 6-step wizard).
+  //   0 Schedule  — days + difficulty + duration + split ("Vibe") + workout type
+  //   1 Per-day   — per training-day focus / duration / intensity / gym
+  //   2 Equipment — equipment inventory (global Target Areas removed)
+  //   3 Health    — injuries + summary
+  // A beginner can finish entirely on the Schedule tab and tap Save.
+  static const List<String> _tabLabels = [
+    'Schedule',
+    'Per-day',
+    'Equipment',
+    'Health',
+  ];
+  late final TabController _tabController;
 
-  bool _isUpdating = false;
   bool _isLoading = false;
-  String _updateStatus = '';
-
-  // Streaming progress state
-  int _generatingWorkout = 0;
-  int _totalWorkoutsToGenerate = 0;
-  String? _generatingDetail;
 
   // Step 0: Schedule
   final Set<int> _selectedDays = {0, 2, 4}; // Default: Mon, Wed, Fri
@@ -48,17 +46,15 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   // Step 5: Health (optional)
   final Set<String> _selectedInjuries = {};
 
-  // Custom inputs
-  String _customFocusArea = '';
+  // Custom inputs ( focus-area custom input removed with the global Target
+  // Areas selector — per-day Focus is the only focus control now).
   String _customInjury = '';
-  bool _showFocusAreaInput = false;
   bool _showInjuryInput = false;
 
   // Equipment quantities
   int _dumbbellCount = 2;
   int _kettlebellCount = 2;
 
-  final TextEditingController _focusAreaController = TextEditingController();
   final TextEditingController _injuryController = TextEditingController();
 
   // ── Change tracking for the "ask me each time" save flow ──────────────
@@ -79,12 +75,17 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   void initState() {
     super.initState();
     _dayOverrides = {};
+    _tabController = TabController(length: _tabLabels.length, vsync: this);
+    _tabController.addListener(() {
+      // Repaint the sticky summary line / Save label as tabs change.
+      if (mounted) setState(() {});
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadPreferences());
   }
 
   @override
   void dispose() {
-    _focusAreaController.dispose();
+    _tabController.dispose();
     _injuryController.dispose();
     super.dispose();
   }
@@ -263,22 +264,19 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         !_setEquals(_selectedInjuries, _initialInjuries);
   }
 
-  /// Persist gym-aware workout days. When an active gym profile exists, the
-  /// days belong to THAT profile (mirrors settings_card `_saveWorkoutDays`),
-  /// so home + Settings can't drift. Otherwise fall back to the global user
-  /// preferences via the canonical update-program write below.
-  Future<void> _persistWorkoutDaysToProfile(List<int> sortedDays) async {
-    final activeProfile = _activeProfile;
-    if (activeProfile == null) return; // global path handled by update-program
-    await ref.read(gymProfilesProvider.notifier).updateProfile(
-          activeProfile.id,
-          GymProfileUpdate(workoutDays: sortedDays),
-        );
-  }
-
-  /// Unified save: persist EVERYTHING with regenerate=false (pure write), then
-  /// — if anything program-affecting changed — ask the user whether to apply
-  /// now (delete today/upcoming so they regenerate under the new prefs).
+  /// Instant-close + background save.
+  ///
+  /// Tapping Save closes the sheet IMMEDIATELY and persists in the background.
+  /// Because the user explicitly tapped Save, that IS the "apply now" decision —
+  /// if any program-affecting field changed we always regenerate upcoming in the
+  /// background (no separate confirm dialog). If nothing program-affecting
+  /// changed, we still persist the writes but skip the (expensive) regenerate.
+  ///
+  /// Dispose-proofing: all background work runs against the ROOT
+  /// [appProviderContainer] (captured before pop), never the sheet's `ref` —
+  /// the sheet's Element is disposed the moment we pop, so reading `ref` after
+  /// that would throw. Snapshots of the user-edited values are captured into
+  /// locals before pop too.
   Future<void> _updateProgram() async {
     if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -287,140 +285,132 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
           backgroundColor: AppColors.error,
         ),
       );
+      // Send the user to the Schedule tab where days live.
+      _tabController.animateTo(0);
       return;
     }
-
-    setState(() {
-      _isUpdating = true;
-      _updateStatus = AppLocalizations.of(context)!.editProgramSheetSavingPreferences;
-      _generatingWorkout = 0;
-      _totalWorkoutsToGenerate = 0;
-      _generatingDetail = null;
-    });
 
     final authState = ref.read(authStateProvider);
     final user = authState.user;
     final userId = user?.id;
+    if (userId == null) return;
 
-    if (userId == null) {
-      setState(() {
-        _isUpdating = false;
-        _updateStatus = '';
-      });
+    // ── Capture everything the background save needs BEFORE we pop ──────────
+    // After pop the sheet's Element is gone, so `ref` is invalid. The root
+    // container survives the whole app session.
+    final container = appProviderContainer;
+    final didChange = _hasProgramChanges;
+    final activeProfile = _activeProfile;
+
+    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final sortedDays = _selectedDays.toList()..sort();
+    final selectedDayNames = sortedDays.map((i) => dayNames[i]).toList();
+
+    final difficulty = _selectedDifficulty;
+    final durationMin = _selectedDurationMin.round();
+    final durationMax = _selectedDurationMax.round();
+    final injuries = _selectedInjuries.toList();
+    final equipment =
+        _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null;
+    final workoutTypeSplit =
+        _selectedProgramId == 'custom' ? 'custom' : (_selectedProgramId ?? 'ai_decide');
+    final dumbbellCount =
+        _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null;
+    final kettlebellCount =
+        _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null;
+    final customProgramDescription =
+        _selectedProgramId == 'custom' ? _customProgramDescription : null;
+    final overridesPayload = <String, dynamic>{};
+    _dayOverrides.forEach((day, override) {
+      overridesPayload[day.toString()] = override.toJson();
+    });
+    final mergedPrefs = _mergedPreferences(user, overridesPayload);
+    final workoutTypeChanged = _selectedWorkoutType != _initialWorkoutType;
+    final newWorkoutType = WorkoutType.fromString(_selectedWorkoutType);
+
+    // ── Instant close ───────────────────────────────────────────────────────
+    if (mounted) {
+      Navigator.pop(context, true);
+    }
+    // Toast via the ROOT messenger so it survives the sheet being popped.
+    rootScaffoldMessengerKey.currentState?.showSnackBar(
+      const SnackBar(content: Text('Program updated')),
+    );
+
+    if (container == null) {
+      debugPrint('⚠️ [EditProgram] no root container — save skipped');
       return;
     }
 
-    final didChange = _hasProgramChanges;
+    // ── Background persistence (dispose-proof, runs against root container) ──
+    unawaited(() async {
+      try {
+        final repo = container.read(workoutRepositoryProvider);
 
-    try {
-      final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      final sortedDays = _selectedDays.toList()..sort();
-      final selectedDayNames = sortedDays.map((i) => dayNames[i]).toList();
-
-      final repo = ref.read(workoutRepositoryProvider);
-
-      // 1. Gym-aware days: write to the active profile when one exists (single
-      //    source of truth shared with Settings).
-      await _persistWorkoutDaysToProfile(sortedDays);
-
-      // 2. Persist program preferences — pure write, NO regenerate. (The
-      //    update-program endpoint also writes days to global prefs, which is
-      //    the fallback when there's no active gym profile.)
-      await repo.updateProgram(
-        userId: userId,
-        difficulty: _selectedDifficulty,
-        durationMinutesMin: _selectedDurationMin.round(),
-        durationMinutesMax: _selectedDurationMax.round(),
-        focusAreas: _selectedFocusAreas.toList(),
-        injuries: _selectedInjuries.toList(),
-        equipment:
-            _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null,
-        workoutType: _selectedProgramId == 'custom'
-            ? 'custom'
-            : (_selectedProgramId ?? 'ai_decide'),
-        workoutDays: selectedDayNames,
-        dumbbellCount:
-            _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
-        kettlebellCount:
-            _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null,
-        customProgramDescription: _selectedProgramId == 'custom'
-            ? _customProgramDescription
-            : null,
-        regenerate: false,
-      );
-
-      // 3. Persist per-day overrides into the user preferences JSONB.
-      await _persistDayOverrides(user, userId);
-
-      // 4. Persist Workout Type (Strength / Cardio / Mixed). This lives on the
-      //    user record via `workout_type_preference`, NOT update-program, so it
-      //    routes through the trainingPreferences notifier (no-ops if unchanged).
-      if (_selectedWorkoutType != _initialWorkoutType) {
-        await ref
-            .read(trainingPreferencesProvider.notifier)
-            .setWorkoutType(WorkoutType.fromString(_selectedWorkoutType));
-      }
-
-      if (!mounted) return;
-
-      // 5. "Ask me each time": only when something program-affecting changed.
-      if (didChange) {
-        final applyNow = await AppDialog.confirm(
-          context,
-          title: 'Apply now?',
-          message:
-              'Apply these changes to your upcoming workouts now? This regenerates today (if not started) and upcoming sessions.',
-          confirmText: 'Apply now',
-          cancelText: 'Later',
-          icon: Icons.auto_awesome_rounded,
-        );
-
-        if (applyNow && mounted) {
-          setState(() {
-            _updateStatus = 'Applying changes…';
-          });
-          await repo.regenerateUpcoming(userId);
-          // Refresh local state + home surfaces so the new sessions show.
-          await ref.read(authStateProvider.notifier).refreshUser();
-          TodayWorkoutNotifier.resetGenerationState();
-          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-          ref.read(workoutsProvider.notifier).silentRefresh();
-        }
-      }
-
-      // Close sheet. Returning `true` lets callers run their own refresh too.
-      if (mounted) {
-        Navigator.pop(context, true);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isUpdating = false;
-          _updateStatus = '';
-          _generatingWorkout = 0;
-          _totalWorkoutsToGenerate = 0;
-          _generatingDetail = null;
-        });
-
-        String errorMessage = AppLocalizations.of(context)!.editProgramSheetFailedToUpdateProgram;
-        final errorStr = e.toString().toLowerCase();
-        if (errorStr.contains('timeout') || errorStr.contains('timed out')) {
-          errorMessage =
-              'Request timed out. The server may be busy. Please try again.';
-        } else if (errorStr.contains('connection') ||
-            errorStr.contains('network')) {
-          errorMessage =
-              'Network error. Please check your connection and try again.';
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: AppColors.error,
+        // Independent writes run in parallel:
+        //   1. Gym-aware days → active profile (single source of truth shared
+        //      with Settings) when a profile exists.
+        //   2. Program preferences (pure write, NO regenerate). The
+        //      update-program endpoint also writes days to global prefs (the
+        //      fallback when there's no active gym profile). Global focusAreas
+        //      are intentionally NOT sent — per-day Focus is the only focus
+        //      control now, so days on "AI decide" fall back to split/AI.
+        //   3. Per-day overrides → user preferences JSONB (awaited dict update).
+        await Future.wait([
+          if (activeProfile != null)
+            container.read(gymProfilesProvider.notifier).updateProfile(
+                  activeProfile.id,
+                  GymProfileUpdate(workoutDays: sortedDays),
+                ),
+          repo.updateProgram(
+            userId: userId,
+            difficulty: difficulty,
+            durationMinutesMin: durationMin,
+            durationMinutesMax: durationMax,
+            focusAreas: const [],
+            injuries: injuries,
+            equipment: equipment,
+            workoutType: workoutTypeSplit,
+            workoutDays: selectedDayNames,
+            dumbbellCount: dumbbellCount,
+            kettlebellCount: kettlebellCount,
+            customProgramDescription: customProgramDescription,
+            regenerate: false,
           ),
+          container.read(authStateProvider.notifier).updateUserProfile({
+            'preferences': mergedPrefs,
+          }),
+          // Workout Type (Strength / Cardio / Mixed) lives on the user record
+          // via `workout_type_preference`; routes through trainingPreferences.
+          if (workoutTypeChanged)
+            container
+                .read(trainingPreferencesProvider.notifier)
+                .setWorkoutType(newWorkoutType),
+        ]);
+
+        // Save IS the apply: regenerate upcoming when anything program-affecting
+        // changed; skip the expensive regen otherwise.
+        if (didChange) {
+          await repo.regenerateUpcoming(userId);
+          await container.read(authStateProvider.notifier).refreshUser();
+          TodayWorkoutNotifier.resetGenerationState();
+          await refreshAfterWorkoutMutation(source: 'edit_program_save');
+        }
+      } catch (e) {
+        debugPrint('⚠️ [EditProgram] background save failed: $e');
+        final messenger = rootScaffoldMessengerKey.currentState;
+        String msg = 'Couldn\'t update your program. Please try again.';
+        final s = e.toString().toLowerCase();
+        if (s.contains('timeout') || s.contains('timed out')) {
+          msg = 'Request timed out. The server may be busy. Please try again.';
+        } else if (s.contains('connection') || s.contains('network')) {
+          msg = 'Network error. Please check your connection and try again.';
+        }
+        messenger?.showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: AppColors.error),
         );
       }
-    }
+    }());
   }
 
   // ── Per-day override mutation helpers (used by _buildPerDayStep) ────────
@@ -485,14 +475,14 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     });
   }
 
-  /// Merge the per-day overrides map into the user preferences JSONB and fire
-  /// the optimistic auth-notifier update (same path the per-day sheet uses).
-  Future<void> _persistDayOverrides(User? user, String userId) async {
-    final payload = <String, dynamic>{};
-    _dayOverrides.forEach((day, override) {
-      payload[day.toString()] = override.toJson();
-    });
-
+  /// Merge the per-day overrides [payload] into the user's existing preferences
+  /// JSONB (so we don't clobber unrelated keys). Pure function — no side effects
+  /// — so it's safe to call before pop and hand the result to the background
+  /// save running on the root container.
+  Map<String, dynamic> _mergedPreferences(
+    User? user,
+    Map<String, dynamic> payload,
+  ) {
     Map<String, dynamic> currentPrefs = {};
     if (user?.preferences != null && user!.preferences!.isNotEmpty) {
       try {
@@ -502,33 +492,9 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         }
       } catch (_) {}
     }
-    final mergedPrefs = Map<String, dynamic>.from(currentPrefs);
-    mergedPrefs['workout_day_overrides'] = payload;
-
-    await ref.read(authStateProvider.notifier).updateUserProfile({
-      'preferences': mergedPrefs,
-    });
-  }
-
-  void _nextStep() {
-    if (_currentStep == 0 && _selectedDays.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.editProgramSheetPleaseSelectAtLeast),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-    if (_currentStep < _totalSteps - 1) {
-      setState(() => _currentStep++);
-    } else {
-      _updateProgram();
-    }
-  }
-
-  void _previousStep() {
-    if (_currentStep > 0) setState(() => _currentStep--);
+    final merged = Map<String, dynamic>.from(currentPrefs);
+    merged['workout_day_overrides'] = payload;
+    return merged;
   }
 
   Future<void> _showProgramHistory() async {
@@ -586,16 +552,13 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   }
 
   Future<void> _restoreProgram(String userId, String programId) async {
-    setState(() {
-      _isUpdating = true;
-      _updateStatus = 'Restoring program...';
-    });
+    setState(() => _isLoading = true);
 
     try {
       final workoutRepo = ref.read(workoutRepositoryProvider);
       await workoutRepo.restoreProgram(userId, programId);
 
-      // Reload preferences to update the UI
+      // Reload preferences to update the UI ( _loadPreferences clears _isLoading)
       await _loadPreferences();
 
       if (mounted) {
@@ -616,11 +579,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isUpdating = false;
-          _updateStatus = '';
-        });
+      if (mounted && _isLoading) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -639,206 +599,169 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
           children: [
             _buildHeader(colors),
             Divider(height: 1, color: colors.cardBorder),
-            _buildProgressIndicator(colors),
+            _buildTabBar(colors),
             Flexible(
               child: _isLoading
                   ? Center(
                       child: CircularProgressIndicator(color: colors.cyan))
-                  : _buildCurrentStep(colors),
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildScheduleTab(colors),
+                        _buildPerDayStep(colors),
+                        _buildEquipmentStep(colors),
+                        _buildHealthStep(colors),
+                      ],
+                    ),
             ),
-            _buildNavigationButtons(colors),
+            _buildSaveBar(colors),
           ],
         ),
       ),
     );
   }
 
+  /// Horizontally-scrollable tab strip replacing the old per-step progress bar.
+  Widget _buildTabBar(SheetColors colors) {
+    return TabBar(
+      controller: _tabController,
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      labelColor: colors.cyan,
+      unselectedLabelColor: colors.textMuted,
+      indicatorColor: colors.cyan,
+      indicatorSize: TabBarIndicatorSize.label,
+      dividerColor: Colors.transparent,
+      labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+      unselectedLabelStyle:
+          const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      tabs: [for (final label in _tabLabels) Tab(text: label)],
+    );
+  }
+
   Widget _buildHeader(SheetColors colors) {
     final l10n = AppLocalizations.of(context)!;
-    final stepTitles = [
-      l10n.editProgramSheetSchedule,
-      l10n.editProgramSheetTrainingProgram,
-      'Per-day',
-      'Workout Type',
-      l10n.editProgramSheetEquipment,
-      l10n.editProgramSheetHealth,
-    ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
-      child: Column(
+      child: Row(
         children: [
-          // Header row
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colors.purple.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.auto_awesome, color: colors.purple, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.editProgramSheetCustomizeProgram,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Step ${_currentStep + 1} of $_totalSteps: ${stepTitles[_currentStep]}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: colors.textMuted),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: _isUpdating ? null : _showProgramHistory,
-                icon: Icon(Icons.history, color: colors.cyan),
-                tooltip: 'Program History',
-              ),
-              IconButton(
-                onPressed: _isUpdating ? null : () => Navigator.pop(context),
-                icon: Icon(Icons.close, color: colors.textSecondary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Info tooltip explaining what this sheet does
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: colors.cyan.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: colors.cyan.withOpacity(0.3)),
+              color: colors.purple.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            child: Icon(Icons.auto_awesome, color: colors.purple, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline, color: colors.cyan, size: 18),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    l10n.editProgramSheetChangeYourWeeklySchedule,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.cyan,
-                      height: 1.3,
-                    ),
-                  ),
+                Text(
+                  l10n.editProgramSheetCustomizeProgram,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Tweak any tab — defaults are AI-chosen. Save when ready.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: colors.textMuted),
                 ),
               ],
             ),
+          ),
+          IconButton(
+            onPressed: _showProgramHistory,
+            icon: Icon(Icons.history, color: colors.cyan),
+            tooltip: 'Program History',
+          ),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(Icons.close, color: colors.textSecondary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProgressIndicator(SheetColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(
-        children: List.generate(_totalSteps, (index) {
-          final isActive = index <= _currentStep;
-          return Expanded(
-            child: Container(
-              margin: EdgeInsets.only(right: index < _totalSteps - 1 ? 8 : 0),
-              height: 4,
-              decoration: BoxDecoration(
-                color: isActive ? colors.cyan : colors.glassSurface,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          );
-        }),
+  /// Schedule tab = weekly schedule + difficulty + duration, with the Split
+  /// ("Vibe") and Workout-Type selectors folded in so a beginner can finish
+  /// the whole setup here and tap Save.
+  Widget _buildScheduleTab(SheetColors colors) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      physics: const BouncingScrollPhysics(),
+      children: [
+        _buildScheduleStep(colors),
+        const SizedBox(height: 24),
+        _sectionTitle(colors, 'Vibe'),
+        const SizedBox(height: 8),
+        _buildTrainingProgramStep(colors),
+        const SizedBox(height: 24),
+        _sectionTitle(colors, 'Workout type'),
+        const SizedBox(height: 8),
+        _buildWorkoutTypeStep(colors),
+      ],
+    );
+  }
+
+  Widget _sectionTitle(SheetColors colors, String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w800,
+        color: colors.textPrimary,
+        letterSpacing: 0.2,
       ),
     );
   }
 
-  Widget _buildCurrentStep(SheetColors colors) {
-    switch (_currentStep) {
-      case 0:
-        return _buildScheduleStep(colors);
-      case 1:
-        return _buildTrainingProgramStep(colors);
-      case 2:
-        return _buildPerDayStep(colors);
-      case 3:
-        return _buildWorkoutTypeStep(colors);
-      case 4:
-        return _buildEquipmentStep(colors);
-      case 5:
-        return _buildHealthStep(colors);
-      default:
-        return const SizedBox();
-    }
-  }
-
+  /// Schedule section content (non-scrolling — the Schedule tab's ListView owns
+  /// scrolling). Days + difficulty + duration.
   Widget _buildScheduleStep(SheetColors colors) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minWidth: constraints.maxWidth,
-              maxWidth: constraints.maxWidth,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  WorkoutDaysSelector(
-                    selectedDays: _selectedDays,
-                    onSelectionChanged: (days) => setState(() {
-                      _selectedDays.clear();
-                      _selectedDays.addAll(days);
-                      // Keep the per-day editor pointed at a valid day.
-                      if (_editingDay != null &&
-                          !_selectedDays.contains(_editingDay)) {
-                        _editingDay = _selectedDays.isNotEmpty
-                            ? (_selectedDays.toList()..sort()).first
-                            : null;
-                      }
-                    }),
-                    disabled: _isUpdating,
-                  ),
-                  const SizedBox(height: 16),
-                  DifficultySelector(
-                    selectedDifficulty: _selectedDifficulty,
-                    onSelectionChanged: (d) =>
-                        setState(() => _selectedDifficulty = d),
-                    disabled: _isUpdating,
-                    fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
-                  ),
-                  const SizedBox(height: 16),
-                  DurationRangeSlider(
-                    durationMin: _selectedDurationMin,
-                    durationMax: _selectedDurationMax,
-                    onChanged: (range) => setState(() {
-                      _selectedDurationMin = range.start;
-                      _selectedDurationMax = range.end;
-                    }),
-                    disabled: _isUpdating,
-                    accentColor: colors.success,
-                  ),
-                  // Program duration selector removed - using automatic 2-week generation
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        WorkoutDaysSelector(
+          selectedDays: _selectedDays,
+          onSelectionChanged: (days) => setState(() {
+            _selectedDays.clear();
+            _selectedDays.addAll(days);
+            // Keep the per-day editor pointed at a valid day.
+            if (_editingDay != null && !_selectedDays.contains(_editingDay)) {
+              _editingDay = _selectedDays.isNotEmpty
+                  ? (_selectedDays.toList()..sort()).first
+                  : null;
+            }
+          }),
+        ),
+        const SizedBox(height: 16),
+        DifficultySelector(
+          selectedDifficulty: _selectedDifficulty,
+          onSelectionChanged: (d) => setState(() => _selectedDifficulty = d),
+          fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
+        ),
+        const SizedBox(height: 16),
+        DurationRangeSlider(
+          durationMin: _selectedDurationMin,
+          durationMax: _selectedDurationMax,
+          onChanged: (range) => setState(() {
+            _selectedDurationMin = range.start;
+            _selectedDurationMax = range.end;
+          }),
+          accentColor: colors.success,
+        ),
+        // Program duration selector removed - using automatic 2-week generation
+      ],
     );
   }
 
@@ -894,31 +817,10 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                 setState(() => _dumbbellCount = c),
             onKettlebellCountChanged: (c) =>
                 setState(() => _kettlebellCount = c),
-            disabled: _isUpdating,
           ),
-          const SizedBox(height: 32),
-          FocusAreasSelector(
-            selectedAreas: _selectedFocusAreas,
-            onSelectionChanged: (areas) =>
-                setState(() => _selectedFocusAreas
-                  ..clear()
-                  ..addAll(areas)),
-            customFocusArea: _customFocusArea,
-            showCustomInput: _showFocusAreaInput,
-            onToggleCustomInput: () =>
-                setState(() => _showFocusAreaInput = !_showFocusAreaInput),
-            onCustomFocusAreaSaved: (value) {
-              setState(() {
-                _customFocusArea = value;
-                if (value.isNotEmpty) {
-                  _selectedFocusAreas.add(value);
-                }
-                _showFocusAreaInput = false;
-              });
-            },
-            customInputController: _focusAreaController,
-            disabled: _isUpdating,
-          ),
+          // The global "Target Areas" selector was removed — per-day Focus
+          // (Per-day tab) is now the only focus control. Days left on "AI
+          // decide" fall back to the split / AI.
         ],
       ),
     );
@@ -948,118 +850,66 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     );
   }
 
-  Widget _buildNavigationButtons(SheetColors colors) {
+  Widget _buildSaveBar(SheetColors colors) {
+    final summary = _condensedSummary();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Progress bar when generating workouts
-          if (_isUpdating && _totalWorkoutsToGenerate > 0) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: _generatingWorkout / _totalWorkoutsToGenerate,
-                backgroundColor: colors.glassSurface,
-                valueColor: AlwaysStoppedAnimation<Color>(colors.cyan),
-                minHeight: 6,
-              ),
-            ),
-            const SizedBox(height: 8),
+          // Sticky condensed summary line so the user always sees the gist
+          // of the program no matter which tab they're on.
+          if (summary.isNotEmpty) ...[
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _generatingDetail ?? _updateStatus,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.textSecondary,
-                  ),
-                ),
-                Text(
-                  '$_generatingWorkout of $_totalWorkoutsToGenerate',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.cyan,
-                    fontWeight: FontWeight.w600,
+                Icon(Icons.tune_rounded, size: 14, color: colors.textMuted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    summary,
+                    style: TextStyle(fontSize: 12, color: colors.textMuted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
-          Row(
-            children: [
-              if (_currentStep > 0)
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isUpdating ? null : _previousStep,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: colors.cardBorder),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child:
-                        Text(AppLocalizations.of(context)!.editProgramSheetBack, style: TextStyle(color: colors.textSecondary)),
-                  ),
-                ),
-              if (_currentStep > 0) const SizedBox(width: 12),
-              Expanded(
-                flex: _currentStep == 0 ? 1 : 2,
-                child: ElevatedButton(
-                  onPressed: _isUpdating ? null : _nextStep,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.cyan,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isUpdating
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              child: Text(
-                                _totalWorkoutsToGenerate > 0
-                                    ? _updateStatus
-                                    : (_updateStatus.isNotEmpty
-                                        ? _updateStatus
-                                        : AppLocalizations.of(context)!.editProgramSheetUpdating),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 13,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          _currentStep < _totalSteps - 1
-                              ? AppLocalizations.of(context)!.editProgramSheetContinue
-                              : 'Save program',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _updateProgram,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.cyan,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-            ],
+              child: const Text(
+                'Save program',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  /// One-line gist of the current program for the sticky summary above Save.
+  String _condensedSummary() {
+    if (_selectedDays.isEmpty) return '';
+    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final days = (_selectedDays.toList()..sort()).map((i) => dayNames[i]);
+    final parts = <String>['${_selectedDays.length}× / wk'];
+    final dur = _selectedDurationMin.round() == _selectedDurationMax.round()
+        ? '${_selectedDurationMin.round()}m'
+        : '${_selectedDurationMin.round()}–${_selectedDurationMax.round()}m';
+    parts.add(dur);
+    parts.add(days.join(' '));
+    return parts.join(' · ');
   }
 }
