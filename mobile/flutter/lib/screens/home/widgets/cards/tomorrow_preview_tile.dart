@@ -48,7 +48,10 @@ class TomorrowPreviewTile extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: () {
           HapticService.light();
-          context.push('/workouts');
+          // Branch-root: switch tabs with go() — push() stacks a 2nd Workouts
+          // screen over the always-mounted IndexedStack copy → duplicate
+          // GlobalKey crash (tip.workouts.exercisePrefs).
+          context.go('/workouts');
         },
         child: Container(
           padding: const EdgeInsets.all(14),

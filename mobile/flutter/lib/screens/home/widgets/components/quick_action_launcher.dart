@@ -160,7 +160,14 @@ Future<bool> launchQuickAction(
       return true;
     case 'workout':
       HapticService.light();
-      context.push(quickActionRegistry['workout']?.route ?? '/workouts');
+      // Branch-root tabs must use go() (push stacks a duplicate Workouts
+      // screen → duplicate-GlobalKey crash). Deep routes still push.
+      final _wkRoute = quickActionRegistry['workout']?.route ?? '/workouts';
+      if (_wkRoute == '/workouts') {
+        context.go(_wkRoute);
+      } else {
+        context.push(_wkRoute);
+      }
       return true;
     case 'form_check':
       // AI Form Analysis with NO exercise name — the analyzer auto-detects the
