@@ -603,13 +603,47 @@ String? _handleAuthRedirect(
   // post-sign-in (see _getNextOnboardingStep above).
 
   // Personal info — auth required, post-sign-in only.
+  //
+  // The sign-in screens (email/Google/Apple) unconditionally
+  // `context.go('/personal-info')` after auth on the assumption that the router
+  // "rewrites to the user's TRUE next step" — but a bare `isLoggedIn ? null`
+  // guard does NOT rewrite, it just ALLOWS the route, so a returning,
+  // fully-onboarded user got parked here on "A couple final details" forever.
+  // Mirror the /splash + /intro guards: consult _getNextOnboardingStep and
+  // bounce anyone who doesn't actually belong on this step to their true next
+  // step (or home). A genuinely fresh user whose next step IS /personal-info
+  // falls through to null and the screen renders.
   if (loc == '/personal-info') {
-    return isLoggedIn ? null : '/intro';
+    if (!isLoggedIn) return '/intro';
+    final user = authState.user;
+    if (user != null) {
+      final nextStep = _getNextOnboardingStep(user, ref);
+      if (nextStep != '/personal-info') {
+        return nextStep ?? homeRoute;
+      }
+    }
+    return null;
   }
 
   // Coach selection - auth required (also used for changing coach from settings)
+  //
+  // Same force-nav rewrite gap as /personal-info above (hit on the
+  // personalInfoAfterPaywall treatment, which force-navs returning users here).
+  // EXCEPT this route is dual-purpose: settings entry points push
+  // `/coach-selection?fromSettings=true` to intentionally re-pick a coach, and
+  // those visits must NEVER be bounced. Only rewrite for the onboarding
+  // hand-off (no fromSettings flag) when the user doesn't belong on this step.
   if (loc == '/coach-selection') {
-    return isLoggedIn ? null : '/intro';
+    if (!isLoggedIn) return '/intro';
+    final fromSettings = state.uri.queryParameters['fromSettings'] == 'true';
+    final user = authState.user;
+    if (!fromSettings && user != null) {
+      final nextStep = _getNextOnboardingStep(user, ref);
+      if (nextStep != '/coach-selection') {
+        return nextStep ?? homeRoute;
+      }
+    }
+    return null;
   }
 
   // (deprecated v4 education screens — guard kept for backward-compat redirects)
