@@ -13,6 +13,7 @@ import '../../../widgets/design_system/zealova.dart';
 import '../../home/widgets/edit_program_sheet.dart';
 import '../../workout/widgets/quick_workout_sheet.dart';
 import 'exercise_preferences_card.dart';
+import 'my_program_sheet.dart';
 import 'workout_library_grid.dart';
 import 'workout_planner_section.dart';
 
@@ -238,13 +239,16 @@ class _ProgramBlock extends ConsumerWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Tappable title + chevron — opens the program(s) surface.
+            // Tappable title — opens the "My Program" detail sheet (current
+            // split + weekly schedule + all edit-prefs + Edit + Browse-all).
+            // This is a DIFFERENT destination from the PROGRAMS tile
+            // (browse-all), so it no longer duplicates that link.
             Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
                   HapticService.light();
-                  context.push('/workout/program-library');
+                  showMyProgramSheet(context, ref);
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -278,7 +282,8 @@ class _ProgramBlock extends ConsumerWidget {
               ),
             ],
             const SizedBox(width: 12),
-            // Separate Edit affordance — opens the unified program editor.
+            // Edit affordance — opens the unified program editor for the
+            // ACTIVE program (kept beside the program label it acts on).
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () async {
@@ -293,7 +298,7 @@ class _ProgramBlock extends ConsumerWidget {
                 children: [
                   Icon(Icons.tune_rounded, size: 15, color: tc.textSecondary),
                   const SizedBox(width: 4),
-                  Text('EDIT',
+                  Text('EDIT PROGRAM',
                       style: ZType.lbl(12,
                           color: tc.textSecondary, letterSpacing: 1.4)),
                 ],
@@ -311,32 +316,43 @@ class _ProgramBlock extends ConsumerWidget {
         else
           const ZealovaRule(),
         const SizedBox(height: 14),
-        // Inline LIBRARY › BUILDER › PROGRAMS › links — replaces the old
-        // floating launcher bar + the gradient library grid.
+        // LIBRARY / BUILDER / PROGRAMS — promoted from weak left-aligned text
+        // links to an evenly-distributed 3-up icon+label tile row so they read
+        // as deliberate navigation, not a footer. PROGRAMS owns "browse all
+        // programs" now that the title is a plain label.
         Row(
           children: [
-            _ProgramLink(
-              label: 'LIBRARY',
-              onTap: () {
-                HapticService.light();
-                context.push('/library');
-              },
+            Expanded(
+              child: _ProgramToolTile(
+                icon: Icons.menu_book_rounded,
+                label: 'LIBRARY',
+                onTap: () {
+                  HapticService.light();
+                  context.push('/library');
+                },
+              ),
             ),
-            const SizedBox(width: 22),
-            _ProgramLink(
-              label: 'BUILDER',
-              onTap: () {
-                HapticService.light();
-                context.push('/workout/build');
-              },
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ProgramToolTile(
+                icon: Icons.handyman_rounded,
+                label: 'BUILDER',
+                onTap: () {
+                  HapticService.light();
+                  context.push('/workout/build');
+                },
+              ),
             ),
-            const SizedBox(width: 22),
-            _ProgramLink(
-              label: 'PROGRAMS',
-              onTap: () {
-                HapticService.light();
-                context.push('/workout/program-library');
-              },
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ProgramToolTile(
+                icon: Icons.list_alt_rounded,
+                label: 'PROGRAMS',
+                onTap: () {
+                  HapticService.light();
+                  context.push('/workout/program-library');
+                },
+              ),
             ),
           ],
         ),
@@ -394,6 +410,47 @@ class _ProgramLink extends StatelessWidget {
                   fontSize: 15,
                   fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+  }
+}
+
+/// A single training-tool tile in the LIBRARY / BUILDER / PROGRAMS row —
+/// icon over an uppercase label inside a hairline card. Designed to sit inside
+/// an [Expanded] so the three tiles share the width evenly.
+class _ProgramToolTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ProgramToolTile(
+      {required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: tc.glassSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: tc.cardBorder),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 22, color: tc.accent),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ZType.lbl(11, color: tc.textSecondary, letterSpacing: 1.2),
+            ),
+          ],
+        ),
       ),
     );
   }
