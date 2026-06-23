@@ -407,7 +407,11 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
       return;
     }
 
-    if (choice == false || !payload.didChange) {
+    // choice == true → regenerate (Apply now, OR the no-change "Regenerate my
+    // workouts" affordance — rebuild today/upcoming from the current plan even
+    // when nothing changed, so a drifted workout can be reconciled).
+    // choice == false → persist only (Apply from next session / Close).
+    if (choice == false) {
       // ── "Later" (or nothing program-affecting changed): persist only ──────
       if (mounted) Navigator.pop(context, true);
       rootScaffoldMessengerKey.currentState?.showSnackBar(

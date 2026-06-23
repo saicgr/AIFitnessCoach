@@ -1046,7 +1046,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  willRegenerate ? 'Apply these changes?' : 'Save program?',
+                  willRegenerate ? 'Apply these changes?' : 'No changes to apply',
                   style: TextStyle(
                     fontSize: 19,
                     fontWeight: FontWeight.w800,
@@ -1057,7 +1057,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                 Text(
                   willRegenerate
                       ? 'Review your program below. Apply now rebuilds today & tomorrow right away — or apply from your next session and it\'ll kick in with your next workouts.'
-                      : 'Review your program below, then save.',
+                      : 'Your plan is unchanged. If your current workouts don\'t match it, you can rebuild today & upcoming workouts from this plan — or just close.',
                   style: TextStyle(
                     fontSize: 13,
                     color: colors.textMuted,
@@ -1115,11 +1115,22 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                       style: TextStyle(fontSize: 11, color: colors.textMuted),
                     ),
                   ),
-                ] else
+                ] else ...[
+                  // No program change to apply — but the user may still want to
+                  // rebuild their workouts from the current plan (e.g. today's
+                  // generated workout drifted from the saved per-day plan).
+                  // "Regenerate" returns true → the caller runs the same
+                  // persist + regenerate-upcoming path as Apply now.
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, false),
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text(
+                        'Regenerate my workouts',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accent,
                         foregroundColor: Colors.white,
@@ -1128,13 +1139,36 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colors.textPrimary,
+                        side: BorderSide(color: colors.cardBorder),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       child: const Text(
-                        'Save',
+                        'Close',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15),
+                            fontWeight: FontWeight.w700, fontSize: 15),
                       ),
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  Center(
+                    child: Text(
+                      'Rebuilds today & upcoming from your current plan',
+                      style: TextStyle(fontSize: 11, color: colors.textMuted),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
