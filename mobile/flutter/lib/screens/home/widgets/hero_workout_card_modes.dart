@@ -119,7 +119,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
             label: l10n.heroWorkoutCardSeeTomorrowSPlan,
             onTap: () {
               HapticService.selection();
-              context.push('/workouts');
+              context.go('/workouts'); // branch-root: go, not push (dup-GlobalKey)
             },
             accent: accent,
             outline: true,
@@ -350,7 +350,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
               HapticService.medium();
               // Reuse the existing quick workout sheet path via /workouts;
               // no dedicated standalone route.
-              context.push('/workouts');
+              context.go('/workouts'); // branch-root: go, not push (dup-GlobalKey)
             },
             accent: accent,
             outline: true,
@@ -370,7 +370,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
             label: l10n.heroWorkoutCardMoveToToday,
             onTap: () {
               HapticService.medium();
-              context.push('/workouts');
+              context.go('/workouts'); // branch-root: go, not push (dup-GlobalKey)
             },
             accent: accent,
           ),
@@ -474,6 +474,12 @@ class _HeroBase extends StatelessWidget {
     // Tighter gaps + smaller minHeight: prior values (minHeight 220, 24/20/8
     // inner gaps) felt bloated for what is fundamentally a 2-line message +
     // 2 buttons. New rhythm matches the rest of the home cards.
+    //
+    // When an illustration backs the card the scrim is dark in BOTH themes, so
+    // body copy is white + drop-shadowed regardless of brightness (matching the
+    // default illustrated card). The solid-surface fallback keeps the normal
+    // theme-driven text colour.
+    final onImage = background != null;
     final content = Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -528,10 +534,25 @@ class _HeroBase extends StatelessWidget {
           Text(
             body,
             style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
+              color: onImage
+                  ? Colors.white
+                  : (isDark ? Colors.white : Colors.black87),
               fontSize: 15,
               fontWeight: FontWeight.w600,
               height: 1.3,
+              shadows: onImage
+                  ? const [
+                      Shadow(
+                        color: Colors.black,
+                        blurRadius: 8,
+                        offset: Offset(0, 1),
+                      ),
+                      Shadow(
+                        color: Colors.black54,
+                        blurRadius: 2,
+                      ),
+                    ]
+                  : null,
             ),
           ),
           const SizedBox(height: 12),
@@ -575,23 +596,32 @@ class _HeroBase extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      // Match the lighter gradient used by the default
-                      // illustrated card render (hero_workout_card.dart)
-                      // so the workout figure stays visible. Prior stops
-                      // (0.55/0.75/0.92 light-mode) were washing the
-                      // illustration out to plain white.
+                      // Mirror the DEFAULT illustrated card's scrim
+                      // (hero_workout_card.dart) exactly: a 5-stop dark scrim
+                      // (black in BOTH light + dark) that's strongest top + bottom
+                      // where the eyebrow/body/buttons sit, with a lighter belly
+                      // so the workout figure still reads through the middle.
+                      // The previous 3-stop ramp had its LIGHTEST point (0.3) at
+                      // the 0.5 belly — exactly where the body line + primary
+                      // button land — so white text dissolved into the figure.
+                      // Pairing this with white-on-dark text + drop shadows below
+                      // makes the copy legible over any illustration.
                       colors: isDark
                           ? [
-                              Colors.black.withValues(alpha: 0.4),
-                              Colors.black.withValues(alpha: 0.3),
-                              Colors.black.withValues(alpha: 0.85),
+                              Colors.black.withValues(alpha: 0.62),
+                              Colors.black.withValues(alpha: 0.42),
+                              Colors.black.withValues(alpha: 0.66),
+                              Colors.black.withValues(alpha: 0.90),
+                              Colors.black.withValues(alpha: 0.97),
                             ]
                           : [
-                              Colors.white.withValues(alpha: 0.5),
-                              Colors.white.withValues(alpha: 0.3),
-                              Colors.white.withValues(alpha: 0.9),
+                              Colors.black.withValues(alpha: 0.55),
+                              Colors.black.withValues(alpha: 0.34),
+                              Colors.black.withValues(alpha: 0.58),
+                              Colors.black.withValues(alpha: 0.82),
+                              Colors.black.withValues(alpha: 0.92),
                             ],
-                      stops: const [0.0, 0.5, 1.0],
+                      stops: const [0.0, 0.32, 0.6, 0.82, 1.0],
                     ),
                   ),
                 ),
@@ -696,12 +726,14 @@ class _PrimaryButton extends StatelessWidget {
 class _SecondaryGhost extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
-  final bool isDark;
 
+  // `isDark` is accepted (call sites still pass it) but no longer used — the
+  // ghost label is now always light + shadowed since it sits over the dark
+  // illustration scrim in both themes.
   const _SecondaryGhost({
     required this.label,
     required this.onTap,
-    required this.isDark,
+    required bool isDark,
   });
 
   @override
@@ -711,11 +743,19 @@ class _SecondaryGhost extends StatelessWidget {
         onPressed: onTap,
         child: Text(
           label,
-          style: TextStyle(
-            color: isDark ? Colors.white70 : Colors.black54,
+          // Always sits over the dark illustration scrim (the smart-mode cards
+          // always render an image background), so a light, shadowed label reads
+          // in BOTH themes — `black54` in light mode used to vanish into the
+          // figure now that the scrim is dark regardless of brightness.
+          style: const TextStyle(
+            color: Colors.white70,
             fontSize: 13,
             fontWeight: FontWeight.w600,
             decoration: TextDecoration.underline,
+            decorationColor: Colors.white70,
+            shadows: [
+              Shadow(color: Colors.black, blurRadius: 6, offset: Offset(0, 1)),
+            ],
           ),
         ),
       ),
