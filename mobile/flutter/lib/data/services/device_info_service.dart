@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cryptography/cryptography.dart';
@@ -137,10 +139,22 @@ class DeviceInfoService {
         installId = 'web-${pkg.buildNumber}';
       }
 
+      // Prefer a Keychain-persisted UUID over the raw platform install id.
+      // iOS `identifierForVendor` (and Android `id`) RESET when the app is
+      // uninstalled/reinstalled — which `flutter run` does on every deploy and
+      // which also happens on simulator resets. That made the SAME physical
+      // device hash to a brand-new fingerprint on each sign-in, so the backend
+      // saw an "unrecognized device" every time and fired a spurious "New
+      // sign-in to your account" email + inserted a duplicate device row.
+      // Keychain entries survive app reinstall on iOS, so this id is stable for
+      // the life of the device. Falls back to the platform install id if secure
+      // storage is unavailable (so we degrade to the old behavior, never throw).
+      final stableInstallId = await _stableInstallId(fallback: installId);
+
       // sha256(platform | model | os | install_id). Keeps PII off the
       // wire — the backend only stores the hash.
       final raw = '$devicePlatform|${deviceModel ?? ''}|'
-          '${osVersion ?? ''}|$installId';
+          '${osVersion ?? ''}|$stableInstallId';
       final digest = await Sha256().hash(utf8.encode(raw));
       final fingerprint = digest.bytes
           .map((b) => b.toRadixString(16).padLeft(2, '0'))
@@ -162,6 +176,43 @@ class DeviceInfoService {
       // Non-fatal — failing to register the device for security alerting
       // shouldn't block a user from using the app.
       debugPrint('⚠️ [DeviceInfo] trackSignInDevice failed: $e');
+    }
+  }
+
+  /// Secure-storage key for the persistent per-device identifier. Stored in the
+  /// iOS Keychain / Android EncryptedSharedPreferences, both of which survive an
+  /// app reinstall — unlike `identifierForVendor` / SharedPreferences, which are
+  /// wiped on uninstall and caused the device fingerprint to churn (→ spurious
+  /// "new sign-in" alerts on every `flutter run` / reinstall).
+  static const _kStableInstallIdKey = 'device_stable_install_id_v1';
+
+  // first_unlock so the value is readable right after boot (before the user has
+  // unlocked since reboot the device is still locked when we may need it), and
+  // explicitly NOT *_this_device_only so it can persist across restore.
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
+
+  /// Read (or lazily mint + persist) a stable random device id from secure
+  /// storage. Returns [fallback] (the raw platform install id) if the Keychain
+  /// is unavailable so device tracking degrades gracefully instead of throwing.
+  Future<String> _stableInstallId({required String fallback}) async {
+    try {
+      final existing = await _secureStorage.read(key: _kStableInstallIdKey);
+      if (existing != null && existing.isNotEmpty) return existing;
+
+      final rnd = Random.secure();
+      final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
+      final id = bytes
+          .map((b) => b.toRadixString(16).padLeft(2, '0'))
+          .join();
+      await _secureStorage.write(key: _kStableInstallIdKey, value: id);
+      return id;
+    } catch (e) {
+      debugPrint(
+        '⚠️ [DeviceInfo] stable install id unavailable, using fallback: $e',
+      );
+      return fallback;
     }
   }
 }
