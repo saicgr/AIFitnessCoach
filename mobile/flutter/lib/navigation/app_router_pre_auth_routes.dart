@@ -195,7 +195,9 @@ List<RouteBase> _preAuthRoutes() => [
         path: '/email-sign-in',
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
-          child: const EmailSignInScreen(),
+          child: EmailSignInScreen(
+            forceSignIn: state.uri.queryParameters['returning'] == 'true',
+          ),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {

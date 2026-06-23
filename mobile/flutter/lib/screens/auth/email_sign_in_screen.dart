@@ -18,7 +18,13 @@ import '../../l10n/generated/app_localizations.dart';
 
 /// Glassmorphic email sign-in screen
 class EmailSignInScreen extends ConsumerStatefulWidget {
-  const EmailSignInScreen({super.key});
+  /// When true the screen opens in sign-in mode and ignores the
+  /// "came-from-onboarding" heuristic — set by the "I already have an account"
+  /// entry so a returning user is never defaulted into signup mode (which would
+  /// try Supabase signUp first and re-send a confirm-signup email).
+  final bool forceSignIn;
+
+  const EmailSignInScreen({super.key, this.forceSignIn = false});
 
   @override
   ConsumerState<EmailSignInScreen> createState() => _EmailSignInScreenState();
@@ -52,15 +58,19 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     // mean to *create* an account, not sign in to an existing one.
     // Returning users hitting this screen from settings/login won't
     // have quiz data and stay in sign-in mode.
-    final quiz = ref.read(preAuthQuizProvider);
-    final cameFromOnboarding =
-        quiz.weightKg != null ||
-        quiz.goalWeightKg != null ||
-        quiz.daysPerWeek != null ||
-        (quiz.goals != null && quiz.goals!.isNotEmpty) ||
-        quiz.fitnessLevel != null;
-    if (cameFromOnboarding) {
-      _isSignUp = true;
+    // The "I already have an account" entry forces sign-in mode — a returning
+    // user must never be defaulted into signup mode off stale quiz data.
+    if (!widget.forceSignIn) {
+      final quiz = ref.read(preAuthQuizProvider);
+      final cameFromOnboarding =
+          quiz.weightKg != null ||
+          quiz.goalWeightKg != null ||
+          quiz.daysPerWeek != null ||
+          (quiz.goals != null && quiz.goals!.isNotEmpty) ||
+          quiz.fitnessLevel != null;
+      if (cameFromOnboarding) {
+        _isSignUp = true;
+      }
     }
   }
 
@@ -113,67 +123,47 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
       // This way returning testers (existing account, correct password)
       // get signed in cleanly, AND new users finishing onboarding get
       // an account created + verification email automatically.
-      if (_isSignUp) {
-        final didSignUp = await _tryEmailSignUp(email, password);
-        if (!didSignUp) {
-          // Supabase says the email is already registered. Try the
-          // password they typed against the existing account.
-          debugPrint(
-            '🟡 [Auth] Email exists — trying sign-in with same password',
-          );
-          await ref
-              .read(authStateProvider.notifier)
-              .signInWithEmail(email, password);
-          // If that sign-in didn't log them in, the email is registered but
-          // this password doesn't open it — commonly because the account was
-          // created with Google/Apple (no password at all). Surface that
-          // directly: "could not create the account, try a different password"
-          // is misleading and sends them in circles. Returning users who typed
-          // the RIGHT password sign in cleanly and skip this branch.
-          final afterFlip = ref.read(authStateProvider);
-          if (afterFlip.status == AuthStatus.error || afterFlip.user == null) {
-            debugPrint(
-              '🟡 [Auth] Email already registered, password mismatch — '
-              'likely a social (Google/Apple) account',
-            );
-            if (mounted) {
-              setState(() {
-                _errorMessage =
-                    'This email already has an account. If you first signed up '
-                    'with Google or Apple, go back and continue with that — '
-                    'otherwise tap Sign In to log in with your password.';
-              });
-            }
-            return;
-          }
-        }
-      } else {
-        await ref
-            .read(authStateProvider.notifier)
-            .signInWithEmail(email, password);
-        final auth1 = ref.read(authStateProvider);
+      // ALWAYS try sign-in FIRST — regardless of whether the UI is in "signup"
+      // or "sign-in" mode. A returning user (including one the screen defaulted
+      // into signup mode from leftover pre-auth quiz data) then logs in cleanly
+      // and we NEVER call Supabase `signUp` on an address that already exists —
+      // which re-sends the "Verify your email" / confirm-signup email (the
+      // "got a new-signup email again on login" bug). Only when sign-in fails
+      // with a credentials error do we fall back to creating an account.
+      await ref
+          .read(authStateProvider.notifier)
+          .signInWithEmail(email, password);
+      final auth1 = ref.read(authStateProvider);
+      final signedIn =
+          auth1.status == AuthStatus.authenticated && auth1.user != null;
+
+      if (!signedIn) {
         final isCredsErr =
             auth1.status == AuthStatus.error &&
             _looksLikeCredentialsError(auth1.errorMessage ?? '');
         if (isCredsErr) {
-          // Could be wrong password OR no account. Try signup —
-          // if the email is unregistered, a new account is created
-          // (and Supabase sends the verify email). If it IS
-          // registered, signUp will throw "already registered" and
-          // we surface a wrong-password message.
+          // No account yet (new user) OR wrong password (existing account).
+          // Try signup: an unregistered email creates a new account (Supabase
+          // sends the verify email); a registered email returns "already
+          // registered" → didSignUp false → it's a real wrong-password.
           debugPrint('🟡 [Auth] Sign-in creds invalid — trying signup');
           final didSignUp = await _tryEmailSignUp(email, password);
           if (!didSignUp) {
             if (mounted) {
               setState(() {
-                _errorMessage =
-                    "An account exists for that email but the password "
-                    "doesn't match. Tap Forgot Password to reset.";
+                _errorMessage = _isSignUp
+                    ? 'This email already has an account. Tap Sign In to log '
+                        'in — or if you first signed up with Google or Apple, '
+                        'go back and continue with that.'
+                    : "An account exists for that email but the password "
+                        "doesn't match. Tap Forgot Password to reset.";
               });
             }
             return;
           }
         }
+        // A non-credential error (network/server) falls through to the
+        // post-attempt state check below, which surfaces the message.
       }
 
       // CRITICAL: AuthNotifier.signInWithEmail swallows exceptions and stores

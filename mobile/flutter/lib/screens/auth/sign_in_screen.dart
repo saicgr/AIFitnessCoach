@@ -833,7 +833,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
         // Email Sign In link
         GestureDetector(
-          onTap: _isLoading ? null : () => context.push('/email-sign-in'),
+          onTap: _isLoading
+              ? null
+              : () => context.push(
+                    widget.forceReturning
+                        ? '/email-sign-in?returning=true'
+                        : '/email-sign-in',
+                  ),
           child: Text(
             'Continue with Email',
             style: TextStyle(
