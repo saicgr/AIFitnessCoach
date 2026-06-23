@@ -77,12 +77,13 @@ router = APIRouter()
 
 BATCH_SIZE = 50
 
-# Master kill-switch for the dormancy taper + rolling weekly cap + win-back
-# taper (Goal 1). Default OFF = exact current behavior. Flip via env var after
-# observing band distribution. FAIL OPEN: when off, no band suppression and no
-# weekly cap, so an active user can never be silenced by this feature.
+# Master switch for the dormancy taper + rolling weekly cap + adaptive tone
+# (Goal 1). Default ON. Set the DORMANCY_TAPER_ENABLED env var to "false" to
+# kill it instantly (no deploy) — emergency rollback. FAIL OPEN by design: even
+# when on, a user with no last_active_at signal is treated as active, so this
+# can't silence anyone until they've opened the app and then gone quiet.
 import os as _os
-_DORMANCY_TAPER_ENABLED = _os.getenv("DORMANCY_TAPER_ENABLED", "false").strip().lower() == "true"
+_DORMANCY_TAPER_ENABLED = _os.getenv("DORMANCY_TAPER_ENABLED", "true").strip().lower() == "true"
 
 
 # ─── Security ───────────────────────────────────────────────────────────────

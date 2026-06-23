@@ -29,10 +29,11 @@ from typing import Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
-# Master kill-switch for dormancy-band suppression (Goal 1). Default OFF =
-# exact current behavior. Mirrors push_nudge_cron._DORMANCY_TAPER_ENABLED so
-# the band branch below is a no-op until the env var is flipped. FAIL OPEN.
-_DORMANCY_TAPER_ENABLED = os.getenv("DORMANCY_TAPER_ENABLED", "false").strip().lower() == "true"
+# Master switch for dormancy-band suppression (Goal 1). Default ON. Mirrors
+# push_nudge_cron._DORMANCY_TAPER_ENABLED. Set DORMANCY_TAPER_ENABLED=false to
+# disable instantly (emergency rollback). FAIL OPEN: a user with no last_active
+# signal is treated as active, so the band branch never silences them.
+_DORMANCY_TAPER_ENABLED = os.getenv("DORMANCY_TAPER_ENABLED", "true").strip().lower() == "true"
 
 # Win-back taper nudge types (re-engagement ladder fired at day 3/7/14/30 of
 # inactivity). Progress-affirming/playful, never shame — these REPLACE the old

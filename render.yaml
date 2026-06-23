@@ -58,13 +58,13 @@ services:
         sync: false
       - key: SUPABASE_KEY
         sync: false
-      # Master kill-switch for the push-notification dormancy taper + rolling
-      # weekly cap + win-back taper + adaptive tone (see
-      # project_notification_dormancy_taper). Default "false" = exact current
-      # behavior (FAIL-OPEN: no band suppression, no weekly cap). Flip to "true"
-      # to enable. Read at import in push_nudge_cron.py + notification_suppression.py.
+      # Push-notification dormancy taper + rolling weekly cap + adaptive tone
+      # (see project_notification_dormancy_taper). ON by default (code default is
+      # also "true"). Set to "false" to kill instantly — emergency rollback, no
+      # deploy. FAIL-OPEN: a user with no last_active_at signal is treated as
+      # active, so nobody is silenced until they go quiet after opening the app.
       - key: DORMANCY_TAPER_ENABLED
-        value: "false"
+        value: "true"
 
   # Two-way OAuth sync cron. Every 15 min: drains oauth_sync_webhook_events
   # queue + pulls accounts whose last_sync_at is older than 15 min. See
