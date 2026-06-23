@@ -19,6 +19,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../models/program_history.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
+import 'add_gym_profile_sheet.dart';
 import '../../workout/widgets/per_day_focus_chips.dart';
 import 'components/components.dart';
 import '../../../l10n/generated/app_localizations.dart';

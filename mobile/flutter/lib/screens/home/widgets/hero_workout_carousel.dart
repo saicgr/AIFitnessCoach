@@ -141,6 +141,43 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   /// Locally generated workouts stored for immediate display (Fix: workout vanishes after generation)
   final List<Workout> _locallyGeneratedWorkouts = [];
 
+  // ── Auto-refill for scheduled days with no workout in the client list ──────
+  // The server often ALREADY has the workout (generated in the background after
+  // a program change), but the client cached the empty state and never refetched
+  // → a scheduled day showed a permanent "No workout yet" until app restart.
+  // While any scheduled day looks empty, poll workoutsProvider so background-
+  // generated workouts appear without a restart; the placeholder shows the
+  // engaging generating card meanwhile. Capped so a genuinely-missing day
+  // eventually falls back to "No workout yet".
+  Timer? _refillTimer;
+  int _refillAttempts = 0;
+  static const int _kRefillMaxAttempts = 10; // ~10 × 4s ≈ 40s of polling
+
+  bool get _refillActive => _refillAttempts < _kRefillMaxAttempts;
+
+  void _ensureRefill(bool hasMissingScheduled) {
+    if (!hasMissingScheduled) {
+      // All scheduled days populated — stop + reset for the next change.
+      _refillTimer?.cancel();
+      _refillTimer = null;
+      if (_refillAttempts != 0) _refillAttempts = 0;
+      return;
+    }
+    if (_refillTimer != null || _refillAttempts >= _kRefillMaxAttempts) return;
+    // Fire one refetch immediately, then poll.
+    ref.read(workoutsProvider.notifier).silentRefresh();
+    _refillTimer = Timer.periodic(const Duration(seconds: 4), (t) {
+      _refillAttempts++;
+      if (_refillAttempts >= _kRefillMaxAttempts) {
+        t.cancel();
+        _refillTimer = null;
+        if (mounted) setState(() {}); // drop generating card → "No workout yet"
+        return;
+      }
+      ref.read(workoutsProvider.notifier).silentRefresh();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -152,6 +189,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
 
   @override
   void dispose() {
+    _refillTimer?.cancel();
     if (_ownsController) {
       _ownedPageController?.dispose();
     }
@@ -441,6 +479,10 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
 
+        // True when a scheduled today/future day has no workout in the client
+        // list — drives the auto-refill poll (A2) so background-generated days
+        // appear without an app restart.
+        bool anyMissingScheduled = false;
         if (workoutDays.isNotEmpty) {
           final weekConfig = ref.watch(weekDisplayConfigProvider);
           final workoutDates = _getWorkoutDatesForWeek(workoutDays, weekConfig);
@@ -457,14 +499,24 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                 }
               }
             } else if (!date.isBefore(today)) {
-              // Only show placeholders for today/future dates — can't generate for past dates
-              // While providers are refreshing (profile switch), treat all slots as
-              // auto-generating so the card shows a loading state instead of "No workout yet"
-              final isGeneratingForDate = isRefreshing || todayWorkoutResponse?.isGenerating == true;
+              // Scheduled today/future day with no workout in the client list.
+              // The server usually already has it — show the engaging generating
+              // card while we poll workoutsProvider to pull it in (capped). Only
+              // after the poll budget is exhausted does it fall back to the plain
+              // "No workout yet". (Profile-switch refresh also forces generating.)
+              anyMissingScheduled = true;
+              final isGeneratingForDate = isRefreshing ||
+                  todayWorkoutResponse?.isGenerating == true ||
+                  _refillActive;
               carouselItems.add(CarouselItem.placeholder(date, isAutoGenerating: isGeneratingForDate));
             }
             // Past dates with no workout are simply skipped (no card to show)
           }
+          // Drive the auto-refill poll after this frame (can't mutate state /
+          // start timers during build).
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _ensureRefill(anyMissingScheduled);
+          });
 
           // Handle workouts on non-workout days (staple-only workouts, quick workouts)
           // Check all days this week for workouts that exist in DB but aren't workout days
@@ -1048,10 +1100,15 @@ class _GeneratingPhaseTextState extends State<_GeneratingPhaseText> {
     super.dispose();
   }
 
-  // Phase 0 is the localized base label; the rest are short honest verbs.
+  // Phase 0 is the localized base label; the rest are creative-but-honest
+  // beats that mirror what the coach actually does (read history → pick work →
+  // personalize → finalize). Caps at the last phase (doesn't loop).
   List<String> get _phases => <String>[
         widget.baseLabel,
-        'Building your sets…',
+        'Reading your recent PRs…',
+        'Referencing your training history…',
+        'Checking your recovery…',
+        'Picking your exercises…',
         'Personalizing for you…',
         'Almost ready…',
       ];

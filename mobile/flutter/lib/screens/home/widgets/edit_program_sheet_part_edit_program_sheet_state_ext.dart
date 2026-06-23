@@ -377,64 +377,57 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
           const SizedBox(height: 16),
 
           // Day picker — only training days are selectable.
+          // B2: a trailing "+" opens a menu of not-yet-selected weekdays.
           Row(
             children: [
-              for (final d in trainingDays) ...[
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _editingDay = d);
-                    },
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color:
-                            d == editingDay ? accent : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: d == editingDay
-                              ? accent
-                              : colors.textMuted.withOpacity(0.35),
-                          width: 1.4,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              weekdaySingle[d],
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+              Expanded(
+                child: Row(
+                  children: [
+                    for (final d in trainingDays) ...[
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _editingDay = d);
+                          },
+                          child: Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: d == editingDay
+                                  ? accent
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
                                 color: d == editingDay
-                                    ? Colors.white
-                                    : colors.textPrimary,
+                                    ? accent
+                                    : colors.textMuted.withOpacity(0.35),
+                                width: 1.4,
                               ),
+                            ),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 2),
+                            alignment: Alignment.center,
+                            child: _buildDayChipContent(
+                              colors,
+                              accent,
+                              weekdaySingle[d],
+                              d,
+                              editingDay,
+                              gymProfiles,
                             ),
                           ),
-                          if (_dayOverrides.containsKey(d) &&
-                              d != editingDay)
-                            Positioned(
-                              bottom: 6,
-                              child: Container(
-                                width: 4,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: accent,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                      if (d != trainingDays.last)
+                        const SizedBox(width: 6),
+                    ],
+                  ],
                 ),
-                if (d != trainingDays.last) const SizedBox(width: 6),
+              ),
+              // B2: "+ Add a day" — only when at least one weekday is free.
+              if (trainingDays.length < 7) ...[
+                const SizedBox(width: 6),
+                _buildAddDayButton(colors, accent, weekdayFull, trainingDays),
               ],
             ],
           ),
@@ -456,23 +449,22 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
               // Only useful when there's at least one OTHER training day and
               // this day has an explicit override to copy.
               if (trainingDays.length > 1 && override != null)
-                TextButton.icon(
+                TextButton(
                   onPressed: () =>
                       _showCopyDaySheet(colors, editingDay, trainingDays),
-                  icon: Icon(Icons.content_copy, size: 16, color: accent),
-                  label: Text(
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
                     'Copy to…',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: accent,
                     ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
             ],
@@ -494,8 +486,162 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
             onDurationChanged: (d) => _setOverrideDuration(editingDay, d),
             onIntensityChanged: (i) => _setOverrideIntensity(editingDay, i),
             onGymChanged: (g) => _setOverrideGym(editingDay, g),
+            // B1: create a gym inline. gymProfilesProvider auto-refreshes once
+            // the sheet saves, so the new gym appears as a chip on return.
+            onAddGym: () => showGlassSheet<void>(
+              context: context,
+              builder: (_) => const AddGymProfileSheet(),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// B3: a single day-picker chip's content — the day label plus, when the day
+  /// has a gym override, a small muted gym tag beneath it. Days with a non-gym
+  /// override still get the dot indicator (as before).
+  Widget _buildDayChipContent(
+    SheetColors colors,
+    Color accent,
+    String label,
+    int day,
+    int editingDay,
+    List<GymProfile> gymProfiles,
+  ) {
+    final isEditing = day == editingDay;
+    final ov = _dayOverrides[day];
+    final onColor = isEditing ? Colors.white : colors.textPrimary;
+
+    // Resolve the per-day gym name (if any) for the tag.
+    String? gymName;
+    if (ov?.gymProfileId != null && gymProfiles.isNotEmpty) {
+      for (final g in gymProfiles) {
+        if (g.id == ov!.gymProfileId) {
+          gymName = g.name;
+          break;
+        }
+      }
+    }
+
+    final dayLabel = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: onColor,
+        ),
+      ),
+    );
+
+    if (gymName != null) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          dayLabel,
+          const SizedBox(height: 2),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              gymName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 8.5,
+                fontWeight: FontWeight.w600,
+                color: isEditing
+                    ? Colors.white.withOpacity(0.85)
+                    : colors.textMuted,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // No gym tag — show the day label, plus the override dot when this day has
+    // a (non-editing) override of any kind.
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        dayLabel,
+        if (ov != null && !isEditing)
+          Positioned(
+            bottom: 6,
+            child: Container(
+              width: 4,
+              height: 4,
+              decoration: BoxDecoration(
+                color: accent,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// B2: the trailing "+ Add a day" button on the per-day day picker. Tapping it
+  /// shows a menu of weekdays that aren't training days yet; picking one adds it
+  /// to [_selectedDays] and jumps the editor to it.
+  Widget _buildAddDayButton(
+    SheetColors colors,
+    Color accent,
+    List<String> weekdayFull,
+    List<int> trainingDays,
+  ) {
+    final available = [
+      for (int i = 0; i < 7; i++)
+        if (!trainingDays.contains(i)) i,
+    ];
+    if (available.isEmpty) return const SizedBox.shrink();
+
+    return PopupMenuButton<int>(
+      tooltip: 'Add a training day',
+      position: PopupMenuPosition.under,
+      color: colors.glassSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colors.cardBorder.withOpacity(0.4)),
+      ),
+      itemBuilder: (_) => [
+        for (final d in available)
+          PopupMenuItem<int>(
+            value: d,
+            child: Text(
+              weekdayFull[d],
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
+              ),
+            ),
+          ),
+      ],
+      onSelected: (d) {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _selectedDays.add(d);
+          _editingDay = d;
+        });
+      },
+      child: Container(
+        width: 44,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: accent.withOpacity(0.55),
+            width: 1.4,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Icon(Icons.add_rounded, size: 20, color: accent),
       ),
     );
   }
@@ -1017,13 +1163,17 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
   }
 
   /// One human-readable line per training day for the summary's Per-day block.
-  /// e.g. "Tue · Upper · 90m · Hell" — or "Tue · AI decides" for no override.
+  /// e.g. "Tue · Upper · 90m · Hell · Work Gym" — or "Tue · AI decides" for no
+  /// override. The gym is appended (B3) only when the day pins an explicit gym.
   List<String> _perDaySummaryLines() {
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final focusLabels = {for (final o in kFocusOptions) o.value: o.label};
     final intensityLabels = {
       for (final o in kIntensityOptions) o.value: o.label,
     };
+    final gymProfiles =
+        ref.read(gymProfilesProvider).valueOrNull ?? const <GymProfile>[];
+    final gymNames = {for (final g in gymProfiles) g.id: g.name};
     final lines = <String>[];
     for (final d in _selectedDays.toList()..sort()) {
       final ov = _dayOverrides[d];
@@ -1036,6 +1186,8 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
         if (ov.durationMin != null) '${ov.durationMin}m',
         if (ov.intensity != null)
           (intensityLabels[ov.intensity] ?? ov.intensity!),
+        if (ov.gymProfileId != null && gymNames.containsKey(ov.gymProfileId))
+          gymNames[ov.gymProfileId]!,
       ];
       lines.add('${dayNames[d]} · ${parts.join(' · ')}');
     }

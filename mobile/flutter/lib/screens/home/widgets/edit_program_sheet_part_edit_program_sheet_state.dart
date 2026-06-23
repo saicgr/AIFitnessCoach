@@ -470,11 +470,27 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
 
       controller.setStep(2); // Building your workouts…
       final repo = container.read(workoutRepositoryProvider);
-      await repo.regenerateUpcoming(payload.userId);
+      // Fire-and-forget: do NOT block the user on AI generation (15-120s). The
+      // backend regenerates today+tomorrow eagerly + the visible week in the
+      // background; the home carousel polls (A2) and fills each card in as the
+      // workouts land. We just kick it off and close fast.
+      unawaited(
+        repo.regenerateUpcoming(payload.userId).then((_) {
+          TodayWorkoutNotifier.resetGenerationState();
+          return refreshAfterWorkoutMutation(
+            source: 'edit_program_apply_now_done',
+            userId: payload.userId,
+          );
+        }).catchError((Object e) {
+          debugPrint('⚠️ [EditProgram] background regen failed: $e');
+        }),
+      );
 
       controller.setStep(3); // Finishing up…
       await container.read(authStateProvider.notifier).refreshUser();
       TodayWorkoutNotifier.resetGenerationState();
+      // Immediate refresh so the carousel flips to its generating/polling state
+      // right away (it keeps polling for the background-generated workouts).
       await refreshAfterWorkoutMutation(
         source: 'edit_program_apply_now',
         userId: payload.userId,

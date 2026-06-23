@@ -111,8 +111,10 @@ class PerDayChip extends StatelessWidget {
 ///
 /// - "AI decide" Focus chip → [onAiDecide] (clears the whole day's override).
 /// - Duration / Intensity → null toggles back to "AI picks".
-/// - Gym selector only renders when [gymProfiles] has ≥2 profiles; "Active gym"
-///   maps to `gymProfileId == null`.
+/// - Gym selector renders whenever [showGymSelector] is true: an "Active gym"
+///   chip ("Active gym" maps to `gymProfileId == null`), a chip per profile in
+///   [gymProfiles], and — when [onAddGym] is set — an "Add gym" chip so a second
+///   gym can be created inline (training different days at different gyms).
 class PerDayControls extends StatelessWidget {
   const PerDayControls({
     super.key,
@@ -128,6 +130,7 @@ class PerDayControls extends StatelessWidget {
     required this.onDurationChanged,
     required this.onIntensityChanged,
     required this.onGymChanged,
+    this.onAddGym,
     this.gymProfiles = const [],
     this.showGymSelector = true,
   });
@@ -147,6 +150,9 @@ class PerDayControls extends StatelessWidget {
   final ValueChanged<int?> onDurationChanged;
   final ValueChanged<String?> onIntensityChanged;
   final ValueChanged<String?> onGymChanged;
+
+  /// Opens the "Add gym profile" flow. When null the "Add gym" chip is hidden.
+  final VoidCallback? onAddGym;
 
   final List<GymProfile> gymProfiles;
   final bool showGymSelector;
@@ -279,9 +285,13 @@ class PerDayControls extends StatelessWidget {
           ],
 
           // ── Gym selector ──
-          // Only meaningful when the user has more than one gym profile;
-          // "Active gym" maps to gymProfileId=null (inherit the active gym).
-          if (showGymSelector && gymProfiles.length >= 2) ...[
+          // B1: always render when enabled — "Active gym" (gymProfileId=null,
+          // inherit the active gym) + a chip per profile + an inline "Add gym"
+          // chip. This makes training different days at different gyms
+          // discoverable even with a single gym (the Add-gym chip is the path
+          // to a second one). "Active gym" is hidden when there's nothing to
+          // inherit from yet (zero profiles) — only the Add-gym chip shows.
+          if (showGymSelector) ...[
             const SizedBox(height: 14),
             sectionLabel('Gym'),
             const SizedBox(height: 6),
@@ -289,15 +299,16 @@ class PerDayControls extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                PerDayChip(
-                  label: 'Active gym',
-                  icon: Icons.location_on_rounded,
-                  selected: gymProfileId == null,
-                  accent: accent,
-                  textPrimary: textPrimary,
-                  textMuted: textMuted,
-                  onTap: () => onGymChanged(null),
-                ),
+                if (gymProfiles.isNotEmpty)
+                  PerDayChip(
+                    label: 'Active gym',
+                    icon: Icons.location_on_rounded,
+                    selected: gymProfileId == null,
+                    accent: accent,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    onTap: () => onGymChanged(null),
+                  ),
                 for (final gym in gymProfiles)
                   PerDayChip(
                     label: gym.name,
@@ -308,33 +319,29 @@ class PerDayControls extends StatelessWidget {
                     textMuted: textMuted,
                     onTap: () => onGymChanged(gym.id),
                   ),
-              ],
-            ),
-          ]
-          // B3: with a single gym there's nothing to pick between, so the
-          // selector is hidden — but a muted hint makes the per-day-gym feature
-          // discoverable (train different days at different gyms).
-          else if (showGymSelector && gymProfiles.length == 1) ...[
-            const SizedBox(height: 14),
-            sectionLabel('Gym'),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(Icons.add_location_alt_outlined,
-                    size: 14, color: textMuted),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Add a 2nd gym to train days at different gyms',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: textMuted,
-                      fontStyle: FontStyle.italic,
-                    ),
+                if (onAddGym != null)
+                  PerDayChip(
+                    label: 'Add gym',
+                    icon: Icons.add_rounded,
+                    selected: false,
+                    accent: accent,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    onTap: onAddGym!,
                   ),
-                ),
               ],
             ),
+            if (gymProfiles.length < 2) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Add a 2nd gym to train days at different gyms',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textMuted,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
           ],
         ],
       ],
