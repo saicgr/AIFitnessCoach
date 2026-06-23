@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -28,6 +29,23 @@ const String backgroundExternalWorkoutSyncTask =
 /// Default true (matches the existing foreground auto-import-when-connected
 /// behavior). The settings "Auto-import external workouts" toggle writes here.
 const String kAutoImportExternalWorkoutsKey = 'auto_import_external_workouts';
+
+/// Periodic background sync of TODAY's daily activity (steps / sleep / vitals)
+/// from Apple Health / Health Connect. Health data only syncs while the app is
+/// foregrounded otherwise, so for a user who doesn't open the app the server's
+/// health data goes stale and recovery/health nudges can't fire. This keeps it
+/// fresh headlessly so health-grounded re-engagement notifications stay accurate
+/// (and the freshness gate lets them fire). See plan §2A-ii.
+const String backgroundDailyActivitySyncTask =
+    'com.fitwiz.backgroundDailyActivitySync';
+
+/// SharedPreferences key — user opt-out of background health sync. Default true.
+/// The Settings "Sync health in the background" toggle writes here.
+const String kBackgroundHealthSyncKey = 'background_health_sync_enabled';
+
+/// Persisted consent-denied gate shared with ActivityService — once the backend
+/// 403s for missing health-data consent, stop hammering /activity/sync.
+const String _kActivityConsentDeniedKey = 'activity_health_consent_denied';
 
 /// Notification channel for sync failures.
 const String _syncNotificationChannelId = 'fitwiz_sync';
@@ -73,6 +91,9 @@ void callbackDispatcher() {
 
         case backgroundExternalWorkoutSyncTask:
           return await _processExternalWorkoutImport();
+
+        case backgroundDailyActivitySyncTask:
+          return await _processDailyActivitySync();
 
         default:
           debugPrint('⚠️ [BackgroundSync] Unknown task: $taskName');
@@ -378,6 +399,129 @@ Future<bool> _processExternalWorkoutImport() async {
   return true;
 }
 
+/// Headless sync of TODAY's daily activity (steps / sleep / vitals) to
+/// /activity/sync so health data stays fresh even when the app isn't opened.
+/// Mirrors the foreground build in health_service_part_daily_activity.dart and
+/// the /activity/sync payload in activity_service.dart. No-ops when the user
+/// disabled background sync, hasn't granted Health permission, or has denied
+/// health-data consent. Always returns true on non-fatal errors so WorkManager
+/// doesn't thrash retries.
+///
+/// NOTE: deliberately does NOT touch last_active_at — this is a background
+/// signal, and marking a dormant user "active" would defeat the dormancy taper.
+/// (/activity/sync has no last_active write; only /home/bootstrap + FCM do.)
+Future<bool> _processDailyActivitySync() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool(kBackgroundHealthSyncKey) ?? true)) {
+      debugPrint('ℹ️ [DailyActivitySync] Disabled by user — skipping');
+      return true;
+    }
+    if (prefs.getBool(_kActivityConsentDeniedKey) ?? false) {
+      debugPrint('ℹ️ [DailyActivitySync] Health consent denied — skipping');
+      return true;
+    }
+  } catch (_) {
+    // Fail-open to the historical behavior (attempt sync) on a prefs error.
+  }
+
+  final token = await _resolveBackgroundToken();
+  if (token == null) {
+    debugPrint('ℹ️ [DailyActivitySync] No auth token — skipping');
+    return true;
+  }
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) {
+    debugPrint('ℹ️ [DailyActivitySync] No user id — skipping');
+    return true;
+  }
+
+  final healthService = HealthService();
+  try {
+    if (!await healthService.hasHealthPermissions()) {
+      debugPrint('ℹ️ [DailyActivitySync] No Health permission — skipping');
+      return true;
+    }
+  } catch (e) {
+    debugPrint('⚠️ [DailyActivitySync] Health perm check failed: $e');
+    return true;
+  }
+
+  try {
+    final steps = await healthService.getTodaySteps();
+    final activeEnergy = await healthService.getTodayActiveEnergy();
+    final sleepData = await healthService.getSleepData(days: 1);
+    final vitals = await healthService.getTodayVitals();
+    final overnight = await healthService.getOvernightVitals();
+    final restingHR = vitals['restingHeartRate'] as int?;
+    final hasSleep = sleepData.hasData;
+
+    final now = DateTime.now();
+    String two(int v) => v.toString().padLeft(2, '0');
+
+    final payload = <String, dynamic>{
+      'user_id': userId,
+      'activity_date': '${now.year}-${two(now.month)}-${two(now.day)}',
+      'steps': steps,
+      'calories_burned': activeEnergy,
+      'active_calories': activeEnergy,
+      'resting_heart_rate': restingHR,
+      'sleep_minutes': hasSleep ? sleepData.totalMinutes : null,
+      'deep_sleep_minutes': hasSleep ? sleepData.deepMinutes : null,
+      'rem_sleep_minutes': hasSleep ? sleepData.remMinutes : null,
+      'light_sleep_minutes': hasSleep ? sleepData.lightMinutes : null,
+      'awake_sleep_minutes':
+          hasSleep && sleepData.awakeMinutes > 0 ? sleepData.awakeMinutes : null,
+      'avg_heart_rate': vitals['avgHeartRate'],
+      'max_heart_rate': vitals['maxHeartRate'],
+      'water_ml': vitals['waterMl'],
+      'sleep_start': hasSleep ? sleepData.bedTime?.toIso8601String() : null,
+      'sleep_end': hasSleep ? sleepData.wakeTime?.toIso8601String() : null,
+      'sleep_latency_minutes': hasSleep ? sleepData.latencyMinutes : null,
+      'sleep_efficiency': hasSleep ? sleepData.efficiency : null,
+      'wake_ups': hasSleep ? sleepData.wakeUps : null,
+      'active_minutes': 0,
+      if (overnight['hrv'] != null) 'hrv': overnight['hrv'],
+      if (overnight['bloodOxygen'] != null) 'blood_oxygen': overnight['bloodOxygen'],
+      if (overnight['respiratoryRate'] != null)
+        'respiratory_rate': overnight['respiratoryRate'],
+      if (overnight['bodyTemperature'] != null)
+        'body_temperature': overnight['bodyTemperature'],
+      'source': Platform.isAndroid ? 'health_connect' : 'apple_health',
+    };
+
+    final dio = Dio(BaseOptions(
+      baseUrl: ApiConstants.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    ));
+
+    final resp = await dio.post('/activity/sync', data: payload);
+    debugPrint(
+        '✅ [DailyActivitySync] Synced (steps=$steps, status=${resp.statusCode})');
+    return true;
+  } catch (e) {
+    final msg = e.toString();
+    if (msg.contains('403') || msg.contains('Forbidden')) {
+      // Mirror ActivityService: persist the consent-denied gate so we stop
+      // hammering the endpoint until the user re-enables consent.
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(_kActivityConsentDeniedKey, true);
+      } catch (_) {}
+      debugPrint('🚫 [DailyActivitySync] Health consent missing — gating');
+    } else {
+      debugPrint('❌ [DailyActivitySync] $e');
+    }
+    return true; // never thrash retries on a transient error
+  }
+}
+
 /// User-friendly title for a headlessly-imported external workout, keyed by the
 /// granular activity kind. Mirrors `HealthImportNotifier._buildWorkoutName`.
 String _externalWorkoutName(String kind) {
@@ -503,8 +647,46 @@ class BackgroundSyncService {
       backoffPolicyDelay: const Duration(minutes: 5),
     );
 
+    // Register periodic daily-activity health sync — every 30 minutes. Keeps
+    // steps/sleep/vitals fresh on the server even when the app isn't opened, so
+    // health-grounded re-engagement nudges stay accurate. Internally no-ops when
+    // the user disabled background health sync or hasn't granted permission.
+    await Workmanager().registerPeriodicTask(
+      backgroundDailyActivitySyncTask,
+      backgroundDailyActivitySyncTask,
+      frequency: const Duration(minutes: 30),
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+      backoffPolicy: BackoffPolicy.exponential,
+      backoffPolicyDelay: const Duration(minutes: 5),
+    );
+
     debugPrint(
         '✅ [BackgroundSync] Workmanager initialized and tasks registered');
+  }
+
+  /// Persist the user's "sync health in the background" preference. The
+  /// background task reads this on each firing. Settings toggle calls this.
+  static Future<void> setBackgroundHealthSync(bool enabled) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(kBackgroundHealthSyncKey, enabled);
+      debugPrint('🔄 [BackgroundSync] background health sync = $enabled');
+    } catch (e) {
+      debugPrint('❌ [BackgroundSync] Failed to persist health-sync pref: $e');
+    }
+  }
+
+  /// Read the current "sync health in the background" preference (default ON).
+  static Future<bool> isBackgroundHealthSyncEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(kBackgroundHealthSyncKey) ?? true;
+    } catch (_) {
+      return true;
+    }
   }
 
   /// Persist the user's "auto-import external workouts" preference. The

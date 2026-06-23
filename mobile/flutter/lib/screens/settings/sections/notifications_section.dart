@@ -158,6 +158,73 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           ),
           Divider(height: 1, color: cardBorder),
 
+          // ─── Coach Tone Selector ─────────────────────────────────
+          // Maps to accountability_intensity. "Auto" = the backend's adaptive
+          // per-user tone bandit (learns which tone earns opens); the others
+          // pin a fixed tone. Research: shame backfires in fitness, so the
+          // default leans warm/auto, and "Tough love" is opt-in only.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Coach tone',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'How your coach talks to you in nudges',
+                  style: TextStyle(fontSize: 12, color: textMuted),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildToneChip(
+                      label: 'Auto',
+                      value: 'auto',
+                      selected: notifPrefs.accountabilityIntensity == 'auto',
+                      accent: accent,
+                      isDark: isDark,
+                      textMuted: textMuted,
+                    ),
+                    _buildToneChip(
+                      label: 'Encouraging',
+                      value: 'gentle',
+                      selected: notifPrefs.accountabilityIntensity == 'gentle',
+                      accent: accent,
+                      isDark: isDark,
+                      textMuted: textMuted,
+                    ),
+                    _buildToneChip(
+                      label: 'Balanced',
+                      value: 'balanced',
+                      selected: notifPrefs.accountabilityIntensity == 'balanced',
+                      accent: accent,
+                      isDark: isDark,
+                      textMuted: textMuted,
+                    ),
+                    _buildToneChip(
+                      label: 'Tough love',
+                      value: 'tough_love',
+                      selected: notifPrefs.accountabilityIntensity == 'tough_love',
+                      accent: accent,
+                      isDark: isDark,
+                      textMuted: textMuted,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: cardBorder),
+
           // ─── Bundle Time Pickers (Minimal/Balanced only) ─────────
           if (isBundleMode) ...[
             _buildBundleTimePicker(
@@ -1047,6 +1114,46 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Coach Tone Chip ────────────────────────────────────
+  Widget _buildToneChip({
+    required String label,
+    required String value,
+    required bool selected,
+    required Color accent,
+    required bool isDark,
+    required Color textMuted,
+  }) {
+    final selectedBg = accent.withValues(alpha: 0.15);
+    final unselectedBg = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    return GestureDetector(
+      onTap: () => ref
+          .read(notificationPreferencesProvider.notifier)
+          .setAccountabilityIntensity(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? selectedBg : unselectedBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? accent : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected
+                ? accent
+                : (isDark ? Colors.white70 : Colors.black87),
           ),
         ),
       ),

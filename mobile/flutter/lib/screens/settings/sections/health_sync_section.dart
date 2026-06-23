@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/health_service.dart';
+import '../../../data/services/background_sync_service.dart';
 import '../../../widgets/app_dialog.dart';
 import '../widgets/section_header.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -449,6 +450,16 @@ class _HealthConnectSettingsCard extends ConsumerStatefulWidget {
 
 class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettingsCard> {
   bool _isExpanded = false;
+  bool _bgHealthSyncEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load the persisted "sync health in the background" preference.
+    BackgroundSyncService.isBackgroundHealthSyncEnabled().then((v) {
+      if (mounted) setState(() => _bgHealthSyncEnabled = v);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -614,6 +625,8 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
         children: [
           _buildConsentCard(isDark, textPrimary, textMuted),
           const SizedBox(height: 8),
+          _buildBackgroundSyncToggle(isDark, textPrimary, textMuted),
+          const SizedBox(height: 8),
           Divider(color: cardBorder),
           const SizedBox(height: 8),
           Text(
@@ -775,6 +788,61 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
   /// insights all stay empty. Surfaced here — right where users connect
   /// their wearable — because the canonical toggle buried in AI Settings
   /// was too easy to miss.
+  /// "Sync health in the background" — keeps steps/sleep/vitals fresh on the
+  /// server even when the app is closed, so health-grounded coach notifications
+  /// stay accurate. Gates the WorkManager backgroundDailyActivitySyncTask.
+  /// Only meaningful once health-data consent is on.
+  Widget _buildBackgroundSyncToggle(
+      bool isDark, Color textPrimary, Color textMuted) {
+    final consent =
+        ref.watch(aiSettingsProvider.select((s) => s.healthDataConsent));
+    if (!consent) return const SizedBox.shrink();
+    final cardBg = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: cardBg.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.sync_rounded, size: 18, color: textMuted),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sync health in the background',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Keeps your steps, sleep and recovery up to date so coach '
+                  'tips stay accurate — even when the app is closed.',
+                  style: TextStyle(fontSize: 12, color: textMuted, height: 1.3),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _bgHealthSyncEnabled,
+            onChanged: (v) {
+              setState(() => _bgHealthSyncEnabled = v);
+              BackgroundSyncService.setBackgroundHealthSync(v);
+            },
+            activeThumbColor: AppColors.success,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildConsentCard(bool isDark, Color textPrimary, Color textMuted) {
     final consent =
         ref.watch(aiSettingsProvider.select((s) => s.healthDataConsent));

@@ -655,6 +655,7 @@ class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
 
     // Set up callback for notification taps (navigation)
     notificationService.onNotificationTapped = (notificationType) {
+      _trackNotificationOpen(notificationType);
       _navigateToScreenForNotificationType(notificationType);
     };
 
@@ -688,6 +689,21 @@ class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
     };
 
     debugPrint('🔔 [App] Notification callbacks configured');
+  }
+
+  /// Fire-and-forget open tracking — feeds optimal-send-time learning + the
+  /// adaptive-tone bandit (push_nudge_log.opened_at). Safe to call on every tap.
+  void _trackNotificationOpen(String? notificationType) {
+    if (notificationType == null || notificationType.isEmpty) return;
+    try {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) return;
+      final apiClient = ref.read(apiClientProvider);
+      unawaited(apiClient.trackNotificationOpen(userId, notificationType));
+    } catch (_) {
+      // best-effort — never block navigation on telemetry
+    }
   }
 
   void _navigateToScreenForNotificationType(String? notificationType) {

@@ -1357,6 +1357,26 @@ class ApiClient with WidgetsBindingObserver {
     );
   }
 
+  /// Fire-and-forget: record that the user opened/tapped a notification.
+  ///
+  /// Feeds two systems: the optimal-send-time model (notification_events) and
+  /// the adaptive-tone bandit (stamps push_nudge_log.opened_at for the most
+  /// recent un-opened nudge). Best-effort — never throws to the caller.
+  Future<void> trackNotificationOpen(String userId, String notificationType) async {
+    try {
+      await _dio.post<dynamic>(
+        '/notifications/track-interaction',
+        queryParameters: {'user_id': userId},
+        data: {
+          'notification_type': notificationType,
+          'opened_at': DateTime.now().toUtc().toIso8601String(),
+        },
+      );
+    } catch (_) {
+      // Best-effort telemetry — silently ignore failures.
+    }
+  }
+
   /// Upload file using multipart form data
   Future<Response<dynamic>> uploadFile(
     String path,
