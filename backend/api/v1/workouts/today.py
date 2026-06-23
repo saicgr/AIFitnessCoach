@@ -651,6 +651,40 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             except Exception as e:
                 logger.warning(f"[BG-GEN] Could not determine focus for {target_date}: {e}", exc_info=True)
 
+        # Phase 2 (flag-gated, default OFF): per-day GYM assignment — the
+        # mixed-gym week. If the user's global weekly plan names a gym for this
+        # weekday, that day trains at THAT gym (its equipment), enabling e.g.
+        # Mon/Wed=Gym 1, Tue/Fri=Gym 2 in one schedule. Fail-open: any error
+        # leaves the passed gym_profile_id untouched. Enable only after replay
+        # per the zero-regression rule (env PER_DAY_GYM_ASSIGNMENT=true).
+        import os as _os
+        if _os.getenv("PER_DAY_GYM_ASSIGNMENT", "false").lower() == "true":
+            try:
+                from .generation_endpoints import _parse_workout_day_overrides
+                _urec = await run_db(lambda: db.get_user(user_id))
+                _prefs = (_urec or {}).get("preferences") or {}
+                if isinstance(_prefs, str):
+                    import json as _json
+                    _prefs = _json.loads(_prefs)
+                _ov = _parse_workout_day_overrides(
+                    _prefs.get("workout_day_overrides")
+                ) or {}
+                _day_ov = _ov.get(target_date.weekday())
+                if _day_ov and _day_ov.get("gym_profile_id"):
+                    gym_profile_id = _day_ov["gym_profile_id"]
+                    logger.info(
+                        f"[BG-GEN][per-day-gym] day {target_date.weekday()} "
+                        f"-> gym {gym_profile_id}"
+                    )
+                    _f = _day_ov.get("focus")
+                    if _f:
+                        focus_for_day = _f
+                        workout_type = infer_workout_type_from_focus(_f)
+            except Exception as _e:
+                logger.warning(
+                    f"[BG-GEN][per-day-gym] resolution failed (fail-open): {_e}"
+                )
+
         # Import the generation function (local import to avoid circular dependency)
         from .generation_endpoints import generate_workout
         from models.schemas import GenerateWorkoutRequest

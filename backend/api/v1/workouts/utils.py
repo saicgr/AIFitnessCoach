@@ -170,6 +170,61 @@ def invalidate_workouts_after_equipment_change(
     }
 
 
+def invalidate_workouts_after_program_change(
+    user_id: str,
+    timezone_str: str = None,
+) -> dict:
+    """Single chokepoint for "the user changed their program — regenerate".
+
+    Deletes the user's not-yet-started today + all upcoming incomplete
+    workouts so the next `/today` read (and the upcoming pre-cache)
+    regenerates them against the new split / per-day / workout-type prefs.
+    In-progress and completed rows are left untouched (same guards as the
+    equipment helper). This is what the "Apply now?" confirm and the
+    `POST /workouts/regenerate-upcoming` endpoint call — so every program
+    mutation path invalidates identically instead of each endpoint rolling
+    its own (or silently doing nothing, the bug this fixes).
+    """
+    today_deleted = 0
+    upcoming_deleted = 0
+
+    try:
+        db = get_supabase_db()
+        today_str = get_user_today(timezone_str) if timezone_str else get_user_today("UTC")
+        today_rows = db.client.table("workouts").select(
+            "id, status, is_completed"
+        ).eq("user_id", user_id).eq("scheduled_date", today_str).execute()
+        ids_to_delete = [
+            r["id"] for r in (today_rows.data or [])
+            if not r.get("is_completed")
+            and r.get("status") not in ("generating", "in_progress")
+        ]
+        if ids_to_delete:
+            res = db.client.table("workouts").delete().in_(
+                "id", ids_to_delete
+            ).execute()
+            today_deleted = len(res.data) if res.data else 0
+            logger.info(
+                f"[INVALIDATE-PROGRAM] Deleted {today_deleted} today workouts "
+                f"for user {user_id}"
+            )
+    except Exception as e:
+        logger.warning(
+            f"[INVALIDATE-PROGRAM] Failed to delete today's workout for "
+            f"user {user_id}: {e}",
+            exc_info=True,
+        )
+
+    upcoming_deleted = invalidate_upcoming_workouts(
+        user_id, reason="program_change", timezone_str=timezone_str
+    )
+
+    return {
+        "today_deleted": today_deleted,
+        "upcoming_deleted": upcoming_deleted,
+    }
+
+
 def invalidate_workouts_after_schedule_change(
     user_id: str,
     timezone_str: str = None,

@@ -102,7 +102,14 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
                 )
             updated_prefs["workout_duration"] = _clamped_dur
         if request.workout_type is not None:
-            updated_prefs["training_split"] = request.workout_type
+            # Canonicalize the legacy "AI picks" id so we store ONE value.
+            # Both 'dont_know' and 'ai_decide' historically meant "AI Decides";
+            # new writes use 'ai_decide'. Reads tolerate both (get_split_context
+            # returns {} for either → AI picks the split).
+            _split = request.workout_type
+            updated_prefs["training_split"] = (
+                "ai_decide" if _split == "dont_know" else _split
+            )
         if request.workout_days is not None:
             # Convert day names to indices (Mon=0, Tue=1, etc.)
             day_map = {"Mon": 0, "Tue": 1, "Wed": 2, "Thu": 3, "Fri": 4, "Sat": 5, "Sun": 6}
@@ -178,48 +185,61 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
                     exc_info=True,
                 )
 
-        # Delete only future incomplete workouts
-        # CRITICAL: Never delete completed workouts or past workouts
-        today = user_today_date(http_request, db, request.user_id).isoformat()
-
-        # Get all workouts for user
-        all_workouts = db.list_workouts(request.user_id, limit=1000)
-
-        # Filter to only future incomplete workouts
-        workouts_to_delete = []
-        for w in all_workouts:
-            scheduled_date = w.get("scheduled_date")
-            is_completed = w.get("is_completed", False)
-
-            # Convert scheduled_date to string for comparison
-            if hasattr(scheduled_date, 'isoformat'):
-                scheduled_date = scheduled_date.isoformat()
-            elif hasattr(scheduled_date, 'strftime'):
-                scheduled_date = scheduled_date.strftime('%Y-%m-%d')
-
-            # Only delete if: not completed AND scheduled for today or future
-            if not is_completed and scheduled_date and scheduled_date >= today:
-                workouts_to_delete.append(w)
-
-        logger.info(f"Found {len(workouts_to_delete)} future incomplete workouts to delete")
-
-        # Delete workout changes first (FK constraint)
-        for w in workouts_to_delete:
-            try:
-                db.delete_workout_changes_by_workout(w["id"])
-            except Exception as e:
-                logger.warning(f"Could not delete workout changes for {w['id']}: {e}", exc_info=True)
-
-        # Delete the workouts
+        # Delete only future incomplete workouts.
+        # CRITICAL: Never delete completed workouts or past workouts.
+        #
+        # Gated behind request.regenerate: the new "ask me each time" editor
+        # saves prefs with regenerate=False (pure persist), then calls
+        # POST /workouts/regenerate-upcoming on user confirm. Existing callers
+        # (e.g. the AI-preset "Start split" sheet) omit the flag → defaults
+        # True → preserve the historical apply-immediately behavior.
+        # Injury invalidation above is ALWAYS-on regardless (safety).
         deleted_count = 0
-        for w in workouts_to_delete:
-            try:
-                db.delete_workout(w["id"])
-                deleted_count += 1
-            except Exception as e:
-                logger.error(f"Failed to delete workout {w['id']}: {e}", exc_info=True)
+        if request.regenerate is not False:
+            today = user_today_date(http_request, db, request.user_id).isoformat()
 
-        logger.info(f"Deleted {deleted_count} future incomplete workouts for user {request.user_id}")
+            # Get all workouts for user
+            all_workouts = db.list_workouts(request.user_id, limit=1000)
+
+            # Filter to only future incomplete workouts
+            workouts_to_delete = []
+            for w in all_workouts:
+                scheduled_date = w.get("scheduled_date")
+                is_completed = w.get("is_completed", False)
+
+                # Convert scheduled_date to string for comparison
+                if hasattr(scheduled_date, 'isoformat'):
+                    scheduled_date = scheduled_date.isoformat()
+                elif hasattr(scheduled_date, 'strftime'):
+                    scheduled_date = scheduled_date.strftime('%Y-%m-%d')
+
+                # Only delete if: not completed AND scheduled for today or future
+                if not is_completed and scheduled_date and scheduled_date >= today:
+                    workouts_to_delete.append(w)
+
+            logger.info(f"Found {len(workouts_to_delete)} future incomplete workouts to delete")
+
+            # Delete workout changes first (FK constraint)
+            for w in workouts_to_delete:
+                try:
+                    db.delete_workout_changes_by_workout(w["id"])
+                except Exception as e:
+                    logger.warning(f"Could not delete workout changes for {w['id']}: {e}", exc_info=True)
+
+            # Delete the workouts
+            for w in workouts_to_delete:
+                try:
+                    db.delete_workout(w["id"])
+                    deleted_count += 1
+                except Exception as e:
+                    logger.error(f"Failed to delete workout {w['id']}: {e}", exc_info=True)
+
+            logger.info(f"Deleted {deleted_count} future incomplete workouts for user {request.user_id}")
+        else:
+            logger.info(
+                f"[update-program] regenerate=False → prefs persisted, future "
+                f"workouts preserved for user {request.user_id}"
+            )
 
         # Index preference changes to RAG for AI context
         try:
@@ -276,6 +296,45 @@ async def update_program(http_request: Request, request: UpdateProgramRequest,
         raise
     except Exception as e:
         logger.error(f"Failed to update program: {e}", exc_info=True)
+        raise safe_internal_error(e, "program")
+
+
+@router.post("/regenerate-upcoming", response_model=QuickRegenerateResponse)
+async def regenerate_upcoming_workouts(http_request: Request, request: QuickRegenerateRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Invalidate not-started today + all upcoming incomplete workouts so they
+    lazily regenerate against the user's current program prefs.
+
+    This is the chokepoint the new "ask me each time" editor calls AFTER it
+    persists a program change (split / per-day / workout type / days) with
+    `update-program regenerate=False`. Pure invalidation — generation happens
+    lazily on the next `/today` read + upcoming pre-cache. Auth-scoped to self.
+    Replaces the old behavior where Settings split/per-day saves were silent
+    invalidation dead-ends (the "the split isn't working" bug).
+    """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    try:
+        from core.timezone_utils import resolve_timezone
+        from .utils import invalidate_workouts_after_program_change
+        db = get_supabase_db()
+        tz = resolve_timezone(http_request, db, request.user_id)
+        counts = invalidate_workouts_after_program_change(
+            request.user_id, timezone_str=tz
+        )
+        deleted = counts.get("today_deleted", 0) + counts.get("upcoming_deleted", 0)
+        logger.info(f"[regenerate-upcoming] user {request.user_id}: {counts}")
+        return QuickRegenerateResponse(
+            success=True,
+            message="Upcoming workouts will regenerate with your new program.",
+            workouts_deleted=deleted,
+            workouts_generated=0,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to regenerate upcoming: {e}", exc_info=True)
         raise safe_internal_error(e, "program")
 
 

@@ -422,6 +422,12 @@ class UpdateProgramRequest(BaseModel):
     # pass-through; prescribed set weights snap to this set when present.
     # Fully optional / fail-open. See GenerateWorkoutRequest.equipment_weights.
     equipment_weights: Optional[Dict[str, List[float]]] = Field(default=None, description="Per-equipment available weights (canonical id -> sorted weights in the user's workout unit).")
+    # When False, persist prefs WITHOUT deleting future workouts (the new
+    # "ask me each time" flow saves prefs first, then calls
+    # /workouts/regenerate-upcoming on user confirm). Defaults True to
+    # preserve historical behavior for existing callers (e.g. the AI-preset
+    # "Start split" sheet, which applies immediately).
+    regenerate: Optional[bool] = Field(default=True)
 
 
 class UpdateProgramResponse(BaseModel):
