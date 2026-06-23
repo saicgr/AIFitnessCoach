@@ -420,9 +420,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case 'bro_split':
         return 'Bro Split';
       case 'dont_know':
-        return 'Auto';
       case 'ai_decide':
-        return 'AI Decide';
+        return 'AI Decides';
       default:
         return split.replaceAll('_', ' ');
     }

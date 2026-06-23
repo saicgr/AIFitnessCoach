@@ -10,6 +10,7 @@ import '../../../data/providers/branded_program_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/design_system/zealova.dart';
+import '../../home/widgets/edit_program_sheet.dart';
 import '../../workout/widgets/quick_workout_sheet.dart';
 import 'exercise_preferences_card.dart';
 import 'workout_library_grid.dart';
@@ -225,10 +226,9 @@ class _ProgramBlock extends ConsumerWidget {
     final tc = ThemeColors.of(context);
     final program = ref.watch(activeUserProgramProvider);
 
+    final bool hasProgram = program?.displayName.trim().isNotEmpty == true;
     final String programLabel =
-        (program?.displayName.trim().isNotEmpty == true)
-            ? program!.displayName.trim().toUpperCase()
-            : 'YOUR PROGRAM';
+        hasProgram ? program!.displayName.trim().toUpperCase() : 'MY PROGRAM';
     final int? currentWeek = program?.currentWeek;
     final int totalWeeks = program?.totalWeeks ?? 0;
 
@@ -236,22 +236,69 @@ class _ProgramBlock extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Tappable title + chevron — opens the program(s) surface.
             Expanded(
-              child: Text(
-                programLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: ZType.disp(20, color: tc.textPrimary),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  HapticService.light();
+                  context.push('/workout/program-library');
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        programLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ZType.disp(20, color: tc.textPrimary),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text('›',
+                        style: TextStyle(
+                            color: tc.textMuted,
+                            fontSize: 20,
+                            height: 1.0,
+                            fontWeight: FontWeight.w300)),
+                  ],
+                ),
               ),
             ),
-            if (currentWeek != null && totalWeeks > 0)
+            if (currentWeek != null && totalWeeks > 0) ...[
+              const SizedBox(width: 10),
               Text(
                 'WEEK $currentWeek OF $totalWeeks',
                 style: ZType.lbl(11, color: tc.accent, letterSpacing: 1.6),
               ),
+            ],
+            const SizedBox(width: 12),
+            // Separate Edit affordance — opens the unified program editor.
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () async {
+                HapticService.light();
+                final changed = await showEditProgramSheet(context, ref);
+                if (changed == true) {
+                  ref.invalidate(activeUserProgramProvider);
+                }
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.tune_rounded, size: 15, color: tc.textSecondary),
+                  const SizedBox(width: 4),
+                  Text('EDIT',
+                      style: ZType.lbl(12,
+                          color: tc.textSecondary, letterSpacing: 1.4)),
+                ],
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
