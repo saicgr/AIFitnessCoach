@@ -7,9 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../data/models/gym_profile.dart';
 import '../../../data/models/user.dart';
+import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../workout/widgets/per_day_focus_chips.dart';
 
 /// Per-day AI workout customization sheet.
 ///
@@ -49,31 +52,10 @@ class _PerDayWorkoutOverridesSheetState
     (full: 'Sunday', short: 'Sun', single: 'S'),
   ];
 
-  /// User-facing focus catalog. Maps to backend `focus` values in
-  /// `workout_day_overrides.<int>.focus`.
-  static const _focusOptions = <({String value, String label, IconData icon})>[
-    (value: 'upper_body', label: 'Upper', icon: Icons.fitness_center_rounded),
-    (value: 'lower_body', label: 'Lower', icon: Icons.directions_walk_rounded),
-    (value: 'full_body', label: 'Full', icon: Icons.accessibility_new_rounded),
-    (value: 'push', label: 'Push', icon: Icons.arrow_upward_rounded),
-    (value: 'pull', label: 'Pull', icon: Icons.arrow_downward_rounded),
-    (value: 'legs', label: 'Legs', icon: Icons.directions_run_rounded),
-    (value: 'core', label: 'Core', icon: Icons.center_focus_strong_rounded),
-    (value: 'cardio', label: 'Cardio', icon: Icons.favorite_rounded),
-    (value: 'mobility', label: 'Mobility', icon: Icons.self_improvement_rounded),
-    (value: 'active_recovery', label: 'Recovery', icon: Icons.bedtime_rounded),
-  ];
-
-  /// User-facing intensity catalog.
-  static const _intensityOptions = <({String value, String label})>[
-    (value: 'easy', label: 'Easy'),
-    (value: 'moderate', label: 'Moderate'),
-    (value: 'hard', label: 'Hard'),
-    (value: 'hell', label: 'Hell 🔥'),
-  ];
-
-  /// Duration options in minutes.
-  static const _durationOptions = [15, 20, 30, 45, 60, 75, 90];
+  // Focus / intensity / duration catalogs now live in the shared
+  // `per_day_focus_chips.dart` (kFocusOptions / kIntensityOptions /
+  // kDurationOptions) so this sheet and the unified Edit Program editor render
+  // identical controls.
 
   /// Currently-selected day for editing. Null = picker visible only.
   int? _selectedDay;
@@ -137,6 +119,21 @@ class _PerDayWorkoutOverridesSheetState
         _draft[day] = intensity == null
             ? existing.copyWith(clearIntensity: true)
             : existing.copyWith(intensity: intensity);
+      }
+    });
+  }
+
+  void _setGym(int day, String? gymProfileId) {
+    setState(() {
+      final existing = _draft[day];
+      if (existing == null) {
+        if (gymProfileId == null) return;
+        _draft[day] =
+            WorkoutDayOverride(focus: 'full_body', gymProfileId: gymProfileId);
+      } else {
+        _draft[day] = gymProfileId == null
+            ? existing.copyWith(clearGymProfileId: true)
+            : existing.copyWith(gymProfileId: gymProfileId);
       }
     });
   }
@@ -372,9 +369,8 @@ class _PerDayWorkoutOverridesSheetState
     Color textMuted,
     bool isDark,
   ) {
-    final currentFocus = override?.focus ?? 'full_body';
-    final currentDuration = override?.durationMin;
-    final currentIntensity = override?.intensity;
+    final gymProfiles =
+        ref.watch(gymProfilesProvider).valueOrNull ?? const <GymProfile>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,87 +403,25 @@ class _PerDayWorkoutOverridesSheetState
         ),
         const SizedBox(height: 10),
 
-        // ── Focus ──
-        Text('Focus', style: TextStyle(fontSize: 13, color: textMuted, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (final opt in _focusOptions)
-              _ChipButton(
-                label: opt.label,
-                icon: opt.icon,
-                selected: currentFocus == opt.value,
-                accent: accent,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-                onTap: () => _setFocus(day, opt.value),
-              ),
-          ],
+        // Shared control stack — identical to the unified Edit Program editor.
+        // focus=null ⇒ "AI decide" (no override for this day); the AI-decide
+        // chip clears the day so the Settings summary "AI decides" matches an
+        // in-sheet control.
+        PerDayControls(
+          focus: override?.focus,
+          durationMin: override?.durationMin,
+          intensity: override?.intensity,
+          gymProfileId: override?.gymProfileId,
+          accent: accent,
+          textPrimary: textPrimary,
+          textMuted: textMuted,
+          gymProfiles: gymProfiles,
+          onFocusChanged: (f) => _setFocus(day, f),
+          onAiDecide: () => _resetDay(day),
+          onDurationChanged: (d) => _setDuration(day, d),
+          onIntensityChanged: (i) => _setIntensity(day, i),
+          onGymChanged: (g) => _setGym(day, g),
         ),
-        const SizedBox(height: 14),
-
-        // ── Duration ──
-        Text('Duration', style: TextStyle(fontSize: 13, color: textMuted, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (final mins in _durationOptions)
-              _ChipButton(
-                label: '$mins min',
-                icon: null,
-                selected: currentDuration == mins,
-                accent: accent,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-                onTap: () => _setDuration(
-                  day,
-                  currentDuration == mins ? null : mins,
-                ),
-              ),
-          ],
-        ),
-        if (currentDuration == null) ...[
-          const SizedBox(height: 4),
-          Text(
-            'AI picks duration if not set',
-            style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic),
-          ),
-        ],
-        const SizedBox(height: 14),
-
-        // ── Intensity ──
-        Text('Intensity', style: TextStyle(fontSize: 13, color: textMuted, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (final opt in _intensityOptions)
-              _ChipButton(
-                label: opt.label,
-                icon: null,
-                selected: currentIntensity == opt.value,
-                accent: accent,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-                onTap: () => _setIntensity(
-                  day,
-                  currentIntensity == opt.value ? null : opt.value,
-                ),
-              ),
-          ],
-        ),
-        if (currentIntensity == null) ...[
-          const SizedBox(height: 4),
-          Text(
-            'AI picks intensity if not set',
-            style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic),
-          ),
-        ],
       ],
     );
   }
@@ -563,70 +497,6 @@ class _DayButton extends StatelessWidget {
                     ),
                   ),
                 ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChipButton extends StatelessWidget {
-  const _ChipButton({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.accent,
-    required this.textPrimary,
-    required this.textMuted,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData? icon;
-  final bool selected;
-  final Color accent;
-  final Color textPrimary;
-  final Color textMuted;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: EdgeInsets.symmetric(
-            horizontal: icon == null ? 12 : 10,
-            vertical: 7,
-          ),
-          decoration: BoxDecoration(
-            color: selected ? accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? accent : textMuted.withValues(alpha: 0.35),
-              width: 1.2,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon,
-                    size: 14, color: selected ? Colors.white : textMuted),
-                const SizedBox(width: 4),
-              ],
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : textPrimary,
-                ),
-              ),
             ],
           ),
         ),

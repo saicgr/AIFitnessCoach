@@ -911,6 +911,11 @@ class WorkoutDayOverride extends Equatable {
   /// Free-text user note, ≤140 chars, sent verbatim to the AI prompt.
   final String? notes;
 
+  /// Optional gym profile this day trains at. When set, the generator uses
+  /// THIS gym's equipment for the day, enabling a mixed-gym week (e.g.
+  /// Mon/Wed = Gym 1, Tue/Fri = Gym 2). `null` = fall back to the active gym.
+  final String? gymProfileId;
+
   const WorkoutDayOverride({
     required this.focus,
     this.durationMin,
@@ -918,6 +923,7 @@ class WorkoutDayOverride extends Equatable {
     this.workoutType,
     this.equipmentOverride,
     this.notes,
+    this.gymProfileId,
   });
 
   factory WorkoutDayOverride.fromJson(Map<String, dynamic> json) {
@@ -934,6 +940,7 @@ class WorkoutDayOverride extends Equatable {
       equipmentOverride:
           eq is List ? eq.map((e) => e.toString()).toList() : null,
       notes: json['notes'] as String?,
+      gymProfileId: json['gym_profile_id'] as String?,
     );
   }
 
@@ -945,6 +952,8 @@ class WorkoutDayOverride extends Equatable {
         if (equipmentOverride != null)
           'equipment_override': equipmentOverride,
         if (notes != null && notes!.isNotEmpty) 'notes': notes,
+        if (gymProfileId != null && gymProfileId!.isNotEmpty)
+          'gym_profile_id': gymProfileId,
       };
 
   WorkoutDayOverride copyWith({
@@ -959,6 +968,8 @@ class WorkoutDayOverride extends Equatable {
     bool clearEquipmentOverride = false,
     String? notes,
     bool clearNotes = false,
+    String? gymProfileId,
+    bool clearGymProfileId = false,
   }) {
     return WorkoutDayOverride(
       focus: focus ?? this.focus,
@@ -971,10 +982,19 @@ class WorkoutDayOverride extends Equatable {
           ? null
           : (equipmentOverride ?? this.equipmentOverride),
       notes: clearNotes ? null : (notes ?? this.notes),
+      gymProfileId:
+          clearGymProfileId ? null : (gymProfileId ?? this.gymProfileId),
     );
   }
 
   @override
-  List<Object?> get props =>
-      [focus, durationMin, intensity, workoutType, equipmentOverride, notes];
+  List<Object?> get props => [
+        focus,
+        durationMin,
+        intensity,
+        workoutType,
+        equipmentOverride,
+        notes,
+        gymProfileId,
+      ];
 }

@@ -2,9 +2,15 @@ part of 'edit_program_sheet.dart';
 
 
 class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
-  // Wizard step (0-3)
+  // Wizard step (0-5). The editor is now a unified, multi-section flow:
+  //   0 Schedule     (days + difficulty + duration)
+  //   1 Split        (AI Decides + AI-Powered presets)
+  //   2 Per-day      (per training-day focus / duration / intensity / gym)
+  //   3 Workout Type (Strength / Cardio / Mixed)
+  //   4 Equipment    (equipment + focus areas)
+  //   5 Health       (injuries + summary)
   int _currentStep = 0;
-  static const int _totalSteps = 4;
+  static const int _totalSteps = 6;
 
   bool _isUpdating = false;
   bool _isLoading = false;
@@ -15,20 +21,31 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   int _totalWorkoutsToGenerate = 0;
   String? _generatingDetail;
 
-  // Step 1: Schedule
+  // Step 0: Schedule
   final Set<int> _selectedDays = {0, 2, 4}; // Default: Mon, Wed, Fri
   String _selectedDifficulty = 'medium';
   double _selectedDurationMin = 45;
   double _selectedDurationMax = 60;
   // Program weeks removed - using automatic 2-week generation with auto-regeneration
 
-  // Step 2: Training Program & Equipment
+  // Step 1: Training Split / Program
+  // null or 'ai_decide' → let the coach choose the split.
   String? _selectedProgramId;
   String _customProgramDescription = ''; // For custom training program
+
+  // Step 2: Per-day overrides (weekday int 0=Mon..6=Sun → override).
+  late Map<int, WorkoutDayOverride> _dayOverrides;
+  // The training day currently being edited in the per-day step.
+  int? _editingDay;
+
+  // Step 3: Workout Type (strength / cardio / mixed).
+  String _selectedWorkoutType = 'mixed';
+
+  // Step 4: Equipment + Focus
   final Set<String> _selectedFocusAreas = {'Full Body'};
   final Set<String> _selectedEquipment = {};
 
-  // Step 3: Health (optional)
+  // Step 5: Health (optional)
   final Set<String> _selectedInjuries = {};
 
   // Custom inputs
@@ -44,9 +61,24 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   final TextEditingController _focusAreaController = TextEditingController();
   final TextEditingController _injuryController = TextEditingController();
 
+  // ── Change tracking for the "ask me each time" save flow ──────────────
+  // Snapshot of program-affecting fields taken right after load. On save we
+  // diff against this to decide whether to offer "Apply now".
+  Set<int> _initialDays = {};
+  String? _initialProgramId;
+  String _initialWorkoutType = 'mixed';
+  String _initialDifficulty = 'medium';
+  int _initialDurationMin = 45;
+  int _initialDurationMax = 60;
+  Map<int, WorkoutDayOverride> _initialOverrides = {};
+  Set<String> _initialEquipment = {};
+  Set<String> _initialFocusAreas = {};
+  Set<String> _initialInjuries = {};
+
   @override
   void initState() {
     super.initState();
+    _dayOverrides = {};
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadPreferences());
   }
 
@@ -57,15 +89,21 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     super.dispose();
   }
 
+  /// Active gym profile (if any). Drives the gym-aware workout-days source so
+  /// the home editor and Settings share ONE source of truth.
+  GymProfile? get _activeProfile => ref.read(activeGymProfileProvider);
+
   Future<void> _loadPreferences() async {
     final authState = ref.read(authStateProvider);
-    final userId = authState.user?.id;
+    final user = authState.user;
+    final userId = user?.id;
 
     if (userId == null) {
       setState(() {
         _isLoading = false;
         _selectedDays.addAll([0, 2, 4]);
         _selectedFocusAreas.add('Full Body');
+        _snapshotInitialState();
       });
       return;
     }
@@ -92,7 +130,11 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             }
 
             _selectedDays.clear();
-            if (prefs.workoutDays.isNotEmpty) {
+            // Prefer the active gym profile's days so home + Settings agree.
+            final profileDays = _activeProfile?.workoutDays;
+            if (profileDays != null && profileDays.isNotEmpty) {
+              _selectedDays.addAll(profileDays);
+            } else if (prefs.workoutDays.isNotEmpty) {
               final dayMap = {
                 'Mon': 0,
                 'Tue': 1,
@@ -106,7 +148,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                 final index = dayMap[day];
                 if (index != null) _selectedDays.add(index);
               }
-            } else {
+            }
+            if (_selectedDays.isEmpty) {
               _selectedDays.addAll([0, 2, 4]);
             }
 
@@ -145,7 +188,21 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             _selectedDays.addAll([0, 2, 4]);
             _selectedFocusAreas.add('Full Body');
           }
+
+          // Per-day overrides live on the user record (preferences JSONB),
+          // not in ProgramPreferences — load them directly from auth state.
+          _dayOverrides = Map<int, WorkoutDayOverride>.from(
+            user?.workoutDayOverrides ?? const <int, WorkoutDayOverride>{},
+          );
+
+          // Workout Type (Strength / Cardio / Mixed) is the user's
+          // `workout_type_preference`, surfaced by the trainingPreferences
+          // notifier — NOT ProgramPreferences.workoutType (that's the split).
+          _selectedWorkoutType =
+              ref.read(trainingPreferencesProvider).workoutType.value;
+
           _isLoading = false;
+          _snapshotInitialState();
         });
       }
     } catch (e) {
@@ -154,11 +211,74 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
           _isLoading = false;
           _selectedDays.addAll([0, 2, 4]);
           _selectedFocusAreas.add('Full Body');
+          _snapshotInitialState();
         });
       }
     }
   }
 
+  /// Capture the post-load values so we can diff on save (change detection for
+  /// the "Apply now?" confirm).
+  void _snapshotInitialState() {
+    _initialDays = Set<int>.from(_selectedDays);
+    _initialProgramId = _selectedProgramId;
+    _initialWorkoutType = _selectedWorkoutType;
+    _initialDifficulty = _selectedDifficulty;
+    _initialDurationMin = _selectedDurationMin.round();
+    _initialDurationMax = _selectedDurationMax.round();
+    _initialOverrides = Map<int, WorkoutDayOverride>.from(_dayOverrides);
+    _initialEquipment = Set<String>.from(_selectedEquipment);
+    _initialFocusAreas = Set<String>.from(_selectedFocusAreas);
+    _initialInjuries = Set<String>.from(_selectedInjuries);
+  }
+
+  bool _setEquals<T>(Set<T> a, Set<T> b) {
+    if (a.length != b.length) return false;
+    for (final item in a) {
+      if (!b.contains(item)) return false;
+    }
+    return true;
+  }
+
+  bool _overridesEqual(
+      Map<int, WorkoutDayOverride> a, Map<int, WorkoutDayOverride> b) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) return false;
+    }
+    return true;
+  }
+
+  /// True when any program-affecting field changed since load.
+  bool get _hasProgramChanges {
+    return !_setEquals(_selectedDays, _initialDays) ||
+        _selectedProgramId != _initialProgramId ||
+        _selectedWorkoutType != _initialWorkoutType ||
+        _selectedDifficulty != _initialDifficulty ||
+        _selectedDurationMin.round() != _initialDurationMin ||
+        _selectedDurationMax.round() != _initialDurationMax ||
+        !_overridesEqual(_dayOverrides, _initialOverrides) ||
+        !_setEquals(_selectedEquipment, _initialEquipment) ||
+        !_setEquals(_selectedFocusAreas, _initialFocusAreas) ||
+        !_setEquals(_selectedInjuries, _initialInjuries);
+  }
+
+  /// Persist gym-aware workout days. When an active gym profile exists, the
+  /// days belong to THAT profile (mirrors settings_card `_saveWorkoutDays`),
+  /// so home + Settings can't drift. Otherwise fall back to the global user
+  /// preferences via the canonical update-program write below.
+  Future<void> _persistWorkoutDaysToProfile(List<int> sortedDays) async {
+    final activeProfile = _activeProfile;
+    if (activeProfile == null) return; // global path handled by update-program
+    await ref.read(gymProfilesProvider.notifier).updateProfile(
+          activeProfile.id,
+          GymProfileUpdate(workoutDays: sortedDays),
+        );
+  }
+
+  /// Unified save: persist EVERYTHING with regenerate=false (pure write), then
+  /// — if anything program-affecting changed — ask the user whether to apply
+  /// now (delete today/upcoming so they regenerate under the new prefs).
   Future<void> _updateProgram() async {
     if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -179,7 +299,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     });
 
     final authState = ref.read(authStateProvider);
-    final userId = authState.user?.id;
+    final user = authState.user;
+    final userId = user?.id;
 
     if (userId == null) {
       setState(() {
@@ -189,14 +310,23 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       return;
     }
 
+    final didChange = _hasProgramChanges;
+
     try {
       final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      final selectedDayNames = _selectedDays.map((i) => dayNames[i]).toList();
+      final sortedDays = _selectedDays.toList()..sort();
+      final selectedDayNames = sortedDays.map((i) => dayNames[i]).toList();
 
       final repo = ref.read(workoutRepositoryProvider);
 
-      // Update preferences and delete old workouts
-      await repo.updateProgramAndRegenerate(
+      // 1. Gym-aware days: write to the active profile when one exists (single
+      //    source of truth shared with Settings).
+      await _persistWorkoutDaysToProfile(sortedDays);
+
+      // 2. Persist program preferences — pure write, NO regenerate. (The
+      //    update-program endpoint also writes days to global prefs, which is
+      //    the fallback when there's no active gym profile.)
+      await repo.updateProgram(
         userId: userId,
         difficulty: _selectedDifficulty,
         durationMinutesMin: _selectedDurationMin.round(),
@@ -205,7 +335,9 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         injuries: _selectedInjuries.toList(),
         equipment:
             _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null,
-        workoutType: _selectedProgramId, // Send training program ID
+        workoutType: _selectedProgramId == 'custom'
+            ? 'custom'
+            : (_selectedProgramId ?? 'ai_decide'),
         workoutDays: selectedDayNames,
         dumbbellCount:
             _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
@@ -214,9 +346,49 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         customProgramDescription: _selectedProgramId == 'custom'
             ? _customProgramDescription
             : null,
+        regenerate: false,
       );
 
-      // Close sheet immediately - workouts will be generated on-demand when user visits home
+      // 3. Persist per-day overrides into the user preferences JSONB.
+      await _persistDayOverrides(user, userId);
+
+      // 4. Persist Workout Type (Strength / Cardio / Mixed). This lives on the
+      //    user record via `workout_type_preference`, NOT update-program, so it
+      //    routes through the trainingPreferences notifier (no-ops if unchanged).
+      if (_selectedWorkoutType != _initialWorkoutType) {
+        await ref
+            .read(trainingPreferencesProvider.notifier)
+            .setWorkoutType(WorkoutType.fromString(_selectedWorkoutType));
+      }
+
+      if (!mounted) return;
+
+      // 5. "Ask me each time": only when something program-affecting changed.
+      if (didChange) {
+        final applyNow = await AppDialog.confirm(
+          context,
+          title: 'Apply now?',
+          message:
+              'Apply these changes to your upcoming workouts now? This regenerates today (if not started) and upcoming sessions.',
+          confirmText: 'Apply now',
+          cancelText: 'Later',
+          icon: Icons.auto_awesome_rounded,
+        );
+
+        if (applyNow && mounted) {
+          setState(() {
+            _updateStatus = 'Applying changes…';
+          });
+          await repo.regenerateUpcoming(userId);
+          // Refresh local state + home surfaces so the new sessions show.
+          await ref.read(authStateProvider.notifier).refreshUser();
+          TodayWorkoutNotifier.resetGenerationState();
+          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+          ref.read(workoutsProvider.notifier).silentRefresh();
+        }
+      }
+
+      // Close sheet. Returning `true` lets callers run their own refresh too.
       if (mounted) {
         Navigator.pop(context, true);
       }
@@ -249,6 +421,93 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         );
       }
     }
+  }
+
+  // ── Per-day override mutation helpers (used by _buildPerDayStep) ────────
+
+  /// Set a single day's focus from the shared [PerDayControls].
+  void _setOverrideFocus(int day, String focus) {
+    setState(() {
+      final existing = _dayOverrides[day];
+      _dayOverrides[day] = existing == null
+          ? WorkoutDayOverride(focus: focus)
+          : existing.copyWith(focus: focus);
+    });
+  }
+
+  /// "AI decide" for a day = remove its override entirely.
+  void _clearOverride(int day) {
+    setState(() => _dayOverrides.remove(day));
+  }
+
+  void _setOverrideDuration(int day, int? duration) {
+    setState(() {
+      final existing = _dayOverrides[day];
+      if (existing == null) {
+        if (duration == null) return;
+        _dayOverrides[day] =
+            WorkoutDayOverride(focus: 'full_body', durationMin: duration);
+      } else {
+        _dayOverrides[day] = duration == null
+            ? existing.copyWith(clearDurationMin: true)
+            : existing.copyWith(durationMin: duration);
+      }
+    });
+  }
+
+  void _setOverrideIntensity(int day, String? intensity) {
+    setState(() {
+      final existing = _dayOverrides[day];
+      if (existing == null) {
+        if (intensity == null) return;
+        _dayOverrides[day] =
+            WorkoutDayOverride(focus: 'full_body', intensity: intensity);
+      } else {
+        _dayOverrides[day] = intensity == null
+            ? existing.copyWith(clearIntensity: true)
+            : existing.copyWith(intensity: intensity);
+      }
+    });
+  }
+
+  void _setOverrideGym(int day, String? gymProfileId) {
+    setState(() {
+      final existing = _dayOverrides[day];
+      if (existing == null) {
+        if (gymProfileId == null) return;
+        _dayOverrides[day] =
+            WorkoutDayOverride(focus: 'full_body', gymProfileId: gymProfileId);
+      } else {
+        _dayOverrides[day] = gymProfileId == null
+            ? existing.copyWith(clearGymProfileId: true)
+            : existing.copyWith(gymProfileId: gymProfileId);
+      }
+    });
+  }
+
+  /// Merge the per-day overrides map into the user preferences JSONB and fire
+  /// the optimistic auth-notifier update (same path the per-day sheet uses).
+  Future<void> _persistDayOverrides(User? user, String userId) async {
+    final payload = <String, dynamic>{};
+    _dayOverrides.forEach((day, override) {
+      payload[day.toString()] = override.toJson();
+    });
+
+    Map<String, dynamic> currentPrefs = {};
+    if (user?.preferences != null && user!.preferences!.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(user.preferences!);
+        if (decoded is Map) {
+          currentPrefs = Map<String, dynamic>.from(decoded);
+        }
+      } catch (_) {}
+    }
+    final mergedPrefs = Map<String, dynamic>.from(currentPrefs);
+    mergedPrefs['workout_day_overrides'] = payload;
+
+    await ref.read(authStateProvider.notifier).updateUserProfile({
+      'preferences': mergedPrefs,
+    });
   }
 
   void _nextStep() {
@@ -368,7 +627,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = context.sheetColors;
 
     return GlassSheet(
@@ -397,7 +655,14 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
   Widget _buildHeader(SheetColors colors) {
     final l10n = AppLocalizations.of(context)!;
-    final stepTitles = [l10n.editProgramSheetSchedule, l10n.editProgramSheetTrainingProgram, l10n.editProgramSheetEquipment, l10n.editProgramSheetHealth];
+    final stepTitles = [
+      l10n.editProgramSheetSchedule,
+      l10n.editProgramSheetTrainingProgram,
+      'Per-day',
+      'Workout Type',
+      l10n.editProgramSheetEquipment,
+      l10n.editProgramSheetHealth,
+    ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
       child: Column(
@@ -506,8 +771,12 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       case 1:
         return _buildTrainingProgramStep(colors);
       case 2:
-        return _buildEquipmentStep(colors);
+        return _buildPerDayStep(colors);
       case 3:
+        return _buildWorkoutTypeStep(colors);
+      case 4:
+        return _buildEquipmentStep(colors);
+      case 5:
         return _buildHealthStep(colors);
       default:
         return const SizedBox();
@@ -534,6 +803,13 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                     onSelectionChanged: (days) => setState(() {
                       _selectedDays.clear();
                       _selectedDays.addAll(days);
+                      // Keep the per-day editor pointed at a valid day.
+                      if (_editingDay != null &&
+                          !_selectedDays.contains(_editingDay)) {
+                        _editingDay = _selectedDays.isNotEmpty
+                            ? (_selectedDays.toList()..sort()).first
+                            : null;
+                      }
                     }),
                     disabled: _isUpdating,
                   ),
@@ -775,7 +1051,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                       : Text(
                           _currentStep < _totalSteps - 1
                               ? AppLocalizations.of(context)!.editProgramSheetContinue
-                              : AppLocalizations.of(context)!.editProgramSheetUpdateAndRegenerate,
+                              : 'Save program',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                 ),
@@ -787,4 +1063,3 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     );
   }
 }
-

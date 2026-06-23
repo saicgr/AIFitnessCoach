@@ -844,6 +844,74 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
     }
   }
 
+  /// Persist program preferences via `POST /workouts/update-program` with an
+  /// explicit [regenerate] flag.
+  ///
+  /// This is the editor's "pure persist" entry point. Pass `regenerate: false`
+  /// to write prefs WITHOUT deleting future workouts — the unified Edit Program
+  /// editor saves prefs first, then (on "Apply now") calls
+  /// [regenerateUpcoming] separately. [updateProgramAndRegenerate] remains the
+  /// historical apply-immediately path for the AI-preset "Start split" sheet.
+  Future<void> updateProgram({
+    required String userId,
+    String? difficulty,
+    int? durationMinutes,
+    int? durationMinutesMin,
+    int? durationMinutesMax,
+    List<String>? focusAreas,
+    List<String>? injuries,
+    List<String>? equipment,
+    String? workoutType,
+    String? trainingStyle,
+    List<String>? workoutDays,
+    int? dumbbellCount,
+    int? kettlebellCount,
+    Map<String, List<double>>? equipmentWeights,
+    String? customProgramDescription,
+    bool regenerate = false,
+  }) async {
+    try {
+      debugPrint(
+          '🔍 [Workout] update-program (regenerate=$regenerate) split=$workoutType style=$trainingStyle');
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/update-program',
+        data: {
+          'user_id': userId,
+          'regenerate': regenerate,
+          if (difficulty != null) 'difficulty': difficulty,
+          if (durationMinutes != null) 'duration_minutes': durationMinutes,
+          if (durationMinutesMin != null) 'duration_minutes_min': durationMinutesMin,
+          if (durationMinutesMax != null) 'duration_minutes_max': durationMinutesMax,
+          if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
+          if (injuries != null) 'injuries': injuries,
+          if (equipment != null) 'equipment': equipment,
+          if (workoutType != null) 'workout_type': workoutType,
+          if (trainingStyle != null) 'training_style': trainingStyle,
+          if (workoutDays != null && workoutDays.isNotEmpty) 'workout_days': workoutDays,
+          if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,
+          if (kettlebellCount != null) 'kettlebell_count': kettlebellCount,
+          if (equipmentWeights != null && equipmentWeights.isNotEmpty)
+            'equipment_weights': equipmentWeights,
+          if (customProgramDescription != null && customProgramDescription.isNotEmpty)
+            'custom_program_description': customProgramDescription,
+        },
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(minutes: 5),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] update-program persisted (regenerate=$regenerate)');
+      } else {
+        throw Exception('Failed to update program: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Error in update-program: $e');
+      rethrow;
+    }
+  }
+
   /// Quick regenerate workouts using current settings
   /// This deletes future incomplete workouts and regenerates them
   /// without requiring the user to go through the full customization wizard
@@ -889,6 +957,47 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
         'success': false,
         'message': 'Error: $e',
       };
+    }
+  }
+
+  /// Delete today's (if not started) + all upcoming generated workouts so they
+  /// regenerate under freshly-saved program preferences.
+  ///
+  /// This is the "Apply now" half of the Edit Program editor's two-step save:
+  ///   1. persist prefs via update-program (regenerate=false — pure write)
+  ///   2. if the user confirms "Apply now", call THIS to clear stale sessions
+  ///
+  /// Backend contract: `POST /workouts/regenerate-upcoming`
+  ///   body  `{ "user_id": "..." }`
+  ///   200   `{ "success": true, "today_deleted": int, "upcoming_deleted": int }`
+  Future<Map<String, dynamic>> regenerateUpcoming(String userId) async {
+    try {
+      debugPrint('🔍 [Workout] Regenerating upcoming workouts for $userId');
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/regenerate-upcoming',
+        data: {'user_id': userId},
+        options: Options(
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(minutes: 2),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint(
+            '✅ [Workout] Regenerate-upcoming: today=${data['today_deleted']} '
+            'upcoming=${data['upcoming_deleted']}');
+        return {
+          'success': data['success'] == true,
+          'today_deleted': data['today_deleted'] ?? 0,
+          'upcoming_deleted': data['upcoming_deleted'] ?? 0,
+        };
+      }
+      throw Exception(
+          'Failed to regenerate upcoming workouts: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Workout] Error regenerating upcoming workouts: $e');
+      rethrow;
     }
   }
 

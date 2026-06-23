@@ -1,12 +1,22 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/training_preferences_provider.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../data/models/gym_profile.dart';
+import '../../../data/models/user.dart';
+import '../../../data/providers/gym_profile_provider.dart';
+import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../models/program_history.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
+import '../../workout/widgets/per_day_focus_chips.dart';
 import 'components/components.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
