@@ -489,6 +489,13 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
       controller.setStep(3); // Finishing up…
       await container.read(authStateProvider.notifier).refreshUser();
       TodayWorkoutNotifier.resetGenerationState();
+      // A4 — open the auto-gen suppression window BEFORE the immediate refresh
+      // below hits the provider's needsGeneration path. regenerateUpcoming
+      // (kicked off above) is already producing the correct per-day workouts;
+      // this stops the provider firing its OWN param-less /generate-stream and
+      // racing them. SEPARATE from resetGenerationState (called from ~9 other
+      // sites like gym-profile switch) so only a program change suppresses.
+      TodayWorkoutNotifier.markExplicitProgramRegen();
       // Immediate refresh so the carousel flips to its generating/polling state
       // right away (it keeps polling for the background-generated workouts).
       await refreshAfterWorkoutMutation(
