@@ -69,6 +69,9 @@ async def generate_workout_insights(
     fitness_level: str = "intermediate",
     history_context: list = None,
     injury_context: dict = None,
+    total_workouts_completed: int = 0,
+    favorite_exercises: list = None,
+    custom_exercises: list = None,
 ) -> str:
     """
     Generate structured workout insights using the insights agent.
@@ -106,6 +109,9 @@ async def generate_workout_insights(
         "fitness_level": fitness_level,
         "history_context": history_context or [],
         "injury_context": injury_context or {},
+        "total_workouts_completed": total_workouts_completed or 0,
+        "favorite_exercises": favorite_exercises or [],
+        "custom_exercises": custom_exercises or [],
         "target_muscles": [],
         "exercise_count": 0,
         "total_sets": 0,

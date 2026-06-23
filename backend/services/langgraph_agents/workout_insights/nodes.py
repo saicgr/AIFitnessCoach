@@ -134,6 +134,9 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     exercise_count = state.get("exercise_count", len(exercises))
     history_context = state.get("history_context") or []
     injury_context = state.get("injury_context") or {}
+    total_workouts_completed = state.get("total_workouts_completed") or 0
+    favorite_exercises = state.get("favorite_exercises") or []
+    custom_exercises = state.get("custom_exercises") or []
 
     # Build exercise detail string with sets/reps/equipment context
     exercise_details = []
@@ -205,8 +208,42 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
                 f"  - Pain-flagged exercises to handle gently: {', '.join([str(p) for p in pain_flagged[:6]])}\n"
             )
 
+    # --- Milestone + favorites + custom blocks (omitted when empty) ---
+    profile_bits = []
+    if total_workouts_completed <= 0:
+        profile_bits.append(
+            "This is the user's FIRST logged workout — celebrate the start, keep cues "
+            "foundational and encouraging, do not assume prior numbers."
+        )
+    elif total_workouts_completed < 5:
+        profile_bits.append(
+            f"This is early in the user's journey (~workout #{total_workouts_completed + 1}) — "
+            "build confidence while teaching good habits."
+        )
+    elif total_workouts_completed >= 50:
+        profile_bits.append(
+            f"The user has logged {total_workouts_completed} workouts — a consistent athlete; "
+            "you can give advanced cues and acknowledge their consistency."
+        )
+    if favorite_exercises:
+        profile_bits.append(
+            "Favorite movement(s) the user loves in this workout: "
+            + ", ".join(favorite_exercises[:4])
+            + " — acknowledge they're training one of their favorites."
+        )
+    if custom_exercises:
+        profile_bits.append(
+            "User-created custom exercise(s) here: "
+            + ", ".join(custom_exercises[:4])
+            + " — nod to their personalized programming."
+        )
+    profile_block = ""
+    if profile_bits:
+        profile_block = "\nUser context:\n" + "\n".join(f"  - {b}" for b in profile_bits) + "\n"
+
     has_history = bool(history_lines)
     has_injury = bool(injuries or pain_flagged)
+    has_profile = bool(profile_bits)
 
     prompt = f"""You are an expert strength coach giving a PERSONALIZED pre-workout briefing. Be specific to THIS workout AND this user — reference exact exercise names, their own recent numbers, rep ranges, and muscles. Never be generic.
 
@@ -215,16 +252,17 @@ Focus: {workout_focus} | Duration: {duration} min | Difficulty: {difficulty} | L
 User goals: {goals_str}
 Exercises ({exercise_count} total, {total_sets} sets):
 {exercises_str}
-{history_block}{injury_block}
+{history_block}{injury_block}{profile_block}
 Generate 3 to 5 insight sections as JSON. Each MUST name a specific exercise from the list above.
 
 PRIORITIZE personalized, data-driven sections in this order when the data exists:
 1. PR / PROGRESSIVE-OVERLOAD OPPORTUNITY ({"INCLUDE THIS — history is available" if has_history else "skip — no history yet"}): use the user's last best set or est 1RM to give a concrete number to beat today — e.g. "You hit 175lb x 5 on Bench Press last time — aim for 180lb x 5 or 175lb x 6 today to push your estimated 1RM." Use the SAME unit shown in the history above.
 2. INJURY-AWARE CUE ({"INCLUDE THIS — active injury/pain listed" if has_injury else "skip — none reported"}): give a protective adjustment for the affected exercise(s) — e.g. "Your right shoulder is recovering — keep Overhead Press in a pain-free range and stop the set if it pinches."
+3. MILESTONE / FAVORITE / CUSTOM ({"INCLUDE THIS — user context provided above" if has_profile else "skip — none"}): if it's their first/early workout, open warm and foundational; if they're a consistent athlete, acknowledge the streak; if a listed exercise is a favorite, hype that they're training one they love; if a listed exercise is their custom creation, nod to their personalized programming. Name the specific exercise.
 Then fill the rest from:
-3. A form cue for the hardest exercise (name it, e.g. "On Barbell Squat, push knees out over toes and brace before each rep").
-4. Why this exercise selection serves their {goals_str} goal.
-5. A mind-muscle / tempo / rest tip tied to a specific exercise.
+4. A form cue for the hardest exercise (name it, e.g. "On Barbell Squat, push knees out over toes and brace before each rep").
+5. Why this exercise selection serves their {goals_str} goal.
+6. A mind-muscle / tempo / rest tip tied to a specific exercise.
 
 Rules:
 - When history is provided, the FIRST section MUST be the PR/progressive-overload opportunity with a concrete target weight or rep.

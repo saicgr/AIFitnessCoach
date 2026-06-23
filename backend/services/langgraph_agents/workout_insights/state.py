@@ -35,6 +35,10 @@ class WorkoutInsightsState(TypedDict):
     #                  pain_flagged_exercises: [...]}
     history_context: Optional[List[Dict[str, Any]]]
     injury_context: Optional[Dict[str, Any]]
+    # Milestone + preference signals (lean: omitted from the prompt when empty).
+    total_workouts_completed: Optional[int]   # lifetime completed workouts (first-vs-Nth framing)
+    favorite_exercises: Optional[List[str]]   # this workout's exercises the user has favorited
+    custom_exercises: Optional[List[str]]     # this workout's user-created custom exercises
 
     # Analysis results
     target_muscles: List[str]

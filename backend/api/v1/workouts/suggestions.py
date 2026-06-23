@@ -300,13 +300,115 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
         target_muscles = parse_json_field(workout_data.get("target_muscles"), [])
 
         # Get user info for goals and fitness level
-        user_result = db.client.table("users").select("goals, fitness_level").eq("id", user_id).execute()
+        user_result = db.client.table("users").select(
+            "goals, fitness_level, workout_weight_unit, weight_unit"
+        ).eq("id", user_id).execute()
 
         user_goals = []
         fitness_level = "intermediate"
+        _user_row = user_result.data[0] if user_result.data else {}
         if user_result.data:
-            user_goals = normalize_goals_list(user_result.data[0].get("goals"))
-            fitness_level = user_result.data[0].get("fitness_level", "intermediate")
+            user_goals = normalize_goals_list(_user_row.get("goals"))
+            fitness_level = _user_row.get("fitness_level", "intermediate")
+
+        # ── Personalization context ───────────────────────────────────────────
+        # generate_workout_insights ALREADY consumes history_context +
+        # injury_context (the prompt prioritizes a PR/progressive-overload cue and
+        # an injury-aware cue) but the caller used to pass NOTHING, so tips were
+        # generic. Assemble the user's real numbers + milestone + favorites +
+        # custom flags here. Fully fail-open — any hiccup → empty → lean prompt.
+        history_context: list = []
+        injury_context: dict = {}
+        total_workouts_completed = 0
+        favorite_exercises: list = []
+        custom_exercises: list = []
+        try:
+            from services.exercise_context_service import (
+                assemble_exercise_contexts,
+                fetch_active_injury_context,
+            )
+            _names = [
+                e.get("name") for e in exercises
+                if isinstance(e, dict) and e.get("name")
+            ]
+            _gpid = workout_data.get("gym_profile_id")
+            _unit = (_user_row.get("workout_weight_unit")
+                     or _user_row.get("weight_unit") or "lbs").lower()
+            _is_lb = _unit in ("lbs", "lb", "pounds")
+
+            def _disp(kg):
+                if not kg or kg <= 0:
+                    return None
+                v = kg * 2.20462 if _is_lb else kg
+                return f"{round(v)}{'lb' if _is_lb else 'kg'}"
+
+            ctxs = assemble_exercise_contexts(db, user_id, _names, _gpid, {})
+            for _nm in _names:
+                _c = ctxs.get(_nm)
+                if not _c:
+                    continue
+                _last_top = None
+                _last_date = None
+                if _c.recent_sessions:
+                    _ls = _c.recent_sessions[0]
+                    _sets = _ls.get("sets") or []
+                    _top = max(
+                        _sets,
+                        key=lambda s: float(s.get("weight_kg") or 0),
+                        default=None,
+                    )
+                    if _top:
+                        _w = float(_top.get("weight_kg") or 0)
+                        _reps = _top.get("reps")
+                        if _w > 0:
+                            _last_top = f"{_disp(_w)} x {_reps}"
+                        elif _reps:
+                            _last_top = f"{_reps} reps (bodyweight)"
+                        _last_date = _ls.get("date")
+                _best = _disp(_c.all_time_best_1rm_kg)
+                _est = _disp(_c.effective_1rm_kg)
+                if _last_top or _best or _est:
+                    history_context.append({
+                        "name": _nm,
+                        "last_top_set": _last_top,
+                        "last_date": _last_date,
+                        "best_1rm": _best,
+                        "est_1rm": _est,
+                    })
+
+            _inj = fetch_active_injury_context(db, user_id)
+            injury_context = {
+                "injuries": _inj.injuries,
+                "pain_flagged_exercises": _inj.pain_flagged_exercises,
+            }
+
+            try:
+                _cnt = db.client.table("workouts").select(
+                    "id", count="exact"
+                ).eq("user_id", user_id).eq("is_completed", True).limit(1).execute()
+                total_workouts_completed = _cnt.count or 0
+            except Exception:
+                total_workouts_completed = 0
+
+            _lower_names = {n.lower() for n in _names}
+            try:
+                _fav = db.client.table("favorite_exercises").select(
+                    "exercise_name"
+                ).eq("user_id", user_id).execute()
+                _fav_set = {(r.get("exercise_name") or "").lower() for r in (_fav.data or [])}
+                favorite_exercises = [n for n in _names if n.lower() in _fav_set]
+            except Exception:
+                favorite_exercises = []
+            try:
+                _cust = db.client.table("custom_exercises").select(
+                    "name"
+                ).eq("user_id", user_id).execute()
+                _cust_set = {(r.get("name") or "").lower() for r in (_cust.data or [])}
+                custom_exercises = [n for n in _names if n.lower() in _cust_set]
+            except Exception:
+                custom_exercises = []
+        except Exception as _pe:
+            logger.warning(f"[insights] personalization assembly failed (fail-open): {_pe}")
 
         # Generate the AI summary using LangGraph agent
         import time
@@ -322,6 +424,11 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
                 difficulty=workout_data.get("difficulty"),
                 user_goals=user_goals,
                 fitness_level=fitness_level,
+                history_context=history_context,
+                injury_context=injury_context,
+                total_workouts_completed=total_workouts_completed,
+                favorite_exercises=favorite_exercises,
+                custom_exercises=custom_exercises,
             )
 
             # Validate that we got a non-empty summary
