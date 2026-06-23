@@ -3,6 +3,7 @@ import 'dart:math' show max;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/app_dialog.dart';
+import '../../widgets/exercise_image.dart';
 import '../../widgets/glass_sheet.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,7 +121,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
   String? _refreshError;
   String? _workoutSummary;
   bool _isLoadingSummary = true;  // Start as true to show loading immediately
-  bool _isWarmupExpanded = true;  // For warmup section — Signature v2: default open
+  bool _isWarmupExpanded = false;  // For warmup section — collapsed by default (user pref)
   bool _isStretchesExpanded = false;  // For stretches section
   bool _isChallengeExpanded = false;  // For challenge exercise section
   bool _isEquipmentExpanded = false;  // For equipment section
@@ -128,7 +129,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
   WorkoutGenerationParams? _generationParams;  // AI reasoning and parameters
   bool _isLoadingParams = false;  // Loading state for generation params
   bool _isAIReasoningExpanded = false;  // For AI reasoning section
-  bool _isMoreInfoExpanded = false;  // For More Info section (AI insights)
+  bool _isMoreInfoExpanded = false;  // For More Info section (extra details)
+  bool _isAIInsightsExpanded = true;  // AI Insights section (between Equipment + Warm Up); shown by default
   bool? _useKgOverride;  // Local override for kg/lbs toggle
   int? _pendingSupersetIndex;  // Index of exercise waiting to be paired via menu
 
@@ -139,6 +141,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
   // Warmup/stretch exercises loaded from API
   List<Map<String, dynamic>>? _warmupData;
   List<Map<String, dynamic>>? _stretchData;
+  // Loading / error state for the warmup+stretch fetch. Drives skeletons and a
+  // retry affordance so we never fall back to a misleading hardcoded list when
+  // the real per-workout data hasn't loaded yet (see _loadWarmupAndStretches).
+  bool _isLoadingWarmupStretch = false;
+  bool _warmupStretchError = false;
 
   // Auto-save state for exercise modifications
   Timer? _autoSaveTimer;
@@ -352,13 +359,14 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                         (workout.name ??
                                 AppLocalizations.of(context).navWorkout)
                             .toUpperCase(),
-                        style: ZType.disp(
-                          40,
+                        style: ZType.sans(
+                          32,
                           color: isDark
                               ? AppColors.textPrimary
                               : AppColorsLight.textPrimary,
-                          letterSpacing: 0.5,
-                          height: 0.92,
+                          weight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          height: 0.98,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -709,6 +717,47 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
           ],
 
           // ─────────────────────────────────────────────────────────────────
+          // AI INSIGHTS SECTION (Collapsible) — promoted out of "More Info" to
+          // sit between Equipment and Warm Up (user request). Shows the
+          // AI-generated pre-workout briefing, now personalized to the user's
+          // lift history, PR/1RM opportunities, injuries and targets. Tap the
+          // header to expand/collapse. Gated on summary presence/loading so the
+          // header never appears as an empty shell.
+          // ─────────────────────────────────────────────────────────────────
+          if (_workoutSummary != null || _isLoadingSummary) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: _buildCollapsibleSectionHeader(
+                  title: 'AI Insights',
+                  icon: Icons.auto_awesome,
+                  color: accentColor,
+                  isExpanded: _isAIInsightsExpanded,
+                  onTap: () => setState(
+                      () => _isAIInsightsExpanded = !_isAIInsightsExpanded),
+                  itemCount: 1,
+                  subtitle: 'Tailored to your history, PRs & injuries',
+                ),
+              ),
+            ),
+            if (_isAIInsightsExpanded)
+              SliverToBoxAdapter(
+                child: buildWorkoutSummarySection(
+                  workoutSummary: _workoutSummary,
+                  isLoadingSummary: _isLoadingSummary,
+                  onTapInsights: () => _workoutSummary != null
+                      ? showAIInsightsPopup(
+                          summaryJson: _workoutSummary!,
+                          workoutId: widget.workoutId,
+                          onSummaryUpdated: (newSummary) =>
+                              setState(() => _workoutSummary = newSummary),
+                        )
+                      : null,
+                ),
+              ),
+          ],
+
+          // ─────────────────────────────────────────────────────────────────
           // POST-WORKOUT SECTION (Sauna - only for completed workouts)
           // ─────────────────────────────────────────────────────────────────
           if (workout.isCompleted == true && !_isLoadingSauna)
@@ -795,16 +844,13 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
             ),
           ),
 
-          // Warmup items (shown when expanded)
+          // Warmup items (shown when expanded) — loading/error/empty/data states
           if (_isWarmupExpanded)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildWarmupStretchItem(
-                  _getWarmupExercises()[index],
-                  AppColors.orange,
-                ),
-                childCount: _getWarmupExercises().length,
-              ),
+            _buildWarmupStretchSliver(
+              _getWarmupExercises(),
+              AppColors.orange,
+              'No warm-up for this workout.',
+              section: 'warmup',
             ),
 
           // ─────────────────────────────────────────────────────────────────
@@ -1047,16 +1093,13 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
             ),
           ),
 
-          // Stretches items (shown when expanded)
+          // Stretches items (shown when expanded) — loading/error/empty/data states
           if (_isStretchesExpanded)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildWarmupStretchItem(
-                  _getStretchExercises()[index],
-                  AppColors.green,
-                ),
-                childCount: _getStretchExercises().length,
-              ),
+            _buildWarmupStretchSliver(
+              _getStretchExercises(),
+              AppColors.green,
+              'No stretches for this workout.',
+              section: 'stretches',
             ),
 
           // ─────────────────────────────────────────────────────────────────
@@ -1071,29 +1114,16 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                 color: accentColor,
                 isExpanded: _isMoreInfoExpanded,
                 onTap: () => setState(() => _isMoreInfoExpanded = !_isMoreInfoExpanded),
-                itemCount: 3,  // Summary, Muscles, AI Reasoning
-                subtitle: 'AI insights & exercise details',
+                itemCount: 2,  // Muscles, AI Reasoning (Summary promoted to AI Insights section above)
+                subtitle: 'Targeted muscles & design reasoning',
               ),
             ),
           ),
 
           // More Info content (shown when expanded)
           if (_isMoreInfoExpanded) ...[
-            // Workout Summary Section (AI-generated)
-            if (_workoutSummary != null || _isLoadingSummary)
-              SliverToBoxAdapter(
-                child: buildWorkoutSummarySection(
-                  workoutSummary: _workoutSummary,
-                  isLoadingSummary: _isLoadingSummary,
-                  onTapInsights: () => _workoutSummary != null
-                      ? showAIInsightsPopup(
-                          summaryJson: _workoutSummary!,
-                          workoutId: widget.workoutId,
-                          onSummaryUpdated: (newSummary) => setState(() => _workoutSummary = newSummary),
-                        )
-                      : null,
-                ),
-              ),
+            // (AI workout summary promoted to its own "AI Insights" section
+            // between Equipment and Warm Up — no longer rendered here.)
 
             // Targeted Muscles Section
             SliverToBoxAdapter(

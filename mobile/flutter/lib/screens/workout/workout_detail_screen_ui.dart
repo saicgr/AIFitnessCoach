@@ -416,10 +416,12 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
   }
 
 
-  Widget _buildWarmupStretchItem(Map<String, String> item, Color color) {
+  Widget _buildWarmupStretchItem(Map<String, String> item, Color color,
+      {int? dragIndex}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     // Optimistic entries carry a `just_added: 'true'` flag so we can give
     // them a brief highlight the first time they render. This makes the
@@ -444,14 +446,38 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
       ),
       child: Row(
         children: [
-          Icon(Icons.fitness_center, color: color, size: 18),
+          // Drag handle — reorder affordance, mirrors the working-exercise
+          // list. Only the handle starts a drag; tapping the row body opens the
+          // exercise-detail screen.
+          if (dragIndex != null) ...[
+            ReorderableDragStartListener(
+              index: dragIndex,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Icon(Icons.drag_indicator, size: 18, color: textMuted),
+              ),
+            ),
+          ],
+          // Real exercise illustration (branded écorché) resolved by name +
+          // optional library id; falls back to an icon on miss. Replaces the
+          // old static dumbbell icon so warmups/stretches show real images.
+          ExerciseImage(
+            exerciseName: item['name'] ?? '',
+            exerciseId: item['exercise_id'],
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            fit: BoxFit.cover,
+            iconColor: color,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               item['name'] ?? '',
-              style: ZType.ser(
+              style: ZType.sans(
                 15,
                 color: textPrimary,
+                weight: FontWeight.w600,
               ),
             ),
           ),
@@ -481,6 +507,114 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
         .animate()
         .fadeIn(duration: 180.ms)
         .slideY(begin: -0.1, end: 0, duration: 220.ms, curve: Curves.easeOut);
+  }
+
+  /// Shimmering placeholder tile shown while warmup/stretch data loads.
+  Widget _buildWarmupStretchSkeleton() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final glassSurface =
+        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      height: 60,
+      decoration: BoxDecoration(
+        color: glassSurface,
+        borderRadius: BorderRadius.circular(10),
+      ),
+    ).animate(onPlay: (c) => c.repeat()).shimmer(
+          duration: 1200.ms,
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+        );
+  }
+
+  /// Inline error + retry row shown when the warmup/stretch fetch fails. We
+  /// surface the failure instead of silently showing a fake default list.
+  Widget _buildWarmupStretchError(Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final glassSurface =
+        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: glassSurface,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: textMuted, size: 18),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "Couldn't load. Tap retry.",
+              style: ZType.sans(14, color: textMuted),
+            ),
+          ),
+          TextButton(
+            onPressed: _loadWarmupAndStretches,
+            child: Text(
+              'Retry',
+              style: ZType.sans(14, color: color, weight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Subtle empty-state row when the server has no warmup/stretch for this
+  /// workout (e.g. an offline/locally-generated workout).
+  Widget _buildWarmupStretchEmpty(String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Text(label, style: ZType.sans(13, color: textMuted)),
+    );
+  }
+
+  /// Build the expanded body sliver for a warmup/stretch section, switching
+  /// between loading (skeletons) / error (retry) / empty / data states.
+  Widget _buildWarmupStretchSliver(
+      List<Map<String, String>> items, Color color, String emptyLabel,
+      {required String section}) {
+    if (items.isEmpty && _isLoadingWarmupStretch) {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => _buildWarmupStretchSkeleton(),
+          childCount: 3,
+        ),
+      );
+    }
+    if (items.isEmpty && _warmupStretchError) {
+      return SliverToBoxAdapter(child: _buildWarmupStretchError(color));
+    }
+    if (items.isEmpty) {
+      return SliverToBoxAdapter(child: _buildWarmupStretchEmpty(emptyLabel));
+    }
+    // Reorderable + tappable: each row opens the full exercise-detail screen on
+    // tap and reorders via its drag handle (persisted by _reorderWarmupStretch).
+    final rawList = section == 'warmup' ? _warmupData : _stretchData;
+    return SliverReorderableList(
+      itemCount: items.length,
+      onReorder: (oldIndex, newIndex) =>
+          _reorderWarmupStretch(section, oldIndex, newIndex),
+      proxyDecorator: (child, index, animation) =>
+          Material(color: Colors.transparent, child: child),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        final raw = (rawList != null && index < rawList.length)
+            ? rawList[index]
+            : null;
+        return GestureDetector(
+          key: ValueKey('${section}_${item['name'] ?? ''}_$index'),
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _openTimedExerciseDetail(raw, item),
+          child: _buildWarmupStretchItem(item, color, dragIndex: index),
+        );
+      },
+    );
   }
 
 }

@@ -93,6 +93,54 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     }
   }
 
+  /// Read the PERSISTED warmup + stretches for a workout (GET, no regeneration).
+  ///
+  /// Each list is `null` when the server has none yet (404) so the caller can
+  /// decide whether to generate. Real network/server errors are RETHROWN so the
+  /// UI can surface a retry state instead of silently showing a misleading
+  /// hardcoded default list (see `feedback_no_silent_fallbacks`).
+  Future<({List<Map<String, dynamic>>? warmup, List<Map<String, dynamic>>? stretches})>
+      fetchWarmupAndStretches(String workoutId) async {
+    Future<List<Map<String, dynamic>>?> readSection(String section) async {
+      try {
+        final response =
+            await apiClient.get('${ApiConstants.workouts}/$workoutId/$section');
+        if (response.statusCode == 200) {
+          final data = response.data as Map<String, dynamic>;
+          return List<Map<String, dynamic>>.from(
+              data['exercises_json'] ?? data['exercises'] ?? []);
+        }
+        return null;
+      } on DioException catch (e) {
+        // 404 = not generated yet → signal "needs generation", not an error.
+        if (e.response?.statusCode == 404) return null;
+        rethrow;
+      }
+    }
+
+    final results = await Future.wait([
+      readSection('warmup'),
+      readSection('stretches'),
+    ]);
+    return (warmup: results[0], stretches: results[1]);
+  }
+
+  /// Persist a user-reordered warmup ([section] == 'warmup') or stretch
+  /// ([section] == 'stretches') list for a workout. Sends the FULL reordered
+  /// list of raw item maps; the backend rewrites the current row's
+  /// `exercises_json` in place (a reorder is not a regeneration). Throws on
+  /// network/server error so callers can surface a retry / revert.
+  Future<void> saveWarmupStretchOrder(
+    String workoutId,
+    String section,
+    List<Map<String, dynamic>> exercises,
+  ) async {
+    await apiClient.put(
+      '${ApiConstants.workouts}/$workoutId/$section',
+      data: {'exercises': exercises},
+    );
+  }
+
   /// Get AI exercise swap suggestions.
   ///
   /// Pass a known chip label in [reason] ("Too difficult", "Too easy", ...)

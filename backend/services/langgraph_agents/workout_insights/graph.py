@@ -67,6 +67,8 @@ async def generate_workout_insights(
     difficulty: str = None,
     user_goals: list = None,
     fitness_level: str = "intermediate",
+    history_context: list = None,
+    injury_context: dict = None,
 ) -> str:
     """
     Generate structured workout insights using the insights agent.
@@ -102,6 +104,8 @@ async def generate_workout_insights(
         "difficulty": difficulty,
         "user_goals": user_goals or [],
         "fitness_level": fitness_level,
+        "history_context": history_context or [],
+        "injury_context": injury_context or {},
         "target_muscles": [],
         "exercise_count": 0,
         "total_sets": 0,

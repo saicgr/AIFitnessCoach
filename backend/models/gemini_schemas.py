@@ -975,8 +975,8 @@ class ImportedWorkoutResponse(BaseModel):
 class WorkoutInsightSection(BaseModel):
     """Schema for a single insight section in workout insights."""
     icon: str = Field(..., description="Emoji icon for the section (e.g., '💪', '🎯', '🔥', '⚡')")
-    title: str = Field(..., description="Short title (2-3 words max)")
-    content: str = Field(..., description="Brief content (6-10 words max)")
+    title: str = Field(..., description="Short title (2-4 words max)")
+    content: str = Field(..., description="1-2 sentences. Reference a specific exercise; cite real weights/reps when given.")
     color: str = Field(..., description="Color hint: 'cyan', 'purple', 'orange', or 'green'")
 
 
@@ -996,7 +996,7 @@ class WorkoutInsightsResponse(BaseModel):
     }
     """
     headline: str = Field(..., description="Motivational headline (3-5 words max)")
-    sections: List[WorkoutInsightSection] = Field(..., description="Exactly 2 insight sections")
+    sections: List[WorkoutInsightSection] = Field(..., description="3 to 5 insight sections")
 
 
 # =============================================================================

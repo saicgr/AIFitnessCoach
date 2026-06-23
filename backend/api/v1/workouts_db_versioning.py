@@ -442,12 +442,104 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
         exercises = parse_json_field(workout_data.get("exercises_json"), [])
         target_muscles = parse_json_field(workout_data.get("target_muscles"), [])
 
-        user_result = db.client.table("users").select("goals, fitness_level").eq("id", user_id).execute()
+        user_result = db.client.table("users").select(
+            "goals, fitness_level, workout_weight_unit, weight_unit"
+        ).eq("id", user_id).execute()
         user_goals = []
         fitness_level = "intermediate"
+        weight_unit = "lbs"
         if user_result.data:
             user_goals = normalize_goals_list(user_result.data[0].get("goals"))
             fitness_level = user_result.data[0].get("fitness_level", "intermediate")
+            weight_unit = (
+                user_result.data[0].get("workout_weight_unit")
+                or user_result.data[0].get("weight_unit")
+                or "lbs"
+            )
+        use_lbs = str(weight_unit).lower().startswith("lb")
+
+        # --- Personalization context: lift history + PR/1RM opportunities +
+        # injuries. This is what turns the briefing from generic "exercise
+        # things" into "last time you hit 80kg×5 — add 2.5kg to set a PR" and
+        # injury-aware cues. Best-effort: any failure degrades to the prior
+        # (workout-only) prompt rather than blocking the summary.
+        history_context: list = []
+        injury_context: dict = {}
+        try:
+            from services.exercise_context_service import (
+                assemble_exercise_contexts,
+                fetch_active_injury_context,
+            )
+
+            ex_names = [e.get("name") for e in exercises if e.get("name")]
+            gym_profile_id = workout_data.get("gym_profile_id")
+            ctxs = assemble_exercise_contexts(
+                db, user_id, ex_names, gym_profile_id, {},  # pre-workout: no current sets
+            )
+
+            # Weights are stored in kg; present them in the user's workout unit so
+            # the briefing reads in the same numbers they lift in.
+            unit_label = "lb" if use_lbs else "kg"
+
+            def _disp_w(kg: float):
+                if kg is None:
+                    return None
+                return round(kg * 2.20462) if use_lbs else round(kg, 1)
+
+            def _fmt_top_set(sessions: list):
+                """Heaviest working set of the most recent session → 'W<unit> x R'."""
+                if not sessions:
+                    return None
+                sets = sessions[0].get("sets") or []
+                working = [s for s in sets if (s.get("set_type") or "working") != "warmup"]
+                if not working:
+                    return None
+                best = max(
+                    working,
+                    key=lambda s: ((s.get("weight_kg") or 0), (s.get("reps") or 0)),
+                )
+                w = best.get("weight_kg")
+                r = best.get("reps")
+                if w and w > 0 and r:
+                    return f"{_disp_w(w)}{unit_label} x {r}"
+                if r:
+                    return f"BW x {r}"
+                return None
+
+            for name in ex_names:
+                c = ctxs.get(name)
+                if c is None:
+                    continue
+                if not c.has_history and not c.all_time_best_1rm_kg and not c.effective_1rm_kg:
+                    continue
+                entry = {"name": name, "unit": unit_label}
+                last = _fmt_top_set(c.recent_sessions)
+                if last:
+                    entry["last_top_set"] = last
+                    if c.recent_sessions:
+                        entry["last_date"] = c.recent_sessions[0].get("date")
+                if c.all_time_best_1rm_kg:
+                    entry["best_1rm"] = f"{_disp_w(c.all_time_best_1rm_kg)}{unit_label}"
+                elif c.effective_1rm_kg:
+                    entry["est_1rm"] = f"{_disp_w(c.effective_1rm_kg)}{unit_label}"
+                history_context.append(entry)
+
+            inj = fetch_active_injury_context(db, user_id)
+            if not inj.is_empty:
+                injury_context = {
+                    "injuries": [
+                        {
+                            "body_part": i.get("body_part"),
+                            "severity": i.get("severity"),
+                            "affects_exercises": i.get("affects_exercises") or [],
+                            "affects_muscles": i.get("affects_muscles") or [],
+                        }
+                        for i in inj.injuries
+                    ],
+                    "pain_flagged_exercises": inj.pain_flagged_exercises,
+                }
+        except Exception as ctx_err:
+            logger.warning(f"[summary] enrichment context failed: {ctx_err}")
 
         start_time = time.time()
         summary = await generate_workout_insights(
@@ -459,6 +551,8 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
             difficulty=workout_data.get("difficulty"),
             user_goals=user_goals,
             fitness_level=fitness_level,
+            history_context=history_context,
+            injury_context=injury_context,
         )
         generation_time_ms = int((time.time() - start_time) * 1000)
 
@@ -595,6 +689,55 @@ async def create_workout_stretches(workout_id: str, duration_minutes: int = 5,
         raise
     except Exception as e:
         logger.error(f"Failed to create stretches: {e}", exc_info=True)
+        raise safe_internal_error(e, "workouts_db")
+
+
+@router.put("/{workout_id}/warmup")
+async def update_workout_warmup_order(workout_id: str, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Persist a user-reordered warmup list for a workout.
+
+    Body: {"exercises": [ ...the full reordered list of warmup item dicts... ]}.
+    Writes the list verbatim onto the current warmup row's exercises_json (a
+    reorder is not a regeneration, so the row/version is reused).
+    """
+    try:
+        body = await request.json()
+        exercises = body.get("exercises") if isinstance(body, dict) else None
+        if not isinstance(exercises, list):
+            raise HTTPException(status_code=422, detail="`exercises` must be a list")
+        service = get_warmup_stretch_service()
+        updated = service.update_warmup_order(workout_id, exercises)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Warmup not found for this workout")
+        return updated
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reorder warmup: {e}", exc_info=True)
+        raise safe_internal_error(e, "workouts_db")
+
+
+@router.put("/{workout_id}/stretches")
+async def update_workout_stretch_order(workout_id: str, request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Persist a user-reordered stretch list for a workout. See warmup PUT."""
+    try:
+        body = await request.json()
+        exercises = body.get("exercises") if isinstance(body, dict) else None
+        if not isinstance(exercises, list):
+            raise HTTPException(status_code=422, detail="`exercises` must be a list")
+        service = get_warmup_stretch_service()
+        updated = service.update_stretch_order(workout_id, exercises)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Stretches not found for this workout")
+        return updated
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reorder stretches: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 

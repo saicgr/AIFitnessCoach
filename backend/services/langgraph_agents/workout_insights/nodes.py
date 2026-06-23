@@ -132,6 +132,8 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     difficulty = state.get("difficulty") or "intermediate"
     total_sets = state.get("total_sets", 0)
     exercise_count = state.get("exercise_count", len(exercises))
+    history_context = state.get("history_context") or []
+    injury_context = state.get("injury_context") or {}
 
     # Build exercise detail string with sets/reps/equipment context
     exercise_details = []
@@ -154,33 +156,87 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
 
     goals_str = ", ".join(user_goals) if user_goals else "general fitness"
 
-    prompt = f"""You are an expert strength coach giving pre-workout briefing notes. Be specific to THIS workout — reference exact exercise names, rep ranges, and muscles.
+    # --- Personalization blocks (only included when data exists, so a new
+    # user's prompt stays lean and the model never invents history). ---
+    history_lines = []
+    for h in history_context[:8]:
+        nm = h.get("name")
+        if not nm:
+            continue
+        bits = []
+        if h.get("last_top_set"):
+            when = f" on {h['last_date']}" if h.get("last_date") else ""
+            bits.append(f"last best set {h['last_top_set']}{when}")
+        if h.get("best_1rm"):
+            bits.append(f"all-time est 1RM {h['best_1rm']}")
+        elif h.get("est_1rm"):
+            bits.append(f"recent est 1RM {h['est_1rm']}")
+        if bits:
+            history_lines.append(f"  - {nm}: {', '.join(bits)}")
+    history_block = ""
+    if history_lines:
+        history_block = (
+            "\nThe user's logged history / strength baselines for exercises in this workout "
+            "(use these to set concrete progressive-overload / PR-beating targets):\n"
+            + "\n".join(history_lines)
+            + "\n"
+        )
+
+    injuries = injury_context.get("injuries") or []
+    pain_flagged = injury_context.get("pain_flagged_exercises") or []
+    injury_block = ""
+    if injuries or pain_flagged:
+        inj_bits = []
+        for i in injuries:
+            bp = i.get("body_part") or "area"
+            sev = i.get("severity")
+            aff = i.get("affects_exercises") or []
+            line = bp + (f" ({sev})" if sev else "")
+            if aff:
+                line += f" — affects: {', '.join([str(a) for a in aff[:4]])}"
+            inj_bits.append(line)
+        injury_block = (
+            "\nACTIVE INJURIES / PAIN — be protective, never tell the user to push through pain:\n"
+        )
+        if inj_bits:
+            injury_block += "\n".join(f"  - {b}" for b in inj_bits) + "\n"
+        if pain_flagged:
+            injury_block += (
+                f"  - Pain-flagged exercises to handle gently: {', '.join([str(p) for p in pain_flagged[:6]])}\n"
+            )
+
+    has_history = bool(history_lines)
+    has_injury = bool(injuries or pain_flagged)
+
+    prompt = f"""You are an expert strength coach giving a PERSONALIZED pre-workout briefing. Be specific to THIS workout AND this user — reference exact exercise names, their own recent numbers, rep ranges, and muscles. Never be generic.
 
 Workout: {workout_name}
 Focus: {workout_focus} | Duration: {duration} min | Difficulty: {difficulty} | Level: {fitness_level}
 User goals: {goals_str}
 Exercises ({exercise_count} total, {total_sets} sets):
 {exercises_str}
+{history_block}{injury_block}
+Generate 3 to 5 insight sections as JSON. Each MUST name a specific exercise from the list above.
 
-Generate exactly 3 insight sections as JSON. Each MUST name specific exercises from the list above.
-
-Pick the 3 most useful from:
-1. A form cue for the hardest exercise (name it, describe the specific technique — e.g. "On Barbell Squat, push knees out over toes and brace your core before each rep")
-2. Why this exercise selection serves their {goals_str} goal (connect specific exercises to the goal)
-3. A mind-muscle cue for one exercise (e.g. "On Seated Cable Row, initiate by squeezing shoulder blades before pulling")
-4. Tempo/intensity advice for the rep ranges in this workout (e.g. "Your 8-12 rep range means pick a weight where rep 10 feels like an 8/10 effort")
-5. A superset or rest period tip based on the exercise order
+PRIORITIZE personalized, data-driven sections in this order when the data exists:
+1. PR / PROGRESSIVE-OVERLOAD OPPORTUNITY ({"INCLUDE THIS — history is available" if has_history else "skip — no history yet"}): use the user's last best set or est 1RM to give a concrete number to beat today — e.g. "You hit 175lb x 5 on Bench Press last time — aim for 180lb x 5 or 175lb x 6 today to push your estimated 1RM." Use the SAME unit shown in the history above.
+2. INJURY-AWARE CUE ({"INCLUDE THIS — active injury/pain listed" if has_injury else "skip — none reported"}): give a protective adjustment for the affected exercise(s) — e.g. "Your right shoulder is recovering — keep Overhead Press in a pain-free range and stop the set if it pinches."
+Then fill the rest from:
+3. A form cue for the hardest exercise (name it, e.g. "On Barbell Squat, push knees out over toes and brace before each rep").
+4. Why this exercise selection serves their {goals_str} goal.
+5. A mind-muscle / tempo / rest tip tied to a specific exercise.
 
 Rules:
-- headline: 3-5 words, motivational but specific to the workout theme
-- section title: 2-4 words
-- section content: 2 sentences max. MUST reference a specific exercise name from this workout. Be concrete, not generic.
-- icon: one emoji
-- color: one of cyan, purple, orange, green
-- exactly 3 sections
+- When history is provided, the FIRST section MUST be the PR/progressive-overload opportunity with a concrete target weight or rep.
+- When injuries/pain are provided, you MUST include the injury-aware section.
+- headline: 3-5 words, motivational but specific to the workout theme.
+- section title: 2-4 words.
+- section content: 2 sentences max. MUST reference a specific exercise name. Be concrete, cite real numbers when given.
+- icon: one emoji. color: one of cyan, purple, orange, green.
+- 3 to 5 sections total.
 
 BAD example (too generic): "These compound movements maximize calorie burn"
-GOOD example: "Lead with Barbell Squats at 4x8-12 while fresh — drive through your heels and keep your chest up to load your quads fully" """
+GOOD example: "You pressed 175lb x 5 on Bench last session — open with 180lb x 5 today and you'll set a new estimated 1RM while you're fresh." """
 
     # Deterministic fallback based on workout data (no AI needed)
     def _build_fallback(headline_text: str = None):
@@ -276,12 +332,13 @@ GOOD example: "Lead with Barbell Squats at 4x8-12 while fresh — drive through 
         if len(headline.split()) > 5:
             headline = " ".join(headline.split()[:5])
 
-        # Truncate section content if too long (max 30 words)
+        # Truncate section content if too long (max 36 words — a PR-target
+        # sentence citing weights/reps runs a little longer than a generic cue)
         for section in sections:
             content = section.get("content", "")
             words = content.split()
-            if len(words) > 30:
-                section["content"] = " ".join(words[:30])
+            if len(words) > 36:
+                section["content"] = " ".join(words[:36])
 
         logger.info(f"[Generate Node] Generated {len(sections)} sections")
 

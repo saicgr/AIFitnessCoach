@@ -29,6 +29,13 @@ class WorkoutInsightsState(TypedDict):
     user_goals: Optional[List[str]]
     fitness_level: Optional[str]
 
+    # Personalization context (pre-workout briefing)
+    # history_context: [{name, last_top_set, last_date, best_1rm_kg|est_1rm_kg}]
+    # injury_context: {injuries: [{body_part, severity, affects_exercises, affects_muscles}],
+    #                  pain_flagged_exercises: [...]}
+    history_context: Optional[List[Dict[str, Any]]]
+    injury_context: Optional[Dict[str, Any]]
+
     # Analysis results
     target_muscles: List[str]
     exercise_count: int

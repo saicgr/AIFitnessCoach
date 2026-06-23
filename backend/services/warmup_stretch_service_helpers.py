@@ -595,6 +595,17 @@ class WarmupStretchService:
         now = datetime.utcnow().isoformat()
 
         try:
+            # SCD2: supersede any prior current warmup(s) for this workout so we
+            # don't accumulate multiple is_current=True rows (which made reads
+            # non-deterministic). Best-effort — a failure here shouldn't block
+            # creating the new row.
+            try:
+                self.supabase.table("warmups").update(
+                    {"is_current": False, "valid_to": now}
+                ).eq("workout_id", workout_id).eq("is_current", True).execute()
+            except Exception as supersede_err:
+                logger.warning(f"⚠️ Could not supersede prior warmups: {supersede_err}")
+
             result = self.supabase.table("warmups").insert({
                 "workout_id": workout_id,
                 "exercises_json": warmup_exercises,
@@ -639,6 +650,15 @@ class WarmupStretchService:
         now = datetime.utcnow().isoformat()
 
         try:
+            # SCD2: supersede any prior current stretches for this workout so we
+            # don't accumulate multiple is_current=True rows.
+            try:
+                self.supabase.table("stretches").update(
+                    {"is_current": False, "valid_to": now}
+                ).eq("workout_id", workout_id).eq("is_current", True).execute()
+            except Exception as supersede_err:
+                logger.warning(f"⚠️ Could not supersede prior stretches: {supersede_err}")
+
             result = self.supabase.table("stretches").insert({
                 "workout_id": workout_id,
                 "exercises_json": stretch_exercises,
@@ -659,11 +679,18 @@ class WarmupStretchService:
             return None
 
     def get_warmup_for_workout(self, workout_id: str) -> Optional[Dict[str, Any]]:
-        """Get current warmup for a workout (only current version)."""
+        """Get current warmup for a workout (latest current version).
+
+        Historically each generation inserted a new is_current=True row without
+        superseding the prior one, so a workout can have multiple current rows.
+        Order by valid_from DESC so we always return the most recent.
+        """
         try:
             result = self.supabase.table("warmups").select("*").eq(
                 "workout_id", workout_id
-            ).eq("is_current", True).limit(1).execute()
+            ).eq("is_current", True).order(
+                "valid_from", desc=True
+            ).limit(1).execute()
 
             return result.data[0] if result.data else None
         except Exception as e:
@@ -671,15 +698,57 @@ class WarmupStretchService:
             return None
 
     def get_stretches_for_workout(self, workout_id: str) -> Optional[Dict[str, Any]]:
-        """Get current stretches for a workout (only current version)."""
+        """Get current stretches for a workout (latest current version)."""
         try:
             result = self.supabase.table("stretches").select("*").eq(
                 "workout_id", workout_id
-            ).eq("is_current", True).limit(1).execute()
+            ).eq("is_current", True).order(
+                "valid_from", desc=True
+            ).limit(1).execute()
 
             return result.data[0] if result.data else None
         except Exception as e:
             logger.error(f"❌ Failed to get stretches: {e}", exc_info=True)
+            return None
+
+    def update_warmup_order(self, workout_id: str, exercises: List[Dict]) -> Optional[Dict[str, Any]]:
+        """Persist a user-reordered warmup list onto the current warmup row.
+
+        Writes the supplied (already-reordered) exercise list straight to the
+        latest is_current row's `exercises_json`. We update IN PLACE rather than
+        inserting a new SCD2 version — a reorder isn't a regeneration, so it
+        keeps the same row/version and simply re-sequences the stored list.
+        Returns the updated row, or None if there's no warmup to update.
+        """
+        try:
+            current = self.get_warmup_for_workout(workout_id)
+            if not current:
+                return None
+            result = self.supabase.table("warmups").update(
+                {"exercises_json": exercises}
+            ).eq("id", current["id"]).execute()
+            logger.info(f"✅ Reordered warmup for workout {workout_id} ({len(exercises)} items)")
+            return result.data[0] if result.data else None
+        except Exception as e:
+            logger.error(f"❌ Failed to reorder warmup: {e}", exc_info=True)
+            return None
+
+    def update_stretch_order(self, workout_id: str, exercises: List[Dict]) -> Optional[Dict[str, Any]]:
+        """Persist a user-reordered stretch list onto the current stretch row.
+
+        See [update_warmup_order] — same in-place re-sequence semantics.
+        """
+        try:
+            current = self.get_stretches_for_workout(workout_id)
+            if not current:
+                return None
+            result = self.supabase.table("stretches").update(
+                {"exercises_json": exercises}
+            ).eq("id", current["id"]).execute()
+            logger.info(f"✅ Reordered stretches for workout {workout_id} ({len(exercises)} items)")
+            return result.data[0] if result.data else None
+        except Exception as e:
+            logger.error(f"❌ Failed to reorder stretches: {e}", exc_info=True)
             return None
 
     def get_warmup_version_history(self, workout_id: str) -> List[Dict[str, Any]]:
