@@ -71,6 +71,13 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   bool _videoInitialized = false;
   bool _showVideo = true;
 
+  // Playback-speed control for the hero video. The chosen rate persists across
+  // a video re-init (e.g. switching exercises) by being re-applied in
+  // [_initVideo]. `_speedMenuOpen` toggles the expanded option row.
+  double _playbackSpeed = 1.0;
+  bool _speedMenuOpen = false;
+  static const List<double> _kPlaybackSpeeds = [0.25, 0.5, 0.75, 1.0, 2.0];
+
   // Rest timer
   Timer? _restTimer;
   int _restSeconds = 0;
@@ -83,6 +90,14 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   // Tab controller for Info/Stats/History floating pill bar
   late TabController _tabController;
   int _selectedTab = 0;
+
+  // Scroll-aware status-bar overlay. The hero header is a LIGHT (white) écorché
+  // image drawn full-bleed under the status bar, so the status-bar icons need
+  // to be DARK while it's expanded — otherwise white-on-white makes the clock /
+  // battery invisible. Once the SliverAppBar collapses to its solid bar we flip
+  // to theme-appropriate icons (light on the dark-theme black bar).
+  final ScrollController _scrollController = ScrollController();
+  bool _headerCollapsed = false;
 
   // Set true when the route was opened with `pendingMuscleTag: true`. The
   // Info-tab UI watches this in `exercise_detail_screen_ui.dart` and renders
@@ -103,6 +118,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
       setState(() => _selectedTab = _tabController.index);
+    });
+
+    // Flip the status-bar icon brightness once the 300pt hero collapses to the
+    // pinned bar. Threshold ≈ expandedHeight − toolbar − a little slack.
+    _scrollController.addListener(() {
+      if (!_scrollController.hasClients) return;
+      final collapsed = _scrollController.offset > (300 - kToolbarHeight - 30);
+      if (collapsed != _headerCollapsed) {
+        setState(() => _headerCollapsed = collapsed);
+      }
     });
 
     // Honor the `pending_muscle_tag` deep-link flag. Force the Info tab
@@ -220,6 +245,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _scrollController.dispose();
     _restTimer?.cancel();
     _videoController?.dispose();
     super.dispose();
@@ -227,6 +253,21 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
 
   /// Initialize + autoplay the looping muted video at [url]. Bounded so a dead
   /// URL can't pin the spinner. Safe to call when [url] is null (no-op).
+  void _setPlaybackSpeed(double speed) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _playbackSpeed = speed;
+      _speedMenuOpen = false;
+    });
+    _videoController?.setPlaybackSpeed(speed);
+  }
+
+  /// "1x", "0.5x", "0.25x" — drops a trailing zero for whole multipliers.
+  String _formatSpeed(double s) {
+    final str = s == s.roundToDouble() ? s.toStringAsFixed(0) : s.toString();
+    return '${str}x';
+  }
+
   Future<void> _initVideo(String? url) async {
     if (url == null || url.isEmpty) return;
     try {
@@ -240,6 +281,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
       controller.setLooping(true);
       controller.setVolume(0);
       controller.play();
+      // Re-apply the user's chosen playback rate so it survives an exercise
+      // switch / re-init (defaults to 1.0 on a fresh screen).
+      controller.setPlaybackSpeed(_playbackSpeed);
       setState(() {
         _videoController = controller;
         _videoInitialized = true;
@@ -420,6 +464,13 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     final warmupSets = 2;
     final repRange = _getRepRange();
     final restSeconds = exercise.restSeconds ?? 120;
+
+    // Timed move (warmup / stretch / cardio hold): no sets×reps grid makes
+    // sense for a 30-sec "Arm circle", so we surface a single DURATION/HOLD
+    // countdown card instead of the set table.
+    final int? timedSecs = exercise.durationSeconds ?? exercise.holdSeconds;
+    final bool isTimedMove = exercise.isTimed == true ||
+        (timedSecs != null && (exercise.sets == null || exercise.sets == 0));
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -431,11 +482,21 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     // Use dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
-    return Scaffold(
+    // Hero image is light → dark icons while expanded; once collapsed, match
+    // the solid bar (white icons on the dark-theme black bar).
+    final overlayStyle = (_headerCollapsed && isDark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark)
+        .copyWith(statusBarColor: Colors.transparent);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: Scaffold(
       backgroundColor: backgroundColor,
       body: Stack(
         children: [
           CustomScrollView(
+            controller: _scrollController,
             slivers: [
               // App bar with video
               SliverAppBar(
@@ -469,7 +530,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                       runSpacing: 8,
                       children: [
                         ZealovaChip(
-                          label: exercise.primaryMuscle ?? exercise.muscleGroup ?? '',
+                          label: _cleanMuscleLabel(
+                              exercise.primaryMuscle ?? exercise.muscleGroup ?? ''),
                           selected: true,
                         ),
                         if (exercise.equipment != null)
@@ -492,17 +554,34 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                         exercise.instructions!.isNotEmpty)
                       _buildInstructionsSection(exercise.instructions!, elevated, textSecondary),
 
-                    // Rest Timer Card
-                    _buildRestTimerCard(restSeconds, elevated, textMuted, textPrimary),
+                    // Timer card — a working countdown. For a timed move it
+                    // doubles as the DURATION/HOLD timer (seeded with the hold
+                    // length); otherwise it's the inter-set rest timer.
+                    _buildRestTimerCard(
+                      isTimedMove ? (timedSecs ?? restSeconds) : restSeconds,
+                      elevated,
+                      textMuted,
+                      textPrimary,
+                      label: isTimedMove
+                          ? (exercise.holdSeconds != null &&
+                                  exercise.durationSeconds == null
+                              ? 'Hold'
+                              : 'Duration')
+                          : null,
+                    ),
                     const SizedBox(height: 24),
 
-                    // Set table header — Barlow uppercase kicker.
-                    const ZealovaSectionKicker('Sets'),
-                    const SizedBox(height: 12),
+                    // Set table — only for rep-based exercises. A timed
+                    // warmup/stretch has no sets×reps grid (it's a duration).
+                    if (!isTimedMove) ...[
+                      // Set table header — Barlow uppercase kicker.
+                      const ZealovaSectionKicker('Sets'),
+                      const SizedBox(height: 12),
 
-                    // Set table
-                    _buildSetTable(warmupSets, totalSets, repRange, exercise.weight, elevated, glassSurface, cardBorder, textPrimary, textMuted, textSecondary),
-                    const SizedBox(height: 24),
+                      // Set table
+                      _buildSetTable(warmupSets, totalSets, repRange, exercise.weight, elevated, glassSurface, cardBorder, textPrimary, textMuted, textSecondary),
+                      const SizedBox(height: 24),
+                    ],
 
                     // Coaching cues (form, breathing, setup, tempo)
                     _buildCoachingCuesSection(exercise, elevated, cardBorder, textPrimary, textSecondary, textMuted, accentColor),
@@ -547,7 +626,27 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
       ),
         ],
       ),
+      ),
     );
+  }
+
+  /// Strip the verbose anatomical parentheticals from a target-muscle string so
+  /// the chip reads cleanly, e.g.
+  ///   "Chest (Pectoralis Major), Middle Back (Latissimus Dorsi, Teres Major)"
+  ///   -> "Chest, Middle Back"
+  /// Keeps every distinct muscle GROUP (unlike the expanded card's first-only
+  /// shortener) but drops the Latin names that blew past the chip width. The
+  /// ZealovaChip ellipsis is the final safety net for pathological cases.
+  String _cleanMuscleLabel(String raw) {
+    if (raw.trim().isEmpty) return '';
+    // Drop everything inside parentheses (which itself may contain commas).
+    final noParens = raw.replaceAll(RegExp(r'\([^)]*\)'), ' ');
+    final groups = <String>[];
+    for (final part in noParens.split(',')) {
+      final cleaned = part.replaceAll(RegExp(r'\s+'), ' ').trim();
+      if (cleaned.isNotEmpty && !groups.contains(cleaned)) groups.add(cleaned);
+    }
+    return groups.isEmpty ? raw.trim() : groups.join(', ');
   }
 
   Widget _buildFloatingPillBar(Color accentColor, bool isDark) {
@@ -556,13 +655,18 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
         : Colors.grey.shade100.withValues(alpha: 0.95);
     final iconMuted = isDark ? Colors.grey.shade500 : Colors.grey.shade400;
 
-    return Center(
+    // Full-width bar with four EVEN segments, each showing its icon AND label
+    // at all times (not just the selected one) — the user wants every tab
+    // worded and visible by default. Equal Expanded segments guarantee the bar
+    // always fits the screen regardless of label length.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         decoration: BoxDecoration(
           color: pillBarColor,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(26),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
@@ -572,14 +676,10 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
           ],
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             _buildPillItem(Icons.info_outline, Icons.info_rounded, 'Info', 0, accentColor, iconMuted, isDark),
-            const SizedBox(width: 4),
             _buildPillItem(Icons.bar_chart_outlined, Icons.bar_chart_rounded, 'Stats', 1, accentColor, iconMuted, isDark),
-            const SizedBox(width: 4),
             _buildPillItem(Icons.history_outlined, Icons.history_rounded, 'History', 2, accentColor, iconMuted, isDark),
-            const SizedBox(width: 4),
             _buildPillItem(Icons.sports_gymnastics_outlined, Icons.sports_gymnastics_rounded, 'Form', 3, accentColor, iconMuted, isDark),
           ],
         ),
@@ -589,51 +689,45 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
 
   Widget _buildPillItem(IconData icon, IconData selectedIcon, String label, int index, Color accentColor, Color mutedColor, bool isDark) {
     final isSelected = _selectedTab == index;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        _tabController.animateTo(index);
-      },
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 14 : 10,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accentColor.withValues(alpha: isDark ? 0.15 : 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? selectedIcon : icon,
-              color: isSelected ? accentColor : mutedColor,
-              size: 20,
-            ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-              child: isSelected
-                  ? Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: Text(
-                        label.toUpperCase(),
-                        style: ZType.lbl(
-                          12,
-                          color: accentColor,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+    final fg = isSelected ? accentColor : mutedColor;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          _tabController.animateTo(index);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? accentColor.withValues(alpha: isDark ? 0.18 : 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSelected ? selectedIcon : icon,
+                color: fg,
+                size: 17,
+              ),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.lbl(10.5, color: fg, letterSpacing: 0.3),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -796,6 +890,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                         _videoController!.play();
                       } else if (_videoController != null) {
                         _videoController!.pause();
+                        _speedMenuOpen = false; // hide speed menu with the video
                       }
                     });
                   },
@@ -824,6 +919,87 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                       ],
                     ),
                   ),
+                ),
+              ),
+
+            // Playback-speed control — only while the video is actually
+            // showing. A tap on the pill expands the 0.25x–2x options upward;
+            // the inner GestureDetectors win the arena so they don't trigger
+            // the section's play/pause tap.
+            if (_videoInitialized && _showVideo && _videoController != null)
+              Positioned(
+                bottom: 16,
+                left: 16,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 160),
+                      curve: Curves.easeOut,
+                      child: _speedMenuOpen
+                          ? Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.72),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  for (final s in _kPlaybackSpeeds)
+                                    GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () => _setPlaybackSpeed(s),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 18, vertical: 8),
+                                        child: Text(
+                                          _formatSpeed(s),
+                                          textAlign: TextAlign.center,
+                                          style: ZType.lbl(
+                                            13,
+                                            color: s == _playbackSpeed
+                                                ? ref.colors(context).accent
+                                                : Colors.white,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () =>
+                          setState(() => _speedMenuOpen = !_speedMenuOpen),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.speed, size: 16, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatSpeed(_playbackSpeed),
+                              style: ZType.lbl(12,
+                                  color: Colors.white, letterSpacing: 0.8),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],
@@ -867,11 +1043,15 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     );
   }
 
-  Widget _buildRestTimerCard(int defaultSeconds, Color elevated, Color textMuted, Color textPrimary) {
+  Widget _buildRestTimerCard(int defaultSeconds, Color elevated, Color textMuted, Color textPrimary, {String? label}) {
     final mins = defaultSeconds ~/ 60;
     final secs = defaultSeconds % 60;
     // Use dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
+    // Default label is the localized "Rest Timer"; a timed move overrides it
+    // with "Duration" / "Hold".
+    final cardLabel =
+        (label ?? AppLocalizations.of(context).exerciseDetailRestTimer).toUpperCase();
 
     return GestureDetector(
       onTap: _isResting ? _stopRestTimer : _startRestTimer,
@@ -893,7 +1073,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppLocalizations.of(context).exerciseDetailRestTimer.toUpperCase(),
+                    cardLabel,
                     style: ZType.lbl(
                       11,
                       color: _isResting ? accentColor : textMuted,

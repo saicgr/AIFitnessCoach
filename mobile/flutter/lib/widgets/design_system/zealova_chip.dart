@@ -45,8 +45,18 @@ class ZealovaChip extends StatelessWidget {
               Icon(icon, size: 12, color: fg),
               const SizedBox(width: 5),
             ],
-            Text(label.toUpperCase(),
-                style: ZType.lbl(10, color: fg, letterSpacing: 1.5)),
+            // Flexible + ellipsis so a long label (e.g. a multi-muscle target
+            // string) can never overflow the chip's row when it's laid out in a
+            // bounded parent (Wrap/Row). Short labels still size to content
+            // because Flexible uses a loose fit.
+            Flexible(
+              child: Text(
+                label.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.lbl(10, color: fg, letterSpacing: 1.5),
+              ),
+            ),
           ],
         ),
       ),
