@@ -72,6 +72,11 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   final SpeechToText _speechToText = SpeechToText();
   bool _isSpeechAvailable = false;
   bool _isListening = false;
+  // Speech is initialized LAZILY (point-of-use), not in initState — calling
+  // _speechToText.initialize() fires the iOS Speech-Recognition + Microphone
+  // permission prompts, and the user shouldn't see those just for opening the
+  // Swap sheet. We init the first time they tap the mic. Guards a single init.
+  bool _speechInitialized = false;
 
   // Cached for filtering
   List<String> _avoidedExerciseNames = [];
@@ -99,7 +104,9 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     _loadAvoidedExercises();
     _loadSimilarExercises();
     _loadRecentExercises();
-    _initSpeech();
+    // NOTE: _initSpeech() is intentionally NOT called here — it triggers the
+    // iOS Speech/Mic permission prompts on call. We defer it to the first
+    // mic tap (see _toggleListening) so opening the sheet asks for nothing.
 
     // Chat-deeplink preselect: jump to AI Picks tab (where the matched
     // exercise is most likely to surface — Similar tab is name-matched
@@ -125,6 +132,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   }
 
   Future<void> _initSpeech() async {
+    _speechInitialized = true;
     try {
       _isSpeechAvailable = await _speechToText.initialize(
         onError: (error) {
@@ -233,6 +241,15 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   }
 
   Future<void> _toggleListening() async {
+    // Point-of-use init: the first mic tap is when we ask for Speech/Mic
+    // permission. _initSpeech() sets _isSpeechAvailable based on the user's
+    // grant; if they deny (or the platform reports unavailable), we surface a
+    // graceful message instead of crashing or silently doing nothing.
+    if (!_speechInitialized) {
+      await _initSpeech();
+      if (!mounted) return;
+    }
+
     if (!_isSpeechAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
