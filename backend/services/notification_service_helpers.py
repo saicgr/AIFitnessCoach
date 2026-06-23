@@ -51,7 +51,7 @@ def _flutter_type_for_nudge(nudge_type: str) -> str:
     Unknown nudge types fall back to `ai_coach_accountability` for the
     same reason — at minimum the user will see the message in chat.
     """
-    if nudge_type.startswith("guilt_day"):
+    if nudge_type.startswith("guilt_day") or nudge_type.startswith("winback_day"):
         return "ai_coach_accountability"
     return _NUDGE_TYPE_TO_FLUTTER_TYPE.get(nudge_type, "ai_coach_accountability")
 
@@ -1243,10 +1243,12 @@ class NotificationService(NotificationServicePart2):
             # Determine which template pool to use
             template_key = (nudge_type, accountability_intensity)
 
-            # EDGE CASE: Guilt escalation uses tier-based keys (e.g., "guilt_day3" → tier 3)
-            if nudge_type.startswith("guilt_day"):
+            # EDGE CASE: guilt_dayN (legacy) + winback_dayN (taper) use tier-based
+            # keys (e.g. "winback_day7" → tier 7). winback_day30 → tier-14 pool.
+            if nudge_type.startswith("guilt_day") or nudge_type.startswith("winback_day"):
+                prefix = "winback_day" if nudge_type.startswith("winback_day") else "guilt_day"
                 try:
-                    tier = int(nudge_type.replace("guilt_day", ""))
+                    tier = int(nudge_type.replace(prefix, ""))
                 except ValueError:
                     tier = 14
                 template_pool = self.COMEBACK_NUDGE_TEMPLATES.get(

@@ -15,7 +15,7 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 import json
 
-from fastapi import APIRouter, Depends, Request, Query
+from fastapi import APIRouter, Depends, Request, Query, BackgroundTasks
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.rate_limiter import user_limiter
@@ -410,6 +410,7 @@ async def _compute_bootstrap(
 @user_limiter.limit("60/minute")
 async def home_bootstrap(
     request: Request,
+    background_tasks: BackgroundTasks,
     user_id: str = Query(..., description="User ID"),
     current_user: dict = Depends(get_current_user),
 ) -> BootstrapResponse:
@@ -436,6 +437,16 @@ async def home_bootstrap(
     try:
         db = get_supabase_db()
         loop = asyncio.get_event_loop()
+
+        # Stamp last_active_at (foreground app-open signal for dormancy tapering).
+        # Fire-and-forget so it never adds latency, and runs even on a cache HIT
+        # below — every bootstrap request means the user opened the app.
+        # NOT called from any background path, so dormant users stay dormant.
+        try:
+            from core.locale import persist_user_last_active
+            background_tasks.add_task(persist_user_last_active, user_id, db)
+        except Exception:
+            pass
 
         # resolve_timezone and _get_active_gym_profile_id are blocking and may
         # each issue a Supabase .execute(). Offload them to the DB executor so

@@ -77,6 +77,13 @@ router = APIRouter()
 
 BATCH_SIZE = 50
 
+# Master kill-switch for the dormancy taper + rolling weekly cap + win-back
+# taper (Goal 1). Default OFF = exact current behavior. Flip via env var after
+# observing band distribution. FAIL OPEN: when off, no band suppression and no
+# weekly cap, so an active user can never be silenced by this feature.
+import os as _os
+_DORMANCY_TAPER_ENABLED = _os.getenv("DORMANCY_TAPER_ENABLED", "false").strip().lower() == "true"
+
 
 # ─── Security ───────────────────────────────────────────────────────────────
 
@@ -193,6 +200,56 @@ def _user_account_age_days(user: dict) -> int:
         return 999
 
 
+def _days_since_last_active(user: dict) -> Optional[int]:
+    """Days since the user last opened the app (foreground), or None.
+
+    Reads users.last_active_at (stamped by /home/bootstrap + FCM register).
+    Returns None when the signal is missing or unparseable — callers MUST treat
+    None as "active" (fail-open) so a user with no signal is never silenced.
+    """
+    raw = user.get("last_active_at")
+    if not raw:
+        return None
+    try:
+        if isinstance(raw, str):
+            ts = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        else:
+            ts = raw
+        return max(0, (datetime.now(ZoneInfo("UTC")) - ts).days)
+    except Exception:
+        return None
+
+
+# Dormancy bands: total push volume STRICTLY DECREASES as inactivity grows.
+# Routine reminders die at "lapsed"; only a tapering win-back fires for
+# lapsed/dormant. Research: taper (day 3/7/14) recovers 10-25% of churners;
+# escalation backfires in fitness. See plan §1B.
+def _dormancy_band(user: dict) -> str:
+    """Classify a user by days-since-last-active. Fail-open to 'active'.
+
+    active       <= 2 days  (or signal missing/unparseable)
+    cooling      3-7 days
+    lapsed       8-14 days
+    dormant      15-30 days
+    deep_dormant > 30 days
+    """
+    try:
+        days = _days_since_last_active(user)
+        if days is None:
+            return "active"
+        if days <= 2:
+            return "active"
+        if days <= 7:
+            return "cooling"
+        if days <= 14:
+            return "lapsed"
+        if days <= 30:
+            return "dormant"
+        return "deep_dormant"
+    except Exception:
+        return "active"
+
+
 def _email_prefix(user: dict) -> str:
     """First-name fallback derived from the email local-part.
 
@@ -231,11 +288,16 @@ def _is_dst_transition_night(timezone_str: str) -> bool:
 # ─── Deduplication ───────────────────────────────────────────────────────────
 
 def _try_dedup_insert(supabase, user_id: str, nudge_type: str, nudge_date: str,
-                      chat_message_id: Optional[str] = None) -> bool:
+                      chat_message_id: Optional[str] = None,
+                      tone: Optional[str] = None) -> bool:
     """Attempt to insert a dedup record. Returns True if successful (not a duplicate).
 
     Uses the UNIQUE index on (user_id, nudge_type, nudge_date) for atomic dedup.
     If the insert fails with a conflict, the nudge was already sent today.
+
+    ``tone`` records which message tone was sent (gentle/balanced/tough_love) so
+    the adaptive-tone bandit can learn per-user open rates. Best-effort: if the
+    column doesn't exist yet (pre-migration) the insert is retried without it.
     """
     try:
         row = {
@@ -245,6 +307,8 @@ def _try_dedup_insert(supabase, user_id: str, nudge_type: str, nudge_date: str,
         }
         if chat_message_id:
             row["chat_message_id"] = chat_message_id
+        if tone:
+            row["tone"] = tone
         supabase.client.table("push_nudge_log").insert(row).execute()
         return True
     except Exception as e:
@@ -284,6 +348,72 @@ def _sent_within_days(supabase, user_id: str, nudge_type: str, days: int) -> boo
         return False
 
 
+# Adaptive-tone arms. tough_love is intentionally EXCLUDED from the auto bandit
+# (shame backfires in fitness — BJHP 2025); users who want it can pin it
+# explicitly. Cold-start prior is the progress-affirming 'balanced'.
+_TONE_ARMS = ("gentle", "balanced")
+_TONE_EPSILON = 0.2          # explore 20% of the time
+_TONE_MIN_TRIALS = 3         # try each arm a few times before exploiting
+
+
+def _select_tone_for_user(supabase, user_id: str) -> str:
+    """Pick the tone with the best per-user open rate (epsilon-greedy bandit).
+
+    Reads tone + opened_at from push_nudge_log. Cold-start / any error →
+    'balanced' (the safe progress-affirming prior). Pure read; never raises.
+    """
+    try:
+        import random
+        rows = (
+            supabase.client.table("push_nudge_log")
+            .select("tone, opened_at")
+            .eq("user_id", user_id)
+            .not_.is_("tone", "null")
+            .limit(500)
+            .execute()
+        ).data or []
+        stats = {arm: [0, 0] for arm in _TONE_ARMS}  # tone -> [sent, opened]
+        for r in rows:
+            t = r.get("tone")
+            if t in stats:
+                stats[t][0] += 1
+                if r.get("opened_at"):
+                    stats[t][1] += 1
+        # Try each arm a few times first.
+        untried = [a for a in _TONE_ARMS if stats[a][0] < _TONE_MIN_TRIALS]
+        if untried:
+            return random.choice(untried)
+        # Explore.
+        if random.random() < _TONE_EPSILON:
+            return random.choice(_TONE_ARMS)
+        # Exploit the highest open rate.
+        return max(_TONE_ARMS, key=lambda a: stats[a][1] / stats[a][0] if stats[a][0] else 0.0)
+    except Exception:
+        return "balanced"
+
+
+def _nudge_ever_sent(supabase, user_id: str, nudge_type: str) -> bool:
+    """True if this nudge_type was EVER sent to the user (any date).
+
+    Used by the win-back taper so each tier (winback_day3/7/14/30) fires exactly
+    ONCE total, robust to missed cron runs — unlike per-day dedup which would
+    re-fire the same tier every day a user stays at that inactivity level.
+    Fails to False (allow) so a glitch never permanently mutes the ladder.
+    """
+    try:
+        res = (
+            supabase.client.table("push_nudge_log")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("nudge_type", nudge_type)
+            .limit(1)
+            .execute()
+        )
+        return bool(res.data)
+    except Exception:
+        return False
+
+
 def _count_nudges_today(supabase, user_id: str, nudge_date: str) -> int:
     """Count how many nudges were sent to this user today (for daily cap)."""
     try:
@@ -295,6 +425,71 @@ def _count_nudges_today(supabase, user_id: str, nudge_date: str) -> int:
         return result.count or 0
     except Exception:
         return 0
+
+
+def _count_nudges_within(supabase, user_id: str, days: int) -> int:
+    """Count nudges sent to this user in the last ``days`` (rolling weekly cap).
+
+    Research healthy cadence is 2-5 pushes per WEEK, not per day; the existing
+    daily cap alone allowed ~14/week. Fails OPEN (returns 0) so a glitch never
+    silences an active user — the daily cap remains the floor.
+    """
+    try:
+        cutoff = (datetime.utcnow().date() - timedelta(days=days)).isoformat()
+        result = supabase.client.table("push_nudge_log") \
+            .select("id", count="exact") \
+            .eq("user_id", user_id) \
+            .gte("nudge_date", cutoff) \
+            .execute()
+        return result.count or 0
+    except Exception:
+        return 0
+
+
+# Rolling per-band push ceilings for QUIET users (window is 7d except
+# deep_dormant which is 14d). 'active' is driven by the user's frequency_preset
+# instead (see _weekly_cap_for) so the Settings cadence control actually takes
+# effect — previously frequency_preset synced to the DB but the cron ignored it.
+WEEKLY_CAP_BY_BAND = {
+    "active": 8,        # ceiling; real active cap = preset below
+    "cooling": 4,
+    "lapsed": 2,
+    "dormant": 1,
+    "deep_dormant": 1,
+}
+
+# frequency_preset → weekly push ceiling. The Settings "How often" picker
+# (minimal / balanced / full_coach) now maps to a real per-WEEK cap. Healthy
+# cadence is 2-5/week; the daily cap alone allowed ~14/week.
+_PRESET_WEEKLY_CAP = {
+    "minimal": 3,
+    "balanced": 5,
+    "full_coach": 8,
+}
+
+
+def _weekly_cap_for(user: dict, band: str) -> tuple:
+    """Return (cap, window_days) for the rolling cap.
+
+    Precedence: explicit per-user weekly_nudge_limit > the user's frequency_preset
+    (active band) > a taper that's the LOWER of preset and the band ceiling
+    (quiet bands — never send a quiet user MORE than they asked for).
+    """
+    prefs = user.get("notification_preferences") or {}
+    preset = prefs.get("frequency_preset", "balanced")
+    preset_cap = _PRESET_WEEKLY_CAP.get(preset, 5)
+    band_cap = WEEKLY_CAP_BY_BAND.get(band, preset_cap)
+
+    override = user.get("weekly_nudge_limit")
+    if isinstance(override, int) and override > 0:
+        cap = override
+    elif band == "active":
+        cap = preset_cap
+    else:
+        cap = min(preset_cap, band_cap)
+
+    window = 14 if band == "deep_dormant" else 7
+    return cap, window
 
 
 # ─── User Data Fetching ─────────────────────────────────────────────────────
@@ -311,7 +506,8 @@ def _fetch_nudge_eligible_users(supabase) -> List[dict]:
             .select(
                 "id, name, email, fcm_token, timezone, notification_preferences, created_at, "
                 "in_vacation_mode, vacation_start_date, vacation_end_date, "
-                "in_comeback_mode, comeback_week, preferred_locale"
+                "in_comeback_mode, comeback_week, preferred_locale, "
+                "last_active_at, weekly_nudge_limit"
             ) \
             .not_.is_("fcm_token", "null") \
             .execute()
@@ -399,9 +595,15 @@ async def _send_nudge(
     if not prefs.get("push_notifications_enabled", True):
         return False
 
-    # 0. Global suppression gate (vacation + comeback). Checked BEFORE dedup so
-    # suppressed nudges don't burn dedup slots or daily cap quota.
-    suppression = should_suppress_notification(user, nudge_type, channel="push")
+    # 0. Global suppression gate (vacation + comeback + dormancy band). Checked
+    # BEFORE dedup so suppressed nudges don't burn dedup slots or daily quota.
+    # dormancy_band tapers volume for quiet users (routine reminders die past
+    # 'active'); the band branch is itself flag-gated + fail-open inside the
+    # suppression module, so when DORMANCY_TAPER_ENABLED is off this is a no-op.
+    band = _dormancy_band(user)
+    suppression = should_suppress_notification(
+        user, nudge_type, channel="push", dormancy_band=band
+    )
     if suppression:
         logger.debug(f"🔕 [Nudge] Suppressed {nudge_type} for {user_id}: {suppression}")
         return False
@@ -411,23 +613,50 @@ async def _send_nudge(
     if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
         return False
 
-    # 2. Dedup check (atomic via UNIQUE constraint)
-    if not _try_dedup_insert(supabase, user_id, nudge_type, local_date):
-        return False
+    # 1b. Rolling weekly cap (band-aware). Healthy cadence is 2-5/week; the
+    # daily cap alone allowed ~14/week. Flag-gated + fail-open so it never
+    # silences an active user when disabled or on a count error.
+    if _DORMANCY_TAPER_ENABLED:
+        weekly_cap, window = _weekly_cap_for(user, band)
+        if _count_nudges_within(supabase, user_id, window) >= weekly_cap:
+            logger.debug(
+                f"🔕 [Nudge] Weekly cap hit for {user_id} "
+                f"(band={band}, cap={weekly_cap}/{window}d): {nudge_type}"
+            )
+            return False
 
-    # 3. Get coach persona
-    ai_settings = user.get("_ai_settings") or {}
-    coach_name = ai_settings.get("coach_name") or "Your Coach"
-    coaching_style = ai_settings.get("coaching_style", "motivational")
-    communication_tone = ai_settings.get("communication_tone", "encouraging")
-    use_emojis = ai_settings.get("use_emojis", True)
+    # 2. Resolve tone (intensity) BEFORE dedup so the chosen tone is recorded on
+    #    the push_nudge_log row — the adaptive-tone bandit learns from per-tone
+    #    open rates.
     intensity = prefs.get("accountability_intensity", "balanced")
+    # Adaptive tone ("auto") — Duolingo's real lever is per-user LEARNING, not
+    # shame. When the user leaves tone on Auto, pick the tone that has earned the
+    # most opens for them (epsilon-greedy over historical open rate); cold-start
+    # defaults to the safe progress-affirming prior. Only changes WHICH message,
+    # never how many. Flag-gated; falls back to 'balanced' when off.
+    if intensity == "auto":
+        intensity = _select_tone_for_user(supabase, user_id) if _DORMANCY_TAPER_ENABLED else "balanced"
     # New-user tone cap (migration 1938 / W6): research shows shame/tough_love
     # undermines motivation for early users. Force balanced for accounts < 14d old
     # regardless of user preference. Users who've used the app 2+ weeks can keep
     # their chosen intensity.
     if _user_account_age_days(user) < 14 and intensity == "tough_love":
         intensity = "balanced"
+    # Win-back taper is re-engagement, NOT punishment: never shame a lapsing user
+    # (shame backfires in fitness — BJHP 2025). Force off tough_love for win-back.
+    if nudge_type.startswith("winback_day") and intensity == "tough_love":
+        intensity = "balanced"
+
+    # 3. Dedup check (atomic via UNIQUE constraint). Record the chosen tone.
+    if not _try_dedup_insert(supabase, user_id, nudge_type, local_date, tone=intensity):
+        return False
+
+    # 4. Get coach persona
+    ai_settings = user.get("_ai_settings") or {}
+    coach_name = ai_settings.get("coach_name") or "Your Coach"
+    coaching_style = ai_settings.get("coaching_style", "motivational")
+    communication_tone = ai_settings.get("communication_tone", "encouraging")
+    use_emojis = ai_settings.get("use_emojis", True)
     use_ai = prefs.get("ai_personalized_nudges", True)
 
     # ── Resolve user's preferred locale for localized push title/body ────────
@@ -923,39 +1152,45 @@ async def _job_habit_reminder(supabase, notif_svc, users: List[dict]) -> int:
     return sent
 
 
-async def _job_guilt_escalation(supabase, notif_svc, users: List[dict]) -> int:
-    """Send Duolingo-style escalating guilt notifications based on days inactive.
+async def _job_winback_taper(supabase, notif_svc, users: List[dict]) -> int:
+    """Win-back taper — re-engagement ladder for users who've gone quiet.
 
-    Tiers: 1, 2, 3, 5, 7, 14+ days without a workout.
-    Each tier has its own dedup key (guilt_day1, guilt_day2, etc.) so the user
-    gets exactly one notification per tier as days accumulate.
+    Replaces the old escalating guilt tiers. Research: a TAPER at day 3/7/14
+    recovers 10-25% of would-be churners, while escalation/shame backfires in
+    fitness (drives quitting). So this fires at most ONCE per threshold and the
+    copy is playful/progress-affirming, never deficit/shame.
+
+    Tiers fire when days-inactive first reaches 3 / 7 / 14 / 30. "Inactive" now
+    means days since last APP OPEN (last_active_at) — falling back to last
+    completed workout for users who predate the signal. Each tier sends exactly
+    once total (robust to missed cron days via _nudge_ever_sent), then silence.
 
     EDGE CASE: Skip if accountability_intensity is "off"
-    EDGE CASE: Skip if guilt_notifications is false
+    EDGE CASE: Skip if guilt_notifications (the win-back opt-out) is false
     EDGE CASE: Skip new users (< 3 days old)
-    EDGE CASE: 14+ tier uses 14 as the key regardless of actual days
+    EDGE CASE: User who never opened the app AND never worked out → skip
     """
     sent = 0
-    tiers = [1, 2, 3, 5, 7, 14]
+    tiers = [3, 7, 14, 30]
 
     for user in users:
         prefs = user.get("notification_preferences") or {}
 
-        # Check preference gates
+        # Preference gates — guilt_notifications is the win-back opt-out toggle.
         intensity = prefs.get("accountability_intensity", "balanced")
         if intensity == "off":
             continue
         if not prefs.get("guilt_notifications", True):
             continue
 
-        # EDGE CASE: No guilt for brand new accounts
+        # No re-engagement pressure for brand new accounts.
         if _user_account_age_days(user) < 3:
             continue
 
         tz_str = user.get("timezone") or "UTC"
         local_hour = _get_user_local_hour(tz_str)
 
-        # Send guilt at 10:00 local time
+        # Fire at 10:00 local time.
         if local_hour != 10:
             continue
         if _is_in_quiet_hours(prefs, local_hour):
@@ -963,45 +1198,40 @@ async def _job_guilt_escalation(supabase, notif_svc, users: List[dict]) -> int:
 
         user_id = str(user["id"])
 
-        # Calculate days since last workout
-        try:
-            last_workout = supabase.client.table("workout_logs") \
-                .select("completed_at") \
-                .eq("user_id", user_id) \
-                .order("completed_at", desc=True) \
-                .limit(1) \
-                .execute()
-
-            if not last_workout.data:
-                # EDGE CASE: User has NEVER completed a workout — skip guilt
-                # (they should get day3_activation email instead)
+        # Days inactive = days since last app open (preferred). Fall back to the
+        # last completed workout for users with no last_active_at yet.
+        days_inactive = _days_since_last_active(user)
+        if days_inactive is None:
+            try:
+                last_workout = supabase.client.table("workout_logs") \
+                    .select("completed_at") \
+                    .eq("user_id", user_id) \
+                    .order("completed_at", desc=True) \
+                    .limit(1) \
+                    .execute()
+                if not last_workout.data:
+                    continue
+                completed_at = last_workout.data[0].get("completed_at")
+                if not completed_at:
+                    continue
+                if isinstance(completed_at, str):
+                    last_date = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
+                else:
+                    last_date = completed_at
+                days_inactive = (datetime.now(ZoneInfo("UTC")) - last_date).days
+            except Exception:
                 continue
 
-            completed_at = last_workout.data[0].get("completed_at")
-            if not completed_at:
-                continue
+        if days_inactive < tiers[0]:
+            continue  # Still warm (active in the last 3 days).
 
-            if isinstance(completed_at, str):
-                last_date = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
-            else:
-                last_date = completed_at
+        # Highest threshold reached so far — fire that tier once, total.
+        tier = max(t for t in tiers if days_inactive >= t)
+        nudge_type = f"winback_day{tier}"
 
-            days_inactive = (datetime.now(ZoneInfo("UTC")) - last_date).days
-        except Exception:
+        # Once-per-tier-ever (robust to missed cron days, unlike per-day dedup).
+        if _nudge_ever_sent(supabase, user_id, nudge_type):
             continue
-
-        if days_inactive < 1:
-            continue  # Worked out today or yesterday
-
-        # Find the appropriate tier
-        # EDGE CASE: 14+ tier catches all long absences
-        tier = 14
-        for t in tiers:
-            if days_inactive <= t:
-                tier = t
-                break
-
-        nudge_type = f"guilt_day{tier}"
 
         success = await _send_nudge(supabase, notif_svc, user, nudge_type, {
             "days": days_inactive,
@@ -2780,6 +3010,15 @@ async def _job_activity_goal(supabase, notif_svc, users: List[dict]) -> int:
             )
             continue
 
+        # Freshness gate (credibility): never nudge about steps using a count
+        # that wasn't synced today. Health data only syncs on app open (+ the
+        # background sync task), so for a user who hasn't opened the app the
+        # step total is days old — "you're at 2,000 steps" on a 4-day-old number
+        # is both wrong and makes the app look broken. days_old >= 1 → skip.
+        staleness = (snapshot or {}).get("staleness") or {}
+        if staleness.get("is_stale"):
+            continue
+
         if not nudge.get("has_message"):
             continue  # No step data — skip silently (no mock data).
 
@@ -3926,7 +4165,7 @@ async def run_push_nudge_cron(
         ("streak_at_risk", _job_streak_at_risk(supabase, notif_svc, users)),
         ("weekly_checkin", _job_weekly_checkin(supabase, notif_svc, users)),
         ("habit_reminder", _job_habit_reminder(supabase, notif_svc, users)),
-        ("guilt_escalation", _job_guilt_escalation(supabase, notif_svc, users)),
+        ("winback_taper", _job_winback_taper(supabase, notif_svc, users)),
         ("trial_reminder", _job_trial_reminder(supabase, notif_svc)),
         # ── Smart app-open hooks ──
         ("streak_countdown", _job_streak_countdown_urgency(supabase, notif_svc, users)),

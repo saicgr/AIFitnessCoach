@@ -212,6 +212,28 @@ def persist_user_locale(user_id: str, locale: str, db_client) -> None:
         logger.warning(f"[Locale] Failed to persist locale for user {user_id}: {exc}")
 
 
+def persist_user_last_active(user_id: str, db_client) -> None:
+    """Stamp users.last_active_at = now (UTC) for dormancy detection (sync).
+
+    Called fire-and-forget from foreground signals (/home/bootstrap, FCM
+    register) so the push cron can taper notifications for quiet users instead
+    of escalating. Background-only paths (e.g. the WorkManager health sync)
+    MUST NOT call this — that would falsely mark a dormant user as active.
+
+    Never raises (background task) and never blocks the request meaningfully —
+    a single indexed UPDATE on the users row.
+    """
+    if not user_id:
+        return
+    try:
+        from datetime import datetime, timezone
+        db_client.client.table("users").update(
+            {"last_active_at": datetime.now(timezone.utc).isoformat()}
+        ).eq("id", user_id).execute()
+    except Exception as exc:
+        logger.warning(f"[LastActive] Failed to persist last_active_at for user {user_id}: {exc}")
+
+
 def get_persisted_locale(user_id: str, db_client) -> str:
     """Read the user's persisted preferred locale from users.preferred_locale.
 

@@ -558,6 +558,25 @@ async def track_notification_interaction(
 
         local_hour_opened = opened_dt.hour
 
+        # Also stamp push_nudge_log.opened_at for the most recent un-opened nudge
+        # in the last 2 days — feeds the adaptive-tone bandit (which tone earns
+        # opens). Best-effort: never break interaction tracking if it fails.
+        # (Pushes are capped to ~4/week, so "most recent un-opened" is a sound
+        # attribution without threading the internal nudge_type through FCM.)
+        try:
+            cutoff = (opened_dt.date() - timedelta(days=2)).isoformat()
+            recent = supabase.client.table("push_nudge_log").select("id").eq(
+                "user_id", user_id
+            ).is_("opened_at", "null").gte(
+                "nudge_date", cutoff
+            ).order("nudge_date", desc=True).limit(1).execute()
+            if recent.data:
+                supabase.client.table("push_nudge_log").update(
+                    {"opened_at": request.opened_at}
+                ).eq("id", recent.data[0]["id"]).execute()
+        except Exception as _e:
+            logger.debug(f"[OpenTrack] push_nudge_log stamp skipped: {_e}")
+
         # Find the most recent unread notification event for this user/type
         event_resp = supabase.client.table("notification_events").select(
             "id"

@@ -129,8 +129,13 @@ async def register_fcm_token(request: RegisterTokenRequest,
             logger.warning(f"User not found: {request.user_id}")
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Update FCM token
-        db.update_user(request.user_id, {"fcm_token": request.fcm_token})
+        # Update FCM token + stamp last_active_at (login / token refresh /
+        # reinstall is a real foreground signal — feeds dormancy tapering).
+        from datetime import datetime, timezone
+        db.update_user(request.user_id, {
+            "fcm_token": request.fcm_token,
+            "last_active_at": datetime.now(timezone.utc).isoformat(),
+        })
         logger.info(f"✅ FCM token registered for user {request.user_id}")
 
         # Log FCM registration

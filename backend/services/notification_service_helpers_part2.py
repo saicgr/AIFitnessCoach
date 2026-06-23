@@ -61,9 +61,14 @@ class NotificationServicePart2:
         if not message_body:
             template_key = (nudge_type, accountability_intensity)
 
-            if nudge_type.startswith("guilt_day"):
+            # guilt_dayN (legacy) and winback_dayN (taper) both route to the
+            # comeback template pool. winback tiers are 3/7/14/30; day30 has no
+            # dedicated pool so it falls back to the tier-14 (longest-absence)
+            # templates via the .get default below.
+            if nudge_type.startswith("guilt_day") or nudge_type.startswith("winback_day"):
+                prefix = "winback_day" if nudge_type.startswith("winback_day") else "guilt_day"
                 try:
-                    tier = int(nudge_type.replace("guilt_day", ""))
+                    tier = int(nudge_type.replace(prefix, ""))
                 except ValueError:
                     tier = 14
                 template_pool = self.COMEBACK_NUDGE_TEMPLATES.get(

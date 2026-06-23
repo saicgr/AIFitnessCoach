@@ -23,9 +23,54 @@ Returns None when the notification should proceed.
 """
 from __future__ import annotations
 
+import os
 from datetime import date, datetime
 from typing import Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+
+# Master kill-switch for dormancy-band suppression (Goal 1). Default OFF =
+# exact current behavior. Mirrors push_nudge_cron._DORMANCY_TAPER_ENABLED so
+# the band branch below is a no-op until the env var is flipped. FAIL OPEN.
+_DORMANCY_TAPER_ENABLED = os.getenv("DORMANCY_TAPER_ENABLED", "false").strip().lower() == "true"
+
+# Win-back taper nudge types (re-engagement ladder fired at day 3/7/14/30 of
+# inactivity). Progress-affirming/playful, never shame — these REPLACE the old
+# escalating guilt tiers. Always allowed in non-active bands.
+WINBACK_NUDGE_TYPES: frozenset = frozenset({
+    "winback_day3",
+    "winback_day7",
+    "winback_day14",
+    "winback_day30",
+})
+
+# Health-data-grounded "gift" nudges — the highest-value, lowest-spam category.
+# As routine reminders are cut for quiet users, ONE of these may substitute in
+# (the rolling weekly cap enforces the "one" part). They tell the user
+# something they couldn't know themselves, so they earn the re-open.
+HEALTH_INSIGHT_NUDGE_TYPES: frozenset = frozenset({
+    "sleep_score",
+    "daily_readiness",
+    "morning_recovery",
+    "health_anomaly",
+    "activity_goal",
+    "rhr_trend",
+    "sleep_debt",
+    "evening_recap",
+})
+
+# Per-band ALLOW-LISTS. Any push not in the band's allow-list (and not critical)
+# is suppressed. Volume strictly decreases as inactivity grows: routine
+# reminders survive only in 'cooling' (down-weighted), die from 'lapsed' on;
+# only the win-back ladder (+ a health insight while still warm) remains.
+_BAND_ALLOWED = {
+    "cooling": frozenset({"morning_workout", "streak_at_risk"})
+    | WINBACK_NUDGE_TYPES
+    | HEALTH_INSIGHT_NUDGE_TYPES,
+    "lapsed": WINBACK_NUDGE_TYPES | HEALTH_INSIGHT_NUDGE_TYPES,
+    "dormant": WINBACK_NUDGE_TYPES,
+    "deep_dormant": WINBACK_NUDGE_TYPES,
+}
 
 
 # Push types that bypass vacation mode.
@@ -59,6 +104,12 @@ COMEBACK_SUPPRESSED_PUSH: frozenset = frozenset({
     "guilt_day5",
     "guilt_day7",
     "guilt_day14",
+    # Win-back taper types (replace the retired guilt tiers) — a user already in
+    # structured comeback mode should not also get the dormancy win-back ladder.
+    "winback_day3",
+    "winback_day7",
+    "winback_day14",
+    "winback_day30",
     "streak_at_risk",
     "missed_workout",
 })
@@ -132,20 +183,26 @@ def should_suppress_notification(
     user: dict,
     nudge_type: str,
     channel: str = "push",
+    dormancy_band: Optional[str] = None,
 ) -> Optional[str]:
     """Central gate — call before sending any nudge/email.
 
     Returns:
         A reason code string if the notification should be suppressed
-        ("vacation" or "comeback"), or None to proceed.
+        ("vacation", "comeback", or "dormancy_<band>"), or None to proceed.
 
     Args:
         user: dict with in_vacation_mode, vacation_start_date, vacation_end_date,
               in_comeback_mode, timezone. Missing keys are treated as unset.
-        nudge_type: Job identifier (e.g. 'morning_workout', 'guilt_day3',
+        nudge_type: Job identifier (e.g. 'morning_workout', 'winback_day3',
                     'streak_at_risk'). Compared against the channel-specific
                     critical + comeback-blocked sets.
         channel: 'push' or 'email'. Selects which whitelist/blocklist applies.
+        dormancy_band: optional 'active'|'cooling'|'lapsed'|'dormant'|
+                    'deep_dormant' from push_nudge_cron._dormancy_band. When
+                    omitted (e.g. email paths) or 'active', band suppression is
+                    skipped — backward compatible. Only enforced when the
+                    DORMANCY_TAPER_ENABLED flag is on (fail-open otherwise).
     """
     if channel == "push":
         critical = CRITICAL_PUSH_TYPES
@@ -165,5 +222,21 @@ def should_suppress_notification(
     # Comeback only suppresses specific job types that would punish recovery.
     if nudge_type in comeback_blocked and is_user_in_comeback(user):
         return "comeback"
+
+    # Dormancy taper — for quiet users, suppress routine reminders and allow only
+    # the band's allow-list (win-back ladder + a health insight while warm).
+    # Critical types always pass. Flag-gated + fail-open: when the flag is off or
+    # the band is 'active'/None/unknown, nothing is suppressed here.
+    if (
+        _DORMANCY_TAPER_ENABLED
+        and dormancy_band
+        and dormancy_band != "active"
+        and nudge_type not in critical
+    ):
+        allowed = _BAND_ALLOWED.get(dormancy_band)
+        # Unknown band → fail open (allow). Known band → suppress anything not
+        # explicitly allowed for that band.
+        if allowed is not None and nudge_type not in allowed:
+            return f"dormancy_{dormancy_band}"
 
     return None
