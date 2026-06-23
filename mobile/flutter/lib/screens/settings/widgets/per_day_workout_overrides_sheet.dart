@@ -138,6 +138,21 @@ class _PerDayWorkoutOverridesSheetState
     });
   }
 
+  void _setEquipment(int day, List<String>? equipment) {
+    setState(() {
+      final existing = _draft[day];
+      if (existing == null) {
+        if (equipment == null) return;
+        _draft[day] =
+            WorkoutDayOverride(focus: 'full_body', equipmentOverride: equipment);
+      } else {
+        _draft[day] = equipment == null
+            ? existing.copyWith(clearEquipmentOverride: true)
+            : existing.copyWith(equipmentOverride: equipment);
+      }
+    });
+  }
+
   void _resetDay(int day) {
     setState(() => _draft.remove(day));
   }
@@ -412,6 +427,7 @@ class _PerDayWorkoutOverridesSheetState
           durationMin: override?.durationMin,
           intensity: override?.intensity,
           gymProfileId: override?.gymProfileId,
+          equipmentOverride: override?.equipmentOverride,
           accent: accent,
           textPrimary: textPrimary,
           textMuted: textMuted,
@@ -421,6 +437,7 @@ class _PerDayWorkoutOverridesSheetState
           onDurationChanged: (d) => _setDuration(day, d),
           onIntensityChanged: (i) => _setIntensity(day, i),
           onGymChanged: (g) => _setGym(day, g),
+          onEquipmentChanged: (eq) => _setEquipment(day, eq),
         ),
       ],
     );

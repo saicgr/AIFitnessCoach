@@ -583,6 +583,29 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
     });
   }
 
+  /// Set a single day's equipment override from the shared [PerDayControls].
+  ///   • `null`  → inherit the user/gym inventory (clear the override).
+  ///   • `[]`    → bodyweight only.
+  ///   • a list  → that explicit subset of equipment.
+  /// Serializes through `WorkoutDayOverride.toJson` on save with NO extra work
+  /// (toJson already emits `equipment_override`).
+  void _setOverrideEquipment(int day, List<String>? equipment) {
+    setState(() {
+      final existing = _dayOverrides[day];
+      if (existing == null) {
+        if (equipment == null) return;
+        _dayOverrides[day] = WorkoutDayOverride(
+          focus: 'full_body',
+          equipmentOverride: equipment,
+        );
+      } else {
+        _dayOverrides[day] = equipment == null
+            ? existing.copyWith(clearEquipmentOverride: true)
+            : existing.copyWith(equipmentOverride: equipment);
+      }
+    });
+  }
+
   /// Merge the per-day overrides [payload] into the user's existing preferences
   /// JSONB (so we don't clobber unrelated keys). Pure function — no side effects
   /// — so it's safe to call before pop and hand the result to the background

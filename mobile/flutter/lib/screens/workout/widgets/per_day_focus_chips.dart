@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/providers/environment_equipment_provider.dart'
+    show getEquipmentDisplayName;
 import '../../../data/models/gym_profile.dart';
+import '../../home/widgets/components/equipment_selector.dart'
+    show showEquipmentPickerSheet;
 
 /// Shared per-day customization chip widgets + option catalogs.
 ///
@@ -104,6 +108,55 @@ class PerDayChip extends StatelessWidget {
   }
 }
 
+/// A pill chip showing a selected equipment item with an inline remove (×)
+/// affordance. Used in the per-day Equipment sub-section so a chosen subset
+/// can be trimmed without reopening the picker.
+class _RemovablePerDayChip extends StatelessWidget {
+  const _RemovablePerDayChip({
+    required this.label,
+    required this.accent,
+    required this.onRemove,
+  });
+
+  final String label;
+  final Color accent;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onRemove,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
+          decoration: BoxDecoration(
+            color: accent,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: accent, width: 1.2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.close_rounded, size: 14, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// The Focus / Duration / Intensity / Gym control stack for a single day.
 ///
 /// Stateless and fully driven by [override] + callbacks so it can be embedded
@@ -122,6 +175,7 @@ class PerDayControls extends StatelessWidget {
     required this.durationMin,
     required this.intensity,
     required this.gymProfileId,
+    required this.equipmentOverride,
     required this.accent,
     required this.textPrimary,
     required this.textMuted,
@@ -129,6 +183,7 @@ class PerDayControls extends StatelessWidget {
     required this.onAiDecide,
     required this.onDurationChanged,
     required this.onIntensityChanged,
+    required this.onEquipmentChanged,
     required this.onGymChanged,
     this.onAddGym,
     this.gymProfiles = const [],
@@ -141,6 +196,10 @@ class PerDayControls extends StatelessWidget {
   final String? intensity;
   final String? gymProfileId;
 
+  /// Per-day equipment subset. `null` = inherit from the user/gym inventory;
+  /// `[]` = bodyweight only; non-empty = canonical snake_case tokens to allow.
+  final List<String>? equipmentOverride;
+
   final Color accent;
   final Color textPrimary;
   final Color textMuted;
@@ -149,6 +208,9 @@ class PerDayControls extends StatelessWidget {
   final VoidCallback onAiDecide;
   final ValueChanged<int?> onDurationChanged;
   final ValueChanged<String?> onIntensityChanged;
+
+  /// `null` = inherit, `[]` = bodyweight only, non-empty = explicit subset.
+  final ValueChanged<List<String>?> onEquipmentChanged;
   final ValueChanged<String?> onGymChanged;
 
   /// Opens the "Add gym profile" flow. When null the "Add gym" chip is hidden.
@@ -283,6 +345,76 @@ class PerDayControls extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 14),
+
+          // ── Equipment ──
+          // null = inherit; [] = bodyweight only; non-empty = explicit subset
+          // of canonical snake_case tokens for this day.
+          sectionLabel('Equipment'),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              PerDayChip(
+                label: 'Inherit',
+                icon: Icons.auto_awesome_rounded,
+                selected: equipmentOverride == null,
+                accent: accent,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+                onTap: () => onEquipmentChanged(null),
+              ),
+              PerDayChip(
+                label: 'Bodyweight only',
+                icon: Icons.accessibility_new_rounded,
+                selected:
+                    equipmentOverride != null && equipmentOverride!.isEmpty,
+                accent: accent,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+                onTap: () => onEquipmentChanged(const []),
+              ),
+              // Selected equipment as removable chips (only when an explicit
+              // non-empty subset is chosen).
+              if (equipmentOverride != null && equipmentOverride!.isNotEmpty)
+                for (final token in equipmentOverride!)
+                  _RemovablePerDayChip(
+                    label: getEquipmentDisplayName(token),
+                    accent: accent,
+                    onRemove: () {
+                      final next = List<String>.from(equipmentOverride!)
+                        ..remove(token);
+                      onEquipmentChanged(next.isEmpty ? const [] : next);
+                    },
+                  ),
+              PerDayChip(
+                label: 'Add equipment',
+                icon: Icons.add_rounded,
+                selected: false,
+                accent: accent,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+                onTap: () async {
+                  final picked = await showEquipmentPickerSheet(
+                    context,
+                    initial: equipmentOverride ?? const [],
+                  );
+                  if (picked == null) return; // dismissed without confirming
+                  onEquipmentChanged(picked);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Inherit uses your gym\'s equipment; pick a subset to restrict this day.',
+            style: TextStyle(
+              fontSize: 11,
+              color: textMuted,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
 
           // ── Gym selector ──
           // B1: always render when enabled — "Active gym" (gymProfileId=null,

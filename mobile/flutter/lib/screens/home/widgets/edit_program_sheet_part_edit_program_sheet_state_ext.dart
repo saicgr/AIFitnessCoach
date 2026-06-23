@@ -477,6 +477,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
             durationMin: override?.durationMin,
             intensity: override?.intensity,
             gymProfileId: override?.gymProfileId,
+            equipmentOverride: override?.equipmentOverride,
             accent: accent,
             textPrimary: colors.textPrimary,
             textMuted: colors.textMuted,
@@ -486,6 +487,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
             onDurationChanged: (d) => _setOverrideDuration(editingDay, d),
             onIntensityChanged: (i) => _setOverrideIntensity(editingDay, i),
             onGymChanged: (g) => _setOverrideGym(editingDay, g),
+            onEquipmentChanged: (eq) => _setOverrideEquipment(editingDay, eq),
             // B1: create a gym inline. gymProfilesProvider auto-refreshes once
             // the sheet saves, so the new gym appears as a chip on return.
             onAddGym: () => showGlassSheet<void>(
@@ -892,6 +894,8 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
           ),
           const SizedBox(height: 24),
           InjuriesSelector(
+            title: 'Injuries',
+            showBodyMap: true,
             selectedInjuries: _selectedInjuries,
             onSelectionChanged: (injuries) =>
                 setState(() => _selectedInjuries
@@ -1052,7 +1056,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                 const SizedBox(height: 4),
                 Text(
                   willRegenerate
-                      ? 'Review your program below. Apply now rebuilds today & tomorrow right away — or save it for later and it\'ll kick in with your next workouts.'
+                      ? 'Review your program below. Apply now rebuilds today & tomorrow right away — or apply from your next session and it\'ll kick in with your next workouts.'
                       : 'Review your program below, then save.',
                   style: TextStyle(
                     fontSize: 13,
@@ -1098,7 +1102,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                         ),
                       ),
                       child: const Text(
-                        'Save for later',
+                        'Apply from next session',
                         style: TextStyle(
                             fontWeight: FontWeight.w700, fontSize: 15),
                       ),
@@ -1107,7 +1111,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                   const SizedBox(height: 6),
                   Center(
                     child: Text(
-                      'Later = applies to your next generated workouts',
+                      'Applies to your next generated workouts',
                       style: TextStyle(fontSize: 11, color: colors.textMuted),
                     ),
                   ),
@@ -1188,10 +1192,21 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
           (intensityLabels[ov.intensity] ?? ov.intensity!),
         if (ov.gymProfileId != null && gymNames.containsKey(ov.gymProfileId))
           gymNames[ov.gymProfileId]!,
+        if (ov.equipmentOverride != null)
+          _equipmentNote(ov.equipmentOverride!),
       ];
       lines.add('${dayNames[d]} · ${parts.join(' · ')}');
     }
     return lines;
+  }
+
+  /// Short per-day equipment note for the summary, consistent with how gym /
+  /// focus are shown. `[]` → "Bodyweight"; a single item → its name; multiple →
+  /// "<first> +N".
+  String _equipmentNote(List<String> equipment) {
+    if (equipment.isEmpty) return 'Bodyweight';
+    if (equipment.length == 1) return equipment.first;
+    return '${equipment.first} +${equipment.length - 1}';
   }
 }
 
