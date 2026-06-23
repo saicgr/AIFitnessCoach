@@ -726,8 +726,18 @@ async def update_user(user_id: str, user: UserUpdate,
 
         if user.preferences is not None or has_extended_fields:
             current_prefs = existing.get("preferences", {})
+            # preferences may arrive as a dict (preferred) or a JSON string
+            # (legacy). merge_extended_fields_into_preferences expects a dict
+            # (it drops non-dicts), so normalize a string to a dict here —
+            # otherwise a string payload would silently wipe the user's prefs.
+            _incoming_prefs = user.preferences
+            if isinstance(_incoming_prefs, str):
+                try:
+                    _incoming_prefs = json.loads(_incoming_prefs)
+                except (ValueError, TypeError):
+                    _incoming_prefs = None
             final_preferences = merge_extended_fields_into_preferences(
-                user.preferences if user.preferences else current_prefs,
+                _incoming_prefs if _incoming_prefs else current_prefs,
                 user.days_per_week,
                 user.workout_duration,
                 user.training_split,

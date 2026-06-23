@@ -119,7 +119,10 @@ class UserUpdate(BaseModel):
     goals: Optional[str] = Field(default=None, max_length=2000)
     equipment: Optional[str] = Field(default=None, max_length=2000)
     custom_equipment: Optional[str] = Field(default=None, max_length=2000)  # User-added equipment
-    preferences: Optional[str] = Field(default=None, max_length=10000)
+    # Accept either a dict (preferred — the app PUTs preferences as a JSON
+    # object) or a JSON string (legacy). Typing it as str-only made every
+    # dict payload 422 at request validation (e.g. the per-day editor save).
+    preferences: Optional[Union[str, dict]] = Field(default=None)
     active_injuries: Optional[Union[str, List[str]]] = Field(default=None)
     onboarding_completed: Optional[bool] = None  # Set to True after onboarding
     coach_selected: Optional[bool] = None  # Set to True after coach selection
