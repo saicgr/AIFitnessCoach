@@ -255,6 +255,48 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         fitness_level = body.fitness_level or user.get("fitness_level")
         preferences = parse_json_field(user.get("preferences"), {})
 
+        # ── Per-day plan CHOKEPOINT (systemic) ───────────────────────────────
+        # Resolve users.preferences.workout_day_overrides for THIS scheduled
+        # weekday and BACKFILL any field the caller did not explicitly pass.
+        # Previously the per-day plan was resolved only by today.py's caller, so
+        # paths that call /generate(-stream) directly (notably the home
+        # today-provider's param-less auto-gen) produced DEFAULT workouts that
+        # then superseded the correct per-day ones. Resolving it here makes the
+        # per-day plan authoritative on EVERY generation path. Caller wins;
+        # fail-open. Mutating `body` lets the existing `body.* or …` resolution
+        # below pick it up with no further changes.
+        try:
+            from datetime import date as _date_cls
+            _wd = None
+            if body.scheduled_date:
+                _wd = _date_cls.fromisoformat(str(body.scheduled_date)[:10]).weekday()
+            if _wd is not None:
+                _day_ov = (_parse_workout_day_overrides(
+                    preferences.get("workout_day_overrides")) or {}).get(_wd)
+                if _day_ov:
+                    if not body.gym_profile_id and _day_ov.get("gym_profile_id"):
+                        body.gym_profile_id = _day_ov["gym_profile_id"]
+                    if not body.focus_areas and _day_ov.get("focus"):
+                        body.focus_areas = [_day_ov["focus"]]
+                    if body.duration_minutes is None and _day_ov.get("duration_min"):
+                        body.duration_minutes = _day_ov["duration_min"]
+                    if not body.intensity_preference and _day_ov.get("intensity"):
+                        _iv = _day_ov["intensity"]
+                        body.intensity_preference = "medium" if _iv == "moderate" else _iv
+                    # equipment_override: non-empty list → restrict to it;
+                    # [] → bodyweight-only ("bodyweight" is the generator's
+                    # canonical no-equipment signal); None → inherit (untouched).
+                    if not body.equipment and _day_ov.get("equipment_override") is not None:
+                        _eq_ov = _day_ov["equipment_override"]
+                        body.equipment = _eq_ov if _eq_ov else ["bodyweight"]
+                    logger.info(
+                        f"[per-day chokepoint] wd={_wd} backfilled → focus={body.focus_areas} "
+                        f"dur={body.duration_minutes} intensity={body.intensity_preference} "
+                        f"gym={body.gym_profile_id} equip={body.equipment}"
+                    )
+        except Exception as _pdc_e:
+            logger.warning(f"[per-day chokepoint] resolution failed (fail-open): {_pdc_e}")
+
         # Resolve gym profile: explicit ID → active → none.
         gym_profile = None
         if body.gym_profile_id:

@@ -209,6 +209,16 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     # and the generator handles profile_id=None downstream.
     stream_gym_profile_id = body.gym_profile_id or get_active_gym_profile_id(db, body.user_id)
 
+    # scheduled_date is TIMESTAMPTZ — `.eq` against a bare "YYYY-MM-DD" string
+    # NEVER matches a stored "...T17:00:00+00" value, so the idempotency checks
+    # below silently found nothing and let a racing /generate-stream (the home
+    # today-provider's param-less auto-gen) regenerate + supersede the correct
+    # per-day workout. Match by the UTC day-range instead — same convention the
+    # supersede block downstream already uses. This is THE fix that stops the
+    # "Apply now built the right workout, then it got overwritten" clobber.
+    _sd_day = str(scheduled_date)[:10] if scheduled_date else None
+    _sd_lo = f"{_sd_day}T00:00:00+00:00" if _sd_day else None
+    _sd_hi = f"{_sd_day}T23:59:59+00:00" if _sd_day else None
     try:
         # NB: dedup intentionally ignores gym_profile_id. A user can have at most one
         # *current* AI workout per day; gym profile is contextual, not part of the
@@ -216,8 +226,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         # (or a different profile) sneak past, producing duplicate today rows.
         existing_generating = await asyncio.to_thread(db.client.table("workouts").select("id").eq(
             "user_id", body.user_id
-        ).eq(
-            "scheduled_date", scheduled_date
+        ).gte(
+            "scheduled_date", _sd_lo
+        ).lte(
+            "scheduled_date", _sd_hi
         ).eq(
             "status", "generating"
         ).execute)
@@ -233,10 +245,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
         # Duplicate check: if a current, non-cancelled workout already exists for
         # this user+date, return it — regardless of gym_profile_id (see comment above).
+        # Day-range match (TIMESTAMPTZ), NOT `.eq` on a bare date string.
         existing_workout = await asyncio.to_thread(db.client.table("workouts").select("id,name,status").eq(
             "user_id", body.user_id
-        ).eq(
-            "scheduled_date", scheduled_date
+        ).gte(
+            "scheduled_date", _sd_lo
+        ).lte(
+            "scheduled_date", _sd_hi
         ).eq(
             "is_current", True
         ).neq(
@@ -301,6 +316,43 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             fitness_level = body.fitness_level or user.get("fitness_level")
             preferences = parse_json_field(user.get("preferences"), {})
 
+            # ── Per-day plan CHOKEPOINT (systemic) ───────────────────────────
+            # The home today-provider auto-generates through THIS streaming
+            # endpoint with ONLY userId/scheduledDate/gymProfileId — no per-day
+            # focus/duration/intensity. That produced a generic workout that
+            # superseded the correct per-day one (root cause of the "Apply now
+            # didn't apply" bug). Resolve workout_day_overrides for this weekday
+            # and backfill what the caller didn't pass. Caller wins; fail-open.
+            try:
+                from datetime import date as _date_cls
+                _wd = None
+                if getattr(body, "scheduled_date", None):
+                    _wd = _date_cls.fromisoformat(str(body.scheduled_date)[:10]).weekday()
+                if _wd is not None:
+                    _day_ov = (_parse_workout_day_overrides(
+                        preferences.get("workout_day_overrides")) or {}).get(_wd)
+                    if _day_ov:
+                        if not getattr(body, "gym_profile_id", None) and _day_ov.get("gym_profile_id"):
+                            body.gym_profile_id = _day_ov["gym_profile_id"]
+                        if not body.focus_areas and _day_ov.get("focus"):
+                            body.focus_areas = [_day_ov["focus"]]
+                        if body.duration_minutes is None and _day_ov.get("duration_min"):
+                            body.duration_minutes = _day_ov["duration_min"]
+                        if not body.intensity_preference and _day_ov.get("intensity"):
+                            _iv = _day_ov["intensity"]
+                            body.intensity_preference = "medium" if _iv == "moderate" else _iv
+                        if not body.equipment and _day_ov.get("equipment_override") is not None:
+                            _eq_ov = _day_ov["equipment_override"]
+                            body.equipment = _eq_ov if _eq_ov else ["bodyweight"]
+                        logger.info(
+                            f"[per-day chokepoint][stream] wd={_wd} backfilled → "
+                            f"focus={body.focus_areas} dur={body.duration_minutes} "
+                            f"intensity={body.intensity_preference} gym={getattr(body,'gym_profile_id',None)} "
+                            f"equip={body.equipment}"
+                        )
+            except Exception as _pdc_e:
+                logger.warning(f"[per-day chokepoint][stream] resolution failed (fail-open): {_pdc_e}")
+
             # Caller-supplied workout type override (matches the pattern used
             # in workouts_db_versioning.py:101). The 4 downstream references
             # below (lines 595, 845, 851, 938) NameError'd in production
@@ -342,7 +394,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 training_split = user.get("training_split")
                 workout_days = parse_json_field(user.get("workout_days"), [])
 
-            intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
+            # Honor an explicit per-day intensity (body.intensity_preference,
+            # set by the chokepoint above or threaded by today.py) — it was
+            # previously dropped here so a per-day "Hell" silently degraded.
+            intensity_preference = body.intensity_preference or preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
 
             # Fetch user preferences in PARALLEL for faster response
             async def fetch_ai_coach_settings():

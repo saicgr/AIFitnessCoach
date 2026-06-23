@@ -660,6 +660,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         # apply the per-day GYM (mixed-gym week: Mon/Wed=Gym 1, Tue/Fri=Gym 2).
         _per_day_duration = None
         _per_day_intensity = None
+        _per_day_equipment = None
         try:
             from .generation_endpoints import _parse_workout_day_overrides
             _urec = await run_db(lambda: db.get_user(user_id))
@@ -686,6 +687,12 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
                     _per_day_intensity = (
                         "medium" if _intensity == "moderate" else _intensity
                     )
+                # Per-day equipment: non-empty list restricts to it; [] means
+                # bodyweight-only ("bodyweight" is the generator's no-equipment
+                # signal); None inherits the gym/user inventory.
+                _eq_ov = _day_ov.get("equipment_override")
+                if _eq_ov is not None:
+                    _per_day_equipment = _eq_ov if _eq_ov else ["bodyweight"]
                 logger.info(
                     f"[BG-GEN][per-day] day {target_date.weekday()} -> "
                     f"focus={focus_for_day} dur={_per_day_duration} "
@@ -708,6 +715,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             workout_type=workout_type,
             duration_minutes=_per_day_duration,
             intensity_preference=_per_day_intensity,
+            equipment=_per_day_equipment,
             adjacent_day_exercises=adjacent_day_exercises,
             batch_offset=batch_offset,
         )
