@@ -40,13 +40,14 @@ import '../../data/services/image_url_cache.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'widgets/sauna_dialog.dart';
 import '../home/widgets/components/training_program_selector.dart';
-import 'widgets/workout_actions_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/exercise_add_sheet.dart';
 import 'widgets/expanded_exercise_card.dart';
 import 'widgets/superset_indicator.dart';
 import 'widgets/superset_reorder_sheet.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../core/constants/branding.dart';
 import '../../widgets/fasting_training_warning.dart';
 import '../../widgets/coach_avatar.dart';
 import '../../models/equipment_item.dart';
@@ -130,7 +131,6 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
   bool _isLoadingParams = false;  // Loading state for generation params
   bool _isAIReasoningExpanded = false;  // For AI reasoning section
   bool _isMoreInfoExpanded = false;  // For More Info section (extra details)
-  bool _isAIInsightsExpanded = true;  // AI Insights section (between Equipment + Warm Up); shown by default
   bool? _useKgOverride;  // Local override for kg/lbs toggle
   int? _pendingSupersetIndex;  // Index of exercise waiting to be paired via menu
 
@@ -717,31 +717,17 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
           ],
 
           // ─────────────────────────────────────────────────────────────────
-          // AI INSIGHTS SECTION (Collapsible) — promoted out of "More Info" to
-          // sit between Equipment and Warm Up (user request). Shows the
-          // AI-generated pre-workout briefing, now personalized to the user's
-          // lift history, PR/1RM opportunities, injuries and targets. Tap the
-          // header to expand/collapse. Gated on summary presence/loading so the
-          // header never appears as an empty shell.
+          // AI INSIGHTS — a SINGLE always-visible tappable card (no chevron, no
+          // expand/collapse). Sits between Equipment and Warm Up (user request).
+          // Shows the AI-generated pre-workout briefing — personalized to the
+          // user's lift history, PR/1RM opportunities, injuries and targets —
+          // as a one-line teaser; tapping opens the full modal. Gated on summary
+          // presence/loading so it never renders as an empty shell.
           // ─────────────────────────────────────────────────────────────────
-          if (_workoutSummary != null || _isLoadingSummary) ...[
+          if (_workoutSummary != null || _isLoadingSummary)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(top: 16),
-                child: _buildCollapsibleSectionHeader(
-                  title: 'AI Insights',
-                  icon: Icons.auto_awesome,
-                  color: accentColor,
-                  isExpanded: _isAIInsightsExpanded,
-                  onTap: () => setState(
-                      () => _isAIInsightsExpanded = !_isAIInsightsExpanded),
-                  itemCount: 1,
-                  subtitle: 'Tailored to your history, PRs & injuries',
-                ),
-              ),
-            ),
-            if (_isAIInsightsExpanded)
-              SliverToBoxAdapter(
                 child: buildWorkoutSummarySection(
                   workoutSummary: _workoutSummary,
                   isLoadingSummary: _isLoadingSummary,
@@ -755,7 +741,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                       : null,
                 ),
               ),
-          ],
+            ),
 
           // ─────────────────────────────────────────────────────────────────
           // POST-WORKOUT SECTION (Sauna - only for completed workouts)

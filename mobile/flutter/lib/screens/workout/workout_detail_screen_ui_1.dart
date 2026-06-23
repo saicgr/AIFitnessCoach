@@ -46,6 +46,10 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
     _loadWorkoutSummary();
     _loadTrainingSplit();
     _loadGenerationParams();
+    // Eagerly load the real per-workout warmup/stretches so the section shows
+    // correct data (and an accurate count) on open, instead of waiting for the
+    // user to expand it and briefly showing the loading/empty state.
+    _loadWarmupAndStretches();
     if (_workout!.isCompleted == true) {
       _loadSaunaLog();
     }
@@ -297,26 +301,76 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
   }
 
 
-  /// Load warmup and stretch exercises from API
+  /// Load warmup and stretch exercises for this workout.
+  ///
+  /// GET-first: reads the PERSISTED, per-workout warmup/stretches (which vary by
+  /// workout) and only generates when the server has none yet. This fixes the
+  /// "same warmups/stretches for every workout" bug — the old path regenerated
+  /// on every expand and, on any empty/error, silently showed a hardcoded
+  /// 5-item default list for all workouts.
+  ///
+  /// Self-deduping: a no-op while a load is in flight or when data is already
+  /// loaded successfully; re-entrant after an error so the retry button works.
   Future<void> _loadWarmupAndStretches() async {
     if (_workout?.id == null) return;
-    // Locally-generated workouts have no server row; the warmup-and-stretches
-    // endpoint would 404. Skip rather than emit a server error.
-    if (_workout!.isLocallyGenerated) {
-      debugPrint('ℹ️ [WorkoutDetail] Skipping server warmup/stretches for locally-generated workout ${widget.workoutId}');
-      return;
+    if (_isLoadingWarmupStretch) return; // a load is already in flight
+    if (_warmupData != null && _stretchData != null && !_warmupStretchError) {
+      return; // already loaded successfully
     }
-    try {
-      final workoutRepo = ref.read(workoutRepositoryProvider);
-      final data = await workoutRepo.generateWarmupAndStretches(_workout!.id!);
+
+    // Locally-generated workouts have no server row; the endpoints 404. There is
+    // no per-workout server data to show — render an empty state rather than a
+    // misleading shared default list.
+    if (_workout!.isLocallyGenerated) {
+      debugPrint('ℹ️ [WorkoutDetail] Locally-generated workout — no server warmup/stretches for ${widget.workoutId}');
       if (mounted) {
         setState(() {
-          _warmupData = data['warmup'] ?? [];
-          _stretchData = data['stretches'] ?? [];
+          _warmupData = const [];
+          _stretchData = const [];
+          _isLoadingWarmupStretch = false;
+          _warmupStretchError = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingWarmupStretch = true;
+        _warmupStretchError = false;
+      });
+    }
+
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      // 1) Read persisted data first (fast, deterministic, varies per workout).
+      final persisted = await workoutRepo.fetchWarmupAndStretches(_workout!.id!);
+      var warmup = persisted.warmup;
+      var stretches = persisted.stretches;
+
+      // 2) Generate ONLY what's missing (first time this workout is opened).
+      if (warmup == null || stretches == null) {
+        final generated = await workoutRepo.generateWarmupAndStretches(_workout!.id!);
+        warmup ??= generated['warmup'];
+        stretches ??= generated['stretches'];
+      }
+
+      if (mounted) {
+        setState(() {
+          _warmupData = warmup ?? [];
+          _stretchData = stretches ?? [];
+          _isLoadingWarmupStretch = false;
+          _warmupStretchError = false;
         });
       }
     } catch (e) {
       debugPrint('❌ [WorkoutDetail] Failed to load warmup/stretches: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingWarmupStretch = false;
+          _warmupStretchError = true;
+        });
+      }
     }
   }
 
@@ -434,13 +488,49 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
 
     showGlassSheet(
       context: context,
-      builder: (context) => GlassSheet(
-        child: EditWorkoutEquipmentSheet(
-          currentEquipment: workout.equipmentNeeded,
-          equipmentDetails: currentEquipmentDetails,
-          onApply: (selectedEquipment) => _applyEquipmentChanges(workout, selectedEquipment),
-        ),
-      ),
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final textMuted =
+            isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        return GlassSheet(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // One-line helper so the targeted-swap behaviour is discoverable:
+              // removing equipment only re-rolls the affected exercises (not the
+              // whole workout), and the change is reversible via Revert.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 16, color: textMuted),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Remove equipment and we'll swap only the affected "
+                        'exercises — tap Revert to restore.',
+                        style: ZType.sans(
+                          12,
+                          color: textMuted,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Flexible(
+                child: EditWorkoutEquipmentSheet(
+                  currentEquipment: workout.equipmentNeeded,
+                  equipmentDetails: currentEquipmentDetails,
+                  onApply: (selectedEquipment) =>
+                      _applyEquipmentChanges(workout, selectedEquipment),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

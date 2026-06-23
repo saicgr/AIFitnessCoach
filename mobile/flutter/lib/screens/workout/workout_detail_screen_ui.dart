@@ -202,7 +202,7 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: ZType.ser(
+                      style: ZType.sans(
                         12,
                         color: textMuted.withValues(alpha: 0.8),
                       ),

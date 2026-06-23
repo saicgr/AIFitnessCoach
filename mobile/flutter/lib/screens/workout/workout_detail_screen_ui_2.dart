@@ -474,22 +474,6 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
   }
 
 
-  Future<void> _showWorkoutActions(
-    BuildContext context,
-    WidgetRef ref,
-    Workout workout,
-  ) async {
-    await showWorkoutActionsSheet(
-      context,
-      ref,
-      workout,
-      onRefresh: () {
-        _loadWorkout();
-      },
-    );
-  }
-
-
   String _formatDuration(int seconds) {
     if (seconds >= 60) {
       final mins = seconds ~/ 60;
@@ -521,7 +505,94 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
         debugPrint('⚠️ [WorkoutDetail] Bad studio_params, using defaults: $e');
       }
     }
-    return const WorkoutBuildParams();
+    // No studio metadata (older / regenerated workouts). Derive the focus from
+    // the workout's actual type/muscles so the Adjust sheet pre-selects the
+    // real focus instead of defaulting Target muscles to "Full body".
+    return WorkoutBuildParams(focusAreas: _deriveFocusAreas(workout));
+  }
+
+  /// Map a workout's `type` (and, failing that, its `primaryMuscles`) onto the
+  /// customization-studio focus-chip tokens (see `_muscleGroups` in
+  /// customization_studio_sheet.dart: full_body / upper / lower / push / pull /
+  /// chest / back / legs / core / glutes / arms / shoulders). Falls back to
+  /// ['full_body'] only when nothing maps.
+  List<String> _deriveFocusAreas(Workout workout) {
+    // 1) Workout type — the strongest signal for a split day.
+    final type = (workout.type ?? '').toLowerCase().trim();
+    const typeToFocus = <String, String>{
+      'lower': 'lower',
+      'lower_body': 'lower',
+      'upper': 'upper',
+      'upper_body': 'upper',
+      'push': 'push',
+      'pull': 'pull',
+      'legs': 'legs',
+      'leg': 'legs',
+      'core': 'core',
+      'abs': 'core',
+      'chest': 'chest',
+      'back': 'back',
+      'shoulders': 'shoulders',
+      'arms': 'arms',
+      'glutes': 'glutes',
+      'full_body': 'full_body',
+      'fullbody': 'full_body',
+      'total_body': 'full_body',
+    };
+    final fromType = typeToFocus[type];
+    if (fromType != null) return [fromType];
+
+    // 2) Otherwise derive from the muscle groups actually trained. Map each
+    //    primary muscle to a focus token and keep the distinct set (max 3 so
+    //    the chip pre-selection stays readable).
+    final tokens = <String>{};
+    for (final muscle in workout.primaryMuscles) {
+      final token = _muscleToFocusToken(muscle);
+      if (token != null) tokens.add(token);
+    }
+    if (tokens.isNotEmpty) {
+      return tokens.take(3).toList(growable: false);
+    }
+
+    // 3) Nothing usable — keep the safe default.
+    return const ['full_body'];
+  }
+
+  /// Resolve a raw muscle name onto a focus-chip token. Returns null when the
+  /// muscle doesn't cleanly map to a chip (so it's simply skipped).
+  String? _muscleToFocusToken(String muscle) {
+    final m = muscle.toLowerCase().trim();
+    if (m.isEmpty) return null;
+    if (m.contains('chest') || m.contains('pec')) return 'chest';
+    if (m.contains('back') ||
+        m.contains('lat') ||
+        m.contains('trap') ||
+        m.contains('rhomboid')) {
+      return 'back';
+    }
+    if (m.contains('shoulder') || m.contains('delt')) return 'shoulders';
+    if (m.contains('bicep') ||
+        m.contains('tricep') ||
+        m.contains('forearm') ||
+        m.contains('arm')) {
+      return 'arms';
+    }
+    if (m.contains('glute')) return 'glutes';
+    if (m.contains('quad') ||
+        m.contains('hamstring') ||
+        m.contains('calf') ||
+        m.contains('calves') ||
+        m.contains('leg') ||
+        m.contains('adductor') ||
+        m.contains('abductor')) {
+      return 'legs';
+    }
+    if (m.contains('core') ||
+        m.contains('ab') ||
+        m.contains('oblique')) {
+      return 'core';
+    }
+    return null;
   }
 
   /// Snapshot the workout's current state into a [BuiltWorkout] so an Undo
@@ -748,72 +819,604 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
     }
   }
 
-  // ── OVERFLOW MENU (Mark as done + Shuffle), shown from the app-bar … button.
-  // Wraps the existing actions sheet so we keep prior behaviour and add the
-  // two new parity items above it.
+  // ── OVERFLOW MENU — fully flattened. The old "More actions" row opened a
+  // SEPARATE actions sheet (an extra tap); now every action is inlined into one
+  // sectioned sheet: a "Quick" group (Mark done, Shuffle) + an "Options" group
+  // (Reschedule, Regenerate, Version history, Generate warm-up, Generate
+  // stretches, Share when completed) + Delete visually separated at the bottom.
+  // `showWorkoutActionsSheet` is intentionally left intact for other callers.
   Future<void> _showParityOverflowMenu(Workout workout) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.colors(context).accent;
     final alreadyDone = workout.isCompleted == true || _markedDoneLocal;
+    final isCompleted = workout.isCompleted == true;
+
+    Widget groupLabel(String text) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              text.toUpperCase(),
+              style: ZType.lbl(11, color: textMuted, letterSpacing: 1.6),
+            ),
+          ),
+        );
+
+    Widget actionTile({
+      required IconData icon,
+      required String title,
+      required String subtitle,
+      required VoidCallback onTap,
+      bool destructive = false,
+    }) {
+      final color = destructive ? AppColors.error : accentColor;
+      return ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(icon, color: color, size: 22),
+        ),
+        title: Text(
+          title,
+          style: ZType.sans(15.5,
+              color: destructive ? AppColors.error : textPrimary,
+              weight: FontWeight.w700),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Text(subtitle,
+              style: ZType.sans(12.5,
+                  color: textMuted, weight: FontWeight.w400, height: 1.25)),
+        ),
+        onTap: onTap,
+      );
+    }
 
     HapticService.selection();
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textPrimary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textPrimary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            if (!alreadyDone)
-              ListTile(
-                leading: Icon(Icons.check_circle_outline_rounded,
-                    color: accentColor),
-                title: Text('Mark as done',
-                    style: TextStyle(color: textPrimary)),
-                subtitle: const Text('Log as completed, no PRs'),
+
+              // ── Quick group ──
+              groupLabel('Quick'),
+              if (!alreadyDone)
+                actionTile(
+                  icon: Icons.check_circle_outline_rounded,
+                  title: 'Mark as done',
+                  subtitle: 'Log as completed, no PRs',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _markAsDone(workout);
+                  },
+                ),
+              actionTile(
+                icon: Icons.shuffle_rounded,
+                title: 'Shuffle exercises',
+                subtitle: 'Re-roll with fresh picks',
                 onTap: () {
                   Navigator.pop(ctx);
-                  _markAsDone(workout);
+                  _shuffleWorkout(workout);
                 },
               ),
-            ListTile(
-              leading: Icon(Icons.shuffle_rounded, color: accentColor),
-              title:
-                  Text('Shuffle exercises', style: TextStyle(color: textPrimary)),
-              subtitle: const Text('Re-roll with fresh picks'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _shuffleWorkout(workout);
-              },
+
+              // ── Options group (was behind "More actions") ──
+              groupLabel('Options'),
+              actionTile(
+                icon: Icons.calendar_month_rounded,
+                title: 'Reschedule',
+                subtitle: 'Change the workout date',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _menuReschedule(workout);
+                },
+              ),
+              actionTile(
+                icon: Icons.refresh_rounded,
+                title: 'Regenerate',
+                subtitle: 'Create a new workout for this day',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _menuRegenerate(workout);
+                },
+              ),
+              actionTile(
+                icon: Icons.history_rounded,
+                title: 'Version history',
+                subtitle: 'View and restore previous versions',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _menuVersionHistory(workout);
+                },
+              ),
+              actionTile(
+                icon: Icons.directions_run_rounded,
+                title: 'Generate warm-up',
+                subtitle: 'Create warm-up exercises',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _menuGenerateTimed(workout, isWarmup: true);
+                },
+              ),
+              actionTile(
+                icon: Icons.self_improvement_rounded,
+                title: 'Generate stretches',
+                subtitle: 'Create cool-down stretches',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _menuGenerateTimed(workout, isWarmup: false);
+                },
+              ),
+              if (isCompleted)
+                actionTile(
+                  icon: Icons.ios_share_rounded,
+                  title: 'Share workout',
+                  subtitle: 'Get a ${Branding.marketingDomain} link for friends',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _menuShare(workout);
+                  },
+                ),
+
+              // ── Delete, visually separated ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                child: Divider(
+                    height: 1, color: cardBorder.withValues(alpha: 0.5)),
+              ),
+              actionTile(
+                icon: Icons.delete_outline_rounded,
+                title: 'Delete workout',
+                subtitle: 'Remove this workout',
+                destructive: true,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _menuDelete(workout);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Inlined overflow-menu action handlers ────────────────────────────────
+  // These replicate the minimal repo/provider calls the standalone
+  // workout_actions_sheet uses (its handlers are private to that widget), so
+  // the flattened menu acts directly without a nested sheet.
+
+  /// Reschedule: pick a date, persist via the repo, refresh dependent views.
+  Future<void> _menuReschedule(Workout workout) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) return;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate:
+          DateTime.tryParse(workout.scheduledDate ?? '') ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked == null || !mounted) return;
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      final ok = await repo.rescheduleWorkout(
+        wid,
+        picked.toIso8601String().split('T')[0],
+      );
+      if (!mounted) return;
+      if (ok) {
+        await _reloadAfterMutation();
+        if (mounted) _showSnackBar('Workout rescheduled');
+      } else {
+        _showSnackBar('Failed to reschedule workout', isError: true);
+      }
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Reschedule failed: $e');
+      if (mounted) _showSnackBar('Failed to reschedule: $e', isError: true);
+    }
+  }
+
+  /// Regenerate: confirm, then consume the streaming regenerate while showing a
+  /// progress dialog (mirrors workout_actions_sheet behaviour 1:1).
+  Future<void> _menuRegenerate(Workout workout) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) return;
+    final confirm = await AppDialog.confirm(
+      context,
+      title: 'Regenerate workout?',
+      message:
+          'This creates a brand-new workout for this day, replacing the current one.',
+      confirmText: 'Regenerate',
+      icon: Icons.refresh_rounded,
+    );
+    if (confirm != true || !mounted) return;
+
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId == null || !mounted) return;
+
+    // Lightweight progress dialog driven by the SSE step messages.
+    final progress = ValueNotifier<String>('Starting regeneration…');
+    BuildContext? dialogContext;
+    // ignore: unawaited_futures
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (dctx) {
+        dialogContext = dctx;
+        final accent = ref.colors(dctx).accent;
+        return AlertDialog(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ValueListenableBuilder<String>(
+                  valueListenable: progress,
+                  builder: (_, msg, __) =>
+                      Text(msg, style: ZType.sans(14, weight: FontWeight.w500)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    Workout? generated;
+    String? error;
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      await for (final p in repo.regenerateWorkoutStreaming(
+        workoutId: wid,
+        userId: userId,
+      )) {
+        if (!mounted) break;
+        if (p.hasError) {
+          error = p.message;
+          break;
+        }
+        if (p.message.isNotEmpty) {
+          progress.value = '${p.message} (${p.step}/${p.totalSteps})';
+        }
+        if (p.isCompleted && p.workout != null) {
+          generated = p.workout;
+          break;
+        }
+      }
+    } catch (e) {
+      error = e.toString();
+    }
+
+    // Close the progress dialog via its own context.
+    final dctx = dialogContext;
+    if (dctx != null && dctx.mounted && Navigator.canPop(dctx)) {
+      Navigator.of(dctx).pop();
+    }
+    progress.dispose();
+
+    if (!mounted) return;
+    if (generated != null) {
+      await _reloadAfterMutation();
+      if (mounted) _showSnackBar('Workout regenerated');
+    } else {
+      _showSnackBar(
+          error != null ? 'Regenerate failed: $error' : 'Could not regenerate',
+          isError: true);
+    }
+  }
+
+  /// Version history: fetch versions and show a compact restore list.
+  Future<void> _menuVersionHistory(Workout workout) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) return;
+    List<Map<String, dynamic>> versions;
+    try {
+      versions = await ref.read(workoutRepositoryProvider).getWorkoutVersions(wid);
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Version history failed: $e');
+      if (mounted) _showSnackBar('Could not load history: $e', isError: true);
+      return;
+    }
+    if (!mounted) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accent = ref.colors(context).accent;
+
+    await showGlassSheet(
+      context: context,
+      builder: (sheetCtx) => GlassSheet(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Row(
+                children: [
+                  Icon(Icons.history_rounded, color: accent, size: 20),
+                  const SizedBox(width: 10),
+                  Text('Version history',
+                      style: ZType.sans(17,
+                          color: textPrimary, weight: FontWeight.w800)),
+                ],
+              ),
             ),
-            ListTile(
-              leading: Icon(Icons.tune_rounded, color: textPrimary),
-              title: Text('More actions', style: TextStyle(color: textPrimary)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _showWorkoutActions(context, ref, workout);
-              },
-            ),
-            const SizedBox(height: 8),
+            if (versions.isEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                child: Text('No previous versions yet.',
+                    style: ZType.sans(14, color: textMuted)),
+              )
+            else
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: versions.length,
+                  padding: const EdgeInsets.only(bottom: 12),
+                  itemBuilder: (lc, i) {
+                    final v = versions[i];
+                    final versionNum = v['version'] ?? (i + 1);
+                    final name = v['name']?.toString() ?? 'Version $versionNum';
+                    final isCurrent = i == 0;
+                    return ListTile(
+                      leading: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: isCurrent
+                            ? accent.withValues(alpha: 0.2)
+                            : (isDark
+                                ? AppColors.elevated
+                                : AppColorsLight.elevated),
+                        child: Text('v$versionNum',
+                            style: ZType.data(11,
+                                color: isCurrent ? accent : textMuted,
+                                weight: FontWeight.w700)),
+                      ),
+                      title: Text(name,
+                          style: ZType.sans(14,
+                              color: textPrimary, weight: FontWeight.w600)),
+                      trailing: isCurrent
+                          ? Text('CURRENT',
+                              style: ZType.lbl(10, color: AppColors.success))
+                          : TextButton(
+                              onPressed: () async {
+                                final ok = await AppDialog.confirm(
+                                  context,
+                                  title: 'Revert to this version?',
+                                  message: 'Restore "$name"?',
+                                  confirmText: 'Revert',
+                                  icon: Icons.restore_rounded,
+                                );
+                                if (ok != true) return;
+                                try {
+                                  await ref
+                                      .read(workoutRepositoryProvider)
+                                      .revertWorkout(wid, versionNum as int);
+                                  if (sheetCtx.mounted) Navigator.pop(sheetCtx);
+                                  await _reloadAfterMutation();
+                                  if (mounted) _showSnackBar('Reverted to $name');
+                                } catch (e) {
+                                  if (mounted) {
+                                    _showSnackBar('Revert failed: $e',
+                                        isError: true);
+                                  }
+                                }
+                              },
+                              child: Text('Revert',
+                                  style: ZType.lbl(12, color: accent)),
+                            ),
+                    );
+                  },
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  /// Generate warm-up or stretches, then show the generated list in a compact
+  /// sheet. After generating we also clear the cached section so the in-screen
+  /// Warm Up / Cool Down section re-fetches the fresh data.
+  Future<void> _menuGenerateTimed(Workout workout,
+      {required bool isWarmup}) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) return;
+    final label = isWarmup ? 'warm-up' : 'stretches';
+    _showSnackBar('Generating $label…');
+    List<Map<String, dynamic>> items;
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      items = isWarmup
+          ? await repo.generateWarmup(wid)
+          : await repo.generateStretches(wid);
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Generate $label failed: $e');
+      if (mounted) _showSnackBar('Failed to generate $label: $e', isError: true);
+      return;
+    }
+    if (!mounted) return;
+    if (items.isEmpty) {
+      _showSnackBar('Could not generate $label', isError: true);
+      return;
+    }
+    // Refresh the in-screen section so the new data appears there too.
+    setState(() {
+      if (isWarmup) {
+        _warmupData = null;
+      } else {
+        _stretchData = null;
+      }
+    });
+    unawaited(_loadWarmupAndStretches());
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final color = isWarmup ? AppColors.orange : AppColors.purple;
+
+    await showGlassSheet(
+      context: context,
+      builder: (sheetCtx) => GlassSheet(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Row(
+                children: [
+                  Icon(
+                      isWarmup
+                          ? Icons.directions_run_rounded
+                          : Icons.self_improvement_rounded,
+                      color: color,
+                      size: 20),
+                  const SizedBox(width: 10),
+                  Text(isWarmup ? 'Warm-up' : 'Cool-down stretches',
+                      style: ZType.sans(17,
+                          color: textPrimary, weight: FontWeight.w800)),
+                ],
+              ),
+            ),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: items.length,
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                itemBuilder: (lc, i) {
+                  final ex = items[i];
+                  final name = ex['name']?.toString() ?? 'Exercise ${i + 1}';
+                  final duration =
+                      ex['duration_seconds'] ?? ex['duration'] ?? 30;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.glassSurface
+                          : AppColorsLight.glassSurface,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(name,
+                              style: ZType.sans(14,
+                                  color: textPrimary, weight: FontWeight.w600)),
+                        ),
+                        Text('${duration}s',
+                            style: ZType.data(12, color: color)),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text(
+                'Added to this workout. Find them in the ${isWarmup ? 'Warm Up' : 'Cool Down'} section.',
+                style: ZType.sans(12, color: textMuted, height: 1.3),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Share: create a public link (completed workouts only) and open the OS
+  /// share sheet, copying to the clipboard first as a guaranteed fallback.
+  Future<void> _menuShare(Workout workout) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) return;
+    try {
+      final api = ref.read(apiClientProvider);
+      final res = await api.dio.post('/workouts/$wid/share-link');
+      final data = res.data;
+      final url = (data is Map && data['url'] is String)
+          ? data['url'] as String
+          : null;
+      if (!mounted) return;
+      if (url == null) {
+        _showSnackBar('Could not create share link', isError: true);
+        return;
+      }
+      await Clipboard.setData(ClipboardData(text: url));
+      if (mounted) _showSnackBar('Link copied to clipboard');
+      await Share.share(
+        '${workout.name ?? 'My workout'} — ${Branding.appName}\n$url',
+        subject: '${Branding.appName} workout',
+      );
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Share failed: $e');
+      if (mounted) _showSnackBar('Share failed: $e', isError: true);
+    }
+  }
+
+  /// Delete: confirm, delete via the repo, and pop back to the list.
+  Future<void> _menuDelete(Workout workout) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) return;
+    final confirm = await AppDialog.destructive(
+      context,
+      title: 'Delete workout?',
+      message: 'This action cannot be undone.',
+      icon: Icons.delete_rounded,
+    );
+    if (confirm != true || !mounted) return;
+    try {
+      final ok = await ref.read(workoutRepositoryProvider).deleteWorkout(wid);
+      if (!mounted) return;
+      if (ok) {
+        try {
+          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+          ref.read(workoutsProvider.notifier).silentRefresh();
+        } catch (_) {/* best effort */}
+        _showSnackBar('Workout deleted');
+        if (context.canPop()) context.pop();
+      } else {
+        _showSnackBar('Failed to delete workout', isError: true);
+      }
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Delete failed: $e');
+      if (mounted) _showSnackBar('Failed to delete: $e', isError: true);
+    }
   }
 }

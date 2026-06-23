@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/workout_generation_params.dart';
@@ -56,7 +57,9 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
     }
   }
 
-  /// Build workout summary section widget
+  /// Single always-visible AI Insights card. No chevron / expand-collapse —
+  /// it shows a one-line teaser of the top insight and opens the full modal on
+  /// tap. Drives the loading skeleton while the summary is being fetched.
   Widget buildWorkoutSummarySection({
     required String? workoutSummary,
     required bool isLoadingSummary,
@@ -64,50 +67,60 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final accentColor = ref.colors(context).accent;
 
+    // Build the teaser. Prefer the structured JSON: use the headline, and when
+    // there are multiple tips fall back to the FIRST tip's title so a multi-tip
+    // summary still surfaces something specific. Body = first tip's content.
+    String? teaserHeadline;
+    String? teaserBody;
+    int tipCount = 0;
     final insights = parseInsightsJson(workoutSummary);
-    String? shortPreview;
-    String? previewBody;
-
     if (insights != null) {
-      shortPreview = insights['headline'] as String?;
+      teaserHeadline = (insights['headline'] as String?)?.trim();
       final sections = insights['sections'] as List<dynamic>?;
       if (sections != null && sections.isNotEmpty) {
-        previewBody = sections.first['content'] as String?;
+        tipCount = sections.length;
+        final first = sections.first as Map<String, dynamic>?;
+        teaserHeadline ??= (first?['title'] as String?)?.trim();
+        teaserBody = (first?['content'] as String?)?.trim();
       }
     } else if (workoutSummary != null) {
-      final cleanSummary = stripMarkdown(workoutSummary);
-      final words = cleanSummary.split(' ');
-      if (words.length <= 6) {
-        shortPreview = cleanSummary;
-      } else {
-        shortPreview = '${words.take(6).join(' ')}...';
-      }
+      final clean = stripMarkdown(workoutSummary);
+      final words = clean.split(RegExp(r'\s+'));
+      teaserHeadline =
+          words.length <= 8 ? clean : '${words.take(8).join(' ')}…';
+    }
+    if (teaserHeadline == null || teaserHeadline.isEmpty) {
+      teaserHeadline = 'Your pre-workout briefing';
     }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: GestureDetector(
-        onTap: workoutSummary != null ? onTapInsights : null,
+        onTap: (!isLoadingSummary && workoutSummary != null)
+            ? onTapInsights
+            : null,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                accentColor.withValues(alpha: 0.15),
-                accentColor.withValues(alpha: 0.1),
+                accentColor.withValues(alpha: 0.16),
+                accentColor.withValues(alpha: 0.08),
               ],
             ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: accentColor.withValues(alpha: 0.3),
-            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: accentColor.withValues(alpha: 0.3)),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
@@ -122,44 +135,64 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      AppLocalizations.of(context).workoutDetailAiAiInsights,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: textMuted,
-                        letterSpacing: 1,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          'AI INSIGHTS',
+                          style: ZType.lbl(
+                            11,
+                            color: textMuted,
+                            letterSpacing: 1.6,
+                          ),
+                        ),
+                        // Count chip for multi-tip summaries.
+                        if (!isLoadingSummary && tipCount > 1) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: accentColor.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '$tipCount',
+                              style: ZType.data(10,
+                                  color: accentColor, weight: FontWeight.w700),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     if (isLoadingSummary)
                       Text(
-                        AppLocalizations.of(context).workoutDetailAiGeneratingInsights,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textSecondary,
-                          fontStyle: FontStyle.italic,
-                        ),
+                        AppLocalizations.of(context)
+                            .workoutDetailAiGeneratingInsights,
+                        style: ZType.sans(13,
+                            color: textSecondary, weight: FontWeight.w500),
                       )
-                    else if (shortPreview != null) ...[
+                    else ...[
                       Text(
-                        shortPreview,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                        teaserHeadline,
+                        style: ZType.sans(
+                          14.5,
+                          color: textPrimary,
+                          weight: FontWeight.w700,
+                          height: 1.2,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (previewBody != null) ...[
+                      if (teaserBody != null && teaserBody.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
-                          previewBody,
-                          style: TextStyle(
-                            fontSize: 12,
+                          stripMarkdown(teaserBody),
+                          style: ZType.sans(
+                            12,
                             color: textSecondary,
-                            height: 1.3,
+                            weight: FontWeight.w400,
+                            height: 1.35,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -170,10 +203,19 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                 ),
               ),
               const SizedBox(width: 8),
-              if (!isLoadingSummary && workoutSummary != null)
+              if (isLoadingSummary)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: accentColor.withValues(alpha: 0.7),
+                  ),
+                )
+              else if (workoutSummary != null)
                 Icon(
-                  Icons.open_in_new,
-                  color: accentColor.withValues(alpha: 0.7),
+                  Icons.arrow_forward_rounded,
+                  color: accentColor.withValues(alpha: 0.8),
                   size: 18,
                 ),
             ],
@@ -251,10 +293,10 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     Expanded(
                       child: Text(
                         headline,
-                        style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
+                        style: ZType.sans(18,
+                            color: textPrimary,
+                            weight: FontWeight.w800,
+                            height: 1.15),
                       ),
                     ),
                     IconButton(
@@ -304,7 +346,10 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                           else
                             Text(
                               stripMarkdown(currentSummary),
-                              style: TextStyle(fontSize: 15, color: textPrimary, height: 1.6),
+                              style: ZType.sans(15,
+                                  color: textPrimary,
+                                  weight: FontWeight.w400,
+                                  height: 1.6),
                             ),
                         ],
                       ),
@@ -329,15 +374,33 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(icon, style: const TextStyle(fontSize: 24)),
+          // Icon chip so each tip leads with a glanceable glyph.
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(icon, style: const TextStyle(fontSize: 20)),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: color)),
-                const SizedBox(height: 4),
-                Text(content, style: TextStyle(fontSize: 14, color: textPrimary, height: 1.4)),
+                Text(
+                  title,
+                  style: ZType.sans(15,
+                      color: color, weight: FontWeight.w800, height: 1.15),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  stripMarkdown(content),
+                  style: ZType.sans(14,
+                      color: textPrimary, weight: FontWeight.w400, height: 1.45),
+                ),
               ],
             ),
           ),
