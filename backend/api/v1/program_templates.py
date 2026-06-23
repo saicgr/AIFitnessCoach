@@ -219,13 +219,15 @@ async def browse_library(
     """
     try:
         # Serve from cache when present — library is static reference data.
-        cache_key = (
+        # RedisCache.get/set take a SINGLE string key — build one via make_key
+        # (the old `.get(*cache_key)` unpacked a 4-tuple → TypeError 500).
+        cache_key = _library_browse_cache.make_key(
             category or "",
             difficulty_level or "",
             sessions_per_week if sessions_per_week is not None else -1,
             (search or "").strip().lower(),
         )
-        cached = _library_browse_cache.get(*cache_key)
+        cached = await _library_browse_cache.get(cache_key)
         if cached is not None:
             return cached
 
@@ -272,7 +274,7 @@ async def browse_library(
             )
         cards.sort(key=lambda c: (c.program_category or "", c.program_name))
         result = LibraryBrowseResponse(total=len(cards), programs=cards)
-        _library_browse_cache.set(*cache_key, result)
+        await _library_browse_cache.set(cache_key, result)
         return result
     except Exception as e:  # noqa: BLE001
         logger.error("Failed to browse program library: %s", e, exc_info=True)
