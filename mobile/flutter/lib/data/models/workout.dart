@@ -213,6 +213,16 @@ class Workout extends Equatable {
   bool get isSyncedFromHealthApp =>
       generationMethod == 'health_connect_import';
 
+  /// True when this workout was generated on-device (offline rule-based or
+  /// on-device Gemma) and therefore carries a client-only UUID that was never
+  /// persisted to the backend `workouts` table. The server-only enrichment
+  /// endpoints (`/summary`, `/warmup-and-stretches`, `/generation-params`)
+  /// look the workout up by id and 404 for these rows, so callers must skip
+  /// those calls and derive what they can from local metadata instead.
+  bool get isLocallyGenerated =>
+      generationMethod == 'rule_based_offline' ||
+      generationMethod == 'on_device_ai';
+
   /// Human-readable platform label sourced from `generation_metadata.source`.
   /// Falls back to "Synced" when the source is missing or unknown.
   String get syncedPlatformLabel {

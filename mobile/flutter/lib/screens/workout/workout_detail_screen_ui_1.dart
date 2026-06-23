@@ -266,6 +266,13 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
       return;
     }
 
+    // Offline/on-device workouts were never persisted server-side, so the
+    // /summary endpoint would 404. Skip the call instead of spamming 404s.
+    if (_workout!.isLocallyGenerated) {
+      debugPrint('ℹ️ [WorkoutDetail] Skipping server summary for locally-generated workout ${widget.workoutId}');
+      return;
+    }
+
     debugPrint('🔍 [WorkoutDetail] Starting to load workout summary for: ${widget.workoutId}');
     setState(() => _isLoadingSummary = true);
 
@@ -293,6 +300,12 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
   /// Load warmup and stretch exercises from API
   Future<void> _loadWarmupAndStretches() async {
     if (_workout?.id == null) return;
+    // Locally-generated workouts have no server row; the warmup-and-stretches
+    // endpoint would 404. Skip rather than emit a server error.
+    if (_workout!.isLocallyGenerated) {
+      debugPrint('ℹ️ [WorkoutDetail] Skipping server warmup/stretches for locally-generated workout ${widget.workoutId}');
+      return;
+    }
     try {
       final workoutRepo = ref.read(workoutRepositoryProvider);
       final data = await workoutRepo.generateWarmupAndStretches(_workout!.id!);
@@ -312,6 +325,14 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
   Future<void> _loadGenerationParams() async {
     if (_workout == null) {
       debugPrint('🔍 [WorkoutDetail] Cannot load generation params - workout is null');
+      return;
+    }
+
+    // Locally-generated workouts aren't persisted server-side, so the
+    // /generation-params endpoint would 404. There is no server-side AI
+    // reasoning to fetch for these — skip the call.
+    if (_workout!.isLocallyGenerated) {
+      debugPrint('ℹ️ [WorkoutDetail] Skipping server generation-params for locally-generated workout ${widget.workoutId}');
       return;
     }
 
