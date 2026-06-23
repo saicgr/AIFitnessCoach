@@ -354,7 +354,11 @@ async def regenerate_upcoming_workouts(http_request: Request, request: QuickRege
                 gym_profile_id=gym_profile_id,
                 workout_days=workout_days,
                 user_tz=tz,
-                horizon_days=2,  # today + tomorrow; rest lazy (AI, visible-first)
+                # Cover the visible week's scheduled days so the carousel cards
+                # all fill in (not just today+tomorrow). Sequential + background
+                # + idempotent (skips days that already have a workout), so it
+                # doesn't block the response. The client polls (A2) meanwhile.
+                horizon_days=7,
                 today_str=get_user_today(tz),
             )
         except Exception as _topup_err:
