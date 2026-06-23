@@ -1254,6 +1254,16 @@ class ExerciseRAGService:
             any("dumbbell" in eq for eq in eq_lower) and
             not any("bench" in eq or "home_gym" in eq or "full_gym" in eq for eq in eq_lower)
         )
+        # Broad/compound focuses (full_body, full_body_*) return semantically
+        # diverse hits, but media coverage among heavy compound movements
+        # (squat/hinge/carry variants) is sparse — only ~13% of full_body hits
+        # carry a gif/video/image. At the default 10× (=60 raw) pool that left
+        # just ~8 media-rich survivors for an 11-exercise target, forcing the
+        # require_media=False backfill + "Only got N/M unique exercises"
+        # warnings and shipping media-less exercises. Widen the pool for broad
+        # focuses so enough media-rich compounds clear the filter (15×→ ~16
+        # media-rich survivors, comfortably above target).
+        is_broad_focus = bool(focus_area and "full_body" in focus_area.lower())
         # Multipliers tuned so the post-filter pipeline (media, difficulty,
         # workout_type, injury, avoided_muscles, consistency_mode, hard-remove
         # of 7d-recent) leaves enough survivors to fill the requested count
@@ -1262,6 +1272,8 @@ class ExerciseRAGService:
         # exercises + narrow focus areas, survivors fell to 4.
         if is_constrained_env:
             candidate_count = min(count * 15, 100)
+        elif is_broad_focus:
+            candidate_count = min(count * 15, 120)
         elif has_dumbbells_no_bench:
             candidate_count = min(count * 12, 80)
         else:
