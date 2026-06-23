@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/environment_equipment_provider.dart'
+    show getEquipmentDisplayName;
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/workout_studio_models.dart';
 import '../../data/providers/workout_studio_providers.dart';
 import '../../data/services/haptic_service.dart';
+import '../home/widgets/components/equipment_selector.dart'
+    show showEquipmentPickerSheet;
 import 'widgets/body_map_selector.dart';
 
 /// Opens the Workout Customization Studio — an instant, RAG-backed live-preview
@@ -90,17 +94,6 @@ class _CustomizationStudioSheetState
     MapEntry('glutes', 'Glutes'),
     MapEntry('arms', 'Arms'),
     MapEntry('shoulders', 'Shoulders'),
-  ];
-
-  // Display label -> backend equipment token.
-  static const List<MapEntry<String, String>> _equipment = [
-    MapEntry('bodyweight', 'Bodyweight'),
-    MapEntry('dumbbells', 'Dumbbells'),
-    MapEntry('barbell', 'Barbell'),
-    MapEntry('kettlebell', 'Kettlebell'),
-    MapEntry('machines', 'Machines'),
-    MapEntry('bands', 'Bands'),
-    MapEntry('cardio', 'Cardio'),
   ];
 
   @override
@@ -415,26 +408,7 @@ class _CustomizationStudioSheetState
 
                     const SizedBox(height: 16),
                     _sectionLabel('Equipment', isDark),
-                    _buildMultiSelectChips(
-                      options: _equipment,
-                      selected: _params.equipment ?? const [],
-                      accent: accent,
-                      isDark: isDark,
-                      onToggle: _toggleEquipment,
-                    ),
-                    if (_params.equipment == null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                          'Using your profile equipment',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? AppColors.textSecondary
-                                : AppColorsLight.textSecondary,
-                          ),
-                        ),
-                      ),
+                    _buildEquipmentRow(isDark, accent),
 
                     const SizedBox(height: 16),
                     _sectionLabel('Impact', isDark),
@@ -549,19 +523,21 @@ class _CustomizationStudioSheetState
     }
   }
 
-  void _toggleEquipment(String key) {
+  /// Open the searchable item-level equipment picker, seeded with the current
+  /// selection, and write the chosen canonical tokens back into [_params].
+  /// An empty result clears the override => "use profile equipment".
+  Future<void> _editEquipment() async {
     HapticService.selection();
-    final current = List<String>.from(_params.equipment ?? const []);
-    if (current.contains(key)) {
-      current.remove(key);
-    } else {
-      current.add(key);
-    }
-    // Empty selection => null => "use profile equipment".
-    if (current.isEmpty) {
+    final result = await showEquipmentPickerSheet(
+      context,
+      initial: _params.equipment ?? const [],
+      title: 'Equipment for this workout',
+    );
+    if (result == null || !mounted) return; // dismissed without confirming
+    if (result.isEmpty) {
       _update(_params.copyWith(clearEquipment: true));
     } else {
-      _update(_params.copyWith(equipment: current));
+      _update(_params.copyWith(equipment: result));
     }
   }
 
@@ -942,6 +918,62 @@ class _CustomizationStudioSheetState
           onTap: () => onToggle(opt.key),
         );
       }).toList(),
+    );
+  }
+
+  /// Item-level equipment control: a summary of the current selection (or a
+  /// "use your profile equipment" hint when none) plus an "Edit equipment"
+  /// button that opens the searchable picker.
+  Widget _buildEquipmentRow(bool isDark, Color accent) {
+    final selected = _params.equipment ?? const <String>[];
+    final secondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (selected.isEmpty)
+          Text(
+            'Using your profile equipment',
+            style: TextStyle(fontSize: 13, color: secondary),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: selected
+                .map((token) => _chip(
+                      label: getEquipmentDisplayName(token),
+                      selected: true,
+                      accent: accent,
+                      isDark: isDark,
+                      onTap: _editEquipment,
+                    ))
+                .toList(),
+          ),
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: _editEquipment,
+            icon: Icon(Icons.edit_outlined, size: 18, color: accent),
+            label: Text(
+              selected.isEmpty ? 'Choose equipment' : 'Edit equipment',
+              style: TextStyle(
+                color: textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              side: BorderSide(color: accent.withValues(alpha: 0.4)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
