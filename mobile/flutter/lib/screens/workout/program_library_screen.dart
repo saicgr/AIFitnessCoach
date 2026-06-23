@@ -33,10 +33,9 @@ class ProgramLibraryScreen extends ConsumerStatefulWidget {
       _ProgramLibraryScreenState();
 }
 
-/// The eight library categories surfaced as filter chips. `null` = All.
+/// The library categories surfaced as filter chips. `null` = All.
 const List<String?> _kCategories = [
   null,
-  'Celebrity',
   'Sport',
   'Goal-Based',
   'Specialized',
@@ -576,19 +575,6 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
                             color: textPrimary,
                           ),
                         ),
-                        if ((widget.card.celebrityName ?? '')
-                            .trim()
-                            .isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            AppLocalizations.of(context)!.programLibraryScreenWith(widget.card.celebrityName!.trim()),
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: accent,
-                            ),
-                          ),
-                        ],
                         if ((template.description ?? '')
                             .trim()
                             .isNotEmpty) ...[

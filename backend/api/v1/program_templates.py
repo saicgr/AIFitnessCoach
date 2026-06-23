@@ -240,6 +240,9 @@ async def browse_library(
             "sessions_per_week, session_duration_minutes, description, "
             "short_description, goals"
         ).eq("has_workouts", True)  # X3 - exclude the 7 empty programs
+        # Celebrity programs are no longer surfaced in the library (product
+        # decision 2026-06): drop the whole "Celebrity Workout" category.
+        query = query.neq("program_category", "Celebrity Workout")
         if category:
             query = query.eq("program_category", category)
         if difficulty_level:
@@ -258,7 +261,9 @@ async def browse_library(
                     program_name=row.get("program_name") or "Program",
                     program_category=row.get("program_category"),
                     program_subcategory=row.get("program_subcategory"),
-                    celebrity_name=row.get("celebrity_name"),
+                    # No celebrity tags anywhere in the library (incl. the few
+                    # Sport Training rows that carry a celebrity_name).
+                    celebrity_name=None,
                     difficulty_level=row.get("difficulty_level"),
                     duration_weeks=row.get("duration_weeks"),
                     sessions_per_week=row.get("sessions_per_week"),
