@@ -316,6 +316,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   Future<void> _showHeroActionSheet(BuildContext context) async {
     HapticService.selection();
     final workout = widget.workout;
+    // Hide the floating nav bar + "+" FAB while the sheet is open — they are
+    // persistent overlays (gated by floatingNavBarVisibleProvider) that
+    // otherwise render ON TOP of the bottom sheet, covering its last item
+    // (e.g. "Reschedule"). Restored on close. Mirrors _shareToSocial in
+    // workout_options_sheet.dart.
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -371,6 +377,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         );
       },
     );
+    if (mounted) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    }
   }
 
   Future<void> _regenerateWorkout() async {
