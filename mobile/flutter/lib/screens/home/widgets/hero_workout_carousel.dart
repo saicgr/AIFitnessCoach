@@ -141,6 +141,44 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   /// Locally generated workouts stored for immediate display (Fix: workout vanishes after generation)
   final List<Workout> _locallyGeneratedWorkouts = [];
 
+  // ── A3: program-change wipe + rebuild ──────────────────────────────────────
+  // After the user edits their program and taps "Apply now", the schedule
+  // (workoutDays / per-day focus) changes and the backend regenerates each day
+  // one-by-one. The carousel previously kept GHOST cards from the OLD plan:
+  //   • the all-workouts cache still held the stale workouts (incl. days that
+  //     are no longer scheduled, e.g. Thu/Fri), and the "rest-day workouts"
+  //     scan rendered them as ghost cards on now-unscheduled days; and
+  //   • `_locallyGeneratedWorkouts` held stale local copies.
+  // We detect the program change by watching the schedule signature change
+  // build-to-build, then WIPE the local merge sources and force the carousel to
+  // rebuild its day slots from the LATEST workoutDays only — a day NOT in the
+  // new workoutDays renders no card (no ghost). Each scheduled day with no real
+  // workout yet shows the generating placeholder; the refill poll then swaps it
+  // for the real card as the backend fills each day in ascending date order.
+  String? _lastScheduleSignature;
+  // True for the first build AFTER a detected program change — used to suppress
+  // the non-scheduled-day (rest-day) ghost scan while the new plan fills in.
+  bool _scheduleJustChanged = false;
+  // When a schedule change is detected we open a short window during which the
+  // rest-day ghost scan stays suppressed (the stale all-workouts cache can take
+  // a couple of refetch cycles to drop the old days). Mirrors A4's window.
+  DateTime? _scheduleChangedAt;
+  static const Duration _scheduleChangeGhostSuppression = Duration(seconds: 90);
+
+  bool get _inScheduleChangeWindow {
+    final t = _scheduleChangedAt;
+    return t != null &&
+        DateTime.now().difference(t) < _scheduleChangeGhostSuppression;
+  }
+
+  /// Stable signature of the active schedule: sorted workout-day indices plus
+  /// the active gym profile id (a profile switch is also a schedule change).
+  /// A change here means the program/plan changed → wipe + rebuild.
+  String _scheduleSignatureFor(List<int> workoutDays, String? gymProfileId) {
+    final sorted = List<int>.from(workoutDays)..sort();
+    return '${gymProfileId ?? ''}|${sorted.join(',')}';
+  }
+
   // ── Auto-refill for scheduled days with no workout in the client list ──────
   // The server often ALREADY has the workout (generated in the background after
   // a program change), but the client cached the empty state and never refetched
@@ -151,7 +189,11 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   // eventually falls back to "No workout yet".
   Timer? _refillTimer;
   int _refillAttempts = 0;
-  static const int _kRefillMaxAttempts = 10; // ~10 × 4s ≈ 40s of polling
+  // ~20 × 4s ≈ 80s of polling. Sized to cover a full-week sequential fill after
+  // a program change (the backend generates today+tomorrow eagerly, then the
+  // rest of the visible week in the background); each scheduled day's real card
+  // swaps in as its workout lands. Stays inside the A3 schedule-change window.
+  static const int _kRefillMaxAttempts = 20;
 
   bool get _refillActive => _refillAttempts < _kRefillMaxAttempts;
 
@@ -336,6 +378,35 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         final workoutDays = (activeProfile?.workoutDays.isNotEmpty ?? false)
             ? activeProfile!.workoutDays
             : user.workoutDays;
+
+        // A3: detect a program/schedule change (Apply now, profile switch, or a
+        // workout-days edit). The signature combines the resolved workout-day
+        // indices + the active gym profile id; when it changes we WIPE the local
+        // merge sources so no stale workout (incl. days no longer scheduled)
+        // ghosts into the rebuilt carousel, reset the refill poll so it fills the
+        // new days one-by-one, and open a window during which the rest-day ghost
+        // scan stays suppressed until the stale all-workouts cache drains.
+        final scheduleSignature =
+            _scheduleSignatureFor(workoutDays, activeProfile?.id);
+        if (_lastScheduleSignature != null &&
+            _lastScheduleSignature != scheduleSignature) {
+          // Wipe local merge sources NOW (build-safe: just a list mutation).
+          _locallyGeneratedWorkouts.clear();
+          _scheduleJustChanged = true;
+          _scheduleChangedAt = DateTime.now();
+          // Reset the refill poll so the new schedule's empty days drive a fresh
+          // sequential fill from the earliest scheduled day onward.
+          _refillAttempts = 0;
+          _refillTimer?.cancel();
+          _refillTimer = null;
+          // Drop any prior carousel positioning so the rebuilt list re-targets
+          // its actionable day cleanly instead of clinging to a stale page.
+          _hasScrolledToInitial = false;
+          _lastItemsSignature = null;
+        } else {
+          _scheduleJustChanged = false;
+        }
+        _lastScheduleSignature = scheduleSignature;
 
         // If today workout hasn't resolved yet AND we have no cached value AND
         // we don't even know the workout schedule yet — show skeleton.
@@ -522,9 +593,20 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           // Check all days this week for workouts that exist in DB but aren't workout days
           final workoutDateKeys = workoutDates.map(_dateKey).toSet();
 
+          // A3: while a program change is settling, SKIP this non-scheduled-day
+          // scan entirely. It's the source of the GHOST cards — the stale
+          // all-workouts cache still holds the OLD plan's workouts on days that
+          // are no longer scheduled (e.g. Thu/Fri after switching to Tue/Wed),
+          // and this loop would render them. Render-gating to the new workoutDays
+          // only (the loop above) is exactly the desired "rebuild from the latest
+          // preferences" behavior. Quick / staple workouts re-surface once the
+          // window closes and the cache has dropped the old days.
+          final suppressRestDayScan =
+              _scheduleJustChanged || _inScheduleChangeWindow;
+
           // Scan ONLY remaining days in the current display week for non-workout-day workouts
           final weekEnd = weekConfig.weekStart(today).add(const Duration(days: 6));
-          for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+          for (int dayOffset = 0; !suppressRestDayScan && dayOffset < 7; dayOffset++) {
             final checkDate = today.add(Duration(days: dayOffset));
             if (checkDate.isAfter(weekEnd)) break; // Don't spill into next week
             final checkKey = _dateKey(checkDate);

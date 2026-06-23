@@ -110,6 +110,31 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   /// When true, the "Generate Workout" button is shown instead of auto-triggering
   static bool _generationTimedOut = false;
 
+  /// A4: timestamp of the last explicit program-regenerate (Apply now). While
+  /// this window is open the provider must NOT fire its OWN param-less
+  /// `generateWorkoutStreaming` for a `needsGeneration` day — the backend's
+  /// `regenerate-upcoming` is already producing the correct per-day workouts,
+  /// and a racing param-less auto-gen would overwrite them with a generic one.
+  /// Set by [resetGenerationState] (the Apply-now path already calls it). The
+  /// poll continues normally — we only suppress the param-less GENERATION, not
+  /// the refetch that pulls the backend-generated workouts in.
+  static DateTime? _explicitRegenAt;
+
+  /// Window after an explicit program-regenerate during which the provider's
+  /// own param-less auto-generation is suppressed. Sized to comfortably cover
+  /// the backend's regenerate-upcoming for today+tomorrow (eager) plus the
+  /// poll cadence; if a day is still genuinely empty after this, the normal
+  /// auto-gen resumes as a safety net.
+  static const Duration _explicitRegenSuppression = Duration(seconds: 90);
+
+  /// True while the explicit-regenerate suppression window from [_explicitRegenAt]
+  /// is still open.
+  static bool get _explicitRegenInFlight {
+    final t = _explicitRegenAt;
+    return t != null &&
+        DateTime.now().difference(t) < _explicitRegenSuppression;
+  }
+
   /// A2 circuit breaker: count consecutive timeout-class failures. Resets on
   /// any successful response. When the count exceeds _circuitOpenThreshold
   /// we stop auto-retrying and surface a "Tap to retry" empty state — this
@@ -539,7 +564,34 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
         final inCooldown = recentFailure != null &&
             DateTime.now().difference(recentFailure) < _generationCooldown;
 
-        if (!hasAnyWorkout && !_hasTriggeredGeneration && !_generationTimedOut && !inCooldown) {
+        // A4 — suppress the provider's own param-less auto-gen while an explicit
+        // program-regenerate is in flight. The backend's regenerate-upcoming is
+        // already producing the correct per-day workouts; firing
+        // generateWorkoutStreaming here (with only userId/date/gymProfileId — no
+        // focus/duration/intensity) would overwrite them with a generic workout
+        // and double the generation load. We still render the "Generating…" hero
+        // so the user sees activity, and the poll keeps refetching to pull the
+        // backend-generated workout in.
+        if (!hasAnyWorkout && _explicitRegenInFlight) {
+          debugPrint('⏸️ [Auto-Gen] Suppressed — explicit program-regenerate in flight; '
+              'backend is producing per-day workouts. Polling for them.');
+          _startBackgroundGenerationPolling();
+          response = TodayWorkoutResponse(
+            hasWorkoutToday: response.hasWorkoutToday,
+            todayWorkout: response.todayWorkout,
+            nextWorkout: response.nextWorkout,
+            daysUntilNext: response.daysUntilNext,
+            restDayMessage: response.restDayMessage,
+            completedToday: response.completedToday,
+            completedWorkout: response.completedWorkout,
+            extraTodayWorkouts: response.extraTodayWorkouts,
+            isGenerating: true,
+            generationMessage: 'Building your new plan...',
+            needsGeneration: false,
+            nextWorkoutDate: response.nextWorkoutDate,
+            gymProfileId: response.gymProfileId,
+          );
+        } else if (!hasAnyWorkout && !_hasTriggeredGeneration && !_generationTimedOut && !inCooldown) {
           // No workouts at all - show generating UI and trigger streaming gen
           // Only trigger ONCE per cycle to prevent poll-triggered re-generation spam
           debugPrint('🚀 [Auto-Gen] No workouts exist, triggering generation for date=${response.nextWorkoutDate} (profile=${response.gymProfileId})');
@@ -1022,7 +1074,25 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     // §8a — stamp the retry-fired time so a double-tap of the retry CTA
     // within the next 3s short-circuits before launching a second job.
     _lastRetryFiredAt = DateTime.now();
-    debugPrint('🔄 [TodayWorkout] Generation state reset (profile switch)');
+    debugPrint('🔄 [TodayWorkout] Generation state reset (profile switch / regenerate)');
+  }
+
+  /// A4 — open the auto-gen suppression window. Call this ONLY from the program
+  /// CHANGE path (Apply now / program regenerate), where the backend's
+  /// regenerate-upcoming is already producing the correct per-day workouts —
+  /// the provider's OWN param-less auto-gen (no focus/duration/intensity) would
+  /// otherwise race and overwrite them with a generic workout.
+  ///
+  /// Deliberately SEPARATE from [resetGenerationState] (called from ~9 sites:
+  /// gym-profile switch, travel mode, quick-action launcher, etc.) so those
+  /// flows still auto-generate immediately — only an explicit program change
+  /// gets the suppression window. The poll/refetch still runs throughout to
+  /// pull the backend-generated workouts in; only the param-less GENERATION is
+  /// suppressed.
+  static void markExplicitProgramRegen() {
+    _explicitRegenAt = DateTime.now();
+    debugPrint('🚧 [TodayWorkout] Explicit program-regenerate marked — '
+        'auto-gen suppressed for ${_explicitRegenSuppression.inSeconds}s');
   }
 
   /// §8a — exposed to the UI so the retry CTA can debounce double-taps.
