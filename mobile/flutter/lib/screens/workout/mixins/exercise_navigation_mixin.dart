@@ -8,6 +8,7 @@ import '../../../core/constants/workout_design.dart';
 import '../../../core/models/set_progression.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../core/providers/tts_provider.dart';
+import '../../../core/providers/favorites_provider.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../widgets/barbell_plate_indicator.dart';
@@ -617,6 +618,13 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       },
       onRemoveFromWorkout: () {
         removeExerciseFromWorkout(exerciseIndex);
+      },
+      isFavorite: ref.read(favoritesProvider).isFavorite(exercise.name),
+      onToggleFavorite: () {
+        ref.read(favoritesProvider.notifier).toggleFavorite(
+              exercise.name,
+              exerciseId: exercise.exerciseId ?? exercise.libraryId,
+            );
       },
       onAddToSuperset: () async {
         HapticFeedback.lightImpact();

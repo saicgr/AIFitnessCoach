@@ -7,9 +7,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/favorites_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'exercise_info_sheet.dart';
@@ -107,6 +109,8 @@ Future<void> showExerciseOptionsSheet({
   VoidCallback? onRemoveAndDontRecommend,
   VoidCallback? onChangeEquipment,
   VoidCallback? onReportPain,
+  VoidCallback? onToggleFavorite,
+  bool isFavorite = false,
 }) {
   HapticFeedback.mediumImpact();
 
@@ -127,6 +131,8 @@ Future<void> showExerciseOptionsSheet({
         onRemoveAndDontRecommend: onRemoveAndDontRecommend,
         onChangeEquipment: onChangeEquipment,
         onReportPain: onReportPain,
+        onToggleFavorite: onToggleFavorite,
+        isFavorite: isFavorite,
       ),
     ),
   );
@@ -147,6 +153,14 @@ class ExerciseOptionsSheet extends StatefulWidget {
   final VoidCallback? onChangeEquipment;
   final VoidCallback? onReportPain;
 
+  /// Toggle this exercise's favorite status. When null, the favorite row is
+  /// hidden (so existing callers that don't pass it keep working unchanged).
+  final VoidCallback? onToggleFavorite;
+
+  /// Whether the exercise is currently favorited — drives the filled heart +
+  /// "Remove favorite" label.
+  final bool isFavorite;
+
   const ExerciseOptionsSheet({
     super.key,
     required this.exercise,
@@ -161,6 +175,8 @@ class ExerciseOptionsSheet extends StatefulWidget {
     this.onRemoveAndDontRecommend,
     this.onChangeEquipment,
     this.onReportPain,
+    this.onToggleFavorite,
+    this.isFavorite = false,
   });
 
   @override
@@ -277,6 +293,56 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
   Widget _buildOptionsList(bool isDark, Color textPrimary, Color textMuted) {
     return Column(
       children: [
+        // Favorite — positive action surfaced at the very top (above the
+        // destructive Remove / Never-Recommend rows). Heart fills red when the
+        // exercise is favorited.
+        //
+        // Self-wires to the shared `favoritesProvider` (the same canonical
+        // favorites state used across the app — settings, library, the
+        // workout-detail card) so the toggle works for every caller without
+        // per-call-site plumbing. An explicit [onToggleFavorite]/[isFavorite]
+        // override still wins when a caller supplies one.
+        if (widget.onToggleFavorite != null)
+          _buildOptionItem(
+            icon: widget.isFavorite
+                ? Icons.favorite_rounded
+                : Icons.favorite_border_rounded,
+            label: widget.isFavorite ? 'Remove favorite' : 'Favorite',
+            onTap: () {
+              HapticFeedback.selectionClick();
+              Navigator.pop(context);
+              widget.onToggleFavorite!();
+            },
+            isDark: isDark,
+            textPrimary: textPrimary,
+            iconColor: widget.isFavorite ? Colors.redAccent : null,
+          )
+        else
+          Consumer(
+            builder: (ctx, ref, _) {
+              final isFav = ref.watch(favoritesProvider
+                  .select((s) => s.isFavorite(widget.exercise.name)));
+              return _buildOptionItem(
+                icon: isFav
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                label: isFav ? 'Remove favorite' : 'Favorite',
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  Navigator.pop(context);
+                  ref.read(favoritesProvider.notifier).toggleFavorite(
+                        widget.exercise.name,
+                        exerciseId: widget.exercise.exerciseId ??
+                            widget.exercise.id,
+                      );
+                },
+                isDark: isDark,
+                textPrimary: textPrimary,
+                iconColor: isFav ? Colors.redAccent : null,
+              );
+            },
+          ),
+
         // Swap exercise — promoted to first row so the most-used mid-workout
         // action is one tap from a long-press (was 3-tap "Replace" before).
         _buildOptionItem(
@@ -432,6 +498,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
     required Color textPrimary,
     bool isDestructive = false,
     bool showChevron = false,
+    Color? iconColor,
   }) {
     final color = isDestructive ? AppColors.error : textPrimary;
 
@@ -443,7 +510,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: Row(
             children: [
-              Icon(icon, color: color, size: 24),
+              Icon(icon, color: iconColor ?? color, size: 24),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
