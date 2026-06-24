@@ -1,0 +1,12 @@
+Photoreal 3D anatomical STRETCH / yoga illustration in a clean medical / fitness-app style.
+- VERTICAL PORTRAIT composition framed for a mobile phone screen.
+- Pure solid white background (#FFFFFF): no gradient, floor, border, vignette, or shadow on the backdrop.
+- A SINGLE anatomical ecorche figure: skin removed, full detailed musculature visible (myology model), androgynous athletic build, anatomically correct with EXACTLY two arms, two legs, two hands, and two feet — ONE single body only.
+- ANATOMICAL INTEGRITY (critical): do NOT draw any duplicate, overlapping, extra, missing, or floating limbs; no third leg, no extra hand. Do NOT render a second figure or a ghosted/translucent body. Hands and feet have correct anatomy.
+- Show the figure HOLDING the stretch at its end-range position (a static hold, not mid-movement). The pose must clearly read as this specific stretch.
+- CRITICAL COLORING RULE: the figure's musculature is OVERWHELMINGLY neutral medium gray. ONLY the muscle being STRETCHED/lengthened is colored deep anatomical red/maroon. The vast majority of the body stays gray. Do NOT paint the torso, arms, legs, or whole body red. If unsure, color LESS red, not more.
+- Non-targeted muscles rendered neutral medium gray.
+- Equipment (if any): suspension-trainer straps, or a yoga mat as a thin flat dark-gray rectangle under the figure. A "resistance band" MUST be a THIN FLEXIBLE ELASTIC band/loop that bends — NEVER a rigid bar, pole, dowel, staff, or stick. For a bodyweight/floor stretch, show NO implement at all. Dark gray athletic shoes with white soles (omit shoes for floor/yoga poses where barefoot is natural).
+- AT MOST ONE optional arrow: a single clean, smooth, CURVED bright blue (#1E6BE6) line with one short bold blue label (e.g. "Hold 30s" or the direction of the stretch). It is perfectly fine to include NO arrow at all for a held position. NEVER more than one arrow. Do NOT add numbered "1." / "2." sequence arrows.
+- Soft even studio lighting, subtle ambient-occlusion contact shadow, matte finish, subject centered, whole figure in frame with margin.
+- Apart from at most one short arrow label, NO other text, watermark, logo, or grid lines.

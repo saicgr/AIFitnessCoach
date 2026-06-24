@@ -1,0 +1,17 @@
+STYLE (extracted from reference render — keep identical for every exercise):
+- Pure solid white background (#FFFFFF), no gradient, no floor, no border, no vignette.
+- Subject is a single 3D-rendered anatomical écorché figure: skin removed, full detailed musculature visible (myology model), androgynous athletic build, full body in frame.
+- Non-targeted muscles rendered in neutral medium gray.
+- Targeted/active muscles highlighted in deep anatomical red/maroon.
+- Equipment rendered in dark charcoal-gray matte metal (hexagonal dumbbell ends, knurled bars, plates) where applicable.
+- Footwear: dark gray athletic shoes with white soles.
+- Soft, even studio lighting; subtle ambient-occlusion contact shadow; matte finish; clean medical-illustration / fitness-app demonstration aesthetic.
+- Three-quarter elevated camera angle, subject centered, entire figure visible with comfortable margin.
+- Absolutely NO text, labels, numbers, arrows, watermark, grid lines, or UI.
+- Photoreal 3D, high detail, sharp focus.
+
+EXERCISE-SPECIFIC (Active Hang):
+- Pose: the figure hangs vertically from a horizontal pull-up bar at the top of the frame, both arms fully extended straight overhead gripping the bar with a pronated (overhand) shoulder-width grip. Body hangs straight and tall, legs together and relaxed/slightly bent, toes pointing down. Shoulders actively depressed and packed down (scapular depression — an active hang, not a passive dead hang).
+- Pull-up bar: a single straight horizontal dark charcoal-gray metal bar spanning the top of the frame.
+- Highlight in deep anatomical red: the latissimus dorsi (lats) as the primary target, with the lower trapezius and teres major engaged.
+- Front three-quarter view so the highlighted back/lat muscles wrapping the torso are clearly visible.

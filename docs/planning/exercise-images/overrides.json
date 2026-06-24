@@ -1,0 +1,217 @@
+{
+  "Cable Tricep Pushdown": {
+    "muscle": "Triceps (back of the upper arm)"
+  },
+  "Single-Leg Curl": {
+    "muscle": "Hamstrings (back of the thigh)",
+    "emphasis": "Use only ONE leg curling the pad toward the glutes; the hamstring (not the quad) is the red muscle."
+  },
+  "Reverse Curl": {
+    "muscle": "Forearm extensors and brachioradialis",
+    "emphasis": "Use a PRONATED (palms-down / overhand) grip on the barbell."
+  },
+  "Elliptical No Hands": {
+    "emphasis": "BOTH hands are completely OFF the machine, held up near the chest or out at the sides, touching NO handle. Absolutely no hand on any handlebar."
+  },
+  "Single-Arm Rear Delt Machine Fly": {
+    "emphasis": "SINGLE-ARM only: exactly ONE arm pulls the machine handle. The other arm hangs relaxed at the side. Do NOT show both arms working."
+  },
+  "Dumbbell Lying Single-Arm Supinated Triceps Extension": {
+    "emphasis": "Only ONE arm holds ONE dumbbell while lying on a bench; the other arm rests."
+  },
+  "Single-Leg Extension": {
+    "emphasis": "Only ONE leg extends the pad; the other foot rests off the pad."
+  },
+  "Behind Neck Lat Pulldown": {
+    "emphasis": "The bar comes DOWN BEHIND the head to the base of the neck/upper back. The bar is BEHIND the head, NEVER in front of the face. Show a rear/back view."
+  },
+  "Mixed Grip Hang": {
+    "emphasis": "MIXED GRIP: the left hand grips OVERHAND (palm facing away) and the right hand grips UNDERHAND (palm facing the body). The two palms face OPPOSITE directions - this is the defining feature."
+  },
+  "Tire Drag Backward": {
+    "emphasis": "The figure FACES TOWARD the tire and steps BACKWARD (walking in reverse), pulling the tire toward itself. Body faces the tire, moving backward."
+  },
+  "Treadmill Side Shuffle Right": {
+    "emphasis": "The figure stands SIDEWAYS on the treadmill in a lateral shuffle stance, NOT a forward run."
+  },
+  "Stationary Bike Standing Climb": {
+    "emphasis": "The rider is STANDING UP off the seat, hips raised above and in front of the saddle, out of the saddle. NOT sitting down."
+  },
+  "Stationary Bike Single-Leg Drill": {
+    "emphasis": "Only ONE leg pedals; the other foot is off the pedal."
+  },
+  "Seated Elbow In Alternating Dumbbell Overhead Press": {
+    "emphasis": "The figure is SEATED on a bench with elbows TUCKED IN close to the body, pressing one dumbbell."
+  },
+  "Wall Slide": {
+    "emphasis": "The figure's back and arms are flat against a vertical WALL, sliding the arms up and down the wall. Draw the wall clearly."
+  },
+  "Lat Stretch Wall": {
+    "emphasis": "One hand grips a vertical WALL or post and the figure leans away to stretch the lat. Draw the wall."
+  },
+  "Hip Flexor Couch Stretch": {
+    "emphasis": "The rear foot/shin is elevated up against a COUCH or bench behind the figure (couch stretch)."
+  },
+  "90/90 Hip Stretch": {
+    "emphasis": "The figure SITS ON THE FLOOR (buttocks on the ground): front leg bent 90 degrees in front, rear leg bent 90 degrees out to the side. NOT kneeling and NOT lunging - seated on the floor."
+  },
+  "Bretzel Stretch": {
+    "emphasis": "The figure lies on its SIDE, twisting the spine, grabbing the top foot behind the body with the opposite hand (Bretzel stretch)."
+  },
+  "Shinbox Get-Up": {
+    "emphasis": "The figure SITS ON THE FLOOR in a 90/90 shin-box (both shins flat on the ground, knees bent 90 degrees), one hand planted, beginning to rise. Start seated on the floor, not kneeling upright."
+  },
+  "Hanuman Dand (Power Hindu Push-Up)": {
+    "emphasis": "Show the dive-bomber HINDU push-up arc: hips piked up high, then swooping the chest down and forward through the arms."
+  },
+  "Chakki Chalanasana (Mill Churning Pose)": {
+    "emphasis": "The figure SITS on the floor with legs spread WIDE, arms extended forward making a large CIRCULAR churning motion."
+  },
+  "Sit-Ups": {
+    "emphasis": "The figure lies SUPINE on the floor, knees bent, curling the torso up into a sit-up."
+  },
+  "Squat To Stand": {
+    "emphasis": "The figure is bent over GRABBING the TOES with both hands, hips low; then pushes the hips UP toward straight legs while STILL HOLDING the toes. The hands hold the toes throughout."
+  },
+  "Seal Jack": {
+    "muscle": "Shoulders and chest",
+    "emphasis": "Arms sweep out wide and CLAP together in front of the chest (seal jack)."
+  },
+  "Battle Rope Squat To Press": {
+    "emphasis": "Show the SQUAT portion: hips lowered into a squat while holding the ropes, then pressing up."
+  },
+  "Cable Face Pull": {
+    "emphasis": "The figure FACES the cable machine and pulls the rope toward the FACE with elbows high and wide."
+  },
+  "Dumbbell Wrist Curl": {
+    "emphasis": "Forearms are braced on the thighs; only the WRISTS curl up and down (wrist flexion). The elbows do NOT move - this is NOT a bicep curl."
+  },
+  "Smith Machine Romanian Deadlift": {
+    "emphasis": "The figure MUST hold the Smith-machine BARBELL in both hands in front of the thighs - draw the bar clearly gripped in the hands. Hands are NOT empty."
+  },
+  "Smith Machine Squat": {
+    "emphasis": "Exactly TWO arrows total in the whole image - remove any extra small arrows."
+  },
+  "Pigeon Stretch": {
+    "emphasis": "Exactly TWO arrows total in the whole image."
+  },
+  "Battle Rope Lunges With Waves": {
+    "emphasis": "Exactly TWO arrows with correctly-spelled labels: '1. Lunge down' and '2. Wave ropes'. No third arrow and no garbled/misspelled text."
+  },
+  "Front Squats Kettlelbell Over Shoulders": {
+    "equipment": "two kettlebells racked at the shoulders",
+    "emphasis": "Exactly TWO arrows: ONE labeled '1. Lower down' and ONE labeled '2. Drive up'. Never duplicate the number 1."
+  },
+  "Treadmill Incline Jog": {
+    "emphasis": "The treadmill deck is set to a clear INCLINE angle (tilted up)."
+  },
+  "Treadmill Steep Incline Walk": {
+    "emphasis": "The treadmill deck is set to a STEEP incline angle (clearly tilted up)."
+  },
+  "Prone Scorpion": {
+    "emphasis": "Match the house style exactly: gray ecorche figure on white, exactly two blue numbered arrows, Zealova branding."
+  },
+  "Sphinx Pose": {
+    "pose": "Lying face-down (prone) on a yoga mat, propped up on the FOREARMS with elbows directly under the shoulders and forearms flat on the mat pointing forward, chest lifted, gentle backbend, hips and legs flat on the mat. This is Sphinx (forearms down), NOT Cobra (which is on straight arms).",
+    "muscle": "Erector Spinae (lower back)",
+    "emphasis": "Forearms MUST be flat on the mat with elbows under shoulders \u2014 do not straighten the arms."
+  },
+  "Cobra to Child Flow": {
+    "pose": "Show the prone Cobra position (chest lifted, hands by ribs) with a curved arrow indicating the flow back toward Child's Pose (hips to heels, arms extended forward).",
+    "muscle": "Erector Spinae (lower back)"
+  },
+  "Lizard Pose": {
+    "pose": "A deep low lunge with one foot stepped to the OUTSIDE of the same-side hand, both hands (or forearms) on the mat inside the front foot, back leg extended long, hips sinking low.",
+    "muscle": "Hip Flexors (front of the hip)"
+  },
+  "Pec Minor Stretch": {
+    "pose": "Standing in a doorway or at a wall corner, one forearm placed vertically on the wall/frame with the elbow ABOVE shoulder height (~90-120 degrees of shoulder abduction), then the torso gently rotates away to stretch the front of the shoulder/upper chest.",
+    "muscle": "Pectoralis Minor (deep upper chest, near the front of the shoulder)",
+    "emphasis": "Highlight the DEEP upper-chest region just below the collarbone near the front of the shoulder (pectoralis minor area), NOT the whole broad pectoralis major sheet."
+  },
+  "Thoracic Extension Stretch": {
+    "pose": "Seated on the floor with a foam roller across the upper back (or quadruped), the figure ARCHES the upper back BACKWARD over the support, chest opening toward the ceiling, hands lightly behind the head, elbows wide \u2014 clear thoracic EXTENSION (back-bend), NOT a rounded cat-flexion.",
+    "muscle": "Thoracic Spine / Erector Spinae (mid-upper back)",
+    "emphasis": "The upper back must ARCH BACKWARD (extension), chest opening up. Do NOT round/flex the spine."
+  },
+  "Tibialis Stretch": {
+    "pose": "Kneeling on the floor with the TOPS OF THE FEET flat on the ground (toes pointed back), then sitting the hips back toward the heels so the front of the shins lengthen.",
+    "muscle": "Tibialis Anterior (front of the shin)",
+    "emphasis": "Tops of the feet are flat on the floor with toes pointing back, hips sitting toward heels \u2014 this stretches the SHINS, not the calves."
+  },
+  "Seated Pigeon Stretch": {
+    "pose": "SEATED on the floor (or supine on the back), one ankle crossed over the opposite bent knee forming a figure-four, gently drawing the thigh toward the chest. A floor/seated stretch \u2014 NOT standing.",
+    "muscle": "Glutes / Piriformis",
+    "emphasis": "The figure is SEATED or lying on the floor, not standing."
+  },
+  "Banded Squat": {
+    "pose": "Standing bodyweight squat with a THIN FLEXIBLE LOOP resistance band around both thighs just above the knees; knees press outward against the band at the bottom of the squat.",
+    "muscle": "Quadriceps, Glutes",
+    "emphasis": "The band is a thin elastic LOOP around the thighs \u2014 absolutely NOT a bar, pole, or staff. No stick of any kind."
+  },
+  "Band Hip Distraction": {
+    "pose": "Lying on the back, a thick FLEXIBLE resistance band loops around the front of one hip/groin crease and runs off to a low anchor at the side, gentle traction as that knee draws toward the chest.",
+    "muscle": "Hip Flexors, Glutes",
+    "emphasis": "The band is a flexible elastic strap that drapes \u2014 NOT a rigid bar or staff."
+  },
+  "Band Ankle Mobilization": {
+    "pose": "Half-kneeling lunge; a THIN FLEXIBLE resistance band loops around the front ankle and anchors low behind, pulling the ankle back while the knee drives FORWARD over the toes.",
+    "muscle": "Ankle, Calves",
+    "emphasis": "The band is a thin flexible elastic loop around the ankle \u2014 NOT a rigid bar/pole. Front foot flat on floor."
+  },
+  "Stairmaster Double Step Sprint": {
+    "pose": "Climbing/sprinting on a StairMaster step-mill machine, taking two steps at a time, hands free or lightly resting on the side rails.",
+    "muscle": "Quadriceps, Glutes",
+    "emphasis": "On a StairMaster machine ONLY. Absolutely NO dumbbells, kettlebells, barbell, or any handheld weights anywhere in the image."
+  },
+  "Stairmaster Lateral Step Right": {
+    "pose": "Stepping sideways (laterally) to the right on a StairMaster step-mill machine, hands lightly on the rails.",
+    "muscle": "Hip Abductors, Glutes",
+    "emphasis": "On a StairMaster machine ONLY. NO dumbbells or handheld weights of any kind."
+  },
+  "Rowing Machine Arms Only": {
+    "pose": "Seated on an indoor rowing machine (erg), legs already straight, both hands gripping the SINGLE handle, performing the arms-only finish pull of the handle to the lower ribs.",
+    "muscle": "Lats, Upper Back",
+    "emphasis": "Both hands grip ONE handle; correct two arms, no extra/duplicate hands."
+  },
+  "Lathi Basic Staff Handling": {
+    "pose": "Standing in an athletic stance handling a long bamboo lathi staff held with BOTH hands in a natural two-handed grip \u2014 one hand near the middle, the other lower on the SAME staff.",
+    "muscle": "Forearms",
+    "emphasis": "Both hands grip the ONE staff in a normal spread grip; do NOT put two hands on the same spot or the same side. One clean figure."
+  },
+  "Lathi Single-Leg Balance": {
+    "pose": "Balancing on one leg with the other knee lifted to about 90 degrees, holding a vertical bamboo lathi staff planted on the ground in front for balance.",
+    "muscle": "Core, Glutes",
+    "emphasis": "One clean figure, exactly two arms and two legs; staff is vertical and held by the hands, not a third leg."
+  },
+  "Ram Murti Dand (Dive Bomber Push-Up)": {
+    "pose": "Mid dive-bomber (hindu) push-up: hips piked high in an inverted-V, then swooping the chest down and forward and arching up like upward-dog. Show the swooping arch position.",
+    "muscle": "Shoulders, Chest",
+    "emphasis": "One clean figure, two arms two legs, hands flat on floor."
+  },
+  "Tuck Back Lever": {
+    "pose": "Hanging from a horizontal pull-up bar with a straight-arm overhand grip, body inverted and held HORIZONTAL facing UP (chest toward ceiling, back toward the floor), knees tucked tightly to the chest, hips level with the bar.",
+    "muscle": "Lats, Chest",
+    "emphasis": "Body horizontal and face-up, hanging by both straight arms from the bar; head in line with the torso; knees tucked. No extra limbs."
+  },
+  "Wall Handstand Push-Up": {
+    "pose": "Inverted in a handstand with the back to a wall, EXACTLY two hands flat on the floor shoulder-width apart, body vertical, elbows bending to lower the head toward the floor.",
+    "muscle": "Shoulders, Triceps",
+    "emphasis": "Exactly TWO hands on the floor and TWO feet against the wall \u2014 one clean inverted figure, no extra hands."
+  },
+  "Foam Roll Hip Flexors": {
+    "pose": "Lying face-down (prone) with a foam roller under the front of one hip/upper thigh, propped on both forearms, rolling the hip flexor.",
+    "muscle": "Hip Flexors",
+    "emphasis": "Both legs anatomically correct and intact; one leg rests on the roller. No broken or bent-wrong limbs."
+  },
+  "Burpee Broad Jump": {
+    "pose": "A sequence: drop into a burpee (chest to floor), stand explosively, then perform a two-footed BROAD JUMP forward landing in a soft squat. Show the broad-jump leap with forward motion arrows.",
+    "muscle": "Quadriceps, Glutes",
+    "emphasis": "Single clean figure mid forward broad-jump after a burpee; show forward leap, not just a vertical jump."
+  },
+  "Wall Ball": {
+    "pose": "Standing facing a wall holding a medicine ball at the chest, squatting down then driving up explosively to throw the medicine ball UP to a high wall target. Show the upward throw to the target.",
+    "muscle": "Quadriceps, Glutes, Shoulders",
+    "emphasis": "A medicine ball thrown UP at a high wall target; figure in a squat-to-throw. The ball is a soft medicine/wall ball, not a dumbbell."
+  }
+}

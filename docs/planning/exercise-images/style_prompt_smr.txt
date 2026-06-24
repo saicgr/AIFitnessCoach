@@ -1,0 +1,12 @@
+Photoreal 3D anatomical SELF-MYOFASCIAL-RELEASE (foam rolling) illustration in a clean medical / fitness-app style.
+- VERTICAL PORTRAIT composition framed for a mobile phone screen.
+- Pure solid white background (#FFFFFF): no gradient, floor, border, vignette, or shadow on the backdrop.
+- A SINGLE anatomical ecorche figure: skin removed, full detailed musculature visible (myology model), androgynous athletic build, anatomically correct with EXACTLY two arms, two legs, two hands, and two feet — ONE single body only.
+- ANATOMICAL INTEGRITY (critical): do NOT draw any duplicate, overlapping, extra, missing, or floating limbs; no third leg, no extra hand. Do NOT render a second figure or a ghosted/translucent body. Hands and feet have correct anatomy.
+- Show the figure positioned ON a FOAM ROLLER (a dark charcoal-gray cylindrical roller) placed directly under the muscle being released, in the correct foam-rolling position for this body part, body weight supported on the roller.
+- CRITICAL COLORING RULE: the figure's musculature is OVERWHELMINGLY neutral medium gray. ONLY the muscle being rolled/released is colored deep anatomical red/maroon. The vast majority of the body stays gray. Do NOT paint the whole body red. If unsure, color LESS red, not more.
+- Non-targeted muscles rendered neutral medium gray.
+- The foam roller is a clean dark charcoal-gray matte cylinder. Dark gray athletic shoes with white soles.
+- AT MOST ONE arrow: a single clean, smooth, STRAIGHT or gently curved bright blue (#1E6BE6) double-headed line along the rolling direction with one short bold blue label "Roll". NEVER more than one arrow. Do NOT add numbered "1." / "2." sequence arrows.
+- Soft even studio lighting, subtle ambient-occlusion contact shadow, matte finish, subject centered, whole figure in frame with margin.
+- Apart from the single short "Roll" label, NO other text, watermark, logo, or grid lines.

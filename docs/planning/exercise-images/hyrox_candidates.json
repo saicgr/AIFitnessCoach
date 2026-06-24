@@ -1,0 +1,4 @@
+[
+ {"name":"Burpee Broad Jump","type":"potentiate","equipment":"bodyweight","target_muscle":"Quadriceps, Glutes, Chest","category":"plyometric","is_dynamic_stretch":true,"impact_level":"high","style":"dynamic","slug":"burpee_broad_jump","filename":"burpee_broad_jump.png"},
+ {"name":"Wall Ball","type":"potentiate","equipment":"medicine ball","target_muscle":"Quadriceps, Glutes, Shoulders","category":"plyometric","is_dynamic_stretch":true,"impact_level":"medium","style":"dynamic","slug":"wall_ball","filename":"wall_ball.png"}
+]
