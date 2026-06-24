@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/chrome_constants.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/discover_snapshot.dart';
 import '../../data/models/fitness_profile.dart';
@@ -24,6 +25,7 @@ import '../../shareables/shareable_catalog.dart' show ShareableTemplate;
 import '../../shareables/shareable_data.dart';
 import '../../shareables/shareable_sheet.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/signature/signature.dart';
 import '../../widgets/top_segmented_control.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
@@ -232,12 +234,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                         ),
                       const SizedBox(width: 4),
                       Text(
-                        AppLocalizations.of(context).bottomNavLeaderboard,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: textColor,
-                        ),
+                        AppLocalizations.of(context).bottomNavLeaderboard.toUpperCase(),
+                        style: ZType.disp(20, color: textColor, letterSpacing: 0.5),
                       ),
                       const Spacer(),
                       if (isReloading)
@@ -435,6 +433,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         // legacy `discoverRisingStars` anchor is reattached here as a
         // sibling so first-run tour step 1 still has a hit target post
         // consolidation.
+        // Signature-v2 section kicker above the consolidated leaderboard
+        // list (Barlow uppercase orange). Replaces the prior unlabeled list.
+        if (s.nearYou.isNotEmpty) ...[
+          const ZSectionKicker(label: 'Near you'),
+          const SizedBox(height: 10),
+        ],
         KeyedSubtree(
           key: TooltipAnchors.discoverRisingStars,
           child: KeyedSubtree(
@@ -475,14 +479,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: elevated,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: border),
       ),
       child: Center(
         child: Text(
           message,
-          style: TextStyle(fontSize: 13, color: textMuted),
+          style: ZType.sans(13, color: textMuted, weight: FontWeight.w500, height: 1.4),
           textAlign: TextAlign.center,
         ),
       ),
@@ -573,6 +576,12 @@ class _RankHeroCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Section kicker above the rank, signature-v2.
+          Text(
+            'YOUR STANDING',
+            style: ZType.lbl(11, color: accent, letterSpacing: 2.0),
+          ),
+          const SizedBox(height: 10),
           // Tier-persistence streak nudge — "Week 2 in Top 1% · 3 more for
           // Iron Throne". Only renders once the user has held a qualifying
           // tier at least one week. Copy adapts to whether a next milestone
@@ -622,11 +631,7 @@ class _RankHeroCard extends ConsumerWidget {
             // category separation from the accent-tinted rank.
             Text(
               '${s.yourMetric.toStringAsFixed(0)} ${s.metricLabel} this week',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: xpPurple,
-              ),
+              style: ZType.data(14, color: xpPurple),
             ),
           ] else ...[
             // Surface the user's own weekly progress even though they're
@@ -640,46 +645,34 @@ class _RankHeroCard extends ConsumerWidget {
                 children: [
                   Text(
                     AppLocalizations.of(context).discoverYou,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: textMuted,
-                    ),
+                    style: ZType.lbl(14, color: textMuted, letterSpacing: 1.4),
                   ),
+                  const SizedBox(width: 6),
                   Text(
                     '${s.yourWeeklyXpUnranked}',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      color: textColor,
-                      height: 1.0,
-                    ),
+                    style: ZType.disp(30, color: textColor),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   Text(
                     AppLocalizations.of(context).discoverXpThisWeek,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: textMuted,
-                    ),
+                    style: ZType.lbl(12, color: textMuted, letterSpacing: 1.2),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
               Text(
                 AppLocalizations.of(context).discoverCompleteAWorkoutTo,
-                style: TextStyle(fontSize: 13, color: textMuted, height: 1.3),
+                style: ZType.sans(13, color: textMuted, weight: FontWeight.w500, height: 1.35),
               ),
             ] else ...[
               Text(
                 AppLocalizations.of(context).discoverCompleteAWorkoutThis,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+                style: ZType.disp(20, color: textColor, letterSpacing: 0.5),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 AppLocalizations.of(context).discoverYourRankPercentileAppears,
-                style: TextStyle(fontSize: 13, color: textMuted, height: 1.3),
+                style: ZType.sans(13, color: textMuted, weight: FontWeight.w500, height: 1.35),
               ),
             ],
           ],
@@ -691,11 +684,7 @@ class _RankHeroCard extends ConsumerWidget {
                 const SizedBox(width: 6),
                 Text(
                   '${s.unitsToNext} ${s.metricLabel} to Top ${_tierPercent(s.nextTier!)}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: accent,
-                  ),
+                  style: ZType.lbl(12.5, color: accent, letterSpacing: 1.0),
                 ),
               ],
             ),
@@ -750,12 +739,7 @@ class _PrimaryRankLine extends StatelessWidget {
         // The rank number is the ONE focused accent use on the hero card.
         Text(
           '#$rank',
-          style: TextStyle(
-            fontSize: 34,
-            fontWeight: FontWeight.w900,
-            color: accent,
-            height: 1.0,
-          ),
+          style: ZType.disp(40, color: accent, letterSpacing: 0),
         ),
         if (delta != null && delta != 0) ...[
           const SizedBox(width: 8),
@@ -767,21 +751,14 @@ class _PrimaryRankLine extends StatelessWidget {
           const SizedBox(width: 2),
           Text(
             '${delta.abs()}',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: delta > 0 ? Colors.green : Colors.redAccent,
-            ),
+            style: ZType.data(15,
+                color: delta > 0 ? Colors.green : Colors.redAccent),
           ),
         ],
         const SizedBox(width: 10),
         Text(
-          'of $totalActive',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: textMuted,
-          ),
+          'OF $totalActive',
+          style: ZType.lbl(12, color: textMuted, letterSpacing: 1.2),
         ),
       ],
     );
@@ -813,13 +790,8 @@ class _ResetChip extends StatelessWidget {
         border: Border.all(color: border),
       ),
       child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: textMuted,
-          letterSpacing: 0.4,
-        ),
+        label.toUpperCase(),
+        style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.2),
       ),
     );
   }
@@ -850,13 +822,8 @@ class _MoversChip extends StatelessWidget {
           const Icon(Icons.trending_up, size: 10, color: Colors.green),
           const SizedBox(width: 3),
           Text(
-            'Movers',
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              color: textMuted,
-              letterSpacing: 0.4,
-            ),
+            'MOVERS',
+            style: ZType.lbl(9, color: textMuted, letterSpacing: 1.0),
           ),
         ],
       ),
@@ -904,13 +871,8 @@ class _ViewTop10Button extends ConsumerWidget {
             const Text('👑', style: TextStyle(fontSize: 16)),
             const SizedBox(width: 8),
             Text(
-              'View top 10',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: textColor,
-                letterSpacing: 0.3,
-              ),
+              'VIEW TOP 10',
+              style: ZType.lbl(12.5, color: textColor, letterSpacing: 1.6),
             ),
             const SizedBox(width: 6),
             Icon(Icons.chevron_right, size: 18, color: textMuted),
@@ -973,12 +935,8 @@ class _Top10Sheet extends ConsumerWidget {
               const Text('👑', style: TextStyle(fontSize: 22)),
               const SizedBox(width: 10),
               Text(
-                AppLocalizations.of(context).discoverTopOfTheWeek,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: textColor,
-                ),
+                AppLocalizations.of(context).discoverTopOfTheWeek.toUpperCase(),
+                style: ZType.disp(20, color: textColor, letterSpacing: 0.5),
               ),
             ],
           ),
@@ -1003,10 +961,7 @@ class _Top10Sheet extends ConsumerWidget {
                 width: 28,
                 child: Text(
                   '#${entries[i].rank}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: textMuted,
-                  ),
+                  style: ZType.data(13, color: textMuted),
                 ),
               ),
               title: Row(
@@ -1017,10 +972,7 @@ class _Top10Sheet extends ConsumerWidget {
                           ? AppLocalizations.of(context).navYou
                           : entries[i].bestName,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: textColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: ZType.sans(14, color: textColor, weight: FontWeight.w600),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -1029,10 +981,7 @@ class _Top10Sheet extends ConsumerWidget {
               ),
               trailing: Text(
                 '${entries[i].metricValue.toStringAsFixed(0)} $metricLabel',
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: ZType.data(13, color: textColor),
               ),
             ),
             if (i < entries.length - 1)
@@ -1084,12 +1033,8 @@ class _TierStreakLine extends StatelessWidget {
 
     final parts = <InlineSpan>[
       TextSpan(
-        text: 'Week $weeks in $tierLabel',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-          color: textColor,
-        ),
+        text: 'WEEK $weeks IN ${tierLabel.toUpperCase()}',
+        style: ZType.lbl(11.5, color: textColor, letterSpacing: 1.2),
       ),
     ];
 
@@ -1098,15 +1043,11 @@ class _TierStreakLine extends StatelessWidget {
       parts.addAll([
         TextSpan(
           text: '  ·  ',
-          style: TextStyle(fontSize: 12, color: textMuted),
+          style: ZType.lbl(11.5, color: textMuted, letterSpacing: 1.2),
         ),
         TextSpan(
-          text: '$remaining more for ${_badgeIconForWeeks(nextMilestoneWeeks!)}',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: accent,
-          ),
+          text: '$remaining MORE FOR ${_badgeIconForWeeks(nextMilestoneWeeks!).toUpperCase()}',
+          style: ZType.lbl(11.5, color: accent, letterSpacing: 1.0),
         ),
       ]);
     }
@@ -1139,13 +1080,8 @@ class _LevelPill extends StatelessWidget {
         border: Border.all(color: accent.withValues(alpha: 0.35), width: 0.8),
       ),
       child: Text(
-        'Lvl $level',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          color: accent,
-          letterSpacing: 0.3,
-        ),
+        'LVL $level',
+        style: ZType.lbl(9.5, color: accent, letterSpacing: 0.8),
       ),
     );
   }
@@ -1190,10 +1126,10 @@ class _NearYouList extends ConsumerWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: elevated,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: border),
           ),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               for (int i = 0; i < entries.length; i++) ...[
@@ -1298,11 +1234,9 @@ class _NearYouList extends ConsumerWidget {
           width: 28,
           child: Text(
             '#${e.rank}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: e.isCurrentUser ? FontWeight.w900 : FontWeight.w600,
-              color: e.isCurrentUser ? accent : textMuted,
-            ),
+            style: ZType.data(13,
+                color: e.isCurrentUser ? accent : textMuted,
+                weight: e.isCurrentUser ? FontWeight.w700 : FontWeight.w400),
           ),
         ),
         RankDeltaChip(delta: e.rankDelta, compact: compact),
@@ -1329,11 +1263,9 @@ class _NearYouList extends ConsumerWidget {
                 child: Text(
                   e.isCurrentUser ? AppLocalizations.of(context).navYou : e.bestName,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: e.isCurrentUser ? FontWeight.w800 : FontWeight.w600,
-                    color: textColor,
-                  ),
+                  style: ZType.sans(13.5,
+                      color: textColor,
+                      weight: e.isCurrentUser ? FontWeight.w800 : FontWeight.w600),
                 ),
               ),
               if (hideIdentity) ...[
@@ -1341,13 +1273,8 @@ class _NearYouList extends ConsumerWidget {
                 Icon(Icons.lock_outline, size: 12, color: textMuted),
                 const SizedBox(width: 2),
                 Text(
-                  AppLocalizations.of(context).manageDuplicateImportsHidden,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: textMuted,
-                    letterSpacing: 0.3,
-                  ),
+                  AppLocalizations.of(context).manageDuplicateImportsHidden.toUpperCase(),
+                  style: ZType.lbl(9.5, color: textMuted, letterSpacing: 1.0),
                 ),
               ],
               if (showFlag) ...[
@@ -1386,24 +1313,16 @@ class _NearYouList extends ConsumerWidget {
               color: accent,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text(
+            child: Text(
               'YOU',
-              style: TextStyle(
-                fontSize: 9,
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
+              style: ZType.lbl(9, color: Colors.white, letterSpacing: 0.8),
             ),
           ),
         ],
         const SizedBox(width: 6),
         Text(
           '${e.metricValue.toStringAsFixed(0)} $metricLabel',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: textColor,
-          ),
+          style: ZType.data(12, color: textColor),
         ),
       ],
     );
@@ -1437,10 +1356,10 @@ class _Top10CollapsibleState extends ConsumerState<_Top10Collapsible> {
     if (widget.entries.isEmpty) return const SizedBox.shrink();
     return Container(
       decoration: BoxDecoration(
-        color: widget.elevated,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: widget.border),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           InkWell(
@@ -1457,12 +1376,8 @@ class _Top10CollapsibleState extends ConsumerState<_Top10Collapsible> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      AppLocalizations.of(context).discoverTopOfTheWeek,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: widget.textColor,
-                      ),
+                      AppLocalizations.of(context).discoverTopOfTheWeek.toUpperCase(),
+                      style: ZType.lbl(13, color: widget.textColor, letterSpacing: 1.6),
                     ),
                   ),
                   Icon(_expanded ? Icons.expand_less : Icons.expand_more, color: widget.textMuted),
@@ -1490,7 +1405,7 @@ class _Top10CollapsibleState extends ConsumerState<_Top10Collapsible> {
                 leading: SizedBox(
                   width: 28,
                   child: Text('#${widget.entries[i].rank}',
-                      style: TextStyle(fontWeight: FontWeight.w700, color: widget.textMuted)),
+                      style: ZType.data(13, color: widget.textMuted)),
                 ),
                 title: Row(
                   children: [
@@ -1498,7 +1413,7 @@ class _Top10CollapsibleState extends ConsumerState<_Top10Collapsible> {
                       child: Text(
                         widget.entries[i].isCurrentUser ? AppLocalizations.of(context).navYou : widget.entries[i].bestName,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: widget.textColor, fontWeight: FontWeight.w600),
+                        style: ZType.sans(14, color: widget.textColor, weight: FontWeight.w600),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -1511,7 +1426,7 @@ class _Top10CollapsibleState extends ConsumerState<_Top10Collapsible> {
                 ),
                 trailing: Text(
                   '${widget.entries[i].metricValue.toStringAsFixed(0)} ${widget.metricLabel}',
-                  style: TextStyle(color: widget.textColor, fontWeight: FontWeight.w700),
+                  style: ZType.data(13, color: widget.textColor),
                 ),
               ),
               if (i < widget.entries.length - 1) Divider(height: 1, color: widget.border),
@@ -1613,18 +1528,15 @@ class _UserPeekSheet extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             name,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: name == 'Anonymous athlete'
-                  ? FontWeight.w600
-                  : FontWeight.w800,
-              color: textColor,
-            ),
+            textAlign: TextAlign.center,
+            style: name == 'Anonymous athlete'
+                ? ZType.sans(20, color: textColor, weight: FontWeight.w600)
+                : ZType.disp(24, color: textColor, letterSpacing: 0.5),
           ),
           if (username != null && username!.isNotEmpty) ...[
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text('@$username',
-                style: TextStyle(fontSize: 13, color: textMuted, fontWeight: FontWeight.w500)),
+                style: ZType.data(12.5, color: textMuted, weight: FontWeight.w400)),
           ],
           // Bio (only rendered inside _profileSection when stats are visible)
           _profileBio(profileAsync, textMuted),
@@ -1664,10 +1576,7 @@ class _UserPeekSheet extends ConsumerWidget {
         textAlign: TextAlign.center,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 13, color: textMuted,
-          fontStyle: FontStyle.italic, height: 1.3,
-        ),
+        style: ZType.ser(14, color: textMuted, height: 1.3),
       ),
     );
   }
@@ -1728,7 +1637,7 @@ class _UserPeekSheet extends ConsumerWidget {
       child: Text(
         message,
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 13, color: textMuted, height: 1.35),
+        style: ZType.sans(13, color: textMuted, weight: FontWeight.w500, height: 1.4),
       ),
     );
   }
@@ -1755,7 +1664,7 @@ class _RankPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sep = Text('  ·  ',
-        style: TextStyle(color: textColor.withValues(alpha: 0.5)));
+        style: ZType.data(13, color: textColor.withValues(alpha: 0.5)));
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
@@ -1767,21 +1676,13 @@ class _RankPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (level != null && level! > 0) ...[
-            Text('Lvl $level',
-                style: TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w800, color: accent,
-                )),
+            Text('LVL $level', style: ZType.lbl(13, color: accent, letterSpacing: 1.0)),
             sep,
           ],
-          Text('#$rank',
-              style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w900, color: accent,
-              )),
+          Text('#$rank', style: ZType.data(15, color: accent)),
           sep,
           Text('${metricValue.toStringAsFixed(0)} $metricLabel',
-              style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w700, color: textColor,
-              )),
+              style: ZType.data(13, color: textColor)),
         ],
       ),
     );
@@ -1984,10 +1885,10 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
                           color: widget.border.withValues(alpha: 0.25),
                           width: 0.4,
                         ),
-                        titleTextStyle: TextStyle(
+                        titleTextStyle: ZType.lbl(
+                          compactLabels ? 10 : 11,
                           color: widget.textMuted,
-                          fontSize: compactLabels ? 10 : 11,
-                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
                         ),
                         titlePositionPercentageOffset: 0.12,
                         getTitle: (index, angle) =>
@@ -2062,22 +1963,13 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
                               Text(
                                 AppLocalizations.of(context).habitDetailScreenNotEnoughDataYet,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: widget.textColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                style: ZType.sans(15, color: widget.textColor, weight: FontWeight.w800),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 AppLocalizations.of(context).discoverComplete3WorkoutsTo,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: widget.textMuted,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.4,
-                                ),
+                                style: ZType.sans(12, color: widget.textMuted, weight: FontWeight.w500, height: 1.4),
                               ),
                             ],
                           ),
@@ -2113,7 +2005,7 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
               const SizedBox(width: 16),
               Text(
                 AppLocalizations.of(context).discoverTapAnAxis,
-                style: TextStyle(fontSize: 11, color: widget.textMuted.withValues(alpha: 0.7)),
+                style: ZType.sans(11, color: widget.textMuted.withValues(alpha: 0.7), weight: FontWeight.w500),
               ),
             ],
           ),
@@ -2249,12 +2141,7 @@ class _MonthNavigator extends StatelessWidget {
                   child: Text(
                     monthYear,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 3,
-                      color: textColor,
-                    ),
+                    style: ZType.lbl(15, color: textColor, letterSpacing: 3),
                   ),
                 ),
               ),
@@ -2273,7 +2160,7 @@ class _MonthNavigator extends StatelessWidget {
             padding: const EdgeInsets.only(top: 2),
             child: Text(
               subtitle,
-              style: TextStyle(fontSize: 10, color: textMuted, letterSpacing: 0.5),
+              style: ZType.data(10, color: textMuted, weight: FontWeight.w400),
             ),
           ),
       ],
@@ -2413,12 +2300,7 @@ class _MonthYearPickerSheetState extends State<_MonthYearPickerSheet> {
               ),
               Text(
                 '$_year',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: textColor,
-                  letterSpacing: 2,
-                ),
+                style: ZType.data(18, color: textColor),
               ),
               IconButton(
                 onPressed: _canNextYear
@@ -2470,12 +2352,9 @@ class _MonthYearPickerSheetState extends State<_MonthYearPickerSheet> {
                     opacity: enabled ? 1.0 : 0.3,
                     child: Text(
                       monthAbbrev[i],
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                        color: isSelected ? widget.accent : textColor,
-                      ),
+                      style: ZType.lbl(13,
+                          color: isSelected ? widget.accent : textColor,
+                          letterSpacing: 1.0),
                     ),
                   ),
                 ),
@@ -2508,7 +2387,7 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 12, color: textColor)),
+        Text(label.toUpperCase(), style: ZType.lbl(11, color: textColor, letterSpacing: 1.0)),
       ],
     );
   }
@@ -2540,7 +2419,7 @@ class _Avatar extends StatelessWidget {
         radius: radius,
         backgroundColor: bg,
         child: Text(initial,
-            style: TextStyle(color: accent, fontWeight: FontWeight.w800, fontSize: fontSize)),
+            style: ZType.disp(fontSize, color: accent)),
       );
     }
 
@@ -2623,22 +2502,17 @@ class _AxisReadout extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 10, fontWeight: FontWeight.w900,
-              letterSpacing: 1, color: textMuted,
-            ),
+            style: ZType.lbl(10, color: textMuted, letterSpacing: 1.4),
           ),
           const SizedBox(width: 14),
           _dot(targetColor),
           const SizedBox(width: 4),
-          Text(_pct(targetValue),
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: textColor)),
+          Text(_pct(targetValue), style: ZType.data(13, color: textColor)),
           if (viewerValue != null) ...[
             const SizedBox(width: 12),
             _dot(viewerColor),
             const SizedBox(width: 4),
-            Text(_pct(viewerValue!),
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: textColor)),
+            Text(_pct(viewerValue!), style: ZType.data(13, color: textColor)),
           ],
         ],
       ),
@@ -2698,13 +2572,9 @@ class _RangeChips extends StatelessWidget {
           ),
         ),
         child: Text(
-          r.label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            color: isSelected ? accent : textMuted,
-            letterSpacing: 0.3,
-          ),
+          r.label.toUpperCase(),
+          style: ZType.lbl(12,
+              color: isSelected ? accent : textMuted, letterSpacing: 1.0),
         ),
       ),
     );

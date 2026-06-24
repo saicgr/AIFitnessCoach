@@ -3,10 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/api_client.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
+/// Signature-v2 onPrimary ink — text/icon color on the solid orange accent.
+const Color _onAccent = Color(0xFF160B03);
+
 /// Dialog to challenge friends after completing a workout
 class ChallengeFriendsDialog extends ConsumerStatefulWidget {
   final String userId;
@@ -25,10 +30,12 @@ class ChallengeFriendsDialog extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ChallengeFriendsDialog> createState() => _ChallengeFriendsDialogState();
+  ConsumerState<ChallengeFriendsDialog> createState() =>
+      _ChallengeFriendsDialogState();
 }
 
-class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog> {
+class _ChallengeFriendsDialogState
+    extends ConsumerState<ChallengeFriendsDialog> {
   final Set<String> _selectedFriendIds = {};
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
@@ -67,8 +74,9 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
     if (_selectedFriendIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).challengeFriendsPleaseSelectAtLeast),
-          backgroundColor: Colors.red,
+          content: Text(AppLocalizations.of(context)
+              .challengeFriendsPleaseSelectAtLeast),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -86,14 +94,17 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
         workoutName: widget.workoutName,
         workoutData: widget.workoutData,
         workoutLogId: widget.workoutLogId,
-        challengeMessage: _messageController.text.isNotEmpty ? _messageController.text : null,
+        challengeMessage: _messageController.text.isNotEmpty
+            ? _messageController.text
+            : null,
       );
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('🏆 Challenge sent to ${_selectedFriendIds.length} friend(s)!'),
+            content: Text(
+                '🏆 Challenge sent to ${_selectedFriendIds.length} friend(s)!'),
             backgroundColor: AppColors.orange,
             behavior: SnackBarBehavior.floating,
           ),
@@ -107,7 +118,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send challenges: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -119,10 +130,20 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final bg = isDark ? AppColors.background : AppColorsLight.background;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Dialog(
       backgroundColor: elevated,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: cardBorder),
+      ),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
         child: Column(
@@ -132,38 +153,38 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                color: orange.withValues(alpha: 0.1),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
+                border: Border(
+                  bottom: BorderSide(color: orange.withValues(alpha: 0.25)),
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.emoji_events, color: AppColors.orange, size: 28),
+                  Icon(Icons.emoji_events, color: orange, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppLocalizations.of(context).challengeFriendsChallengeFriends,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          AppLocalizations.of(context)
+                              .challengeFriendsChallengeFriends,
+                          style: ZType.disp(22,
+                              color: textPrimary, letterSpacing: 0.5),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.workoutName,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.orange,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          widget.workoutName.toUpperCase(),
+                          style:
+                              ZType.lbl(12, color: orange, letterSpacing: 1.4),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: textMuted),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -175,32 +196,35 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
+                border: Border.all(color: orange.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppLocalizations.of(context).challengeFriendsStatsToBeat,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
-                    ),
+                    AppLocalizations.of(context)
+                        .challengeFriendsStatsToBeat
+                        .toUpperCase(),
+                    style:
+                        ZType.lbl(11, color: textMuted, letterSpacing: 1.6),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 16,
                     runSpacing: 8,
                     children: [
                       if (widget.workoutData['duration_minutes'] != null)
-                        _buildStatChip('⏱️', '${widget.workoutData['duration_minutes']} min'),
+                        _buildStatChip('⏱️',
+                            '${widget.workoutData['duration_minutes']} MIN',
+                            orange),
                       if (widget.workoutData['total_volume'] != null)
-                        _buildStatChip('💪', '${widget.workoutData['total_volume']} lbs'),
+                        _buildStatChip('💪',
+                            '${widget.workoutData['total_volume']} LBS', orange),
                       if (widget.workoutData['exercises_count'] != null)
-                        _buildStatChip('🏋️', '${widget.workoutData['exercises_count']} exercises'),
+                        _buildStatChip('🏋️',
+                            '${widget.workoutData['exercises_count']} EXERCISES',
+                            orange),
                     ],
                   ),
                 ],
@@ -212,6 +236,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
                 controller: _searchController,
+                style: ZType.sans(14, color: textPrimary, weight: FontWeight.w500),
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
@@ -219,14 +244,25 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                 },
                 decoration: InputDecoration(
                   hintText: AppLocalizations.of(context).groupCreateSearchFriends,
-                  prefixIcon: const Icon(Icons.search, size: 20),
+                  hintStyle: ZType.sans(14,
+                      color: textMuted, weight: FontWeight.w400),
+                  prefixIcon: Icon(Icons.search, size: 20, color: textMuted),
                   filled: true,
-                  fillColor: isDark ? AppColors.background : AppColorsLight.background,
+                  fillColor: bg,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(color: cardBorder),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: orange),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                 ),
               ),
             ),
@@ -238,8 +274,11 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
               child: _filteredFriends.isEmpty
                   ? Center(
                       child: Text(
-                        _searchQuery.isEmpty ? AppLocalizations.of(context).challengeFriendsNoFriendsToChallenge : 'No friends found',
-                        style: const TextStyle(color: AppColors.textMuted),
+                        _searchQuery.isEmpty
+                            ? AppLocalizations.of(context)
+                                .challengeFriendsNoFriendsToChallenge
+                            : 'No friends found',
+                        style: ZType.ser(14, color: textMuted),
                       ),
                     )
                   : ListView.builder(
@@ -248,10 +287,13 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                       itemBuilder: (context, index) {
                         final friend = _filteredFriends[index];
                         final friendId = friend['id'] as String;
-                        final isSelected = _selectedFriendIds.contains(friendId);
+                        final isSelected =
+                            _selectedFriendIds.contains(friendId);
 
                         return CheckboxListTile(
                           value: isSelected,
+                          activeColor: orange,
+                          checkColor: _onAccent,
                           onChanged: (value) {
                             HapticFeedback.lightImpact();
                             setState(() {
@@ -264,31 +306,36 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                           },
                           title: Text(
                             friend['name'] as String,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            style: ZType.sans(15,
+                                color: textPrimary, weight: FontWeight.w700),
                           ),
                           subtitle: friend['username'] != null
-                              ? Text('@${friend['username']}')
+                              ? Text(
+                                  '@${friend['username']}',
+                                  style: ZType.sans(12,
+                                      color: textMuted,
+                                      weight: FontWeight.w400),
+                                )
                               : null,
                           secondary: CircleAvatar(
                             radius: 20,
-                            backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+                            backgroundColor: orange.withValues(alpha: 0.15),
                             backgroundImage: friend['avatar_url'] != null
                                 ? NetworkImage(friend['avatar_url'])
                                 : null,
                             child: friend['avatar_url'] == null
                                 ? Text(
-                                    (friend['name'] as String)[0].toUpperCase(),
-                                    style: const TextStyle(
-                                      color: AppColors.cyan,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    (friend['name'] as String)[0]
+                                        .toUpperCase(),
+                                    style: ZType.disp(16, color: orange),
                                   )
                                 : null,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 8),
                         );
                       },
                     ),
@@ -301,13 +348,26 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                 controller: _messageController,
                 maxLines: 2,
                 maxLength: 200,
+                style:
+                    ZType.sans(14, color: textPrimary, weight: FontWeight.w500),
                 decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context).challengeFriendsAddTrashTalkMessage,
+                  hintText: AppLocalizations.of(context)
+                      .challengeFriendsAddTrashTalkMessage,
+                  hintStyle: ZType.sans(14,
+                      color: textMuted, weight: FontWeight.w400),
                   filled: true,
-                  fillColor: isDark ? AppColors.background : AppColorsLight.background,
+                  fillColor: bg,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(color: cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: orange),
                   ),
                   contentPadding: const EdgeInsets.all(12),
                 ),
@@ -321,14 +381,20 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _isSending ? null : () => Navigator.pop(context),
+                      onPressed:
+                          _isSending ? null : () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: cardBorder),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(AppLocalizations.of(context).buttonCancel),
+                      child: Text(
+                        AppLocalizations.of(context).buttonCancel.toUpperCase(),
+                        style: ZType.lbl(13,
+                            color: textPrimary, letterSpacing: 1.2),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -337,7 +403,10 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                     child: ElevatedButton.icon(
                       onPressed: _isSending ? null : _sendChallenges,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.orange,
+                        backgroundColor: orange,
+                        foregroundColor: _onAccent,
+                        disabledBackgroundColor:
+                            orange.withValues(alpha: 0.5),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -348,16 +417,19 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: _onAccent,
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Icon(Icons.send, size: 18),
+                          : const Icon(Icons.send, size: 18, color: _onAccent),
                       label: Text(
                         _isSending
-                            ? AppLocalizations.of(context).challengeFriendsSending
-                            : 'Send Challenge (${_selectedFriendIds.length})',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                            ? AppLocalizations.of(context)
+                                .challengeFriendsSending
+                                .toUpperCase()
+                            : 'SEND CHALLENGE (${_selectedFriendIds.length})',
+                        style:
+                            ZType.lbl(13, color: _onAccent, letterSpacing: 1.2),
                       ),
                     ),
                   ),
@@ -370,12 +442,13 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
     );
   }
 
-  Widget _buildStatChip(String emoji, String value) {
+  Widget _buildStatChip(String emoji, String value, Color orange) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: orange.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -384,11 +457,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
           const SizedBox(width: 6),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.orange,
-            ),
+            style: ZType.data(12, color: orange),
           ),
         ],
       ),

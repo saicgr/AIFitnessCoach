@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/custom_exercises_provider.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/custom_exercise.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
+import '../../widgets/signature/signature.dart';
 import 'widgets/custom_exercise_card.dart';
 import 'widgets/create_exercise_sheet.dart';
 import 'widgets/empty_custom_exercises.dart';
@@ -58,7 +60,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.successMessage!),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -68,7 +70,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error!),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -109,13 +111,15 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
       floatingActionButton: state.exercises.isNotEmpty
           ? FloatingActionButton.extended(
               onPressed: () => _showCreateSheet(context),
-              backgroundColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-              icon: const Icon(Icons.add, color: Colors.black),
+              backgroundColor: AppColors.orange,
+              foregroundColor: const Color(0xFF160B03),
+              icon: const Icon(Icons.add, color: Color(0xFF160B03)),
               label: Text(
-                AppLocalizations.of(context).netflixExercisesTabCreate,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
+                AppLocalizations.of(context).netflixExercisesTabCreate.toUpperCase(),
+                style: ZType.lbl(
+                  13,
+                  color: const Color(0xFF160B03),
+                  letterSpacing: 1.2,
                 ),
               ),
             )
@@ -124,11 +128,12 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
   }
 
   Widget _buildHeader(BuildContext context, bool isDark, CustomExercisesState state) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final stats = state.stats;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       child: Row(
         children: [
           GlassBackButton(
@@ -143,18 +148,14 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context).workoutSettingsMyExercises,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  AppLocalizations.of(context).workoutSettingsMyExercises.toUpperCase(),
+                  style: ZType.disp(26, color: textPrimary, letterSpacing: 0.5),
                 ),
                 if (stats != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   Text(
-                    '${stats.totalCustomExercises} exercises, ${stats.totalUses} uses',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                        ),
+                    '${stats.totalCustomExercises} EXERCISES · ${stats.totalUses} USES',
+                    style: ZType.lbl(11, color: textMuted, letterSpacing: 1.6),
                   ),
                 ],
               ],
@@ -164,7 +165,10 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
             const SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.orange,
+              ),
             ),
         ],
       ),
@@ -172,32 +176,32 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
   }
 
   Widget _buildSearchBar(BuildContext context, bool isDark) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface2 : AppColorsLight.surface;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Container(
         decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(12),
-          border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+          color: surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: cardBorder),
         ),
         child: TextField(
           controller: _searchController,
           onChanged: (value) {
             setState(() => _searchQuery = value);
           },
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
-          ),
+          style: ZType.sans(14, color: textPrimary, weight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
-            hintStyle: TextStyle(color: textMuted),
-            prefixIcon: Icon(Icons.search, color: textMuted),
+            hintStyle: ZType.sans(14, color: textMuted, weight: FontWeight.w500),
+            prefixIcon: Icon(Icons.search, color: textMuted, size: 20),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
-                    icon: Icon(Icons.clear, color: textMuted),
+                    icon: Icon(Icons.clear, color: textMuted, size: 18),
                     onPressed: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
@@ -205,7 +209,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
                   )
                 : null,
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           ),
         ),
       ),
@@ -247,21 +251,21 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
 
   Widget _buildExerciseList(BuildContext context, bool isDark, List<CustomExercise> exercises) {
     if (exercises.isEmpty) {
+      final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.search_off,
-              size: 48,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              size: 44,
+              color: textMuted,
             ),
             const SizedBox(height: 16),
             Text(
               _searchQuery.isNotEmpty ? AppLocalizations.of(context).customExercisesNoExercisesMatchYour : 'No exercises in this category',
-              style: TextStyle(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-              ),
+              style: ZType.sans(14, color: textMuted, weight: FontWeight.w500),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -269,9 +273,10 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
     }
 
     return RefreshIndicator(
+      color: AppColors.orange,
       onRefresh: () => ref.read(customExercisesProvider.notifier).refresh(),
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
         itemCount: exercises.length,
         itemBuilder: (context, index) {
           final exercise = exercises[index];
@@ -311,23 +316,46 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
 
   void _confirmDelete(BuildContext context, CustomExercise exercise) {
     HapticService.medium();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context).myExercisesDeleteExercise),
-        content: Text('Are you sure you want to delete "${exercise.name}"? This cannot be undone.'),
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: cardBorder),
+        ),
+        title: Text(
+          AppLocalizations.of(context).myExercisesDeleteExercise.toUpperCase(),
+          style: ZType.lbl(15, color: textPrimary, letterSpacing: 1.2),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${exercise.name}"? This cannot be undone.',
+          style: ZType.sans(14, color: textSecondary, weight: FontWeight.w500, height: 1.4),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context).buttonCancel),
+            child: Text(
+              AppLocalizations.of(context).buttonCancel.toUpperCase(),
+              style: ZType.lbl(13, color: textMuted, letterSpacing: 1.0),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               ref.read(customExercisesProvider.notifier).deleteExercise(exercise.id);
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text(AppLocalizations.of(context).buttonDelete),
+            child: Text(
+              AppLocalizations.of(context).buttonDelete.toUpperCase(),
+              style: ZType.lbl(13, color: AppColors.error, letterSpacing: 1.0),
+            ),
           ),
         ],
       ),
@@ -344,26 +372,36 @@ class _ExerciseDetailsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return AlertDialog(
+      backgroundColor: surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: cardBorder),
+      ),
       title: Row(
         children: [
-          Expanded(child: Text(exercise.name)),
+          Expanded(
+            child: Text(
+              exercise.name,
+              style: ZType.sans(18, color: textPrimary, weight: FontWeight.w700),
+            ),
+          ),
           if (exercise.isComposite)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: cyan.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
+                color: AppColors.orange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.orange.withValues(alpha: 0.4)),
               ),
               child: Text(
-                exercise.typeLabel,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: cyan,
-                ),
+                exercise.typeLabel.toUpperCase(),
+                style: ZType.lbl(10, color: AppColors.orange, letterSpacing: 1.0),
               ),
             ),
         ],
@@ -373,48 +411,47 @@ class _ExerciseDetailsDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildDetail('Muscle', exercise.primaryMuscle),
-            _buildDetail('Equipment', exercise.equipment),
-            _buildDetail('Sets', exercise.defaultSets.toString()),
+            _buildDetail('Muscle', exercise.primaryMuscle, textMuted, textPrimary),
+            _buildDetail('Equipment', exercise.equipment, textMuted, textPrimary),
+            _buildDetail('Sets', exercise.defaultSets.toString(), textMuted, textPrimary),
             if (exercise.defaultReps != null)
-              _buildDetail('Reps', exercise.defaultReps.toString()),
+              _buildDetail('Reps', exercise.defaultReps.toString(), textMuted, textPrimary),
             if (exercise.defaultRestSeconds != null)
-              _buildDetail('Rest', '${exercise.defaultRestSeconds}s'),
+              _buildDetail('Rest', '${exercise.defaultRestSeconds}s', textMuted, textPrimary),
             if (exercise.instructions != null && exercise.instructions!.isNotEmpty)
-              _buildDetail('Instructions', exercise.instructions!),
+              _buildDetail('Instructions', exercise.instructions!, textMuted, textPrimary),
             if (exercise.isComposite && exercise.componentExercises != null) ...[
               const SizedBox(height: 16),
-              Text(
-                AppLocalizations.of(context).pillarDetailComponents,
-                style: TextStyle(fontWeight: FontWeight.bold),
+              ZSectionKicker(
+                label: AppLocalizations.of(context).pillarDetailComponents,
               ),
               const SizedBox(height: 8),
               ...exercise.componentExercises!.map((c) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: Row(
                       children: [
                         Container(
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
-                            color: cyan.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
+                            color: AppColors.orange.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(7),
+                            border: Border.all(
+                                color: AppColors.orange.withValues(alpha: 0.4)),
                           ),
                           child: Center(
                             child: Text(
                               '${c.order}',
-                              style: TextStyle(
-                                color: cyan,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
+                              style: ZType.data(11, color: AppColors.orange),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             '${c.name} ${c.targetDisplay.isNotEmpty ? "(${c.targetDisplay})" : ""}',
+                            style: ZType.sans(13.5,
+                                color: textPrimary, weight: FontWeight.w500),
                           ),
                         ),
                       ],
@@ -424,11 +461,8 @@ class _ExerciseDetailsDialog extends StatelessWidget {
             if (exercise.usageCount > 0) ...[
               const SizedBox(height: 16),
               Text(
-                'Used ${exercise.usageCount} times${exercise.lastUsedFormatted != null ? " - Last: ${exercise.lastUsedFormatted}" : ""}',
-                style: TextStyle(
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                  fontSize: 12,
-                ),
+                'Used ${exercise.usageCount} times${exercise.lastUsedFormatted != null ? " · Last: ${exercise.lastUsedFormatted}" : ""}',
+                style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.2),
               ),
             ],
           ],
@@ -437,29 +471,35 @@ class _ExerciseDetailsDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(AppLocalizations.of(context).commonClose),
+          child: Text(
+            AppLocalizations.of(context).commonClose.toUpperCase(),
+            style: ZType.lbl(13, color: AppColors.orange, letterSpacing: 1.0),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildDetail(String label, String value) {
+  Widget _buildDetail(
+      String label, String value, Color labelColor, Color valueColor) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 80,
+            width: 88,
             child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
+              label.toUpperCase(),
+              style: ZType.lbl(10.5, color: labelColor, letterSpacing: 1.2),
             ),
           ),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Text(
+              value,
+              style: ZType.sans(13.5, color: valueColor, weight: FontWeight.w500),
+            ),
+          ),
         ],
       ),
     );

@@ -7,11 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/signature/signature.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 part 'create_exercise_sheet_part_dashed_border_painter.dart';
@@ -143,8 +145,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.pureWhite;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -198,10 +199,8 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    AppLocalizations.of(context).myExercisesCreateExercise,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    AppLocalizations.of(context).myExercisesCreateExercise.toUpperCase(),
+                    style: ZType.disp(22, color: textPrimary, letterSpacing: 0.5),
                   ),
                 ),
               ],
@@ -236,8 +235,6 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildSimpleForm(BuildContext context, bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -246,7 +243,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Photo section
-            _buildPhotoSection(isDark, cyan),
+            _buildPhotoSection(isDark, AppColors.orange),
             const SizedBox(height: 20),
 
             // Name field
@@ -353,8 +350,8 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _createSimpleExercise,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: cyan,
-                  foregroundColor: Colors.black,
+                  backgroundColor: AppColors.orange,
+                  foregroundColor: const Color(0xFF160B03),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -366,15 +363,13 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.black,
+                          color: Color(0xFF160B03),
                         ),
                       )
                     : Text(
-                        AppLocalizations.of(context).myExercisesCreateExercise,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
+                        AppLocalizations.of(context).myExercisesCreateExercise.toUpperCase(),
+                        style: ZType.lbl(14,
+                            color: const Color(0xFF160B03), letterSpacing: 1.2),
                       ),
               ),
             ),
@@ -386,7 +381,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildComboForm(BuildContext context, bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return SingleChildScrollView(
@@ -452,17 +447,19 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           Row(
             children: [
               Text(
-                'Exercises (${_components.length})',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                'Exercises (${_components.length})'.toUpperCase(),
+                style: ZType.lbl(14, color: textPrimary, letterSpacing: 1.4),
               ),
               const Spacer(),
               if (_components.length < 5)
                 TextButton.icon(
                   onPressed: () => _showAddComponentDialog(context, isDark),
-                  icon: Icon(Icons.add, size: 18, color: cyan),
-                  label: Text(AppLocalizations.of(context).tilePickerAdd, style: TextStyle(color: cyan)),
+                  icon: const Icon(Icons.add, size: 18, color: AppColors.orange),
+                  label: Text(
+                    AppLocalizations.of(context).tilePickerAdd.toUpperCase(),
+                    style: ZType.lbl(13,
+                        color: AppColors.orange, letterSpacing: 1.0),
+                  ),
                 ),
             ],
           ),
@@ -472,21 +469,22 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.surface : AppColorsLight.surface,
+                color: isDark ? AppColors.surface2 : AppColorsLight.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDark ? Colors.white12 : Colors.black12,
-                  style: BorderStyle.solid,
+                  color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                 ),
               ),
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.layers_outlined, size: 40, color: textSecondary),
-                    const SizedBox(height: 8),
+                    Icon(Icons.layers_outlined, size: 38, color: textSecondary),
+                    const SizedBox(height: 10),
                     Text(
                       AppLocalizations.of(context).createExerciseAddAtLeast2,
-                      style: TextStyle(color: textSecondary),
+                      style: ZType.sans(13.5,
+                          color: textSecondary, weight: FontWeight.w500),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -522,9 +520,11 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                   ? null
                   : _createComboExercise,
               style: ElevatedButton.styleFrom(
-                backgroundColor: cyan,
-                foregroundColor: Colors.black,
-                disabledBackgroundColor: cyan.withOpacity(0.3),
+                backgroundColor: AppColors.orange,
+                foregroundColor: const Color(0xFF160B03),
+                disabledBackgroundColor: AppColors.orange.withValues(alpha: 0.25),
+                disabledForegroundColor:
+                    const Color(0xFF160B03).withValues(alpha: 0.6),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -536,17 +536,16 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.black,
+                        color: Color(0xFF160B03),
                       ),
                     )
                   : Text(
-                      _components.length < 2
-                          ? 'Add ${2 - _components.length} more exercises'
-                          : 'Create Combo Exercise',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
+                      (_components.length < 2
+                              ? 'Add ${2 - _components.length} more exercises'
+                              : 'Create Combo Exercise')
+                          .toUpperCase(),
+                      style: ZType.lbl(14,
+                          color: const Color(0xFF160B03), letterSpacing: 1.2),
                     ),
             ),
           ),
@@ -568,14 +567,10 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
             width: double.infinity,
             height: 180,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surface : AppColorsLight.surface,
+              color: isDark ? AppColors.surface2 : AppColorsLight.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.black.withValues(alpha: 0.12),
-                width: 1.5,
-                style: BorderStyle.solid,
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
               ),
             ),
             child: _selectedImage != null
@@ -616,8 +611,8 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                 : CustomPaint(
                     painter: _DashedBorderPainter(
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : Colors.black.withValues(alpha: 0.15),
+                          ? AppColors.hairlineStrong
+                          : AppColorsLight.cardBorder,
                       borderRadius: 12,
                     ),
                     child: Center(
@@ -626,20 +621,20 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                         children: [
                           Icon(
                             Icons.camera_alt_outlined,
-                            size: 40,
+                            size: 38,
                             color: isDark
                                 ? AppColors.textMuted
                                 : AppColorsLight.textMuted,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Text(
-                            AppLocalizations.of(context).progressScreenUiAddPhoto,
-                            style: TextStyle(
+                            AppLocalizations.of(context).progressScreenUiAddPhoto.toUpperCase(),
+                            style: ZType.lbl(
+                              12,
                               color: isDark
                                   ? AppColors.textMuted
                                   : AppColorsLight.textMuted,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              letterSpacing: 1.4,
                             ),
                           ),
                         ],
@@ -678,12 +673,8 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                     )
                   : Icon(Icons.auto_awesome, size: 18, color: cyan),
               label: Text(
-                _isAnalyzing ? AppLocalizations.of(context).recipeBuilderSheetAnalyzing : AppLocalizations.of(context).foodSearchResultsAnalyzeWithAi,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: cyan,
-                ),
+                (_isAnalyzing ? AppLocalizations.of(context).recipeBuilderSheetAnalyzing : AppLocalizations.of(context).foodSearchResultsAnalyzeWithAi).toUpperCase(),
+                style: ZType.lbl(13, color: cyan, letterSpacing: 1.2),
               ),
             ),
           ),
@@ -823,7 +814,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           SnackBar(
             content: Text('Failed to analyze photo: $e'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -835,7 +826,10 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildComboTypeSelector(bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    const accent = AppColors.orange;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Wrap(
       spacing: 8,
@@ -848,28 +842,30 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
             setState(() => _comboType = type);
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? cyan.withOpacity(0.2) : (isDark ? AppColors.surface : AppColorsLight.surface),
+              color: isSelected
+                  ? accent.withValues(alpha: 0.12)
+                  : (isDark ? AppColors.surface2 : AppColorsLight.surface),
               borderRadius: BorderRadius.circular(10),
-              border: isSelected ? Border.all(color: cyan, width: 2) : null,
+              border: Border.all(
+                color: isSelected ? accent : cardBorder,
+                width: isSelected ? 1.5 : 1,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  type.displayName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? cyan : (isDark ? Colors.white : Colors.black),
-                  ),
+                  type.displayName.toUpperCase(),
+                  style: ZType.lbl(13,
+                      color: isSelected ? accent : textPrimary,
+                      letterSpacing: 1.0),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   type.description,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                  ),
+                  style: ZType.sans(11.5, color: textMuted, weight: FontWeight.w500),
                 ),
               ],
             ),
@@ -880,13 +876,17 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildComponentTile(ComponentExercise comp, int index, bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    const accent = AppColors.orange;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : AppColorsLight.surface,
+        color: isDark ? AppColors.surface2 : AppColorsLight.surface,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
       ),
       child: Row(
         children: [
@@ -894,17 +894,14 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: cyan.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(14),
+              color: accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: accent.withValues(alpha: 0.4)),
             ),
             child: Center(
               child: Text(
                 '${comp.order}',
-                style: TextStyle(
-                  color: cyan,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+                style: ZType.data(13, color: accent),
               ),
             ),
           ),
@@ -915,16 +912,15 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
               children: [
                 Text(
                   comp.name,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  style: ZType.sans(14, color: textPrimary, weight: FontWeight.w600),
                 ),
-                if (comp.targetDisplay.isNotEmpty)
+                if (comp.targetDisplay.isNotEmpty) ...[
+                  const SizedBox(height: 2),
                   Text(
-                    comp.targetDisplay,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                    ),
+                    comp.targetDisplay.toUpperCase(),
+                    style: ZType.lbl(10, color: textMuted, letterSpacing: 1.0),
                   ),
+                ],
               ],
             ),
           ),
@@ -934,7 +930,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
               setState(() => _components.removeAt(index));
             },
             icon: const Icon(Icons.close, size: 18),
-            color: Colors.red.withOpacity(0.7),
+            color: AppColors.error.withValues(alpha: 0.8),
           ),
         ],
       ),
@@ -945,25 +941,61 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
     _componentNameController.clear();
     _componentReps = 10;
 
+    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final fieldFill = isDark ? AppColors.surface2 : AppColorsLight.surface;
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(AppLocalizations.of(context).workoutSummaryAddExercise),
+          backgroundColor: surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: cardBorder),
+          ),
+          title: Text(
+            AppLocalizations.of(context).workoutSummaryAddExercise.toUpperCase(),
+            style: ZType.lbl(15, color: textPrimary, letterSpacing: 1.2),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: _componentNameController,
+                style: ZType.sans(14, color: textPrimary, weight: FontWeight.w500),
                 decoration: InputDecoration(
                   labelText: AppLocalizations.of(context).workoutHistoryImportExerciseName,
+                  labelStyle: ZType.lbl(11, color: textMuted, letterSpacing: 1.2),
                   hintText: AppLocalizations.of(context).supersetAlgorithmCardEGBenchPress,
+                  hintStyle: ZType.sans(14, color: textMuted, weight: FontWeight.w500),
+                  filled: true,
+                  fillColor: fieldFill,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppColors.orange),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Text(AppLocalizations.of(context).createExerciseReps),
+                  Text(
+                    AppLocalizations.of(context).createExerciseReps.toUpperCase(),
+                    style: ZType.lbl(12, color: textSecondary, letterSpacing: 1.2),
+                  ),
+                  const Spacer(),
                   IconButton(
                     onPressed: () {
                       if (_componentReps > 1) {
@@ -971,8 +1003,9 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                       }
                     },
                     icon: const Icon(Icons.remove),
+                    color: textSecondary,
                   ),
-                  Text('$_componentReps', style: const TextStyle(fontSize: 18)),
+                  Text('$_componentReps', style: ZType.data(18, color: textPrimary)),
                   IconButton(
                     onPressed: () {
                       if (_componentReps < 50) {
@@ -980,6 +1013,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                       }
                     },
                     icon: const Icon(Icons.add),
+                    color: AppColors.orange,
                   ),
                 ],
               ),
@@ -988,9 +1022,19 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(AppLocalizations.of(context).buttonCancel),
+              child: Text(
+                AppLocalizations.of(context).buttonCancel.toUpperCase(),
+                style: ZType.lbl(13, color: textMuted, letterSpacing: 1.0),
+              ),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.orange,
+                foregroundColor: const Color(0xFF160B03),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               onPressed: () {
                 if (_componentNameController.text.isNotEmpty) {
                   setState(() {
@@ -1003,7 +1047,11 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                   Navigator.pop(context);
                 }
               },
-              child: Text(AppLocalizations.of(context).tilePickerAdd),
+              child: Text(
+                AppLocalizations.of(context).tilePickerAdd.toUpperCase(),
+                style: ZType.lbl(13,
+                    color: const Color(0xFF160B03), letterSpacing: 1.2),
+              ),
             ),
           ],
         ),
@@ -1052,17 +1100,17 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildAdvancedSection(bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    const accent = AppColors.orange;
+    final surface = isDark ? AppColors.surface2 : AppColorsLight.surface;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Container(
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? Colors.white12 : Colors.black12,
-        ),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1077,24 +1125,20 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
               padding: const EdgeInsets.all(14),
               child: Row(
                 children: [
-                  Icon(Icons.science_outlined, color: cyan, size: 18),
+                  const Icon(Icons.science_outlined, color: accent, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppLocalizations.of(context).stapleChoiceAdvancedOptional,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
+                          AppLocalizations.of(context).stapleChoiceAdvancedOptional.toUpperCase(),
+                          style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.2),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
                           AppLocalizations.of(context).createExerciseRestRpeTempoIncline,
-                          style: TextStyle(fontSize: 12, color: textMuted),
+                          style: ZType.sans(12, color: textMuted, weight: FontWeight.w500),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1161,59 +1205,35 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                   // Band color chips
                   if (_equipmentUsesBand) ...[
                     Text(
-                      AppLocalizations.of(context).stapleChoiceBand,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: textMuted,
-                      ),
+                      AppLocalizations.of(context).stapleChoiceBand.toUpperCase(),
+                      style: ZType.lbl(11, color: textMuted, letterSpacing: 1.2),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: _bandColorOptions.map((e) {
                         final (value, label) = e;
                         final isSelected = _selectedBandColor == value;
-                        return GestureDetector(
+                        return ZChip(
+                          label: label,
+                          selected: isSelected,
                           onTap: () {
                             HapticService.light();
                             setState(() {
                               _selectedBandColor = isSelected ? null : value;
                             });
                           },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: isSelected ? cyan.withValues(alpha: 0.2) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected ? cyan : textMuted.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: Text(
-                              label,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                color: isSelected ? cyan : textMuted,
-                              ),
-                            ),
-                          ),
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                   ],
 
                   // Notes
                   Text(
-                    AppLocalizations.of(context).syncedWorkoutDetailNotes,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: textMuted,
-                    ),
+                    AppLocalizations.of(context).syncedWorkoutDetailNotes.toUpperCase(),
+                    style: ZType.lbl(11, color: textMuted, letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 6),
                   _buildTextField(
@@ -1237,14 +1257,16 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
     bool isDark, {
     bool keyboard = false,
   }) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return Row(
       children: [
         SizedBox(
           width: 140,
           child: Text(
-            label,
-            style: TextStyle(fontSize: 13, color: textMuted),
+            label.toUpperCase(),
+            style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.0),
           ),
         ),
         Expanded(
@@ -1253,26 +1275,21 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
             keyboardType: keyboard
                 ? const TextInputType.numberWithOptions(decimal: true)
                 : TextInputType.text,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? Colors.white : Colors.black,
-            ),
+            style: ZType.sans(14, color: textPrimary, weight: FontWeight.w500),
             decoration: InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: textMuted.withValues(alpha: 0.3)),
+                borderSide: BorderSide(color: cardBorder),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: textMuted.withValues(alpha: 0.3)),
+                borderSide: BorderSide(color: cardBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                  color: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                ),
+                borderSide: const BorderSide(color: AppColors.orange),
               ),
             ),
           ),

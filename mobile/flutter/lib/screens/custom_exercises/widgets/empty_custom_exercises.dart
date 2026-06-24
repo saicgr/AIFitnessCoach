@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Empty state widget for when user has no custom exercises
+/// Empty state widget for when user has no custom exercises — signature-v2:
+/// orange accent, hairline-bordered feature panel, Anton title, Barlow CTA.
 class EmptyCustomExercises extends StatelessWidget {
   final VoidCallback? onCreatePressed;
 
@@ -15,30 +17,32 @@ class EmptyCustomExercises extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final surface = isDark ? AppColors.surface2 : AppColorsLight.surface;
 
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Icon
             Container(
-              width: 120,
-              height: 120,
+              width: 110,
+              height: 110,
               decoration: BoxDecoration(
-                color: cyan.withOpacity(0.1),
+                color: AppColors.orange.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
+                border: Border.all(
+                    color: AppColors.orange.withValues(alpha: 0.3)),
               ),
-              child: Center(
+              child: const Center(
                 child: Icon(
                   Icons.add_circle_outline,
-                  size: 60,
-                  color: cyan,
+                  size: 54,
+                  color: AppColors.orange,
                 ),
               ),
             ),
@@ -46,10 +50,8 @@ class EmptyCustomExercises extends StatelessWidget {
 
             // Title
             Text(
-              AppLocalizations.of(context).emptyCustomExercisesCreateYourOwnExercises,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              AppLocalizations.of(context).emptyCustomExercisesCreateYourOwnExercises.toUpperCase(),
+              style: ZType.disp(24, color: textPrimary, letterSpacing: 0.5),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -57,9 +59,8 @@ class EmptyCustomExercises extends StatelessWidget {
             // Description
             Text(
               AppLocalizations.of(context).emptyCustomExercisesBuildCustomExercisesTailore,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: textSecondary,
-                  ),
+              style: ZType.sans(14,
+                  color: textSecondary, weight: FontWeight.w500, height: 1.4),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -68,9 +69,9 @@ class EmptyCustomExercises extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(16),
-                border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+                color: surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: cardBorder),
               ),
               child: Column(
                 children: [
@@ -111,8 +112,8 @@ class EmptyCustomExercises extends StatelessWidget {
                   onCreatePressed?.call();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: cyan,
-                  foregroundColor: Colors.black,
+                  backgroundColor: AppColors.orange,
+                  foregroundColor: const Color(0xFF160B03),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -121,14 +122,12 @@ class EmptyCustomExercises extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add),
-                    SizedBox(width: 8),
+                    const Icon(Icons.add, color: Color(0xFF160B03), size: 20),
+                    const SizedBox(width: 8),
                     Text(
-                      AppLocalizations.of(context).emptyCustomExercisesCreateYourFirstExercise,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
+                      AppLocalizations.of(context).emptyCustomExercisesCreateYourFirstExercise.toUpperCase(),
+                      style: ZType.lbl(14,
+                          color: const Color(0xFF160B03), letterSpacing: 1.2),
                     ),
                   ],
                 ),
@@ -147,8 +146,8 @@ class EmptyCustomExercises extends StatelessWidget {
     String subtitle,
     bool isDark,
   ) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Row(
       children: [
@@ -156,12 +155,13 @@ class EmptyCustomExercises extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: cyan.withOpacity(0.15),
+            color: AppColors.orange.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
           ),
           child: Icon(
             icon,
-            color: cyan,
+            color: AppColors.orange,
             size: 20,
           ),
         ),
@@ -171,17 +171,14 @@ class EmptyCustomExercises extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                title.toUpperCase(),
+                style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.2),
               ),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textSecondary,
-                ),
+                style: ZType.sans(12.5,
+                    color: textSecondary, weight: FontWeight.w500),
               ),
             ],
           ),

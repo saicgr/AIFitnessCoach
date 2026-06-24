@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/leaderboard_tier_color.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -49,11 +50,7 @@ class RankDeltaChip extends StatelessWidget {
           child: Text(
             '·',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey.withValues(alpha: 0.55),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
+            style: ZType.data(12, color: Colors.grey.withValues(alpha: 0.55)),
           ),
         ),
       );
@@ -76,12 +73,7 @@ class RankDeltaChip extends StatelessWidget {
         child: Text(
           compact ? arrow : '$arrow$absStr',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: color,
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.2,
-          ),
+          style: ZType.data(11, color: color),
         ),
       ),
     );
@@ -117,11 +109,7 @@ class StreakFlame extends StatelessWidget {
             const SizedBox(width: 1),
             Text(
               '$streak',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: textColor ?? const Color(0xFFFF8A3D),
-              ),
+              style: ZType.data(11, color: textColor ?? const Color(0xFFFF8A3D)),
             ),
           ],
         ],
@@ -269,12 +257,7 @@ class GapChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            color: accent,
-            letterSpacing: 0.4,
-          ),
+          style: ZType.data(10, color: accent),
         ),
       ),
     );
@@ -331,10 +314,7 @@ class TierRingAvatar extends StatelessWidget {
         radius: radius - ringWidth,
         backgroundColor: bgFill,
         child: Text(initial,
-            style: TextStyle(
-                color: accent,
-                fontWeight: FontWeight.w800,
-                fontSize: fontSize)),
+            style: ZType.disp(fontSize, color: accent)),
       );
     } else {
       imageOrInitial = ClipOval(
