@@ -1381,6 +1381,155 @@ async def suggest_exercise_substitutes(request: SubstituteRequest, current_user:
         raise safe_internal_error(e, "exercise_preferences")
 
 
+def _run_substitute_cascade(
+    db, ctx: "SubstituteContext", original_name: str
+) -> List[Dict[str, Any]]:
+    """Shared retrieval cascade behind both /suggest-substitutes and
+    /alternatives — muscle search → token search → cross-muscle (injury/
+    pregnant/post-surgery only) → fuzzy → generic pool. Returns the top-scored
+    candidate ROWS (not yet shaped). Filtering/scoring uses the passed ctx, so
+    an injury-free ctx yields generic same-muscle alternatives.
+    """
+    muscle_group = get_exercise_muscle_group(_normalize_exercise_name(original_name))
+    _lookup_original_metadata(db, ctx)
+
+    pool: List[Dict[str, Any]] = []
+    if muscle_group:
+        pool.extend(_cached_query_by_muscle(db, muscle_group, limit=12))
+    pool.extend(_token_search(db, original_name, ctx))
+    if ctx.injury_type or ctx.intent in {"pregnant", "post_surgery"}:
+        pool.extend(_expand_to_safe_muscles(db, ctx, muscle_group))
+
+    seen_ids: set = set()
+    seen_names: set = set()
+    candidates: List[Dict[str, Any]] = []
+    for row in pool:
+        rid = row.get("id")
+        nlow = (row.get("name") or "").lower()
+        if rid in seen_ids or nlow in seen_names:
+            continue
+        if not _row_passes_all_filters(row, ctx):
+            continue
+        seen_ids.add(rid)
+        seen_names.add(nlow)
+        candidates.append(row)
+
+    if len(candidates) < 3:
+        for row in _fuzzy_search(db, original_name):
+            rid = row.get("id")
+            nlow = (row.get("name") or "").lower()
+            if rid in seen_ids or nlow in seen_names:
+                continue
+            if not _row_passes_all_filters(row, ctx):
+                continue
+            seen_ids.add(rid)
+            seen_names.add(nlow)
+            candidates.append(row)
+
+    if len(candidates) < 3:
+        for row in _generic_pool_fallback(db):
+            rid = row.get("id")
+            nlow = (row.get("name") or "").lower()
+            if rid in seen_ids or nlow in seen_names:
+                continue
+            if not _row_passes_all_filters(row, ctx):
+                continue
+            seen_ids.add(rid)
+            seen_names.add(nlow)
+            candidates.append(row)
+
+    candidates.sort(
+        key=lambda r: _score_candidate(r, muscle_group, ctx),
+        reverse=True,
+    )
+    return candidates
+
+
+@router.get("/exercises/{exercise_id}/alternatives")
+async def get_exercise_alternatives(
+    exercise_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Generic alternatives for an exercise (same muscle / different equipment),
+    by exercise_id. REUSES the substitutes pipeline with NO injury/intent
+    context, so it returns plain same-muscle swaps for the swap sheet's
+    "Alternatives" tab.
+
+    Returns up to ~8 items shaped for the Flutter exercise row:
+      {"alternatives": [{name, target_muscle, body_part, equipment,
+                         difficulty_level, gif_url, image_url, reason}, ...]}
+
+    Fail-open: unknown id or no matches → {"alternatives": []} (never fabricate).
+    """
+    try:
+        db = get_supabase_db()
+
+        # Resolve the exercise_id → its library row (need the name to drive the
+        # name-based substitute cascade). Try the MV first.
+        row = None
+        try:
+            res = (
+                db.client.table("exercise_library_cleaned")
+                .select(_SUBSTITUTE_COLS)
+                .eq("id", exercise_id)
+                .limit(1)
+                .execute()
+            )
+            if res.data:
+                row = res.data[0]
+        except Exception as e:
+            logger.warning(f"alternatives: MV id lookup failed: {e}")
+
+        if not row:
+            # Unknown / unresolvable id — fail-open, no fabrication.
+            return {"alternatives": []}
+
+        original_name = row.get("name") or ""
+
+        # Build an injury-free / intent-free context: generic alternatives.
+        fake_request = SubstituteRequest(
+            exercise_name=original_name,
+            user_id=str(current_user["id"]),
+            reason=None,
+        )
+        ctx = _classify_reason(fake_request)
+
+        candidates = _run_substitute_cascade(db, ctx, original_name)
+        top = candidates[:8]
+
+        alternatives = []
+        for r in top:
+            media = r.get("gif_url") or r.get("video_url") or r.get("image_url")
+            # Reason: same muscle, highlight an equipment change when it differs.
+            orig_eq = (row.get("equipment") or "").lower()
+            cand_eq = (r.get("equipment") or "").lower()
+            if cand_eq and cand_eq != orig_eq:
+                reason = "Same muscle, different equipment"
+            else:
+                reason = "Same muscle group"
+            alternatives.append({
+                "name": r.get("name") or "",
+                "target_muscle": r.get("target_muscle"),
+                "body_part": r.get("display_body_part") or r.get("body_part"),
+                "equipment": r.get("equipment"),
+                "difficulty_level": (
+                    str(r.get("difficulty_level"))
+                    if r.get("difficulty_level") is not None
+                    else None
+                ),
+                "gif_url": media,
+                "image_url": r.get("image_url"),
+                "reason": reason,
+            })
+
+        return {"alternatives": alternatives}
+
+    except Exception as e:
+        logger.error(f"Error getting alternatives for {exercise_id}: {e}", exc_info=True)
+        # Fail-open per project rule: never 500 the swap sheet on a bad id.
+        return {"alternatives": []}
+
+
 @router.get("/injury-exercises/{injury_type}")
 async def get_exercises_to_avoid_for_injury(injury_type: str, current_user: dict = Depends(get_current_user)):
     """

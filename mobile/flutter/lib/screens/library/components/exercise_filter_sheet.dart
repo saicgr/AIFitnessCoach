@@ -3,14 +3,23 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/services/context_logging_service.dart';
+import '../../../widgets/body_muscle_selector.dart';
+import '../../../widgets/signature/signature.dart';
 import '../providers/library_providers.dart';
-import '../providers/muscle_group_images_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Bottom sheet for filtering exercises — all sections open with pills, no dropdowns.
+
+/// Signature-v2 filter sheet for the Exercise Library.
+///
+/// Restyled to the chosen redesign (`#screen-exercise` Filter frame): a near-black
+/// glass sheet, a MUSCLE body-map section at the top (front/back tappable
+/// silhouette → toggles `selectedMuscleGroupsProvider`), then Equipment / Type /
+/// Goal / Suitable-for / Avoid facet rows rendered as [ZChip] pills. The filter
+/// source of truth (the `selected*Provider`s) is unchanged, and the Exercises
+/// tab refreshes itself when those providers change — so Apply simply closes.
 class ExerciseFilterSheet extends ConsumerWidget {
   const ExerciseFilterSheet({super.key});
 
@@ -25,14 +34,8 @@ class ExerciseFilterSheet extends ConsumerWidget {
     final selectedAvoid = ref.watch(selectedAvoidSetProvider);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Signature accent (volt/orange) drives the primary action + chrome —
-    // replaces the off-brand cyan the sheet previously used for Clear all,
-    // the loading spinner, and the Apply button.
-    final accent = ref.watch(accentColorProvider).getColor(isDark);
+    const accent = AppColors.orange;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -45,13 +48,14 @@ class ExerciseFilterSheet extends ConsumerWidget {
           child: Container(
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.black.withValues(alpha: 0.85)
+                  ? const Color(0xFF09090B).withValues(alpha: 0.92)
                   : Colors.white.withValues(alpha: 0.92),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border(
                 top: BorderSide(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
+                      ? Colors.white.withValues(alpha: 0.12)
                       : Colors.black.withValues(alpha: 0.1),
                   width: 0.5,
                 ),
@@ -72,17 +76,19 @@ class ExerciseFilterSheet extends ConsumerWidget {
                   ),
                 ),
 
-                // Header
+                // Header — Anton-flavoured title + a "RESET" link (signature v2
+                // `.filt-head`).
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 12, 4),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         AppLocalizations.of(context).recipesFilters,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: ZType.disp(26,
+                            color: isDark
+                                ? AppColors.textPrimary
+                                : AppColorsLight.textPrimary),
                       ),
                       TextButton(
                         onPressed: () => clearAllFilters(ref),
@@ -90,7 +96,8 @@ class ExerciseFilterSheet extends ConsumerWidget {
                           AppLocalizations.of(context)
                               .settingsCardPartClearAll
                               .toUpperCase(),
-                          style: ZType.lbl(12, color: accent, letterSpacing: 1.0),
+                          style:
+                              ZType.lbl(12, color: accent, letterSpacing: 1.4),
                         ),
                       ),
                     ],
@@ -102,7 +109,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
                 // Filter content
                 Expanded(
                   child: filterOptionsAsync.when(
-                    loading: () => Center(
+                    loading: () => const Center(
                       child: CircularProgressIndicator(color: accent),
                     ),
                     error: (e, _) => Center(
@@ -111,11 +118,14 @@ class ExerciseFilterSheet extends ConsumerWidget {
                         children: [
                           Icon(Icons.error_outline, color: textMuted, size: 48),
                           const SizedBox(height: 16),
-                          Text(AppLocalizations.of(context).exerciseFilterFailedToLoadFilters,
+                          Text(
+                              AppLocalizations.of(context)
+                                  .exerciseFilterFailedToLoadFilters,
                               style: TextStyle(color: textMuted)),
                           TextButton(
                             onPressed: () => ref.refresh(filterOptionsProvider),
-                            child: Text(AppLocalizations.of(context).buttonRetry),
+                            child:
+                                Text(AppLocalizations.of(context).buttonRetry),
                           ),
                         ],
                       ),
@@ -123,164 +133,182 @@ class ExerciseFilterSheet extends ConsumerWidget {
                     data: (filterOptions) {
                       return SingleChildScrollView(
                         controller: scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // ── BODY PART — muscle image pills ──
-                            _SectionHeader(
-                              title: AppLocalizations.of(context).exerciseFilterBodyPart,
-                              icon: Icons.accessibility_new,
-                              color: purple,
+                            // ── MUSCLE — tappable front/back body map ──
+                            _FacetKicker(
+                              label: AppLocalizations.of(context)
+                                  .exerciseFilterBodyPart,
                               count: selectedMuscles.length,
                             ),
                             const SizedBox(height: 10),
-                            _MuscleImageGrid(
-                              options: filterOptions.bodyParts.map((o) => o.name).toList(),
-                              selectedValues: selectedMuscles,
-                              color: purple,
-                              isDark: isDark,
+                            _MuscleBodyMapSection(
+                              selectedMuscles: selectedMuscles,
                               onToggle: (value) {
-                                final newSet = Set<String>.from(selectedMuscles);
+                                final newSet =
+                                    Set<String>.from(selectedMuscles);
                                 final existing = newSet.firstWhere(
-                                  (v) => v.toLowerCase() == value.toLowerCase(),
+                                  (v) =>
+                                      v.toLowerCase() == value.toLowerCase(),
                                   orElse: () => '',
                                 );
                                 if (existing.isNotEmpty) {
                                   newSet.remove(existing);
                                 } else {
                                   newSet.add(value);
-                                  ref.read(contextLoggingServiceProvider).logExerciseFilterUsed(
+                                  ref
+                                      .read(contextLoggingServiceProvider)
+                                      .logExerciseFilterUsed(
                                     filterType: 'body_part',
                                     filterValues: [value],
                                   );
                                 }
-                                ref.read(selectedMuscleGroupsProvider.notifier).state = newSet;
+                                ref
+                                    .read(selectedMuscleGroupsProvider.notifier)
+                                    .state = newSet;
                               },
                             ),
 
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 22),
 
                             // ── EQUIPMENT — pills ──
-                            _SectionHeader(
-                              title: AppLocalizations.of(context).trainingSetupCardEquipment,
-                              icon: Icons.fitness_center,
-                              color: cyan,
+                            _FacetKicker(
+                              label: AppLocalizations.of(context)
+                                  .trainingSetupCardEquipment,
                               count: selectedEquipments.length,
                             ),
                             const SizedBox(height: 10),
-                            _PillWrap(
-                              options: filterOptions.equipment.map((o) => o.name).toList(),
+                            _ChipFacet(
+                              options: filterOptions.equipment
+                                  .map((o) => o.name)
+                                  .toList(),
                               selectedValues: selectedEquipments,
-                              color: cyan,
-                              isDark: isDark,
                               onToggle: (value) {
-                                final newSet = Set<String>.from(selectedEquipments);
+                                final newSet =
+                                    Set<String>.from(selectedEquipments);
                                 final existing = newSet.firstWhere(
-                                  (v) => v.toLowerCase() == value.toLowerCase(),
+                                  (v) =>
+                                      v.toLowerCase() == value.toLowerCase(),
                                   orElse: () => '',
                                 );
                                 if (existing.isNotEmpty) {
                                   newSet.remove(existing);
                                 } else {
                                   newSet.add(value);
-                                  ref.read(contextLoggingServiceProvider).logExerciseFilterUsed(
+                                  ref
+                                      .read(contextLoggingServiceProvider)
+                                      .logExerciseFilterUsed(
                                     filterType: 'equipment',
                                     filterValues: [value],
                                   );
                                 }
-                                ref.read(selectedEquipmentsProvider.notifier).state = newSet;
+                                ref
+                                    .read(selectedEquipmentsProvider.notifier)
+                                    .state = newSet;
                               },
                             ),
 
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 22),
 
                             // ── EXERCISE TYPE — pills ──
-                            _SectionHeader(
-                              title: AppLocalizations.of(context).exerciseFilterExerciseType,
-                              icon: Icons.category,
-                              color: success,
+                            _FacetKicker(
+                              label: AppLocalizations.of(context)
+                                  .exerciseFilterExerciseType,
                               count: selectedTypes.length,
                             ),
                             const SizedBox(height: 10),
-                            _PillWrap(
-                              options: filterOptions.exerciseTypes.map((o) => o.name).toList(),
+                            _ChipFacet(
+                              options: filterOptions.exerciseTypes
+                                  .map((o) => o.name)
+                                  .toList(),
                               selectedValues: selectedTypes,
-                              color: success,
-                              isDark: isDark,
                               onToggle: (value) {
-                                final newSet = Set<String>.from(selectedTypes);
+                                final newSet =
+                                    Set<String>.from(selectedTypes);
                                 final existing = newSet.firstWhere(
-                                  (v) => v.toLowerCase() == value.toLowerCase(),
+                                  (v) =>
+                                      v.toLowerCase() == value.toLowerCase(),
                                   orElse: () => '',
                                 );
                                 if (existing.isNotEmpty) {
                                   newSet.remove(existing);
                                 } else {
                                   newSet.add(value);
-                                  ref.read(contextLoggingServiceProvider).logExerciseFilterUsed(
+                                  ref
+                                      .read(contextLoggingServiceProvider)
+                                      .logExerciseFilterUsed(
                                     filterType: 'exercise_type',
                                     filterValues: [value],
                                   );
                                 }
-                                ref.read(selectedExerciseTypesProvider.notifier).state = newSet;
+                                ref
+                                    .read(
+                                        selectedExerciseTypesProvider.notifier)
+                                    .state = newSet;
                               },
                             ),
 
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 22),
 
                             // ── GOALS — pills ──
-                            _SectionHeader(
-                              title: AppLocalizations.of(context).fastingCalendarGoals,
-                              icon: Icons.track_changes,
-                              color: Colors.orange,
+                            _FacetKicker(
+                              label: AppLocalizations.of(context)
+                                  .fastingCalendarGoals,
                               count: selectedGoals.length,
                             ),
                             const SizedBox(height: 10),
-                            _PillWrap(
-                              options: filterOptions.goals.map((o) => o.name).toList(),
+                            _ChipFacet(
+                              options: filterOptions.goals
+                                  .map((o) => o.name)
+                                  .toList(),
                               selectedValues: selectedGoals,
-                              color: Colors.orange,
-                              isDark: isDark,
                               onToggle: (value) {
-                                final newSet = Set<String>.from(selectedGoals);
+                                final newSet =
+                                    Set<String>.from(selectedGoals);
                                 final existing = newSet.firstWhere(
-                                  (v) => v.toLowerCase() == value.toLowerCase(),
+                                  (v) =>
+                                      v.toLowerCase() == value.toLowerCase(),
                                   orElse: () => '',
                                 );
                                 if (existing.isNotEmpty) {
                                   newSet.remove(existing);
                                 } else {
                                   newSet.add(value);
-                                  ref.read(contextLoggingServiceProvider).logExerciseFilterUsed(
+                                  ref
+                                      .read(contextLoggingServiceProvider)
+                                      .logExerciseFilterUsed(
                                     filterType: 'goals',
                                     filterValues: [value],
                                   );
                                 }
-                                ref.read(selectedGoalsProvider.notifier).state = newSet;
+                                ref
+                                    .read(selectedGoalsProvider.notifier)
+                                    .state = newSet;
                               },
                             ),
 
-                            const SizedBox(height: 20),
-
                             // ── SUITABLE FOR — pills ──
                             if (filterOptions.suitableFor.isNotEmpty) ...[
-                              _SectionHeader(
-                                title: AppLocalizations.of(context).exerciseFilterSuitableFor,
-                                icon: Icons.person_outline,
-                                color: Colors.teal,
+                              const SizedBox(height: 22),
+                              _FacetKicker(
+                                label: AppLocalizations.of(context)
+                                    .exerciseFilterSuitableFor,
                                 count: selectedSuitableFor.length,
                               ),
                               const SizedBox(height: 10),
-                              _PillWrap(
-                                options: filterOptions.suitableFor.map((o) => o.name).toList(),
+                              _ChipFacet(
+                                options: filterOptions.suitableFor
+                                    .map((o) => o.name)
+                                    .toList(),
                                 selectedValues: selectedSuitableFor,
-                                color: Colors.teal,
-                                isDark: isDark,
                                 onToggle: (value) {
-                                  final newSet = Set<String>.from(selectedSuitableFor);
+                                  final newSet =
+                                      Set<String>.from(selectedSuitableFor);
                                   final existing = newSet.firstWhere(
-                                    (v) => v.toLowerCase() == value.toLowerCase(),
+                                    (v) =>
+                                        v.toLowerCase() == value.toLowerCase(),
                                     orElse: () => '',
                                   );
                                   if (existing.isNotEmpty) {
@@ -288,30 +316,34 @@ class ExerciseFilterSheet extends ConsumerWidget {
                                   } else {
                                     newSet.add(value);
                                   }
-                                  ref.read(selectedSuitableForSetProvider.notifier).state = newSet;
+                                  ref
+                                      .read(selectedSuitableForSetProvider
+                                          .notifier)
+                                      .state = newSet;
                                 },
                               ),
-                              const SizedBox(height: 20),
                             ],
 
                             // ── AVOID IF YOU HAVE — pills ──
                             if (filterOptions.avoidIf.isNotEmpty) ...[
-                              _SectionHeader(
-                                title: AppLocalizations.of(context).exerciseFilterAvoidIfYouHave,
-                                icon: Icons.warning_amber_rounded,
-                                color: Colors.redAccent,
+                              const SizedBox(height: 22),
+                              _FacetKicker(
+                                label: AppLocalizations.of(context)
+                                    .exerciseFilterAvoidIfYouHave,
                                 count: selectedAvoid.length,
                               ),
                               const SizedBox(height: 10),
-                              _PillWrap(
-                                options: filterOptions.avoidIf.map((o) => o.name).toList(),
+                              _ChipFacet(
+                                options: filterOptions.avoidIf
+                                    .map((o) => o.name)
+                                    .toList(),
                                 selectedValues: selectedAvoid,
-                                color: Colors.redAccent,
-                                isDark: isDark,
                                 onToggle: (value) {
-                                  final newSet = Set<String>.from(selectedAvoid);
+                                  final newSet =
+                                      Set<String>.from(selectedAvoid);
                                   final existing = newSet.firstWhere(
-                                    (v) => v.toLowerCase() == value.toLowerCase(),
+                                    (v) =>
+                                        v.toLowerCase() == value.toLowerCase(),
                                     orElse: () => '',
                                   );
                                   if (existing.isNotEmpty) {
@@ -319,10 +351,11 @@ class ExerciseFilterSheet extends ConsumerWidget {
                                   } else {
                                     newSet.add(value);
                                   }
-                                  ref.read(selectedAvoidSetProvider.notifier).state = newSet;
+                                  ref
+                                      .read(selectedAvoidSetProvider.notifier)
+                                      .state = newSet;
                                 },
                               ),
-                              const SizedBox(height: 20),
                             ],
 
                             const SizedBox(height: 16),
@@ -333,18 +366,17 @@ class ExerciseFilterSheet extends ConsumerWidget {
                   ),
                 ),
 
-                // Apply button
+                // Apply button — signature primary CTA: accent fill,
+                // dark-on-orange condensed label.
                 Padding(
-                  padding: EdgeInsetsDirectional.only(start: 16,
+                  padding: EdgeInsetsDirectional.only(
+                    start: 16,
                     end: 16,
                     top: 12,
                     bottom: 12 + MediaQuery.of(context).padding.bottom,
                   ),
                   child: SizedBox(
                     width: double.infinity,
-                    // Signature primary CTA — same grammar as the Library
-                    // "BUILD CUSTOM WORKOUT" button: accent fill, dark-on-orange
-                    // label, condensed uppercase type.
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
@@ -379,50 +411,39 @@ class ExerciseFilterSheet extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Section Header
+// Facet kicker — Barlow-Condensed uppercase section label + a count pill.
+// (signature v2 `.fsec .fk`)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
+class _FacetKicker extends StatelessWidget {
+  final String label;
   final int count;
 
-  const _SectionHeader({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.count,
-  });
+  const _FacetKicker({required this.label, required this.count});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final faint = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 8),
         Text(
-          title.toUpperCase(),
-          style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.2),
+          label.toUpperCase(),
+          style: ZType.lbl(11.5, color: faint, letterSpacing: 2.2),
         ),
         if (count > 0) ...[
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: AppColors.orange.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               '$count',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+              style: ZType.lbl(10.5,
+                  color: AppColors.orange, letterSpacing: 0.5),
             ),
           ),
         ],
@@ -432,145 +453,22 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Muscle Image Grid — circular anatomy images with labels
+// Chip facet — a wrap of signature [ZChip] pills.
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _MuscleImageGrid extends StatelessWidget {
+class _ChipFacet extends StatelessWidget {
   final List<String> options;
   final Set<String> selectedValues;
-  final Color color;
-  final bool isDark;
-  final Function(String) onToggle;
+  final void Function(String) onToggle;
 
-  const _MuscleImageGrid({
+  const _ChipFacet({
     required this.options,
     required this.selectedValues,
-    required this.color,
-    required this.isDark,
     required this.onToggle,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return Wrap(
-      spacing: 10,
-      runSpacing: 12,
-      children: options.map((name) {
-        final isSelected = selectedValues.any(
-          (v) => v.toLowerCase() == name.toLowerCase(),
-        );
-        final imagePath = muscleGroupAssets[name];
-
-        return GestureDetector(
-          onTap: () => onToggle(name),
-          child: SizedBox(
-            width: 68,
-            child: Column(
-              children: [
-                // Circular avatar
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? color.withOpacity(0.2) : elevated,
-                    border: Border.all(
-                      color: isSelected ? color : cardBorder,
-                      width: isSelected ? 2.5 : 1,
-                    ),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      if (imagePath != null)
-                        Image.asset(
-                          imagePath,
-                          fit: BoxFit.cover,
-                          width: 52,
-                          height: 52,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.fitness_center,
-                            size: 20,
-                            color: isSelected ? color : textMuted,
-                          ),
-                        )
-                      else
-                        Icon(
-                          Icons.fitness_center,
-                          size: 20,
-                          color: isSelected ? color : textMuted,
-                        ),
-                      // Selected check overlay
-                      if (isSelected)
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: color.withOpacity(0.4),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                // Label
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? color : textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Pill Wrap — directly visible pills with no dropdown
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _PillWrap extends StatelessWidget {
-  final List<String> options;
-  final Set<String> selectedValues;
-  final Color color;
-  final bool isDark;
-  final Function(String) onToggle;
-
-  const _PillWrap({
-    required this.options,
-    required this.selectedValues,
-    required this.color,
-    required this.isDark,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -578,38 +476,10 @@ class _PillWrap extends StatelessWidget {
         final isSelected = selectedValues.any(
           (v) => v.toLowerCase() == name.toLowerCase(),
         );
-
-        return GestureDetector(
+        return ZChip(
+          label: _shortenName(name),
+          selected: isSelected,
           onTap: () => onToggle(name),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? color.withOpacity(0.2) : glassSurface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? color : Colors.transparent,
-                width: isSelected ? 1.5 : 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isSelected) ...[
-                  Icon(Icons.check, size: 14, color: color),
-                  const SizedBox(width: 4),
-                ],
-                Text(
-                  _shortenName(name),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    color: isSelected ? color : textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
         );
       }).toList(),
     );
@@ -636,5 +506,66 @@ class _PillWrap extends StatelessWidget {
       shortened = '${shortened.substring(0, 22)}...';
     }
     return shortened;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Muscle body-map section — front/back tappable silhouette wired to the muscle
+// filter provider. A tapped muscle region maps (via [packageGroupToBackendMuscle]
+// inside [BodyMuscleSelectorWidget]) to a backend muscle string, which we toggle
+// into `selectedMuscleGroupsProvider`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MuscleBodyMapSection extends StatelessWidget {
+  final Set<String> selectedMuscles;
+  final void Function(String muscle) onToggle;
+
+  const _MuscleBodyMapSection({
+    required this.selectedMuscles,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedSelected = selectedMuscles.toSet();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Selected-muscle chips so a tapped region is also legible as text and
+        // can be removed without hunting the silhouette.
+        if (mutedSelected.isNotEmpty) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: mutedSelected.map((m) {
+              return ZChip(
+                label: getMuscleDisplayName(m),
+                selected: true,
+                leadingDot: DifficultyUtils.getColor('hard'),
+                onTap: () => onToggle(m),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+        ],
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface2,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: BodyMuscleSelectorWidget(
+            selectedMuscles: selectedMuscles,
+            onMuscleToggle: onToggle,
+            height: 320,
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -18,6 +18,9 @@ typedef ProgramLibraryFilter = ({
   String? difficulty,
   int? sessionsPerWeek,
   String? search,
+  List<String>? goals,
+  int? durationMin,
+  int? durationMax,
 });
 
 /// Cache-first browse of the curated program library, keyed by the active
@@ -58,6 +61,9 @@ Future<ProgramLibraryResult> _browseLibraryWithRetry(
         difficulty: filter.difficulty,
         sessionsPerWeek: filter.sessionsPerWeek,
         search: filter.search,
+        goals: filter.goals,
+        durationMin: filter.durationMin,
+        durationMax: filter.durationMax,
       );
     } on DioException catch (e) {
       if (attempt >= maxAttempts || !_isTransientLibraryFailure(e)) rethrow;
@@ -81,6 +87,35 @@ bool _isTransientLibraryFailure(DioException e) {
       return code == 502 || code == 503 || code == 504;
   }
 }
+
+/// Cache-first curated-featured programs (`GET /library/featured`). Same
+/// cache-first + transient-retry posture as [programLibraryBrowseProvider]:
+/// `keepAlive` so a returning user sees the last result instantly. Errors
+/// propagate so the screen's error + Retry card shows; never mock data.
+final programFeaturedProvider =
+    FutureProvider.autoDispose<ProgramLibraryResult>((ref) async {
+  ref.keepAlive();
+  final repo = ref.watch(programTemplateRepositoryProvider);
+  return repo.getFeatured();
+});
+
+/// Cache-first personalized recommendations (`GET /library/recommended`).
+/// Same posture as [programFeaturedProvider].
+final programRecommendedProvider =
+    FutureProvider.autoDispose<ProgramLibraryResult>((ref) async {
+  ref.keepAlive();
+  final repo = ref.watch(programTemplateRepositoryProvider);
+  return repo.getRecommended();
+});
+
+/// Cache-first category facet counts (`GET /library/categories`) — drives the
+/// category chips / filter rail. Same posture as [programFeaturedProvider].
+final programCategoryCountsProvider = FutureProvider.autoDispose<
+    List<({String category, int count})>>((ref) async {
+  ref.keepAlive();
+  final repo = ref.watch(programTemplateRepositoryProvider);
+  return repo.getCategoryCounts();
+});
 
 /// Thin HTTP wrapper for `/api/v1/program-templates/*`.
 ///
@@ -108,6 +143,9 @@ class ProgramTemplateRepository {
     String? difficulty,
     int? sessionsPerWeek,
     String? search,
+    List<String>? goals,
+    int? durationMin,
+    int? durationMax,
   }) async {
     final query = <String, dynamic>{};
     if (category != null && category.isNotEmpty) {
@@ -122,6 +160,21 @@ class ProgramTemplateRepository {
     if (search != null && search.trim().isNotEmpty) {
       query['search'] = search.trim();
     }
+    if (goals != null) {
+      final clean = goals
+          .map((g) => g.trim())
+          .where((g) => g.isNotEmpty)
+          .toList(growable: false);
+      if (clean.isNotEmpty) {
+        query['goals'] = clean.join(',');
+      }
+    }
+    if (durationMin != null) {
+      query['duration_min'] = durationMin;
+    }
+    if (durationMax != null) {
+      query['duration_max'] = durationMax;
+    }
     debugPrint('🏋️ [ProgramTemplate] browseLibrary | filters=$query');
     final resp = await _client.get(
       '$_base/library',
@@ -130,6 +183,78 @@ class ProgramTemplateRepository {
     return ProgramLibraryResult.fromJson(
       Map<String, dynamic>.from(resp.data as Map),
     );
+  }
+
+  /// GET /library/featured — curated/editorial featured programs.
+  ///
+  /// Same `{total, programs}` shape as [browseLibrary]. Wrapped in the shared
+  /// transient-retry so a deploy blip doesn't dump the user to the error card.
+  Future<ProgramLibraryResult> getFeatured() {
+    debugPrint('🏋️ [ProgramTemplate] getFeatured');
+    return _getLibraryResultWithRetry('$_base/library/featured');
+  }
+
+  /// GET /library/recommended — personalized program recommendations.
+  ///
+  /// Same `{total, programs}` shape as [browseLibrary]. Wrapped in the shared
+  /// transient-retry.
+  Future<ProgramLibraryResult> getRecommended() {
+    debugPrint('🏋️ [ProgramTemplate] getRecommended');
+    return _getLibraryResultWithRetry('$_base/library/recommended');
+  }
+
+  /// GET /library/categories — category facet counts for the filter rail.
+  ///
+  /// Returns `{categories:[{category, count}]}`; we surface a list of typed
+  /// `(category, count)` records. Wrapped in the shared transient-retry.
+  Future<List<({String category, int count})>> getCategoryCounts() async {
+    debugPrint('🏋️ [ProgramTemplate] getCategoryCounts');
+    final data = await _getMapWithRetry('$_base/library/categories');
+    final raw = data['categories'];
+    final out = <({String category, int count})>[];
+    if (raw is List) {
+      for (final c in raw) {
+        if (c is Map) {
+          final category = c['category']?.toString() ?? '';
+          if (category.isEmpty) continue;
+          final count = _toInt(c['count']);
+          out.add((category: category, count: count));
+        }
+      }
+    }
+    return out;
+  }
+
+  /// Coerce a loose JSON number/string into an int, defaulting to 0.
+  int _toInt(dynamic v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v.trim()) ?? 0;
+    return 0;
+  }
+
+  /// GET a `{total, programs}` route with the shared transient-retry posture
+  /// (same backoff + transient classification as [_browseLibraryWithRetry]).
+  Future<ProgramLibraryResult> _getLibraryResultWithRetry(String path) async {
+    final data = await _getMapWithRetry(path);
+    return ProgramLibraryResult.fromJson(data);
+  }
+
+  /// GET a JSON object with up to 3 attempts, retrying only TRANSIENT failures
+  /// (timeouts / dropped connections / 502-503-504). Non-transient errors
+  /// (auth / 4xx) rethrow immediately. Mirrors [_browseLibraryWithRetry] for
+  /// the static library reference routes.
+  Future<Map<String, dynamic>> _getMapWithRetry(String path) async {
+    const maxAttempts = 3;
+    for (var attempt = 1;; attempt++) {
+      try {
+        final resp = await _client.get(path);
+        return Map<String, dynamic>.from(resp.data as Map);
+      } on DioException catch (e) {
+        if (attempt >= maxAttempts || !_isTransientLibraryFailure(e)) rethrow;
+        await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+      }
+    }
   }
 
   /// GET /library/{program_id} — full structured preview of one program.

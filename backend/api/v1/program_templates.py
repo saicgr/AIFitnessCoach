@@ -203,16 +203,24 @@ async def browse_library(
     difficulty_level: Optional[str] = Query(default=None),
     sessions_per_week: Optional[int] = Query(default=None),
     search: Optional[str] = Query(default=None),
+    goals: Optional[str] = Query(
+        default=None,
+        description="Comma-separated goal tokens; keep programs whose goals[] "
+        "overlaps ANY token (case-insensitive contains).",
+    ),
+    duration_min: Optional[int] = Query(default=None, ge=1),
+    duration_max: Optional[int] = Query(default=None, ge=1),
     current_user: dict = Depends(get_current_user),
 ):
     """Browse the 259-program `programs` library as lightweight cards.
 
     Filters: program_category, difficulty_level, sessions_per_week, free-text
-    search on program_name. The 7 rows with an empty `workouts` blob are
-    excluded server-side via the precomputed `has_workouts` column (migration
-    2220) — we no longer fetch the heavy `workouts` JSONB blob just to derive
-    that, which is what made this endpoint slow enough to trip the client's
-    receiveTimeout. Empty filtered result -> total=0 (#L14).
+    search on program_name, goals[] overlap, and a duration_weeks range. The 7
+    rows with an empty `workouts` blob are excluded server-side via the
+    precomputed `has_workouts` column (migration 2220) — we no longer fetch the
+    heavy `workouts` JSONB blob just to derive that, which is what made this
+    endpoint slow enough to trip the client's receiveTimeout. Empty filtered
+    result -> total=0 (#L14).
 
     Cached (in-memory, long TTL) keyed by the filter tuple, since the library
     is static curated data.
@@ -226,6 +234,9 @@ async def browse_library(
             difficulty_level or "",
             sessions_per_week if sessions_per_week is not None else -1,
             (search or "").strip().lower(),
+            (goals or "").strip().lower(),
+            duration_min if duration_min is not None else -1,
+            duration_max if duration_max is not None else -1,
         )
         cached = await _library_browse_cache.get(cache_key)
         # The cache is JSON-backed (Redis): values MUST be plain dicts. A dict
@@ -257,10 +268,31 @@ async def browse_library(
             query = query.eq("sessions_per_week", sessions_per_week)
         if search:
             query = query.ilike("program_name", f"%{search}%")
+        # duration_weeks range — DB-side (cheap, indexed-ish numeric compare).
+        if duration_min is not None:
+            query = query.gte("duration_weeks", duration_min)
+        if duration_max is not None:
+            query = query.lte("duration_weeks", duration_max)
         resp = query.execute()
+
+        # goals[] overlap — Python post-filter (case-insensitive substring
+        # match of ANY requested token against ANY of the program's goals).
+        goal_tokens = [
+            g.strip().lower() for g in (goals or "").split(",") if g.strip()
+        ]
+
+        def _matches_goals(program_goals: Any) -> bool:
+            if not goal_tokens:
+                return True
+            if not isinstance(program_goals, list):
+                return False
+            blob = " ".join(str(g).lower() for g in program_goals)
+            return any(tok in blob for tok in goal_tokens)
 
         cards: List[LibraryProgramCard] = []
         for row in resp.data or []:
+            if not _matches_goals(row.get("goals")):
+                continue
             cards.append(
                 LibraryProgramCard(
                     id=str(row["id"]),
@@ -292,6 +324,270 @@ async def browse_library(
         return result
     except Exception as e:  # noqa: BLE001
         logger.error("Failed to browse program library: %s", e, exc_info=True)
+        raise safe_internal_error(e, "program_templates")
+
+
+# Light card column list — shared by /library, /library/featured,
+# /library/recommended so they all hydrate the same LibraryProgramCard shape.
+_LIBRARY_CARD_COLS = (
+    "id, program_name, program_category, program_subcategory, "
+    "celebrity_name, difficulty_level, duration_weeks, "
+    "sessions_per_week, session_duration_minutes, description, "
+    "short_description, goals, featured_rank"
+)
+
+
+def _row_to_card(row: Dict[str, Any]) -> LibraryProgramCard:
+    """Hydrate a programs row into the lightweight browse card."""
+    return LibraryProgramCard(
+        id=str(row["id"]),
+        program_name=row.get("program_name") or "Program",
+        program_category=row.get("program_category"),
+        program_subcategory=row.get("program_subcategory"),
+        # No celebrity tags anywhere in the library.
+        celebrity_name=None,
+        difficulty_level=row.get("difficulty_level"),
+        duration_weeks=row.get("duration_weeks"),
+        sessions_per_week=row.get("sessions_per_week"),
+        session_duration_minutes=row.get("session_duration_minutes"),
+        description=(row.get("short_description") or row.get("description")),
+        goals=row.get("goals") or [],
+    )
+
+
+# Maps a user's `primary_goal` to the goal keywords found in a program's
+# `goals[]` array. Match is case-insensitive substring (so "Build Muscle"
+# matches "build muscle and strength"). strength_hypertrophy spans both.
+_GOAL_KEYWORDS: Dict[str, List[str]] = {
+    "muscle_hypertrophy": ["build muscle", "hypertrophy", "aesthetic", "muscle"],
+    "muscle_strength": ["increase strength", "strength", "powerlifting"],
+    "strength_hypertrophy": [
+        "build muscle", "hypertrophy", "aesthetic", "muscle",
+        "increase strength", "strength", "powerlifting",
+    ],
+    "weight_loss": ["weight loss", "fat loss", "lean", "lose weight", "cut"],
+    "fat_loss": ["fat loss", "weight loss", "lean", "cut"],
+    "endurance": ["endurance", "conditioning", "cardio", "stamina"],
+    "general_fitness": ["general fitness", "health", "wellness", "fitness"],
+    "athletic_performance": [
+        "athletic", "performance", "sport", "power", "explosive",
+    ],
+    "mobility": ["mobility", "flexibility", "stretch"],
+}
+
+# Normalized fitness-level vocabulary for the difficulty-match scoring rule.
+_FITNESS_LEVELS = ("beginner", "intermediate", "advanced")
+
+# Featured / recommended caches — same long TTL + dict-only rule as browse.
+_library_featured_cache = ResponseCache(
+    prefix="program_library_featured", ttl_seconds=6 * 3600, max_size=8
+)
+_library_categories_cache = ResponseCache(
+    prefix="program_library_categories", ttl_seconds=6 * 3600, max_size=8
+)
+_library_recommended_cache = ResponseCache(
+    prefix="program_library_recommended", ttl_seconds=6 * 3600, max_size=256
+)
+
+
+def _goal_keywords_for(primary_goal: Optional[str]) -> List[str]:
+    """Resolve a user's primary_goal to program-goal keywords (lowercase)."""
+    if not primary_goal:
+        return []
+    key = str(primary_goal).strip().lower()
+    return _GOAL_KEYWORDS.get(key, [])
+
+
+def _normalize_level(level: Optional[str]) -> Optional[str]:
+    """Normalize an arbitrary fitness_level / difficulty string to one of
+    beginner / intermediate / advanced (or None if unrecognized)."""
+    if not level:
+        return None
+    s = str(level).strip().lower()
+    for canon in _FITNESS_LEVELS:
+        if canon in s:
+            return canon
+    return None
+
+
+@router.get("/library/featured", response_model=LibraryBrowseResponse)
+async def library_featured(
+    current_user: dict = Depends(get_current_user),
+):
+    """Curated featured programs: WHERE featured_rank IS NOT NULL ORDER BY
+    featured_rank ASC. Same lightweight card shape as /library. Excludes
+    Celebrity Workout + the empty-workouts rows like everywhere else.
+
+    Cached (in-memory, long TTL) as a plain dict — the library is static.
+    """
+    try:
+        cache_key = _library_featured_cache.make_key("featured")
+        cached = await _library_featured_cache.get(cache_key)
+        if isinstance(cached, dict):
+            return cached
+
+        db = get_supabase()
+        resp = (
+            db.client.table("programs")
+            .select(_LIBRARY_CARD_COLS)
+            .eq("has_workouts", True)
+            .neq("program_category", "Celebrity Workout")
+            .not_.is_("featured_rank", "null")
+            .order("featured_rank", desc=False)
+            .execute()
+        )
+        cards = [_row_to_card(row) for row in resp.data or []]
+        result = LibraryBrowseResponse(total=len(cards), programs=cards)
+        # Cache a JSON-serializable dict, NOT the pydantic model (Redis cache
+        # serializes via json.dumps → a cached model returns a useless str).
+        await _library_featured_cache.set(cache_key, result.model_dump())
+        return result
+    except Exception as e:  # noqa: BLE001
+        logger.error("Failed to load featured programs: %s", e, exc_info=True)
+        raise safe_internal_error(e, "program_templates")
+
+
+@router.get("/library/categories")
+async def library_categories(
+    current_user: dict = Depends(get_current_user),
+):
+    """Distinct program_category values with counts, ordered by count desc.
+    Excludes Celebrity Workout + empty-workouts rows.
+
+    Response: {"categories": [{"category": str, "count": int}, ...]}
+    Cached (in-memory, long TTL) as a plain dict.
+    """
+    try:
+        cache_key = _library_categories_cache.make_key("categories")
+        cached = await _library_categories_cache.get(cache_key)
+        if isinstance(cached, dict):
+            return cached
+
+        db = get_supabase()
+        resp = (
+            db.client.table("programs")
+            .select("program_category")
+            .eq("has_workouts", True)
+            .neq("program_category", "Celebrity Workout")
+            .execute()
+        )
+        counts: Dict[str, int] = {}
+        for row in resp.data or []:
+            cat = row.get("program_category")
+            if not cat:
+                continue
+            counts[cat] = counts.get(cat, 0) + 1
+        categories = [
+            {"category": cat, "count": n}
+            for cat, n in sorted(
+                counts.items(), key=lambda kv: (-kv[1], kv[0])
+            )
+        ]
+        result = {"categories": categories}
+        # Cache the plain dict directly (already JSON-serializable).
+        await _library_categories_cache.set(cache_key, result)
+        return result
+    except Exception as e:  # noqa: BLE001
+        logger.error(
+            "Failed to load library categories: %s", e, exc_info=True
+        )
+        raise safe_internal_error(e, "program_templates")
+
+
+@router.get("/library/recommended", response_model=LibraryBrowseResponse)
+async def library_recommended(
+    current_user: dict = Depends(get_current_user),
+):
+    """Personalized top-10 programs scored against the user's primary_goal +
+    fitness_level.
+
+    Scoring per non-celebrity has_workouts program:
+      +30 if any user-goal keyword matches the program's goals[]
+      +25 if difficulty_level ≈ the user's fitness_level (normalized)
+      +10 if featured_rank is not null
+
+    Fail-open: if we can't read a goal AND a level, fall back to the featured
+    list (never fabricate). Cached per (goal, level) as a plain dict.
+    """
+    try:
+        user_id = str(current_user["id"])
+        primary_goal = current_user.get("primary_goal")
+        fitness_level = current_user.get("fitness_level")
+
+        db = get_supabase()
+        # get_current_user may not carry profile fields — hydrate from `users`.
+        if primary_goal is None or fitness_level is None:
+            try:
+                ures = (
+                    db.client.table("users")
+                    .select("primary_goal, fitness_level")
+                    .eq("id", user_id)
+                    .limit(1)
+                    .execute()
+                )
+                if ures.data:
+                    primary_goal = primary_goal or ures.data[0].get(
+                        "primary_goal"
+                    )
+                    fitness_level = fitness_level or ures.data[0].get(
+                        "fitness_level"
+                    )
+            except Exception as ue:  # noqa: BLE001
+                logger.warning(
+                    "recommended: user profile lookup failed: %s", ue
+                )
+
+        goal_keywords = _goal_keywords_for(primary_goal)
+        user_level = _normalize_level(fitness_level)
+
+        # Fail-open: no usable personalization signal → featured list.
+        if not goal_keywords and not user_level:
+            return await library_featured(current_user=current_user)
+
+        cache_key = _library_recommended_cache.make_key(
+            str(primary_goal or "").lower(),
+            user_level or "",
+        )
+        cached = await _library_recommended_cache.get(cache_key)
+        if isinstance(cached, dict):
+            return cached
+
+        resp = (
+            db.client.table("programs")
+            .select(_LIBRARY_CARD_COLS)
+            .eq("has_workouts", True)
+            .neq("program_category", "Celebrity Workout")
+            .execute()
+        )
+
+        def _score(row: Dict[str, Any]) -> int:
+            s = 0
+            program_goals = row.get("goals")
+            if goal_keywords and isinstance(program_goals, list):
+                blob = " ".join(str(g).lower() for g in program_goals)
+                if any(kw in blob for kw in goal_keywords):
+                    s += 30
+            if user_level and _normalize_level(
+                row.get("difficulty_level")
+            ) == user_level:
+                s += 25
+            if row.get("featured_rank") is not None:
+                s += 10
+            return s
+
+        scored = sorted(
+            (resp.data or []),
+            key=lambda r: _score(r),
+            reverse=True,
+        )
+        top = [_row_to_card(r) for r in scored[:10]]
+        result = LibraryBrowseResponse(total=len(top), programs=top)
+        await _library_recommended_cache.set(cache_key, result.model_dump())
+        return result
+    except Exception as e:  # noqa: BLE001
+        logger.error(
+            "Failed to load recommended programs: %s", e, exc_info=True
+        )
         raise safe_internal_error(e, "program_templates")
 
 
