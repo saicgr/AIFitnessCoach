@@ -1,0 +1,19 @@
+# Scratch / generated artifacts from the exercise-image pipeline — not for git.
+# Source images live in S3 (ILLUSTRATIONS ALL/); these are local working files.
+generated/
+results/
+review_shards/
+test_*/
+_flagged/
+_review/
+_fail/
+log_*.txt
+pipeline_run.log
+*.jsonl
+contact_sheet.png
+sheet_*.png
+review_gallery.html
+
+# Keep tracked (the reusable pipeline + reports):
+#   run_pipeline.py, brand_stamp.py, style_prompt.txt,
+#   missing_images_tracker.md, flagged_report.md, flagged_findings.json, .gitignore
