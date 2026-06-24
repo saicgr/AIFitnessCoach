@@ -977,17 +977,24 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
   }
 
 
-  /// Show snackbar message
+  /// Show snackbar message.
+  ///
+  /// Clears any in-flight snackbar BEFORE showing the new one so two never
+  /// stack — stacked SnackBars share a Hero tag on their content Text and
+  /// crash with "multiple heroes share the same tag". Every snackbar on this
+  /// screen should route through here (or clear first) for the same reason.
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red[700] : null,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError ? Colors.red[700] : null,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
   }
 
 

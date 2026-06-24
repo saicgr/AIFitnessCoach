@@ -497,10 +497,23 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
   /// studio opens pre-seeded with the user's real preferences; fall back to
   /// defaults when the workout predates studio metadata.
   WorkoutBuildParams _studioParamsFromWorkout(Workout workout) {
+    // Seed the equipment override from the workout's CURRENT exercises so the
+    // "Equipment for this workout" picker opens pre-selected (Smith/Cable/Lat…)
+    // instead of "0 selected". Empty => keep null so the override falls back to
+    // the user's profile equipment rather than forcing an empty selection.
+    final seededEquipment = _seedEquipmentFromWorkout(workout);
+
     final raw = workout.generationMetadata?['studio_params'];
     if (raw is Map) {
       try {
-        return WorkoutBuildParams.fromJson(Map<String, dynamic>.from(raw));
+        final stored = WorkoutBuildParams.fromJson(Map<String, dynamic>.from(raw));
+        // Prefer the stored params, but seed equipment from the live workout
+        // when the stored params didn't carry an explicit override.
+        if ((stored.equipment == null || stored.equipment!.isEmpty) &&
+            seededEquipment.isNotEmpty) {
+          return stored.copyWith(equipment: seededEquipment);
+        }
+        return stored;
       } catch (e) {
         debugPrint('⚠️ [WorkoutDetail] Bad studio_params, using defaults: $e');
       }
@@ -508,7 +521,27 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
     // No studio metadata (older / regenerated workouts). Derive the focus from
     // the workout's actual type/muscles so the Adjust sheet pre-selects the
     // real focus instead of defaulting Target muscles to "Full body".
-    return WorkoutBuildParams(focusAreas: _deriveFocusAreas(workout));
+    return WorkoutBuildParams(
+      focusAreas: _deriveFocusAreas(workout),
+      equipment: seededEquipment.isEmpty ? null : seededEquipment,
+    );
+  }
+
+  /// Map the workout's current equipment (`workout.equipmentNeeded`, which are
+  /// display-ish names like "Cable Machine"/"Lat Pulldown") onto the canonical
+  /// snake_case tokens the equipment picker stores (`commonEquipmentOptions`).
+  /// Names that don't normalize onto a known token are dropped so we never seed
+  /// a token the picker can't render. De-duped, order-preserving.
+  List<String> _seedEquipmentFromWorkout(Workout workout) {
+    final tokens = <String>[];
+    final seen = <String>{};
+    for (final name in workout.equipmentNeeded) {
+      final token = name.toLowerCase().trim().replaceAll(' ', '_');
+      if (token.isEmpty) continue;
+      if (!commonEquipmentOptions.contains(token)) continue;
+      if (seen.add(token)) tokens.add(token);
+    }
+    return tokens;
   }
 
   /// Map a workout's `type` (and, failing that, its `primaryMuscles`) onto the

@@ -480,7 +480,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                         if (_trainingSplit != null && _getTrainingProgramName(_trainingSplit!) != null) ...[
                           const SizedBox(width: 8),
                           _buildLabeledBadge(
-                            label: AppLocalizations.of(context).workoutDetailProgram,
+                            // Labeled "Split" (not "Program") — this chip's value
+                            // is the training split (e.g. "Full Body"), which read
+                            // as confusing next to the TYPE chip when both showed.
+                            // Literal string keeps it off the localized "Program"
+                            // key without an .arb change.
+                            label: 'Split',
                             value: _getTrainingProgramName(_trainingSplit!)!,
                             color: accentColor,
                             backgroundColor: accentColor.withValues(alpha: 0.15),
@@ -1150,9 +1155,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
         right: 16,
         child: Row(
           children: [
-            // Back button - floating pill
+            // Back button - floating pill. Guard pop: if this screen was
+            // reached via a stack-replacing `go` (nothing to pop), fall back to
+            // the workouts tab instead of throwing "There is nothing to pop".
             GestureDetector(
-              onTap: () => context.pop(),
+              onTap: () =>
+                  context.canPop() ? context.pop() : context.go('/workouts'),
               child: Container(
                 height: 44,
                 width: 44,
