@@ -24,6 +24,7 @@ import '../../../widgets/main_shell.dart';
 import 'regenerate_workout_sheet.dart';
 import '../../social/widgets/create_post_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
+import '../../workout/widgets/workout_actions_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../shareables/shareable_sheet.dart';
 import '../../../shareables/adapters/workout_adapter.dart';
@@ -311,70 +312,39 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   }
 
   /// Surface 2.2 — single action sheet bound to the ⋯ icon top-right of the
-  /// hero card. Hosts View Details / Regenerate / Skip / Reschedule so the
-  /// card surface itself stays focused on the START button.
+  /// hero card. Delegates to the shared `showWorkoutActionsSheet` so the home
+  /// card's "⋯" presents the SAME fuller grouped action set as the
+  /// workout-detail "⋯" menu (full parity): Quick (Mark as done, Shuffle, View
+  /// details) + Options (Reschedule, Regenerate, Version history, Generate
+  /// warm-up, Generate stretches, Share when completed, Skip) + Delete. Reusing
+  /// the detail menu's widget guarantees the two can't drift.
   Future<void> _showHeroActionSheet(BuildContext context) async {
     HapticService.selection();
     final workout = widget.workout;
     // Hide the floating nav bar + "+" FAB while the sheet is open — they are
     // persistent overlays (gated by floatingNavBarVisibleProvider) that
-    // otherwise render ON TOP of the bottom sheet, covering its last item
-    // (e.g. "Reschedule"). Restored on close. Mirrors _shareToSocial in
-    // workout_options_sheet.dart.
+    // otherwise render ON TOP of the bottom sheet, covering its last item.
+    // Restored on close. Mirrors _shareCompletedWorkout above.
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.elevated
-          : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetCtx) {
-        return SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.visibility_outlined),
-                title: Text(AppLocalizations.of(context).heroWorkoutCardViewDetails),
-                onTap: () {
-                  Navigator.of(sheetCtx).pop();
-                  context.push('/workout/${workout.id}', extra: workout);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.refresh),
-                title: Text(AppLocalizations.of(context).workoutActionsRegenerate),
-                onTap: () {
-                  Navigator.of(sheetCtx).pop();
-                  _regenerateWorkout();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.skip_next_rounded),
-                title: Text(AppLocalizations.of(context).workoutOptionsSkipWorkout),
-                onTap: () {
-                  Navigator.of(sheetCtx).pop();
-                  _skipWorkout();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.event_repeat_rounded),
-                title: const Text('Reschedule'),
-                onTap: () {
-                  Navigator.of(sheetCtx).pop();
-                  // Routes through the existing options menu's reschedule
-                  // flow if present; otherwise opens the workout detail
-                  // where the user can reschedule. Fail-soft.
-                  context.push('/workout/${workout.id}', extra: workout);
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
+    await showWorkoutActionsSheet(
+      context,
+      ref,
+      workout,
+      // Quick group: Mark done only when not already completed (the sheet also
+      // guards this); Shuffle re-rolls picks; View details routes to the live
+      // detail screen (kept here so the sheet stays navigation-agnostic). The
+      // home card's old in-line Regenerate/Skip are now part of this same set.
+      showMarkDone: workout.isCompleted != true,
+      showShuffle: true,
+      showSkip: true,
+      onViewDetails: () =>
+          context.push('/workout/${workout.id}', extra: workout),
+      // The shared sheet already refreshes today/workouts via the dispose-proof
+      // mutation coordinator; this extra silent refresh keeps the carousel in
+      // lock-step on the home tab specifically.
+      onRefresh: () {
+        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+        ref.read(workoutsProvider.notifier).silentRefresh();
       },
     );
     if (mounted) {

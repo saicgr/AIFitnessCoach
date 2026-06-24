@@ -1,22 +1,46 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../widgets/app_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/haptic_service.dart';
+import '../../../data/providers/workout_studio_providers.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Shows a bottom sheet with workout actions
+
+/// Shows a bottom sheet with workout actions.
+///
+/// The base action set (Reschedule, Regenerate, Version history, Generate
+/// warm-up, Generate stretches, Share-when-completed, Delete) is always
+/// rendered. The Quick-group affordances (Mark as done, Shuffle, View details,
+/// Skip) are OPT-IN via the flags below so callers that don't want them — or
+/// that drive them through their own navigation — stay unaffected. This single
+/// sheet is shared by the workout-detail "⋯" menu and the home hero-card "⋯"
+/// menu so the two can't drift in parity.
+///
+/// [showMarkDone] / [showShuffle] / [showSkip] are handled internally (they
+/// call the same repository / studio-service / completion endpoint the detail
+/// screen uses). [onViewDetails], when provided, adds a "View details" tile
+/// that pops the sheet and invokes the callback — the sheet itself stays
+/// navigation-agnostic so it doesn't need a router import.
 Future<void> showWorkoutActionsSheet(
   BuildContext context,
   WidgetRef ref,
   Workout workout, {
   VoidCallback? onRefresh,
+  bool showMarkDone = false,
+  bool showShuffle = false,
+  bool showSkip = false,
+  VoidCallback? onViewDetails,
 }) async {
   await showGlassSheet(
     context: context,
@@ -25,6 +49,10 @@ Future<void> showWorkoutActionsSheet(
       child: _WorkoutActionsSheet(
         workout: workout,
         onRefresh: onRefresh,
+        showMarkDone: showMarkDone,
+        showShuffle: showShuffle,
+        showSkip: showSkip,
+        onViewDetails: onViewDetails,
       ),
     ),
   );
@@ -33,8 +61,19 @@ Future<void> showWorkoutActionsSheet(
 class _WorkoutActionsSheet extends ConsumerStatefulWidget {
   final Workout workout;
   final VoidCallback? onRefresh;
+  final bool showMarkDone;
+  final bool showShuffle;
+  final bool showSkip;
+  final VoidCallback? onViewDetails;
 
-  const _WorkoutActionsSheet({required this.workout, this.onRefresh});
+  const _WorkoutActionsSheet({
+    required this.workout,
+    this.onRefresh,
+    this.showMarkDone = false,
+    this.showShuffle = false,
+    this.showSkip = false,
+    this.onViewDetails,
+  });
 
   @override
   ConsumerState<_WorkoutActionsSheet> createState() => _WorkoutActionsSheetState();
@@ -48,6 +87,16 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
   int _regenerateStep = 0;
   int _regenerateTotalSteps = 4;
   String _regenerateMessage = '';
+
+  /// Whether the workout already counts as completed — hides "Mark as done".
+  bool get _alreadyDone => widget.workout.isCompleted == true;
+
+  /// True when any Quick-group affordance is shown; drives the section labels
+  /// (we only label "Quick"/"Options" when the menu is the fuller parity menu).
+  bool get _hasQuickGroup =>
+      (widget.showMarkDone && !_alreadyDone) ||
+      widget.showShuffle ||
+      widget.onViewDetails != null;
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +178,42 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Column(
                 children: [
+                  // ── Quick group (opt-in) ──
+                  // Mark done / Shuffle / View details. Only shown when the
+                  // caller asks for them so the detail-screen and home-card
+                  // menus share one widget without forcing every caller to
+                  // surface the same affordances.
+                  if (_hasQuickGroup) _GroupLabel(text: 'Quick'),
+                  if (widget.showMarkDone && !_alreadyDone)
+                    _ActionTile(
+                      icon: Icons.check_circle_outline_rounded,
+                      title: 'Mark as done',
+                      subtitle: 'Log as completed, no PRs',
+                      isLoading: _loadingAction == 'markDone',
+                      onTap: () => _handleMarkDone(context),
+                    ),
+                  if (widget.showShuffle)
+                    _ActionTile(
+                      icon: Icons.shuffle_rounded,
+                      title: 'Shuffle exercises',
+                      subtitle: 'Re-roll with fresh picks',
+                      isLoading: _loadingAction == 'shuffle',
+                      onTap: () => _handleShuffle(context),
+                    ),
+                  if (widget.onViewDetails != null)
+                    _ActionTile(
+                      icon: Icons.visibility_outlined,
+                      title: AppLocalizations.of(context).heroWorkoutCardViewDetails,
+                      subtitle: 'Open the full workout',
+                      isLoading: false,
+                      onTap: () {
+                        Navigator.pop(context);
+                        widget.onViewDetails!.call();
+                      },
+                    ),
+
+                  // ── Options group ──
+                  if (_hasQuickGroup) _GroupLabel(text: 'Options'),
                   _ActionTile(
                     icon: Icons.calendar_month,
                     title: AppLocalizations.of(context).workoutActionsReschedule,
@@ -190,6 +275,21 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                         );
                       },
                     ),
+                  if (widget.showSkip)
+                    _ActionTile(
+                      icon: Icons.skip_next_rounded,
+                      title: AppLocalizations.of(context).workoutOptionsSkipWorkout,
+                      subtitle: 'Remove without completing it',
+                      isLoading: _loadingAction == 'skip',
+                      onTap: () => _handleSkip(context),
+                    ),
+
+                  // ── Delete, visually separated ──
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    child: Divider(
+                        height: 1, color: cardBorder.withValues(alpha: 0.5)),
+                  ),
                   _ActionTile(
                     icon: Icons.delete_outline,
                     title: AppLocalizations.of(context).workoutActionsDeleteWorkout,
@@ -538,6 +638,179 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         }
       }
     }
+  }
+
+  // ── Quick-group handlers ───────────────────────────────────────────────────
+  // These mirror the workout-detail screen's own handlers 1:1 (same completion
+  // endpoint + studio shuffle service) so the home-card menu can't drift from
+  // the detail menu. Each refreshes dependent views via the dispose-proof
+  // root-container coordinator (the sheet may be popped before the refresh
+  // settles).
+
+  /// Mark as done — logs the workout as completed without running the timer,
+  /// hitting the same `/complete?completion_method=marked_done` endpoint the
+  /// detail screen uses. No PRs are created server-side for this path.
+  Future<void> _handleMarkDone(BuildContext context) async {
+    if (_loadingAction != null) return;
+    final wid = widget.workout.id;
+    if (wid == null || wid.isEmpty || _alreadyDone) return;
+
+    final confirm = await AppDialog.confirm(
+      context,
+      title: 'Mark as done?',
+      message:
+          'Log this workout as completed without running the timer. '
+          'No personal records will be created.',
+      confirmText: 'Mark as done',
+      icon: Icons.check_circle_outline_rounded,
+    );
+    if (confirm != true || !mounted) return;
+
+    setState(() => _loadingAction = 'markDone');
+    HapticService.selection();
+    try {
+      await ref.read(apiClientProvider).post(
+        '${ApiConstants.workouts}/$wid/complete',
+        queryParameters: {'completion_method': 'marked_done'},
+      );
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onRefresh?.call();
+      // Full-set refresh so muscle/score/consistency update too.
+      unawaited(refreshAfterWorkoutMutation(source: 'markDone', workoutId: wid));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logged as done'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingAction = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not log workout: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Shuffle — re-rolls the workout with fresh exercise picks via the studio
+  /// service (same path as the detail screen's Shuffle).
+  Future<void> _handleShuffle(BuildContext context) async {
+    if (_loadingAction != null) return;
+    final wid = widget.workout.id;
+    if (wid == null || wid.isEmpty) return;
+
+    setState(() => _loadingAction = 'shuffle');
+    HapticService.selection();
+    try {
+      await ref.read(workoutStudioServiceProvider).shuffle(wid);
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onRefresh?.call();
+      unawaited(refreshAfterWorkoutMutation(source: 'shuffle', workoutId: wid));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Shuffled in fresh exercises'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingAction = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not shuffle: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Skip — removes the workout for this day without completing it (mirrors the
+  /// home card's prior Skip flow: delete + refresh).
+  Future<void> _handleSkip(BuildContext context) async {
+    if (_loadingAction != null) return;
+    final wid = widget.workout.id;
+    if (wid == null || wid.isEmpty) return;
+
+    final confirm = await AppDialog.destructive(
+      context,
+      title: AppLocalizations.of(context).workoutOptionsSkipWorkout,
+      message: AppLocalizations.of(context).workoutOptionsThisWorkoutWillBe,
+      confirmText: 'Skip',
+      icon: Icons.skip_next_rounded,
+    );
+    if (confirm != true || !mounted) return;
+
+    setState(() => _loadingAction = 'skip');
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      final success = await repo.deleteWorkout(wid);
+      if (!mounted) return;
+      if (success) {
+        Navigator.pop(context);
+        widget.onRefresh?.call();
+        unawaited(refreshAfterWorkoutMutation(source: 'skip', workoutId: wid));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Workout skipped'),
+            backgroundColor: AppColors.textMuted,
+          ),
+        );
+      } else {
+        setState(() => _loadingAction = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingAction = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+}
+
+/// Small uppercase section divider label ("QUICK" / "OPTIONS") used by the
+/// parity menu. Mirrors the detail screen's group label styling.
+class _GroupLabel extends StatelessWidget {
+  final String text;
+
+  const _GroupLabel({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text.toUpperCase(),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.6,
+            color: textMuted,
+          ),
+        ),
+      ),
+    );
   }
 }
 
