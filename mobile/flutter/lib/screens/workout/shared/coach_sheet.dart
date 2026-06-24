@@ -14,9 +14,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/chat_message.dart';
+import '../../../data/models/coach_persona.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../ai_settings/ai_settings_screen.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Default quick replies — balanced framing for general use.
@@ -103,6 +106,13 @@ class _CoachSheetState extends ConsumerState<CoachSheet> {
 
     final msgs = ref.watch(chatMessagesProvider).valueOrNull ?? const [];
 
+    // The user's actual selected coach persona (same source as the main Chat
+    // tab) — so the in-workout sheet shows OUR coach (avatar + name), not a
+    // generic 🎭 placeholder.
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach =
+        CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
+
     return Padding(
       padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
       child: Container(
@@ -123,15 +133,29 @@ class _CoachSheetState extends ConsumerState<CoachSheet> {
             ),
           ),
           Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(20, 12, 12, 4),
+            padding: const EdgeInsetsDirectional.fromSTEB(20, 10, 12, 4),
             child: Row(children: [
-              const Text('🎭', style: TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
-              Text(AppLocalizations.of(context).easyChatPillAskYourCoach,
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: fg)),
+              CoachAvatar(
+                coach: coach,
+                size: 30,
+                showBorder: true,
+                showShadow: false,
+                enableTapToView: false,
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(coach.name,
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: fg)),
+                  Text(AppLocalizations.of(context).easyChatPillAskYourCoach,
+                      style: TextStyle(fontSize: 11.5, color: muted)),
+                ],
+              ),
               const Spacer(),
               IconButton(
                 icon: Icon(Icons.close, color: fg),
@@ -139,7 +163,7 @@ class _CoachSheetState extends ConsumerState<CoachSheet> {
               ),
             ]),
           ),
-          Expanded(child: _buildMessageList(msgs, fg, muted)),
+          Expanded(child: _buildMessageList(msgs, fg, muted, coach)),
           _buildQuickChips(muted),
           _buildInputRow(fg, muted, isDark),
           SizedBox(height: media.viewInsets.bottom > 0 ? 8 : 12),
@@ -148,8 +172,43 @@ class _CoachSheetState extends ConsumerState<CoachSheet> {
     );
   }
 
-  Widget _buildMessageList(List<ChatMessage> msgs, Color fg, Color muted) {
+  Widget _buildMessageList(
+      List<ChatMessage> msgs, Color fg, Color muted, CoachPersona coach) {
     final recent = msgs.length <= 6 ? msgs : msgs.sublist(msgs.length - 6);
+    // Empty state — a real coach greeting referencing the current exercise so
+    // the sheet never opens as a blank void (which read as "not the real
+    // coach"). Messages route through the same context-rich chat pipeline.
+    if (recent.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CoachAvatar(
+              coach: coach,
+              size: 56,
+              showBorder: true,
+              showShadow: false,
+              enableTapToView: false,
+            ),
+            const SizedBox(height: 14),
+            Text(
+              "Hey, I'm ${coach.name}.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: fg),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Ask me anything about ${widget.exercise.name} — form, weight, '
+              'swaps, or how you’re feeling. I can see your workout.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, height: 1.4, color: muted),
+            ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ListView.builder(

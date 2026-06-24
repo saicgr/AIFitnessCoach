@@ -206,11 +206,13 @@ class EasyActiveWorkoutView extends StatelessWidget {
               currentWeightDisplay: state.displayWeight,
               currentReps: state.reps,
               editingSetIndex: editingSetIndex,
+              // Tapping a ledger pill navigates/edits THAT set (done → edit,
+              // upcoming → skip ahead, current → return to live). History is
+              // its own chip beside the name — opening History on a set tap
+              // read as "why did my set open this?" + showed empty.
               onEditSet: onEditSet,
               onReturnToCurrent: onReturnToCurrent,
               onSkipToSet: onSkipToSet,
-              // Spec: tap any ledger pill → History sheet.
-              onOpenHistory: onShowHistory,
             ),
             // EASY REDESIGN: the five stacked insight cards (pre-set coach
             // tip / last-time / score-target / how-did-I-do) were REMOVED from
