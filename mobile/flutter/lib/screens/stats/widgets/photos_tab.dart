@@ -8,7 +8,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/animations/app_animations.dart';
-import '../../../widgets/design_system/zealova.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/progress_photos.dart';
 import '../../../data/repositories/progress_photos_repository.dart';
@@ -205,11 +204,11 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    '${_selectedPhotoIds.length} selected'.toUpperCase(),
-                    style: ZType.lbl(
-                      13,
+                    '${_selectedPhotoIds.length} selected',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                       color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                      letterSpacing: 1.0,
                     ),
                   ),
                   const Spacer(),
@@ -224,8 +223,12 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                       });
                     },
                     child: Text(
-                      AppLocalizations.of(context).syncedWorkoutsHistoryAll.toUpperCase(),
-                      style: ZType.lbl(12, color: accentColor, letterSpacing: 1.0),
+                      AppLocalizations.of(context).syncedWorkoutsHistoryAll,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: accentColor,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -304,11 +307,11 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = ref.watch(accentColorProvider);
     final accentColor = accent.getColor(isDark);
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accentContrast = isDark ? Colors.black : Colors.white;
 
-    // Signature pill: hairline border, Barlow uppercase. Selected = faint
-    // accent fill + accent border + accent text (single accent, not a slab).
     Widget buildPill(String label, bool selected, VoidCallback onTap) {
       return Padding(
         padding: const EdgeInsets.only(right: 8),
@@ -318,23 +321,21 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
             onTap();
           },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            height: 34,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            duration: const Duration(milliseconds: 200),
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected
-                  ? accentColor.withValues(alpha: 0.10)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: selected ? accentColor : cardBorder),
+              color: selected ? accentColor : elevated,
+              borderRadius: BorderRadius.circular(18),
+              border: selected ? null : Border.all(color: cardBorder),
             ),
             child: Text(
-              label.toUpperCase(),
-              style: ZType.lbl(
-                12,
-                color: selected ? accentColor : textSecondary,
-                letterSpacing: 1.2,
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: selected ? accentContrast : textSecondary,
               ),
             ),
           ),
@@ -375,8 +376,8 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
         children: [
           // Photo count
           Text(
-            '$totalPhotos photo${totalPhotos == 1 ? '' : 's'}'.toUpperCase(),
-            style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.2),
+            '$totalPhotos photo${totalPhotos == 1 ? '' : 's'}',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textSecondary),
           ),
           const SizedBox(width: 8),
           // Sort toggle (icon only)
@@ -440,10 +441,10 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.compare_arrows_rounded, size: 14, color: accentColor),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 4),
                   Text(
-                    AppLocalizations.of(context).recipeHistoryCompare.toUpperCase(),
-                    style: ZType.lbl(11, color: accentColor, letterSpacing: 1.0),
+                    AppLocalizations.of(context).recipeHistoryCompare,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: accentColor),
                   ),
                 ],
               ),
@@ -474,8 +475,12 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
           child: Row(
             children: [
               Text(
-                'Saved Comparisons (${comparisons.length})'.toUpperCase(),
-                style: ZType.lbl(15, color: textPrimary, letterSpacing: 1.2),
+                'Saved Comparisons (${comparisons.length})',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
               ),
               IconButton(
                 icon: AnimatedRotation(
@@ -541,8 +546,12 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
           Row(
             children: [
               Text(
-                AppLocalizations.of(context).progressScreenUiLatestByView.toUpperCase(),
-                style: ZType.lbl(15, color: textPrimary, letterSpacing: 1.2),
+                AppLocalizations.of(context).progressScreenUiLatestByView,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
               ),
               IconButton(
                 icon: AnimatedRotation(
@@ -629,10 +638,14 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                       ),
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             Text(
-              type.displayName.toUpperCase(),
-              style: ZType.lbl(10, color: textSecondary, letterSpacing: 1.0),
+              type.displayName,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../l10n/generated/app_localizations.dart';
-
-/// Signature-v2 onPrimary ink — text/icon color on the solid orange accent.
-const Color _onAccent = Color(0xFF160B03);
 
 /// Dialog shown after completing a challenge workout
 /// Displays victory/attempt result with stats comparison
@@ -37,8 +33,6 @@ class ChallengeCompleteDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -47,7 +41,6 @@ class ChallengeCompleteDialog extends StatelessWidget {
         decoration: BoxDecoration(
           color: elevated,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: cardBorder),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.3),
@@ -60,12 +53,12 @@ class ChallengeCompleteDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header with result
-            _buildHeader(context, isDark),
+            _buildHeader(context),
 
             // Stats comparison
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _buildStatsComparison(context, isDark),
+              child: _buildStatsComparison(context),
             ),
 
             const SizedBox(height: 20),
@@ -74,7 +67,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
             if (didBeat)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildShareNotification(context, isDark),
+                child: _buildShareNotification(context),
               ),
 
             const SizedBox(height: 20),
@@ -82,7 +75,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
             // Actions
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: _buildActions(context, isDark),
+              child: _buildActions(context),
             ),
           ],
         ),
@@ -90,20 +83,25 @@ class ChallengeCompleteDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark) {
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final accent = didBeat ? const Color(0xFFFFD700) : orange;
+  Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.12),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(
-          bottom: BorderSide(color: accent.withValues(alpha: 0.3)),
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: didBeat
+              ? [
+                  const Color(0xFFFFD700).withValues(alpha: 0.3),
+                  Colors.orange.withValues(alpha: 0.3),
+                ]
+              : [
+                  AppColors.orange.withValues(alpha: 0.2),
+                  AppColors.orange.withValues(alpha: 0.1),
+                ],
         ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -116,34 +114,36 @@ class ChallengeCompleteDialog extends StatelessWidget {
 
           // Victory or attempt message
           Text(
-            (didBeat
-                    ? AppLocalizations.of(context).challengeCompleteVictory
-                    : AppLocalizations.of(context)
-                        .challengeCompleteChallengeAttempted)
-                .toUpperCase(),
-            textAlign: TextAlign.center,
-            style: ZType.disp(26, color: accent, letterSpacing: 1.0),
+            didBeat ? AppLocalizations.of(context).challengeCompleteVictory : AppLocalizations.of(context).challengeCompleteChallengeAttempted,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: didBeat ? const Color(0xFFFFD700) : AppColors.orange,
+              letterSpacing: 1.5,
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           // Challenge description
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
-              style: ZType.ser(15, color: textPrimary),
+              style: DefaultTextStyle.of(context).style.copyWith(fontSize: 15, inherit: false),
               children: [
                 TextSpan(
                   text: didBeat ? 'You beat ' : 'You challenged ',
                 ),
                 TextSpan(
                   text: '$challengerName\'s',
-                  style: ZType.ser(15,
-                      color: textPrimary, weight: FontWeight.w600),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const TextSpan(text: ' '),
                 TextSpan(
                   text: workoutName,
-                  style: ZType.ser(15, color: orange, weight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.orange,
+                  ),
                 ),
                 const TextSpan(text: '!'),
               ],
@@ -154,62 +154,71 @@ class ChallengeCompleteDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsComparison(BuildContext context, bool isDark) {
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+  Widget _buildStatsComparison(BuildContext context) {
     final yourDuration = yourStats['duration_minutes'];
     final yourVolume = yourStats['total_volume'];
     final theirDuration = theirStats['duration_minutes'];
     final theirVolume = theirStats['total_volume'];
 
-    final accent = didBeat ? Colors.green : orange;
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        color: didBeat
+            ? Colors.green.withValues(alpha: 0.1)
+            : AppColors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: didBeat
+              ? Colors.green.withValues(alpha: 0.3)
+              : AppColors.orange.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppLocalizations.of(context)
-                .challengeCompletePerformanceComparison
-                .toUpperCase(),
-            style: ZType.lbl(12, color: accent, letterSpacing: 1.8),
+          Row(
+            children: [
+              Icon(
+                Icons.analytics_outlined,
+                size: 18,
+                color: didBeat ? Colors.green : AppColors.orange,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                AppLocalizations.of(context).challengeCompletePerformanceComparison,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: didBeat ? Colors.green : AppColors.orange,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 
           // Duration
           if (yourDuration != null && theirDuration != null) ...[
             _buildStatRow(
-              context: context,
-              isDark: isDark,
               emoji: '⏱️',
               label: AppLocalizations.of(context).challengeCompleteTime,
               yourLabel: AppLocalizations.of(context).challengeCompleteYou,
               themLabel: AppLocalizations.of(context).challengeCompleteThem,
-              yourValue: AppLocalizations.of(context)
-                  .challengeCompleteDialogMin(yourDuration),
-              theirValue: AppLocalizations.of(context)
-                  .challengeCompleteDialogMin2(theirDuration),
+              yourValue: AppLocalizations.of(context)!.challengeCompleteDialogMin(yourDuration),
+              theirValue: AppLocalizations.of(context)!.challengeCompleteDialogMin2(theirDuration),
               youWon: didBeat && yourDuration <= theirDuration,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
           ],
 
           // Volume
           if (yourVolume != null && theirVolume != null)
             _buildStatRow(
-              context: context,
-              isDark: isDark,
               emoji: '💪',
               label: AppLocalizations.of(context).challengeCompleteVolume,
               yourLabel: AppLocalizations.of(context).challengeCompleteYou,
               themLabel: AppLocalizations.of(context).challengeCompleteThem,
               yourValue: '${yourVolume.toStringAsFixed(0)} lbs',
-              theirValue: AppLocalizations.of(context)
-                  .challengeCompleteDialogLbs(theirVolume.toStringAsFixed(0)),
+              theirValue: AppLocalizations.of(context)!.challengeCompleteDialogLbs(theirVolume.toStringAsFixed(0)),
               youWon: didBeat && yourVolume >= theirVolume,
             ),
         ],
@@ -218,8 +227,6 @@ class ChallengeCompleteDialog extends StatelessWidget {
   }
 
   Widget _buildStatRow({
-    required BuildContext context,
-    required bool isDark,
     required String emoji,
     required String label,
     required String yourLabel,
@@ -228,9 +235,6 @@ class ChallengeCompleteDialog extends StatelessWidget {
     required String theirValue,
     required bool youWon,
   }) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     return Row(
       children: [
         Text(emoji, style: const TextStyle(fontSize: 18)),
@@ -240,8 +244,12 @@ class ChallengeCompleteDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label.toUpperCase(),
-                style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.2),
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMuted,
+                ),
               ),
               const SizedBox(height: 6),
               Row(
@@ -251,14 +259,19 @@ class ChallengeCompleteDialog extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '$yourLabel ',
-                        style: ZType.lbl(11,
-                            color: textMuted, letterSpacing: 0.5),
+                        yourLabel,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textMuted,
+                        ),
                       ),
                       Text(
                         yourValue,
-                        style: ZType.data(13.5,
-                            color: youWon ? Colors.green : textPrimary),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: youWon ? Colors.green : null,
+                        ),
                       ),
                       if (youWon) ...[
                         const SizedBox(width: 4),
@@ -275,13 +288,18 @@ class ChallengeCompleteDialog extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '$themLabel ',
-                        style: ZType.lbl(11,
-                            color: textMuted, letterSpacing: 0.5),
+                        themLabel,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textMuted,
+                        ),
                       ),
                       Text(
                         theirValue,
-                        style: ZType.data(13.5, color: textPrimary),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
@@ -294,24 +312,27 @@ class ChallengeCompleteDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildShareNotification(BuildContext context, bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+  Widget _buildShareNotification(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
+        color: AppColors.cyan.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cyan.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: AppColors.cyan.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.share, size: 18, color: cyan),
+          const Icon(Icons.share, size: 18, color: AppColors.cyan),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               AppLocalizations.of(context).challengeCompleteYourVictoryHasBeen,
-              style: ZType.sans(12,
-                  color: textMuted, weight: FontWeight.w500, height: 1.3),
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textMuted,
+              ),
             ),
           ),
         ],
@@ -319,34 +340,26 @@ class ChallengeCompleteDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildActions(BuildContext context, bool isDark) {
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+  Widget _buildActions(BuildContext context) {
     return Column(
       children: [
         // View in feed button (if victory)
         if (didBeat && onViewFeed != null)
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: ElevatedButton.icon(
               onPressed: () {
                 HapticFeedback.lightImpact();
                 Navigator.pop(context);
                 onViewFeed?.call();
               },
-              icon: Icon(Icons.feed, size: 18, color: cyan),
+              icon: const Icon(Icons.feed, size: 18),
               label: Text(
-                AppLocalizations.of(context)
-                    .challengeCompleteViewInFeed
-                    .toUpperCase(),
-                style: ZType.lbl(13, color: cyan, letterSpacing: 1.2),
+                AppLocalizations.of(context).challengeCompleteViewInFeed,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: cyan.withValues(alpha: 0.5)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cyan,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -367,17 +380,13 @@ class ChallengeCompleteDialog extends StatelessWidget {
                 Navigator.pop(context);
                 onViewDetails?.call();
               },
-              icon: const Icon(Icons.compare_arrows_rounded,
-                  size: 18, color: _onAccent),
+              icon: const Icon(Icons.compare_arrows_rounded, size: 18),
               label: Text(
-                AppLocalizations.of(context)
-                    .challengeCompleteViewFullComparison
-                    .toUpperCase(),
-                style: ZType.lbl(13, color: _onAccent, letterSpacing: 1.2),
+                AppLocalizations.of(context).challengeCompleteViewFullComparison,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: orange,
-                foregroundColor: _onAccent,
+                backgroundColor: AppColors.orange,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -398,17 +407,14 @@ class ChallengeCompleteDialog extends StatelessWidget {
               onDismiss?.call();
             },
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: cardBorder),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
             child: Text(
-              AppLocalizations.of(context)
-                  .challengeCompleteContinue
-                  .toUpperCase(),
-              style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.2),
+              AppLocalizations.of(context).challengeCompleteContinue,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ),

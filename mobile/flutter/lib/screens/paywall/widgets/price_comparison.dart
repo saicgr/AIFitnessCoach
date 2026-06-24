@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
 /// Signature-v2 PRICE anchor — a compact mini bar chart with a Monthly/Yearly
@@ -27,7 +26,7 @@ class PaywallPriceComparison extends StatefulWidget {
 }
 
 class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
-  static const Color _accent = AppColors.orange;
+  static const Color _accent = Color(0xFFF97316);
 
   bool _yearly = false;
 

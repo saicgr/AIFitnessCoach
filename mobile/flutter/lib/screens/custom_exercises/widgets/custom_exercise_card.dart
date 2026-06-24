@@ -1,14 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Card widget for displaying a custom exercise — signature-v2: near-black
-/// surface with a hairline border (not a raised Material card), orange accent
-/// for composites, Anton/Barlow/Archivo typography.
+/// Card widget for displaying a custom exercise
 class CustomExerciseCard extends StatelessWidget {
   final CustomExercise exercise;
   final VoidCallback? onTap;
@@ -24,10 +21,8 @@ class CustomExerciseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.surface2 : AppColorsLight.surface;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accent = AppColors.orange;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return GestureDetector(
@@ -37,12 +32,12 @@ class CustomExerciseCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorder),
+          color: elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -50,50 +45,48 @@ class CustomExerciseCard extends StatelessWidget {
               Row(
                 children: [
                   // Thumbnail — user-uploaded photo if available, else type-icon fallback.
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: cardBorder),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: (exercise.imageUrl != null &&
-                            exercise.imageUrl!.isNotEmpty)
-                        ? CachedNetworkImage(
-                            imageUrl: exercise.imageUrl!,
-                            fit: BoxFit.cover,
-                            placeholder: (_, __) => Container(
-                              color: isDark
-                                  ? AppColors.surface
-                                  : AppColorsLight.surface,
-                            ),
-                            errorWidget: (_, __, ___) => Container(
-                              color: isDark
-                                  ? AppColors.surface
-                                  : AppColorsLight.surface,
-                              child: Icon(Icons.fitness_center,
-                                  color: textSecondary, size: 22),
-                            ),
-                          )
-                        : Container(
-                            color: exercise.isComposite
-                                ? accent.withValues(alpha: 0.12)
-                                : (isDark
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: (exercise.imageUrl != null &&
+                              exercise.imageUrl!.isNotEmpty)
+                          ? CachedNetworkImage(
+                              imageUrl: exercise.imageUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (_, __) => Container(
+                                color: isDark
                                     ? AppColors.surface
-                                    : AppColorsLight.surface),
-                            child: Center(
-                              child: Icon(
-                                exercise.isComposite
-                                    ? Icons.layers
-                                    : Icons.fitness_center,
-                                color: exercise.isComposite
-                                    ? accent
-                                    : textSecondary,
-                                size: 22,
+                                    : AppColorsLight.surface,
+                              ),
+                              errorWidget: (_, __, ___) => Container(
+                                color: isDark
+                                    ? AppColors.surface
+                                    : AppColorsLight.surface,
+                                child: Icon(Icons.fitness_center,
+                                    color: textSecondary, size: 24),
+                              ),
+                            )
+                          : Container(
+                              color: exercise.isComposite
+                                  ? cyan.withOpacity(0.2)
+                                  : (isDark
+                                      ? AppColors.surface
+                                      : AppColorsLight.surface),
+                              child: Center(
+                                child: Icon(
+                                  exercise.isComposite
+                                      ? Icons.layers
+                                      : Icons.fitness_center,
+                                  color: exercise.isComposite
+                                      ? cyan
+                                      : textSecondary,
+                                  size: 24,
+                                ),
                               ),
                             ),
-                          ),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   // Name and type
@@ -103,24 +96,27 @@ class CustomExerciseCard extends StatelessWidget {
                       children: [
                         Text(
                           exercise.name,
-                          style: ZType.sans(15,
-                              color: textPrimary, weight: FontWeight.w700),
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         Row(
                           children: [
                             _buildTag(
                               context,
                               exercise.typeLabel,
-                              exercise.isComposite ? accent : textSecondary,
+                              exercise.isComposite ? cyan : textSecondary,
+                              isDark,
                             ),
                             const SizedBox(width: 8),
                             _buildTag(
                               context,
                               exercise.primaryMuscle,
                               textSecondary,
+                              isDark,
                             ),
                           ],
                         ),
@@ -136,7 +132,7 @@ class CustomExerciseCard extends StatelessWidget {
                       },
                       icon: Icon(
                         Icons.delete_outline,
-                        color: AppColors.error.withValues(alpha: 0.8),
+                        color: Colors.red.withOpacity(0.7),
                         size: 20,
                       ),
                       padding: EdgeInsets.zero,
@@ -155,10 +151,9 @@ class CustomExerciseCard extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? AppColors.surface
+                        ? AppColors.surface.withOpacity(0.5)
                         : AppColorsLight.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: cardBorder),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,13 +162,17 @@ class CustomExerciseCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.list,
-                            size: 13,
-                            color: accent,
+                            size: 14,
+                            color: textSecondary,
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            AppLocalizations.of(context).customExerciseCardExercises(exercise.componentCount).toUpperCase(),
-                            style: ZType.lbl(10, color: accent, letterSpacing: 1.2),
+                            AppLocalizations.of(context)!.customExerciseCardExercises(exercise.componentCount),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
@@ -182,8 +181,10 @@ class CustomExerciseCard extends StatelessWidget {
                         exercise.componentExercises!
                             .map((c) => c.name)
                             .join(' → '),
-                        style: ZType.sans(13,
-                            color: textSecondary, weight: FontWeight.w500, height: 1.3),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -199,15 +200,15 @@ class CustomExerciseCard extends StatelessWidget {
                   _buildDetailChip(
                     context,
                     Icons.repeat,
-                    '${exercise.defaultSets} SETS',
+                    '${exercise.defaultSets} sets',
                     isDark,
                   ),
                   if (exercise.defaultReps != null) ...[
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 12),
                     _buildDetailChip(
                       context,
                       Icons.fitness_center,
-                      '${exercise.defaultReps} REPS',
+                      '${exercise.defaultReps} reps',
                       isDark,
                     ),
                   ],
@@ -216,27 +217,29 @@ class CustomExerciseCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
-                      vertical: 5,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.surface
+                          ? AppColors.surface.withOpacity(0.5)
                           : AppColorsLight.surface,
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(color: cardBorder),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           _getEquipmentIcon(exercise.equipment),
-                          size: 13,
+                          size: 14,
                           color: textSecondary,
                         ),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 4),
                         Text(
-                          _formatEquipment(exercise.equipment).toUpperCase(),
-                          style: ZType.lbl(10, color: textSecondary, letterSpacing: 1.0),
+                          _formatEquipment(exercise.equipment),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -251,22 +254,25 @@ class CustomExerciseCard extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.history,
-                      size: 13,
+                      size: 14,
                       color: textSecondary,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      AppLocalizations.of(context).customExerciseCardUsedTimes(exercise.usageCount).toUpperCase(),
-                      style: ZType.lbl(10, color: textSecondary, letterSpacing: 1.0),
+                      AppLocalizations.of(context)!.customExerciseCardUsedTimes(exercise.usageCount),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
                     ),
                     if (exercise.lastUsedFormatted != null) ...[
+                      Text(AppLocalizations.of(context).programLibrary),
                       Text(
-                        ' · ',
-                        style: ZType.lbl(10, color: textSecondary, letterSpacing: 1.0),
-                      ),
-                      Text(
-                        exercise.lastUsedFormatted!.toUpperCase(),
-                        style: ZType.lbl(10, color: textSecondary, letterSpacing: 1.0),
+                        exercise.lastUsedFormatted!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textSecondary,
+                        ),
                       ),
                     ],
                   ],
@@ -279,17 +285,20 @@ class CustomExerciseCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTag(BuildContext context, String text, Color color) {
+  Widget _buildTag(BuildContext context, String text, Color color, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        text.toUpperCase(),
-        style: ZType.lbl(9.5, color: color, letterSpacing: 1.0),
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: color,
+        ),
       ),
     );
   }
@@ -305,11 +314,14 @@ class CustomExerciseCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: textSecondary),
-        const SizedBox(width: 5),
+        Icon(icon, size: 14, color: textSecondary),
+        const SizedBox(width: 4),
         Text(
-          text.toUpperCase(),
-          style: ZType.lbl(10.5, color: textSecondary, letterSpacing: 1.0),
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: textSecondary,
+          ),
         ),
       ],
     );

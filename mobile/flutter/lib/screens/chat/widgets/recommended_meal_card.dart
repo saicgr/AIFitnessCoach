@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/repositories/nutrition_repository.dart';
@@ -144,8 +143,7 @@ class _RecommendedMealCardState extends ConsumerState<RecommendedMealCard> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.surface : AppColorsLight.surface;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final proteinColor =
         isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
     final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
@@ -164,7 +162,7 @@ class _RecommendedMealCardState extends ConsumerState<RecommendedMealCard> {
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder),
+          border: Border.all(color: accent.withValues(alpha: 0.25)),
         ),
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -191,22 +189,17 @@ class _RecommendedMealCardState extends ConsumerState<RecommendedMealCard> {
                     children: [
                       Text(
                         title,
-                        style: ZType.sans(
-                          15,
-                          weight: FontWeight.w700,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                           color: textPrimary,
-                          height: 1.15,
                         ),
                       ),
                       if (subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 2),
                         Text(
                           subtitle,
-                          style: ZType.ser(
-                            12.5,
-                            color: textSecondary,
-                            height: 1.3,
-                          ),
+                          style: TextStyle(fontSize: 12, color: textSecondary),
                         ),
                       ],
                     ],
@@ -218,11 +211,15 @@ class _RecommendedMealCardState extends ConsumerState<RecommendedMealCard> {
                   children: [
                     Text(
                       '$calories',
-                      style: ZType.data(18, color: accent),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: accent,
+                      ),
                     ),
                     Text(
-                      'KCAL',
-                      style: ZType.lbl(10, color: textSecondary, letterSpacing: 1.0),
+                      'kcal',
+                      style: TextStyle(fontSize: 10, color: textSecondary),
                     ),
                   ],
                 ),
@@ -267,11 +264,7 @@ class _RecommendedMealCardState extends ConsumerState<RecommendedMealCard> {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     "Couldn't log that — tap to try again.",
-                    style: ZType.sans(
-                      11,
-                      weight: FontWeight.w500,
-                      color: AppColors.error,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppColors.error),
                   ),
                 ),
             ],
@@ -309,13 +302,21 @@ class _MacroPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              label.toUpperCase(),
-              style: ZType.lbl(11, color: color, letterSpacing: 0.8),
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
             ),
             const SizedBox(width: 6),
             Text(
               '${grams.round()}g',
-              style: ZType.data(12, color: color),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
             ),
           ],
         ),
@@ -382,12 +383,8 @@ class _LogButton extends StatelessWidget {
               Icon(logged ? Icons.check_rounded : Icons.add_rounded, size: 18),
             const SizedBox(width: 8),
             Text(
-              label.toUpperCase(),
-              style: ZType.lbl(
-                14,
-                color: logged ? AppColors.green : Colors.white,
-                letterSpacing: 1.2,
-              ),
+              label,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             ),
           ],
         ),

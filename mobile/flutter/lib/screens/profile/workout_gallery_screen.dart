@@ -196,11 +196,10 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
         setState(() => _selectedFilter = selected ? type : null);
         _loadImages();
       },
-      // Signature-v2: primary/selected accent is orange, not cyan.
-      selectedColor: AppColors.orange.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.orange,
+      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
+      checkmarkColor: AppColors.cyan,
       labelStyle: TextStyle(
-        color: isSelected ? AppColors.orange : null,
+        color: isSelected ? AppColors.cyan : null,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
     );

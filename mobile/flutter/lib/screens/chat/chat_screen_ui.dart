@@ -72,12 +72,11 @@ class _StreamingBubble extends StatelessWidget {
                         // is impossible here (the bubble is only created on
                         // the first non-empty token).
                         streaming.content,
-                        // Archivo body — matches the committed coach bubble.
-                        style: ZType.sans(
-                          15,
-                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                          weight: FontWeight.w400,
-                          height: 1.45,
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.4,
+                          color:
+                              isDark ? Colors.white : AppColorsLight.textPrimary,
                         ),
                       ),
                     ),
@@ -136,11 +135,12 @@ class _StreamingBubble extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsetsDirectional.only(top: 4, start: 36),
                   child: Text(
-                    AppLocalizations.of(context).chatScreenUiTyping.toUpperCase(),
-                    style: ZType.lbl(
-                      9.5,
-                      color: isDark ? AppColors.textMuted : Colors.grey.shade500,
-                      letterSpacing: 1.4,
+                    AppLocalizations.of(context).chatScreenUiTyping,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark
+                          ? AppColors.textMuted
+                          : Colors.grey.shade500,
                     ),
                   ),
                 ),
@@ -177,21 +177,19 @@ extension _ChatScreenStateUI on _ChatScreenState {
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.surface : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: isDark ? AppColors.cardBorder : Colors.grey.shade300,
-            ),
+            color: isDark
+                ? AppColors.elevated.withOpacity(0.7)
+                : Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(12),
           ),
-          // Signature: Barlow uppercase day marker on a hairline pill.
           child: Text(
-            label.toUpperCase(),
-            style: ZType.lbl(
-              10.5,
+            label,
+            style: TextStyle(
+              fontSize: 12,
               color: isDark ? AppColors.textMuted : Colors.grey.shade600,
-              letterSpacing: 1.5,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),

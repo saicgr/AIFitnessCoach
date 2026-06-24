@@ -14,7 +14,6 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
@@ -81,8 +80,12 @@ class CoachGreetingView extends StatelessWidget {
             Text(
               headline,
               textAlign: TextAlign.center,
-              style: ZType.ser(26,
-                  color: c.textPrimary, weight: FontWeight.w600, height: 1.2),
+              style: TextStyle(
+                fontSize: 24,
+                height: 1.2,
+                fontWeight: FontWeight.w800,
+                color: c.textPrimary,
+              ),
             ),
           if (headline.isNotEmpty && body.isNotEmpty)
             const SizedBox(height: 8),
@@ -92,8 +95,11 @@ class CoachGreetingView extends StatelessWidget {
             Text(
               body,
               textAlign: TextAlign.center,
-              style: ZType.sans(15,
-                  color: c.textSecondary, weight: FontWeight.w400, height: 1.4),
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.4,
+                color: c.textSecondary,
+              ),
             ),
 
           // Grounded inline graphs (sleep ring / recovery / steps) — Fix 3:
@@ -162,8 +168,11 @@ class _GreetingSuggestion extends StatelessWidget {
               Expanded(
                 child: Text(
                   chip.label,
-                  style: ZType.sans(14.5,
-                      color: colors.textPrimary, weight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textPrimary,
+                  ),
                 ),
               ),
               Icon(

@@ -15,7 +15,6 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -41,6 +40,7 @@ class EquipmentMatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = ThemeColors.of(context);
+    final isDark = colors.isDark;
 
     final canonical = actionData['canonical_name'] as String?;
     final rawName = actionData['raw_name'] as String?;
@@ -56,9 +56,15 @@ class EquipmentMatchCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: isDark
+            ? Colors.white.withOpacity(0.04)
+            : Colors.black.withOpacity(0.03),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.cardBorder),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.05),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,13 +75,13 @@ class EquipmentMatchCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: colors.accent.withOpacity(0.15),
+                  color: AppColors.cyan.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.fitness_center_outlined,
                   size: 18,
-                  color: colors.accent,
+                  color: AppColors.cyan,
                 ),
               ),
               const SizedBox(width: 10),
@@ -85,11 +91,10 @@ class EquipmentMatchCard extends StatelessWidget {
                   children: [
                     Text(
                       headlineLabel,
-                      style: ZType.sans(
-                        15,
-                        weight: FontWeight.w700,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
-                        height: 1.15,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -99,11 +104,9 @@ class EquipmentMatchCard extends StatelessWidget {
                           : (unmatchedReason == 'not_equipment'
                               ? 'That doesn\'t look like gym equipment'
                               : 'No matching exercises in your library yet'),
-                      style: ZType.sans(
-                        12,
-                        weight: FontWeight.w400,
+                      style: TextStyle(
+                        fontSize: 12,
                         color: colors.textMuted,
-                        height: 1.3,
                       ),
                     ),
                   ],
@@ -163,13 +166,10 @@ class EquipmentMatchCard extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onCreateCustom,
             icon: const Icon(Icons.add_outlined, size: 18),
-            label: Text(
-              cta.toUpperCase(),
-              style: ZType.lbl(13, color: colors.accent, letterSpacing: 1.2),
-            ),
+            label: Text(cta),
             style: OutlinedButton.styleFrom(
-              foregroundColor: colors.accent,
-              side: BorderSide(color: colors.accent.withOpacity(0.4)),
+              foregroundColor: AppColors.cyan,
+              side: BorderSide(color: AppColors.cyan.withOpacity(0.4)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -180,13 +180,9 @@ class EquipmentMatchCard extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onStartWorkoutWithEquipment,
             icon: const Icon(Icons.flash_on_outlined, size: 18),
-            label: Text(
-              AppLocalizations.of(context).equipmentMatchCardStartAWorkoutWith.toUpperCase(),
-              style: ZType.lbl(13, color: colors.textPrimary, letterSpacing: 1.2),
-            ),
+            label: Text(AppLocalizations.of(context).equipmentMatchCardStartAWorkoutWith),
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.textPrimary,
-              side: BorderSide(color: colors.cardBorder),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -217,12 +213,9 @@ class EquipmentMatchCard extends StatelessWidget {
         TextButton.icon(
           onPressed: onStartWorkoutWithEquipment,
           icon: const Icon(Icons.flash_on_outlined, size: 16),
-          label: Text(
-            AppLocalizations.of(context).equipmentMatchCardStartAWorkoutWith.toUpperCase(),
-            style: ZType.lbl(12, color: colors.accent, letterSpacing: 1.2),
-          ),
+          label: Text(AppLocalizations.of(context).equipmentMatchCardStartAWorkoutWith),
           style: TextButton.styleFrom(
-            foregroundColor: colors.accent,
+            foregroundColor: AppColors.cyan,
             padding: EdgeInsets.zero,
             minimumSize: const Size(0, 32),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -256,9 +249,15 @@ class _MatchRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: colors.isDark ? AppColors.elevated : AppColorsLight.elevated,
+          color: colors.isDark
+              ? Colors.white.withOpacity(0.03)
+              : Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: colors.cardBorder),
+          border: Border.all(
+            color: colors.isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.05),
+          ),
         ),
         child: Row(
           children: [
@@ -286,21 +285,18 @@ class _MatchRow extends StatelessWidget {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: ZType.sans(
-                      14,
-                      weight: FontWeight.w700,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       color: colors.textPrimary,
-                      height: 1.15,
                     ),
                   ),
                   if (muscle != null && muscle.isNotEmpty)
                     Text(
                       muscle,
-                      style: ZType.sans(
-                        12,
-                        weight: FontWeight.w400,
+                      style: TextStyle(
+                        fontSize: 12,
                         color: colors.textMuted,
-                        height: 1.3,
                       ),
                     ),
                   if (badge != null && badge.isNotEmpty)
@@ -310,15 +306,15 @@ class _MatchRow extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: colors.accent.withOpacity(0.12),
+                          color: AppColors.cyan.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          badge.toUpperCase(),
-                          style: ZType.lbl(
-                            10,
-                            color: colors.accent,
-                            letterSpacing: 0.8,
+                          badge,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.cyan,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -331,15 +327,15 @@ class _MatchRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: colors.accent,
+                color: AppColors.cyan,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                AppLocalizations.of(context).nextSetPreviewUse.toUpperCase(),
-                style: ZType.lbl(
-                  12,
-                  color: colors.accentContrast,
-                  letterSpacing: 1.2,
+                AppLocalizations.of(context).nextSetPreviewUse,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
             ),

@@ -336,13 +336,10 @@ class ChatMessageBubble extends ConsumerWidget {
               // leak through from older agent prompts. The /support route
               // does not exist; show_options chips render below instead.
               _scrubLegacyActionTokens(message.content),
-              // Signature: Archivo body for the message text — the coach's
-              // human voice reads as Fraunces only in dedicated whisper lines.
-              style: ZType.sans(
-                15,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
-                weight: FontWeight.w400,
-                height: 1.45,
+                fontSize: 15,
+                height: 1.4,
               ),
             ),
           // ── Contact / option chips (action: "show_options") ─────────────
@@ -564,20 +561,17 @@ class ChatMessageBubble extends ConsumerWidget {
               children: [
                 Text(
                   _formatTime(message.timestamp ?? DateTime.now()),
-                  // Space Mono telemetry for the timestamp/latency readout.
-                  style: ZType.data(
-                    9.5,
+                  style: const TextStyle(
+                    fontSize: 10,
                     color: AppColors.textMuted,
-                    weight: FontWeight.w400,
                   ),
                 ),
                 if (!isUser && message.responseTimeMs != null) ...[
                   Text(
                     ' · ${_formatResponseTime(message.responseTimeMs!)}',
-                    style: ZType.data(
-                      9.5,
+                    style: TextStyle(
+                      fontSize: 10,
                       color: AppColors.textMuted,
-                      weight: FontWeight.w400,
                     ),
                   ),
                 ],
@@ -593,10 +587,10 @@ class ChatMessageBubble extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 'Generated offline by ${message.actionData?['model'] ?? 'Local AI'}',
-                style: ZType.lbl(
-                  8.5,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontStyle: FontStyle.italic,
                   color: AppColors.textMuted.withOpacity(0.6),
-                  letterSpacing: 1.0,
                 ),
               ),
             ),
@@ -788,16 +782,18 @@ class ChatMessageBubble extends ConsumerWidget {
   }
 
   Widget _buildErrorMessage(BuildContext context) {
-    // Signature: error turns on a hairline-bordered near-black surface tinted
-    // with the semantic error color (never a flat red Material card).
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.10),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.error.withOpacity(0.30)),
+          color: isDark
+              ? Colors.red.withOpacity(0.1)
+              : Colors.red.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.red.withOpacity(0.3)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -805,13 +801,14 @@ class ChatMessageBubble extends ConsumerWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.warning_amber_rounded, size: 18,
-                    color: AppColors.error),
+                Icon(Icons.warning_amber_rounded, size: 18,
+                    color: isDark ? Colors.red[300] : Colors.red[600]),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     message.content,
-                    style: ZType.sans(13, color: AppColors.error, weight: FontWeight.w400),
+                    style: TextStyle(fontSize: 13,
+                        color: isDark ? Colors.red[300] : Colors.red[700]),
                   ),
                 ),
               ],
@@ -821,9 +818,11 @@ class ChatMessageBubble extends ConsumerWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: TextButton.icon(
                   onPressed: onRetry,
-                  icon: const Icon(Icons.refresh, size: 14, color: AppColors.error),
-                  label: Text(AppLocalizations.of(context).buttonRetry.toUpperCase(),
-                      style: ZType.lbl(11, color: AppColors.error, letterSpacing: 1.2)),
+                  icon: Icon(Icons.refresh, size: 14,
+                      color: isDark ? Colors.red[300] : Colors.red[600]),
+                  label: Text(AppLocalizations.of(context).buttonRetry,
+                      style: TextStyle(fontSize: 12,
+                          color: isDark ? Colors.red[300] : Colors.red[600])),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     minimumSize: Size.zero,
@@ -855,11 +854,10 @@ class ChatMessageBubble extends ConsumerWidget {
         ),
         child: Text(
           message.content,
-          // System notices speak in the coach's quiet human (Fraunces) voice.
-          style: ZType.ser(
-            13,
+          style: TextStyle(
+            fontSize: 13,
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-            style: FontStyle.italic,
+            fontStyle: FontStyle.italic,
           ),
           textAlign: TextAlign.center,
         ),
@@ -950,7 +948,10 @@ class ChatMessageBubble extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
                 prompt,
-                style: ZType.sans(13, color: AppColors.textMuted, weight: FontWeight.w400),
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 13,
+                ),
               ),
             ),
           Wrap(
@@ -1040,14 +1041,18 @@ class _ViewMicrosButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: color.withValues(alpha: 0.30)),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.science_outlined, size: 16, color: color),
-                const SizedBox(width: 6),
+                Icon(Icons.science_outlined, size: 16, color: color),
+                SizedBox(width: 6),
                 Text(
-                  'Vitamins & minerals'.toUpperCase(),
-                  style: ZType.lbl(11.5, color: color, letterSpacing: 1.2),
+                  'Vitamins & minerals',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
                 ),
               ],
             ),
@@ -1110,11 +1115,10 @@ class _WorkoutContextMessageState extends State<_WorkoutContextMessage>
         // User's actual question
         Text(
           userQuestion,
-          style: ZType.sans(
-            15,
+          style: TextStyle(
             color: widget.textColor,
-            weight: FontWeight.w400,
-            height: 1.45,
+            fontSize: 15,
+            height: 1.4,
           ),
         ),
         const SizedBox(height: 8),

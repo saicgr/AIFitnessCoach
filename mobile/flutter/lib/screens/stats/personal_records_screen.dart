@@ -8,7 +8,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/stat_typography.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
-import '../../widgets/design_system/zealova.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/gym_profile.dart';
 import '../../data/models/scores.dart';
@@ -432,28 +431,24 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    // Signature stat: muted glyph, Space-Mono numeral, Barlow uppercase label.
-    // Only the `accent` stat (Total PRs) carries the accent color — every other
-    // figure stays neutral so a single accent anchors the row.
-    Widget statItem(String value, String label, IconData icon,
-        {bool accent = false}) {
-      final figureColor = accent ? accentColor : textPrimary;
+    Widget statItem(String value, String label, IconData icon, Color iconColor) {
       return Expanded(
         child: Column(
           children: [
-            Icon(icon, size: 16, color: accent ? accentColor : textMuted),
-            const SizedBox(height: 5),
+            Icon(icon, size: 18, color: iconColor),
+            const SizedBox(height: 4),
             StatNumber(
               value: value,
               size: StatType.secondary,
-              color: figureColor,
+              color: textPrimary,
               alignment: Alignment.center,
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Text(
-              label.toUpperCase(),
-              style: ZType.lbl(9, color: textMuted, letterSpacing: 1.2),
+              label,
+              style: TextStyle(fontSize: 11, color: textMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -463,39 +458,40 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-              color: isDark ? AppColors.hairline : AppColorsLight.cardBorder),
-        ),
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
           statItem(
             '${stats.totalPrs}',
             'Total PRs',
-            Icons.emoji_events_outlined,
-            accent: true,
+            Icons.emoji_events_rounded,
+            Colors.amber,
           ),
           _verticalDivider(isDark),
           statItem(
             '${stats.prsThisPeriod}',
             'Last 30d',
-            Icons.calendar_today_outlined,
+            Icons.calendar_today_rounded,
+            accentColor,
           ),
           _verticalDivider(isDark),
           statItem(
             '${stats.currentPrStreak}',
             'PR Streak',
-            Icons.local_fire_department_outlined,
+            Icons.local_fire_department_rounded,
+            Colors.deepOrange,
           ),
           if (dots != null && dots.dotsScore > 0) ...[
             _verticalDivider(isDark),
             statItem(
               dots.dotsScore.toStringAsFixed(0),
               'DOTS',
-              Icons.speed_outlined,
+              Icons.speed_rounded,
+              Colors.purpleAccent,
             ),
           ],
         ],
@@ -507,7 +503,9 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
     return Container(
       width: 1,
       height: 36,
-      color: isDark ? AppColors.hairline : AppColorsLight.cardBorder,
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.08)
+          : Colors.black.withValues(alpha: 0.08),
     );
   }
 
@@ -516,27 +514,19 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
   // ──────────────────────────────────────────────────────────────────────────
 
   Widget _buildSearchBar(bool isDark, Color accentColor) {
-    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    OutlineInputBorder hairlineBorder(Color color) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: color),
-        );
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: TextField(
         controller: _searchController,
-        style: ZType.sans(
-          14,
-          weight: FontWeight.w500,
+        style: TextStyle(
           color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
         ),
         decoration: InputDecoration(
           hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
-          hintStyle: ZType.sans(14, weight: FontWeight.w500, color: textMuted),
+          hintStyle: TextStyle(color: textMuted),
           prefixIcon: Icon(Icons.search, color: textMuted, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -548,10 +538,11 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
                 )
               : null,
           filled: true,
-          fillColor: surface,
-          enabledBorder: hairlineBorder(cardBorder),
-          focusedBorder: hairlineBorder(accentColor),
-          border: hairlineBorder(cardBorder),
+          fillColor: elevated,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
@@ -575,8 +566,8 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
       child: Row(
         children: [
           Text(
-            AppLocalizations.of(context).personalRecordsSortBy.toUpperCase(),
-            style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.4),
+            AppLocalizations.of(context).personalRecordsSortBy,
+            style: TextStyle(fontSize: 12, color: textMuted),
           ),
           const SizedBox(width: 8),
           ..._SortMode.values.map((mode) {
@@ -609,29 +600,23 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
                 },
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? accentColor.withValues(alpha: 0.10)
+                        ? accentColor.withValues(alpha: 0.15)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: isSelected
-                          ? accentColor
-                          : (isDark
-                              ? AppColors.cardBorder
-                              : AppColorsLight.cardBorder),
-                    ),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        label.toUpperCase(),
-                        style: ZType.lbl(
-                          11,
+                        label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w400,
                           color: isSelected ? accentColor : textSecondary,
-                          letterSpacing: 1.0,
                         ),
                       ),
                       if (isSelected) ...[
@@ -715,15 +700,15 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.emoji_events_outlined, size: 56, color: textMuted),
+            Icon(Icons.emoji_events_outlined,
+                size: 64, color: Colors.amber.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
-              (gymScoped
-                      ? 'No PRs at this gym yet'
-                      : AppLocalizations.of(context)
-                          .prSummaryCardNoPersonalRecordsYet)
-                  .toUpperCase(),
-              style: ZType.lbl(15, color: textPrimary, letterSpacing: 1.2),
+              gymScoped
+                  ? 'No PRs at this gym yet'
+                  : AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -731,7 +716,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
               gymScoped
                   ? 'Log a PR here, or switch to "All gyms".'
                   : AppLocalizations.of(context).personalRecordsCompleteWorkoutsToStart,
-              style: ZType.sans(13, weight: FontWeight.w500, color: textMuted),
+              style: TextStyle(fontSize: 14, color: textMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -817,13 +802,13 @@ class _ExercisePRCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
 
     final current1rm = oneRm?.oneRepMaxKg ?? pr.estimated1rmKg;
     final bwRatio = strengthData?.bodyweightRatio;
@@ -835,7 +820,7 @@ class _ExercisePRCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surface : AppColorsLight.surface,
+          color: elevated,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: cardBorder),
         ),
@@ -851,16 +836,25 @@ class _ExercisePRCard extends StatelessWidget {
                     children: [
                       Text(
                         pr.exerciseDisplayName,
-                        style: ZType.sans(15,
-                            weight: FontWeight.w700, color: textPrimary),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
                       ),
                       if (pr.muscleGroup != null)
                         Padding(
-                          padding: const EdgeInsets.only(top: 3),
+                          padding: const EdgeInsets.only(top: 2),
                           child: Text(
-                            pr.muscleGroup!.replaceAll('_', ' ').toUpperCase(),
-                            style: ZType.lbl(10,
-                                color: textMuted, letterSpacing: 1.2),
+                            pr.muscleGroup!
+                                .replaceAll('_', ' ')
+                                .split(' ')
+                                .map((w) => w.isEmpty
+                                    ? w
+                                    : '${w[0].toUpperCase()}${w.substring(1)}')
+                                .join(' '),
+                            style:
+                                TextStyle(fontSize: 12, color: textMuted),
                           ),
                         ),
                       // Gym attribution chip — colored dot + gym name so a
@@ -873,54 +867,40 @@ class _ExercisePRCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Badges — All-Time PR carries the one accent on the card;
-                // strength level keeps its identity color but as a hairline
-                // chip (dot + label) rather than a filled Material pill.
+                // Badges
                 if (pr.isAllTimePr)
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                          color: accentColor.withValues(alpha: 0.45)),
+                      color: Colors.amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      AppLocalizations.of(context)
-                          .workoutSummaryScreenAllTime
-                          .toUpperCase(),
-                      style: ZType.lbl(9.5,
-                          color: accentColor, letterSpacing: 1.0),
+                      AppLocalizations.of(context).workoutSummaryScreenAllTime,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.amber.shade700,
+                      ),
                     ),
                   ),
                 if (level != null) ...[
                   const SizedBox(width: 6),
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: cardBorder),
+                      color: _levelColor(level).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _levelColor(level),
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          _levelLabel(level).toUpperCase(),
-                          style: ZType.lbl(9.5,
-                              color: textSecondary, letterSpacing: 1.0),
-                        ),
-                      ],
+                    child: Text(
+                      _levelLabel(level),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: _levelColor(level),
+                      ),
                     ),
                   ),
                 ],
@@ -969,21 +949,25 @@ class _ExercisePRCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   _formatDate(pr.achievedAt),
-                  style: ZType.data(11, color: textMuted),
+                  style: TextStyle(fontSize: 11, color: textMuted),
                 ),
                 const Spacer(),
                 if (pr.improvementPercent != null &&
                     pr.improvementPercent! > 0)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 9, vertical: 4),
+                        horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: success.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(999),
+                      color: Colors.green.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       AppLocalizations.of(context)!.personalRecordsScreenValue(pr.improvementPercent!.toStringAsFixed(1)),
-                      style: ZType.data(11, color: success),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green,
+                      ),
                     ),
                   ),
               ],
@@ -1015,8 +999,12 @@ class _ExercisePRCard extends StatelessWidget {
           ),
           const SizedBox(width: 5),
           Text(
-            name.toUpperCase(),
-            style: ZType.lbl(10, color: color, letterSpacing: 0.8),
+            name,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
           ),
         ],
       ),
@@ -1029,10 +1017,11 @@ class _ExercisePRCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 13, color: iconColor),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
         Text(
           text,
-          style: ZType.data(11.5, color: textColor),
+          style: TextStyle(
+              fontSize: 12, fontWeight: FontWeight.w500, color: textColor),
         ),
       ],
     );

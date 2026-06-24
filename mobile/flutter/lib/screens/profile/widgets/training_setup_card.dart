@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/training_preferences_provider.dart';
 import '../../../core/providers/variation_provider.dart';
 import '../../../data/models/user.dart';
@@ -125,12 +124,9 @@ class TrainingSetupCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
     // Get the active gym profile for equipment and environment.
     // After this edit the gym profile is also the source of truth for
     // workout days, focus areas, and training split — the users table
@@ -147,26 +143,27 @@ class TrainingSetupCard extends ConsumerWidget {
         ? activeGymProfile!.focusAreas.map(_titleCase).join(', ')
         : (user?.focusAreasDisplay ?? 'Full body');
 
-    // Signature-v2: matte hairline surface (no boxed Material elevation),
-    // Barlow kicker header, hairline-ruled rows with framed muted glyphs.
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row — Barlow uppercase kicker + ghost edit affordance.
+          // Header row with edit icon
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 AppLocalizations.of(context).trainingSetupCardTrainingSetup,
-                style: ZType.lbl(12, color: textMuted, letterSpacing: 1.8),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
               ),
               if (activeGymProfile != null)
                 GestureDetector(
@@ -179,238 +176,198 @@ class TrainingSetupCard extends ConsumerWidget {
                       ),
                     );
                   },
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          AppLocalizations.of(context).commonEdit.toUpperCase(),
-                          style: ZType.lbl(11, color: accent, letterSpacing: 1.4),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.edit_rounded, color: accent, size: 14),
-                      ],
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.cyan.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.edit_rounded,
+                      color: AppColors.cyan,
+                      size: 18,
                     ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 16),
 
           // Equipment row
           _SetupRow(
             icon: Icons.fitness_center,
+            iconColor: AppColors.orange,
             label: AppLocalizations.of(context).trainingSetupCardEquipment,
             value: _getEquipmentDisplay(equipment),
             textPrimary: textPrimary,
             textSecondary: textSecondary,
-            textMuted: textMuted,
-            cardBorder: cardBorder,
           ),
+          const SizedBox(height: 12),
 
           // Environment row (from gym profile)
           _SetupRow(
             icon: Icons.location_on_outlined,
+            iconColor: AppColors.green,
             label: AppLocalizations.of(context).workoutPreferencesCardEnvironment,
             value: environment,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
-            textMuted: textMuted,
-            cardBorder: cardBorder,
           ),
+          const SizedBox(height: 12),
 
           // Experience row
           _SetupRow(
             icon: Icons.timeline,
+            iconColor: AppColors.purple,
             label: AppLocalizations.of(context).workoutPreferencesCardExperience,
             value: user?.trainingExperienceDisplay ?? AppLocalizations.of(context).workoutPreferencesCardNotSet,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
-            textMuted: textMuted,
-            cardBorder: cardBorder,
           ),
+          const SizedBox(height: 12),
 
           // Focus Areas row (reads from active gym profile first so
           // My Gym edits surface here without a reload)
           _SetupRow(
             icon: Icons.center_focus_strong,
+            iconColor: AppColors.cyan,
             label: AppLocalizations.of(context).workoutPreferencesCardFocusAreas,
             value: focusAreasValue,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
-            textMuted: textMuted,
-            cardBorder: cardBorder,
           ),
+          const SizedBox(height: 12),
 
           // Workout Days row (active gym profile is source of truth)
           _SetupRow(
             icon: Icons.calendar_today_outlined,
+            iconColor: AppColors.info,
             label: AppLocalizations.of(context).workoutSettingsWorkoutDays,
             value: workoutDaysValue,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
-            textMuted: textMuted,
-            cardBorder: cardBorder,
           ),
+          const SizedBox(height: 12),
 
           // Training Split row
           _TrainingSplitRow(
             textPrimary: textPrimary,
             textSecondary: textSecondary,
-            textMuted: textMuted,
-            cardBorder: cardBorder,
           ),
+          const SizedBox(height: 12),
 
           // Weekly Variety row
           _VarietyRow(
             textPrimary: textPrimary,
             textSecondary: textSecondary,
-            textMuted: textMuted,
-            cardBorder: cardBorder,
           ),
 
           // Custom Equipment link
-          if (onCustomEquipment != null)
+          if (onCustomEquipment != null) ...[
+            const SizedBox(height: 16),
+            Divider(
+              color: textSecondary.withValues(alpha: 0.2),
+              height: 1,
+            ),
+            const SizedBox(height: 12),
             _TappableRow(
               icon: Icons.build_outlined,
               label: AppLocalizations.of(context).trainingSetupCardMyCustomEquipment,
               subtitle: AppLocalizations.of(context).trainingSetupCardAddEquipmentNotIn,
+              iconColor: AppColors.yellow,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
-              textMuted: textMuted,
-              cardBorder: cardBorder,
               onTap: onCustomEquipment!,
             ),
+          ],
         ],
       ),
     );
   }
 }
 
-/// A single hairline-ruled row in the setup card. Framed muted glyph (the
-/// `.st-gl` grammar), neutral label, value right-aligned. No per-row accent
-/// tint — the redesign drops the rainbow icons.
+/// A single row in the setup card.
 class _SetupRow extends StatelessWidget {
   final IconData icon;
+  final Color? iconColor;
   final String label;
   final String value;
   final Color textPrimary;
   final Color textSecondary;
-  final Color textMuted;
-  final Color cardBorder;
 
   const _SetupRow({
     required this.icon,
+    this.iconColor,
     required this.label,
     required this.value,
     required this.textPrimary,
     required this.textSecondary,
-    required this.textMuted,
-    required this.cardBorder,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 11),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: cardBorder)),
-      ),
-      // crossAxisAlignment.start so a 2-line value (long German/Telugu
-      // translation) tops out flush with the label glyph instead of pushing
-      // the glyph downward as the row grows.
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _FramedGlyph(icon: icon, color: textMuted, cardBorder: cardBorder),
-          const SizedBox(width: 12),
-          // Label gets a smaller flex weight so the value (the user-customised
-          // content) wins the layout when both compete.
-          Flexible(
-            flex: 4,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 3),
-              child: Text(
-                label,
-                style: TextStyle(fontSize: 14, color: textSecondary),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+    // crossAxisAlignment.start so a 2-line value (long German/Telugu
+    // translation) tops out flush with the label icon instead of pushing
+    // the icon downward as the row grows.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(icon, size: 18, color: iconColor ?? textSecondary),
+        ),
+        const SizedBox(width: 10),
+        // Label gets a smaller flex weight so the value (which is the
+        // user-customised content) wins the layout when both compete.
+        Flexible(
+          flex: 4,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: textSecondary,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(width: 8),
-          Flexible(
-            flex: 6,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 3),
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
-                textAlign: TextAlign.right,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          flex: 6,
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: textPrimary,
             ),
+            textAlign: TextAlign.right,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-/// The signature framed hairline glyph box (`.st-gl`) — a muted icon inside a
-/// 30px hairline-bordered rounded square. Shared by the setup rows.
-class _FramedGlyph extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final Color cardBorder;
-
-  const _FramedGlyph({
-    required this.icon,
-    required this.color,
-    required this.cardBorder,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 30,
-      height: 30,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        border: Border.all(color: cardBorder),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(icon, size: 16, color: color),
-    );
-  }
-}
-
-/// A tappable hairline-ruled row with a framed glyph, label, subtitle, chevron.
+/// A tappable row with icon, label, subtitle, and chevron.
 class _TappableRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String subtitle;
+  final Color iconColor;
   final Color textPrimary;
   final Color textSecondary;
-  final Color textMuted;
-  final Color cardBorder;
   final VoidCallback onTap;
 
   const _TappableRow({
     required this.icon,
     required this.label,
     required this.subtitle,
+    required this.iconColor,
     required this.textPrimary,
     required this.textSecondary,
-    required this.textMuted,
-    required this.cardBorder,
     required this.onTap,
   });
 
@@ -419,38 +376,45 @@ class _TappableRow extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: cardBorder)),
-        ),
-        child: Row(
-          children: [
-            _FramedGlyph(icon: icon, color: textMuted, cardBorder: cardBorder),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 12, color: textMuted),
-                  ),
-                ],
-              ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
             ),
-            Icon(Icons.chevron_right, size: 18, color: textMuted),
-          ],
-        ),
+            child: Icon(icon, size: 18, color: iconColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            size: 20,
+            color: textSecondary,
+          ),
+        ],
       ),
     );
   }
@@ -460,14 +424,10 @@ class _TappableRow extends StatelessWidget {
 class _TrainingSplitRow extends ConsumerWidget {
   final Color textPrimary;
   final Color textSecondary;
-  final Color textMuted;
-  final Color cardBorder;
 
   const _TrainingSplitRow({
     required this.textPrimary,
     required this.textSecondary,
-    required this.textMuted,
-    required this.cardBorder,
   });
 
   static const _splitDisplayNames = {
@@ -496,12 +456,11 @@ class _TrainingSplitRow extends ConsumerWidget {
 
     return _SetupRow(
       icon: Icons.view_week_outlined,
+      iconColor: AppColors.limeGreen,
       label: AppLocalizations.of(context).workoutSettingsTrainingSplit,
       value: displayName,
       textPrimary: textPrimary,
       textSecondary: textSecondary,
-      textMuted: textMuted,
-      cardBorder: cardBorder,
     );
   }
 }
@@ -510,14 +469,10 @@ class _TrainingSplitRow extends ConsumerWidget {
 class _VarietyRow extends ConsumerWidget {
   final Color textPrimary;
   final Color textSecondary;
-  final Color textMuted;
-  final Color cardBorder;
 
   const _VarietyRow({
     required this.textPrimary,
     required this.textSecondary,
-    required this.textMuted,
-    required this.cardBorder,
   });
 
   String _varietyLabel(int percentage) {
@@ -539,12 +494,11 @@ class _VarietyRow extends ConsumerWidget {
       behavior: HitTestBehavior.opaque,
       child: _SetupRow(
         icon: Icons.shuffle_rounded,
+        iconColor: AppColors.yellow,
         label: AppLocalizations.of(context).workoutSettingsWeeklyVariety,
         value: _varietyLabel(percentage),
         textPrimary: textPrimary,
         textSecondary: textSecondary,
-        textMuted: textMuted,
-        cardBorder: cardBorder,
       ),
     );
   }
@@ -613,8 +567,8 @@ class _VarietyRow extends ConsumerWidget {
         ref.read(variationProvider.notifier).setVariation(value);
         Navigator.pop(context);
       },
-      selectedColor: AppColors.orange.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.orange,
+      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
+      checkmarkColor: AppColors.cyan,
     );
   }
 }

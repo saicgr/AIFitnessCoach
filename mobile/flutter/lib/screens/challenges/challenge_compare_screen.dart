@@ -3,17 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_typography.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
-
-/// Signature-v2 onPrimary ink — text/icon color on the solid orange accent.
-const Color _onAccent = Color(0xFF160B03);
-
 /// Full-screen side-by-side comparison of challenge results.
 ///
 /// Shows overall stats (time, volume, sets) and per-exercise breakdown
@@ -39,9 +34,7 @@ class _ChallengeCompareScreenState
     super.initState();
     _loadChallenge();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(posthogServiceProvider)
-          .capture(eventName: 'challenge_compare_viewed');
+      ref.read(posthogServiceProvider).capture(eventName: 'challenge_compare_viewed');
     });
   }
 
@@ -76,7 +69,8 @@ class _ChallengeCompareScreenState
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.background : AppColorsLight.background;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final textColor =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Scaffold(
       backgroundColor: bg,
@@ -84,7 +78,7 @@ class _ChallengeCompareScreenState
         title: AppLocalizations.of(context).challengeCompareChallengeResults,
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: orange))
+          ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? _buildError(isDark)
               : _buildComparison(context, isDark),
@@ -92,45 +86,40 @@ class _ChallengeCompareScreenState
   }
 
   Widget _buildError(bool isDark) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
             Text(
               AppLocalizations.of(context).challengeCompareFailedToLoadChallenge,
-              textAlign: TextAlign.center,
-              style: ZType.sans(16, color: textPrimary, weight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color:
+                    isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               _error ?? '',
               textAlign: TextAlign.center,
-              style: ZType.ser(13, color: textMuted),
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _loadChallenge,
-              icon: const Icon(Icons.refresh, size: 18, color: _onAccent),
-              label: Text(
-                AppLocalizations.of(context).buttonRetry.toUpperCase(),
-                style: ZType.lbl(13, color: _onAccent, letterSpacing: 1.2),
-              ),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: orange,
-                foregroundColor: _onAccent,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                backgroundColor: AppColors.orange,
+                foregroundColor: Colors.white,
               ),
             ),
           ],
@@ -147,7 +136,6 @@ class _ChallengeCompareScreenState
     final textColor =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
 
     final didBeat = data['did_beat'] as bool? ?? false;
     final workoutName = data['workout_name'] as String? ?? 'Workout';
@@ -183,7 +171,6 @@ class _ChallengeCompareScreenState
             isDark: isDark,
             elevated: elevated,
             cardBorder: cardBorder,
-            orange: orange,
             challengerName: challengerName,
             challengerAvatar: challengerAvatar,
             challengedName: challengedName,
@@ -196,73 +183,86 @@ class _ChallengeCompareScreenState
           // Workout name
           Text(
             workoutName,
-            textAlign: TextAlign.center,
-            style: ZType.disp(24, color: orange, letterSpacing: 0.5),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.orange,
+            ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Overall Stats
-          _buildSectionHeader('Overall', orange),
-          const SizedBox(height: 4),
-          _StatBlock(
-            cardBorder: cardBorder,
-            children: [
-              _buildComparisonRow(
-                emoji: '⏱️',
-                label: AppLocalizations.of(context).workoutShowcaseTime,
-                valueA: challengerStats['duration_minutes'],
-                valueB: challengedStats['duration_minutes'],
-                formatFn: (v) => '$v MIN',
-                lowerIsBetter: true,
-                textColor: textColor,
-                textMuted: textMuted,
-              ),
-              _buildComparisonRow(
-                emoji: '💪',
-                label:
-                    AppLocalizations.of(context).workoutSummaryAdvancedVolume,
-                valueA: challengerStats['total_volume'],
-                valueB: challengedStats['total_volume'],
-                formatFn: (v) => _formatVolume(v),
-                lowerIsBetter: false,
-                textColor: textColor,
-                textMuted: textMuted,
-              ),
-              _buildComparisonRow(
-                emoji: '📊',
-                label: AppLocalizations.of(context).workoutSummaryGeneralSets,
-                valueA: challengerStats['total_sets'],
-                valueB: challengedStats['total_sets'],
-                formatFn: (v) => '$v',
-                lowerIsBetter: false,
-                textColor: textColor,
-                textMuted: textMuted,
-              ),
-              _buildComparisonRow(
-                emoji: '🔄',
-                label: AppLocalizations.of(context).workoutSummaryGeneralReps,
-                valueA: challengerStats['total_reps'],
-                valueB: challengedStats['total_reps'],
-                formatFn: (v) => '$v',
-                lowerIsBetter: false,
-                textColor: textColor,
-                textMuted: textMuted,
-                isLast: true,
-              ),
-            ],
+          _buildSectionHeader('Overall', Icons.analytics_outlined, textColor),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: cardBorder.withValues(alpha: 0.3)),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildComparisonRow(
+                  emoji: '⏱️',
+                  label: AppLocalizations.of(context).workoutShowcaseTime,
+                  valueA: challengerStats['duration_minutes'],
+                  valueB: challengedStats['duration_minutes'],
+                  formatFn: (v) => '${v} min',
+                  lowerIsBetter: true,
+                  textColor: textColor,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 16),
+                _buildComparisonRow(
+                  emoji: '💪',
+                  label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
+                  valueA: challengerStats['total_volume'],
+                  valueB: challengedStats['total_volume'],
+                  formatFn: (v) => _formatVolume(v),
+                  lowerIsBetter: false,
+                  textColor: textColor,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 16),
+                _buildComparisonRow(
+                  emoji: '📊',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralSets,
+                  valueA: challengerStats['total_sets'],
+                  valueB: challengedStats['total_sets'],
+                  formatFn: (v) => '$v',
+                  lowerIsBetter: false,
+                  textColor: textColor,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 16),
+                _buildComparisonRow(
+                  emoji: '🔄',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralReps,
+                  valueA: challengerStats['total_reps'],
+                  valueB: challengedStats['total_reps'],
+                  formatFn: (v) => '$v',
+                  lowerIsBetter: false,
+                  textColor: textColor,
+                  textMuted: textMuted,
+                ),
+              ],
+            ),
           ),
 
           // Exercise Breakdown
           if (challengerExercises.isNotEmpty ||
               challengedExercises.isNotEmpty) ...[
             const SizedBox(height: 24),
-            _buildSectionHeader('Exercise Breakdown', orange),
-            const SizedBox(height: 4),
+            _buildSectionHeader(
+                'Exercise Breakdown', Icons.list_rounded, textColor),
+            const SizedBox(height: 12),
             _buildExerciseBreakdown(
               challengerExercises: challengerExercises,
               challengedExercises: challengedExercises,
               isDark: isDark,
+              elevated: elevated,
               cardBorder: cardBorder,
               textColor: textColor,
               textMuted: textMuted,
@@ -284,20 +284,33 @@ class _ChallengeCompareScreenState
     required bool isDark,
     required Color elevated,
     required Color cardBorder,
-    required Color orange,
     required String challengerName,
     required String? challengerAvatar,
     required String challengedName,
     required String? challengedAvatar,
     required bool didBeat,
   }) {
-    final accent = didBeat ? Colors.green : orange;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: elevated,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: didBeat
+              ? [
+                  Colors.green.withValues(alpha: 0.1),
+                  AppColors.cyan.withValues(alpha: 0.1),
+                ]
+              : [
+                  AppColors.orange.withValues(alpha: 0.1),
+                  AppColors.orange.withValues(alpha: 0.05),
+                ],
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: (didBeat ? Colors.green : AppColors.orange)
+              .withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         children: [
@@ -307,8 +320,6 @@ class _ChallengeCompareScreenState
               name: challengerName,
               avatarUrl: challengerAvatar,
               isWinner: !didBeat,
-              orange: orange,
-              isDark: isDark,
             ),
           ),
 
@@ -317,14 +328,21 @@ class _ChallengeCompareScreenState
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.pureBlack : AppColorsLight.background,
+              color: elevated,
               shape: BoxShape.circle,
-              border: Border.all(color: orange.withValues(alpha: 0.5), width: 2),
+              border: Border.all(
+                color: AppColors.orange.withValues(alpha: 0.5),
+                width: 2,
+              ),
             ),
-            child: Center(
+            child: const Center(
               child: Text(
                 'VS',
-                style: ZType.disp(16, color: orange, letterSpacing: 0.5),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.orange,
+                ),
               ),
             ),
           ),
@@ -335,8 +353,6 @@ class _ChallengeCompareScreenState
               name: challengedName,
               avatarUrl: challengedAvatar,
               isWinner: didBeat,
-              orange: orange,
-              isDark: isDark,
             ),
           ),
         ],
@@ -348,11 +364,7 @@ class _ChallengeCompareScreenState
     required String name,
     required String? avatarUrl,
     required bool isWinner,
-    required Color orange,
-    required bool isDark,
   }) {
-    final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     return Column(
       children: [
         Stack(
@@ -360,13 +372,17 @@ class _ChallengeCompareScreenState
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: orange.withValues(alpha: 0.15),
+              backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
               backgroundImage:
                   avatarUrl != null ? NetworkImage(avatarUrl) : null,
               child: avatarUrl == null
                   ? Text(
                       name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: ZType.disp(22, color: orange),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cyan,
+                      ),
                     )
                   : null,
             ),
@@ -389,24 +405,41 @@ class _ChallengeCompareScreenState
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: ZType.sans(14,
-              color: isWinner ? Colors.green : textColor,
-              weight: FontWeight.w700),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: isWinner ? FontWeight.bold : FontWeight.w500,
+            color: isWinner ? Colors.green : null,
+          ),
         ),
         if (isWinner)
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              AppLocalizations.of(context).challengeCompareWinner.toUpperCase(),
-              style: ZType.lbl(10, color: Colors.green, letterSpacing: 1.6),
+          Text(
+            AppLocalizations.of(context).challengeCompareWinner,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+              letterSpacing: 1,
             ),
           ),
       ],
     );
   }
 
-  Widget _buildSectionHeader(String title, Color orange) {
-    return ZSectionKickerLocal(label: title, color: orange);
+  Widget _buildSectionHeader(String title, IconData icon, Color textColor) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppColors.textMuted),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildComparisonRow({
@@ -418,7 +451,6 @@ class _ChallengeCompareScreenState
     required bool lowerIsBetter,
     required Color textColor,
     required Color textMuted,
-    bool isLast = false,
   }) {
     final numA = _toDouble(valueA);
     final numB = _toDouble(valueB);
@@ -436,69 +468,66 @@ class _ChallengeCompareScreenState
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: isLast
-          ? null
-          : BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: AppColors.hairline),
+    return Row(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 18)),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 60,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textMuted,
+            ),
+          ),
+        ),
+        // UserA value
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                valueA != null ? formatFn(valueA) : '-',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: aWins ? FontWeight.bold : FontWeight.w500,
+                  color: aWins ? Colors.green : textColor,
+                ),
               ),
-            ),
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: 10),
-          SizedBox(
-            width: 64,
-            child: Text(
-              label.toUpperCase(),
-              style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.0),
-            ),
-          ),
-          // UserA value
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: Text(
-                    valueA != null ? formatFn(valueA) : '-',
-                    textAlign: TextAlign.center,
-                    style: ZType.data(13.5,
-                        color: aWins ? Colors.green : textColor),
-                  ),
-                ),
-                if (aWins) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.check_circle, size: 14, color: Colors.green),
-                ],
+              if (aWins) ...[
+                const SizedBox(width: 4),
+                const Icon(Icons.check_circle, size: 14, color: Colors.green),
               ],
-            ),
+            ],
           ),
-          Text('vs', style: ZType.lbl(10, color: textMuted, letterSpacing: 1.0)),
-          // UserB value
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: Text(
-                    valueB != null ? formatFn(valueB) : '-',
-                    textAlign: TextAlign.center,
-                    style: ZType.data(13.5,
-                        color: bWins ? Colors.green : textColor),
-                  ),
+        ),
+        Text(
+          'vs',
+          style: TextStyle(fontSize: 12, color: textMuted),
+        ),
+        // UserB value
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                valueB != null ? formatFn(valueB) : '-',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: bWins ? FontWeight.bold : FontWeight.w500,
+                  color: bWins ? Colors.green : textColor,
                 ),
-                if (bWins) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.check_circle, size: 14, color: Colors.green),
-                ],
+              ),
+              if (bWins) ...[
+                const SizedBox(width: 4),
+                const Icon(Icons.check_circle, size: 14, color: Colors.green),
               ],
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -506,6 +535,7 @@ class _ChallengeCompareScreenState
     required List<dynamic> challengerExercises,
     required List<dynamic> challengedExercises,
     required bool isDark,
+    required Color elevated,
     required Color cardBorder,
     required Color textColor,
     required Color textMuted,
@@ -515,134 +545,145 @@ class _ChallengeCompareScreenState
         ? challengerExercises.length
         : challengedExercises.length;
 
-    return _StatBlock(
-      cardBorder: cardBorder,
-      children: List.generate(maxLen, (index) {
-        final exA = index < challengerExercises.length
-            ? challengerExercises[index] as Map<String, dynamic>
-            : null;
-        final exB = index < challengedExercises.length
-            ? challengedExercises[index] as Map<String, dynamic>
-            : null;
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder.withValues(alpha: 0.3)),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: maxLen,
+        separatorBuilder: (_, __) => Divider(
+          height: 1,
+          indent: 16,
+          endIndent: 16,
+          color: cardBorder.withValues(alpha: 0.2),
+        ),
+        itemBuilder: (context, index) {
+          final exA = index < challengerExercises.length
+              ? challengerExercises[index] as Map<String, dynamic>
+              : null;
+          final exB = index < challengedExercises.length
+              ? challengedExercises[index] as Map<String, dynamic>
+              : null;
 
-        final name = exA?['name'] ?? exB?['name'] ?? 'Exercise ${index + 1}';
+          final name = exA?['name'] ?? exB?['name'] ?? 'Exercise ${index + 1}';
 
-        final setsA = exA?['sets'] as int?;
-        final repsA = exA?['reps'] as int?;
-        final weightA = _toDouble(exA?['weight_kg']);
+          final setsA = exA?['sets'] as int?;
+          final repsA = exA?['reps'] as int?;
+          final weightA = _toDouble(exA?['weight_kg']);
 
-        final setsB = exB?['sets'] as int?;
-        final repsB = exB?['reps'] as int?;
-        final weightB = _toDouble(exB?['weight_kg']);
+          final setsB = exB?['sets'] as int?;
+          final repsB = exB?['reps'] as int?;
+          final weightB = _toDouble(exB?['weight_kg']);
 
-        String formatExercise(int? sets, int? reps, double? weight) {
-          final parts = <String>[];
-          if (sets != null && reps != null) parts.add('${sets}x$reps');
-          if (weight != null && weight > 0) {
-            parts.add('@ ${weight.toStringAsFixed(0)}kg');
+          String formatExercise(int? sets, int? reps, double? weight) {
+            final parts = <String>[];
+            if (sets != null && reps != null) parts.add('${sets}x$reps');
+            if (weight != null && weight > 0) {
+              parts.add('@ ${weight.toStringAsFixed(0)}kg');
+            }
+            return parts.isNotEmpty ? parts.join(' ') : '-';
           }
-          return parts.isNotEmpty ? parts.join(' ') : '-';
-        }
 
-        final strA = formatExercise(setsA, repsA, weightA);
-        final strB = formatExercise(setsB, repsB, weightB);
+          final strA = formatExercise(setsA, repsA, weightA);
+          final strB = formatExercise(setsB, repsB, weightB);
 
-        // Determine winner by weight (higher is better)
-        final aWins =
-            weightA != null && weightB != null && weightA > weightB;
-        final bWins =
-            weightA != null && weightB != null && weightB > weightA;
+          // Determine winner by weight (higher is better)
+          final aWins = weightA != null &&
+              weightB != null &&
+              weightA > weightB;
+          final bWins = weightA != null &&
+              weightB != null &&
+              weightB > weightA;
 
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: index == maxLen - 1
-              ? null
-              : BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: AppColors.hairline),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name as String,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
                   ),
                 ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name as String,
-                style: ZType.sans(14, color: textColor, weight: FontWeight.w700),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Flexible(
-                          child: Text(
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Text(
                             strA,
-                            style: ZType.data(12.5,
-                                color: aWins ? Colors.green : textMuted),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight:
+                                  aWins ? FontWeight.bold : FontWeight.w400,
+                              color: aWins ? Colors.green : textMuted,
+                            ),
                           ),
-                        ),
-                        if (aWins) ...[
-                          const SizedBox(width: 4),
-                          const Icon(Icons.check_circle,
-                              size: 12, color: Colors.green),
+                          if (aWins) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.check_circle,
+                                size: 12, color: Colors.green),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  Text('vs',
-                      style:
-                          ZType.lbl(10, color: textMuted, letterSpacing: 1.0)),
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Flexible(
-                          child: Text(
+                    Text('vs', style: TextStyle(fontSize: 11, color: textMuted)),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
                             strB,
-                            textAlign: TextAlign.end,
-                            style: ZType.data(12.5,
-                                color: bWins ? Colors.green : textMuted),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight:
+                                  bWins ? FontWeight.bold : FontWeight.w400,
+                              color: bWins ? Colors.green : textMuted,
+                            ),
                           ),
-                        ),
-                        if (bWins) ...[
-                          const SizedBox(width: 4),
-                          const Icon(Icons.check_circle,
-                              size: 12, color: Colors.green),
+                          if (bWins) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.check_circle,
+                                size: 12, color: Colors.green),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      }),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildActionButtons(
       BuildContext context, Map<String, dynamic> data, bool isDark) {
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return Row(
       children: [
         // Rematch button
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () => _sendRematch(data),
-            icon: const Icon(Icons.replay_rounded, size: 20, color: _onAccent),
+            icon: const Icon(Icons.replay_rounded, size: 20),
             label: Text(
-              AppLocalizations.of(context).challengeCompareRematch.toUpperCase(),
-              style: ZType.lbl(13, color: _onAccent, letterSpacing: 1.2),
+              AppLocalizations.of(context).challengeCompareRematch,
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: orange,
-              foregroundColor: _onAccent,
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -658,15 +699,23 @@ class _ChallengeCompareScreenState
               HapticFeedback.lightImpact();
               context.go('/social');
             },
-            icon: Icon(Icons.feed_rounded, size: 20, color: textPrimary),
+            icon: Icon(
+              Icons.feed_rounded,
+              size: 20,
+              color: isDark ? AppColors.cyan : AppColorsLight.textPrimary,
+            ),
             label: Text(
-              AppLocalizations.of(context)
-                  .challengeCompareViewFeed
-                  .toUpperCase(),
-              style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.2),
+              AppLocalizations.of(context).challengeCompareViewFeed,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.cyan : AppColorsLight.textPrimary,
+              ),
             ),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: cardBorder),
+              side: BorderSide(
+                color: (isDark ? AppColors.cyan : AppColorsLight.textPrimary)
+                    .withValues(alpha: 0.5),
+              ),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -706,8 +755,7 @@ class _ChallengeCompareScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                AppLocalizations.of(context).challengeCompareRematchSent),
+            content: Text(AppLocalizations.of(context).challengeCompareRematchSent),
             backgroundColor: Colors.green,
           ),
         );
@@ -738,53 +786,8 @@ class _ChallengeCompareScreenState
     final v = _toDouble(volume);
     if (v == null) return '-';
     if (v >= 1000) {
-      return '${(v / 1000).toStringAsFixed(1)}K LBS';
+      return '${(v / 1000).toStringAsFixed(1)}K lbs';
     }
-    return '${v.toStringAsFixed(0)} LBS';
-  }
-}
-
-/// A boxed group of comparison rows separated by hairline rules — the
-/// signature-v2 alternative to a heavy Material card.
-class _StatBlock extends StatelessWidget {
-  final List<Widget> children;
-  final Color cardBorder;
-
-  const _StatBlock({required this.children, required this.cardBorder});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(children: children),
-    );
-  }
-}
-
-/// Local Barlow-uppercase section kicker (the screen renders its own headers,
-/// not via a rail). Matches the signature `ZSectionKicker` look.
-class ZSectionKickerLocal extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const ZSectionKickerLocal({
-    super.key,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        label.toUpperCase(),
-        style: ZType.lbl(12, color: color, letterSpacing: 2.0),
-      ),
-    );
+    return '${v.toStringAsFixed(0)} lbs';
   }
 }

@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/services/haptic_service.dart';
@@ -74,15 +73,21 @@ class EnhancedEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Anton display name + Fraunces tagline (the coach's human voice).
           Text(
             coach.name,
-            style: ZType.disp(28, color: colors.textPrimary, letterSpacing: 0.5),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             coach.tagline.isNotEmpty ? coach.tagline : AppLocalizations.of(context).enhancedEmptyStateYourPersonalFitnessAssistan,
-            style: ZType.ser(14.5, color: colors.textSecondary),
+            style: TextStyle(
+              fontSize: 14,
+              color: colors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -91,8 +96,13 @@ class EnhancedEmptyState extends StatelessWidget {
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: Text(
-              AppLocalizations.of(context).enhancedEmptyStateTryAsking.toUpperCase(),
-              style: ZType.lbl(11, color: colors.textMuted, letterSpacing: 2.0),
+              AppLocalizations.of(context).enhancedEmptyStateTryAsking,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: colors.textMuted,
+                letterSpacing: 1.0,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -240,7 +250,11 @@ class _SuggestionsSheet extends StatelessWidget {
                       children: [
                         Text(
                           AppLocalizations.of(context)!.enhancedEmptyStateTryAsking2(coach.name),
-                          style: ZType.sans(16, color: colors.textPrimary, weight: FontWeight.w700),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textPrimary,
+                          ),
                         ),
                         const Spacer(),
                         IconButton(
@@ -309,7 +323,11 @@ class _SuggestionsSheet extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       text,
-                                      style: ZType.sans(14, color: colors.textPrimary, weight: FontWeight.w600),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: colors.textPrimary,
+                                      ),
                                     ),
                                   ),
                                   Icon(
@@ -376,7 +394,11 @@ class _CompactChip extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               text,
-              style: ZType.sans(13, color: colors.textPrimary, weight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: colors.textPrimary,
+              ),
             ),
           ],
         ),
