@@ -426,6 +426,25 @@ async def build_adapted_workout(params: WorkoutBuildParams, user: Optional[dict]
             deduped.append(e)
     rag_exercises = deduped[:count]
 
+    # Honor explicit equipment: if the user picked equipment the focus/category
+    # gate left unused (e.g. a cardio machine on a strength day), append ONE
+    # exercise using it as a labeled finisher. Equipment-scoped + compound-only
+    # fetch, so junk fillers can't enter. Fail-open.
+    if params.equipment:
+        try:
+            from api.v1.workouts.generation_helpers import (
+                ensure_requested_equipment_represented,
+            )
+            from core.db import get_supabase_db
+            rag_exercises, _fin_notes = await ensure_requested_equipment_represented(
+                rag_exercises, params.equipment, get_supabase_db(),
+                avoid_names=set(avoid_list), max_finishers=2,
+            )
+            if _fin_notes:
+                relaxed.extend(_fin_notes)
+        except Exception as _fe:
+            logger.warning(f"[workout_builder] finisher injection skipped: {_fe}")
+
     # adaptive params
     adaptive = get_adaptive_workout_service(supabase_client=None)
     try:
@@ -459,6 +478,7 @@ async def build_adapted_workout(params: WorkoutBuildParams, user: Optional[dict]
             "is_unilateral": ex.get("is_unilateral", False),
             "muscle_group": mg,
             "equipment": ex.get("equipment", "Bodyweight"),
+            "is_finisher": ex.get("is_finisher", False),
             "notes": ex.get("notes", "") or ex.get("instructions", ""),
             "gif_url": ex.get("gif_url", ""),
             "video_url": ex.get("video_url", ""),

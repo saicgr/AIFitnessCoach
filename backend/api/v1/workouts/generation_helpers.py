@@ -182,6 +182,129 @@ def check_equipment_focus_compatibility(
         logger.warning(f"check_equipment_focus_compatibility skipped due to: {e}", exc_info=True)
 
 
+# ── Explicit-equipment finisher injection ────────────────────────────────────
+# When a user EXPLICITLY picks equipment that the focus/category gate leaves
+# unused (e.g. a Rowing Machine — category=cardio — on an Upper/strength day,
+# dropped by the blanket cardio gate in exercise_rag), honor the pick by
+# appending ONE exercise using THAT equipment as a labeled finisher. The fetch
+# is scoped to the chosen equipment + compound-only, so bodyweight junk fillers
+# ("Arm Pulses") structurally can't enter. The global category gate is untouched
+# for normal selection. Fully fail-open.
+
+_FINISHER_BW_SKIP = {"bodyweight", "body weight", "body_weight", "none", ""}
+
+
+def _pretty_equipment(eq: str) -> str:
+    parts = [w for w in re.split(r"[_\s]+", (eq or "").strip()) if w]
+    return " ".join(w[:1].upper() + w[1:] for w in parts) or (eq or "").strip()
+
+
+def _equipment_is_represented(eq_token: str, used: set) -> bool:
+    t = (eq_token or "").strip().lower()
+    if not t:
+        return True
+    return any(t in u or u in t for u in used)
+
+
+def _fetch_equipment_finisher(db, equipment: str, exclude_names: set):
+    """Fetch ONE compound exercise that uses `equipment`, shaped as a raw
+    exercise dict ready for the workout formatters. None when nothing matches."""
+    try:
+        res = (
+            db.client.table("exercise_library")
+            .select(
+                "id, exercise_name, equipment, body_part, target_muscle, category, "
+                "mechanic_type, default_duration_seconds, instructions, gif_url, image_s3_path"
+            )
+            .ilike("equipment", f"%{equipment}%")
+            .eq("mechanic_type", "compound")
+            .limit(30)
+            .execute()
+        )
+        rows = [
+            r for r in (res.data or [])
+            if (r.get("target_muscle") or "").strip()
+            and (r.get("exercise_name") or "").strip().lower() not in exclude_names
+            and not (r.get("exercise_name") or "").lower().endswith("_female")
+        ]
+        if not rows:
+            return None
+        rows.sort(key=lambda r: (r.get("exercise_name") or ""))
+        r = rows[0]
+        dur = r.get("default_duration_seconds") or 300
+        return {
+            "id": r.get("id"),
+            "library_id": r.get("id"),
+            "name": r.get("exercise_name"),
+            "equipment": r.get("equipment"),
+            "category": r.get("category"),
+            "muscle_group": r.get("body_part"),
+            "body_part": r.get("body_part"),
+            "target_muscle": r.get("target_muscle"),
+            "is_finisher": True,
+            "is_timed": True,
+            "duration_seconds": int(dur) if dur else 300,
+            "sets": 1,
+            "instructions": r.get("instructions") or "",
+            "gif_url": r.get("gif_url") or "",
+            "image_url": r.get("image_s3_path") or "",
+        }
+    except Exception as e:
+        logger.warning(f"[finisher] fetch for '{equipment}' failed: {e}")
+        return None
+
+
+async def ensure_requested_equipment_represented(
+    exercises: List[Dict[str, Any]],
+    requested_equipment: Optional[List[str]],
+    db,
+    *,
+    avoid_names: Optional[set] = None,
+    max_finishers: int = 2,
+):
+    """Append a labeled finisher for each EXPLICITLY-requested equipment that
+    ended up unused. Returns (exercises, notes). Fail-open → (exercises, [])."""
+    notes: List[str] = []
+    try:
+        if not requested_equipment or not exercises:
+            return exercises, notes
+        req = []
+        for e in requested_equipment:
+            t = (e or "").strip()
+            if t and t.lower() not in _FINISHER_BW_SKIP and t.lower() not in BODYWEIGHT_TOKENS:
+                req.append(t)
+        if not req:
+            return exercises, notes
+        used = {
+            (ex.get("equipment") or "").strip().lower()
+            for ex in exercises if ex.get("equipment")
+        }
+        existing = {(ex.get("name") or "").strip().lower() for ex in exercises}
+        avoid = {(a or "").strip().lower() for a in (avoid_names or set())}
+        added = 0
+        for eq in req:
+            if added >= max_finishers:
+                break
+            if _equipment_is_represented(eq, used):
+                continue
+            cand = await asyncio.to_thread(
+                _fetch_equipment_finisher, db, eq, existing | avoid
+            )
+            if not cand:
+                continue
+            exercises.append(cand)
+            existing.add((cand.get("name") or "").strip().lower())
+            cat = (cand.get("category") or "cardio").strip().lower()
+            notes.append(f"Added {_pretty_equipment(eq)} as a {cat} finisher")
+            added += 1
+        return exercises, notes
+    except Exception as e:
+        logger.warning(
+            f"[finisher] ensure_requested_equipment_represented failed (fail-open): {e}"
+        )
+        return exercises, notes
+
+
 def _estimate_workout_met(exercises: list, workout_type: str = None, difficulty: str = None) -> float:
     """Estimate MET (Metabolic Equivalent of Task) from exercise composition."""
     met = 3.5
