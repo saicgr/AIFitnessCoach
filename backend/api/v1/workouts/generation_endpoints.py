@@ -1755,6 +1755,30 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     f"added {len(_rag_added)} safe for {injury_names}"
                 )
 
+        # Honor explicit equipment (per-day override / request): append a labeled
+        # finisher for any explicitly-requested equipment the focus/category gate
+        # left unused (e.g. a cardio machine on a strength day). Same helper as the
+        # studio path; equipment-scoped + compound-only so junk fillers can't enter.
+        # Runs AFTER all filters/injury-safety, immediately before persist. Fail-open.
+        if body.equipment and exercises:
+            try:
+                from api.v1.workouts.generation_helpers import (
+                    ensure_requested_equipment_represented,
+                )
+                _avoid_fin = set(avoided_exercises or []) | set(injury_names or [])
+                exercises, _fin_notes = await ensure_requested_equipment_represented(
+                    exercises, body.equipment, db,
+                    avoid_names=_avoid_fin, max_finishers=2,
+                )
+                if _fin_notes:
+                    _note = "; ".join(_fin_notes)
+                    workout_description = (
+                        f"{workout_description.strip()} ({_note})"
+                        if (workout_description or "").strip() else _note
+                    )
+            except Exception as _fe:
+                logger.warning(f"[generate_workout] finisher injection skipped: {_fe}")
+
         workout_db_data = {
             "user_id": body.user_id,
             "gym_profile_id": gym_profile_id,  # Link workout to gym profile

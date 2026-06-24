@@ -1325,6 +1325,22 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 goals if isinstance(goals, list) else None,
             )
 
+            # Honor explicit equipment: append a labeled finisher for any
+            # explicitly-requested equipment the focus/category gate left unused
+            # (same helper as the studio + /generate paths; equipment-scoped +
+            # compound-only so junk fillers can't enter). Runs before the calorie
+            # estimate so the finisher is counted. Fail-open.
+            if getattr(body, "equipment", None) and exercises:
+                try:
+                    from api.v1.workouts.generation_helpers import (
+                        ensure_requested_equipment_represented,
+                    )
+                    exercises, _fin_notes = await ensure_requested_equipment_represented(
+                        exercises, body.equipment, db, avoid_names=set(), max_finishers=2,
+                    )
+                except Exception as _fe:
+                    logger.warning(f"[streaming] finisher injection skipped: {_fe}")
+
             # Compute estimated calories using MET-based formula
             _user_weight_kg = float(user.get("weight_kg") or user.get("weight") or 70) if user else 70.0
             _user_weight_kg = max(30.0, min(_user_weight_kg, 250.0))
