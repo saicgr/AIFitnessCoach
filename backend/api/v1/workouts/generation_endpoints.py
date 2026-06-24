@@ -947,7 +947,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             # beginner still gets level-appropriate exercise selection.
             _fl = (fitness_level or "intermediate").lower()
             _per_day_intensity = (body.intensity_preference or "").lower()
-            if _per_day_intensity in ("hard", "hell"):
+            if _per_day_intensity in ("easy", "medium", "hard", "hell"):
                 difficulty = _per_day_intensity
                 workout_data["difficulty"] = _per_day_intensity
                 logger.info(
@@ -1678,6 +1678,13 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         _enforced_difficulty = _FITNESS_LEVEL_TO_DIFFICULTY.get(
             (fitness_level or "").strip().lower(), difficulty
         )
+        # An EXPLICIT intensity (per-day override or request) is a deliberate
+        # effort choice and must NOT be downgraded to match fitness_level (skill)
+        # — that was silently turning a beginner's per-day "Hell" back into
+        # "easy". Only enforce fitness_level→difficulty when the caller gave NO
+        # intensity (the original guard against LLM difficulty drift).
+        if (body.intensity_preference or "").strip():
+            _enforced_difficulty = difficulty
         if _enforced_difficulty != difficulty:
             logger.info(
                 f"🔧 [FieldOverride] difficulty {difficulty!r} → "

@@ -812,13 +812,19 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 # Beginners NEVER get hard/hell; advanced+non-mobility never gets easy.
                 _fl = (fitness_level or "intermediate").lower()
                 _diff = (difficulty or "").lower()
+                # An EXPLICIT per-day/user intensity (effort) must not be capped to
+                # match fitness_level (skill) — a beginner who chose "Hell" keeps the
+                # Hell label; exercise SELECTION still stays beginner-safe below.
+                _explicit_intensity = (body.intensity_preference or "").strip().lower() in (
+                    "easy", "medium", "hard", "hell"
+                )
                 _focus_str = (body.focus_areas[0] if body.focus_areas else "").lower()
                 _is_mobility_intent = (
                     "mobility" in _focus_str or "stretch" in _focus_str
                     or (workout_type or "").lower() in ("mobility", "recovery", "stretch")
                 )
 
-                if _fl == "beginner" and _diff in ("hard", "hell"):
+                if _fl == "beginner" and _diff in ("hard", "hell") and not _explicit_intensity:
                     logger.warning(
                         f"⚠️ [DifficultyCeiling] Beginner request returned '{difficulty}' "
                         f"— forcing to 'medium' (workout='{workout_name}')"
