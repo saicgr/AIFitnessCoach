@@ -942,8 +942,13 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                               margin: const EdgeInsets.only(bottom: 8),
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.72),
+                                // High opacity + hairline border so it stays
+                                // legible over a WHITE video frame too.
+                                color: Colors.black.withValues(alpha: 0.85),
                                 borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color:
+                                        Colors.white.withValues(alpha: 0.18)),
                               ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
@@ -980,10 +985,14 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                           setState(() => _speedMenuOpen = !_speedMenuOpen),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                            horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
-                          color: Colors.black54,
+                          // Near-opaque dark pill + hairline border → crisp on a
+                          // white video frame (black54 goes muddy grey there).
+                          color: Colors.black.withValues(alpha: 0.82),
                           borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,

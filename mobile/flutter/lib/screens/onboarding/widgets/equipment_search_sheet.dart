@@ -76,6 +76,17 @@ class EquipmentSearchSheet extends StatefulWidget {
     'Triceps Extension Machine',
     'Weight Plate',
     'Yoga Mat',
+    // Previously missing from the picker despite having library exercises
+    // (counts are deduped uniques): pull-up bar (47 raw), sled, foam roller,
+    // agility ladder, stair climber, plyo box, rebounder, gymnastic rings.
+    'Pull-Up Bar',
+    'Gymnastic Rings',
+    'Sled',
+    'Plyo Box',
+    'Foam Roller',
+    'Agility Ladder',
+    'Stair Climber',
+    'Rebounder',
   ];
 
   @override

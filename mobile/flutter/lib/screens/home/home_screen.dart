@@ -1405,7 +1405,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget _widgetForSection(HomeSection section) {
     switch (section) {
       case HomeSection.quickActions:
-        return const QuickActionsRow();
+        // Anchor for nav-tour step 3 ("Quick Log"). The active home renders
+        // sections via this switch, NOT the legacy tile_factory.dart — so the
+        // tour key must live here or the spotlight resolves a zero rect.
+        return KeyedSubtree(
+          key: AppTourKeys.quickLogKey,
+          child: const QuickActionsRow(),
+        );
       case HomeSection.weekStrip:
         return const HomeWeekStrip();
       case HomeSection.coachHero:
@@ -1419,7 +1425,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // in `_WorkoutHeroBody._metaLine` (see unified_home_widgets.dart).
         return const SizedBox.shrink();
       case HomeSection.workoutCard:
-        return const HomeWorkoutCard();
+        // Anchor for nav-tour step 2 ("Today's Workout"). Key lives on the
+        // active section widget (the legacy heroCarousel/tile_factory anchor
+        // never mounts in this layout → zero-rect → no spotlight).
+        return KeyedSubtree(
+          key: AppTourKeys.heroCarouselKey,
+          child: const HomeWorkoutCard(),
+        );
       case HomeSection.nutritionCard:
         // Signature v2: Home leads with the compact one-line FUEL strip above
         // the fold; the full nutrition card lives on the Nutrition tab.

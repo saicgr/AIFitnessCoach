@@ -64,6 +64,25 @@ class ZType {
         color: color ?? AppColors.textPrimary,
       );
 
+  /// Archivo — clean grotesque sans for neutral headings + names where the
+  /// heavy Anton display face or the Fraunces serif read as too stylized
+  /// (e.g. the workout-detail masthead + warmup/stretch exercise names).
+  static TextStyle sans(
+    double size, {
+    Color? color,
+    FontWeight weight = FontWeight.w700,
+    double letterSpacing = 0,
+    double height = 1.1,
+  }) =>
+      TextStyle(
+        fontFamily: 'Archivo',
+        fontWeight: weight,
+        fontSize: size,
+        height: height,
+        letterSpacing: letterSpacing,
+        color: color ?? AppColors.textPrimary,
+      );
+
   /// Space Mono — telemetry / monospaced numeric readouts (timers, set tables).
   static TextStyle data(
     double size, {

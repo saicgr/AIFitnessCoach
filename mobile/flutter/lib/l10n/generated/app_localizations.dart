@@ -41264,19 +41264,19 @@ abstract class AppLocalizations {
   /// No description provided for @notifications3Day.
   ///
   /// In en, this message translates to:
-  /// **'3/day'**
+  /// **'~3/week'**
   String get notifications3Day;
 
   /// No description provided for @notifications45Day.
   ///
   /// In en, this message translates to:
-  /// **'4-5/day'**
+  /// **'~5/week'**
   String get notifications45Day;
 
   /// No description provided for @notifications810Day.
   ///
   /// In en, this message translates to:
-  /// **'8-10/day'**
+  /// **'~8/week'**
   String get notifications810Day;
 
   /// No description provided for @notificationsAdvanced.

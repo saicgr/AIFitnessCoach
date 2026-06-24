@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/home_layout.dart';
 import '../../../data/services/health_service.dart';
-import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
 // import '../../../widgets/xp_progress_card.dart'; // Coming soon
@@ -35,14 +34,11 @@ class TileFactory {
         // Coming soon
         return const SizedBox.shrink();
       case TileType.nextWorkout:
-        // Anchor for home-tour step 2 ("Your AI Workout"). The tour key was
-        // stranded on the orphaned SectionedHeroArea/HeroWorkoutCarousel
-        // (old home layout) — the current home renders the hero as the
-        // nextWorkout tile, so the spotlight target lives here now.
-        return KeyedSubtree(
-          key: AppTourKeys.heroCarouselKey,
-          child: _buildNextWorkoutTile(context, ref, tile, isDark),
-        );
+        // NOTE: the nav-tour step-2 anchor (heroCarouselKey) now lives on the
+        // active layout's HomeSection.workoutCard in home_screen.dart. This
+        // legacy tile path is not rendered by the current home, so it must NOT
+        // also hold the key (a second mount = duplicate-GlobalKey crash).
+        return _buildNextWorkoutTile(context, ref, tile, isDark);
       case TileType.fitnessScore:
         // Coming soon
         return const SizedBox.shrink();
@@ -53,10 +49,11 @@ class TileFactory {
         // Coming soon
         return const SizedBox.shrink();
       case TileType.quickActions:
-        return Padding(
-          key: AppTourKeys.quickLogKey,
-          padding: const EdgeInsets.only(top: 8, bottom: 8),
-          child: const QuickActionsRow(),
+        // quickLogKey moved to the active HomeSection.quickActions anchor in
+        // home_screen.dart (see note on nextWorkout above).
+        return const Padding(
+          padding: EdgeInsets.only(top: 8, bottom: 8),
+          child: QuickActionsRow(),
         );
       case TileType.weeklyProgress:
         // Removed feature - return empty widget

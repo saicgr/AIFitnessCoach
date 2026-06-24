@@ -80,6 +80,28 @@ class _ExerciseInstructionsScreenState
   int _selectedTab = 0; // 0 = Setup, 1 = Tips
   bool _isExpanded = false;
 
+  // Playback-speed control. The chosen rate persists across a video re-init
+  // (retry / substitute) by being re-applied in [_loadVideo]. `_speedMenuOpen`
+  // toggles the expanded option row.
+  double _playbackSpeed = 1.0;
+  bool _speedMenuOpen = false;
+  static const List<double> _kPlaybackSpeeds = [0.25, 0.5, 0.75, 1.0, 2.0];
+
+  void _setPlaybackSpeed(double speed) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _playbackSpeed = speed;
+      _speedMenuOpen = false;
+    });
+    _videoController?.setPlaybackSpeed(speed);
+  }
+
+  /// "1x", "0.5x", "0.25x" — drops a trailing zero for whole multipliers.
+  String _formatSpeed(double s) {
+    final str = s == s.roundToDouble() ? s.toStringAsFixed(0) : s.toString();
+    return '${str}x';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -185,6 +207,9 @@ class _ExerciseInstructionsScreenState
       _videoController!.setLooping(true);
       _videoController!.setVolume(0); // Muted
       _videoController!.play(); // Auto-play
+      // Re-apply the user's chosen rate so it survives a retry / substitute
+      // re-init (defaults to 1.0 on a fresh open).
+      _videoController!.setPlaybackSpeed(_playbackSpeed);
 
       if (mounted) {
         setState(() {
@@ -269,6 +294,103 @@ class _ExerciseInstructionsScreenState
             left: 0,
             right: 0,
             child: _buildBottomSection(isDark, textPrimary, textMuted, accentColor),
+          ),
+
+          // Playback-speed control — only while a video is actually playing.
+          if (_isVideoInitialized && _videoController != null)
+            _buildSpeedControl(accentColor),
+        ],
+      ),
+    );
+  }
+
+  /// Bottom-left playback-speed overlay (0.25x–2x). A tap on the pill expands
+  /// the options upward; the inner GestureDetectors win the arena so they don't
+  /// trigger the video's play/pause tap.
+  Widget _buildSpeedControl(Color accentColor) {
+    return Positioned(
+      bottom: MediaQuery.of(context).padding.bottom + 20,
+      left: 16,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            child: _speedMenuOpen
+                ? Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      // High opacity + hairline border so it stays legible over
+                      // a WHITE video frame as well as a dark one.
+                      color: Colors.black.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.18)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final s in _kPlaybackSpeeds)
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _setPlaybackSpeed(s),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 18, vertical: 8),
+                              child: Text(
+                                _formatSpeed(s),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                  color: s == _playbackSpeed
+                                      ? accentColor
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _speedMenuOpen = !_speedMenuOpen),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                // Near-opaque dark pill + hairline border → crisp white text on
+                // a white video frame (black54 composited to muddy grey there).
+                color: Colors.black.withValues(alpha: 0.82),
+                borderRadius: BorderRadius.circular(20),
+                border:
+                    Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.speed, size: 16, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatSpeed(_playbackSpeed),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

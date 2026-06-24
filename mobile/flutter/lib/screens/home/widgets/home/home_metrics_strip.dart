@@ -19,10 +19,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
+import '../../../../core/widgets/skeleton/skeleton_box.dart';
 import '../../../../data/models/metric_value.dart';
 import '../../../../data/providers/metric_value_provider.dart';
+import '../../../../data/providers/recovery_provider.dart';
+import '../../../../data/providers/sleep_score_provider.dart';
 import '../../../../data/providers/today_score_provider.dart';
+import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../data/services/health_service.dart' show dailyActivityProvider;
 import '../ring_catalog.dart';
 import 'unified_home_widgets.dart' show kHomeHPad;
 
@@ -37,6 +42,28 @@ class HomeMetricsStrip extends ConsumerWidget {
     final sleep = ref.watch(metricValueProvider(RingKind.sleep));
     final ready = ref.watch(metricValueProvider(RingKind.recovery));
     final score = ref.watch(todayScoreProvider);
+
+    // Per-cell "first load" signal — true only while the cell's underlying
+    // source is still fetching AND has produced no value yet. This shows a
+    // subtle shimmer on a fresh sign-in (so the strip reads as loading rather
+    // than four broken "—" dashes), but NEVER sticks: once a source resolves to
+    // "no data", isLoading flips false and the cell falls back to a dash. The
+    // `&& isEmpty` guard means an already-populated cell never shimmers on a
+    // background refresh.
+    final activity = ref.watch(dailyActivityProvider);
+    final sleepAsync = ref.watch(sleepScoreProvider);
+    final recoveryAsync = ref.watch(recoveryProvider);
+    final workoutAsync = ref.watch(todayWorkoutProvider);
+
+    final stepsLoading = steps.isEmpty && activity.isLoading;
+    final sleepLoading =
+        sleep.isEmpty && sleepAsync.isLoading && !sleepAsync.hasValue;
+    final readyLoading =
+        ready.isEmpty && recoveryAsync.isLoading && !recoveryAsync.hasValue;
+    // The Today Score always computes (never empty), but its dominant input is
+    // the workout plan — shimmer the cell until that first resolves so a fresh
+    // sign-in doesn't flash a transient "0" before the real score lands.
+    final scoreLoading = workoutAsync.isLoading && !workoutAsync.hasValue;
 
     return Padding(
       padding: kHomeHPad,
@@ -55,6 +82,7 @@ class HomeMetricsStrip extends ConsumerWidget {
                 value: _metricHeadline(steps),
                 label: 'Steps',
                 route: '/health/combined',
+                loading: stepsLoading,
               ),
               _divider(c),
               _cell(
@@ -62,6 +90,7 @@ class HomeMetricsStrip extends ConsumerWidget {
                 value: _metricHeadline(sleep),
                 label: 'Sleep',
                 route: '/health/sleep',
+                loading: sleepLoading,
               ),
               _divider(c),
               _cell(
@@ -71,6 +100,7 @@ class HomeMetricsStrip extends ConsumerWidget {
                 label: 'Ready',
                 accent: true,
                 route: '/health/combined',
+                loading: readyLoading,
               ),
               _divider(c),
               _cell(
@@ -78,6 +108,7 @@ class HomeMetricsStrip extends ConsumerWidget {
                 value: '${score.score}',
                 label: 'Score',
                 route: '/health/combined',
+                loading: scoreLoading,
               ),
             ],
           ),
@@ -99,6 +130,7 @@ class HomeMetricsStrip extends ConsumerWidget {
     required String label,
     bool accent = false,
     required String route,
+    bool loading = false,
   }) {
     return Expanded(
       child: InkWell(
@@ -116,24 +148,32 @@ class HomeMetricsStrip extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  text: value,
-                  style: ZType.disp(
-                    16,
-                    color: accent ? c.accent : c.textPrimary,
+              if (loading)
+                // Sized to roughly match the 16pt value line so the
+                // shimmer→value swap doesn't reflow the strip height.
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 3),
+                  child: SkeletonBox(width: 28, height: 14, radius: 6),
+                )
+              else
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    text: value,
+                    style: ZType.disp(
+                      16,
+                      color: accent ? c.accent : c.textPrimary,
+                    ),
+                    children: valueSuffix == null
+                        ? null
+                        : [
+                            TextSpan(
+                              text: valueSuffix,
+                              style: ZType.disp(9, color: c.textMuted),
+                            ),
+                          ],
                   ),
-                  children: valueSuffix == null
-                      ? null
-                      : [
-                          TextSpan(
-                            text: valueSuffix,
-                            style: ZType.disp(9, color: c.textMuted),
-                          ),
-                        ],
                 ),
-              ),
               const SizedBox(height: 4),
               Text(
                 label.toUpperCase(),

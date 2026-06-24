@@ -24441,13 +24441,13 @@ class AppLocalizationsEn extends AppLocalizations {
       '\"Your muscles miss you! 💪\"';
 
   @override
-  String get notifications3Day => '3/day';
+  String get notifications3Day => '~3/week';
 
   @override
-  String get notifications45Day => '4-5/day';
+  String get notifications45Day => '~5/week';
 
   @override
-  String get notifications810Day => '8-10/day';
+  String get notifications810Day => '~8/week';
 
   @override
   String get notificationsAdvanced => 'Advanced';

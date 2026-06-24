@@ -13,6 +13,8 @@
 ///   * Primary + secondary CTA routes come from the API payload.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderProxyBox;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -706,53 +708,18 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   }
 
   Widget _skeleton(ThemeColors c, {bool isMinimized = false}) {
-    // A1: a TRUE shimmer skeleton that matches the briefing layout — header
-    // (real, instant) + a headline line + a 2-line body + two task rows. The
-    // previous loading state rendered `_CoachNudgeStack` (generic contextual
-    // nudges like "Peak window now"), which read as REAL tasks and then
-    // vanished when the briefing resolved (the "pre-rendered tasks" report).
-    // A shimmer placeholder can never be mistaken for content, and the disk
-    // cache (see dailyCoachInsightProvider) usually paints the last briefing
-    // instantly so this is only ever seen on a genuine first cold load.
-    if (isMinimized) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _eyebrow(c, false, isMinimized: true),
-          const SizedBox(height: 8),
-          const SkeletonBox(width: 180, height: 14, radius: 7),
-        ],
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _eyebrow(c, false),
-        const SizedBox(height: 10),
-        // Headline placeholder.
-        const SkeletonBox(width: 210, height: 15, radius: 7),
-        const SizedBox(height: 10),
-        // Body placeholder (2 lines).
-        const SkeletonText(lines: 2, lineHeight: 12, spacing: 7),
-        const SizedBox(height: 16),
-        // "TO DO TODAY" label placeholder.
-        const SkeletonBox(width: 84, height: 9, radius: 5),
-        const SizedBox(height: 10),
-        // Two task-row placeholders mirroring the _TodoCard height.
-        for (var i = 0; i < 2; i++) ...[
-          if (i > 0) const SizedBox(height: 8),
-          SkeletonShimmer(
-            child: Container(
-              height: 54,
-              decoration: BoxDecoration(
-                color: c.cardBorder,
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-          ),
-        ],
-      ],
+    // Branded "coach is thinking" state — shown ONLY on a genuine cold load
+    // (no disk-cached insight yet, e.g. the first sign-in of a fresh account
+    // where the server is still generating the briefing). The previous loading
+    // state was a bare shimmer skeleton, which read as a stuck/empty card
+    // rather than "your coach is preparing". This keeps the REAL eyebrow header
+    // (instant) and below it a pulsing ✦ + a rotating status line + one soft
+    // shimmer bar, so it unmistakably reads as deliberate, branded loading.
+    // The disk cache (see dailyCoachInsightProvider) usually paints the last
+    // briefing instantly, so this is only ever seen on a true first cold load.
+    return _CoachThinkingCard(
+      header: _eyebrow(c, false, isMinimized: isMinimized),
+      isMinimized: isMinimized,
     );
   }
 
@@ -1743,5 +1710,145 @@ class _MeasureSizeRenderObject extends RenderProxyBox {
     // Fire after this layout pass settles; the listener schedules its own
     // post-frame setState so we never mutate the tree mid-layout.
     onChange(newSize);
+  }
+}
+
+/// The branded cold-load state for the coach hero — a pulsing ✦ paired with a
+/// rotating status line ("Reading your day…" → "Pulling your numbers
+/// together…" → …) and one soft shimmer bar. Self-contained (owns its own
+/// ticker + rotation timer) so the parent's lifecycle is untouched, and it
+/// reads as the coach actively preparing rather than a stuck, empty card.
+///
+/// [header] is the already-built eyebrow row (kept real + instant); the
+/// animated content sits beneath it. In [isMinimized] only a single compact
+/// line is shown to match the collapsed card height.
+class _CoachThinkingCard extends StatefulWidget {
+  final Widget header;
+  final bool isMinimized;
+
+  const _CoachThinkingCard({
+    required this.header,
+    this.isMinimized = false,
+  });
+
+  @override
+  State<_CoachThinkingCard> createState() => _CoachThinkingCardState();
+}
+
+class _CoachThinkingCardState extends State<_CoachThinkingCard>
+    with SingleTickerProviderStateMixin {
+  // Rotating reassurance copy. Kept human + specific to the work the coach is
+  // actually doing on first load (reading the day, pulling numbers, shaping the
+  // focus) so it never reads as a generic spinner label.
+  static const List<String> _phrases = <String>[
+    'Reading your day…',
+    'Pulling your numbers together…',
+    'Checking last night’s sleep…',
+    'Shaping today’s focus…',
+  ];
+
+  late final AnimationController _pulse;
+  Timer? _rotateTimer;
+  int _phraseIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    // Advance the status line every ~1.9s; AnimatedSwitcher cross-fades it.
+    _rotateTimer = Timer.periodic(const Duration(milliseconds: 1900), (_) {
+      if (!mounted) return;
+      setState(() => _phraseIndex = (_phraseIndex + 1) % _phrases.length);
+    });
+  }
+
+  @override
+  void dispose() {
+    _rotateTimer?.cancel();
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  Widget _spark(ThemeColors c, double size) {
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.35, end: 1.0).animate(
+        CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
+      ),
+      child: Icon(Icons.auto_awesome, size: size, color: c.accent),
+    );
+  }
+
+  Widget _rotatingLine(ThemeColors c, double fontSize) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 320),
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: child,
+      ),
+      child: Text(
+        _phrases[_phraseIndex],
+        key: ValueKey<int>(_phraseIndex),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.w600,
+          color: c.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ThemeColors.of(context);
+
+    if (widget.isMinimized) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          widget.header,
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _spark(c, 13),
+              const SizedBox(width: 8),
+              Flexible(child: _rotatingLine(c, 13)),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        widget.header,
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            _spark(c, 16),
+            const SizedBox(width: 10),
+            Expanded(child: _rotatingLine(c, 14)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // One soft shimmer bar keeps the "loading" read without faking content.
+        const SkeletonBox(width: 180, height: 11, radius: 6),
+        const SizedBox(height: 14),
+        Text(
+          'Your focus lands in a sec.',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: c.textSecondary,
+          ),
+        ),
+      ],
+    );
   }
 }
