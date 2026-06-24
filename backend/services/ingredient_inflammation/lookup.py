@@ -95,28 +95,43 @@ async def _ensure_food_db_cache() -> Dict[str, Tuple[int, str]]:
             supabase = get_supabase()
 
             cache: Dict[str, Tuple[int, str]] = {}
-            offset = 0
             batch_size = 1000
+            # Keyset pagination on the `id` PK. The previous deep-OFFSET scan
+            # (.range(offset, ...)) is O(offset) in Postgres — each batch
+            # re-scans every preceding row — so over the ~528k matching rows it
+            # tripped the statement timeout (57014) around offset 120k and the
+            # cache loaded only a fraction. `WHERE id > cursor ORDER BY id LIMIT`
+            # rides the PK index (O(log n) per batch) so every batch is fast and
+            # the whole table loads.
+            last_id = 0
 
             while True:
                 try:
                     result = supabase.client.table("food_database") \
-                        .select("name, inflammatory_score, inflammatory_category") \
+                        .select("id, name, inflammatory_score, inflammatory_category") \
                         .not_.is_("inflammatory_score", "null") \
                         .eq("is_primary", True) \
-                        .range(offset, offset + batch_size - 1) \
+                        .gt("id", last_id) \
+                        .order("id") \
+                        .limit(batch_size) \
                         .execute()
                 except Exception as batch_err:
                     logger.info(
-                        f"🔄 [food_db_cache] Batch at offset={offset} failed ({batch_err}), "
+                        f"🔄 [food_db_cache] Batch after id={last_id} failed ({batch_err}), "
                         f"using {len(cache)} entries loaded so far"
                     )
                     break
 
-                if not result.data:
+                rows = result.data or []
+                if not rows:
                     break
 
-                for row in result.data:
+                for row in rows:
+                    # Advance the cursor for EVERY row (rows are id-ordered), so
+                    # pagination never stalls even if a row fails the score gate.
+                    row_id = row.get("id")
+                    if row_id is not None:
+                        last_id = row_id
                     name = row.get("name")
                     score = row.get("inflammatory_score")
                     if name and score is not None:
@@ -125,9 +140,8 @@ async def _ensure_food_db_cache() -> Dict[str, Tuple[int, str]]:
                             category = row.get("inflammatory_category") or ingredient_score_to_category(score_int)
                             cache[name.lower().strip()] = (score_int, category)
 
-                if len(result.data) < batch_size:
+                if len(rows) < batch_size:
                     break
-                offset += batch_size
 
             _food_db_cache = cache
             _food_db_cache_loaded_at = time.monotonic()
