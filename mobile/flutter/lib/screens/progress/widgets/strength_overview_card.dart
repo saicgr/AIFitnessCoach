@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../data/models/muscle_status.dart';
 import '../../../data/models/scores.dart';
+import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/gym_progress_filter_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../library/providers/muscle_group_images_provider.dart';
@@ -182,6 +183,14 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
             padding: const EdgeInsets.only(bottom: 4),
             child: GymProgressFilter(surfaceKey: _gymSurfaceKey),
           ),
+
+          // Machine-calibration nudge: cable stacks / pulley ratios aren't
+          // calibrated the same across gyms, so the same exercise can log a
+          // very different weight at each one and the COMBINED score bounces on
+          // a gym switch. Shown only for multi-gym users still on "All gyms" —
+          // selecting a gym above scopes the score and clears the hint.
+          if (_hasMultipleGyms(ref) && !gymScoped)
+            _MachineCalibrationHint(tc: tc),
 
           if (isLoading && strengthScores == null)
             const Padding(
@@ -790,4 +799,46 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
     }
   }
 
+  /// True when the user has ≥2 live gym profiles — mirrors GymProgressFilter's
+  /// own visibility gate for this (breakdown-free) surface, so the hint shows
+  /// exactly when the selector does.
+  bool _hasMultipleGyms(WidgetRef ref) {
+    final gyms = ref.watch(gymProfilesProvider).valueOrNull ?? const [];
+    return gyms.length >= 2;
+  }
+
+}
+
+/// One-line caption explaining that machine weights aren't comparable across
+/// gyms (cable stacks / pulley ratios differ), so the combined score can bounce
+/// on a gym switch — pick a gym above for accurate progress. Mirrors the
+/// "Bodyweight is combined across gyms" caption style in GymProgressFilter.
+class _MachineCalibrationHint extends StatelessWidget {
+  final ThemeColors tc;
+
+  const _MachineCalibrationHint({required this.tc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.tune_rounded, size: 13, color: tc.textMuted),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Text(
+              'Machine weights differ across gyms — pick a gym for accurate progress',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: tc.textMuted,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
