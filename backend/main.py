@@ -219,8 +219,48 @@ class LoggingMiddleware:
         "/apple-touch-icon-precomposed.png",
     })
 
+    # Automated vulnerability scanners constantly probe every public host for
+    # exposed secrets/configs (`.env`, `phpinfo.php`, `.git/config`, framework
+    # configs, CI/mail-provider keys). We correctly 404 them all, but each probe
+    # otherwise emits an INFO + WARNING line — hundreds per scan — drowning real
+    # logs. Detect the unambiguous probe shapes and short-circuit with a bare
+    # 404, skipping logging AND routing. This is log hygiene only: the security
+    # posture is unchanged (these files never existed). Conservative by design —
+    # our real API lives under /api/, /dev/, /docs, /static/, and the
+    # /.well-known/* deep-link files, none of which match these tokens.
+    _SCANNER_PROBE_RE = re.compile(
+        r"(?:"
+        r"\.env\b|\.env[.~]|/\.env|"          # .env and all its variants
+        r"/\.git|/\.aws|/\.ssh|/\.svn|/\.hg|"  # VCS / cloud cred dirs
+        r"\.php\b|\.asp\b|\.aspx\b|\.jsp\b|"   # server-script probes
+        r"\.bak\b|\.old\b|\.swp\b|"            # editor/backup leftovers
+        r"phpinfo|wp-config|wp-admin|wp-login|xmlrpc|"  # WordPress/PHP
+        r"/server-status|/server-info"        # Apache mod_status
+        r")",
+        re.IGNORECASE,
+    )
+
     def __init__(self, app: ASGIApp):
         self.app = app
+
+    @classmethod
+    def _is_scanner_probe(cls, path: str) -> bool:
+        # Never short-circuit our own surfaces.
+        if path.startswith(("/api/", "/dev/", "/static/", "/.well-known/")):
+            return False
+        return bool(cls._SCANNER_PROBE_RE.search(path))
+
+    @staticmethod
+    async def _send_bare_404(send: Send) -> None:
+        await send({
+            "type": "http.response.start",
+            "status": 404,
+            "headers": [(b"content-type", b"application/json")],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": b'{"detail":"Not Found"}',
+        })
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         if scope["type"] != "http":
@@ -232,6 +272,12 @@ class LoggingMiddleware:
         method = request.method
         path = request.url.path
         query = str(request.query_params) if request.query_params else ""
+
+        # Drop vulnerability-scanner probes silently (404, no log line, no
+        # routing). Keeps the log stream readable; security posture unchanged.
+        if self._is_scanner_probe(path):
+            await self._send_bare_404(send)
+            return
 
         # Generate unique request ID for tracing
         request_id = str(uuid.uuid4())[:8]
