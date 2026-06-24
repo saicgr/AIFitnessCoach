@@ -73,6 +73,11 @@ class _CustomizationStudioSheetState
   String? _previewError;
   List<WorkoutPreset> _presets = const [];
 
+  /// True once the user makes their first change. Until then we show a neutral
+  /// idle summary of the current workout — never a "Building your workout…"
+  /// spinner — because nothing has changed yet.
+  bool _dirty = false;
+
   // ── Display catalogs ──────────────────────────────────────────────────────
   static const List<MapEntry<String, String>> _trainingStyles = [
     MapEntry('strength', 'Strength'),
@@ -100,8 +105,9 @@ class _CustomizationStudioSheetState
   void initState() {
     super.initState();
     _params = widget.initialParams;
-    // Kick off an initial preview so the panel is never empty.
-    _schedulePreview(immediate: true);
+    // Do NOT preview on open — the panel reflects the current workout until the
+    // user changes something. A "Building your workout…" spinner before any edit
+    // reads as broken. The first real change (via [_update]) starts the preview.
     _loadPresets();
   }
 
@@ -113,9 +119,14 @@ class _CustomizationStudioSheetState
 
   // ── Preview pipeline ──────────────────────────────────────────────────────
 
-  /// Mutate params and (re)schedule a debounced preview.
+  /// Mutate params and (re)schedule a debounced preview. The first call flips
+  /// [_dirty], which is what turns the preview card from its idle summary into
+  /// the live "Updating…" state.
   void _update(WorkoutBuildParams next) {
-    setState(() => _params = next);
+    setState(() {
+      _params = next;
+      _dirty = true;
+    });
     _schedulePreview();
   }
 
@@ -412,6 +423,7 @@ class _CustomizationStudioSheetState
 
                     const SizedBox(height: 16),
                     _sectionLabel('Impact', isDark),
+                    _buildUnsatisfiedEquipmentNote(isDark),
                     _buildSegmented(
                       options: const [
                         MapEntry('low', 'Low'),
@@ -609,7 +621,11 @@ class _CustomizationStudioSheetState
             children: [
               Expanded(
                 child: Text(
-                  preview?.name ?? 'Building your workout…',
+                  // Before the first change: a neutral idle title (never a
+                  // "Building…" spinner). After a change: the live preview name,
+                  // falling back to "Building…" only while it's actually loading.
+                  preview?.name ??
+                      (_dirty ? 'Building your workout…' : _idleTitle()),
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -675,9 +691,14 @@ class _CustomizationStudioSheetState
               ),
             ],
           ] else if (!_previewLoading) ...[
+            const SizedBox(height: 4),
+            Text(
+              _idleSummary(),
+              style: TextStyle(fontSize: 13, color: secondary),
+            ),
             const SizedBox(height: 8),
             Text(
-              'Adjust the controls below to build your workout.',
+              'Adjust the controls below to rebuild it live.',
               style: TextStyle(fontSize: 13, color: secondary),
             ),
           ],
@@ -744,6 +765,80 @@ class _CustomizationStudioSheetState
       return '$reps reps';
     }
     return '';
+  }
+
+  /// A neutral, human-readable title for the idle preview card (shown on open,
+  /// before any change). Derived from the current params — no network call.
+  String _idleTitle() {
+    if (widget.workoutId != null) return 'Your current workout';
+    final styleLabel = _trainingStyles
+        .firstWhere(
+          (e) => e.key == _params.trainingStyle,
+          orElse: () => const MapEntry('', ''),
+        )
+        .value;
+    final focus = _params.focusAreas;
+    final focusLabel = (focus.length == 1)
+        ? _muscleGroups
+            .firstWhere(
+              (e) => e.key == focus.first,
+              orElse: () => const MapEntry('', ''),
+            )
+            .value
+        : '';
+    final parts = [
+      if (focusLabel.isNotEmpty) focusLabel,
+      if (styleLabel.isNotEmpty) styleLabel,
+    ];
+    return parts.isEmpty ? 'New workout' : '${parts.join(' • ')} workout';
+  }
+
+  /// One-line summary of the current params for the idle card.
+  String _idleSummary() {
+    return '${_params.durationMinutes} min • ${_params.intensity} intensity';
+  }
+
+  /// Canonicalize an equipment string (human label or snake_case) so chosen
+  /// tokens and an exercise's `equipment` field compare apples-to-apples.
+  String _canonEquip(String raw) => raw
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[(),]'), ' ')
+      .replaceAll(RegExp(r'\s+'), '_')
+      .replaceAll(RegExp(r'_+'), '_')
+      .replaceAll(RegExp(r'^_|_$'), '');
+
+  /// Equipment the user explicitly chose for this workout that NO exercise in
+  /// the current preview actually uses — e.g. picking "Rowing Machine" on an
+  /// upper-body session that drew none. Empty until there's a preview AND a
+  /// chosen-equipment override. Returns canonical tokens.
+  List<String> _unsatisfiedEquipment() {
+    final chosen = _params.equipment;
+    final preview = _lastPreview;
+    if (chosen == null || chosen.isEmpty || preview == null) return const [];
+
+    // All equipment canonical tokens actually used by the preview's exercises
+    // (main + warmup + cooldown).
+    final used = <String>{};
+    for (final e in [
+      ...preview.exercises,
+      ...preview.warmup,
+      ...preview.cooldown,
+    ]) {
+      final raw = e['equipment'];
+      if (raw == null) continue;
+      if (raw is List) {
+        for (final r in raw) {
+          used.add(_canonEquip(r.toString()));
+        }
+      } else {
+        used.add(_canonEquip(raw.toString()));
+      }
+    }
+
+    return chosen
+        .where((token) => !used.contains(_canonEquip(token)))
+        .toList(growable: false);
   }
 
   String _humanizeConstraint(String c) {
@@ -974,6 +1069,45 @@ class _CustomizationStudioSheetState
           ),
         ),
       ],
+    );
+  }
+
+  /// An amber heads-up listing chosen equipment that the current preview's
+  /// exercises don't actually use (e.g. "Rowing Machine" on an upper-body day).
+  /// Renders nothing when every chosen piece is satisfied (or there's no
+  /// preview / no equipment override yet).
+  Widget _buildUnsatisfiedEquipmentNote(bool isDark) {
+    final unsatisfied = _unsatisfiedEquipment();
+    if (unsatisfied.isEmpty) return const SizedBox.shrink();
+
+    final secondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final labels =
+        unsatisfied.map(getEquipmentDisplayName).join(', ');
+    final verb = unsatisfied.length == 1 ? 'uses' : 'use';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(Icons.info_outline, size: 14, color: Colors.amber),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'No exercises in this workout $verb: $labels',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: secondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

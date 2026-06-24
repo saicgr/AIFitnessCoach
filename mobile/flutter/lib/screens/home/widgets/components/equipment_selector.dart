@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/environment_equipment_provider.dart'
-    show commonEquipmentOptions, getEquipmentDisplayName;
+    show
+        WorkoutEnvironment,
+        commonEquipmentOptions,
+        environmentEquipmentProvider,
+        getEquipmentDisplayName;
 import '../../../../widgets/glass_sheet.dart';
 import 'sheet_theme_colors.dart';
 import 'selectable_chip.dart';
@@ -369,7 +374,20 @@ Future<List<String>?> showEquipmentPickerSheet(
   );
 }
 
-class _EquipmentPickerSheet extends StatefulWidget {
+/// Canonicalize a raw equipment string (which may be a human label like
+/// "Rowing Machine" or "tire, sledgehammer") into the snake_case token form the
+/// picker stores and the backend matches on.
+String _canonicalEquipmentToken(String raw) {
+  return raw
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[(),]'), ' ')
+      .replaceAll(RegExp(r'\s+'), '_')
+      .replaceAll(RegExp(r'_+'), '_')
+      .replaceAll(RegExp(r'^_|_$'), '');
+}
+
+class _EquipmentPickerSheet extends ConsumerStatefulWidget {
   const _EquipmentPickerSheet({
     required this.initial,
     required this.title,
@@ -379,10 +397,11 @@ class _EquipmentPickerSheet extends StatefulWidget {
   final String title;
 
   @override
-  State<_EquipmentPickerSheet> createState() => _EquipmentPickerSheetState();
+  ConsumerState<_EquipmentPickerSheet> createState() =>
+      _EquipmentPickerSheetState();
 }
 
-class _EquipmentPickerSheetState extends State<_EquipmentPickerSheet> {
+class _EquipmentPickerSheetState extends ConsumerState<_EquipmentPickerSheet> {
   late final Set<String> _selected;
   String _query = '';
 
@@ -392,15 +411,43 @@ class _EquipmentPickerSheetState extends State<_EquipmentPickerSheet> {
     _selected = widget.initial.toSet();
   }
 
-  /// Canonical tokens, presets first then the remaining taxonomy, de-duped.
+  /// Canonical tokens to show, in this order (de-duped, snake_case):
+  ///   1. pinned presets
+  ///   2. the user's actual profile equipment (so a full-gym user sees what
+  ///      they really have, not just the 37-item common taxonomy)
+  ///   3. the fuller Commercial Gym master list (~88 items)
+  ///   4. the common taxonomy (covers anything the above miss)
+  ///   5. any currently-selected token not otherwise present
+  ///
+  /// A full-gym user therefore sees ~80+ items rather than ~37.
   List<String> get _orderedTokens {
     final out = <String>[];
     final seen = <String>{};
-    for (final t in _pinnedPickerPresets) {
-      if (commonEquipmentOptions.contains(t) && seen.add(t)) out.add(t);
-    }
-    for (final t in commonEquipmentOptions) {
+
+    void add(String raw) {
+      final t = _canonicalEquipmentToken(raw);
+      if (t.isEmpty) return;
       if (seen.add(t)) out.add(t);
+    }
+
+    for (final t in _pinnedPickerPresets) {
+      if (commonEquipmentOptions.contains(t)) add(t);
+    }
+    // User's real profile equipment.
+    for (final t in ref.read(environmentEquipmentProvider).equipment) {
+      add(t);
+    }
+    // Fuller commercial-gym master list.
+    for (final t in WorkoutEnvironment.commercialGym.defaultEquipment) {
+      add(t);
+    }
+    // Common taxonomy backstop.
+    for (final t in commonEquipmentOptions) {
+      add(t);
+    }
+    // Never drop an already-selected token.
+    for (final t in _selected) {
+      add(t);
     }
     return out;
   }
