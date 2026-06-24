@@ -228,7 +228,13 @@ async def browse_library(
             (search or "").strip().lower(),
         )
         cached = await _library_browse_cache.get(cache_key)
-        if cached is not None:
+        # The cache is JSON-backed (Redis): values MUST be plain dicts. A dict
+        # round-trips cleanly and FastAPI re-validates it against the response
+        # model. Anything else is a poisoned entry from when a pydantic model
+        # was cached directly (json.dumps(..., default=str) stringified the whole
+        # object → a str came back and 500'd response validation) — ignore it
+        # and fall through to a fresh fetch so the cache self-heals.
+        if isinstance(cached, dict):
             return cached
 
         db = get_supabase()
@@ -279,7 +285,10 @@ async def browse_library(
             )
         cards.sort(key=lambda c: (c.program_category or "", c.program_name))
         result = LibraryBrowseResponse(total=len(cards), programs=cards)
-        await _library_browse_cache.set(cache_key, result)
+        # Cache a JSON-serializable dict, NOT the pydantic model: the Redis cache
+        # serializes via json.dumps(..., default=str), which would otherwise
+        # stringify the whole model and return a useless str on the next hit.
+        await _library_browse_cache.set(cache_key, result.model_dump())
         return result
     except Exception as e:  # noqa: BLE001
         logger.error("Failed to browse program library: %s", e, exc_info=True)
