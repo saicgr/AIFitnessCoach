@@ -146,6 +146,10 @@ class WorkoutExercise extends Equatable {
   final int? dropSetPercentage; // Percentage to reduce weight each drop (typically 20-25%)
   @JsonKey(name: 'is_challenge')
   final bool? isChallenge; // Whether this is an optional challenge exercise for beginners
+  @JsonKey(name: 'is_finisher')
+  final bool? isFinisher; // Appended cardio/conditioning finisher (e.g. a rowing
+  // machine the user explicitly picked on a strength day) — shown with a
+  // "Finisher" chip on the exercise card.
   @JsonKey(name: 'progression_from')
   final String? progressionFrom; // Name of the main exercise this progresses from
   final String? difficulty; // Exercise difficulty level (e.g., "intermediate", "advanced")
@@ -208,6 +212,7 @@ class WorkoutExercise extends Equatable {
     this.dropSetCount,
     this.dropSetPercentage,
     this.isChallenge,
+    this.isFinisher,
     this.progressionFrom,
     this.difficulty,
     this.difficultyNum,
@@ -421,6 +426,7 @@ class WorkoutExercise extends Equatable {
     int? dropSetCount,
     int? dropSetPercentage,
     bool? isFailureSet,
+    bool? isFinisher,
     List<SetTarget>? setTargets,
     String? tempo,
     String? formCue,
@@ -466,6 +472,7 @@ class WorkoutExercise extends Equatable {
       dropSetCount: dropSetCount ?? this.dropSetCount,
       dropSetPercentage: dropSetPercentage ?? this.dropSetPercentage,
       isFailureSet: isFailureSet ?? this.isFailureSet,
+      isFinisher: isFinisher ?? this.isFinisher,
       setTargets: setTargets ?? this.setTargets,
       tempo: tempo ?? this.tempo,
       formCue: formCue ?? this.formCue,

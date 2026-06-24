@@ -351,6 +351,63 @@ const List<String> _pinnedPickerPresets = [
   'squat_rack',
 ];
 
+/// Canonical snake_case tokens for cardio-machine equipment. When one of these
+/// is shown in the picker we tag it with a small "· cardio" badge, and — on a
+/// strength-style day — hint that picking it adds a cardio finisher rather than
+/// reshaping the whole session. Deterministic + client-side so the badge is
+/// instant and never waits on the backend.
+const Set<String> _cardioEquipmentTokens = {
+  'rowing_machine',
+  'treadmill',
+  'stationary_bike',
+  'elliptical',
+  'ski_erg',
+  'stair_climber',
+  'assault_bike',
+};
+
+/// True when [token] (already canonical, or canonicalizable) names a cardio
+/// machine. Tolerant of a few common label variants the taxonomy doesn't pin
+/// (e.g. "rower", "exercise bike", "stairmaster") so the badge still lands.
+bool _isCardioEquipment(String token) {
+  final t = _canonicalEquipmentToken(token);
+  if (_cardioEquipmentTokens.contains(t)) return true;
+  // A handful of synonym tokens that map onto the same machines.
+  const synonyms = {
+    'rower': 'rowing_machine',
+    'exercise_bike': 'stationary_bike',
+    'spin_bike': 'stationary_bike',
+    'spinning_bike': 'stationary_bike',
+    'air_bike': 'assault_bike',
+    'fan_bike': 'assault_bike',
+    'skierg': 'ski_erg',
+    'stairmaster': 'stair_climber',
+    'stepmill': 'stair_climber',
+    'cross_trainer': 'elliptical',
+  };
+  return synonyms.containsKey(t);
+}
+
+/// Whether a workout focus reads as strength-style — i.e. NOT a cardio or
+/// full-body day — for the "added as a finisher" hint. Anything we can't
+/// confidently classify (or a missing focus) suppresses the hint, so we never
+/// over-claim.
+bool _isStrengthStyleFocus(String? focus) {
+  if (focus == null) return false;
+  final f = focus.toLowerCase().trim();
+  if (f.isEmpty) return false;
+  if (f.contains('cardio') ||
+      f.contains('full_body') ||
+      f.contains('full body') ||
+      f.contains('conditioning') ||
+      f.contains('hiit') ||
+      f.contains('mobility') ||
+      f.contains('recovery')) {
+    return false;
+  }
+  return true;
+}
+
 /// A reusable searchable multi-select equipment picker.
 ///
 /// Stores and returns the CANONICAL snake_case values from
@@ -359,17 +416,24 @@ const List<String> _pinnedPickerPresets = [
 /// follows. Returns the selected canonical tokens on confirm, or `null` if the
 /// user dismisses without confirming.
 ///
+/// [focus] is the optional day/workout focus (e.g. `'upper'`, `'cardio'`). When
+/// it reads as strength-style, cardio-machine chips show a one-line "added as a
+/// finisher on strength days" hint so the user knows the pick is appended, not
+/// substituted.
+///
 /// Used by the per-day equipment override flow (`PerDayControls`).
 Future<List<String>?> showEquipmentPickerSheet(
   BuildContext context, {
   required List<String> initial,
   String title = 'Equipment for this day',
+  String? focus,
 }) {
   return showGlassSheet<List<String>>(
     context: context,
     builder: (ctx) => _EquipmentPickerSheet(
       initial: initial,
       title: title,
+      focus: focus,
     ),
   );
 }
@@ -391,10 +455,12 @@ class _EquipmentPickerSheet extends ConsumerStatefulWidget {
   const _EquipmentPickerSheet({
     required this.initial,
     required this.title,
+    this.focus,
   });
 
   final List<String> initial;
   final String title;
+  final String? focus;
 
   @override
   ConsumerState<_EquipmentPickerSheet> createState() =>
@@ -534,21 +600,55 @@ class _EquipmentPickerSheetState extends ConsumerState<_EquipmentPickerSheet> {
                       ),
                     )
                   : SingleChildScrollView(
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          for (final token in filtered)
-                            SelectableChip(
-                              label: getEquipmentDisplayName(token),
-                              isSelected: _selected.contains(token),
-                              accentColor: colors.success,
-                              onTap: () => setState(() {
-                                if (!_selected.add(token)) {
-                                  _selected.remove(token);
-                                }
-                              }),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final token in filtered)
+                                SelectableChip(
+                                  label: getEquipmentDisplayName(token),
+                                  isSelected: _selected.contains(token),
+                                  accentColor: colors.success,
+                                  // Tag cardio machines so the user knows a
+                                  // rower/treadmill/etc. isn't a strength move.
+                                  trailing: _isCardioEquipment(token)
+                                      ? _CardioBadge(color: colors.textMuted)
+                                      : null,
+                                  onTap: () => setState(() {
+                                    if (!_selected.add(token)) {
+                                      _selected.remove(token);
+                                    }
+                                  }),
+                                ),
+                            ],
+                          ),
+                          // On a strength-style day, a single hint that any
+                          // cardio machine the user picks is appended as a
+                          // finisher rather than reshaping the whole session.
+                          if (_isStrengthStyleFocus(widget.focus) &&
+                              filtered.any(_isCardioEquipment)) ...[
+                            const SizedBox(height: 10),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.bolt,
+                                    size: 13, color: colors.textMuted),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    'Added as a finisher on strength days.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: colors.textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
+                          ],
                         ],
                       ),
                     ),
@@ -577,6 +677,26 @@ class _EquipmentPickerSheetState extends ConsumerState<_EquipmentPickerSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Small muted "· cardio" badge rendered in a [SelectableChip]'s trailing slot
+/// to flag cardio-machine equipment in the picker.
+class _CardioBadge extends StatelessWidget {
+  const _CardioBadge({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '· cardio',
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        color: color,
       ),
     );
   }

@@ -423,7 +423,12 @@ class _CustomizationStudioSheetState
 
                     const SizedBox(height: 16),
                     _sectionLabel('Impact', isDark),
-                    _buildUnsatisfiedEquipmentNote(isDark),
+                    // The accurate equipment outcome (e.g. "Added Rowing Machine
+                    // as a cardio finisher") arrives through the preview's
+                    // relaxed_constraints, which the preview card above already
+                    // renders — so there is no separate Impact note here. (The
+                    // old, inaccurate "no exercises use this equipment" note was
+                    // removed.)
                     _buildSegmented(
                       options: const [
                         MapEntry('low', 'Low'),
@@ -540,10 +545,15 @@ class _CustomizationStudioSheetState
   /// An empty result clears the override => "use profile equipment".
   Future<void> _editEquipment() async {
     HapticService.selection();
+    // Pass the focus so the picker can hint that a cardio machine picked on a
+    // strength day is appended as a finisher. Only pass a single, unambiguous
+    // focus area (multi-area selections aren't classifiable as one style).
+    final focus = _params.focusAreas.length == 1 ? _params.focusAreas.first : null;
     final result = await showEquipmentPickerSheet(
       context,
       initial: _params.equipment ?? const [],
       title: 'Equipment for this workout',
+      focus: focus,
     );
     if (result == null || !mounted) return; // dismissed without confirming
     if (result.isEmpty) {
@@ -798,49 +808,6 @@ class _CustomizationStudioSheetState
     return '${_params.durationMinutes} min • ${_params.intensity} intensity';
   }
 
-  /// Canonicalize an equipment string (human label or snake_case) so chosen
-  /// tokens and an exercise's `equipment` field compare apples-to-apples.
-  String _canonEquip(String raw) => raw
-      .trim()
-      .toLowerCase()
-      .replaceAll(RegExp(r'[(),]'), ' ')
-      .replaceAll(RegExp(r'\s+'), '_')
-      .replaceAll(RegExp(r'_+'), '_')
-      .replaceAll(RegExp(r'^_|_$'), '');
-
-  /// Equipment the user explicitly chose for this workout that NO exercise in
-  /// the current preview actually uses — e.g. picking "Rowing Machine" on an
-  /// upper-body session that drew none. Empty until there's a preview AND a
-  /// chosen-equipment override. Returns canonical tokens.
-  List<String> _unsatisfiedEquipment() {
-    final chosen = _params.equipment;
-    final preview = _lastPreview;
-    if (chosen == null || chosen.isEmpty || preview == null) return const [];
-
-    // All equipment canonical tokens actually used by the preview's exercises
-    // (main + warmup + cooldown).
-    final used = <String>{};
-    for (final e in [
-      ...preview.exercises,
-      ...preview.warmup,
-      ...preview.cooldown,
-    ]) {
-      final raw = e['equipment'];
-      if (raw == null) continue;
-      if (raw is List) {
-        for (final r in raw) {
-          used.add(_canonEquip(r.toString()));
-        }
-      } else {
-        used.add(_canonEquip(raw.toString()));
-      }
-    }
-
-    return chosen
-        .where((token) => !used.contains(_canonEquip(token)))
-        .toList(growable: false);
-  }
-
   String _humanizeConstraint(String c) {
     // Constraints arrive as short tokens/phrases; present them as info lines.
     final cleaned = c.replaceAll('_', ' ').trim();
@@ -1069,45 +1036,6 @@ class _CustomizationStudioSheetState
           ),
         ),
       ],
-    );
-  }
-
-  /// An amber heads-up listing chosen equipment that the current preview's
-  /// exercises don't actually use (e.g. "Rowing Machine" on an upper-body day).
-  /// Renders nothing when every chosen piece is satisfied (or there's no
-  /// preview / no equipment override yet).
-  Widget _buildUnsatisfiedEquipmentNote(bool isDark) {
-    final unsatisfied = _unsatisfiedEquipment();
-    if (unsatisfied.isEmpty) return const SizedBox.shrink();
-
-    final secondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final labels =
-        unsatisfied.map(getEquipmentDisplayName).join(', ');
-    final verb = unsatisfied.length == 1 ? 'uses' : 'use';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 1),
-            child: Icon(Icons.info_outline, size: 14, color: Colors.amber),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              'No exercises in this workout $verb: $labels',
-              style: TextStyle(
-                fontSize: 12.5,
-                color: secondary,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

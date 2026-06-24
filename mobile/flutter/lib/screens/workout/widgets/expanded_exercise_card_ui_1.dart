@@ -607,6 +607,12 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       // existing muscle / equipment / preference chips and
                       // shares the row's horizontal wrap so it never overflows.
                       _buildStrengthScoreChip(accentColor),
+                      // "Finisher" chip — when the backend appended this
+                      // exercise as a cardio/conditioning finisher (e.g. a
+                      // rowing machine the user explicitly picked on a strength
+                      // day). Distinct amber accent so it reads as a tag, not a
+                      // muscle/equipment label.
+                      if (exercise.isFinisher == true) _buildFinisherChip(),
                       if (exercise.muscleGroup != null || exercise.primaryMuscle != null)
                         _buildInfoChip(
                           Icons.fitness_center,
@@ -1222,6 +1228,38 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     );
   }
 
+
+  /// Amber "Finisher" tag chip — shown when [WorkoutExercise.isFinisher] is
+  /// true (an appended cardio/conditioning finisher). Distinct from the
+  /// accent-colored muscle/equipment chips so it reads as a label, not a stat.
+  Widget _buildFinisherChip() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const color = Colors.amber;
+    final displayColor = isDark ? color : _darkenColor(color);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(isDark ? 0.12 : 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: displayColor.withOpacity(0.4), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.bolt, size: 12, color: displayColor),
+          const SizedBox(width: 4),
+          Text(
+            'Finisher',
+            style: TextStyle(
+              fontSize: 11,
+              color: displayColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildInfoChip(IconData icon, String text, Color color) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
