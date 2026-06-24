@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/models/quick_action.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../home/widgets/components/quick_action_launcher.dart';
@@ -196,11 +197,7 @@ class _SuggestedActionsCardState extends ConsumerState<SuggestedActionsCard> {
         children: [
           Text(
             _promptText(ids),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
+            style: ZType.ser(13.5, color: textColor),
           ),
           const SizedBox(height: 8),
           // Wrap (never Row) so chips reflow on iPhone SE → iPad without
@@ -245,12 +242,8 @@ class _SuggestedActionsCardState extends ConsumerState<SuggestedActionsCard> {
                   Icon(meta.icon, size: 16, color: color),
                   const SizedBox(width: 6),
                   Text(
-                    meta.label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
+                    meta.label.toUpperCase(),
+                    style: ZType.lbl(13, color: color, letterSpacing: 0.8),
                   ),
                 ],
               ),

@@ -414,7 +414,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    // Signature-v2 card fill — `surface` (one step over the near-black bg)
+    // with a hairline border, matching the restyled Training/Nutrition cards.
+    final elevated = isDark ? AppColors.surface : AppColorsLight.surface;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 

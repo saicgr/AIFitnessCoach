@@ -492,13 +492,14 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                   ? AppLocalizations.of(context)!.measurementsTabNoLogsInLast(_selectedType.displayName.toLowerCase(), periodLabel)
                   : AppLocalizations.of(context)!.measurementsTabLogToSeeTrends(_selectedType.displayName.toLowerCase()),
               textAlign: TextAlign.center,
-              style: TextStyle(color: textMuted),
+              style: ZType.sans(13, weight: FontWeight.w500, color: textMuted),
             ),
             if (hasOlderData) ...[
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => setState(() => _selectedPeriod = 'all'),
-                child: Text(AppLocalizations.of(context).measurementsViewAll, style: TextStyle(color: cyan)),
+                child: Text(AppLocalizations.of(context).measurementsViewAll.toUpperCase(),
+                    style: ZType.lbl(11, color: cyan, letterSpacing: 1.2)),
               ),
             ],
           ],
@@ -522,10 +523,11 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
             const SizedBox(height: 4),
             Text(
               DateFormat('MMM d, yyyy').format(filtered.first.recordedAt),
-              style: TextStyle(fontSize: 13, color: textMuted),
+              style: ZType.data(12, color: textMuted),
             ),
             const SizedBox(height: 8),
-            Text(AppLocalizations.of(context).measurementsLogAgainToSee, style: TextStyle(fontSize: 12, color: textMuted)),
+            Text(AppLocalizations.of(context).measurementsLogAgainToSee,
+                style: ZType.sans(12, weight: FontWeight.w500, color: textMuted)),
           ],
         ),
       );
@@ -675,14 +677,11 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              result.label.isNotEmpty
-                  ? '${dType.displayName} $valueStr ${result.label}'
-                  : '${dType.displayName} $valueStr',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: result.color,
-              ),
+              (result.label.isNotEmpty
+                      ? '${dType.displayName} $valueStr ${result.label}'
+                      : '${dType.displayName} $valueStr')
+                  .toUpperCase(),
+              style: ZType.lbl(10, color: result.color, letterSpacing: 0.8),
             ),
           ),
         ),
@@ -777,10 +776,8 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                               ),
                               Text(
                                 '${_formatValue(change.abs())} ${entry.unit}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: _getChangeColor(type, change),
-                                ),
+                                style: ZType.data(12,
+                                    color: _getChangeColor(type, change)),
                               ),
                             ],
                           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/services/haptic_service.dart';
@@ -27,10 +28,11 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surfaceColor = isDark ? AppColors.surface : AppColorsLight.surface;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
     final nutritionState = ref.watch(nutritionPreferencesProvider);
     final fastingState = ref.watch(fastingSettingsProvider);
     final prefs = nutritionState.preferences;
@@ -63,14 +65,14 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: cardBorder),
         ),
-        child: const Center(
+        child: Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
-            child: CircularProgressIndicator(),
+            padding: const EdgeInsets.all(24),
+            child: CircularProgressIndicator(color: accent),
           ),
         ),
       );
@@ -78,24 +80,20 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: cardBorder),
       ),
       child: Column(
         children: [
-          // Header with edit button
+          // Header — Barlow uppercase kicker + ghost edit affordance.
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+            padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
             child: Row(
               children: [
                 Text(
                   AppLocalizations.of(context).nutritionFastingCardNutritionFasting,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
+                  style: ZType.lbl(12, color: textMuted, letterSpacing: 1.8),
                 ),
                 const Spacer(),
                 IconButton(
@@ -103,10 +101,10 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
                     HapticService.selection();
                     context.push('/nutrition-settings');
                   },
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.edit_outlined,
-                    color: AppColors.green,
-                    size: 20,
+                    color: accent,
+                    size: 18,
                   ),
                   tooltip: AppLocalizations.of(context).nutritionFastingCardEditNutritionSettings,
                 ),
@@ -124,7 +122,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             textPrimary: textPrimary,
             textMuted: textMuted,
           ),
-          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+          Divider(height: 1, color: cardBorder, indent: 58, endIndent: 16),
 
           _buildInfoRow(
             icon: Icons.restaurant_outlined,
@@ -135,7 +133,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             textPrimary: textPrimary,
             textMuted: textMuted,
           ),
-          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+          Divider(height: 1, color: cardBorder, indent: 58, endIndent: 16),
 
           _buildInfoRow(
             icon: Icons.flag_outlined,
@@ -151,7 +149,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             textMuted: textMuted,
           ),
           if (prefs?.goalWeightKg != null) ...[
-            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            Divider(height: 1, color: cardBorder, indent: 58, endIndent: 16),
             _buildInfoRow(
               icon: Icons.my_location_outlined,
               iconColor: AppColors.green,
@@ -163,7 +161,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             ),
           ],
           if (prefs?.goalDate != null) ...[
-            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            Divider(height: 1, color: cardBorder, indent: 58, endIndent: 16),
             _buildInfoRow(
               icon: Icons.calendar_today_outlined,
               iconColor: AppColors.purple,
@@ -177,7 +175,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
           if (prefs?.rateOfChange != null &&
               (prefs!.primaryGoalEnum == NutritionGoal.loseFat ||
                prefs.primaryGoalEnum == NutritionGoal.buildMuscle)) ...[
-            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            Divider(height: 1, color: cardBorder, indent: 58, endIndent: 16),
             _buildInfoRow(
               icon: Icons.trending_down_outlined,
               iconColor: AppColors.orange,
@@ -188,7 +186,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
               textMuted: textMuted,
             ),
           ],
-          Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+          Divider(height: 1, color: cardBorder, indent: 58, endIndent: 16),
 
           // Macros row — only when the user has real configured targets, so we
           // never present the 150/200/65 placeholder split as a real plan.
@@ -204,7 +202,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
 
           // Allergens (only if set)
           if (prefs?.allergies.isNotEmpty == true) ...[
-            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            Divider(height: 1, color: cardBorder, indent: 58, endIndent: 16),
             _buildInfoRow(
               icon: Icons.warning_amber_outlined,
               iconColor: AppColors.orange,
@@ -218,7 +216,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
 
           // Dietary Restrictions (only if set)
           if (prefs?.dietaryRestrictions.isNotEmpty == true) ...[
-            Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+            Divider(height: 1, color: cardBorder, indent: 58, endIndent: 16),
             _buildInfoRow(
               icon: Icons.no_meals_outlined,
               iconColor: AppColors.purple,
@@ -250,6 +248,9 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
     );
   }
 
+  /// Hairline-row info line. `iconColor` is retained in the signature but no
+  /// longer tints the glyph — the redesign uses a framed muted glyph (drops
+  /// the per-row rainbow) with the value right-aligned.
   Widget _buildInfoRow({
     required IconData icon,
     required Color iconColor,
@@ -259,26 +260,28 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
     required Color textPrimary,
     required Color textMuted,
   }) {
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Icon(icon, color: iconColor, size: 20),
+          _NutritionGlyph(icon: icon, color: textMuted, cardBorder: cardBorder),
           const SizedBox(width: 12),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 14,
-              color: textMuted,
-            ),
+            style: TextStyle(fontSize: 14, color: textMuted),
           ),
           const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
             ),
           ),
         ],
@@ -294,11 +297,15 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
     required Color textPrimary,
     required Color textMuted,
   }) {
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Icon(Icons.pie_chart_outline, color: AppColors.info, size: 20),
+          _NutritionGlyph(
+              icon: Icons.pie_chart_outline,
+              color: textMuted,
+              cardBorder: cardBorder),
           const SizedBox(width: 12),
           Text(
             AppLocalizations.of(context).nutritionFastingCardMacros,
@@ -399,6 +406,35 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
       default:
         return protocol;
     }
+  }
+}
+
+/// The signature framed hairline glyph (`.st-gl`) used by the nutrition rows —
+/// a muted icon inside a 30px hairline-bordered rounded square. Replaces the
+/// per-row rainbow icon tints.
+class _NutritionGlyph extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final Color cardBorder;
+
+  const _NutritionGlyph({
+    required this.icon,
+    required this.color,
+    required this.cardBorder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 30,
+      height: 30,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: Border.all(color: cardBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(icon, size: 16, color: color),
+    );
   }
 }
 

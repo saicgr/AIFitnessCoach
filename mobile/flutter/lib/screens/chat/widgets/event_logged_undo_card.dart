@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 
@@ -150,7 +151,11 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
                   minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: Text(AppLocalizations.of(context).workoutUiBuildersUndo),
+                child: Text(
+                  AppLocalizations.of(context).workoutUiBuildersUndo.toUpperCase(),
+                  style: ZType.lbl(12, color: theme.colorScheme.primary,
+                      letterSpacing: 1.0),
+                ),
               )
             : const SizedBox.shrink();
         break;
@@ -163,10 +168,9 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
         break;
       case _UndoUiState.undone:
         trailing = Text(
-          AppLocalizations.of(context).eventLoggedUndoRemoved,
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.error,
-          ),
+          AppLocalizations.of(context).eventLoggedUndoRemoved.toUpperCase(),
+          style: ZType.lbl(12, color: theme.colorScheme.error,
+              letterSpacing: 1.0),
         );
         break;
       case _UndoUiState.failed:
@@ -177,15 +181,18 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
             minimumSize: const Size(0, 32),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: Text(AppLocalizations.of(context).buttonRetry),
+          child: Text(
+            AppLocalizations.of(context).buttonRetry.toUpperCase(),
+            style: ZType.lbl(12, color: theme.colorScheme.primary,
+                letterSpacing: 1.0),
+          ),
         );
         break;
       case _UndoUiState.expired:
         trailing = Text(
-          AppLocalizations.of(context).savedHubSaved,
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          AppLocalizations.of(context).savedHubSaved.toUpperCase(),
+          style: ZType.lbl(12, color: theme.colorScheme.onSurfaceVariant,
+              letterSpacing: 1.0),
         );
         break;
     }
@@ -208,12 +215,16 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
               name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                decoration:
-                    struck ? TextDecoration.lineThrough : TextDecoration.none,
+              style: ZType.sans(
+                14,
                 color: struck
                     ? theme.colorScheme.onSurfaceVariant
                     : theme.colorScheme.onSurface,
+                weight: FontWeight.w500,
+                height: 1.2,
+              ).copyWith(
+                decoration:
+                    struck ? TextDecoration.lineThrough : TextDecoration.none,
               ),
             ),
           ),

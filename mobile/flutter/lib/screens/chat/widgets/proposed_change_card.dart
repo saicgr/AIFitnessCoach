@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -135,9 +136,7 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.orange.withValues(alpha: 0.08)
-              : AppColors.orange.withValues(alpha: 0.06),
+          color: isDark ? AppColors.surface : AppColorsLight.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: AppColors.orange.withValues(alpha: 0.35),
@@ -159,9 +158,9 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
                 Expanded(
                   child: Text(
                     widget.summary,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                    style: ZType.sans(
+                      14,
+                      weight: FontWeight.w700,
                       color: isDark
                           ? AppColors.textPrimary
                           : AppColorsLight.textPrimary,
@@ -177,8 +176,8 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
                 padding: const EdgeInsetsDirectional.only(start: 26),
                 child: Text(
                   widget.reason!,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: ZType.ser(
+                    12.5,
                     color: isDark
                         ? AppColors.textSecondary
                         : AppColorsLight.textSecondary,
@@ -227,8 +226,9 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: ZType.sans(
+                    12,
+                    weight: FontWeight.w500,
                     color: AppColors.error,
                   ),
                 ),
@@ -250,11 +250,8 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
                           : AppColorsLight.textSecondary,
                     ),
                     child: Text(
-                      AppLocalizations.of(context).proposedChangeCardNotNow,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      AppLocalizations.of(context).proposedChangeCardNotNow.toUpperCase(),
+                      style: ZType.lbl(13, letterSpacing: 1.2),
                     ),
                   ),
                 ),
@@ -287,10 +284,11 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
                             ),
                           )
                         : Text(
-                            AppLocalizations.of(context).proposedChangeCardApplyChange,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
+                            AppLocalizations.of(context).proposedChangeCardApplyChange.toUpperCase(),
+                            style: ZType.lbl(
+                              13,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
                             ),
                           ),
                   ),
@@ -323,12 +321,8 @@ class _StatusRow extends StatelessWidget {
         const SizedBox(width: 6),
         Flexible(
           child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(12, color: color, letterSpacing: 1.0),
           ),
         ),
       ],

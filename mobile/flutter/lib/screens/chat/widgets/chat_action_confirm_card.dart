@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/theme_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -194,18 +195,18 @@ class ChatActionConfirmCardState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = ThemeColors.of(context);
     // Signature: the in-bubble action chip ("SWAP → MACHINE PRESS ✓") is the
     // ONE place the reserved gym-aware accent is allowed in the thread.
-    final accent = ThemeColors.of(context).accent;
-    final muted = theme.textTheme.bodySmall?.color?.withOpacity(0.7);
+    final accent = colors.accent;
+    final muted = colors.textMuted;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.cardColor,
-        border: Border.all(color: accent.withOpacity(0.4)),
+        color: colors.surface,
+        border: Border.all(color: colors.cardBorder),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -218,8 +219,11 @@ class ChatActionConfirmCardState
               Expanded(
                 child: Text(
                   widget.summaryText,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                  style: ZType.sans(
+                    14,
+                    weight: FontWeight.w700,
+                    color: colors.textPrimary,
+                    height: 1.25,
                   ),
                 ),
               ),
@@ -229,8 +233,11 @@ class ChatActionConfirmCardState
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
+              style: ZType.sans(
+                12,
+                weight: FontWeight.w500,
+                color: colors.error,
+                height: 1.35,
               ),
             ),
           ],
@@ -239,30 +246,51 @@ class ChatActionConfirmCardState
             Row(children: [
               Icon(Icons.check_circle, color: accent, size: 16),
               const SizedBox(width: 6),
-              Text(AppLocalizations.of(context).proposedChangeCardApplied, style: theme.textTheme.bodySmall),
+              Text(
+                AppLocalizations.of(context).proposedChangeCardApplied.toUpperCase(),
+                style: ZType.lbl(12, color: accent, letterSpacing: 1.0),
+              ),
             ])
           else if (_cancelled)
-            Text(AppLocalizations.of(context).proposedChangeCardDismissed,
-                style: theme.textTheme.bodySmall?.copyWith(color: muted))
+            Text(
+              AppLocalizations.of(context).proposedChangeCardDismissed.toUpperCase(),
+              style: ZType.lbl(12, color: muted, letterSpacing: 1.0),
+            )
           else
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
                   onPressed: _busy ? null : _onCancel,
-                  child: Text(AppLocalizations.of(context).buttonCancel),
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.textSecondary,
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context).buttonCancel.toUpperCase(),
+                    style: ZType.lbl(13, letterSpacing: 1.2),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
                   onPressed: _busy ? null : _onApply,
-                  style: FilledButton.styleFrom(backgroundColor: accent),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: accent,
+                    foregroundColor: colors.accentContrast,
+                  ),
                   child: _busy
                       ? const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white))
-                      : Text(AppLocalizations.of(context).setAdjustmentSheetApply),
+                      : Text(
+                          AppLocalizations.of(context).setAdjustmentSheetApply.toUpperCase(),
+                          style: ZType.lbl(
+                            13,
+                            color: colors.accentContrast,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
                 ),
               ],
             ),

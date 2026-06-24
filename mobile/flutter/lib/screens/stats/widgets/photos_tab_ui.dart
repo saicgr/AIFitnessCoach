@@ -62,9 +62,8 @@ extension _PhotosTabStateUI on _PhotosTabState {
                   if (comparison.formattedWeightChange != null)
                     Text(
                       comparison.formattedWeightChange!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      style: ZType.data(
+                        12,
                         color: (comparison.weightChangeKg ?? 0) < 0
                             ? (isDark ? AppColors.success : AppColorsLight.success)
                             : (isDark ? AppColors.orange : AppColorsLight.orange),
@@ -73,10 +72,7 @@ extension _PhotosTabStateUI on _PhotosTabState {
                   if (comparison.formattedDuration != null)
                     Text(
                       comparison.formattedDuration!,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: textMuted,
-                      ),
+                      style: ZType.data(11, color: textMuted),
                     ),
                 ],
               ),
@@ -176,12 +172,9 @@ extension _PhotosTabStateUI on _PhotosTabState {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            photo.viewTypeEnum.displayName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            photo.viewTypeEnum.displayName.toUpperCase(),
+                            style: ZType.lbl(8.5,
+                                color: Colors.white, letterSpacing: 0.8),
                           ),
                         ),
                       ),
@@ -221,28 +214,21 @@ extension _PhotosTabStateUI on _PhotosTabState {
                 ),
               ),
             ),
-            // Date and time below the photo
+            // Date and time below the photo — Space Mono telemetry.
             Padding(
-              padding: const EdgeInsets.only(top: 4, left: 2),
+              padding: const EdgeInsets.only(top: 5, left: 2),
               child: Text(
                 dateStr,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
+                style: ZType.data(10.5, color: textPrimary),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 2),
+              padding: const EdgeInsets.only(top: 1, left: 2),
               child: Text(
                 timeStr,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: textMuted,
-                ),
+                style: ZType.data(9.5, color: textMuted),
                 maxLines: 1,
               ),
             ),
@@ -257,7 +243,7 @@ extension _PhotosTabStateUI on _PhotosTabState {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = ref.watch(accentColorProvider);
     final accentColor = accent.getColor(isDark);
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -269,15 +255,9 @@ extension _PhotosTabStateUI on _PhotosTabState {
         margin: const EdgeInsets.all(24),
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: elevated,
+          color: surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: accentColor.withValues(alpha: 0.1),
-              blurRadius: 20,
-            ),
-          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -290,21 +270,15 @@ extension _PhotosTabStateUI on _PhotosTabState {
             ),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).progressScreenUiNoProgressPhotosYet,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-              ),
+              AppLocalizations.of(context).progressScreenUiNoProgressPhotosYet.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.lbl(16, color: textPrimary, letterSpacing: 1.2),
             ),
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context).progressScreenUiTakePhotosFromDifferent,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: textSecondary,
-              ),
+              style: ZType.sans(13, weight: FontWeight.w500, color: textSecondary),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(

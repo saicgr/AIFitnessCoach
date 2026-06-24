@@ -14,6 +14,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 
 /// One suggested-reply chip definition.
@@ -246,13 +247,10 @@ class SuggestedReplyChips extends StatelessWidget {
                     color: c.accent.withValues(alpha: 0.30),
                   ),
                 ),
+                // Barlow uppercase chip label — the accent reply affordance.
                 child: Text(
-                  chip.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: c.accent,
-                  ),
+                  chip.label.toUpperCase(),
+                  style: ZType.lbl(11.5, color: c.accent, letterSpacing: 1.0),
                 ),
               ),
             ),

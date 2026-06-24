@@ -71,11 +71,8 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                   ),
                   Text(
                     _formatValue(change.abs()),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: _getChangeColor(_selectedType, change),
-                    ),
+                    style: ZType.data(13,
+                        color: _getChangeColor(_selectedType, change)),
                   ),
                 ],
               ] else
@@ -311,20 +308,20 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                 if (spot.barIndex == 1) {
                   return LineTooltipItem(
                     'Trend: ${_formatValue(spot.y)} kg',
-                    TextStyle(
-                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                    ZType.data(12,
+                        color: isDark
+                            ? AppColors.textPrimary
+                            : AppColorsLight.textPrimary),
                   );
                 }
                 final date = index < data.length ? data[index].recordedAt : DateTime.now();
                 return LineTooltipItem(
                   '${_formatValue(spot.y)} kg\n${DateFormat('MMM d').format(date)}',
-                  TextStyle(
-                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                    fontSize: 12,
-                  ),
+                  ZType.data(12,
+                      weight: FontWeight.w400,
+                      color: isDark
+                          ? AppColors.textPrimary
+                          : AppColorsLight.textPrimary),
                 );
               }).toList();
             },

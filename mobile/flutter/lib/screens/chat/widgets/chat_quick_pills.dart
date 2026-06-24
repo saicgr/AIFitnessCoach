@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/chat_quick_action.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/chat_quick_action_provider.dart';
 import '../../../data/services/haptic_service.dart';
@@ -71,11 +72,7 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                     Expanded(
                       child: Text(
                         action.label,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textPrimary,
-                        ),
+                        style: ZType.sans(16, color: colors.textPrimary, weight: FontWeight.w700),
                       ),
                     ),
                   ],
@@ -233,13 +230,10 @@ class _ChatPill extends StatelessWidget {
               children: [
                 Icon(action.icon, size: 16, color: action.color),
                 const SizedBox(width: 6),
+                // Barlow uppercase quick-action label.
                 Text(
-                  action.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: colors.textPrimary,
-                  ),
+                  action.label.toUpperCase(),
+                  style: ZType.lbl(11.5, color: colors.textPrimary, letterSpacing: 0.8),
                 ),
               ],
             ),
@@ -334,11 +328,7 @@ class _MiniPickerOption extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
-              ),
+              style: ZType.sans(14, color: colors.textPrimary, weight: FontWeight.w600),
             ),
             const Spacer(),
             Icon(Icons.chevron_right, color: colors.textMuted, size: 20),
@@ -407,11 +397,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context).chatQuickPillsChatActions,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textPrimary,
-                        ),
+                        style: ZType.sans(18, color: colors.textPrimary, weight: FontWeight.w700),
                       ),
                     ),
                     IconButton(
@@ -475,11 +461,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                   Expanded(
                     child: Text(
                       AppLocalizations.of(context).chatQuickPillsCustomizeShortcuts,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
-                      ),
+                      style: ZType.sans(18, color: colors.textPrimary, weight: FontWeight.w700),
                     ),
                   ),
                   TextButton(
@@ -571,11 +553,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                         Expanded(
                           child: Text(
                             action.label,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textPrimary,
-                            ),
+                            style: ZType.sans(14, color: colors.textPrimary, weight: FontWeight.w600),
                           ),
                         ),
                         if (isTop5)
@@ -634,12 +612,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
       padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Text(
         title.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: textMuted,
-          letterSpacing: 1.0,
-        ),
+        style: ZType.lbl(11, color: textMuted, letterSpacing: 1.8),
       ),
     );
   }
@@ -695,18 +668,11 @@ class _ActionRow extends StatelessWidget {
                   children: [
                     Text(
                       action.label,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
-                      ),
+                      style: ZType.sans(14, color: colors.textPrimary, weight: FontWeight.w600),
                     ),
                     Text(
                       action.description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textMuted,
-                      ),
+                      style: ZType.sans(12, color: colors.textMuted, weight: FontWeight.w400),
                     ),
                   ],
                 ),

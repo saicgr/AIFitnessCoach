@@ -204,10 +204,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
     // Watch the active gym profile (restored — Active Gym row below uses it).
     final activeGymProfile = ref.watch(activeGymProfileProvider);
 
@@ -216,10 +217,14 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     // the TrainingSetupCard immediately below (Days, Steps both appeared
     // in both surfaces). Edit-mode rows are interactive when _isEditing
     // is true and read-only otherwise — same widget, same row shape.
+    // Signature-v2: matte hairline surface; rows separated by hairline rules
+    // with framed muted glyphs (drops the per-row rainbow tints). Selected
+    // chips/selectors use the app accent (orange).
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
+        color: surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         children: [
@@ -229,45 +234,46 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             isDark: isDark,
             textMuted: textMuted,
             textSecondary: textSecondary,
+            cardBorder: cardBorder,
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
           // Duration (editable range)
           _buildEditableRow(
             icon: Icons.timer_outlined,
-            iconColor: AppColors.cyan,
             label: l10n.editableFitnessCardDuration,
             value: _formatDurationDisplay(),
             isEditing: _isEditing,
-            editWidget: _buildDurationRangeSelector(AppColors.cyan),
+            editWidget: _buildDurationRangeSelector(accent),
             isDark: isDark,
             textMuted: textMuted,
+            cardBorder: cardBorder,
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
           // Warmup Duration
           _buildEditableRow(
             icon: Icons.whatshot_outlined,
-            iconColor: AppColors.orange,
             label: l10n.editableFitnessCardWarmup,
             value: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin(_selectedWarmupDuration),
             isEditing: _isEditing,
-            editWidget: _buildWarmupSelector(AppColors.orange, cardBorder, textSecondary),
+            editWidget: _buildWarmupSelector(accent, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
+            cardBorder: cardBorder,
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
           // Stretch Duration
           _buildEditableRow(
             icon: Icons.self_improvement_outlined,
-            iconColor: AppColors.purple,
             label: l10n.editableFitnessCardStretch,
             value: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin2(_selectedStretchDuration),
             isEditing: _isEditing,
-            editWidget: _buildStretchSelector(AppColors.purple, cardBorder, textSecondary),
+            editWidget: _buildStretchSelector(accent, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
+            cardBorder: cardBorder,
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
@@ -279,61 +285,61 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // the row is the editor.
           _buildEditableRow(
             icon: Icons.flag,
-            iconColor: AppColors.green,
             label: l10n.editableFitnessCardGoal,
             value: _selectedGoal,
             isEditing: _isEditing,
-            editWidget: _buildGoalSelector(AppColors.green, cardBorder, textSecondary),
+            editWidget: _buildGoalSelector(accent, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
+            cardBorder: cardBorder,
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
           // Level
           _buildEditableRow(
             icon: Icons.signal_cellular_alt,
-            iconColor: AppColors.info,
             label: l10n.editableFitnessCardLevel,
             value: _selectedLevel,
             isEditing: _isEditing,
-            editWidget: _buildLevelSelector(AppColors.info, cardBorder, textSecondary),
+            editWidget: _buildLevelSelector(accent, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
+            cardBorder: cardBorder,
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
           // Workout Days (restored)
           _buildEditableRow(
             icon: Icons.calendar_today,
-            iconColor: AppColors.yellow,
             label: l10n.editableFitnessCardWorkoutDays,
             value: _selectedDays.isEmpty
                 ? l10n.editableFitnessCardNotSet
                 : _selectedDays.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', '),
             isEditing: _isEditing,
-            editWidget: _buildDaysSelector(AppColors.yellow, cardBorder, textSecondary),
+            editWidget: _buildDaysSelector(accent, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
+            cardBorder: cardBorder,
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
           // Daily Steps Goal
           _buildEditableRow(
             icon: Icons.directions_walk,
-            iconColor: AppColors.green,
             label: l10n.editableFitnessCardDailySteps,
             value: _formatStepGoal(_selectedStepGoal),
             isEditing: _isEditing,
-            editWidget: _buildStepGoalSelector(AppColors.green, cardBorder, textSecondary),
+            editWidget: _buildStepGoalSelector(accent, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
+            cardBorder: cardBorder,
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
-          // Injuries
+          // Injuries — keeps the semantic error tint on selected chips (injury
+          // = warning), per the "keep semantic status colors" rule.
           _buildEditableRow(
             icon: Icons.healing,
-            iconColor: AppColors.error,
             label: l10n.editableFitnessCardInjuries,
             value: _selectedInjuries.isEmpty
                 ? l10n.editableFitnessCardNone
@@ -342,6 +348,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             editWidget: _buildInjurySelector(cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
+            cardBorder: cardBorder,
           ),
 
           // Warning when editing
@@ -866,6 +873,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     required bool isDark,
     required Color textMuted,
     required Color textSecondary,
+    required Color cardBorder,
   }) {
     final gymName = profile?.name ?? 'No gym selected';
     final gymColor = profile?.profileColor ?? Colors.grey;
@@ -880,19 +888,22 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         child: Row(
           children: [
+            // Framed hairline glyph; the gym's identity color is carried by
+            // the dot beside the name below, not a tinted icon fill.
             Container(
               width: 32,
               height: 32,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: gymColor.withValues(alpha: 0.2),
+                border: Border.all(color: cardBorder),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(gymIcon, color: gymColor, size: 16),
+              child: Icon(gymIcon, color: textMuted, size: 16),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -961,31 +972,33 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
 
   Widget _buildEditableRow({
     required IconData icon,
-    required Color iconColor,
     required String label,
     required String value,
     required bool isEditing,
     required Widget editWidget,
     required bool isDark,
     required Color textMuted,
+    required Color cardBorder,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              // Framed hairline glyph (`.st-gl`) — muted icon, no per-row tint.
               Container(
                 width: 32,
                 height: 32,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.2),
+                  border: Border.all(color: cardBorder),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: iconColor, size: 16),
+                child: Icon(icon, color: textMuted, size: 16),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -997,7 +1010,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
                     if (!isEditing)
                       Text(
                         value,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                   ],
                 ),
