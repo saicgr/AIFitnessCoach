@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/constants/app_colors.dart';
 
-/// Signature v2 single orange accent.
-const Color _kSigAccent = Color(0xFFF97316);
-const Color _kSigInk = Color(0xFF0A0A0B);
-const Color _kSigSurface = Color(0xFF141416);
-const Color _kSigBorder = Color(0xFF26262B);
-const Color _kSigText = Color(0xFFFAFAFA);
-const Color _kSigMut = Color(0xFF9D9DA6);
+/// Signature v2 palette — pinned to the near-black dark tokens. The reel is a
+/// self-contained dark conversion surface (it must look identical in light or
+/// dark app themes), so it references the dark `AppColors` literals directly
+/// rather than the theme-resolved `ThemeColors`.
+const Color _kSigAccent = AppColors.orange;
+const Color _kSigInk = AppColors.pureBlack;
+const Color _kSigSurface = AppColors.surface;
+const Color _kSigBorder = AppColors.cardBorder;
+const Color _kSigText = AppColors.textPrimary;
+const Color _kSigMut = AppColors.textSecondary;
 
 /// A short (~3-beat) auto-advancing animated value reel.
 ///
@@ -569,7 +573,8 @@ class _MenuMockCard extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1,
-                color: best ? Colors.white : _kSigMut,
+                // Dark ink on the orange "best fit" fill (signature-v2 on-accent).
+                color: best ? const Color(0xFF160B03) : _kSigMut,
               ),
             ),
           ),

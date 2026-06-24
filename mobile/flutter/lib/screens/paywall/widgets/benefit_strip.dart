@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
-
-/// Signature v2 single orange accent.
-const Color _kSigAccent = Color(0xFFF97316);
 
 /// "Built for how you train" — a strip of 4 NON-ATTRIBUTED benefit cards.
 ///
@@ -32,13 +31,10 @@ class PaywallBenefitStrip extends StatelessWidget {
       children: [
         Text(
           'BUILT FOR HOW YOU TRAIN',
-          style: TextStyle(
-            fontFamily: 'Barlow Condensed',
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2,
-            color: _kSigAccent,
-          ),
+          style: ZType.lbl(13,
+              weight: FontWeight.w800,
+              letterSpacing: 2,
+              color: AppColors.orange),
         ),
         const SizedBox(height: 12),
         // 2x2 grid of benefit cards — even on narrow phones two-up reads
@@ -78,10 +74,10 @@ class PaywallBenefitStrip extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: _kSigAccent.withValues(alpha: 0.12),
+              color: AppColors.orange.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(benefit.$1, size: 18, color: _kSigAccent),
+            child: Icon(benefit.$1, size: 18, color: AppColors.orange),
           ),
           const Spacer(),
           Text(

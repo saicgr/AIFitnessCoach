@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/services/posthog_service.dart';
@@ -12,7 +14,10 @@ import 'widgets/price_comparison.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 /// Signature v2 single orange accent — used for the headline + CTA styling.
-const Color _kSigAccent = Color(0xFFF97316);
+const Color _kSigAccent = AppColors.orange;
+
+/// Dark ink for text/iconography sitting on the orange CTA fill (signature-v2).
+const Color _kOnAccent = Color(0xFF160B03);
 
 /// Goal-mirrored headline line 2 — reflecting the user's own quiz goal back at
 /// them converts far better than a generic capability line (2026 paywall
@@ -110,22 +115,12 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
                   Text(
                     'EVERYTHING YOU NEED',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Anton',
-                      fontSize: 24,
-                      height: 1.05,
-                      color: colors.textPrimary,
-                    ),
+                    style: ZType.disp(24, height: 1.05, color: colors.textPrimary),
                   ),
                   Text(
                     _goalHeadline(ref.watch(preAuthQuizProvider).goal),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'Anton',
-                      fontSize: 24,
-                      height: 1.05,
-                      color: _kSigAccent,
-                    ),
+                    style: ZType.disp(24, height: 1.05, color: _kSigAccent),
                   ),
                   const SizedBox(height: 18),
                 ],
@@ -199,7 +194,7 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
                 onPressed: () => context.push('/paywall-timeline'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kSigAccent,
-                  foregroundColor: Colors.white,
+                  foregroundColor: _kOnAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -217,14 +212,14 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 2,
-                        color: Colors.white,
+                        color: _kOnAccent,
                       ),
                     ),
                     SizedBox(width: 8),
                     Icon(
                       Icons.arrow_forward_rounded,
                       size: 20,
-                      color: Colors.white,
+                      color: _kOnAccent,
                     ),
                   ],
                 ),
@@ -292,21 +287,11 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
         // Title — goal-mirrored (reflects the user's quiz goal).
         Text(
           'EVERYTHING YOU NEED',
-          style: TextStyle(
-            fontFamily: 'Anton',
-            fontSize: 28,
-            height: 1.05,
-            color: colors.textPrimary,
-          ),
+          style: ZType.disp(28, height: 1.05, color: colors.textPrimary),
         ),
         Text(
           _goalHeadline(ref.watch(preAuthQuizProvider).goal),
-          style: const TextStyle(
-            fontFamily: 'Anton',
-            fontSize: 28,
-            height: 1.05,
-            color: _kSigAccent,
-          ),
+          style: ZType.disp(28, height: 1.05, color: _kSigAccent),
         ),
         const SizedBox(height: 20),
 
@@ -465,13 +450,7 @@ class _FeatureChip extends StatelessWidget {
           const SizedBox(width: 7),
           Text(
             feat.$2.toUpperCase(),
-            style: TextStyle(
-              fontFamily: 'Barlow Condensed',
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-              color: colors.textPrimary,
-            ),
+            style: ZType.lbl(13, letterSpacing: 1, color: colors.textPrimary),
           ),
         ],
       ),

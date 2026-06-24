@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/services/posthog_service.dart';
@@ -11,7 +12,10 @@ import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 /// Signature v2 single orange accent.
-const Color _kSigAccent = Color(0xFFF97316);
+const Color _kSigAccent = AppColors.orange;
+
+/// Dark ink for text/iconography sitting on the orange CTA fill (signature-v2).
+const Color _kOnAccent = Color(0xFF160B03);
 
 /// Paywall Screen 2: Trial Timeline
 /// Shows users what to expect during their free trial
@@ -267,7 +271,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                 onPressed: () => context.push('/paywall-pricing'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kSigAccent,
-                  foregroundColor: Colors.white,
+                  foregroundColor: _kOnAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -282,7 +286,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 2,
-                    color: Colors.white,
+                    color: _kOnAccent,
                   ),
                 ),
               ),

@@ -270,7 +270,7 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                     onPressed: () => context.push('/paywall-pricing'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.accent,
-                      foregroundColor: Colors.white,
+                      foregroundColor: colors.accentContrast,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -278,7 +278,11 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                     ),
                     child: Text(
                       AppLocalizations.of(context).hardPaywallSubscribeNow,
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: colors.accentContrast,
+                      ),
                     ),
                   ),
                 ),
