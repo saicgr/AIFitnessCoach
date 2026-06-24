@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/stat_typography.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../data/providers/heart_rate_stream_provider.dart';
 import '../models/workout_state.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -33,12 +34,18 @@ class WorkoutStatsStrip extends ConsumerWidget {
   final bool useKg;
   final bool isDark;
 
+  /// When true, inserts an EFFORT column (live heart rate from a connected
+  /// wearable via [heartRateStreamProvider]) between Duration and Calories.
+  /// Shows "—" when no wearable HR is streaming — never a fabricated number.
+  final bool showEffort;
+
   const WorkoutStatsStrip({
     super.key,
     required this.workoutSeconds,
     required this.setLogs,
     required this.useKg,
     required this.isDark,
+    this.showEffort = false,
   });
 
   @override
@@ -58,6 +65,15 @@ class WorkoutStatsStrip extends ConsumerWidget {
       seconds: workoutSeconds,
       bodyWeightKg: bodyWeightKg,
     );
+
+    // Live heart rate (EFFORT) — only when requested AND a wearable is
+    // actively streaming samples. No data → "—" (honest, never faked).
+    final int? liveHr = showEffort
+        ? ref.watch(heartRateStreamProvider).maybeWhen(
+              data: (bpm) => bpm > 0 ? bpm : null,
+              orElse: () => null,
+            )
+        : null;
 
     final textPrimary = isDark ? AppColors.textPrimary : Colors.black87;
     final textMuted = isDark ? AppColors.textMuted : Colors.grey.shade600;
@@ -83,6 +99,15 @@ class WorkoutStatsStrip extends ConsumerWidget {
               textMuted: textMuted,
             ),
           ),
+          if (showEffort)
+            Expanded(
+              child: _StatColumn(
+                label: 'EFFORT',
+                value: liveHr != null ? '$liveHr ♥' : '—',
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+              ),
+            ),
           Expanded(
             child: _StatColumn(
               label: AppLocalizations.of(context).workoutSummaryGeneralCalories,

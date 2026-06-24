@@ -43,6 +43,13 @@ class EasyFocalColumn extends StatelessWidget {
   /// button re-captions to "Update set N" so the action is obvious.
   final int? editingSetIndex;
 
+  /// "Next: [name] · [detail]" preview line shown just above LOG SET (per the
+  /// approved mockup). Null hides the line (e.g. final exercise).
+  final String? nextExerciseName;
+
+  /// Short detail for the Next line, e.g. "15 reps" or "Rest · 1 min".
+  final String? nextDetail;
+
   const EasyFocalColumn({
     super.key,
     required this.state,
@@ -56,6 +63,8 @@ class EasyFocalColumn extends StatelessWidget {
     required this.onDurationChanged,
     required this.onLogSet,
     this.editingSetIndex,
+    this.nextExerciseName,
+    this.nextDetail,
   });
 
   /// Builds the signature-v2 poster + whisper block (`.rw-poster` /
@@ -213,7 +222,7 @@ class EasyFocalColumn extends StatelessWidget {
         : (state.displayWeight % 1 == 0
               ? state.displayWeight.toStringAsFixed(0)
               : state.displayWeight.toStringAsFixed(1));
-    return 'LOG SET — $wTok × ${state.reps}';
+    return '✓  LOG SET — $wTok × ${state.reps}';
   }
 
   @override
@@ -248,7 +257,10 @@ class EasyFocalColumn extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             TimedExerciseTimer(
-              key: ValueKey('easytimed_${exerciseName}_${state.completedCount}'),
+              // Key includes the duration so the ±5s nudges below reset the
+              // countdown to the new hold target.
+              key: ValueKey(
+                  'easytimed_${exerciseName}_${state.completedCount}_${state.durationSeconds}'),
               durationSeconds: state.durationSeconds,
               exerciseName: exerciseName,
               setNumber: state.completedCount + 1,
@@ -256,14 +268,51 @@ class EasyFocalColumn extends StatelessWidget {
               autoStart: false,
               onComplete: () => HapticService.instance.success(),
             ),
+            const SizedBox(height: 16),
+            // ±5s nudges either side of the hold target (spec).
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _NudgePill(
+                  label: '−5s',
+                  color: colors.textPrimary,
+                  onTap: () {
+                    HapticService.instance.tick();
+                    onDurationChanged(
+                        (state.durationSeconds - 5).clamp(5, 3600).toDouble());
+                  },
+                ),
+                const SizedBox(width: 16),
+                _NudgePill(
+                  label: '+5s',
+                  color: colors.textPrimary,
+                  onTap: () {
+                    HapticService.instance.tick();
+                    onDurationChanged(
+                        (state.durationSeconds + 5).clamp(5, 3600).toDouble());
+                  },
+                ),
+              ],
+            ),
           ],
         );
 
-        // Centered caption rendered BELOW each stepper (per the Easy redesign):
-        // the value stays bare ("60" / "12") inside the −/+ controls and the
-        // unit lives in the label below ("WEIGHT (LB)" / "REPS"). The kg|lb
-        // toggle moved up to the header tab row (no longer beside the stepper).
+        // Caption rendered BELOW each stepper (per the approved mockup): the
+        // value stays bare ("60" / "12") inside the −/+ controls and the unit
+        // lives in the label below ("WEIGHT (LB)" / "REPS"). The two steppers
+        // sit SIDE BY SIDE on one row (not stacked) so the focal block never
+        // pushes the LOG button off-screen. The kg|lb toggle lives in the
+        // header tab row.
         final stepLabel = ZType.lbl(11, color: colors.textMuted, letterSpacing: 1.5);
+        Widget stepperColumn(Widget stepper, String label) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                stepper,
+                const SizedBox(height: 5),
+                Text(label, style: stepLabel, textAlign: TextAlign.center),
+              ],
+            );
         final repsBody = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -271,50 +320,100 @@ class EasyFocalColumn extends StatelessWidget {
             // The Anton poster (`.rw-poster`) + Fraunces whisper — the huge
             // `weight × reps` masthead — dominate the top of the focal column.
             _poster(ctx, tight: tight),
-            SizedBox(height: tight ? 12 : 20),
-            FocalStepper(
-              value: state.displayWeight,
-              step: weightStep,
-              unit: '',
-              min: 0,
-              max: 999,
-              compact: stepperCompact,
-              onChanged: onWeightChanged,
-            ),
-            const SizedBox(height: 5),
-            Center(child: Text('WEIGHT (${useKg ? 'KG' : 'LB'})', style: stepLabel)),
-            SizedBox(height: gapBetweenSteppers + 6),
-            FocalStepper(
-              value: state.reps.toDouble(),
-              step: 1,
-              unit: '',
-              integerOnly: true,
-              min: 0,
-              max: 99,
-              compact: stepperCompact,
-              onChanged: onRepsChanged,
-            ),
-            const SizedBox(height: 5),
-            Center(
-              child: Text(
-                AppLocalizations.of(context).workoutSummaryGeneralReps.toUpperCase(),
-                style: stepLabel,
-              ),
+            SizedBox(height: tight ? 14 : 22),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: stepperColumn(
+                    FocalStepper(
+                      value: state.displayWeight,
+                      step: weightStep,
+                      unit: '',
+                      min: 0,
+                      max: 999,
+                      compact: stepperCompact,
+                      onChanged: onWeightChanged,
+                    ),
+                    'WEIGHT (${useKg ? 'KG' : 'LB'})',
+                  ),
+                ),
+                SizedBox(width: gapBetweenSteppers + 8),
+                Expanded(
+                  child: stepperColumn(
+                    FocalStepper(
+                      value: state.reps.toDouble(),
+                      step: 1,
+                      unit: '',
+                      integerOnly: true,
+                      min: 0,
+                      max: 99,
+                      compact: stepperCompact,
+                      onChanged: onRepsChanged,
+                    ),
+                    AppLocalizations.of(context)
+                        .workoutSummaryGeneralReps
+                        .toUpperCase(),
+                  ),
+                ),
+              ],
             ),
           ],
         );
+
+        // Helper line under the steppers: increment + interaction affordances.
+        final stepTok = weightStep % 1 == 0
+            ? weightStep.toStringAsFixed(0)
+            : weightStep.toStringAsFixed(1);
+        final helperLine = state.isTimed
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '+$stepTok ${useKg ? 'kg' : 'lb'} · tap = haptic tick · hold = ramp faster',
+                  textAlign: TextAlign.center,
+                  style: ZType.sans(11.5, color: colors.textMuted),
+                ),
+              );
+
+        // "Next: <name> · <detail>" preview just above LOG SET.
+        final nextLine = (nextExerciseName == null || nextExerciseName!.isEmpty)
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  text: TextSpan(
+                    style: ZType.sans(13.5, color: colors.textSecondary),
+                    children: [
+                      TextSpan(
+                        text: 'Next: ',
+                        style: ZType.sans(13.5, color: colors.textMuted),
+                      ),
+                      TextSpan(
+                        text: nextExerciseName!,
+                        style: ZType.sans(13.5,
+                            color: colors.textPrimary, weight: FontWeight.w700),
+                      ),
+                      if (nextDetail != null && nextDetail!.isNotEmpty)
+                        TextSpan(
+                          text: ' · ${nextDetail!}',
+                          style: ZType.sans(13.5, color: colors.textSecondary),
+                        ),
+                    ],
+                  ),
+                ),
+              );
 
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPad),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Center the poster+steppers in the residual space (replacing the
-              // old `Spacer()` centering) but scroll instead of overflowing when
-              // the budget is genuinely too small (iPhone SE with every insight
-              // card present) — `minHeight: maxHeight` makes the column fill and
-              // center when there's slack, and the SingleChildScrollView absorbs
-              // the rare squeeze so the LOG button never gets pushed off-screen.
+              // Center the poster+steppers in the residual space but scroll
+              // instead of overflowing when the budget is genuinely too small.
               Expanded(
                 child: LayoutBuilder(
                   builder: (innerCtx, innerC) => SingleChildScrollView(
@@ -331,10 +430,11 @@ class EasyFocalColumn extends StatelessWidget {
                   ),
                 ),
               ),
-              // The rounded accent CTA pill (`.rw-cta`): fully-rounded,
-              // uppercase Barlow Condensed with wide tracking. Caption shows
-              // the live `weight × reps` target so the button restates the
-              // poster ("LOG SET — 60 × 8"), matching the v2 frame.
+              if (helperLine != null) helperLine,
+              if (nextLine != null) nextLine,
+              SizedBox(height: tight ? 8 : 12),
+              // The rounded accent CTA pill (`.rw-cta`): caption restates the
+              // live `weight × reps` ("LOG SET — 60 × 12"), matching the frame.
               SizedBox(
                 height: logBtnHeight,
                 child: ElevatedButton(
@@ -361,6 +461,36 @@ class EasyFocalColumn extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Compact ±5s nudge pill flanking the timed-move countdown.
+class _NudgePill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _NudgePill(
+      {required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.22)),
+        ),
+        child: Text(
+          label,
+          style: ZType.data(16, color: color, weight: FontWeight.w700),
+        ),
+      ),
     );
   }
 }

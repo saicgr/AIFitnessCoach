@@ -56,6 +56,9 @@ class EasyRestOverlay extends ConsumerStatefulWidget {
   /// still compile.
   final VoidCallback? onPause;
 
+  /// Quick-log a cup of water mid-rest (the 💧 control in the strip — mockup).
+  final VoidCallback? onLogWater;
+
   const EasyRestOverlay({
     super.key,
     required this.initialSeconds,
@@ -71,6 +74,7 @@ class EasyRestOverlay extends ConsumerStatefulWidget {
     this.onAddTime,
     this.onSubtractTime,
     this.onPause,
+    this.onLogWater,
   });
 
   @override
@@ -203,6 +207,30 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
                               await HapticService.instance.tap();
                               widget.onAddTime!();
                             }),
+                      ],
+                      // 💧 Water — quick-log a cup mid-rest (mockup).
+                      if (widget.onLogWater != null) ...[
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () async {
+                            await HapticService.instance.tap();
+                            widget.onLogWater!();
+                          },
+                          child: Container(
+                            width: 38,
+                            height: 32,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(9),
+                              border: Border.all(
+                                  color: (isDark ? Colors.white : Colors.black)
+                                      .withValues(alpha: 0.16)),
+                            ),
+                            child: Icon(Icons.water_drop_outlined,
+                                size: 16, color: accent),
+                          ),
+                        ),
                       ],
                     ],
                   ),

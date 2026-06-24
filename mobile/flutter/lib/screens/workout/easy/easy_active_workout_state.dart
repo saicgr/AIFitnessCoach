@@ -63,6 +63,7 @@ import 'easy_rest_controller.dart';
 import 'easy_sheet_helpers.dart';
 import 'score_target_service.dart';
 import 'widgets/easy_exercise_actions_sheet.dart';
+import 'widgets/easy_exercise_header.dart' show showEasyExerciseHistorySheet;
 import 'widgets/easy_help_sheet.dart';
 import 'widgets/easy_warmup_runner.dart';
 
@@ -754,6 +755,7 @@ class EasyActiveWorkoutScreenState
       seconds: seconds,
       target: target,
       useKg: ref.read(useKgForWorkoutProvider),
+      onLogWater: _logWaterCup,
     );
   }
 
@@ -953,25 +955,31 @@ class EasyActiveWorkoutScreenState
       onShowVideo: () => openEasyVideo(context, exercise, ref: ref),
       onSetIncrement: () => _showIncrementPicker(exercise.equipment),
       incrementLabel: incLabel,
-      onLogWater: () async {
-        final userId = await ref.read(apiClientProvider).getUserId();
-        if (userId == null || !mounted) return;
-        final ok = await ref
-            .read(hydrationProvider.notifier)
-            .quickLog(userId: userId, amountMl: 250);
-        if (!mounted) return;
-        if (ok) {
-          await HapticService.instance.success();
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Logged a cup of water'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      },
+      onCompleteWorkout: _completeWorkoutNow,
+      onQuitWorkout: _quitWorkout,
+      onLogWater: _logWaterCup,
     );
+  }
+
+  /// Logs one cup (250 ml) of water via the shared hydration path. Reused by
+  /// the ⋯ actions sheet AND the 💧 control on the inline rest strip.
+  Future<void> _logWaterCup() async {
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId == null || !mounted) return;
+    final ok = await ref
+        .read(hydrationProvider.notifier)
+        .quickLog(userId: userId, amountMl: 250);
+    if (!mounted) return;
+    if (ok) {
+      await HapticService.instance.success();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logged a cup of water'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _jumpTo(int idx) {
@@ -1273,7 +1281,15 @@ class EasyActiveWorkoutScreenState
               _exercises[nextIdx].videoUrl)
         : null;
 
-    return EasyActiveWorkoutView(
+    return PopScope(
+      // Intercept the system back gesture / hardware back so leaving the
+      // workout confirms first (parity with Advanced). `_quitWorkout` shows
+      // the "logged sets saved" dialog and pops on confirm.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _quitWorkout();
+      },
+      child: EasyActiveWorkoutView(
       exercise: exercise,
       state: state,
       nextExerciseName: nextExerciseName,
@@ -1291,7 +1307,9 @@ class EasyActiveWorkoutScreenState
         useKg: useKg,
         workoutStartEpochMs: _workoutStartEpochMs,
       ),
-      onBack: () => Navigator.of(context).maybePop(),
+      // Leaving the workout confirms first (parity with Advanced) — logged
+      // sets are saved, but a stray back tap shouldn't silently exit.
+      onBack: _quitWorkout,
       // Video = full-screen looping video player (pure playback).
       // Instructions = text-only glass sheet with muscle / body /
       // equipment / how-to. Separate surfaces, distinct content.
@@ -1369,10 +1387,13 @@ class EasyActiveWorkoutScreenState
       onSkipToNext: _currentIndex < _exercises.length - 1
           ? _skipToNextExercise
           : null,
+      onShowHistory: () =>
+          showEasyExerciseHistorySheet(context, ref, exercise.name),
       onShowExerciseActions: _showExerciseActions,
       onQuitWorkout: _quitWorkout,
       onCompleteWorkoutNow: _completeWorkoutNow,
       allCompletedSets: [for (final s in _perExercise.values) ...s.completed],
+      ),
     );
   }
 }

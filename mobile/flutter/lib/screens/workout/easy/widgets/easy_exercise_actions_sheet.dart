@@ -67,6 +67,8 @@ class EasyExerciseActionsSheet extends StatelessWidget {
     required VoidCallback onLogWater,
     required VoidCallback onSetIncrement,
     required String incrementLabel,
+    VoidCallback? onCompleteWorkout,
+    VoidCallback? onQuitWorkout,
   }) {
     return showGlassSheet(
       context: context,
@@ -118,6 +120,22 @@ class EasyExerciseActionsSheet extends StatelessWidget {
               subtitle: '+1 cup · 250 ml',
               onTap: onLogWater,
             ),
+            // Workout-level actions — finalize now or quit (both confirm /
+            // finalize on their own). Quit is tinted destructive.
+            if (onCompleteWorkout != null)
+              EasyExerciseAction(
+                icon: Icons.check_circle_outline_rounded,
+                label: AppLocalizations.of(context).workoutTopBarCompleteWorkout,
+                subtitle: 'Finish now with your logged sets',
+                onTap: onCompleteWorkout,
+              ),
+            if (onQuitWorkout != null)
+              EasyExerciseAction(
+                icon: Icons.close_rounded,
+                label: AppLocalizations.of(context).easyTopBarQuitWorkout,
+                onTap: onQuitWorkout,
+                destructive: true,
+              ),
           ],
         ),
       ),

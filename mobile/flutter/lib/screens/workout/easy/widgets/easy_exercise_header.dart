@@ -11,8 +11,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../../data/models/exercise.dart';
+import '../../../../data/services/api_client.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -81,188 +83,344 @@ class EasyExerciseHeader extends ConsumerWidget {
     final textColor = isDark ? Colors.white : Colors.black;
     final muted = textColor.withValues(alpha: 0.58);
     final accent = AccentColorScope.of(context).getColor(isDark);
-    // Max thumbnail size the layout targets. Actual render size shrinks when
-    // the title wraps to a second line or when the parent column is short.
-    final thumbnailMax = compact ? 140.0 : 180.0;
-    // Bumped caps (240 / 320) give room for 2-line titles. The thumbnail is
-    // Flexible below, so it still downsizes when available height < cap.
-    final maxHeight = compact ? 240.0 : 320.0;
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            // The exercise-name MASTHEAD (`.rw-mast`): the name set in Anton
-            // display type, uppercase, the signature-v2 header treatment. A
-            // single auto-shrinking line — long names like "Cable Standing
-            // Up Straight Crossovers" scale down to ONE line instead of
-            // wrapping and stealing ~26px from the focal column budget below.
-            // Tap-to-see-full-name is still available via the info button.
-            SizedBox(
-              height: compact ? 26 : 30,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.center,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 6),
+          // Wide MEDIA (mockup): the move's video/illustration in a landscape
+          // frame with a centered play affordance + a fullscreen expand.
+          // Tapping opens the looping full-screen player.
+          _WideMedia(
+            exercise: exercise,
+            isDark: isDark,
+            height: compact ? 132 : 168,
+            onTap: () async {
+              await HapticService.instance.tap();
+              onShowVideo();
+            },
+          ),
+          const SizedBox(height: 12),
+          // Name (left) + ↺ History chip (right). History rehomes here from
+          // the tab row — it's DATA (this session's ledger is already inline,
+          // History opens previous sessions + progress).
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
                 child: Text(
-                  exercise.name.toUpperCase(),
-                  style: ZType.disp(
-                    compact ? 22 : 24,
-                    color: ThemeColors.of(context).textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
+                  exercise.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _SetCountStepButton(
-                  icon: Icons.remove_rounded,
-                  onTap: onRemoveSet,
-                  color: muted,
-                  tooltip: AppLocalizations.of(
-                    context,
-                  ).easyExerciseHeaderRemoveSet,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  // Barlow Condensed uppercase label (`.lbl`) — the v2
-                  // "SET 3 OF 4" subtitle treatment under the masthead.
-                  child: Text(
-                    'SET $currentSet OF $totalSets',
-                    style: ZType.lbl(
-                      12,
-                      color: muted,
-                      weight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
+                  style: ZType.disp(
+                    compact ? 21 : 24,
+                    color: ThemeColors.of(context).textPrimary,
                   ),
                 ),
-                _SetCountStepButton(
-                  icon: Icons.add_rounded,
-                  onTap: onAddSet,
-                  color: muted,
-                  tooltip: AppLocalizations.of(
-                    context,
-                  ).easyExerciseHeaderAddSet,
+              ),
+              const SizedBox(width: 10),
+              _HistoryChip(
+                color: textColor,
+                onTap: () {
+                  HapticService.instance.tap();
+                  showEasyExerciseHistorySheet(context, ref, exercise.name);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Tab row = RESOURCES: kg|lb · Form check · Instructions · Plan ·
+          // Note. (History moved beside the name; the ⋯ actions live in the
+          // top bar.) Scales down to fit narrow devices.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const UnitChip(),
+                const SizedBox(width: 12),
+                if (onFormCheck != null) ...[
+                  _LinkChip(
+                    icon: Icons.sports_gymnastics_outlined,
+                    label: 'Form check',
+                    color: accent,
+                    onTap: () async {
+                      await HapticService.instance.tap();
+                      onFormCheck!();
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                _LinkChip(
+                  icon: Icons.menu_book_outlined,
+                  label:
+                      AppLocalizations.of(context).workoutShowcaseInstructions,
+                  color: textColor,
+                  onTap: () async {
+                    await HapticService.instance.tap();
+                    onShowInfo();
+                  },
                 ),
+                const SizedBox(width: 10),
+                _LinkChip(
+                  icon: Icons.list_alt_rounded,
+                  label: AppLocalizations.of(context).workoutsPlan,
+                  color: textColor,
+                  onTap: () async {
+                    await HapticService.instance.tap();
+                    onOpenPlan();
+                  },
+                ),
+                if (onEditNote != null) ...[
+                  const SizedBox(width: 10),
+                  _NoteHeaderChip(
+                    onTap: onEditNote!,
+                    hasNote: hasNote,
+                    color: textColor,
+                  ),
+                ],
               ],
             ),
-            const SizedBox(height: 12),
-            Flexible(
-              fit: FlexFit.loose,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: thumbnailMax,
-                  maxHeight: thumbnailMax,
-                ),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: _Thumbnail(exercise: exercise, isDark: isDark),
+          ),
+          const SizedBox(height: 12),
+          // SET n OF m stepper.
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _SetCountStepButton(
+                icon: Icons.remove_rounded,
+                onTap: onRemoveSet,
+                color: muted,
+                tooltip:
+                    AppLocalizations.of(context).easyExerciseHeaderRemoveSet,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  'SET $currentSet OF $totalSets',
+                  style: ZType.lbl(
+                    12,
+                    color: muted,
+                    weight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            // Bottom row: ▶ Video · 📖 Instructions · 📋 Plan · 📝 Note.
-            // Video = looping full-screen video player only.
-            // Instructions = muscle / body / equipment + written how-to.
-            // Plan = full workout at a glance.
-            // Note = per-set text + audio + photo (the kg/lb toggle lives
-            //       inside the Weight stepper now — right where the unit
-            //       appears — so this slot holds the per-set note chip).
-            // 5 chips can exceed the row width on narrower devices — scale
-            // the whole strip down to fit instead of overflowing.
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // kg | lb unit toggle now leads the tab row (moved off the
-                  // Weight stepper per the Easy redesign).
-                  const UnitChip(),
-                  const SizedBox(width: 12),
-                  // Video chip dropped — the exercise media is already shown
-                  // inline + autoplays at the top of the header; fullscreen is a
-                  // tap on that media. (onShowVideo still wired to it + the ⋯
-                  // "Show video" action.)
-                  // Form Check — the hero media action, accent-tinted so it
-                  // stands out from the muted Instructions/Plan chips. Opens the
-                  // AI form-analysis sheet pre-filled with this exercise.
-                  if (onFormCheck != null) ...[
-                    _LinkChip(
-                      icon: Icons.sports_gymnastics_outlined,
-                      label: 'Form check',
-                      color: accent,
-                      onTap: () async {
-                        await HapticService.instance.tap();
-                        onFormCheck!();
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                  ],
-                  _LinkChip(
-                    icon: Icons.menu_book_outlined,
-                    label: AppLocalizations.of(
-                      context,
-                    ).workoutShowcaseInstructions,
-                    color: textColor,
-                    onTap: () async {
-                      await HapticService.instance.tap();
-                      onShowInfo();
-                    },
-                  ),
-                  const SizedBox(width: 10),
-                  _LinkChip(
-                    icon: Icons.list_alt_rounded,
-                    label: AppLocalizations.of(context).workoutsPlan,
-                    color: textColor,
-                    onTap: () async {
-                      await HapticService.instance.tap();
-                      onOpenPlan();
-                    },
-                  ),
-                  if (onEditNote != null) ...[
-                    const SizedBox(width: 10),
-                    _NoteHeaderChip(
-                      onTap: onEditNote!,
-                      hasNote: hasNote,
-                      color: textColor,
-                    ),
-                  ],
-                  // ↺ History — previous SESSIONS for this exercise (the
-                  // set-ledger above already shows THIS session's sets). Opens
-                  // a sheet of past sessions. Rehomes the old "last-time" card.
-                  const SizedBox(width: 10),
-                  _LinkChip(
-                    icon: Icons.history_rounded,
-                    label: 'History',
-                    color: textColor,
-                    onTap: () {
-                      HapticService.instance.tap();
-                      _showEasyHistory(context, ref, exercise.name);
-                    },
-                  ),
-                  if (onShowMore != null) ...[
-                    const SizedBox(width: 10),
-                    _LinkChip(
-                      icon: Icons.more_horiz_rounded,
-                      label: AppLocalizations.of(context).homeMore,
-                      color: textColor,
-                      onTap: () async {
-                        await HapticService.instance.tap();
-                        onShowMore!();
-                      },
-                    ),
-                  ],
-                ],
+              _SetCountStepButton(
+                icon: Icons.add_rounded,
+                onTap: onAddSet,
+                color: muted,
+                tooltip: AppLocalizations.of(context).easyExerciseHeaderAddSet,
               ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Wide landscape media frame — the move's video (autoplays inline, muted +
+/// looping) or, while it resolves / when there's none, the illustration. A
+/// fullscreen-expand button opens the full-screen player. Matches the mockup.
+class _WideMedia extends ConsumerStatefulWidget {
+  final WorkoutExercise exercise;
+  final bool isDark;
+  final double height;
+  final VoidCallback onTap;
+
+  const _WideMedia({
+    required this.exercise,
+    required this.isDark,
+    required this.height,
+    required this.onTap,
+  });
+
+  @override
+  ConsumerState<_WideMedia> createState() => _WideMediaState();
+}
+
+class _WideMediaState extends ConsumerState<_WideMedia> {
+  VideoPlayerController? _controller;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveAndPlay();
+  }
+
+  @override
+  void didUpdateWidget(covariant _WideMedia old) {
+    super.didUpdateWidget(old);
+    // Focal exercise changed → tear down + re-resolve the new move's video.
+    if (old.exercise.name != widget.exercise.name) {
+      _controller?.dispose();
+      _controller = null;
+      _ready = false;
+      _resolveAndPlay();
+    }
+  }
+
+  Future<void> _resolveAndPlay() async {
+    // Resolution mirrors openEasyVideo: a real https URL on the model, else
+    // the `/videos/by-exercise/<name>` endpoint (returns a presigned URL).
+    String? url;
+    final direct = widget.exercise.videoUrl;
+    if (direct != null && direct.startsWith('http')) {
+      url = direct;
+    } else {
+      try {
+        final res = await ref.read(apiClientProvider).get(
+              '/videos/by-exercise/${Uri.encodeComponent(widget.exercise.name)}',
+            );
+        if (res.statusCode == 200 && res.data != null) {
+          url = res.data['url'] as String?;
+        }
+      } catch (_) {
+        // No video → silently fall back to the illustration.
+      }
+    }
+    if (url == null || url.isEmpty || !mounted) return;
+    try {
+      final c = VideoPlayerController.networkUrl(Uri.parse(url));
+      await c.initialize();
+      c
+        ..setLooping(true)
+        ..setVolume(0)
+        ..play();
+      if (!mounted) {
+        await c.dispose();
+        return;
+      }
+      setState(() {
+        _controller = c;
+        _ready = true;
+      });
+    } catch (_) {
+      // Init failed (codec / network) → keep the illustration.
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final border =
+        (isDark ? Colors.white : Colors.black).withValues(alpha: 0.10);
+    final preResolved = widget.exercise.imageS3Path ??
+        widget.exercise.gifUrl ??
+        widget.exercise.videoUrl;
+    final hasVideo = _ready && _controller != null;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          height: widget.height,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            border: Border.all(color: border),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (hasVideo)
+                FittedBox(
+                  fit: BoxFit.cover,
+                  clipBehavior: Clip.hardEdge,
+                  child: SizedBox(
+                    width: _controller!.value.size.width,
+                    height: _controller!.value.size.height,
+                    child: VideoPlayer(_controller!),
+                  ),
+                )
+              else
+                ExerciseImage(
+                  exerciseName: widget.exercise.name,
+                  imageUrl: preResolved,
+                  width: double.infinity,
+                  height: double.infinity,
+                  borderRadius: 0,
+                  fit: BoxFit.cover,
+                  backgroundColor: (isDark ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.04),
+                  iconColor: (isDark ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.22),
+                ),
+              // Centered play affordance — only while showing the still (the
+              // video, once playing, needs none).
+              if (!hasVideo)
+                Center(
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.34),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.play_arrow_rounded,
+                        color: Colors.white, size: 34),
+                  ),
+                ),
+              // Fullscreen expand affordance, bottom-right.
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.open_in_full_rounded,
+                      color: Colors.black87, size: 16),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pill-style ↺ History chip shown beside the exercise name.
+class _HistoryChip extends StatelessWidget {
+  final Color color;
+  final VoidCallback onTap;
+  const _HistoryChip({required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = color.withValues(alpha: 0.82);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.history_rounded, size: 15, color: fg),
+            const SizedBox(width: 5),
+            Text(
+              'History',
+              style: TextStyle(
+                  fontSize: 12.5, fontWeight: FontWeight.w700, color: fg),
             ),
           ],
         ),
@@ -273,8 +431,10 @@ class EasyExerciseHeader extends ConsumerWidget {
 
 /// Opens the ↺ History sheet — previous SESSIONS for this exercise (this
 /// session's sets are already in the set-ledger). Reuses [ExerciseSessionCard]
-/// + [exerciseHistoryProvider].
-void _showEasyHistory(BuildContext context, WidgetRef ref, String exerciseName) {
+/// + [exerciseHistoryProvider]. Public so the set-ledger pills (tap → History,
+/// per the locked spec) can reuse the exact same sheet.
+void showEasyExerciseHistorySheet(
+    BuildContext context, WidgetRef ref, String exerciseName) {
   showGlassSheet<void>(
     context: context,
     builder: (_) => GlassSheet(child: _EasyHistorySheet(exerciseName: exerciseName)),
@@ -334,49 +494,6 @@ class _EasyHistorySheet extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Centered demo thumbnail. Uses gifUrl if available; falls back to a
-/// muted icon placeholder. Videos (videoUrl) render via the Show Video
-/// CTA — the still here is just for instant recognition.
-class _Thumbnail extends StatelessWidget {
-  final WorkoutExercise exercise;
-  final bool isDark;
-  const _Thumbnail({required this.exercise, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04);
-    final border = (isDark ? Colors.white : Colors.black).withValues(
-      alpha: 0.10,
-    );
-    // Use the shared ExerciseImage widget so imageS3Path keys without a full
-    // URL, or expired presigned URLs, round-trip through the
-    // `/exercise-images/{name}` endpoint instead of silently failing in
-    // Image.network — which is why the dumbbell placeholder was sticky.
-    final preResolved =
-        exercise.imageS3Path ?? exercise.gifUrl ?? exercise.videoUrl;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: ExerciseImage(
-        exerciseName: exercise.name,
-        imageUrl: preResolved,
-        width: double.infinity,
-        height: double.infinity,
-        borderRadius: 0,
-        backgroundColor: Colors.transparent,
-        iconColor: (isDark ? Colors.white : Colors.black).withValues(
-          alpha: 0.22,
-        ),
       ),
     );
   }

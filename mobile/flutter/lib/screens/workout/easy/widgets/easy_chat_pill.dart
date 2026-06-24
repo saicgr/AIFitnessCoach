@@ -26,11 +26,16 @@ class EasyChatPill extends ConsumerWidget {
   final int currentSetNumber;
   final int totalSets;
 
+  /// Full-width outlined "✦ Ask coach" pill below LOG SET (per the approved
+  /// mockup). When false, renders as a compact min-width chip.
+  final bool expand;
+
   const EasyChatPill({
     super.key,
     required this.currentExercise,
     required this.currentSetNumber,
     required this.totalSets,
+    this.expand = false,
   });
 
   @override
@@ -55,6 +60,7 @@ class EasyChatPill extends ConsumerWidget {
           },
           child: Container(
             height: 44,
+            width: expand ? double.infinity : null,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.08),
@@ -62,7 +68,9 @@ class EasyChatPill extends ConsumerWidget {
               border: Border.all(color: accent.withValues(alpha: 0.35)),
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+              mainAxisAlignment:
+                  expand ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
                 Icon(Icons.auto_awesome_outlined, color: accent, size: 16),
                 const SizedBox(width: 6),

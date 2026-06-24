@@ -10,7 +10,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/providers/favorites_provider.dart';
 import '../../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/accent_color_provider.dart';
@@ -35,9 +34,14 @@ class EasyTopBar extends ConsumerWidget {
   /// "Skip to next exercise" menu action.
   final VoidCallback? onSkipToNext;
 
-  /// Current focal exercise — drives the favorite heart state + toggle
-  /// target. Null hides the favorite button.
+  /// Current focal exercise — retained for callers; no longer drives a
+  /// favorite heart (removed per the Easy redesign — no heart/PiP in Easy).
   final WorkoutExercise? exercise;
+
+  /// Opens the full ⋯ actions sheet (This-exercise + Workout groups). When
+  /// provided, the single ⋯ on the right routes here (matches the mockup);
+  /// falls back to the legacy Skip/Complete/Quit popup when null.
+  final VoidCallback? onShowActions;
 
   const EasyTopBar({
     super.key,
@@ -48,7 +52,14 @@ class EasyTopBar extends ConsumerWidget {
     this.onCompleteNow,
     this.onSkipToNext,
     this.exercise,
+    this.onShowActions,
   });
+
+  String _fmt(int s) {
+    final m = s ~/ 60;
+    final sec = (s % 60).toString().padLeft(2, '0');
+    return '$m:$sec';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -65,8 +76,7 @@ class EasyTopBar extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           children: [
-            // Back button — floating circular chip (matches the back
-            // button style used on other detail screens).
+            // Back button — confirms before leaving (parity with Advanced).
             _FloatingBackButton(
               onTap: () async {
                 await HapticService.instance.tap();
@@ -75,92 +85,83 @@ class EasyTopBar extends ConsumerWidget {
               isDark: isDark,
               color: textColor,
             ),
+            const SizedBox(width: 8),
+            // Elapsed-time pill (the mockup's left timer). Display-only — the
+            // workout clock keeps running; no fragile half-wired pause.
+            _TimerPill(label: _fmt(workoutSeconds), isDark: isDark, color: textColor),
             const Spacer(),
-            // [E|S|A] tier toggle
+            // [Easy | Advanced] tier toggle
             _TierPill(currentMode: currentMode, accent: accent, isDark: isDark),
             const Spacer(),
-            if (exercise != null)
-              _FavoriteButton(exercise: exercise!, color: textColor),
-            if (onMinimize != null)
-              SizedBox(
-                width: 36,
-                height: 36,
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  icon: Icon(Icons.picture_in_picture_alt_outlined,
-                      size: 20, color: textColor),
-                  onPressed: () async {
-                    await HapticService.instance.tap();
-                    onMinimize!.call();
-                  },
-                  tooltip: AppLocalizations.of(context).easyTopBarMinimizeWorkout,
-                ),
+            // Single ⋯ = ACTIONS (mockup). Opens the full action sheet
+            // (Increment · Swap · Report pain · Change equipment · Skip ·
+            // Show video · Log water · Complete · Quit). No heart, no PiP.
+            SizedBox(
+              width: 36,
+              height: 36,
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: Icon(Icons.more_horiz_rounded, size: 22, color: textColor),
+                tooltip: AppLocalizations.of(context).homeMore,
+                onPressed: (onShowActions ??
+                        onSkipToNext ??
+                        onCompleteNow ??
+                        onQuit) ==
+                    null
+                    ? null
+                    : () async {
+                        await HapticService.instance.tap();
+                        if (onShowActions != null) {
+                          onShowActions!();
+                        } else if (onCompleteNow != null) {
+                          onCompleteNow!();
+                        }
+                      },
               ),
-            // Overflow menu — holds the quiet but essential Skip /
-            // Complete-now / Quit actions so the top bar stays uncluttered.
-            if (onSkipToNext != null ||
-                onCompleteNow != null ||
-                onQuit != null)
-              SizedBox(
-                width: 36,
-                height: 36,
-                child: PopupMenuButton<String>(
-                  padding: EdgeInsets.zero,
-                  icon: Icon(Icons.more_vert_rounded,
-                      size: 20, color: textColor),
-                  tooltip: AppLocalizations.of(context).homeMore,
-                  position: PopupMenuPosition.under,
-                  onSelected: (v) async {
-                    await HapticService.instance.tap();
-                    if (v == 'skip' && onSkipToNext != null) {
-                      onSkipToNext!();
-                    } else if (v == 'complete' && onCompleteNow != null) {
-                      onCompleteNow!();
-                    } else if (v == 'quit' && onQuit != null) {
-                      onQuit!();
-                    }
-                  },
-                  itemBuilder: (ctx) => [
-                    if (onSkipToNext != null)
-                      PopupMenuItem(
-                        value: 'skip',
-                        child: Row(children: [
-                          Icon(Icons.skip_next_rounded, size: 18),
-                          SizedBox(width: 10),
-                          Text(AppLocalizations.of(context).easyTopBarSkipToNextExercise),
-                        ]),
-                      ),
-                    if (onCompleteNow != null)
-                      PopupMenuItem(
-                        value: 'complete',
-                        child: Row(children: [
-                          Icon(Icons.check_circle_rounded,
-                              size: 18, color: accent),
-                          const SizedBox(width: 10),
-                          Text(AppLocalizations.of(context).workoutTopBarCompleteWorkout),
-                        ]),
-                      ),
-                    if (onQuit != null) const PopupMenuDivider(),
-                    if (onQuit != null)
-                      PopupMenuItem(
-                        value: 'quit',
-                        child: Row(children: [
-                          Icon(Icons.close_rounded,
-                              size: 18, color: Colors.redAccent),
-                          const SizedBox(width: 10),
-                          Text(AppLocalizations.of(context).easyTopBarQuitWorkout,
-                              style: TextStyle(color: Colors.redAccent)),
-                        ]),
-                      ),
-                  ],
-                ),
-              ),
-            // Stopwatch removed — duplicated by the Duration stat card
-            // immediately below the top bar. Kept the field on the widget
-            // so callers don't need updates; if a future tier wants it
-            // back, just reinstate the Row here.
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Small rounded elapsed-time pill on the left of the Easy top bar.
+class _TimerPill extends StatelessWidget {
+  final String label;
+  final bool isDark;
+  final Color color;
+  const _TimerPill(
+      {required this.label, required this.isDark, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.10),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer_outlined, size: 14, color: color.withValues(alpha: 0.7)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Space Mono',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -282,36 +283,3 @@ class _FloatingBackButton extends StatelessWidget {
   }
 }
 
-/// Heart icon that toggles the current exercise in the favorites list.
-/// Fills red when favorited; outlined otherwise.
-class _FavoriteButton extends ConsumerWidget {
-  final WorkoutExercise exercise;
-  final Color color;
-
-  const _FavoriteButton({required this.exercise, required this.color});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isFav = ref.watch(favoritesProvider).isFavorite(exercise.name);
-    return SizedBox(
-      width: 36,
-      height: 36,
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        icon: Icon(
-          isFav ? Icons.favorite : Icons.favorite_border,
-          size: 20,
-          color: isFav ? Colors.redAccent : color,
-        ),
-        onPressed: () async {
-          await HapticService.instance.tap();
-          await ref.read(favoritesProvider.notifier).toggleFavorite(
-                exercise.name,
-                exerciseId: exercise.id ?? exercise.libraryId,
-              );
-        },
-        tooltip: isFav ? AppLocalizations.of(context).easyTopBarRemoveFromFavorites : AppLocalizations.of(context).easyTopBarAddToFavorites,
-      ),
-    );
-  }
-}

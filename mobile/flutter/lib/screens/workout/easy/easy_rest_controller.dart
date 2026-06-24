@@ -72,6 +72,7 @@ RestStreamBroadcaster startEasyRest({
   required int seconds,
   required EasyNextTarget target,
   required bool useKg,
+  VoidCallback? onLogWater,
 }) {
   final broadcaster = RestStreamBroadcaster(seconds);
   timer.startRestTimer(seconds);
@@ -102,6 +103,7 @@ RestStreamBroadcaster startEasyRest({
         onAddTime: () => timer.adjustRestTime(15),
         onSubtractTime: () => timer.adjustRestTime(-15),
         onPause: timer.toggleRestPause,
+        onLogWater: onLogWater,
         onDone: () {
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();

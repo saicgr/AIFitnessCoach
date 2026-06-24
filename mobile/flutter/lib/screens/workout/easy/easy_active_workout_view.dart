@@ -21,7 +21,6 @@ import 'widgets/easy_completed_dots.dart';
 import 'widgets/easy_exercise_header.dart';
 import 'widgets/easy_focal_column.dart';
 import 'widgets/easy_top_bar.dart';
-import 'widgets/easy_up_next_chip.dart';
 
 class EasyActiveWorkoutView extends StatelessWidget {
   final WorkoutExercise exercise;
@@ -91,6 +90,9 @@ class EasyActiveWorkoutView extends StatelessWidget {
   /// final exercise of the workout).
   final VoidCallback? onSkipToNext;
 
+  /// Opens the History sheet — wired to the set-ledger pill taps (spec).
+  final VoidCallback? onShowHistory;
+
   /// Open the per-exercise actions sheet (Swap / Report pain / Change
   /// equipment / Skip / Video). Wired by the state to the new
   /// `EasyExerciseActionsSheet.show()` helper. Reachable via the "•••"
@@ -146,6 +148,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     this.onEditNote,
     this.hasNote = false,
     this.onSkipToNext,
+    this.onShowHistory,
     this.onShowExerciseActions,
     this.onQuitWorkout,
     this.onCompleteWorkoutNow,
@@ -168,12 +171,17 @@ class EasyActiveWorkoutView extends StatelessWidget {
               onQuit: onQuitWorkout,
               onSkipToNext: onSkipToNext,
               exercise: exercise,
+              // Single ⋯ opens the full actions sheet (mockup).
+              onShowActions: onShowExerciseActions,
             ),
             WorkoutStatsStrip(
               workoutSeconds: workoutSeconds,
               setLogs: allCompletedSets,
               useKg: useKg,
               isDark: isDark,
+              // EFFORT (live HR) as the mockup's 2nd stat — shows "—" without
+              // a wearable streaming, never a fabricated number.
+              showEffort: true,
             ),
             EasyExerciseHeader(
               exercise: exercise,
@@ -195,10 +203,14 @@ class EasyActiveWorkoutView extends StatelessWidget {
               currentSetIndex: state.completedCount,
               totalSets: state.totalSets,
               useKg: useKg,
+              currentWeightDisplay: state.displayWeight,
+              currentReps: state.reps,
               editingSetIndex: editingSetIndex,
               onEditSet: onEditSet,
               onReturnToCurrent: onReturnToCurrent,
               onSkipToSet: onSkipToSet,
+              // Spec: tap any ledger pill → History sheet.
+              onOpenHistory: onShowHistory,
             ),
             // EASY REDESIGN: the five stacked insight cards (pre-set coach
             // tip / last-time / score-target / how-did-I-do) were REMOVED from
@@ -227,29 +239,21 @@ class EasyActiveWorkoutView extends StatelessWidget {
                   onDurationChanged: onDurationChanged,
                   onLogSet: onLogSet,
                   editingSetIndex: editingSetIndex,
+                  // "Next: <name>" preview shown just above LOG SET (mockup).
+                  nextExerciseName: nextExerciseName,
                 ),
               ),
             ),
-            // Up next + Ask-coach share one row so Log Set stays the only
-            // primary CTA. Tap the Up-next chip to SKIP to the next exercise.
+            // Full-width "✦ Ask coach" below LOG SET — the only secondary CTA,
+            // visually lighter than the primary Log Set (per the mockup). Skip
+            // to the next exercise lives in the ⋯ menu.
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: EasyUpNextChip(
-                      nextExerciseName: nextExerciseName,
-                      nextExerciseImageUrl: nextExerciseImageUrl,
-                      onSkipToNext: onSkipToNext,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  EasyChatPill(
-                    currentExercise: exercise,
-                    currentSetNumber: currentSetNumber,
-                    totalSets: state.totalSets,
-                  ),
-                ],
+              child: EasyChatPill(
+                currentExercise: exercise,
+                currentSetNumber: currentSetNumber,
+                totalSets: state.totalSets,
+                expand: true,
               ),
             ),
           ],
