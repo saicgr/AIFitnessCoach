@@ -333,6 +333,7 @@ class EasyFocalColumn extends StatelessWidget {
                       min: 0,
                       max: 999,
                       compact: stepperCompact,
+                      dense: true,
                       onChanged: onWeightChanged,
                     ),
                     'WEIGHT (${useKg ? 'KG' : 'LB'})',
@@ -349,6 +350,7 @@ class EasyFocalColumn extends StatelessWidget {
                       min: 0,
                       max: 99,
                       compact: stepperCompact,
+                      dense: true,
                       onChanged: onRepsChanged,
                     ),
                     AppLocalizations.of(context)

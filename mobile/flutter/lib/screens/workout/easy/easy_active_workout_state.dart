@@ -1177,7 +1177,10 @@ class EasyActiveWorkoutScreenState
       // Clear the shared session — user explicitly walked away. Re-entry
       // should rehydrate from persisted server data, not stale memory.
       ref.read(activeWorkoutSessionProvider.notifier).clear();
-      Navigator.of(context).maybePop();
+      // Use pop() (NOT maybePop) — the screen's PopScope(canPop: false)
+      // intercepts maybePop()/system-back to show THIS confirm; a direct
+      // pop bypasses the guard so the confirmed Quit actually leaves.
+      Navigator.of(context).pop();
     }
   }
 
@@ -1366,7 +1369,9 @@ class EasyActiveWorkoutScreenState
               isResting: false,
               restSecondsRemaining: 0,
             );
-        Navigator.of(context).maybePop();
+        // Direct pop() — bypasses the screen's PopScope(canPop: false) guard
+        // (minimize is a deliberate dismiss, not a stray back gesture).
+        Navigator.of(context).pop();
       },
       onWeightChanged: _setWeight,
       onRepsChanged: _setReps,

@@ -45,6 +45,11 @@ class FocalStepper extends StatefulWidget {
   /// Small-screen mode (iPhone SE / foldable folded) — compacts sizing.
   final bool compact;
 
+  /// Dense mode — used when TWO steppers sit side-by-side (Easy Weight|Reps).
+  /// Shrinks buttons + gaps so the internal row fits a half-width column
+  /// (the full-width sizing overflows ~70px when paired).
+  final bool dense;
+
   const FocalStepper({
     super.key,
     required this.value,
@@ -56,6 +61,7 @@ class FocalStepper extends StatefulWidget {
     this.min = 0,
     this.max = 9999,
     this.compact = false,
+    this.dense = false,
   });
 
   @override
@@ -133,12 +139,16 @@ class _FocalStepperState extends State<FocalStepper> {
     final accent = AccentColorScope.of(context).getColor(isDark);
     final onSurface = isDark ? Colors.white : Colors.black;
 
-    final btnSize = widget.compact ? 56.0 : 64.0;
-    final digitSize = widget.compact ? 30.0 : 34.0;
+    final btnSize = widget.dense ? 46.0 : (widget.compact ? 56.0 : 64.0);
+    final digitSize = widget.dense ? 28.0 : (widget.compact ? 30.0 : 34.0);
     // Bumped glyphs so the − / + are easier to thumb-hit than they look
     // in the corners of the focal card.
-    final glyphSize = widget.compact ? 30.0 : 36.0;
-    final unitSize = widget.compact ? 16.0 : 18.0;
+    final glyphSize = widget.dense ? 26.0 : (widget.compact ? 30.0 : 36.0);
+    final unitSize = widget.dense ? 15.0 : (widget.compact ? 16.0 : 18.0);
+    // Inner gap + display floor shrink in dense mode so the row fits a
+    // half-width column (46 + 8 + 34 + 8 + 46 = 142 < ~174 available).
+    final innerGap = widget.dense ? 8.0 : 18.0;
+    final displayMinWidth = widget.dense ? 34.0 : 96.0;
     final canDec = widget.value > widget.min;
     final canInc = widget.value < widget.max;
 
@@ -177,22 +187,24 @@ class _FocalStepperState extends State<FocalStepper> {
               onLongPressStart: canDec ? () => _startRamp(-1) : null,
               onLongPressEnd: _stopRamp,
             ),
-            const SizedBox(width: 18),
-            GestureDetector(
-              onTap: _editNumerically,
-              behavior: HitTestBehavior.opaque,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 96),
-                child: FocalStepperDisplay(
-                  value: widget.value,
-                  unit: widget.unit,
-                  digitSize: digitSize,
-                  unitSize: unitSize,
-                  integerOnly: widget.integerOnly,
+            SizedBox(width: innerGap),
+            Flexible(
+              child: GestureDetector(
+                onTap: _editNumerically,
+                behavior: HitTestBehavior.opaque,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: displayMinWidth),
+                  child: FocalStepperDisplay(
+                    value: widget.value,
+                    unit: widget.unit,
+                    digitSize: digitSize,
+                    unitSize: unitSize,
+                    integerOnly: widget.integerOnly,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 18),
+            SizedBox(width: innerGap),
             FocalStepperButton(
               icon: Icons.add_rounded,
               size: btnSize,
