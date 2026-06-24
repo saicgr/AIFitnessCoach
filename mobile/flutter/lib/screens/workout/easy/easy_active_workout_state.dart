@@ -952,7 +952,8 @@ class EasyActiveWorkoutScreenState
         );
       },
       onSkipToNext: _skipToNextExercise,
-      onShowVideo: () => openEasyVideo(context, exercise, ref: ref),
+      onShowVideo: () => openEasyVideo(context, exercise,
+          ref: ref, playlist: _exercises, playlistIndex: _currentIndex),
       onSetIncrement: () => _showIncrementPicker(exercise.equipment),
       incrementLabel: incLabel,
       onCompleteWorkout: _completeWorkoutNow,
@@ -1316,7 +1317,8 @@ class EasyActiveWorkoutScreenState
       // Video = full-screen looping video player (pure playback).
       // Instructions = text-only glass sheet with muscle / body /
       // equipment / how-to. Separate surfaces, distinct content.
-      onShowVideo: () => openEasyVideo(context, exercise, ref: ref),
+      onShowVideo: () => openEasyVideo(context, exercise,
+          ref: ref, playlist: _exercises, playlistIndex: _currentIndex),
       onShowInfo: () => openEasyInfoSheet(context, exercise),
       // Form Check — pre-filled with this exercise (editable in the sheet);
       // the sheet captures the active gym so analyses persist per gym/exercise.

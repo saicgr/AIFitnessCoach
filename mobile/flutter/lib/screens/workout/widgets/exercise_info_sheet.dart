@@ -21,10 +21,17 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/exercise_image.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Show the exercise instructions as a full screen page
+/// Show the exercise instructions as a full screen page.
+///
+/// When [playlist] + [playlistIndex] are supplied, the sheet shows prev/next
+/// chevrons so the user can skip between exercises without leaving the viewer
+/// (Easy mode passes its full exercise list here). Single-exercise callers omit
+/// them and the chevrons stay hidden.
 Future<void> showExerciseInfoSheet({
   required BuildContext context,
   required WorkoutExercise exercise,
+  List<WorkoutExercise>? playlist,
+  int? playlistIndex,
 }) {
   HapticFeedback.mediumImpact();
 
@@ -32,6 +39,8 @@ Future<void> showExerciseInfoSheet({
     AppPageRoute(
       builder: (context) => ExerciseInstructionsScreen(
         exercise: exercise,
+        playlist: playlist,
+        playlistIndex: playlistIndex,
       ),
     ),
   );
@@ -41,9 +50,18 @@ Future<void> showExerciseInfoSheet({
 class ExerciseInstructionsScreen extends ConsumerStatefulWidget {
   final WorkoutExercise exercise;
 
+  /// Optional list of exercises this viewer can skip through (prev/next).
+  /// When null/empty, the viewer is single-exercise and chevrons are hidden.
+  final List<WorkoutExercise>? playlist;
+
+  /// Starting index into [playlist]. Ignored when [playlist] is null/empty.
+  final int? playlistIndex;
+
   const ExerciseInstructionsScreen({
     super.key,
     required this.exercise,
+    this.playlist,
+    this.playlistIndex,
   });
 
   @override
@@ -76,6 +94,20 @@ class _ExerciseInstructionsScreenState
   // Guard against double-fire from rapid retries.
   bool _isRetrying = false;
 
+  // ── Playlist / skip state ──────────────────────────────────────────────
+  // When the caller passes a playlist, the viewer tracks a mutable index so
+  // prev/next chevrons can swap the displayed exercise (and its video) in
+  // place. Single-exercise callers collapse to a one-item list.
+  late int _index;
+  List<WorkoutExercise> get _playlist =>
+      (widget.playlist != null && widget.playlist!.isNotEmpty)
+          ? widget.playlist!
+          : [widget.exercise];
+  WorkoutExercise get _exercise =>
+      _playlist[_index.clamp(0, _playlist.length - 1)];
+  bool get _hasPrev => _index > 0;
+  bool get _hasNext => _index < _playlist.length - 1;
+
   // Bottom tabs state
   int _selectedTab = 0; // 0 = Setup, 1 = Tips
   bool _isExpanded = false;
@@ -105,7 +137,122 @@ class _ExerciseInstructionsScreenState
   @override
   void initState() {
     super.initState();
+    _index = (widget.playlist != null &&
+            widget.playlist!.isNotEmpty &&
+            widget.playlistIndex != null)
+        ? widget.playlistIndex!.clamp(0, widget.playlist!.length - 1)
+        : 0;
     _loadVideoUrl();
+  }
+
+  /// Skip to another exercise in the playlist. Tears down the current video,
+  /// resets the load state, and re-runs the loader for the new exercise. The
+  /// chosen playback speed persists (re-applied in [_initializeVideo]).
+  Future<void> _goToExercise(int newIndex) async {
+    if (newIndex < 0 ||
+        newIndex >= _playlist.length ||
+        newIndex == _index) {
+      return;
+    }
+    HapticFeedback.selectionClick();
+    try {
+      await _videoController?.dispose();
+    } catch (_) {}
+    _videoController = null;
+    if (!mounted) return;
+    setState(() {
+      _index = newIndex;
+      _videoUrl = null;
+      _isLoadingVideo = true;
+      _isVideoInitialized = false;
+      _videoError = false;
+      _substituteOriginalName = null;
+      _substituteMatchedName = null;
+      _speedMenuOpen = false;
+    });
+    await _loadVideoUrl();
+  }
+
+  /// Opens the Setup + Tips detail in a bottom sheet (the "more" action). These
+  /// were previously inline tabs; the ⋯ button revives them on demand without
+  /// cluttering the full-screen video.
+  void _showMoreSheet() {
+    HapticFeedback.selectionClick();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentColor = ref.read(accentColorProvider).getColor(isDark);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.pureWhite,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: textMuted.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    _titleCase(_exercise.name),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppLocalizations.of(context).easySheetHelpersHowToPerform,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                      color: accentColor,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildSetupContent(isDark, textPrimary, textMuted, accentColor),
+                  const SizedBox(height: 20),
+                  Text(
+                    AppLocalizations.of(context).easySheetHelpersFormTips,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                      color: accentColor,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildTipsContent(isDark, textPrimary, textMuted, accentColor),
+                  // Tips/Setup builders for the detail strings are unchanged.
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -122,7 +269,7 @@ class _ExerciseInstructionsScreenState
   /// black loading screen — we always fall through to the still-image
   /// placeholder within ~20s worst case.
   Future<void> _loadVideoUrl() async {
-    final exerciseName = widget.exercise.name;
+    final exerciseName = _exercise.name;
 
     try {
       final apiClient = ref.read(apiClientProvider);
@@ -296,6 +443,9 @@ class _ExerciseInstructionsScreenState
             child: _buildBottomSection(isDark, textPrimary, textMuted, accentColor),
           ),
 
+          // Prev/next exercise chevrons — only for multi-exercise playlists.
+          _buildSkipChevrons(),
+
           // Playback-speed control — only while a video is actually playing.
           if (_isVideoInitialized && _videoController != null)
             _buildSpeedControl(accentColor),
@@ -398,7 +548,7 @@ class _ExerciseInstructionsScreenState
   }
 
   Widget _buildSubstituteBanner(Color textPrimary, Color textMuted) {
-    final original = _substituteOriginalName ?? widget.exercise.name;
+    final original = _substituteOriginalName ?? _exercise.name;
     final matched = _substituteMatchedName ?? '';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -470,7 +620,7 @@ class _ExerciseInstructionsScreenState
             child: Column(
               children: [
                 Text(
-                  _titleCase(widget.exercise.name),
+                  _titleCase(_exercise.name),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -492,9 +642,73 @@ class _ExerciseInstructionsScreenState
               ],
             ),
           ),
-          // Spacer to balance
-          const SizedBox(width: 48),
+          // "More" — Setup + Tips detail. Balances the back button.
+          IconButton(
+            onPressed: _showMoreSheet,
+            icon: Icon(
+              Icons.more_horiz_rounded,
+              color: textPrimary,
+              size: 24,
+            ),
+            tooltip: AppLocalizations.of(context).homeMore,
+          ),
         ],
+      ),
+    );
+  }
+
+  /// Vertically-centered prev/next chevrons overlaid on the video sides. Only
+  /// rendered when a multi-exercise playlist was supplied. The buttons sit
+  /// above the play/pause tap target (own GestureDetector wins the arena).
+  Widget _buildSkipChevrons() {
+    if (_playlist.length < 2) return const SizedBox.shrink();
+    Widget chevron({required bool next}) {
+      final enabled = next ? _hasNext : _hasPrev;
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: enabled
+            ? () => _goToExercise(next ? _index + 1 : _index - 1)
+            : null,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 150),
+          opacity: enabled ? 1.0 : 0.25,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              shape: BoxShape.circle,
+              border:
+                  Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            child: Icon(
+              next
+                  ? Icons.chevron_right_rounded
+                  : Icons.chevron_left_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        ignoring: false,
+        child: Align(
+          alignment: Alignment.center,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                chevron(next: false),
+                chevron(next: true),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -524,7 +738,7 @@ class _ExerciseInstructionsScreenState
 
     // Per-exercise framing override (see exercise_video_overrides.dart).
     // Null for almost every exercise — falls back to native aspect.
-    final crop = exerciseVideoCropFor(widget.exercise.name);
+    final crop = exerciseVideoCropFor(_exercise.name);
 
     if (_isVideoInitialized && _videoController != null) {
       final nativeAspect = _videoController!.value.aspectRatio;
@@ -599,7 +813,7 @@ class _ExerciseInstructionsScreenState
         ? AspectRatio(
             aspectRatio: crop.aspectRatio,
             child: ExerciseImage(
-              exerciseName: widget.exercise.name,
+              exerciseName: _exercise.name,
               width: screenW,
               height: screenW / crop.aspectRatio,
               borderRadius: 0,
@@ -610,7 +824,7 @@ class _ExerciseInstructionsScreenState
             ),
           )
         : ExerciseImage(
-            exerciseName: widget.exercise.name,
+            exerciseName: _exercise.name,
             width: screenW,
             height: screenH * 0.5,
             borderRadius: 0,
@@ -799,7 +1013,9 @@ class _ExerciseInstructionsScreenState
     final instructions = _getSetupInstructions();
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       itemCount: instructions.length,
       itemBuilder: (context, index) {
         return Padding(
@@ -850,7 +1066,9 @@ class _ExerciseInstructionsScreenState
     final tips = _getFormTips();
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       itemCount: tips.length,
       itemBuilder: (context, index) {
         return Padding(
@@ -893,12 +1111,12 @@ class _ExerciseInstructionsScreenState
   }
 
   String _getTargetMuscles() {
-    if (widget.exercise.primaryMuscle != null &&
-        widget.exercise.primaryMuscle!.isNotEmpty) {
-      return widget.exercise.primaryMuscle!;
-    } else if (widget.exercise.muscleGroup != null &&
-        widget.exercise.muscleGroup!.isNotEmpty) {
-      return widget.exercise.muscleGroup!;
+    if (_exercise.primaryMuscle != null &&
+        _exercise.primaryMuscle!.isNotEmpty) {
+      return _exercise.primaryMuscle!;
+    } else if (_exercise.muscleGroup != null &&
+        _exercise.muscleGroup!.isNotEmpty) {
+      return _exercise.muscleGroup!;
     }
     return 'Full Body';
   }
@@ -976,8 +1194,8 @@ class _ExerciseInstructionsScreenState
   ///   - "farmer's carry"                   → generic safety blurb
   ///   - "push-ups"                         → generic safety blurb
   String _routeKey() {
-    final name = widget.exercise.name.toLowerCase();
-    final eq = (widget.exercise.equipment ?? '').toLowerCase();
+    final name = _exercise.name.toLowerCase();
+    final eq = (_exercise.equipment ?? '').toLowerCase();
 
     // Most specific first.
     if (name.contains('fly') || name.contains('flye')) return 'fly';
@@ -1037,10 +1255,10 @@ class _ExerciseInstructionsScreenState
   /// Returns null if no DB content is available — caller falls through to
   /// the keyword router.
   List<String>? _dbInstructionSteps() {
-    final steps = widget.exercise.instructions;
+    final steps = _exercise.instructions;
     if (steps == null || steps.isEmpty) return null;
     // Reuse the model's parser if present (handles numbered/sentence-split).
-    final parsed = widget.exercise.instructions.toString();
+    final parsed = _exercise.instructions.toString();
     if (parsed.trim().isEmpty) return null;
     // Try splitting on common separators.
     final lines = parsed
@@ -1057,7 +1275,7 @@ class _ExerciseInstructionsScreenState
 
     // If the model carries an explicit `setup` cue, prefer that as the first
     // step alongside the template.
-    final setup = widget.exercise.setup;
+    final setup = _exercise.setup;
     final List<String> base;
     switch (_routeKey()) {
       case 'fly':
@@ -1227,8 +1445,8 @@ class _ExerciseInstructionsScreenState
 
   List<String> _getFormTips() {
     // DB-backed form cue takes precedence as the first tip.
-    final cue = widget.exercise.formCue;
-    final breathing = widget.exercise.breathingCue;
+    final cue = _exercise.formCue;
+    final breathing = _exercise.breathingCue;
     final List<String> base;
     switch (_routeKey()) {
       case 'fly':

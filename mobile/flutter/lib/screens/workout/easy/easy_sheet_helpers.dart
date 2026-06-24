@@ -6,43 +6,36 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:video_player/video_player.dart';
 
 import '../../../core/services/haptic_service.dart';
 import '../../../data/models/exercise.dart';
-import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../models/workout_state.dart';
 import '../shared/exercise_instruction_copy.dart';
 import '../shared/plan_sheet.dart';
+import '../widgets/exercise_info_sheet.dart';
 import 'easy_active_workout_state_models.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Launch a full-screen video-only viewer for the current exercise.
+/// Launch the shared full-screen exercise viewer for the current exercise.
 ///
-/// Resolution order (matches the rest of the app):
-///   1. exercise.videoUrl / videoS3Path / gifUrl
-///   2. API `/videos/by-exercise/<name>` — returns a presigned S3 URL
-///   3. Snackbar fallback if neither returns media
+/// Easy mode previously used a bare video-only viewer (no speed control, no
+/// back, no skip). It now opens the SAME [ExerciseInstructionsScreen] every
+/// other surface uses — so Easy gets playback speed, a real back button, the
+/// "more" (Setup/Tips) menu, and (when [playlist] is supplied) prev/next skip.
 Future<void> openEasyVideo(
   BuildContext context,
   WorkoutExercise exercise, {
   required WidgetRef ref,
+  List<WorkoutExercise>? playlist,
+  int? playlistIndex,
 }) async {
   HapticService.instance.tap();
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => _EasyVideoOnlyScreen(
-        exerciseName: exercise.name,
-        directUrl: exercise.videoUrl?.isNotEmpty == true
-            ? exercise.videoUrl
-            : (exercise.videoS3Path?.isNotEmpty == true
-                ? exercise.videoS3Path
-                : (exercise.gifUrl?.isNotEmpty == true
-                    ? exercise.gifUrl
-                    : null)),
-      ),
-    ),
+  await showExerciseInfoSheet(
+    context: context,
+    exercise: exercise,
+    playlist: playlist,
+    playlistIndex: playlistIndex,
   );
 }
 
@@ -84,156 +77,6 @@ void openEasyInfoSheet(BuildContext context, WorkoutExercise exercise) {
       child: _EasyInstructionsContent(exercise: exercise),
     ),
   );
-}
-
-/// Full-screen video-only viewer. Uses the same `VideoPlayerController`
-/// + API pattern as ExerciseInstructionsScreen (which works), but without
-/// the instructions tabs — pure playback.
-class _EasyVideoOnlyScreen extends ConsumerStatefulWidget {
-  final String exerciseName;
-  final String? directUrl;
-  const _EasyVideoOnlyScreen({
-    required this.exerciseName,
-    required this.directUrl,
-  });
-
-  @override
-  ConsumerState<_EasyVideoOnlyScreen> createState() =>
-      _EasyVideoOnlyScreenState();
-}
-
-class _EasyVideoOnlyScreenState extends ConsumerState<_EasyVideoOnlyScreen> {
-  VideoPlayerController? _controller;
-  String? _resolvedUrl;
-  bool _loading = true;
-  bool _error = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _resolveAndPlay();
-  }
-
-  Future<void> _resolveAndPlay() async {
-    // 1. Prefer an already-resolved URL on the exercise model — but ONLY if
-    // it's a real https URL. A raw `s3://bucket/key` path (videoS3Path) is
-    // NOT playable by ExoPlayer ("unknown protocol: s3"), so treat it as
-    // unresolved and fall through to the API, which returns a presigned
-    // https URL. Mirrors widgets/exercise_image.dart's resolution.
-    final direct = widget.directUrl;
-    if (direct != null && direct.startsWith('http')) {
-      _resolvedUrl = direct;
-    } else {
-      // 2. Fall back to the API (handles s3:// paths + missing media).
-      try {
-        final apiClient = ref.read(apiClientProvider);
-        final res = await apiClient.get(
-          '/videos/by-exercise/${Uri.encodeComponent(widget.exerciseName)}',
-        );
-        if (res.statusCode == 200 && res.data != null) {
-          _resolvedUrl = res.data['url'] as String?;
-        }
-      } catch (e) {
-        debugPrint('❌ [EasyVideo] API lookup failed: $e');
-      }
-    }
-
-    if (_resolvedUrl == null || _resolvedUrl!.isEmpty) {
-      if (mounted) setState(() => _error = true);
-      return;
-    }
-    await _initController();
-  }
-
-  Future<void> _initController() async {
-    try {
-      final c = VideoPlayerController.networkUrl(Uri.parse(_resolvedUrl!));
-      await c.initialize();
-      c
-        ..setLooping(true)
-        ..setVolume(0)
-        ..play();
-      if (!mounted) {
-        await c.dispose();
-        return;
-      }
-      setState(() {
-        _controller = c;
-        _loading = false;
-      });
-    } catch (e) {
-      debugPrint('❌ [EasyVideo] Init failed: $e');
-      if (mounted) {
-        setState(() {
-          _error = true;
-          _loading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Center(child: _body()),
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 4,
-            right: 4,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 28),
-              onPressed: () => Navigator.of(context).maybePop(),
-            ),
-          ),
-          PositionedDirectional(start: 16,
-            end: 16,
-            bottom: MediaQuery.of(context).padding.bottom + 16,
-            child: Text(
-              widget.exerciseName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _body() {
-    if (_loading) {
-      return const CircularProgressIndicator(color: Colors.white70);
-    }
-    if (_error || _controller == null) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.videocam_off_outlined, color: Colors.white54, size: 56),
-          SizedBox(height: 12),
-          Text(
-            AppLocalizations.of(context).easySheetHelpersNoDemoVideoFor,
-            style: TextStyle(color: Colors.white70),
-          ),
-        ],
-      );
-    }
-    return AspectRatio(
-      aspectRatio: _controller!.value.aspectRatio,
-      child: VideoPlayer(_controller!),
-    );
-  }
 }
 
 class _EasyInstructionsContent extends StatelessWidget {
