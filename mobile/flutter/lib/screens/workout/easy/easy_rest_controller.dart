@@ -101,6 +101,7 @@ RestStreamBroadcaster startEasyRest({
         onSkip: timer.skipRest,
         onAddTime: () => timer.adjustRestTime(15),
         onSubtractTime: () => timer.adjustRestTime(-15),
+        onPause: timer.toggleRestPause,
         onDone: () {
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();

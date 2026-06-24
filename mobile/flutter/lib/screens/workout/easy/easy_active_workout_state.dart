@@ -38,7 +38,9 @@ import '../../../core/services/haptic_service.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/pr_detection_service.dart';
 import '../../../data/services/workout_completion_prewarmer.dart';
@@ -62,6 +64,7 @@ import 'easy_sheet_helpers.dart';
 import 'score_target_service.dart';
 import 'widgets/easy_exercise_actions_sheet.dart';
 import 'widgets/easy_help_sheet.dart';
+import 'widgets/easy_warmup_runner.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -117,6 +120,13 @@ class EasyActiveWorkoutScreenState
   // the pre-set insight engine so banner text doesn't flicker between
   // variants on every rebuild.
   final int _workoutStartEpochMs = DateTime.now().millisecondsSinceEpoch;
+
+  // Warm-up phase (Easy redesign). When `_warmupPhase` is true the build
+  // returns the guided EasyWarmupRunner instead of the working-set screen.
+  // Warm-up is kept OUT of `_exercises` / the logged session so it can't drift
+  // working-set indices or inflate stats — it's a pre-workout interstitial.
+  List<Map<String, dynamic>>? _warmup;
+  bool _warmupPhase = false;
 
   @override
   void initState() {
@@ -205,13 +215,54 @@ class EasyActiveWorkoutScreenState
 
     _currentSetStartTime = DateTime.now();
 
-    // Easy skips warmup by design. Mark the phase as done so tier-switching
-    // to Advanced mid-session doesn't drop the user back into warmup.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Easy now STARTS WITH WARM-UP (present but skippable) instead of skipping
+    // it. Resolve the warm-up phase after the first frame (so the checkpoint
+    // restore above has had a chance to run).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resolveWarmupPhase());
+  }
+
+  /// Decide whether to show the guided warm-up before the working sets.
+  /// Shows ONLY on a fresh start (no restored sets), when warm-up data exists,
+  /// and when warm-up hasn't already been done/skipped this session (so a
+  /// tier-swap back to Easy doesn't re-show it). Otherwise proceeds straight to
+  /// the working sets, mirroring the prior behaviour. Never blocks the workout:
+  /// any fetch failure falls through to "no warm-up".
+  Future<void> _resolveWarmupPhase() async {
+    if (!mounted) return;
+    final alreadyDone = ref.read(activeWorkoutWarmupDoneProvider);
+    final hasLoggedSets =
+        _perExercise.values.any((s) => s.completed.isNotEmpty);
+    if (alreadyDone || hasLoggedSets || widget.workout.id == null) {
+      _finishWarmupPhase();
+      return;
+    }
+    try {
+      final res = await ref
+          .read(workoutRepositoryProvider)
+          .fetchWarmupAndStretches(widget.workout.id!);
       if (!mounted) return;
-      ref.read(activeWorkoutWarmupDoneProvider.notifier).state = true;
-      EasyHelpSheet.showIfNeverSeen(context, onSkipToNext: _skipToNextExercise);
-    });
+      final warm = res.warmup;
+      if (warm != null && warm.isNotEmpty) {
+        setState(() {
+          _warmup = warm;
+          _warmupPhase = true;
+        });
+        return;
+      }
+    } catch (_) {
+      // No warm-up / offline → proceed without one (never a hardcoded fallback).
+    }
+    _finishWarmupPhase();
+  }
+
+  /// Leave the warm-up phase → working sets. Marks warm-up done (so Advanced
+  /// won't re-warmup on a tier swap) and shows the first-run help. Called from
+  /// the runner's onDone (finished OR skipped) and the no-warmup path.
+  void _finishWarmupPhase() {
+    if (!mounted) return;
+    if (_warmupPhase) setState(() => _warmupPhase = false);
+    ref.read(activeWorkoutWarmupDoneProvider.notifier).state = true;
+    EasyHelpSheet.showIfNeverSeen(context, onSkipToNext: _skipToNextExercise);
   }
 
   @override
@@ -768,10 +819,62 @@ class EasyActiveWorkoutScreenState
   /// equipment / Skip / Video). Reachable from the "•••" header chip and
   /// from a long-press on the focal column body. Easy mode previously had
   /// NO swap path mid-workout; this wiring is the fix.
+  /// Quick per-equipment weight-increment picker (the +/− step). Persists via
+  /// weightIncrementsProvider, so the focal stepper immediately uses the new
+  /// step. Answers "where do I set the increment per exercise/equipment".
+  void _showIncrementPicker(String? equipment) {
+    final incState = ref.read(weightIncrementsProvider);
+    final unit = incState.unitSuffix; // 'kg' | 'lbs'
+    final opts = unit == 'lbs'
+        ? const <double>[2.5, 5, 10, 25]
+        : const <double>[1, 2.5, 5, 10, 20];
+    final current = incState.getIncrement(equipment);
+    String fmt(double v) =>
+        v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+    showGlassSheet<void>(
+      context: context,
+      builder: (sheetCtx) => GlassSheet(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+              child: Text(
+                'Weight increment · ${equipment ?? 'default'}',
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ),
+            ...opts.map((o) {
+              final sel = (o - current).abs() < 0.001;
+              return ListTile(
+                title: Text('${fmt(o)} $unit'),
+                trailing: sel ? const Icon(Icons.check_rounded) : null,
+                onTap: () async {
+                  await ref
+                      .read(weightIncrementsProvider.notifier)
+                      .setIncrement(equipment ?? '', o);
+                  await HapticService.instance.success();
+                  if (sheetCtx.mounted) Navigator.of(sheetCtx).pop();
+                },
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showExerciseActions() {
     if (_currentIndex >= _exercises.length) return;
     final exercise = _exercises[_currentIndex];
     final workoutId = widget.workout.id;
+    final incNow = ref.read(weightIncrementsProvider);
+    final incVal = incNow.getIncrement(exercise.equipment);
+    final incLabel =
+        '${incVal == incVal.roundToDouble() ? incVal.toStringAsFixed(0) : incVal} ${incNow.unitSuffix} · ${exercise.equipment ?? 'default'}';
     EasyExerciseActionsSheet.show(
       context,
       exerciseName: exercise.name,
@@ -848,6 +951,26 @@ class EasyActiveWorkoutScreenState
       },
       onSkipToNext: _skipToNextExercise,
       onShowVideo: () => openEasyVideo(context, exercise, ref: ref),
+      onSetIncrement: () => _showIncrementPicker(exercise.equipment),
+      incrementLabel: incLabel,
+      onLogWater: () async {
+        final userId = await ref.read(apiClientProvider).getUserId();
+        if (userId == null || !mounted) return;
+        final ok = await ref
+            .read(hydrationProvider.notifier)
+            .quickLog(userId: userId, amountMl: 250);
+        if (!mounted) return;
+        if (ok) {
+          await HapticService.instance.success();
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Logged a cup of water'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
     );
   }
 
@@ -1054,6 +1177,12 @@ class EasyActiveWorkoutScreenState
   Widget build(BuildContext context) {
     if (_exercises.isEmpty) {
       return const Scaffold(body: SizedBox.shrink());
+    }
+
+    // Warm-up phase (Easy redesign) — guided warm-up runner before the working
+    // sets. Kept separate from the logged session (no stats/index impact).
+    if (_warmupPhase && _warmup != null) {
+      return EasyWarmupRunner(warmup: _warmup!, onDone: _finishWarmupPhase);
     }
 
     // Saving / completing pipeline is running — show the same trophy +

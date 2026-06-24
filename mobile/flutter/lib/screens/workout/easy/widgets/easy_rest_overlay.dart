@@ -51,6 +51,11 @@ class EasyRestOverlay extends ConsumerStatefulWidget {
   final VoidCallback? onAddTime;
   final VoidCallback? onSubtractTime;
 
+  /// Pause / resume the rest countdown — wired to
+  /// WorkoutTimerController.toggleRestPause. Optional so older call-sites
+  /// still compile.
+  final VoidCallback? onPause;
+
   const EasyRestOverlay({
     super.key,
     required this.initialSeconds,
@@ -65,6 +70,7 @@ class EasyRestOverlay extends ConsumerStatefulWidget {
     required this.onDone,
     this.onAddTime,
     this.onSubtractTime,
+    this.onPause,
   });
 
   @override
@@ -74,6 +80,7 @@ class EasyRestOverlay extends ConsumerStatefulWidget {
 class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
   late int _remaining;
   late final Stream<int> _stream;
+  bool _paused = false;
 
   @override
   void initState() {
@@ -156,6 +163,17 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
                                   letterSpacing: 0)
                               .copyWith(height: 1.0)),
                       const Spacer(),
+                      if (widget.onPause != null) ...[
+                        _RestCtl(
+                            label: _paused ? '▶' : '⏸',
+                            isDark: isDark,
+                            onTap: () async {
+                              await HapticService.instance.tap();
+                              widget.onPause!();
+                              setState(() => _paused = !_paused);
+                            }),
+                        const SizedBox(width: 8),
+                      ],
                       if (widget.onSubtractTime != null)
                         _RestCtl(
                             label: '−15',

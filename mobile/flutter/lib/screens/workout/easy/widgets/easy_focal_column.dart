@@ -16,16 +16,20 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../shared/focal_stepper.dart';
-import '../../shared/unit_chip.dart';
+import '../../widgets/timed_exercise_timer.dart';
 import '../easy_active_workout_state_models.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 
 class EasyFocalColumn extends StatelessWidget {
   final EasyExerciseState state;
+  /// Current exercise name — used to key the timed-move countdown so it resets
+  /// when the exercise changes.
+  final String exerciseName;
   final bool useKg;
   final double weightStep;
   final Color accent;
@@ -42,6 +46,7 @@ class EasyFocalColumn extends StatelessWidget {
   const EasyFocalColumn({
     super.key,
     required this.state,
+    required this.exerciseName,
     required this.useKg,
     required this.weightStep,
     required this.accent,
@@ -233,91 +238,68 @@ class EasyFocalColumn extends StatelessWidget {
         // Timed exercises (planks, wall sits, dead-hangs) measure hold
         // duration, not weight × reps. Render a single seconds stepper
         // and write the user's value into SetLog.durationSeconds.
+        // Timed move (warm-up hold / plank / wall-sit): a LIVE countdown with
+        // built-in play/pause (TimedExerciseTimer). Starts paused — tap ▶ to
+        // begin the hold, ⏸ to pause/resume. The big LOG SET below commits the
+        // hold (reachable any time); the timer's completion just buzzes. The
+        // ValueKey resets the countdown when the exercise OR set changes.
         final timedBody = Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // The Anton poster (`.rw-poster`) + Fraunces whisper sit above
-            // the hold-seconds stepper, the single dominant focal element.
-            _poster(ctx, tight: tight),
-            SizedBox(height: tight ? 10 : 18),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                children: [
-                  Text(
-                    AppLocalizations.of(context).easyFocalColumnHold,
-                    style: ZType.lbl(
-                      13,
-                      color: colors.textSecondary,
-                      weight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            FocalStepper(
-              value: state.durationSeconds.toDouble(),
-              step: 5,
-              unit: 'sec',
-              integerOnly: true,
-              min: 5,
-              max: 600,
-              compact: stepperCompact,
-              onChanged: onDurationChanged,
+            TimedExerciseTimer(
+              key: ValueKey('easytimed_${exerciseName}_${state.completedCount}'),
+              durationSeconds: state.durationSeconds,
+              exerciseName: exerciseName,
+              setNumber: state.completedCount + 1,
+              totalSets: state.totalSets,
+              autoStart: false,
+              onComplete: () => HapticService.instance.success(),
             ),
           ],
         );
 
+        // Centered caption rendered BELOW each stepper (per the Easy redesign):
+        // the value stays bare ("60" / "12") inside the −/+ controls and the
+        // unit lives in the label below ("WEIGHT (LB)" / "REPS"). The kg|lb
+        // toggle moved up to the header tab row (no longer beside the stepper).
+        final stepLabel = ZType.lbl(11, color: colors.textMuted, letterSpacing: 1.5);
         final repsBody = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // The Anton poster (`.rw-poster`) + Fraunces whisper — the huge
-            // `weight × reps` masthead — dominate the top of the focal
-            // column, directly above the editable steppers that feed it.
+            // `weight × reps` masthead — dominate the top of the focal column.
             _poster(ctx, tight: tight),
-            SizedBox(height: tight ? 10 : 18),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    AppLocalizations.of(context).workoutSummaryAdvancedWeight,
-                    style: ZType.lbl(
-                      13,
-                      color: colors.textSecondary,
-                      weight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const Spacer(),
-                  const UnitChip(),
-                ],
-              ),
-            ),
+            SizedBox(height: tight ? 12 : 20),
             FocalStepper(
               value: state.displayWeight,
               step: weightStep,
-              unit: useKg ? 'kg' : 'lb',
+              unit: '',
               min: 0,
               max: 999,
               compact: stepperCompact,
               onChanged: onWeightChanged,
             ),
-            SizedBox(height: gapBetweenSteppers),
+            const SizedBox(height: 5),
+            Center(child: Text('WEIGHT (${useKg ? 'KG' : 'LB'})', style: stepLabel)),
+            SizedBox(height: gapBetweenSteppers + 6),
             FocalStepper(
-              label: AppLocalizations.of(context).workoutSummaryGeneralReps,
               value: state.reps.toDouble(),
               step: 1,
-              unit: 'reps',
+              unit: '',
               integerOnly: true,
               min: 0,
               max: 99,
               compact: stepperCompact,
               onChanged: onRepsChanged,
+            ),
+            const SizedBox(height: 5),
+            Center(
+              child: Text(
+                AppLocalizations.of(context).workoutSummaryGeneralReps.toUpperCase(),
+                style: stepLabel,
+              ),
             ),
           ],
         );

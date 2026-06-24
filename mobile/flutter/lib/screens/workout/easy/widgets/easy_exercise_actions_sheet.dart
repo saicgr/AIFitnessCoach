@@ -64,6 +64,9 @@ class EasyExerciseActionsSheet extends StatelessWidget {
     required VoidCallback onChangeEquipment,
     required VoidCallback onSkipToNext,
     required VoidCallback onShowVideo,
+    required VoidCallback onLogWater,
+    required VoidCallback onSetIncrement,
+    required String incrementLabel,
   }) {
     return showGlassSheet(
       context: context,
@@ -72,6 +75,14 @@ class EasyExerciseActionsSheet extends StatelessWidget {
         child: EasyExerciseActionsSheet(
           exerciseName: exerciseName,
           actions: [
+            // Per-equipment weight increment (the +/− step). Shows the current
+            // value; tapping opens a quick picker.
+            EasyExerciseAction(
+              icon: Icons.tune_rounded,
+              label: 'Increment',
+              subtitle: incrementLabel,
+              onTap: onSetIncrement,
+            ),
             EasyExerciseAction(
               icon: Icons.swap_horiz_rounded,
               label: AppLocalizations.of(context).workoutReviewSwapExercise,
@@ -99,6 +110,13 @@ class EasyExerciseActionsSheet extends StatelessWidget {
               icon: Icons.play_circle_outline_rounded,
               label: AppLocalizations.of(context).easyExerciseActionsShowVideo,
               onTap: onShowVideo,
+            ),
+            // Quick water log mid-workout (Easy redesign) — a cup (250 ml).
+            EasyExerciseAction(
+              icon: Icons.water_drop_outlined,
+              label: 'Log water',
+              subtitle: '+1 cup · 250 ml',
+              onTap: onLogWater,
             ),
           ],
         ),

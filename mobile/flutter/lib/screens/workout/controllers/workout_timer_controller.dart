@@ -97,8 +97,9 @@ class WorkoutTimerController {
     _restEndsAt = DateTime.now().add(Duration(seconds: seconds));
 
     _restTimer?.cancel();
+    _restPaused = false;
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!_isPaused && _restSecondsRemaining > 0) {
+      if (!_isPaused && !_restPaused && _restSecondsRemaining > 0) {
         _restSecondsRemaining--;
         onRestTick?.call(_restSecondsRemaining);
 
@@ -148,6 +149,23 @@ class WorkoutTimerController {
     // Keep the wall-clock end-time in sync so Live Activity countdown matches.
     _restEndsAt = DateTime.now().add(Duration(seconds: _restSecondsRemaining));
     onRestTick?.call(_restSecondsRemaining);
+    HapticService.selection();
+  }
+
+  /// Rest-specific pause (distinct from the whole-workout [_isPaused]). Lets
+  /// the user hold the rest countdown without freezing the workout duration.
+  /// Used by the Easy/Advanced inline rest strip's ⏸ control.
+  bool _restPaused = false;
+  bool get isRestPaused => _restPaused;
+
+  /// Toggle the rest countdown pause. On resume, re-anchor the wall-clock end
+  /// so the Live Activity countdown stays in sync.
+  void toggleRestPause() {
+    _restPaused = !_restPaused;
+    if (!_restPaused) {
+      _restEndsAt =
+          DateTime.now().add(Duration(seconds: _restSecondsRemaining));
+    }
     HapticService.selection();
   }
 

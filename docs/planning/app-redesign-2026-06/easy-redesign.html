@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova — Easy Mode: Current vs Proposed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --acc:#37E07A; --acc-dp:#22C55E; --line:#232326; --txt:#f4f4f5; --mut:#9b9ba3; --red:#EF4444; --amber:#F5A623; }
+body { background:#09090b; color:var(--txt); font-family:Inter,-apple-system,sans-serif; font-size:15px; line-height:1.5; }
+.anton{font-family:Anton,'Arial Narrow',sans-serif;font-weight:400}
+.cond{font-family:'Barlow Condensed',sans-serif}
+.mono{font-family:'Space Mono',monospace}
+.serif{font-family:Fraunces,Georgia,serif}
+
+.hd{padding:40px 48px 20px;position:relative;overflow:hidden}
+.hd::before{content:'';position:absolute;right:-80px;top:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(55,224,122,.16),transparent 70%);pointer-events:none}
+.hd-title{font-family:Anton,sans-serif;font-size:30px;letter-spacing:.5px;text-transform:uppercase}
+.hd-title .o{color:var(--acc)}
+.hd-sub{color:var(--mut);font-size:13.5px;margin-top:4px;max-width:1000px;line-height:1.6}
+.hd-sub b{color:#cfcfd6}
+.seckick{padding:30px 48px 0;font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:3px;text-transform:uppercase;font-size:16px}
+.seckick.cur{color:var(--red)} .seckick.new{color:var(--acc)}
+.secsub{padding:2px 48px 0;color:var(--mut);font-size:13px;max-width:1000px}
+.row{display:flex;gap:40px;overflow-x:auto;padding:22px 48px 40px;align-items:flex-start}
+.cell{flex:0 0 auto;width:312px}
+.cap{margin-top:14px;padding:13px 15px;background:#121214;border:1px solid var(--line);border-radius:12px}
+.cap-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1px;text-transform:uppercase;font-size:14.5px}
+.cap-name .tag{font-size:11px;letter-spacing:2px;margin-right:8px}
+.cap-name .tag.r{color:var(--red)} .cap-name .tag.g{color:var(--acc)}
+.cap-why{color:#c9c9cf;font-size:12.5px;margin-top:5px;line-height:1.55}
+.cap-why b{color:#e6e6ea}
+
+.fwrap{width:312px;height:675.2px;position:relative}
+.phone{width:390px;height:844px;transform:scale(.8);transform-origin:top left;border-radius:46px;padding:4px;position:relative;background:linear-gradient(150deg,#5d5d66 0%,#1e1e23 22%,#0b0b0d 50%,#2a2a30 78%,#4e4e57 100%);box-shadow:0 30px 70px -22px rgba(0,0,0,.9)}
+.screen{width:100%;height:100%;border-radius:42px;overflow:hidden;position:relative;background:#0A0A0B;color:#fafafa}
+.notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:110px;height:26px;background:#000;border-radius:16px;z-index:40}
+.homebar{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:120px;height:4px;background:rgba(255,255,255,.28);border-radius:2px;z-index:40}
+.sbar{position:absolute;top:14px;left:0;right:0;display:flex;justify-content:space-between;padding:0 30px;font-size:13.5px;font-weight:600;z-index:39}
+
+.disp{font-family:Anton,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.5px}
+.lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:2px}
+.ser{font-family:Fraunces,Georgia,serif}
+.data{font-family:'Space Mono',monospace}
+
+.body{position:absolute;inset:0;padding:46px 20px 22px;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;color:var(--mut);font-size:13px}
+.tpill{background:#1b1b1e;border-radius:999px;padding:6px 14px;display:flex;gap:8px;align-items:center;color:#fff;font-weight:700}
+.toggle{display:flex;align-items:center;background:#1b1b1e;border-radius:999px;padding:3px}
+.toggle .on{background:var(--acc);color:#08140c;border-radius:999px;padding:4px 12px;font-weight:800;font-size:12px}
+.toggle .off{color:var(--mut);padding:4px 10px;font-weight:700;font-size:12px}
+.stats{display:flex;justify-content:space-between;margin-top:14px;padding:0 6px}
+.stat{text-align:center}
+.stat .v{font-family:'Space Mono',monospace;font-weight:700;font-size:17px}
+.stat .v.hl{color:var(--acc)}
+.stat .k{color:var(--mut);font-size:10px;letter-spacing:.5px;margin-top:1px}
+.video{margin-top:14px;height:166px;border-radius:18px;background:linear-gradient(135deg,#c7b9a4,#e9e1d4 55%,#bcae98);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.silh{width:64px;height:92px;background:#5b5147;border-radius:24px 24px 10px 10px;opacity:.55}
+.video .play{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px}
+.video .fs{position:absolute;right:12px;bottom:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.9);color:#222;display:flex;align-items:center;justify-content:center;font-size:13px}
+.exname{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.exname .nm{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.exname .info{width:26px;height:26px;border-radius:50%;border:1px solid #34343a;color:var(--mut);display:flex;align-items:center;justify-content:center;font-size:14px}
+/* history pill — replaces the ambiguous ⓘ; opens previous sets + actions */
+.hist{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;border:1px solid #34343a;color:#cfcfd6;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;font-size:11px}
+.hist .ic{font-size:13px}
+.setrow{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:8px;color:var(--mut)}
+.setrow .sq{width:26px;height:26px;border-radius:8px;background:#1b1b1e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px}
+.setrow .lab{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;font-size:13px}
+.warm{margin-top:8px;text-align:center}
+.warm a{color:var(--acc);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;font-size:12.5px;text-decoration:none}
+/* compact tab row — KEPT from current (Video/Form/Instructions/Plan/Note/More) */
+.chips{display:flex;gap:10px;justify-content:center;margin-top:9px;color:var(--mut);font-size:11px;flex-wrap:wrap}
+.chips span{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.chips .form{color:var(--acc)}
+
+/* set ledger — how previous sets are visible */
+.ledger{display:flex;gap:7px;margin-top:10px;justify-content:center}
+.led{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:#141416;border:1px solid #26262b;font-size:11px}
+.led b{font-family:'Barlow Condensed',sans-serif;font-weight:800;color:var(--mut)}
+.led .val{font-family:'Space Mono',monospace;font-size:11px}
+.led.done{border-color:rgba(55,224,122,.4)} .led.done .ck{color:var(--acc)}
+.led.act{border-color:var(--acc);background:rgba(55,224,122,.08)} .led.act .val{color:#fff}
+
+.focal{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.poster{display:flex;align-items:baseline;gap:6px;line-height:.9}
+.poster .num{font-family:Anton,sans-serif;font-size:70px}
+.poster .unit{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;color:var(--mut);align-self:flex-start;margin-top:13px}
+.poster .x{font-size:38px;color:#444;margin:0 4px}
+.poster .acc{color:var(--acc)}
+.whisper{font-family:Fraunces,Georgia,serif;font-style:italic;color:#a9a9b1;font-size:14.5px;margin-top:6px}
+.steppers{display:flex;gap:13px;margin-top:16px;width:100%}
+.stcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px}
+.st{width:100%;background:#141416;border:1px solid #26262b;border-radius:18px;padding:7px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+/* big, accent-bordered tap targets — value centered between − and + */
+.st .b{width:44px;height:44px;border-radius:13px;background:rgba(55,224,122,.12);border:1.5px solid var(--acc);color:var(--acc);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;line-height:1;flex:0 0 auto}
+.st .v{font-family:'Space Mono',monospace;font-weight:700;font-size:24px;flex:1;text-align:center;white-space:nowrap}
+.stlabel{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;font-size:10.5px;color:var(--mut)}
+.holdhint{text-align:center;color:#6c6c74;font-size:10.5px;margin-top:9px;letter-spacing:.3px}
+/* timed-move controls: live countdown + pause/resume + ±5s */
+.timedctrls{display:flex;gap:14px;align-items:center;justify-content:center;margin-top:18px}
+.tb{padding:11px 16px;border-radius:14px;background:#141416;border:1px solid #26262b;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;font-size:14px;color:#cfcfd6}
+.ppbtn{width:66px;height:66px;border-radius:50%;background:rgba(55,224,122,.14);border:1.5px solid var(--acc);color:var(--acc);display:flex;align-items:center;justify-content:center;font-size:26px}
+/* kg | lb unit toggle */
+.unitrow{display:flex;justify-content:flex-end;width:100%;margin-top:10px;margin-bottom:-4px}
+.ut{display:inline-flex;background:#1b1b1e;border-radius:999px;padding:3px}
+.ut b{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1px;font-size:11px;padding:3px 12px;border-radius:999px;color:var(--mut)}
+.ut b.on{background:var(--acc);color:#08140c}
+.chips .ut{padding:2px;background:#1b1b1e;border-radius:999px}
+.chips .ut b{padding:2px 8px;font-size:10px;letter-spacing:.5px}
+.st .mid .k{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;font-size:10px;color:var(--mut)}
+
+.nextline{text-align:center;color:var(--mut);font-size:13px;margin-bottom:8px}
+.nextline b{color:#d6d6dc;font-weight:700}
+.cta{height:52px;border-radius:26px;background:var(--acc);color:#08140c;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1.5px;font-size:16px;box-shadow:0 14px 34px -10px rgba(55,224,122,.5)}
+.foot{display:flex;gap:8px;margin-top:9px}
+.lk{flex:1;height:32px;border-radius:999px;border:1px solid #2c2c31;color:#cfcfd6;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600}
+.lk.acc{border-color:rgba(55,224,122,.4);color:var(--acc)}
+
+.rest{margin-top:auto;margin-bottom:10px;border:1px solid rgba(55,224,122,.35);border-radius:16px;background:rgba(55,224,122,.06);padding:11px 13px;display:flex;align-items:center;gap:11px}
+.rest .rl{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1.5px;color:var(--acc);font-size:12px}
+.rest .tm{font-family:'Space Mono',monospace;font-weight:700;font-size:19px}
+.rest .ctl{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#cfcfd6;font-size:12px}
+.rest .sk{color:var(--acc)}
+.rest .nx{margin-left:auto;color:var(--mut);font-size:11px;text-align:right}
+
+/* ===== CURRENT (old) UI bits — the cramped stack ===== */
+.ohead{display:flex;align-items:center;justify-content:space-between;color:var(--mut);font-size:13px}
+.oimg{margin:10px auto 0;width:150px;height:150px;border-radius:18px;background:linear-gradient(135deg,#e9e1d4,#c7b9a4);display:flex;align-items:center;justify-content:center}
+.otabs{display:flex;gap:11px;justify-content:center;margin-top:10px;color:var(--mut);font-size:11px;flex-wrap:wrap}
+.otabs span.a{color:var(--acc)}
+.opills{display:flex;gap:8px;justify-content:center;margin-top:9px}
+.opill{width:34px;height:30px;border-radius:9px;border:1px solid #2a2a2e;display:flex;align-items:center;justify-content:center;color:var(--mut);font-family:'Space Mono',monospace;font-size:13px}
+.opill.a{border-color:var(--acc);color:#fff}
+.ocard{margin-top:9px;border:1px solid rgba(55,224,122,.35);border-radius:14px;background:rgba(55,224,122,.06);padding:9px 11px;font-size:11.5px;color:#d6e8dc;display:flex;gap:8px;align-items:flex-start}
+.ocard .x{margin-left:auto;color:var(--mut)}
+.ocard.b{color:#cfe6d8}
+.obw{text-align:center;margin-top:8px}
+.obw .big{font-family:Anton,sans-serif;font-size:54px}
+.obw .sm{color:#444;font-size:28px}
+.obw .ser{font-style:italic;color:#9a9aa2;font-size:13px;margin-top:-2px}
+.oweight{display:flex;align-items:center;justify-content:space-between;margin-top:7px;color:var(--mut);font-size:12px}
+.ofade{position:absolute;left:0;right:0;bottom:78px;height:54px;background:linear-gradient(to bottom,rgba(10,10,11,0),#0A0A0B);z-index:5;pointer-events:none}
+.oclip{position:absolute;left:50%;transform:translateX(-50%);bottom:60px;color:var(--amber);font-size:11px;font-weight:700;z-index:6}
+.octa{position:absolute;left:20px;right:20px;bottom:30px;height:50px;border-radius:25px;background:var(--acc);color:#08140c;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1.5px;font-size:15px;z-index:7;opacity:.96}
+
+/* history sheet (previous sets) */
+.sheet{position:absolute;left:0;right:0;bottom:0;top:120px;background:#141416;border-radius:26px 26px 0 0;border-top:1px solid #2a2a2e;padding:16px 18px;z-index:20}
+.sheet .grab{width:42px;height:5px;border-radius:3px;background:#3a3a40;margin:0 auto 14px}
+.sheet h4{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:13px;color:var(--mut)}
+.tbl{margin-top:8px}
+.trow{display:grid;grid-template-columns:30px 1fr 1fr 24px;align-items:center;padding:9px 4px;border-bottom:1px solid #232327;font-size:13px}
+.trow .s{font-family:'Space Mono',monospace;color:var(--mut)}
+.trow .v{font-family:'Space Mono',monospace}
+.trow .ck{color:var(--acc);text-align:right}
+.trow.head{color:var(--mut);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;font-size:11px;border-bottom:1px solid #2a2a2e}
+.prev{margin-top:16px}
+.prevrow{display:flex;justify-content:space-between;padding:7px 4px;border-bottom:1px solid #1f1f23;font-size:12.5px;color:#cfcfd6}
+.prevrow .d{color:var(--mut)}
+.hl-line{display:flex;align-items:center;gap:8px;margin-top:4px;color:var(--acc);font-size:12px;font-weight:700}
+.spark{display:flex;align-items:flex-end;gap:6px;height:44px;margin-top:8px}
+.spark i{flex:1;background:#2a2a2e;border-radius:3px 3px 0 0}
+.spark i.hi{background:var(--acc)}
+</style>
+</head>
+<body>
+  <div class="hd">
+    <div class="hd-title">EASY MODE — <span class="o">CURRENT vs PROPOSED</span></div>
+    <div class="hd-sub">Left = <b>today's Easy</b> (5 stacked AI cards crowd the log action → the BW×N / Weight / LOG SET region scrolls & LOG SET gets pushed below the fold). Right = <b>proposed</b>, modeled on Google Health + weights: one calm focal, LOG SET always pinned, AI behind ⓘ/Coach. <b>Previous sets</b> are shown via the set-ledger row + a tap-to-open history sheet (last frame).</div>
+  </div>
+
+  <!-- ════════════ CURRENT ════════════ -->
+  <div class="seckick cur">● CURRENT — TODAY</div>
+  <div class="secsub">What ships now (from your screenshots): stats → image → 6 tabs → set pills → coach card → level-up card → BW×13 → "Hit your target" → weight toggle → LOG SET → up-next. Too much above the action.</div>
+  <div class="row">
+    <div class="cell">
+      <div class="fwrap"><div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="sbar"><span>4:33</span><span>▂▄▆ ⏻</span></div>
+        <div class="body" style="padding:46px 18px 12px">
+          <div class="ohead">
+            <span style="font-size:18px">←</span>
+            <span class="toggle"><span class="on">Easy</span><span class="off">Advanced</span></span>
+            <span style="color:var(--mut)">♡ ▢ ⋯</span>
+          </div>
+          <div class="stats" style="margin-top:10px">
+            <div class="stat"><div class="v">28s</div><div class="k">DURATION</div></div>
+            <div class="stat"><div class="v">1</div><div class="k">KCAL</div></div>
+            <div class="stat"><div class="v">0</div><div class="k">VOLUME kg</div></div>
+          </div>
+          <div class="disp" style="text-align:center;font-size:26px;margin-top:8px">PUSH-UP</div>
+          <div class="setrow"><span class="sq">−</span><span class="lab">SET 1 OF 3</span><span class="sq">+</span></div>
+          <div class="oimg"><div class="silh" style="background:#9a8f80"></div></div>
+          <div class="otabs"><span class="a">▶ Video</span><span>✱ Form</span><span>📖 Instructions</span><span>📋 Plan</span><span>✎ Note</span><span>⋯ More</span></div>
+          <div class="opills"><span class="opill a">1</span><span class="opill">2</span><span class="opill">3</span></div>
+          <div class="ocard">✦ Coach · No history yet — keep set 1 within your limit, 2-3 clean reps to spare. <span class="x">✕</span></div>
+          <div class="ocard b">↻ Hit 13+ clean reps to refresh + level up Chest … <span class="x">⌄</span></div>
+          <div class="obw"><span class="big">BW</span> <span class="sm">×</span> <span class="big">13</span><div class="ser">Hit your target. Push.</div></div>
+          <div class="oweight"><span>Weight</span><span>kg | lb</span></div>
+          <div class="ofade"></div>
+          <div class="oclip">↕ scrolls — LOG SET below the fold</div>
+        </div>
+        <div class="octa">LOG SET — BW × 13</div>
+        <div class="homebar"></div>
+      </div></div></div>
+      <div class="cap">
+        <div class="cap-name"><span class="tag r">PROBLEM</span>Five cards before the action</div>
+        <div class="cap-why">Coach card + level-up card + 6-tab row + set pills push <b>BW×13 / Weight / LOG SET</b> down → the focal region scrolls and LOG SET sits at/under the fold. AI insight is in your face instead of one tap away.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ PROPOSED ════════════ -->
+  <div class="seckick new">● PROPOSED — NEW</div>
+  <div class="secsub">Google-Health-calm + weights. Set-ledger shows previous sets inline; ⓘ opens the full history sheet. AI lives behind ⓘ / Ask coach / Analytics. LOG SET pinned, never scrolls.</div>
+  <div class="row">
+
+    <!-- NEW · LOG (with set ledger) -->
+    <div class="cell">
+      <div class="fwrap"><div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="sbar"><span>4:33</span><span>▂▄▆ ⏻</span></div>
+        <div class="body">
+          <div class="topbar">
+            <span style="font-size:20px">⌄</span>
+            <span class="tpill">▮▮ <span class="data">01:09</span></span>
+            <span class="toggle"><span class="on">Easy</span><span class="off">Advanced</span></span>
+            <span style="font-size:18px;color:var(--mut)">⋯</span>
+          </div>
+          <div class="stats">
+            <div class="stat"><div class="v">1:09</div><div class="k">DURATION</div></div>
+            <div class="stat"><div class="v hl">75 ♥</div><div class="k">EFFORT</div></div>
+            <div class="stat"><div class="v">8</div><div class="k">CAL</div></div>
+            <div class="stat"><div class="v">660</div><div class="k">VOLUME kg</div></div>
+          </div>
+          <div class="video"><div class="silh"></div><div class="play">▶</div><div class="fs">⤢</div></div>
+          <div class="exname"><span class="nm">Goblet Squat</span><span class="hist"><span class="ic">↺</span> HISTORY</span></div>
+          <!-- tab row: kg|lb leads it; Video dropped (inline autoplay); More → ⋯ menu -->
+          <div class="chips"><span class="ut"><b>KG</b><b class="on">LB</b></span><span class="form">✱ Form check</span><span>📖 Instructions</span><span>📋 Plan</span><span>✎ Note</span></div>
+          <div class="setrow"><span class="sq">−</span><span class="lab">SET 3 OF 3</span><span class="sq">+</span></div>
+          <!-- PREVIOUS SETS, inline -->
+          <div class="ledger">
+            <div class="led done"><b>1</b><span class="val">55×12</span><span class="ck">✓</span></div>
+            <div class="led done"><b>2</b><span class="val">60×12</span><span class="ck">✓</span></div>
+            <div class="led act"><b>3</b><span class="val">60×12</span></div>
+          </div>
+
+          <div class="focal">
+            <div class="poster"><span class="num">60</span><span class="unit">lb</span><span class="x">×</span><span class="num acc">12</span></div>
+            <div class="whisper">2 sets in — finish strong.</div>
+            <div class="steppers">
+              <div class="stcol">
+                <div class="st"><span class="b">−</span><span class="v">60</span><span class="b">+</span></div>
+                <div class="stlabel">WEIGHT (LB)</div>
+              </div>
+              <div class="stcol">
+                <div class="st"><span class="b">−</span><span class="v">12</span><span class="b">+</span></div>
+                <div class="stlabel">REPS</div>
+              </div>
+            </div>
+            <div class="holdhint">+5 lb · tap = haptic tick · hold = ramp faster</div>
+          </div>
+
+          <div class="nextline">Next: <b>Kettlebell swing · 15 reps</b></div>
+          <div class="cta">✓ LOG SET — 60 × 12</div>
+          <div class="foot"><div class="lk acc">✦ Ask coach</div></div>
+        </div>
+        <div class="homebar"></div>
+      </div></div></div>
+      <div class="cap">
+        <div class="cap-name"><span class="tag g">NEW · LOG</span>Previous sets, inline</div>
+        <div class="cap-why">The <b>set-ledger</b> (1·55×12 ✓ · 2·60×12 ✓ · 3 now) shows every logged set at a glance — tap any to edit. One calm Weight×Reps focal. LOG SET pinned, no scroll.</div>
+      </div>
+    </div>
+
+    <!-- NEW · REST -->
+    <div class="cell">
+      <div class="fwrap"><div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="sbar"><span>4:34</span><span>▂▄▆ ⏻</span></div>
+        <div class="body">
+          <div class="topbar">
+            <span style="font-size:20px">⌄</span>
+            <span class="tpill">▮▮ <span class="data">01:38</span></span>
+            <span class="toggle"><span class="on">Easy</span><span class="off">Advanced</span></span>
+            <span style="font-size:18px;color:var(--mut)">⋯</span>
+          </div>
+          <div class="stats">
+            <div class="stat"><div class="v">1:38</div><div class="k">DURATION</div></div>
+            <div class="stat"><div class="v hl">78 ♥</div><div class="k">EFFORT</div></div>
+            <div class="stat"><div class="v">14</div><div class="k">CAL</div></div>
+            <div class="stat"><div class="v">720</div><div class="k">VOLUME kg</div></div>
+          </div>
+          <div class="video"><div class="silh"></div><div class="play">▶</div><div class="fs">⤢</div></div>
+          <div class="exname"><span class="nm">Goblet Squat</span><span class="hist"><span class="ic">↺</span> HISTORY</span></div>
+          <div class="setrow"><span class="lab" style="color:var(--acc)">SET 3 LOGGED ✓</span></div>
+          <div class="ledger">
+            <div class="led done"><b>1</b><span class="val">55×12</span><span class="ck">✓</span></div>
+            <div class="led done"><b>2</b><span class="val">60×12</span><span class="ck">✓</span></div>
+            <div class="led done"><b>3</b><span class="val">60×12</span><span class="ck">✓</span></div>
+          </div>
+          <div class="focal">
+            <div class="poster"><span class="num acc">✓</span></div>
+            <div class="whisper">Nice — exercise complete.</div>
+          </div>
+          <div class="rest">
+            <span class="rl">REST</span><span class="tm">1:28</span>
+            <span class="ctl" style="font-size:15px">⏸</span><span class="ctl">−15</span><span class="ctl sk">SKIP</span><span class="ctl">+15</span>
+            <span class="ctl" style="font-size:14px;margin-left:auto">💧 Water</span>
+          </div>
+          <div class="cta">NEXT EXERCISE →</div>
+          <div class="foot"><div class="lk acc">✦ Ask coach</div></div>
+        </div>
+        <div class="homebar"></div>
+      </div></div></div>
+      <div class="cap">
+        <div class="cap-name"><span class="tag g">NEW · REST</span>Inline rest, no takeover</div>
+        <div class="cap-why">Rest is a slim in-flow strip (−15 · SKIP · +15 + next), NOT a full-screen overlay. All three sets show ✓ in the ledger. Retires <code>easy_rest_overlay.dart</code>.</div>
+      </div>
+    </div>
+
+    <!-- NEW · HISTORY SHEET (how you see previous sets + sessions) -->
+    <div class="cell">
+      <div class="fwrap"><div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="sbar"><span>4:33</span><span>▂▄▆ ⏻</span></div>
+        <div class="body" style="filter:brightness(.5)">
+          <div class="topbar"><span style="font-size:20px">⌄</span><span class="tpill">▮▮ <span class="data">01:09</span></span><span class="toggle"><span class="on">Easy</span><span class="off">Advanced</span></span><span style="color:var(--mut)">⋯</span></div>
+          <div class="exname" style="margin-top:120px"><span class="nm">Goblet Squat</span><span class="hist"><span class="ic">↺</span> HISTORY</span></div>
+        </div>
+        <!-- the sheet that opens from ⓘ / tapping the ledger -->
+        <div class="sheet">
+          <div class="grab"></div>
+          <h4>This session · Goblet Squat</h4>
+          <div class="tbl">
+            <div class="trow head"><span>SET</span><span>WEIGHT</span><span>REPS</span><span></span></div>
+            <div class="trow"><span class="s">1</span><span class="v">55 lb</span><span class="v">12</span><span class="ck">✓</span></div>
+            <div class="trow"><span class="s">2</span><span class="v">60 lb</span><span class="v">12</span><span class="ck">✓</span></div>
+            <div class="trow"><span class="s">3</span><span class="v">60 lb</span><span class="v">12</span><span class="ck">✓</span></div>
+          </div>
+          <h4 style="margin-top:16px">Progress · est 1RM &nbsp;<span style="color:var(--acc)">▲ 6%</span></h4>
+          <div class="spark"><i style="height:38%"></i><i style="height:50%"></i><i style="height:58%"></i><i style="height:55%"></i><i style="height:72%"></i><i class="hi" style="height:88%"></i></div>
+          <div class="prev">
+            <h4>Previous sessions</h4>
+            <div class="prevrow"><span>Jun 19 · top set</span><span class="data">55 × 12</span></div>
+            <div class="prevrow"><span>Jun 15 · top set</span><span class="data">52.5 × 12</span></div>
+          </div>
+          <div class="hl-line">↗ +5 lb vs last session</div>
+          <div class="foot" style="margin-top:14px"><div class="lk acc">✦ Ask coach about this lift</div></div>
+        </div>
+        <div class="homebar"></div>
+      </div></div></div>
+      <div class="cap">
+        <div class="cap-name"><span class="tag g">NEW · HISTORY</span>↺ History → sets · sessions · progress</div>
+        <div class="cap-why">Tap <b>↺ History</b> (or the ledger): this session's set table + previous sessions + a <b>progress chart</b> (est-1RM trend — this is "Analytics", folded in here, no separate chip). Where the old coach/level-up/last-time cards now live, off the log surface.</div>
+      </div>
+    </div>
+
+    <!-- NEW · WARM-UP -->
+    <div class="cell">
+      <div class="fwrap"><div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="sbar"><span>4:31</span><span>▂▄▆ ⏻</span></div>
+        <div class="body">
+          <div class="topbar"><span style="font-size:20px">⌄</span><span class="tpill">▮▮ <span class="data">00:04</span></span><span class="toggle"><span class="on">Easy</span><span class="off">Advanced</span></span><span style="font-size:18px;color:var(--mut)">⋯</span></div>
+          <div class="stats">
+            <div class="stat"><div class="v">4s</div><div class="k">DURATION</div></div>
+            <div class="stat"><div class="v hl">68 ♥</div><div class="k">EFFORT</div></div>
+            <div class="stat"><div class="v">0</div><div class="k">CAL</div></div>
+            <div class="stat"><div class="v">0</div><div class="k">VOLUME kg</div></div>
+          </div>
+          <div class="video"><div class="silh"></div><div class="play">▶</div><div class="fs">⤢</div></div>
+          <div class="exname"><span class="nm">Arm Circles</span><span class="hist"><span class="ic">↺</span> HISTORY</span></div>
+          <div class="setrow"><span class="lab" style="color:var(--acc)">WARM-UP · 1 OF 4</span></div>
+          <div class="warm"><a>↑ Hide warm-up</a></div>
+          <div class="focal">
+            <div class="poster"><span class="num acc">0:30</span></div>
+            <div class="whisper">Loosen up — keep it light.</div>
+            <!-- live countdown: pause/resume in the middle, ±5s either side -->
+            <div class="timedctrls">
+              <div class="tb">−5s</div>
+              <div class="ppbtn">⏸</div>
+              <div class="tb">+5s</div>
+            </div>
+            <div class="holdhint">tap ⏸ to pause the hold · auto-advances at 0</div>
+          </div>
+          <div class="nextline">Next: <b>Butt kicks · 30s</b> · <span style="color:var(--acc)">Skip warm-up →</span></div>
+          <div class="cta">✓ DONE — NEXT MOVE</div>
+          <div class="foot"><div class="lk acc">✦ Ask coach</div></div>
+        </div>
+        <div class="homebar"></div>
+      </div></div></div>
+      <div class="cap">
+        <div class="cap-name"><span class="tag g">NEW · WARM-UP</span>Present, collapsible, skippable</div>
+        <div class="cap-why">Warm-up moves play as timed steps (Hold 0:30) with a clear <b>Skip warm-up →</b>, collapsed by default behind "Show warm-up · 4 moves". Excluded from volume/PR stats.</div>
+      </div>
+    </div>
+
+    <!-- NEW · MORE sheet (what ⋯ opens) -->
+    <div class="cell">
+      <div class="fwrap"><div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="sbar"><span>4:33</span><span>▂▄▆ ⏻</span></div>
+        <div class="body" style="filter:brightness(.5)">
+          <div class="topbar"><span style="font-size:20px">⌄</span><span class="tpill">▮▮ <span class="data">01:09</span></span><span class="toggle"><span class="on">Easy</span><span class="off">Advanced</span></span><span style="color:#fff;font-size:18px">⋯</span></div>
+          <div class="exname" style="margin-top:120px"><span class="nm">Goblet Squat</span><span class="hist"><span class="ic">↺</span> HISTORY</span></div>
+        </div>
+        <div class="sheet" style="top:260px">
+          <div class="grab"></div>
+          <h4>This exercise</h4>
+          <div class="prev" style="margin-top:4px">
+            <div class="prevrow"><span>Increment</span><span class="d">5 lb · hold to ramp</span></div>
+            <div class="prevrow"><span>Swap exercise</span><span class="d">pick a different movement</span></div>
+            <div class="prevrow"><span>Report pain</span><span class="d">skip + avoid</span></div>
+            <div class="prevrow"><span>Change equipment</span><span class="d">don't have what's needed</span></div>
+            <div class="prevrow"><span>Skip to next exercise</span><span class="d"></span></div>
+          </div>
+          <h4 style="margin-top:16px">Workout</h4>
+          <div class="prev" style="margin-top:4px">
+            <div class="prevrow"><span>Log water</span><span class="d">+1 cup / bottle</span></div>
+            <div class="prevrow"><span>Complete workout</span><span class="d"></span></div>
+            <div class="prevrow" style="color:var(--red)"><span>Quit without saving</span><span class="d"></span></div>
+          </div>
+        </div>
+        <div class="homebar"></div>
+      </div></div></div>
+      <div class="cap">
+        <div class="cap-name"><span class="tag g">NEW · ⋯ MENU</span>One menu, two groups</div>
+        <div class="cap-why">The single top-right <b>⋯</b> holds everything actionable: <b>This exercise</b> (<b>Increment</b> · Swap · Report pain · Change equipment · Skip) + <b>Workout</b> (<b>Log water</b> · Complete · Quit). <b>Increment</b> defaults per-equipment (barbell/dumbbell 5 lb · machine 10 lb · cable 2.5 lb), overridable per exercise. No duplicate dots — ↺ History = data, ⋯ = actions, tab row = resources.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="hd" style="border-top:1px solid var(--line)">
+    <div class="cap-name" style="font-size:17px"><span class="tag g">OLD → NEW · THE DIFFERENCES</span></div>
+    <div class="hd-sub" style="margin-top:8px">
+      • <b>5 stacked cards → gone:</b> coach tip / level-up / last-time / how-did-I-do leave the log surface.<br>
+      • <b>Three confusing affordances → clean roles:</b> <b>↺ History</b> = data (sets · sessions · progress/analytics) · <b>tab row</b> = resources (Form · Instructions · Plan · Note) · <b>⋯</b> top-right = actions (This-exercise: Swap/Pain/Equipment/Skip + Workout: Complete/Quit). One ⋯, no duplicate dots.<br>
+      • <b>ⓘ → ↺ History icon</b> (it opens history, so it reads as history, not "info").<br>
+      • <b>Video chip dropped</b> — video is already inline + autoplays. <b>Analytics folded into History</b> (progress chart in the sheet; no separate chip).<br>
+      • <b>Previous sets:</b> inline <b>set-ledger</b> (1·55×12 ✓ …) + the History sheet.<br>
+      • <b>Steppers:</b> big accent-bordered −/+, value <b>60</b> + label <b>Weight (lb)</b> (flips to (kg) via the tab-row toggle). <b>Haptic tick</b> per tap + <b>hold to ramp</b>. <b>Increment</b> set in ⋯ (per-equipment default, per-exercise override).<br>
+      • <b>LOG SET</b> pinned · <b>Warm-up</b> present+collapsible+skippable · <b>Rest</b> inline (no full-screen overlay).<br>
+      • <b>Water log</b> 💧 in the rest strip + the ⋯ menu (quick +1 cup/bottle). <b>Easy | Advanced</b> spelled out. <b>Form → Form check</b>.<br>
+      • <b>Distinct from Advanced</b> = the Gravl-style all-sets table; Easy stays one-set, two big numbers, big tap targets.
+    </div>
+  </div>
+</body>
+</html>

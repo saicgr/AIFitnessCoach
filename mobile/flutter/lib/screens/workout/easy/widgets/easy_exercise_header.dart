@@ -18,6 +18,10 @@ import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../widgets/exercise_image.dart';
+import '../../../../widgets/exercise_stats_widgets.dart';
+import '../../../../widgets/glass_sheet.dart';
+import '../../../../data/providers/exercise_history_provider.dart';
+import '../../shared/unit_chip.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 
@@ -180,24 +184,21 @@ class EasyExerciseHeader extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _LinkChip(
-                    icon: Icons.play_circle_outline,
-                    label: AppLocalizations.of(context).workoutShowcaseVideo,
-                    color: textColor,
-                    onTap: () async {
-                      await HapticService.instance.tap();
-                      onShowVideo();
-                    },
-                  ),
-                  const SizedBox(width: 10),
+                  // kg | lb unit toggle now leads the tab row (moved off the
+                  // Weight stepper per the Easy redesign).
+                  const UnitChip(),
+                  const SizedBox(width: 12),
+                  // Video chip dropped — the exercise media is already shown
+                  // inline + autoplays at the top of the header; fullscreen is a
+                  // tap on that media. (onShowVideo still wired to it + the ⋯
+                  // "Show video" action.)
                   // Form Check — the hero media action, accent-tinted so it
-                  // stands out from the muted Video/Instructions/Plan chips.
-                  // Opens the AI form-analysis sheet pre-filled with this
-                  // exercise (editable). The differentiator surfaced in-workout.
+                  // stands out from the muted Instructions/Plan chips. Opens the
+                  // AI form-analysis sheet pre-filled with this exercise.
                   if (onFormCheck != null) ...[
                     _LinkChip(
                       icon: Icons.sports_gymnastics_outlined,
-                      label: 'Form',
+                      label: 'Form check',
                       color: accent,
                       onTap: () async {
                         await HapticService.instance.tap();
@@ -235,6 +236,19 @@ class EasyExerciseHeader extends ConsumerWidget {
                       color: textColor,
                     ),
                   ],
+                  // ↺ History — previous SESSIONS for this exercise (the
+                  // set-ledger above already shows THIS session's sets). Opens
+                  // a sheet of past sessions. Rehomes the old "last-time" card.
+                  const SizedBox(width: 10),
+                  _LinkChip(
+                    icon: Icons.history_rounded,
+                    label: 'History',
+                    color: textColor,
+                    onTap: () {
+                      HapticService.instance.tap();
+                      _showEasyHistory(context, ref, exercise.name);
+                    },
+                  ),
                   if (onShowMore != null) ...[
                     const SizedBox(width: 10),
                     _LinkChip(
@@ -252,6 +266,74 @@ class EasyExerciseHeader extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Opens the ↺ History sheet — previous SESSIONS for this exercise (this
+/// session's sets are already in the set-ledger). Reuses [ExerciseSessionCard]
+/// + [exerciseHistoryProvider].
+void _showEasyHistory(BuildContext context, WidgetRef ref, String exerciseName) {
+  showGlassSheet<void>(
+    context: context,
+    builder: (_) => GlassSheet(child: _EasyHistorySheet(exerciseName: exerciseName)),
+  );
+}
+
+class _EasyHistorySheet extends ConsumerWidget {
+  final String exerciseName;
+  const _EasyHistorySheet({required this.exerciseName});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
+    final async = ref.watch(exerciseHistoryProvider(exerciseName));
+    return ConstrainedBox(
+      constraints:
+          BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+            child: Text(
+              'History · ${exerciseName.toUpperCase()}',
+              style: ZType.lbl(13, color: tc.textMuted, letterSpacing: 1.5),
+            ),
+          ),
+          Flexible(
+            child: async.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (_, __) => Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text("Couldn't load history",
+                    style: TextStyle(color: tc.textMuted)),
+              ),
+              data: (h) {
+                final sessions = h.sortedSessionsNewestFirst;
+                if (sessions.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                    child: Text('No history yet for this exercise.',
+                        style: TextStyle(color: tc.textMuted)),
+                  );
+                }
+                return ListView(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  children: [
+                    for (final s in sessions) ExerciseSessionCard(session: s),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

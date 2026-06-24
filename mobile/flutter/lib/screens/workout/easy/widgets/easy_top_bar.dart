@@ -180,9 +180,9 @@ class _TierPill extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
-      onLongPress: () async {
-        await HapticService.instance.tap();
-        await showTierComparisonSheet(context);
+      onLongPress: () {
+        HapticService.instance.tap();
+        showTierComparisonSheet(context);
       },
       child: Container(
         height: 32,
@@ -220,7 +220,9 @@ class _TierPill extends ConsumerWidget {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 160),
                 child: Text(
-                  selected ? m.label : m.shortLabel,
+                  // Always show the FULL label so the inactive segment reads
+                  // "Advanced" (not a bare "A") — per the Easy redesign.
+                  m.label,
                   key: ValueKey('${m.name}_${selected ? 'full' : 'short'}'),
                   style: TextStyle(
                     fontSize: 12,
