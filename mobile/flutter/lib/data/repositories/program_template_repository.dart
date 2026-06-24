@@ -35,13 +35,52 @@ final programLibraryBrowseProvider = FutureProvider.autoDispose
   // longer referenced for a while.
   ref.keepAlive();
   final repo = ref.watch(programTemplateRepositoryProvider);
-  return repo.browseLibrary(
-    category: filter.category,
-    difficulty: filter.difficulty,
-    sessionsPerWeek: filter.sessionsPerWeek,
-    search: filter.search,
-  );
+  // Scoped resilience: the library is static reference data behind a single
+  // GET. A transient backend blip — a deploy restart, a cold cache prewarm, a
+  // whole-backend stall — shouldn't dump the user straight to the "could not
+  // load the program library" card on the first failure. Retry a couple of
+  // times on TRANSIENT failures only; real errors (auth / 4xx) propagate
+  // immediately so we never mask a genuine problem or substitute mock data.
+  return _browseLibraryWithRetry(repo, filter);
 });
+
+/// Browse the library, retrying up to 3 times on transient network/server
+/// failures with a short backoff. Non-transient errors rethrow on attempt 1.
+Future<ProgramLibraryResult> _browseLibraryWithRetry(
+  ProgramTemplateRepository repo,
+  ProgramLibraryFilter filter,
+) async {
+  const maxAttempts = 3;
+  for (var attempt = 1;; attempt++) {
+    try {
+      return await repo.browseLibrary(
+        category: filter.category,
+        difficulty: filter.difficulty,
+        sessionsPerWeek: filter.sessionsPerWeek,
+        search: filter.search,
+      );
+    } on DioException catch (e) {
+      if (attempt >= maxAttempts || !_isTransientLibraryFailure(e)) rethrow;
+      // 400ms then 800ms — enough to ride out a restart / cold-cache window.
+      await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+    }
+  }
+}
+
+/// True for failures worth retrying: connection/receive/send timeouts, dropped
+/// connections, and 502/503/504 (gateway / restart). NOT 4xx (auth, bad input).
+bool _isTransientLibraryFailure(DioException e) {
+  switch (e.type) {
+    case DioExceptionType.connectionTimeout:
+    case DioExceptionType.receiveTimeout:
+    case DioExceptionType.sendTimeout:
+    case DioExceptionType.connectionError:
+      return true;
+    default:
+      final code = e.response?.statusCode ?? 0;
+      return code == 502 || code == 503 || code == 504;
+  }
+}
 
 /// Thin HTTP wrapper for `/api/v1/program-templates/*`.
 ///
