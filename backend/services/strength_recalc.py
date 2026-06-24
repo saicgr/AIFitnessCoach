@@ -60,6 +60,85 @@ def _decayed_effective_1rm(all_time_best: float, days_since_trained: Optional[fl
     return round(all_time_best * floored, 2)
 
 
+# ── Outlier guard (machine/gym calibration artifact) ────────────────────────────────────
+# The same machine exercise can log wildly different weights across gyms because cable
+# stacks / pulley ratios aren't calibrated the same (a user reported a cable pulldown
+# reading 95 lb at one gym and 35 lb at another). Left unchecked, a single anomalously
+# heavy session sets the sticky all-time best (max(), then a 120-day decayed carry-forward
+# that OVERRIDES the honest fresh window), so the strength score spikes then reads as
+# "declining" for months. We refuse to promote a lone, uncorroborated spike to the
+# all-time best: a top session more than _BEST_SPIKE_RATIO× the next-best session — with
+# no second session anywhere near it — is treated as a calibration artifact, and the
+# corroborated runner-up is used instead. This only gates NEW promotion; it never shrinks
+# an already-stored best, so no existing user's number drops retroactively.
+_BEST_SPIKE_RATIO = 1.4
+
+
+def _session_one_rms_by_exercise(
+    logs: List[Dict[str, Any]],
+    strength_service: StrengthCalculatorService,
+) -> Dict[str, List[float]]:
+    """Per-exercise list of best 1RMs, one entry per workout_log row (≈ one session).
+
+    The combined flatten collapses an exercise to a single window-best, which hides
+    whether a heavy number was hit once or repeatedly. Flattening one row at a time keeps
+    that per-session signal so the outlier guard can tell a real capacity from a one-off
+    machine-calibration artifact. Fail-open: any row that won't parse is skipped.
+    """
+    from api.v1.scores import _flatten_logs_for_strength
+
+    by_ex: Dict[str, List[float]] = {}
+    for row in logs:
+        try:
+            flat = _flatten_logs_for_strength([row])
+        except Exception:  # noqa: BLE001
+            continue
+        for entry in flat:
+            name = entry.get("exercise_name", "")
+            if not name:
+                continue
+            weight = float(entry.get("weight_kg", 0) or 0)
+            reps = int(entry.get("reps", 0) or 0)
+            one_rm = strength_service.calculate_1rm_average(weight, reps)
+            if one_rm > 0:
+                by_ex.setdefault(_norm_key(name), []).append(one_rm)
+    return by_ex
+
+
+def _display_names_by_key(logs: List[Dict[str, Any]]) -> Dict[str, str]:
+    """Representative display name per normalized exercise key from the window."""
+    from api.v1.scores import _flatten_logs_for_strength
+
+    out: Dict[str, str] = {}
+    try:
+        for entry in _flatten_logs_for_strength(logs):
+            nm = entry.get("exercise_name", "")
+            if nm:
+                out.setdefault(_norm_key(nm), nm)
+    except Exception:  # noqa: BLE001
+        pass
+    return out
+
+
+def _trusted_window_best(session_1rms: List[float]) -> float:
+    """Largest window 1RM that isn't a lone, uncorroborated spike.
+
+    With ≥2 sessions, if the top session is more than _BEST_SPIKE_RATIO× the second-best
+    it's treated as a machine-calibration artifact and the second-best is used instead.
+    With a single session there's nothing to compare against, so it's accepted as-is
+    (per-gym isolation + the establishing range still soften a first heavy log).
+    """
+    vals = sorted((v for v in session_1rms if v > 0), reverse=True)
+    if not vals:
+        return 0.0
+    if len(vals) == 1:
+        return vals[0]
+    top, second = vals[0], vals[1]
+    if second > 0 and top > _BEST_SPIKE_RATIO * second:
+        return second
+    return top
+
+
 def _norm_key(name: str) -> str:
     return (name or "").strip().lower()
 
@@ -220,42 +299,45 @@ def _upsert_exercise_bests(
     strength_service: StrengthCalculatorService,
     now: datetime,
     library_index: Optional[Dict[str, Any]] = None,
+    gym_profile_id: Optional[str] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Upsert strength_exercise_bests from the 90d logs and return per-muscle effective 1RMs.
 
     For each (exercise, gym) we track the all-time best 1RM (max over the window AND any
     previously stored best) and last_trained_at = now; we then read back the decayed
-    effective 1RM and roll it up to the BEST effective per muscle group (machine-credit
-    combined rule lives in scores.py for the combined/per-gym split; here we just surface
-    the per-muscle carry-forward used by the combined recompute).
+    effective 1RM and roll it up to the BEST effective per muscle group.
+
+    ``gym_profile_id`` scopes the read/write: ``None`` maintains the combined NULL-gym
+    carry-forward (the headline number), while a gym id maintains that gym's OWN bests so
+    an easy-machine PR at one gym can't inflate another gym's score (machine stacks aren't
+    comparable across gyms). The fresh window best is taken through the outlier guard
+    (:func:`_trusted_window_best`) so a lone calibration-artifact spike never becomes the
+    sticky all-time best.
     """
-    from api.v1.scores import _flatten_logs_for_strength
-
-    # Best fresh 1RM per exercise from this window (combined, NULL gym for the headline).
-    flattened = _flatten_logs_for_strength(all_logs)
+    # Best fresh 1RM per exercise from this window, outlier-guarded against a lone spike.
+    session_1rms = _session_one_rms_by_exercise(all_logs, strength_service)
+    name_by_key = _display_names_by_key(all_logs)
     fresh_best: Dict[str, Dict[str, Any]] = {}
-    for entry in flattened:
-        name = entry.get("exercise_name", "")
-        if not name:
+    for key, vals in session_1rms.items():
+        trusted = _trusted_window_best(vals)
+        if trusted <= 0:
             continue
-        weight = float(entry.get("weight_kg", 0) or 0)
-        reps = int(entry.get("reps", 0) or 0)
-        one_rm = strength_service.calculate_1rm_average(weight, reps)
-        key = _norm_key(name)
-        prev = fresh_best.get(key)
-        if prev is None or one_rm > prev["one_rm"]:
-            fresh_best[key] = {"one_rm": one_rm, "name": name}
+        fresh_best[key] = {"one_rm": trusted, "name": name_by_key.get(key, key)}
 
-    # Load any existing stored bests (combined / NULL gym).
+    # Load any existing stored bests, scoped to this gym (or combined / NULL gym).
     stored: Dict[str, Dict[str, Any]] = {}
     try:
-        resp = (
+        stored_q = (
             supabase.table("strength_exercise_bests")
             .select("exercise_key, all_time_best_1rm_kg, best_achieved_at, last_trained_at")
             .eq("user_id", user_id)
-            .is_("gym_profile_id", "null")
-            .execute()
         )
+        stored_q = (
+            stored_q.is_("gym_profile_id", "null")
+            if gym_profile_id is None
+            else stored_q.eq("gym_profile_id", gym_profile_id)
+        )
+        resp = stored_q.execute()
         for r in (resp.data or []):
             stored[_norm_key(r.get("exercise_key", ""))] = r
     except Exception as e:  # noqa: BLE001
@@ -275,7 +357,7 @@ def _upsert_exercise_bests(
         record = {
             "user_id": user_id,
             "exercise_key": key,
-            "gym_profile_id": None,
+            "gym_profile_id": gym_profile_id,
             "all_time_best_1rm_kg": round(new_best, 2),
             "best_achieved_at": best_achieved,
             "last_trained_at": now.isoformat(),
@@ -292,9 +374,18 @@ def _upsert_exercise_bests(
             # fall back to delete+insert for this row (still additive).
             logger.debug(f"bests upsert fallback for {key}: {e}")
             try:
-                supabase.table("strength_exercise_bests").delete().eq(
-                    "user_id", user_id
-                ).eq("exercise_key", key).is_("gym_profile_id", "null").execute()
+                del_q = (
+                    supabase.table("strength_exercise_bests")
+                    .delete()
+                    .eq("user_id", user_id)
+                    .eq("exercise_key", key)
+                )
+                del_q = (
+                    del_q.is_("gym_profile_id", "null")
+                    if gym_profile_id is None
+                    else del_q.eq("gym_profile_id", gym_profile_id)
+                )
+                del_q.execute()
                 supabase.table("strength_exercise_bests").insert(record).execute()
             except Exception as e2:  # noqa: BLE001
                 logger.warning(f"bests write failed for {key}: {e2}")
@@ -536,10 +627,6 @@ def _recompute_strength_for_user(
             gym_workout_data = _flatten_logs_for_strength(gym_logs)
             if not gym_workout_data:
                 continue
-            gym_muscle_scores = _calculate_all_with_context(
-                strength_service, gym_workout_data, bodyweight, gender, muscle_ctx,
-                library_index,
-            )
 
             prev_gym_resp = (
                 supabase.table("strength_scores")
@@ -554,6 +641,45 @@ def _recompute_strength_for_user(
                 mgk = r.get("muscle_group")
                 if mgk and mgk not in prev_gym_scores:
                     prev_gym_scores[mgk] = r.get("strength_score")
+
+            # Per-gym carry-forward: maintain this gym's OWN strength_exercise_bests
+            # (decayed effective 1RM) and build a per-gym context from it, so an
+            # easy-machine PR at another gym can no longer inflate this gym's score.
+            # Machine stacks aren't comparable across gyms — each gym's number must be
+            # internally consistent over time. Fail-open: any error falls back to the
+            # combined muscle_ctx (prior behavior).
+            try:
+                gym_bests_by_muscle = _upsert_exercise_bests(
+                    supabase=supabase,
+                    user_id=user_id,
+                    all_logs=gym_logs,
+                    strength_service=strength_service,
+                    now=now,
+                    library_index=library_index,
+                    gym_profile_id=gid,
+                )
+                gym_muscle_ctx = _gather_muscle_context(
+                    supabase=supabase,
+                    user_id=user_id,
+                    all_logs=gym_logs,
+                    strength_service=strength_service,
+                    bodyweight_trend_pct=bw_trend,
+                    previous_scores=prev_gym_scores,
+                    bests_by_muscle=gym_bests_by_muscle,
+                    now=now,
+                    library_index=library_index,
+                )
+            except Exception as e:  # noqa: BLE001
+                logger.warning(
+                    f"Per-gym carry-forward failed for gym {gid}; "
+                    f"using combined context: {e}"
+                )
+                gym_muscle_ctx = muscle_ctx
+
+            gym_muscle_scores = _calculate_all_with_context(
+                strength_service, gym_workout_data, bodyweight, gender, gym_muscle_ctx,
+                library_index,
+            )
 
             for mg, score in gym_muscle_scores.items():
                 prev_score = prev_gym_scores.get(mg)
