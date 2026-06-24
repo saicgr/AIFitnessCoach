@@ -423,12 +423,12 @@ class _CustomizationStudioSheetState
 
                     const SizedBox(height: 16),
                     _sectionLabel('Impact', isDark),
-                    // The accurate equipment outcome (e.g. "Added Rowing Machine
-                    // as a cardio finisher") arrives through the preview's
-                    // relaxed_constraints, which the preview card above already
-                    // renders — so there is no separate Impact note here. (The
-                    // old, inaccurate "no exercises use this equipment" note was
-                    // removed.)
+                    // "What changed" lines for the current preview. The backend
+                    // appends accurate equipment outcomes here too (e.g. "Added
+                    // Rowing Machine as a cardio finisher", "Broadened equipment
+                    // …"), so this replaces the old, inaccurate "no exercises
+                    // use this equipment" note. Renders nothing when empty.
+                    _buildImpactNotes(isDark),
                     _buildSegmented(
                       options: const [
                         MapEntry('low', 'Low'),
@@ -813,6 +813,55 @@ class _CustomizationStudioSheetState
     final cleaned = c.replaceAll('_', ' ').trim();
     if (cleaned.isEmpty) return 'Adjusted to fit your constraints';
     return cleaned[0].toUpperCase() + cleaned.substring(1);
+  }
+
+  /// "What changed" lines for the Impact section — every entry in the current
+  /// preview's `relaxedConstraints`. The backend appends accurate equipment
+  /// outcomes into this same list (e.g. "Added Rowing Machine as a cardio
+  /// finisher", "Broadened equipment to fit"), so rendering it verbatim is the
+  /// accurate replacement for the old "no exercises use this equipment" note.
+  /// Renders nothing when there's no preview or no constraints.
+  Widget _buildImpactNotes(bool isDark) {
+    final notes = _lastPreview?.relaxedConstraints ?? const <String>[];
+    if (notes.isEmpty) return const SizedBox.shrink();
+
+    final secondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: notes
+            .map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child:
+                          Icon(Icons.info_outline, size: 14, color: secondary),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        _humanizeConstraint(c),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: secondary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
   }
 
   Widget _sectionLabel(String text, bool isDark) {
