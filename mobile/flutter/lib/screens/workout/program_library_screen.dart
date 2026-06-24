@@ -7,6 +7,8 @@ import '../../core/theme/app_typography.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/signature/signature.dart';
 import '../../data/models/program_template.dart';
+import '../../data/providers/branded_program_provider.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
 import 'program_template_builder_screen.dart';
@@ -1502,12 +1504,23 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
   bool _importing = false;
   bool _autoImportFired = false;
 
+  /// True when this is a branded card the backend told us has no normalizable
+  /// day structure — we skip the structured-preview fetch entirely and render
+  /// the card-level info + a "preview not available" note instead.
+  bool get _previewUnavailable =>
+      widget.card.isBranded && !widget.card.previewAvailable;
+
   @override
   void initState() {
     super.initState();
-    _preview = ref
-        .read(programTemplateRepositoryProvider)
-        .previewLibraryProgram(widget.card.id);
+    // Both `library` and `branded` (when previewable) resolve through the same
+    // `GET /library/{id}` preview route. Only skip the fetch when the backend
+    // already told us no normalized preview exists for this branded program.
+    if (!_previewUnavailable) {
+      _preview = ref
+          .read(programTemplateRepositoryProvider)
+          .previewLibraryProgram(widget.card.id);
+    }
     if (widget.autoImport) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _autoImportFired) return;
@@ -1517,6 +1530,13 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
     }
   }
 
+  /// START / Import.
+  ///
+  /// - `library`: clone → editable template → builder (unchanged).
+  /// - `branded`: try the same import → builder; if the backend 422s with
+  ///   `branded_import_unsupported` (no normalizable structure), fall back to
+  ///   the BRANDED ASSIGN flow (assign the bare uuid as the user's current
+  ///   program), then confirm + pop.
   Future<void> _import() async {
     if (_importing) return;
     setState(() => _importing = true);
@@ -1531,11 +1551,54 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
       // Open the builder pre-filled with the imported (now editable) copy.
       router.push(ProgramBuilderRoute.path, extra: template);
     } on ProgramParseException catch (e) {
+      // A branded program with no normalizable structure can't go through the
+      // template builder — fall back to the branded ASSIGN flow.
+      if (widget.card.isBranded && e.code == 'branded_import_unsupported') {
+        await _assignBranded();
+        return;
+      }
       if (!mounted) return;
       setState(() => _importing = false);
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       if (!mounted) return;
+      setState(() => _importing = false);
+      messenger.showSnackBar(
+        SnackBar(
+            content: Text(
+                AppLocalizations.of(context).programLibraryCouldNotImportThis)),
+      );
+    }
+  }
+
+  /// Branded ASSIGN fallback — set this branded program as the user's current
+  /// program (mirrors the existing branded assign UX: confirm via snackbar +
+  /// pop the sheet). Uses the bare uuid (without the `branded:` prefix).
+  Future<void> _assignBranded() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final userId = ref.read(authStateProvider).user?.id;
+    if (userId == null) {
+      if (!mounted) return;
+      setState(() => _importing = false);
+      messenger.showSnackBar(
+        SnackBar(
+            content: Text(
+                AppLocalizations.of(context).programLibraryCouldNotImportThis)),
+      );
+      return;
+    }
+    final ok = await ref.read(currentProgramProvider.notifier).assignProgram(
+          programId: widget.card.bareBrandedId,
+          userId: userId,
+        );
+    if (!mounted) return;
+    if (ok) {
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(content: Text('${widget.card.programName} started')),
+      );
+    } else {
       setState(() => _importing = false);
       messenger.showSnackBar(
         SnackBar(
@@ -1570,7 +1633,9 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
                 ),
               ),
               Expanded(
-                child: FutureBuilder<ProgramTemplate>(
+                child: _previewUnavailable
+                    ? _buildCardLevelInfo()
+                    : FutureBuilder<ProgramTemplate>(
                   future: _preview,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -1637,13 +1702,19 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: Colors.white),
                             )
-                          : const Icon(Icons.tune_rounded, size: 18),
+                          : Icon(
+                              _previewUnavailable
+                                  ? Icons.play_arrow_rounded
+                                  : Icons.tune_rounded,
+                              size: 18),
                       label: Text(
                         _importing
                             ? AppLocalizations.of(context)
                                 .programLibraryImporting
-                            : AppLocalizations.of(context)
-                                .programLibraryImportCustomize,
+                            : (_previewUnavailable
+                                ? 'START PROGRAM'
+                                : AppLocalizations.of(context)
+                                    .programLibraryImportCustomize),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -1680,6 +1751,72 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
         const SizedBox(width: 4),
         Text(label,
             style: ZType.data(11, color: AppColors.textMuted)),
+      ],
+    );
+  }
+
+  /// Branded card with no normalizable day breakdown — render the card-level
+  /// info we already have plus an honest "preview not available" note. The
+  /// user can still START it (it assigns through the branded flow).
+  Widget _buildCardLevelInfo() {
+    final card = widget.card;
+    final stats = <Widget>[];
+    if (card.durationWeeks != null) {
+      stats.add(_miniStat(Icons.event_rounded, '${card.durationWeeks} weeks'));
+    }
+    if (card.sessionsPerWeek != null) {
+      stats.add(_miniStat(
+          Icons.fitness_center_rounded, '${card.sessionsPerWeek}×/week'));
+    }
+    if (card.difficultyLevel != null &&
+        card.difficultyLevel!.trim().isNotEmpty) {
+      stats.add(_miniStat(
+          Icons.signal_cellular_alt_rounded, card.difficultyLevel!));
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      children: [
+        Text(
+          card.programName.toUpperCase(),
+          style: ZType.disp(24, color: AppColors.textPrimary),
+        ),
+        if ((card.description ?? '').trim().isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            card.description!.trim(),
+            style: ZType.ser(13, color: AppColors.textSecondary),
+          ),
+        ],
+        if (stats.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Wrap(spacing: 8, runSpacing: 8, children: stats),
+        ],
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface2,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline_rounded,
+                  size: 16, color: AppColors.textSecondary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Preview not available — you can still start it.',
+                  style: ZType.sans(13,
+                      color: AppColors.textSecondary,
+                      weight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

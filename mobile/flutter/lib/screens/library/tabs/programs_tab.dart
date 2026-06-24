@@ -1,556 +1,79 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
-import '../../../data/models/branded_program.dart';
 import '../../../data/services/haptic_service.dart';
-import '../providers/library_providers.dart';
-import '../widgets/filter_chip_widget.dart';
-import '../widgets/program_card.dart';
-import '../widgets/program_carousel_section.dart';
-import '../../../widgets/glass_sheet.dart';
-import '../components/programs_intro_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Format category name: replace underscores with spaces and capitalize each word
-String _formatCategoryName(String category) {
-  return category
-      .replaceAll('_', ' ')
-      .split(' ')
-      .map((word) => word.isNotEmpty
-          ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
-          : '')
-      .join(' ');
-}
 
-/// Group programs into sections for carousel display
-Map<String, List<BrandedProgram>> _groupProgramsIntoSections(List<BrandedProgram> programs) {
-  final Map<String, List<BrandedProgram>> sections = {};
-
-  // Featured - first 5 programs or random selection
-  final featured = programs.take(5).toList();
-  if (featured.isNotEmpty) {
-    sections['Featured Programs'] = featured;
-  }
-
-  // Beginner Friendly
-  final beginner = programs.where((p) =>
-    p.difficultyLevel?.toLowerCase() == 'beginner' ||
-    p.category?.toLowerCase() == 'general_fitness'
-  ).toList();
-  if (beginner.isNotEmpty) {
-    sections['Beginner Friendly'] = beginner;
-  }
-
-  // Build Strength
-  final strength = programs.where((p) =>
-    p.category?.toLowerCase() == 'strength' ||
-    p.category?.toLowerCase() == 'hypertrophy'
-  ).toList();
-  if (strength.isNotEmpty) {
-    sections['Build Strength'] = strength;
-  }
-
-  // Athletic Performance
-  final athletic = programs.where((p) =>
-    p.category?.toLowerCase() == 'athletic' ||
-    p.category?.toLowerCase() == 'sport_training'
-  ).toList();
-  if (athletic.isNotEmpty) {
-    sections['Athletic Performance'] = athletic;
-  }
-
-  // Home Workouts
-  final home = programs.where((p) =>
-    p.category?.toLowerCase() == 'bodyweight' ||
-    p.category?.toLowerCase() == 'home'
-  ).toList();
-  if (home.isNotEmpty) {
-    sections['Home Workouts'] = home;
-  }
-
-  // Celebrity Programs
-  final celebrity = programs.where((p) =>
-    p.category?.toLowerCase() == 'celebrity_workout' ||
-    p.celebrityName != null
-  ).toList();
-  if (celebrity.isNotEmpty) {
-    sections['Celebrity Programs'] = celebrity;
-  }
-
-  // All Programs (as fallback if not enough in categories)
-  if (sections.length < 3 && programs.length > 5) {
-    sections['All Programs'] = programs;
-  }
-
-  return sections;
-}
-
-/// Programs tab content with search, category filter, and list
-class ProgramsTab extends ConsumerStatefulWidget {
+/// Programs tab — now a thin entry point to the single unified Programs
+/// experience at `/workout/program-library`.
+///
+/// Historically this tab rendered its own Netflix-style branded-program browse
+/// (carousels, category chips, search, `ProgramDetailSheet`) sourced from the
+/// legacy `programsProvider`. That duplicated the redesigned Program Library
+/// screen, so the browse body was retired in favour of one destination. This
+/// tab is no longer mounted on any live route (the Library screen dropped its
+/// Programs tab), but it is kept compiling as a safe forwarding surface in case
+/// any deep link reintroduces it — it intentionally no longer reads the branded
+/// `programsProvider`.
+class ProgramsTab extends ConsumerWidget {
   const ProgramsTab({super.key});
 
   @override
-  ConsumerState<ProgramsTab> createState() => _ProgramsTabState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
 
-class _ProgramsTabState extends ConsumerState<ProgramsTab> {
-  bool _hasShownIntro = false;
-  bool _isSearchExpanded = false;
-  final _searchController = TextEditingController();
-  final _searchFocusNode = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    // Show intro sheet after build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_hasShownIntro && mounted) {
-        _showIntroSheet();
-        _hasShownIntro = true;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _searchFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _showIntroSheet() {
-    showGlassSheet(
-      context: context,
-      isDismissible: true,
-      builder: (context) => const ProgramsIntroSheet(),
-    );
-  }
-
-  void _toggleSearch() {
-    HapticService.light();
-    setState(() {
-      _isSearchExpanded = !_isSearchExpanded;
-      if (_isSearchExpanded) {
-        _searchFocusNode.requestFocus();
-      } else {
-        _searchFocusNode.unfocus();
-        _searchController.clear();
-        ref.read(programSearchProvider.notifier).state = '';
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final programsAsync = ref.watch(programsProvider);
-    final categoriesAsync = ref.watch(programCategoriesProvider);
-    final searchQuery = ref.watch(programSearchProvider);
-    final selectedCategory = ref.watch(selectedProgramCategoryProvider);
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final accentColor = ref.colors(context).accent;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-
-    return Stack(
-      children: [
-        // Main content
-        Column(
-          children: [
-            // Info banner - compact single line
-            Container(
-              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: cyan.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.fitness_center_rounded, color: cyan, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppLocalizations.of(context).programsTapAnyProgramTo,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: cyan,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Category filter chips
-            SizedBox(
-              height: 40,
-              child: categoriesAsync.when(
-                loading: () => const SizedBox(),
-                error: (_, __) => const SizedBox(),
-                data: (categories) {
-                  return ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      FilterChipWidget(
-                        label: AppLocalizations.of(context).syncedWorkoutsHistoryAll,
-                        isSelected: selectedCategory == null,
-                        onTap: () {
-                          ref.read(selectedProgramCategoryProvider.notifier).state =
-                              null;
-                        },
-                      ),
-                      ...categories.map((category) => FilterChipWidget(
-                            label: _formatCategoryName(category),
-                            isSelected: selectedCategory == category,
-                            onTap: () {
-                              ref
-                                  .read(selectedProgramCategoryProvider.notifier)
-                                  .state = selectedCategory == category
-                                  ? null
-                                  : category;
-                            },
-                          )),
-                    ],
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Programs list
-            Expanded(
-              child: programsAsync.when(
-                loading: () => Center(
-                  child: CircularProgressIndicator(color: cyan),
-                ),
-                error: (error, _) {
-                  // Get user-friendly error message
-                  final errorMessage = error is AppException
-                      ? error.userMessage
-                      : ExceptionHandler.getUserMessage(error);
-                  final isNetworkError = error is NetworkException ||
-                      errorMessage.contains('internet') ||
-                      errorMessage.contains('connection');
-
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            isNetworkError ? Icons.wifi_off : Icons.error_outline,
-                            color: isDark ? AppColors.error : AppColorsLight.error,
-                            size: 48,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            errorMessage,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: isDark
-                                  ? AppColors.textPrimary
-                                  : AppColorsLight.textPrimary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            onPressed: () => ref.invalidate(programsProvider),
-                            icon: const Icon(Icons.refresh),
-                            label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: cyan,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-                data: (programs) {
-                  var filtered = programs;
-
-                  if (searchQuery.isNotEmpty) {
-                    filtered = filtered
-                        .where((p) =>
-                            p.name
-                                .toLowerCase()
-                                .contains(searchQuery.toLowerCase()) ||
-                            (p.category
-                                    ?.toLowerCase()
-                                    .contains(searchQuery.toLowerCase()) ??
-                                false) ||
-                            (p.celebrityName
-                                    ?.toLowerCase()
-                                    .contains(searchQuery.toLowerCase()) ??
-                                false) ||
-                            (p.goals?.any((g) =>
-                                    g.toLowerCase().contains(searchQuery.toLowerCase())) ??
-                                false))
-                        .toList();
-                  }
-
-                  if (selectedCategory != null) {
-                    filtered = filtered
-                        .where((p) => p.category == selectedCategory)
-                        .toList();
-                  }
-
-                  if (filtered.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.fitness_center,
-                            color: textMuted,
-                            size: 48,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(AppLocalizations.of(context).programsNoProgramsFound),
-                          if (searchQuery.isNotEmpty || selectedCategory != null)
-                            TextButton(
-                              onPressed: () {
-                                ref.read(programSearchProvider.notifier).state = '';
-                                ref
-                                    .read(selectedProgramCategoryProvider.notifier)
-                                    .state = null;
-                                setState(() {
-                                  _isSearchExpanded = false;
-                                  _searchController.clear();
-                                });
-                              },
-                              child: Text(AppLocalizations.of(context).programsClearFilters),
-                            ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  // If searching or filtering, show list view
-                  if (searchQuery.isNotEmpty || selectedCategory != null) {
-                    return ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final program = filtered[index];
-                        return ProgramCard(
-                          program: program,
-                        )
-                            .animate()
-                            .fadeIn(delay: Duration(milliseconds: index * 50));
-                      },
-                    );
-                  }
-
-                  // Netflix-style carousel layout
-                  final sections = _groupProgramsIntoSections(filtered);
-                  final sectionEntries = sections.entries.toList();
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 80),
-                    itemCount: sectionEntries.length,
-                    itemBuilder: (context, index) {
-                      final entry = sectionEntries[index];
-                      final isFeatured = entry.key == 'Featured Programs';
-
-                      return ProgramCarouselSection(
-                        title: entry.key,
-                        programs: entry.value,
-                        isFeatured: isFeatured,
-                      )
-                          .animate()
-                          .fadeIn(delay: Duration(milliseconds: index * 100));
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-
-        // Bottom fade gradient
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: IgnorePointer(
-            child: Container(
-              height: bottomPadding + 100,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    backgroundColor.withValues(alpha: 0),
-                    backgroundColor.withValues(alpha: 0.8),
-                    backgroundColor,
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        // Floating pill bar
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: bottomPadding + 16,
-          child: Center(
-            child: _isSearchExpanded
-                ? _buildExpandedSearchBar(context, isDark, elevated, accentColor, textMuted)
-                : _buildFloatingPillBar(context, isDark, accentColor),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFloatingPillBar(BuildContext context, bool isDark, Color accentColor) {
-    final iconColor = isDark ? Colors.white70 : Colors.black54;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.grey.shade900.withValues(alpha: 0.85)
-                : Colors.grey.shade200.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(32),
-          ),
-          child: GestureDetector(
-            onTap: _toggleSearch,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.search_rounded,
-                    color: iconColor,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppLocalizations.of(context).programsSearch,
-                    style: TextStyle(
-                      color: iconColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExpandedSearchBar(
-    BuildContext context,
-    bool isDark,
-    Color elevated,
-    Color accentColor,
-    Color textMuted,
-  ) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width - 32,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            HapticService.light();
+            context.push('/workout/program-library');
+          },
           child: Container(
-            height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: 6),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.grey.shade900.withValues(alpha: 0.85)
-                  : Colors.grey.shade200.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(32),
+              color: tc.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: tc.cardBorder),
             ),
             child: Row(
               children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: tc.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.explore_rounded, color: tc.accent, size: 24),
+                ),
                 const SizedBox(width: 16),
-                Icon(
-                  Icons.search_rounded,
-                  color: isDark ? Colors.white70 : Colors.black54,
-                  size: 22,
-                ),
-                const SizedBox(width: 12),
                 Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: (value) {
-                      ref.read(programSearchProvider.notifier).state = value;
-                    },
-                    cursorColor: accentColor,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 16,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context).programsSearchPrograms,
-                      hintStyle: TextStyle(
-                        color: textMuted.withValues(alpha: 0.7),
-                        fontSize: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)
+                            .programsIntroBrowsePrograms
+                            .toUpperCase(),
+                        style: ZType.disp(18, color: tc.textPrimary),
                       ),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: false,
-                      contentPadding: EdgeInsets.zero,
-                      isDense: true,
-                    ),
+                      const SizedBox(height: 4),
+                      Text(
+                        AppLocalizations.of(context)
+                            .programMenuButtonTryCelebrityWorkoutsSport,
+                        style: TextStyle(fontSize: 13, color: tc.textSecondary),
+                      ),
+                    ],
                   ),
                 ),
-                // Close button
-                GestureDetector(
-                  onTap: _toggleSearch,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    margin: const EdgeInsets.only(right: 2),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.close_rounded,
-                        color: accentColor,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
+                const SizedBox(width: 8),
+                Icon(Icons.arrow_forward_ios, size: 14, color: tc.textMuted),
               ],
             ),
           ),

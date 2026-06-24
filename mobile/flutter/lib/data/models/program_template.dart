@@ -605,6 +605,9 @@ class ProgramTemplate {
 // ---------------------------------------------------------------------------
 
 class ProgramLibraryCard {
+  /// Raw id from the backend. For curated rows this is a plain id; for
+  /// branded rows it is PREFIXED `branded:<uuid>` (see [source]). Always
+  /// preserved verbatim — the preview/import routes expect the prefixed form.
   final String id;
   final String programName;
 
@@ -622,6 +625,18 @@ class ProgramLibraryCard {
   final String? description;
   final List<String> goals;
 
+  /// Which catalog this card came from — `library` (the curated 259-row
+  /// `programs` table) or `branded` (the branded-program catalog, whose ids
+  /// are namespaced `branded:<uuid>`). Defaults to `library` for older
+  /// payloads that predate the unified contract.
+  final String source;
+
+  /// Whether `GET /library/{id}` can return a normalized day-by-day preview
+  /// for this card. Branded programs without a normalizable structure return
+  /// `preview_available: false`, in which case the preview sheet shows the
+  /// card-level info instead of a day breakdown. Defaults to true.
+  final bool previewAvailable;
+
   const ProgramLibraryCard({
     required this.id,
     required this.programName,
@@ -634,6 +649,8 @@ class ProgramLibraryCard {
     this.sessionDurationMinutes,
     this.description,
     this.goals = const [],
+    this.source = 'library',
+    this.previewAvailable = true,
   });
 
   factory ProgramLibraryCard.fromJson(Map<String, dynamic> json) {
@@ -649,8 +666,19 @@ class ProgramLibraryCard {
       sessionDurationMinutes: _asInt(json['session_duration_minutes']),
       description: json['description'] as String?,
       goals: _asStringList(json['goals']),
+      source: _asString(json['source'], fallback: 'library'),
+      previewAvailable: _asBool(json['preview_available'], fallback: true),
     );
   }
+
+  /// True when this card came from the branded-program catalog.
+  bool get isBranded => source == 'branded';
+
+  /// The branded program's bare uuid — `id` with the `branded:` prefix
+  /// stripped. Used for the branded ASSIGN fallback when import is
+  /// unsupported. Returns the raw `id` unchanged when it carries no prefix.
+  String get bareBrandedId =>
+      id.startsWith('branded:') ? id.substring('branded:'.length) : id;
 }
 
 /// Paged result of `GET /library`.

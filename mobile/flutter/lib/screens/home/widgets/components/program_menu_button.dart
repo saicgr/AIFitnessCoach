@@ -403,7 +403,10 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                   child: InkWell(
                     onTap: () {
                       Navigator.pop(ctx);
-                      context.push('/library?tab=1');
+                      // Unified Programs destination — the redesigned curated
+                      // program library. (Previously pushed /library?tab=1,
+                      // which opened the Exercises tab, not programs.)
+                      context.push('/workout/program-library');
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(

@@ -43,7 +43,15 @@ from core.logger import get_logger
 from core.supabase_client import get_supabase
 
 from services.gemini_service import ResponseCache
-from services.program_library_importer import normalize_program_blob_for_preview
+from services.program_library_importer import (
+    normalize_program_blob_for_preview,
+    ExerciseResolver,
+    _exercise_to_day_exercise,
+    _classify_workout_type,
+    map_difficulty,
+    derive_progression_strategy,
+    derive_deload_every_n,
+)
 from services.program_template_parser import parse_to_template_json
 from services.program_template_expander import (
     expand_template,
@@ -58,8 +66,12 @@ router = APIRouter()
 # library is static/curated reference data, so a long TTL is safe — the only
 # writes are bulk re-imports, which restart the process. Keyed by the
 # (category, difficulty_level, sessions_per_week, search) filter tuple.
+# NOTE: cache prefixes carry a "_v2" suffix because the cached dict shape
+# changed when the library was unified with branded_programs (added the
+# `source` field + branded rows). Bumping the prefix retires any pre-merge
+# cached payloads without a manual flush.
 _library_browse_cache = ResponseCache(
-    prefix="program_library_browse", ttl_seconds=6 * 3600, max_size=256
+    prefix="program_library_browse_v2", ttl_seconds=6 * 3600, max_size=256
 )
 
 
@@ -79,6 +91,10 @@ class LibraryProgramCard(BaseModel):
     session_duration_minutes: Optional[int] = None
     description: Optional[str] = None
     goals: List[str] = Field(default_factory=list)
+    # 'library' for `programs` rows (bare uuid id), 'branded' for
+    # `branded_programs` rows (id prefixed "branded:<uuid>"). Default keeps
+    # existing clients/responses unchanged.
+    source: str = "library"
 
 
 class LibraryBrowseResponse(BaseModel):
@@ -195,6 +211,223 @@ def _get_template_or_404(db, template_id: str) -> Dict[str, Any]:
 
 
 # =============================================================================
+# Branded-program unification (programs ∪ branded_programs at the read API)
+# =============================================================================
+# The two catalogs are merged at the READ layer ONLY — no data migration. A
+# branded card's id is prefixed "branded:<uuid>" so the client + the single-
+# program preview/import dispatch can tell the two sources apart; `programs`
+# ids stay bare. The card's `source` field ('library' | 'branded') is the
+# explicit, prefix-independent discriminator.
+_BRANDED_ID_PREFIX = "branded:"
+
+# branded_programs.category enum -> friendly Title Case label shown on cards.
+# Anything not in this map (the live table has drifted past the original 8-value
+# CHECK, e.g. 'gym_packed') falls back to Title-Cased underscores.
+_BRANDED_CATEGORY_LABELS: Dict[str, str] = {
+    "strength": "Strength",
+    "hypertrophy": "Hypertrophy",
+    "endurance": "Endurance",
+    "athletic": "Athletic",
+    "fat_loss": "Fat Loss",
+    "general_fitness": "General Fitness",
+    "bodyweight": "Bodyweight",
+    "powerbuilding": "Powerbuilding",
+}
+
+# branded_programs.difficulty_level -> friendly Title Case label.
+_BRANDED_DIFFICULTY_LABELS: Dict[str, str] = {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "all_levels": "All Levels",
+}
+
+
+def _titleize(token: Optional[str]) -> Optional[str]:
+    """snake_case / lowercase -> 'Title Case' (None passes through)."""
+    if not token:
+        return None
+    return " ".join(w.capitalize() for w in str(token).replace("_", " ").split())
+
+
+def branded_category_label(category: Optional[str]) -> Optional[str]:
+    """Friendly Title Case label for a branded_programs.category value."""
+    if not category:
+        return None
+    key = str(category).strip().lower()
+    return _BRANDED_CATEGORY_LABELS.get(key) or _titleize(category)
+
+
+def branded_difficulty_label(difficulty: Optional[str]) -> Optional[str]:
+    """Friendly Title Case label for a branded_programs.difficulty_level."""
+    if not difficulty:
+        return None
+    key = str(difficulty).strip().lower()
+    return _BRANDED_DIFFICULTY_LABELS.get(key) or _titleize(difficulty)
+
+
+def _branded_row_to_card(row: Dict[str, Any]) -> LibraryProgramCard:
+    """Map a branded_programs row into the shared LibraryProgramCard shape.
+
+    name->program_name; category enum -> friendly label (program_category);
+    split_type -> program_subcategory; difficulty Title Case; description falls
+    back to tagline; session_duration_minutes is unknown for branded (null ok).
+    The id is prefixed so the client + preview/import dispatch by source.
+    """
+    return LibraryProgramCard(
+        id=f"{_BRANDED_ID_PREFIX}{row['id']}",
+        program_name=row.get("name") or "Program",
+        program_category=branded_category_label(row.get("category")),
+        program_subcategory=_titleize(row.get("split_type")),
+        celebrity_name=None,
+        difficulty_level=branded_difficulty_label(row.get("difficulty_level")),
+        duration_weeks=row.get("duration_weeks"),
+        sessions_per_week=row.get("sessions_per_week"),
+        session_duration_minutes=None,
+        description=(row.get("description") or row.get("tagline")),
+        goals=row.get("goals") or [],
+        source="branded",
+    )
+
+
+# Light column list for branded cards — mirrors _LIBRARY_CARD_COLS, branded
+# schema. is_featured drives the featured ∪.
+_BRANDED_CARD_COLS = (
+    "id, name, tagline, description, category, difficulty_level, "
+    "duration_weeks, sessions_per_week, split_type, goals, is_featured"
+)
+
+
+def _fetch_branded_cards(
+    db,
+    *,
+    featured_only: bool = False,
+) -> List[LibraryProgramCard]:
+    """Fetch ACTIVE branded_programs as cards. Best-effort: a branded-table
+    error must NOT take down the (curated) library — callers degrade to the
+    `programs`-only result rather than 500."""
+    query = (
+        db.client.table("branded_programs")
+        .select(_BRANDED_CARD_COLS)
+        .eq("is_active", True)
+    )
+    if featured_only:
+        query = query.eq("is_featured", True)
+    resp = query.execute()
+    return [_branded_row_to_card(row) for row in (resp.data or [])]
+
+
+def _strip_branded_prefix(program_id: str) -> str:
+    """'branded:<uuid>' -> '<uuid>'. Assumes caller already checked prefix."""
+    return program_id[len(_BRANDED_ID_PREFIX):]
+
+
+def _branded_week_workouts_to_days(
+    week_workouts: List[Dict[str, Any]],
+    *,
+    difficulty_level: Optional[str],
+    resolver: ExerciseResolver,
+) -> List[Dict[str, Any]]:
+    """Normalize a branded `program_variant_weeks.workouts` array (one week of
+    sessions) into the editable `days[]` shape used by user_program_templates.
+
+    The branded week-workout shape is structurally the same as a
+    programs.workouts entry: {workout_name, type, exercises:[{name, sets, reps,
+    rest_seconds, ...}]}. We reuse the importer's per-exercise normalizer so the
+    rep-string parsing + exercise resolution are IDENTICAL to the programs path.
+    """
+    program_difficulty = map_difficulty(difficulty_level)
+    days: List[Dict[str, Any]] = []
+    for idx, w in enumerate(week_workouts or []):
+        raw_exercises = w.get("exercises") or []
+        day_exercises = [
+            _exercise_to_day_exercise(ex, resolver) for ex in raw_exercises
+        ]
+        is_rest = len(day_exercises) == 0
+        days.append(
+            {
+                "day_index": idx,
+                "day_name": (
+                    w.get("workout_name")
+                    or w.get("name")
+                    or f"Day {idx + 1}"
+                ),
+                "is_rest": is_rest,
+                "workout_type": _classify_workout_type(w.get("type")),
+                "difficulty": program_difficulty,
+                "exercises": day_exercises,
+            }
+        )
+    return days
+
+
+def _fetch_branded_first_week_workouts(
+    db, branded_id: str, program_name: str
+) -> List[Dict[str, Any]]:
+    """Best-effort fetch of one representative week of branded session data.
+
+    Branded structured weeks live in `program_variant_weeks`, reached via a
+    `program_variants` row (joined either on base_program_id OR on a name match,
+    since the duration service keys variants by variant_name). We take week 1 of
+    the base-duration variant as the canonical day rotation. Returns [] if no
+    structured weeks exist (caller then signals preview_available=False rather
+    than fabricating).
+    """
+    variant_ids: List[str] = []
+    try:
+        vresp = (
+            db.client.table("program_variants")
+            .select("id")
+            .eq("base_program_id", branded_id)
+            .order("duration_weeks")
+            .execute()
+        )
+        variant_ids = [str(v["id"]) for v in (vresp.data or [])]
+    except Exception as e:  # noqa: BLE001
+        logger.warning(
+            "branded preview: variant lookup by base_program_id failed: %s", e
+        )
+
+    # Fallback: the duration service matches variants by variant_name, not
+    # base_program_id — try a name match if the FK join found nothing.
+    if not variant_ids and program_name:
+        try:
+            vresp = (
+                db.client.table("program_variants")
+                .select("id")
+                .ilike("variant_name", f"%{program_name}%")
+                .order("duration_weeks")
+                .execute()
+            )
+            variant_ids = [str(v["id"]) for v in (vresp.data or [])]
+        except Exception as e:  # noqa: BLE001
+            logger.warning(
+                "branded preview: variant lookup by name failed: %s", e
+            )
+
+    for vid in variant_ids:
+        try:
+            wresp = (
+                db.client.table("program_variant_weeks")
+                .select("workouts")
+                .eq("variant_id", vid)
+                .order("week_number")
+                .limit(1)
+                .execute()
+            )
+            if wresp.data:
+                blob = wresp.data[0].get("workouts")
+                if isinstance(blob, list) and blob:
+                    return blob
+        except Exception as e:  # noqa: BLE001
+            logger.warning(
+                "branded preview: week fetch for variant %s failed: %s", vid, e
+            )
+            continue
+    return []
+
+
+# =============================================================================
 # Library - first-ever API over the `programs` table
 # =============================================================================
 @router.get("/library", response_model=LibraryBrowseResponse)
@@ -251,6 +484,9 @@ async def browse_library(
         db = get_supabase()
         # Light card columns ONLY — drop the `workouts` blob from the select.
         # has_workouts + sessions_per_week are now precomputed columns.
+        # NOTE: the structured DB-side filters below only apply to the curated
+        # `programs` query. Branded rows are fetched whole and filtered in
+        # Python by the SAME predicates so the merged set is filtered uniformly.
         query = db.client.table("programs").select(
             "id, program_name, program_category, program_subcategory, "
             "celebrity_name, difficulty_level, duration_weeks, "
@@ -313,8 +549,55 @@ async def browse_library(
                         or row.get("description")
                     ),
                     goals=row.get("goals") or [],
+                    source="library",
                 )
             )
+
+        # --- Merge in branded_programs, then apply the SAME filters in Python
+        # so both taxonomies are filtered identically. The category filter must
+        # match EITHER taxonomy: for branded we match against the friendly
+        # label (e.g. ?category=Strength matches category='strength'), so a
+        # single category value works across both. Best-effort: a branded-table
+        # failure degrades to the curated-only result instead of 500ing.
+        try:
+            branded_cards = _fetch_branded_cards(db)
+        except Exception as be:  # noqa: BLE001
+            logger.warning("Branded merge skipped (fetch failed): %s", be)
+            branded_cards = []
+
+        norm_difficulty = (difficulty_level or "").strip().lower() or None
+        search_lc = (search or "").strip().lower() or None
+        for bc in branded_cards:
+            # category: match against the friendly label (case-insensitive).
+            if category and (bc.program_category or "").lower() != (
+                category.strip().lower()
+            ):
+                continue
+            # difficulty_level: branded labels are Title Case ('All Levels');
+            # match the raw incoming token case-insensitively against the label.
+            if norm_difficulty and (
+                bc.difficulty_level or ""
+            ).lower() != norm_difficulty:
+                continue
+            if (
+                sessions_per_week is not None
+                and bc.sessions_per_week != sessions_per_week
+            ):
+                continue
+            if search_lc and search_lc not in (bc.program_name or "").lower():
+                continue
+            if duration_min is not None and (
+                bc.duration_weeks is None or bc.duration_weeks < duration_min
+            ):
+                continue
+            if duration_max is not None and (
+                bc.duration_weeks is None or bc.duration_weeks > duration_max
+            ):
+                continue
+            if not _matches_goals(bc.goals):
+                continue
+            cards.append(bc)
+
         cards.sort(key=lambda c: (c.program_category or "", c.program_name))
         result = LibraryBrowseResponse(total=len(cards), programs=cards)
         # Cache a JSON-serializable dict, NOT the pydantic model: the Redis cache
@@ -352,6 +635,7 @@ def _row_to_card(row: Dict[str, Any]) -> LibraryProgramCard:
         session_duration_minutes=row.get("session_duration_minutes"),
         description=(row.get("short_description") or row.get("description")),
         goals=row.get("goals") or [],
+        source="library",
     )
 
 
@@ -380,13 +664,13 @@ _FITNESS_LEVELS = ("beginner", "intermediate", "advanced")
 
 # Featured / recommended caches — same long TTL + dict-only rule as browse.
 _library_featured_cache = ResponseCache(
-    prefix="program_library_featured", ttl_seconds=6 * 3600, max_size=8
+    prefix="program_library_featured_v2", ttl_seconds=6 * 3600, max_size=8
 )
 _library_categories_cache = ResponseCache(
-    prefix="program_library_categories", ttl_seconds=6 * 3600, max_size=8
+    prefix="program_library_categories_v2", ttl_seconds=6 * 3600, max_size=8
 )
 _library_recommended_cache = ResponseCache(
-    prefix="program_library_recommended", ttl_seconds=6 * 3600, max_size=256
+    prefix="program_library_recommended_v2", ttl_seconds=6 * 3600, max_size=256
 )
 
 
@@ -436,7 +720,18 @@ async def library_featured(
             .order("featured_rank", desc=False)
             .execute()
         )
+        # Curated featured first (ordered by featured_rank), then branded
+        # is_featured rows appended AFTER the 6 curated (#3 spec: "rank branded
+        # after the 6 curated"). Branded sorted by name for stable ordering.
         cards = [_row_to_card(row) for row in resp.data or []]
+        try:
+            branded_featured = _fetch_branded_cards(db, featured_only=True)
+            branded_featured.sort(key=lambda c: c.program_name)
+            cards.extend(branded_featured)
+        except Exception as be:  # noqa: BLE001
+            logger.warning(
+                "Branded featured merge skipped (fetch failed): %s", be
+            )
         result = LibraryBrowseResponse(total=len(cards), programs=cards)
         # Cache a JSON-serializable dict, NOT the pydantic model (Redis cache
         # serializes via json.dumps → a cached model returns a useless str).
@@ -477,6 +772,28 @@ async def library_categories(
             if not cat:
                 continue
             counts[cat] = counts.get(cat, 0) + 1
+
+        # Merge branded category counts under the SAME friendly labels so a
+        # branded 'strength' folds into the curated 'Strength' bucket where the
+        # `programs` taxonomy already uses that label, otherwise it adds a new
+        # branded-only category (e.g. 'Powerbuilding'). Best-effort.
+        try:
+            bresp = (
+                db.client.table("branded_programs")
+                .select("category")
+                .eq("is_active", True)
+                .execute()
+            )
+            for row in bresp.data or []:
+                label = branded_category_label(row.get("category"))
+                if not label:
+                    continue
+                counts[label] = counts.get(label, 0) + 1
+        except Exception as be:  # noqa: BLE001
+            logger.warning(
+                "Branded category merge skipped (fetch failed): %s", be
+            )
+
         categories = [
             {"category": cat, "count": n}
             for cat, n in sorted(
@@ -560,13 +877,15 @@ async def library_recommended(
             .execute()
         )
 
-        def _score(row: Dict[str, Any]) -> int:
-            s = 0
-            program_goals = row.get("goals")
+        def _score_goals(program_goals: Any) -> int:
             if goal_keywords and isinstance(program_goals, list):
                 blob = " ".join(str(g).lower() for g in program_goals)
                 if any(kw in blob for kw in goal_keywords):
-                    s += 30
+                    return 30
+            return 0
+
+        def _score(row: Dict[str, Any]) -> int:
+            s = _score_goals(row.get("goals"))
             if user_level and _normalize_level(
                 row.get("difficulty_level")
             ) == user_level:
@@ -575,12 +894,37 @@ async def library_recommended(
                 s += 10
             return s
 
-        scored = sorted(
-            (resp.data or []),
-            key=lambda r: _score(r),
-            reverse=True,
-        )
-        top = [_row_to_card(r) for r in scored[:10]]
+        # Score curated programs AND active branded programs together; the top
+        # 10 of the MERGED set is returned as cards. Branded difficulty is
+        # normalized off the raw enum ('all_levels' -> None, never matches a
+        # concrete level — same as the curated path). is_featured mirrors the
+        # +10 featured weight. Best-effort branded fetch (degrade to curated).
+        scored: List[tuple] = [
+            (_score(r), _row_to_card(r)) for r in (resp.data or [])
+        ]
+        try:
+            bresp = (
+                db.client.table("branded_programs")
+                .select(_BRANDED_CARD_COLS)
+                .eq("is_active", True)
+                .execute()
+            )
+            for brow in bresp.data or []:
+                bs = _score_goals(brow.get("goals"))
+                if user_level and _normalize_level(
+                    brow.get("difficulty_level")
+                ) == user_level:
+                    bs += 25
+                if brow.get("is_featured"):
+                    bs += 10
+                scored.append((bs, _branded_row_to_card(brow)))
+        except Exception as be:  # noqa: BLE001
+            logger.warning(
+                "Branded recommended merge skipped (fetch failed): %s", be
+            )
+
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        top = [card for _, card in scored[:10]]
         result = LibraryBrowseResponse(total=len(top), programs=top)
         await _library_recommended_cache.set(cache_key, result.model_dump())
         return result
@@ -596,11 +940,90 @@ async def library_program_detail(
     program_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Full structured preview of one `programs` row - the `workouts` JSONB
+    """Full structured preview of one program - the `workouts` JSONB
     normalized into the `days` shape (rep-strings parsed, exercises resolved).
+
+    Source-aware: a 'branded:<uuid>' id previews from branded_programs (week-1
+    sessions normalized to the SAME days[] shape). When a branded program has
+    no structured weeks, returns card-level info + `preview_available: false`
+    so the client shows "Preview not available, you can still start it" rather
+    than crashing — we never fabricate workout data.
     """
     try:
         db = get_supabase()
+
+        # --- Branded preview path -----------------------------------------
+        if program_id.startswith(_BRANDED_ID_PREFIX):
+            branded_id = _strip_branded_prefix(program_id)
+            bresp = (
+                db.client.table("branded_programs")
+                .select("*")
+                .eq("id", branded_id)
+                .eq("is_active", True)
+                .limit(1)
+                .execute()
+            )
+            if not bresp.data:
+                raise HTTPException(
+                    status_code=404, detail="Program not found"
+                )
+            branded = bresp.data[0]
+            program_name = branded.get("name")
+            week_workouts = _fetch_branded_first_week_workouts(
+                db, branded_id, program_name or ""
+            )
+            base = {
+                "program_id": program_id,
+                "program_name": program_name,
+                "celebrity_name": None,
+                "difficulty_level": branded_difficulty_label(
+                    branded.get("difficulty_level")
+                ),
+                "duration_weeks": branded.get("duration_weeks"),
+                "source": "branded",
+                "category": branded_category_label(branded.get("category")),
+                "description": (
+                    branded.get("description") or branded.get("tagline")
+                ),
+            }
+            if not week_workouts:
+                # No structured weeks -> card-level info + a flag, never fake.
+                return {
+                    **base,
+                    "preview_available": False,
+                    "name": program_name,
+                    "week_length": 7,
+                    "days": [],
+                    "progression_strategy": derive_progression_strategy(
+                        branded.get("category")
+                    ),
+                    "deload_every_n_weeks": derive_deload_every_n(
+                        branded.get("category")
+                    ),
+                    "source_program_id": branded_id,
+                }
+            resolver = ExerciseResolver(user_id=str(current_user["id"]))
+            days = _branded_week_workouts_to_days(
+                week_workouts,
+                difficulty_level=branded.get("difficulty_level"),
+                resolver=resolver,
+            )
+            return {
+                **base,
+                "preview_available": True,
+                "name": program_name or "Imported Program",
+                "week_length": max(7, len(days)),
+                "days": days,
+                "progression_strategy": derive_progression_strategy(
+                    branded.get("category")
+                ),
+                "deload_every_n_weeks": derive_deload_every_n(
+                    branded.get("category")
+                ),
+                "source_program_id": branded_id,
+            }
+
+        # --- Curated `programs` preview path (unchanged) ------------------
         resp = (
             db.client.table("programs")
             .select("*")
@@ -626,6 +1049,8 @@ async def library_program_detail(
             "celebrity_name": program.get("celebrity_name"),
             "difficulty_level": program.get("difficulty_level"),
             "duration_weeks": program.get("duration_weeks"),
+            "source": "library",
+            "preview_available": True,
             **normalized,
         }
     except HTTPException:
@@ -643,14 +1068,94 @@ async def import_from_program(
     program_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Clone a `programs` row into a NEW editable `user_program_templates` row.
+    """Clone a program into a NEW editable `user_program_templates` row.
 
-    source='library', source_program_id set. The user's copy is an independent
-    snapshot - editing it never affects the source or another user's copy
-    (#L11/#L12).
+    Source-aware: a 'branded:<uuid>' id imports the branded program's week-1
+    sessions into the SAME editable template shape (reusing the branded week ->
+    days normalizer). If the branded program has no structured weeks to
+    normalize, returns 422 {error:'branded_import_unsupported'} rather than
+    fabricating workout data. Curated `programs` import is unchanged.
+
+    source='library' (or 'branded'), source_program_id set. The user's copy is
+    an independent snapshot - editing it never affects the source or another
+    user's copy (#L11/#L12).
     """
     try:
         db = get_supabase()
+
+        # --- Branded import path ------------------------------------------
+        if program_id.startswith(_BRANDED_ID_PREFIX):
+            branded_id = _strip_branded_prefix(program_id)
+            bresp = (
+                db.client.table("branded_programs")
+                .select("*")
+                .eq("id", branded_id)
+                .eq("is_active", True)
+                .limit(1)
+                .execute()
+            )
+            if not bresp.data:
+                raise HTTPException(
+                    status_code=404, detail="Program not found"
+                )
+            branded = bresp.data[0]
+            program_name = branded.get("name")
+            user_id = str(current_user["id"])
+            week_workouts = _fetch_branded_first_week_workouts(
+                db, branded_id, program_name or ""
+            )
+            if not week_workouts:
+                # No clean normalizable structure -> be conservative, do NOT
+                # fabricate. The client can still START the branded program via
+                # the branded /assign flow.
+                raise HTTPException(
+                    status_code=422,
+                    detail={
+                        "error": "branded_import_unsupported",
+                        "message": "This program can't be imported as an "
+                        "editable template yet. You can still start it.",
+                    },
+                )
+            resolver = ExerciseResolver(user_id=user_id)
+            days = _branded_week_workouts_to_days(
+                week_workouts,
+                difficulty_level=branded.get("difficulty_level"),
+                resolver=resolver,
+            )
+            category = branded.get("category")
+            now = datetime.utcnow().isoformat()
+            insert_row = {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "name": program_name or "Imported Program",
+                "description": (
+                    branded.get("description") or branded.get("tagline")
+                ),
+                "week_length": max(7, len(days)),
+                "days": days,
+                "deload_every_n_weeks": derive_deload_every_n(category),
+                "progression_strategy": derive_progression_strategy(category),
+                "apply_staples": True,
+                # source_program_id is a uuid column -> store the bare uuid; the
+                # 'branded' source field records which catalog it came from.
+                "source": "branded",
+                "source_program_id": branded_id,
+                "category": branded_category_label(category),
+                "created_at": now,
+                "updated_at": now,
+            }
+            created = (
+                db.client.table("user_program_templates")
+                .insert(insert_row)
+                .execute()
+            )
+            if not created.data:
+                raise HTTPException(
+                    status_code=500, detail="Failed to create template"
+                )
+            return _template_row_to_dict(created.data[0])
+
+        # --- Curated `programs` import path (unchanged) -------------------
         resp = (
             db.client.table("programs")
             .select("*")
