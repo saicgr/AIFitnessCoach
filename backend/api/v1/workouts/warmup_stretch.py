@@ -255,8 +255,11 @@ async def create_workout_warmup_and_stretches(
     except HTTPException:
         raise
     except Exception as e:
+        # Warmup/stretches are non-critical chrome — never 500 the client (it
+        # breaks opening the workout). Log the real cause and degrade to empty
+        # so the screen shows "no warmup yet" gracefully.
         logger.error(f"Failed to create warmup and stretches: {e}", exc_info=True)
-        raise safe_internal_error(e, "warmup_stretch")
+        return {"warmup": None, "stretches": None}
 
 
 @router.post("/{workout_id}/warmup-logs")

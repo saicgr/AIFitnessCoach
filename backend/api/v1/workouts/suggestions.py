@@ -21,6 +21,18 @@ from services.langgraph_agents.workout_insights.graph import generate_workout_in
 from models.gemini_schemas import WorkoutSuggestionsResponse
 
 from .utils import parse_json_field, normalize_goals_list
+import uuid as _uuid
+
+
+def _valid_workout_uuid(workout_id: str) -> bool:
+    """True iff workout_id is a real UUID. Guards against sentinels like
+    "active" reaching `.eq("id", ...)`, which throws Postgres 22P02 → 500.
+    """
+    try:
+        _uuid.UUID(str(workout_id))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -273,6 +285,8 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
     bypass the cache and generate a fresh summary.
     """
     logger.info(f"Getting AI summary for workout {workout_id} (force_regenerate={force_regenerate})")
+    if not _valid_workout_uuid(workout_id):
+        raise HTTPException(status_code=404, detail="Workout not found")
     try:
         db = get_supabase_db()
 
@@ -513,6 +527,8 @@ async def get_workout_generation_params(workout_id: str,
     - Equipment, goals, and fitness level context
     """
     logger.info(f"Getting generation parameters for workout {workout_id}")
+    if not _valid_workout_uuid(workout_id):
+        raise HTTPException(status_code=404, detail="Workout not found")
     try:
         db = get_supabase_db()
 

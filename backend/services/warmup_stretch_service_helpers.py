@@ -948,6 +948,12 @@ class WarmupStretchService:
 
         Runs warmup and stretch generation in parallel for faster response.
         """
+        # return_exceptions=True so a failure in EITHER branch (e.g. the
+        # pre-try work in create_*_for_workout — target-muscle extraction,
+        # recently-used query, generate_* — on an odd custom-workout
+        # exercises_json shape) degrades to None instead of propagating an
+        # uncaught exception → endpoint 500. Warmup/stretches are non-critical
+        # chrome; a generation failure must never break opening the workout.
         warmup, stretches = await asyncio.gather(
             self.create_warmup_for_workout(
                 workout_id, exercises, warmup_duration, injuries, user_id
@@ -955,7 +961,14 @@ class WarmupStretchService:
             self.create_stretches_for_workout(
                 workout_id, exercises, stretch_duration, injuries, user_id
             ),
+            return_exceptions=True,
         )
+        if isinstance(warmup, Exception):
+            logger.error(f"❌ Warmup generation failed: {warmup}", exc_info=warmup)
+            warmup = None
+        if isinstance(stretches, Exception):
+            logger.error(f"❌ Stretch generation failed: {stretches}", exc_info=stretches)
+            stretches = None
 
         return {
             "warmup": warmup,

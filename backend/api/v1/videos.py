@@ -17,6 +17,7 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 import boto3
+from urllib.parse import unquote
 from botocore.exceptions import ClientError
 import os
 import re
@@ -551,6 +552,12 @@ async def get_image_by_exercise_name(
          with a gender suffix.
       3. Anything else → 404. No partial / contains / S3-wide fuzzy matching.
     """
+    # Normalize the path param: the `{exercise_name:path}` converter passes the
+    # raw segment through, so a caller that didn't URL-encode (e.g. a literal
+    # space in "Pull-Up Wide-Grip") arrives un-decoded. unquote() is a harmless
+    # no-op on already-decoded input and also collapses any double-encoding.
+    exercise_name = unquote(exercise_name or "").strip()
+
     try:
         db = get_supabase_db()
 
@@ -748,7 +755,16 @@ async def get_image_by_exercise_name(
     except HTTPException:
         raise
     except Exception as e:
-        raise safe_internal_error(e, "image_url_by_exercise")
+        # An image lookup must never 500 the client — that breaks every tile on
+        # the screen. Log the real cause and return a 404 placeholder signal so
+        # the Flutter client renders its fallback illustration.
+        logger.error(
+            f"image lookup failed for '{exercise_name}': {e}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "no_image", "exercise_name": exercise_name},
+        )
 
 
 class BatchImageRequest(BaseModel):
