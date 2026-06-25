@@ -46,6 +46,14 @@ from .coach_tools import (
     import_exercise,
 )
 
+# === Program Library integration: coach recommend / start / build programs ===
+from .program_tools import (
+    recommend_program,
+    assign_program,
+    generate_coach_program,
+    PROGRAM_TOOLS,
+)
+
 # === Issue 3: workout mutation tools ===
 # Direct in-workout mutations (swap one exercise, log a set, build/break
 # supersets, reorder). Frontend renders a confirm-card via action_data
@@ -173,6 +181,8 @@ ALL_TOOLS = [
     # Coach import tools (gym equipment + custom exercise)
     import_gym_equipment,
     import_exercise,
+    # === Program Library: recommend / start / build programs ===
+    *PROGRAM_TOOLS,
     # === Issue 3: workout mutation tools ===
     *ISSUE_3_MUTATION_TOOLS,
     # === Issue 2: equipment identify ===
@@ -219,6 +229,11 @@ __all__ = [
     # Coach import tools
     "import_gym_equipment",
     "import_exercise",
+    # Program Library tools
+    "recommend_program",
+    "assign_program",
+    "generate_coach_program",
+    "PROGRAM_TOOLS",
     # Issue 3: workout mutation tools
     "swap_single_exercise",
     "log_set",

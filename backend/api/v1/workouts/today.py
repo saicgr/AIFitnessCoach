@@ -175,6 +175,66 @@ def _resolve_workout_days(user: dict, active_profile: Optional[dict]) -> List[in
     return _get_user_workout_days(user)
 
 
+def _fetch_active_program_assignments(db, user_id: str) -> List[dict]:
+    """Fetch the user's ACTIVE program assignments (program-library Start flow).
+
+    Returns the raw rows; callers derive the {assignment_id: meta} lookup and the
+    set of covered weekdays. Fail-open: any error returns [] so /today degrades
+    to the existing AI-decides path rather than 500ing (the workouts themselves
+    are still served by scheduled_date regardless)."""
+    try:
+        resp = (
+            db.client.table("user_program_assignments")
+            .select("id, source_program_id, custom_program_name, assigned_days, "
+                    "slot, current_week, template_id")
+            .eq("user_id", user_id)
+            .eq("is_active", True)
+            .eq("status", "active")
+            .execute()
+        )
+        return resp.data or []
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"[PROGRAM] active assignment fetch failed (fail-open): {e}")
+        return []
+
+
+def _build_assignment_meta(assignments: List[dict]) -> dict:
+    """{assignment_id: {program_id, program_name, slot}} for summary tagging."""
+    meta = {}
+    for a in assignments:
+        meta[str(a["id"])] = {
+            "program_id": (
+                str(a["source_program_id"]) if a.get("source_program_id") else None
+            ),
+            "program_name": a.get("custom_program_name"),
+            "slot": a.get("slot") or "primary",
+        }
+    return meta
+
+
+def _assignment_covered_weekdays(assignments: List[dict]) -> Set[int]:
+    """Set of Mon=0..Sun=6 weekdays that ANY active assignment prescribes. Used
+    to suppress AI auto-generation on days a started program already covers."""
+    covered: Set[int] = set()
+    for a in assignments:
+        for d in (a.get("assigned_days") or []):
+            try:
+                di = int(d)
+            except (TypeError, ValueError):
+                continue
+            if 0 <= di <= 6:
+                covered.add(di)
+    return covered
+
+
+def _program_sort_key(row: dict) -> tuple:
+    """Order today's workouts primary-program first, then addon, then non-program
+    (AI/quick). Stable secondary on created_at."""
+    slot = (row.get("program_slot") or "").lower()
+    rank = 0 if slot == "primary" else (1 if slot == "addon" else 2)
+    return (rank, str(row.get("created_at") or ""))
+
+
 def _compute_etag(response: "TodayWorkoutResponse") -> str:
     """Lightweight ETag based on workout IDs + completion + generating status."""
     parts = []
@@ -205,6 +265,14 @@ class TodayWorkoutSummary(BaseModel):
     is_completed: bool
     exercises: List[dict] = []  # Full exercise data for hero card preview
     generation_method: Optional[str] = None  # e.g. 'quick_rule_based', 'gemini', etc.
+    # Program-assignment provenance (migration 2285). Populated for workouts
+    # expanded from a started library program; null for AI-decides / quick
+    # workouts. Lets the carousel label each card with its program + week + slot.
+    program_id: Optional[str] = None        # source programs.id
+    program_name: Optional[str] = None      # display name of the program
+    program_week: Optional[int] = None      # 1-based week within the program
+    program_slot: Optional[str] = None      # 'primary' | 'addon'
+    assignment_id: Optional[str] = None     # user_program_assignments.id
 
 
 class TodayWorkoutResponse(BaseModel):
@@ -258,6 +326,7 @@ def _row_to_summary(
     *,
     locale: str = "en",
     db_client=None,
+    assignment_meta: Optional[dict] = None,
 ) -> TodayWorkoutSummary:
     """Convert a database row to TodayWorkoutSummary.
 
@@ -266,6 +335,10 @@ def _row_to_summary(
     entry returns the English name AND schedules a background translation;
     next read hits the cache. [db_client] is required for the background
     persist — when omitted, queueing is a no-op (read-only callers).
+
+    [assignment_meta] is the {assignment_id: {program_id, program_name, slot}}
+    lookup built once per /today call; when the row carries an assignment_id we
+    tag the summary with its program provenance (migration 2285).
     """
     # Parse exercises
     raw_exercises = row.get("exercises") or row.get("exercises_json")
@@ -308,6 +381,16 @@ def _row_to_summary(
             db_client=db_client,
         )
 
+    # Program-assignment provenance tagging (migration 2285). The row carries
+    # assignment_id + program_slot + template_week from the expander; program
+    # id/name come from the per-call assignment_meta lookup.
+    _assignment_id = row.get("assignment_id")
+    _meta = (assignment_meta or {}).get(str(_assignment_id)) if _assignment_id else None
+    _program_id = _meta.get("program_id") if _meta else None
+    _program_name = _meta.get("program_name") if _meta else None
+    _program_slot = row.get("program_slot") or (_meta.get("slot") if _meta else None)
+    _program_week = row.get("template_week")
+
     return TodayWorkoutSummary(
         id=row.get("id", ""),
         name=display_name or row.get("name", "Workout"),
@@ -322,6 +405,11 @@ def _row_to_summary(
         is_completed=row.get("is_completed", False),
         exercises=exercises if isinstance(exercises, list) else [],
         generation_method=row.get("generation_method"),
+        program_id=str(_program_id) if _program_id else None,
+        program_name=_program_name,
+        program_week=_program_week,
+        program_slot=_program_slot,
+        assignment_id=str(_assignment_id) if _assignment_id else None,
     )
 
 
@@ -1010,6 +1098,24 @@ async def get_today_workout(
         # See _resolve_workout_days for the full rule.
         selected_days = _resolve_workout_days(user, active_profile_row)
 
+        # Program-library assignments (migration 2285). When the user has STARTED
+        # a published program, its expanded workouts are served by scheduled_date
+        # like any other; we additionally (a) tag each with program provenance via
+        # assignment_meta, and (b) suppress AI auto-generation on weekdays a
+        # program already prescribes so the carousel shows the PRESCRIBED plan, not
+        # an AI-decides extra. Fail-open: an empty fetch leaves the legacy path.
+        active_assignments = await run_db(
+            lambda: _fetch_active_program_assignments(db, user_id)
+        )
+        assignment_meta = _build_assignment_meta(active_assignments)
+        program_covered_weekdays = _assignment_covered_weekdays(active_assignments)
+        # AI-decides should only fill weekdays NOT prescribed by a started
+        # program — program days serve their PRESCRIBED expanded workout, never
+        # an AI-generated one. When no program is active this equals selected_days.
+        ai_generation_days = [
+            d for d in selected_days if d not in program_covered_weekdays
+        ]
+
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         is_today_workout_day = _is_today_a_workout_day(selected_days, user_today_str=today_str)
 
@@ -1174,23 +1280,29 @@ async def get_today_workout(
                 # exempt quick_workout (migration 2048's unique index intentionally
                 # excludes manual/quick sources, so this overlap is by design).
                 # Without a stable order the home card could flicker between them.
-                # Priority: in-progress > non-degraded > most-recently-created.
+                # Priority: program-PRIMARY > in-progress > non-degraded >
+                # most-recently-created. A started program's primary session is
+                # the headline; addon-program + AI/quick rows fall to extras.
                 def _today_sort_key(r: dict):
                     status = (r.get("status") or "").lower()
                     in_progress = status in ("in_progress", "active", "started")
                     is_deg = bool(r.get("is_degraded"))
+                    slot = (r.get("program_slot") or "").lower()
+                    # higher = sorts first (reverse=True): primary(2) > addon(1) > none(0)
+                    slot_rank = 2 if slot == "primary" else (1 if slot == "addon" else 0)
                     return (
+                        slot_rank,
                         1 if in_progress else 0,
                         0 if is_deg else 1,
                         str(r.get("created_at") or ""),
                     )
                 _safe_today_rows.sort(key=_today_sort_key, reverse=True)
-                today_workout = _row_to_summary(_safe_today_rows[0], user_today_str=today_str, locale=_display_locale, db_client=db)
+                today_workout = _row_to_summary(_safe_today_rows[0], user_today_str=today_str, locale=_display_locale, db_client=db, assignment_meta=assignment_meta)
                 has_workout_today = True
                 logger.debug(f"[TODAY DEBUG] Found today's workout: {today_workout.name}")
                 if len(_safe_today_rows) > 1:
                     extra_today_workouts = [
-                        _row_to_summary(row, user_today_str=today_str, locale=_display_locale, db_client=db)
+                        _row_to_summary(row, user_today_str=today_str, locale=_display_locale, db_client=db, assignment_meta=assignment_meta)
                         for row in _safe_today_rows[1:]
                     ]
                     logger.debug(f"[TODAY DEBUG] Found {len(extra_today_workouts)} extra today workouts")
@@ -1204,7 +1316,7 @@ async def get_today_workout(
             _candidate_future.extend(_demoted_rows)
             _candidate_future.sort(key=lambda r: str(r.get("scheduled_date") or ""))
         if _candidate_future:
-            next_workout = _row_to_summary(_candidate_future[0], user_today_str=today_str, locale=_display_locale, db_client=db)
+            next_workout = _row_to_summary(_candidate_future[0], user_today_str=today_str, locale=_display_locale, db_client=db, assignment_meta=assignment_meta)
             next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
             user_today_date = datetime.strptime(today_str, "%Y-%m-%d").date()
             days_until_next = (next_date - user_today_date).days
@@ -1230,8 +1342,8 @@ async def get_today_workout(
         needs_generation = False
         next_workout_date: Optional[str] = None
 
-        if not today_workout and not has_completed_workout_today:
-            nearest_scheduled_date_str = _calculate_next_workout_date(selected_days, user_today_str=today_str)
+        if not today_workout and not has_completed_workout_today and ai_generation_days:
+            nearest_scheduled_date_str = _calculate_next_workout_date(ai_generation_days, user_today_str=today_str)
             if not next_workout:
                 # Case 1: No workouts at all - generate for the next scheduled day
                 needs_generation = True
@@ -1264,7 +1376,7 @@ async def get_today_workout(
         # Build completed workout summary if user completed today's workout
         completed_workout_summary: Optional[TodayWorkoutSummary] = None
         if has_completed_workout_today:
-            completed_workout_summary = _row_to_summary(completed_today_rows[0], user_today_str=today_str, locale=_display_locale, db_client=db)
+            completed_workout_summary = _row_to_summary(completed_today_rows[0], user_today_str=today_str, locale=_display_locale, db_client=db, assignment_meta=assignment_meta)
             logger.info(f"User completed today's workout: {completed_workout_summary.name}")
 
         # ================================================================
@@ -1278,15 +1390,17 @@ async def get_today_workout(
             # Fill the full 14-day horizon to match the /upcoming read endpoint
             # (batch_generation.py default), so the home carousel + offline
             # pre-cache always have complete coverage after a profile switch.
+            # Only AI-fill weekdays NOT covered by a started program — program
+            # days already carry their PRESCRIBED expanded workouts.
             upcoming_missing = _get_upcoming_dates_needing_generation(
                 db=db,
                 user_id=user_id,
-                selected_days=selected_days,
+                selected_days=ai_generation_days,
                 active_profile_id=active_profile_id,
                 max_dates=14,
                 user_today_str=today_str,
                 user_tz=user_tz,
-            )
+            ) if ai_generation_days else []
             if upcoming_missing:
                 _last_bg_gen_schedule[user_id] = now_ts
                 logger.info(f"[BG-GEN] Scheduling SEQUENTIAL background generation for {len(upcoming_missing)} dates: "
@@ -1298,7 +1412,7 @@ async def get_today_workout(
                     user_id=user_id,
                     dates=upcoming_missing,
                     gym_profile_id=active_profile_id,
-                    selected_days=selected_days,
+                    selected_days=ai_generation_days,
                     user_tz=user_tz,
                 )
 

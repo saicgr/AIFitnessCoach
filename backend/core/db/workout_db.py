@@ -75,7 +75,10 @@ class WorkoutDB(BaseDB):
             "id, user_id, name, type, difficulty, scheduled_date, is_completed, "
             "exercises_json, duration_minutes, generation_method, is_current, "
             "version_number, parent_workout_id, gym_profile_id, created_at, "
-            "estimated_duration_minutes, warmup_json, stretch_json, is_favorite"
+            "estimated_duration_minutes, warmup_json, stretch_json, is_favorite, "
+            # Program-assignment provenance (migration 2285) so /today can tag
+            # program-expanded workouts with program name / week / slot.
+            "template_id, template_week, assignment_id, program_slot"
         ).eq("user_id", user_id)
 
         # Filter by gym profile if specified — also include workouts with no profile

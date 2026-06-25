@@ -29,6 +29,7 @@ Endpoints:
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 from datetime import date, datetime
@@ -71,7 +72,7 @@ router = APIRouter()
 # `source` field + branded rows). Bumping the prefix retires any pre-merge
 # cached payloads without a manual flush.
 _library_browse_cache = ResponseCache(
-    prefix="program_library_browse_v2", ttl_seconds=6 * 3600, max_size=256
+    prefix="program_library_browse_v3", ttl_seconds=6 * 3600, max_size=256
 )
 
 
@@ -91,6 +92,14 @@ class LibraryProgramCard(BaseModel):
     session_duration_minutes: Optional[int] = None
     description: Optional[str] = None
     goals: List[str] = Field(default_factory=list)
+    # Editorial fields (migration 2283) — the curated copy shown on the card +
+    # detail. Null on branded rows (which carry their own tagline/description).
+    editorial_name: Optional[str] = None
+    tagline: Optional[str] = None
+    who_for: Optional[str] = None
+    who_not_for: Optional[str] = None
+    equipment_summary: Optional[str] = None
+    progression_note: Optional[str] = None
     # 'library' for `programs` rows (bare uuid id), 'branded' for
     # `branded_programs` rows (id prefixed "branded:<uuid>"). Default keeps
     # existing clients/responses unchanged.
@@ -129,6 +138,8 @@ class TemplatePatchRequest(BaseModel):
 
 class ParseRequest(BaseModel):
     description: str = Field(..., min_length=1)
+    # Optional duration hint surfaced in the review UI (echoed as suggested_weeks).
+    weeks: Optional[int] = Field(default=None, ge=1)
 
 
 class ScheduleRequest(BaseModel):
@@ -137,6 +148,39 @@ class ScheduleRequest(BaseModel):
     day_alignment: str = Field(default="start_today")
     # {day_index: "HH:MM"} user-local times; missing days default to noon.
     day_times: Dict[str, str] = Field(default_factory=dict)
+
+
+class CustomizeOptions(BaseModel):
+    """The three optional adaptation toggles applied to a cloned program's days
+    BEFORE it is scheduled. All default ON — a user who taps 'Start' without
+    touching options gets a level/injury/equipment-fitted plan."""
+    adapt_to_level: bool = True
+    swap_for_injuries: bool = True
+    fit_equipment: bool = True
+
+
+class AssignProgramRequest(BaseModel):
+    """Start a published library program for the user.
+
+    Clones the `programs` row into an editable user_program_template, optionally
+    customizes its days, creates a user_program_assignments row (slot +
+    assigned_days), then expands concrete dated workouts and clears the /today
+    cache.
+    """
+    program_id: str = Field(..., description="public.programs.id to start")
+    assigned_days: List[int] = Field(
+        default_factory=list,
+        description="Weekdays to train, Mon=0..Sun=6. Empty => start_today "
+        "sequential off the template's training days.",
+    )
+    slot: str = Field(default="primary", description="'primary' | 'addon'")
+    start_date: Optional[date] = None
+    replace: bool = Field(
+        default=True,
+        description="primary only: end overlapping active PRIMARY assignments.",
+    )
+    duration_weeks: Optional[int] = Field(default=None, ge=1)
+    customize: Optional[CustomizeOptions] = None
 
 
 # =============================================================================
@@ -491,8 +535,9 @@ async def browse_library(
             "id, program_name, program_category, program_subcategory, "
             "celebrity_name, difficulty_level, duration_weeks, "
             "sessions_per_week, session_duration_minutes, description, "
-            "short_description, goals"
-        ).eq("has_workouts", True)  # X3 - exclude the 7 empty programs
+            "short_description, goals, editorial_name, tagline, who_for, "
+            "who_not_for, equipment_summary, progression_note"
+        ).eq("has_workouts", True).eq("is_published", True)  # curated set only
         # Celebrity programs are no longer surfaced in the library (product
         # decision 2026-06): drop the whole "Celebrity Workout" category.
         query = query.neq("program_category", "Celebrity Workout")
@@ -549,6 +594,12 @@ async def browse_library(
                         or row.get("description")
                     ),
                     goals=row.get("goals") or [],
+                    editorial_name=row.get("editorial_name"),
+                    tagline=row.get("tagline"),
+                    who_for=row.get("who_for"),
+                    who_not_for=row.get("who_not_for"),
+                    equipment_summary=row.get("equipment_summary"),
+                    progression_note=row.get("progression_note"),
                     source="library",
                 )
             )
@@ -616,7 +667,9 @@ _LIBRARY_CARD_COLS = (
     "id, program_name, program_category, program_subcategory, "
     "celebrity_name, difficulty_level, duration_weeks, "
     "sessions_per_week, session_duration_minutes, description, "
-    "short_description, goals, featured_rank"
+    "short_description, goals, featured_rank, "
+    "editorial_name, tagline, who_for, who_not_for, "
+    "equipment_summary, progression_note"
 )
 
 
@@ -635,6 +688,12 @@ def _row_to_card(row: Dict[str, Any]) -> LibraryProgramCard:
         session_duration_minutes=row.get("session_duration_minutes"),
         description=(row.get("short_description") or row.get("description")),
         goals=row.get("goals") or [],
+        editorial_name=row.get("editorial_name"),
+        tagline=row.get("tagline"),
+        who_for=row.get("who_for"),
+        who_not_for=row.get("who_not_for"),
+        equipment_summary=row.get("equipment_summary"),
+        progression_note=row.get("progression_note"),
         source="library",
     )
 
@@ -664,13 +723,13 @@ _FITNESS_LEVELS = ("beginner", "intermediate", "advanced")
 
 # Featured / recommended caches — same long TTL + dict-only rule as browse.
 _library_featured_cache = ResponseCache(
-    prefix="program_library_featured_v2", ttl_seconds=6 * 3600, max_size=8
+    prefix="program_library_featured_v3", ttl_seconds=6 * 3600, max_size=8
 )
 _library_categories_cache = ResponseCache(
-    prefix="program_library_categories_v2", ttl_seconds=6 * 3600, max_size=8
+    prefix="program_library_categories_v3", ttl_seconds=6 * 3600, max_size=8
 )
 _library_recommended_cache = ResponseCache(
-    prefix="program_library_recommended_v2", ttl_seconds=6 * 3600, max_size=256
+    prefix="program_library_recommended_v3", ttl_seconds=6 * 3600, max_size=256
 )
 
 
@@ -715,6 +774,7 @@ async def library_featured(
             db.client.table("programs")
             .select(_LIBRARY_CARD_COLS)
             .eq("has_workouts", True)
+            .eq("is_published", True)
             .neq("program_category", "Celebrity Workout")
             .not_.is_("featured_rank", "null")
             .order("featured_rank", desc=False)
@@ -763,6 +823,7 @@ async def library_categories(
             db.client.table("programs")
             .select("program_category")
             .eq("has_workouts", True)
+            .eq("is_published", True)
             .neq("program_category", "Celebrity Workout")
             .execute()
         )
@@ -873,6 +934,7 @@ async def library_recommended(
             db.client.table("programs")
             .select(_LIBRARY_CARD_COLS)
             .eq("has_workouts", True)
+            .eq("is_published", True)
             .neq("program_category", "Celebrity Workout")
             .execute()
         )
@@ -1049,6 +1111,17 @@ async def library_program_detail(
             "celebrity_name": program.get("celebrity_name"),
             "difficulty_level": program.get("difficulty_level"),
             "duration_weeks": program.get("duration_weeks"),
+            "sessions_per_week": program.get("sessions_per_week"),
+            "session_duration_minutes": program.get("session_duration_minutes"),
+            "goals": program.get("goals") or [],
+            # Editorial copy (migration 2283) for the detail screen.
+            "editorial_name": program.get("editorial_name"),
+            "tagline": program.get("tagline"),
+            "who_for": program.get("who_for"),
+            "who_not_for": program.get("who_not_for"),
+            "equipment_summary": program.get("equipment_summary"),
+            "progression_note": program.get("progression_note"),
+            "is_published": program.get("is_published", False),
             "source": "library",
             "preview_available": True,
             **normalized,
@@ -1229,8 +1302,30 @@ async def parse_program(
     422 'parse_error' when Gemini fails twice (#13/#14).
     """
     try:
+        user_id = str(current_user["id"])
+        # Resolve fitness level / goal / equipment / injuries so the parse can
+        # tailor exercise selection + run the injury-safety pass.
+        from services.program_customizer import resolve_user_context
+        try:
+            uctx = resolve_user_context(user_id)
+            # Hydrate primary_goal too (not part of customizer's context).
+            try:
+                gres = (
+                    get_supabase().client.table("users")
+                    .select("primary_goal")
+                    .eq("id", user_id).limit(1).execute()
+                )
+                if gres.data:
+                    uctx["primary_goal"] = gres.data[0].get("primary_goal")
+            except Exception:  # noqa: BLE001
+                pass
+        except Exception:  # noqa: BLE001
+            uctx = None
         parsed = await parse_to_template_json(
-            request.description, user_id=str(current_user["id"])
+            request.description,
+            user_id=user_id,
+            weeks=request.weeks,
+            user_context=uctx,
         )
         return parsed
     except ValueError as ve:
@@ -1259,6 +1354,112 @@ async def parse_program(
         raise
     except Exception as e:  # noqa: BLE001
         logger.error("Failed to parse program: %s", e, exc_info=True)
+        raise safe_internal_error(e, "program_templates")
+
+
+# =============================================================================
+# Import from photo / PDF (Gemini Vision)
+# =============================================================================
+class ImportPhotoRequest(BaseModel):
+    """A photo/screenshot/PDF of a program. Provide EITHER image_base64 (+ mime)
+    OR an s3_key. PDFs are accepted (mime_type='application/pdf')."""
+    image_base64: Optional[str] = None
+    mime_type: str = "image/jpeg"
+    s3_key: Optional[str] = None
+    weeks: Optional[int] = Field(default=None, ge=1)
+
+
+@router.post("/import-photo")
+async def import_program_from_photo(
+    request: ImportPhotoRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Vision-parse a photo / screenshot / PDF of a workout program into an
+    editable draft template (source='imported'). Does NOT persist — the client
+    reviews/edits then POSTs to `/`.
+
+    Returns the same shape as /parse. 422 {error:'not_a_program'} when the image
+    isn't a program; 422 {error:'parse_error'} on a vision failure.
+    """
+    import base64 as _b64
+    try:
+        user_id = str(current_user["id"])
+
+        # Resolve image bytes from base64 or S3.
+        if request.image_base64:
+            try:
+                image_bytes = _b64.b64decode(request.image_base64)
+            except Exception:
+                raise HTTPException(
+                    status_code=422,
+                    detail={"error": "parse_error", "message": "Invalid image data"},
+                )
+            mime_type = request.mime_type or "image/jpeg"
+        elif request.s3_key:
+            from services.s3_service import get_s3_service
+            try:
+                image_bytes = await asyncio.to_thread(
+                    get_s3_service().download_bytes, request.s3_key
+                )
+            except Exception as se:  # noqa: BLE001
+                logger.error("import-photo: S3 download failed: %s", se)
+                raise HTTPException(
+                    status_code=422,
+                    detail={"error": "parse_error",
+                            "message": "Could not read the uploaded file"},
+                )
+            # Infer mime from the key extension; default to jpeg, pdf for .pdf.
+            key_lc = request.s3_key.lower()
+            if key_lc.endswith(".pdf"):
+                mime_type = "application/pdf"
+            elif key_lc.endswith(".png"):
+                mime_type = "image/png"
+            else:
+                mime_type = request.mime_type or "image/jpeg"
+        else:
+            raise HTTPException(
+                status_code=422,
+                detail={"error": "parse_error",
+                        "message": "Provide image_base64 or s3_key"},
+            )
+
+        # Resolve user context (level / goal / equipment / injuries).
+        from services.program_customizer import resolve_user_context
+        try:
+            uctx = resolve_user_context(user_id)
+        except Exception:  # noqa: BLE001
+            uctx = None
+
+        from services.program_template_parser import parse_program_from_image
+        parsed = await parse_program_from_image(
+            image_bytes=image_bytes,
+            mime_type=mime_type,
+            user_id=user_id,
+            weeks=request.weeks,
+            user_context=uctx,
+        )
+        return parsed
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        msg = str(ve)
+        if msg.startswith("not_a_program"):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "not_a_program",
+                    "message": msg.split(":", 1)[-1].strip()
+                    or "This image doesn't look like a workout program",
+                },
+            )
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "parse_error",
+                    "message": "Could not read the program from this image. "
+                    "Try a clearer photo or the manual builder."},
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.error("Failed to import program from photo: %s", e, exc_info=True)
         raise safe_internal_error(e, "program_templates")
 
 
@@ -1352,6 +1553,643 @@ async def list_user_templates(
     except Exception as e:  # noqa: BLE001
         logger.error(
             "Failed to list templates for %s: %s", user_id, e, exc_info=True
+        )
+        raise safe_internal_error(e, "program_templates")
+
+
+# =============================================================================
+# Assign / Start a published program  (Program Library integration)
+# =============================================================================
+def _published_program_or_404(db, program_id: str) -> Dict[str, Any]:
+    """Fetch a PUBLISHED, importable `programs` row or raise 404/422.
+
+    Only is_published=true rows are startable from the library (curated set).
+    A metadata-only program (empty workouts) is 422 — never fabricated.
+    """
+    resp = (
+        db.client.table("programs")
+        .select("*")
+        .eq("id", program_id)
+        .limit(1)
+        .execute()
+    )
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Program not found")
+    program = resp.data[0]
+    if not program.get("is_published"):
+        raise HTTPException(
+            status_code=404,
+            detail="This program is not available to start",
+        )
+    if not _has_workouts(program):
+        raise HTTPException(
+            status_code=422,
+            detail="This program has no structured workouts to start",
+        )
+    return program
+
+
+def _program_display_name(program: Dict[str, Any]) -> str:
+    return (
+        program.get("editorial_name")
+        or program.get("program_name")
+        or "Program"
+    )
+
+
+def _assignment_to_dict(
+    row: Dict[str, Any],
+    *,
+    display_name: Optional[str] = None,
+    duration_weeks: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Normalize a user_program_assignments row for the API. display_name +
+    duration_weeks are resolved by the caller (template/program lookups)."""
+    return {
+        "id": str(row["id"]),
+        "user_id": str(row["user_id"]),
+        "template_id": (
+            str(row["template_id"]) if row.get("template_id") else None
+        ),
+        "source_program_id": (
+            str(row["source_program_id"])
+            if row.get("source_program_id") else None
+        ),
+        "branded_program_id": (
+            str(row["branded_program_id"])
+            if row.get("branded_program_id") else None
+        ),
+        "custom_program_name": row.get("custom_program_name"),
+        "display_name": display_name or row.get("custom_program_name"),
+        "assigned_days": row.get("assigned_days") or [],
+        "slot": row.get("slot") or "primary",
+        "status": row.get("status"),
+        "is_active": row.get("is_active", False),
+        "current_week": row.get("current_week", 1),
+        "duration_weeks": duration_weeks,
+        "total_workouts": row.get("total_workouts"),
+        "workouts_completed": row.get("workouts_completed", 0),
+        "progress_percentage": row.get("progress_percentage", 0),
+        "started_at": (
+            str(row["started_at"]) if row.get("started_at") else None
+        ),
+        "completed_at": (
+            str(row["completed_at"]) if row.get("completed_at") else None
+        ),
+    }
+
+
+async def _clear_today_cache(user_id: str) -> None:
+    """Fire the /today cache-clear chokepoint after a schedule change. Imported
+    lazily to avoid a heavy import at module load + circulars."""
+    try:
+        from api.v1.workouts.today import invalidate_today_workout_cache
+        await invalidate_today_workout_cache(user_id)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("today cache invalidation failed: %s", e)
+
+
+async def assign_program_core(
+    db,
+    *,
+    user_id: str,
+    program_id: str,
+    assigned_days: List[int],
+    slot: str,
+    start_date: Optional[date],
+    replace: bool,
+    duration_weeks: Optional[int],
+    customize: Optional[CustomizeOptions],
+) -> Dict[str, Any]:
+    """Shared Start-a-program logic used by the HTTP endpoint AND the coach
+    `assign_program` tool. Returns the response dict.
+
+    Steps: validate published program -> clone to user_program_template (with
+    optional customization of days) -> end overlapping active primaries (replace)
+    -> insert assignment -> expand dated workouts tagged with assignment_id +
+    slot -> clear /today cache.
+    """
+    slot = (slot or "primary").strip().lower()
+    if slot not in ("primary", "addon"):
+        raise HTTPException(
+            status_code=422, detail="slot must be 'primary' or 'addon'"
+        )
+
+    program = _published_program_or_404(db, program_id)
+    display_name = _program_display_name(program)
+
+    # Resolve duration: explicit override > program.duration_weeks > 8, capped.
+    weeks = duration_weeks or program.get("duration_weeks") or 8
+    weeks = max(1, min(int(weeks), MAX_WEEKS))
+
+    start = start_date or date.today()
+
+    # --- 1. Clone the programs row into an editable user template ----------
+    normalized = normalize_program_blob_for_preview(program, user_id=user_id)
+    days = normalized["days"]
+
+    # --- 2. Customize the cloned days (injury / equipment / level) ---------
+    customize_summary: Optional[Dict[str, Any]] = None
+    if customize is not None:
+        from services.program_customizer import customize_template_days
+        try:
+            customize_summary = await customize_template_days(
+                days,
+                user_id=user_id,
+                adapt_to_level=customize.adapt_to_level,
+                swap_for_injuries=customize.swap_for_injuries,
+                fit_equipment=customize.fit_equipment,
+            )
+        except Exception as ce:  # noqa: BLE001 — never block Start on customize
+            logger.warning(
+                "assign customize failed (using uncustomized days): %s", ce
+            )
+
+    now = datetime.utcnow().isoformat()
+    template_id = str(uuid.uuid4())
+    template_row = {
+        "id": template_id,
+        "user_id": user_id,
+        "name": display_name,
+        "description": normalized.get("description"),
+        "week_length": normalized["week_length"],
+        "days": days,
+        "deload_every_n_weeks": normalized["deload_every_n_weeks"],
+        "progression_strategy": normalized["progression_strategy"],
+        "apply_staples": True,
+        "source": "library",
+        "source_program_id": program_id,
+        "category": normalized.get("category"),
+        "duration_weeks": weeks,
+        "created_at": now,
+        "updated_at": now,
+    }
+    created_tpl = (
+        db.client.table("user_program_templates")
+        .insert(template_row)
+        .execute()
+    )
+    if not created_tpl.data:
+        raise HTTPException(status_code=500, detail="Failed to create template")
+    template = created_tpl.data[0]
+
+    # --- 3. End overlapping active PRIMARY assignments (primary + replace) --
+    if slot == "primary" and replace:
+        try:
+            existing = (
+                db.client.table("user_program_assignments")
+                .select("id, assigned_days")
+                .eq("user_id", user_id)
+                .eq("is_active", True)
+                .eq("slot", "primary")
+                .execute()
+            )
+            new_days = set(int(d) for d in (assigned_days or []))
+            for ex in existing.data or []:
+                ex_days = set(int(d) for d in (ex.get("assigned_days") or []))
+                # No assigned_days on either side => treat as a full overlap so
+                # a "replace" Start always supersedes the prior primary.
+                overlaps = (
+                    not new_days or not ex_days or bool(new_days & ex_days)
+                )
+                if overlaps:
+                    db.client.table("user_program_assignments").update(
+                        {
+                            "is_active": False,
+                            "status": "abandoned",
+                            "updated_at": now,
+                        }
+                    ).eq("id", ex["id"]).execute()
+        except Exception as e:  # noqa: BLE001
+            logger.warning("primary supersede failed: %s", e)
+
+    # --- 4. Insert the assignment row --------------------------------------
+    assignment_id = str(uuid.uuid4())
+    assignment_row = {
+        "id": assignment_id,
+        "user_id": user_id,
+        "template_id": template_id,
+        "source_program_id": program_id,
+        "custom_program_name": display_name,
+        "assigned_days": list(assigned_days or []),
+        "slot": slot,
+        "is_active": True,
+        "status": "active",
+        "current_week": 1,
+        "started_at": now,
+    }
+    created_asgmt = (
+        db.client.table("user_program_assignments")
+        .insert(assignment_row)
+        .execute()
+    )
+    if not created_asgmt.data:
+        raise HTTPException(
+            status_code=500, detail="Failed to create assignment"
+        )
+    assignment = created_asgmt.data[0]
+
+    # --- 5. Schedule + expand into concrete dated workouts -----------------
+    gym_profile_id = _resolve_active_gym_profile(db, user_id)
+    schedule_id = str(uuid.uuid4())
+    day_alignment = "calendar_weekday" if assigned_days else "start_today"
+    try:
+        db.client.table("user_program_schedules").insert(
+            {
+                "id": schedule_id,
+                "template_id": template_id,
+                "user_id": user_id,
+                "start_date": start.isoformat(),
+                "weeks": weeks,
+                "day_alignment": day_alignment,
+                "day_times": {},
+            }
+        ).execute()
+    except Exception as e:  # noqa: BLE001
+        logger.warning("schedule row insert failed (continuing): %s", e)
+
+    from services.program_template_expander import expand_template as _expand
+    result = _expand(
+        template=template,
+        schedule_id=schedule_id,
+        user_id=user_id,
+        start_date=start,
+        weeks=weeks,
+        day_alignment=day_alignment,
+        day_times={},
+        gym_profile_id=gym_profile_id,
+        assignment_id=assignment_id,
+        program_slot=slot,
+        assigned_days=list(assigned_days or []),
+    )
+
+    # Record total_workouts on the assignment now that we know the count.
+    try:
+        db.client.table("user_program_assignments").update(
+            {"total_workouts": result["workouts_created"]}
+        ).eq("id", assignment_id).execute()
+    except Exception as e:  # noqa: BLE001
+        logger.debug("total_workouts update skipped: %s", e)
+
+    # --- 6. Clear /today cache (chokepoint) --------------------------------
+    await _clear_today_cache(user_id)
+
+    response: Dict[str, Any] = {
+        "success": True,
+        "assignment_id": assignment_id,
+        "template_id": template_id,
+        "program_id": program_id,
+        "program_name": display_name,
+        "slot": slot,
+        "assigned_days": list(assigned_days or []),
+        "duration_weeks": weeks,
+        "workouts_created": result["workouts_created"],
+        "skipped_existing": result["skipped_existing"],
+        "assignment": _assignment_to_dict(
+            assignment, display_name=display_name, duration_weeks=weeks
+        ),
+    }
+    if customize_summary is not None:
+        response["customize_summary"] = customize_summary
+    return response
+
+
+@router.post("/assign")
+async def assign_program(
+    request: AssignProgramRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Start a published library program for the authenticated user.
+
+    Clones -> (optionally) customizes -> creates an assignment -> expands dated
+    workouts tagged with the assignment + slot -> clears /today cache. Safe to
+    retry: a re-fired expansion dedupes on the template-slot unique index, but a
+    retry creates a NEW template/assignment (idempotency is per-call, not
+    cross-call — the client should not auto-retry a 2xx).
+    """
+    try:
+        db = get_supabase()
+        return await assign_program_core(
+            db,
+            user_id=str(current_user["id"]),
+            program_id=request.program_id,
+            assigned_days=request.assigned_days,
+            slot=request.slot,
+            start_date=request.start_date,
+            replace=request.replace,
+            duration_weeks=request.duration_weeks,
+            customize=request.customize,
+        )
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as e:  # noqa: BLE001
+        logger.error("Failed to assign program: %s", e, exc_info=True)
+        raise safe_internal_error(e, "program_templates")
+
+
+# =============================================================================
+# Active assignments
+# =============================================================================
+class AssignmentPatchRequest(BaseModel):
+    custom_program_name: Optional[str] = None
+    assigned_days: Optional[List[int]] = None
+    slot: Optional[str] = None
+    status: Optional[str] = None  # 'active' | 'paused'
+
+
+def _assignment_or_404(db, assignment_id: str) -> Dict[str, Any]:
+    resp = (
+        db.client.table("user_program_assignments")
+        .select("*")
+        .eq("id", assignment_id)
+        .limit(1)
+        .execute()
+    )
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    return resp.data[0]
+
+
+def _hydrate_assignment_meta(db, row: Dict[str, Any]) -> Dict[str, Any]:
+    """Resolve display_name + duration_weeks for an assignment from its template
+    (preferred) or source program. Cheap best-effort lookups."""
+    display_name = row.get("custom_program_name")
+    duration_weeks: Optional[int] = None
+    tpl_id = row.get("template_id")
+    if tpl_id:
+        try:
+            tr = (
+                db.client.table("user_program_templates")
+                .select("name, duration_weeks")
+                .eq("id", tpl_id)
+                .limit(1)
+                .execute()
+            )
+            if tr.data:
+                display_name = display_name or tr.data[0].get("name")
+                duration_weeks = tr.data[0].get("duration_weeks")
+        except Exception:  # noqa: BLE001
+            pass
+    if duration_weeks is None and row.get("source_program_id"):
+        try:
+            pr = (
+                db.client.table("programs")
+                .select("editorial_name, program_name, duration_weeks")
+                .eq("id", row["source_program_id"])
+                .limit(1)
+                .execute()
+            )
+            if pr.data:
+                display_name = display_name or (
+                    pr.data[0].get("editorial_name")
+                    or pr.data[0].get("program_name")
+                )
+                duration_weeks = duration_weeks or pr.data[0].get(
+                    "duration_weeks"
+                )
+        except Exception:  # noqa: BLE001
+            pass
+    return _assignment_to_dict(
+        row, display_name=display_name, duration_weeks=duration_weeks
+    )
+
+
+@router.get("/assignments")
+async def list_assignments(
+    current_user: dict = Depends(get_current_user),
+):
+    """Active + recently-completed program assignments for the user.
+
+    Sorted primary-first, then most-recently-started. Each row carries a
+    resolved display_name + duration_weeks + source_program_id so the Flutter
+    'My Programs' surface renders without extra round-trips.
+    """
+    try:
+        db = get_supabase()
+        user_id = str(current_user["id"])
+        resp = (
+            db.client.table("user_program_assignments")
+            .select("*")
+            .eq("user_id", user_id)
+            .in_("status", ["active", "paused", "completed"])
+            .order("started_at", desc=True)
+            .execute()
+        )
+        rows = resp.data or []
+        # Only surface PROGRAM-LIBRARY / template / branded assignments — every
+        # row here either has a template, a source program, or a branded id.
+        hydrated = [_hydrate_assignment_meta(db, r) for r in rows]
+        # primary first, then by started_at desc (already desc-ordered above).
+        hydrated.sort(key=lambda a: 0 if a.get("slot") == "primary" else 1)
+        return {"assignments": hydrated}
+    except Exception as e:  # noqa: BLE001
+        logger.error("Failed to list assignments: %s", e, exc_info=True)
+        raise safe_internal_error(e, "program_templates")
+
+
+@router.patch("/assignments/{assignment_id}")
+async def patch_assignment(
+    assignment_id: str,
+    request: AssignmentPatchRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Rename / move days / change slot / pause-resume an assignment.
+
+    On a day or slot change we reschedule: drop the assignment's future
+    incomplete workouts and re-expand from its template against the new days,
+    then clear the /today cache.
+    """
+    try:
+        db = get_supabase()
+        row = _assignment_or_404(db, assignment_id)
+        _require_owner(row, current_user)
+        user_id = str(current_user["id"])
+
+        updates: Dict[str, Any] = {}
+        if request.custom_program_name is not None:
+            updates["custom_program_name"] = request.custom_program_name
+        if request.slot is not None:
+            s = request.slot.strip().lower()
+            if s not in ("primary", "addon"):
+                raise HTTPException(
+                    status_code=422, detail="slot must be 'primary' or 'addon'"
+                )
+            updates["slot"] = s
+        if request.assigned_days is not None:
+            updates["assigned_days"] = [
+                int(d) for d in request.assigned_days if 0 <= int(d) <= 6
+            ]
+        if request.status is not None:
+            st = request.status.strip().lower()
+            if st not in ("active", "paused"):
+                raise HTTPException(
+                    status_code=422,
+                    detail="status must be 'active' or 'paused'",
+                )
+            updates["status"] = st
+            updates["is_active"] = st == "active"
+            if st == "paused":
+                updates["paused_at"] = datetime.utcnow().isoformat()
+
+        if not updates:
+            return {"success": True, "assignment": _hydrate_assignment_meta(db, row)}
+
+        updates["updated_at"] = datetime.utcnow().isoformat()
+        db.client.table("user_program_assignments").update(updates).eq(
+            "id", assignment_id
+        ).execute()
+
+        # Cascade a rename onto the template too (keeps both surfaces aligned).
+        if "custom_program_name" in updates and row.get("template_id"):
+            try:
+                db.client.table("user_program_templates").update(
+                    {"name": updates["custom_program_name"]}
+                ).eq("id", row["template_id"]).execute()
+            except Exception as e:  # noqa: BLE001
+                logger.debug("template rename cascade skipped: %s", e)
+
+        # Reschedule on a day/slot change: rebuild this assignment's future
+        # workouts against the new schedule.
+        needs_reschedule = (
+            "assigned_days" in updates or "slot" in updates
+        ) and row.get("template_id")
+        if needs_reschedule:
+            await _reschedule_assignment(
+                db,
+                assignment_id=assignment_id,
+                user_id=user_id,
+                template_id=str(row["template_id"]),
+                assigned_days=updates.get(
+                    "assigned_days", row.get("assigned_days") or []
+                ),
+                slot=updates.get("slot", row.get("slot") or "primary"),
+            )
+
+        await _clear_today_cache(user_id)
+        fresh = _assignment_or_404(db, assignment_id)
+        return {"success": True, "assignment": _hydrate_assignment_meta(db, fresh)}
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        logger.error(
+            "Failed to patch assignment %s: %s", assignment_id, e,
+            exc_info=True,
+        )
+        raise safe_internal_error(e, "program_templates")
+
+
+async def _reschedule_assignment(
+    db,
+    *,
+    assignment_id: str,
+    user_id: str,
+    template_id: str,
+    assigned_days: List[int],
+    slot: str,
+) -> None:
+    """Drop this assignment's FUTURE INCOMPLETE workouts and re-expand the
+    template against the new assigned_days/slot. Past + completed rows are kept.
+    """
+    now_iso = datetime.utcnow().isoformat()
+    try:
+        # Remove future incomplete rows produced by THIS assignment.
+        db.client.table("workouts").delete().eq(
+            "assignment_id", assignment_id
+        ).eq("user_id", user_id).gte(
+            "scheduled_date", now_iso
+        ).eq("is_completed", False).execute()
+    except Exception as e:  # noqa: BLE001
+        logger.warning("reschedule: future-row delete failed: %s", e)
+
+    template = _get_template_or_404(db, template_id)
+    weeks = template.get("duration_weeks") or 8
+    weeks = max(1, min(int(weeks), MAX_WEEKS))
+    gym_profile_id = _resolve_active_gym_profile(db, user_id)
+    schedule_id = str(uuid.uuid4())
+    day_alignment = "calendar_weekday" if assigned_days else "start_today"
+    try:
+        db.client.table("user_program_schedules").insert(
+            {
+                "id": schedule_id,
+                "template_id": template_id,
+                "user_id": user_id,
+                "start_date": date.today().isoformat(),
+                "weeks": weeks,
+                "day_alignment": day_alignment,
+                "day_times": {},
+            }
+        ).execute()
+    except Exception as e:  # noqa: BLE001
+        logger.debug("reschedule: schedule row insert skipped: %s", e)
+    try:
+        expand_template(
+            template=template,
+            schedule_id=schedule_id,
+            user_id=user_id,
+            start_date=date.today(),
+            weeks=weeks,
+            day_alignment=day_alignment,
+            day_times={},
+            gym_profile_id=gym_profile_id,
+            assignment_id=assignment_id,
+            program_slot=slot,
+            assigned_days=list(assigned_days or []),
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.error("reschedule: re-expand failed: %s", e, exc_info=True)
+
+
+@router.delete("/assignments/{assignment_id}")
+async def delete_assignment(
+    assignment_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """End an assignment (is_active=false, status='abandoned') and remove its
+    future incomplete workouts. Completed/past rows are kept for history."""
+    try:
+        db = get_supabase()
+        row = _assignment_or_404(db, assignment_id)
+        _require_owner(row, current_user)
+        user_id = str(current_user["id"])
+
+        db.client.table("user_program_assignments").update(
+            {
+                "is_active": False,
+                "status": "abandoned",
+                "updated_at": datetime.utcnow().isoformat(),
+            }
+        ).eq("id", assignment_id).execute()
+
+        now_iso = datetime.utcnow().isoformat()
+        removed = 0
+        try:
+            res = (
+                db.client.table("workouts")
+                .delete()
+                .eq("assignment_id", assignment_id)
+                .eq("user_id", user_id)
+                .gte("scheduled_date", now_iso)
+                .eq("is_completed", False)
+                .execute()
+            )
+            removed = len(res.data or [])
+        except Exception as e:  # noqa: BLE001
+            logger.warning("assignment delete: future-row purge failed: %s", e)
+
+        await _clear_today_cache(user_id)
+        return {
+            "success": True,
+            "assignment_id": assignment_id,
+            "future_workouts_removed": removed,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        logger.error(
+            "Failed to delete assignment %s: %s", assignment_id, e,
+            exc_info=True,
         )
         raise safe_internal_error(e, "program_templates")
 
@@ -1610,6 +2448,7 @@ async def schedule_template(
             exc_info=True,
         )
         raise safe_internal_error(e, "program_templates")
+
 
 
 @router.post("/{template_id}/regenerate-future")

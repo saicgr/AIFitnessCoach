@@ -251,6 +251,9 @@ def expand_template(
     day_alignment: str,
     day_times: Dict[str, str],
     gym_profile_id: Optional[str] = None,
+    assignment_id: Optional[str] = None,
+    program_slot: Optional[str] = None,
+    assigned_days: Optional[List[int]] = None,
 ) -> Dict[str, Any]:
     """Expand a template into `workouts` rows inside a single DB transaction.
 
@@ -309,6 +312,22 @@ def expand_template(
         else []
     )
 
+    # When the caller pins specific weekdays (program-assign flow: assigned_days
+    # e.g. [1,3,5] = Tue/Thu/Sat in Mon=0 indexing), the template's TRAINING
+    # days are laid onto those weekdays in order: the k-th training day of the
+    # week → assigned_days[k]. This is the per-day multi-assignment scheduling
+    # the carousel renders. assigned_days takes precedence over both alignment
+    # modes when present + the week is a calendar week.
+    weekday_targets: Optional[List[int]] = None
+    if assigned_days and week_length == 7:
+        weekday_targets = sorted({int(d) for d in assigned_days if 0 <= int(d) <= 6})
+    # Map each training day's day_index -> its ordinal among training days, so we
+    # can index into weekday_targets without assuming day_index is contiguous.
+    training_day_indices = [
+        int(d.get("day_index", 0)) for d in days if not d.get("is_rest")
+    ]
+    _training_ordinal = {di: k for k, di in enumerate(training_day_indices)}
+
     deload_weeks: List[int] = []
     rows_to_insert: List[Dict[str, Any]] = []
 
@@ -329,7 +348,19 @@ def expand_template(
             # week_length-long block.
             offset_days = (week - 1) * week_length + day_index
 
-            if day_alignment == "calendar_weekday" and week_length == 7:
+            if weekday_targets:
+                # assigned_days mapping: place the k-th training day of the week
+                # on the k-th assigned weekday (cycling if more training days
+                # than assigned weekdays). Week 1's first assigned weekday is the
+                # first such weekday on/after start_date.
+                ordinal = _training_ordinal.get(day_index, 0)
+                target_weekday = weekday_targets[ordinal % len(weekday_targets)]
+                start_weekday = start_date.weekday()  # Mon=0
+                lead = (target_weekday - start_weekday) % 7
+                target_date = start_date + timedelta(
+                    days=(week - 1) * 7 + lead
+                )
+            elif day_alignment == "calendar_weekday" and week_length == 7:
                 # Align template day_index (0=Mon..6=Sun) to real weekdays:
                 # shift start_date forward to the matching weekday.
                 start_weekday = start_date.weekday()  # Mon=0
@@ -385,6 +416,12 @@ def expand_template(
                 "intensity_mode": "deload" if is_deload else "normal",
                 "gym_profile_id": gym_profile_id,
             }
+            # Program-assignment tagging (migration 2285) — lets today.py label
+            # the carousel (program name/week/slot) by resolving the assignment.
+            if assignment_id:
+                row["assignment_id"] = assignment_id
+            if program_slot:
+                row["program_slot"] = program_slot
 
             if apply_staples and staples:
                 injected = _inject_staples(day.get("exercises") or [], staples)

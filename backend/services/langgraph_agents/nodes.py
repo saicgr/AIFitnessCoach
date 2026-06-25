@@ -324,6 +324,23 @@ EXAMPLES:
 - "My knee is better now" → Use clear_injury(user_id={state['user_id']}, body_part="knee")
 - "How's my injury recovery going?" → Use get_active_injuries(user_id={state['user_id']})
 
+PROGRAM TOOLS (multi-week training programs from the library or custom-built):
+- recommend_program(user_id="{state['user_id']}", goal_hint="...") - Suggest ONE published library program that fits the user's goal + level. Use when they ask "what program should I do?" / "recommend a program" / "got a plan for building muscle?". Returns a card the user can start.
+- assign_program(user_id="{state['user_id']}", program_id="<id>", assigned_days=[0,2,4], slot="primary|addon") - START a program for the user (clones it, fits it to their injuries/equipment/level, schedules the workouts). assigned_days are Mon=0..Sun=6. Use slot="addon" to run a second plan alongside their main one (e.g. a cardio block). Use the program_id from a prior recommend_program, or one the user named.
+- generate_coach_program(user_id="{state['user_id']}", request="...", weeks=8) - BUILD a custom multi-week program from the user's description (e.g. "a 4-day upper/lower for hypertrophy"). Saves an editable draft; tell them you can schedule it once they pick days.
+
+PROGRAM HANDLING:
+1. "Recommend a program" / "what should I follow?" → recommend_program; then offer to start it.
+2. "Start <program>" / "yes start it" / "put me on it" → assign_program (ask which days if they haven't said; default to their usual workout days).
+3. "Build me a program" / "make me a 5-day split" → generate_coach_program, then offer to schedule it.
+4. NEVER invent program_ids — only assign one returned by recommend_program or explicitly chosen by the user.
+
+EXAMPLES:
+- "What program should I do to build muscle?" → recommend_program(user_id="{state['user_id']}", goal_hint="build muscle")
+- "Start that one on Mon/Wed/Fri" → assign_program(user_id="{state['user_id']}", program_id="<id>", assigned_days=[0,2,4], slot="primary")
+- "Add a 2-day cardio plan alongside" → recommend_program then assign_program(..., slot="addon")
+- "Build me a 4-day upper/lower program" → generate_coach_program(user_id="{state['user_id']}", request="4-day upper/lower hypertrophy program", weeks=8)
+
 NUTRITION TRACKING TOOLS:
 - log_food_from_text(user_id="{state['user_id']}", food_description="...", meal_type="breakfast|lunch|dinner|snack", timezone_str="{_tz}") - Log food from text description
   * IMPORTANT: When user describes food they ate (e.g., "I ate biryani", "had 2 eggs for breakfast"), you MUST call this tool
@@ -844,6 +861,50 @@ async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:
             logger.info(
                 f"[Action Data] Event logged: {result.get('event_id')} "
                 f"(domain={result.get('domain')}, calories={result.get('calories')})"
+            )
+        # Program Library: recommend a program -> chat renders a program card
+        # with a "Start" CTA (program_id lets the frontend deep-link / assign).
+        elif action == "recommend_program":
+            action_data = {
+                "action": "recommend_program",
+                "program": result.get("program"),
+                "reason": result.get("reason"),
+                "success": result.get("success", False),
+            }
+            logger.info(
+                f"[Action Data] Recommend program: "
+                f"{(result.get('program') or {}).get('id')}"
+            )
+        # Program Library: program started -> frontend refreshes today/home and
+        # can show a "View program" card (assignment_id + program identity).
+        elif action == "assign_program":
+            action_data = {
+                "action": "assign_program",
+                "program_id": result.get("program_id"),
+                "program_name": result.get("program_name"),
+                "assignment_id": result.get("assignment_id"),
+                "template_id": result.get("template_id"),
+                "workouts_created": result.get("workouts_created"),
+                "success": result.get("success", False),
+            }
+            logger.info(
+                f"[Action Data] Assign program: {result.get('program_name')} "
+                f"(assignment={result.get('assignment_id')})"
+            )
+        # Program Library: custom program built -> frontend can open the draft
+        # template / offer to schedule it (template_id).
+        elif action == "create_program":
+            action_data = {
+                "action": "create_program",
+                "template_id": result.get("template_id"),
+                "program_name": result.get("program_name"),
+                "day_count": result.get("day_count"),
+                "weeks": result.get("weeks"),
+                "success": result.get("success", False),
+            }
+            logger.info(
+                f"[Action Data] Create program: {result.get('program_name')} "
+                f"(template={result.get('template_id')})"
             )
 
     # If no tool results, use intent (fallback to current workout if available)
