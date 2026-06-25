@@ -401,9 +401,10 @@ class _ProgramTemplateBuilderScreenState
               ),
               const SizedBox(height: 16),
 
-              // Days.
+              // Days. This is the CYCLE — the repeating N-day pattern, not the
+              // total program length (set in the settings strip above).
               _fieldLabel(
-                  '${draft.weekLength}-day cycle', textSecondary),
+                  'Cycle · ${draft.weekLength}-day pattern', textSecondary),
               const SizedBox(height: 8),
               for (final day in draft.days)
                 _DayEditorCard(

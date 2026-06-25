@@ -3,7 +3,41 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/program_template.dart';
+import '../models/user_program_assignment.dart';
 import '../services/api_client.dart';
+
+/// Response for `POST /program-templates/assign` (the unified Start-program
+/// flow). Kept here (not in the read-only model file) so this stream owns it.
+class AssignResult {
+  final bool success;
+  final String? assignmentId;
+  final String? templateId;
+  final int workoutsCreated;
+
+  const AssignResult({
+    required this.success,
+    this.assignmentId,
+    this.templateId,
+    this.workoutsCreated = 0,
+  });
+
+  factory AssignResult.fromJson(Map<String, dynamic> json) {
+    int toInt(dynamic v) {
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v.trim()) ?? 0;
+      return 0;
+    }
+
+    final s = json['success'];
+    return AssignResult(
+      success: s is bool ? s : true,
+      assignmentId: json['assignment_id']?.toString(),
+      templateId: json['template_id']?.toString(),
+      workoutsCreated: toInt(json['workouts_created']),
+    );
+  }
+}
 
 /// DI provider for the program-template repository.
 final programTemplateRepositoryProvider =
@@ -284,6 +318,57 @@ class ProgramTemplateRepository {
   }
 
   // -------------------------------------------------------------------------
+  // Assign — enroll the user in a library program (slot/days/start-date) and
+  // expand it forward into scheduled workouts. The unified "Start program"
+  // flow (Primary vs Add-on, Replace vs Run-alongside) calls this.
+  // -------------------------------------------------------------------------
+
+  /// POST /assign — enroll the user in a library program.
+  ///
+  /// [programId] is the library card id (curated plain id or branded uuid —
+  /// pass the bare uuid for branded). [assignedDays] are weekday ints
+  /// 0=Mon..6=Sun the program occupies. [slot] is `primary` | `addon`.
+  /// [startDate] is `YYYY-MM-DD`. [replace] (primary only) replaces the current
+  /// primary instead of running alongside. [durationWeeks] optionally overrides
+  /// the program's length. [customize] carries the AI-tailoring toggles.
+  Future<AssignResult> assignProgram({
+    required String programId,
+    required List<int> assignedDays,
+    required ProgramSlot slot,
+    required String startDate,
+    bool replace = false,
+    int? durationWeeks,
+    bool adaptToLevel = false,
+    bool swapForInjuries = false,
+    bool fitEquipment = false,
+  }) async {
+    final body = <String, dynamic>{
+      'program_id': programId,
+      'assigned_days': assignedDays,
+      'slot': slot == ProgramSlot.addon ? 'addon' : 'primary',
+      'start_date': startDate,
+      'replace': replace,
+      if (durationWeeks != null) 'duration_weeks': durationWeeks,
+      if (adaptToLevel || swapForInjuries || fitEquipment)
+        'customize': {
+          'adapt_to_level': adaptToLevel,
+          'swap_for_injuries': swapForInjuries,
+          'fit_equipment': fitEquipment,
+        },
+    };
+    debugPrint('🏋️ [ProgramTemplate] assignProgram | id=$programId '
+        'slot=${body['slot']} days=$assignedDays replace=$replace');
+    try {
+      final resp = await _client.post('$_base/assign', data: body);
+      return AssignResult.fromJson(
+        Map<String, dynamic>.from(resp.data as Map),
+      );
+    } on DioException catch (e) {
+      throw _mapParseError(e) ?? e;
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Parse — free-text → reviewable (NOT saved) template draft.
   // -------------------------------------------------------------------------
 
@@ -302,6 +387,42 @@ class ProgramTemplateRepository {
         '$_base/parse',
         data: {'description': description},
       );
+      return ProgramTemplate.fromJson(
+        Map<String, dynamic>.from(resp.data as Map),
+      );
+    } on DioException catch (e) {
+      throw _mapParseError(e) ?? e;
+    }
+  }
+
+  /// POST /import-photo — OCR a photo/PDF of a written program into a DRAFT
+  /// template (`source='imported'`, no `id`). The user reviews / edits it in
+  /// the builder, then calls [createTemplate] to persist.
+  ///
+  /// Pass EITHER [imageBase64] + [mimeType] (in-memory bytes) OR [s3Key] (an
+  /// already-uploaded object). Throws [ProgramParseException] on a 422 —
+  /// `not_a_program` when the image wasn't a program, `parse_error` otherwise.
+  Future<ProgramTemplate> importFromPhoto({
+    String? imageBase64,
+    String? mimeType,
+    String? s3Key,
+  }) async {
+    final body = <String, dynamic>{};
+    if (s3Key != null && s3Key.isNotEmpty) {
+      body['s3_key'] = s3Key;
+    } else if (imageBase64 != null && imageBase64.isNotEmpty) {
+      body['image_base64'] = imageBase64;
+      body['mime_type'] = mimeType ?? 'image/jpeg';
+    } else {
+      throw const ProgramParseException(
+        'parse_error',
+        'No image provided. Pick a photo or PDF of your program first.',
+      );
+    }
+    debugPrint('🤖 [ProgramTemplate] importFromPhoto | '
+        '${s3Key != null ? 's3=$s3Key' : 'bytes=${imageBase64?.length}'}');
+    try {
+      final resp = await _client.post('$_base/import-photo', data: body);
       return ProgramTemplate.fromJson(
         Map<String, dynamic>.from(resp.data as Map),
       );

@@ -73,6 +73,22 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
+          // Program length (weeks) — how long the program runs end to end.
+          // Distinct from the "${weekLength}-day cycle" (the repeating pattern)
+          // and "Deload every N weeks" (the deload cadence). Bound to
+          // ProgramTemplate.durationWeeks; null = use the source / default.
+          _label('Program length', textSecondary),
+          const SizedBox(height: 4),
+          _buildDurationStepper(textPrimary, textSecondary, accent),
+          const SizedBox(height: 4),
+          _infoNote(
+            'How long the whole program runs. This is different from the '
+            '${template.weekLength}-day cycle (the pattern that repeats) and '
+            'the deload cadence below.',
+            textSecondary,
+          ),
+          const SizedBox(height: 14),
+
           // Progression strategy.
           _label(l.programMetaProgression, textSecondary),
           const SizedBox(height: 6),
@@ -128,6 +144,80 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
         letterSpacing: 0.7,
         color: color,
       ),
+    );
+  }
+
+  /// Program length stepper (1..24 weeks) + an "Auto" state (durationWeeks ==
+  /// null → use the source program's length / a sensible default). A stepper
+  /// rather than a slider so a precise week count is easy to dial in.
+  Widget _buildDurationStepper(
+    Color textPrimary,
+    Color textSecondary,
+    Color accent,
+  ) {
+    const minWeeks = 1;
+    const maxWeeks = 24;
+    final weeks = template.durationWeeks;
+    // A from-scratch draft starts with durationWeeks == null ("Auto" — the
+    // scheduler uses a sensible default). The first interaction commits a
+    // concrete week count; decrementing below 1, or tapping the value, returns
+    // to Auto (the model's copyWith now honors clearDurationWeeks).
+    final isAuto = weeks == null;
+
+    void setWeeks(int w) {
+      onChanged(template.copyWith(durationWeeks: w.clamp(minWeeks, maxWeeks)));
+    }
+
+    void setAuto() {
+      onChanged(template.copyWith(clearDurationWeeks: true));
+    }
+
+    return Row(
+      children: [
+        _StepperButton(
+          icon: Icons.remove_rounded,
+          accent: accent,
+          // From Auto, the first decrement lands on a concrete default (8);
+          // stepping below 1 returns to Auto.
+          onTap: () {
+            if (isAuto) {
+              setWeeks(8);
+            } else if (weeks <= minWeeks) {
+              setAuto();
+            } else {
+              setWeeks(weeks - 1);
+            }
+          },
+        ),
+        Expanded(
+          child: GestureDetector(
+            // Tap toggles: Auto → default length, a set value → back to Auto.
+            onTap: isAuto ? () => setWeeks(8) : setAuto,
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              children: [
+                Text(
+                  isAuto ? 'Auto' : '$weeks',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: textPrimary,
+                  ),
+                ),
+                Text(
+                  isAuto ? 'tap to set' : 'weeks · tap for Auto',
+                  style: TextStyle(fontSize: 11, color: textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ),
+        _StepperButton(
+          icon: Icons.add_rounded,
+          accent: accent,
+          onTap: () => setWeeks((weeks ?? 8) + 1),
+        ),
+      ],
     );
   }
 
@@ -227,6 +317,35 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+/// A circular +/- stepper button used by the program-length control.
+class _StepperButton extends StatelessWidget {
+  final IconData icon;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _StepperButton({
+    required this.icon,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: accent.withValues(alpha: 0.14),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, size: 20, color: accent),
+        ),
+      ),
     );
   }
 }

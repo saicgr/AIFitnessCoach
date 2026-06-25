@@ -107,39 +107,58 @@ class ZHeroCard extends StatelessWidget {
               ],
             ),
           ),
-          // Body.
+          // Body. The title + description live in a Flexible region that
+          // yields under tight constraints (the card is a fixed height inside
+          // a PageView), while the meta row + buttons stay pinned at the
+          // bottom — this prevents the 2px RenderFlex overflow seen when a
+          // 2-line title meets a 2-line description on a short card.
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ZType.disp(24, color: AppColors.textPrimary),
-                  ),
-                  if (description != null && description!.trim().isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      description!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: ZType.ser(13, color: AppColors.textSecondary),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                ZType.disp(22, color: AppColors.textPrimary),
+                          ),
+                        ),
+                        if (description != null &&
+                            description!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 5),
+                          Flexible(
+                            child: Text(
+                              description!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  ZType.ser(13, color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
-                  const Spacer(),
+                  ),
                   if (meta != null && meta!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 8),
                     Text(
                       meta!.toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: ZType.data(10.5, color: AppColors.textMuted),
                     ),
-                    const SizedBox(height: 12),
                   ],
-                  if (primaryLabel != null || ghostLabel != null)
+                  if (primaryLabel != null || ghostLabel != null) ...[
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         if (primaryLabel != null)
@@ -160,6 +179,7 @@ class ZHeroCard extends StatelessWidget {
                           ),
                       ],
                     ),
+                  ],
                 ],
               ),
             ),
@@ -188,7 +208,7 @@ class _PrimaryButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        height: 42,
+        height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: AppColors.orange,
@@ -216,7 +236,7 @@ class _GhostButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        height: 42,
+        height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: Colors.transparent,

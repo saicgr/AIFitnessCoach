@@ -57,9 +57,14 @@ List<RouteBase> _workoutRoutes() => [
       // ("program-library" etc.) aren't matched as a workoutId param.
 
       // Program library — browse the 259-program curated library.
+      // `?programId=<id>` deep-links straight to a program's PREVIEW detail
+      // sheet (used by the coach's "View program" chat card).
       GoRoute(
         path: '/workout/program-library',
-        builder: (context, state) => const ProgramLibraryScreen(),
+        builder: (context, state) {
+          final programId = state.uri.queryParameters['programId'];
+          return ProgramLibraryScreen(initialProgramId: programId);
+        },
       ),
 
       // Program builder — three entry tabs converging on one editable

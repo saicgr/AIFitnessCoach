@@ -36,7 +36,44 @@ class ProgramLibraryCardTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = _ProgramCategoryTheme.forCategory(data.programCategory);
     final isCelebrity = (data.celebrityName ?? '').trim().isNotEmpty;
+    // Editorial display name (migration 2283) when present, else the raw name.
+    final title = data.displayName;
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 3-up grid cells are ~110-118px wide on an iPhone SE; the prior
+        // single-column / 2-up layout was ~150-280px. Scale type + padding so
+        // the card stays legible and never overflows the narrower cell.
+        final narrow = constraints.maxWidth < 140;
+        final pad = narrow ? 10.0 : 12.0;
+        final titleSize = narrow ? 13.5 : 17.0;
+        final eyebrowSize = narrow ? 9.0 : 10.5;
+        final showDescription =
+            !narrow && (data.description ?? '').trim().isNotEmpty;
+        return _buildCard(
+          theme: theme,
+          isCelebrity: isCelebrity,
+          title: title,
+          pad: pad,
+          titleSize: titleSize,
+          eyebrowSize: eyebrowSize,
+          showDescription: showDescription,
+          narrow: narrow,
+        );
+      },
+    );
+  }
+
+  Widget _buildCard({
+    required _ProgramCategoryTheme theme,
+    required bool isCelebrity,
+    required String title,
+    required double pad,
+    required double titleSize,
+    required double eyebrowSize,
+    required bool showDescription,
+    required bool narrow,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -69,16 +106,14 @@ class ProgramLibraryCardTile extends StatelessWidget {
                   bottom: -22,
                   child: Icon(
                     theme.icon,
-                    size: 128,
+                    size: narrow ? 96 : 128,
                     color: Colors.white.withValues(alpha: 0.14),
                   ),
                 ),
                 Padding(
-                  // Tightened from 16 to 12 — 147×164 grid cells can't
-                  // afford 32px lost to padding on each axis. Pulls the
-                  // chip Wrap back to a single row (was overflowing by
-                  // 20 px on SE / iPad-Mini cells).
-                  padding: const EdgeInsets.all(12),
+                  // Padding + type scale come from LayoutBuilder so the card
+                  // fits the 3-up grid cell (~110px) without overflow.
+                  padding: EdgeInsets.all(pad),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -87,8 +122,8 @@ class ProgramLibraryCardTile extends StatelessWidget {
                       // when present.
                       Row(
                         children: [
-                          _GlyphBadge(icon: theme.icon),
-                          const SizedBox(width: 8),
+                          _GlyphBadge(icon: theme.icon, compact: narrow),
+                          SizedBox(width: narrow ? 6 : 8),
                           Expanded(
                             child: Text(
                               isCelebrity
@@ -98,7 +133,7 @@ class ProgramLibraryCardTile extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 10.5,
+                                fontSize: eyebrowSize,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.8,
                                 color: Colors.white.withValues(alpha: 0.85),
@@ -107,24 +142,23 @@ class ProgramLibraryCardTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      // Program name — the hero text.
+                      SizedBox(height: narrow ? 6 : 8),
+                      // Program name — the hero text (editorial name).
                       Text(
-                        data.programName,
+                        title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 17,
+                        style: TextStyle(
+                          fontSize: titleSize,
                           fontWeight: FontWeight.w800,
                           height: 1.15,
                           color: Colors.white,
                         ),
                       ),
-                      if ((data.description ?? '').trim().isNotEmpty) ...[
+                      if (showDescription) ...[
                         const SizedBox(height: 4),
-                        // 1 line only on narrow grid cells — the 164 px
-                        // height budget can't fit eyebrow + 2-line title
-                        // + 2-line description + chips without overflow.
+                        // 1 line only — the height budget can't fit eyebrow +
+                        // 2-line title + 2-line description + chips.
                         Text(
                           data.description!.trim(),
                           maxLines: 1,
@@ -136,15 +170,18 @@ class ProgramLibraryCardTile extends StatelessWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 8),
+                      SizedBox(height: narrow ? 6 : 8),
                       // Stat chips. Wrap so they never overflow horizontally
-                      // on a narrow iPhone SE grid cell; vertical overflow
-                      // is prevented by trimming the rest of the card above.
+                      // on a narrow grid cell; vertical overflow is prevented
+                      // by trimming the rest of the card above. On the narrow
+                      // 3-up cell we drop the difficulty chip (kept in the
+                      // preview) so duration + sessions stay on one line.
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
                         children: [
-                          if ((data.difficultyLevel ?? '').isNotEmpty)
+                          if (!narrow &&
+                              (data.difficultyLevel ?? '').isNotEmpty)
                             _StatChip(
                               icon: Icons.bolt_rounded,
                               label: _titleCase(data.difficultyLevel!),
@@ -183,19 +220,21 @@ class ProgramLibraryCardTile extends StatelessWidget {
 /// Small frosted glyph badge that sits in the eyebrow row.
 class _GlyphBadge extends StatelessWidget {
   final IconData icon;
-  const _GlyphBadge({required this.icon});
+  final bool compact;
+  const _GlyphBadge({required this.icon, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
+    final size = compact ? 22.0 : 28.0;
     return Container(
-      width: 28,
-      height: 28,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(compact ? 6 : 8),
       ),
-      child: Icon(icon, size: 16, color: Colors.white),
+      child: Icon(icon, size: compact ? 13 : 16, color: Colors.white),
     );
   }
 }
