@@ -28,6 +28,7 @@ import 'event_logged_undo_card.dart';
 import 'share_artifact_card.dart';
 import 'suggested_actions_card.dart';
 import 'recommended_meal_card.dart';
+import 'program_action_card.dart';
 import 'report_message_sheet.dart';
 import 'voice_message_widget.dart';
 import 'chat_media_widgets.dart';
@@ -477,6 +478,18 @@ class ChatMessageBubble extends ConsumerWidget {
               message.actionData != null &&
               message.actionData!['action'] == 'meal_recommended')
             RecommendedMealCard(
+              actionData: Map<String, dynamic>.from(message.actionData!),
+            ),
+          // ── Program Library actions ───────────────────────────────────
+          // The coach can recommend / assign / create a multi-day program.
+          // Each carries program_id / program_name / template_id /
+          // assignment_id and deep-links into the Program Library / builder /
+          // My Programs. (Assign/create refresh the assignments provider.)
+          if (!isUser &&
+              message.actionData != null &&
+              ProgramActionCard.handledActions
+                  .contains(message.actionData!['action'] as String?))
+            ProgramActionCard(
               actionData: Map<String, dynamic>.from(message.actionData!),
             ),
           // ── Suggested-action launcher chips ───────────────────────────

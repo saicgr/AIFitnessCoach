@@ -37,6 +37,8 @@ import '../../data/models/parsed_exercise.dart';
 import '../../data/models/rest_suggestion.dart';
 import '../../data/models/smart_weight_suggestion.dart';
 import '../../data/models/workout.dart';
+import '../../data/models/workout_program_context.dart';
+import '../../screens/home/widgets/program_context_banner.dart';
 import '../../data/providers/gym_profile_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -1857,14 +1859,50 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
 
       case WorkoutPhase.active:
         if (isFoldableOpen) {
-          return buildFoldableActiveWorkout(windowState);
+          return _withProgramBanner(
+              buildFoldableActiveWorkout(windowState), backgroundColor);
         }
         // Use V2 MacroFactor-style design
         if (_useV2Design) {
-          return buildActiveWorkoutScreenV2(isDark, backgroundColor);
+          return _withProgramBanner(
+              buildActiveWorkoutScreenV2(isDark, backgroundColor),
+              backgroundColor);
         }
-        return buildActiveWorkoutScreen(isDark, backgroundColor);
+        return _withProgramBanner(
+            buildActiveWorkoutScreen(isDark, backgroundColor), backgroundColor);
     }
+  }
+
+  /// Wrap an active-phase screen with a thin "Week X · {Program}" banner when
+  /// this workout came from an enrolled program (both Easy + Advanced modes go
+  /// through here). Returns [child] unchanged for non-program workouts so the
+  /// header layout is untouched in the common case.
+  ///
+  /// The banner is mounted in this file (which I own) rather than inside the
+  /// header-building mixins so the program integration stays in one place. It
+  /// sits in a SafeArea above the active Scaffold, which keeps clear of the
+  /// WorkoutTopBarV2 chrome below it.
+  Widget _withProgramBanner(Widget child, Color backgroundColor) {
+    final pc = widget.workout.programContext;
+    if (pc == null || !pc.hasContent) return child;
+    return ColoredBox(
+      color: backgroundColor,
+      child: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ProgramContextBanner(programContext: pc, compact: true),
+              ),
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    );
   }
 
   /// Calculate RIR algorithmically based on set type and position

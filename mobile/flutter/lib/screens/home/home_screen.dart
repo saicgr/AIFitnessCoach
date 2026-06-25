@@ -51,6 +51,8 @@ import 'widgets/edit_tracking_sheet.dart';
 import 'widgets/stacked_banner_panel.dart';
 import 'widgets/calibration_banner.dart';
 import 'widgets/cards/setup_checklist_card.dart';
+import 'widgets/my_programs_card.dart';
+import 'widgets/today_addons_row.dart';
 import 'widgets/extended_home_cards_stack.dart';
 import '../../widgets/rating_prompt_banner.dart';
 import 'widgets/tile_factory.dart';
@@ -1323,7 +1325,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // and provides its own vertical margin — so no trailing gap sliver here,
       // else a hidden card would leave a phantom void.
       if (visible[i] == HomeSection.workoutCard) {
+        // Program Library integration: today's program ADD-ONS sit as a slim
+        // row directly under the hero, and the user's enrolled programs ("My
+        // Programs") follow. Both self-hide when empty (My Programs shows its
+        // discovery empty-state on home only).
+        slivers.add(const SliverToBoxAdapter(child: TodayAddonsRow()));
         slivers.add(const SliverToBoxAdapter(child: SetupChecklistCard()));
+        slivers.add(const SliverToBoxAdapter(child: MyProgramsCard()));
       }
     }
 
@@ -1356,9 +1364,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   children: [
                     _widgetForSection(section),
                     // If a My Space reorder pushed the workout card below the
-                    // fold, keep the Get Started Challenge directly beneath it.
-                    if (section == HomeSection.workoutCard)
+                    // fold, keep the add-ons row, Get Started Challenge, and My
+                    // Programs directly beneath it.
+                    if (section == HomeSection.workoutCard) ...[
+                      const TodayAddonsRow(),
                       const SetupChecklistCard(),
+                      const MyProgramsCard(),
+                    ],
                     SizedBox(height: gap),
                   ],
                 ),

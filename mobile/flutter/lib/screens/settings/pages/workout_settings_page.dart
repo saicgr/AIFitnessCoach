@@ -8,6 +8,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/providers/program_assignments_provider.dart';
+import '../../../data/services/haptic_service.dart';
 import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/weight_increments_sheet.dart';
@@ -103,6 +105,13 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                   ),
                 ],
               ),
+
+              // ── Splits vs Programs explainer + active programs ──
+              // The SPLIT selector above is the AI-decides path; PROGRAMS follow
+              // a fixed plan. One-line explainer keeps the two distinct.
+              const SizedBox(height: 10),
+              const _SplitsVsProgramsExplainer(),
+              const _ActiveProgramsSection(),
 
               const SizedBox(height: 24),
 
@@ -364,6 +373,159 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ============================================================================
+// Splits vs Programs — clarity copy + active-program surfacing
+// ============================================================================
+
+/// One-line explainer separating the AI-decides SPLIT path (above) from fixed
+/// PROGRAMS. Keeps the two mental models distinct (the user kept conflating
+/// "training split" with "following a program").
+class _SplitsVsProgramsExplainer extends StatelessWidget {
+  const _SplitsVsProgramsExplainer();
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 14, color: tc.textMuted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Splits shape AI-generated days · Programs follow a fixed plan.',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                color: tc.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Active enrolled programs surfaced inside Workout Settings. Each lists the
+/// program name + "Edit program" (opens the builder). Self-hides when the user
+/// has no active programs. A "Browse Program Library" row is always shown so
+/// the path to fixed plans is discoverable from settings.
+class _ActiveProgramsSection extends ConsumerWidget {
+  const _ActiveProgramsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
+    final async = ref.watch(programAssignmentsProvider);
+
+    final active = async.valueOrNull
+            ?.where((a) => a.status != 'completed')
+            .toList() ??
+        const [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        if (active.isNotEmpty) ...[
+          for (final a in active)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: tc.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: tc.cardBorder),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.fact_check_outlined, size: 18, color: tc.accent),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            a.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: tc.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            a.isAddon ? 'Add-on · ${a.weekLabel}' : a.weekLabel,
+                            style: TextStyle(
+                                fontSize: 12, color: tc.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (a.templateId != null)
+                      TextButton(
+                        onPressed: () {
+                          HapticService.light();
+                          // Open the builder for this assignment's template.
+                          GoRouter.of(context).push('/workout/program-builder');
+                        },
+                        child: const Text('Edit'),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+        // Always-present discovery row into the fixed-plan library.
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              HapticService.light();
+              GoRouter.of(context).push('/workout/program-library');
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: tc.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: tc.cardBorder),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.library_books_outlined,
+                      size: 18, color: tc.textMuted),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      active.isEmpty
+                          ? 'Browse the Program Library'
+                          : 'Add another program',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: tc.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_ios, size: 13, color: tc.textMuted),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

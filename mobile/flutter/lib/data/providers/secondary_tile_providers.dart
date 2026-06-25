@@ -39,6 +39,7 @@ import 'masteries_provider.dart';
 import 'micronutrient_gap_provider.dart';
 import 'mindfulness_provider.dart';
 import 'personal_bests_provider.dart';
+import 'program_assignments_provider.dart';
 import 'recovery_provider.dart';
 import 'rhr_delta_provider.dart';
 import 'sleep_detail_provider.dart';
@@ -100,4 +101,8 @@ final List<ProviderOrFamily> secondaryTileProviders = <ProviderOrFamily>[
   // Inline Home tiles (public providers)
   cycleAwareWeightProvider,
   customHabitsHomeProvider,
+  // Program Library — enrolled program assignments ("My Programs" card +
+  // carousel/active-workout program banner). Kept alive for instant returns;
+  // must be invalidated on logout so user B never inherits user A's programs.
+  programAssignmentsProvider,
 ];

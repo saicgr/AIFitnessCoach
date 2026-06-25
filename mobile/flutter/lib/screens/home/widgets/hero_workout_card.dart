@@ -10,6 +10,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/workout.dart';
+import '../../../data/models/workout_program_context.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
@@ -845,11 +846,21 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                   // sitting under the title.
                   Builder(builder: (_) {
                     final typeLabel = _getWorkoutTypeLabel(workout.type);
+                    // Program provenance ("Week 3") leads the meta line when the
+                    // workout came from an enrolled program (carried in
+                    // generation_metadata via WorkoutProgramContext).
+                    final pc = workout.programContext;
+                    final weekLabel = (pc != null &&
+                            pc.programWeek != null &&
+                            pc.programWeek! > 0)
+                        ? 'Week ${pc.programWeek}'
+                        : '';
                     final parts = <String>[
                       dateLabel.toLowerCase() == 'today'
                           ? 'Today'
                           : dateLabel[0].toUpperCase() +
                               dateLabel.substring(1).toLowerCase(),
+                      if (weekLabel.isNotEmpty) weekLabel,
                       if (typeLabel.isNotEmpty) typeLabel,
                       if ((workout.durationMinutes ?? 0) > 0)
                         '${workout.durationMinutes}m',

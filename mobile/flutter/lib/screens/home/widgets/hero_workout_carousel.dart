@@ -7,8 +7,10 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_start_provider.dart';
 import '../../../data/models/workout.dart';
+import '../../../data/models/user_program_assignment.dart' show ProgramSlot;
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/providers/program_assignments_provider.dart';
 import '../../../data/providers/synced_workouts_provider.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
@@ -171,12 +173,19 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         DateTime.now().difference(t) < _scheduleChangeGhostSuppression;
   }
 
-  /// Stable signature of the active schedule: sorted workout-day indices plus
-  /// the active gym profile id (a profile switch is also a schedule change).
-  /// A change here means the program/plan changed → wipe + rebuild.
-  String _scheduleSignatureFor(List<int> workoutDays, String? gymProfileId) {
+  /// Stable signature of the active schedule: sorted workout-day indices, the
+  /// active gym profile id (a profile switch is also a schedule change), AND a
+  /// digest of the active program assignments (id·week·slot·days). Starting or
+  /// ending a program — or a program advancing a week — changes this, which
+  /// forces the same wipe + sequential refill as a workout-days edit, so the
+  /// carousel never shows ghost cards from a just-ended program.
+  String _scheduleSignatureFor(
+    List<int> workoutDays,
+    String? gymProfileId,
+    String assignmentSignature,
+  ) {
     final sorted = List<int>.from(workoutDays)..sort();
-    return '${gymProfileId ?? ''}|${sorted.join(',')}';
+    return '${gymProfileId ?? ''}|${sorted.join(',')}|$assignmentSignature';
   }
 
   // ── Auto-refill for scheduled days with no workout in the client list ──────
@@ -386,8 +395,21 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         // ghosts into the rebuilt carousel, reset the refill poll so it fills the
         // new days one-by-one, and open a window during which the rest-day ghost
         // scan stays suppressed until the stale all-workouts cache drains.
-        final scheduleSignature =
-            _scheduleSignatureFor(workoutDays, activeProfile?.id);
+        // Fold the active program assignments into the schedule signature so
+        // assign / end / week-advance triggers the same wipe + sequential
+        // refill as a workout-days edit (no ghost cards from an ended program).
+        final assignments =
+            ref.watch(programAssignmentsProvider).valueOrNull ?? const [];
+        final assignmentSignature = (assignments
+                .where((a) => a.isActive)
+                .map((a) => '${a.id}:${a.currentWeek}:'
+                    '${a.slot == ProgramSlot.addon ? 'a' : 'p'}:'
+                    '${(List<int>.from(a.assignedDays)..sort()).join('-')}')
+                .toList()
+              ..sort())
+            .join(',');
+        final scheduleSignature = _scheduleSignatureFor(
+            workoutDays, activeProfile?.id, assignmentSignature);
         if (_lastScheduleSignature != null &&
             _lastScheduleSignature != scheduleSignature) {
           // Wipe local merge sources NOW (build-safe: just a list mutation).
@@ -485,9 +507,13 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         if (nextWorkout != null && !mergedWorkouts.any((w) => w.id == nextWorkout.id)) {
           mergedWorkouts.add(nextWorkout);
         }
-        // Merge extra today workouts (quick workouts coexisting with scheduled)
+        // Merge extra today workouts (quick workouts coexisting with scheduled).
+        // Program ADD-ONS are deliberately EXCLUDED here — they render as a slim
+        // secondary row beneath the carousel (TodayAddonsRow), not as their own
+        // hero card, so the day's primary plan stays the single hero.
         final extraTodayWorkouts = todayWorkoutResponse?.extraTodayWorkouts ?? [];
         for (final extra in extraTodayWorkouts) {
+          if (extra.isProgramAddon) continue;
           final extraWorkout = extra.toWorkout();
           if (!mergedWorkouts.any((w) => w.id == extraWorkout.id)) {
             mergedWorkouts.add(extraWorkout);

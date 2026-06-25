@@ -305,32 +305,77 @@ class _TrainingPlansSectionState extends State<_TrainingPlansSection> {
         // Section header
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                AppLocalizations.of(context).discoverTrainingPlans.toUpperCase(),
-                style: ZType.disp(22, color: textPrimary),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)
+                        .discoverTrainingPlans
+                        .toUpperCase(),
+                    style: ZType.disp(22, color: textPrimary),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      final qs = _selectedCategory == 'all'
+                          ? ''
+                          : '?category=$_selectedCategory';
+                      context.push('/library/splits$qs');
+                    },
+                    child: Text(
+                      AppLocalizations.of(context)
+                          .workoutHistoryImportViewAll
+                          .toUpperCase(),
+                      style: ZType.lbl(11,
+                          color: textSecondary, letterSpacing: 1.4),
+                    ),
+                  ),
+                ],
               ),
-              GestureDetector(
-                onTap: () {
-                  HapticService.light();
-                  final qs = _selectedCategory == 'all'
-                      ? ''
-                      : '?category=$_selectedCategory';
-                  context.push('/library/splits$qs');
-                },
-                child: Text(
-                  AppLocalizations.of(context)
-                      .workoutHistoryImportViewAll
-                      .toUpperCase(),
-                  style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.4),
-                ),
+              const SizedBox(height: 2),
+              // Clarity: these are SPLIT structures the AI generates days from,
+              // distinct from fixed Programs (cross-link below).
+              Text(
+                'Structures for AI-generated training',
+                style: TextStyle(fontSize: 13, color: textSecondary),
               ),
             ],
           ),
         ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
+
+        const SizedBox(height: 8),
+
+        // Cross-link to the fixed-plan Program Library (distinct from splits).
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: GestureDetector(
+            onTap: () {
+              HapticService.light();
+              context.push('/workout/program-library');
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.menu_book_outlined, size: 14, color: tc.accent),
+                const SizedBox(width: 6),
+                Text(
+                  'Looking for a fixed plan? Program Library',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: tc.accent,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Icon(Icons.arrow_forward_ios, size: 11, color: tc.accent),
+              ],
+            ),
+          ),
+        ),
 
         const SizedBox(height: 10),
 

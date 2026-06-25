@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/providers/milestones_provider.dart';
 import '../../data/providers/muscle_analytics_provider.dart';
+import '../../data/providers/program_assignments_provider.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -36,6 +37,9 @@ final List<ProviderOrFamily> kWorkoutMutationProviders = <ProviderOrFamily>[
   consistencyDataProvider,
   activityHeatmapProvider,
   calendarHeatmapProvider,
+  // Program progress (Week X · % complete) advances the instant a program
+  // workout is completed — not just on resume/pull-to-refresh.
+  programAssignmentsProvider,
 ];
 
 // Coalesce a burst of mutation refreshes (e.g. completion + a couple of
