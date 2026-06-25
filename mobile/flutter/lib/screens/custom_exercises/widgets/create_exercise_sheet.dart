@@ -69,11 +69,19 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   final _comboNameController = TextEditingController();
   final _comboNotesController = TextEditingController();
   ComboType _comboType = ComboType.superset;
-  String _comboPrimaryMuscle = 'chest';
-  String _comboEquipment = 'dumbbell';
+  // A combo can span multiple muscles/equipment (push-ups = bodyweight, bench =
+  // barbell), so we don't ask the user to pick a single value. These are
+  // auto-derived: the AI builder fills them (returning "mixed" when components
+  // differ); a hand-built combo defaults to "full body" / "mixed".
+  String _comboPrimaryMuscle = 'full body';
+  String _comboEquipment = 'mixed';
   final List<ComponentExercise> _components = [];
   final _componentNameController = TextEditingController();
   int _componentReps = 10;
+
+  // AI Combo builder
+  final _comboAiController = TextEditingController();
+  bool _isBuildingCombo = false;
 
   bool _isSubmitting = false;
   File? _selectedImage;
@@ -108,6 +116,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
     _instructionsController.dispose();
     _comboNameController.dispose();
     _comboNotesController.dispose();
+    _comboAiController.dispose();
     _componentNameController.dispose();
     _restController.dispose();
     _rpeController.dispose();
@@ -394,6 +403,11 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // What a combo is + AI builder (answers "how do I do push-ups then
+          // bench press?" — that's a superset; build it by describing it).
+          _buildComboIntroAndAi(context, isDark, cyan),
+          const SizedBox(height: 20),
+
           // Combo name
           _buildLabel('Combo Name', isDark),
           const SizedBox(height: 8),
@@ -408,44 +422,11 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           _buildLabel('Combo Type', isDark),
           const SizedBox(height: 8),
           _buildComboTypeSelector(isDark),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Muscle and Equipment row
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLabel('Muscle', isDark),
-                    const SizedBox(height: 8),
-                    _buildDropdown(
-                      value: _comboPrimaryMuscle,
-                      items: _muscleGroups,
-                      onChanged: (v) => setState(() => _comboPrimaryMuscle = v!),
-                      isDark: isDark,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLabel('Equipment', isDark),
-                    const SizedBox(height: 8),
-                    _buildDropdown(
-                      value: _comboEquipment,
-                      items: _equipmentOptions,
-                      onChanged: (v) => setState(() => _comboEquipment = v!),
-                      isDark: isDark,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          // Targets — auto-derived. A combo can mix muscles/equipment, so we
+          // show a read-only summary instead of forcing a single choice.
+          _buildComboTargetsHint(isDark),
           const SizedBox(height: 24),
 
           // Components section
@@ -485,8 +466,17 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                     Icon(Icons.layers_outlined, size: 40, color: textSecondary),
                     const SizedBox(height: 8),
                     Text(
-                      AppLocalizations.of(context).createExerciseAddAtLeast2,
-                      style: TextStyle(color: textSecondary),
+                      'Add 2+ exercises to your combo',
+                      style: TextStyle(
+                        color: textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'e.g. tap + Add → Push-ups, then + Add → Bench Press',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: textSecondary, fontSize: 12),
                     ),
                   ],
                 ),
@@ -830,6 +820,197 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
     } finally {
       if (mounted) {
         setState(() => _isAnalyzing = false);
+      }
+    }
+  }
+
+  /// Combo explainer + "Build with AI" entry. Answers the common confusion
+  /// ("how do I do push-ups then bench press?") and lets the user describe a
+  /// combo in plain English; AI fills the type + component list for review.
+  Widget _buildComboIntroAndAi(BuildContext context, bool isDark, Color cyan) {
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            cyan.withOpacity(isDark ? 0.16 : 0.10),
+            isDark ? AppColors.surface : AppColorsLight.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cyan.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.auto_awesome_rounded, size: 18, color: cyan),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Combine 2+ exercises into one block — like push-ups → bench '
+                  'press (that\'s a superset). Describe it and let AI build it, '
+                  'or fill it in below.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.4,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            controller: _comboAiController,
+            hint: 'e.g. superset of push-ups then barbell bench press, 10 reps each',
+            isDark: isDark,
+            maxLines: 2,
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isBuildingCombo ? null : _buildComboWithAi,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cyan,
+                foregroundColor: Colors.black,
+                disabledBackgroundColor: cyan.withOpacity(0.3),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: _isBuildingCombo
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.black,
+                      ),
+                    )
+                  : const Icon(Icons.auto_awesome, size: 18),
+              label: Text(
+                _isBuildingCombo ? 'Building…' : 'Build with AI',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Read-only "Targets" summary — a combo can mix muscles/equipment, so this is
+  /// auto-derived (AI-filled or defaulted to Mixed) rather than user-picked.
+  Widget _buildComboTargetsHint(bool isDark) {
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    String cap(String s) =>
+        s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+    return Row(
+      children: [
+        Icon(Icons.my_location_outlined, size: 14, color: textSecondary),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            'Targets: ${cap(_comboPrimaryMuscle)} · ${cap(_comboEquipment)}  (auto)',
+            style: TextStyle(fontSize: 12.5, color: textSecondary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Call the backend AI combo builder, then pre-fill the form for review.
+  Future<void> _buildComboWithAi() async {
+    final desc = _comboAiController.text.trim();
+    if (desc.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Describe your combo first (e.g. "superset of push-ups then bench press")'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    setState(() => _isBuildingCombo = true);
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+      final response = await apiClient.post(
+        '/custom-exercises/$userId/analyze-combo',
+        data: {'raw_text': desc},
+      );
+      final data = response.data as Map<String, dynamic>;
+
+      final comps = <ComponentExercise>[];
+      final rawComps = data['component_exercises'];
+      if (rawComps is List) {
+        for (final c in rawComps) {
+          if (c is Map) {
+            comps.add(ComponentExercise.fromJson(Map<String, dynamic>.from(c)));
+          }
+        }
+      }
+      if (comps.length < 2) {
+        throw Exception(
+            'AI couldn\'t find at least 2 exercises — add a bit more detail');
+      }
+
+      setState(() {
+        if (data['name'] != null) {
+          _comboNameController.text = data['name'] as String;
+        }
+        _comboType = ComboTypeExtension.fromString(data['combo_type'] as String?);
+        if (data['primary_muscle'] != null) {
+          _comboPrimaryMuscle = (data['primary_muscle'] as String).toLowerCase();
+        }
+        if (data['equipment'] != null) {
+          _comboEquipment = (data['equipment'] as String).toLowerCase();
+        }
+        final notes = data['custom_notes'];
+        if (notes is String && notes.isNotEmpty) {
+          _comboNotesController.text = notes;
+        }
+        _components
+          ..clear()
+          ..addAll(comps);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Built "${_comboNameController.text}" — review & tweak below'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Couldn\'t build combo: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isBuildingCombo = false);
       }
     }
   }

@@ -11340,6 +11340,9 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
+  String get exercisesTabHistoryToggle => 'History';
+
+  @override
   String expandableSummaryExerciseCardKg(Object weightKg) {
     return '$weightKg kg';
   }

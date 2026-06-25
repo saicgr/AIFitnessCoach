@@ -11,6 +11,7 @@ import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/empty_state.dart';
 import '../models/filter_option.dart';
 import '../providers/library_providers.dart';
+import '../providers/muscle_group_images_provider.dart';
 import '../widgets/exercise_search_bar.dart';
 import '../widgets/filter_button.dart';
 import '../widgets/active_filter_chips.dart';
@@ -71,10 +72,14 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
   /// `custom_exercises_screen.dart` so behavior stays consistent.
   void _showCreateExercise(BuildContext context) {
     HapticService.light();
+    // `CreateExerciseSheet` is fully self-chromed (its own blur, border, drag
+    // handle, and close button), so it is NOT wrapped in a `GlassSheet` here —
+    // wrapping would render a SECOND drag handle and a double blur/border.
+    // (Mirrors the entry point in `custom_exercises_screen.dart`.)
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      builder: (_) => const GlassSheet(child: CreateExerciseSheet()),
+      builder: (_) => const CreateExerciseSheet(),
     );
   }
 
@@ -177,18 +182,19 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
                 onTap: () => _showCreateExercise(context),
               ),
               const SizedBox(width: 6),
-              // AI-import a custom exercise (photo / video / describe).
-              _MiniIconButton(
-                icon: Icons.auto_awesome_rounded,
+              // AI-import a custom exercise (photo / video / describe). Styled
+              // distinctly from the plain "+" so the smart action stands out.
+              _AiMiniButton(
                 tooltip: 'Import with AI',
                 onTap: () => showImportExerciseScreen(context),
               ),
               const SizedBox(width: 8),
-              // "Performed" toggle chip
+              // "History" (performed-only) toggle chip — filters the catalog to
+              // exercises the user has actually logged.
               Padding(
                 padding: const EdgeInsetsDirectional.only(end: 8),
                 child: ZealovaChip(
-                  label: AppLocalizations.of(context).commonDone,
+                  label: AppLocalizations.of(context).exercisesTabHistoryToggle,
                   icon: performedOnly ? Icons.check_circle : Icons.history,
                   selected: performedOnly,
                   onTap: () {
@@ -216,7 +222,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
           selected: selectedMuscles,
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
 
         // "Did you mean?" suggestion banner
         if (searchSuggestion != null && searchSuggestion.isNotEmpty) ...[
@@ -266,8 +272,15 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
           const SizedBox(height: 8),
         ],
 
-        // Active filter chips
-        if (activeFilters > 0) ...[
+        // Active filter chips. Muscle selections are already represented as
+        // highlighted pills in the row above, so only surface this second row
+        // when a NON-muscle filter (equipment/type/goal/suitable/avoid) is
+        // active — otherwise it's redundant chrome that just adds a gap.
+        if (selectedEquipments.isNotEmpty ||
+            selectedTypes.isNotEmpty ||
+            selectedGoals.isNotEmpty ||
+            selectedSuitableFor.isNotEmpty ||
+            selectedAvoid.isNotEmpty) ...[
           const ActiveFilterChipsList(),
           const SizedBox(height: 8),
         ],
@@ -392,7 +405,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
         Expanded(
           child: ListView.builder(
             controller: _scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
             itemCount: itemCount,
             itemBuilder: (context, index) {
               // Loading indicator at the end
@@ -444,6 +457,18 @@ class _MuscleChipRow extends ConsumerWidget {
     required this.selected,
   });
 
+  /// Resolve a muscle/body-part label to its illustration asset, matching the
+  /// `muscleGroupAssets` keys case-insensitively. Returns null for groups we
+  /// don't have art for (e.g. "Cardio", "Abdominals") so the chip falls back to
+  /// a clean text-only pill rather than a broken thumbnail.
+  String? _assetFor(String name) {
+    final lower = name.toLowerCase();
+    for (final entry in muscleGroupAssets.entries) {
+      if (entry.key.toLowerCase() == lower) return entry.value;
+    }
+    return null;
+  }
+
   void _toggle(WidgetRef ref, String value) {
     final newSet = Set<String>.from(selected);
     // Match case-insensitively so a provider value seeded from a deep-link
@@ -476,6 +501,7 @@ class _MuscleChipRow extends ConsumerWidget {
           );
           return ZealovaChip(
             label: name,
+            leadingAsset: _assetFor(name),
             selected: isSelected,
             onTap: () => _toggle(ref, name),
           );
@@ -515,6 +541,57 @@ class _MiniIconButton extends StatelessWidget {
             border: Border.all(color: AppColors.cardBorder),
           ),
           child: Icon(icon, size: 18, color: tc.textPrimary),
+        ),
+      ),
+    );
+  }
+}
+
+/// AI-import entry point in the Exercises header. Styled as a "smart" action —
+/// an accent gradient fill with an accent-tinted glow — so it reads as distinct
+/// from the plain neutral `_MiniIconButton` ("+") sitting beside it.
+class _AiMiniButton extends StatelessWidget {
+  final String tooltip;
+  final VoidCallback onTap;
+  const _AiMiniButton({required this.tooltip, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accent.withValues(alpha: 0.85),
+                accent.withValues(alpha: 0.55),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: accent.withValues(alpha: 0.6)),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: 0.35),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.auto_awesome_rounded,
+            size: 17,
+            color: Colors.white,
+          ),
         ),
       ),
     );

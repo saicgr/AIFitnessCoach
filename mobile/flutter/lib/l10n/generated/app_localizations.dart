@@ -19217,6 +19217,12 @@ abstract class AppLocalizations {
   /// **'Failed to load exercises: {error}'**
   String exercisesTabFailedToLoadExercises(Object error);
 
+  /// No description provided for @exercisesTabHistoryToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get exercisesTabHistoryToggle;
+
   /// No description provided for @expandableSummaryExerciseCardKg.
   ///
   /// In en, this message translates to:

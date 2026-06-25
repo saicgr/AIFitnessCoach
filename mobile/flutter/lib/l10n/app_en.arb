@@ -18935,6 +18935,7 @@
   "exerciseTableHeaderTarget": "Target",
   "exercisesLoadMore": "Load more",
   "exercisesTabFailedToLoadExercises": "Failed to load exercises: {error}",
+  "exercisesTabHistoryToggle": "History",
   "expandableSummaryExerciseCardKg": "{weightKg} kg",
   "expandableSummaryExerciseCardTime": "Time: {formatted}",
   "expandableSummaryExerciseReps": "Reps",

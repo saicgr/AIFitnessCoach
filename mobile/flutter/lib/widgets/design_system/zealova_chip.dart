@@ -8,6 +8,10 @@ class ZealovaChip extends StatelessWidget {
   final String label;
   final IconData? icon;
   final String? emoji;
+  /// Optional small leading thumbnail (e.g. a muscle-group illustration on the
+  /// quick-filter pills). Takes precedence over [emoji]/[icon]. A missing asset
+  /// degrades gracefully to a text-only chip (no broken-image box).
+  final String? leadingAsset;
   final bool selected;
   final VoidCallback? onTap;
   const ZealovaChip({
@@ -15,6 +19,7 @@ class ZealovaChip extends StatelessWidget {
     required this.label,
     this.icon,
     this.emoji,
+    this.leadingAsset,
     this.selected = false,
     this.onTap,
   });
@@ -38,7 +43,19 @@ class ZealovaChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (emoji != null) ...[
+            if (leadingAsset != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.asset(
+                  leadingAsset!,
+                  width: 16,
+                  height: 16,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ] else if (emoji != null) ...[
               Text(emoji!, style: const TextStyle(fontSize: 11)),
               const SizedBox(width: 5),
             ] else if (icon != null) ...[

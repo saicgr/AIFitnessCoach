@@ -562,35 +562,68 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: enabled ? _submit : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accent,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: accent.withOpacity(0.35),
-              disabledForegroundColor: Colors.white70,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 180),
+          opacity: enabled ? 1.0 : 0.45,
+          child: Container(
+            width: double.infinity,
+            height: 54,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  accent.withOpacity(0.95),
+                  accent.withOpacity(0.7),
+                ],
               ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: enabled
+                  ? [
+                      BoxShadow(
+                        color: accent.withOpacity(0.4),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
             ),
-            icon: _isSubmitting
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.2,
-                      valueColor: AlwaysStoppedAnimation(Colors.white),
-                    ),
-                  )
-                : const Icon(Icons.auto_awesome, size: 20),
-            label: Text(
-              _isSubmitting ? AppLocalizations.of(context).importExerciseWorking : AppLocalizations.of(context).importExerciseImportWithAi,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: enabled ? _submit : null,
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _isSubmitting
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                valueColor:
+                                    AlwaysStoppedAnimation(Colors.white),
+                              ),
+                            )
+                          : const Icon(Icons.auto_awesome,
+                              size: 20, color: Colors.white),
+                      const SizedBox(width: 10),
+                      Text(
+                        _isSubmitting
+                            ? AppLocalizations.of(context).importExerciseWorking
+                            : AppLocalizations.of(context)
+                                .importExerciseImportWithAi,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -980,25 +1013,46 @@ class _IntroCard extends StatelessWidget {
     final textMuted =
         isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withOpacity(0.3)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withOpacity(isDark ? 0.18 : 0.12),
+            bg,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withOpacity(0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 36,
-            width: 36,
+            height: 44,
+            width: 44,
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.18),
-              borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  accent.withOpacity(0.9),
+                  accent.withOpacity(0.55),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(13),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withOpacity(0.35),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            child: Icon(icon, size: 20, color: accent),
+            child: Icon(icon, size: 22, color: Colors.white),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
