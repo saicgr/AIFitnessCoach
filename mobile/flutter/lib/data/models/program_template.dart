@@ -440,6 +440,12 @@ class ProgramTemplate {
   /// Length of the repeating cycle in days (default 7, supports 1..N).
   final int weekLength;
 
+  /// Total program length in WEEKS — how long the program runs end to end
+  /// (distinct from [weekLength], the repeating cycle, and
+  /// [deloadEveryNWeeks]). The scheduler expands this many weeks. Null = use
+  /// the source program's duration / a sensible default.
+  final int? durationWeeks;
+
   final List<ProgramDay> days;
 
   /// Run a deload every Nth week. Null = no scheduled deload (yoga etc).
@@ -475,6 +481,7 @@ class ProgramTemplate {
     required this.name,
     this.description,
     this.weekLength = 7,
+    this.durationWeeks,
     this.days = const [],
     this.deloadEveryNWeeks = 5,
     this.progressionStrategy = 'linear',
@@ -502,6 +509,7 @@ class ProgramTemplate {
       name: _asString(json['name'], fallback: 'Program'),
       description: json['description'] as String?,
       weekLength: _asInt(json['week_length']) ?? 7,
+      durationWeeks: _asInt(json['duration_weeks']),
       days: days,
       deloadEveryNWeeks: _asInt(json['deload_every_n_weeks']),
       progressionStrategy:
@@ -523,6 +531,7 @@ class ProgramTemplate {
         'name': name,
         if (description != null) 'description': description,
         'week_length': weekLength,
+        if (durationWeeks != null) 'duration_weeks': durationWeeks,
         'days': days.map((d) => d.toJson()).toList(),
         'deload_every_n_weeks': deloadEveryNWeeks,
         'progression_strategy': progressionStrategy,
@@ -565,6 +574,8 @@ class ProgramTemplate {
     String? name,
     String? description,
     int? weekLength,
+    int? durationWeeks,
+    bool clearDurationWeeks = false,
     List<ProgramDay>? days,
     int? deloadEveryNWeeks,
     bool clearDeload = false,
@@ -584,6 +595,8 @@ class ProgramTemplate {
       name: name ?? this.name,
       description: description ?? this.description,
       weekLength: weekLength ?? this.weekLength,
+      durationWeeks:
+          clearDurationWeeks ? null : (durationWeeks ?? this.durationWeeks),
       days: days ?? this.days,
       deloadEveryNWeeks:
           clearDeload ? null : (deloadEveryNWeeks ?? this.deloadEveryNWeeks),
@@ -625,6 +638,18 @@ class ProgramLibraryCard {
   final String? description;
   final List<String> goals;
 
+  /// Editorial copy (migration 2283) for a rich, curated detail page. All
+  /// nullable — fall back to [programName] / [description] when absent.
+  /// [editorialName] is the human-facing display name; [tagline] a one-liner;
+  /// [whoFor] / [whoNotFor] set expectations; [equipmentSummary] lists gear;
+  /// [progressionNote] explains how the program advances in plain English.
+  final String? editorialName;
+  final String? tagline;
+  final String? whoFor;
+  final String? whoNotFor;
+  final String? equipmentSummary;
+  final String? progressionNote;
+
   /// Which catalog this card came from — `library` (the curated 259-row
   /// `programs` table) or `branded` (the branded-program catalog, whose ids
   /// are namespaced `branded:<uuid>`). Defaults to `library` for older
@@ -649,6 +674,12 @@ class ProgramLibraryCard {
     this.sessionDurationMinutes,
     this.description,
     this.goals = const [],
+    this.editorialName,
+    this.tagline,
+    this.whoFor,
+    this.whoNotFor,
+    this.equipmentSummary,
+    this.progressionNote,
     this.source = 'library',
     this.previewAvailable = true,
   });
@@ -666,9 +697,21 @@ class ProgramLibraryCard {
       sessionDurationMinutes: _asInt(json['session_duration_minutes']),
       description: json['description'] as String?,
       goals: _asStringList(json['goals']),
+      editorialName: json['editorial_name'] as String?,
+      tagline: json['tagline'] as String?,
+      whoFor: json['who_for'] as String?,
+      whoNotFor: json['who_not_for'] as String?,
+      equipmentSummary: json['equipment_summary'] as String?,
+      progressionNote: json['progression_note'] as String?,
       source: _asString(json['source'], fallback: 'library'),
       previewAvailable: _asBool(json['preview_available'], fallback: true),
     );
+  }
+
+  /// Human-facing display name — prefers the curated [editorialName].
+  String get displayName {
+    final e = editorialName?.trim();
+    return (e != null && e.isNotEmpty) ? e : programName;
   }
 
   /// True when this card came from the branded-program catalog.

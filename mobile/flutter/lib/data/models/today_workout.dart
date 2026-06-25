@@ -23,6 +23,22 @@ class TodayWorkoutSummary {
   final List<WorkoutExercise> exercises;
   final String? generationMethod;
 
+  // ── Program provenance (Program Library integration) ──────────────────────
+  // The backend tags each program-sourced workout in the /today payload with
+  // these fields. They flow through [toWorkout] into `generation_metadata` so
+  // the codegen-locked [Workout] (no build_runner — see project_codegen_gotcha)
+  // can carry them to the carousel / active-workout banner via
+  // [WorkoutProgramContext].
+  final String? programId;
+  final String? programName;
+  final int? programWeek;
+
+  /// `primary` drives the home hero; `addon` stacks beneath it. Defaults to
+  /// `primary` for back-compat with untagged (AI / ad-hoc) workouts.
+  final String programSlot;
+  final String? assignmentId;
+  final int? programDurationWeeks;
+
   const TodayWorkoutSummary({
     required this.id,
     required this.name,
@@ -38,7 +54,19 @@ class TodayWorkoutSummary {
     required this.isCompleted,
     this.exercises = const [],
     this.generationMethod,
+    this.programId,
+    this.programName,
+    this.programWeek,
+    this.programSlot = 'primary',
+    this.assignmentId,
+    this.programDurationWeeks,
   });
+
+  /// True when this workout came from an enrolled program.
+  bool get isFromProgram => programId != null && programId!.isNotEmpty;
+
+  /// True when this is a stacked add-on (vs the primary plan for the day).
+  bool get isProgramAddon => programSlot.toLowerCase() == 'addon';
 
   /// Get formatted duration display (e.g., "45-60m" or "45m")
   String get formattedDurationShort {
@@ -60,6 +88,15 @@ class TodayWorkoutSummary {
         .map((e) => WorkoutExercise.fromJson(e as Map<String, dynamic>))
         .toList();
 
+    // Program tags can arrive as top-level snake_case keys (the /today row) or
+    // nested inside generation_metadata. Read top-level first, fall back to the
+    // nested blob.
+    final meta = json['generation_metadata'];
+    final metaMap = meta is Map ? Map<String, dynamic>.from(meta) : const {};
+    String? pick(String key) =>
+        (json[key] ?? metaMap[key])?.toString();
+    int? pickInt(String key) => _summaryInt(json[key] ?? metaMap[key]);
+
     return TodayWorkoutSummary(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? 'Workout',
@@ -78,7 +115,23 @@ class TodayWorkoutSummary {
       isCompleted: json['is_completed'] as bool? ?? false,
       exercises: exercises,
       generationMethod: json['generation_method'] as String?,
+      programId: pick('program_id'),
+      programName: pick('program_name'),
+      programWeek: pickInt('program_week'),
+      programSlot: pick('program_slot') ?? 'primary',
+      assignmentId: pick('assignment_id'),
+      programDurationWeeks:
+          pickInt('program_duration_weeks') ?? pickInt('duration_weeks'),
     );
+  }
+
+  /// Loose int coercion for the program tags (backend may emit num/str).
+  static int? _summaryInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v.trim());
+    return null;
   }
 
   Map<String, dynamic> toJson() => {
@@ -96,9 +149,21 @@ class TodayWorkoutSummary {
         'is_completed': isCompleted,
         'exercises': exercises.map((e) => e.toJson()).toList(),
         'generation_method': generationMethod,
+        if (programId != null) 'program_id': programId,
+        if (programName != null) 'program_name': programName,
+        if (programWeek != null) 'program_week': programWeek,
+        'program_slot': programSlot,
+        if (assignmentId != null) 'assignment_id': assignmentId,
+        if (programDurationWeeks != null)
+          'program_duration_weeks': programDurationWeeks,
       };
 
-  /// Convert to full Workout object for NextWorkoutCard compatibility
+  /// Convert to full Workout object for NextWorkoutCard compatibility.
+  ///
+  /// Program tags ride through `generation_metadata` (the codegen-locked
+  /// [Workout] can't grow new typed columns — see project_codegen_gotcha), so
+  /// [WorkoutProgramContextX.programContext] can read them on the carousel /
+  /// active-workout banner.
   Workout toWorkout() => Workout(
         id: id,
         name: name,
@@ -113,6 +178,17 @@ class TodayWorkoutSummary {
         // Pass the API's exercise count so it can be used as fallback
         knownExerciseCount: exerciseCount,
         generationMethod: generationMethod,
+        generationMetadata: isFromProgram
+            ? {
+                'program_id': programId,
+                if (programName != null) 'program_name': programName,
+                if (programWeek != null) 'program_week': programWeek,
+                'program_slot': programSlot,
+                if (assignmentId != null) 'assignment_id': assignmentId,
+                if (programDurationWeeks != null)
+                  'program_duration_weeks': programDurationWeeks,
+              }
+            : null,
       );
 }
 
@@ -149,6 +225,33 @@ class TodayWorkoutResponse {
   bool get hasDisplayableContent =>
       todayWorkout != null || nextWorkout != null || completedToday || restDayMessage != null;
 
+  /// Today's PRIMARY workout (the home hero). The backend marks the primary
+  /// plan via `program_slot != 'addon'` (or no slot at all for AI / ad-hoc).
+  /// Falls back to [todayWorkout] which is already the primary by contract.
+  TodayWorkoutSummary? get primaryTodayWorkout {
+    final t = todayWorkout;
+    if (t != null && !t.isProgramAddon) return t;
+    // If today_workout itself is an add-on (unusual), surface the first
+    // non-add-on extra as the primary instead.
+    for (final e in extraTodayWorkouts) {
+      if (!e.isProgramAddon) return e;
+    }
+    return t;
+  }
+
+  /// Today's ADD-ON workouts — program-sourced stacked sessions (e.g. a
+  /// 7-minute core add-on) that ride on top of the primary plan. Drawn from the
+  /// extra-today list plus a today_workout that happens to be an add-on.
+  List<TodayWorkoutSummary> get addonTodayWorkouts {
+    final out = <TodayWorkoutSummary>[];
+    final t = todayWorkout;
+    if (t != null && t.isProgramAddon) out.add(t);
+    for (final e in extraTodayWorkouts) {
+      if (e.isProgramAddon) out.add(e);
+    }
+    return out;
+  }
+
   const TodayWorkoutResponse({
     required this.hasWorkoutToday,
     this.todayWorkout,
@@ -167,6 +270,52 @@ class TodayWorkoutResponse {
   });
 
   factory TodayWorkoutResponse.fromJson(Map<String, dynamic> json) {
+    // Back-compat for a pure-LIST `workouts:[...]` payload (multi-assignment
+    // day). When present and the object-shaped today_workout/extra fields are
+    // absent, split the list into primary (first non-add-on, today-dated) +
+    // add-ons so the rest of the pipeline (carousel / cache) is unchanged.
+    final rawList = json['workouts'];
+    if (rawList is List &&
+        rawList.isNotEmpty &&
+        json['today_workout'] == null &&
+        json['extra_today_workouts'] == null) {
+      final all = rawList
+          .whereType<Map>()
+          .map((e) => TodayWorkoutSummary.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+      // Today's items only for the hero/add-on split; future ones become next.
+      final todays = all.where((w) => w.isToday).toList();
+      final future = all.where((w) => !w.isToday).toList();
+      TodayWorkoutSummary? primary;
+      final addons = <TodayWorkoutSummary>[];
+      for (final w in todays) {
+        if (!w.isProgramAddon && primary == null) {
+          primary = w;
+        } else {
+          addons.add(w);
+        }
+      }
+      // Pick the soonest future workout as `next` (the list is normally sorted).
+      final next = future.isNotEmpty ? future.first : null;
+      return TodayWorkoutResponse(
+        hasWorkoutToday: primary != null || addons.isNotEmpty,
+        todayWorkout: primary,
+        nextWorkout: next,
+        extraTodayWorkouts: addons,
+        isGenerating: json['is_generating'] as bool? ?? false,
+        generationMessage: json['generation_message'] as String?,
+        needsGeneration: json['needs_generation'] as bool? ?? false,
+        nextWorkoutDate: json['next_workout_date'] as String?,
+        gymProfileId: json['gym_profile_id'] as String?,
+        completedToday: json['completed_today'] as bool? ?? false,
+        completedWorkout: json['completed_workout'] != null
+            ? TodayWorkoutSummary.fromJson(
+                json['completed_workout'] as Map<String, dynamic>)
+            : null,
+        lastGenerationError: json['last_generation_error'] as String?,
+      );
+    }
+
     return TodayWorkoutResponse(
       hasWorkoutToday: json['has_workout_today'] as bool? ?? false,
       todayWorkout: json['today_workout'] != null
