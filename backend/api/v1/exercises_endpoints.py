@@ -597,6 +597,24 @@ async def create_composite_exercise(user_id: str, exercise: CompositeExerciseCre
         created = result.data[0]
         logger.info(f"✅ [Composite Exercise] Created '{exercise.name}' (ID: {created['id']})")
 
+        # Best-effort RAG indexing into `custom_exercise_library` so the AI
+        # Coach / workout generation can actually retrieve this combo (the
+        # exercise RAG search merges base + custom-per-user collections). Mirrors
+        # the simple custom-exercise create path. Non-fatal on failure.
+        try:
+            from services.exercise_rag.service import get_exercise_rag_service
+            rag_service = get_exercise_rag_service()
+            indexed = await rag_service.index_custom_exercise(created)
+            if indexed:
+                logger.info(f"✅ [Composite Exercise] RAG indexed combo {created['id']}")
+            else:
+                logger.warning(f"⚠️ [Composite Exercise] RAG indexing returned False for {created['id']}")
+        except Exception as rag_err:
+            logger.warning(
+                f"⚠️ [Composite Exercise] RAG indexing failed (non-fatal) for {created.get('id')}: {rag_err}",
+                exc_info=True,
+            )
+
         # Log to user context
         try:
             user_context_service = UserContextService()

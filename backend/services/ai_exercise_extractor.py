@@ -54,6 +54,11 @@ VALID_EXERCISE_TYPES = ["strength", "cardio", "warmup", "stretch", "mobility", "
 VALID_MOVEMENT_TYPES = ["static", "dynamic", "isometric"]
 VALID_DIFFICULTIES = ["beginner", "intermediate", "advanced"]
 
+# Composite/combo taxonomy — mirrors `exercises_endpoints.py::CompositeExerciseCreate.combo_type`
+# and `ComponentExercise`. A combo preview built here is shaped so the frontend can hand it
+# straight to `POST /custom-exercises/{user_id}/composite` (the persisting create endpoint).
+VALID_COMBO_TYPES = ["superset", "compound_set", "giant_set", "complex", "hybrid"]
+
 VALID_BODY_PARTS = [
     "chest", "back", "legs", "shoulders", "arms", "core",
     "cardio", "full body", "glutes", "calves",
@@ -114,6 +119,52 @@ _VIDEO_FRAME_PROMPT_TEMPLATE = (
 
 _TEXT_PROMPT_TEMPLATE = (
     "Given the exercise description: '{raw_text}'{hint_suffix}, infer and return a complete exercise record.\n"
+    "Return JSON with this exact shape:\n{schema}\n\n{rules}"
+)
+
+
+# --- Combo / composite-exercise prompt --------------------------------------
+# Shaped so the parsed result maps onto `CompositeExerciseCreate` (combo_type +
+# 2-5 component_exercises) for the frontend to review/edit before POSTing.
+
+_COMBO_SCHEMA_BLOCK = f"""{{
+  "name":                "<string — human-readable combo name, e.g. 'Push-up → Bench Press Superset'>",
+  "combo_type":          "<one of: {', '.join(VALID_COMBO_TYPES)}>",
+  "primary_muscle":      "<one of: {', '.join(VALID_MUSCLE_GROUPS)} — use 'full body' when components hit different regions>",
+  "secondary_muscles":   ["<optional, same vocabulary as primary_muscle>"],
+  "equipment":           "<one of: {', '.join(VALID_EQUIPMENT)}, OR the literal 'mixed' when components use different equipment>",
+  "custom_notes":        "<optional string — coaching note for the whole combo, or null>",
+  "component_exercises": [
+    {{
+      "name":             "<string — single movement name, Title Case>",
+      "order":            <int — 1-based position in the sequence>,
+      "reps":             <int 1-50, or null for a timed hold>,
+      "duration_seconds": <int 1-600, or null for a rep-based movement>,
+      "transition_note":  "<optional string — how to move into the next movement, or null>"
+    }}
+    // 2 to 5 components total, in performed order
+  ]
+}}"""
+
+_COMBO_RULES = f"""Rules:
+- Detect 2 to 5 distinct component movements performed in sequence. If you cannot find at least 2, return what you found anyway — never invent filler movements.
+- combo_type — pick the single best fit:
+    • superset      = 2 DIFFERENT exercises (often opposing/unrelated muscles) back-to-back.
+    • compound_set  = 2 exercises for the SAME muscle group back-to-back.
+    • giant_set     = 3 or more exercises performed in sequence.
+    • complex       = a barbell/dumbbell sequence where the weight NEVER leaves the hands between movements.
+    • hybrid        = 2 movements fused into one continuous motion (e.g. a curl-to-press, a thruster).
+- order: assign sequential 1-based positions in the order the movements are performed.
+- reps vs duration: infer reps for counted movements (default 10 if the user gave no count); use duration_seconds for timed holds/carries instead, with reps null.
+- equipment: set to the canonical value when ALL components share it; set to the literal "mixed" when components use different equipment.
+- primary_muscle: set to "full body" when the components span different regions; otherwise the shared dominant muscle.
+- Use the exact canonical vocabulary for combo_type, primary_muscle, secondary_muscles, and equipment (except equipment="mixed").
+- Return ONLY JSON — no markdown fences, no preamble.
+"""
+
+_COMBO_TEXT_PROMPT_TEMPLATE = (
+    "A user wants to build a combo / composite exercise from this description: '{raw_text}'{hint_suffix}.\n"
+    "Break it into its ordered component movements and classify the combination.\n"
     "Return JSON with this exact shape:\n{schema}\n\n{rules}"
 )
 
@@ -265,6 +316,107 @@ def _normalize_payload(raw: Dict[str, Any]) -> Dict[str, Any]:
         "is_warmup_suitable": bool(raw.get("is_warmup_suitable", exercise_type == "warmup")),
         "is_stretch_suitable": bool(raw.get("is_stretch_suitable", exercise_type == "stretch")),
         "is_cooldown_suitable": bool(raw.get("is_cooldown_suitable", False)),
+    }
+
+
+def _normalize_combo_payload(raw: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Normalize a Gemini combo JSON payload into the composite-exercise preview shape
+    the frontend feeds to `POST /custom-exercises/{user_id}/composite`
+    (`CompositeExerciseCreate`).
+
+    - combo_type: canonicalized to one of VALID_COMBO_TYPES (default "superset").
+    - primary_muscle: canonicalized to VALID_MUSCLE_GROUPS (default "full body").
+    - equipment: "mixed" passes through untouched; otherwise canonicalized to
+      VALID_EQUIPMENT with a "mixed" default (components differ → caller decides).
+    - secondary_muscles: filtered to VALID_MUSCLE_GROUPS, minus primary.
+    - component_exercises: 2-5 validated components with sequential 1-based order,
+      reps coerced to [1,50] (default 10 when no duration), duration to [1,600].
+
+    Raises ValueError (no silent fallback, per CLAUDE.md) if fewer than 2 valid
+    components survive validation.
+    """
+    # Normalize separators first — the model often writes "giant set"/"compound-set"
+    # where our vocab uses underscores ("giant_set"/"compound_set").
+    combo_type_raw = re.sub(r"[\s\-]+", "_", str(raw.get("combo_type") or "").strip().lower())
+    combo_type = _pick_canonical(combo_type_raw, VALID_COMBO_TYPES, "superset")
+    primary_muscle = _pick_canonical(raw.get("primary_muscle"), VALID_MUSCLE_GROUPS, "full body")
+
+    # Equipment: honor an explicit "mixed" from the model, else canonicalize.
+    equipment_raw = str(raw.get("equipment") or "").strip().lower()
+    if equipment_raw == "mixed":
+        equipment = "mixed"
+    else:
+        equipment = _pick_canonical(raw.get("equipment"), VALID_EQUIPMENT, "mixed")
+
+    secondary_muscles = [
+        m.lower() for m in _normalize_list(raw.get("secondary_muscles"))
+        if m.lower() in VALID_MUSCLE_GROUPS and m.lower() != primary_muscle
+    ]
+
+    raw_components = raw.get("component_exercises")
+    if not isinstance(raw_components, list):
+        raw_components = []
+
+    components: List[Dict[str, Any]] = []
+    for comp in raw_components:
+        if not isinstance(comp, dict):
+            continue
+        comp_name = (comp.get("name") or "").strip()
+        if not comp_name:
+            logger.warning("⚠️ [AiExerciseExtractor] combo component missing name — skipping")
+            continue
+
+        duration_seconds = _coerce_int(comp.get("duration_seconds"), 1, 600, None)
+        # Prefer reps unless the model explicitly marked this a timed hold.
+        if duration_seconds is not None and comp.get("reps") in (None, 0):
+            reps = None
+        else:
+            reps = _coerce_int(comp.get("reps"), 1, 50, 10)
+            duration_seconds = None
+
+        transition = comp.get("transition_note")
+        transition = transition.strip() if isinstance(transition, str) and transition.strip() else None
+
+        components.append({
+            "name": comp_name[:200],
+            "order": len(components) + 1,  # sequential, reassigned below for safety
+            "reps": reps,
+            "duration_seconds": duration_seconds,
+            "transition_note": transition,
+        })
+        if len(components) >= 5:
+            break
+
+    # Reassign sequential 1-based order (defensive — model order may be sparse/dup).
+    for i, comp in enumerate(components):
+        comp["order"] = i + 1
+
+    if len(components) < 2:
+        logger.error(
+            f"❌ [AiExerciseExtractor] combo extraction yielded {len(components)} valid "
+            f"component(s); need at least 2. Raw component count={len(raw_components)}"
+        )
+        raise ValueError(
+            "Could not identify at least 2 distinct movements for the combo. "
+            "Describe the sequence more explicitly (e.g. 'push-ups then bench press')."
+        )
+
+    custom_notes = raw.get("custom_notes")
+    custom_notes = custom_notes.strip() if isinstance(custom_notes, str) and custom_notes.strip() else None
+    if custom_notes and len(custom_notes) > 2000:
+        custom_notes = custom_notes[:1997] + "..."
+
+    name = (raw.get("name") or "").strip() or "Custom Combo"
+
+    return {
+        "name": name[:200],
+        "combo_type": combo_type,
+        "primary_muscle": primary_muscle,
+        "secondary_muscles": secondary_muscles,
+        "equipment": equipment,
+        "custom_notes": custom_notes,
+        "component_exercises": components,
     }
 
 
@@ -481,6 +633,59 @@ class AiExerciseExtractor:
         raw = _parse_json_strict(raw_response)
         payload = _normalize_payload(raw)
         logger.info(f"✅ [AiExerciseExtractor] text → '{payload['name']}' (equipment={payload['equipment']})")
+        return payload
+
+    async def extract_combo_from_text(
+        self,
+        raw_text: str,
+        user_hint: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Extract a combo / composite exercise from a free-text description.
+
+        e.g. "superset of push-ups then barbell bench press, 10 reps each" →
+        a structured preview with combo_type, primary/secondary muscles, equipment,
+        and 2-5 ordered component_exercises. The returned dict maps onto
+        `CompositeExerciseCreate` so the frontend can review/edit and POST it to
+        `POST /custom-exercises/{user_id}/composite` (this method does NOT persist).
+
+        Raises ValueError if the description yields fewer than 2 valid components.
+        """
+        if not raw_text or not raw_text.strip():
+            raise ValueError("extract_combo_from_text requires non-empty raw_text")
+
+        logger.info(f"🤖 [AiExerciseExtractor] extract_combo_from_text '{raw_text[:80]}...'")
+
+        hint_suffix = f" (user hint: '{user_hint.strip()}')" if user_hint and user_hint.strip() else ""
+        prompt = _COMBO_TEXT_PROMPT_TEMPLATE.format(
+            raw_text=raw_text.strip().replace("'", "\\'"),
+            hint_suffix=hint_suffix,
+            schema=_COMBO_SCHEMA_BLOCK,
+            rules=_COMBO_RULES,
+        )
+
+        response = await gemini_generate_with_retry(
+            model=self._settings.gemini_model,
+            contents=[prompt],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.2,
+                max_output_tokens=1500,
+            ),
+            method_name="ai_exercise_extractor.combo_text",
+        )
+
+        raw_response = getattr(response, "text", "") or ""
+        if not raw_response.strip():
+            raise ValueError("Gemini returned empty response for combo extraction")
+
+        raw = _parse_json_strict(raw_response)
+        payload = _normalize_combo_payload(raw)
+        logger.info(
+            f"🏋️ [AiExerciseExtractor] combo → '{payload['name']}' "
+            f"(type={payload['combo_type']}, components={len(payload['component_exercises'])}, "
+            f"equipment={payload['equipment']})"
+        )
         return payload
 
     # --------------------------------------------------------------- Internals

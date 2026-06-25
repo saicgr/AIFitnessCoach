@@ -156,6 +156,35 @@ class AnalyzeTextRequest(BaseModel):
     raw_text: str = Field(..., description="Exercise name or short description (e.g. 'Kettlebell torso rotation')")
 
 
+class AnalyzeComboRequest(BaseModel):
+    """Request to build a combo/composite-exercise preview from a typed description."""
+    raw_text: str = Field(
+        ..., min_length=10,
+        description="Combo description, e.g. 'superset of push-ups then barbell bench press, 10 reps each'",
+    )
+    user_hint: Optional[str] = Field(
+        default=None, description="Optional disambiguation hint (e.g. 'lower body finisher')"
+    )
+
+
+class AnalyzeComboResponse(BaseModel):
+    """Combo preview shaped for the existing composite-create endpoint.
+
+    The frontend shows these fields for review/edit, then POSTs them (with sets/
+    rest/tags the user picks) to `POST /custom-exercises/{user_id}/composite`.
+    Nothing is persisted by the analyze step.
+    """
+    name: str = Field(..., description="Human-readable combo name")
+    combo_type: str = Field(..., description="superset | compound_set | giant_set | complex | hybrid")
+    primary_muscle: str = Field(..., description="Primary muscle group, or 'full body' when mixed")
+    secondary_muscles: List[str] = Field(default_factory=list)
+    equipment: str = Field(..., description="Canonical equipment, or 'mixed' when components differ")
+    custom_notes: Optional[str] = None
+    component_exercises: List[Dict[str, Any]] = Field(
+        ..., description="2-5 ordered components: {name, order, reps, duration_seconds, transition_note}"
+    )
+
+
 class ImportExerciseRequest(BaseModel):
     """
     Request body for POST /custom-exercises/{user_id}/import.
@@ -629,6 +658,49 @@ async def analyze_exercise_text(
         raise HTTPException(status_code=502, detail=str(ve))
     except Exception as e:
         logger.error(f"❌ Failed to fill exercise from text: {e}", exc_info=True)
+        raise safe_internal_error(e, "custom_exercises")
+
+
+@router.post("/{user_id}/analyze-combo", response_model=AnalyzeComboResponse)
+async def analyze_exercise_combo(
+    user_id: str,
+    request: AnalyzeComboRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Build a combo/composite-exercise preview from a typed description WITHOUT persisting.
+
+    The "Build with AI" combo flow: the user describes a sequence (e.g. "superset of
+    push-ups then barbell bench press, 10 reps each") and we return a structured combo
+    (combo_type + 2-5 ordered components + muscles/equipment) for them to review and
+    edit before saving via POST /{user_id}/composite. Synchronous, ~1-2s. Mirrors
+    analyze-text.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    raw_text = (request.raw_text or "").strip()
+    if not raw_text:
+        raise HTTPException(status_code=400, detail="raw_text is required")
+
+    try:
+        logger.info(f"🏋️ Building combo from text for user {user_id}: {raw_text!r}")
+        extractor = get_ai_exercise_extractor()
+        payload = await extractor.extract_combo_from_text(
+            raw_text=raw_text, user_hint=request.user_hint
+        )
+        logger.info(
+            f"✅ Combo built: '{payload['name']}' "
+            f"({payload['combo_type']}, {len(payload['component_exercises'])} components)"
+        )
+        return AnalyzeComboResponse(**payload)
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        # Too-few-components / empty model output — a client-correctable input problem.
+        logger.warning(f"⚠️ Combo extraction rejected input: {ve}")
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as e:
+        logger.error(f"❌ Failed to build combo from text: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
