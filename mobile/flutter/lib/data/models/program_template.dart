@@ -614,6 +614,41 @@ class ProgramTemplate {
 }
 
 // ---------------------------------------------------------------------------
+// ProgramPhase — one authored block on the detail-page Overview (mig 2286).
+// ---------------------------------------------------------------------------
+
+class ProgramPhase {
+  final int index;
+  final String title;
+  final String? subtitle;
+  final int? weekStart;
+  final int? weekEnd;
+
+  const ProgramPhase({
+    required this.index,
+    required this.title,
+    this.subtitle,
+    this.weekStart,
+    this.weekEnd,
+  });
+
+  factory ProgramPhase.fromJson(Map<String, dynamic> json) => ProgramPhase(
+        index: _asInt(json['index']) ?? 0,
+        title: _asString(json['title'], fallback: 'Phase'),
+        subtitle: json['subtitle'] as String?,
+        weekStart: _asInt(json['week_start']),
+        weekEnd: _asInt(json['week_end']),
+      );
+
+  /// "Week 1–2" / "Week 6" / null when no range.
+  String? get weekLabel {
+    if (weekStart == null) return null;
+    if (weekEnd == null || weekEnd == weekStart) return 'Week $weekStart';
+    return 'Week $weekStart–$weekEnd';
+  }
+}
+
+// ---------------------------------------------------------------------------
 // ProgramLibraryCard — lightweight `GET /library` card DTO.
 // ---------------------------------------------------------------------------
 
@@ -650,6 +685,14 @@ class ProgramLibraryCard {
   final String? equipmentSummary;
   final String? progressionNote;
 
+  /// Authored phase blocks (mig 2286) for the detail Overview. Empty when the
+  /// program has none (the detail page derives a fallback split).
+  final List<ProgramPhase> phases;
+
+  /// Distinct users who have started this program (real count from
+  /// user_program_assignments). Null when not hydrated (card payloads).
+  final int? joinedCount;
+
   /// Which catalog this card came from — `library` (the curated 259-row
   /// `programs` table) or `branded` (the branded-program catalog, whose ids
   /// are namespaced `branded:<uuid>`). Defaults to `library` for older
@@ -680,6 +723,8 @@ class ProgramLibraryCard {
     this.whoNotFor,
     this.equipmentSummary,
     this.progressionNote,
+    this.phases = const [],
+    this.joinedCount,
     this.source = 'library',
     this.previewAvailable = true,
   });
@@ -703,6 +748,13 @@ class ProgramLibraryCard {
       whoNotFor: json['who_not_for'] as String?,
       equipmentSummary: json['equipment_summary'] as String?,
       progressionNote: json['progression_note'] as String?,
+      phases: (json['phases'] is List)
+          ? (json['phases'] as List)
+              .whereType<Map>()
+              .map((p) => ProgramPhase.fromJson(_asMap(p)))
+              .toList()
+          : const [],
+      joinedCount: _asInt(json['joined_count']),
       source: _asString(json['source'], fallback: 'library'),
       previewAvailable: _asBool(json['preview_available'], fallback: true),
     );

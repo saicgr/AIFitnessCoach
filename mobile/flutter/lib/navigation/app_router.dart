@@ -78,6 +78,7 @@ import '../screens/workout/workout_summary_screen_v2.dart';
 import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/workout/custom_workout_builder_screen.dart';
 import '../screens/workout/exercise_progressions_screen.dart';
+import '../screens/workout/program_detail_screen.dart';
 import '../screens/workout/program_library_screen.dart';
 import '../screens/workout/program_template_builder_screen.dart';
 import '../screens/workout/template_list_screen.dart';

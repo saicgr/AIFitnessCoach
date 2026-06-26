@@ -15,6 +15,7 @@ import '../../data/models/program_template.dart';
 import '../../data/models/user_program_assignment.dart';
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
+import 'program_detail_screen.dart';
 import 'program_template_builder_screen.dart';
 import 'widgets/program_library_card.dart';
 
@@ -25,6 +26,24 @@ import '../../l10n/generated/app_localizations.dart';
 class ProgramLibraryRoute {
   ProgramLibraryRoute._();
   static const String path = '/workout/program-library';
+}
+
+/// Public entry point to the unified Start flow (start date + weekdays + slot
+/// → `POST /assign`). Exposed so the full-screen program detail page can hand
+/// off to the exact same sheet the library uses.
+class ProgramLibraryStartFlow {
+  ProgramLibraryStartFlow._();
+
+  /// Open the Start flow sheet for [card]. Same sheet the hero/cards use.
+  static void open(BuildContext context, ProgramLibraryCard card) {
+    HapticService.light();
+    showGlassSheet<void>(
+      context: context,
+      builder: (_) => GlassSheet(
+        child: _StartProgramFlowSheet(card: card),
+      ),
+    );
+  }
 }
 
 /// Browse the curated 259-program library — signature-v2 redesign.
@@ -126,7 +145,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _deepLinkOpened) return;
         _deepLinkOpened = true;
-        _openPreviewById(id);
+        _openDetailById(id);
       });
     }
   }
@@ -138,36 +157,11 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     super.dispose();
   }
 
-  /// Resolve a program id to a card and open its PREVIEW sheet. The structured
-  /// detail (name/description/category/duration) is fetched from the preview
-  /// route; editorial card fields aren't in that payload, so the sheet renders
-  /// from the resolved name/description. On failure, a transient toast — the
-  /// browse surface stays usable (never a dead-end).
-  Future<void> _openPreviewById(String id) async {
-    final repo = ref.read(programTemplateRepositoryProvider);
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final template = await repo.previewLibraryProgram(id);
-      if (!mounted) return;
-      final card = ProgramLibraryCard(
-        id: id,
-        programName: template.name,
-        description: template.description,
-        programCategory: template.category,
-        durationWeeks: template.durationWeeks,
-        // The id may be branded — preserve the source so the sheet picks the
-        // right Start path.
-        source: id.startsWith('branded:') ? 'branded' : 'library',
-      );
-      _openPreview(card);
-    } catch (_) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(
-            content: Text('Could not open that program. Browse the library '
-                'to find it.')),
-      );
-    }
+  /// Deep-link: push the full-screen detail page for [id]. The detail page
+  /// fetches `GET /library/{id}` itself (editorial card + phases + sample
+  /// week), so we don't pre-resolve a card here.
+  void _openDetailById(String id) {
+    context.push(ProgramDetailRoute.path, extra: {'programId': id});
   }
 
   // -------------------------------------------------------------------------
@@ -401,15 +395,20 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     // Cap the carousel so it stays a curated "of the week" lane, not a feed.
     final cards = programs.take(6).toList(growable: false);
     final page = _heroPage.clamp(0, cards.length - 1);
+    // Cinematic hero (mockup #13): the striped panel is ~46% of screen height;
+    // with the kicker + button row + dots the whole block lands near 56-60%.
+    final screenH = MediaQuery.of(context).size.height;
+    final panelH = (screenH * 0.46).clamp(300.0, 460.0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 9),
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
           child: ZSectionKicker(label: kicker),
         ),
         SizedBox(
-          height: 232,
+          height: panelH,
           child: PageView.builder(
             controller: _heroController,
             itemCount: cards.length,
@@ -418,21 +417,14 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
               final p = cards[i];
               return Padding(
                 padding: EdgeInsets.only(
-                  left: i == 0 ? 18 : 6,
-                  right: i == cards.length - 1 ? 18 : 6,
+                  left: i == 0 ? 18 : 7,
+                  right: i == cards.length - 1 ? 18 : 7,
                 ),
-                child: ZHeroCard(
-                  title: p.displayName,
-                  description: p.tagline?.trim().isNotEmpty == true
-                      ? p.tagline
-                      : p.description,
-                  category: p.programCategory,
-                  difficultyLevel: p.difficultyLevel,
-                  meta: _heroMeta(p),
-                  primaryLabel: 'START PROGRAM',
-                  onPrimary: () => _startProgram(p),
-                  ghostLabel: 'PREVIEW',
-                  onGhost: () => _openPreview(p),
+                child: _BigHeroCard(
+                  card: p,
+                  kicker: kicker,
+                  onStart: () => _startProgram(p),
+                  onPreview: () => _openPreview(p),
                   onTap: () => _openPreview(p),
                 ),
               );
@@ -440,7 +432,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           ),
         ),
         if (cards.length > 1) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           ZCarouselDots(
             count: cards.length,
             index: page,
@@ -459,6 +451,8 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   }
 
   Widget _heroSkeleton() {
+    final screenH = MediaQuery.of(context).size.height;
+    final panelH = (screenH * 0.46).clamp(300.0, 460.0);
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
       child: Column(
@@ -467,29 +461,16 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           const _ShimmerBox(width: 160, height: 13),
           const SizedBox(height: 12),
           Container(
-            height: 232,
+            height: panelH,
             decoration: BoxDecoration(
               color: AppColors.surface2,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(color: AppColors.cardBorder),
             ),
           ),
         ],
       ),
     );
-  }
-
-  /// `LEVEL · wk WK · n×/WK · min MIN` — Space Mono meta (rendered by the card).
-  String _heroMeta(ProgramLibraryCard p) {
-    final parts = <String>[];
-    final lvl = p.difficultyLevel?.trim();
-    if (lvl != null && lvl.isNotEmpty) parts.add(lvl.toUpperCase());
-    if (p.durationWeeks != null) parts.add('${p.durationWeeks} WK');
-    if (p.sessionsPerWeek != null) parts.add('${p.sessionsPerWeek}×/WK');
-    if (p.sessionDurationMinutes != null) {
-      parts.add('${p.sessionDurationMinutes} MIN');
-    }
-    return parts.join(' · ');
   }
 
   // -------------------------------------------------------------------------
@@ -989,22 +970,13 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   // Preview sheet + Start flow + creation entry points.
   // -------------------------------------------------------------------------
 
-  /// PREVIEW (card tap / hero ghost) → rich READ-ONLY detail sheet with a
-  /// persistent "Start program" button at the bottom.
+  /// PREVIEW (card tap / hero ghost) → push the full-screen program detail
+  /// page (mockup #14). The tapped [card] is passed through for an instant
+  /// header render while the richer detail (phases / joined_count / sample
+  /// week) loads.
   void _openPreview(ProgramLibraryCard card) {
     HapticService.light();
-    showGlassSheet<void>(
-      context: context,
-      // GlassSheet draws the single drag handle; the inner sheet draws none
-      // (avoids the double-handle bug). Same pattern as the filter sheet.
-      builder: (_) => GlassSheet(
-        child: _ProgramPreviewSheet(
-          card: card,
-          onStart: () => _openStartFlow(card),
-          onCustomize: () => _openCustomizeBuilder(card),
-        ),
-      ),
-    );
+    context.push(ProgramDetailRoute.path, extra: {'card': card});
   }
 
   /// START PROGRAM (hero primary) → go straight to the Start flow sheet
@@ -1022,32 +994,6 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         child: _StartProgramFlowSheet(card: card),
       ),
     );
-  }
-
-  /// "Customize" from the preview → import the program into an editable
-  /// template and open the builder (the prior "Import & customize" behavior).
-  Future<void> _openCustomizeBuilder(ProgramLibraryCard card) async {
-    final repo = ref.read(programTemplateRepositoryProvider);
-    final messenger = ScaffoldMessenger.of(context);
-    final router = GoRouter.of(context);
-    final navigator = Navigator.of(context);
-    try {
-      final template = await repo.importFromProgram(card.id);
-      if (!mounted) return;
-      // Close the preview sheet, then open the builder pre-filled.
-      navigator.pop();
-      router.push(ProgramBuilderRoute.path, extra: template);
-    } on ProgramParseException catch (e) {
-      if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (_) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-            content: Text(
-                AppLocalizations.of(context).programLibraryCouldNotImportThis)),
-      );
-    }
   }
 
   /// Add (＋) → builder "build from scratch".
@@ -1629,496 +1575,6 @@ class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
             ),
           ),
           Wrap(spacing: 8, runSpacing: 8, children: chips),
-        ],
-      ),
-    );
-  }
-}
-
-// ===========================================================================
-// Preview sheet — rich READ-ONLY program detail (point #3 PREVIEW).
-//
-// Editorial name + tagline, who-for / who-not-for, equipment, a plain-English
-// progression note, and a "Sample week" expandable (the day-by-day from the
-// preview payload). A persistent "Start program" button sits at the bottom and
-// hands off to the Start flow; a quieter "Customize in builder" link imports
-// the program into an editable template. No data is mutated here.
-// ===========================================================================
-
-class _ProgramPreviewSheet extends ConsumerStatefulWidget {
-  final ProgramLibraryCard card;
-
-  /// Opens the Start flow (start date + weekdays + slot). Wired by the screen.
-  final VoidCallback onStart;
-
-  /// Imports the program into an editable template and opens the builder.
-  final VoidCallback onCustomize;
-
-  const _ProgramPreviewSheet({
-    required this.card,
-    required this.onStart,
-    required this.onCustomize,
-  });
-
-  @override
-  ConsumerState<_ProgramPreviewSheet> createState() =>
-      _ProgramPreviewSheetState();
-}
-
-class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
-  Future<ProgramTemplate>? _preview;
-  bool _sampleWeekOpen = false;
-
-  /// True when this is a branded card the backend told us has no normalizable
-  /// day structure — we skip the structured-preview fetch entirely.
-  bool get _previewUnavailable =>
-      widget.card.isBranded && !widget.card.previewAvailable;
-
-  @override
-  void initState() {
-    super.initState();
-    if (!_previewUnavailable) {
-      _preview = ref
-          .read(programTemplateRepositoryProvider)
-          .previewLibraryProgram(widget.card.id);
-    }
-  }
-
-  void _retryPreview() {
-    setState(() {
-      _preview = ref
-          .read(programTemplateRepositoryProvider)
-          .previewLibraryProgram(widget.card.id);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final card = widget.card;
-    return DraggableScrollableSheet(
-      initialChildSize: 0.82,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-          ),
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                  children: [
-                    // Eyebrow — category / celebrity.
-                    Text(
-                      ((card.celebrityName ?? '').trim().isNotEmpty
-                              ? card.celebrityName!
-                              : (card.programCategory ?? 'PROGRAM'))
-                          .toUpperCase(),
-                      style: ZType.lbl(11,
-                          color: AppColors.orange, letterSpacing: 2.0),
-                    ),
-                    const SizedBox(height: 6),
-                    // Editorial display name.
-                    Text(
-                      card.displayName.toUpperCase(),
-                      style: ZType.disp(26, color: AppColors.textPrimary),
-                    ),
-                    // Tagline (editorial) → description fallback.
-                    if ((card.tagline ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        card.tagline!.trim(),
-                        style:
-                            ZType.ser(14, color: AppColors.textSecondary),
-                      ),
-                    ] else if ((card.description ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        card.description!.trim(),
-                        style:
-                            ZType.ser(13, color: AppColors.textSecondary),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    _cardStatsRow(card),
-
-                    // Who-for / who-not-for.
-                    if ((card.whoFor ?? '').trim().isNotEmpty)
-                      _PreviewNote(
-                        icon: Icons.check_circle_outline_rounded,
-                        tint: const Color(0xFF2ECC71),
-                        label: 'WHO IT IS FOR',
-                        body: card.whoFor!.trim(),
-                      ),
-                    if ((card.whoNotFor ?? '').trim().isNotEmpty)
-                      _PreviewNote(
-                        icon: Icons.do_not_disturb_on_outlined,
-                        tint: const Color(0xFFEF4444),
-                        label: 'WHO IT IS NOT FOR',
-                        body: card.whoNotFor!.trim(),
-                      ),
-                    if ((card.equipmentSummary ?? '').trim().isNotEmpty)
-                      _PreviewNote(
-                        icon: Icons.fitness_center_rounded,
-                        tint: AppColors.orange,
-                        label: 'EQUIPMENT',
-                        body: card.equipmentSummary!.trim(),
-                      ),
-                    if ((card.progressionNote ?? '').trim().isNotEmpty)
-                      _PreviewNote(
-                        icon: Icons.trending_up_rounded,
-                        tint: const Color(0xFF38BDF8),
-                        label: 'HOW IT PROGRESSES',
-                        body: card.progressionNote!.trim(),
-                      ),
-
-                    const SizedBox(height: 8),
-                    _buildSampleWeek(),
-                  ],
-                ),
-              ),
-              _buildBottomBar(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// A few mini-stats from the card-level data (no fetch required).
-  Widget _cardStatsRow(ProgramLibraryCard card) {
-    final stats = <Widget>[];
-    if (card.difficultyLevel != null &&
-        card.difficultyLevel!.trim().isNotEmpty) {
-      stats.add(_miniStat(
-          Icons.bolt_rounded, card.difficultyLevel!.trim()));
-    }
-    if (card.durationWeeks != null && card.durationWeeks! > 0) {
-      stats.add(_miniStat(Icons.event_rounded, '${card.durationWeeks} weeks'));
-    }
-    if (card.sessionsPerWeek != null && card.sessionsPerWeek! > 0) {
-      stats.add(_miniStat(
-          Icons.repeat_rounded, '${card.sessionsPerWeek}×/week'));
-    }
-    if (card.sessionDurationMinutes != null &&
-        card.sessionDurationMinutes! > 0) {
-      stats.add(_miniStat(
-          Icons.timer_outlined, '${card.sessionDurationMinutes} min'));
-    }
-    if (stats.isEmpty) return const SizedBox.shrink();
-    return Wrap(spacing: 10, runSpacing: 8, children: stats);
-  }
-
-  Widget _miniStat(IconData icon, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppColors.textMuted),
-        const SizedBox(width: 4),
-        Text(label, style: ZType.data(11, color: AppColors.textMuted)),
-      ],
-    );
-  }
-
-  /// "Sample week" expandable — the day-by-day from the structured preview.
-  Widget _buildSampleWeek() {
-    if (_previewUnavailable) {
-      return Container(
-        margin: const EdgeInsets.only(top: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface2,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.info_outline_rounded,
-                size: 16, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'A day-by-day preview is not available for this program — you '
-                'can still start it.',
-                style: ZType.sans(13,
-                    color: AppColors.textSecondary, weight: FontWeight.w500),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        GestureDetector(
-          onTap: () {
-            HapticService.selection();
-            setState(() => _sampleWeekOpen = !_sampleWeekOpen);
-          },
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              children: [
-                Text(
-                  'SAMPLE WEEK',
-                  style: ZType.lbl(13,
-                      color: AppColors.textPrimary, letterSpacing: 1.8),
-                ),
-                const Spacer(),
-                Icon(
-                  _sampleWeekOpen
-                      ? Icons.expand_less_rounded
-                      : Icons.expand_more_rounded,
-                  color: AppColors.textSecondary,
-                  size: 22,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (_sampleWeekOpen)
-          FutureBuilder<ProgramTemplate>(
-            future: _preview,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(
-                    child: CircularProgressIndicator(color: AppColors.orange),
-                  ),
-                );
-              }
-              if (snapshot.hasError) {
-                return _ErrorState(
-                  message: 'Could not load the sample week.',
-                  onRetry: _retryPreview,
-                );
-              }
-              final template = snapshot.data!;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      children: [
-                        _miniStat(Icons.event_rounded,
-                            '${template.weekLength}-day cycle'),
-                        _miniStat(Icons.fitness_center_rounded,
-                            '${template.trainingDayCount} training days'),
-                        _miniStat(Icons.list_alt_rounded,
-                            '${template.totalExercises} exercises'),
-                      ],
-                    ),
-                  ),
-                  for (final day in template.days) _DayPreviewTile(day: day),
-                ],
-              );
-            },
-          ),
-      ],
-    );
-  }
-
-  Widget _buildBottomBar() {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.orange,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  widget.onStart();
-                },
-                icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                label: Text(
-                  'START PROGRAM',
-                  style: ZType.lbl(14,
-                      color: Colors.white,
-                      weight: FontWeight.w800,
-                      letterSpacing: 2.0),
-                ),
-              ),
-            ),
-            // Customize is only meaningful for importable (non-branded-only)
-            // programs — the builder needs a normalizable structure.
-            if (!_previewUnavailable) ...[
-              const SizedBox(height: 6),
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  widget.onCustomize();
-                },
-                icon: const Icon(Icons.tune_rounded,
-                    size: 16, color: AppColors.textSecondary),
-                label: Text(
-                  'Customize in builder',
-                  style: ZType.sans(13,
-                      color: AppColors.textSecondary, weight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A labeled note block (who-for / equipment / progression) in the preview.
-class _PreviewNote extends StatelessWidget {
-  final IconData icon;
-  final Color tint;
-  final String label;
-  final String body;
-
-  const _PreviewNote({
-    required this.icon,
-    required this.tint,
-    required this.label,
-    required this.body,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: tint.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Icon(icon, size: 16, color: tint),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: ZType.lbl(10.5,
-                      color: AppColors.textMuted, letterSpacing: 1.6),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  body,
-                  style: ZType.sans(13.5,
-                      color: AppColors.textPrimary,
-                      weight: FontWeight.w500,
-                      height: 1.35),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One day row inside the preview sheet.
-class _DayPreviewTile extends StatelessWidget {
-  final ProgramDay day;
-
-  const _DayPreviewTile({required this.day});
-
-  @override
-  Widget build(BuildContext context) {
-    if (day.effectivelyRest) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface2,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.bedtime_outlined,
-                size: 16, color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Text(
-              AppLocalizations.of(context)
-                  .programLibraryScreenRest(day.dayName),
-              style: ZType.sans(13,
-                  color: AppColors.textSecondary, weight: FontWeight.w600),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            day.dayName.toUpperCase(),
-            style: ZType.lbl(13,
-                color: AppColors.textPrimary, letterSpacing: 1.2),
-          ),
-          const SizedBox(height: 8),
-          for (final ex in day.exercises)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      ex.name,
-                      style: ZType.sans(13,
-                          color: AppColors.textPrimary,
-                          weight: FontWeight.w500),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppLocalizations.of(context)
-                        .programLibraryScreenValue(ex.sets, ex.repsLabel()),
-                    style: ZType.data(11, color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
@@ -3203,4 +2659,272 @@ class _AiEntryRow extends StatelessWidget {
       ),
     );
   }
+}
+
+// ===========================================================================
+// Big hero card — the cinematic "RECOMMENDED FOR YOU" carousel card (mockup
+// #13). A full-bleed diagonal-striped panel (no image) with a RECOMMENDED
+// ribbon top-left, a difficulty pill top-right, a big Anton title low on the
+// panel + tagline + stat chips; a full-width orange START PROGRAM + outline
+// PREVIEW below the panel.
+// ===========================================================================
+
+class _BigHeroCard extends StatelessWidget {
+  final ProgramLibraryCard card;
+  final String kicker;
+  final VoidCallback onStart;
+  final VoidCallback onPreview;
+  final VoidCallback onTap;
+
+  const _BigHeroCard({
+    required this.card,
+    required this.kicker,
+    required this.onStart,
+    required this.onPreview,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = categoryTheme(card.programCategory);
+    final hasDifficulty =
+        card.difficultyLevel != null && card.difficultyLevel!.trim().isNotEmpty;
+    final subtitle = (card.tagline?.trim().isNotEmpty == true)
+        ? card.tagline!.trim()
+        : (card.description ?? '').trim();
+    final ribbon = kicker.toLowerCase().contains('recommend')
+        ? 'RECOMMENDED'
+        : kicker.toUpperCase();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // The striped panel — fills the remaining height.
+        Expanded(
+          child: GestureDetector(
+            onTap: onTap,
+            behavior: HitTestBehavior.opaque,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(gradient: theme.headerGradient),
+                  ),
+                  CustomPaint(
+                    painter: _HeroStripePainter(
+                      color: Colors.white.withValues(alpha: 0.05),
+                    ),
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0xCC000000)],
+                        stops: [0.4, 1.0],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            _HeroRibbon(label: ribbon),
+                            const Spacer(),
+                            if (hasDifficulty)
+                              _HeroDifficultyPill(level: card.difficultyLevel!),
+                          ],
+                        ),
+                        const Spacer(),
+                        Text(
+                          card.displayName.toUpperCase(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: ZType.disp(38, color: AppColors.textPrimary),
+                        ),
+                        if (subtitle.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            subtitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                ZType.ser(14, color: AppColors.textSecondary),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        _buildStatChips(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Buttons below the panel.
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.orange,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: onStart,
+                child: Text(
+                  'START PROGRAM',
+                  style: ZType.lbl(13,
+                      color: Colors.white,
+                      weight: FontWeight.w800,
+                      letterSpacing: 1.8),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 2,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textPrimary,
+                  side: const BorderSide(color: AppColors.cardBorder),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: onPreview,
+                child: Text(
+                  'PREVIEW',
+                  style: ZType.lbl(13,
+                      color: AppColors.textSecondary, letterSpacing: 1.8),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatChips() {
+    final chips = <Widget>[];
+    if (card.durationWeeks != null && card.durationWeeks! > 0) {
+      chips.add(_HeroStatChip(label: '${card.durationWeeks} WK'));
+    }
+    if (card.sessionsPerWeek != null && card.sessionsPerWeek! > 0) {
+      chips.add(_HeroStatChip(label: '${card.sessionsPerWeek}×/WK'));
+    }
+    if (card.sessionDurationMinutes != null &&
+        card.sessionDurationMinutes! > 0) {
+      chips.add(_HeroStatChip(label: '${card.sessionDurationMinutes} MIN'));
+    }
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Wrap(spacing: 8, runSpacing: 8, children: chips);
+  }
+}
+
+class _HeroRibbon extends StatelessWidget {
+  final String label;
+  const _HeroRibbon({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.orange,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        label,
+        style: ZType.lbl(11, color: Colors.white, letterSpacing: 1.6),
+      ),
+    );
+  }
+}
+
+class _HeroDifficultyPill extends StatelessWidget {
+  final String level;
+  const _HeroDifficultyPill({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = programDifficultyColor(level);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 7),
+          Text(level.toUpperCase(),
+              style: ZType.lbl(10.5,
+                  color: AppColors.textPrimary, letterSpacing: 1.4)),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroStatChip extends StatelessWidget {
+  final String label;
+  const _HeroStatChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Text(label, style: ZType.data(11, color: AppColors.textPrimary)),
+    );
+  }
+}
+
+/// Diagonal hatch lines over the hero panel — matches the detail-page header.
+class _HeroStripePainter extends CustomPainter {
+  final Color color;
+  const _HeroStripePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2;
+    const gap = 18.0;
+    for (double x = -size.height; x < size.width; x += gap) {
+      canvas.drawLine(
+        Offset(x, size.height),
+        Offset(x + size.height, 0),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_HeroStripePainter oldDelegate) =>
+      oldDelegate.color != color;
 }

@@ -300,6 +300,31 @@ class ProgramTemplateRepository {
     );
   }
 
+  /// GET /library/{program_id} — the SAME endpoint as [previewLibraryProgram],
+  /// but parsed into BOTH the editorial card (name/tagline/who-for/phases/
+  /// joined_count) and the normalized sample-week template (name/days). The
+  /// detail page needs both: the card-level editorial + phase content for the
+  /// Overview tab, and the day-by-day for the Schedule tab. One request, two
+  /// views over the same payload (the backend merges card fields + `**normalized`).
+  Future<({ProgramLibraryCard card, ProgramTemplate sampleWeek})>
+      getLibraryDetail(String programId) async {
+    debugPrint('🏋️ [ProgramTemplate] getLibraryDetail | id=$programId');
+    final resp = await _client.get('$_base/library/$programId');
+    final data = Map<String, dynamic>.from(resp.data as Map);
+    // The detail payload carries the id as `program_id` (not `id`), so seed the
+    // id the card model reads — preserving the caller's prefixed/branded form
+    // — before parsing. Don't clobber an `id` if the backend ever sends one.
+    final cardData = Map<String, dynamic>.from(data);
+    cardData.putIfAbsent('id', () => data['program_id'] ?? programId);
+    if ((cardData['id']?.toString() ?? '').isEmpty) {
+      cardData['id'] = programId;
+    }
+    return (
+      card: ProgramLibraryCard.fromJson(cardData),
+      sampleWeek: ProgramTemplate.fromJson(data),
+    );
+  }
+
   /// POST /from-program/{program_id} — clone a library program into a NEW
   /// editable saved template. Returns the saved row.
   ///

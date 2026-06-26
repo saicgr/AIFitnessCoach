@@ -57,13 +57,37 @@ List<RouteBase> _workoutRoutes() => [
       // ("program-library" etc.) aren't matched as a workoutId param.
 
       // Program library — browse the 259-program curated library.
-      // `?programId=<id>` deep-links straight to a program's PREVIEW detail
-      // sheet (used by the coach's "View program" chat card).
+      // `?programId=<id>` deep-links straight to the full-screen program detail
+      // page (used by the coach's "View program" chat card).
       GoRoute(
         path: '/workout/program-library',
         builder: (context, state) {
           final programId = state.uri.queryParameters['programId'];
           return ProgramLibraryScreen(initialProgramId: programId);
+        },
+      ),
+
+      // Full-screen program detail page (mockup #14). `extra` accepts either
+      // `{card: ProgramLibraryCard}` (tapped in the library — instant header)
+      // or `{programId: String}` (deep-link). Declared BEFORE `/workout/:id`
+      // so "program-detail" is a static segment, not a workoutId param.
+      GoRoute(
+        path: '/workout/program-detail',
+        builder: (context, state) {
+          final extra = state.extra;
+          ProgramLibraryCard? card;
+          String? programId;
+          if (extra is Map) {
+            final c = extra['card'];
+            if (c is ProgramLibraryCard) card = c;
+            final id = extra['programId'];
+            if (id is String) programId = id;
+          }
+          if (card == null && (programId == null || programId.isEmpty)) {
+            // Defensive: nothing to show — bounce back to the library.
+            return const ProgramLibraryScreen();
+          }
+          return ProgramDetailScreen(card: card, programId: programId);
         },
       ),
 
