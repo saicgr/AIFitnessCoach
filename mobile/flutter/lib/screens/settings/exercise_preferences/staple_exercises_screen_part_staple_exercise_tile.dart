@@ -22,70 +22,14 @@ class _StapleExerciseTile extends ConsumerWidget {
     required this.onRemove,
   });
 
-  Future<void> _showDetail(BuildContext context, WidgetRef ref) async {
-    // Try to fetch full exercise data from library API
-    final repo = ref.read(libraryRepositoryProvider);
-    LibraryExercise libraryExercise;
-
-    try {
-      LibraryExerciseItem? fullExercise;
-
-      // First try by library ID if available
-      if (staple.libraryId != null) {
-        fullExercise = await repo.getExercise(staple.libraryId!);
-      }
-
-      // Fallback: search by name
-      if (fullExercise == null) {
-        final results = await repo.searchExercises(
-          query: staple.exerciseName,
-          limit: 1,
-        );
-        if (results.isNotEmpty) {
-          fullExercise = results.first;
-        }
-      }
-
-      if (fullExercise != null) {
-        libraryExercise = LibraryExercise(
-          id: fullExercise.id,
-          nameValue: fullExercise.name,
-          bodyPart: fullExercise.bodyPart,
-          equipmentValue: fullExercise.equipment,
-          targetMuscle: fullExercise.targetMuscle,
-          gifUrl: fullExercise.gifUrl,
-          videoUrl: fullExercise.videoUrl,
-          imageUrl: fullExercise.imageUrl,
-          difficultyLevelValue: fullExercise.difficulty,
-          instructionsValue: fullExercise.instructions,
-        );
-      } else {
-        // Use minimal data from staple as last resort
-        libraryExercise = LibraryExercise(
-          id: staple.libraryId,
-          nameValue: staple.exerciseName,
-          bodyPart: staple.bodyPart,
-          equipmentValue: staple.equipment,
-          gifUrl: staple.gifUrl,
-          category: staple.category,
-        );
-      }
-    } catch (e) {
-      debugPrint('Error fetching exercise details: $e');
-      libraryExercise = LibraryExercise(
-        id: staple.libraryId,
-        nameValue: staple.exerciseName,
-        bodyPart: staple.bodyPart,
-        equipmentValue: staple.equipment,
-        gifUrl: staple.gifUrl,
-        category: staple.category,
-      );
-    }
-
-    if (!context.mounted) return;
-    showGlassSheet(
-      context: context,
-      builder: (context) => ExerciseDetailSheet(exercise: libraryExercise),
+  void _showDetail(BuildContext context, WidgetRef ref) {
+    // Browse mode resolves media + stats from the library row itself, so we
+    // just thread the staple's libraryId + name through.
+    openExerciseBrowse(
+      context,
+      name: staple.exerciseName,
+      exerciseId: staple.libraryId,
+      libraryId: staple.libraryId,
     );
   }
 

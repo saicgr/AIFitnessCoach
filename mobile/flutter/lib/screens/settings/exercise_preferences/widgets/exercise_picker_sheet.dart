@@ -5,17 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/providers/custom_exercises_provider.dart';
-import '../../../../data/local/database.dart';
 import '../../../../data/local/database_provider.dart';
 import '../../../../data/models/custom_exercise.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/image_url_cache.dart';
-import '../../../../data/models/exercise.dart';
 import '../../../../data/repositories/library_repository.dart';
 import '../../../../widgets/exercise_image.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../custom_exercises/widgets/create_exercise_sheet.dart';
-import '../../../library/components/exercise_detail_sheet.dart';
+import '../../../workout/exercise_browse.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 
 part 'exercise_picker_sheet_part_exercise_picker_sheet.dart';

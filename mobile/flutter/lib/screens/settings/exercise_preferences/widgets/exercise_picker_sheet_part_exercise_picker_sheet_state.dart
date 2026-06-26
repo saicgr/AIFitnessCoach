@@ -488,22 +488,15 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
   }
 
   void _openDetailSheet(LibraryExerciseItem exercise) {
-    final libraryExercise = LibraryExercise(
-      id: exercise.id,
-      nameValue: exercise.name,
-      bodyPart: exercise.bodyPart,
-      equipmentValue: exercise.equipment,
-      targetMuscle: exercise.targetMuscle,
-      gifUrl: exercise.gifUrl,
-      videoUrl: exercise.videoUrl,
-      imageUrl: exercise.imageUrl,
-      difficultyLevelValue: exercise.difficulty,
-      instructionsValue: exercise.instructions,
-    );
-
-    showGlassSheet(
-      context: context,
-      builder: (context) => ExerciseDetailSheet(exercise: libraryExercise),
+    // Read-only preview of the highlighted exercise. Pushes the modern detail
+    // screen in browse mode over the picker sheet; the back button returns
+    // here so the user can keep picking. Browse mode resolves media + stats
+    // from the library row, so we only thread the id + name through.
+    openExerciseBrowse(
+      context,
+      name: exercise.name,
+      exerciseId: exercise.id,
+      libraryId: exercise.id,
     );
   }
 

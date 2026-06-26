@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
-import '../../../data/models/exercise.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
-import '../../../data/repositories/library_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/staple_choice_sheet.dart';
-import '../../library/components/exercise_detail_sheet.dart';
+import '../../workout/exercise_browse.dart';
 import 'widgets/empty_state_with_suggestions.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
