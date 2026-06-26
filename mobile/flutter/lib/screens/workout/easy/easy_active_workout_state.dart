@@ -938,6 +938,9 @@ class EasyActiveWorkoutScreenState
           context,
           exerciseName: exercise.name,
           exerciseId: exercise.id ?? exercise.libraryId,
+          bodyPart: exercise.muscleGroup ?? exercise.bodyPart,
+          // Active workout id → swap the aggravators at the ≥4/10 threshold (#3).
+          workoutId: widget.workout.id,
         );
         // The avoided-list provider already invalidates today/all-workouts
         // caches; for the *current* session we leave the exercise in place

@@ -79,9 +79,9 @@ These are the gaps where **we already have the data or backend** and the work is
 > | 9c | On-set adaptive caption | C polish | ✅ shipped | Phase 1 |
 > | 11 | Skill→Today + hold chart | C polish | ✅ shipped | Phase 1 |
 > | 2c | "Coach Noticed" card (surface) | A | ✅ shipped | Phase 1 |
-> | 1 | Pre-workout reshape gate | A | ⬜ pending | — |
-> | 2a | Coach apply-action | A | ⬜ pending | — |
-> | 3 | Pain→today's-exercise swap | A | ⬜ pending | — |
+> | 1 | Pre-workout reshape gate | A | ✅ shipped | Phase 2 |
+> | 2a | Coach apply-action | A | ✅ shipped | Phase 2 |
+> | 3 | Pain→today's-exercise swap | A | ✅ shipped | Phase 2 |
 > | 9d | Set-logging dials | C polish | ⬜ pending | — |
 > | 10 | Equipment-aware progression method | C polish | ⬜ pending | — |
 > | 12 | Accept/Reject draft step | D trust | ⬜ pending | — |

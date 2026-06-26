@@ -672,6 +672,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           // Pass the worked area so sharp/severe pain also files a body-part
           // injury into the phase-aware system (not just avoiding this exercise).
           bodyPart: exercise.muscleGroup ?? exercise.bodyPart,
+          // Active workout id → swap the aggravators at the ≥4/10 threshold (#3).
+          workoutId: (workoutWidget as dynamic).workout.id as String?,
         );
       },
     );

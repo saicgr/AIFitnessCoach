@@ -19,6 +19,7 @@ import 'easy/easy_active_workout_screen.dart';
 import 'providers/active_workout_live_provider.dart';
 import 'widgets/exercise_add_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
+import 'widgets/pre_workout_reshape_gate.dart';
 
 class ActiveWorkoutEntry extends ConsumerStatefulWidget {
   final Workout workout;
@@ -87,6 +88,14 @@ class _ActiveWorkoutEntryState extends ConsumerState<ActiveWorkoutEntry> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _maybeConsumeEquipmentMatchPendingAction();
+    });
+    // Pre-workout reshape gate (Dr-Yaad audit #1) — once per workout per day,
+    // ask the check-in and live-reshape the session before the first set. Runs
+    // after the equipment-match consumer so we never stack two sheets; the gate
+    // self-skips if it already ran today, and applies via activeWorkoutLiveProvider.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      maybeRunPreWorkoutReshape(context, ref, widget.workout);
     });
     if (!notifier.state) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {

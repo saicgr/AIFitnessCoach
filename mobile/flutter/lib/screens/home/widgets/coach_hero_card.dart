@@ -16,6 +16,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter/rendering.dart' show RenderProxyBox;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +26,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../widgets/design_system/zealova_stat_tile.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/services/api_client.dart';
 import '../../../data/providers/sleep_score_provider.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
@@ -808,9 +810,15 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
-                  // Surface-half: route to chat seeded with the proposal.
-                  // Phase 2 replaces this with the live reshape (cn.action).
-                  _openChat(context, insight);
+                  // #2 apply-action: reshape today's session for the flagged
+                  // body part via the reshape endpoint. Falls back to chat when
+                  // there's no today workout to adjust.
+                  if (cn.action == 'adjust_today_workout' &&
+                      cn.bodyPart != null) {
+                    _applyCoachAdjustment(cn, insight);
+                  } else {
+                    _openChat(context, insight);
+                  }
                 },
                 child: Container(
                   padding:
@@ -847,6 +855,54 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         ],
       ),
     );
+  }
+
+  /// #2 apply-action — the user tapped Accept on the "Coach noticed" card. Pull
+  /// today's workout and reshape it for the flagged body part via the reshape
+  /// endpoint (apply=true), then surface the concrete change. Falls back to
+  /// chat when there's no today workout to adjust.
+  Future<void> _applyCoachAdjustment(
+    CoachNoticed cn,
+    DailyCoachInsight? insight,
+  ) async {
+    final today = ref.read(todayWorkoutProvider).valueOrNull?.todayWorkout;
+    final wid = today?.id;
+    if (wid == null || wid.isEmpty || cn.bodyPart == null) {
+      _openChat(context, insight);
+      return;
+    }
+    HapticFeedback.mediumImpact();
+    try {
+      final client = ref.read(apiClientProvider);
+      final resp = await client.post(
+        '/workouts/$wid/reshape-for-readiness',
+        // pain_level 5 ≥ the 4/10 swap threshold so aggravators get swapped.
+        data: {'pain_part': cn.bodyPart, 'pain_level': 5, 'apply': true},
+      );
+      final data = Map<String, dynamic>.from(resp.data as Map);
+      final reshaped = data['reshaped'] == true;
+      final reasons = (data['reasons'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString())
+          .toList();
+      if (!mounted) return;
+      // Refresh today's workout so the swap shows immediately.
+      ref.read(todayWorkoutProvider.notifier).refresh();
+      final bp = cn.bodyPart!.replaceAll('_', ' ');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.green,
+          duration: const Duration(seconds: 4),
+          content: Text(
+            reshaped && reasons.isNotEmpty
+                ? reasons.first
+                : "Today's session already protects your $bp.",
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      _openChat(context, insight);
+    }
   }
 
   void _openChat(BuildContext context, DailyCoachInsight? insight) {

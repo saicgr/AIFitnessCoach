@@ -78,11 +78,18 @@ class ReportPainSheet extends ConsumerStatefulWidget {
   // this one exercise avoided.
   final String? bodyPart;
 
+  /// Active workout id. When present AND the pain is in the "swap zone"
+  /// (sharp/severe ≈ ≥4/10, Dr-Yaad audit #3), we don't just avoid the exercise
+  /// for the future — we ask the engine to SWAP the aggravators on the spot via
+  /// `/workouts/{id}/reshape-for-readiness`. Null falls back to avoid-only.
+  final String? workoutId;
+
   const ReportPainSheet({
     super.key,
     required this.exerciseName,
     this.exerciseId,
     this.bodyPart,
+    this.workoutId,
   });
 
   static Future<bool> show(
@@ -90,6 +97,7 @@ class ReportPainSheet extends ConsumerStatefulWidget {
     required String exerciseName,
     String? exerciseId,
     String? bodyPart,
+    String? workoutId,
   }) async {
     final result = await showGlassSheet<bool>(
       context: context,
@@ -98,6 +106,7 @@ class ReportPainSheet extends ConsumerStatefulWidget {
           exerciseName: exerciseName,
           exerciseId: exerciseId,
           bodyPart: bodyPart,
+          workoutId: workoutId,
         ),
       ),
     );
@@ -112,6 +121,7 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
   _PainSeverity? _severity;
   int _windowIdx = 1; // default = 2 weeks
   bool _submitting = false;
+  String? _swapReason; // set when the engine swapped the aggravators (#3)
 
   /// Map the pain sheet's severity (mild|sharp|severe) to an injury severity.
   /// Mild pain stays exercise-specific (no body-part injury filed).
@@ -157,13 +167,41 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
       }
     }
 
+    // #3 swap-at-threshold: sharp/severe pain (≈ ≥4/10) is the "swap zone" — ask
+    // the engine to swap the aggravators in today's session right now (mild pain
+    // stays monitor-only, so the active set is never disrupted on a soft flag).
+    final wid = widget.workoutId?.trim();
+    final isSwapZone =
+        severity == _PainSeverity.sharp || severity == _PainSeverity.severe;
+    if (ok && isSwapZone && wid != null && wid.isNotEmpty &&
+        part != null && part.isNotEmpty) {
+      try {
+        final painLevel = severity == _PainSeverity.severe ? 7 : 5;
+        final resp = await ref.read(apiClientProvider).post(
+          '/workouts/$wid/reshape-for-readiness',
+          data: {'pain_part': part, 'pain_level': painLevel, 'apply': true},
+        );
+        final data = Map<String, dynamic>.from(resp.data as Map);
+        if (data['reshaped'] == true) {
+          final reasons = (data['reasons'] as List<dynamic>? ?? const [])
+              .map((e) => e.toString())
+              .toList();
+          _swapReason = reasons.isNotEmpty ? reasons.first : null;
+        }
+      } catch (_) {
+        // Non-fatal: the exercise is still avoided for future generations.
+      }
+    }
+
     if (!mounted) return;
     if (ok) {
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              '${widget.exerciseName} flagged for pain — we\'ll skip it ${_windows[_windowIdx].duration == null ? 'until you re-enable it' : 'for ${_windows[_windowIdx].label}'}.'),
+            _swapReason ??
+                '${widget.exerciseName} flagged for pain — we\'ll skip it ${_windows[_windowIdx].duration == null ? 'until you re-enable it' : 'for ${_windows[_windowIdx].label}'}.',
+          ),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsetsDirectional.only(bottom: 90, start: 16, end: 16),
         ),

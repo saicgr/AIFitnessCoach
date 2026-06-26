@@ -48,6 +48,7 @@ from .set_note_media import router as set_note_media_router
 from .share_link import router as share_link_router
 from .card_context import router as card_context_router
 from .swap_variant import router as swap_variant_router
+from .reshape import router as reshape_router
 from .milestones_progress import router as milestones_progress_router
 from .studio import router as studio_router
 
@@ -78,6 +79,11 @@ router.include_router(card_context_router)
 # nested PUT/DELETE/GET `/{workout_id}` handlers in crud don't shadow
 # the swap path. Same precedence pattern as card_context above.
 router.include_router(swap_variant_router)
+
+# Pre-workout reshape (Dr-Yaad audit #1) — POST `/{workout_id}/reshape-for-
+# readiness`. Registered BEFORE crud_router for the same `/{workout_id}`
+# precedence reason as swap_variant above.
+router.include_router(reshape_router)
 
 # Workout count milestones (static `/milestones` path) — must come BEFORE
 # crud_router so it isn't swallowed by the dynamic `/{workout_id}` route.
