@@ -101,8 +101,8 @@ def get_supabase():
 def fetch_curated_program(program_id: str) -> Optional[dict]:
     sb = get_supabase()
     resp = sb.table("programs").select(
-        "id, editorial_name, program_name, program_category, description, tagline, "
-        "goals, duration_weeks, sessions_per_week, is_published"
+        "id, editorial_name, program_name, program_category, program_subcategory, "
+        "description, tagline, goals, duration_weeks, sessions_per_week, is_published"
     ).eq("id", program_id).limit(1).execute()
     if not resp.data:
         return None
@@ -111,11 +111,34 @@ def fetch_curated_program(program_id: str) -> Optional[dict]:
 
 # ── Build the week/session matrix for a curated program ───────────────────────
 
+def _weeks_for(program_row: dict) -> set:
+    """Return the weeks set for a program's full generation matrix.
+
+    Express programs (program_subcategory == 'Express', e.g. 7-Minute Upper/Lower
+    Body) are capped at <= 4 weeks — long ladders (8w, 12w) make no sense for a
+    quick-hit format and would generate junk content. All other programs get the
+    standard ladder {1, 2, 4, 8, 12} merged with their intended duration.
+    """
+    intended = program_row.get("duration_weeks") or 8
+    is_express = (program_row.get("program_subcategory") or "").strip().lower() == "express"
+
+    if is_express:
+        # Cap: keep only weeks <= 4, always include the intended duration if it
+        # is also <= 4 (both 7-Minute programs have duration_weeks=2, so {1,2,4}).
+        base = {1, 2, 4}
+        if intended <= 4:
+            base.add(intended)
+        return base
+
+    # Standard ladder for all other programs.
+    return {1, 2, 4, 8, 12} | {intended}
+
+
 def build_matrix(program_row: dict, smoke_test: bool = False):
     """Return sorted (weeks, sessions) tuples for generation.
 
     Full matrix:
-      weeks    = sorted( {1,2,4,8,12} | {program.duration_weeks} )
+      weeks    = _weeks_for(program_row)  — see helper for Express cap
       sessions = sorted( {3,4,5} | {program.sessions_per_week} ) clamped [2,6]
 
     Smoke-test matrix (tiny, fast):
@@ -126,11 +149,10 @@ def build_matrix(program_row: dict, smoke_test: bool = False):
         weeks_set = {1, 2}
         sessions_set = {3}
     else:
-        intended_weeks = program_row.get("duration_weeks") or 8
-        intended_sess  = program_row.get("sessions_per_week") or 4
-        weeks_set    = {1, 2, 4, 8, 12} | {intended_weeks}
-        sessions_set = ({3, 4, 5} | {intended_sess})
-        sessions_set = {s for s in sessions_set if 2 <= s <= 6}
+        intended_sess = program_row.get("sessions_per_week") or 4
+        weeks_set     = _weeks_for(program_row)
+        sessions_set  = {3, 4, 5} | {intended_sess}
+        sessions_set  = {s for s in sessions_set if 2 <= s <= 6}
 
     combos = [(w, s) for w in sorted(weeks_set) for s in sorted(sessions_set)]
     return combos
