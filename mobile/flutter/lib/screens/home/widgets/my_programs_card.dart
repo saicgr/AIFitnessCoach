@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/user_program_assignment.dart';
 import '../../../data/providers/program_assignments_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/design_system/section_header.dart';
+import '../../workout/widgets/ai_adaptive_plan_card.dart';
 import '../../workout/widgets/program_manage_sheet.dart';
 
 /// "My Programs" — lists the user's active program enrollments with progress,
@@ -24,15 +24,9 @@ class MyProgramsCard extends ConsumerWidget {
   /// the profile TRAINING section). Defaults to showing the header.
   final bool showHeader;
 
-  /// When true (home), the empty state is shown so new users discover the
-  /// Program Library. When false, an empty list collapses to nothing (so it
-  /// doesn't clutter a screen that already has many sections).
-  final bool showEmptyState;
-
   const MyProgramsCard({
     super.key,
     this.showHeader = true,
-    this.showEmptyState = true,
   });
 
   @override
@@ -51,10 +45,14 @@ class MyProgramsCard extends ConsumerWidget {
       data: (assignments) {
         final active =
             assignments.where((a) => a.status != 'completed').toList();
-        if (active.isEmpty) {
-          if (!showEmptyState) return const SizedBox.shrink();
-          return _EmptyState(showHeader: showHeader);
-        }
+        // The current training plan = active PRIMARY program(s). When there's
+        // none, the user is on the default AI-decides adaptive plan — show the
+        // synthetic "AI Coach · Adaptive Plan" card as the active plan (never an
+        // empty state, because AI-decides is a real, active plan). An add-on
+        // without a primary still gets the AI card (it owns the primary slot).
+        final hasActivePrimary =
+            active.any((a) => a.isPrimary && a.isActive);
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -64,6 +62,12 @@ class MyProgramsCard extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
+                  // AI-decides adaptive plan as the active card when no primary
+                  // program is enrolled.
+                  if (!hasActivePrimary) ...[
+                    const AiAdaptivePlanCard(),
+                    const SizedBox(height: 10),
+                  ],
                   for (final a in active) ...[
                     _ProgramRow(assignment: a),
                     const SizedBox(height: 10),
@@ -112,79 +116,6 @@ class _ErrorRow extends StatelessWidget {
                 ),
                 TextButton(onPressed: onRetry, child: const Text('Retry')),
               ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  final bool showHeader;
-  const _EmptyState({required this.showHeader});
-
-  @override
-  Widget build(BuildContext context) {
-    final tc = ThemeColors.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (showHeader) const SectionHeader(label: 'My Programs'),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: GestureDetector(
-            onTap: () {
-              HapticService.light();
-              context.push('/workout/program-library');
-            },
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: tc.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: tc.cardBorder),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: tc.elevated,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: tc.cardBorder),
-                    ),
-                    child: Icon(Icons.library_books_outlined,
-                        size: 20, color: tc.textMuted),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'No program yet',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: tc.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Browse the Library to follow a fixed plan.',
-                          style:
-                              TextStyle(fontSize: 12.5, color: tc.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.arrow_forward_ios, size: 13, color: tc.textMuted),
-                ],
-              ),
             ),
           ),
         ),

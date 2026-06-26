@@ -13,6 +13,7 @@ import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
 import 'program_detail_screen.dart';
 import 'program_template_builder_screen.dart';
+import 'widgets/ai_adaptive_plan_card.dart';
 import 'widgets/program_library_card.dart';
 import 'widgets/program_manage_sheet.dart';
 
@@ -147,25 +148,29 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
           final active = assignments
               .where((a) => a.status == 'active' && a.isActive)
               .toList(growable: false);
-          if (active.isEmpty) {
-            return const _SectionEmpty(
-              icon: Icons.play_circle_outline_rounded,
-              label: 'No active programs yet. Start one from the library.',
-            );
-          }
-          return _HorizontalRail(
-            itemCount: active.length,
-            itemBuilder: (context, i) {
-              final assignment = active[i];
-              return _ActiveProgramCard(
+          // No assigned PRIMARY program → the AI Coach adaptive plan is what
+          // actually drives the user's home workout, so surface it FIRST. This
+          // means Active is never empty (real programs and/or the AI card).
+          final hasActivePrimary =
+              assignments.any((a) => a.isPrimary && a.isActive);
+
+          final cards = <Widget>[
+            if (!hasActivePrimary)
+              const SizedBox(width: 260, child: AiAdaptivePlanCard()),
+            for (final assignment in active)
+              _ActiveProgramCard(
                 assignment: assignment,
                 onTap: () {
                   HapticService.light();
                   // Open the shared manage sheet (pause / resume / edit / end).
                   showProgramManageSheet(context, ref, assignment);
                 },
-              );
-            },
+              ),
+          ];
+
+          return _HorizontalRail(
+            itemCount: cards.length,
+            itemBuilder: (context, i) => cards[i],
           );
         },
       ),

@@ -130,6 +130,12 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   String _search = '';
   final TextEditingController _searchController = TextEditingController();
 
+  /// "See all programs" sentinel — when true the result surface shows the flat
+  /// grid of EVERY published program (an empty browse filter) without any
+  /// category/difficulty pre-selected. Distinct from a real facet so the
+  /// browse grid renders all rows.
+  bool _showAllPrograms = false;
+
   /// A PageView of the recommended/featured hero cards.
   final PageController _heroController = PageController(viewportFraction: 0.88);
   int _heroPage = 0;
@@ -183,6 +189,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   /// Whether the user has narrowed the library at all — when true the screen
   /// shows the filtered browse result surface instead of the discovery rails.
   bool get _hasActiveFilter =>
+      _showAllPrograms ||
       _category != null ||
       _difficulty != null ||
       _sessionsPerWeek != null ||
@@ -206,6 +213,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
 
   void _clearFilters() {
     setState(() {
+      _showAllPrograms = false;
       _category = null;
       _difficulty = null;
       _sessionsPerWeek = null;
@@ -348,67 +356,141 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   // -------------------------------------------------------------------------
 
   Widget _buildDiscovery() {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 28),
-      children: [
-        const SizedBox(height: 14),
-        _buildHeroCarousel(),
-        const SizedBox(height: 12),
-        _buildSearchAndFilterRow(),
-        const SizedBox(height: 10),
-        _buildCategoryQuickChips(),
-        const SizedBox(height: 18),
-        _buildQuickRail(),
-        _buildBeginnerRail(),
-        _buildGoalRail(),
-        const SizedBox(height: 4),
-        _buildBrowseByCategory(),
+    // CustomScrollView so the search + filter + "SEE ALL" + category chips can
+    // PIN to the top (SliverPersistentHeader) once the big hero scrolls past.
+    return CustomScrollView(
+      slivers: [
+        const SliverToBoxAdapter(child: SizedBox(height: 14)),
+        SliverToBoxAdapter(child: _buildHeroCarousel()),
+        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _StickyControlsDelegate(
+            builder: (context, overlapping) => _buildStickyControls(overlapping),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 16),
+              _buildQuickRail(),
+              _buildBeginnerRail(),
+              _buildGoalRail(),
+              const SizedBox(height: 4),
+              _buildBrowseByCategory(),
+              const SizedBox(height: 28),
+            ],
+          ),
+        ),
       ],
     );
   }
 
+  /// The pinned controls block: search + filter row, a "SEE ALL" count link,
+  /// and the category quick-chips. Gets an opaque background when pinned so
+  /// content scrolling underneath doesn't bleed through.
+  Widget _buildStickyControls(bool overlapping) {
+    return Container(
+      color: AppColors.pureBlack,
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildSearchAndFilterRow(),
+          const SizedBox(height: 8),
+          _buildSeeAllRow(),
+          const SizedBox(height: 6),
+          _buildCategoryQuickChips(),
+          if (overlapping)
+            const Divider(height: 1, color: AppColors.hairlineStrong),
+        ],
+      ),
+    );
+  }
+
+  /// "SEE ALL N PROGRAMS" — opens the flat 3-col grid of every published
+  /// program by clearing every filter (the filtered surface with an empty
+  /// filter IS the all-programs grid). Count comes from the category facets.
+  Widget _buildSeeAllRow() {
+    final counts = ref.watch(programCategoryCountsProvider).valueOrNull;
+    final total = counts?.fold<int>(0, (s, c) => s + c.count);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: GestureDetector(
+        onTap: _openAllPrograms,
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          children: [
+            Text(
+              total != null ? 'SEE ALL $total PROGRAMS' : 'SEE ALL PROGRAMS',
+              style: ZType.lbl(12, color: AppColors.orange, letterSpacing: 1.4),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_forward_rounded,
+                size: 14, color: AppColors.orange),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Open the flat all-programs grid — the filtered surface with NO facets set
+  /// shows every published program (the browse provider returns all when the
+  /// filter is empty). We flip a sentinel so [_hasActiveFilter] is true and the
+  /// result surface renders, without pre-selecting any category.
+  void _openAllPrograms() {
+    HapticService.light();
+    setState(() => _showAllPrograms = true);
+  }
+
   // -------------------------------------------------------------------------
-  // Hero carousel — Recommended for you (falls back to Featured if empty).
+  // Hero carousel — FEATURED first (HYROX / editorial, by featured_rank), then
+  // personalized recommendations appended (deduped). Featured cards get a
+  // "FEATURED" ribbon; recommended cards get none (the kicker already says
+  // "for you", so a "RECOMMENDED" ribbon would be redundant).
   // -------------------------------------------------------------------------
 
   Widget _buildHeroCarousel() {
+    final featured = ref.watch(programFeaturedProvider);
     final recommended = ref.watch(programRecommendedProvider);
 
-    return recommended.when(
-      skipLoadingOnRefresh: true,
-      skipLoadingOnReload: true,
-      loading: _heroSkeleton,
-      // A failed recommendation fetch isn't fatal to the whole screen — fall
-      // back to featured so the masthead still has a hero. If both fail, the
-      // hero quietly collapses (the rails + categories below still render).
-      error: (_, __) => _buildFeaturedHeroFallback(),
-      data: (result) {
-        if (result.programs.isEmpty) {
-          return _buildFeaturedHeroFallback();
-        }
-        return _buildHeroPager(result.programs, 'Recommended for you');
-      },
-    );
+    // Show a skeleton only while BOTH are still loading on a cold start — once
+    // either resolves we can paint. (skipLoadingOnRefresh keeps it from
+    // flashing on background refreshes.)
+    final featuredList = featured.valueOrNull?.programs ?? const [];
+    final recommendedList = recommended.valueOrNull?.programs ?? const [];
+
+    if (featured.isLoading &&
+        recommended.isLoading &&
+        featuredList.isEmpty &&
+        recommendedList.isEmpty) {
+      return _heroSkeleton();
+    }
+
+    // Merge: featured first (flagged), then recommended (deduped by id). The
+    // featured provider is already ordered by featured_rank server-side.
+    final merged = <({ProgramLibraryCard card, bool featured})>[];
+    final seen = <String>{};
+    for (final p in featuredList) {
+      if (seen.add(p.id)) merged.add((card: p, featured: true));
+    }
+    for (final p in recommendedList) {
+      if (seen.add(p.id)) merged.add((card: p, featured: false));
+    }
+
+    if (merged.isEmpty) return const SizedBox.shrink();
+    return _buildHeroPager(merged, 'Featured & for you');
   }
 
-  Widget _buildFeaturedHeroFallback() {
-    final featured = ref.watch(programFeaturedProvider);
-    return featured.when(
-      skipLoadingOnRefresh: true,
-      skipLoadingOnReload: true,
-      loading: _heroSkeleton,
-      error: (_, __) => const SizedBox.shrink(),
-      data: (result) {
-        if (result.programs.isEmpty) return const SizedBox.shrink();
-        return _buildHeroPager(result.programs, 'Program of the week');
-      },
-    );
-  }
-
-  Widget _buildHeroPager(List<ProgramLibraryCard> programs, String kicker) {
-    // Cap the carousel so it stays a curated "of the week" lane, not a feed.
-    final cards = programs.take(6).toList(growable: false);
-    final page = _heroPage.clamp(0, cards.length - 1);
+  Widget _buildHeroPager(
+    List<({ProgramLibraryCard card, bool featured})> entries,
+    String kicker,
+  ) {
+    // Cap the carousel so it stays a curated lane, not a feed.
+    final items = entries.take(6).toList(growable: false);
+    final page = _heroPage.clamp(0, items.length - 1);
     // Cinematic hero (mockup #13): the striped panel is ~46% of screen height;
     // with the kicker + button row + dots the whole block lands near 56-60%.
     final screenH = MediaQuery.of(context).size.height;
@@ -425,18 +507,19 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           height: panelH,
           child: PageView.builder(
             controller: _heroController,
-            itemCount: cards.length,
+            itemCount: items.length,
             onPageChanged: (i) => setState(() => _heroPage = i),
             itemBuilder: (context, i) {
-              final p = cards[i];
+              final e = items[i];
+              final p = e.card;
               return Padding(
                 padding: EdgeInsets.only(
                   left: i == 0 ? 18 : 7,
-                  right: i == cards.length - 1 ? 18 : 7,
+                  right: i == items.length - 1 ? 18 : 7,
                 ),
                 child: _BigHeroCard(
                   card: p,
-                  kicker: kicker,
+                  featured: e.featured,
                   onStart: () => _startProgram(p),
                   onPreview: () => _openPreview(p),
                   onTap: () => _openPreview(p),
@@ -445,10 +528,10 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
             },
           ),
         ),
-        if (cards.length > 1) ...[
+        if (items.length > 1) ...[
           const SizedBox(height: 12),
           ZCarouselDots(
-            count: cards.length,
+            count: items.length,
             index: page,
             onPrev: () => _heroController.previousPage(
               duration: const Duration(milliseconds: 280),
@@ -822,6 +905,11 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   /// A row showing active facets + a one-tap "CLEAR" affordance.
   Widget _buildActiveFilterStrip() {
     final chips = <Widget>[];
+    // "All programs" view (no facets) — show a single explanatory chip so the
+    // surface isn't a bare grid with only a CLEAR link.
+    if (_showAllPrograms && _activeFilterCount == 0 && _search.isEmpty) {
+      chips.add(_activeChip('ALL PROGRAMS'));
+    }
     if (_category != null) chips.add(_activeChip(_category!));
     if (_difficulty != null) {
       chips.add(_activeChip(_difficulty!,
@@ -2686,14 +2774,18 @@ class _AiEntryRow extends StatelessWidget {
 
 class _BigHeroCard extends StatelessWidget {
   final ProgramLibraryCard card;
-  final String kicker;
+
+  /// True for editorial/HYROX featured programs — shows the "FEATURED" ribbon.
+  /// Recommended (personalized) cards pass false and get NO ribbon (the kicker
+  /// already conveys "for you", so a "RECOMMENDED" ribbon would be redundant).
+  final bool featured;
   final VoidCallback onStart;
   final VoidCallback onPreview;
   final VoidCallback onTap;
 
   const _BigHeroCard({
     required this.card,
-    required this.kicker,
+    required this.featured,
     required this.onStart,
     required this.onPreview,
     required this.onTap,
@@ -2707,9 +2799,6 @@ class _BigHeroCard extends StatelessWidget {
     final subtitle = (card.tagline?.trim().isNotEmpty == true)
         ? card.tagline!.trim()
         : (card.description ?? '').trim();
-    final ribbon = kicker.toLowerCase().contains('recommend')
-        ? 'RECOMMENDED'
-        : kicker.toUpperCase();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2749,7 +2838,7 @@ class _BigHeroCard extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            _HeroRibbon(label: ribbon),
+                            if (featured) const _HeroRibbon(label: 'FEATURED'),
                             const Spacer(),
                             if (hasDifficulty)
                               _HeroDifficultyPill(level: card.difficultyLevel!),
@@ -2942,4 +3031,39 @@ class _HeroStripePainter extends CustomPainter {
   @override
   bool shouldRepaint(_HeroStripePainter oldDelegate) =>
       oldDelegate.color != color;
+}
+
+// ===========================================================================
+// Sticky controls delegate — pins the search + filter + "See all" + category
+// chips to the top once the big hero scrolls past (point #3).
+// ===========================================================================
+
+class _StickyControlsDelegate extends SliverPersistentHeaderDelegate {
+  /// `overlapping` is true once the header is pinned over scrolled content —
+  /// used to add a divider so the controls read as a distinct bar.
+  final Widget Function(BuildContext context, bool overlapping) builder;
+
+  _StickyControlsDelegate({required this.builder});
+
+  // Fixed extent sized to fit: search row (~48) + gap + see-all (~20) + gap +
+  // chips (~34) + paddings, with a little headroom so the divider never causes
+  // a 1px overflow. A constant extent keeps the pin smooth.
+  static const double _extent = 140;
+
+  @override
+  double get minExtent => _extent;
+
+  @override
+  double get maxExtent => _extent;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(
+      height: _extent,
+      child: builder(context, overlapsContent || shrinkOffset > 0),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_StickyControlsDelegate oldDelegate) => true;
 }
