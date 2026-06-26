@@ -202,6 +202,26 @@ async def reshape_for_readiness(
                 f"({req.pain_level or 0}/10) — monitoring, not swapping yet."
             )
 
+        # Tissue-fatigue ledger feed (Dr-Yaad #4): a VERY hot joint/tendon
+        # (heat ≥ 85) joins the swap set so we proactively pull load off it —
+        # seeing the injury before it happens. Mapped tissue → injury body part.
+        try:
+            from services.tissue_fatigue_service import hottest_tissues
+            _TISSUE_TO_PART = {
+                "lumbar": "lower_back", "achilles": "ankle",
+            }
+            hot = hottest_tissues(user_id, threshold_heat=85.0)
+            for t in hot[:2]:
+                part = _TISSUE_TO_PART.get(t, t)
+                if part not in avoid_parts:
+                    avoid_parts.append(part)
+                    reasons.append(
+                        f"Your {t} is running hot from recent volume — pulled load "
+                        f"off it before it flares."
+                    )
+        except Exception as e:
+            logger.debug(f"[reshape] tissue feed skipped: {e}")
+
         if avoid_parts:
             try:
                 from services.exercise_rag.injury_guard import enforce_injury_safety

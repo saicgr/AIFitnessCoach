@@ -329,6 +329,20 @@ async def complete_workout(
                 gym_profile_id=workout_gym_profile_id,
             )
 
+        # Background: accumulate per-joint/tissue fatigue (Dr-Yaad audit #4).
+        # Reads each exercise's tissue_stress (migration 2290) and adds it to the
+        # user's decaying tissue ledger so the engine sees elbow/wrist/tendon load
+        # building before it flares. Best-effort; never blocks completion.
+        try:
+            from services.tissue_fatigue_service import record_workout_tissue_load
+            background_tasks.add_task(
+                record_workout_tissue_load,
+                user_id=user_id,
+                exercises=exercises,
+            )
+        except Exception as e:
+            logger.warning(f"[tissue] schedule failed: {e}")
+
         # Background: Recalculate Strength Scores and Fitness Score
         tz_str = resolve_timezone(request, db, user_id)
         # Coalesced: bulk-completion bursts (5 workouts in 1s from sync replay)

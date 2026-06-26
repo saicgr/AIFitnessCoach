@@ -157,6 +157,24 @@ class ChartViewLogRequest(BaseModel):
 # Endpoints
 # ============================================
 
+@router.get("/tissue-fatigue")
+async def get_tissue_fatigue_endpoint(
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-joint/tissue fatigue "heat" (Dr-Yaad audit #4).
+
+    Returns the user's current decayed tissue load per joint/tendon — elbow,
+    wrist, shoulder, knee, hip, lumbar, ankle, achilles, neck — each with a raw
+    `load` and a 0–100 `heat`. Cooled-down tissues are omitted. Drives a
+    "tissue heat" surface and feeds pre-session reshaping.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    from services.tissue_fatigue_service import get_tissue_fatigue
+    return {"user_id": user_id, "tissues": get_tissue_fatigue(user_id)}
+
+
 @router.get("/strength-over-time", response_model=StrengthProgressionResponse)
 async def get_strength_over_time(
     user_id: str = Query(..., description="User ID"),

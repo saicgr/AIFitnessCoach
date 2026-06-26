@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/exercise_progressions_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -236,6 +237,10 @@ class _Content extends StatelessWidget {
         // ── Hold-time progress (Dr-Yaad audit #11) ── self-hides when the
         // user has no timed-skill history (<2 sessions of a hold movement).
         _HoldTimeChart(mastery: data.mastery, isDark: isDark, accent: accent),
+
+        // ── Tissue heat (Dr-Yaad audit #4) ── per-joint/tendon load from the
+        // fatigue ledger; self-hides when nothing is running hot.
+        _TissueHeatCard(isDark: isDark, accent: accent),
 
         // ── Ready to advance ──
         if (data.suggestions.isNotEmpty) ...[
@@ -496,6 +501,142 @@ class _HoldTimeChartState extends ConsumerState<_HoldTimeChart> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ===========================================================================
+// Tissue heat card (Dr-Yaad audit #4)
+// ===========================================================================
+
+/// Per-joint/tendon load from the fatigue ledger — "elbow 78, shoulder 62".
+/// Fetches `/progress/tissue-fatigue`; self-hides when nothing is hot.
+class _TissueHeatCard extends ConsumerStatefulWidget {
+  final bool isDark;
+  final Color accent;
+  const _TissueHeatCard({required this.isDark, required this.accent});
+
+  @override
+  ConsumerState<_TissueHeatCard> createState() => _TissueHeatCardState();
+}
+
+class _TissueHeatCardState extends ConsumerState<_TissueHeatCard> {
+  Future<List<MapEntry<String, num>>>? _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  Future<List<MapEntry<String, num>>> _load() async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null || userId.isEmpty) return const [];
+    try {
+      final resp = await ref.read(apiClientProvider).get(
+            '/progress/tissue-fatigue',
+            queryParameters: {'user_id': userId},
+          );
+      final tissues =
+          (resp.data as Map?)?['tissues'] as Map<String, dynamic>? ?? const {};
+      final entries = <MapEntry<String, num>>[];
+      tissues.forEach((k, v) {
+        final heat = (v is Map) ? (v['heat'] as num? ?? 0) : 0;
+        if (heat > 0) entries.add(MapEntry(k, heat));
+      });
+      entries.sort((a, b) => b.value.compareTo(a.value));
+      return entries;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Color _heatColor(num heat) {
+    if (heat >= 85) return const Color(0xFFEF4444); // red
+    if (heat >= 65) return const Color(0xFFF59E0B); // amber
+    return const Color(0xFF14B8A6); // teal — cooling
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<MapEntry<String, num>>>(
+      future: _future,
+      builder: (context, snapshot) {
+        final data = snapshot.data ?? const [];
+        if (data.isEmpty) return const SizedBox.shrink();
+        final cardColor = widget.isDark
+            ? AppColors.glassSurface
+            : AppColorsLight.glassSurface;
+        final border =
+            widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        final text =
+            widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        final muted =
+            widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.whatshot_outlined, size: 16, color: widget.accent),
+                    const SizedBox(width: 6),
+                    Text('Tissue load',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: text)),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text('Joint/tendon load building across your recent sessions',
+                    style: TextStyle(fontSize: 11, color: muted)),
+                const SizedBox(height: 12),
+                for (final e in data) ...[
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 70,
+                        child: Text(
+                          e.key[0].toUpperCase() + e.key.substring(1),
+                          style: TextStyle(fontSize: 12, color: text),
+                        ),
+                      ),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (e.value / 100).clamp(0.0, 1.0).toDouble(),
+                            minHeight: 7,
+                            backgroundColor: border,
+                            valueColor:
+                                AlwaysStoppedAnimation(_heatColor(e.value)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('${e.value.round()}',
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _heatColor(e.value))),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
