@@ -84,7 +84,10 @@ Future<void> maybeRunPreWorkoutReshape(
 
   final accepted = await showDialog<bool>(
     context: context,
-    builder: (ctx) => _ReshapeDiffDialog(reasons: result.reasons),
+    builder: (ctx) => _ReshapeDiffDialog(
+      reasons: result.reasons,
+      provenance: result.provenance,
+    ),
   );
   if (accepted != true || !context.mounted) return;
 
@@ -130,11 +133,13 @@ class _ReshapeResult {
   final bool reshaped;
   final List<String> reasons;
   final List<Map<String, dynamic>> reshapedExercises;
+  final String provenance;
 
   const _ReshapeResult({
     required this.reshaped,
     required this.reasons,
     required this.reshapedExercises,
+    required this.provenance,
   });
 
   factory _ReshapeResult.fromJson(Map<String, dynamic> json) => _ReshapeResult(
@@ -147,6 +152,7 @@ class _ReshapeResult {
                 .whereType<Map>()
                 .map((e) => Map<String, dynamic>.from(e))
                 .toList(),
+        provenance: (json['provenance'] as String?) ?? '',
       );
 }
 
@@ -406,7 +412,8 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
 
 class _ReshapeDiffDialog extends StatelessWidget {
   final List<String> reasons;
-  const _ReshapeDiffDialog({required this.reasons});
+  final String provenance;
+  const _ReshapeDiffDialog({required this.reasons, this.provenance = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -439,17 +446,42 @@ class _ReshapeDiffDialog extends StatelessWidget {
                 ],
               ),
             ),
+          // Provenance / trust footer (Dr-Yaad audit #12) — the engine drafts;
+          // you decide. Reinforces "nothing changes until you accept".
+          if (provenance.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 1, right: 6),
+                  child: Icon(Icons.verified_outlined,
+                      size: 13, color: AppColors.textMuted),
+                ),
+                Expanded(
+                  child: Text(
+                    provenance,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Keep original'),
+          child: const Text('Reject'),
         ),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: AppColors.cyan),
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('Use this'),
+          child: const Text('Accept'),
         ),
       ],
     );

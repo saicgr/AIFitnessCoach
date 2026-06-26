@@ -119,6 +119,29 @@ class ProgressionService:
         avg_rpe = self._calculate_average_rpe(performance_history[-3:])
         is_plateau = self._detect_plateau(performance_history)
 
+        # === Equipment-differentiated method (Dr-Yaad audit #10) ============
+        # Bodyweight / band-only movements can't be loaded in kg — added-weight
+        # LINEAR progression is meaningless. Progress reps within the range
+        # (DOUBLE_PROGRESSION); once the user tops the range the harder-variation
+        # ladder (exercise_progressions / skill chains) takes over. We still
+        # honour DELOAD on real fatigue so we never over-cook a bodyweight skill.
+        if self._is_unloadable_equipment(equipment_type, exercise_name):
+            if avg_rpe and avg_rpe > RPE_THRESHOLDS["deload"]:
+                strategy = ProgressionStrategy.DELOAD
+                reason = "High fatigue — easing this bodyweight movement back"
+            else:
+                strategy = ProgressionStrategy.DOUBLE_PROGRESSION
+                reason = (
+                    "Bodyweight/band: add reps within the range, then step up to a "
+                    "harder variation — no added load to chase"
+                )
+            return self._calculate_progression(
+                exercise_id, exercise_name, last_performance, strategy, reason,
+                equipment_type=equipment_type,
+                form_score=form_score,
+                available_weights_kg=available_weights_kg,
+            )
+
         # Count consecutive "ready to progress" sessions for pace-aware logic
         consecutive_ready = self._count_consecutive_ready_sessions(performance_history)
         pace_threshold = PROGRESSION_PACE_THRESHOLDS.get(progression_pace, 2)
@@ -150,6 +173,40 @@ class ProgressionService:
             form_score=form_score,
             available_weights_kg=available_weights_kg,
         )
+
+    # ------------------------------------------------------------------
+    # Equipment-differentiated progression (Dr-Yaad audit #10)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _is_unloadable_equipment(
+        equipment_type: Optional[str], exercise_name: Optional[str] = None
+    ) -> bool:
+        """True when the movement can't take external kg load — bodyweight or
+        band only — so reps/variation is the right progression lever, not weight.
+
+        Reads the equipment string first; falls back to the exercise name for
+        the common bodyweight skills (push-up / pull-up / plank / dip / squat
+        hold) that are sometimes stored with a null/blank equipment field."""
+        eq = (equipment_type or "").lower()
+        _UNLOADABLE = (
+            "bodyweight", "body weight", "body-weight", "calisthenic",
+            "resistance band", "band", "suspension", "trx", "none",
+        )
+        # "weighted" / "weight vest" variants ARE loadable — exclude them.
+        if "weight" in eq and "bodyweight" not in eq and "body weight" not in eq:
+            return False
+        if any(tok in eq for tok in _UNLOADABLE):
+            return True
+        # Name backstop for blank-equipment bodyweight staples (not weighted).
+        nm = (exercise_name or "").lower()
+        if "weighted" in nm or "machine" in nm:
+            return False
+        _BW_NAME = (
+            "push-up", "push up", "pushup", "pull-up", "pull up", "pullup",
+            "chin-up", "chinup", "plank", "l-sit", "lever", "planche",
+            "handstand", "dip ", "air squat", "pistol", "hollow", "bridge",
+        )
+        return bool(eq == "" and any(tok in nm for tok in _BW_NAME))
 
     # ------------------------------------------------------------------
     # Template-driven progression helpers (Phase B wiring)

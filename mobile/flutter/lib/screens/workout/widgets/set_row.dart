@@ -6,6 +6,7 @@ import '../../../core/services/weight_suggestion_service.dart';
 import '../../../widgets/glass_card.dart';
 import '../../../widgets/glow_button.dart';
 import '../../../widgets/number_stepper.dart';
+import 'set_dial.dart';
 import 'set_row_visuals.dart';
 import 'voice_set_logging.dart';
 
@@ -587,9 +588,53 @@ class _SetRowState extends State<SetRow> {
             ),
             ],
           ),
+          // Visual goal/last/range dials (Dr-Yaad audit #9) — under the inputs
+          // for the active working set, so logging is "read the dial, swipe".
+          if (_showDials) _buildDials(),
           // On-set adaptive caption (Dr-Yaad audit #9) — the progression
           // stakes shown right under the dials, not buried in the rest row.
           if (_onSetCaption != null) _buildOnSetCaption(),
+        ],
+      ),
+    );
+  }
+
+  /// Show the dials only on the active, not-completed working set, and only
+  /// when there's a reference value to plot (a goal or a last-session number).
+  bool get _showDials {
+    final s = widget.setData;
+    if (!widget.isCurrentSet || s.isCompleted) return false;
+    if (s.setType.toLowerCase() == 'warmup') return false;
+    if (s.metric == 'time') return false; // time holds use the caption only
+    final hasWeightRef = (s.targetWeight > 0) || (s.previousWeight ?? 0) > 0;
+    final hasRepsRef = s.targetReps > 0 || (s.previousReps ?? 0) > 0;
+    return hasWeightRef || hasRepsRef;
+  }
+
+  Widget _buildDials() {
+    final s = widget.setData;
+    final showWeight = s.metric != 'reps' &&
+        ((s.targetWeight > 0) || (s.previousWeight ?? 0) > 0);
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, left: 44, right: 4),
+      child: Column(
+        children: [
+          if (showWeight)
+            SetDial(
+              label: 'LOAD',
+              unit: 'kg',
+              current: s.actualWeight,
+              goal: s.targetWeight > 0 ? s.targetWeight : null,
+              last: (s.previousWeight ?? 0) > 0 ? s.previousWeight : null,
+            ),
+          if (showWeight) const SizedBox(height: 8),
+          SetDial(
+            label: 'REPS',
+            unit: 'reps',
+            current: s.actualReps.toDouble(),
+            goal: s.targetReps > 0 ? s.targetReps.toDouble() : null,
+            last: (s.previousReps ?? 0) > 0 ? s.previousReps!.toDouble() : null,
+          ),
         ],
       ),
     );

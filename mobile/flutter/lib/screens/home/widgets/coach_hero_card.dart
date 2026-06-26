@@ -852,6 +852,16 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
               ),
             ],
           ),
+          // Trust framing (Dr-Yaad audit #12) — the engine drafts, you decide.
+          const SizedBox(height: 8),
+          Text(
+            'The engine drafts the change — nothing happens until you accept.',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontStyle: FontStyle.italic,
+              color: c.textMuted,
+            ),
+          ),
         ],
       ),
     );

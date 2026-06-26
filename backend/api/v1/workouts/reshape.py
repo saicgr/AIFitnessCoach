@@ -62,6 +62,12 @@ class ReshapeResponse(BaseModel):
     reasons: List[str]
     original_exercises: List[Dict[str, Any]]
     reshaped_exercises: List[Dict[str, Any]]
+    # Trust framing (Dr-Yaad audit #12): every reshape decision here is the
+    # deterministic engine (readiness scaler + injury-safety swap + time trim),
+    # NOT an LLM — and nothing is committed until the user accepts.
+    provenance: str = (
+        "Adjusted by the deterministic engine — nothing changes until you accept."
+    )
 
 
 # Pain at/above this 0–10 level moves from "monitor" to "swap zone" (#3).

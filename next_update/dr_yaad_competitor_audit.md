@@ -82,9 +82,9 @@ These are the gaps where **we already have the data or backend** and the work is
 > | 1 | Pre-workout reshape gate | A | ✅ shipped | Phase 2 |
 > | 2a | Coach apply-action | A | ✅ shipped | Phase 2 |
 > | 3 | Pain→today's-exercise swap | A | ✅ shipped | Phase 2 |
-> | 9d | Set-logging dials | C polish | ⬜ pending | — |
-> | 10 | Equipment-aware progression method | C polish | ⬜ pending | — |
-> | 12 | Accept/Reject draft step | D trust | ⬜ pending | — |
+> | 9d | Set-logging dials | C polish | ✅ shipped | Phase 3 |
+> | 10 | Equipment-aware progression method | C polish | ✅ shipped | Phase 3 |
+> | 12 | Accept/Reject draft step | D trust | ✅ shipped | Phase 3 |
 > | 5 | Exercise effect-profiles | B engine | ⬜ pending | — |
 > | 4 | Per-tissue fatigue ledger | B engine | ⬜ pending | — |
 > | 6 | Per-user volume learning | B engine | ⬜ pending | — |
