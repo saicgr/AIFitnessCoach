@@ -79,6 +79,10 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// whenever the variant changes so the user always lands on week 1.
   int _selectedWeekIndex = 0;
 
+  /// Which selector pill row is currently expanded: 'weeks', 'sessions', or
+  /// null (both collapsed). Toggled by tapping a selector tile.
+  String? _expandedSelector;
+
   @override
   void initState() {
     super.initState();
@@ -186,14 +190,29 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   }
 
   /// Called when the user picks a different variant from the selector tiles.
-  /// Resets the week index and triggers a schedule refetch via the provider.
+  /// Resets the week index, collapses the pill row, and triggers a schedule
+  /// refetch via the provider.
   void _selectVariant(String variantId) {
-    if (variantId == _selectedVariantId) return;
+    if (variantId == _selectedVariantId) {
+      // Tapping the already-selected pill just closes the row.
+      setState(() => _expandedSelector = null);
+      return;
+    }
     HapticService.selection();
     setState(() {
       _selectedVariantId = variantId;
       _selectedWeekIndex = 0;
+      _expandedSelector = null;
     });
+  }
+
+  /// Navigate to the Schedule tab and land on the week that contains
+  /// [weekStart] (1-based). Used by phase card taps.
+  void _jumpToScheduleWeek(int weekStart) {
+    HapticService.light();
+    // weekStart is 1-based; _selectedWeekIndex is 0-based.
+    setState(() => _selectedWeekIndex = (weekStart - 1).clamp(0, 999));
+    _tabController.animateTo(1);
   }
 
   /// Resolves the best variant for [weeks] × [sessions] on a sparse matrix.
@@ -483,14 +502,13 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       );
     }
 
-    // Multi-variant: show selector tiles for WEEKS and SESSIONS. Each distinct
-    // value gets its own tappable chip within the tile.
+    // Multi-variant: tiles look identical to the static ones (big number +
+    // label) but include a subtle ⌄ chevron. Tapping a tile toggles an
+    // animated pill row that slides in below the tile row — no layout pop.
     final distinctWeeks = variants.map((v) => v.weeks).toSet().toList()
       ..sort();
 
-    // Sessions available for the currently-selected week only. This prevents
-    // the PER WEEK tile from showing values that have no pairing with the
-    // active week (sparse matrix guard).
+    // Sessions available for the currently-selected week only — sparse guard.
     final currentWeeks = selectedVariant?.weeks ?? variants.first.weeks;
     final sessionsForCurrentWeek = variants
         .where((v) => v.weeks == currentWeeks)
@@ -502,58 +520,48 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     final distinctIntensities =
         variants.map((v) => v.intensity).toSet().toList();
 
+    final weeksLabel   = selectedVariant?.weeks.toString() ??
+        displayWeeks?.toString() ?? '—';
+    final sessionsLabel = selectedVariant?.sessionsPerWeek.toString() ??
+        displaySessions?.toString() ?? '—';
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Tile row — always looks like static tiles ──────────────────────
           Row(
             children: [
-              // WEEKS selector tile.
+              // WEEKS — tappable tile that toggles the weeks pill row.
               Expanded(
-                child: _VariantSelectorTile(
+                child: _SelectableTile(
+                  value: weeksLabel,
                   label: 'WEEKS',
-                  values: distinctWeeks.map((w) => w.toString()).toList(),
-                  selectedValue: selectedVariant?.weeks.toString() ??
-                      displayWeeks?.toString() ??
-                      '—',
                   accented: true,
-                  onSelect: (val) {
-                    final w = int.tryParse(val);
-                    if (w == null) return;
-                    // Snap sessions to the nearest available value for the
-                    // newly chosen week so the PER WEEK chip stays valid.
-                    final currentSessions = selectedVariant?.sessionsPerWeek ??
-                        variants.first.sessionsPerWeek;
-                    final candidate =
-                        _resolveVariant(variants, w, currentSessions);
-                    _selectVariant(candidate.variantId);
-                  },
+                  expanded: _expandedSelector == 'weeks',
+                  onTap: () => setState(() {
+                    _expandedSelector =
+                        _expandedSelector == 'weeks' ? null : 'weeks';
+                  }),
                 ),
               ),
               const SizedBox(width: 10),
-              // PER WEEK selector tile — shows only sessions available for
-              // the currently-selected week (sparse-matrix safe).
+              // PER WEEK — tappable tile that toggles the sessions pill row.
               Expanded(
-                child: _VariantSelectorTile(
+                child: _SelectableTile(
+                  value: sessionsLabel,
                   label: 'PER WEEK',
-                  values:
-                      sessionsForCurrentWeek.map((s) => s.toString()).toList(),
-                  selectedValue:
-                      selectedVariant?.sessionsPerWeek.toString() ??
-                          displaySessions?.toString() ??
-                          '—',
                   accented: false,
-                  onSelect: (val) {
-                    final s = int.tryParse(val);
-                    if (s == null) return;
-                    final candidate = _resolveVariant(variants, currentWeeks, s);
-                    _selectVariant(candidate.variantId);
-                  },
+                  expanded: _expandedSelector == 'sessions',
+                  onTap: () => setState(() {
+                    _expandedSelector =
+                        _expandedSelector == 'sessions' ? null : 'sessions';
+                  }),
                 ),
               ),
               const SizedBox(width: 10),
-              // MINUTES stays static (not variant-dependent in contract).
+              // MINUTES — always static.
               Expanded(
                 child: _StatTile(
                   value: card.sessionDurationMinutes?.toString() ?? '—',
@@ -562,6 +570,46 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               ),
             ],
           ),
+
+          // ── Animated pill row — slides in below tiles ──────────────────────
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _expandedSelector == 'weeks'
+                ? _PillRow(
+                    key: const ValueKey('weeks-pills'),
+                    values: distinctWeeks.map((w) => w.toString()).toList(),
+                    selectedValue: weeksLabel,
+                    onSelect: (val) {
+                      final w = int.tryParse(val);
+                      if (w == null) return;
+                      final currentSessions =
+                          selectedVariant?.sessionsPerWeek ??
+                              variants.first.sessionsPerWeek;
+                      _selectVariant(
+                          _resolveVariant(variants, w, currentSessions)
+                              .variantId);
+                    },
+                  )
+                : _expandedSelector == 'sessions'
+                    ? _PillRow(
+                        key: const ValueKey('sessions-pills'),
+                        values: sessionsForCurrentWeek
+                            .map((s) => s.toString())
+                            .toList(),
+                        selectedValue: sessionsLabel,
+                        onSelect: (val) {
+                          final s = int.tryParse(val);
+                          if (s == null) return;
+                          _selectVariant(
+                              _resolveVariant(variants, currentWeeks, s)
+                                  .variantId);
+                        },
+                      )
+                    : const SizedBox.shrink(),
+          ),
+
           // Intensity chip row — only when there are distinct intensities.
           if (distinctIntensities.length > 1) ...[
             const SizedBox(height: 10),
@@ -631,7 +679,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
             style: ZType.lbl(13,
                 color: AppColors.textPrimary, letterSpacing: 1.8)),
         const SizedBox(height: 12),
-        for (final phase in phases) _PhaseBlock(phase: phase),
+        for (final phase in phases)
+          _PhaseBlock(
+            phase: phase,
+            onTap: () => _jumpToScheduleWeek(phase.weekStart ?? 1),
+          ),
         if (phases.isEmpty)
           Text(
             'This program runs as a single continuous block.',
@@ -988,85 +1040,147 @@ class _DiagonalStripePainter extends CustomPainter {
 }
 
 // ===========================================================================
-// Variant selector tile — like _StatTile but with tappable value chips.
+// Selectable stat tile — looks like _StatTile but shows a small ⌄/⌃ chevron
+// in the bottom-right corner when the program has >1 option for this
+// dimension. Tapping toggles the pill row that slides in below.
 // ===========================================================================
 
-class _VariantSelectorTile extends StatelessWidget {
+class _SelectableTile extends StatelessWidget {
+  final String value;
   final String label;
+  final bool accented;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  const _SelectableTile({
+    required this.value,
+    required this.label,
+    required this.accented,
+    required this.expanded,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        decoration: BoxDecoration(
+          color: accented
+              ? AppColors.orange.withValues(alpha: 0.14)
+              : AppColors.surface2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: accented
+                ? AppColors.orange
+                : (expanded ? AppColors.orange : AppColors.cardBorder),
+          ),
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    value,
+                    style: ZType.disp(28,
+                        color: accented
+                            ? AppColors.orange
+                            : AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: ZType.lbl(10,
+                        color: AppColors.textMuted, letterSpacing: 1.4),
+                  ),
+                ],
+              ),
+            ),
+            // Subtle affordance chevron anchored to bottom-right.
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Icon(
+                expanded
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                size: 14,
+                color: accented
+                    ? AppColors.orange.withValues(alpha: 0.7)
+                    : AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Pill row — horizontal scrollable strip of option chips that animates in
+// below the tile row when a _SelectableTile is tapped.
+// ===========================================================================
+
+class _PillRow extends StatelessWidget {
   final List<String> values;
   final String selectedValue;
-  final bool accented;
   final ValueChanged<String> onSelect;
 
-  const _VariantSelectorTile({
-    required this.label,
+  const _PillRow({
+    super.key,
     required this.values,
     required this.selectedValue,
-    required this.accented,
     required this.onSelect,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: accented
-            ? AppColors.orange.withValues(alpha: 0.14)
-            : AppColors.surface2,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: accented ? AppColors.orange : AppColors.cardBorder,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Chip row for the distinct values.
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            alignment: WrapAlignment.center,
-            children: values.map((v) {
-              final isSelected = v == selectedValue;
-              return GestureDetector(
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: values.map((v) {
+            final isSelected = v == selectedValue;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
                 onTap: () => onSelect(v),
                 behavior: HitTestBehavior.opaque,
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                      horizontal: 18, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.orange
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    border: isSelected
-                        ? null
-                        : Border.all(
-                            color: AppColors.cardBorder,
-                          ),
+                        : AppColors.surface2,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.orange
+                          : AppColors.cardBorder,
+                    ),
                   ),
                   child: Text(
                     v,
-                    style: ZType.disp(
-                      18,
-                      color: isSelected
-                          ? Colors.white
-                          : (accented
-                              ? AppColors.orange
-                              : AppColors.textPrimary),
-                    ),
+                    style: ZType.sans(14,
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                        weight: FontWeight.w700),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: ZType.lbl(10,
-                color: AppColors.textMuted, letterSpacing: 1.4),
-          ),
-        ],
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -1183,56 +1297,66 @@ class _StatTile extends StatelessWidget {
 
 class _PhaseBlock extends StatelessWidget {
   final ProgramPhase phase;
-  const _PhaseBlock({required this.phase});
+
+  /// Tapping the card navigates to the schedule tab at [phase.weekStart].
+  final VoidCallback onTap;
+
+  const _PhaseBlock({required this.phase, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final weekLabel = phase.weekLabel;
     final subtitle = phase.subtitle?.trim();
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            phase.index.toString().padLeft(2, '0'),
-            style: ZType.disp(26, color: AppColors.orange),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  phase.title,
-                  style: ZType.sans(15,
-                      color: AppColors.textPrimary, weight: FontWeight.w700),
-                ),
-                if (weekLabel != null ||
-                    (subtitle != null && subtitle.isNotEmpty)) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    [
-                      if (weekLabel != null) weekLabel,
-                      if (subtitle != null && subtitle.isNotEmpty) subtitle,
-                    ].join(' · '),
-                    style: ZType.sans(12.5,
-                        color: AppColors.textSecondary,
-                        weight: FontWeight.w500),
-                  ),
-                ],
-              ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              phase.index.toString().padLeft(2, '0'),
+              style: ZType.disp(26, color: AppColors.orange),
             ),
-          ),
-          const Icon(Icons.chevron_right_rounded,
-              size: 20, color: AppColors.textMuted),
-        ],
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    phase.title,
+                    style: ZType.sans(15,
+                        color: AppColors.textPrimary, weight: FontWeight.w700),
+                  ),
+                  if (weekLabel != null ||
+                      (subtitle != null && subtitle.isNotEmpty)) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      [
+                        if (weekLabel != null) weekLabel,
+                        if (subtitle != null && subtitle.isNotEmpty) subtitle,
+                      ].join(' · '),
+                      style: ZType.sans(12.5,
+                          color: AppColors.textSecondary,
+                          weight: FontWeight.w500),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // Chevron is now meaningful — tapping navigates to that phase's
+            // first week in the Schedule tab.
+            const Icon(Icons.chevron_right_rounded,
+                size: 20, color: AppColors.orange),
+          ],
+        ),
       ),
     );
   }
