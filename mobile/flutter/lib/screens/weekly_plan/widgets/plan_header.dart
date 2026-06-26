@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/weekly_plan.dart';
+import '../../../data/services/api_client.dart';
 import '../../../services/mesocycle_planner.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -72,6 +75,9 @@ class PlanHeader extends StatelessWidget {
           // Periodization label — "Week X of N · Phase" (Calorii-audit P4.2).
           // Self-hides when there's no active mesocycle.
           const _MesocyclePhaseChip(),
+          // Recommended training block from the strength→skill ratio
+          // (Dr-Yaad audit #7). Self-hides until there's enough signal.
+          const _BlockRecommendationChip(),
           const SizedBox(height: 20),
 
           // Stats row
@@ -201,6 +207,83 @@ class _MesocyclePhaseChip extends StatefulWidget {
 
   @override
   State<_MesocyclePhaseChip> createState() => _MesocyclePhaseChipState();
+}
+
+/// Recommended training block from the strength→skill ratio (Dr-Yaad #7).
+/// Fetches `/progress/block-recommendation`; self-hides on no data / error.
+class _BlockRecommendationChip extends ConsumerStatefulWidget {
+  const _BlockRecommendationChip();
+
+  @override
+  ConsumerState<_BlockRecommendationChip> createState() =>
+      _BlockRecommendationChipState();
+}
+
+class _BlockRecommendationChipState
+    extends ConsumerState<_BlockRecommendationChip> {
+  String? _block;
+  String? _reason;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null || userId.isEmpty) return;
+    try {
+      final resp = await ref.read(apiClientProvider).get(
+            '/progress/block-recommendation',
+            queryParameters: {'user_id': userId},
+          );
+      final data = resp.data as Map?;
+      if (mounted && data != null) {
+        setState(() {
+          _block = data['block'] as String?;
+          _reason = data['reason'] as String?;
+        });
+      }
+    } catch (_) {
+      // Non-critical — chip stays hidden.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final block = _block;
+    if (block == null || block.isEmpty) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Tooltip(
+        message: _reason ?? '',
+        triggerMode: TooltipTriggerMode.tap,
+        child: Row(
+          children: [
+            Icon(Icons.recommend_rounded,
+                size: 16, color: cs.onPrimaryContainer),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                'Recommended block: $block',
+                style: TextStyle(
+                  color: cs.onPrimaryContainer,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.info_outline_rounded,
+                size: 13, color: cs.onPrimaryContainer.withValues(alpha: 0.6)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _MesocyclePhaseChipState extends State<_MesocyclePhaseChip> {

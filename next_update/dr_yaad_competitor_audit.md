@@ -87,8 +87,10 @@ These are the gaps where **we already have the data or backend** and the work is
 > | 12 | Accept/Reject draft step | D trust | ✅ shipped | Phase 3 |
 > | 5 | Exercise effect-profiles | B engine | ✅ shipped | Phase 4 (mig 2290) |
 > | 4 | Per-tissue fatigue ledger | B engine | ✅ shipped | Phase 4 (mig 2291) |
-> | 6 | Per-user volume learning | B engine | ⬜ pending | — |
-> | 7 | Strength→skill block picker | B engine | ⬜ pending | — |
+> | 6 | Per-user volume learning | B engine | ✅ shipped | Phase 4 (mig 2292) |
+> | 7 | Strength→skill block picker | B engine | ✅ shipped | Phase 4 |
+>
+> **All 14 rows shipped (2026-06-26).** Migrations 2290/2291/2292 APPLIED to prod; code committed, not pushed.
 
 ### Cluster A — the advise→act loop (his real edge; = our OPEN moat item)
 

@@ -124,8 +124,20 @@ class WorkoutValidator:
                 weekly_sets[muscle] = weekly_sets.get(muscle, 0) + int(ex.get("sets") or 0)
 
         # ----- Rule 1: Volume landmarks (MRV hard, MEV warn) ----------------
+        # Prefer this user's EARNED landmarks (Dr-Yaad audit #6) over the static
+        # population defaults — assertive where we have data, static where we
+        # don't. Lazy import avoids the module cycle (the learner imports the
+        # static map from here). Fail-open to static on any error.
+        eff_landmarks = VOLUME_LANDMARKS
+        try:
+            from services.volume_learning_service import get_user_landmarks
+            _uid = getattr(self.user_state, "user_id", None)
+            if _uid:
+                eff_landmarks = get_user_landmarks(_uid)
+        except Exception:
+            eff_landmarks = VOLUME_LANDMARKS
         for muscle, total_sets in weekly_sets.items():
-            landmarks = VOLUME_LANDMARKS.get(muscle)
+            landmarks = eff_landmarks.get(muscle)
             if not landmarks:
                 continue
             mrv = landmarks["mrv"]

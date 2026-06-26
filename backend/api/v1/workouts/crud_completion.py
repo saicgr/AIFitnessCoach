@@ -343,6 +343,14 @@ async def complete_workout(
         except Exception as e:
             logger.warning(f"[tissue] schedule failed: {e}")
 
+        # Background: re-learn per-user volume landmarks (Dr-Yaad audit #6) from
+        # the freshly-updated weekly volume + strain history. Best-effort.
+        try:
+            from services.volume_learning_service import recompute_user_landmarks
+            background_tasks.add_task(recompute_user_landmarks, user_id=user_id)
+        except Exception as e:
+            logger.warning(f"[vol-learn] schedule failed: {e}")
+
         # Background: Recalculate Strength Scores and Fitness Score
         tz_str = resolve_timezone(request, db, user_id)
         # Coalesced: bulk-completion bursts (5 workouts in 1s from sync replay)

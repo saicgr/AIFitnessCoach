@@ -157,6 +157,23 @@ class ChartViewLogRequest(BaseModel):
 # Endpoints
 # ============================================
 
+@router.get("/block-recommendation")
+async def get_block_recommendation(
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Strength→skill ratio block recommendation (Dr-Yaad audit #7).
+
+    Returns the recommended training block (Skill / Foundational Strength /
+    Hypertrophy) selected from the user's basic-lift strength vs skill level —
+    "the ratio decides, not a template" — with the reason + the indices.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    from services.block_recommender_service import recommend_block
+    return recommend_block(user_id)
+
+
 @router.get("/tissue-fatigue")
 async def get_tissue_fatigue_endpoint(
     user_id: str = Query(..., description="User ID"),
