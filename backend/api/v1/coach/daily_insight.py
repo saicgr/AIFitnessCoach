@@ -265,6 +265,54 @@ def _build_greeting(
     }
 
 
+def _build_coach_noticed(
+    snapshot: Dict[str, Any],
+    next_workout: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Proactive "Coach noticed" card (Dr-Yaad audit #2).
+
+    Deterministic + zero-cost. Names yesterday's injury/pain signal and the
+    concrete adjustment the engine already applied to today's session, then
+    offers an Accept action (Phase 2 wires `adjust_today_workout` to a live
+    reshape; until then the card routes to chat with a seeded question). Returns
+    None when there's no active injury — the card self-hides.
+    """
+    injury = snapshot.get("injury") or {}
+    bp = injury.get("body_part")
+    if not bp:
+        return None
+    phase = (injury.get("phase") or "").lower()
+    bp_title = str(bp).replace("_", " ")
+
+    if phase in ("recovery", "reintroduction"):
+        body = (
+            f"Your {bp_title} is far enough along to test. I added a light "
+            f"reintroduction into today's session and pulled anything that "
+            f"loads it hard — tell me how it feels and I'll adjust."
+        )
+        accept_label = "Adjust today's session"
+    else:  # acute / subacute / unknown → protect
+        body = (
+            f"Your {bp_title} is still settling. I kept {bp_title}-loading work "
+            f"lighter today and swapped the exercises that aggravate it. Want me "
+            f"to ease it off further?"
+        )
+        accept_label = "Ease today's session further"
+
+    return {
+        "title": "Coach noticed",
+        "body": body,
+        "body_part": bp,
+        "phase": phase or None,
+        "severity": injury.get("severity"),
+        # Phase 2 (#2 apply-action) maps this to a live pre-session reshape.
+        "action": "adjust_today_workout",
+        "accept_label": accept_label,
+        "dismiss_label": "Talk more",
+        "chat_seed": f"How's my {bp_title} and what did you change in today's workout?",
+    }
+
+
 def _sanitize_chips(raw: Any) -> Optional[List[Dict[str, Any]]]:
     """Validate Gemini-emitted chips. Each becomes {label, route?, action?}:
     a valid route, a known action, or label-only (a plain reply chip — used by
@@ -342,6 +390,10 @@ class DailyInsightResponse(BaseModel):
     # rich morning/evening briefings — the GenericBlocksRenderer schema. None
     # for lightweight sources or when the user has no health data.
     blocks: Optional[List[Dict[str, Any]]] = None
+    # "Coach noticed" proactive card (Dr-Yaad audit #2) — a concrete,
+    # injury-aware observation + the adjustment the engine already made, with
+    # an Accept action. None when there's nothing worth surfacing prominently.
+    coach_noticed: Optional[Dict[str, Any]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -651,6 +703,8 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
                 snapshot["injury"] = {
                     "body_part": a0.get("body_part"),
                     "phase": a0.get("phase"),
+                    "severity": a0.get("severity"),
+                    "allowed_intensity": a0.get("allowed_intensity"),
                 }
     except Exception as e:
         logger.debug(f"[daily_insight] injury block skipped: {e}")
@@ -1666,6 +1720,12 @@ async def daily_insight(
                                 _home_blocks(row.get("leading_pillar"))
                                 if source == "home" else briefing_blocks
                             ),
+                            # Recompute the proactive card from the live injury
+                            # snapshot even on a cache hit (Dr-Yaad audit #2).
+                            coach_noticed=(
+                                _build_coach_noticed(snapshot)
+                                if source in ("home", "morning_brief") else None
+                            ),
                         )
             except HTTPException:
                 raise
@@ -2003,6 +2063,12 @@ async def daily_insight(
             blocks=(
                 _home_blocks(payload.get("leading_pillar"))
                 if source == "home" else briefing_blocks
+            ),
+            # Proactive "Coach noticed" card — only on the Today/home surface
+            # (Dr-Yaad audit #2). Self-hides when there's no active injury.
+            coach_noticed=(
+                _build_coach_noticed(snapshot)
+                if source in ("home", "morning_brief") else None
             ),
         )
     except HTTPException:

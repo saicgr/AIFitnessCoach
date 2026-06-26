@@ -144,6 +144,10 @@ class WorkoutExercise extends Equatable {
   final int? dropSetCount; // Number of drop sets (typically 2-3)
   @JsonKey(name: 'drop_set_percentage')
   final int? dropSetPercentage; // Percentage to reduce weight each drop (typically 20-25%)
+  @JsonKey(name: 'movement_pattern')
+  final String? movementPattern; // Coarse pattern (press/pull/squat/hinge/bodyweight_core…) — migration 235 / classifier
+  @JsonKey(name: 'movement_category')
+  final String? movementCategory; // SKILL | STRENGTH | PREHAB — backend-derived tag for the active-workout chip (Dr-Yaad #8)
   @JsonKey(name: 'is_challenge')
   final bool? isChallenge; // Whether this is an optional challenge exercise for beginners
   @JsonKey(name: 'is_finisher')
@@ -211,6 +215,8 @@ class WorkoutExercise extends Equatable {
     this.isDropSet,
     this.dropSetCount,
     this.dropSetPercentage,
+    this.movementPattern,
+    this.movementCategory,
     this.isChallenge,
     this.isFinisher,
     this.progressionFrom,
@@ -427,6 +433,8 @@ class WorkoutExercise extends Equatable {
     int? dropSetPercentage,
     bool? isFailureSet,
     bool? isFinisher,
+    String? movementPattern,
+    String? movementCategory,
     List<SetTarget>? setTargets,
     String? tempo,
     String? formCue,
@@ -473,6 +481,8 @@ class WorkoutExercise extends Equatable {
       dropSetPercentage: dropSetPercentage ?? this.dropSetPercentage,
       isFailureSet: isFailureSet ?? this.isFailureSet,
       isFinisher: isFinisher ?? this.isFinisher,
+      movementPattern: movementPattern ?? this.movementPattern,
+      movementCategory: movementCategory ?? this.movementCategory,
       setTargets: setTargets ?? this.setTargets,
       tempo: tempo ?? this.tempo,
       formCue: formCue ?? this.formCue,
@@ -500,6 +510,25 @@ class WorkoutExercise extends Equatable {
 
   /// Whether this exercise has AI-generated set targets
   bool get hasSetTargets => setTargets != null && setTargets!.isNotEmpty;
+
+  /// SKILL / STRENGTH / PREHAB chip label (Dr-Yaad audit #8). Prefers the
+  /// backend-derived [movementCategory]; falls back to a light client
+  /// derivation for cached pre-upgrade workouts that predate the tag. Returns
+  /// null when nothing classifies (no chip — fail-open, never a wrong tag).
+  String? get movementCategoryResolved {
+    if (movementCategory != null && movementCategory!.isNotEmpty) {
+      return movementCategory;
+    }
+    final sec = (section ?? '').toLowerCase();
+    if (sec == 'warmup' || sec == 'cooldown') return 'PREHAB';
+    if (isTimedExercise && (holdSeconds != null && holdSeconds! > 0)) {
+      return 'SKILL';
+    }
+    final p = (movementPattern ?? '').toLowerCase();
+    if (p == 'bodyweight_core') return 'SKILL';
+    if (p.isEmpty || p == 'other') return null;
+    return 'STRENGTH';
+  }
 }
 
 /// Library exercise (full details from /library/exercises API)

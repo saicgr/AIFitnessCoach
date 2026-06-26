@@ -91,6 +91,42 @@ class InsightChip {
 /// The daily coach insight returned by the backend (or built deterministically
 /// as a fallback). `isFallback` flags whether the server actually generated
 /// this — a small UI indicator can be shown when true.
+/// Proactive "Coach noticed" card (Dr-Yaad audit #2) — a concrete,
+/// injury-aware observation + the adjustment the engine made, with an Accept
+/// action. Null when the backend surfaced nothing worth a prominent card.
+class CoachNoticed {
+  final String title;
+  final String body;
+  final String? bodyPart;
+  final String? phase;
+  final String? action; // e.g. 'adjust_today_workout' (Phase 2 apply-action)
+  final String acceptLabel;
+  final String dismissLabel;
+  final String? chatSeed;
+
+  const CoachNoticed({
+    required this.title,
+    required this.body,
+    this.bodyPart,
+    this.phase,
+    this.action,
+    this.acceptLabel = 'Adjust',
+    this.dismissLabel = 'Talk more',
+    this.chatSeed,
+  });
+
+  factory CoachNoticed.fromJson(Map<String, dynamic> json) => CoachNoticed(
+        title: (json['title'] as String?) ?? 'Coach noticed',
+        body: (json['body'] as String?) ?? '',
+        bodyPart: json['body_part'] as String?,
+        phase: json['phase'] as String?,
+        action: json['action'] as String?,
+        acceptLabel: (json['accept_label'] as String?) ?? 'Adjust',
+        dismissLabel: (json['dismiss_label'] as String?) ?? 'Talk more',
+        chatSeed: json['chat_seed'] as String?,
+      );
+}
+
 class DailyCoachInsight {
   /// Server-persisted insight id (UUID). Null on the deterministic
   /// fallback path (the row isn't persisted there). Plan §1c.5 — the
@@ -116,6 +152,9 @@ class DailyCoachInsight {
   /// Empty for light/home sources or when the user has no health data.
   final List<Map<String, dynamic>> blocks;
 
+  /// Proactive "Coach noticed" card (Dr-Yaad audit #2). Null when absent.
+  final CoachNoticed? coachNoticed;
+
   const DailyCoachInsight({
     this.insightId,
     required this.headline,
@@ -127,6 +166,7 @@ class DailyCoachInsight {
     this.source = 'home',
     this.chips = const [],
     this.blocks = const [],
+    this.coachNoticed,
   });
 
   /// True when this is a RICH morning/evening briefing (vs a light greeting
@@ -174,6 +214,9 @@ class DailyCoachInsight {
       source: (json['source'] as String?) ?? 'home',
       chips: chips,
       blocks: blocks,
+      coachNoticed: json['coach_noticed'] is Map<String, dynamic>
+          ? CoachNoticed.fromJson(json['coach_noticed'] as Map<String, dynamic>)
+          : null,
     );
   }
 }

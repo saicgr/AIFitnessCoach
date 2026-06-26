@@ -301,6 +301,69 @@ class TodayWorkoutResponse(BaseModel):
     degraded_reason: Optional[str] = None
 
 
+# ---------------------------------------------------------------------------
+# Movement-category tagging (Dr-Yaad audit #8) — surface a SKILL / STRENGTH /
+# PREHAB chip on the active-workout exercise card. We already own the data:
+# `movement_pattern` is set at generation by deterministic_workout_builder, and
+# `classify_movement_pattern()` is a pure name→pattern fallback so coverage is
+# 100% without a DB join. Fail-open: an unknown pattern yields NO chip (None),
+# never a wrong one — same lesson as the warmup-image fuzzy-alias trap.
+# ---------------------------------------------------------------------------
+def _movement_category(ex: dict) -> Optional[str]:
+    """Coarse SKILL / STRENGTH / PREHAB tag for one exercise dict, or None.
+
+    - PREHAB: prehab-flagged (#5 effect-profiles) or a warmup/cooldown mobility
+      slot. Isolation accessory work (curls/raises) is STILL strength — it is
+      deliberately NOT labelled prehab.
+    - SKILL: a timed hold or a bodyweight trunk/skill hold (plank, L-sit,
+      hollow, levers) — the calisthenics "skill" bucket.
+    - STRENGTH: everything else that classified to a real loaded/bodyweight
+      strength pattern (incl. isolation accessory). Unknown ("other") → None.
+    """
+    from services.exercise_rag.sane_ranges import (
+        classify_movement_pattern,
+        PATTERN_OTHER,
+    )
+
+    if ex.get("is_prehab") is True:
+        return "PREHAB"
+    section = (ex.get("section") or "").lower()
+    if section in ("warmup", "cooldown"):
+        return "PREHAB"
+
+    pattern = ex.get("movement_pattern") or classify_movement_pattern(
+        ex.get("name") or ex.get("exercise_name")
+    )
+    is_hold = ex.get("is_timed") is True or bool(ex.get("hold_seconds"))
+    if pattern == "bodyweight_core" or (is_hold and pattern != PATTERN_OTHER):
+        return "SKILL"
+    if pattern == PATTERN_OTHER:
+        return None
+    return "STRENGTH"
+
+
+def _attach_movement_meta(exercises: list) -> None:
+    """In-place: tag each exercise dict with movement_pattern + movement_category.
+
+    No-op for non-dict entries. Cheap + deterministic; safe to call per /today.
+    """
+    if not isinstance(exercises, list):
+        return
+    for ex in exercises:
+        if not isinstance(ex, dict):
+            continue
+        cat = _movement_category(ex)
+        if cat is not None:
+            ex["movement_category"] = cat
+        # Surface the raw pattern too (already present for generated workouts;
+        # backfill from the name classifier otherwise) for downstream clients.
+        if not ex.get("movement_pattern"):
+            from services.exercise_rag.sane_ranges import classify_movement_pattern
+            p = classify_movement_pattern(ex.get("name") or ex.get("exercise_name"))
+            if p and p != "other":
+                ex["movement_pattern"] = p
+
+
 def _extract_primary_muscles(exercises: list) -> List[str]:
     """Extract unique primary muscle groups from exercises."""
     muscles = set()
@@ -352,6 +415,10 @@ def _row_to_summary(
         except (json.JSONDecodeError, TypeError):
             logger.warning(f"[_row_to_summary] Failed to parse exercises JSON for workout {row.get('id')}", exc_info=True)
             exercises = []
+
+    # Tag each exercise with its SKILL/STRENGTH/PREHAB movement category so the
+    # active-workout card can render the chip (Dr-Yaad audit #8).
+    _attach_movement_meta(exercises if isinstance(exercises, list) else [])
 
     # Get scheduled date
     scheduled_date = row.get("scheduled_date", "")

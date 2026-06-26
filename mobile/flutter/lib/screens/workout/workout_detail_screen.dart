@@ -1136,6 +1136,73 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               ),
           ],
 
+          // Skill progressions entry (Dr-Yaad audit #11) — weaves the
+          // progression-chain engine + hold-time history into the daily
+          // workout flow, not just the Progress tab.
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    context.push('/workout/exercise-progressions');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(isDark ? 0.10 : 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: accentColor.withOpacity(0.30), width: 0.8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.trending_up_rounded,
+                            size: 20, color: accentColor),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Skill progressions',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? AppColors.textPrimary
+                                      : AppColorsLight.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Track holds & advance to harder variants',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: isDark
+                                      ? AppColors.textMuted
+                                      : AppColorsLight.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right_rounded,
+                            size: 20,
+                            color: isDark
+                                ? AppColors.textMuted
+                                : AppColorsLight.textMuted),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           // Bottom padding for FAB and floating nav bar. In summary mode the
           // Detail/Summary/Advanced pill floats over this list instead, so
           // reserve at least its clearance.

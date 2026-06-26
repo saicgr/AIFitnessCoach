@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -232,6 +233,10 @@ class _Content extends StatelessWidget {
         _Intro(isDark: isDark, accent: accent),
         const SizedBox(height: 20),
 
+        // ── Hold-time progress (Dr-Yaad audit #11) ── self-hides when the
+        // user has no timed-skill history (<2 sessions of a hold movement).
+        _HoldTimeChart(mastery: data.mastery, isDark: isDark, accent: accent),
+
         // ── Ready to advance ──
         if (data.suggestions.isNotEmpty) ...[
           _SectionLabel(
@@ -290,6 +295,207 @@ class _Content extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+// ===========================================================================
+// Hold-time progress chart (Dr-Yaad audit #11)
+// ===========================================================================
+
+/// A small line chart of best-hold seconds over recent sessions for the user's
+/// most relevant timed skill, with a dashed goal line at the next unlock
+/// target. Picks the skill itself (most-recently-performed hold movement),
+/// fetches its history, and self-hides when there is <2 sessions of data.
+class _HoldTimeChart extends ConsumerStatefulWidget {
+  final List<ExerciseMasteryWithChain> mastery;
+  final bool isDark;
+  final Color accent;
+
+  const _HoldTimeChart({
+    required this.mastery,
+    required this.isDark,
+    required this.accent,
+  });
+
+  @override
+  ConsumerState<_HoldTimeChart> createState() => _HoldTimeChartState();
+}
+
+class _HoldTimeChartState extends ConsumerState<_HoldTimeChart> {
+  // Movement names that are held for time — the calisthenics "skill" bucket.
+  static const _holdNeedles = [
+    'hold', 'plank', 'l-sit', 'lsit', 'l sit', 'lever', 'planche', 'handstand',
+    'hang', 'hollow', 'bridge', 'wall sit', 'tuck', 'flag', 'iso',
+  ];
+
+  Future<HoldHistory?>? _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  String? _pickTimedSkill() {
+    final candidates = widget.mastery.where((m) {
+      final n = m.exerciseName.toLowerCase();
+      return _holdNeedles.any((needle) => n.contains(needle));
+    }).toList()
+      ..sort((a, b) {
+        final ad = a.lastPerformedAt, bd = b.lastPerformedAt;
+        if (ad == null && bd == null) return 0;
+        if (ad == null) return 1;
+        if (bd == null) return -1;
+        return bd.compareTo(ad);
+      });
+    return candidates.isEmpty ? null : candidates.first.exerciseName;
+  }
+
+  Future<HoldHistory?> _load() async {
+    final name = _pickTimedSkill();
+    if (name == null) return null;
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null || userId.isEmpty) return null;
+    try {
+      return await ref
+          .read(exerciseProgressionsRepositoryProvider)
+          .getHoldHistory(userId, name);
+    } catch (_) {
+      // A failed secondary chart must never break the screen — hide silently.
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<HoldHistory?>(
+      future: _future,
+      builder: (context, snapshot) {
+        final h = snapshot.data;
+        if (h == null || !h.hasData) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: _buildCard(context, h),
+        );
+      },
+    );
+  }
+
+  Widget _buildCard(BuildContext context, HoldHistory h) {
+    final cardColor =
+        widget.isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final border = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textColor = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final muted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final spots = <FlSpot>[
+      for (int i = 0; i < h.points.length; i++)
+        FlSpot(i.toDouble(), h.points[i].bestHoldSeconds.toDouble()),
+    ];
+    final maxData = h.points
+        .map((p) => p.bestHoldSeconds)
+        .fold<int>(0, (a, b) => a > b ? a : b);
+    final maxY =
+        ((h.targetHoldSeconds ?? 0) > maxData ? h.targetHoldSeconds! : maxData)
+            .toDouble();
+    final current = h.currentBestHoldSeconds ?? h.points.last.bestHoldSeconds;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.timer_outlined, size: 16, color: widget.accent),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Hold-time progress · ${h.exerciseName}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            h.targetHoldSeconds != null
+                ? 'Now ${current}s · next unlock at ${h.targetHoldSeconds}s'
+                : 'Now ${current}s · longest holds per session',
+            style: TextStyle(fontSize: 11, color: muted),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 120,
+            child: LineChart(
+              LineChartData(
+                minY: 0,
+                maxY: maxY <= 0 ? 10 : maxY * 1.15,
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: (maxY <= 0 ? 10 : maxY) / 2,
+                  getDrawingHorizontalLine: (v) =>
+                      FlLine(color: border.withOpacity(0.5), strokeWidth: 0.5),
+                ),
+                titlesData: FlTitlesData(
+                  topTitles:
+                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles:
+                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles:
+                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 28,
+                      getTitlesWidget: (v, meta) => Text(
+                        '${v.toInt()}s',
+                        style: TextStyle(fontSize: 9, color: muted),
+                      ),
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                extraLinesData: h.targetHoldSeconds != null
+                    ? ExtraLinesData(horizontalLines: [
+                        HorizontalLine(
+                          y: h.targetHoldSeconds!.toDouble(),
+                          color: widget.accent.withOpacity(0.7),
+                          strokeWidth: 1.5,
+                          dashArray: [6, 4],
+                        ),
+                      ])
+                    : const ExtraLinesData(),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    color: widget.accent,
+                    barWidth: 2.5,
+                    dotData: const FlDotData(show: true),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: widget.accent.withOpacity(0.12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

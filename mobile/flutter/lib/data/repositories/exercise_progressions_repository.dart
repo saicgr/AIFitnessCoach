@@ -390,6 +390,53 @@ class AcceptProgressionResponse {
 }
 
 // ===========================================================================
+// HoldHistory — per-session best-hold series for a timed skill (Dr-Yaad #11).
+// ===========================================================================
+
+class HoldPoint {
+  final DateTime performedAt;
+  final int bestHoldSeconds;
+  const HoldPoint({required this.performedAt, required this.bestHoldSeconds});
+
+  factory HoldPoint.fromJson(Map<String, dynamic> json) => HoldPoint(
+        performedAt:
+            DateTime.tryParse((json['performed_at'] ?? '').toString()) ??
+                DateTime.fromMillisecondsSinceEpoch(0),
+        bestHoldSeconds: _asInt(json['best_hold_seconds']),
+      );
+}
+
+class HoldHistory {
+  final String exerciseName;
+  final List<HoldPoint> points;
+  final int? currentBestHoldSeconds;
+  final int? targetHoldSeconds;
+
+  const HoldHistory({
+    required this.exerciseName,
+    required this.points,
+    this.currentBestHoldSeconds,
+    this.targetHoldSeconds,
+  });
+
+  bool get hasData => points.length >= 2;
+
+  factory HoldHistory.fromJson(Map<String, dynamic> json) => HoldHistory(
+        exerciseName: (json['exercise_name'] ?? '').toString(),
+        points: (json['points'] as List<dynamic>? ?? const [])
+            .whereType<Map>()
+            .map((e) => HoldPoint.fromJson(Map<String, dynamic>.from(e)))
+            .toList(),
+        currentBestHoldSeconds: json['current_best_hold_seconds'] == null
+            ? null
+            : _asInt(json['current_best_hold_seconds']),
+        targetHoldSeconds: json['target_hold_seconds'] == null
+            ? null
+            : _asInt(json['target_hold_seconds']),
+      );
+}
+
+// ===========================================================================
 // Repository
 // ===========================================================================
 
@@ -446,6 +493,19 @@ class ExerciseProgressionsRepository {
         .map((e) =>
             ProgressionSuggestionItem.fromJson(Map<String, dynamic>.from(e)))
         .toList();
+  }
+
+  /// GET /exercise-progressions/user/{userId}/hold-history/{exerciseName}
+  ///
+  /// Per-session best-hold time-series for a timed skill (Dr-Yaad #11). Drives
+  /// the hold-time chart. Returns an empty-points [HoldHistory] for first-timers.
+  Future<HoldHistory> getHoldHistory(String userId, String exerciseName) async {
+    debugPrint('🏋️ [Progressions] hold-history | user=$userId ex=$exerciseName');
+    final resp = await _client.get(
+      '/exercise-progressions/user/$userId/hold-history/'
+      '${Uri.encodeComponent(exerciseName)}',
+    );
+    return HoldHistory.fromJson(Map<String, dynamic>.from(resp.data as Map));
   }
 
   /// GET /exercise-progressions/chains

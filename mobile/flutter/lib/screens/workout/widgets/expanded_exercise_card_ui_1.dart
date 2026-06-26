@@ -613,6 +613,13 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       // day). Distinct amber accent so it reads as a tag, not a
                       // muscle/equipment label.
                       if (exercise.isFinisher == true) _buildFinisherChip(),
+                      // Movement-category chip — SKILL / STRENGTH / PREHAB
+                      // (Dr-Yaad audit #8). Mirrors his Today screen tags. Data
+                      // is backend-derived (movement_category) with a client
+                      // fallback; null → no chip (fail-open).
+                      if (exercise.movementCategoryResolved != null)
+                        _buildMovementCategoryChip(
+                            exercise.movementCategoryResolved!),
                       if (exercise.muscleGroup != null || exercise.primaryMuscle != null)
                         _buildInfoChip(
                           Icons.fitness_center,
@@ -1254,6 +1261,56 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
               fontSize: 11,
               color: displayColor,
               fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// SKILL / STRENGTH / PREHAB movement-category tag chip (Dr-Yaad audit #8).
+  /// Distinct hue per bucket so the user reads the session's intent at a glance:
+  /// SKILL = indigo (technique/holds), STRENGTH = the card accent, PREHAB =
+  /// teal (mobility/warm-down). Mirrors his Today screen's per-exercise tags.
+  Widget _buildMovementCategoryChip(String category) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final IconData icon;
+    final Color color;
+    switch (category.toUpperCase()) {
+      case 'SKILL':
+        icon = Icons.auto_awesome;
+        color = const Color(0xFF7C6CF4); // indigo
+        break;
+      case 'PREHAB':
+        icon = Icons.healing;
+        color = const Color(0xFF14B8A6); // teal
+        break;
+      case 'STRENGTH':
+      default:
+        icon = Icons.fitness_center;
+        color = const Color(0xFFEF5777); // rose
+        break;
+    }
+    final displayColor = isDark ? color : _darkenColor(color);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(isDark ? 0.12 : 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: displayColor.withOpacity(0.4), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: displayColor),
+          const SizedBox(width: 4),
+          Text(
+            category.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11,
+              color: displayColor,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
             ),
           ),
         ],

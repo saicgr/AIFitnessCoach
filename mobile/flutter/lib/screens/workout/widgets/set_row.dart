@@ -321,8 +321,12 @@ class _SetRowState extends State<SetRow> {
           width: widget.isCurrentSet ? 2 : 1,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Row(
+            children: [
           // Set number/type badge
           GestureDetector(
             onTap: isCompleted ? null : _cycleSetType,
@@ -581,6 +585,61 @@ class _SetRowState extends State<SetRow> {
                 size: 28,
               ),
             ),
+            ],
+          ),
+          // On-set adaptive caption (Dr-Yaad audit #9) — the progression
+          // stakes shown right under the dials, not buried in the rest row.
+          if (_onSetCaption != null) _buildOnSetCaption(),
+        ],
+      ),
+    );
+  }
+
+  /// One-line progression-stakes caption for the ACTIVE working set, derived
+  /// from its own prev/target data. Null for warmups, completed/non-current
+  /// sets, when progressive overload is off, or with no weighted history.
+  String? get _onSetCaption {
+    final s = widget.setData;
+    if (!widget.isCurrentSet || s.isCompleted) return null;
+    if (s.setType.toLowerCase() == 'warmup') return null;
+    if (!s.progressiveOverloadEnabled) return null;
+    final prevW = s.previousWeight;
+    if (prevW == null || prevW <= 0) {
+      if (s.isFirstSetEver) {
+        return 'Set your baseline here — next session builds on it.';
+      }
+      return null;
+    }
+    String fmt(double w) =>
+        w % 1 == 0 ? w.toStringAsFixed(0) : w.toStringAsFixed(1);
+    if (s.targetWeight > prevW + 0.01) {
+      return 'Up from last time (${fmt(prevW)}→${fmt(s.targetWeight)} kg). '
+          'Clear all reps and next week steps up again.';
+    }
+    return 'Match last session (${fmt(prevW)} kg × ${s.previousReps ?? s.targetReps}), '
+        'then beat it — next week goes heavier.';
+  }
+
+  Widget _buildOnSetCaption() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, left: 44, right: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.trending_up_rounded,
+              size: 12, color: AppColors.cyan.withOpacity(0.9)),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              _onSetCaption!,
+              style: const TextStyle(
+                fontSize: 10.5,
+                height: 1.25,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );

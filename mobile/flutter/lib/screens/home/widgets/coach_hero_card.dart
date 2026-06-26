@@ -483,6 +483,13 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             color: c.textPrimary,
           ),
         ),
+        // Proactive "Coach noticed" card (Dr-Yaad audit #2) — a concrete
+        // injury-aware observation + the adjustment the engine made, with an
+        // Accept action. Self-hides when the backend surfaced nothing.
+        if (insight.coachNoticed != null) ...[
+          const SizedBox(height: 10),
+          _coachNoticedBanner(c, insight, insight.coachNoticed!),
+        ],
         if (hasBullets) ...[
           const SizedBox(height: 8),
           for (final line in bodyLines)
@@ -748,6 +755,97 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         // user-actionable sub-cards stay visible.
         const _CoachNudgeStack(),
       ],
+    );
+  }
+
+  /// Proactive "Coach noticed" banner (Dr-Yaad audit #2). The Accept button
+  /// is a surface-half stub today — it opens chat seeded with the coach's
+  /// concrete proposal; Phase 2 (#2 apply-action) swaps it for a live
+  /// pre-session reshape via the `action` field.
+  Widget _coachNoticedBanner(
+    ThemeColors c,
+    DailyCoachInsight insight,
+    CoachNoticed cn,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: c.accent.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: c.accent.withOpacity(0.30), width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.lightbulb_outline_rounded, size: 15, color: c.accent),
+              const SizedBox(width: 6),
+              Text(
+                cn.title.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                  color: c.accent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            cn.body,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.35,
+              color: c.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  // Surface-half: route to chat seeded with the proposal.
+                  // Phase 2 replaces this with the live reshape (cn.action).
+                  _openChat(context, insight);
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: c.accent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    cn.acceptLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: c.accentContrast,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _openChat(context, insight),
+                child: Text(
+                  cn.dismissLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: c.textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

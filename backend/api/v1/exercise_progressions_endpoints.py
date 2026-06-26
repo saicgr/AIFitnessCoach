@@ -234,6 +234,69 @@ async def check_readiness_endpoint(user_id: str, exercise_name: str, current_use
     return result
 
 
+@router.get("/user/{user_id}/hold-history/{exercise_name}")
+async def get_hold_history(
+    user_id: str,
+    exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-session best-hold time-series for a timed skill (Dr-Yaad audit #11).
+
+    Drives the hold-time history chart on the progressions screen — "planche
+    10s→14s, plan to 16s by deload". Reads `best_time_seconds` per session from
+    `exercise_performance_summary` (already populated on every workout
+    completion). Returns the points + the next unlock target (min_hold_seconds)
+    when the exercise sits in a progression chain, so the chart can draw a goal
+    line. Empty `points` is a normal first-timer state, not an error.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    db = get_supabase_db()
+    try:
+        rows = (
+            db.client.table("exercise_performance_summary")
+            .select("best_time_seconds, performed_at")
+            .eq("user_id", user_id)
+            .ilike("exercise_name", f"%{exercise_name.lower()}%")
+            .not_.is_("best_time_seconds", "null")
+            .order("performed_at", desc=False)
+            .limit(60)
+            .execute()
+        ).data or []
+    except Exception as e:  # pragma: no cover - defensive
+        raise safe_internal_error(e, "hold_history")
+
+    points = [
+        {
+            "performed_at": r.get("performed_at"),
+            "best_hold_seconds": int(r["best_time_seconds"]),
+        }
+        for r in rows
+        if r.get("best_time_seconds") is not None and r.get("performed_at")
+    ]
+
+    # Next unlock target (min_hold_seconds) from the progression chain, if any.
+    target_hold_seconds: Optional[int] = None
+    try:
+        _check, get_next_variant, _parse = _progressions_parent()
+        nv = await get_next_variant(exercise_name)
+        if nv and isinstance(nv.get("step"), dict):
+            crit = nv["step"].get("unlock_criteria") or {}
+            mh = crit.get("min_hold_seconds")
+            if mh:
+                target_hold_seconds = int(mh)
+    except Exception:
+        target_hold_seconds = None
+
+    return {
+        "exercise_name": exercise_name,
+        "points": points,
+        "current_best_hold_seconds": points[-1]["best_hold_seconds"] if points else None,
+        "target_hold_seconds": target_hold_seconds,
+    }
+
+
 @router.get("/next-variant/{exercise_name}")
 async def get_next_variant_endpoint(exercise_name: str, current_user: dict = Depends(get_current_user)):
     """
