@@ -1009,6 +1009,46 @@ async def library_recommended(
         raise safe_internal_error(e, "program_templates")
 
 
+# --- Detail-page enrichers (joined_count + phases) -------------------------
+def _normalize_phases(raw: Any) -> List[Dict[str, Any]]:
+    """Normalize the `programs.phases` jsonb (migration 2286) into a clean list
+    of {index, title, subtitle, week_start, week_end}. Returns [] when absent /
+    malformed — the content agent authors these per published program."""
+    if not isinstance(raw, list):
+        return []
+    out: List[Dict[str, Any]] = []
+    for i, p in enumerate(raw):
+        if not isinstance(p, dict):
+            continue
+        out.append({
+            "index": p.get("index", i),
+            "title": p.get("title"),
+            "subtitle": p.get("subtitle"),
+            "week_start": p.get("week_start"),
+            "week_end": p.get("week_end"),
+        })
+    return out
+
+
+def _program_joined_count(db, program_id: str) -> int:
+    """COUNT(DISTINCT user_id) of assignments started from this catalog program.
+    Real count (may be 0). Fail-open to 0 — social proof must never 500 detail.
+
+    supabase-py has no COUNT(DISTINCT); we fetch the (small) user_id column and
+    dedupe in Python. The set is bounded by adoption, well within one page."""
+    try:
+        resp = (
+            db.client.table("user_program_assignments")
+            .select("user_id")
+            .eq("source_program_id", program_id)
+            .execute()
+        )
+        return len({str(r["user_id"]) for r in (resp.data or []) if r.get("user_id")})
+    except Exception as e:  # noqa: BLE001
+        logger.warning("joined_count failed for %s (fail-open 0): %s", program_id, e)
+        return 0
+
+
 @router.get("/library/{program_id}")
 async def library_program_detail(
     program_id: str,
@@ -1134,6 +1174,11 @@ async def library_program_detail(
             "equipment_summary": program.get("equipment_summary"),
             "progression_note": program.get("progression_note"),
             "is_published": program.get("is_published", False),
+            # Multi-week phase breakdown (migration 2286 `programs.phases` jsonb).
+            # [] when the content agent hasn't authored phases for this program.
+            "phases": _normalize_phases(program.get("phases")),
+            # Real social-proof count of users who have started this program.
+            "joined_count": _program_joined_count(db, str(program["id"])),
             "source": "library",
             "preview_available": True,
             **normalized,
