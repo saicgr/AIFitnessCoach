@@ -2251,6 +2251,139 @@ async def delete_assignment(
         raise safe_internal_error(e, "program_templates")
 
 
+# =============================================================================
+# Program favorites  (Program Detail page heart — persists)
+# =============================================================================
+class FavoriteProgramRequest(BaseModel):
+    program_id: str = Field(..., description="public.programs.id to favorite")
+
+
+@router.get("/favorites")
+async def list_favorite_programs(
+    current_user: dict = Depends(get_current_user),
+):
+    """The user's favorited library programs as full cards, newest-first.
+
+    Joins favorite_programs -> programs. Includes the editorial card fields +
+    `phases` (from the row). Fail-open: any error returns an empty list rather
+    than 500ing the favorites surface."""
+    try:
+        db = get_supabase()
+        user_id = str(current_user["id"])
+        favs = (
+            db.client.table("favorite_programs")
+            .select("program_id, created_at")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        rows = favs.data or []
+        if not rows:
+            return {"programs": []}
+
+        # Preserve favorite order (newest first); fetch the program rows in one
+        # query, then re-sort to the favorite order.
+        ordered_ids = [str(r["program_id"]) for r in rows if r.get("program_id")]
+        progs = (
+            db.client.table("programs")
+            .select(_LIBRARY_CARD_COLS + ", phases")
+            .in_("id", ordered_ids)
+            .execute()
+        )
+        by_id = {str(p["id"]): p for p in (progs.data or [])}
+
+        cards: List[Dict[str, Any]] = []
+        for pid in ordered_ids:
+            p = by_id.get(pid)
+            if not p:
+                continue  # program deleted (FK cascade should prevent, but safe)
+            card = _row_to_card(p).model_dump()
+            card["phases"] = _normalize_phases(p.get("phases"))
+            cards.append(card)
+        return {"programs": cards}
+    except Exception as e:  # noqa: BLE001
+        logger.error("Failed to list favorite programs: %s", e, exc_info=True)
+        return {"programs": []}
+
+
+@router.get("/favorites/ids")
+async def list_favorite_program_ids(
+    current_user: dict = Depends(get_current_user),
+):
+    """Fast heart-state for the client: just the favorited program_ids. Fail-open
+    to an empty list."""
+    try:
+        db = get_supabase()
+        user_id = str(current_user["id"])
+        resp = (
+            db.client.table("favorite_programs")
+            .select("program_id")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        ids = [str(r["program_id"]) for r in (resp.data or []) if r.get("program_id")]
+        return {"program_ids": ids}
+    except Exception as e:  # noqa: BLE001
+        logger.error("Failed to list favorite program ids: %s", e, exc_info=True)
+        return {"program_ids": []}
+
+
+@router.post("/favorites")
+async def add_favorite_program(
+    request: FavoriteProgramRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Favorite a program. Idempotent — a re-tap on an already-favorited program
+    is a no-op (dedupes on the unique(user_id, program_id) index)."""
+    try:
+        db = get_supabase()
+        user_id = str(current_user["id"])
+        # Validate the program exists (clean 404 vs an opaque FK error).
+        prog = (
+            db.client.table("programs")
+            .select("id")
+            .eq("id", request.program_id)
+            .limit(1)
+            .execute()
+        )
+        if not prog.data:
+            raise HTTPException(status_code=404, detail="Program not found")
+        try:
+            db.client.table("favorite_programs").insert(
+                {"user_id": user_id, "program_id": request.program_id}
+            ).execute()
+        except Exception as ie:  # noqa: BLE001
+            # Unique-violation on a re-tap is the idempotent success path.
+            if "23505" in str(ie) or "duplicate key" in str(ie).lower():
+                logger.debug("favorite already exists (idempotent): %s", ie)
+            else:
+                raise
+        return {"success": True, "favorited": True}
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        logger.error("Failed to add favorite program: %s", e, exc_info=True)
+        raise safe_internal_error(e, "program_templates")
+
+
+@router.delete("/favorites/{program_id}")
+async def remove_favorite_program(
+    program_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Unfavorite a program. Idempotent — deleting a non-favorite is success."""
+    try:
+        db = get_supabase()
+        user_id = str(current_user["id"])
+        db.client.table("favorite_programs").delete().eq(
+            "user_id", user_id
+        ).eq("program_id", program_id).execute()
+        return {"success": True, "favorited": False}
+    except Exception as e:  # noqa: BLE001
+        logger.error("Failed to remove favorite program: %s", e, exc_info=True)
+        raise safe_internal_error(e, "program_templates")
+
+
 @router.get("/{template_id}")
 async def get_template(
     template_id: str,
