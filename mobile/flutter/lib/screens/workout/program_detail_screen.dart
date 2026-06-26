@@ -201,22 +201,31 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     return Column(
       children: [
         Expanded(
-          child: CustomScrollView(
-            slivers: [
+          // NestedScrollView so the OVERVIEW/SCHEDULE tab bar PINS to the top:
+          // the striped header + stat tiles scroll away in the outer header
+          // slivers, the tab bar sits in a pinned SliverPersistentHeader, and
+          // each tab's own ListView scrolls beneath it. Switching tabs keeps
+          // the pinned bar in place; each tab keeps its own scroll via the
+          // PageStorageKey on its list.
+          child: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) => [
               SliverToBoxAdapter(child: _buildHeader(card)),
               SliverToBoxAdapter(child: _buildStatTiles(card)),
-              SliverToBoxAdapter(child: _buildTabBar()),
-              SliverFillRemaining(
-                hasScrollBody: true,
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildOverviewTab(card),
-                    _buildScheduleTab(),
-                  ],
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _DetailTabBarDelegate(
+                  tabBar: _buildTabBar(),
+                  overlapping: innerBoxIsScrolled,
                 ),
               ),
             ],
+            body: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildOverviewTab(card),
+                _buildScheduleTab(),
+              ],
+            ),
           ),
         ),
         _buildBottomBar(card),
@@ -388,6 +397,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         : _fallbackPhases(card.durationWeeks);
 
     return ListView(
+      key: const PageStorageKey<String>('program_detail_overview'),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
         Text('PHASES',
@@ -490,6 +500,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           );
         }
         return ListView(
+          key: const PageStorageKey<String>('program_detail_schedule'),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
             Wrap(
@@ -976,4 +987,48 @@ class _DetailError extends StatelessWidget {
       ),
     );
   }
+}
+
+// ===========================================================================
+// Pinned tab-bar delegate — keeps OVERVIEW / SCHEDULE stuck to the top while
+// each tab's content scrolls beneath it (NestedScrollView header sliver).
+// ===========================================================================
+
+class _DetailTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget tabBar;
+
+  /// True once inner tab content has scrolled under the bar — adds a divider.
+  final bool overlapping;
+
+  _DetailTabBarDelegate({required this.tabBar, required this.overlapping});
+
+  // TabBar (~46) + the bar's top padding (8) + a hairline. A constant extent
+  // keeps the pin smooth.
+  static const double _extent = 56;
+
+  @override
+  double get minExtent => _extent;
+
+  @override
+  double get maxExtent => _extent;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      height: _extent,
+      decoration: BoxDecoration(
+        color: AppColors.pureBlack,
+        border: overlapping || overlapsContent
+            ? const Border(
+                bottom: BorderSide(color: AppColors.hairlineStrong))
+            : null,
+      ),
+      alignment: Alignment.centerLeft,
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_DetailTabBarDelegate oldDelegate) =>
+      oldDelegate.overlapping != overlapping || oldDelegate.tabBar != tabBar;
 }
