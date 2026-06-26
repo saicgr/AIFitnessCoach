@@ -196,6 +196,48 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     });
   }
 
+  /// Resolves the best variant for [weeks] × [sessions] on a sparse matrix.
+  ///
+  /// Priority:
+  ///   1. Exact match (weeks == w && sessionsPerWeek == s).
+  ///   2. Nearest available sessionsPerWeek for [weeks] (min abs diff; tiebreak
+  ///      lower).
+  ///   3. Default variant (isDefault == true).
+  ///   4. First variant in the list.
+  ///
+  /// Never returns null as long as [variants] is non-empty.
+  ProgramVariantOption _resolveVariant(
+    List<ProgramVariantOption> variants,
+    int weeks,
+    int sessions,
+  ) {
+    // 1. Exact match.
+    for (final v in variants) {
+      if (v.weeks == weeks && v.sessionsPerWeek == sessions) return v;
+    }
+
+    // 2. Nearest sessions for the requested weeks.
+    final sameWeek = variants.where((v) => v.weeks == weeks).toList();
+    if (sameWeek.isNotEmpty) {
+      sameWeek.sort((a, b) {
+        final da = (a.sessionsPerWeek - sessions).abs();
+        final db = (b.sessionsPerWeek - sessions).abs();
+        if (da != db) return da.compareTo(db);
+        // Tiebreak: prefer the lower sessions count.
+        return a.sessionsPerWeek.compareTo(b.sessionsPerWeek);
+      });
+      return sameWeek.first;
+    }
+
+    // 3. Default variant.
+    for (final v in variants) {
+      if (v.isDefault) return v;
+    }
+
+    // 4. First variant.
+    return variants.first;
+  }
+
   @override
   Widget build(BuildContext context) {
     final card = _card;
@@ -445,8 +487,18 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     // value gets its own tappable chip within the tile.
     final distinctWeeks = variants.map((v) => v.weeks).toSet().toList()
       ..sort();
-    final distinctSessions =
-        variants.map((v) => v.sessionsPerWeek).toSet().toList()..sort();
+
+    // Sessions available for the currently-selected week only. This prevents
+    // the PER WEEK tile from showing values that have no pairing with the
+    // active week (sparse matrix guard).
+    final currentWeeks = selectedVariant?.weeks ?? variants.first.weeks;
+    final sessionsForCurrentWeek = variants
+        .where((v) => v.weeks == currentWeeks)
+        .map((v) => v.sessionsPerWeek)
+        .toSet()
+        .toList()
+      ..sort();
+
     final distinctIntensities =
         variants.map((v) => v.intensity).toSet().toList();
 
@@ -469,29 +521,24 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                   onSelect: (val) {
                     final w = int.tryParse(val);
                     if (w == null) return;
-                    // Pick the first variant matching the chosen weeks that
-                    // is also compatible with the current sessions selection.
-                    final candidate = variants.firstWhere(
-                      (v) =>
-                          v.weeks == w &&
-                          v.sessionsPerWeek ==
-                              (selectedVariant?.sessionsPerWeek ??
-                                  variants.first.sessionsPerWeek),
-                      orElse: () =>
-                          variants.firstWhere((v) => v.weeks == w,
-                              orElse: () => variants.first),
-                    );
+                    // Snap sessions to the nearest available value for the
+                    // newly chosen week so the PER WEEK chip stays valid.
+                    final currentSessions = selectedVariant?.sessionsPerWeek ??
+                        variants.first.sessionsPerWeek;
+                    final candidate =
+                        _resolveVariant(variants, w, currentSessions);
                     _selectVariant(candidate.variantId);
                   },
                 ),
               ),
               const SizedBox(width: 10),
-              // PER WEEK selector tile.
+              // PER WEEK selector tile — shows only sessions available for
+              // the currently-selected week (sparse-matrix safe).
               Expanded(
                 child: _VariantSelectorTile(
                   label: 'PER WEEK',
                   values:
-                      distinctSessions.map((s) => s.toString()).toList(),
+                      sessionsForCurrentWeek.map((s) => s.toString()).toList(),
                   selectedValue:
                       selectedVariant?.sessionsPerWeek.toString() ??
                           displaySessions?.toString() ??
@@ -500,15 +547,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                   onSelect: (val) {
                     final s = int.tryParse(val);
                     if (s == null) return;
-                    final candidate = variants.firstWhere(
-                      (v) =>
-                          v.sessionsPerWeek == s &&
-                          v.weeks ==
-                              (selectedVariant?.weeks ?? variants.first.weeks),
-                      orElse: () =>
-                          variants.firstWhere((v) => v.sessionsPerWeek == s,
-                              orElse: () => variants.first),
-                    );
+                    final candidate = _resolveVariant(variants, currentWeeks, s);
                     _selectVariant(candidate.variantId);
                   },
                 ),
