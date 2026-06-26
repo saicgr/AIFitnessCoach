@@ -260,9 +260,16 @@ def generate_for_program(program_id: str, smoke_test: bool = False) -> dict:
 
     print(f"Matrix: {len(combos)} combos: {combos}")
 
-    # Initialize Gemini client.
+    # Initialize Gemini client with a hard per-call HTTP timeout so a wedged
+    # socket can never hang the run forever (observed under high concurrency).
+    # On timeout the genai call raises → the per-combo try/except marks that
+    # combo failed and the loop continues; a resume re-run backfills the gap.
     from google import genai
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    from google.genai import types as _genai_types
+    client = genai.Client(
+        api_key=GEMINI_API_KEY,
+        http_options=_genai_types.HttpOptions(timeout=120_000),  # 120s, in ms
+    )
 
     sb = get_supabase()
 
