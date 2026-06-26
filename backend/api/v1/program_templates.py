@@ -63,6 +63,33 @@ from services.program_template_expander import (
 logger = get_logger(__name__)
 router = APIRouter()
 
+# Lazy singleton for S3 presigning (same credentials used by custom exercise
+# media). Imported lazily to avoid a circular import at module load.
+_s3_media_service = None
+
+
+def _get_s3_media_service():
+    global _s3_media_service
+    if _s3_media_service is None:
+        from services.custom_exercise_media_service import (
+            get_custom_exercise_media_service,
+        )
+        _s3_media_service = get_custom_exercise_media_service()
+    return _s3_media_service
+
+
+def _presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
+    """Presign an S3 key → a temporary GET URL (1-hour TTL).
+    Returns None when s3_path is absent or S3 is not configured."""
+    if not s3_path:
+        return None
+    try:
+        svc = _get_s3_media_service()
+        return svc.get_signed_url(s3_path, expires_in=3600)
+    except Exception as e:  # noqa: BLE001
+        logger.debug("presign failed for %s: %s", s3_path, e)
+        return None
+
 # In-memory TTL cache for the program-library browse result. The `programs`
 # library is static/curated reference data, so a long TTL is safe — the only
 # writes are bulk re-imports, which restart the process. Keyed by the
@@ -181,6 +208,13 @@ class AssignProgramRequest(BaseModel):
     )
     duration_weeks: Optional[int] = Field(default=None, ge=1)
     customize: Optional[CustomizeOptions] = None
+    variant_id: Optional[str] = Field(
+        default=None,
+        description="Optional program_variants.id to clone. When provided, "
+        "the variant's program_variant_weeks rows are used instead of the "
+        "curated programs.workouts blob. Fail-open: any lookup error falls "
+        "back to the single-plan path.",
+    )
 
 
 # =============================================================================
@@ -1224,6 +1258,52 @@ def _program_joined_count(db, program_id: str) -> int:
         return 0
 
 
+def _fetch_variant_options(
+    db, variant_base_id: Optional[str], default_variant_id: Optional[str]
+) -> List[Dict[str, Any]]:
+    """Return the sorted list of variant options for the detail page.
+
+    Source: program_variants WHERE base_program_id = variant_base_id, each row
+    becoming {variant_id, weeks, sessions_per_week, intensity, is_default}.
+    Sorted by weeks ASC, then sessions ASC, then intensity.
+    Returns [] when variant_base_id is NULL (single-plan programs).
+    """
+    if not variant_base_id:
+        return []
+    try:
+        resp = (
+            db.client.table("program_variants")
+            .select("id, duration_weeks, sessions_per_week, intensity_level")
+            .eq("base_program_id", variant_base_id)
+            .order("duration_weeks", desc=False)
+            .execute()
+        )
+        rows = resp.data or []
+        _intensity_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
+        rows.sort(
+            key=lambda r: (
+                r.get("duration_weeks") or 0,
+                r.get("sessions_per_week") or 0,
+                _intensity_rank.get(r.get("intensity_level") or "Medium", 1),
+            )
+        )
+        return [
+            {
+                "variant_id": str(r["id"]),
+                "weeks": r.get("duration_weeks"),
+                "sessions_per_week": r.get("sessions_per_week"),
+                "intensity": r.get("intensity_level"),
+                "is_default": str(r["id"]) == str(default_variant_id or ""),
+            }
+            for r in rows
+        ]
+    except Exception as e:  # noqa: BLE001
+        logger.warning(
+            "variant_options fetch failed for base %s: %s", variant_base_id, e
+        )
+        return []
+
+
 @router.get("/library/{program_id}")
 async def library_program_detail(
     program_id: str,
@@ -1312,7 +1392,7 @@ async def library_program_detail(
                 "source_program_id": branded_id,
             }
 
-        # --- Curated `programs` preview path (unchanged) ------------------
+        # --- Curated `programs` preview path ---------------------------------
         resp = (
             db.client.table("programs")
             .select("*")
@@ -1332,6 +1412,11 @@ async def library_program_detail(
         normalized = normalize_program_blob_for_preview(
             program, user_id=str(current_user["id"])
         )
+        # Variant options (migration 2289): when this program is linked to a
+        # branded_programs base, surface the available duration/session choices.
+        variant_base_id = program.get("variant_base_id")
+        default_variant_id = program.get("default_variant_id")
+        variant_options = _fetch_variant_options(db, variant_base_id, default_variant_id)
         return {
             "program_id": str(program["id"]),
             "program_name": program.get("program_name"),
@@ -1356,6 +1441,11 @@ async def library_program_detail(
             "joined_count": _program_joined_count(db, str(program["id"])),
             "source": "library",
             "preview_available": True,
+            # Variant chooser (migration 2289): [] + null for single-plan programs.
+            "variant_options": variant_options,
+            "default_variant_id": (
+                str(default_variant_id) if default_variant_id else None
+            ),
             **normalized,
         }
     except HTTPException:
@@ -1368,9 +1458,286 @@ async def library_program_detail(
         raise safe_internal_error(e, "program_templates")
 
 
+@router.get("/library/{program_id}/schedule")
+async def library_program_schedule(
+    program_id: str,
+    variant_id: Optional[str] = Query(default=None),
+    current_user: dict = Depends(get_current_user),
+):
+    """Multi-week exercise schedule for a variant of a curated library program.
+
+    When variant_id is supplied → read program_variant_weeks for that variant,
+    flatten workouts jsonb into days → exercises, and LEFT JOIN
+    program_exercises_with_media (by variant_id + week_number + exercise name)
+    to attach image_url, video_url, gif_url, and exercise_id (canonical).
+
+    When variant_id is omitted → use programs.default_variant_id; if that is
+    also NULL the program has no variant library and a minimal single-week
+    schedule is built from programs.workouts instead (fail-open, no 500).
+
+    Presigning: S3 keys are signed with a 1-hour TTL using the same service
+    that handles custom exercise media (CustomExerciseMediaService).
+    exercise_id is resolved: program_exercises_with_media does not expose a
+    canonical library UUID, so we resolve canonical_name → exercise_library_cleaned.id.
+    """
+    # NOTE: This route MUST be registered before @router.get("/{template_id}")
+    # so FastAPI matches /library/{id}/schedule before the generic catch-all.
+    try:
+        db = get_supabase()
+
+        # ── 1. Resolve the variant_id to use ──────────────────────────────────
+        effective_variant_id = variant_id
+        program = None
+
+        if not effective_variant_id:
+            # Fetch the curated program to get default_variant_id.
+            presp = (
+                db.client.table("programs")
+                .select("id, program_name, editorial_name, workouts, "
+                        "difficulty_level, variant_base_id, default_variant_id")
+                .eq("id", program_id)
+                .limit(1)
+                .execute()
+            )
+            if not presp.data:
+                raise HTTPException(status_code=404, detail="Program not found")
+            program = presp.data[0]
+            default_vid = program.get("default_variant_id")
+            if default_vid:
+                effective_variant_id = str(default_vid)
+
+        # ── 2. Variant path: read program_variant_weeks ───────────────────────
+        if effective_variant_id:
+            weeks_resp = (
+                db.client.table("program_variant_weeks")
+                .select("week_number, phase, focus, workouts")
+                .eq("variant_id", effective_variant_id)
+                .order("week_number", desc=False)
+                .execute()
+            )
+            if not weeks_resp.data:
+                # Variant exists in DB but has no weeks — fall through to
+                # the single-plan path rather than 404ing.
+                logger.warning(
+                    "schedule: no weeks for variant %s — falling through",
+                    effective_variant_id,
+                )
+                effective_variant_id = None
+
+        if effective_variant_id and weeks_resp.data:
+            # ── 2a. Build exercise-name → media map for this variant ──────────
+            # Fetch all rows from the view for this variant.
+            try:
+                media_resp = (
+                    db.client.table("program_exercises_with_media")
+                    .select(
+                        "week_number, workout_idx, exercise_name_normalized, "
+                        "canonical_name, image_s3_path, video_s3_path, gif_url"
+                    )
+                    .eq("variant_id", effective_variant_id)
+                    .execute()
+                )
+                media_rows = media_resp.data or []
+            except Exception as me:  # noqa: BLE001
+                logger.warning(
+                    "schedule: media fetch failed for variant %s: %s",
+                    effective_variant_id, me,
+                )
+                media_rows = []
+
+            # Build a lookup: (week_number, canonical_name_lower) -> media row.
+            _media_map: Dict[tuple, Dict[str, Any]] = {}
+            for mr in media_rows:
+                key = (
+                    mr.get("week_number"),
+                    (mr.get("canonical_name") or "").lower(),
+                )
+                if key not in _media_map:
+                    _media_map[key] = mr
+
+            # Also build a name-based fallback without week_number.
+            _media_name_map: Dict[str, Dict[str, Any]] = {}
+            for mr in media_rows:
+                cn = (mr.get("canonical_name") or "").lower()
+                if cn and cn not in _media_name_map:
+                    _media_name_map[cn] = mr
+
+            # ── 2b. Resolve canonical_name → exercise_library_cleaned.id ──────
+            canonical_names = {
+                (mr.get("canonical_name") or "").strip()
+                for mr in media_rows
+                if mr.get("canonical_name")
+            }
+            exercise_id_by_name: Dict[str, Optional[str]] = {}
+            if canonical_names:
+                try:
+                    lib_resp = (
+                        db.client.table("exercise_library_cleaned")
+                        .select("id, name")
+                        .in_("name", list(canonical_names))
+                        .execute()
+                    )
+                    for lr in (lib_resp.data or []):
+                        exercise_id_by_name[str(lr["name"]).strip()] = str(lr["id"])
+                except Exception as le:  # noqa: BLE001
+                    logger.warning(
+                        "schedule: exercise_id resolution failed: %s", le
+                    )
+
+            # ── 2c. Flatten weeks → days → exercises ──────────────────────────
+            out_weeks: List[Dict[str, Any]] = []
+            for wrow in weeks_resp.data:
+                week_num = wrow.get("week_number")
+                workouts_blob = wrow.get("workouts") or []
+                if not isinstance(workouts_blob, list):
+                    workouts_blob = []
+
+                days: List[Dict[str, Any]] = []
+                for wi, w in enumerate(workouts_blob):
+                    if not isinstance(w, dict):
+                        continue
+                    raw_exercises = w.get("exercises") or []
+                    exercises_out: List[Dict[str, Any]] = []
+                    for ex in (raw_exercises if isinstance(raw_exercises, list) else []):
+                        if not isinstance(ex, dict):
+                            continue
+                        ex_name = (
+                            ex.get("exercise_name")
+                            or ex.get("name")
+                            or ""
+                        ).strip()
+                        # Match to media by (week_number, canonical_name).
+                        ex_name_lower = ex_name.lower()
+                        media = (
+                            _media_map.get((week_num, ex_name_lower))
+                            or _media_name_map.get(ex_name_lower)
+                            or {}
+                        )
+                        canon_name = (media.get("canonical_name") or "").strip()
+                        exercise_id = exercise_id_by_name.get(canon_name) if canon_name else None
+
+                        image_url = _presign_s3_path(media.get("image_s3_path"))
+                        video_url = _presign_s3_path(media.get("video_s3_path"))
+                        gif_url = media.get("gif_url") or None
+
+                        exercises_out.append({
+                            "exercise_id": exercise_id,
+                            "name": ex_name or canon_name,
+                            "sets": str(ex.get("sets") or "") or None,
+                            "reps": str(ex.get("reps") or "") or None,
+                            "duration": str(ex.get("duration") or "") or None,
+                            "image_url": image_url,
+                            "video_url": video_url,
+                            "gif_url": gif_url,
+                        })
+
+                    days.append({
+                        "day_name": (
+                            w.get("workout_name") or w.get("name") or f"Day {wi + 1}"
+                        ),
+                        "workout_type": w.get("type") or w.get("workout_type"),
+                        "exercises": exercises_out,
+                    })
+
+                out_weeks.append({
+                    "week_number": week_num,
+                    "phase": wrow.get("phase"),
+                    "focus": wrow.get("focus"),
+                    "days": days,
+                })
+
+            return {
+                "variant_id": effective_variant_id,
+                "weeks": out_weeks,
+            }
+
+        # ── 3. Single-plan fallback (no variant library) ──────────────────────
+        # Fetch the program row if we didn't already.
+        if program is None:
+            presp = (
+                db.client.table("programs")
+                .select("id, program_name, editorial_name, workouts, difficulty_level")
+                .eq("id", program_id)
+                .limit(1)
+                .execute()
+            )
+            if not presp.data:
+                raise HTTPException(status_code=404, detail="Program not found")
+            program = presp.data[0]
+
+        workouts_blob = program.get("workouts") or {}
+        if isinstance(workouts_blob, dict):
+            raw_workouts = workouts_blob.get("workouts") or []
+        else:
+            raw_workouts = workouts_blob if isinstance(workouts_blob, list) else []
+
+        days: List[Dict[str, Any]] = []
+        for wi, w in enumerate(raw_workouts):
+            if not isinstance(w, dict):
+                continue
+            raw_exercises = w.get("exercises") or []
+            exercises_out: List[Dict[str, Any]] = []
+            for ex in (raw_exercises if isinstance(raw_exercises, list) else []):
+                if not isinstance(ex, dict):
+                    continue
+                ex_name = (
+                    ex.get("exercise_name") or ex.get("name") or ""
+                ).strip()
+                exercises_out.append({
+                    "exercise_id": None,
+                    "name": ex_name,
+                    "sets": str(ex.get("sets") or "") or None,
+                    "reps": str(ex.get("reps") or "") or None,
+                    "duration": str(ex.get("duration") or "") or None,
+                    "image_url": None,
+                    "video_url": None,
+                    "gif_url": None,
+                })
+            days.append({
+                "day_name": w.get("workout_name") or w.get("name") or f"Day {wi + 1}",
+                "workout_type": w.get("type"),
+                "exercises": exercises_out,
+            })
+
+        # Wrap the single plan as week 1 so the response shape is consistent.
+        return {
+            "variant_id": None,
+            "weeks": [
+                {
+                    "week_number": 1,
+                    "phase": None,
+                    "focus": None,
+                    "days": days,
+                }
+            ] if days else [],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        logger.error(
+            "Failed to load schedule for %s: %s", program_id, e, exc_info=True
+        )
+        raise safe_internal_error(e, "program_templates")
+
+
+class ImportFromProgramRequest(BaseModel):
+    """Optional body for POST /from-program/{program_id}.
+
+    All fields are optional so callers that supply no body (the existing
+    behaviour) continue to work unchanged.
+    """
+    variant_id: Optional[str] = Field(
+        default=None,
+        description="Optional program_variants.id. When supplied, the variant's "
+        "week-1 program_variant_weeks rows replace the curated programs.workouts "
+        "blob when building the editable template snapshot. Fail-open.",
+    )
+
+
 @router.post("/from-program/{program_id}")
 async def import_from_program(
     program_id: str,
+    request: Optional[ImportFromProgramRequest] = None,
     current_user: dict = Depends(get_current_user),
 ):
     """Clone a program into a NEW editable `user_program_templates` row.
@@ -1460,7 +1827,7 @@ async def import_from_program(
                 )
             return _template_row_to_dict(created.data[0])
 
-        # --- Curated `programs` import path (unchanged) -------------------
+        # --- Curated `programs` import path (unchanged, + optional variant) --
         resp = (
             db.client.table("programs")
             .select("*")
@@ -1482,6 +1849,51 @@ async def import_from_program(
         normalized = normalize_program_blob_for_preview(
             program, user_id=user_id
         )
+        import_days = normalized["days"]
+
+        # Variant override: substitute days from program_variant_weeks week 1.
+        import_variant_id = (request.variant_id if request else None)
+        if import_variant_id:
+            try:
+                w1_resp = (
+                    db.client.table("program_variant_weeks")
+                    .select("workouts")
+                    .eq("variant_id", import_variant_id)
+                    .eq("week_number", 1)
+                    .limit(1)
+                    .execute()
+                )
+                w1_rows = w1_resp.data or []
+                if w1_rows:
+                    raw_wkts = w1_rows[0].get("workouts") or []
+                    if isinstance(raw_wkts, list) and raw_wkts:
+                        variant_import_days: List[Dict[str, Any]] = []
+                        for wkt in raw_wkts:
+                            if not isinstance(wkt, dict):
+                                continue
+                            exercises = [
+                                {
+                                    "name": (
+                                        ex.get("exercise_name") or ex.get("name") or ""
+                                    ),
+                                    "sets": ex.get("sets"),
+                                    "reps": ex.get("reps"),
+                                    "duration": ex.get("duration"),
+                                }
+                                for ex in (wkt.get("exercises") or [])
+                                if isinstance(ex, dict)
+                            ]
+                            variant_import_days.append({
+                                "name": wkt.get("workout_name") or wkt.get("name") or "",
+                                "exercises": exercises,
+                            })
+                        if variant_import_days:
+                            import_days = variant_import_days
+            except Exception as vie:  # noqa: BLE001 — fail-open
+                logger.warning(
+                    "import_from_program: variant %s week-1 lookup failed, "
+                    "falling back to single plan: %s", import_variant_id, vie
+                )
 
         now = datetime.utcnow().isoformat()
         insert_row = {
@@ -1490,7 +1902,7 @@ async def import_from_program(
             "name": normalized["name"],
             "description": normalized.get("description"),
             "week_length": normalized["week_length"],
-            "days": normalized["days"],
+            "days": import_days,
             "deload_every_n_weeks": normalized["deload_every_n_weeks"],
             "progression_strategy": normalized["progression_strategy"],
             "apply_staples": True,
@@ -1892,6 +2304,7 @@ async def assign_program_core(
     replace: bool,
     duration_weeks: Optional[int],
     customize: Optional[CustomizeOptions],
+    variant_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Shared Start-a-program logic used by the HTTP endpoint AND the coach
     `assign_program` tool. Returns the response dict.
@@ -1900,6 +2313,11 @@ async def assign_program_core(
     optional customization of days) -> end overlapping active primaries (replace)
     -> insert assignment -> expand dated workouts tagged with assignment_id +
     slot -> clear /today cache.
+
+    When variant_id is supplied: attempt to build `days` from
+    program_variant_weeks (week 1 only for the template snapshot — the full
+    multi-week schedule is stored in the assignment's weekly expansion).
+    Any variant lookup error falls back silently to the single-plan path.
     """
     slot = (slot or "primary").strip().lower()
     if slot not in ("primary", "addon"):
@@ -1919,6 +2337,61 @@ async def assign_program_core(
     # --- 1. Clone the programs row into an editable user template ----------
     normalized = normalize_program_blob_for_preview(program, user_id=user_id)
     days = normalized["days"]
+
+    # --- 1b. Variant override: substitute days from program_variant_weeks ----
+    # Only week 1 is used for the template snapshot; the full multi-week
+    # expansion is handled by the assignment's dated-workout expander which
+    # already knows to call the schedule endpoint per-week.
+    if variant_id:
+        try:
+            w1_resp = (
+                db.client.table("program_variant_weeks")
+                .select("workouts")
+                .eq("variant_id", variant_id)
+                .eq("week_number", 1)
+                .limit(1)
+                .execute()
+            )
+            w1_rows = w1_resp.data or []
+            if w1_rows:
+                raw_workouts = w1_rows[0].get("workouts") or []
+                if isinstance(raw_workouts, list) and raw_workouts:
+                    # Normalize to days shape: [{name, exercises:[...]}]
+                    variant_days: List[Dict[str, Any]] = []
+                    for w in raw_workouts:
+                        if not isinstance(w, dict):
+                            continue
+                        raw_exercises = w.get("exercises") or []
+                        exercises = []
+                        for ex in (raw_exercises if isinstance(raw_exercises, list) else []):
+                            if isinstance(ex, dict):
+                                exercises.append({
+                                    "name": (
+                                        ex.get("exercise_name")
+                                        or ex.get("name")
+                                        or ""
+                                    ),
+                                    "sets": ex.get("sets"),
+                                    "reps": ex.get("reps"),
+                                    "duration": ex.get("duration"),
+                                })
+                        variant_days.append({
+                            "name": (
+                                w.get("workout_name") or w.get("name") or ""
+                            ),
+                            "exercises": exercises,
+                        })
+                    if variant_days:
+                        days = variant_days
+                        logger.debug(
+                            "assign_program_core: using variant %s week-1 days "
+                            "(%d days)", variant_id, len(days)
+                        )
+        except Exception as ve:  # noqa: BLE001 — fail-open
+            logger.warning(
+                "assign_program_core: variant %s week-1 lookup failed, "
+                "falling back to single plan: %s", variant_id, ve
+            )
 
     # --- 2. Customize the cloned days (injury / equipment / level) ---------
     customize_summary: Optional[Dict[str, Any]] = None
@@ -2111,6 +2584,7 @@ async def assign_program(
             replace=request.replace,
             duration_weeks=request.duration_weeks,
             customize=request.customize,
+            variant_id=request.variant_id,
         )
     except HTTPException:
         raise
