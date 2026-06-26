@@ -9,7 +9,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import '../../workout/widgets/exercise_swap_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
-import '../../workout/widgets/exercise_detail_sheet.dart';
+import '../../workout/exercise_browse.dart';
 import 'components/components.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -114,11 +114,12 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
     }
   }
 
-  Future<void> _viewExerciseDetail(WorkoutExercise exercise) async {
-    await showExerciseDetailSheet(
+  void _viewExerciseDetail(WorkoutExercise exercise) {
+    openExerciseBrowse(
       context,
-      ref,
-      exercise: exercise,
+      name: exercise.name,
+      exerciseId: exercise.exerciseId,
+      libraryId: exercise.libraryId,
     );
   }
 

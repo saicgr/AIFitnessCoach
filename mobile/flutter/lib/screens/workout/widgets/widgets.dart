@@ -3,7 +3,6 @@
 /// Export all workout-related widgets for easy imports.
 library;
 
-export 'exercise_detail_sheet.dart' hide SetData;
 export 'exercise_set_tracker.dart';
 export 'exercise_swap_sheet.dart';
 export 'number_input_widgets.dart';

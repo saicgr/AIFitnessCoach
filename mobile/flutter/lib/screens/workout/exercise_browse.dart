@@ -7,8 +7,9 @@ import '../../data/models/exercise.dart';
 /// Open the modern full-screen [ExerciseDetailScreen] in READ-ONLY browse mode
 /// for a library / program exercise.
 ///
-/// This replaces the old `ExerciseDetailSheet` bottom sheet on the browse
-/// surfaces (Exercise Library, custom exercises, program schedule). Browse mode
+/// This is the single exercise-detail UI app-wide — it replaced the former
+/// bottom-sheet detail views on every browse surface (Exercise Library, custom
+/// exercises, program schedule, staples, exercise picker, workout review). Browse mode
 /// shows media (image/video toggle, speed, mute), the Anton title, body-part /
 /// equipment pills, the Favorite/Staple/Queue/Avoid row, and the
 /// INFO/STATS/HISTORY/FORM tabs — but hides the rest timer and set-logging
