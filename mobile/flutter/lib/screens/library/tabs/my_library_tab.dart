@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
@@ -14,8 +13,8 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../components/exercise_detail_sheet.dart';
 import '../providers/library_providers.dart';
+import '../../workout/exercise_browse.dart';
 import '../../custom_exercises/widgets/create_exercise_sheet.dart';
 
 part 'my_library_tab_part_custom_exercises_section.dart';

@@ -3,14 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
-import '../../data/models/exercise.dart';
 import '../../data/models/program_template.dart';
 import '../../data/providers/program_favorites_provider.dart';
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/exercise_image.dart';
 import '../../widgets/signature/signature.dart';
-import '../../screens/library/components/exercise_detail_sheet.dart';
+import 'exercise_browse.dart';
 import 'program_library_screen.dart' show ProgramLibraryStartFlow;
 
 /// Route metadata for the full-screen program detail page (mockup #14).
@@ -37,7 +36,7 @@ class ProgramDetailRoute {
 ///
 /// The SCHEDULE tab now shows a week chip-row → selected week's day cards, each
 /// exercise row carrying a 40px thumbnail. Tapping an exercise opens the
-/// library's [ExerciseDetailSheet] (same sheet the Exercise Library uses).
+/// modern read-only exercise detail (browse mode), same as the Exercise Library.
 class ProgramDetailScreen extends ConsumerStatefulWidget {
   /// The library card tapped to get here — lets the header paint instantly
   /// while the richer detail (phases / joined_count / sample week) loads.
@@ -888,22 +887,15 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     );
   }
 
-  /// Open the library's ExerciseDetailSheet for a schedule exercise.
-  /// Uses the library/components ExerciseDetailSheet with a minimal
-  /// LibraryExercise constructed from the schedule row.
+  /// Open the modern read-only exercise detail for a schedule exercise.
+  /// Threads the schedule row's exerciseId so media + stats resolve to the
+  /// exact library row; falls back to name-only resolution when absent.
   void _openExerciseDetail(ProgramScheduleExercise ex) {
-    final exercise = LibraryExercise(
-      id: ex.exerciseId,
-      nameValue: ex.name,
-      videoUrl: ex.videoUrl,
-      imageUrl: ex.imageUrl,
-      gifUrl: ex.gifUrl,
-    );
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ExerciseDetailSheet(exercise: exercise),
+    openExerciseBrowse(
+      context,
+      name: ex.name,
+      exerciseId: ex.exerciseId,
+      libraryId: ex.exerciseId,
     );
   }
 
@@ -1452,7 +1444,7 @@ class _WeekPhaseHeader extends StatelessWidget {
 
 /// One training day card in the schedule tab — shows the day name and a list
 /// of exercise rows with 40px thumbnails. Tapping an exercise row opens the
-/// library's ExerciseDetailSheet.
+/// modern read-only exercise detail (browse mode).
 class _ScheduleDayCard extends StatelessWidget {
   final ProgramScheduleDay day;
   final void Function(ProgramScheduleExercise) onExerciseTap;

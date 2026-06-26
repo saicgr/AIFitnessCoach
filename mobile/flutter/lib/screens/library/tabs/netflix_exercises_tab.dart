@@ -18,8 +18,8 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
 import '../../../screens/custom_exercises/widgets/create_exercise_sheet.dart';
-import '../components/exercise_detail_sheet.dart';
 import '../components/ai_split_preset_detail_sheet.dart';
+import '../../workout/exercise_browse.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 part 'netflix_exercises_tab_part_exercise_list_card.dart';
@@ -121,9 +121,11 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
         if (exercise.targetMuscle != null) 'muscle_group': exercise.targetMuscle!,
       },
     );
-    showGlassSheet(
-      context: context,
-      builder: (context) => ExerciseDetailSheet(exercise: exercise),
+    openExerciseBrowse(
+      context,
+      name: exercise.name,
+      exerciseId: exercise.id,
+      libraryId: exercise.id,
     );
   }
 

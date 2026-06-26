@@ -9,9 +9,8 @@ import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
-import '../../../widgets/glass_sheet.dart';
-import '../components/exercise_detail_sheet.dart';
 import '../screens/category_exercises_screen.dart';
+import '../../workout/exercise_browse.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Netflix-style horizontal carousel for a category of exercises
@@ -339,10 +338,11 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
   }
 
   void _showExerciseDetail(LibraryExercise exercise) {
-    HapticService.light();
-    showGlassSheet(
-      context: context,
-      builder: (context) => ExerciseDetailSheet(exercise: exercise),
+    openExerciseBrowse(
+      context,
+      name: exercise.name,
+      exerciseId: exercise.id,
+      libraryId: exercise.id,
     );
   }
 
@@ -672,10 +672,11 @@ class _NetflixCard extends StatelessWidget {
   });
 
   void _showExerciseDetail(BuildContext context) {
-    HapticService.light();
-    showGlassSheet(
-      context: context,
-      builder: (context) => ExerciseDetailSheet(exercise: exercise),
+    openExerciseBrowse(
+      context,
+      name: exercise.name,
+      exerciseId: exercise.id,
+      libraryId: exercise.id,
     );
   }
 

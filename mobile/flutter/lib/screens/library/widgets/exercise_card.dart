@@ -16,7 +16,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../utils/tz.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/signature/signature.dart';
-import '../components/exercise_detail_sheet.dart';
+import '../../workout/exercise_browse.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -26,7 +26,8 @@ import '../../../l10n/generated/app_localizations.dart';
 /// `[3px difficulty stripe] [40px thumb] title / ●level · muscle · equipment
 ///  [♥ + ⇄]`.
 /// - The 3px left stripe + level dot are colored by [DifficultyUtils.getColor].
-/// - Tapping the row opens the existing [ExerciseDetailSheet] (unchanged).
+/// - Tapping the row opens the modern exercise detail in read-only browse
+///   mode via [openExerciseBrowse].
 /// - Inline actions: ♥ toggles [favoritesProvider]; + opens the
 ///   add-to-workout/queue sheet ([_AddToWorkoutSheet]); ⇄ opens the
 ///   Alternatives sheet ([_AlternativesSheet]).
@@ -70,9 +71,11 @@ class ExerciseCard extends ConsumerWidget {
   }
 
   void _showExerciseDetail(BuildContext context) {
-    showGlassSheet(
-      context: context,
-      builder: (context) => ExerciseDetailSheet(exercise: exercise),
+    openExerciseBrowse(
+      context,
+      name: exercise.name,
+      exerciseId: exercise.id,
+      libraryId: exercise.id,
     );
   }
 
@@ -533,23 +536,10 @@ class _AlternativeRow extends ConsumerWidget {
       accentStripeColor: difficultyColor,
       verticalPadding: 9,
       onTap: () {
-        // Build a LibraryExercise from the alternative's fields so the standard
-        // detail sheet can render it (its own id isn't returned, so the detail
-        // sheet resolves media by name — matching the rest of the app).
-        final alt = LibraryExercise(
-          nameValue: alternative.name,
-          bodyPart: alternative.bodyPart,
-          targetMuscle: alternative.targetMuscle,
-          equipmentValue: alternative.equipment,
-          difficultyLevelValue: alternative.difficultyLevel,
-          gifUrl: alternative.gifUrl,
-          imageUrl: imageUrl,
-        );
+        // The alternative's own id isn't returned, so browse mode resolves
+        // media + stats by name — matching the rest of the app.
         Navigator.pop(context);
-        showGlassSheet(
-          context: context,
-          builder: (context) => ExerciseDetailSheet(exercise: alt),
-        );
+        openExerciseBrowse(context, name: alternative.name);
       },
       leading: Container(
         width: 40,

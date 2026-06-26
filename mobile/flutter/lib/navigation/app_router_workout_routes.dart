@@ -155,6 +155,7 @@ List<RouteBase> _workoutRoutes() => [
           WorkoutExercise? exercise;
           int initialTab = 0;
           bool pendingMuscleTag = false;
+          bool browse = false;
 
           final extra = state.extra;
           if (extra is WorkoutExercise) {
@@ -163,6 +164,12 @@ List<RouteBase> _workoutRoutes() => [
             // Read the muscle-tag flag from any of the supported shapes.
             final flag = extra['pending_muscle_tag'];
             if (flag is bool) pendingMuscleTag = flag;
+
+            // Read-only browse mode (Exercise Library / program schedule
+            // tap-through via openExerciseBrowse). Hides the rest timer +
+            // set-logging table; everything else renders read-only.
+            final browseFlag = extra['browse'];
+            if (browseFlag is bool) browse = browseFlag;
 
             final inner = extra['exercise'];
             if (inner is WorkoutExercise) {
@@ -214,6 +221,7 @@ List<RouteBase> _workoutRoutes() => [
             exercise: exercise,
             initialTab: initialTab,
             pendingMuscleTag: pendingMuscleTag,
+            browse: browse,
           );
         },
       ),

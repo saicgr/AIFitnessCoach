@@ -51,11 +51,19 @@ class ExerciseDetailScreen extends ConsumerStatefulWidget {
   /// + open of the editor on the Info tab.
   final bool pendingMuscleTag;
 
+  /// BROWSE mode. False (default) → the full active-workout execution screen
+  /// (rest timer, set-logging table). True → a read-only library/program
+  /// preview: media + title + pills + Favorite/Staple/Queue/Avoid row +
+  /// INFO/STATS/HISTORY/FORM tabs, but NO rest-timer card and NO set table
+  /// (those assume a live workout and would crash on a null-sets exercise).
+  final bool browse;
+
   const ExerciseDetailScreen({
     super.key,
     required this.exercise,
     this.initialTab = 0,
     this.pendingMuscleTag = false,
+    this.browse = false,
   });
 
   @override
@@ -557,23 +565,28 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                     // Timer card — a working countdown. For a timed move it
                     // doubles as the DURATION/HOLD timer (seeded with the hold
                     // length); otherwise it's the inter-set rest timer.
-                    _buildRestTimerCard(
-                      isTimedMove ? (timedSecs ?? restSeconds) : restSeconds,
-                      elevated,
-                      textMuted,
-                      textPrimary,
-                      label: isTimedMove
-                          ? (exercise.holdSeconds != null &&
-                                  exercise.durationSeconds == null
-                              ? 'Hold'
-                              : 'Duration')
-                          : null,
-                    ),
-                    const SizedBox(height: 24),
+                    // Hidden in browse mode (no active workout to rest between).
+                    if (!widget.browse) ...[
+                      _buildRestTimerCard(
+                        isTimedMove ? (timedSecs ?? restSeconds) : restSeconds,
+                        elevated,
+                        textMuted,
+                        textPrimary,
+                        label: isTimedMove
+                            ? (exercise.holdSeconds != null &&
+                                    exercise.durationSeconds == null
+                                ? 'Hold'
+                                : 'Duration')
+                            : null,
+                      ),
+                      const SizedBox(height: 24),
+                    ],
 
                     // Set table — only for rep-based exercises. A timed
                     // warmup/stretch has no sets×reps grid (it's a duration).
-                    if (!isTimedMove) ...[
+                    // Hidden in browse mode — the set targets assume a live
+                    // workout and a browse-constructed exercise has null sets.
+                    if (!isTimedMove && !widget.browse) ...[
                       // Set table header — Barlow uppercase kicker.
                       const ZealovaSectionKicker('Sets'),
                       const SizedBox(height: 12),
