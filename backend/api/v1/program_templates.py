@@ -72,7 +72,7 @@ router = APIRouter()
 # `source` field + branded rows). Bumping the prefix retires any pre-merge
 # cached payloads without a manual flush.
 _library_browse_cache = ResponseCache(
-    prefix="program_library_browse_v3", ttl_seconds=6 * 3600, max_size=256
+    prefix="program_library_browse_v4", ttl_seconds=6 * 3600, max_size=256
 )
 
 
@@ -264,6 +264,14 @@ def _get_template_or_404(db, template_id: str) -> Dict[str, Any]:
 # explicit, prefix-independent discriminator.
 _BRANDED_ID_PREFIX = "branded:"
 
+# Product decision 2026-06-25: the library shows ONLY the curated `programs`
+# set (is_published=true). The legacy branded_programs catalog has no publish
+# flag, so merging it floods every surface with un-curated rows (Desk Break,
+# Equipment Specific, Obese Beginner, …). Gate the merge OFF. Branded
+# single-program preview/import paths are left intact (harmless — no branded
+# card surfaces to reach them). Flip to True to restore the unified merge.
+_INCLUDE_BRANDED_IN_LIBRARY = False
+
 # branded_programs.category enum -> friendly Title Case label shown on cards.
 # Anything not in this map (the live table has drifted past the original 8-value
 # CHECK, e.g. 'gym_packed') falls back to Title-Cased underscores.
@@ -350,6 +358,8 @@ def _fetch_branded_cards(
     """Fetch ACTIVE branded_programs as cards. Best-effort: a branded-table
     error must NOT take down the (curated) library — callers degrade to the
     `programs`-only result rather than 500."""
+    if not _INCLUDE_BRANDED_IN_LIBRARY:
+        return []
     query = (
         db.client.table("branded_programs")
         .select(_BRANDED_CARD_COLS)
@@ -723,13 +733,13 @@ _FITNESS_LEVELS = ("beginner", "intermediate", "advanced")
 
 # Featured / recommended caches — same long TTL + dict-only rule as browse.
 _library_featured_cache = ResponseCache(
-    prefix="program_library_featured_v3", ttl_seconds=6 * 3600, max_size=8
+    prefix="program_library_featured_v4", ttl_seconds=6 * 3600, max_size=8
 )
 _library_categories_cache = ResponseCache(
-    prefix="program_library_categories_v3", ttl_seconds=6 * 3600, max_size=8
+    prefix="program_library_categories_v4", ttl_seconds=6 * 3600, max_size=8
 )
 _library_recommended_cache = ResponseCache(
-    prefix="program_library_recommended_v3", ttl_seconds=6 * 3600, max_size=256
+    prefix="program_library_recommended_v4", ttl_seconds=6 * 3600, max_size=256
 )
 
 
@@ -838,22 +848,23 @@ async def library_categories(
         # branded 'strength' folds into the curated 'Strength' bucket where the
         # `programs` taxonomy already uses that label, otherwise it adds a new
         # branded-only category (e.g. 'Powerbuilding'). Best-effort.
-        try:
-            bresp = (
-                db.client.table("branded_programs")
-                .select("category")
-                .eq("is_active", True)
-                .execute()
-            )
-            for row in bresp.data or []:
-                label = branded_category_label(row.get("category"))
-                if not label:
-                    continue
-                counts[label] = counts.get(label, 0) + 1
-        except Exception as be:  # noqa: BLE001
-            logger.warning(
-                "Branded category merge skipped (fetch failed): %s", be
-            )
+        if _INCLUDE_BRANDED_IN_LIBRARY:
+            try:
+                bresp = (
+                    db.client.table("branded_programs")
+                    .select("category")
+                    .eq("is_active", True)
+                    .execute()
+                )
+                for row in bresp.data or []:
+                    label = branded_category_label(row.get("category"))
+                    if not label:
+                        continue
+                    counts[label] = counts.get(label, 0) + 1
+            except Exception as be:  # noqa: BLE001
+                logger.warning(
+                    "Branded category merge skipped (fetch failed): %s", be
+                )
 
         categories = [
             {"category": cat, "count": n}
@@ -964,26 +975,27 @@ async def library_recommended(
         scored: List[tuple] = [
             (_score(r), _row_to_card(r)) for r in (resp.data or [])
         ]
-        try:
-            bresp = (
-                db.client.table("branded_programs")
-                .select(_BRANDED_CARD_COLS)
-                .eq("is_active", True)
-                .execute()
-            )
-            for brow in bresp.data or []:
-                bs = _score_goals(brow.get("goals"))
-                if user_level and _normalize_level(
-                    brow.get("difficulty_level")
-                ) == user_level:
-                    bs += 25
-                if brow.get("is_featured"):
-                    bs += 10
-                scored.append((bs, _branded_row_to_card(brow)))
-        except Exception as be:  # noqa: BLE001
-            logger.warning(
-                "Branded recommended merge skipped (fetch failed): %s", be
-            )
+        if _INCLUDE_BRANDED_IN_LIBRARY:
+            try:
+                bresp = (
+                    db.client.table("branded_programs")
+                    .select(_BRANDED_CARD_COLS)
+                    .eq("is_active", True)
+                    .execute()
+                )
+                for brow in bresp.data or []:
+                    bs = _score_goals(brow.get("goals"))
+                    if user_level and _normalize_level(
+                        brow.get("difficulty_level")
+                    ) == user_level:
+                        bs += 25
+                    if brow.get("is_featured"):
+                        bs += 10
+                    scored.append((bs, _branded_row_to_card(brow)))
+            except Exception as be:  # noqa: BLE001
+                logger.warning(
+                    "Branded recommended merge skipped (fetch failed): %s", be
+                )
 
         scored.sort(key=lambda pair: pair[0], reverse=True)
         top = [card for _, card in scored[:10]]
