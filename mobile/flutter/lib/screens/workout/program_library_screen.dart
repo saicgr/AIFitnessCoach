@@ -18,6 +18,7 @@ import '../../data/services/haptic_service.dart';
 import 'program_detail_screen.dart';
 import 'program_template_builder_screen.dart';
 import 'widgets/program_library_card.dart';
+import 'your_programs_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 
@@ -311,6 +312,13 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
               style: ZType.disp(30, color: AppColors.textPrimary),
             ),
           ),
+          // Your Programs hub (Active / Favorites / Custom / AI-made).
+          _HeaderActionButton(
+            icon: Icons.bookmark_border_rounded,
+            tooltip: 'Your programs',
+            onTap: _openYourPrograms,
+          ),
+          const SizedBox(width: 8),
           // Add + AI creation entry points (point #8).
           _HeaderActionButton(
             icon: Icons.add_rounded,
@@ -327,6 +335,12 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         ],
       ),
     );
+  }
+
+  /// Bookmark → the Your Programs hub.
+  void _openYourPrograms() {
+    HapticService.light();
+    context.push(YourProgramsRoute.path);
   }
 
   // -------------------------------------------------------------------------

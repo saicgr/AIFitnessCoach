@@ -325,6 +325,55 @@ class ProgramTemplateRepository {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Favorites — the user's hearted library programs (Your Programs hub).
+  // -------------------------------------------------------------------------
+
+  /// GET /favorites — the user's favorited library programs as full cards.
+  Future<List<ProgramLibraryCard>> listFavorites() async {
+    debugPrint('🏋️ [ProgramTemplate] listFavorites');
+    final resp = await _client.get('$_base/favorites');
+    final data = Map<String, dynamic>.from(resp.data as Map);
+    final raw = data['programs'];
+    final out = <ProgramLibraryCard>[];
+    if (raw is List) {
+      for (final p in raw) {
+        if (p is Map) {
+          out.add(ProgramLibraryCard.fromJson(Map<String, dynamic>.from(p)));
+        }
+      }
+    }
+    return out;
+  }
+
+  /// GET /favorites/ids — just the favorited program ids (drives heart state).
+  Future<Set<String>> favoriteIds() async {
+    debugPrint('🏋️ [ProgramTemplate] favoriteIds');
+    final resp = await _client.get('$_base/favorites/ids');
+    final data = Map<String, dynamic>.from(resp.data as Map);
+    final raw = data['program_ids'];
+    final out = <String>{};
+    if (raw is List) {
+      for (final id in raw) {
+        final s = id?.toString();
+        if (s != null && s.isNotEmpty) out.add(s);
+      }
+    }
+    return out;
+  }
+
+  /// POST /favorites {program_id} — favorite a program.
+  Future<void> addFavorite(String programId) async {
+    debugPrint('🏋️ [ProgramTemplate] addFavorite | id=$programId');
+    await _client.post('$_base/favorites', data: {'program_id': programId});
+  }
+
+  /// DELETE /favorites/{program_id} — un-favorite a program.
+  Future<void> removeFavorite(String programId) async {
+    debugPrint('🏋️ [ProgramTemplate] removeFavorite | id=$programId');
+    await _client.delete('$_base/favorites/$programId');
+  }
+
   /// POST /from-program/{program_id} — clone a library program into a NEW
   /// editable saved template. Returns the saved row.
   ///

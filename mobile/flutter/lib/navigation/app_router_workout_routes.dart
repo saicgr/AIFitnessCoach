@@ -91,6 +91,13 @@ List<RouteBase> _workoutRoutes() => [
         },
       ),
 
+      // Your Programs hub (Active / Favorites / Custom / AI-made). Declared
+      // BEFORE `/workout/:id` so "your-programs" is a static segment.
+      GoRoute(
+        path: '/workout/your-programs',
+        builder: (context, state) => const YourProgramsScreen(),
+      ),
+
       // Program builder — three entry tabs converging on one editable
       // builder. `extra` accepts an optional pre-loaded ProgramTemplate
       // (used by "Import & customize" and "Edit") to open straight into

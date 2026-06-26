@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/program_template.dart';
+import '../../data/providers/program_favorites_provider.dart';
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/signature/signature.dart';
@@ -58,10 +59,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// fetched (editorial-complete) card once the detail resolves.
   ProgramLibraryCard? _card;
 
-  /// Local-only favorite toggle. No program-favorites backend exists yet
-  /// (the favorites infra is exercise-scoped), so this is a visual toggle for
-  /// now — wire to a programs-favorites endpoint when one lands.
-  bool _favorited = false;
+  /// Optimistic favorite override — null means "defer to the server set"
+  /// ([favoriteProgramIdsProvider]); non-null is the in-flight toggle target
+  /// shown immediately while the add/remove call + invalidation settle.
+  bool? _favoriteOverride;
+  bool _favoriteBusy = false;
 
   @override
   void initState() {
@@ -69,6 +71,65 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     _tabController = TabController(length: 2, vsync: this);
     _card = widget.card;
     _load();
+  }
+
+  /// Whether the program is favorited, preferring the optimistic override, then
+  /// the WATCHED server set, then false. Call only from build (it `watch`es).
+  bool _isFavoritedWatched() {
+    if (_favoriteOverride != null) return _favoriteOverride!;
+    final ids = ref.watch(favoriteProgramIdsProvider).valueOrNull;
+    return ids != null && ids.contains(_resolveId);
+  }
+
+  /// Same logic with `read` (no rebuild subscription) for the tap handler.
+  bool _isFavoritedRead() {
+    if (_favoriteOverride != null) return _favoriteOverride!;
+    final ids = ref.read(favoriteProgramIdsProvider).valueOrNull;
+    return ids != null && ids.contains(_resolveId);
+  }
+
+  /// Optimistic heart toggle → add/removeFavorite → invalidate both providers.
+  /// On failure the override is cleared so the UI snaps back to server truth.
+  Future<void> _toggleFavorite() async {
+    final id = _resolveId;
+    if (id.isEmpty || _favoriteBusy) return;
+    HapticService.selection();
+    final next = !_isFavoritedRead();
+    setState(() {
+      _favoriteOverride = next;
+      _favoriteBusy = true;
+    });
+    final repo = ref.read(programTemplateRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      if (next) {
+        await repo.addFavorite(id);
+      } else {
+        await repo.removeFavorite(id);
+      }
+      if (!mounted) return;
+      refreshProgramFavoritesW(ref);
+      setState(() {
+        _favoriteBusy = false;
+        // Keep the override until the invalidated set re-resolves to it, so the
+        // heart doesn't flicker; clear it once it matches server truth below.
+      });
+      // Reconcile: once the fresh set lands, drop the override.
+      final fresh = await ref.read(favoriteProgramIdsProvider.future);
+      if (!mounted) return;
+      if (fresh.contains(id) == next) {
+        setState(() => _favoriteOverride = null);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _favoriteOverride = null; // snap back to server truth.
+        _favoriteBusy = false;
+      });
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not update favorites. Try again.')),
+      );
+    }
   }
 
   @override
@@ -215,16 +276,16 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                         onTap: _back,
                       ),
                       const Spacer(),
-                      _CircleIconButton(
-                        icon: _favorited
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        tint: _favorited ? AppColors.orange : null,
-                        onTap: () {
-                          HapticService.selection();
-                          setState(() => _favorited = !_favorited);
-                        },
-                      ),
+                      Builder(builder: (context) {
+                        final fav = _isFavoritedWatched();
+                        return _CircleIconButton(
+                          icon: fav
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          tint: fav ? AppColors.orange : null,
+                          onTap: _toggleFavorite,
+                        );
+                      }),
                     ],
                   ),
                   const Spacer(),
