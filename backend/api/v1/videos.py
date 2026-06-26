@@ -561,6 +561,37 @@ async def get_image_by_exercise_name(
     try:
         db = get_supabase_db()
 
+        def _canonical_demo_fallback():
+            """Last-resort resolve via the canonical/demos/aliases stack — the same
+            stack the program schedule uses — keyed by normalize_exercise_name()
+            through the resolve_exercise_demo_media() RPC. Exact normalized-alias
+            match only (no fuzzy → never a wrong-sibling image). Returns the
+            response dict (image only) or None. This is what makes program-generated
+            exercise names (e.g. "Pushups", "Zone 2 Run", "Tricep Cable Pushdowns")
+            render in the active-workout screen even when they don't exist verbatim
+            in exercise_library."""
+            if not exercise_name:
+                return None
+            try:
+                rpc = db.client.rpc(
+                    "resolve_exercise_demo_media", {"p_name": exercise_name}
+                ).execute()
+                rows = rpc.data or []
+                img = rows[0].get("image_s3_path") if rows else None
+                if img:
+                    from api.v1.library.utils import resolve_image_url
+                    return {
+                        "url": resolve_image_url(img),
+                        "expires_in": None,
+                        "exercise_name": rows[0].get("canonical_name") or exercise_name,
+                    }
+            except Exception as _fb_err:  # noqa: BLE001
+                logger.debug(
+                    "canonical demo fallback failed for %s: %s",
+                    exercise_name, _fb_err,
+                )
+            return None
+
         # ---- Path 1: explicit UUID lookup (per edge case 72) -----------------
         if exercise_id:
             result = db.client.table("exercise_library").select(
@@ -586,11 +617,17 @@ async def get_image_by_exercise_name(
                         "image_s3_path": mv_row.get("image_url"),
                     }
             if not row:
+                _fb = _canonical_demo_fallback()
+                if _fb:
+                    return _fb
                 raise HTTPException(
                     status_code=404,
                     detail={"error": "exercise_not_found", "exercise_id": exercise_id},
                 )
             if not row.get("image_s3_path"):
+                _fb = _canonical_demo_fallback()
+                if _fb:
+                    return _fb
                 raise HTTPException(
                     status_code=404,
                     detail={"error": "no_image", "exercise_id": row["id"]},
@@ -729,6 +766,9 @@ async def get_image_by_exercise_name(
                     break
 
         if not found_row:
+            _fb = _canonical_demo_fallback()
+            if _fb:
+                return _fb
             # No exercise by that name (and no alias). 404 — never fall back
             # to S3 fuzzy search or another exercise's image.
             raise HTTPException(
@@ -737,6 +777,9 @@ async def get_image_by_exercise_name(
             )
 
         if not found_row.get("image_s3_path"):
+            _fb = _canonical_demo_fallback()
+            if _fb:
+                return _fb
             # Row exists but image is missing. 404 with row id so the client can
             # surface a "missing illustration" state cleanly. NEVER serve another
             # row's image (this is the lat-pulldown bug we're locking down).
