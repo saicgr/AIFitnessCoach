@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../data/models/exercise.dart';
 import '../../data/models/program_template.dart';
 import '../../data/providers/program_favorites_provider.dart';
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/exercise_image.dart';
 import '../../widgets/signature/signature.dart';
+import '../../screens/library/components/exercise_detail_sheet.dart';
 import 'program_library_screen.dart' show ProgramLibraryStartFlow;
 
 /// Route metadata for the full-screen program detail page (mockup #14).
@@ -20,17 +23,21 @@ class ProgramDetailRoute {
 /// Full-screen PROGRAM DETAIL page — the cinematic, signature-v2 replacement
 /// for the old bottom-sheet preview (mockup #14).
 ///
-/// Full-bleed diagonal-striped header (no image), back ‹ + favorite heart, a
-/// difficulty pill, a huge Anton title + subtitle; three big stat tiles
-/// (WEEKS / PER WEEK / MINUTES); OVERVIEW (phase blocks + who-for / progression
-/// / equipment) and SCHEDULE (the real day-by-day) tabs; a sticky bottom bar
-/// with a real JOINED count (hidden when null/0 — no fake numbers) + a big
-/// orange START PROGRAM button that hands off to the existing Start flow.
+/// The striped header is now a pinned [SliverAppBar] (expandedHeight 280). When
+/// fully expanded it shows the gradient / stripes / difficulty pill / Anton
+/// title. When the user scrolls, it collapses to a slim app-bar that reserves
+/// `MediaQuery.padding.top` + toolbar height, keeping the back button and
+/// favorite heart tappable throughout — the tab bar pins BELOW it, never under
+/// the Dynamic Island.
 ///
-/// Opens either from a [card] (tapped in the library — instant header render
-/// while the full detail loads) or a bare [programId] (deep-link). Either way
-/// it fetches `GET /library/{id}` for the editorial card (phases/joined_count)
-/// + the normalized sample week.
+/// Stat tiles for WEEKS and PER WEEK become selectors when the loaded card
+/// exposes `variantOptions.length > 1`, letting the user switch between
+/// 4-week / 8-week / 12-week (etc.) variants. Selecting a variant fires a
+/// re-fetch of the schedule tab.
+///
+/// The SCHEDULE tab now shows a week chip-row → selected week's day cards, each
+/// exercise row carrying a 40px thumbnail. Tapping an exercise opens the
+/// library's [ExerciseDetailSheet] (same sheet the Exercise Library uses).
 class ProgramDetailScreen extends ConsumerStatefulWidget {
   /// The library card tapped to get here — lets the header paint instantly
   /// while the richer detail (phases / joined_count / sample week) loads.
@@ -65,11 +72,21 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   bool? _favoriteOverride;
   bool _favoriteBusy = false;
 
+  /// The currently-selected variant id. Null = program default (or single plan).
+  String? _selectedVariantId;
+
+  /// The selected week index (0-based) in the schedule tab. Resets to 0
+  /// whenever the variant changes so the user always lands on week 1.
+  int _selectedWeekIndex = 0;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _card = widget.card;
+    // Seed the variant from whatever the tapped card already knows. Upgraded
+    // once the detail fetch resolves with the full editorial card.
+    _selectedVariantId = widget.card?.defaultVariantId;
     _load();
   }
 
@@ -111,8 +128,6 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       refreshProgramFavoritesW(ref);
       setState(() {
         _favoriteBusy = false;
-        // Keep the override until the invalidated set re-resolves to it, so the
-        // heart doesn't flicker; clear it once it matches server truth below.
       });
       // Reconcile: once the fresh set lands, drop the override.
       final fresh = await ref.read(favoriteProgramIdsProvider.future);
@@ -143,12 +158,17 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   void _load() {
     final id = _resolveId;
     if (id.isEmpty) return;
-    final future = ref.read(programTemplateRepositoryProvider).getLibraryDetail(id);
+    final future =
+        ref.read(programTemplateRepositoryProvider).getLibraryDetail(id);
     _detail = future;
     // Upgrade the header card to the editorial-complete one once it lands.
     future.then((result) {
       if (!mounted) return;
-      setState(() => _card = result.card);
+      setState(() {
+        _card = result.card;
+        // Seed variant from the full card if the tapped card didn't have it.
+        _selectedVariantId ??= result.card.defaultVariantId;
+      });
     }).catchError((_) {
       // Swallow — the FutureBuilder below surfaces the error state.
     });
@@ -165,6 +185,17 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     ProgramLibraryStartFlow.open(context, card);
   }
 
+  /// Called when the user picks a different variant from the selector tiles.
+  /// Resets the week index and triggers a schedule refetch via the provider.
+  void _selectVariant(String variantId) {
+    if (variantId == _selectedVariantId) return;
+    HapticService.selection();
+    setState(() {
+      _selectedVariantId = variantId;
+      _selectedWeekIndex = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final card = _card;
@@ -172,7 +203,8 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       backgroundColor: AppColors.pureBlack,
       body: card == null
           // No card yet (pure deep-link, first frame) — load the header lazily.
-          ? FutureBuilder<({ProgramLibraryCard card, ProgramTemplate sampleWeek})>(
+          ? FutureBuilder<
+                ({ProgramLibraryCard card, ProgramTemplate sampleWeek})>(
               future: _detail,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -201,15 +233,14 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     return Column(
       children: [
         Expanded(
-          // NestedScrollView so the OVERVIEW/SCHEDULE tab bar PINS to the top:
-          // the striped header + stat tiles scroll away in the outer header
-          // slivers, the tab bar sits in a pinned SliverPersistentHeader, and
-          // each tab's own ListView scrolls beneath it. Switching tabs keeps
-          // the pinned bar in place; each tab keeps its own scroll via the
-          // PageStorageKey on its list.
+          // NestedScrollView so the OVERVIEW/SCHEDULE tab bar PINS to the top.
+          // The SliverAppBar handles the 280-tall header with pinned: true so
+          // it collapses to a slim bar (status-bar-height + kToolbarHeight) as
+          // the user scrolls. The tab bar in a SliverPersistentHeader pins
+          // BELOW the collapsed app-bar — never under the Dynamic Island.
           child: NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) => [
-              SliverToBoxAdapter(child: _buildHeader(card)),
+              _buildSliverAppBar(card, innerBoxIsScrolled),
               SliverToBoxAdapter(child: _buildStatTiles(card)),
               SliverPersistentHeader(
                 pinned: true,
@@ -223,7 +254,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               controller: _tabController,
               children: [
                 _buildOverviewTab(card),
-                _buildScheduleTab(),
+                _buildScheduleTab(card),
               ],
             ),
           ),
@@ -234,10 +265,12 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   }
 
   // -------------------------------------------------------------------------
-  // Header — full-bleed diagonal-striped panel.
+  // Header — pinned SliverAppBar with the diagonal-striped hero.
+  // When expanded → full gradient + stripes + difficulty pill + Anton title.
+  // When collapsed → slim bar with back ‹ + program name + favorite heart.
   // -------------------------------------------------------------------------
 
-  Widget _buildHeader(ProgramLibraryCard card) {
+  Widget _buildSliverAppBar(ProgramLibraryCard card, bool innerBoxIsScrolled) {
     final theme = categoryTheme(card.programCategory);
     final hasDifficulty =
         card.difficultyLevel != null && card.difficultyLevel!.trim().isNotEmpty;
@@ -245,59 +278,83 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         ? card.tagline!.trim()
         : (card.programCategory ?? '').trim();
 
-    return SizedBox(
-      height: 280,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Tinted gradient base + diagonal stripes.
-          DecoratedBox(
-            decoration: BoxDecoration(gradient: theme.headerGradient),
-          ),
-          CustomPaint(
-            painter: _DiagonalStripePainter(
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
-          ),
-          // Bottom scrim so the title reads against the panel.
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Color(0xCC000000)],
-                stops: [0.45, 1.0],
+    return SliverAppBar(
+      backgroundColor: AppColors.pureBlack,
+      expandedHeight: 280,
+      pinned: true,
+      automaticallyImplyLeading: false,
+      // Collapsed bar: back ‹ + program title + favorite heart.
+      leading: GestureDetector(
+        onTap: _back,
+        behavior: HitTestBehavior.opaque,
+        child: const Icon(Icons.arrow_back_ios_new_rounded,
+            size: 18, color: AppColors.textPrimary),
+      ),
+      title: AnimatedOpacity(
+        // Fade in the collapsed title only when actually collapsed (i.e. when
+        // the flexible space is shrunk away). Prevents double-title flicker.
+        opacity: innerBoxIsScrolled ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 150),
+        child: Text(
+          card.displayName,
+          style: ZType.sans(15,
+              color: AppColors.textPrimary, weight: FontWeight.w700),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+      actions: [
+        Builder(builder: (context) {
+          final fav = _isFavoritedWatched();
+          return GestureDetector(
+            onTap: _toggleFavorite,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Icon(
+                fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                size: 22,
+                color: fav ? AppColors.orange : AppColors.textPrimary,
               ),
             ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+          );
+        }),
+      ],
+      // Expanded area: the full 280px diagonal-striped hero.
+      flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.pin,
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Tinted gradient base + diagonal stripes.
+            DecoratedBox(
+              decoration: BoxDecoration(gradient: theme.headerGradient),
+            ),
+            CustomPaint(
+              painter: _DiagonalStripePainter(
+                color: Colors.white.withValues(alpha: 0.05),
+              ),
+            ),
+            // Bottom scrim so the title reads against the panel.
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0xCC000000)],
+                  stops: [0.45, 1.0],
+                ),
+              ),
+            ),
+            // Title block anchored to the bottom of the expanded area.
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Top row — back ‹ + favorite heart.
-                  Row(
-                    children: [
-                      _CircleIconButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: _back,
-                      ),
-                      const Spacer(),
-                      Builder(builder: (context) {
-                        final fav = _isFavoritedWatched();
-                        return _CircleIconButton(
-                          icon: fav
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_border_rounded,
-                          tint: fav ? AppColors.orange : null,
-                          onTap: _toggleFavorite,
-                        );
-                      }),
-                    ],
-                  ),
-                  const Spacer(),
                   if (hasDifficulty) ...[
                     _DifficultyPill(level: card.difficultyLevel!),
                     const SizedBox(height: 10),
@@ -318,43 +375,174 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   // -------------------------------------------------------------------------
   // Stat tiles — WEEKS / PER WEEK / MINUTES.
+  // WEEKS and PER WEEK become variant selectors when variantOptions.length > 1.
   // -------------------------------------------------------------------------
 
   Widget _buildStatTiles(ProgramLibraryCard card) {
+    final variants = card.variantOptions;
+    final hasVariants = variants.length > 1;
+
+    // Resolve the currently-selected variant's data (fallback to card defaults).
+    ProgramVariantOption? selectedVariant;
+    if (hasVariants) {
+      for (final v in variants) {
+        if (v.variantId == _selectedVariantId) {
+          selectedVariant = v;
+          break;
+        }
+      }
+      selectedVariant ??= variants.firstWhere(
+        (v) => v.isDefault,
+        orElse: () => variants.first,
+      );
+    }
+
+    final displayWeeks = selectedVariant?.weeks ?? card.durationWeeks;
+    final displaySessions =
+        selectedVariant?.sessionsPerWeek ?? card.sessionsPerWeek;
+
+    if (!hasVariants) {
+      // Single-plan programs: static tiles — unchanged from before.
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                value: displayWeeks?.toString() ?? '—',
+                label: 'WEEKS',
+                accented: true,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatTile(
+                value: displaySessions?.toString() ?? '—',
+                label: 'PER WEEK',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatTile(
+                value: card.sessionDurationMinutes?.toString() ?? '—',
+                label: 'MINUTES',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Multi-variant: show selector tiles for WEEKS and SESSIONS. Each distinct
+    // value gets its own tappable chip within the tile.
+    final distinctWeeks = variants.map((v) => v.weeks).toSet().toList()
+      ..sort();
+    final distinctSessions =
+        variants.map((v) => v.sessionsPerWeek).toSet().toList()..sort();
+    final distinctIntensities =
+        variants.map((v) => v.intensity).toSet().toList();
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _StatTile(
-              value: card.durationWeeks?.toString() ?? '—',
-              label: 'WEEKS',
-              // The most relevant stat (length) gets the orange accent.
-              accented: true,
-            ),
+          Row(
+            children: [
+              // WEEKS selector tile.
+              Expanded(
+                child: _VariantSelectorTile(
+                  label: 'WEEKS',
+                  values: distinctWeeks.map((w) => w.toString()).toList(),
+                  selectedValue: selectedVariant?.weeks.toString() ??
+                      displayWeeks?.toString() ??
+                      '—',
+                  accented: true,
+                  onSelect: (val) {
+                    final w = int.tryParse(val);
+                    if (w == null) return;
+                    // Pick the first variant matching the chosen weeks that
+                    // is also compatible with the current sessions selection.
+                    final candidate = variants.firstWhere(
+                      (v) =>
+                          v.weeks == w &&
+                          v.sessionsPerWeek ==
+                              (selectedVariant?.sessionsPerWeek ??
+                                  variants.first.sessionsPerWeek),
+                      orElse: () =>
+                          variants.firstWhere((v) => v.weeks == w,
+                              orElse: () => variants.first),
+                    );
+                    _selectVariant(candidate.variantId);
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              // PER WEEK selector tile.
+              Expanded(
+                child: _VariantSelectorTile(
+                  label: 'PER WEEK',
+                  values:
+                      distinctSessions.map((s) => s.toString()).toList(),
+                  selectedValue:
+                      selectedVariant?.sessionsPerWeek.toString() ??
+                          displaySessions?.toString() ??
+                          '—',
+                  accented: false,
+                  onSelect: (val) {
+                    final s = int.tryParse(val);
+                    if (s == null) return;
+                    final candidate = variants.firstWhere(
+                      (v) =>
+                          v.sessionsPerWeek == s &&
+                          v.weeks ==
+                              (selectedVariant?.weeks ?? variants.first.weeks),
+                      orElse: () =>
+                          variants.firstWhere((v) => v.sessionsPerWeek == s,
+                              orElse: () => variants.first),
+                    );
+                    _selectVariant(candidate.variantId);
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              // MINUTES stays static (not variant-dependent in contract).
+              Expanded(
+                child: _StatTile(
+                  value: card.sessionDurationMinutes?.toString() ?? '—',
+                  label: 'MINUTES',
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _StatTile(
-              value: card.sessionsPerWeek?.toString() ?? '—',
-              label: 'PER WEEK',
+          // Intensity chip row — only when there are distinct intensities.
+          if (distinctIntensities.length > 1) ...[
+            const SizedBox(height: 10),
+            _IntensityChipRow(
+              intensities: distinctIntensities,
+              selectedIntensity: selectedVariant?.intensity ?? '',
+              onSelect: (intensity) {
+                final candidate = variants.firstWhere(
+                  (v) =>
+                      v.intensity == intensity &&
+                      v.weeks ==
+                          (selectedVariant?.weeks ?? variants.first.weeks),
+                  orElse: () =>
+                      variants.firstWhere((v) => v.intensity == intensity,
+                          orElse: () => variants.first),
+                );
+                _selectVariant(candidate.variantId);
+              },
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _StatTile(
-              value: card.sessionDurationMinutes?.toString() ?? '—',
-              label: 'MINUTES',
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -470,10 +658,108 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   }
 
   // -------------------------------------------------------------------------
-  // SCHEDULE tab — the real day-by-day from the sample week.
+  // SCHEDULE tab — multi-week grouped view with media thumbnails + tap-through.
   // -------------------------------------------------------------------------
 
-  Widget _buildScheduleTab() {
+  Widget _buildScheduleTab(ProgramLibraryCard card) {
+    final scheduleKey = (
+      programId: _resolveId,
+      variantId: _selectedVariantId,
+    );
+    final scheduleAsync = ref.watch(programScheduleProvider(scheduleKey));
+
+    return scheduleAsync.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: AppColors.orange),
+      ),
+      error: (err, _) => _DetailError(onRetry: () {
+        ref.invalidate(programScheduleProvider(scheduleKey));
+      }, onBack: null),
+      data: (schedule) {
+        if (schedule.weeks.isEmpty) {
+          // Fallback: render the legacy sample week from the detail fetch.
+          return _buildLegacyScheduleFallback();
+        }
+        return _buildMultiWeekSchedule(schedule);
+      },
+    );
+  }
+
+  /// Renders the schedule grouped by week with a week chip-row selector.
+  Widget _buildMultiWeekSchedule(ProgramScheduleResponse schedule) {
+    final weeks = schedule.weeks;
+    final weekIndex =
+        _selectedWeekIndex.clamp(0, weeks.length - 1);
+    final selectedWeek = weeks[weekIndex];
+
+    return ListView(
+      key: const PageStorageKey<String>('program_detail_schedule'),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      children: [
+        // Week selector chip row: Wk 1, Wk 2, ...
+        if (weeks.length > 1) ...[
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: weeks.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final isSelected = i == weekIndex;
+                return GestureDetector(
+                  onTap: () {
+                    if (i == weekIndex) return;
+                    HapticService.light();
+                    setState(() => _selectedWeekIndex = i);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.orange.withValues(alpha: 0.18)
+                          : AppColors.surface2,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.orange
+                            : AppColors.cardBorder,
+                      ),
+                    ),
+                    child: Text(
+                      'Wk ${weeks[i].weekNumber}',
+                      style: ZType.lbl(12,
+                          color: isSelected
+                              ? AppColors.orange
+                              : AppColors.textSecondary,
+                          letterSpacing: 1.0),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
+
+        // Phase / focus header for the selected week.
+        if ((selectedWeek.phase?.trim().isNotEmpty ?? false) ||
+            (selectedWeek.focus?.trim().isNotEmpty ?? false)) ...[
+          _WeekPhaseHeader(week: selectedWeek),
+          const SizedBox(height: 12),
+        ],
+
+        // Day cards for the selected week.
+        for (final day in selectedWeek.days)
+          _ScheduleDayCard(day: day, onExerciseTap: _openExerciseDetail),
+      ],
+    );
+  }
+
+  /// Fallback to the legacy sample-week when the new schedule endpoint returns
+  /// nothing (e.g., the backend is mid-deploy). Shows the old day tiles.
+  Widget _buildLegacyScheduleFallback() {
     return FutureBuilder<({ProgramLibraryCard card, ProgramTemplate sampleWeek})>(
       future: _detail,
       builder: (context, snapshot) {
@@ -503,34 +789,30 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           key: const PageStorageKey<String>('program_detail_schedule'),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            Wrap(
-              spacing: 10,
-              runSpacing: 8,
-              children: [
-                _miniStat(Icons.event_rounded,
-                    '${template.weekLength}-day cycle'),
-                _miniStat(Icons.fitness_center_rounded,
-                    '${template.trainingDayCount} training days'),
-                _miniStat(Icons.list_alt_rounded,
-                    '${template.totalExercises} exercises'),
-              ],
-            ),
-            const SizedBox(height: 14),
-            for (final day in template.days) _ScheduleDayTile(day: day),
+            for (final day in template.days)
+              _LegacyScheduleDayTile(day: day),
           ],
         );
       },
     );
   }
 
-  Widget _miniStat(IconData icon, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppColors.textMuted),
-        const SizedBox(width: 4),
-        Text(label, style: ZType.data(11, color: AppColors.textMuted)),
-      ],
+  /// Open the library's ExerciseDetailSheet for a schedule exercise.
+  /// Uses the library/components ExerciseDetailSheet with a minimal
+  /// LibraryExercise constructed from the schedule row.
+  void _openExerciseDetail(ProgramScheduleExercise ex) {
+    final exercise = LibraryExercise(
+      id: ex.exerciseId,
+      nameValue: ex.name,
+      videoUrl: ex.videoUrl,
+      imageUrl: ex.imageUrl,
+      gifUrl: ex.gifUrl,
+    );
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ExerciseDetailSheet(exercise: exercise),
     );
   }
 
@@ -609,33 +891,6 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
 // Header pieces.
 // ===========================================================================
 
-class _CircleIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final Color? tint;
-
-  const _CircleIconButton({required this.icon, required this.onTap, this.tint});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 38,
-        height: 38,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.35),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-        ),
-        child: Icon(icon, size: 17, color: tint ?? AppColors.textPrimary),
-      ),
-    );
-  }
-}
-
 class _DifficultyPill extends StatelessWidget {
   final String level;
   const _DifficultyPill({required this.level});
@@ -679,8 +934,6 @@ class _DiagonalStripePainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 2;
     const gap = 18.0;
-    // 45° lines sweeping across the full panel (offset by height so the
-    // diagonal covers the whole rect, not just the square).
     for (double x = -size.height; x < size.width; x += gap) {
       canvas.drawLine(
         Offset(x, size.height),
@@ -696,7 +949,151 @@ class _DiagonalStripePainter extends CustomPainter {
 }
 
 // ===========================================================================
-// Stat tile.
+// Variant selector tile — like _StatTile but with tappable value chips.
+// ===========================================================================
+
+class _VariantSelectorTile extends StatelessWidget {
+  final String label;
+  final List<String> values;
+  final String selectedValue;
+  final bool accented;
+  final ValueChanged<String> onSelect;
+
+  const _VariantSelectorTile({
+    required this.label,
+    required this.values,
+    required this.selectedValue,
+    required this.accented,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: accented
+            ? AppColors.orange.withValues(alpha: 0.14)
+            : AppColors.surface2,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: accented ? AppColors.orange : AppColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Chip row for the distinct values.
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            alignment: WrapAlignment.center,
+            children: values.map((v) {
+              final isSelected = v == selectedValue;
+              return GestureDetector(
+                onTap: () => onSelect(v),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.orange
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    border: isSelected
+                        ? null
+                        : Border.all(
+                            color: AppColors.cardBorder,
+                          ),
+                  ),
+                  child: Text(
+                    v,
+                    style: ZType.disp(
+                      18,
+                      color: isSelected
+                          ? Colors.white
+                          : (accented
+                              ? AppColors.orange
+                              : AppColors.textPrimary),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: ZType.lbl(10,
+                color: AppColors.textMuted, letterSpacing: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Intensity chip row — shown beneath the WEEKS/PER-WEEK/MINUTES row when
+/// there are multiple distinct intensities (e.g. Light / Medium / Hard).
+class _IntensityChipRow extends StatelessWidget {
+  final List<String> intensities;
+  final String selectedIntensity;
+  final ValueChanged<String> onSelect;
+
+  const _IntensityChipRow({
+    required this.intensities,
+    required this.selectedIntensity,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text('INTENSITY',
+            style: ZType.lbl(10,
+                color: AppColors.textMuted, letterSpacing: 1.4)),
+        const SizedBox(width: 10),
+        Wrap(
+          spacing: 8,
+          children: intensities.map((intensity) {
+            final isSelected = intensity == selectedIntensity;
+            return GestureDetector(
+              onTap: () => onSelect(intensity),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.orange.withValues(alpha: 0.18)
+                      : AppColors.surface2,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.orange
+                        : AppColors.cardBorder,
+                  ),
+                ),
+                child: Text(
+                  intensity,
+                  style: ZType.sans(12,
+                      color: isSelected
+                          ? AppColors.orange
+                          : AppColors.textSecondary,
+                      weight: FontWeight.w600),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// Stat tile (static — no variant selector).
 // ===========================================================================
 
 class _StatTile extends StatelessWidget {
@@ -764,7 +1161,6 @@ class _PhaseBlock extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Numbered orange index.
           Text(
             phase.index.toString().padLeft(2, '0'),
             style: ZType.disp(26, color: AppColors.orange),
@@ -779,7 +1175,8 @@ class _PhaseBlock extends StatelessWidget {
                   style: ZType.sans(15,
                       color: AppColors.textPrimary, weight: FontWeight.w700),
                 ),
-                if (weekLabel != null || (subtitle != null && subtitle.isNotEmpty)) ...[
+                if (weekLabel != null ||
+                    (subtitle != null && subtitle.isNotEmpty)) ...[
                   const SizedBox(height: 3),
                   Text(
                     [
@@ -858,12 +1255,185 @@ class _OverviewNote extends StatelessWidget {
 }
 
 // ===========================================================================
-// Schedule day tile (mirrors the old preview-sheet day row).
+// Schedule — week phase header + day cards with media thumbnails.
 // ===========================================================================
 
-class _ScheduleDayTile extends StatelessWidget {
+/// Optional week-level header showing the phase name and focus line.
+class _WeekPhaseHeader extends StatelessWidget {
+  final ProgramScheduleWeek week;
+  const _WeekPhaseHeader({required this.week});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if ((week.phase?.trim().isNotEmpty ?? false))
+          Text(
+            week.phase!.trim().toUpperCase(),
+            style: ZType.lbl(12,
+                color: AppColors.orange, letterSpacing: 1.5),
+          ),
+        if ((week.focus?.trim().isNotEmpty ?? false)) ...[
+          const SizedBox(height: 2),
+          Text(
+            week.focus!.trim(),
+            style: ZType.sans(12.5,
+                color: AppColors.textSecondary, weight: FontWeight.w500),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// One training day card in the schedule tab — shows the day name and a list
+/// of exercise rows with 40px thumbnails. Tapping an exercise row opens the
+/// library's ExerciseDetailSheet.
+class _ScheduleDayCard extends StatelessWidget {
+  final ProgramScheduleDay day;
+  final void Function(ProgramScheduleExercise) onExerciseTap;
+
+  const _ScheduleDayCard({required this.day, required this.onExerciseTap});
+
+  @override
+  Widget build(BuildContext context) {
+    if (day.isRest) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface2,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.bedtime_outlined,
+                size: 16, color: AppColors.textSecondary),
+            const SizedBox(width: 8),
+            Text(
+              '${day.dayName} · Rest',
+              style: ZType.sans(13,
+                  color: AppColors.textSecondary, weight: FontWeight.w600),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Day name header + optional workout type badge.
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  day.dayName.toUpperCase(),
+                  style: ZType.lbl(13,
+                      color: AppColors.textPrimary, letterSpacing: 1.2),
+                ),
+              ),
+              if (day.workoutType != null && day.workoutType!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Text(
+                    day.workoutType!.toUpperCase(),
+                    style: ZType.lbl(9,
+                        color: AppColors.textMuted, letterSpacing: 1.2),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          for (final ex in day.exercises)
+            _ScheduleExerciseRow(ex: ex, onTap: () => onExerciseTap(ex)),
+        ],
+      ),
+    );
+  }
+}
+
+/// One exercise row inside a day card — 40px thumbnail on the left, name and
+/// volume label on the right. Tapping opens the exercise detail sheet.
+class _ScheduleExerciseRow extends StatelessWidget {
+  final ProgramScheduleExercise ex;
+  final VoidCallback onTap;
+
+  const _ScheduleExerciseRow({required this.ex, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final volume = ex.volumeLabel;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 40×40 thumbnail — uses the pre-resolved imageUrl when present,
+            // else resolves by exerciseId (preferred) or name via the widget.
+            ExerciseImage(
+              exerciseName: ex.name,
+              imageUrl: ex.imageUrl,
+              exerciseId: ex.exerciseId,
+              width: 40,
+              height: 40,
+              borderRadius: 8,
+              backgroundColor: AppColors.surface,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                ex.name,
+                style: ZType.sans(13,
+                    color: AppColors.textPrimary, weight: FontWeight.w500),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (volume.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Text(
+                volume,
+                style: ZType.data(11, color: AppColors.textSecondary),
+              ),
+            ],
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right_rounded,
+                size: 16, color: AppColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Legacy schedule day tile — fallback when new schedule endpoint returns empty.
+// Mirrors the old _ScheduleDayTile but without the class name collision.
+// ===========================================================================
+
+class _LegacyScheduleDayTile extends StatelessWidget {
   final ProgramDay day;
-  const _ScheduleDayTile({required this.day});
+  const _LegacyScheduleDayTile({required this.day});
 
   @override
   Widget build(BuildContext context) {
@@ -914,6 +1484,15 @@ class _ScheduleDayTile extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  ExerciseImage(
+                    exerciseName: ex.name,
+                    exerciseId: ex.exerciseId,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 8,
+                    backgroundColor: AppColors.surface,
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       ex.name,

@@ -674,20 +674,25 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   }
 
   Widget _buildSearchPill() {
+    // Tightened pill: icon abuts field with only a 6px gap instead of 8px
+    // + 12px horizontal insets, and vertical contentPadding reduced so the
+    // pill sits at _kControlHeight without internal overflow. Clear-X and mic
+    // suffixes are preserved with symmetric right insets.
     return SizedBox(
       height: _kControlHeight,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface2,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.cardBorder),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.only(left: 10, right: 8),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Icon(Icons.search_rounded,
                 color: AppColors.textMuted, size: 18),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
               child: TextField(
                 controller: _searchController,
@@ -701,7 +706,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 },
                 decoration: InputDecoration(
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                  // Reduced vertical padding keeps the pill at _kControlHeight
+                  // without the text clipping at the bottom.
+                  contentPadding: const EdgeInsets.symmetric(vertical: 11),
                   border: InputBorder.none,
                   hintText:
                       AppLocalizations.of(context).programLibrarySearchPrograms,
@@ -724,16 +731,16 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                       color: AppColors.textMuted, size: 16),
                 ),
               ),
-            // Voice search mic.
+            // Voice search mic — right-edge inset matches left icon spacing.
             GestureDetector(
               onTap: _toggleVoiceSearch,
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.only(left: 2),
+                padding: const EdgeInsets.only(left: 2, right: 2),
                 child: Icon(
                   _listening ? Icons.mic_rounded : Icons.mic_none_rounded,
                   color: _listening ? AppColors.orange : AppColors.textMuted,
-                  size: 19,
+                  size: 18,
                 ),
               ),
             ),

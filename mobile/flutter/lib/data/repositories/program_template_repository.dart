@@ -151,6 +151,20 @@ final programCategoryCountsProvider = FutureProvider.autoDispose<
   return repo.getCategoryCounts();
 });
 
+/// Per-variant schedule provider keyed by (programId, variantId).
+/// `variantId` is null for single-plan programs (the backend resolves
+/// `default_variant_id` automatically). `keepAlive` so the schedule doesn't
+/// re-fetch on every tab switch while the user reviews it.
+///
+/// Errors propagate so the schedule tab can show a Retry card — no mock data.
+final programScheduleProvider = FutureProvider.autoDispose.family<
+    ProgramScheduleResponse,
+    ({String programId, String? variantId})>((ref, key) async {
+  ref.keepAlive();
+  final repo = ref.watch(programTemplateRepositoryProvider);
+  return repo.getLibrarySchedule(key.programId, variantId: key.variantId);
+});
+
 /// Thin HTTP wrapper for `/api/v1/program-templates/*`.
 ///
 /// Every method returns a typed model and lets Dio exceptions bubble — the
@@ -405,6 +419,8 @@ class ProgramTemplateRepository {
   /// [startDate] is `YYYY-MM-DD`. [replace] (primary only) replaces the current
   /// primary instead of running alongside. [durationWeeks] optionally overrides
   /// the program's length. [customize] carries the AI-tailoring toggles.
+  /// [variantId] — when the program has multiple variants, pass the chosen
+  /// `ProgramVariantOption.variantId`; null falls back to the single plan.
   Future<AssignResult> assignProgram({
     required String programId,
     required List<int> assignedDays,
@@ -415,6 +431,7 @@ class ProgramTemplateRepository {
     bool adaptToLevel = false,
     bool swapForInjuries = false,
     bool fitEquipment = false,
+    String? variantId,
   }) async {
     final body = <String, dynamic>{
       'program_id': programId,
@@ -423,6 +440,7 @@ class ProgramTemplateRepository {
       'start_date': startDate,
       'replace': replace,
       if (durationWeeks != null) 'duration_weeks': durationWeeks,
+      if (variantId != null && variantId.isNotEmpty) 'variant_id': variantId,
       if (adaptToLevel || swapForInjuries || fitEquipment)
         'customize': {
           'adapt_to_level': adaptToLevel,
@@ -431,7 +449,8 @@ class ProgramTemplateRepository {
         },
     };
     debugPrint('🏋️ [ProgramTemplate] assignProgram | id=$programId '
-        'slot=${body['slot']} days=$assignedDays replace=$replace');
+        'slot=${body['slot']} days=$assignedDays replace=$replace '
+        'variant=$variantId');
     try {
       final resp = await _client.post('$_base/assign', data: body);
       return AssignResult.fromJson(
@@ -613,6 +632,36 @@ class ProgramTemplateRepository {
     debugPrint('🏋️ [ProgramTemplate] regenerateFuture | id=$templateId');
     final resp = await _client.post('$_base/$templateId/regenerate-future');
     return ScheduleResult.fromJson(
+      Map<String, dynamic>.from(resp.data as Map),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Library schedule — multi-week, variant-aware day-by-day breakdown.
+  // -------------------------------------------------------------------------
+
+  /// GET /library/{program_id}/schedule?variant_id={uuid} — fetch the
+  /// multi-week day-by-day schedule for a library program, optionally scoped
+  /// to a specific variant.
+  ///
+  /// When [variantId] is null, the backend uses `default_variant_id` for
+  /// multi-variant programs, or the single plan's workouts for single-plan
+  /// programs. Exercises carry presigned media URLs where the library has them.
+  Future<ProgramScheduleResponse> getLibrarySchedule(
+    String programId, {
+    String? variantId,
+  }) async {
+    debugPrint('🏋️ [ProgramTemplate] getLibrarySchedule | '
+        'id=$programId variant=$variantId');
+    final query = <String, dynamic>{};
+    if (variantId != null && variantId.isNotEmpty) {
+      query['variant_id'] = variantId;
+    }
+    final resp = await _client.get(
+      '$_base/library/$programId/schedule',
+      queryParameters: query.isEmpty ? null : query,
+    );
+    return ProgramScheduleResponse.fromJson(
       Map<String, dynamic>.from(resp.data as Map),
     );
   }

@@ -649,6 +649,230 @@ class ProgramPhase {
 }
 
 // ---------------------------------------------------------------------------
+// ProgramVariantOption — one variant row for a multi-variant program.
+// Source: `variant_options[]` on `GET /library/{id}`.
+// ---------------------------------------------------------------------------
+
+class ProgramVariantOption {
+  /// The `program_variants.id` for this variant.
+  final String variantId;
+
+  /// Total program duration in weeks for this variant.
+  final int weeks;
+
+  /// Sessions per week for this variant.
+  final int sessionsPerWeek;
+
+  /// Intensity label — "Light", "Medium", "Hard", "Elite", etc.
+  final String intensity;
+
+  /// True when this variant is the program's default choice.
+  final bool isDefault;
+
+  const ProgramVariantOption({
+    required this.variantId,
+    required this.weeks,
+    required this.sessionsPerWeek,
+    required this.intensity,
+    required this.isDefault,
+  });
+
+  factory ProgramVariantOption.fromJson(Map<String, dynamic> json) =>
+      ProgramVariantOption(
+        variantId: _asString(json['variant_id']),
+        weeks: _asInt(json['weeks']) ?? 0,
+        sessionsPerWeek: _asInt(json['sessions_per_week']) ?? 0,
+        intensity: _asString(json['intensity'], fallback: 'Medium'),
+        isDefault: _asBool(json['is_default']),
+      );
+}
+
+// ---------------------------------------------------------------------------
+// ProgramScheduleExercise — one exercise row in the schedule API response.
+// Source: `GET /library/{id}/schedule?variant_id=`.
+// ---------------------------------------------------------------------------
+
+class ProgramScheduleExercise {
+  /// Canonical library id — may be null if the exercise could not be resolved.
+  final String? exerciseId;
+  final String name;
+
+  /// String form (e.g. "4", "3-4") — null when not specified.
+  final String? sets;
+
+  /// String form (e.g. "800 m", "12", "45 sec") — null when not specified.
+  final String? reps;
+
+  /// Duration string — null for rep-based exercises.
+  final String? duration;
+
+  /// Presigned S3 URL for the exercise image — null when unavailable.
+  final String? imageUrl;
+
+  /// Presigned S3 URL for the exercise video — null when unavailable.
+  final String? videoUrl;
+
+  /// GIF URL — null when unavailable.
+  final String? gifUrl;
+
+  const ProgramScheduleExercise({
+    this.exerciseId,
+    required this.name,
+    this.sets,
+    this.reps,
+    this.duration,
+    this.imageUrl,
+    this.videoUrl,
+    this.gifUrl,
+  });
+
+  factory ProgramScheduleExercise.fromJson(Map<String, dynamic> json) =>
+      ProgramScheduleExercise(
+        exerciseId: json['exercise_id']?.toString(),
+        name: _asString(json['name'], fallback: 'Exercise'),
+        sets: json['sets']?.toString(),
+        reps: json['reps']?.toString(),
+        duration: json['duration']?.toString(),
+        imageUrl: json['image_url'] as String?,
+        videoUrl: json['video_url'] as String?,
+        gifUrl: json['gif_url'] as String?,
+      );
+
+  /// Compact "sets × reps" label; skips null side. E.g. "4 × 800 m", "3 sets".
+  String get volumeLabel {
+    final s = sets?.trim();
+    final r = reps?.trim();
+    final d = duration?.trim();
+    if (s != null && s.isNotEmpty && r != null && r.isNotEmpty) {
+      return '$s × $r';
+    }
+    if (s != null && s.isNotEmpty && d != null && d.isNotEmpty) {
+      return '$s × $d';
+    }
+    if (r != null && r.isNotEmpty) return r;
+    if (d != null && d.isNotEmpty) return d;
+    if (s != null && s.isNotEmpty) return '$s sets';
+    return '';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ProgramScheduleDay — one training day in the schedule response.
+// ---------------------------------------------------------------------------
+
+class ProgramScheduleDay {
+  /// Display name — "Run Intervals", "Upper Body A", "Rest", etc.
+  final String dayName;
+
+  /// `strength | cardio | mobility | rest | ...`
+  final String? workoutType;
+
+  final List<ProgramScheduleExercise> exercises;
+
+  const ProgramScheduleDay({
+    required this.dayName,
+    this.workoutType,
+    this.exercises = const [],
+  });
+
+  bool get isRest =>
+      (workoutType?.toLowerCase() == 'rest') ||
+      (exercises.isEmpty && dayName.toLowerCase().contains('rest'));
+
+  factory ProgramScheduleDay.fromJson(Map<String, dynamic> json) {
+    final raw = json['exercises'];
+    final exercises = <ProgramScheduleExercise>[];
+    if (raw is List) {
+      for (final e in raw) {
+        if (e is Map) {
+          exercises.add(
+              ProgramScheduleExercise.fromJson(Map<String, dynamic>.from(e)));
+        }
+      }
+    }
+    return ProgramScheduleDay(
+      dayName: _asString(json['day_name'], fallback: 'Day'),
+      workoutType: json['workout_type'] as String?,
+      exercises: exercises,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ProgramScheduleWeek — one week in the schedule response.
+// ---------------------------------------------------------------------------
+
+class ProgramScheduleWeek {
+  final int weekNumber;
+
+  /// Phase/block title for this week — e.g. "Base & Stations". May be null.
+  final String? phase;
+
+  /// Focus subtitle — e.g. "Running intervals + station technique". May be null.
+  final String? focus;
+
+  final List<ProgramScheduleDay> days;
+
+  const ProgramScheduleWeek({
+    required this.weekNumber,
+    this.phase,
+    this.focus,
+    this.days = const [],
+  });
+
+  factory ProgramScheduleWeek.fromJson(Map<String, dynamic> json) {
+    final raw = json['days'];
+    final days = <ProgramScheduleDay>[];
+    if (raw is List) {
+      for (final d in raw) {
+        if (d is Map) {
+          days.add(ProgramScheduleDay.fromJson(Map<String, dynamic>.from(d)));
+        }
+      }
+    }
+    return ProgramScheduleWeek(
+      weekNumber: _asInt(json['week_number']) ?? 1,
+      phase: json['phase'] as String?,
+      focus: json['focus'] as String?,
+      days: days,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ProgramScheduleResponse — top-level response for
+// `GET /library/{id}/schedule?variant_id=`.
+// ---------------------------------------------------------------------------
+
+class ProgramScheduleResponse {
+  /// The resolved variant id (null for single-plan programs).
+  final String? variantId;
+
+  final List<ProgramScheduleWeek> weeks;
+
+  const ProgramScheduleResponse({
+    this.variantId,
+    this.weeks = const [],
+  });
+
+  factory ProgramScheduleResponse.fromJson(Map<String, dynamic> json) {
+    final raw = json['weeks'];
+    final weeks = <ProgramScheduleWeek>[];
+    if (raw is List) {
+      for (final w in raw) {
+        if (w is Map) {
+          weeks.add(ProgramScheduleWeek.fromJson(Map<String, dynamic>.from(w)));
+        }
+      }
+    }
+    return ProgramScheduleResponse(
+      variantId: json['variant_id']?.toString(),
+      weeks: weeks,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // ProgramLibraryCard — lightweight `GET /library` card DTO.
 // ---------------------------------------------------------------------------
 
@@ -705,6 +929,14 @@ class ProgramLibraryCard {
   /// card-level info instead of a day breakdown. Defaults to true.
   final bool previewAvailable;
 
+  /// Variant rows for multi-variant programs. Empty for single-plan programs
+  /// (30-Day Plank, HYROX Full Simulation, etc.) where `variant_base_id IS NULL`.
+  final List<ProgramVariantOption> variantOptions;
+
+  /// The default variant id — matches `ProgramVariantOption.variantId` for the
+  /// variant with `is_default: true`. Null for single-plan programs.
+  final String? defaultVariantId;
+
   const ProgramLibraryCard({
     required this.id,
     required this.programName,
@@ -727,9 +959,23 @@ class ProgramLibraryCard {
     this.joinedCount,
     this.source = 'library',
     this.previewAvailable = true,
+    this.variantOptions = const [],
+    this.defaultVariantId,
   });
 
   factory ProgramLibraryCard.fromJson(Map<String, dynamic> json) {
+    // Parse variant_options list — guard against nulls / non-maps gracefully.
+    final rawVariants = json['variant_options'];
+    final variantOptions = <ProgramVariantOption>[];
+    if (rawVariants is List) {
+      for (final v in rawVariants) {
+        if (v is Map) {
+          variantOptions.add(
+              ProgramVariantOption.fromJson(Map<String, dynamic>.from(v)));
+        }
+      }
+    }
+
     return ProgramLibraryCard(
       id: _asString(json['id']),
       programName: _asString(json['program_name'], fallback: 'Program'),
@@ -757,6 +1003,8 @@ class ProgramLibraryCard {
       joinedCount: _asInt(json['joined_count']),
       source: _asString(json['source'], fallback: 'library'),
       previewAvailable: _asBool(json['preview_available'], fallback: true),
+      variantOptions: variantOptions,
+      defaultVariantId: json['default_variant_id']?.toString(),
     );
   }
 
