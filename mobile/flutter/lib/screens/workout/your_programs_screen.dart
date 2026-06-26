@@ -14,6 +14,7 @@ import '../../data/services/haptic_service.dart';
 import 'program_detail_screen.dart';
 import 'program_template_builder_screen.dart';
 import 'widgets/program_library_card.dart';
+import 'widgets/program_manage_sheet.dart';
 
 /// Route metadata for the Your Programs hub.
 class YourProgramsRoute {
@@ -154,13 +155,17 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
           }
           return _HorizontalRail(
             itemCount: active.length,
-            itemBuilder: (context, i) =>
-                _ActiveProgramCard(assignment: active[i], onTap: () {
-              HapticService.light();
-              // Active programs are managed from the workout tab home; route
-              // there so the user lands on their in-progress plan.
-              context.go('/home');
-            }),
+            itemBuilder: (context, i) {
+              final assignment = active[i];
+              return _ActiveProgramCard(
+                assignment: assignment,
+                onTap: () {
+                  HapticService.light();
+                  // Open the shared manage sheet (pause / resume / edit / end).
+                  showProgramManageSheet(context, ref, assignment);
+                },
+              );
+            },
           );
         },
       ),
@@ -198,6 +203,7 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
                 width: 150,
                 child: ProgramLibraryCardTile(
                   data: p,
+                  showFavorite: true,
                   onTap: () {
                     HapticService.light();
                     context.push(ProgramDetailRoute.path, extra: {'card': p});

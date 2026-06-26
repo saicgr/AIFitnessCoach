@@ -910,6 +910,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
             final p = result.programs[i];
             return ProgramLibraryCardTile(
               data: p,
+              showFavorite: true,
               onTap: () => _openPreview(p),
             );
           },

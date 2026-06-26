@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/program_template.dart';
+import '../../../data/providers/program_favorites_provider.dart';
+import '../../../data/repositories/program_template_repository.dart';
+import '../../../data/services/haptic_service.dart';
 
 /// A designed, image-free category card for the program library (plan B.3.2).
 ///
@@ -25,12 +29,23 @@ class ProgramLibraryCardTile extends StatelessWidget {
   /// otherwise it sizes to its grid cell.
   final bool fullWidth;
 
+  /// When true, a small favorite heart is overlaid top-right. Enable ONLY for
+  /// catalog cards (a real library program with a non-empty id) — favoriting a
+  /// template-derived card (custom/AI) is meaningless. The heart itself is the
+  /// only Consumer-wrapped region so toggles don't rebuild the whole card.
+  final bool showFavorite;
+
   const ProgramLibraryCardTile({
     super.key,
     required this.data,
     required this.onTap,
     this.fullWidth = false,
+    this.showFavorite = false,
   });
+
+  /// Whether the heart should actually render — gated to real catalog programs.
+  bool get _favoritable =>
+      showFavorite && data.source == 'library' && data.id.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +155,9 @@ class ProgramLibraryCardTile extends StatelessWidget {
                               ),
                             ),
                           ),
+                          // Reserve room so the eyebrow text never slides under
+                          // the top-right favorite heart overlay.
+                          if (_favoritable) const SizedBox(width: 26),
                         ],
                       ),
                       SizedBox(height: narrow ? 6 : 8),
@@ -203,6 +221,14 @@ class ProgramLibraryCardTile extends StatelessWidget {
                     ],
                   ),
                 ),
+                // Favorite heart — only the heart is Consumer-wrapped so a
+                // toggle never rebuilds the whole card. Gated to catalog cards.
+                if (_favoritable)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: _CardFavoriteHeart(programId: data.id),
+                  ),
               ],
             ),
           ),
@@ -214,6 +240,90 @@ class ProgramLibraryCardTile extends StatelessWidget {
   static String _titleCase(String s) {
     if (s.isEmpty) return s;
     return s[0].toUpperCase() + s.substring(1).toLowerCase();
+  }
+}
+
+/// The per-card favorite heart. Consumer-scoped so a toggle rebuilds only the
+/// heart, not the whole card. Optimistic: flips immediately, calls the repo,
+/// then invalidates both favorites providers so the source of truth re-syncs.
+class _CardFavoriteHeart extends ConsumerStatefulWidget {
+  final String programId;
+  const _CardFavoriteHeart({required this.programId});
+
+  @override
+  ConsumerState<_CardFavoriteHeart> createState() =>
+      _CardFavoriteHeartState();
+}
+
+class _CardFavoriteHeartState extends ConsumerState<_CardFavoriteHeart> {
+  /// Optimistic override — null defers to the server set.
+  bool? _override;
+  bool _busy = false;
+
+  bool _favored(Set<String>? ids) {
+    if (_override != null) return _override!;
+    return ids != null && ids.contains(widget.programId);
+  }
+
+  Future<void> _toggle() async {
+    if (_busy) return;
+    HapticService.selection();
+    final ids = ref.read(favoriteProgramIdsProvider).valueOrNull;
+    final next = !_favored(ids);
+    setState(() {
+      _override = next;
+      _busy = true;
+    });
+    final repo = ref.read(programTemplateRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      if (next) {
+        await repo.addFavorite(widget.programId);
+      } else {
+        await repo.removeFavorite(widget.programId);
+      }
+      if (!mounted) return;
+      refreshProgramFavoritesW(ref);
+      final fresh = await ref.read(favoriteProgramIdsProvider.future);
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        if (fresh.contains(widget.programId) == next) _override = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _override = null;
+        _busy = false;
+      });
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not update favorites. Try again.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ids = ref.watch(favoriteProgramIdsProvider).valueOrNull;
+    final fav = _favored(ids);
+    return GestureDetector(
+      onTap: _toggle,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.28),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          size: 16,
+          color: fav ? AppColors.orange : Colors.white,
+        ),
+      ),
+    );
   }
 }
 
