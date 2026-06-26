@@ -154,23 +154,30 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
           final hasActivePrimary =
               assignments.any((a) => a.isPrimary && a.isActive);
 
-          final cards = <Widget>[
-            if (!hasActivePrimary)
-              const SizedBox(width: 260, child: AiAdaptivePlanCard()),
-            for (final assignment in active)
-              _ActiveProgramCard(
-                assignment: assignment,
-                onTap: () {
-                  HapticService.light();
-                  // Open the shared manage sheet (pause / resume / edit / end).
-                  showProgramManageSheet(context, ref, assignment);
-                },
-              ),
-          ];
-
-          return _HorizontalRail(
-            itemCount: cards.length,
-            itemBuilder: (context, i) => cards[i],
+          // Active is FULL-WIDTH vertical (not a 260px rail) so the AI card +
+          // program cards breathe and never truncate.
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (!hasActivePrimary) ...[
+                  const AiAdaptivePlanCard(),
+                  if (active.isNotEmpty) const SizedBox(height: 10),
+                ],
+                for (var i = 0; i < active.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 10),
+                  _ActiveProgramCard(
+                    assignment: active[i],
+                    onTap: () {
+                      HapticService.light();
+                      // Shared manage sheet (pause / resume / edit / end).
+                      showProgramManageSheet(context, ref, active[i]);
+                    },
+                  ),
+                ],
+              ],
+            ),
           );
         },
       ),
@@ -424,7 +431,9 @@ class _ActiveProgramCard extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: 220,
+        // Full-width vertical card (no fixed width / no Spacer — those only
+        // worked inside the old bounded-height horizontal rail).
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface2,
@@ -433,6 +442,7 @@ class _ActiveProgramCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
@@ -442,7 +452,7 @@ class _ActiveProgramCard extends StatelessWidget {
                   _slotPill('PRIMARY'),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 12),
             Text(
               assignment.title,
               maxLines: 2,

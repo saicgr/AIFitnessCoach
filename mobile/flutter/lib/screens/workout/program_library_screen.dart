@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
@@ -143,6 +144,11 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   /// Guards the one-shot deep-link auto-open so it fires only once.
   bool _deepLinkOpened = false;
 
+  /// Voice search — reuses the app's speech_to_text pattern (see voice_mic_fab).
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _speechReady = false;
+  bool _listening = false;
+
   @override
   void initState() {
     super.initState();
@@ -157,8 +163,77 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // Voice search.
+  // -------------------------------------------------------------------------
+
+  Future<void> _initSpeech() async {
+    if (_speechReady) return;
+    try {
+      _speechReady = await _speech.initialize(
+        onStatus: (status) {
+          if (status == 'notListening' && _listening && mounted) {
+            setState(() => _listening = false);
+          }
+        },
+        onError: (_) {
+          if (!mounted) return;
+          setState(() => _listening = false);
+        },
+      );
+    } catch (_) {
+      _speechReady = false;
+    }
+  }
+
+  /// Toggle voice search — listen, transcribe into the search field (which
+  /// triggers the search), permission-denied handled gracefully via a snackbar.
+  Future<void> _toggleVoiceSearch() async {
+    HapticService.light();
+    if (_listening) {
+      await _speech.stop();
+      if (mounted) setState(() => _listening = false);
+      return;
+    }
+    if (!_speechReady) await _initSpeech();
+    if (!_speechReady || !await _speech.hasPermission) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Mic permission needed — enable it in Settings.')),
+      );
+      return;
+    }
+    setState(() => _listening = true);
+    await _speech.listen(
+      listenFor: const Duration(seconds: 12),
+      pauseFor: const Duration(seconds: 2),
+      onResult: (result) {
+        if (!mounted) return;
+        final words = result.recognizedWords.trim();
+        _searchController.text = words;
+        _searchController.selection = TextSelection.collapsed(
+          offset: _searchController.text.length,
+        );
+        // Apply once the recognizer finalizes so the grid doesn't churn on
+        // every partial word.
+        if (result.finalResult) {
+          setState(() {
+            _search = words;
+            _listening = false;
+          });
+        }
+      },
+      listenOptions: stt.SpeechListenOptions(
+        partialResults: true,
+        cancelOnError: true,
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    _speech.cancel();
     _searchController.dispose();
     _heroController.dispose();
     super.dispose();
@@ -286,11 +361,10 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   Widget _buildHeader(BuildContext context) {
     final filtered = _hasActiveFilter;
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF09090B),
-        border: Border(bottom: BorderSide(color: AppColors.hairlineStrong)),
-      ),
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 13),
+      // No bottom border — the masthead flows seamlessly into the search area.
+      // (The pinned controls keep their own divider that appears on scroll.)
+      decoration: const BoxDecoration(color: Color(0xFF09090B)),
+      padding: const EdgeInsets.fromLTRB(14, 6, 14, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -387,9 +461,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     );
   }
 
-  /// The pinned controls block: search + filter row, a "SEE ALL" count link,
-  /// and the category quick-chips. Gets an opaque background when pinned so
-  /// content scrolling underneath doesn't bleed through.
+  /// The pinned controls block: search + filter + grid-toggle row, then the
+  /// category quick-chips. Opaque background so content scrolling underneath
+  /// doesn't bleed through; a divider appears once it overlaps content.
   Widget _buildStickyControls(bool overlapping) {
     return Container(
       color: AppColors.pureBlack,
@@ -398,51 +472,16 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          _buildBrowseHeadingRow(),
+          const SizedBox(height: 10),
           _buildSearchAndFilterRow(),
-          const SizedBox(height: 8),
-          _buildSeeAllRow(),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           _buildCategoryQuickChips(),
           if (overlapping)
             const Divider(height: 1, color: AppColors.hairlineStrong),
         ],
       ),
     );
-  }
-
-  /// "SEE ALL N PROGRAMS" — opens the flat 3-col grid of every published
-  /// program by clearing every filter (the filtered surface with an empty
-  /// filter IS the all-programs grid). Count comes from the category facets.
-  Widget _buildSeeAllRow() {
-    final counts = ref.watch(programCategoryCountsProvider).valueOrNull;
-    final total = counts?.fold<int>(0, (s, c) => s + c.count);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: GestureDetector(
-        onTap: _openAllPrograms,
-        behavior: HitTestBehavior.opaque,
-        child: Row(
-          children: [
-            Text(
-              total != null ? 'SEE ALL $total PROGRAMS' : 'SEE ALL PROGRAMS',
-              style: ZType.lbl(12, color: AppColors.orange, letterSpacing: 1.4),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.arrow_forward_rounded,
-                size: 14, color: AppColors.orange),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Open the flat all-programs grid — the filtered surface with NO facets set
-  /// shows every published program (the browse provider returns all when the
-  /// filter is empty). We flip a sentinel so [_hasActiveFilter] is true and the
-  /// result surface renders, without pre-selecting any category.
-  void _openAllPrograms() {
-    HapticService.light();
-    setState(() => _showAllPrograms = true);
   }
 
   // -------------------------------------------------------------------------
@@ -574,6 +613,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   // Search pill + Filter button.
   // -------------------------------------------------------------------------
 
+  /// Shared control height so the search field, FILTER, and grid-toggle line up.
+  static const double _kControlHeight = 46;
+
   Widget _buildSearchAndFilterRow() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -587,56 +629,116 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     );
   }
 
-  Widget _buildSearchPill() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+  /// "BROWSE PROGRAMS" heading on the left + a "SEE ALL N ›" link on the right
+  /// (mirrors the "Browse by Category" header style). SEE ALL opens the flat
+  /// all-programs 3-col grid (the `_showAllPrograms` path). Lives at the top of
+  /// the pinned controls so it sticks with the search + chips.
+  Widget _buildBrowseHeadingRow() {
+    final counts = ref.watch(programCategoryCountsProvider).valueOrNull;
+    final total = counts?.fold<int>(0, (s, c) => s + c.count);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.search_rounded,
-              color: AppColors.textMuted, size: 18),
-          const SizedBox(width: 8),
           Expanded(
-            child: TextField(
-              controller: _searchController,
-              style: ZType.sans(13.5,
-                  color: AppColors.textPrimary, weight: FontWeight.w500),
-              cursorColor: AppColors.orange,
-              textInputAction: TextInputAction.search,
-              onSubmitted: (v) {
-                _search = v.trim();
-                _applyFilters();
-              },
-              decoration: InputDecoration(
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                border: InputBorder.none,
-                hintText:
-                    AppLocalizations.of(context).programLibrarySearchPrograms,
-                hintStyle: ZType.sans(13.5,
-                    color: AppColors.textMuted, weight: FontWeight.w500),
-              ),
+            child: Text(
+              'BROWSE PROGRAMS',
+              style: ZType.lbl(13,
+                  color: AppColors.textPrimary, letterSpacing: 1.8),
             ),
           ),
-          if (_search.isNotEmpty)
-            GestureDetector(
-              onTap: () {
-                _searchController.clear();
-                _search = '';
-                _applyFilters();
-              },
-              behavior: HitTestBehavior.opaque,
-              child: const Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Icon(Icons.close_rounded,
-                    color: AppColors.textMuted, size: 16),
+          GestureDetector(
+            onTap: () {
+              HapticService.light();
+              setState(() => _showAllPrograms = true);
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  total != null ? 'SEE ALL $total' : 'SEE ALL',
+                  style: ZType.lbl(12,
+                      color: AppColors.orange, letterSpacing: 1.2),
+                ),
+                const SizedBox(width: 2),
+                const Icon(Icons.chevron_right_rounded,
+                    size: 16, color: AppColors.orange),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchPill() {
+    return SizedBox(
+      height: _kControlHeight,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.search_rounded,
+                color: AppColors.textMuted, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                style: ZType.sans(13.5,
+                    color: AppColors.textPrimary, weight: FontWeight.w500),
+                cursorColor: AppColors.orange,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (v) {
+                  _search = v.trim();
+                  _applyFilters();
+                },
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                  border: InputBorder.none,
+                  hintText:
+                      AppLocalizations.of(context).programLibrarySearchPrograms,
+                  hintStyle: ZType.sans(13.5,
+                      color: AppColors.textMuted, weight: FontWeight.w500),
+                ),
               ),
             ),
-        ],
+            if (_search.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  _searchController.clear();
+                  _search = '';
+                  _applyFilters();
+                },
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(Icons.close_rounded,
+                      color: AppColors.textMuted, size: 16),
+                ),
+              ),
+            // Voice search mic.
+            GestureDetector(
+              onTap: _toggleVoiceSearch,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 2),
+                child: Icon(
+                  _listening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                  color: _listening ? AppColors.orange : AppColors.textMuted,
+                  size: 19,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -647,14 +749,15 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       onTap: _openFilterSheet,
       behavior: HitTestBehavior.opaque,
       child: Container(
+        height: _kControlHeight,
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: count > 0 ? AppColors.orange : AppColors.cardBorder,
           ),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -705,6 +808,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       error: (_, __) => const SizedBox.shrink(),
       data: (cats) {
         if (cats.isEmpty) return const SizedBox.shrink();
+        final total = cats.fold<int>(0, (s, c) => s + c.count);
         return SizedBox(
           height: 34,
           child: ListView.separated(
@@ -714,9 +818,13 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, i) {
               if (i == 0) {
+                // ALL chip carries the total count and resets the category
+                // filter. The flat all-programs grid is opened by the SEE ALL
+                // link in the heading row (the single entry for that view).
                 return ZChip(
-                  label: AppLocalizations.of(context).syncedWorkoutsHistoryAll,
-                  selected: _category == null,
+                  label:
+                      '${AppLocalizations.of(context).syncedWorkoutsHistoryAll} $total',
+                  selected: _category == null && !_showAllPrograms,
                   onTap: () {
                     HapticService.selection();
                     setState(() => _category = null);
@@ -885,16 +993,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          child: Row(
-            children: [
-              Expanded(child: _buildSearchPill()),
-              const SizedBox(width: 10),
-              _buildFilterButton(),
-            ],
-          ),
-        ),
+        // Same search + FILTER + grid-toggle controls as discovery, so the
+        // grid-toggle (now active) can flip back out of the all-programs grid.
+        _buildSearchAndFilterRow(),
         const SizedBox(height: 12),
         _buildActiveFilterStrip(),
         Expanded(child: _buildBrowseGrid()),
@@ -3045,10 +3146,10 @@ class _StickyControlsDelegate extends SliverPersistentHeaderDelegate {
 
   _StickyControlsDelegate({required this.builder});
 
-  // Fixed extent sized to fit: search row (~48) + gap + see-all (~20) + gap +
-  // chips (~34) + paddings, with a little headroom so the divider never causes
-  // a 1px overflow. A constant extent keeps the pin smooth.
-  static const double _extent = 140;
+  // Fixed extent sized to fit the pinned block top→bottom: heading row (~18) +
+  // 10 gap + search row (46) + 10 gap + chips (34) + 8 bottom = ~126, +6
+  // headroom so the divider never causes a 1px overflow.
+  static const double _extent = 132;
 
   @override
   double get minExtent => _extent;
