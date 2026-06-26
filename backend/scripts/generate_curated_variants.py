@@ -302,6 +302,47 @@ def generate_for_program(program_id: str, smoke_test: bool = False) -> dict:
     # use our chosen model (not whatever is in .env).
     gp.GEMINI_MODEL = GEMINI_MODEL
 
+    # ── Volume-requirement prompt boost (monkeypatch, NOT editing the shared
+    # generate_programs.py) ───────────────────────────────────────────────────
+    # Gemini 3.1 Flash Lite tends to return weeks too THIN to pass the validator
+    # (`generate_programs.validate_week` requires exercises_found >= sessions*3,
+    # i.e. >=3 main exercises per workout). Flash-lite often returns ~2/workout
+    # → "Low exercise count" → empty variants. We wrap the prompt builders to
+    # append a forceful per-workout minimum with margin so flash-lite clears the
+    # gate. Idempotent: only wraps once per process.
+    def _volume_clause(sessions: int) -> str:
+        sessions = sessions or 4
+        return (
+            "\n\n## NON-NEGOTIABLE VOLUME REQUIREMENT\n"
+            f"Each of the {sessions} workouts MUST contain AT LEAST 5 main "
+            "exercises in its \"exercises\" array (warmup/cooldown do NOT count "
+            "toward this). Strength/hybrid workouts should have 5-7 main "
+            f"exercises. The week MUST total AT LEAST {sessions * 5} main "
+            "exercises across all its workouts. A workout with fewer than 4 main "
+            "exercises, or a week below the minimum, is INVALID and will be "
+            "REJECTED — always add appropriate accessory/secondary exercises "
+            "(e.g. isolation work, core, carries) to meet the minimum. Never "
+            "return a sparse week."
+        )
+
+    if not getattr(gp, "_volume_boost_applied", False):
+        _orig_week_prompt = gp.get_week_prompt
+        _orig_full_prompt = gp.get_full_program_prompt
+
+        def _week_prompt_boosted(program, week_num, total_weeks, sessions, *a, **k):
+            return _orig_week_prompt(
+                program, week_num, total_weeks, sessions, *a, **k
+            ) + _volume_clause(sessions)
+
+        def _full_prompt_boosted(program, duration, sessions, *a, **k):
+            return _orig_full_prompt(
+                program, duration, sessions, *a, **k
+            ) + _volume_clause(sessions)
+
+        gp.get_week_prompt = _week_prompt_boosted
+        gp.get_full_program_prompt = _full_prompt_boosted
+        gp._volume_boost_applied = True
+
     total_cost = 0.0
     variants_ok = 0
     variants_failed = 0
