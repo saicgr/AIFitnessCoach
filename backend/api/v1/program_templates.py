@@ -482,6 +482,136 @@ def _fetch_branded_first_week_workouts(
 
 
 # =============================================================================
+# Natural program search (broadened multi-field + synonym expansion)
+# =============================================================================
+# Body-part / goal synonym expansion so "chest" finds push programs, "lose belly
+# fat" finds Lean Burn, etc. Each key is the user-typed concept; the values are
+# the terms we ALSO match against the program's searchable text. Keyed by the
+# trigger substring (so "chest day" still expands via "chest"). The curated set
+# is tiny (~18 published) so this all runs in Python per request.
+_SEARCH_SYNONYMS: Dict[str, List[str]] = {
+    "chest": ["chest", "pec", "bench", "push-up", "push up", "chest press",
+              "fly", "dip", "incline", "push"],
+    "back": ["back", "lat", "row", "pull", "pull-up", "pull up", "deadlift",
+             "pulldown"],
+    "leg": ["leg", "quad", "squat", "lunge", "hamstring", "calf", "glute"],
+    "legs": ["leg", "quad", "squat", "lunge", "hamstring", "calf", "glute"],
+    "glute": ["glute", "hip thrust", "bridge", "hip"],
+    "glutes": ["glute", "hip thrust", "bridge", "hip"],
+    "shoulder": ["shoulder", "delt", "overhead", "ohp", "press", "lateral raise"],
+    "shoulders": ["shoulder", "delt", "overhead", "ohp", "press", "lateral raise"],
+    "arm": ["arm", "bicep", "tricep", "curl", "extension"],
+    "arms": ["arm", "bicep", "tricep", "curl", "extension"],
+    "core": ["core", "ab", "abs", "plank", "crunch", "oblique"],
+    "abs": ["core", "ab", "abs", "plank", "crunch", "oblique"],
+    "cardio": ["cardio", "run", "running", "endurance", "conditioning",
+               "hyrox", "row", "ski", "sprint"],
+    "fat loss": ["fat loss", "lean", "cut", "weight loss", "shred", "burn"],
+    "lose": ["fat loss", "lean", "cut", "weight loss", "shred", "burn"],
+    "belly": ["fat loss", "lean", "cut", "core", "ab", "abs"],
+    "muscle": ["muscle", "hypertrophy", "build", "mass", "bodybuilding",
+               "aesthetic"],
+    "strength": ["strength", "powerlifting", "heavy", "1rm", "power"],
+}
+
+
+def _expand_search_terms(search: str) -> List[str]:
+    """Expand a raw search string into a deduped list of lowercased match terms:
+    the original phrase + its whitespace tokens + any synonym-map expansions
+    triggered by a token or by a phrase substring (e.g. 'fat loss', 'lose')."""
+    s = (search or "").strip().lower()
+    if not s:
+        return []
+    terms: List[str] = [s]
+    terms.extend(t for t in s.split() if t)
+    # Phrase-level synonym triggers (multi-word keys like 'fat loss').
+    for key, syns in _SEARCH_SYNONYMS.items():
+        if key in s:
+            terms.extend(syns)
+    # De-dupe, preserve order, drop empties + 1-char noise.
+    seen: set = set()
+    out: List[str] = []
+    for t in terms:
+        t = t.strip()
+        if len(t) < 2 or t in seen:
+            continue
+        seen.add(t)
+        out.append(t)
+    return out
+
+
+def _workouts_blob_text(workouts: Any) -> str:
+    """Flatten a programs.workouts JSONB into a lowercased text blob of exercise
+    names (+ workout/day labels) so movements like 'Bench Press' are searchable.
+    Best-effort: any unexpected shape returns ''. Bounded — curated programs are
+    small."""
+    if not workouts:
+        return ""
+    parts: List[str] = []
+    blob = workouts
+    if isinstance(blob, dict):
+        blob = blob.get("workouts") or []
+    if not isinstance(blob, list):
+        return ""
+    for w in blob:
+        if not isinstance(w, dict):
+            continue
+        for k in ("workout_name", "name", "type", "focus"):
+            v = w.get(k)
+            if isinstance(v, str):
+                parts.append(v)
+        for ex in (w.get("exercises") or []):
+            if isinstance(ex, dict):
+                nm = ex.get("exercise_name") or ex.get("name")
+                if isinstance(nm, str):
+                    parts.append(nm)
+            elif isinstance(ex, str):
+                parts.append(ex)
+    return " ".join(parts).lower()
+
+
+def _search_rank(row: Dict[str, Any], terms: List[str]) -> int:
+    """Score a program row against the expanded search terms. 0 = no match.
+    Weighted by where the hit lands: name/editorial > category/goals/tags >
+    description > workouts-text (exercise names)."""
+    if not terms:
+        return 1  # no search → everything matches (caller shouldn't call this)
+
+    name_blob = " ".join(
+        str(row.get(k) or "") for k in ("program_name", "editorial_name")
+    ).lower()
+    cat_blob = " ".join(
+        str(row.get(k) or "")
+        for k in ("program_category", "program_subcategory")
+    ).lower()
+    goals_blob = " ".join(str(g).lower() for g in (row.get("goals") or []))
+    tags_blob = " ".join(str(t).lower() for t in (row.get("tags") or []))
+    tagline_blob = " ".join(
+        str(row.get(k) or "") for k in ("tagline", "who_for")
+    ).lower()
+    desc_blob = " ".join(
+        str(row.get(k) or "")
+        for k in ("description", "short_description", "equipment_summary",
+                  "progression_note")
+    ).lower()
+    workouts_blob = _workouts_blob_text(row.get("workouts"))
+
+    score = 0
+    for t in terms:
+        if t in name_blob:
+            score += 100
+        if t in cat_blob or t in goals_blob or t in tags_blob:
+            score += 40
+        if t in tagline_blob:
+            score += 25
+        if t in desc_blob:
+            score += 15
+        if t in workouts_blob:
+            score += 8
+    return score
+
+
+# =============================================================================
 # Library - first-ever API over the `programs` table
 # =============================================================================
 @router.get("/library", response_model=LibraryBrowseResponse)
@@ -536,17 +666,25 @@ async def browse_library(
             return cached
 
         db = get_supabase()
-        # Light card columns ONLY — drop the `workouts` blob from the select.
-        # has_workouts + sessions_per_week are now precomputed columns.
-        # NOTE: the structured DB-side filters below only apply to the curated
-        # `programs` query. Branded rows are fetched whole and filtered in
-        # Python by the SAME predicates so the merged set is filtered uniformly.
-        query = db.client.table("programs").select(
+        # Light card columns. When a free-text `search` is present we ALSO pull
+        # `tags` + the `workouts` JSONB so the broadened Python matcher can search
+        # category/goals/tags/description AND exercise names. The curated
+        # published set is tiny (~18) so fetching workouts on the search path is
+        # cheap; the no-search browse keeps the light select.
+        _card_cols = (
             "id, program_name, program_category, program_subcategory, "
             "celebrity_name, difficulty_level, duration_weeks, "
             "sessions_per_week, session_duration_minutes, description, "
             "short_description, goals, editorial_name, tagline, who_for, "
             "who_not_for, equipment_summary, progression_note"
+        )
+        if search:
+            _card_cols += ", tags, workouts"
+        # NOTE: the structured DB-side filters below only apply to the curated
+        # `programs` query. Branded rows are fetched whole and filtered in
+        # Python by the SAME predicates so the merged set is filtered uniformly.
+        query = db.client.table("programs").select(
+            _card_cols
         ).eq("has_workouts", True).eq("is_published", True)  # curated set only
         # Celebrity programs are no longer surfaced in the library (product
         # decision 2026-06): drop the whole "Celebrity Workout" category.
@@ -557,14 +695,28 @@ async def browse_library(
             query = query.eq("difficulty_level", difficulty_level)
         if sessions_per_week is not None:
             query = query.eq("sessions_per_week", sessions_per_week)
-        if search:
-            query = query.ilike("program_name", f"%{search}%")
+        # NOTE: `search` is intentionally NOT applied DB-side anymore. The old
+        # name-only `ilike(program_name)` missed "chest"/"lose belly fat"/exercise
+        # names. We fetch the (small) filtered set and rank in Python below with
+        # synonym expansion + multi-field matching. The other DB-side filters
+        # (category/difficulty/sessions/duration) still narrow the set first.
         # duration_weeks range — DB-side (cheap, indexed-ish numeric compare).
         if duration_min is not None:
             query = query.gte("duration_weeks", duration_min)
         if duration_max is not None:
             query = query.lte("duration_weeks", duration_max)
         resp = query.execute()
+
+        # Broadened, ranked search over the fetched curated set (synonym-expanded,
+        # multi-field). Build {program_id: rank}; rows scoring 0 are dropped. When
+        # there's no search, every row passes (rank not consulted).
+        search_terms = _expand_search_terms(search) if search else []
+        _search_ranks: Dict[str, int] = {}
+        if search_terms:
+            for row in resp.data or []:
+                r = _search_rank(row, search_terms)
+                if r > 0:
+                    _search_ranks[str(row["id"])] = r
 
         # goals[] overlap — Python post-filter (case-insensitive substring
         # match of ANY requested token against ANY of the program's goals).
@@ -583,6 +735,9 @@ async def browse_library(
         cards: List[LibraryProgramCard] = []
         for row in resp.data or []:
             if not _matches_goals(row.get("goals")):
+                continue
+            # When searching, only keep rows that scored a match.
+            if search_terms and str(row["id"]) not in _search_ranks:
                 continue
             cards.append(
                 LibraryProgramCard(
@@ -627,7 +782,6 @@ async def browse_library(
             branded_cards = []
 
         norm_difficulty = (difficulty_level or "").strip().lower() or None
-        search_lc = (search or "").strip().lower() or None
         for bc in branded_cards:
             # category: match against the friendly label (case-insensitive).
             if category and (bc.program_category or "").lower() != (
@@ -645,8 +799,23 @@ async def browse_library(
                 and bc.sessions_per_week != sessions_per_week
             ):
                 continue
-            if search_lc and search_lc not in (bc.program_name or "").lower():
-                continue
+            # Broadened branded search: rank the card's own fields against the
+            # SAME expanded terms (branded rows have no workouts blob to mine).
+            if search_terms:
+                bc_row = {
+                    "program_name": bc.program_name,
+                    "editorial_name": bc.editorial_name,
+                    "program_category": bc.program_category,
+                    "program_subcategory": bc.program_subcategory,
+                    "goals": bc.goals,
+                    "tagline": bc.tagline,
+                    "who_for": bc.who_for,
+                    "description": bc.description,
+                }
+                br = _search_rank(bc_row, search_terms)
+                if br <= 0:
+                    continue
+                _search_ranks[bc.id] = br
             if duration_min is not None and (
                 bc.duration_weeks is None or bc.duration_weeks < duration_min
             ):
@@ -659,7 +828,13 @@ async def browse_library(
                 continue
             cards.append(bc)
 
-        cards.sort(key=lambda c: (c.program_category or "", c.program_name))
+        if search_terms:
+            # Search results: rank desc, then name for stable ties.
+            cards.sort(
+                key=lambda c: (-_search_ranks.get(c.id, 0), c.program_name)
+            )
+        else:
+            cards.sort(key=lambda c: (c.program_category or "", c.program_name))
         result = LibraryBrowseResponse(total=len(cards), programs=cards)
         # Cache a JSON-serializable dict, NOT the pydantic model: the Redis cache
         # serializes via json.dumps(..., default=str), which would otherwise
