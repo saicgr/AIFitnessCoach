@@ -6,10 +6,10 @@
 --
 -- Mapping rationale (18 curated published programs → 16 mapped, 2 left NULL as inherently-fixed):
 --
---   HYROX Race Prep (8w/4)              → NULL  (HYROX-specific; no branded analogue)
---   HYROX Full Simulation (1w/1)        → NULL  (inherently fixed / single-session)
---   HYROX Pro — Elite Race Build (12w/6) → NULL  (HYROX-specific; no branded analogue)
---   30-Day Plank Challenge (5w/6)       → NULL  (inherently fixed / challenge format)
+--   HYROX Race Prep (8w/4)               → HYROX Race Prep branded base (9eedeaf0); default 8w/5sess
+--   HYROX Full Simulation (1w/1)         → NULL  (inherently fixed / single-session race-day sim)
+--   HYROX Pro — Elite Race Build (12w/6) → HYROX Race Prep branded base (9eedeaf0); default 12w/6sess
+--   30-Day Plank Challenge (5w/6)        → NULL  (inherently fixed / challenge format)
 --   Iron Surge — Heavy Compound (12w/4)      → Functional Strength      (strength/full_body, 4×/wk, [4,8,12]w)
 --   Anabolic Foundations (12w/4)             → PHUL                      (upper_lower hypertrophy, 4×/wk, [4,8,12]w)
 --   Strong & Steady Women's (12w/4)          → Kettlebell for Women      (equipment_specific women's, 4×/wk, [2,4,8,12]w)
@@ -147,18 +147,24 @@ UPDATE programs SET
   default_variant_id = '4ae8a35c-2042-410e-8e39-131c18244f9b'
 WHERE id = 'a616a82c-d9be-4b71-a7ef-7b291ec47107';
 
--- ── Step 3: Inherently-fixed and HYROX slots — explicit NULL (no-op but documents intent) ──
+-- ── Step 3: HYROX + fixed slots ──────────────────────────────────────────────
 
--- HYROX Race Prep: no branded HYROX variant library → leave NULL
-UPDATE programs SET variant_base_id = NULL, default_variant_id = NULL
+-- HYROX Race Prep (8w/4): shares the branded HYROX Race Prep base;
+--   default = 8w/5sess/Medium — closest available to the curated program's 4 sess/wk
+UPDATE programs SET
+  variant_base_id    = '9eedeaf0-6e54-4e19-8a01-b48b83e28398',
+  default_variant_id = '4f8a5416-6220-469f-aa3f-bca8085c1e51'  -- 8w/5sess/Medium
 WHERE id = '28509af5-3ae9-4f3b-a4ad-bbf840798a64';
 
--- HYROX Full Simulation: single-session fixed program → NULL
+-- HYROX Full Simulation: single-session race-day sim → genuinely fixed, NULL
 UPDATE programs SET variant_base_id = NULL, default_variant_id = NULL
 WHERE id = '73d9ec23-5845-498f-8015-e961e141cec5';
 
--- HYROX Pro — Elite Race Build: HYROX-specific → NULL
-UPDATE programs SET variant_base_id = NULL, default_variant_id = NULL
+-- HYROX Pro — Elite Race Build (12w/6): shares the branded HYROX Race Prep base;
+--   default = 12w/6sess/Medium — exact match
+UPDATE programs SET
+  variant_base_id    = '9eedeaf0-6e54-4e19-8a01-b48b83e28398',
+  default_variant_id = '2d2ad8da-0c8d-46b9-ac30-cf1985c92ac0'  -- 12w/6sess/Medium
 WHERE id = '6348ee98-26a1-4eda-9957-e058de835def';
 
 -- 30-Day Plank Challenge: inherently-fixed daily challenge → NULL

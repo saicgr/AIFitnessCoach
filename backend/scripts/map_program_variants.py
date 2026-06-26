@@ -61,13 +61,16 @@ def main():
     # Each entry: (curated_program_id, branded_base_id or None, reason)
     # None = intentionally left unmapped (fixed program or no acceptable base).
     MAPPING = [
-        # HYROX programs — no branded HYROX variant library
-        ("28509af5-3ae9-4f3b-a4ad-bbf840798a64", None,
-         "HYROX Race Prep — HYROX-specific, no branded analogue"),
+        # HYROX programs — Race Prep + Pro share the branded HYROX Race Prep base;
+        # Full Simulation is a single-session race-day run (inherently fixed → NULL)
+        ("28509af5-3ae9-4f3b-a4ad-bbf840798a64",
+         "9eedeaf0-6e54-4e19-8a01-b48b83e28398",
+         "HYROX Race Prep (8w/4) → HYROX Race Prep branded [hyrox/5-6x/[8,12,16,24]w]; default 8w/5sess"),
         ("73d9ec23-5845-498f-8015-e961e141cec5", None,
-         "HYROX Full Simulation — inherently fixed / single-session"),
-        ("6348ee98-26a1-4eda-9957-e058de835def", None,
-         "HYROX Pro Elite Race Build — HYROX-specific, no branded analogue"),
+         "HYROX Full Simulation — single-session race-day sim, inherently fixed"),
+        ("6348ee98-26a1-4eda-9957-e058de835def",
+         "9eedeaf0-6e54-4e19-8a01-b48b83e28398",
+         "HYROX Pro Elite Race Build (12w/6) → HYROX Race Prep branded; default 12w/6sess exact match"),
         # Strength programs
         ("d98a7ddc-d55b-4b42-939f-e80f75d4e44e",
          "1542cb5b-79b5-4ff0-a752-885e0bd52e46",
