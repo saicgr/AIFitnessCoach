@@ -1278,7 +1278,25 @@ def _fetch_variant_options(
             .order("duration_weeks", desc=False)
             .execute()
         )
-        rows = resp.data or []
+        all_rows = resp.data or []
+        if not all_rows:
+            return []
+        # Only offer variants that actually have generated week content — some
+        # variants came out EMPTY (0 program_variant_weeks rows) from generation
+        # gaps. Offering them would dead-end the schedule (falls back to the
+        # single plan). Filter to non-empty so the weeks/sessions selectors are
+        # honest.
+        ids = [str(r["id"]) for r in all_rows]
+        wk = (
+            db.client.table("program_variant_weeks")
+            .select("variant_id")
+            .in_("variant_id", ids)
+            .execute()
+        )
+        non_empty = {str(w["variant_id"]) for w in (wk.data or [])}
+        rows = [r for r in all_rows if str(r["id"]) in non_empty]
+        if not rows:
+            return []
         _intensity_rank = {"Easy": 0, "Medium": 1, "Hard": 2}
         rows.sort(
             key=lambda r: (
@@ -1287,13 +1305,32 @@ def _fetch_variant_options(
                 _intensity_rank.get(r.get("intensity_level") or "Medium", 1),
             )
         )
+        # Effective default: the stored default if it's non-empty, else the
+        # non-empty variant closest to the stored default's (weeks, sessions) so
+        # the headline never points at an empty variant.
+        stored = str(default_variant_id or "")
+        if stored in {str(r["id"]) for r in rows}:
+            eff_default = stored
+        else:
+            target = next((r for r in all_rows if str(r["id"]) == stored), None)
+            tw = (target or {}).get("duration_weeks") or 0
+            ts = (target or {}).get("sessions_per_week") or 0
+            best = min(
+                rows,
+                key=lambda r: (
+                    abs((r.get("duration_weeks") or 0) - tw),
+                    abs((r.get("sessions_per_week") or 0) - ts),
+                    _intensity_rank.get(r.get("intensity_level") or "Medium", 1),
+                ),
+            )
+            eff_default = str(best["id"])
         return [
             {
                 "variant_id": str(r["id"]),
                 "weeks": r.get("duration_weeks"),
                 "sessions_per_week": r.get("sessions_per_week"),
                 "intensity": r.get("intensity_level"),
-                "is_default": str(r["id"]) == str(default_variant_id or ""),
+                "is_default": str(r["id"]) == eff_default,
             }
             for r in rows
         ]
@@ -1417,6 +1454,13 @@ async def library_program_detail(
         variant_base_id = program.get("variant_base_id")
         default_variant_id = program.get("default_variant_id")
         variant_options = _fetch_variant_options(db, variant_base_id, default_variant_id)
+        # Use the EFFECTIVE default from the (non-empty) options so the FE never
+        # initialises the schedule with an empty variant.
+        _eff_default = next(
+            (o["variant_id"] for o in variant_options if o.get("is_default")), None
+        )
+        if _eff_default:
+            default_variant_id = _eff_default
         return {
             "program_id": str(program["id"]),
             "program_name": program.get("program_name"),
