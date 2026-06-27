@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/assign_preview.dart';
 import '../models/program_template.dart';
 import '../models/user_program_assignment.dart';
 import '../services/api_client.dart';
@@ -458,6 +459,90 @@ class ProgramTemplateRepository {
       );
     } on DioException catch (e) {
       throw _mapParseError(e) ?? e;
+    }
+  }
+
+  /// Shared request body for the assign / assign-preview / assign-review trio.
+  /// Kept in one place so the live preview is GUARANTEED to send the exact same
+  /// args the real [assignProgram] call will — otherwise the preview could lie.
+  Map<String, dynamic> _assignBody({
+    required String programId,
+    required List<int> assignedDays,
+    required ProgramSlot slot,
+    required String startDate,
+    required bool replace,
+    int? durationWeeks,
+  }) {
+    return <String, dynamic>{
+      'program_id': programId,
+      'assigned_days': assignedDays,
+      'slot': slot == ProgramSlot.addon ? 'addon' : 'primary',
+      'start_date': startDate,
+      'replace': replace,
+      if (durationWeeks != null) 'duration_weeks': durationWeeks,
+    };
+  }
+
+  /// POST /assign-preview — a deterministic, LLM-free projection of what
+  /// assigning this program will SCHEDULE and OVERLAP (week-by-week days +
+  /// collisions + impact counts + a one-line summary). Drives the live schedule
+  /// preview in the Start flow. Same args as [assignProgram]; lets Dio
+  /// exceptions bubble so the sheet can show a "couldn't preview" + Retry.
+  Future<AssignPreview> previewAssignment({
+    required String programId,
+    required List<int> assignedDays,
+    required ProgramSlot slot,
+    required String startDate,
+    bool replace = false,
+    int? durationWeeks,
+  }) async {
+    final body = _assignBody(
+      programId: programId,
+      assignedDays: assignedDays,
+      slot: slot,
+      startDate: startDate,
+      replace: replace,
+      durationWeeks: durationWeeks,
+    );
+    debugPrint('🏋️ [ProgramTemplate] previewAssignment | id=$programId '
+        'slot=${body['slot']} days=$assignedDays replace=$replace');
+    final resp = await _client.post('$_base/assign-preview', data: body);
+    return AssignPreview.fromJson(
+      Map<String, dynamic>.from(resp.data as Map),
+    );
+  }
+
+  /// POST /assign-review — a 1-2 sentence AI coach take on this assignment.
+  /// Fail-SOFT: returns the `review` string, falling back to the deterministic
+  /// `summary` then '' on ANY error. NEVER throws to the UI — the preview /
+  /// confirm flow must keep working even when the LLM is down.
+  Future<String> assignmentReview({
+    required String programId,
+    required List<int> assignedDays,
+    required ProgramSlot slot,
+    required String startDate,
+    bool replace = false,
+    int? durationWeeks,
+  }) async {
+    final body = _assignBody(
+      programId: programId,
+      assignedDays: assignedDays,
+      slot: slot,
+      startDate: startDate,
+      replace: replace,
+      durationWeeks: durationWeeks,
+    );
+    debugPrint('🤖 [ProgramTemplate] assignmentReview | id=$programId '
+        'slot=${body['slot']} days=$assignedDays replace=$replace');
+    try {
+      final resp = await _client.post('$_base/assign-review', data: body);
+      final data = Map<String, dynamic>.from(resp.data as Map);
+      final review = data['review']?.toString().trim() ?? '';
+      if (review.isNotEmpty) return review;
+      return data['summary']?.toString().trim() ?? '';
+    } catch (e) {
+      debugPrint('⚠️ [ProgramTemplate] assignmentReview failed (soft): $e');
+      return '';
     }
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,6 +13,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/signature/signature.dart';
+import '../../data/models/assign_preview.dart';
 import '../../data/models/program_template.dart';
 import '../../data/models/user_program_assignment.dart';
 import '../../data/repositories/program_template_repository.dart';
@@ -1887,6 +1889,27 @@ class _StartProgramFlowSheetState
 
   bool _submitting = false;
 
+  // ---- Live schedule preview + overlap + AI review state ------------------
+  // The preview/review re-fetch (debounced) whenever the assign args change so
+  // the user sees EXACTLY what "CONFIRM & START" will schedule and overlap.
+  AssignPreview? _preview;
+  bool _previewLoading = false;
+  Object? _previewError;
+
+  /// AI coach take (assign-review). Fail-soft — null when absent/identical to
+  /// the deterministic summary (we never duplicate the summary line).
+  String? _review;
+  bool _reviewLoading = false;
+
+  /// "Show all weeks" toggle for the schedule preview (week 1 expands by default).
+  bool _showAllWeeks = false;
+
+  /// Debounce timer + monotonic request sequence. The sequence guards against
+  /// a stale (slower) response overwriting a newer one: each run captures the
+  /// seq it started with and bails on apply if a newer run has since started.
+  Timer? _previewDebounce;
+  int _previewSeq = 0;
+
   @override
   void initState() {
     super.initState();
@@ -1900,6 +1923,125 @@ class _StartProgramFlowSheetState
     } else {
       _days.addAll(const [0, 2, 4]); // Mon/Wed/Fri default.
     }
+    // Initial preview fetch once the first frame is laid out (ref is ready and
+    // the sheet is mounted). No debounce on the first load — paint it ASAP.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _runPreview();
+    });
+  }
+
+  @override
+  void dispose() {
+    _previewDebounce?.cancel();
+    super.dispose();
+  }
+
+  /// Debounced re-fetch — call after any change to days / start date / slot /
+  /// replace. Coalesces a burst of taps into one request ~350ms after the last.
+  void _schedulePreview() {
+    _previewDebounce?.cancel();
+    _previewDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) _runPreview();
+    });
+  }
+
+  /// Immediate re-fetch (Retry button) — skips the debounce window.
+  void _runPreviewNow() {
+    _previewDebounce?.cancel();
+    if (mounted) _runPreview();
+  }
+
+  /// The exact assign args the live preview/review send — built from the SAME
+  /// fields `_submit` passes to `assignProgram`, so the preview can't drift
+  /// from what actually happens on confirm.
+  ({
+    String programId,
+    List<int> assignedDays,
+    ProgramSlot slot,
+    String startDate,
+    bool replace,
+    int? durationWeeks,
+  }) _previewArgs() {
+    final card = widget.card;
+    return (
+      programId: card.isBranded ? card.bareBrandedId : card.id,
+      assignedDays: _days.toList()..sort(),
+      slot: _slot,
+      startDate: _isoDate(_startDate),
+      replace: _slot == ProgramSlot.primary && _replace,
+      durationWeeks: card.durationWeeks,
+    );
+  }
+
+  /// Fetch the deterministic schedule preview (and kick off the AI review in
+  /// parallel). Guarded by [_previewSeq] so a slow, stale response can never
+  /// clobber a newer one, and by `mounted` for the async gap.
+  Future<void> _runPreview() async {
+    final seq = ++_previewSeq;
+    // No training days → nothing to preview; clear any prior result.
+    if (_days.isEmpty) {
+      setState(() {
+        _preview = null;
+        _previewError = null;
+        _previewLoading = false;
+        _review = null;
+        _reviewLoading = false;
+      });
+      return;
+    }
+    setState(() {
+      _previewLoading = true;
+      _previewError = null;
+      _reviewLoading = true;
+    });
+    // Kick the AI review off concurrently (fail-soft, never throws).
+    unawaited(_fetchReview(seq));
+    final repo = ref.read(programTemplateRepositoryProvider);
+    final args = _previewArgs();
+    try {
+      final preview = await repo.previewAssignment(
+        programId: args.programId,
+        assignedDays: args.assignedDays,
+        slot: args.slot,
+        startDate: args.startDate,
+        replace: args.replace,
+        durationWeeks: args.durationWeeks,
+      );
+      if (!mounted || seq != _previewSeq) return;
+      setState(() {
+        _preview = preview;
+        _previewLoading = false;
+        // Reset the week expander when the schedule shape changes materially.
+        _showAllWeeks = false;
+      });
+    } catch (e) {
+      if (!mounted || seq != _previewSeq) return;
+      setState(() {
+        _previewError = e;
+        _previewLoading = false;
+      });
+    }
+  }
+
+  /// Fetch the AI coach review for the [seq]-th config. Fail-soft: the repo
+  /// returns '' on any error, so this never throws. Applied only if still the
+  /// newest run.
+  Future<void> _fetchReview(int seq) async {
+    final repo = ref.read(programTemplateRepositoryProvider);
+    final args = _previewArgs();
+    final review = await repo.assignmentReview(
+      programId: args.programId,
+      assignedDays: args.assignedDays,
+      slot: args.slot,
+      startDate: args.startDate,
+      replace: args.replace,
+      durationWeeks: args.durationWeeks,
+    );
+    if (!mounted || seq != _previewSeq) return;
+    setState(() {
+      _review = review.trim().isEmpty ? null : review.trim();
+      _reviewLoading = false;
+    });
   }
 
   /// Spread [n] sessions roughly evenly across a 7-day week (0=Mon..6=Sun).
@@ -1951,6 +2093,7 @@ class _StartProgramFlowSheetState
     );
     if (picked != null && mounted) {
       setState(() => _startDate = picked);
+      _schedulePreview();
     }
   }
 
@@ -2023,7 +2166,7 @@ class _StartProgramFlowSheetState
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
                   children: [
                     Text(
                       'START PROGRAM',
@@ -2095,42 +2238,66 @@ class _StartProgramFlowSheetState
                       _buildReplaceToggle(),
                     ],
 
+                    const SizedBox(height: 22),
+
+                    // Live schedule preview + overlap (replaces the old static
+                    // "current program" banner with a concrete week-by-week,
+                    // collision-aware projection of what CONFIRM will schedule).
+                    _buildSchedulePreviewSection(),
+
+                    const SizedBox(height: 18),
+
+                    // ✨ AI coach review of this exact assignment.
+                    _buildCoachReviewSection(),
+
                     const SizedBox(height: 20),
 
                     // AI tailor.
                     _buildAiTailor(),
+
+                    // Impact restate just above the pinned CONFIRM bar.
+                    _buildImpactRestate(),
                   ],
                 ),
               ),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.orange,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+              Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(
+                    top: BorderSide(color: AppColors.cardBorder),
+                  ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  minimum: const EdgeInsets.only(bottom: 6),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.orange,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                      ),
-                      onPressed: _submitting ? null : _submit,
-                      icon: _submitting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.check_rounded, size: 20),
-                      label: Text(
-                        _submitting ? 'STARTING…' : 'CONFIRM & START',
-                        style: ZType.lbl(14,
-                            color: Colors.white,
-                            weight: FontWeight.w800,
-                            letterSpacing: 2.0),
+                        onPressed: _submitting ? null : _submit,
+                        icon: _submitting
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.check_rounded, size: 20),
+                        label: Text(
+                          _submitting ? 'STARTING…' : 'CONFIRM & START',
+                          style: ZType.lbl(14,
+                              color: Colors.white,
+                              weight: FontWeight.w800,
+                              letterSpacing: 2.0),
+                        ),
                       ),
                     ),
                   ),
@@ -2158,6 +2325,7 @@ class _StartProgramFlowSheetState
                   _days.add(i);
                 }
               });
+              _schedulePreview();
             },
             behavior: HitTestBehavior.opaque,
             child: Container(
@@ -2200,6 +2368,7 @@ class _StartProgramFlowSheetState
             onTap: () {
               HapticService.selection();
               setState(() => _slot = ProgramSlot.primary);
+              _schedulePreview();
             },
           ),
         ),
@@ -2212,12 +2381,419 @@ class _StartProgramFlowSheetState
             onTap: () {
               HapticService.selection();
               setState(() => _slot = ProgramSlot.addon);
+              _schedulePreview();
             },
           ),
         ),
       ],
     );
   }
+
+  // -------------------------------------------------------------------------
+  // Live schedule preview + overlap.
+  // -------------------------------------------------------------------------
+
+  /// Compact "Mon Jun 29" formatter for a [DateTime] (weekday + short month +
+  /// day). Used by the day rows in the schedule preview.
+  String _fmtShort(DateTime d) {
+    const wd = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    // DateTime.weekday is 1=Mon..7=Sun.
+    return '${wd[d.weekday - 1]} ${months[d.month - 1]} ${d.day}';
+  }
+
+  /// Day-row date label — parses the ISO date and renders "Mon Jun 29", falling
+  /// back to the response's own weekday name if the date can't be parsed.
+  String _dayLabel(PreviewDay d) {
+    final dt = DateTime.tryParse(d.date);
+    if (dt != null) return _fmtShort(dt);
+    return [d.weekdayName, d.date].where((s) => s.isNotEmpty).join(' ');
+  }
+
+  /// SCHEDULE PREVIEW section — week-by-week, collision-annotated projection.
+  Widget _buildSchedulePreviewSection() {
+    final preview = _preview;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _StartFlowLabel('SCHEDULE PREVIEW'),
+        const SizedBox(height: 8),
+        // Prefer showing an existing preview even while a newer one loads (no
+        // flicker); only fall through to error / skeleton when there's none.
+        if (preview != null)
+          _buildPreviewBody(preview)
+        else if (_previewError != null)
+          _buildPreviewError()
+        else if (_previewLoading)
+          _buildPreviewSkeleton()
+        else
+          // No training days picked → nothing to preview.
+          Text(
+            'Pick at least one training day to preview the schedule.',
+            style: ZType.sans(12.5,
+                color: AppColors.textMuted, weight: FontWeight.w500),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPreviewBody(AssignPreview p) {
+    final collisions = p.collisionsByDate;
+    final weeks = p.weeks;
+    final visibleWeeks = _showAllWeeks ? weeks : weeks.take(1).toList();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Totals line.
+          Row(
+            children: [
+              const Icon(Icons.calendar_month_rounded,
+                  size: 15, color: AppColors.orange),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${p.totalWorkouts} workouts · ${p.durationWeeks} wks · '
+                  '${p.sessionsPerWeek}/wk',
+                  style: ZType.sans(13,
+                      color: AppColors.textPrimary, weight: FontWeight.w700),
+                ),
+              ),
+              // Subtle in-flight indicator when re-fetching over an existing
+              // preview (e.g. the user just toggled a day).
+              if (_previewLoading)
+                const SizedBox(
+                  width: 13,
+                  height: 13,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 1.6, color: AppColors.textMuted),
+                ),
+            ],
+          ),
+          for (final w in visibleWeeks) _buildPreviewWeek(w, collisions),
+          if (weeks.length > 1) ...[
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                HapticService.light();
+                setState(() => _showAllWeeks = !_showAllWeeks);
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _showAllWeeks
+                        ? 'Show less'
+                        : 'Show all ${weeks.length} weeks',
+                    style: ZType.lbl(11,
+                        color: AppColors.orange, letterSpacing: 1.0),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(
+                    _showAllWeeks
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: AppColors.orange,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewWeek(PreviewWeek w, Map<String, PreviewCollision> coll) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Text(
+              'WEEK ${w.weekNumber}',
+              style: ZType.lbl(10.5,
+                  color: AppColors.textSecondary, letterSpacing: 1.6),
+            ),
+            if (w.isDeload) ...[
+              const SizedBox(width: 8),
+              _miniChip('DELOAD', AppColors.info),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        for (final d in w.days) _buildPreviewDayRow(d, coll[d.date]),
+      ],
+    );
+  }
+
+  Widget _buildPreviewDayRow(PreviewDay d, PreviewCollision? collision) {
+    final existing = collision?.existingName ?? '';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 86,
+            child: Text(
+              _dayLabel(d),
+              style: ZType.sans(11.5,
+                  color: AppColors.textSecondary, weight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  d.exercisesCount > 0
+                      ? '${d.sessionName} · ${d.exercisesCount} ex'
+                      : d.sessionName,
+                  style: ZType.sans(12.5,
+                      color: AppColors.textPrimary, weight: FontWeight.w600),
+                ),
+                if (existing.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text(
+                      '↔ $existing',
+                      style: ZType.sans(10.5,
+                          color: AppColors.textMuted, weight: FontWeight.w500),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _resolutionChip(d.resolution),
+        ],
+      ),
+    );
+  }
+
+  /// Colored chip per overlap resolution: replace → orange "Replaces",
+  /// stack → blue "Stacks", add → green "New day".
+  Widget _resolutionChip(PreviewResolution r) {
+    final Color color;
+    final String label;
+    switch (r) {
+      case PreviewResolution.replace:
+        color = AppColors.orange;
+        label = 'Replaces';
+        break;
+      case PreviewResolution.stack:
+        color = AppColors.info;
+        label = 'Stacks';
+        break;
+      case PreviewResolution.add:
+        color = AppColors.green;
+        label = 'New day';
+        break;
+    }
+    return _miniChip(label, color);
+  }
+
+  /// Shared small pill — translucent fill + accent border + accent label.
+  Widget _miniChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        label,
+        style: ZType.lbl(9.5, color: color, letterSpacing: 0.6),
+      ),
+    );
+  }
+
+  Widget _buildPreviewSkeleton() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          _ShimmerBox(width: 180, height: 13),
+          SizedBox(height: 14),
+          _ShimmerBox(width: 240, height: 11),
+          SizedBox(height: 9),
+          _ShimmerBox(width: 210, height: 11),
+          SizedBox(height: 9),
+          _ShimmerBox(width: 230, height: 11),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewError() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_rounded,
+              size: 16, color: AppColors.textMuted),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "Couldn't preview schedule. You can still start.",
+              style: ZType.sans(12.5,
+                  color: AppColors.textMuted, weight: FontWeight.w500),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              HapticService.light();
+              _runPreviewNow();
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 6),
+              child: Text(
+                'RETRY',
+                style: ZType.lbl(11,
+                    color: AppColors.orange, letterSpacing: 1.2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // ✨ Coach review.
+  // -------------------------------------------------------------------------
+
+  /// COACH REVIEW card — the deterministic summary instantly, then the AI take.
+  Widget _buildCoachReviewSection() {
+    final preview = _preview;
+    if (preview == null) return const SizedBox.shrink();
+    final summary = preview.summary;
+    final review = _review;
+    // Show the AI line only when it's present and ADDS to the summary.
+    final showReview = review != null && review != summary;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: AppColors.orange.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded,
+                  size: 16, color: AppColors.orange),
+              const SizedBox(width: 8),
+              Text(
+                'COACH REVIEW',
+                style: ZType.lbl(11,
+                    color: AppColors.orange, letterSpacing: 1.6),
+              ),
+            ],
+          ),
+          if (summary.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              summary,
+              style: ZType.sans(12.5,
+                  color: AppColors.textPrimary, weight: FontWeight.w600),
+            ),
+          ],
+          if (showReview) ...[
+            const SizedBox(height: 6),
+            Text(
+              review,
+              style: ZType.ser(13, color: AppColors.textSecondary),
+            ),
+          ] else if (_reviewLoading && review == null) ...[
+            const SizedBox(height: 8),
+            const _ShimmerBox(width: 200, height: 11),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Impact restate (just above the CONFIRM bar).
+  // -------------------------------------------------------------------------
+
+  Widget _buildImpactRestate() {
+    final preview = _preview;
+    if (preview == null) return const SizedBox.shrink();
+    final i = preview.impact;
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _impactPill('${i.replaceCount} replace', AppColors.orange),
+          _impactDot(),
+          _impactPill('${i.stackCount} stack', AppColors.info),
+          _impactDot(),
+          _impactPill('${i.newCount} new', AppColors.green),
+        ],
+      ),
+    );
+  }
+
+  Widget _impactPill(String text, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: ZType.sans(12,
+              color: AppColors.textSecondary, weight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+
+  Widget _impactDot() => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Text('·',
+            style: ZType.sans(12, color: AppColors.textMuted)),
+      );
 
   Widget _buildReplaceToggle() {
     return Container(
@@ -2232,7 +2808,10 @@ class _StartProgramFlowSheetState
         dense: true,
         value: _replace,
         activeThumbColor: AppColors.orange,
-        onChanged: (v) => setState(() => _replace = v),
+        onChanged: (v) {
+          setState(() => _replace = v);
+          _schedulePreview();
+        },
         title: Text(
           'Replace current program',
           style: ZType.sans(13.5,
