@@ -476,6 +476,7 @@ class ProgramTemplateRepository {
     required String startDate,
     required bool replace,
     int? durationWeeks,
+    String? variantId,
     Map<String, String>? dayResolutions,
   }) {
     return <String, dynamic>{
@@ -485,6 +486,11 @@ class ProgramTemplateRepository {
       'start_date': startDate,
       'replace': replace,
       if (durationWeeks != null) 'duration_weeks': durationWeeks,
+      // The EXACT variant the user picked (weeks × sessions). Sent on BOTH
+      // preview and commit so the backend schedules that variant's
+      // program_variant_weeks — not a duration-only default — keeping the
+      // picker, totals, and what's scheduled in lockstep.
+      if (variantId != null && variantId.isNotEmpty) 'variant_id': variantId,
       // Per-day overlap resolution: { "YYYY-MM-DD": "replace" | "add" } for the
       // first-week conflict days. Sent on BOTH preview and commit so they agree.
       if (dayResolutions != null && dayResolutions.isNotEmpty)
@@ -504,6 +510,7 @@ class ProgramTemplateRepository {
     required String startDate,
     bool replace = false,
     int? durationWeeks,
+    String? variantId,
     Map<String, String>? dayResolutions,
   }) async {
     final body = _assignBody(
@@ -513,10 +520,12 @@ class ProgramTemplateRepository {
       startDate: startDate,
       replace: replace,
       durationWeeks: durationWeeks,
+      variantId: variantId,
       dayResolutions: dayResolutions,
     );
     debugPrint('🏋️ [ProgramTemplate] previewAssignment | id=$programId '
-        'slot=${body['slot']} days=$assignedDays replace=$replace');
+        'slot=${body['slot']} days=$assignedDays replace=$replace '
+        'variant=$variantId');
     final resp = await _client.post('$_base/assign-preview', data: body);
     return AssignPreview.fromJson(
       Map<String, dynamic>.from(resp.data as Map),
@@ -534,6 +543,7 @@ class ProgramTemplateRepository {
     required String startDate,
     bool replace = false,
     int? durationWeeks,
+    String? variantId,
     Map<String, String>? dayResolutions,
   }) async {
     final body = _assignBody(
@@ -543,10 +553,12 @@ class ProgramTemplateRepository {
       startDate: startDate,
       replace: replace,
       durationWeeks: durationWeeks,
+      variantId: variantId,
       dayResolutions: dayResolutions,
     );
     debugPrint('🤖 [ProgramTemplate] assignmentReview | id=$programId '
-        'slot=${body['slot']} days=$assignedDays replace=$replace');
+        'slot=${body['slot']} days=$assignedDays replace=$replace '
+        'variant=$variantId');
     try {
       final resp = await _client.post('$_base/assign-review', data: body);
       final data = Map<String, dynamic>.from(resp.data as Map);

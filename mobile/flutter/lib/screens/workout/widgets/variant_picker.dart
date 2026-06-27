@@ -129,7 +129,8 @@ class VariantSelectorRow extends StatefulWidget {
 class _VariantSelectorRowState extends State<VariantSelectorRow> {
   // Precomputed once per variant list (not per picker open).
   late List<int> _distinctWeeks;
-  late Map<int, List<int>> _sessionsByWeeks;
+  late Map<int, List<int>> _sessionsByWeeks; // weeks → sessions that exist
+  late Map<int, List<int>> _weeksBySessions; // sessions → weeks that exist
   late List<String> _distinctIntensities;
 
   @override
@@ -152,12 +153,19 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
   void _recompute() {
     final weeks = widget.variants.map((v) => v.weeks).toSet().toList()..sort();
     _distinctWeeks = weeks;
-    final map = <int, Set<int>>{};
+    // Build BOTH directions so each picker only ever offers combos that exist
+    // as real variants (sparse-matrix guard, symmetric).
+    final byWeeks = <int, Set<int>>{};
+    final bySessions = <int, Set<int>>{};
     for (final v in widget.variants) {
-      (map[v.weeks] ??= <int>{}).add(v.sessionsPerWeek);
+      (byWeeks[v.weeks] ??= <int>{}).add(v.sessionsPerWeek);
+      (bySessions[v.sessionsPerWeek] ??= <int>{}).add(v.weeks);
     }
     _sessionsByWeeks = {
-      for (final e in map.entries) e.key: (e.value.toList()..sort()),
+      for (final e in byWeeks.entries) e.key: (e.value.toList()..sort()),
+    };
+    _weeksBySessions = {
+      for (final e in bySessions.entries) e.key: (e.value.toList()..sort()),
     };
     _distinctIntensities = widget.variants
         .map((v) => v.intensity)
@@ -177,6 +185,20 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
     final weeksLabel = selected?.weeks.toString() ?? '—';
     final sessionsLabel = selected?.sessionsPerWeek.toString() ?? '—';
 
+    // Available options for the CURRENT selection (sparse-matrix aware). When a
+    // control has ≤1 real option it renders non-interactive (no chevron) — never
+    // offer a combo that has no variant.
+    final currentWeeks = selected?.weeks;
+    final currentSessions = selected?.sessionsPerWeek;
+    final weekOptions =
+        (currentSessions != null ? _weeksBySessions[currentSessions] : null) ??
+            _distinctWeeks;
+    final sessionOptions =
+        (currentWeeks != null ? _sessionsByWeeks[currentWeeks] : null) ??
+            const <int>[];
+    final durationInteractive = weekOptions.length > 1;
+    final perWeekInteractive = sessionOptions.length > 1;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -192,6 +214,7 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
                   caption: 'DURATION',
                   value: weeksLabel,
                   unit: 'WK',
+                  interactive: durationInteractive,
                   onTap: _openWeeksPicker,
                 ),
               ),
@@ -201,6 +224,7 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
                   caption: 'PER WEEK',
                   value: sessionsLabel,
                   unit: '×',
+                  interactive: perWeekInteractive,
                   onTap: _openSessionsPicker,
                 ),
               ),
@@ -240,11 +264,14 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
     final currentSessions =
         selected?.sessionsPerWeek ?? widget.variants.first.sessionsPerWeek;
     final def = defaultProgramVariant(widget.variants, widget.defaultVariantId);
+    // Only weeks that have a real variant at the current sessions/week.
+    final weekOptions = _weeksBySessions[currentSessions] ?? _distinctWeeks;
+    if (weekOptions.length <= 1) return; // single option → nothing to pick.
 
     _showPicker(
       title: 'Program length',
       options: [
-        for (final w in _distinctWeeks)
+        for (final w in weekOptions)
           _PickerOption(
             label: '$w weeks',
             isSelected: selected?.weeks == w,
@@ -263,6 +290,7 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
     final currentWeeks = selected?.weeks ?? widget.variants.first.weeks;
     final sessions = _sessionsByWeeks[currentWeeks] ?? const <int>[];
     final def = defaultProgramVariant(widget.variants, widget.defaultVariantId);
+    if (sessions.length <= 1) return; // single option → nothing to pick.
 
     _showPicker(
       title: 'Sessions per week',
@@ -363,17 +391,22 @@ class _DropdownControl extends StatelessWidget {
   final String unit;
   final VoidCallback onTap;
 
+  /// When false the control is a plain read-out (no chevron, no tap) — used
+  /// when only one option exists for the current selection.
+  final bool interactive;
+
   const _DropdownControl({
     required this.caption,
     required this.value,
     required this.unit,
     required this.onTap,
+    this.interactive = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: interactive ? onTap : null,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
@@ -421,11 +454,12 @@ class _DropdownControl extends StatelessWidget {
                   ),
                 ],
                 const Spacer(),
-                const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 22,
-                  color: AppColors.orange,
-                ),
+                if (interactive)
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 22,
+                    color: AppColors.orange,
+                  ),
               ],
             ),
           ],

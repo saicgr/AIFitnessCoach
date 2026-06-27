@@ -1994,6 +1994,7 @@ class _StartProgramFlowSheetState
     String startDate,
     bool replace,
     int? durationWeeks,
+    String? variantId,
     Map<String, String>? dayResolutions,
   }) _previewArgs() {
     final card = widget.card;
@@ -2007,6 +2008,10 @@ class _StartProgramFlowSheetState
       startDate: _isoDate(_startDate),
       replace: false,
       durationWeeks: _durationWeeks ?? card.durationWeeks,
+      // The exact picked variant (weeks × sessions) so the backend schedules
+      // THAT variant — not a duration-only default. Without it an 8wk×5 pick
+      // would silently schedule the 8wk×4 default (4 days, dropping a 5th).
+      variantId: _selectedVariantId,
       dayResolutions: _dayResolutions.isEmpty
           ? null
           : Map<String, String>.from(_dayResolutions),
@@ -2046,9 +2051,27 @@ class _StartProgramFlowSheetState
         startDate: args.startDate,
         replace: args.replace,
         durationWeeks: args.durationWeeks,
+        variantId: args.variantId,
         dayResolutions: args.dayResolutions,
       );
       if (!mounted || seq != _previewSeq) return;
+      // AUTHORITATIVE frequency = what the backend will actually schedule. If a
+      // stale over-selection picked more days than the program places, trim the
+      // extras (highest weekdays) and re-preview so a selected day can never
+      // end up unscheduled ("Rest day" on a chosen day).
+      final scheduled = preview.sessionsPerWeek;
+      if (scheduled > 0 && _days.length > scheduled) {
+        final keep = (_days.toList()..sort()).take(scheduled).toSet();
+        setState(() {
+          _days
+            ..clear()
+            ..addAll(keep);
+          _preview = preview;
+          _previewLoading = false;
+        });
+        _schedulePreview();
+        return;
+      }
       setState(() {
         _preview = preview;
         _previewLoading = false;
@@ -2079,6 +2102,7 @@ class _StartProgramFlowSheetState
       startDate: args.startDate,
       replace: args.replace,
       durationWeeks: args.durationWeeks,
+      variantId: args.variantId,
       dayResolutions: args.dayResolutions,
     );
     if (!mounted || seq != _previewSeq) return;
@@ -2162,6 +2186,7 @@ class _StartProgramFlowSheetState
         startDate: _isoDate(_startDate),
         replace: false,
         durationWeeks: _durationWeeks ?? card.durationWeeks,
+        variantId: _selectedVariantId,
         adaptToLevel: _aiTailor && _adaptToLevel,
         swapForInjuries: _aiTailor && _swapForInjuries,
         fitEquipment: _aiTailor && _fitEquipment,
@@ -2381,50 +2406,92 @@ class _StartProgramFlowSheetState
   }
 
   Widget _buildWeekdayPicker() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // The program runs a fixed sessions/week — cap selection at that count so
+    // assigned_days never exceeds what the backend will schedule (extra days
+    // were silently dropped before, causing the "Saturday flicker").
+    final target = _targetSessions();
+    final atCap = target != null && _days.length >= target;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var i = 0; i < 7; i++)
-          GestureDetector(
-            onTap: () {
-              HapticService.selection();
-              setState(() {
-                if (_days.contains(i)) {
-                  _days.remove(i);
-                } else {
-                  _days.add(i);
-                }
-              });
-              _schedulePreview();
-            },
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 40,
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _days.contains(i)
-                    ? AppColors.orange
-                    : AppColors.surface2,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: _days.contains(i)
-                      ? AppColors.orange
-                      : AppColors.cardBorder,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            for (var i = 0; i < 7; i++)
+              GestureDetector(
+                onTap: () => _toggleTrainingDay(i, target),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 40,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _days.contains(i)
+                        ? AppColors.orange
+                        : AppColors.surface2,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _days.contains(i)
+                          ? AppColors.orange
+                          : AppColors.cardBorder,
+                    ),
+                  ),
+                  child: Text(
+                    _kWeekdayLabels[i],
+                    style: ZType.lbl(10.5,
+                        color: _days.contains(i)
+                            ? Colors.white
+                            : AppColors.textSecondary,
+                        letterSpacing: 0.5),
+                  ),
                 ),
               ),
-              child: Text(
-                _kWeekdayLabels[i],
-                style: ZType.lbl(10.5,
-                    color: _days.contains(i)
-                        ? Colors.white
-                        : AppColors.textSecondary,
-                    letterSpacing: 0.5),
-              ),
-            ),
+          ],
+        ),
+        if (target != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Pick $target ${target == 1 ? 'day' : 'days'} · '
+            '${_days.length} selected'
+            '${atCap ? '' : ' — tap to add'}',
+            style: ZType.sans(11.5,
+                color: _days.length == target
+                    ? AppColors.textMuted
+                    : AppColors.orange,
+                weight: FontWeight.w500),
           ),
+        ],
       ],
     );
+  }
+
+  /// Toggle a training weekday. Deselect is always allowed; selecting a new day
+  /// is BLOCKED once [target] days are already picked (the program's fixed
+  /// sessions/week) — a brief hint explains why instead of silently dropping a
+  /// day server-side.
+  void _toggleTrainingDay(int i, int? target) {
+    if (_days.contains(i)) {
+      HapticService.selection();
+      setState(() => _days.remove(i));
+      _schedulePreview();
+      return;
+    }
+    if (target != null && _days.length >= target) {
+      HapticService.selection();
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('This program runs $target×/week — deselect a day '
+                'to pick a different one.'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      return;
+    }
+    HapticService.selection();
+    setState(() => _days.add(i));
+    _schedulePreview();
   }
 
   // -------------------------------------------------------------------------
@@ -2467,11 +2534,9 @@ class _StartProgramFlowSheetState
   Widget _buildTotalsLine() {
     final p = _preview;
     final int? weeks = p?.durationWeeks ?? _durationWeeks;
-    final selected = selectedProgramVariant(widget.card.variantOptions,
-        _selectedVariantId, widget.card.defaultVariantId);
-    final int? perWeek = p?.sessionsPerWeek ??
-        selected?.sessionsPerWeek ??
-        (_days.isNotEmpty ? _days.length : widget.card.sessionsPerWeek);
+    // Same authoritative source as the cap — preview/variant/card, NEVER the
+    // selected-day count — so the displayed Y can't disagree with scheduling.
+    final int? perWeek = _targetSessions();
     final int? total = (p != null && p.totalWorkouts > 0)
         ? p.totalWorkouts
         : (weeks != null && perWeek != null ? weeks * perWeek : null);
@@ -2504,19 +2569,50 @@ class _StartProgramFlowSheetState
     );
   }
 
-  /// Apply a picked variant: store its id, drive [_durationWeeks], re-spread the
-  /// training days to its sessions/week, then re-run the preview.
+  /// Apply a picked variant: store its id, drive [_durationWeeks], and set the
+  /// training-day count to EXACTLY the variant's sessions/week, then re-run the
+  /// preview. Exact-N matters because the backend cycles the variant's sessions
+  /// onto `assigned_days[si % len]` — fewer days than sessions doubles workouts
+  /// onto a day; more days leaves a selected day unscheduled. Existing day picks
+  /// are kept where possible (trim the highest extras / fill the lowest gaps).
   void _onVariantSelected(ProgramVariantOption v) {
     HapticService.selection();
     setState(() {
       _selectedVariantId = v.variantId;
       _durationWeeks = v.weeks;
-      final n = v.sessionsPerWeek.clamp(1, 7);
-      _days
-        ..clear()
-        ..addAll(_spreadDays(n));
+      _setDaysToCount(v.sessionsPerWeek.clamp(1, 7));
     });
     _schedulePreview();
+  }
+
+  /// The authoritative sessions/week the program SCHEDULES — preview-first
+  /// (`AssignPreview.sessionsPerWeek` = what the backend actually places), then
+  /// the active variant's value before the first preview, then the card's.
+  /// NEVER the selected-day count (that caused a self-reinforcing cap loop:
+  /// pick more days → N rises → allows more days). Null when unknown (→ no cap).
+  int? _targetSessions() {
+    final p = _preview;
+    if (p != null && p.sessionsPerWeek > 0) return p.sessionsPerWeek;
+    final selected = selectedProgramVariant(widget.card.variantOptions,
+        _selectedVariantId, widget.card.defaultVariantId);
+    return selected?.sessionsPerWeek ?? widget.card.sessionsPerWeek;
+  }
+
+  /// Set [_days] to EXACTLY [n] entries, preserving existing picks: trim the
+  /// highest weekdays when over, fill the lowest free weekdays when under.
+  /// Caller wraps in setState.
+  void _setDaysToCount(int n) {
+    if (n <= 0) return;
+    if (_days.length > n) {
+      final keep = (_days.toList()..sort()).take(n).toSet();
+      _days
+        ..clear()
+        ..addAll(keep);
+    } else {
+      for (var d = 0; d < 7 && _days.length < n; d++) {
+        _days.add(d);
+      }
+    }
   }
 
   /// Revert to the program's recommended variant.
