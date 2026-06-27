@@ -81,29 +81,44 @@ class _WeekSelector extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(width: 6),
-                  // Sun/Mon toggle chip
-                  GestureDetector(
-                    onTap: onToggleWeekStart,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.textMuted.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: colors.textMuted.withOpacity(0.2),
+                  // Week-start toggle — a two-segment "Mon | Sun" pill so it
+                  // reads as an interactive control, not a static label. The
+                  // active side is highlighted; tapping flips weekStartDay.
+                  Tooltip(
+                    message: 'Week starts on',
+                    child: GestureDetector(
+                      onTap: onToggleWeekStart,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 3,
                         ),
-                      ),
-                      child: Text(
-                        weekStartDay == 1
-                            ? AppLocalizations.of(context).workoutPlannerMon
-                            : AppLocalizations.of(context).workoutPlannerSun,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textMuted,
+                        decoration: BoxDecoration(
+                          color: colors.textMuted.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: colors.textMuted.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.swap_horiz,
+                              size: 12,
+                              color: colors.textMuted,
+                            ),
+                            const SizedBox(width: 4),
+                            _weekStartSegment(
+                              AppLocalizations.of(context).workoutPlannerMon,
+                              active: weekStartDay == 1,
+                            ),
+                            const SizedBox(width: 2),
+                            _weekStartSegment(
+                              AppLocalizations.of(context).workoutPlannerSun,
+                              active: weekStartDay != 1,
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -118,6 +133,28 @@ class _WeekSelector extends StatelessWidget {
             color: colors.textSecondary,
           ),
         ],
+      ),
+    );
+  }
+
+  /// One side of the Mon|Sun segmented toggle. The active side is filled with
+  /// the accent so the current week-start choice is obvious at a glance.
+  Widget _weekStartSegment(String label, {required bool active}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: active
+            ? colors.accent.withValues(alpha: 0.18)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+          color: active ? colors.accent : colors.textMuted,
+        ),
       ),
     );
   }
