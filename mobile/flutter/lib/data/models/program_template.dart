@@ -50,7 +50,10 @@ String _asString(dynamic v, {String fallback = ''}) {
 
 List<String> _asStringList(dynamic v) {
   if (v is List) {
-    return v.map((e) => e?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+    return v
+        .map((e) => e?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
   return const [];
 }
@@ -140,13 +143,13 @@ class RepsSpec {
   }
 
   Map<String, dynamic> toJson() => {
-        'kind': _repsKindToString(kind),
-        if (min != null) 'min': min,
-        if (max != null) 'max': max,
-        if (unit != null) 'unit': unit,
-        'per_side': perSide,
-        if (raw != null) 'raw': raw,
-      };
+    'kind': _repsKindToString(kind),
+    if (min != null) 'min': min,
+    if (max != null) 'max': max,
+    if (unit != null) 'unit': unit,
+    'per_side': perSide,
+    if (raw != null) 'raw': raw,
+  };
 
   /// Human-readable label for chips / preview rows. Never returns empty.
   String displayLabel() {
@@ -237,6 +240,11 @@ class ProgramExercise {
   /// Superset grouping key — exercises sharing a group run as a superset.
   final String? supersetGroup;
 
+  /// Order within a superset group (0-based). Null when the exercise is not
+  /// part of a superset. Mirrors `WorkoutExercise.supersetOrder` so a played
+  /// workout honors the authored pairing sequence.
+  final int? supersetOrder;
+
   /// True when the exercise name could not be resolved to any library row.
   final bool unresolved;
 
@@ -260,6 +268,7 @@ class ProgramExercise {
     this.notes,
     this.setType,
     this.supersetGroup,
+    this.supersetOrder,
     this.unresolved = false,
     this.resolutionSource,
     this.inferred = false,
@@ -281,6 +290,7 @@ class ProgramExercise {
       notes: json['notes'] as String?,
       setType: json['set_type'] as String?,
       supersetGroup: json['superset_group']?.toString(),
+      supersetOrder: _asInt(json['superset_order']),
       unresolved: _asBool(json['unresolved']),
       resolutionSource: json['resolution_source'] as String?,
       inferred: _asBool(json['inferred']),
@@ -288,23 +298,24 @@ class ProgramExercise {
   }
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        if (originalName != null) 'original_name': originalName,
-        if (exerciseId != null) 'exercise_id': exerciseId,
-        'sets': sets,
-        if (reps != null) 'reps': reps,
-        if (repsSpec != null) 'reps_spec': repsSpec!.toJson(),
-        'per_side': perSide,
-        if (targetRir != null) 'target_rir': targetRir,
-        if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
-        if (restSeconds != null) 'rest_seconds': restSeconds,
-        if (notes != null) 'notes': notes,
-        if (setType != null) 'set_type': setType,
-        if (supersetGroup != null) 'superset_group': supersetGroup,
-        'unresolved': unresolved,
-        if (resolutionSource != null) 'resolution_source': resolutionSource,
-        'inferred': inferred,
-      };
+    'name': name,
+    if (originalName != null) 'original_name': originalName,
+    if (exerciseId != null) 'exercise_id': exerciseId,
+    'sets': sets,
+    if (reps != null) 'reps': reps,
+    if (repsSpec != null) 'reps_spec': repsSpec!.toJson(),
+    'per_side': perSide,
+    if (targetRir != null) 'target_rir': targetRir,
+    if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
+    if (restSeconds != null) 'rest_seconds': restSeconds,
+    if (notes != null) 'notes': notes,
+    if (setType != null) 'set_type': setType,
+    if (supersetGroup != null) 'superset_group': supersetGroup,
+    if (supersetOrder != null) 'superset_order': supersetOrder,
+    'unresolved': unresolved,
+    if (resolutionSource != null) 'resolution_source': resolutionSource,
+    'inferred': inferred,
+  };
 
   /// Short reps label for preview rows. Prefers the structured spec.
   String repsLabel() {
@@ -328,6 +339,8 @@ class ProgramExercise {
     String? notes,
     String? setType,
     String? supersetGroup,
+    int? supersetOrder,
+    bool clearSuperset = false,
     bool? unresolved,
     String? resolutionSource,
     bool? inferred,
@@ -345,7 +358,12 @@ class ProgramExercise {
       restSeconds: restSeconds ?? this.restSeconds,
       notes: notes ?? this.notes,
       setType: setType ?? this.setType,
-      supersetGroup: supersetGroup ?? this.supersetGroup,
+      supersetGroup: clearSuperset
+          ? null
+          : (supersetGroup ?? this.supersetGroup),
+      supersetOrder: clearSuperset
+          ? null
+          : (supersetOrder ?? this.supersetOrder),
       unresolved: unresolved ?? this.unresolved,
       resolutionSource: resolutionSource ?? this.resolutionSource,
       inferred: inferred ?? this.inferred,
@@ -399,12 +417,12 @@ class ProgramDay {
   }
 
   Map<String, dynamic> toJson() => {
-        'day_index': dayIndex,
-        'day_name': dayName,
-        'is_rest': isRest,
-        if (workoutType != null) 'workout_type': workoutType,
-        'exercises': exercises.map((e) => e.toJson()).toList(),
-      };
+    'day_index': dayIndex,
+    'day_name': dayName,
+    'is_rest': isRest,
+    if (workoutType != null) 'workout_type': workoutType,
+    'exercises': exercises.map((e) => e.toJson()).toList(),
+  };
 
   /// A day with no exercises is effectively a rest day.
   bool get effectivelyRest => isRest || exercises.isEmpty;
@@ -512,8 +530,10 @@ class ProgramTemplate {
       durationWeeks: _asInt(json['duration_weeks']),
       days: days,
       deloadEveryNWeeks: _asInt(json['deload_every_n_weeks']),
-      progressionStrategy:
-          _asString(json['progression_strategy'], fallback: 'linear'),
+      progressionStrategy: _asString(
+        json['progression_strategy'],
+        fallback: 'linear',
+      ),
       applyStaples: _asBool(json['apply_staples'], fallback: true),
       source: _asString(json['source'], fallback: 'authored'),
       sourceProgramId: json['source_program_id']?.toString(),
@@ -528,45 +548,45 @@ class ProgramTemplate {
   /// Body for `POST /` (create) and `PATCH /{id}` (edit). Intentionally
   /// excludes server-managed fields (`id`, `user_id`, timestamps).
   Map<String, dynamic> toCreateJson() => {
-        'name': name,
-        if (description != null) 'description': description,
-        'week_length': weekLength,
-        if (durationWeeks != null) 'duration_weeks': durationWeeks,
-        'days': days.map((d) => d.toJson()).toList(),
-        'deload_every_n_weeks': deloadEveryNWeeks,
-        'progression_strategy': progressionStrategy,
-        'apply_staples': applyStaples,
-        'source': source,
-        if (sourceProgramId != null) 'source_program_id': sourceProgramId,
-        if (category != null) 'category': category,
-      };
+    'name': name,
+    if (description != null) 'description': description,
+    'week_length': weekLength,
+    if (durationWeeks != null) 'duration_weeks': durationWeeks,
+    'days': days.map((d) => d.toJson()).toList(),
+    'deload_every_n_weeks': deloadEveryNWeeks,
+    'progression_strategy': progressionStrategy,
+    'apply_staples': applyStaples,
+    'source': source,
+    if (sourceProgramId != null) 'source_program_id': sourceProgramId,
+    if (category != null) 'category': category,
+  };
 
   /// Full round-trip JSON (used for caching / debugging).
   Map<String, dynamic> toJson() => {
-        if (id != null) 'id': id,
-        if (userId != null) 'user_id': userId,
-        ...toCreateJson(),
-        'base_week_only': baseWeekOnly,
-        if (repeatWeeksHint != null) 'repeat_weeks_hint': repeatWeeksHint,
-        if (createdAt != null) 'created_at': createdAt,
-        if (updatedAt != null) 'updated_at': updatedAt,
-      };
+    if (id != null) 'id': id,
+    if (userId != null) 'user_id': userId,
+    ...toCreateJson(),
+    'base_week_only': baseWeekOnly,
+    if (repeatWeeksHint != null) 'repeat_weeks_hint': repeatWeeksHint,
+    if (createdAt != null) 'created_at': createdAt,
+    if (updatedAt != null) 'updated_at': updatedAt,
+  };
 
   /// Non-rest day count — what the UI calls "training days".
-  int get trainingDayCount =>
-      days.where((d) => !d.effectivelyRest).length;
+  int get trainingDayCount => days.where((d) => !d.effectivelyRest).length;
 
   /// At least one training day → schedulable.
   bool get hasTrainingDays => trainingDayCount > 0;
 
   /// Total exercises across every training day.
-  int get totalExercises =>
-      days.fold(0, (sum, d) => sum + d.exercises.length);
+  int get totalExercises => days.fold(0, (sum, d) => sum + d.exercises.length);
 
   /// Count of exercises the resolver could not match — drives the
   /// "needs review" badge.
   int get unresolvedCount => days.fold(
-      0, (sum, d) => sum + d.exercises.where((e) => e.unresolved).length);
+    0,
+    (sum, d) => sum + d.exercises.where((e) => e.unresolved).length,
+  );
 
   ProgramTemplate copyWith({
     String? id,
@@ -595,11 +615,13 @@ class ProgramTemplate {
       name: name ?? this.name,
       description: description ?? this.description,
       weekLength: weekLength ?? this.weekLength,
-      durationWeeks:
-          clearDurationWeeks ? null : (durationWeeks ?? this.durationWeeks),
+      durationWeeks: clearDurationWeeks
+          ? null
+          : (durationWeeks ?? this.durationWeeks),
       days: days ?? this.days,
-      deloadEveryNWeeks:
-          clearDeload ? null : (deloadEveryNWeeks ?? this.deloadEveryNWeeks),
+      deloadEveryNWeeks: clearDeload
+          ? null
+          : (deloadEveryNWeeks ?? this.deloadEveryNWeeks),
       progressionStrategy: progressionStrategy ?? this.progressionStrategy,
       applyStaples: applyStaples ?? this.applyStaples,
       source: source ?? this.source,
@@ -633,12 +655,12 @@ class ProgramPhase {
   });
 
   factory ProgramPhase.fromJson(Map<String, dynamic> json) => ProgramPhase(
-        index: _asInt(json['index']) ?? 0,
-        title: _asString(json['title'], fallback: 'Phase'),
-        subtitle: json['subtitle'] as String?,
-        weekStart: _asInt(json['week_start']),
-        weekEnd: _asInt(json['week_end']),
-      );
+    index: _asInt(json['index']) ?? 0,
+    title: _asString(json['title'], fallback: 'Phase'),
+    subtitle: json['subtitle'] as String?,
+    weekStart: _asInt(json['week_start']),
+    weekEnd: _asInt(json['week_end']),
+  );
 
   /// "Week 1–2" / "Week 6" / null when no range.
   String? get weekLabel {
@@ -786,7 +808,8 @@ class ProgramScheduleDay {
       for (final e in raw) {
         if (e is Map) {
           exercises.add(
-              ProgramScheduleExercise.fromJson(Map<String, dynamic>.from(e)));
+            ProgramScheduleExercise.fromJson(Map<String, dynamic>.from(e)),
+          );
         }
       }
     }
@@ -850,10 +873,7 @@ class ProgramScheduleResponse {
 
   final List<ProgramScheduleWeek> weeks;
 
-  const ProgramScheduleResponse({
-    this.variantId,
-    this.weeks = const [],
-  });
+  const ProgramScheduleResponse({this.variantId, this.weeks = const []});
 
   factory ProgramScheduleResponse.fromJson(Map<String, dynamic> json) {
     final raw = json['weeks'];
@@ -971,7 +991,8 @@ class ProgramLibraryCard {
       for (final v in rawVariants) {
         if (v is Map) {
           variantOptions.add(
-              ProgramVariantOption.fromJson(Map<String, dynamic>.from(v)));
+            ProgramVariantOption.fromJson(Map<String, dynamic>.from(v)),
+          );
         }
       }
     }
@@ -996,9 +1017,9 @@ class ProgramLibraryCard {
       progressionNote: json['progression_note'] as String?,
       phases: (json['phases'] is List)
           ? (json['phases'] as List)
-              .whereType<Map>()
-              .map((p) => ProgramPhase.fromJson(_asMap(p)))
-              .toList()
+                .whereType<Map>()
+                .map((p) => ProgramPhase.fromJson(_asMap(p)))
+                .toList()
           : const [],
       joinedCount: _asInt(json['joined_count']),
       source: _asString(json['source'], fallback: 'library'),
