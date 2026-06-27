@@ -639,10 +639,13 @@ def _insert_workout_rows(
                 # Replace semantics: clear the colliding rows this program now
                 # owns. Guard on status so completed/skipped history survives.
                 cur.execute(
-                    "DELETE FROM workouts WHERE id = ANY(%s) "
+                    # workouts.id is uuid; supersede_ids arrive as text → cast the
+                    # array to uuid[] so ANY() type-matches (was: operator does not
+                    # exist: uuid = text).
+                    "DELETE FROM workouts WHERE id = ANY(%s::uuid[]) "
                     "AND is_completed = false "
                     "AND status NOT IN ('completed', 'skipped')",
-                    (list(supersede_ids),),
+                    ([str(x) for x in supersede_ids],),
                 )
                 superseded = cur.rowcount or 0
             for row in rows_to_insert:
