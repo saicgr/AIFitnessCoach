@@ -2473,20 +2473,48 @@ async def assign_program_core(
             )
 
     # --- 2. Customize the cloned days (injury / equipment / level) ---------
+    # Resolve the schedulable variant ONCE up front — both the AI-tailor pass
+    # and the expansion below schedule from its real per-week sessions.
+    _eff_vid, _weeks_rows = _resolve_variant_weeks(db, program_id, variant_id)
+
     customize_summary: Optional[Dict[str, Any]] = None
     if customize is not None:
-        from services.program_customizer import customize_template_days
+        from services.program_customizer import (
+            customize_template_days,
+            resolve_user_context,
+        )
         try:
-            customize_summary = await customize_template_days(
-                days,
-                user_id=user_id,
-                adapt_to_level=customize.adapt_to_level,
-                swap_for_injuries=customize.swap_for_injuries,
-                fit_equipment=customize.fit_equipment,
-            )
+            if _weeks_rows:
+                # Variant program: tailor the REAL per-week sessions (injuries /
+                # equipment / level) across ALL weeks, in one pass with a single
+                # resolved context. Sessions are mutated in place inside
+                # _weeks_rows, so expand_variant_weeks schedules the tailored set.
+                ctx = resolve_user_context(user_id)
+                flat_sessions = [
+                    s
+                    for wrow in _weeks_rows
+                    for s in (wrow.get("workouts") or [])
+                    if isinstance(s, dict)
+                ]
+                customize_summary = await customize_template_days(
+                    flat_sessions,
+                    user_id=user_id,
+                    adapt_to_level=customize.adapt_to_level,
+                    swap_for_injuries=customize.swap_for_injuries,
+                    fit_equipment=customize.fit_equipment,
+                    context=ctx,
+                )
+            else:
+                customize_summary = await customize_template_days(
+                    days,
+                    user_id=user_id,
+                    adapt_to_level=customize.adapt_to_level,
+                    swap_for_injuries=customize.swap_for_injuries,
+                    fit_equipment=customize.fit_equipment,
+                )
         except Exception as ce:  # noqa: BLE001 — never block Start on customize
             logger.warning(
-                "assign customize failed (using uncustomized days): %s", ce
+                "assign customize failed (using uncustomized plan): %s", ce
             )
 
     now = datetime.utcnow().isoformat()
@@ -2596,7 +2624,7 @@ async def assign_program_core(
     # program_variant_weeks — schedule from that so each calendar week gets its
     # own sessions (and flattened-blob programs like HYROX don't blow the cap).
     # Normal programs with no variant library fall back to the base-blob expand.
-    _eff_vid, _weeks_rows = _resolve_variant_weeks(db, program_id, variant_id)
+    # _weeks_rows was resolved + AI-tailored above.
     if _weeks_rows:
         result = expand_variant_weeks(
             weeks_rows=_weeks_rows,
@@ -2891,6 +2919,9 @@ def _build_assign_preview(
             })
         weeks = plan["weeks_used"]
         sessions_per_week = plan["sessions_per_week"]
+        # Variant scheduling places session si on the chosen weekday → the
+        # training-day picker applies.
+        respects_training_days = True
     else:
         resolved = _resolve_program_days_for_preview(
             db, program_id=req.program_id, variant_id=req.variant_id,
@@ -2930,6 +2961,12 @@ def _build_assign_preview(
                 "is_deload": p["week"] in deload_weeks,
             })
         sessions_per_week = len([d for d in days if not d.get("is_rest")])
+        # Base-blob path only honours the picked weekdays on a 7-day week.
+        # Flattened multi-day blobs (e.g. a 30-day challenge) schedule on
+        # consecutive days, so the training-day picker doesn't apply.
+        respects_training_days = (
+            int(normalized.get("week_length") or 7) == 7
+        )
 
     # Order each calendar week's sessions by date for display.
     pdays.sort(key=lambda d: (d["week_number"], d["target_date"]))
@@ -3097,6 +3134,7 @@ def _build_assign_preview(
         "total_workouts": total,
         "start_date": start.isoformat(),
         "slot": slot,
+        "respects_training_days": respects_training_days,
         "weeks": weeks_out,
         "collisions": collisions,
         "replace_ends": replace_ends,
