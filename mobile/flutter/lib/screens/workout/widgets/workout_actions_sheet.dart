@@ -76,7 +76,8 @@ class _WorkoutActionsSheet extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_WorkoutActionsSheet> createState() => _WorkoutActionsSheetState();
+  ConsumerState<_WorkoutActionsSheet> createState() =>
+      _WorkoutActionsSheetState();
 }
 
 class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
@@ -101,217 +102,280 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardBorder = isDark
+        ? AppColors.cardBorder
+        : AppColorsLight.cardBorder;
 
     return SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Title
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
               children: [
-            // Title
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.fitness_center,
-                      color: accentColor,
-                      size: 24,
-                    ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppLocalizations.of(context).workoutActionsWorkoutOptions,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
-                          ),
+                  child: Icon(
+                    Icons.fitness_center,
+                    color: accentColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(
+                          context,
+                        ).workoutActionsWorkoutOptions,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.workout.name ?? AppLocalizations.of(context).navWorkout,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: accentColor,
-                            fontWeight: FontWeight.w500,
-                          ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.workout.name ??
+                            AppLocalizations.of(context).navWorkout,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: accentColor,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.black.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: textMuted, size: 22),
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                    ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                ],
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close, color: textMuted, size: 22),
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Divider(height: 1, color: cardBorder),
+
+          // Actions — scrollable so a long action list (all groups + delete)
+          // never overflows the constrained bottom-sheet height. Mirrors the
+          // Flexible + scroll pattern used by sibling sheets in this file.
+          Flexible(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  children: [
+                    // ── Quick group (opt-in) ──
+                    // Mark done / Shuffle / View details. Only shown when the
+                    // caller asks for them so the detail-screen and home-card
+                    // menus share one widget without forcing every caller to
+                    // surface the same affordances.
+                    if (_hasQuickGroup) _GroupLabel(text: 'Quick'),
+                    if (widget.showMarkDone && !_alreadyDone)
+                      _ActionTile(
+                        icon: Icons.check_circle_outline_rounded,
+                        title: 'Mark as done',
+                        subtitle: 'Log as completed, no PRs',
+                        isLoading: _loadingAction == 'markDone',
+                        onTap: () => _handleMarkDone(context),
+                      ),
+                    if (widget.showShuffle)
+                      _ActionTile(
+                        icon: Icons.shuffle_rounded,
+                        title: 'Shuffle exercises',
+                        subtitle: 'Re-roll with fresh picks',
+                        isLoading: _loadingAction == 'shuffle',
+                        onTap: () => _handleShuffle(context),
+                      ),
+                    if (widget.onViewDetails != null)
+                      _ActionTile(
+                        icon: Icons.visibility_outlined,
+                        title: AppLocalizations.of(
+                          context,
+                        ).heroWorkoutCardViewDetails,
+                        subtitle: 'Open the full workout',
+                        isLoading: false,
+                        onTap: () {
+                          Navigator.pop(context);
+                          widget.onViewDetails!.call();
+                        },
+                      ),
+
+                    // ── Options group ──
+                    if (_hasQuickGroup) _GroupLabel(text: 'Options'),
+                    _ActionTile(
+                      icon: Icons.calendar_month,
+                      title: AppLocalizations.of(
+                        context,
+                      ).workoutActionsReschedule,
+                      subtitle: AppLocalizations.of(
+                        context,
+                      ).workoutActionsChangeWorkoutDate,
+                      isLoading: _loadingAction == 'reschedule',
+                      onTap: () => _handleReschedule(context),
+                    ),
+                    _ActionTile(
+                      icon: Icons.refresh,
+                      title: AppLocalizations.of(
+                        context,
+                      ).workoutActionsRegenerate,
+                      subtitle:
+                          _loadingAction == 'regenerate' &&
+                              _regenerateMessage.isNotEmpty
+                          ? '$_regenerateMessage ($_regenerateStep/$_regenerateTotalSteps)'
+                          : 'Create a new workout for this day',
+                      isLoading: _loadingAction == 'regenerate',
+                      onTap: () => _handleRegenerate(context),
+                    ),
+                    _ActionTile(
+                      icon: Icons.history,
+                      title: AppLocalizations.of(
+                        context,
+                      ).workoutActionsVersionHistory,
+                      subtitle: AppLocalizations.of(
+                        context,
+                      ).workoutActionsViewAndRestorePrevious,
+                      isLoading: _loadingAction == 'versions',
+                      onTap: () => _handleVersionHistory(context),
+                    ),
+                    _ActionTile(
+                      icon: Icons.directions_run,
+                      title: AppLocalizations.of(
+                        context,
+                      ).workoutActionsGenerateWarmup,
+                      subtitle: AppLocalizations.of(
+                        context,
+                      ).workoutActionsCreateWarmupExercises,
+                      isLoading: _loadingAction == 'warmup',
+                      onTap: () => _handleGenerateWarmup(context),
+                    ),
+                    _ActionTile(
+                      icon: Icons.self_improvement,
+                      title: AppLocalizations.of(
+                        context,
+                      ).workoutActionsGenerateStretches,
+                      subtitle: AppLocalizations.of(
+                        context,
+                      ).workoutActionsCreateCoolDownStretches,
+                      isLoading: _loadingAction == 'stretches',
+                      onTap: () => _handleGenerateStretches(context),
+                    ),
+                    // Backend rejects share-link generation for unfinished
+                    // workouts (only completed sessions get a public token).
+                    // Hide the affordance entirely so the user isn't left
+                    // tapping a button that silently 400s.
+                    if (widget.workout.isCompleted == true)
+                      _ActionTile(
+                        icon: Icons.ios_share_rounded,
+                        title: AppLocalizations.of(
+                          context,
+                        ).workoutSummaryShareWorkout,
+                        subtitle:
+                            'Get a ${Branding.marketingDomain} link for friends',
+                        isLoading: _loadingAction == 'share',
+                        onTap: () => _handleShare(context),
+                      )
+                    else
+                      _ActionTile(
+                        icon: Icons.ios_share_rounded,
+                        title: AppLocalizations.of(
+                          context,
+                        ).workoutSummaryShareWorkout,
+                        subtitle: AppLocalizations.of(
+                          context,
+                        ).workoutActionsFinishThisWorkoutTo,
+                        isLoading: false,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                ).workoutActionsCompleteTheWorkoutFirst,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    if (widget.showSkip)
+                      _ActionTile(
+                        icon: Icons.skip_next_rounded,
+                        title: AppLocalizations.of(
+                          context,
+                        ).workoutOptionsSkipWorkout,
+                        subtitle: 'Remove without completing it',
+                        isLoading: _loadingAction == 'skip',
+                        onTap: () => _handleSkip(context),
+                      ),
+
+                    // ── Delete, visually separated ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 6,
+                      ),
+                      child: Divider(
+                        height: 1,
+                        color: cardBorder.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    _ActionTile(
+                      icon: Icons.delete_outline,
+                      title: AppLocalizations.of(
+                        context,
+                      ).workoutActionsDeleteWorkout,
+                      subtitle: AppLocalizations.of(
+                        context,
+                      ).workoutActionsRemoveThisWorkout,
+                      isDestructive: true,
+                      isLoading: _loadingAction == 'delete',
+                      onTap: () => _handleDelete(context),
+                    ),
+                  ],
+                ),
               ),
             ),
+          ),
 
-            Divider(height: 1, color: cardBorder),
-
-            // Actions
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                children: [
-                  // ── Quick group (opt-in) ──
-                  // Mark done / Shuffle / View details. Only shown when the
-                  // caller asks for them so the detail-screen and home-card
-                  // menus share one widget without forcing every caller to
-                  // surface the same affordances.
-                  if (_hasQuickGroup) _GroupLabel(text: 'Quick'),
-                  if (widget.showMarkDone && !_alreadyDone)
-                    _ActionTile(
-                      icon: Icons.check_circle_outline_rounded,
-                      title: 'Mark as done',
-                      subtitle: 'Log as completed, no PRs',
-                      isLoading: _loadingAction == 'markDone',
-                      onTap: () => _handleMarkDone(context),
-                    ),
-                  if (widget.showShuffle)
-                    _ActionTile(
-                      icon: Icons.shuffle_rounded,
-                      title: 'Shuffle exercises',
-                      subtitle: 'Re-roll with fresh picks',
-                      isLoading: _loadingAction == 'shuffle',
-                      onTap: () => _handleShuffle(context),
-                    ),
-                  if (widget.onViewDetails != null)
-                    _ActionTile(
-                      icon: Icons.visibility_outlined,
-                      title: AppLocalizations.of(context).heroWorkoutCardViewDetails,
-                      subtitle: 'Open the full workout',
-                      isLoading: false,
-                      onTap: () {
-                        Navigator.pop(context);
-                        widget.onViewDetails!.call();
-                      },
-                    ),
-
-                  // ── Options group ──
-                  if (_hasQuickGroup) _GroupLabel(text: 'Options'),
-                  _ActionTile(
-                    icon: Icons.calendar_month,
-                    title: AppLocalizations.of(context).workoutActionsReschedule,
-                    subtitle: AppLocalizations.of(context).workoutActionsChangeWorkoutDate,
-                    isLoading: _loadingAction == 'reschedule',
-                    onTap: () => _handleReschedule(context),
-                  ),
-                  _ActionTile(
-                    icon: Icons.refresh,
-                    title: AppLocalizations.of(context).workoutActionsRegenerate,
-                    subtitle: _loadingAction == 'regenerate' && _regenerateMessage.isNotEmpty
-                        ? '$_regenerateMessage ($_regenerateStep/$_regenerateTotalSteps)'
-                        : 'Create a new workout for this day',
-                    isLoading: _loadingAction == 'regenerate',
-                    onTap: () => _handleRegenerate(context),
-                  ),
-                  _ActionTile(
-                    icon: Icons.history,
-                    title: AppLocalizations.of(context).workoutActionsVersionHistory,
-                    subtitle: AppLocalizations.of(context).workoutActionsViewAndRestorePrevious,
-                    isLoading: _loadingAction == 'versions',
-                    onTap: () => _handleVersionHistory(context),
-                  ),
-                  _ActionTile(
-                    icon: Icons.directions_run,
-                    title: AppLocalizations.of(context).workoutActionsGenerateWarmup,
-                    subtitle: AppLocalizations.of(context).workoutActionsCreateWarmupExercises,
-                    isLoading: _loadingAction == 'warmup',
-                    onTap: () => _handleGenerateWarmup(context),
-                  ),
-                  _ActionTile(
-                    icon: Icons.self_improvement,
-                    title: AppLocalizations.of(context).workoutActionsGenerateStretches,
-                    subtitle: AppLocalizations.of(context).workoutActionsCreateCoolDownStretches,
-                    isLoading: _loadingAction == 'stretches',
-                    onTap: () => _handleGenerateStretches(context),
-                  ),
-                  // Backend rejects share-link generation for unfinished
-                  // workouts (only completed sessions get a public token).
-                  // Hide the affordance entirely so the user isn't left
-                  // tapping a button that silently 400s.
-                  if (widget.workout.isCompleted == true)
-                    _ActionTile(
-                      icon: Icons.ios_share_rounded,
-                      title: AppLocalizations.of(context).workoutSummaryShareWorkout,
-                      subtitle: 'Get a ${Branding.marketingDomain} link for friends',
-                      isLoading: _loadingAction == 'share',
-                      onTap: () => _handleShare(context),
-                    )
-                  else
-                    _ActionTile(
-                      icon: Icons.ios_share_rounded,
-                      title: AppLocalizations.of(context).workoutSummaryShareWorkout,
-                      subtitle: AppLocalizations.of(context).workoutActionsFinishThisWorkoutTo,
-                      isLoading: false,
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(AppLocalizations.of(context).workoutActionsCompleteTheWorkoutFirst)),
-                        );
-                      },
-                    ),
-                  if (widget.showSkip)
-                    _ActionTile(
-                      icon: Icons.skip_next_rounded,
-                      title: AppLocalizations.of(context).workoutOptionsSkipWorkout,
-                      subtitle: 'Remove without completing it',
-                      isLoading: _loadingAction == 'skip',
-                      onTap: () => _handleSkip(context),
-                    ),
-
-                  // ── Delete, visually separated ──
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                    child: Divider(
-                        height: 1, color: cardBorder.withValues(alpha: 0.5)),
-                  ),
-                  _ActionTile(
-                    icon: Icons.delete_outline,
-                    title: AppLocalizations.of(context).workoutActionsDeleteWorkout,
-                    subtitle: AppLocalizations.of(context).workoutActionsRemoveThisWorkout,
-                    isDestructive: true,
-                    isLoading: _loadingAction == 'delete',
-                    onTap: () => _handleDelete(context),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 8),
-          ],
-            ),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 
   Future<void> _handleReschedule(BuildContext context) async {
     final newDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.tryParse(widget.workout.scheduledDate ?? '') ?? DateTime.now(),
+      initialDate:
+          DateTime.tryParse(widget.workout.scheduledDate ?? '') ??
+          DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
@@ -350,14 +414,20 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
           widget.onRefresh?.call();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context).workoutActionsWorkoutRescheduled),
+              content: Text(
+                AppLocalizations.of(context).workoutActionsWorkoutRescheduled,
+              ),
               backgroundColor: AppColors.success,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context).workoutActionsFailedToRescheduleWorkout),
+              content: Text(
+                AppLocalizations.of(
+                  context,
+                ).workoutActionsFailedToRescheduleWorkout,
+              ),
               backgroundColor: AppColors.error,
             ),
           );
@@ -371,7 +441,11 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
     final id = widget.workout.id;
     if (id == null || id.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).workoutActionsThisWorkoutCannotBe)),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).workoutActionsThisWorkoutCannotBe,
+          ),
+        ),
       );
       return;
     }
@@ -385,7 +459,11 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       if (!mounted) return;
       if (url == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).workoutActionsCouldNotCreateShare)),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).workoutActionsCouldNotCreateShare,
+            ),
+          ),
         );
         return;
       }
@@ -395,7 +473,11 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       // SnackBar behind the dismissed sheet and makes the action look silent.
       await Clipboard.setData(ClipboardData(text: url));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).workoutActionsLinkCopiedToClipboard)),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).workoutActionsLinkCopiedToClipboard,
+          ),
+        ),
       );
       Navigator.of(context).pop();
       await Share.share(
@@ -406,9 +488,9 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       if (!mounted) return;
       // Surface the failure visibly: keep the sheet open so the SnackBar
       // isn't hidden behind a popping animation.
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Share failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Share failed: $e')));
     } finally {
       if (mounted) setState(() => _loadingAction = null);
     }
@@ -481,14 +563,20 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
           widget.onRefresh?.call();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context).workoutActionsWorkoutRegenerated),
+              content: Text(
+                AppLocalizations.of(context).workoutActionsWorkoutRegenerated,
+              ),
               backgroundColor: AppColors.success,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context).workoutActionsFailedToRegenerateWorkout),
+              content: Text(
+                AppLocalizations.of(
+                  context,
+                ).workoutActionsFailedToRegenerateWorkout,
+              ),
               backgroundColor: AppColors.error,
             ),
           );
@@ -558,7 +646,9 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).workoutActionsFailedToGenerateWarmup),
+          content: Text(
+            AppLocalizations.of(context).workoutActionsFailedToGenerateWarmup,
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -596,7 +686,11 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).workoutActionsFailedToGenerateStretches),
+          content: Text(
+            AppLocalizations.of(
+              context,
+            ).workoutActionsFailedToGenerateStretches,
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -631,7 +725,9 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
           widget.onRefresh?.call();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context).workoutActionsWorkoutDeleted),
+              content: Text(
+                AppLocalizations.of(context).workoutActionsWorkoutDeleted,
+              ),
               backgroundColor: AppColors.success,
             ),
           );
@@ -669,15 +765,19 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
     setState(() => _loadingAction = 'markDone');
     HapticService.selection();
     try {
-      await ref.read(apiClientProvider).post(
-        '${ApiConstants.workouts}/$wid/complete',
-        queryParameters: {'completion_method': 'marked_done'},
-      );
+      await ref
+          .read(apiClientProvider)
+          .post(
+            '${ApiConstants.workouts}/$wid/complete',
+            queryParameters: {'completion_method': 'marked_done'},
+          );
       if (!mounted) return;
       Navigator.pop(context);
       widget.onRefresh?.call();
       // Full-set refresh so muscle/score/consistency update too.
-      unawaited(refreshAfterWorkoutMutation(source: 'markDone', workoutId: wid));
+      unawaited(
+        refreshAfterWorkoutMutation(source: 'markDone', workoutId: wid),
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Logged as done'),
@@ -766,7 +866,9 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         setState(() => _loadingAction = null);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout),
+            content: Text(
+              AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout,
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -776,7 +878,9 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         setState(() => _loadingAction = null);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout),
+            content: Text(
+              AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout,
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -834,8 +938,12 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final errorColor = isDark ? AppColors.error : AppColorsLight.error;
 
@@ -873,7 +981,9 @@ class _ActionTile extends StatelessWidget {
         child: Text(
           subtitle,
           style: TextStyle(
-            color: isDestructive ? errorColor.withValues(alpha: 0.7) : textSecondary,
+            color: isDestructive
+                ? errorColor.withValues(alpha: 0.7)
+                : textSecondary,
             fontSize: 13,
           ),
         ),
@@ -931,8 +1041,8 @@ class _VersionHistorySheet extends ConsumerWidget {
                   child: Text(
                     AppLocalizations.of(context).workoutActionsVersionHistory,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -953,10 +1063,16 @@ class _VersionHistorySheet extends ConsumerWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.history, size: 48, color: AppColors.textMuted),
+                        Icon(
+                          Icons.history,
+                          size: 48,
+                          color: AppColors.textMuted,
+                        ),
                         SizedBox(height: 16),
                         Text(
-                          AppLocalizations.of(context).workoutActionsNoVersionHistory,
+                          AppLocalizations.of(
+                            context,
+                          ).workoutActionsNoVersionHistory,
                           style: TextStyle(color: AppColors.textMuted),
                         ),
                       ],
@@ -987,7 +1103,9 @@ class _VersionHistorySheet extends ConsumerWidget {
                             child: Text(
                               'v$versionNum',
                               style: TextStyle(
-                                color: isCurrent ? AppColors.cyan : AppColors.textMuted,
+                                color: isCurrent
+                                    ? AppColors.cyan
+                                    : AppColors.textMuted,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
@@ -1010,7 +1128,9 @@ class _VersionHistorySheet extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  AppLocalizations.of(context).workoutActionsCurrent,
+                                  AppLocalizations.of(
+                                    context,
+                                  ).workoutActionsCurrent,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -1022,22 +1142,33 @@ class _VersionHistorySheet extends ConsumerWidget {
                                 onPressed: () async {
                                   final confirm = await AppDialog.confirm(
                                     context,
-                                    title: AppLocalizations.of(context).workoutActionsRevertToThisVersion,
+                                    title: AppLocalizations.of(
+                                      context,
+                                    ).workoutActionsRevertToThisVersion,
                                     message: 'Restore "$name"?',
                                     confirmText: 'Revert',
                                     icon: Icons.restore_rounded,
                                   );
 
                                   if (confirm == true) {
-                                    final repo = ref.read(workoutRepositoryProvider);
-                                    await repo.revertWorkout(workoutId, versionNum);
+                                    final repo = ref.read(
+                                      workoutRepositoryProvider,
+                                    );
+                                    await repo.revertWorkout(
+                                      workoutId,
+                                      versionNum,
+                                    );
                                     if (context.mounted) {
                                       Navigator.pop(context);
                                       onRevert?.call();
                                     }
                                   }
                                 },
-                                child: Text(AppLocalizations.of(context).workoutDetailRevert),
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).workoutDetailRevert,
+                                ),
                               ),
                       );
                     },
@@ -1063,10 +1194,7 @@ class _WarmupStretchesSheet extends StatelessWidget {
   final String title;
   final List<Map<String, dynamic>> exercises;
 
-  const _WarmupStretchesSheet({
-    required this.title,
-    required this.exercises,
-  });
+  const _WarmupStretchesSheet({required this.title, required this.exercises});
 
   @override
   Widget build(BuildContext context) {
@@ -1098,7 +1226,9 @@ class _WarmupStretchesSheet extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  title.contains('Warmup') ? Icons.directions_run : Icons.self_improvement,
+                  title.contains('Warmup')
+                      ? Icons.directions_run
+                      : Icons.self_improvement,
                   color: AppColors.orange,
                 ),
                 const SizedBox(width: 12),
@@ -1106,8 +1236,8 @@ class _WarmupStretchesSheet extends StatelessWidget {
                   child: Text(
                     title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -1129,7 +1259,8 @@ class _WarmupStretchesSheet extends StatelessWidget {
               itemBuilder: (context, index) {
                 final exercise = exercises[index];
                 final name = exercise['name'] ?? 'Exercise ${index + 1}';
-                final duration = exercise['duration_seconds'] ?? exercise['duration'] ?? 30;
+                final duration =
+                    exercise['duration_seconds'] ?? exercise['duration'] ?? 30;
                 final instructions = exercise['instructions'] ?? '';
 
                 return Container(
