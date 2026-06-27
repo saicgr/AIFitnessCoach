@@ -2213,11 +2213,19 @@ class _StartProgramFlowSheetState
                     ),
                     const SizedBox(height: 20),
 
-                    // Training weekdays.
-                    _StartFlowLabel('TRAINING DAYS'),
-                    const SizedBox(height: 8),
-                    _buildWeekdayPicker(),
-                    const SizedBox(height: 20),
+                    // Training weekdays — hidden for consecutive-day programs
+                    // (e.g. a 30-day daily challenge) where the picker is moot.
+                    if (_preview?.respectsTrainingDays == false) ...[
+                      _StartFlowLabel('SCHEDULE'),
+                      const SizedBox(height: 8),
+                      _buildDailyCadenceNote(),
+                      const SizedBox(height: 20),
+                    ] else ...[
+                      _StartFlowLabel('TRAINING DAYS'),
+                      const SizedBox(height: 8),
+                      _buildWeekdayPicker(),
+                      const SizedBox(height: 20),
+                    ],
 
                     // Slot — Primary vs Add-on.
                     _StartFlowLabel('SLOT'),
@@ -2307,6 +2315,37 @@ class _StartProgramFlowSheetState
           ),
         );
       },
+    );
+  }
+
+  /// Shown instead of the weekday picker for consecutive-day programs (e.g. a
+  /// 30-day challenge): the program runs every day from the start date.
+  Widget _buildDailyCadenceNote() {
+    final n = _preview?.totalWorkouts ?? 0;
+    final days = n > 0 ? '$n consecutive days' : 'consecutive days';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.event_repeat_rounded,
+              size: 18, color: AppColors.orange),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Runs daily — $days from your start date. '
+              'No training-day selection needed.',
+              style: ZType.sans(12.5,
+                  color: AppColors.textSecondary, weight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -208,6 +208,11 @@ class AssignPreview {
   final int totalWorkouts;
   final String startDate; // YYYY-MM-DD
   final String slot; // "primary" | "addon"
+
+  /// Whether the chosen training-days actually drive scheduling. False for
+  /// consecutive-day programs (e.g. a 30-day daily challenge), where the
+  /// weekday picker is meaningless and should be hidden.
+  final bool respectsTrainingDays;
   final List<PreviewWeek> weeks;
   final List<PreviewCollision> collisions;
   final List<PreviewReplaceEnd> replaceEnds;
@@ -222,6 +227,7 @@ class AssignPreview {
     required this.totalWorkouts,
     required this.startDate,
     required this.slot,
+    required this.respectsTrainingDays,
     required this.weeks,
     required this.collisions,
     required this.replaceEnds,
@@ -260,6 +266,10 @@ class AssignPreview {
       totalWorkouts: _toInt(json['total_workouts']),
       startDate: _toStr(json['start_date']),
       slot: _toStr(json['slot']),
+      // Default true when absent so normal programs keep showing the picker.
+      respectsTrainingDays: json['respects_training_days'] == null
+          ? true
+          : _toBool(json['respects_training_days']),
       weeks: parseList(json['weeks'], PreviewWeek.fromJson),
       collisions: parseList(json['collisions'], PreviewCollision.fromJson),
       replaceEnds: parseList(json['replace_ends'], PreviewReplaceEnd.fromJson),
