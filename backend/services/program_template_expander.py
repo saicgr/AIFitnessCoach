@@ -242,6 +242,104 @@ def _day_to_exercises_json(
 # ---------------------------------------------------------------------------
 # Main expansion entry point
 # ---------------------------------------------------------------------------
+def plan_template_days(
+    days: List[Dict[str, Any]],
+    *,
+    week_length: int,
+    deload_every: Optional[int],
+    start_date: date,
+    weeks: int,
+    day_alignment: str,
+    day_times: Dict[str, str],
+    assigned_days: Optional[List[int]] = None,
+) -> Dict[str, Any]:
+    """Pure date planner shared by [expand_template] (to build rows) and the
+    assign-preview dry-run (to SHOW the schedule). NO DB writes.
+
+    Given the template `days` blob + scheduling inputs, computes — for every
+    training day of every week — the exact calendar date, anchored datetime, and
+    deload flag, using the IDENTICAL mapping `expand_template` writes with. This
+    is the single source of truth for "which date a program day lands on", so a
+    preview can never drift from what assignment actually creates.
+
+    Returns {"planned": [ {week, day, day_index, target_date, scheduled,
+    is_deload} ... ], "deload_weeks": [int...]} in insert order. Raises
+    ValueError on invalid input / cap breaches (same caps as expand_template).
+    """
+    training_days = [d for d in days if not d.get("is_rest")]
+    if not training_days:
+        raise ValueError("Template has no training days to schedule")
+    if weeks < 1:
+        raise ValueError("weeks must be >= 1")
+    if weeks > MAX_WEEKS:
+        raise ValueError(f"weeks capped at {MAX_WEEKS}")
+
+    total_training = len(training_days) * weeks
+    if total_training > MAX_TOTAL_WORKOUTS:
+        raise ValueError(
+            f"This schedule would create {total_training} workouts; "
+            f"the cap is {MAX_TOTAL_WORKOUTS}. Reduce weeks or training days."
+        )
+
+    week_length = int(week_length or 7)
+
+    # When the caller pins weekdays (program-assign: assigned_days e.g. [1,3,5]),
+    # the template's k-th training day → assigned_days[k] (cycling). Mirrors the
+    # weekday_targets branch in expand_template exactly.
+    weekday_targets: Optional[List[int]] = None
+    if assigned_days and week_length == 7:
+        weekday_targets = sorted(
+            {int(d) for d in assigned_days if 0 <= int(d) <= 6}
+        )
+    training_day_indices = [
+        int(d.get("day_index", 0)) for d in days if not d.get("is_rest")
+    ]
+    _training_ordinal = {di: k for k, di in enumerate(training_day_indices)}
+
+    deload_weeks: List[int] = []
+    planned: List[Dict[str, Any]] = []
+
+    for week in range(1, weeks + 1):
+        is_deload = bool(
+            deload_every and deload_every > 0 and week % deload_every == 0
+        )
+        if is_deload:
+            deload_weeks.append(week)
+
+        for day in days:
+            if day.get("is_rest"):
+                continue
+            day_index = int(day.get("day_index", 0))
+            offset_days = (week - 1) * week_length + day_index
+
+            if weekday_targets:
+                ordinal = _training_ordinal.get(day_index, 0)
+                target_weekday = weekday_targets[ordinal % len(weekday_targets)]
+                start_weekday = start_date.weekday()  # Mon=0
+                lead = (target_weekday - start_weekday) % 7
+                target_date = start_date + timedelta(days=(week - 1) * 7 + lead)
+            elif day_alignment == "calendar_weekday" and week_length == 7:
+                start_weekday = start_date.weekday()  # Mon=0
+                lead = (day_index - start_weekday) % 7
+                target_date = start_date + timedelta(days=(week - 1) * 7 + lead)
+            else:
+                target_date = start_date + timedelta(days=offset_days)
+
+            t = _parse_hhmm(day_times.get(str(day_index)))
+            scheduled = _anchored_scheduled_date(target_date, t)
+
+            planned.append({
+                "week": week,
+                "day": day,
+                "day_index": day_index,
+                "target_date": target_date,
+                "scheduled": scheduled,
+                "is_deload": is_deload,
+            })
+
+    return {"planned": planned, "deload_weeks": deload_weeks}
+
+
 def expand_template(
     template: Dict[str, Any],
     schedule_id: str,
@@ -280,25 +378,24 @@ def expand_template(
     apply_staples = bool(template.get("apply_staples", True))
     template_id = template["id"]
 
-    training_days = [d for d in days if not d.get("is_rest")]
-    if not training_days:
-        raise ValueError("Template has no training days to schedule")
-
-    if weeks < 1:
-        raise ValueError("weeks must be >= 1")
-    if weeks > MAX_WEEKS:
-        raise ValueError(f"weeks capped at {MAX_WEEKS}")
-
-    total_training = len(training_days) * weeks
-    if total_training > MAX_TOTAL_WORKOUTS:
-        raise ValueError(
-            f"This schedule would create {total_training} workouts; "
-            f"the cap is {MAX_TOTAL_WORKOUTS}. Reduce weeks or training days."
-        )
+    # Single source of truth for which date each training day lands on; the
+    # assign-preview dry-run calls the SAME planner so the preview matches.
+    plan = plan_template_days(
+        days,
+        week_length=week_length,
+        deload_every=deload_every,
+        start_date=start_date,
+        weeks=weeks,
+        day_alignment=day_alignment,
+        day_times=day_times,
+        assigned_days=assigned_days,
+    )
+    planned = plan["planned"]
+    deload_weeks = plan["deload_weeks"]
 
     # Seed week-1 weights from PRs once (#42).
     all_names: List[str] = []
-    for d in training_days:
+    for d in (d for d in days if not d.get("is_rest")):
         for ex in d.get("exercises") or []:
             n = ex.get("name") or ex.get("original_name")
             if n:
@@ -312,134 +409,80 @@ def expand_template(
         else []
     )
 
-    # When the caller pins specific weekdays (program-assign flow: assigned_days
-    # e.g. [1,3,5] = Tue/Thu/Sat in Mon=0 indexing), the template's TRAINING
-    # days are laid onto those weekdays in order: the k-th training day of the
-    # week → assigned_days[k]. This is the per-day multi-assignment scheduling
-    # the carousel renders. assigned_days takes precedence over both alignment
-    # modes when present + the week is a calendar week.
-    weekday_targets: Optional[List[int]] = None
-    if assigned_days and week_length == 7:
-        weekday_targets = sorted({int(d) for d in assigned_days if 0 <= int(d) <= 6})
-    # Map each training day's day_index -> its ordinal among training days, so we
-    # can index into weekday_targets without assuming day_index is contiguous.
-    training_day_indices = [
-        int(d.get("day_index", 0)) for d in days if not d.get("is_rest")
-    ]
-    _training_ordinal = {di: k for k, di in enumerate(training_day_indices)}
-
-    deload_weeks: List[int] = []
     rows_to_insert: List[Dict[str, Any]] = []
 
-    for week in range(1, weeks + 1):
-        is_deload = bool(
-            deload_every and deload_every > 0 and week % deload_every == 0
+    for p in planned:
+        week = p["week"]
+        day = p["day"]
+        day_index = p["day_index"]
+        is_deload = p["is_deload"]
+        scheduled = p["scheduled"]
+
+        exercises_json = _day_to_exercises_json(
+            day, seed_weights, is_deload
         )
-        if is_deload:
-            deload_weeks.append(week)
 
-        for day in days:
-            if day.get("is_rest"):
-                continue  # #34 - no row for rest days
-            day_index = int(day.get("day_index", 0))
+        workout_type = day.get("workout_type", "strength")
+        # workouts.difficulty is NOT-NULL (easy|medium|hard|hell). Read it
+        # from the template day; safe fallback 'medium' for any older
+        # authored template whose days[] predates the difficulty key.
+        difficulty = day.get("difficulty") or "medium"
+        row: Dict[str, Any] = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "name": day.get("day_name") or f"Day {day_index + 1}",
+            "description": (
+                f"{template.get('name', 'Program')} - week {week}"
+            ),
+            "scheduled_date": scheduled,
+            "exercises_json": psycopg2.extras.Json(exercises_json),
+            # workouts_status_check allows scheduled | completed | missed |
+            # skipped | rescheduled | generating - a future expanded
+            # workout is 'scheduled'.
+            "status": "scheduled",
+            # is_current=false: these are forward-scheduled rows, not the
+            # live "current" workout. The partial unique index
+            # workouts_one_current_per_user_day only permits ONE
+            # is_current=true row per user per day - a 6-week expansion
+            # must not claim all of them, and must not collide with an
+            # existing AI-plan workout on the same date. today.py serves
+            # by scheduled_date, not is_current.
+            "is_current": False,
+            "is_completed": False,
+            "type": workout_type,
+            "difficulty": difficulty,
+            "generation_source": "template",
+            "generation_method": "program_template",
+            "template_id": template_id,
+            "template_week": week,
+            "template_day_index": day_index,
+            "intensity_mode": "deload" if is_deload else "normal",
+            "gym_profile_id": gym_profile_id,
+        }
+        # Program-assignment tagging (migration 2285) — lets today.py label
+        # the carousel (program name/week/slot) by resolving the assignment.
+        if assignment_id:
+            row["assignment_id"] = assignment_id
+        if program_slot:
+            row["program_slot"] = program_slot
 
-            # Day-of-cycle offset. With a week_length of e.g. 10 the cycle is
-            # not the calendar week, so we offset off day_index within the
-            # week_length-long block.
-            offset_days = (week - 1) * week_length + day_index
-
-            if weekday_targets:
-                # assigned_days mapping: place the k-th training day of the week
-                # on the k-th assigned weekday (cycling if more training days
-                # than assigned weekdays). Week 1's first assigned weekday is the
-                # first such weekday on/after start_date.
-                ordinal = _training_ordinal.get(day_index, 0)
-                target_weekday = weekday_targets[ordinal % len(weekday_targets)]
-                start_weekday = start_date.weekday()  # Mon=0
-                lead = (target_weekday - start_weekday) % 7
-                target_date = start_date + timedelta(
-                    days=(week - 1) * 7 + lead
+        if apply_staples and staples:
+            injected = _inject_staples(day.get("exercises") or [], staples)
+            if injected["warmup"]:
+                row["warmup_json"] = psycopg2.extras.Json(
+                    injected["warmup"]
                 )
-            elif day_alignment == "calendar_weekday" and week_length == 7:
-                # Align template day_index (0=Mon..6=Sun) to real weekdays:
-                # shift start_date forward to the matching weekday.
-                start_weekday = start_date.weekday()  # Mon=0
-                lead = (day_index - start_weekday) % 7
-                target_date = start_date + timedelta(
-                    days=(week - 1) * 7 + lead
+            if injected["stretch"]:
+                row["stretch_json"] = psycopg2.extras.Json(
+                    injected["stretch"]
                 )
-            else:
-                # 'start_today' - day 1 is the picked date (#29 default).
-                target_date = start_date + timedelta(days=offset_days)
+            if injected["main"]:
+                merged = exercises_json + injected["main"]
+                for idx, ex in enumerate(merged):
+                    ex["order"] = idx + 1
+                row["exercises_json"] = psycopg2.extras.Json(merged)
 
-            t = _parse_hhmm(day_times.get(str(day_index)))
-            scheduled = _anchored_scheduled_date(target_date, t)
-
-            exercises_json = _day_to_exercises_json(
-                day, seed_weights, is_deload
-            )
-
-            workout_type = day.get("workout_type", "strength")
-            # workouts.difficulty is NOT-NULL (easy|medium|hard|hell). Read it
-            # from the template day; safe fallback 'medium' for any older
-            # authored template whose days[] predates the difficulty key.
-            difficulty = day.get("difficulty") or "medium"
-            row: Dict[str, Any] = {
-                "id": str(uuid.uuid4()),
-                "user_id": user_id,
-                "name": day.get("day_name") or f"Day {day_index + 1}",
-                "description": (
-                    f"{template.get('name', 'Program')} - week {week}"
-                ),
-                "scheduled_date": scheduled,
-                "exercises_json": psycopg2.extras.Json(exercises_json),
-                # workouts_status_check allows scheduled | completed | missed |
-                # skipped | rescheduled | generating - a future expanded
-                # workout is 'scheduled'.
-                "status": "scheduled",
-                # is_current=false: these are forward-scheduled rows, not the
-                # live "current" workout. The partial unique index
-                # workouts_one_current_per_user_day only permits ONE
-                # is_current=true row per user per day - a 6-week expansion
-                # must not claim all of them, and must not collide with an
-                # existing AI-plan workout on the same date. today.py serves
-                # by scheduled_date, not is_current.
-                "is_current": False,
-                "is_completed": False,
-                "type": workout_type,
-                "difficulty": difficulty,
-                "generation_source": "template",
-                "generation_method": "program_template",
-                "template_id": template_id,
-                "template_week": week,
-                "template_day_index": day_index,
-                "intensity_mode": "deload" if is_deload else "normal",
-                "gym_profile_id": gym_profile_id,
-            }
-            # Program-assignment tagging (migration 2285) — lets today.py label
-            # the carousel (program name/week/slot) by resolving the assignment.
-            if assignment_id:
-                row["assignment_id"] = assignment_id
-            if program_slot:
-                row["program_slot"] = program_slot
-
-            if apply_staples and staples:
-                injected = _inject_staples(day.get("exercises") or [], staples)
-                if injected["warmup"]:
-                    row["warmup_json"] = psycopg2.extras.Json(
-                        injected["warmup"]
-                    )
-                if injected["stretch"]:
-                    row["stretch_json"] = psycopg2.extras.Json(
-                        injected["stretch"]
-                    )
-                if injected["main"]:
-                    merged = exercises_json + injected["main"]
-                    for idx, ex in enumerate(merged):
-                        ex["order"] = idx + 1
-                    row["exercises_json"] = psycopg2.extras.Json(merged)
-
-            rows_to_insert.append(row)
+        rows_to_insert.append(row)
 
     # ----- transactional insert (all-or-nothing, idempotent) ---------------
     created = 0

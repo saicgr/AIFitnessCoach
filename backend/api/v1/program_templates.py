@@ -56,6 +56,7 @@ from services.program_library_importer import (
 from services.program_template_parser import parse_to_template_json
 from services.program_template_expander import (
     expand_template,
+    plan_template_days,
     regenerate_future,
     MAX_WEEKS,
 )
@@ -215,6 +216,20 @@ class AssignProgramRequest(BaseModel):
         "curated programs.workouts blob. Fail-open: any lookup error falls "
         "back to the single-plan path.",
     )
+
+
+class AssignPreviewRequest(BaseModel):
+    """Dry-run a program assignment: compute the REAL dated schedule + calendar
+    collisions WITHOUT writing anything. Same inputs as [AssignProgramRequest];
+    the response shows exactly what `assign` would create so the Start sheet can
+    show "what lands when" and "what it overlaps" before the user commits."""
+    program_id: str
+    assigned_days: List[int] = Field(default_factory=list)
+    slot: str = "primary"
+    start_date: Optional[date] = None
+    replace: bool = True
+    duration_weeks: Optional[int] = Field(default=None, ge=1)
+    variant_id: Optional[str] = None
 
 
 # =============================================================================
@@ -2637,6 +2652,460 @@ async def assign_program(
     except Exception as e:  # noqa: BLE001
         logger.error("Failed to assign program: %s", e, exc_info=True)
         raise safe_internal_error(e, "program_templates")
+
+
+# =============================================================================
+# Assign PREVIEW (dry-run) + AI review — show what Start would schedule before
+# the user commits. The preview reuses the EXACT date planner expand_template
+# writes with (plan_template_days) so it can never drift from reality.
+# =============================================================================
+_WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def _resolve_program_days_for_preview(
+    db, *, program_id: str, variant_id: Optional[str], user_id: str
+) -> Dict[str, Any]:
+    """Resolve the in-memory `days` blob + metadata for a program WITHOUT
+    cloning a template. Mirrors assign_program_core steps 1-1b (normalize +
+    optional variant week-1 override). No DB writes."""
+    program = _published_program_or_404(db, program_id)
+    display_name = _program_display_name(program)
+    normalized = normalize_program_blob_for_preview(program, user_id=user_id)
+    days = normalized["days"]
+
+    if variant_id:
+        try:
+            w1_resp = (
+                db.client.table("program_variant_weeks")
+                .select("workouts")
+                .eq("variant_id", variant_id)
+                .eq("week_number", 1)
+                .limit(1)
+                .execute()
+            )
+            w1_rows = w1_resp.data or []
+            if w1_rows:
+                raw_workouts = w1_rows[0].get("workouts") or []
+                if isinstance(raw_workouts, list) and raw_workouts:
+                    variant_days: List[Dict[str, Any]] = []
+                    for idx, w in enumerate(raw_workouts):
+                        if not isinstance(w, dict):
+                            continue
+                        raw_ex = w.get("exercises") or []
+                        exercises = [
+                            {"name": ex.get("exercise_name") or ex.get("name") or ""}
+                            for ex in (raw_ex if isinstance(raw_ex, list) else [])
+                            if isinstance(ex, dict)
+                        ]
+                        variant_days.append({
+                            "day_index": idx,
+                            "day_name": w.get("workout_name") or w.get("name") or "",
+                            "is_rest": len(exercises) == 0,
+                            "workout_type": w.get("type") or "strength",
+                            "exercises": exercises,
+                        })
+                    if variant_days:
+                        days = variant_days
+        except Exception as ve:  # noqa: BLE001 — fail-open, mirror assign
+            logger.warning(
+                "preview variant %s week-1 lookup failed: %s", variant_id, ve
+            )
+
+    return {
+        "program": program,
+        "display_name": display_name,
+        "normalized": normalized,
+        "days": days,
+    }
+
+
+def _resolve_training_weekdays(
+    db, user_id: str, gym_profile_id: Optional[str]
+) -> set:
+    """Best-effort set of weekdays (Mon=0..Sun=6) the user already trains on per
+    their preferences — used to flag program dates that land on a day the AI
+    would otherwise have generated a workout (those future AI workouts are not
+    materialized rows yet). Fail-open: empty set on any lookup miss."""
+    def _coerce(v) -> set:
+        out = set()
+        for d in (v or []):
+            try:
+                di = int(d)
+                if 0 <= di <= 6:
+                    out.add(di)
+            except (TypeError, ValueError):
+                continue
+        return out
+
+    # Active gym profile takes precedence (it scopes the live schedule).
+    if gym_profile_id:
+        for table in ("gym_profiles", "user_gym_profiles"):
+            try:
+                resp = (
+                    db.client.table(table).select("*")
+                    .eq("id", gym_profile_id).limit(1).execute()
+                )
+                if resp.data:
+                    row = resp.data[0]
+                    days = _coerce(row.get("workout_days") or row.get("training_days"))
+                    if days:
+                        return days
+            except Exception:  # noqa: BLE001
+                continue
+    # Fall back to the user-level preference.
+    try:
+        resp = (
+            db.client.table("users").select("*")
+            .eq("id", user_id).limit(1).execute()
+        )
+        if resp.data:
+            return _coerce(
+                resp.data[0].get("workout_days")
+                or resp.data[0].get("training_days")
+            )
+    except Exception:  # noqa: BLE001
+        pass
+    return set()
+
+
+def _build_assign_preview(
+    db, *, user_id: str, req: "AssignPreviewRequest"
+) -> Dict[str, Any]:
+    """Compute the dated schedule + collisions a Start would create. No writes."""
+    slot = (req.slot or "primary").strip().lower()
+    if slot not in ("primary", "addon"):
+        raise HTTPException(
+            status_code=422, detail="slot must be 'primary' or 'addon'"
+        )
+
+    resolved = _resolve_program_days_for_preview(
+        db, program_id=req.program_id, variant_id=req.variant_id, user_id=user_id
+    )
+    program = resolved["program"]
+    display_name = resolved["display_name"]
+    normalized = resolved["normalized"]
+    days = resolved["days"]
+
+    weeks = req.duration_weeks or program.get("duration_weeks") or 8
+    weeks = max(1, min(int(weeks), MAX_WEEKS))
+    start = req.start_date or date.today()
+    assigned_days = list(req.assigned_days or [])
+    day_alignment = "calendar_weekday" if assigned_days else "start_today"
+
+    # SAME planner expand_template writes with → preview cannot drift.
+    plan = plan_template_days(
+        days,
+        week_length=int(normalized.get("week_length") or 7),
+        deload_every=normalized.get("deload_every_n_weeks"),
+        start_date=start,
+        weeks=weeks,
+        day_alignment=day_alignment,
+        day_times={},
+        assigned_days=assigned_days,
+    )
+    planned = plan["planned"]
+    deload_weeks = set(plan["deload_weeks"])
+
+    # --- existing materialized workouts on the planned dates -----------------
+    target_dates = sorted({p["target_date"] for p in planned})
+    existing_by_date: Dict[str, List[Dict[str, Any]]] = {}
+    if target_dates:
+        try:
+            lo = target_dates[0].isoformat()
+            hi = (target_dates[-1] + timedelta(days=1)).isoformat()
+            wresp = (
+                db.client.table("workouts")
+                .select(
+                    "id, name, scheduled_date, program_slot, assignment_id, "
+                    "generation_source, generation_method, status"
+                )
+                .eq("user_id", user_id)
+                .gte("scheduled_date", lo)
+                .lte("scheduled_date", hi)
+                .execute()
+            )
+            for w in wresp.data or []:
+                if (w.get("generation_method") or "") == "health_connect_import":
+                    continue
+                if (w.get("status") or "") in ("completed", "skipped"):
+                    continue
+                sd = (w.get("scheduled_date") or "")[:10]
+                if sd:
+                    existing_by_date.setdefault(sd, []).append(w)
+        except Exception as e:  # noqa: BLE001
+            logger.warning("preview collision lookup failed: %s", e)
+
+    gym_profile_id = _resolve_active_gym_profile(db, user_id)
+    training_weekdays = _resolve_training_weekdays(db, user_id, gym_profile_id)
+
+    # --- build per-week schedule + collisions --------------------------------
+    weeks_out: List[Dict[str, Any]] = []
+    collisions: List[Dict[str, Any]] = []
+    cur_week = None
+    week_bucket: Optional[Dict[str, Any]] = None
+    replace_count = stack_count = new_count = 0
+
+    for p in planned:
+        day = p["day"]
+        wk = p["week"]
+        td = p["target_date"]
+        iso = td.isoformat()
+        weekday = td.weekday()
+        session_name = day.get("day_name") or f"Day {p['day_index'] + 1}"
+        ex_count = len([e for e in (day.get("exercises") or []) if e])
+        intensity = "deload" if wk in deload_weeks else "normal"
+
+        if wk != cur_week:
+            cur_week = wk
+            week_bucket = {
+                "week_number": wk,
+                "is_deload": wk in deload_weeks,
+                "days": [],
+            }
+            weeks_out.append(week_bucket)
+
+        # classify what's already on this date
+        existing = existing_by_date.get(iso) or []
+        clash = None
+        if existing:
+            # prefer a same-slot clash, else the first non-health row
+            same_slot = [w for w in existing if (w.get("program_slot") or "") == slot]
+            w = (same_slot or existing)[0]
+            is_program = bool(
+                w.get("assignment_id")
+                or (w.get("generation_source") == "template")
+            )
+            clash = {
+                "source": "program" if is_program else "ai",
+                "existing_name": w.get("name") or "Workout",
+                "existing_slot": w.get("program_slot") or (
+                    "primary" if not is_program else "primary"
+                ),
+            }
+        elif weekday in training_weekdays:
+            # no row yet, but the AI would have generated here
+            clash = {
+                "source": "ai_planned",
+                "existing_name": "AI workout",
+                "existing_slot": "primary",
+            }
+
+        if clash is None:
+            resolution = "add"
+            new_count += 1
+        elif slot == "addon":
+            resolution = "stack"
+            stack_count += 1
+        elif slot == "primary" and req.replace:
+            resolution = "replace"
+            replace_count += 1
+        else:  # primary, run-alongside
+            resolution = "stack"
+            stack_count += 1
+
+        day_out = {
+            "date": iso,
+            "weekday": weekday,
+            "weekday_name": _WEEKDAY_NAMES[weekday],
+            "session_name": session_name,
+            "workout_type": day.get("workout_type") or "strength",
+            "exercises_count": ex_count,
+            "intensity_mode": intensity,
+            "resolution": resolution,
+        }
+        week_bucket["days"].append(day_out)
+
+        if clash is not None:
+            collisions.append({
+                "date": iso,
+                "weekday": weekday,
+                "weekday_name": _WEEKDAY_NAMES[weekday],
+                "resolution": resolution,
+                **clash,
+            })
+
+    # --- which active primaries would `replace` end? -------------------------
+    replace_ends: List[Dict[str, Any]] = []
+    if slot == "primary" and req.replace:
+        try:
+            existing_asgmts = (
+                db.client.table("user_program_assignments")
+                .select("id, custom_program_name, assigned_days")
+                .eq("user_id", user_id)
+                .eq("is_active", True)
+                .eq("slot", "primary")
+                .execute()
+            )
+            new_days = set(int(d) for d in assigned_days)
+            for ex in existing_asgmts.data or []:
+                ex_days = set(int(d) for d in (ex.get("assigned_days") or []))
+                if not new_days or not ex_days or (new_days & ex_days):
+                    replace_ends.append({
+                        "assignment_id": str(ex["id"]),
+                        "name": ex.get("custom_program_name") or "Current program",
+                        "weekdays": sorted(ex_days),
+                    })
+        except Exception as e:  # noqa: BLE001
+            logger.warning("preview replace-ends lookup failed: %s", e)
+
+    total = len(planned)
+    sessions_per_week = len([d for d in days if not d.get("is_rest")])
+    summary = _deterministic_preview_summary(
+        program_name=display_name,
+        weeks=weeks,
+        sessions_per_week=sessions_per_week,
+        total=total,
+        slot=slot,
+        replace_count=replace_count,
+        stack_count=stack_count,
+        new_count=new_count,
+        replace_ends=replace_ends,
+        assigned_days=assigned_days,
+    )
+
+    return {
+        "program_id": req.program_id,
+        "program_name": display_name,
+        "duration_weeks": weeks,
+        "sessions_per_week": sessions_per_week,
+        "total_workouts": total,
+        "start_date": start.isoformat(),
+        "slot": slot,
+        "weeks": weeks_out,
+        "collisions": collisions,
+        "replace_ends": replace_ends,
+        "impact": {
+            "replace_count": replace_count,
+            "stack_count": stack_count,
+            "new_count": new_count,
+        },
+        "summary": summary,
+    }
+
+
+def _deterministic_preview_summary(
+    *, program_name: str, weeks: int, sessions_per_week: int, total: int,
+    slot: str, replace_count: int, stack_count: int, new_count: int,
+    replace_ends: List[Dict[str, Any]], assigned_days: List[int],
+) -> str:
+    """Instant, always-accurate one-liner about the change (the deterministic
+    'coach line' the sheet shows before the LLM review streams in)."""
+    days_txt = ""
+    if assigned_days:
+        days_txt = " on " + "·".join(
+            _WEEKDAY_NAMES[d] for d in sorted(set(assigned_days)) if 0 <= d <= 6
+        )
+    head = (
+        f"Schedules {total} {program_name} workouts over {weeks} "
+        f"week{'s' if weeks != 1 else ''}{days_txt}."
+    )
+    bits: List[str] = []
+    if slot == "addon":
+        bits.append("Stacks on top of your current plan")
+    else:
+        if replace_ends:
+            names = ", ".join(r["name"] for r in replace_ends)
+            bits.append(f"Replaces {names}")
+        elif replace_count:
+            bits.append(f"Replaces {replace_count} existing workout"
+                        f"{'s' if replace_count != 1 else ''}")
+        if stack_count:
+            bits.append(f"runs alongside {stack_count} day"
+                        f"{'s' if stack_count != 1 else ''}")
+    if new_count:
+        bits.append(f"adds {new_count} new training day"
+                    f"{'s' if new_count != 1 else ''}")
+    if bits:
+        return head + " " + "; ".join(bits) + "."
+    return head
+
+
+@router.post("/assign-preview")
+async def assign_program_preview(
+    request: AssignPreviewRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Dry-run a Start: return the real dated schedule + calendar collisions
+    WITHOUT writing. Powers the Start sheet's schedule preview + overlap flags +
+    the instant deterministic impact line."""
+    try:
+        db = get_supabase()
+        return _build_assign_preview(
+            db, user_id=str(current_user["id"]), req=request
+        )
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as e:  # noqa: BLE001
+        logger.error("assign-preview failed: %s", e, exc_info=True)
+        raise safe_internal_error(e, "program_templates")
+
+
+@router.post("/assign-review")
+async def assign_program_review(
+    request: AssignPreviewRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """A short AI coach review of what starting this program does to the user's
+    week. Recomputes the same dry-run, then asks Gemini for a 1-2 sentence take.
+    Fail-soft: returns the deterministic summary if the LLM is unavailable."""
+    db = get_supabase()
+    try:
+        preview = _build_assign_preview(
+            db, user_id=str(current_user["id"]), req=request
+        )
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as e:  # noqa: BLE001
+        logger.error("assign-review preview failed: %s", e, exc_info=True)
+        raise safe_internal_error(e, "program_templates")
+
+    fallback = preview.get("summary") or ""
+    try:
+        from google.genai import types
+        from services.gemini.constants import gemini_generate_with_retry
+        from core.config import get_settings
+        settings = get_settings()
+
+        impact = preview["impact"]
+        collide_lines = "; ".join(
+            f"{c['weekday_name']} {c['date']}: {c['resolution']} "
+            f"({c['source']}: {c['existing_name']})"
+            for c in preview["collisions"][:8]
+        ) or "no overlaps with existing workouts"
+        prompt = (
+            "You are a concise, encouraging strength coach. In 1-2 short "
+            "sentences (max ~40 words, no preamble, no markdown), tell the user "
+            "what starting this program does to their training week and whether "
+            "it's a sensible fit. Be specific about overlaps.\n\n"
+            f"Program: {preview['program_name']}\n"
+            f"Duration: {preview['duration_weeks']} weeks, "
+            f"{preview['sessions_per_week']} sessions/week\n"
+            f"Slot: {preview['slot']}\n"
+            f"Total workouts scheduled: {preview['total_workouts']}\n"
+            f"Replaces: {impact['replace_count']}, "
+            f"stacks alongside: {impact['stack_count']}, "
+            f"new training days: {impact['new_count']}\n"
+            f"Overlaps: {collide_lines}\n"
+        )
+        resp = await gemini_generate_with_retry(
+            model=settings.gemini_model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.6, max_output_tokens=120,
+            ),
+            user_id=str(current_user["id"]),
+            timeout=12.0,
+            method_name="assign_review",
+        )
+        review = (getattr(resp, "text", "") or "").strip()
+        return {"review": review or fallback, "summary": fallback}
+    except Exception as e:  # noqa: BLE001 — never block the sheet on the LLM
+        logger.warning("assign-review LLM failed, using deterministic: %s", e)
+        return {"review": fallback, "summary": fallback}
 
 
 # =============================================================================
