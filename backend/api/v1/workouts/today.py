@@ -229,10 +229,13 @@ def _assignment_covered_weekdays(assignments: List[dict]) -> Set[int]:
 
 def _program_sort_key(row: dict) -> tuple:
     """Order today's workouts primary-program first, then addon, then non-program
-    (AI/quick). Stable secondary on created_at."""
+    (AI/quick). Tie-break on authored display_order (multi-session days are batch-
+    inserted with near-identical created_at), then created_at."""
     slot = (row.get("program_slot") or "").lower()
     rank = 0 if slot == "primary" else (1 if slot == "addon" else 2)
-    return (rank, str(row.get("created_at") or ""))
+    do = row.get("display_order")
+    do = do if isinstance(do, int) else 0
+    return (rank, do, str(row.get("created_at") or ""))
 
 
 def _compute_etag(response: "TodayWorkoutResponse") -> str:
@@ -1376,10 +1379,13 @@ async def get_today_workout(
                     slot = (r.get("program_slot") or "").lower()
                     # higher = sorts first (reverse=True): primary(2) > addon(1) > none(0)
                     slot_rank = 2 if slot == "primary" else (1 if slot == "addon" else 0)
+                    do = r.get("display_order")
+                    do = do if isinstance(do, int) else 0
                     return (
                         slot_rank,
                         1 if in_progress else 0,
                         0 if is_deg else 1,
+                        -do,  # reverse=True: lower display_order shows first
                         str(r.get("created_at") or ""),
                     )
                 _safe_today_rows.sort(key=_today_sort_key, reverse=True)
