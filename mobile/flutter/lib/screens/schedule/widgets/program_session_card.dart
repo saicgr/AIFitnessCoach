@@ -59,7 +59,11 @@ class ProgramSessionCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
           ),
+          // Bottom-align the (non-positioned) content so the title sits low
+          // like a photo card — WITHOUT a flex Spacer, which would need a
+          // finite height the unbounded ListView item can't supply.
           child: Stack(
+            alignment: Alignment.bottomLeft,
             children: [
               // Base gradient + accent glow (stand-in for cover art).
               Positioned.fill(
@@ -104,9 +108,7 @@ class ProgramSessionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Spacer(),
                     Row(
                       children: [
                         if (slotBadge != null) ...[
