@@ -92,6 +92,25 @@ These are the gaps where **we already have the data or backend** and the work is
 >
 > **All 14 rows shipped (2026-06-26).** Migrations 2290/2291/2292 APPLIED to prod; code committed, not pushed.
 
+> ### 👀 WHERE TO SEE IT — UI navigation map
+> Rebuild + run the app (new Dart files + a model change → full `flutter run`, not hot-reload).
+> Most active-workout surfaces render in the **Advanced** workout UI tier (not Easy).
+>
+> | # | What you'll see | Screen / file | How to reach it |
+> |---|-----------------|---------------|-----------------|
+> | 8 | SKILL / STRENGTH / PREHAB chips on each exercise | active workout · `expanded_exercise_card_ui_1.dart` | Start a workout (Advanced UI) → beside the muscle/equipment chips |
+> | 9c | On-set caption "Match last session… next week goes heavier" | active set · `set_row.dart` | Active workout → current working set |
+> | 9d | Goal/last/range dials (LOAD + REPS tracks) | active set · `set_dial.dart` | Active workout → current set (needs a target or previous value to plot) |
+> | 1 | Pre-workout check-in → "Reshaped for today" Accept/Reject | sheet+dialog · `pre_workout_reshape_gate.dart` | Tap **Start** on a workout (once/day); the diff dialog only shows if the check-in actually changes the session (low sleep / sore part / time limit) |
+> | 2 | "Coach noticed…" card + Accept / Talk more + provenance | Home coach hero · `coach_hero_card.dart` | Shows only when an **active injury** is logged (else self-hides) |
+> | 3 | Pain → swap | report-pain sheet · `report_pain_sheet.dart` | Active workout → exercise menu → Report pain → **Sharp/Severe** (≥4/10) → swaps + shows reason |
+> | 11 | "Skill progressions" entry → hold-time chart + Tissue-load heat card | `workout_detail_screen.dart` → `exercise_progressions_screen.dart` | Tap a workout (don't start) → bottom → "Skill progressions"; charts self-hide until hold-skill / tissue data exists |
+> | 12 | Accept/Reject wording + "engine drafts — nothing happens until you accept" | reshape dialog + coach card | same surfaces as #1 and #2 |
+> | 7 | "Recommended block: Foundational Strength" chip (tap = reason) | weekly-plan header · `plan_header.dart` | Open weekly plan → beside the "Week X of N" mesocycle chip; needs strength/skill history |
+>
+> **No direct screen** (engine-only, surfaced indirectly): #4 tissue ledger (→ tissue-heat card), #5 effect-profiles, #6 volume learning, #10 equipment-aware progression.
+> **Data-gated** (won't show on a fresh account): #1, #2, #3, #7, #11-charts. Fastest way to force-see #1+#3: start a workout, flag a sore shoulder + "20 min" in the check-in, then log a sharp pain on an exercise.
+
 ### Cluster A — the advise→act loop (his real edge; = our OPEN moat item)
 
 **#1 · Pre-workout check-in GATE that live-reshapes today's session — 🟡 PARTIAL → effectively 🔴 GAP · [MEDIUM]**
