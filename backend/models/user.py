@@ -161,6 +161,8 @@ class UserUpdate(BaseModel):
     # Progression and workout type preferences
     progression_pace: Optional[str] = Field(default=None, max_length=20)  # slow, medium, fast
     workout_type_preference: Optional[str] = Field(default=None, max_length=20)  # strength, cardio, mixed
+    # Cardio cadence preference (cardio-in-split). {cadence: off|every_session, placement: before|after}
+    cardio_preference: Optional[dict] = None
     # Workout environment - stored in preferences
     workout_environment: Optional[str] = Field(default=None, max_length=50)  # commercial_gym, home_gym, home, etc.
     gym_name: Optional[str] = Field(default=None, max_length=100)  # User-provided gym/location name

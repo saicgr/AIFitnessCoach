@@ -816,6 +816,9 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         _per_day_duration = None
         _per_day_intensity = None
         _per_day_equipment = None
+        _prefs = {}
+        _cardio_finisher = False
+        _cardio_placement = "after"
         try:
             from .generation_endpoints import _parse_workout_day_overrides
             _urec = await run_db(lambda: db.get_user(user_id))
@@ -858,6 +861,20 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
                 f"[BG-GEN][per-day] resolution failed (fail-open): {_e}"
             )
 
+        # Cardio cadence preference (set once in Training Preferences → Cardio).
+        # MVP: an every-session conditioning block placed before/after lifting —
+        # answers Hevy's "cardio before or after your session" without a manual
+        # per-workout toggle. The generator skips it on cardio/mixed days.
+        try:
+            _cp = _prefs.get("cardio_preference") or {}
+            if isinstance(_cp, dict):
+                _cadence = (_cp.get("cadence") or "off").lower()
+                _cardio_placement = (_cp.get("placement") or "after").lower()
+                if _cadence in ("every_session", "each_session", "on"):
+                    _cardio_finisher = True
+        except Exception as _ce:
+            logger.warning(f"[BG-GEN][cardio] preference read failed (fail-open): {_ce}")
+
         # Import the generation function (local import to avoid circular dependency)
         from .generation_endpoints import generate_workout
         from models.schemas import GenerateWorkoutRequest
@@ -873,6 +890,8 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             equipment=_per_day_equipment,
             adjacent_day_exercises=adjacent_day_exercises,
             batch_offset=batch_offset,
+            cardio_finisher=_cardio_finisher,
+            cardio_placement=_cardio_placement,
         )
 
         # Call the unwrapped function to bypass the @user_limiter.limit decorator.

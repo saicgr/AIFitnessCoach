@@ -304,6 +304,7 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     String? section,
     Map<String, double>? cardioParams,
     String? previewId,
+    bool applyToFuture = false,
   }) async {
     try {
       // Route to the preview endpoint when a preview_id is present so we
@@ -325,6 +326,9 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
           'swap_source': swapSource,
           if (section != null) 'section': section,
           if (previewId != null) 'preview_id': previewId,
+          // Persisting a swap only makes sense for committed workouts, not the
+          // short-lived regeneration preview cache.
+          if (previewId == null && applyToFuture) 'apply_to_future': true,
           if (cardioParams != null) ...cardioParams,
         },
       );
@@ -357,6 +361,71 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     } catch (e, stackTrace) {
       debugPrint('❌ [Workout] Error swapping exercise: $e\n$stackTrace');
       return (null, 'Failed to swap exercise. Please try again.');
+    }
+  }
+
+  /// List the user's active persistent exercise substitutions (A -> B), created
+  /// when a swap is made with "Apply to future workouts" on.
+  Future<List<Map<String, dynamic>>> listSubstitutions() async {
+    try {
+      final response =
+          await apiClient.get('${ApiConstants.workouts}/substitutions');
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final rows = (data['substitutions'] as List?) ?? const [];
+        return rows.cast<Map<String, dynamic>>();
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] listSubstitutions failed: $e');
+    }
+    return const [];
+  }
+
+  /// Deactivate a persistent substitution so future generations revert to the
+  /// AI's choice for that exercise.
+  Future<bool> deleteSubstitution(String id) async {
+    try {
+      final response =
+          await apiClient.delete('${ApiConstants.workouts}/substitutions/$id');
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('❌ [Workout] deleteSubstitution failed: $e');
+      return false;
+    }
+  }
+
+  /// Replace a single workout's ordered exercise list (reorder/remove/edit) and
+  /// PIN the workout so a later program change won't overwrite the hand-edit
+  /// (F5). Returns the updated workout, or null + message on failure.
+  Future<(Workout?, String?)> editWorkoutExercises({
+    required String workoutId,
+    required List<Map<String, dynamic>> exercises,
+  }) async {
+    try {
+      final response = await apiClient.patch(
+        '${ApiConstants.workouts}/$workoutId/exercises',
+        data: {'exercises': exercises},
+      );
+      if (response.statusCode == 200) {
+        return (Workout.fromJson(response.data as Map<String, dynamic>), null);
+      }
+      return (null, 'Server error (${response.statusCode}). Please try again.');
+    } catch (e) {
+      debugPrint('❌ [Workout] editWorkoutExercises failed: $e');
+      return (null, 'Failed to save changes. Please try again.');
+    }
+  }
+
+  /// Undo a hand-edit: delete the pinned workout so it regenerates from the
+  /// current plan on the next read. Returns true on success.
+  Future<bool> resetWorkoutToPlan(String workoutId) async {
+    try {
+      final response = await apiClient
+          .post('${ApiConstants.workouts}/$workoutId/reset-to-plan');
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('❌ [Workout] resetWorkoutToPlan failed: $e');
+      return false;
     }
   }
 

@@ -22,7 +22,7 @@ from core.logger import get_logger
 from core.rate_limiter import limiter
 from models.schemas import (
     Workout, SwapWorkoutsRequest, SwapExerciseRequest,
-    AddExerciseRequest, ExtendWorkoutRequest,
+    AddExerciseRequest, ExtendWorkoutRequest, EditWorkoutExercisesRequest,
 )
 from services.gemini_service import GeminiService
 from services.exercise_library_service import get_exercise_library_service
@@ -42,6 +42,7 @@ from .focus_validation_utils import (
     compare_muscle_profiles,
 )
 from .generation_helpers import normalize_exercise_numeric_fields
+from .substitutions import upsert_substitution
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -219,6 +220,22 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
         except Exception as e:
             logger.warning(f"Failed to log swap to exercise_swaps: {e}", exc_info=True)
 
+        # Persist the swap going forward (the wedge): future AI generations replace
+        # the old exercise with the new one, and progression history follows it.
+        # Only for the main section — warmups/stretches don't drive progression.
+        if payload.apply_to_future and (payload.section in (None, "main")):
+            swapped = exercises[i] if i < len(exercises) else {}
+            upsert_substitution(
+                db,
+                workout.get("user_id"),
+                payload.old_exercise_name,
+                payload.new_exercise_name,
+                muscle_group=swapped.get("muscle_group"),
+                movement_pattern=swapped.get("movement_pattern"),
+                substitute_library_id=swapped.get("library_id"),
+                reason=payload.reason,
+            )
+
         updated_workout = row_to_workout(updated)
 
         if muscle_profile_warning:
@@ -241,6 +258,114 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
     except Exception as e:
         logger.error(f"Failed to swap exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
+
+
+@router.get("/substitutions")
+async def list_exercise_substitutions(request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """List the user's active persistent exercise substitutions (A -> B)."""
+    try:
+        from .substitutions import get_active_substitutions
+        db = get_supabase_db()
+        rows = get_active_substitutions(db, current_user["id"])
+        return {"substitutions": rows}
+    except Exception as e:
+        logger.error(f"Failed to list substitutions: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_operations")
+
+
+@router.delete("/substitutions/{substitution_id}")
+async def delete_exercise_substitution(request: Request, substitution_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Deactivate a persistent substitution so future generations revert to AI choice."""
+    try:
+        db = get_supabase_db()
+        db.client.table("user_exercise_substitutions").update(
+            {"is_active": False, "updated_at": datetime.now().isoformat()}
+        ).eq("id", substitution_id).eq("user_id", current_user["id"]).execute()
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"Failed to delete substitution: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_operations")
+
+
+@router.patch("/{workout_id}/exercises", response_model=Workout)
+@limiter.limit("20/minute")
+async def edit_workout_exercises(request: Request, workout_id: str, payload: EditWorkoutExercisesRequest, background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
+    """Replace one workout's exercise list (reorder/remove/edit) and PIN it.
+
+    Pinning protects this workout from the regenerate cascade (F5) — a program
+    change won't silently overwrite a hand-edited future workout. Use
+    POST /{id}/reset-to-plan to undo.
+    """
+    try:
+        db = get_supabase_db()
+        workout = db.get_workout(workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+        if str(workout.get("user_id")) != str(current_user["id"]):
+            raise HTTPException(status_code=403, detail="Not your workout")
+
+        now = datetime.now().isoformat()
+        updated = db.update_workout(workout_id, {
+            "exercises_json": json.dumps(payload.exercises),
+            "last_modified_at": now,
+            "last_modified_method": "user_edit",
+            "is_user_modified": True,
+            "user_modified_at": now,
+        })
+        if not updated:
+            raise safe_internal_error(ValueError("Failed to update workout"), "workout_operations")
+
+        log_workout_change(workout_id, workout.get("user_id"), "user_edit", "exercises_json", None, None)
+
+        updated_workout = row_to_workout(updated)
+
+        async def _bg_index():
+            try:
+                await index_workout_to_rag(updated_workout)
+            except Exception as e:
+                logger.warning(f"Background: Failed to index edited workout to RAG: {e}", exc_info=True)
+        background_tasks.add_task(_bg_index)
+
+        logger.info(f"Workout {workout_id} hand-edited + pinned (is_user_modified=True)")
+        return updated_workout
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to edit workout exercises: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_operations")
+
+
+@router.post("/{workout_id}/reset-to-plan")
+@limiter.limit("10/minute")
+async def reset_workout_to_plan(request: Request, workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Undo a hand-edit: delete the pinned workout so the next /today (or upcoming
+    pre-cache) regenerates it from the current plan (per-day focus + substitutions)."""
+    try:
+        db = get_supabase_db()
+        workout = db.get_workout(workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+        if str(workout.get("user_id")) != str(current_user["id"]):
+            raise HTTPException(status_code=403, detail="Not your workout")
+        if workout.get("is_completed") or workout.get("status") in ("in_progress", "generating"):
+            raise HTTPException(status_code=400, detail="Can't reset a completed or in-progress workout")
+
+        db.client.table("workouts").delete().eq("id", workout_id).execute()
+        logger.info(f"Workout {workout_id} reset to plan (deleted for regeneration)")
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reset workout to plan: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_operations")
 
 
 @router.post("/add-exercise", response_model=Workout)
@@ -307,10 +432,16 @@ async def add_exercise_to_workout(request: Request, payload: AddExerciseRequest,
 
             exercises.append(new_exercise)
 
+            # Pin: a manually-added exercise is a deliberate structural edit F1's
+            # substitution path doesn't cover, so protect it from the regenerate
+            # cascade (F5). "Reset to plan" clears it.
+            _now = datetime.now().isoformat()
             update_data = {
                 "exercises_json": json.dumps(exercises),
-                "last_modified_at": datetime.now().isoformat(),
-                "last_modified_method": "exercise_add"
+                "last_modified_at": _now,
+                "last_modified_method": "exercise_add",
+                "is_user_modified": True,
+                "user_modified_at": _now,
             }
 
             updated = db.update_workout(payload.workout_id, update_data)

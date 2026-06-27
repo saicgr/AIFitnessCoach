@@ -52,6 +52,12 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   bool _isSwapping = false;
   String? _selectedReason;
 
+  // Persist the swap going forward: future AI generations replace the old
+  // exercise with the new one, and progressive-overload history follows it.
+  // Defaults ON — directly answers "I want to swap once, not every week."
+  // Hidden on the preview-swap path (previews aren't committed).
+  bool _applyToFuture = true;
+
   /// When non-null, the row whose name (case-insensitive) matches this
   /// gets a brief cyan pulse highlight on first paint after the targeted
   /// tab loads. Cleared by [_clearPreselectHighlight] after ~1.4s so a
@@ -629,6 +635,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       reason: _selectedReason,
       swapSource: source,
       previewId: widget.previewId,
+      applyToFuture: _applyToFuture,
     );
 
     setState(() => _isSwapping = false);
@@ -924,6 +931,43 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                         ],
                       ),
                     ),
+
+                    // Apply-to-future toggle (the wedge): persist this swap so
+                    // future AI plans honor it and progress follows the swap.
+                    if (widget.previewId == null) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(Icons.event_repeat, size: 18, color: textMuted),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Apply to future workouts',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Future plans use this exercise and keep your progress',
+                                  style: TextStyle(fontSize: 11, color: textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: _applyToFuture,
+                            activeThumbColor: AppColors.cyan,
+                            onChanged: (v) =>
+                                setState(() => _applyToFuture = v),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -971,6 +1015,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                           newExerciseName: name,
                           swapSource: 'equipment_snap_history',
                           previewId: widget.previewId,
+                          applyToFuture: _applyToFuture,
                         );
                         if (!mounted) return null;
                         if (err != null) {

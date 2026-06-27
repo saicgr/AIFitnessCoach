@@ -138,6 +138,46 @@ async def get_exercise_history(
     limit: int = 5,
     gym_profile_id: Optional[str] = None,
 ) -> List[dict]:
+    """Recent performance history for an exercise, following persistent swaps.
+
+    If the user has permanently swapped another exercise A into this one (B) via
+    `user_exercise_substitutions`, A's logged history is merged in so progressive
+    overload FOLLOWS the swap — the existing decay/progression logic then carries
+    the trajectory forward. Without a substitution this is identical to the
+    single-name lookup.
+    """
+    aliases: List[str] = []
+    try:
+        db = get_supabase_db()
+        from api.v1.workouts.substitutions import get_substitution_source_names
+        aliases = get_substitution_source_names(db, user_id, exercise_name)
+    except Exception as e:
+        logger.debug(f"Substitution alias lookup failed (non-fatal): {e}")
+
+    names = [exercise_name]
+    seen = {exercise_name.strip().lower()}
+    for a in aliases:
+        k = (a or "").strip().lower()
+        if k and k not in seen:
+            seen.add(k)
+            names.append(a)
+
+    if len(names) == 1:
+        return await _fetch_history_single(user_id, exercise_name, limit, gym_profile_id)
+
+    merged: List[dict] = []
+    for nm in names:
+        merged.extend(await _fetch_history_single(user_id, nm, limit, gym_profile_id))
+    merged.sort(key=lambda x: x.get("date") or "", reverse=True)
+    return merged[:limit]
+
+
+async def _fetch_history_single(
+    user_id: str,
+    exercise_name: str,
+    limit: int = 5,
+    gym_profile_id: Optional[str] = None,
+) -> List[dict]:
     """
     Fetch user's recent performance history for an exercise.
 

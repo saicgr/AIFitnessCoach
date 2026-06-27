@@ -707,7 +707,7 @@ async def update_user(user_id: str, user: UserUpdate,
             user.intensity_preference, user.preferred_time,
             user.progression_pace, user.workout_type_preference,
             user.workout_environment, user.gym_name, user.workout_variety,
-            user.workout_days,
+            user.workout_days, user.cardio_preference,
         ])
 
         # Detect schedule change BEFORE merging — needed for invalidation hook
@@ -749,6 +749,7 @@ async def update_user(user_id: str, user: UserUpdate,
                 user.gym_name,
                 workout_variety=user.workout_variety,
                 workout_days=user.workout_days,
+                cardio_preference=user.cardio_preference,
             )
             update_data["preferences"] = final_preferences
             logger.info(f"🔍 [DEBUG] Final preferences to save: {final_preferences}")

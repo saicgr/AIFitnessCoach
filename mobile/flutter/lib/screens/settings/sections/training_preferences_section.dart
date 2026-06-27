@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
+import '../exercise_preferences/cardio_preference_screen.dart';
 import '../exercise_preferences/excluded_muscles_screen.dart';
+import '../exercise_preferences/exercise_substitutions_screen.dart';
 import '../widgets/widgets.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -139,6 +141,17 @@ class TrainingPreferencesSection extends StatelessWidget {
               isTrainingSplitSelector: true,
             ),
             SettingItemData(
+              icon: Icons.directions_run,
+              title: 'Cardio',
+              subtitle: 'Auto-add cardio before or after lifting',
+              onTap: () => Navigator.push(
+                context,
+                AppPageRoute(
+                  builder: (_) => const CardioPreferenceScreen(),
+                ),
+              ),
+            ),
+            SettingItemData(
               icon: Icons.calendar_month,
               title: AppLocalizations.of(context).workoutSettingsWorkoutDays,
               subtitle: AppLocalizations.of(context).workoutSettingsWhichDaysYouTrain,
@@ -200,6 +213,17 @@ class TrainingPreferencesSection extends StatelessWidget {
                 context,
                 AppPageRoute(
                   builder: (_) => const ExcludedMusclesScreen(),
+                ),
+              ),
+            ),
+            SettingItemData(
+              icon: Icons.event_repeat,
+              title: 'Swapped Exercises',
+              subtitle: 'Swaps the AI keeps in future workouts',
+              onTap: () => Navigator.push(
+                context,
+                AppPageRoute(
+                  builder: (_) => const ExerciseSubstitutionsScreen(),
                 ),
               ),
             ),

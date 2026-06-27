@@ -307,8 +307,33 @@ class _MesocyclePhaseChipState extends State<_MesocyclePhaseChip> {
   @override
   Widget build(BuildContext context) {
     final ctx = _ctx;
-    if (ctx == null) return const SizedBox.shrink();
     final cs = Theme.of(context).colorScheme;
+    // No structured mesocycle plan: the AI program is adaptive and open-ended.
+    // Surface that honestly instead of hiding — answers the common "is this
+    // indefinite, and when do the exercises change?" question without inventing
+    // a week count we don't have a reliable client-side anchor for.
+    if (ctx == null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Row(
+          children: [
+            Icon(Icons.all_inclusive_rounded,
+                size: 16, color: cs.onPrimaryContainer),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                'Ongoing · Exercises adapt as you progress',
+                style: TextStyle(
+                  color: cs.onPrimaryContainer,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: Row(

@@ -121,6 +121,9 @@ class TrainingPreferencesState {
   final ProgressionPace progressionPace;
   final WorkoutType workoutType;
   final String trainingSplit;
+  // Cardio-in-split cadence: 'off' | 'every_session'. Placement: 'after' | 'before'.
+  final String cardioCadence;
+  final String cardioPlacement;
   final bool isLoading;
   final String? error;
 
@@ -128,6 +131,8 @@ class TrainingPreferencesState {
     this.progressionPace = ProgressionPace.medium,
     this.workoutType = WorkoutType.strength,
     this.trainingSplit = 'dont_know',
+    this.cardioCadence = 'off',
+    this.cardioPlacement = 'after',
     this.isLoading = false,
     this.error,
   });
@@ -136,6 +141,8 @@ class TrainingPreferencesState {
     ProgressionPace? progressionPace,
     WorkoutType? workoutType,
     String? trainingSplit,
+    String? cardioCadence,
+    String? cardioPlacement,
     bool? isLoading,
     String? error,
   }) {
@@ -143,6 +150,8 @@ class TrainingPreferencesState {
       progressionPace: progressionPace ?? this.progressionPace,
       workoutType: workoutType ?? this.workoutType,
       trainingSplit: trainingSplit ?? this.trainingSplit,
+      cardioCadence: cardioCadence ?? this.cardioCadence,
+      cardioPlacement: cardioPlacement ?? this.cardioPlacement,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -162,6 +171,16 @@ class TrainingPreferencesNotifier extends StateNotifier<TrainingPreferencesState
 
   TrainingPreferencesNotifier(this._ref) : super(const TrainingPreferencesState()) {
     _init();
+  }
+
+  /// Parse the nested `cardio_preference` object into (cadence, placement).
+  (String, String) _parseCardioPreference(dynamic raw) {
+    if (raw is Map) {
+      final cadence = raw['cadence']?.toString() ?? 'off';
+      final placement = raw['placement']?.toString() ?? 'after';
+      return (cadence, placement);
+    }
+    return ('off', 'after');
   }
 
   /// Parse preferences JSON string to Map
@@ -191,10 +210,13 @@ class TrainingPreferencesNotifier extends StateNotifier<TrainingPreferencesState
             prefsMap['workout_type_preference']?.toString(),
           );
           final trainingSplit = prefsMap['training_split']?.toString() ?? 'dont_know';
+          final cardio = _parseCardioPreference(prefsMap['cardio_preference']);
           state = TrainingPreferencesState(
             progressionPace: progressionPace,
             workoutType: workoutType,
             trainingSplit: trainingSplit,
+            cardioCadence: cardio.$1,
+            cardioPlacement: cardio.$2,
           );
           debugPrint(
             '   [TrainingPrefs] Loaded: pace=${progressionPace.value}, type=${workoutType.value}, split=$trainingSplit',
@@ -269,12 +291,46 @@ class TrainingPreferencesNotifier extends StateNotifier<TrainingPreferencesState
     }
   }
 
+  /// Set the cardio-in-split preference (cadence + placement) and sync.
+  Future<void> setCardioPreference({
+    required String cadence,
+    required String placement,
+  }) async {
+    if (cadence == state.cardioCadence && placement == state.cardioPlacement) {
+      return;
+    }
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId != null) {
+        await apiClient.put(
+          '${ApiConstants.users}/$userId',
+          data: {
+            'cardio_preference': {'cadence': cadence, 'placement': placement},
+          },
+        );
+        debugPrint('   [TrainingPrefs] Synced cardio: $cadence/$placement');
+      }
+      await _ref.read(authStateProvider.notifier).refreshUser();
+      state = state.copyWith(
+        cardioCadence: cadence,
+        cardioPlacement: placement,
+        isLoading: false,
+      );
+    } catch (e) {
+      debugPrint('   [TrainingPrefs] Cardio update error: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
   /// Refresh preferences from user profile
   Future<void> refresh() async {
     final authState = _ref.read(authStateProvider);
     if (authState.user != null) {
       final prefsMap = _parsePreferences(authState.user!.preferences);
       if (prefsMap != null) {
+        final cardio = _parseCardioPreference(prefsMap['cardio_preference']);
         state = TrainingPreferencesState(
           progressionPace: ProgressionPace.fromString(
             prefsMap['progression_pace']?.toString(),
@@ -283,6 +339,8 @@ class TrainingPreferencesNotifier extends StateNotifier<TrainingPreferencesState
             prefsMap['workout_type_preference']?.toString(),
           ),
           trainingSplit: prefsMap['training_split']?.toString() ?? 'dont_know',
+          cardioCadence: cardio.$1,
+          cardioPlacement: cardio.$2,
         );
       }
     }

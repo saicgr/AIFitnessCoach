@@ -1003,6 +1003,39 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     goals=goals if isinstance(goals, list) else None,
                 )
 
+                # Persistent swaps ("swap going forward"): replace any generated
+                # exercise the user has permanently swapped away from with their
+                # chosen substitute. Name-keyed, fail-open. See substitutions.py.
+                try:
+                    from api.v1.workouts.substitutions import (
+                        get_substitution_map,
+                        apply_substitutions,
+                    )
+                    _sub_map = get_substitution_map(db, body.user_id)
+                    if _sub_map:
+                        _n_sub = apply_substitutions(db, exercises, _sub_map)
+                        if _n_sub:
+                            logger.info(f"🔁 [Subs] Applied {_n_sub} persistent substitution(s)")
+                except Exception as _sub_err:
+                    logger.warning(f"[Subs] apply failed (non-fatal): {_sub_err}")
+
+                # Cardio-in-split: add a short bodyweight conditioning block when
+                # the user's cardio preference asks for it. RAG fixes the lifting
+                # list before naming, so this is a deterministic append (not a
+                # prompt). Skipped for cardio/mixed/mobility/recovery days.
+                try:
+                    if getattr(body, "cardio_finisher", False) and (
+                        (body.workout_type or "strength").lower()
+                        not in ("cardio", "mixed", "mobility", "recovery")
+                    ):
+                        from api.v1.workouts.cardio_finisher import apply_cardio_block
+                        exercises = apply_cardio_block(
+                            exercises,
+                            placement=getattr(body, "cardio_placement", "after") or "after",
+                        )
+                except Exception as _cf_err:
+                    logger.warning(f"[Cardio] block apply failed (non-fatal): {_cf_err}")
+
             # Infer workout type from focus area for PPL tracking
             # This ensures workout_type is set correctly even when Gemini doesn't specify it
             from api.v1.workouts.utils import infer_workout_type_from_focus

@@ -65,7 +65,9 @@ def invalidate_upcoming_workouts(
             # Last-resort fallback — callers should always supply timezone_str
             today_str = get_user_today("UTC")
 
-        query = db.client.table("workouts").select("id, scheduled_date, status").eq(
+        query = db.client.table("workouts").select(
+            "id, scheduled_date, status, is_user_modified"
+        ).eq(
             "user_id", user_id
         ).gt(
             "scheduled_date", today_str
@@ -77,14 +79,17 @@ def invalidate_upcoming_workouts(
         if not rows.data:
             return 0
 
-        ids_to_delete = [
-            r["id"] for r in rows.data
-            if r.get("status") != "generating"
-        ]
+        # Skip user-pinned workouts: a future workout the user hand-edited must
+        # survive the regenerate cascade (F5 — granular edits). "Reset to plan"
+        # clears the flag to let it regenerate again.
+        def _eligible(r):
+            return r.get("status") != "generating" and not r.get("is_user_modified")
+
+        ids_to_delete = [r["id"] for r in rows.data if _eligible(r)]
 
         if only_next:
             dated = sorted(
-                [(r["id"], r.get("scheduled_date", "")) for r in rows.data if r.get("status") != "generating"],
+                [(r["id"], r.get("scheduled_date", "")) for r in rows.data if _eligible(r)],
                 key=lambda x: x[1],
             )
             ids_to_delete = [dated[0][0]] if dated else []
@@ -198,13 +203,14 @@ def invalidate_workouts_after_program_change(
         # component differs). Use the day's UTC range instead.
         _start, _end = local_date_to_utc_range(today_str, _tz)
         today_rows = db.client.table("workouts").select(
-            "id, status, is_completed"
+            "id, status, is_completed, is_user_modified"
         ).eq("user_id", user_id).gte(
             "scheduled_date", _start
         ).lte("scheduled_date", _end).execute()
         ids_to_delete = [
             r["id"] for r in (today_rows.data or [])
             if not r.get("is_completed")
+            and not r.get("is_user_modified")
             and r.get("status") not in ("generating", "in_progress")
         ]
         if ids_to_delete:

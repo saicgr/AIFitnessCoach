@@ -457,6 +457,7 @@ def merge_extended_fields_into_preferences(
     # silently losing the user's quiz answers. The `*` makes that class of bug
     # impossible: no field can ever land in the wrong slot positionally again.
     *,
+    cardio_preference: Optional[dict] = None,
     # Enhanced pre-auth quiz fields
     sleep_quality: Optional[str] = None,
     obstacles: Optional[List[str]] = None,
@@ -523,6 +524,8 @@ def merge_extended_fields_into_preferences(
         prefs["progression_pace"] = progression_pace
     if workout_type_preference is not None:
         prefs["workout_type_preference"] = workout_type_preference
+    if cardio_preference is not None:
+        prefs["cardio_preference"] = cardio_preference
     if workout_environment is not None:
         prefs["workout_environment"] = workout_environment
     if gym_name is not None:

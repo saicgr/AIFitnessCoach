@@ -260,6 +260,7 @@ class GenerateWorkoutRequest(BaseModel):
     batch_offset: int = Field(default=0, ge=0, description="Offset index for batch generation to ensure exercise variety across days")
     force_non_preferred_day: bool = Field(default=False, description="Set True when the user deliberately chose a date outside their preferred workout days (e.g., 'do this today' on a rest day). Bypasses the preferred-day gate.")
     cardio_finisher: bool = Field(default=False, description="Append a 5-10 min cardio finisher to a strength/hypertrophy workout (cardio-in-split). Ignored for pure cardio/mobility types.")
+    cardio_placement: Optional[str] = Field(default="after", max_length=10, description="Where the cardio block goes relative to the lifting work: 'after' (finisher) or 'before' (opener). Only applies when cardio_finisher is True.")
     # Per-equipment available weights the user actually owns. Each key is a
     # canonical equipment id ("dumbbells", "kettlebell", "barbell", ...) and
     # each value is the SORTED list of available loads, already expanded from
@@ -325,6 +326,7 @@ class SwapExerciseRequest(BaseModel):
     new_exercise_name: str = Field(..., max_length=200)
     reason: Optional[str] = Field(default=None, max_length=500)
     swap_source: Optional[str] = Field(default="ai_suggestion", max_length=50)  # 'ai_suggestion', 'library_search', 'recent_exercise'
+    apply_to_future: bool = Field(default=False, description="Persist this swap going forward: future AI-generated workouts use the new exercise in place of the old one, and progressive-overload history follows the swap. Ignored on the preview-swap path.")
     section: Optional[str] = Field(default="main", description="Section: main, warmup, or stretches")
     duration_seconds: Optional[float] = Field(default=None, description="Cardio duration in seconds")
     speed_mph: Optional[float] = Field(default=None, description="Cardio speed in mph")
@@ -332,6 +334,15 @@ class SwapExerciseRequest(BaseModel):
     rpm: Optional[float] = Field(default=None, description="Cardio RPM")
     resistance_level: Optional[float] = Field(default=None, description="Cardio resistance level")
     stroke_rate_spm: Optional[float] = Field(default=None, description="Rowing stroke rate SPM")
+
+
+class EditWorkoutExercisesRequest(BaseModel):
+    """Replace a single workout's exercise list (reorder/remove/edit) and pin it.
+
+    Pinning (is_user_modified) protects the workout from the regenerate cascade so
+    a hand-edited future workout isn't silently overwritten by a program change.
+    """
+    exercises: List[dict] = Field(..., description="Full ordered exercise list to persist for this workout.")
 
 
 class AddExerciseRequest(BaseModel):
