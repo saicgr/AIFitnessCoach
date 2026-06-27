@@ -433,6 +433,7 @@ class ProgramTemplateRepository {
     bool swapForInjuries = false,
     bool fitEquipment = false,
     String? variantId,
+    Map<String, String>? dayResolutions,
   }) async {
     final body = <String, dynamic>{
       'program_id': programId,
@@ -442,6 +443,9 @@ class ProgramTemplateRepository {
       'replace': replace,
       if (durationWeeks != null) 'duration_weeks': durationWeeks,
       if (variantId != null && variantId.isNotEmpty) 'variant_id': variantId,
+      // Per-day overlap resolution — same shape preview sent (parity).
+      if (dayResolutions != null && dayResolutions.isNotEmpty)
+        'day_resolutions': dayResolutions,
       if (adaptToLevel || swapForInjuries || fitEquipment)
         'customize': {
           'adapt_to_level': adaptToLevel,
@@ -472,6 +476,7 @@ class ProgramTemplateRepository {
     required String startDate,
     required bool replace,
     int? durationWeeks,
+    Map<String, String>? dayResolutions,
   }) {
     return <String, dynamic>{
       'program_id': programId,
@@ -480,6 +485,10 @@ class ProgramTemplateRepository {
       'start_date': startDate,
       'replace': replace,
       if (durationWeeks != null) 'duration_weeks': durationWeeks,
+      // Per-day overlap resolution: { "YYYY-MM-DD": "replace" | "add" } for the
+      // first-week conflict days. Sent on BOTH preview and commit so they agree.
+      if (dayResolutions != null && dayResolutions.isNotEmpty)
+        'day_resolutions': dayResolutions,
     };
   }
 
@@ -495,6 +504,7 @@ class ProgramTemplateRepository {
     required String startDate,
     bool replace = false,
     int? durationWeeks,
+    Map<String, String>? dayResolutions,
   }) async {
     final body = _assignBody(
       programId: programId,
@@ -503,6 +513,7 @@ class ProgramTemplateRepository {
       startDate: startDate,
       replace: replace,
       durationWeeks: durationWeeks,
+      dayResolutions: dayResolutions,
     );
     debugPrint('🏋️ [ProgramTemplate] previewAssignment | id=$programId '
         'slot=${body['slot']} days=$assignedDays replace=$replace');
@@ -523,6 +534,7 @@ class ProgramTemplateRepository {
     required String startDate,
     bool replace = false,
     int? durationWeeks,
+    Map<String, String>? dayResolutions,
   }) async {
     final body = _assignBody(
       programId: programId,
@@ -531,6 +543,7 @@ class ProgramTemplateRepository {
       startDate: startDate,
       replace: replace,
       durationWeeks: durationWeeks,
+      dayResolutions: dayResolutions,
     );
     debugPrint('🤖 [ProgramTemplate] assignmentReview | id=$programId '
         'slot=${body['slot']} days=$assignedDays replace=$replace');

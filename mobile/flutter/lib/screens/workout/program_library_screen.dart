@@ -21,6 +21,7 @@ import '../../data/services/haptic_service.dart';
 import 'program_detail_screen.dart';
 import 'program_template_builder_screen.dart';
 import 'widgets/program_library_card.dart';
+import 'widgets/variant_picker.dart';
 import 'your_programs_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -1875,11 +1876,21 @@ class _StartProgramFlowSheetState
     extends ConsumerState<_StartProgramFlowSheet> {
   late DateTime _startDate;
   final Set<int> _days = <int>{};
-  ProgramSlot _slot = ProgramSlot.primary;
 
-  /// Primary only: replace the current primary vs run alongside it. Defaults to
-  /// run-alongside (false) per the spec.
-  bool _replace = false;
+  /// Selected variant id (multi-variant programs) — drives the inline
+  /// Duration / Per-week pickers. Null for single-plan programs.
+  String? _selectedVariantId;
+
+  /// The program length sent to preview / assign. Seeded from the default
+  /// variant (or the card) and updated when the user changes the Duration
+  /// picker. Null falls back to the card's own duration server-side.
+  int? _durationWeeks;
+
+  /// Per-day overlap resolution for CONFLICT days in the first week, keyed by
+  /// ISO date (YYYY-MM-DD) → 'replace' | 'add'. Threaded to BOTH preview and
+  /// commit (identical body) so the projection can't drift from what happens.
+  /// Absent date == backend default ('replace').
+  final Map<String, String> _dayResolutions = <String, String>{};
 
   // AI-tailor toggle + its sub-options (only meaningful when on).
   bool _aiTailor = false;
@@ -1901,9 +1912,6 @@ class _StartProgramFlowSheetState
   String? _review;
   bool _reviewLoading = false;
 
-  /// "Show all weeks" toggle for the schedule preview (week 1 expands by default).
-  bool _showAllWeeks = false;
-
   /// Debounce timer + monotonic request sequence. The sequence guards against
   /// a stale (slower) response overwriting a newer one: each run captures the
   /// seq it started with and bails on apply if a newer run has since started.
@@ -1914,8 +1922,18 @@ class _StartProgramFlowSheetState
   void initState() {
     super.initState();
     _startDate = DateTime.now();
-    // Seed sensible default training days from the program's sessions/week.
-    final n = widget.card.sessionsPerWeek;
+
+    // Seed the inline Duration / Per-week pickers from the recommended variant
+    // (multi-variant programs); single-plan programs fall back to the card.
+    final variants = widget.card.variantOptions;
+    final defaultVariant =
+        defaultProgramVariant(variants, widget.card.defaultVariantId);
+    _selectedVariantId = defaultVariant?.variantId;
+    _durationWeeks = defaultVariant?.weeks ?? widget.card.durationWeeks;
+
+    // Seed sensible default training days from the recommended variant's
+    // sessions/week, else the program's sessions/week.
+    final n = defaultVariant?.sessionsPerWeek ?? widget.card.sessionsPerWeek;
     if (n != null && n > 0) {
       // Spread n sessions across the week (e.g. 3 → Mon/Wed/Fri).
       final picks = _spreadDays(n.clamp(1, 7));
@@ -1961,15 +1979,22 @@ class _StartProgramFlowSheetState
     String startDate,
     bool replace,
     int? durationWeeks,
+    Map<String, String>? dayResolutions,
   }) _previewArgs() {
     final card = widget.card;
     return (
       programId: card.isBranded ? card.bareBrandedId : card.id,
       assignedDays: _days.toList()..sort(),
-      slot: _slot,
+      // Slot / replace are no longer program-level choices — Main vs Extra is
+      // decided PER DAY via [_dayResolutions]. The program enrolls as primary;
+      // "Add alongside" days surface as stacked Extras server-side.
+      slot: ProgramSlot.primary,
       startDate: _isoDate(_startDate),
-      replace: _slot == ProgramSlot.primary && _replace,
-      durationWeeks: card.durationWeeks,
+      replace: false,
+      durationWeeks: _durationWeeks ?? card.durationWeeks,
+      dayResolutions: _dayResolutions.isEmpty
+          ? null
+          : Map<String, String>.from(_dayResolutions),
     );
   }
 
@@ -2006,13 +2031,16 @@ class _StartProgramFlowSheetState
         startDate: args.startDate,
         replace: args.replace,
         durationWeeks: args.durationWeeks,
+        dayResolutions: args.dayResolutions,
       );
       if (!mounted || seq != _previewSeq) return;
       setState(() {
         _preview = preview;
         _previewLoading = false;
-        // Reset the week expander when the schedule shape changes materially.
-        _showAllWeeks = false;
+        // Keep the per-day resolution map in sync with the conflicts in this
+        // projection (seed new conflicts → 'replace', prune stale ones). Does
+        // NOT re-trigger a preview — the seeded default matches the backend's.
+        _reconcileDayResolutions(preview);
       });
     } catch (e) {
       if (!mounted || seq != _previewSeq) return;
@@ -2036,6 +2064,7 @@ class _StartProgramFlowSheetState
       startDate: args.startDate,
       replace: args.replace,
       durationWeeks: args.durationWeeks,
+      dayResolutions: args.dayResolutions,
     );
     if (!mounted || seq != _previewSeq) return;
     setState(() {
@@ -2114,13 +2143,16 @@ class _StartProgramFlowSheetState
       final result = await repo.assignProgram(
         programId: card.isBranded ? card.bareBrandedId : card.id,
         assignedDays: _days.toList()..sort(),
-        slot: _slot,
+        slot: ProgramSlot.primary,
         startDate: _isoDate(_startDate),
-        replace: _slot == ProgramSlot.primary && _replace,
-        durationWeeks: card.durationWeeks,
+        replace: false,
+        durationWeeks: _durationWeeks ?? card.durationWeeks,
         adaptToLevel: _aiTailor && _adaptToLevel,
         swapForInjuries: _aiTailor && _swapForInjuries,
         fitEquipment: _aiTailor && _fitEquipment,
+        dayResolutions: _dayResolutions.isEmpty
+            ? null
+            : Map<String, String>.from(_dayResolutions),
       );
       if (!mounted) return;
       navigator.pop();
@@ -2179,6 +2211,10 @@ class _StartProgramFlowSheetState
                     ),
                     const SizedBox(height: 20),
 
+                    // Length & frequency — inline Duration + Per-week pickers
+                    // (shared with the detail screen) + the totals line.
+                    _buildLengthFrequencySection(),
+
                     // Start date.
                     _StartFlowLabel('START DATE'),
                     const SizedBox(height: 8),
@@ -2227,31 +2263,11 @@ class _StartProgramFlowSheetState
                       const SizedBox(height: 20),
                     ],
 
-                    // Slot — Primary vs Add-on.
-                    _StartFlowLabel('SLOT'),
-                    const SizedBox(height: 8),
-                    _buildSlotPicker(),
-                    const SizedBox(height: 8),
-                    Text(
-                      _slot == ProgramSlot.primary
-                          ? 'Primary drives your home workout.'
-                          : 'Add-on stacks on top, e.g. a 7-min core finisher.',
-                      style: ZType.sans(12.5,
-                          color: AppColors.textMuted, weight: FontWeight.w500),
-                    ),
-
-                    // Replace vs Run-alongside (Primary only).
-                    if (_slot == ProgramSlot.primary) ...[
-                      const SizedBox(height: 16),
-                      _buildReplaceToggle(),
-                    ],
-
-                    const SizedBox(height: 22),
-
-                    // Live schedule preview + overlap (replaces the old static
-                    // "current program" banner with a concrete week-by-week,
-                    // collision-aware projection of what CONFIRM will schedule).
-                    _buildSchedulePreviewSection(),
+                    // Full 7-day schedule overlap — per-day conflict resolution
+                    // (Replace / Add alongside) built from the live preview.
+                    // Replaces the old Slot + Replace controls: Main vs Extra is
+                    // now decided per day, not as a program-level toggle.
+                    _buildOverlapSection(),
 
                     const SizedBox(height: 18),
 
@@ -2396,96 +2412,185 @@ class _StartProgramFlowSheetState
     );
   }
 
-  Widget _buildSlotPicker() {
-    return Row(
-      children: [
-        Expanded(
-          child: _SlotChip(
-            label: 'PRIMARY',
-            icon: Icons.home_rounded,
-            selected: _slot == ProgramSlot.primary,
-            onTap: () {
-              HapticService.selection();
-              setState(() => _slot = ProgramSlot.primary);
-              _schedulePreview();
-            },
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _SlotChip(
-            label: 'ADD-ON',
-            icon: Icons.add_circle_outline_rounded,
-            selected: _slot == ProgramSlot.addon,
-            onTap: () {
-              HapticService.selection();
-              setState(() => _slot = ProgramSlot.addon);
-              _schedulePreview();
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
   // -------------------------------------------------------------------------
   // Live schedule preview + overlap.
   // -------------------------------------------------------------------------
 
-  /// Compact "Mon Jun 29" formatter for a [DateTime] (weekday + short month +
-  /// day). Used by the day rows in the schedule preview.
-  String _fmtShort(DateTime d) {
-    const wd = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  // -------------------------------------------------------------------------
+  // Length & frequency — inline Duration + Per-week pickers + totals.
+  // -------------------------------------------------------------------------
+
+  /// Inline Duration / Per-week selectors (the SAME widget the program detail
+  /// screen uses) plus the live totals line. Single-plan programs (no variant
+  /// matrix) just show the totals — there is nothing to choose.
+  Widget _buildLengthFrequencySection() {
+    final variants = widget.card.variantOptions;
+    final hasVariants = variants.length > 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (hasVariants) ...[
+          _StartFlowLabel('LENGTH & FREQUENCY'),
+          const SizedBox(height: 8),
+          VariantSelectorRow(
+            variants: variants,
+            selectedVariantId: _selectedVariantId,
+            defaultVariantId: widget.card.defaultVariantId,
+            onSelect: _onVariantSelected,
+            onResetToDefault: _onVariantReset,
+          ),
+          const SizedBox(height: 10),
+        ],
+        _buildTotalsLine(),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  /// "▦ N workouts · W wks · X/wk" — from the live preview when available, else
+  /// derived from the selected variant / card so it never reads blank.
+  Widget _buildTotalsLine() {
+    final p = _preview;
+    final int? weeks = p?.durationWeeks ?? _durationWeeks;
+    final selected = selectedProgramVariant(widget.card.variantOptions,
+        _selectedVariantId, widget.card.defaultVariantId);
+    final int? perWeek = p?.sessionsPerWeek ??
+        selected?.sessionsPerWeek ??
+        (_days.isNotEmpty ? _days.length : widget.card.sessionsPerWeek);
+    final int? total = (p != null && p.totalWorkouts > 0)
+        ? p.totalWorkouts
+        : (weeks != null && perWeek != null ? weeks * perWeek : null);
+    final parts = <String>[
+      if (total != null) '$total workouts',
+      if (weeks != null) '$weeks wks',
+      if (perWeek != null) '$perWeek/wk',
     ];
-    // DateTime.weekday is 1=Mon..7=Sun.
-    return '${wd[d.weekday - 1]} ${months[d.month - 1]} ${d.day}';
+    if (parts.isEmpty) return const SizedBox.shrink();
+    return Row(
+      children: [
+        const Icon(Icons.calendar_view_week_rounded,
+            size: 15, color: AppColors.orange),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            parts.join(' · '),
+            style: ZType.sans(13,
+                color: AppColors.textPrimary, weight: FontWeight.w700),
+          ),
+        ),
+        if (_previewLoading)
+          const SizedBox(
+            width: 13,
+            height: 13,
+            child: CircularProgressIndicator(
+                strokeWidth: 1.6, color: AppColors.textMuted),
+          ),
+      ],
+    );
   }
 
-  /// Day-row date label — parses the ISO date and renders "Mon Jun 29", falling
-  /// back to the response's own weekday name if the date can't be parsed.
-  String _dayLabel(PreviewDay d) {
-    final dt = DateTime.tryParse(d.date);
-    if (dt != null) return _fmtShort(dt);
-    return [d.weekdayName, d.date].where((s) => s.isNotEmpty).join(' ');
+  /// Apply a picked variant: store its id, drive [_durationWeeks], re-spread the
+  /// training days to its sessions/week, then re-run the preview.
+  void _onVariantSelected(ProgramVariantOption v) {
+    HapticService.selection();
+    setState(() {
+      _selectedVariantId = v.variantId;
+      _durationWeeks = v.weeks;
+      final n = v.sessionsPerWeek.clamp(1, 7);
+      _days
+        ..clear()
+        ..addAll(_spreadDays(n));
+    });
+    _schedulePreview();
   }
 
-  /// SCHEDULE PREVIEW section — week-by-week, collision-annotated projection.
-  Widget _buildSchedulePreviewSection() {
+  /// Revert to the program's recommended variant.
+  void _onVariantReset() {
+    final def = defaultProgramVariant(
+        widget.card.variantOptions, widget.card.defaultVariantId);
+    if (def == null) return;
+    _onVariantSelected(def);
+  }
+
+  // -------------------------------------------------------------------------
+  // Schedule overlap — full 7-day week with per-day conflict resolution.
+  // -------------------------------------------------------------------------
+
+  /// SCHEDULE OVERLAP section — the full Mon–Sun week the program starts in,
+  /// each day annotated against the user's existing calendar. Conflict days
+  /// carry a per-day Replace / Add-alongside choice. The header links out to
+  /// the full schedule screen.
+  Widget _buildOverlapSection() {
     final preview = _preview;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _StartFlowLabel('SCHEDULE PREVIEW'),
+        Row(
+          children: [
+            Expanded(child: _StartFlowLabel('SCHEDULE OVERLAP')),
+            GestureDetector(
+              onTap: () {
+                HapticService.light();
+                context.push('/schedule');
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Open full schedule',
+                      style: ZType.lbl(11,
+                          color: AppColors.orange, letterSpacing: 0.4)),
+                  const SizedBox(width: 2),
+                  const Icon(Icons.arrow_forward_rounded,
+                      size: 13, color: AppColors.orange),
+                ],
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
         // Prefer showing an existing preview even while a newer one loads (no
         // flicker); only fall through to error / skeleton when there's none.
         if (preview != null)
-          _buildPreviewBody(preview)
+          _buildOverlapBody(preview)
         else if (_previewError != null)
           _buildPreviewError()
         else if (_previewLoading)
           _buildPreviewSkeleton()
         else
-          // No training days picked → nothing to preview.
           Text(
             'Pick at least one training day to preview the schedule.',
             style: ZType.sans(12.5,
                 color: AppColors.textMuted, weight: FontWeight.w500),
           ),
+        const SizedBox(height: 8),
+        Text(
+          'Conflicting days default to Replace. "Add alongside" stacks the new '
+          'workout as an Extra.',
+          style: ZType.sans(11.5,
+              color: AppColors.textMuted,
+              weight: FontWeight.w500,
+              height: 1.35),
+        ),
       ],
     );
   }
 
-  Widget _buildPreviewBody(AssignPreview p) {
-    final collisions = p.collisionsByDate;
-    final weeks = p.weeks;
-    final visibleWeeks = _showAllWeeks ? weeks : weeks.take(1).toList();
+  Widget _buildOverlapBody(AssignPreview p) {
+    final dates = _overlapWeekDates(p);
+    final firstWeek = p.weeks.isNotEmpty ? p.weeks.first : null;
+    final programByDate = <String, PreviewDay>{
+      for (final d in firstWeek?.days ?? const <PreviewDay>[]) d.date: d,
+    };
+    final collByDate = <String, List<PreviewCollision>>{};
+    for (final c in p.collisions) {
+      if (c.date.isNotEmpty) {
+        (collByDate[c.date] ??= <PreviewCollision>[]).add(c);
+      }
+    }
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: AppColors.surface2,
         borderRadius: BorderRadius.circular(12),
@@ -2494,171 +2599,354 @@ class _StartProgramFlowSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Totals line.
-          Row(
-            children: [
-              const Icon(Icons.calendar_month_rounded,
-                  size: 15, color: AppColors.orange),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${p.totalWorkouts} workouts · ${p.durationWeeks} wks · '
-                  '${p.sessionsPerWeek}/wk',
-                  style: ZType.sans(13,
-                      color: AppColors.textPrimary, weight: FontWeight.w700),
-                ),
+          for (final date in dates)
+            _buildOverlapRow(
+              date,
+              programByDate[_isoDate(date)],
+              collByDate[_isoDate(date)] ?? const <PreviewCollision>[],
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// One day row in the overlap. Four shapes: FREE (program day, no conflict),
+  /// CONFLICT (program day + existing → per-day Replace / Add choice), KEEP
+  /// (existing only — program doesn't use this day), REST (nothing).
+  Widget _buildOverlapRow(
+    DateTime date,
+    PreviewDay? program,
+    List<PreviewCollision> existing,
+  ) {
+    final iso = _isoDate(date);
+    const wd = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    final dayChip = wd[date.weekday - 1];
+    final progName = widget.card.displayName;
+
+    Widget chip() => SizedBox(
+          width: 38,
+          child: Text(dayChip,
+              style: ZType.lbl(11,
+                  color: AppColors.textSecondary, letterSpacing: 0.5)),
+        );
+
+    // CASE 1 — program day, no conflict → FREE.
+    if (program != null && existing.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            chip(),
+            Expanded(
+              child: Text.rich(
+                TextSpan(children: [
+                  TextSpan(
+                      text: '✓ free',
+                      style: ZType.sans(12.5,
+                          color: AppColors.green, weight: FontWeight.w700)),
+                  TextSpan(
+                      text: '   →   ',
+                      style: ZType.sans(12.5,
+                          color: AppColors.textMuted, weight: FontWeight.w500)),
+                  TextSpan(
+                      text: _sessionLabel(program),
+                      style: ZType.sans(12.5,
+                          color: AppColors.textPrimary,
+                          weight: FontWeight.w600)),
+                ]),
               ),
-              // Subtle in-flight indicator when re-fetching over an existing
-              // preview (e.g. the user just toggled a day).
-              if (_previewLoading)
-                const SizedBox(
-                  width: 13,
-                  height: 13,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 1.6, color: AppColors.textMuted),
-                ),
-            ],
-          ),
-          for (final w in visibleWeeks) _buildPreviewWeek(w, collisions),
-          if (weeks.length > 1) ...[
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: () {
-                HapticService.light();
-                setState(() => _showAllWeeks = !_showAllWeeks);
-              },
-              behavior: HitTestBehavior.opaque,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _showAllWeeks
-                        ? 'Show less'
-                        : 'Show all ${weeks.length} weeks',
-                    style: ZType.lbl(11,
-                        color: AppColors.orange, letterSpacing: 1.0),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // CASE 2 — program day + existing workout(s) → CONFLICT (per-day choice).
+    if (program != null && existing.isNotEmpty) {
+      final adding = (_dayResolutions[iso] ?? 'replace') == 'add';
+      final totalSessions = adding ? existing.length + 1 : 1;
+      final overExert = totalSessions >= 3;
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
+        decoration: BoxDecoration(
+          color: AppColors.warning.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.warning.withValues(alpha: 0.30)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                chip(),
+                Expanded(
+                  child: Text(
+                    existing.length > 1
+                        ? '⚠ already has ${existing.length} workouts'
+                        : '⚠ already has a workout',
+                    style: ZType.sans(12.5,
+                        color: AppColors.warning, weight: FontWeight.w700),
                   ),
-                  const SizedBox(width: 2),
-                  Icon(
-                    _showAllWeeks
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    size: 16,
-                    color: AppColors.orange,
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 38),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final c in existing)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(
+                        '• ${_existingLabel(c)}',
+                        style: ZType.sans(11.5,
+                            color: AppColors.textSecondary,
+                            weight: FontWeight.w500),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 38),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _choiceChip(
+                      label: existing.length > 1 ? 'Replace all' : 'Replace',
+                      selected: !adding,
+                      onTap: () => _setDayResolution(iso, 'replace'),
+                    ),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: _choiceChip(
+                      label: 'Add alongside',
+                      selected: adding,
+                      onTap: () => _setDayResolution(iso, 'add'),
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPreviewWeek(PreviewWeek w, Map<String, PreviewCollision> coll) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Text(
-              'WEEK ${w.weekNumber}',
-              style: ZType.lbl(10.5,
-                  color: AppColors.textSecondary, letterSpacing: 1.6),
-            ),
-            if (w.isDeload) ...[
-              const SizedBox(width: 8),
-              _miniChip('DELOAD', AppColors.info),
+            if (adding) ...[
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 38),
+                child: Text(
+                  '$totalSessions sessions $dayChip — existing stay, '
+                  '${_sessionLabel(program)} adds as an Extra.',
+                  style: ZType.sans(11,
+                      color: AppColors.textSecondary,
+                      weight: FontWeight.w500,
+                      height: 1.35),
+                ),
+              ),
+              if (overExert) ...[
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 38),
+                  child: _recoveryCaution(totalSessions, dayChip),
+                ),
+              ],
             ],
           ],
         ),
-        const SizedBox(height: 4),
-        for (final d in w.days) _buildPreviewDayRow(d, coll[d.date]),
-      ],
+      );
+    }
+
+    // CASE 3 — existing workout(s) only (program doesn't use this day) → KEEP.
+    if (program == null && existing.isNotEmpty) {
+      final names = existing
+          .map((c) => c.existingName.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      final keepText = names.isEmpty
+          ? 'keeps your existing workout'
+          : (names.length == 1
+              ? 'keeps ${names.first}'
+              : 'keeps ${names.first} +${names.length - 1} more');
+      return Opacity(
+        opacity: 0.7,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              chip(),
+              Expanded(
+                child: Text(
+                  '↺ $keepText  ($progName doesn\'t use $dayChip)',
+                  style: ZType.sans(12,
+                      color: AppColors.textSecondary, weight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // CASE 4 — nothing scheduled → REST.
+    return Opacity(
+      opacity: 0.45,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+        child: Row(
+          children: [
+            chip(),
+            Text(
+              'Rest day',
+              style: ZType.sans(12, color: AppColors.textMuted)
+                  .copyWith(fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildPreviewDayRow(PreviewDay d, PreviewCollision? collision) {
-    final existing = collision?.existingName ?? '';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+  /// Session display label for a program training day.
+  String _sessionLabel(PreviewDay d) {
+    final s = d.sessionName.trim();
+    return s.isNotEmpty ? s : widget.card.displayName;
+  }
+
+  /// Existing-workout display label for a collision row (name + Extra tag).
+  String _existingLabel(PreviewCollision c) {
+    final name = c.existingName.trim();
+    final base = name.isNotEmpty ? name : 'Existing workout';
+    return c.existingSlot.trim().toLowerCase() == 'addon'
+        ? '$base · Extra'
+        : base;
+  }
+
+  /// The 7 dates (Mon–Sun) of the week the program's first session lands in.
+  List<DateTime> _overlapWeekDates(AssignPreview p) {
+    DateTime anchor = DateTime.tryParse(p.startDate) ?? _startDate;
+    final firstWeek = p.weeks.isNotEmpty ? p.weeks.first : null;
+    if (firstWeek != null && firstWeek.days.isNotEmpty) {
+      final ds = firstWeek.days
+          .map((d) => DateTime.tryParse(d.date))
+          .whereType<DateTime>()
+          .toList()
+        ..sort();
+      if (ds.isNotEmpty) anchor = ds.first;
+    }
+    final monday = DateTime(anchor.year, anchor.month, anchor.day)
+        .subtract(Duration(days: anchor.weekday - 1));
+    return [for (var i = 0; i < 7; i++) monday.add(Duration(days: i))];
+  }
+
+  /// Keep [_dayResolutions] aligned to the conflicts in this projection: prune
+  /// dates that are no longer conflicts, seed new conflicts → 'replace'. Called
+  /// inside the preview-apply setState; never re-triggers a fetch (the seeded
+  /// default matches the backend's, so the projection is already consistent).
+  void _reconcileDayResolutions(AssignPreview p) {
+    final firstWeek = p.weeks.isNotEmpty ? p.weeks.first : null;
+    final programDates = <String>{
+      for (final d in firstWeek?.days ?? const <PreviewDay>[]) d.date,
+    };
+    final collisionDates = <String>{
+      for (final c in p.collisions)
+        if (c.date.isNotEmpty) c.date,
+    };
+    final conflictDates = programDates.where(collisionDates.contains).toSet();
+    _dayResolutions.removeWhere((k, _) => !conflictDates.contains(k));
+    for (final d in conflictDates) {
+      _dayResolutions.putIfAbsent(d, () => 'replace');
+    }
+  }
+
+  /// Set a per-day overlap resolution and re-run the (debounced) preview so the
+  /// projection reflects the choice.
+  void _setDayResolution(String iso, String value) {
+    if (_dayResolutions[iso] == value) return;
+    HapticService.selection();
+    setState(() => _dayResolutions[iso] = value);
+    _schedulePreview();
+  }
+
+  /// A per-day Replace / Add-alongside radio chip.
+  Widget _choiceChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.orange.withValues(alpha: 0.16)
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? AppColors.orange : AppColors.cardBorder,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              selected
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              size: 15,
+              color: selected ? AppColors.orange : AppColors.textMuted,
+            ),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.sans(12,
+                    color: selected
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
+                    weight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Soft, non-blocking recovery caution for a heavily-stacked day.
+  Widget _recoveryCaution(int sessions, String day) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 86,
-            child: Text(
-              _dayLabel(d),
-              style: ZType.sans(11.5,
-                  color: AppColors.textSecondary, weight: FontWeight.w600),
-            ),
-          ),
+          const Icon(Icons.warning_amber_rounded,
+              size: 15, color: AppColors.warning),
           const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  d.exercisesCount > 0
-                      ? '${d.sessionName} · ${d.exercisesCount} ex'
-                      : d.sessionName,
-                  style: ZType.sans(12.5,
-                      color: AppColors.textPrimary, weight: FontWeight.w600),
-                ),
-                if (existing.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 1),
-                    child: Text(
-                      '↔ $existing',
-                      style: ZType.sans(10.5,
-                          color: AppColors.textMuted, weight: FontWeight.w500),
-                    ),
-                  ),
-              ],
+            child: Text(
+              "That's $sessions sessions on $day. Big day — make sure you "
+              'recover, or spread these across the week.',
+              style: ZType.sans(11,
+                  color: AppColors.warning,
+                  weight: FontWeight.w500,
+                  height: 1.35),
             ),
           ),
-          const SizedBox(width: 8),
-          _resolutionChip(d.resolution),
         ],
-      ),
-    );
-  }
-
-  /// Colored chip per overlap resolution: replace → orange "Replaces",
-  /// stack → blue "Stacks", add → green "New day".
-  Widget _resolutionChip(PreviewResolution r) {
-    final Color color;
-    final String label;
-    switch (r) {
-      case PreviewResolution.replace:
-        color = AppColors.orange;
-        label = 'Replaces';
-        break;
-      case PreviewResolution.stack:
-        color = AppColors.info;
-        label = 'Stacks';
-        break;
-      case PreviewResolution.add:
-        color = AppColors.green;
-        label = 'New day';
-        break;
-    }
-    return _miniChip(label, color);
-  }
-
-  /// Shared small pill — translucent fill + accent border + accent label.
-  Widget _miniChip(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        label,
-        style: ZType.lbl(9.5, color: color, letterSpacing: 0.6),
       ),
     );
   }
@@ -2834,39 +3122,6 @@ class _StartProgramFlowSheetState
             style: ZType.sans(12, color: AppColors.textMuted)),
       );
 
-  Widget _buildReplaceToggle() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
-      child: SwitchListTile.adaptive(
-        contentPadding: EdgeInsets.zero,
-        dense: true,
-        value: _replace,
-        activeThumbColor: AppColors.orange,
-        onChanged: (v) {
-          setState(() => _replace = v);
-          _schedulePreview();
-        },
-        title: Text(
-          'Replace current program',
-          style: ZType.sans(13.5,
-              color: AppColors.textPrimary, weight: FontWeight.w600),
-        ),
-        subtitle: Text(
-          _replace
-              ? 'Your current primary program is replaced.'
-              : 'Runs alongside your current program.',
-          style: ZType.sans(11.5,
-              color: AppColors.textMuted, weight: FontWeight.w500),
-        ),
-      ),
-    );
-  }
-
   Widget _buildAiTailor() {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
@@ -2952,55 +3207,6 @@ class _StartFlowLabel extends StatelessWidget {
     return Text(
       text,
       style: ZType.lbl(11, color: AppColors.textMuted, letterSpacing: 2.0),
-    );
-  }
-}
-
-class _SlotChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _SlotChip({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? AppColors.orange.withValues(alpha: 0.16)
-                          : AppColors.surface2,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? AppColors.orange : AppColors.cardBorder,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon,
-                size: 16,
-                color: selected ? AppColors.orange : AppColors.textSecondary),
-            const SizedBox(width: 7),
-            Text(
-              label,
-              style: ZType.lbl(12,
-                  color: selected ? AppColors.orange : AppColors.textSecondary,
-                  letterSpacing: 1.2),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
