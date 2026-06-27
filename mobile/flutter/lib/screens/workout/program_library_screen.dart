@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/user_provider.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/signature/signature.dart';
@@ -1892,6 +1893,13 @@ class _StartProgramFlowSheetState
   /// Absent date == backend default ('replace').
   final Map<String, String> _dayResolutions = <String, String>{};
 
+  /// The user's AI-program training weekdays (0=Mon..6=Sun), read once from
+  /// [currentUserProvider]. The AI program generates on demand, so these days
+  /// carry NO materialized collision in the preview — the overlap treats them
+  /// as existing "AI program" sessions so it's honest about what a day already
+  /// holds (mirrors the schedule screen's AI-awareness).
+  Set<int> _aiDays = <int>{};
+
   // AI-tailor toggle + its sub-options (only meaningful when on).
   bool _aiTailor = false;
   bool _adaptToLevel = true;
@@ -1930,6 +1938,12 @@ class _StartProgramFlowSheetState
         defaultProgramVariant(variants, widget.card.defaultVariantId);
     _selectedVariantId = defaultVariant?.variantId;
     _durationWeeks = defaultVariant?.weeks ?? widget.card.durationWeeks;
+
+    // AI-program training days (0=Mon..6=Sun) — used to flag AI-generated days
+    // in the overlap even though they have no materialized collision yet.
+    _aiDays =
+        ref.read(currentUserProvider).valueOrNull?.workoutDays.toSet() ??
+            <int>{};
 
     // Seed sensible default training days from the recommended variant's
     // sessions/week, else the program's sessions/week.
@@ -2577,7 +2591,7 @@ class _StartProgramFlowSheetState
   }
 
   Widget _buildOverlapBody(AssignPreview p) {
-    final dates = _overlapWeekDates(p);
+    final dates = _overlapWindowDates(p);
     final firstWeek = p.weeks.isNotEmpty ? p.weeks.first : null;
     final programByDate = <String, PreviewDay>{
       for (final d in firstWeek?.days ?? const <PreviewDay>[]) d.date: d,
@@ -2604,24 +2618,58 @@ class _StartProgramFlowSheetState
               date,
               programByDate[_isoDate(date)],
               collByDate[_isoDate(date)] ?? const <PreviewCollision>[],
+              _aiDays.contains(date.weekday - 1),
             ),
         ],
       ),
     );
   }
 
+  /// A synthetic "AI program" existing session for an AI training day that has
+  /// no materialized collision (the AI plan generates on demand). The backend's
+  /// resolve_collision already handles this `ai_planned`-no-row case for both
+  /// 'replace' and 'add', so sending day_resolutions for these dates is valid.
+  PreviewCollision _aiCollision(DateTime date) {
+    const wd = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return PreviewCollision(
+      date: _isoDate(date),
+      weekday: date.weekday - 1,
+      weekdayName: wd[date.weekday - 1],
+      resolution: PreviewResolution.replace,
+      source: 'ai_planned',
+      existingName: 'AI program',
+      existingSlot: 'primary',
+    );
+  }
+
   /// One day row in the overlap. Four shapes: FREE (program day, no conflict),
   /// CONFLICT (program day + existing → per-day Replace / Add choice), KEEP
   /// (existing only — program doesn't use this day), REST (nothing).
+  ///
+  /// [isAiDay] folds the on-demand AI program into the picture: an AI day with
+  /// no materialized collision still counts as an existing "AI program" session,
+  /// so the program-uses-it case becomes a CONFLICT and the program-skips-it
+  /// case becomes a KEEP — never a misleading "Rest day".
   Widget _buildOverlapRow(
     DateTime date,
     PreviewDay? program,
-    List<PreviewCollision> existing,
+    List<PreviewCollision> materialized,
+    bool isAiDay,
   ) {
     final iso = _isoDate(date);
     const wd = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     final dayChip = wd[date.weekday - 1];
     final progName = widget.card.displayName;
+
+    // Effective existing sessions = materialized collisions + a synthetic AI
+    // session for an AI day (unless a materialized AI row is already present, to
+    // avoid double-listing).
+    final hasMaterializedAi =
+        materialized.any((c) => c.source.toLowerCase().contains('ai'));
+    final existing = <PreviewCollision>[
+      ...materialized,
+      if (isAiDay && !hasMaterializedAi) _aiCollision(date),
+    ];
 
     Widget chip() => SizedBox(
           width: 38,
@@ -2826,8 +2874,13 @@ class _StartProgramFlowSheetState
         : base;
   }
 
-  /// The 7 dates (Mon–Sun) of the week the program's first session lands in.
-  List<DateTime> _overlapWeekDates(AssignPreview p) {
+  /// The first full training rotation as a ROLLING 7-day window starting at the
+  /// start date (the earlier of the preview's start_date and the first program
+  /// session). A calendar Mon–Sun snap would drop training days that fall into
+  /// the next calendar week — e.g. a Saturday start with Thu/Fri/Sat days would
+  /// only show Saturday. A rolling window guarantees every selected training day
+  /// in the first rotation gets a row.
+  List<DateTime> _overlapWindowDates(AssignPreview p) {
     DateTime anchor = DateTime.tryParse(p.startDate) ?? _startDate;
     final firstWeek = p.weeks.isNotEmpty ? p.weeks.first : null;
     if (firstWeek != null && firstWeek.days.isNotEmpty) {
@@ -2836,11 +2889,12 @@ class _StartProgramFlowSheetState
           .whereType<DateTime>()
           .toList()
         ..sort();
-      if (ds.isNotEmpty) anchor = ds.first;
+      // Use the earliest of the start date and the first program session so the
+      // start day itself is always included.
+      if (ds.isNotEmpty && ds.first.isBefore(anchor)) anchor = ds.first;
     }
-    final monday = DateTime(anchor.year, anchor.month, anchor.day)
-        .subtract(Duration(days: anchor.weekday - 1));
-    return [for (var i = 0; i < 7; i++) monday.add(Duration(days: i))];
+    final start = DateTime(anchor.year, anchor.month, anchor.day);
+    return [for (var i = 0; i < 7; i++) start.add(Duration(days: i))];
   }
 
   /// Keep [_dayResolutions] aligned to the conflicts in this projection: prune
@@ -2856,7 +2910,14 @@ class _StartProgramFlowSheetState
       for (final c in p.collisions)
         if (c.date.isNotEmpty) c.date,
     };
-    final conflictDates = programDates.where(collisionDates.contains).toSet();
+    // A program day conflicts when it has a materialized collision OR it falls
+    // on an AI training weekday (the AI program would otherwise generate there).
+    final conflictDates = <String>{};
+    for (final iso in programDates) {
+      final dt = DateTime.tryParse(iso);
+      final isAiDay = dt != null && _aiDays.contains(dt.weekday - 1);
+      if (collisionDates.contains(iso) || isAiDay) conflictDates.add(iso);
+    }
     _dayResolutions.removeWhere((k, _) => !conflictDates.contains(k));
     for (final d in conflictDates) {
       _dayResolutions.putIfAbsent(d, () => 'replace');
