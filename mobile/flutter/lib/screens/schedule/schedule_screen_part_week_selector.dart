@@ -1,6 +1,5 @@
 part of 'schedule_screen.dart';
 
-
 // ─────────────────────────────────────────────────────────────────
 // Week Selector
 // ─────────────────────────────────────────────────────────────────
@@ -32,9 +31,7 @@ class _WeekSelector extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.elevated,
         border: Border(
-          bottom: BorderSide(
-            color: colors.cardBorder.withOpacity(0.3),
-          ),
+          bottom: BorderSide(color: colors.cardBorder.withOpacity(0.3)),
         ),
       ),
       child: Row(
@@ -66,7 +63,10 @@ class _WeekSelector extends StatelessWidget {
                   const SizedBox(width: 6),
                   if (_isCurrentWeek(selectedWeek))
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: colors.cyan.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
@@ -85,7 +85,10 @@ class _WeekSelector extends StatelessWidget {
                   GestureDetector(
                     onTap: onToggleWeekStart,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: colors.textMuted.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(10),
@@ -94,7 +97,9 @@ class _WeekSelector extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        weekStartDay == 1 ? AppLocalizations.of(context).workoutPlannerMon : AppLocalizations.of(context).workoutPlannerSun,
+                        weekStartDay == 1
+                            ? AppLocalizations.of(context).workoutPlannerMon
+                            : AppLocalizations.of(context).workoutPlannerSun,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -126,7 +131,6 @@ class _WeekSelector extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────────────────────────
 // Day Header
 // ─────────────────────────────────────────────────────────────────
@@ -155,12 +159,10 @@ class _DayHeader extends StatelessWidget {
         color: isToday
             ? colors.cyan.withOpacity(0.1)
             : isTargetDay
-                ? colors.cyan.withOpacity(0.05)
-                : Colors.transparent,
+            ? colors.cyan.withOpacity(0.05)
+            : Colors.transparent,
         border: Border(
-          bottom: BorderSide(
-            color: colors.cardBorder.withOpacity(0.3),
-          ),
+          bottom: BorderSide(color: colors.cardBorder.withOpacity(0.3)),
         ),
       ),
       child: Column(
@@ -198,7 +200,6 @@ class _DayHeader extends StatelessWidget {
     );
   }
 }
-
 
 // ─────────────────────────────────────────────────────────────────
 // Draggable Workout Card
@@ -260,7 +261,8 @@ class _DraggableWorkoutCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  workout.type?.toUpperCase() ?? AppLocalizations.of(context).workoutsStrength,
+                  workout.type?.toUpperCase() ??
+                      AppLocalizations.of(context).workoutsStrength,
                   style: TextStyle(
                     fontSize: 8,
                     fontWeight: FontWeight.w600,
@@ -274,17 +276,24 @@ class _DraggableWorkoutCard extends StatelessWidget {
       ),
       childWhenDragging: Opacity(
         opacity: 0.3,
-        child: _WorkoutCard(workout: workout, typeColor: typeColor, colors: colors),
+        child: _WorkoutCard(
+          workout: workout,
+          typeColor: typeColor,
+          colors: colors,
+        ),
       ),
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 200),
         opacity: isDragging ? 0.3 : 1.0,
-        child: _WorkoutCard(workout: workout, typeColor: typeColor, colors: colors),
+        child: _WorkoutCard(
+          workout: workout,
+          typeColor: typeColor,
+          colors: colors,
+        ),
       ),
     );
   }
 }
-
 
 class _WorkoutCard extends StatelessWidget {
   final Workout workout;
@@ -305,9 +314,7 @@ class _WorkoutCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isCompleted
-            ? colors.success.withOpacity(0.1)
-            : colors.elevated,
+        color: isCompleted ? colors.success.withOpacity(0.1) : colors.elevated,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isCompleted
@@ -327,20 +334,14 @@ class _WorkoutCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: isCompleted
-                        ? colors.success
-                        : colors.textPrimary,
+                    color: isCompleted ? colors.success : colors.textPrimary,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (isCompleted)
-                Icon(
-                  Icons.check_circle,
-                  size: 14,
-                  color: colors.success,
-                ),
+                Icon(Icons.check_circle, size: 14, color: colors.success),
             ],
           ),
           const SizedBox(height: 4),
@@ -351,7 +352,8 @@ class _WorkoutCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              workout.type?.toUpperCase() ?? AppLocalizations.of(context).workoutsStrength,
+              workout.type?.toUpperCase() ??
+                  AppLocalizations.of(context).workoutsStrength,
               style: TextStyle(
                 fontSize: 8,
                 fontWeight: FontWeight.w600,
@@ -362,187 +364,10 @@ class _WorkoutCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             workout.formattedDurationShort,
-            style: TextStyle(
-              fontSize: 9,
-              color: colors.textMuted,
-            ),
+            style: TextStyle(fontSize: 9, color: colors.textMuted),
           ),
         ],
       ),
     );
   }
 }
-
-
-// ─────────────────────────────────────────────────────────────────
-// Agenda View Workout Card (larger, phone-friendly)
-// ─────────────────────────────────────────────────────────────────
-
-class _AgendaWorkoutCard extends StatelessWidget {
-  final Workout workout;
-  final ThemeColors colors;
-  final VoidCallback onTap;
-
-  const _AgendaWorkoutCard({
-    required this.workout,
-    required this.colors,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
-    final isCompleted = workout.isCompleted ?? false;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final leftMargin = screenWidth < 380 ? 40.0 : 60.0;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: EdgeInsetsDirectional.only(start: leftMargin, bottom: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isCompleted
-              ? colors.success.withOpacity(0.1)
-              : colors.elevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isCompleted
-                ? colors.success.withOpacity(0.4)
-                : typeColor.withOpacity(0.3),
-            width: isCompleted ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Workout type icon
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: typeColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                _getWorkoutIcon(workout.type),
-                color: typeColor,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            // Workout details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    workout.name ?? AppLocalizations.of(context).navWorkout,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: isCompleted
-                          ? colors.success
-                          : colors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: typeColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          workout.type?.toUpperCase() ?? AppLocalizations.of(context).workoutsStrength,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: typeColor,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.timer_outlined, size: 14, color: colors.textMuted),
-                          const SizedBox(width: 4),
-                          Text(
-                            AppLocalizations.of(context)!.scheduleScreenPartWeekSelectorMin(workout.bestDurationMinutes),
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: colors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.fitness_center, size: 14, color: colors.textMuted),
-                          const SizedBox(width: 4),
-                          Text(
-                            AppLocalizations.of(context)!.scheduleScreenPartWeekSelectorEx(workout.exerciseCount),
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: colors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            // Status indicator
-            if (isCompleted)
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: colors.success.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check,
-                  color: colors.success,
-                  size: 20,
-                ),
-              )
-            else
-              Icon(
-                Icons.chevron_right,
-                color: colors.textMuted,
-                size: 24,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getWorkoutIcon(String? type) {
-    switch (type?.toLowerCase()) {
-      case 'strength':
-        return Icons.fitness_center;
-      case 'cardio':
-        return Icons.directions_run;
-      case 'hiit':
-        return Icons.flash_on;
-      case 'flexibility':
-        return Icons.self_improvement;
-      case 'yoga':
-        return Icons.self_improvement;
-      default:
-        return Icons.fitness_center;
-    }
-  }
-}
-

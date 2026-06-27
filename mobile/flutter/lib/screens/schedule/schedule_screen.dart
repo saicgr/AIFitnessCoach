@@ -11,6 +11,9 @@ import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/schedule_item.dart';
 import '../../data/models/workout.dart';
+import '../../data/models/user_program_assignment.dart';
+import '../../data/models/workout_program_context.dart';
+import '../../data/providers/program_assignments_provider.dart';
 import '../../data/providers/schedule_provider.dart';
 import '../../data/repositories/schedule_repository.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -18,7 +21,13 @@ import '../../core/services/posthog_service.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/glass_sheet.dart';
 import '../profile/synced_workout_detail_screen.dart';
+import '../workout/widgets/program_manage_sheet.dart';
+import 'widgets/active_programs_strip.dart';
 import 'widgets/add_schedule_item_sheet.dart';
+import 'widgets/manage_programs_sheet.dart';
+import 'widgets/program_color.dart';
+import 'widgets/program_session_card.dart';
+import 'widgets/schedule_filter_sheet.dart';
 import 'widgets/schedule_item_card.dart';
 import 'widgets/timeline_view.dart';
 
@@ -29,7 +38,11 @@ part 'schedule_screen_part_week_selector.dart';
 DateTime _weekStartFor(DateTime date, int weekStartDay) {
   // DateTime.weekday: 1=Mon..7=Sun
   final diff = (date.weekday - weekStartDay + 7) % 7;
-  return DateTime(date.year, date.month, date.day).subtract(Duration(days: diff));
+  return DateTime(
+    date.year,
+    date.month,
+    date.day,
+  ).subtract(Duration(days: diff));
 }
 
 /// Provider for currently selected week (respects week start day preference)
@@ -59,6 +72,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   int _generatedCount = 0;
   int _totalToGenerate = 0;
 
+  // Program-aware agenda filter (by program + by type). Empty = show all.
+  ScheduleFilter _filter = ScheduleFilter.none;
+
   @override
   void initState() {
     super.initState();
@@ -87,10 +103,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               });
             },
           ),
-          PillAppBarAction(
-            icon: Icons.today,
-            onTap: () => _goToToday(ref),
-          ),
+          PillAppBarAction(icon: Icons.today, onTap: () => _goToToday(ref)),
         ],
       ),
       body: Column(
@@ -107,8 +120,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               // Re-compute selected week with new start day
               final now = DateTime.now();
               final newStartDay = ref.read(weekStartDayProvider);
-              ref.read(selectedWeekProvider.notifier).state =
-                  _weekStartFor(now, newStartDay);
+              ref.read(selectedWeekProvider.notifier).state = _weekStartFor(
+                now,
+                newStartDay,
+              );
             },
           ),
 
@@ -129,11 +144,19 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                       return _buildTimelineView(context, selectedWeek, colors);
                     case 'week':
                       return _buildWeekView(
-                          context, workouts, selectedWeek, colors);
+                        context,
+                        workouts,
+                        selectedWeek,
+                        colors,
+                      );
                     case 'agenda':
                     default:
                       return _buildAgendaView(
-                          context, workouts, selectedWeek, colors);
+                        context,
+                        workouts,
+                        selectedWeek,
+                        colors,
+                      );
                   }
                 }
                 // Error with no cached data to fall back to.
@@ -142,11 +165,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline,
-                            size: 48, color: colors.error),
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: colors.error,
+                        ),
                         const SizedBox(height: 16),
-                        Text('Failed to load: ${workoutsState.error}',
-                            style: TextStyle(color: colors.textPrimary)),
+                        Text(
+                          'Failed to load: ${workoutsState.error}',
+                          style: TextStyle(color: colors.textPrimary),
+                        ),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () =>
@@ -176,10 +204,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   Expanded(
                     child: Text(
                       _hintText,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colors.textMuted,
-                      ),
+                      style: TextStyle(fontSize: 14, color: colors.textMuted),
                     ),
                   ),
                   GestureDetector(
@@ -254,12 +279,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     }
   }
 
-  void _showAddItemSheet(BuildContext context, ThemeColors colors, {String? prefilledTime}) {
+  void _showAddItemSheet(
+    BuildContext context,
+    ThemeColors colors, {
+    String? prefilledTime,
+  }) {
     final selectedWeek = ref.read(selectedWeekProvider);
     // Use today if within the selected week, otherwise use Monday of selected week
     final now = DateTime.now();
     final weekEnd = selectedWeek.add(const Duration(days: 6));
-    final selectedDate = (now.isAfter(selectedWeek) && now.isBefore(weekEnd.add(const Duration(days: 1))))
+    final selectedDate =
+        (now.isAfter(selectedWeek) &&
+            now.isBefore(weekEnd.add(const Duration(days: 1))))
         ? DateTime(now.year, now.month, now.day)
         : selectedWeek;
 
@@ -275,7 +306,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 
-  Future<void> _createScheduleItem(ScheduleItemCreate item, ThemeColors colors) async {
+  Future<void> _createScheduleItem(
+    ScheduleItemCreate item,
+    ThemeColors colors,
+  ) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
@@ -295,11 +329,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   }
 
   /// Timeline view showing a vertical 24-hour timeline for today/selected day
-  Widget _buildTimelineView(BuildContext context, DateTime weekStart, ThemeColors colors) {
+  Widget _buildTimelineView(
+    BuildContext context,
+    DateTime weekStart,
+    ThemeColors colors,
+  ) {
     // Use today if within the selected week
     final now = DateTime.now();
     final weekEnd = weekStart.add(const Duration(days: 6));
-    final selectedDate = (now.isAfter(weekStart.subtract(const Duration(days: 1))) &&
+    final selectedDate =
+        (now.isAfter(weekStart.subtract(const Duration(days: 1))) &&
             now.isBefore(weekEnd.add(const Duration(days: 1))))
         ? DateTime(now.year, now.month, now.day)
         : weekStart;
@@ -328,15 +367,24 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   selectedDate.day == now.day) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: colors.accent.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: colors.accent.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Text(
                     AppLocalizations.of(context).todayScoreCardToday,
-                    style: ZType.lbl(9, color: colors.accent, letterSpacing: 1.6),
+                    style: ZType.lbl(
+                      9,
+                      color: colors.accent,
+                      letterSpacing: 1.6,
+                    ),
                   ),
                 ),
               ],
@@ -352,8 +400,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 return TimelineView(
                   items: schedule.items,
                   isDark: colors.isDark,
-                  onItemTap: (item) => _showAddItemSheet(context, colors,
-                      prefilledTime: item.startTime),
+                  onItemTap: (item) => _showAddItemSheet(
+                    context,
+                    colors,
+                    prefilledTime: item.startTime,
+                  ),
                   onEmptyTap: (time) =>
                       _showAddItemSheet(context, colors, prefilledTime: time),
                 );
@@ -361,8 +412,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               if (scheduleAsync.hasError) {
                 return Center(
                   child: Text(
-                      'Failed to load timeline: ${scheduleAsync.error}',
-                      style: TextStyle(color: colors.error)),
+                    'Failed to load timeline: ${scheduleAsync.error}',
+                    style: TextStyle(color: colors.error),
+                  ),
                 );
               }
               // Cold start — layout-matched skeleton list of time-slot rows.
@@ -378,20 +430,74 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 
-  /// Agenda view - vertical scrolling list grouped by day
-  Widget _buildAgendaView(BuildContext context, List<Workout> workouts, DateTime weekStart, ThemeColors colors) {
+  /// Agenda view - vertical scrolling list grouped by day. Program-aware:
+  /// renders a merged multi-program calendar (curated photo-forward cards, AI
+  /// placeholders on uncovered training days), an active-programs strip + filter
+  /// bar header, and a soft recovery caution on heavy days.
+  Widget _buildAgendaView(
+    BuildContext context,
+    List<Workout> workouts,
+    DateTime weekStart,
+    ThemeColors colors,
+  ) {
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
     final today = DateTime.now();
 
+    // Active program enrollments (drive the strip, card colors, AI ghosting).
+    final assignments =
+        ref
+            .watch(programAssignmentsProvider)
+            .valueOrNull
+            ?.where((a) => a.isActive)
+            .toList() ??
+        const <UserProgramAssignment>[];
+    final userWorkoutDays =
+        ref.watch(currentUserProvider).valueOrNull?.workoutDays ??
+        const <int>[];
+
+    final hasPrograms = assignments.isNotEmpty;
+    final headerCount = hasPrograms ? 1 : 0;
+
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: 7,
-      itemBuilder: (context, index) {
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: headerCount + 7,
+      itemBuilder: (context, rawIndex) {
+        // Header row: active-programs strip + filter bar (only with programs).
+        if (hasPrograms && rawIndex == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 4, bottom: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ActiveProgramsStrip(
+                  assignments: assignments,
+                  colors: colors,
+                  onManage: _openManagePrograms,
+                  onTapProgram: _onTapProgramChip,
+                ),
+                const SizedBox(height: 12),
+                ScheduleFilterBar(
+                  filter: _filter,
+                  colors: colors,
+                  onOpenSheet: () => _openFilterSheet(assignments, workouts),
+                  onToggleType: (t) =>
+                      setState(() => _filter = _filter.toggleType(t)),
+                  onClear: () => setState(() => _filter = ScheduleFilter.none),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final index = rawIndex - headerCount;
         final day = days[index];
-        final isToday = day.year == today.year &&
+        final isToday =
+            day.year == today.year &&
             day.month == today.month &&
             day.day == today.day;
-        final isPast = day.isBefore(DateTime(today.year, today.month, today.day));
+        final isPast = day.isBefore(
+          DateTime(today.year, today.month, today.day),
+        );
         final dayWorkouts = _getWorkoutsForDay(workouts, day);
         final dayAccent = _accentForWeekday(day.weekday);
 
@@ -399,163 +505,430 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         final dayDate = DateTime(day.year, day.month, day.day);
         final scheduleAsync = ref.watch(dailyScheduleProvider(dayDate));
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Day header
-            Padding(
-              padding: const EdgeInsets.only(top: 16, bottom: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: isToday ? dayAccent : colors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: isToday
-                          ? null
-                          : Border.all(color: AppColors.cardBorder),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          DateFormat('E').format(day).toUpperCase(),
-                          style: ZType.lbl(
-                            9,
-                            color: isToday
-                                ? colors.accentContrast
-                                : (isPast ? colors.textMuted : colors.textSecondary),
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        Text(
-                          '${day.day}',
-                          style: ZType.disp(
-                            18,
-                            color: isToday
-                                ? colors.accentContrast
-                                : (isPast ? colors.textMuted : colors.textPrimary),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          DateFormat('EEEE').format(day).toUpperCase(),
-                          style: ZType.lbl(
-                            15,
-                            color: isToday ? dayAccent : (isPast ? colors.textMuted : colors.textPrimary),
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        Text(
-                          DateFormat('MMM d, yyyy').format(day),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: colors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (isToday)
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Day header
+              Padding(
+                padding: const EdgeInsets.only(top: 16, bottom: 8),
+                child: Row(
+                  children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
-                        color: dayAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: dayAccent.withValues(alpha: 0.4)),
+                        color: isToday ? dayAccent : colors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isToday
+                            ? null
+                            : Border.all(color: AppColors.cardBorder),
                       ),
-                      child: Text(
-                        'TODAY',
-                        style: ZType.lbl(10, color: dayAccent, letterSpacing: 1.8),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            DateFormat('E').format(day).toUpperCase(),
+                            style: ZType.lbl(
+                              9,
+                              color: isToday
+                                  ? colors.accentContrast
+                                  : (isPast
+                                        ? colors.textMuted
+                                        : colors.textSecondary),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          Text(
+                            '${day.day}',
+                            style: ZType.disp(
+                              18,
+                              color: isToday
+                                  ? colors.accentContrast
+                                  : (isPast
+                                        ? colors.textMuted
+                                        : colors.textPrimary),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            DateFormat('EEEE').format(day).toUpperCase(),
+                            style: ZType.lbl(
+                              15,
+                              color: isToday
+                                  ? dayAccent
+                                  : (isPast
+                                        ? colors.textMuted
+                                        : colors.textPrimary),
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('MMM d, yyyy').format(day),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isToday)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: dayAccent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: dayAccent.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Text(
+                          'TODAY',
+                          style: ZType.lbl(
+                            10,
+                            color: dayAccent,
+                            letterSpacing: 1.8,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
 
-            // Schedule items for the day. Read via valueOrNull so a silent
-            // background revalidate never blanks already-rendered items.
-            Builder(
-              builder: (context) {
-                final schedule = scheduleAsync.valueOrNull;
-                if (schedule != null && schedule.items.isNotEmpty) {
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      left: MediaQuery.of(context).size.width < 380 ? 40.0 : 60.0,
-                    ),
-                    child: Column(
-                      children: schedule.items.map((item) => ScheduleItemCard(
-                        item: item,
-                        isDark: colors.isDark,
-                        onTap: () => _showAddItemSheet(context, colors, prefilledTime: item.startTime),
-                        onComplete: () => _completeItem(item, colors),
-                      )).toList(),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-
-            // Workouts for the day (legacy support)
-            if (dayWorkouts.isEmpty)
+              // Schedule items for the day. Read via valueOrNull so a silent
+              // background revalidate never blanks already-rendered items.
               Builder(
                 builder: (context) {
-                  final screenWidth = MediaQuery.of(context).size.width;
-                  final leftMargin = screenWidth < 380 ? 40.0 : 60.0;
-                  return scheduleAsync.maybeWhen(
-                    data: (schedule) {
-                      if (schedule.items.isNotEmpty) return const SizedBox.shrink();
-                      return _buildEmptyDayTile(leftMargin, dayAccent, isPast, colors);
-                    },
-                    orElse: () => _buildEmptyDayTile(leftMargin, dayAccent, isPast, colors),
-                  );
+                  final schedule = scheduleAsync.valueOrNull;
+                  if (schedule != null && schedule.items.isNotEmpty) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        left: MediaQuery.of(context).size.width < 380
+                            ? 40.0
+                            : 60.0,
+                      ),
+                      child: Column(
+                        children: schedule.items
+                            .map(
+                              (item) => ScheduleItemCard(
+                                item: item,
+                                isDark: colors.isDark,
+                                onTap: () => _showAddItemSheet(
+                                  context,
+                                  colors,
+                                  prefilledTime: item.startTime,
+                                ),
+                                onComplete: () => _completeItem(item, colors),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
-              )
-            else
-              ...dayWorkouts.asMap().entries.map((entry) {
-                final workoutCard = _AgendaWorkoutCard(
-                  workout: entry.value,
-                  colors: colors,
-                  onTap: () {
-                    if (entry.value.generationMethod == 'health_connect_import') {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => SyncedWorkoutDetailScreen(workout: entry.value),
-                      ));
-                    } else if (entry.value.isCompleted == true) {
-                      // Completed workouts open the summary (Detail/Summary/Advanced)
-                      // instead of the active "Start workout" detail.
-                      context.push('/workout-summary/${entry.value.id}', extra: entry.value);
-                    } else {
-                      context.push('/workout/${entry.value.id}', extra: entry.value);
-                    }
-                  },
-                );
-                return workoutCard;
-              }),
-
-            // Divider between days
-            if (index < 6)
-              Divider(
-                color: colors.cardBorder.withOpacity(0.3),
-                height: 24,
               ),
-          ],
+
+              // Program-aware sessions (curated cards + AI placeholders +
+              // recovery caution), or the empty/rest tile.
+              _buildDaySessions(
+                context,
+                day,
+                isPast,
+                dayWorkouts,
+                assignments,
+                userWorkoutDays,
+                scheduleAsync.valueOrNull?.items.isNotEmpty ?? false,
+                dayAccent,
+                colors,
+              ),
+
+              // Divider between days
+              if (index < 6)
+                Divider(color: colors.cardBorder.withOpacity(0.3), height: 24),
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildWeekView(BuildContext context, List<Workout> workouts, DateTime weekStart, ThemeColors colors) {
+  /// Build a single day's session list: filtered + ordered program/AI/ad-hoc
+  /// workout cards, an AI placeholder on uncovered training days, and a soft
+  /// recovery caption on heavy days. Falls back to the empty/rest tile.
+  Widget _buildDaySessions(
+    BuildContext context,
+    DateTime day,
+    bool isPast,
+    List<Workout> dayWorkouts,
+    List<UserProgramAssignment> assignments,
+    List<int> userWorkoutDays,
+    bool hasScheduleItems,
+    Color dayAccent,
+    ThemeColors colors,
+  ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final leftMargin = screenWidth < 380 ? 40.0 : 60.0;
+
+    // Filter, then order primary (Main) first, add-ons after, each group
+    // keeping its existing order (stable). Time-of-day ordering is a follow-up.
+    final visible = dayWorkouts.where(_filter.allows).toList();
+    final primary = visible
+        .where((w) => !(w.programContext?.isAddon ?? false))
+        .toList();
+    final addon = visible
+        .where((w) => (w.programContext?.isAddon ?? false))
+        .toList();
+    final ordered = [...primary, ...addon];
+    final multiSession = ordered.length > 1;
+
+    // AI placeholder: an uncovered training day with nothing materialized yet.
+    final weekday0 = (day.weekday - 1) % 7;
+    final covered = assignmentForWeekday(assignments, weekday0) != null;
+    final isTrainingDay = userWorkoutDays.contains(weekday0);
+    final filterAllowsAi =
+        _filter.programs.isEmpty ||
+        _filter.programs.contains(kAiProgramFilterToken);
+    final showGhost =
+        isTrainingDay &&
+        !isPast &&
+        !covered &&
+        dayWorkouts.isEmpty &&
+        filterAllowsAi;
+
+    // Recovery caution (client-side heuristic, never blocks).
+    final totalMin = ordered.fold<int>(0, (s, w) => s + w.bestDurationMinutes);
+    final bigDay = ordered.length >= 3 || totalMin >= 120;
+
+    final children = <Widget>[];
+    for (final w in ordered) {
+      if (children.isNotEmpty) children.add(const SizedBox(height: 8));
+      children.add(_sessionCard(context, w, day, assignments, multiSession));
+    }
+    if (showGhost) {
+      if (children.isNotEmpty) children.add(const SizedBox(height: 8));
+      children.add(AiPlaceholderCard(onTap: () => _generateForDate(day)));
+    }
+    if (bigDay && ordered.isNotEmpty) {
+      children.add(const SizedBox(height: 8));
+      children.add(_recoveryCaution(ordered.length, totalMin, colors));
+    }
+
+    if (children.isEmpty) {
+      // No sessions, no ghost: empty/rest tile (unless custom items fill it).
+      if (hasScheduleItems) return const SizedBox.shrink();
+      return _buildEmptyDayTile(leftMargin, dayAccent, isPast, colors);
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(left: leftMargin),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
+    );
+  }
+
+  /// One program-aware session card. Curated workouts resolve a stable program
+  /// color + "NAME · W{w}D{n}" tag; non-program (AI / synced / ad-hoc) workouts
+  /// fall back to a type color + type label.
+  Widget _sessionCard(
+    BuildContext context,
+    Workout w,
+    DateTime day,
+    List<UserProgramAssignment> assignments,
+    bool multiSession,
+  ) {
+    final ctx = w.programContext;
+    final assignmentId = ctx?.assignmentId;
+    UserProgramAssignment? assignment;
+    if (assignmentId != null) {
+      for (final a in assignments) {
+        if (a.id == assignmentId) {
+          assignment = a;
+          break;
+        }
+      }
+    }
+
+    final Color accent = (assignmentId != null && assignmentId.isNotEmpty)
+        ? ProgramColors.forKey(assignmentId)
+        : AppColors.getWorkoutTypeColor(w.type ?? 'strength');
+
+    final isAddon = ctx?.isAddon ?? false;
+    String? slotBadge;
+    if (multiSession) {
+      slotBadge = isAddon ? 'Extra' : 'Main';
+    } else if (isAddon) {
+      slotBadge = 'Extra';
+    }
+
+    return ProgramSessionCard(
+      workout: w,
+      tagLabel: _tagFor(w, ctx, assignment, day),
+      accent: accent,
+      slotBadge: slotBadge,
+      compact: isAddon,
+      onTap: () => _openWorkout(context, w),
+    );
+  }
+
+  /// "HYROX · W1D3" for program workouts; a type label otherwise.
+  String _tagFor(
+    Workout w,
+    WorkoutProgramContext? ctx,
+    UserProgramAssignment? assignment,
+    DateTime day,
+  ) {
+    final name = ctx?.programName?.trim();
+    if (name != null && name.isNotEmpty) {
+      final sb = StringBuffer(name);
+      final wk = ctx?.programWeek;
+      if (wk != null && wk > 0) {
+        sb.write(' · W$wk');
+        final dn = _dayNumberInProgram(assignment, day);
+        if (dn != null) sb.write('D$dn');
+      }
+      return sb.toString();
+    }
+    final type = w.type?.trim();
+    if (type != null && type.isNotEmpty) return type;
+    return 'Workout';
+  }
+
+  /// Which numbered session of the program's week this day is (1-based), from
+  /// the assignment's training days. Null when unknown.
+  int? _dayNumberInProgram(UserProgramAssignment? assignment, DateTime day) {
+    if (assignment == null || assignment.assignedDays.isEmpty) return null;
+    final weekday0 = (day.weekday - 1) % 7;
+    final sorted = [...assignment.assignedDays]..sort();
+    final idx = sorted.indexOf(weekday0);
+    return idx >= 0 ? idx + 1 : null;
+  }
+
+  /// Soft, non-blocking recovery caption for heavy days.
+  Widget _recoveryCaution(int sessions, int minutes, ThemeColors colors) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: colors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: colors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded, size: 16, color: colors.warning),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '$sessions sessions today (~$minutes min). Big day — recover well.',
+              style: TextStyle(
+                fontSize: 11.5,
+                height: 1.35,
+                color: colors.warning,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Route a workout tap (synced import → detail, completed → summary, else
+  /// active detail). Mirrors the legacy agenda card tap behavior.
+  void _openWorkout(BuildContext context, Workout w) {
+    if (w.generationMethod == 'health_connect_import') {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SyncedWorkoutDetailScreen(workout: w),
+        ),
+      );
+    } else if (w.isCompleted == true) {
+      context.push('/workout-summary/${w.id}', extra: w);
+    } else {
+      context.push('/workout/${w.id}', extra: w);
+    }
+  }
+
+  /// Generate the AI workout for a specific (uncovered) training day, triggered
+  /// from the ghosted AI placeholder card.
+  Future<void> _generateForDate(DateTime date) async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Generating ${DateFormat('EEEE').format(date)}\'s workout…',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+    try {
+      final workout = await ref
+          .read(workoutsProvider.notifier)
+          .generateWorkoutForDate(date);
+      if (!mounted) return;
+      if (workout != null) {
+        AppSnackBar.success(
+          context,
+          'Generated ${DateFormat('EEEE, MMM d').format(date)}',
+        );
+      } else {
+        AppSnackBar.error(context, 'Could not generate that workout.');
+      }
+    } catch (e) {
+      if (mounted) AppSnackBar.error(context, 'Could not generate: $e');
+    }
+  }
+
+  void _openManagePrograms() {
+    showManageProgramsSheet(context, ref);
+  }
+
+  Future<void> _openFilterSheet(
+    List<UserProgramAssignment> assignments,
+    List<Workout> workouts,
+  ) async {
+    final available = <ScheduleWorkoutType>{};
+    for (final w in workouts) {
+      available.add(scheduleTypeFor(w));
+    }
+    final result = await showScheduleFilterSheet(
+      context: context,
+      current: _filter,
+      assignments: assignments,
+      availableTypes: available,
+    );
+    if (result != null && mounted) {
+      setState(() => _filter = result);
+    }
+  }
+
+  void _onTapProgramChip(UserProgramAssignment assignment) {
+    // TODO(full-program-view): open the all-weeks view (screen F). For now,
+    // open the existing per-program manage sheet.
+    showProgramManageSheet(context, ref, assignment);
+  }
+
+  Widget _buildWeekView(
+    BuildContext context,
+    List<Workout> workouts,
+    DateTime weekStart,
+    ThemeColors colors,
+  ) {
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
     final today = DateTime.now();
 
@@ -563,7 +936,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       children: days.asMap().entries.map((entry) {
         final index = entry.key;
         final day = entry.value;
-        final isToday = day.year == today.year &&
+        final isToday =
+            day.year == today.year &&
             day.month == today.month &&
             day.day == today.day;
         final dayWorkouts = _getWorkoutsForDay(workouts, day);
@@ -618,12 +992,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                               ? [
                                   Container(
                                     height: 60,
-                                    margin: const EdgeInsets.symmetric(vertical: 4),
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: isTargetDay
                                             ? colors.cyan.withOpacity(0.5)
-                                            : colors.cardBorder.withOpacity(0.2),
+                                            : colors.cardBorder.withOpacity(
+                                                0.2,
+                                              ),
                                         style: BorderStyle.solid,
                                       ),
                                       borderRadius: BorderRadius.circular(8),
@@ -643,7 +1021,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                   return _DraggableWorkoutCard(
                                     workout: workout,
                                     onDragStarted: () {
-                                      setState(() => _draggingWorkout = workout);
+                                      setState(
+                                        () => _draggingWorkout = workout,
+                                      );
                                     },
                                     onDragEnd: () {
                                       setState(() {
@@ -651,7 +1031,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                         _targetDayIndex = null;
                                       });
                                     },
-                                    isDragging: _draggingWorkout?.id == workout.id,
+                                    isDragging:
+                                        _draggingWorkout?.id == workout.id,
                                     colors: colors,
                                   );
                                 }).toList(),
@@ -747,7 +1128,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 
-  Widget _buildEmptyDayTile(double leftMargin, Color dayAccent, bool isPast, ThemeColors colors) {
+  Widget _buildEmptyDayTile(
+    double leftMargin,
+    Color dayAccent,
+    bool isPast,
+    ThemeColors colors,
+  ) {
     return Container(
       margin: EdgeInsets.only(left: leftMargin, bottom: 8),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
@@ -765,7 +1151,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           ),
           const SizedBox(width: 12),
           Text(
-            isPast ? AppLocalizations.of(context).scheduleRestDay : AppLocalizations.of(context).scheduleNoItemsScheduled,
+            isPast
+                ? AppLocalizations.of(context).scheduleRestDay
+                : AppLocalizations.of(context).scheduleNoItemsScheduled,
             style: ZType.lbl(
               12,
               color: isPast ? colors.textMuted : colors.textSecondary,
@@ -777,7 +1165,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 
-  Future<void> _rescheduleWorkout(Workout workout, DateTime newDate, ThemeColors colors) async {
+  Future<void> _rescheduleWorkout(
+    Workout workout,
+    DateTime newDate,
+    ThemeColors colors,
+  ) async {
     final newDateStr = DateFormat('yyyy-MM-dd').format(newDate);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -803,13 +1195,19 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     try {
       final repository = ref.read(workoutRepositoryProvider);
-      final success = await repository.rescheduleWorkout(workout.id!, newDateStr);
+      final success = await repository.rescheduleWorkout(
+        workout.id!,
+        newDateStr,
+      );
 
       if (success) {
         await ref.read(workoutsProvider.notifier).silentRefresh();
 
         if (mounted) {
-          AppSnackBar.success(context, 'Workout moved to ${DateFormat('EEEE, MMM d').format(newDate)}');
+          AppSnackBar.success(
+            context,
+            'Workout moved to ${DateFormat('EEEE, MMM d').format(newDate)}',
+          );
         }
       } else {
         throw Exception('Failed to reschedule');
@@ -823,15 +1221,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
   void _changeWeek(WidgetRef ref, int delta) {
     final current = ref.read(selectedWeekProvider);
-    ref.read(selectedWeekProvider.notifier).state =
-        current.add(Duration(days: 7 * delta));
+    ref.read(selectedWeekProvider.notifier).state = current.add(
+      Duration(days: 7 * delta),
+    );
   }
 
   void _goToToday(WidgetRef ref) {
     final weekStartDay = ref.read(weekStartDayProvider);
     final now = DateTime.now();
-    ref.read(selectedWeekProvider.notifier).state =
-        _weekStartFor(now, weekStartDay);
+    ref.read(selectedWeekProvider.notifier).state = _weekStartFor(
+      now,
+      weekStartDay,
+    );
   }
 
   /// Compute which training dates in this week still need workouts
@@ -917,7 +1318,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                               color: colors.accent.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: colors.accent.withValues(alpha: 0.35)),
+                                color: colors.accent.withValues(alpha: 0.35),
+                              ),
                             ),
                             child: Icon(
                               Icons.auto_awesome,
@@ -931,7 +1333,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  AppLocalizations.of(context).scheduleGenerateThisWeek,
+                                  AppLocalizations.of(
+                                    context,
+                                  ).scheduleGenerateThisWeek,
                                   style: ZType.lbl(
                                     14,
                                     color: colors.textPrimary,
@@ -1052,8 +1456,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               ? 'Generated $successCount workout${successCount == 1 ? '' : 's'} for this week'
               : 'Generated $successCount of ${missingDates.length} workouts',
         ),
-        backgroundColor:
-            successCount == missingDates.length ? colors.success : colors.warning,
+        backgroundColor: successCount == missingDates.length
+            ? colors.success
+            : colors.warning,
       ),
     );
   }
