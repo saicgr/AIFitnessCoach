@@ -2499,6 +2499,18 @@ async def assign_program_core(
     # and the expansion below schedule from its real per-week sessions.
     _eff_vid, _weeks_rows = _resolve_variant_weeks(db, program_id, variant_id)
 
+    # A resolved variant is AUTHORITATIVE for the schedule shape. Its week rows
+    # drive the real expansion (expand_variant_weeks below) AND its session count
+    # is whatever the variant's weeks contain — so the reported/stored duration
+    # must come from the variant, NOT the program-default duration_weeks computed
+    # above. Otherwise picking e.g. the HYROX 8wk×5/week variant while the
+    # program default is 8wk×4/week would schedule the variant correctly but
+    # label the template/assignment/response with the wrong week count and
+    # diverge from assign-preview (which derives weeks from plan_variant_schedule
+    # → weeks_used). min(len, MAX_WEEKS) matches the planner's [:max_weeks] slice.
+    if _weeks_rows:
+        weeks = max(1, min(len(_weeks_rows), MAX_WEEKS))
+
     customize_summary: Optional[Dict[str, Any]] = None
     if customize is not None:
         from services.program_customizer import (
@@ -2692,6 +2704,25 @@ async def assign_program_core(
     # --- 6. Clear /today cache (chokepoint) --------------------------------
     await _clear_today_cache(user_id)
 
+    # sessions_per_week — from the CHOSEN variant's busiest week when scheduling
+    # from program_variant_weeks (authoritative, matches the preview); else the
+    # base-blob template's non-rest day count. Surfaced so the client can verify
+    # assign == assign-preview after a non-default frequency pick.
+    if _weeks_rows:
+        # Mirror plan_variant_schedule's per-week session count (dict-only) so
+        # this equals the preview's sessions_per_week exactly.
+        sessions_per_week = max(
+            (
+                len([s for s in (w.get("workouts") or []) if isinstance(s, dict)])
+                for w in _weeks_rows
+            ),
+            default=0,
+        )
+    else:
+        sessions_per_week = len(
+            [d for d in (days or []) if not d.get("is_rest")]
+        )
+
     response: Dict[str, Any] = {
         "success": True,
         "assignment_id": assignment_id,
@@ -2701,6 +2732,7 @@ async def assign_program_core(
         "slot": slot,
         "assigned_days": list(assigned_days or []),
         "duration_weeks": weeks,
+        "sessions_per_week": sessions_per_week,
         "workouts_created": result["workouts_created"],
         "skipped_existing": result["skipped_existing"],
         "superseded_existing": result.get("superseded_existing", 0),
