@@ -490,11 +490,13 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     // Use dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
-    // Hero image is light → dark icons while expanded; once collapsed, match
-    // the solid bar (white icons on the dark-theme black bar).
-    final overlayStyle = (_headerCollapsed && isDark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark)
+    // The hero media can be a WHITE écorché OR a dark video — either way a top
+    // scrim (added in _buildVideoSection) darkens the status-bar strip, so we
+    // use LIGHT icons while expanded. Once collapsed, match the solid bar:
+    // light icons on the dark-theme black bar, dark icons on a light-theme bar.
+    final overlayStyle = (_headerCollapsed && !isDark
+            ? SystemUiOverlayStyle.dark
+            : SystemUiOverlayStyle.light)
         .copyWith(statusBarColor: Colors.transparent);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -869,6 +871,27 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
             else
               _buildPlaceholder(elevated, textMuted),
 
+            // Status-bar scrim — keeps the phone's clock/battery legible over a
+            // WHITE video/image frame (the écorché bleeds under the notch).
+            // Pairs with the LIGHT status-bar icons set above.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Container(
+                  height: MediaQuery.of(context).padding.top + 16,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x73000000), Color(0x00000000)],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
             // Play/Pause overlay
             if (_videoInitialized && _videoController != null)
               Center(
@@ -951,7 +974,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                       duration: const Duration(milliseconds: 160),
                       curve: Curves.easeOut,
                       child: _speedMenuOpen
-                          ? Container(
+                          // IntrinsicWidth bounds the menu so the inner
+                          // stretch-Column has a finite width to stretch to.
+                          // The Positioned (left+bottom only) otherwise hands it
+                          // an unbounded width → "forces infinite width" crash.
+                          ? IntrinsicWidth(
+                              child: Container(
                               margin: const EdgeInsets.only(bottom: 8),
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               decoration: BoxDecoration(
@@ -988,6 +1016,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                                       ),
                                     ),
                                 ],
+                              ),
                               ),
                             )
                           : const SizedBox.shrink(),
