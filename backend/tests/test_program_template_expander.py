@@ -425,8 +425,8 @@ class TestExpandTemplateResultShape:
     def test_result_keys(self):
         result, _ = _run_expand(_template(), weeks=2)
         assert set(result) == {
-            "workouts_created", "skipped_existing", "total_attempted",
-            "deload_weeks", "schedule_id",
+            "workouts_created", "skipped_existing", "superseded_existing",
+            "total_attempted", "deload_weeks", "schedule_id",
         }
 
     def test_rest_days_produce_no_rows(self):

@@ -60,6 +60,7 @@ from services.program_template_expander import (
     plan_template_days,
     plan_variant_schedule,
     regenerate_future,
+    resolve_collision,
     MAX_WEEKS,
 )
 
@@ -218,6 +219,15 @@ class AssignProgramRequest(BaseModel):
         "curated programs.workouts blob. Fail-open: any lookup error falls "
         "back to the single-plan path.",
     )
+    day_resolutions: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Optional per-day conflict override: {ISO date 'YYYY-MM-DD' "
+        "→ 'replace' | 'add'}. 'replace' supersedes the existing workout that "
+        "day; 'add' keeps it and stacks the new one as an extra "
+        "(program_slot='addon'). Absent/empty → the global slot+replace default "
+        "(primary+replace replaces conflicts). Must match the assign-preview "
+        "input so creation mirrors the preview exactly.",
+    )
 
 
 class AssignPreviewRequest(BaseModel):
@@ -232,6 +242,12 @@ class AssignPreviewRequest(BaseModel):
     replace: bool = True
     duration_weeks: Optional[int] = Field(default=None, ge=1)
     variant_id: Optional[str] = None
+    day_resolutions: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Per-day conflict override {ISO date → 'replace' | 'add'}; "
+        "same shape + semantics as on AssignProgramRequest so the preview "
+        "reflects exactly what assign will create.",
+    )
 
 
 # =============================================================================
@@ -2384,9 +2400,15 @@ async def assign_program_core(
     duration_weeks: Optional[int],
     customize: Optional[CustomizeOptions],
     variant_id: Optional[str] = None,
+    day_resolutions: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """Shared Start-a-program logic used by the HTTP endpoint AND the coach
     `assign_program` tool. Returns the response dict.
+
+    `day_resolutions` ({ISO date → 'replace' | 'add'}) is an optional per-day
+    conflict override threaded into the expander so a colliding date is either
+    replaced (existing workout removed) or stacked (new tagged 'addon'),
+    matching the assign-preview the user confirmed.
 
     Steps: validate published program -> clone to user_program_template (with
     optional customization of days) -> end overlapping active primaries (replace)
@@ -2637,6 +2659,9 @@ async def assign_program_core(
             assignment_id=assignment_id,
             program_slot=slot,
             apply_staples=True,
+            replace=replace,
+            day_resolutions=day_resolutions or {},
+            resolve_collisions=True,
         )
     else:
         result = expand_template(
@@ -2651,6 +2676,9 @@ async def assign_program_core(
             assignment_id=assignment_id,
             program_slot=slot,
             assigned_days=list(assigned_days or []),
+            replace=replace,
+            day_resolutions=day_resolutions or {},
+            resolve_collisions=True,
         )
 
     # Record total_workouts on the assignment now that we know the count.
@@ -2675,6 +2703,7 @@ async def assign_program_core(
         "duration_weeks": weeks,
         "workouts_created": result["workouts_created"],
         "skipped_existing": result["skipped_existing"],
+        "superseded_existing": result.get("superseded_existing", 0),
         "assignment": _assignment_to_dict(
             assignment, display_name=display_name, duration_weeks=weeks
         ),
@@ -2710,6 +2739,7 @@ async def assign_program(
             duration_weeks=request.duration_weeks,
             customize=request.customize,
             variant_id=request.variant_id,
+            day_resolutions=request.day_resolutions,
         )
     except HTTPException:
         raise
@@ -3054,18 +3084,26 @@ def _build_assign_preview(
                 "existing_slot": "primary",
             }
 
-        if clash is None:
-            resolution = "add"
-            new_count += 1
-        elif slot == "addon":
-            resolution = "stack"
-            stack_count += 1
-        elif slot == "primary" and req.replace:
-            resolution = "replace"
+        # Resolve via the SAME helper the expander materializes with, so the
+        # preview can never drift from what assign creates. A per-day override in
+        # day_resolutions is honored only on a detected clash (the client sends
+        # overrides for conflict cards). resolve_collision returns add | stack |
+        # replace; "add" only happens with no clash.
+        resolution = resolve_collision(
+            date_iso=iso,
+            has_existing=(clash is not None),
+            slot=slot,
+            replace=req.replace,
+            day_resolutions=(
+                req.day_resolutions if clash is not None else None
+            ),
+        )
+        if resolution == "replace":
             replace_count += 1
-        else:  # primary, run-alongside
-            resolution = "stack"
+        elif resolution == "stack":
             stack_count += 1
+        else:  # "add"
+            new_count += 1
 
         day_out = {
             "date": iso,

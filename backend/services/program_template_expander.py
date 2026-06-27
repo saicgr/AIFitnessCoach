@@ -38,6 +38,87 @@ MAX_WEEKS = 12
 
 
 # ---------------------------------------------------------------------------
+# Per-day collision resolution (assign / assign-preview parity)
+# ---------------------------------------------------------------------------
+# A single source of truth for "what happens on a date that already has a
+# workout", shared by _build_assign_preview (the dry-run the client renders) AND
+# the expander (what assign actually materializes). Returning the SAME value
+# from one function is what guarantees the preview can never drift from the
+# commit. Vocabulary:
+#   "add"     - no existing workout that day → just create the new one.
+#   "stack"   - keep the existing AND add the new (new tagged program_slot
+#               'addon' so it shows as an extra alongside, not a replacement).
+#   "replace" - remove the existing workout(s) that day and create the new one.
+#
+# A per-day OVERRIDE in `day_resolutions` (ISO date → "replace" | "add") is
+# authoritative: it wins even on a date with no materialized row, so the user's
+# explicit choice on a conflict card is always honored identically by preview
+# and commit. With no override, conflicts fall back to slot/replace defaults
+# (primary+replace → replace; addon or primary run-alongside → stack).
+def resolve_collision(
+    *,
+    date_iso: str,
+    has_existing: bool,
+    slot: str,
+    replace: bool,
+    day_resolutions: Optional[Dict[str, str]] = None,
+) -> str:
+    """Resolve one date to 'add' | 'stack' | 'replace'. See module note above."""
+    override = (day_resolutions or {}).get(date_iso)
+    if override == "add":
+        return "stack"
+    if override == "replace":
+        return "replace"
+    if not has_existing:
+        return "add"
+    if (slot or "primary") == "addon":
+        return "stack"
+    if (slot or "primary") == "primary" and replace:
+        return "replace"
+    return "stack"  # primary, run-alongside
+
+
+def _find_colliding_workouts(
+    user_id: str, dates: List[str]
+) -> Dict[str, List[str]]:
+    """Map ISO date 'YYYY-MM-DD' → [workout_id, ...] of existing schedulable
+    workouts on that date. Mirrors the assign-preview collision filter: drops
+    health-connect imports + completed/skipped rows (those are never replaced).
+    Best-effort — any read error returns {} so scheduling never fails on the
+    collision probe (the program just stacks rather than replacing)."""
+    if not dates:
+        return {}
+    dateset = set(dates)
+    db = get_supabase()
+    out: Dict[str, List[str]] = {}
+    try:
+        lo = min(dates)
+        hi = (date.fromisoformat(max(dates)) + timedelta(days=1)).isoformat()
+        resp = (
+            db.client.table("workouts")
+            .select(
+                "id, scheduled_date, status, generation_method"
+            )
+            .eq("user_id", user_id)
+            .gte("scheduled_date", lo)
+            .lte("scheduled_date", hi)
+            .execute()
+        )
+        for w in resp.data or []:
+            if (w.get("generation_method") or "") == "health_connect_import":
+                continue
+            if (w.get("status") or "") in ("completed", "skipped"):
+                continue
+            sd = (w.get("scheduled_date") or "")[:10]
+            if sd in dateset:
+                out.setdefault(sd, []).append(str(w["id"]))
+    except Exception as e:  # noqa: BLE001 — collision probe is best-effort
+        logger.warning("collision lookup failed for %s: %s", user_id, e)
+        return {}
+    return out
+
+
+# ---------------------------------------------------------------------------
 # DB DSN helper - psycopg2 wants a plain postgresql:// DSN with sslmode.
 # ---------------------------------------------------------------------------
 def _psycopg_dsn() -> str:
@@ -352,6 +433,9 @@ def expand_template(
     assignment_id: Optional[str] = None,
     program_slot: Optional[str] = None,
     assigned_days: Optional[List[int]] = None,
+    replace: bool = True,
+    day_resolutions: Optional[Dict[str, str]] = None,
+    resolve_collisions: bool = False,
 ) -> Dict[str, Any]:
     """Expand a template into `workouts` rows inside a single DB transaction.
 
@@ -364,6 +448,15 @@ def expand_template(
         day_alignment: 'start_today' | 'calendar_weekday'.
         day_times: {str(day_index): 'HH:MM'} user-local times.
         gym_profile_id: the active gym profile rows are tagged with (#36).
+        replace: primary-slot default for conflicting dates (True → replace the
+            existing workout, False → run alongside). Only consulted when
+            resolve_collisions=True.
+        day_resolutions: optional {ISO date → "replace" | "add"} per-day override
+            of the conflict outcome (authoritative on that date).
+        resolve_collisions: when True, each date is checked against existing
+            workouts and materialized per resolve_collision() (assign path).
+            When False (plain /schedule), rows are inserted as-is — no deletes,
+            no re-tagging — preserving the original behavior.
 
     Returns:
         {"workouts_created": int, "deload_weeks": [int...],
@@ -458,6 +551,10 @@ def expand_template(
             "template_day_index": day_index,
             "intensity_mode": "deload" if is_deload else "normal",
             "gym_profile_id": gym_profile_id,
+            # Intra-day ordering (migration 2294): the template day index gives a
+            # stable order for any sessions that share a date (today.py orders by
+            # slot, then display_order, then created_at).
+            "display_order": day_index,
         }
         # Program-assignment tagging (migration 2285) — lets today.py label
         # the carousel (program name/week/slot) by resolving the assignment.
@@ -484,17 +581,31 @@ def expand_template(
 
         rows_to_insert.append(row)
 
+    # ----- per-day collision resolution (assign path only) -----------------
+    supersede_ids: List[str] = []
+    if resolve_collisions:
+        supersede_ids = _apply_collision_resolution(
+            rows_to_insert,
+            user_id=user_id,
+            slot=program_slot,
+            replace=replace,
+            day_resolutions=day_resolutions,
+        )
+
     # ----- transactional insert (all-or-nothing, idempotent) ---------------
-    created, skipped = _insert_workout_rows(rows_to_insert)
+    created, skipped, superseded = _insert_workout_rows(
+        rows_to_insert, supersede_ids
+    )
 
     logger.info(
         "Expanded template %s: %d workouts created, %d skipped (idempotent), "
-        "deload weeks=%s",
-        template_id, created, skipped, deload_weeks,
+        "%d superseded, deload weeks=%s",
+        template_id, created, skipped, superseded, deload_weeks,
     )
     return {
         "workouts_created": created,
         "skipped_existing": skipped,
+        "superseded_existing": superseded,
         "total_attempted": len(rows_to_insert),
         "deload_weeks": deload_weeks,
         "schedule_id": schedule_id,
@@ -503,17 +614,37 @@ def expand_template(
 
 def _insert_workout_rows(
     rows_to_insert: List[Dict[str, Any]],
+    supersede_ids: Optional[List[str]] = None,
 ) -> tuple:
     """Transactional, all-or-nothing, idempotent insert of workout rows. Dedupes
     on uq_workouts_template_slot (template_id, template_week, template_day_index,
     scheduled_date) so a double-tap / concurrent schedule is a no-op (#39/#69).
-    Returns (created, skipped). Shared by expand_template + expand_variant_weeks."""
+
+    When `supersede_ids` is given (the existing workouts on dates the user/slot
+    resolved to "replace"), those rows are DELETED in the SAME transaction as the
+    insert — so replace is atomic with the new program landing (never a window
+    where the date has neither workout). Only non-completed/non-skipped rows are
+    removed (completed history is preserved even if mistakenly passed in).
+
+    Returns (created, skipped, superseded). Shared by expand_template +
+    expand_variant_weeks."""
     created = 0
     skipped = 0
+    superseded = 0
     conn = psycopg2.connect(_psycopg_dsn())
     try:
         conn.autocommit = False
         with conn.cursor() as cur:
+            if supersede_ids:
+                # Replace semantics: clear the colliding rows this program now
+                # owns. Guard on status so completed/skipped history survives.
+                cur.execute(
+                    "DELETE FROM workouts WHERE id = ANY(%s) "
+                    "AND is_completed = false "
+                    "AND status NOT IN ('completed', 'skipped')",
+                    (list(supersede_ids),),
+                )
+                superseded = cur.rowcount or 0
             for row in rows_to_insert:
                 cols = list(row.keys())
                 placeholders = ", ".join(["%s"] * len(cols))
@@ -537,7 +668,48 @@ def _insert_workout_rows(
         raise
     finally:
         conn.close()
-    return created, skipped
+    return created, skipped, superseded
+
+
+# ---------------------------------------------------------------------------
+# Per-row collision materialization (shared by both expanders)
+# ---------------------------------------------------------------------------
+def _apply_collision_resolution(
+    rows_to_insert: List[Dict[str, Any]],
+    *,
+    user_id: str,
+    slot: Optional[str],
+    replace: bool,
+    day_resolutions: Optional[Dict[str, str]],
+) -> List[str]:
+    """Resolve each built row against existing workouts on its date, mutating the
+    rows in place for "stack" (re-tag program_slot='addon') and collecting the
+    workout ids to delete for "replace". Returns the supersede id list to hand to
+    _insert_workout_rows so the delete + insert are one transaction.
+
+    Uses the SAME resolve_collision() the assign-preview renders with, so the
+    materialized result matches the preview exactly for every overridden date."""
+    planned_dates = sorted({row["scheduled_date"][:10] for row in rows_to_insert})
+    collision_map = _find_colliding_workouts(user_id, planned_dates)
+    supersede_ids: List[str] = []
+    seen_replace_dates: set = set()
+    for row in rows_to_insert:
+        diso = row["scheduled_date"][:10]
+        existing_ids = collision_map.get(diso) or []
+        res = resolve_collision(
+            date_iso=diso,
+            has_existing=bool(existing_ids),
+            slot=slot or "primary",
+            replace=replace,
+            day_resolutions=day_resolutions,
+        )
+        if res == "stack":
+            # Keep the existing workout; this new one stacks as an extra.
+            row["program_slot"] = "addon"
+        elif res == "replace" and existing_ids and diso not in seen_replace_dates:
+            supersede_ids.extend(existing_ids)
+            seen_replace_dates.add(diso)
+    return supersede_ids
 
 
 # ---------------------------------------------------------------------------
@@ -621,11 +793,19 @@ def expand_variant_weeks(
     assignment_id: Optional[str] = None,
     program_slot: Optional[str] = None,
     apply_staples: bool = True,
+    replace: bool = True,
+    day_resolutions: Optional[Dict[str, str]] = None,
+    resolve_collisions: bool = False,
 ) -> Dict[str, Any]:
     """Expand a curated program's program_variant_weeks into dated `workouts`
     rows — one per session per week, each carrying its OWN week's content. Same
     columns / idempotency / staples / PR-seeding as expand_template; deload is
-    left to the variant's own authored content (no synthetic deload scaling)."""
+    left to the variant's own authored content (no synthetic deload scaling).
+
+    `replace` / `day_resolutions` / `resolve_collisions` behave exactly as in
+    expand_template: when resolve_collisions=True each session date is resolved
+    against existing workouts via resolve_collision() (replace → supersede,
+    stack → re-tag program_slot='addon'); when False, rows insert as-is."""
     plan = plan_variant_schedule(
         weeks_rows, assigned_days=assigned_days, start_date=start_date
     )
@@ -683,6 +863,10 @@ def expand_variant_weeks(
             "template_day_index": p["session_idx"],
             "intensity_mode": "normal",
             "gym_profile_id": gym_profile_id,
+            # Intra-day ordering (migration 2294): session index within the week
+            # orders sessions that land on the same date (e.g. sessions/week >
+            # training weekdays) so the home card never flickers between them.
+            "display_order": p["session_idx"],
         }
         if assignment_id:
             row["assignment_id"] = assignment_id
@@ -703,14 +887,28 @@ def expand_variant_weeks(
 
         rows_to_insert.append(row)
 
-    created, skipped = _insert_workout_rows(rows_to_insert)
+    supersede_ids: List[str] = []
+    if resolve_collisions:
+        supersede_ids = _apply_collision_resolution(
+            rows_to_insert,
+            user_id=user_id,
+            slot=program_slot,
+            replace=replace,
+            day_resolutions=day_resolutions,
+        )
+
+    created, skipped, superseded = _insert_workout_rows(
+        rows_to_insert, supersede_ids
+    )
     logger.info(
-        "Expanded variant for template %s: %d created, %d skipped (%d weeks)",
-        template_id, created, skipped, plan["weeks_used"],
+        "Expanded variant for template %s: %d created, %d skipped, "
+        "%d superseded (%d weeks)",
+        template_id, created, skipped, superseded, plan["weeks_used"],
     )
     return {
         "workouts_created": created,
         "skipped_existing": skipped,
+        "superseded_existing": superseded,
         "total_attempted": len(rows_to_insert),
         "deload_weeks": [],
         "schedule_id": schedule_id,
