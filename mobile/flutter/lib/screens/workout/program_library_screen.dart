@@ -17,6 +17,7 @@ import '../../widgets/signature/signature.dart';
 import '../../data/models/assign_preview.dart';
 import '../../data/models/program_template.dart';
 import '../../data/models/user_program_assignment.dart';
+import '../../data/providers/schedule_provider.dart' show weekStartDayProvider;
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
 import 'program_detail_screen.dart';
@@ -2591,7 +2592,15 @@ class _StartProgramFlowSheetState
   }
 
   Widget _buildOverlapBody(AssignPreview p) {
-    final dates = _overlapWindowDates(p);
+    // Rolling-window dates (each weekday once, with its real date), then ORDERED
+    // by weekday respecting the user's week-start preference (1=Mon..7=Sun) —
+    // not chronologically from the start date, which reads oddly (e.g. a Sat
+    // start listing Sat→Fri). day_resolutions stays keyed by the real ISO date,
+    // so display order has no effect on what's sent.
+    final weekStartDay = ref.watch(weekStartDayProvider);
+    final dates = _overlapWindowDates(p)
+      ..sort((a, b) => ((a.weekday - weekStartDay + 7) % 7)
+          .compareTo((b.weekday - weekStartDay + 7) % 7));
     final firstWeek = p.weeks.isNotEmpty ? p.weeks.first : null;
     final programByDate = <String, PreviewDay>{
       for (final d in firstWeek?.days ?? const <PreviewDay>[]) d.date: d,
