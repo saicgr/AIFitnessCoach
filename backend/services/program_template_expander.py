@@ -485,6 +485,29 @@ def expand_template(
         rows_to_insert.append(row)
 
     # ----- transactional insert (all-or-nothing, idempotent) ---------------
+    created, skipped = _insert_workout_rows(rows_to_insert)
+
+    logger.info(
+        "Expanded template %s: %d workouts created, %d skipped (idempotent), "
+        "deload weeks=%s",
+        template_id, created, skipped, deload_weeks,
+    )
+    return {
+        "workouts_created": created,
+        "skipped_existing": skipped,
+        "total_attempted": len(rows_to_insert),
+        "deload_weeks": deload_weeks,
+        "schedule_id": schedule_id,
+    }
+
+
+def _insert_workout_rows(
+    rows_to_insert: List[Dict[str, Any]],
+) -> tuple:
+    """Transactional, all-or-nothing, idempotent insert of workout rows. Dedupes
+    on uq_workouts_template_slot (template_id, template_week, template_day_index,
+    scheduled_date) so a double-tap / concurrent schedule is a no-op (#39/#69).
+    Returns (created, skipped). Shared by expand_template + expand_variant_weeks."""
     created = 0
     skipped = 0
     conn = psycopg2.connect(_psycopg_dsn())
@@ -495,8 +518,6 @@ def expand_template(
                 cols = list(row.keys())
                 placeholders = ", ".join(["%s"] * len(cols))
                 col_sql = ", ".join(cols)
-                # ON CONFLICT against uq_workouts_template_slot makes the
-                # second concurrent / double-tap schedule a no-op (#39/#69).
                 sql = (
                     f"INSERT INTO workouts ({col_sql}) "
                     f"VALUES ({placeholders}) "
@@ -516,18 +537,184 @@ def expand_template(
         raise
     finally:
         conn.close()
+    return created, skipped
 
+
+# ---------------------------------------------------------------------------
+# Variant-week scheduling — curated multi-week programs store their REAL
+# week-by-week plan in program_variant_weeks (the source the program-detail
+# schedule view reads). plan_variant_schedule / expand_variant_weeks schedule
+# from that directly so each calendar week gets its OWN sessions (distinct per
+# week), instead of the flattened base `workouts` blob (which for some programs
+# — e.g. HYROX — is all weeks flattened → blows the workout cap).
+# ---------------------------------------------------------------------------
+def plan_variant_schedule(
+    weeks_rows: List[Dict[str, Any]],
+    *,
+    assigned_days: Optional[List[int]],
+    start_date: date,
+    max_weeks: int = MAX_WEEKS,
+    max_total: int = MAX_TOTAL_WORKOUTS,
+) -> Dict[str, Any]:
+    """Pure planner for a variant's program_variant_weeks. Week index wi (0-based,
+    in week_number order) lands on calendar week wi; session si of that week → the
+    weekday sorted(assigned_days)[si % n] (cycling), date = start + wi*7 + lead.
+    With no assigned_days, sessions fall on consecutive days from start_date.
+
+    Returns {"planned": [ {week_number, session_idx, weekday, target_date,
+    scheduled, session} ... ], "weeks_used": int, "sessions_per_week": int}.
+    Raises ValueError if the schedule would exceed max_total."""
+    rows = sorted(
+        [w for w in (weeks_rows or []) if isinstance(w, dict)],
+        key=lambda w: w.get("week_number") or 0,
+    )[:max_weeks]
+    targets = sorted({int(d) for d in (assigned_days or []) if 0 <= int(d) <= 6})
+
+    planned: List[Dict[str, Any]] = []
+    sessions_pw = 0
+    total = 0
+    for wi, wrow in enumerate(rows):
+        sessions = wrow.get("workouts") or []
+        if not isinstance(sessions, list):
+            sessions = []
+        sessions = [s for s in sessions if isinstance(s, dict)]
+        sessions_pw = max(sessions_pw, len(sessions))
+        for si, sess in enumerate(sessions):
+            total += 1
+            if total > max_total:
+                raise ValueError(
+                    f"This schedule would create more than {max_total} "
+                    "workouts. Reduce weeks or sessions."
+                )
+            if targets:
+                weekday = targets[si % len(targets)]
+                lead = (weekday - start_date.weekday()) % 7
+                target_date = start_date + timedelta(days=wi * 7 + lead)
+            else:
+                target_date = start_date + timedelta(days=wi * 7 + si)
+                weekday = target_date.weekday()
+            scheduled = _anchored_scheduled_date(target_date, _parse_hhmm(None))
+            planned.append({
+                "week_number": wrow.get("week_number") or (wi + 1),
+                "session_idx": si,
+                "weekday": weekday,
+                "target_date": target_date,
+                "scheduled": scheduled,
+                "session": sess,
+            })
+    return {
+        "planned": planned,
+        "weeks_used": len(rows),
+        "sessions_per_week": sessions_pw,
+    }
+
+
+def expand_variant_weeks(
+    *,
+    weeks_rows: List[Dict[str, Any]],
+    template: Dict[str, Any],
+    schedule_id: str,
+    user_id: str,
+    start_date: date,
+    assigned_days: Optional[List[int]],
+    gym_profile_id: Optional[str] = None,
+    assignment_id: Optional[str] = None,
+    program_slot: Optional[str] = None,
+    apply_staples: bool = True,
+) -> Dict[str, Any]:
+    """Expand a curated program's program_variant_weeks into dated `workouts`
+    rows — one per session per week, each carrying its OWN week's content. Same
+    columns / idempotency / staples / PR-seeding as expand_template; deload is
+    left to the variant's own authored content (no synthetic deload scaling)."""
+    plan = plan_variant_schedule(
+        weeks_rows, assigned_days=assigned_days, start_date=start_date
+    )
+    planned = plan["planned"]
+    if not planned:
+        raise ValueError("Variant has no sessions to schedule")
+    template_id = template["id"]
+    program_name = template.get("name", "Program")
+
+    all_names: List[str] = []
+    for p in planned:
+        for ex in (p["session"].get("exercises") or []):
+            n = ex.get("name") or ex.get("original_name")
+            if n:
+                all_names.append(n)
+    seed_weights = _seed_target_weights(user_id, all_names)
+    staples = (
+        _load_staples_for_profile(user_id, gym_profile_id)
+        if apply_staples
+        else []
+    )
+
+    rows_to_insert: List[Dict[str, Any]] = []
+    for p in planned:
+        sess = p["session"]
+        day = {
+            "day_name": (
+                sess.get("workout_name")
+                or sess.get("name")
+                or f"Day {p['session_idx'] + 1}"
+            ),
+            "workout_type": sess.get("type") or sess.get("workout_type")
+            or "strength",
+            "exercises": sess.get("exercises") or [],
+        }
+        exercises_json = _day_to_exercises_json(day, seed_weights, False)
+        row: Dict[str, Any] = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "name": day["day_name"],
+            "description": f"{program_name} - week {p['week_number']}",
+            "scheduled_date": p["scheduled"],
+            "exercises_json": psycopg2.extras.Json(exercises_json),
+            "status": "scheduled",
+            "is_current": False,
+            "is_completed": False,
+            "type": day["workout_type"],
+            # workouts.difficulty is NOT-NULL + CHECK(easy|medium|hard|hell);
+            # variant sessions carry per-exercise difficulty only, so default.
+            "difficulty": "medium",
+            "generation_source": "template",
+            "generation_method": "program_template",
+            "template_id": template_id,
+            "template_week": p["week_number"],
+            "template_day_index": p["session_idx"],
+            "intensity_mode": "normal",
+            "gym_profile_id": gym_profile_id,
+        }
+        if assignment_id:
+            row["assignment_id"] = assignment_id
+        if program_slot:
+            row["program_slot"] = program_slot
+
+        if apply_staples and staples:
+            injected = _inject_staples(day["exercises"], staples)
+            if injected["warmup"]:
+                row["warmup_json"] = psycopg2.extras.Json(injected["warmup"])
+            if injected["stretch"]:
+                row["stretch_json"] = psycopg2.extras.Json(injected["stretch"])
+            if injected["main"]:
+                merged = exercises_json + injected["main"]
+                for idx, ex in enumerate(merged):
+                    ex["order"] = idx + 1
+                row["exercises_json"] = psycopg2.extras.Json(merged)
+
+        rows_to_insert.append(row)
+
+    created, skipped = _insert_workout_rows(rows_to_insert)
     logger.info(
-        "Expanded template %s: %d workouts created, %d skipped (idempotent), "
-        "deload weeks=%s",
-        template_id, created, skipped, deload_weeks,
+        "Expanded variant for template %s: %d created, %d skipped (%d weeks)",
+        template_id, created, skipped, plan["weeks_used"],
     )
     return {
         "workouts_created": created,
         "skipped_existing": skipped,
         "total_attempted": len(rows_to_insert),
-        "deload_weeks": deload_weeks,
+        "deload_weeks": [],
         "schedule_id": schedule_id,
+        "weeks_used": plan["weeks_used"],
     }
 
 

@@ -56,7 +56,9 @@ from services.program_library_importer import (
 from services.program_template_parser import parse_to_template_json
 from services.program_template_expander import (
     expand_template,
+    expand_variant_weeks,
     plan_template_days,
+    plan_variant_schedule,
     regenerate_future,
     MAX_WEEKS,
 )
@@ -2572,20 +2574,38 @@ async def assign_program_core(
     except Exception as e:  # noqa: BLE001
         logger.warning("schedule row insert failed (continuing): %s", e)
 
-    from services.program_template_expander import expand_template as _expand
-    result = _expand(
-        template=template,
-        schedule_id=schedule_id,
-        user_id=user_id,
-        start_date=start,
-        weeks=weeks,
-        day_alignment=day_alignment,
-        day_times={},
-        gym_profile_id=gym_profile_id,
-        assignment_id=assignment_id,
-        program_slot=slot,
-        assigned_days=list(assigned_days or []),
-    )
+    # Curated multi-week programs store their REAL per-week plan in
+    # program_variant_weeks — schedule from that so each calendar week gets its
+    # own sessions (and flattened-blob programs like HYROX don't blow the cap).
+    # Normal programs with no variant library fall back to the base-blob expand.
+    _eff_vid, _weeks_rows = _resolve_variant_weeks(db, program_id, variant_id)
+    if _weeks_rows:
+        result = expand_variant_weeks(
+            weeks_rows=_weeks_rows,
+            template=template,
+            schedule_id=schedule_id,
+            user_id=user_id,
+            start_date=start,
+            assigned_days=list(assigned_days or []),
+            gym_profile_id=gym_profile_id,
+            assignment_id=assignment_id,
+            program_slot=slot,
+            apply_staples=True,
+        )
+    else:
+        result = expand_template(
+            template=template,
+            schedule_id=schedule_id,
+            user_id=user_id,
+            start_date=start,
+            weeks=weeks,
+            day_alignment=day_alignment,
+            day_times={},
+            gym_profile_id=gym_profile_id,
+            assignment_id=assignment_id,
+            program_slot=slot,
+            assigned_days=list(assigned_days or []),
+        )
 
     # Record total_workouts on the assignment now that we know the count.
     try:
@@ -2660,6 +2680,45 @@ async def assign_program(
 # writes with (plan_template_days) so it can never drift from reality.
 # =============================================================================
 _WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def _resolve_variant_weeks(
+    db, program_id: str, variant_id: Optional[str]
+) -> tuple:
+    """Resolve the schedulable VARIANT for a curated program → its per-week
+    program_variant_weeks (the real source the program-detail schedule reads).
+    effective = explicit variant_id, else programs.default_variant_id.
+    Returns (effective_variant_id, weeks_rows) or (None, []) when the program
+    has no variant library (then callers fall back to the base-blob path)."""
+    effective = variant_id
+    if not effective:
+        try:
+            pr = (
+                db.client.table("programs")
+                .select("default_variant_id")
+                .eq("id", program_id)
+                .limit(1)
+                .execute()
+            )
+            if pr.data:
+                effective = pr.data[0].get("default_variant_id")
+        except Exception as e:  # noqa: BLE001
+            logger.warning("default_variant_id lookup failed: %s", e)
+    if not effective:
+        return None, []
+    try:
+        wks = (
+            db.client.table("program_variant_weeks")
+            .select("week_number, workouts")
+            .eq("variant_id", effective)
+            .order("week_number", desc=False)
+            .execute()
+        )
+        rows = wks.data or []
+        return (str(effective) if rows else None), rows
+    except Exception as e:  # noqa: BLE001
+        logger.warning("variant weeks lookup failed for %s: %s", effective, e)
+        return None, []
 
 
 def _resolve_program_days_for_preview(
@@ -2778,36 +2837,87 @@ def _build_assign_preview(
             status_code=422, detail="slot must be 'primary' or 'addon'"
         )
 
-    resolved = _resolve_program_days_for_preview(
-        db, program_id=req.program_id, variant_id=req.variant_id, user_id=user_id
-    )
-    program = resolved["program"]
-    display_name = resolved["display_name"]
-    normalized = resolved["normalized"]
-    days = resolved["days"]
-
-    weeks = req.duration_weeks or program.get("duration_weeks") or 8
-    weeks = max(1, min(int(weeks), MAX_WEEKS))
     start = req.start_date or date.today()
     assigned_days = list(req.assigned_days or [])
-    day_alignment = "calendar_weekday" if assigned_days else "start_today"
 
-    # SAME planner expand_template writes with → preview cannot drift.
-    plan = plan_template_days(
-        days,
-        week_length=int(normalized.get("week_length") or 7),
-        deload_every=normalized.get("deload_every_n_weeks"),
-        start_date=start,
-        weeks=weeks,
-        day_alignment=day_alignment,
-        day_times={},
-        assigned_days=assigned_days,
+    # Unified per-day plan: {week_number, target_date, weekday, session_name,
+    # workout_type, exercises_count, is_deload}. Built from the variant weeks
+    # (fast, correct, matches assign) when the program has a variant library;
+    # else from the base-blob template path (normal weekly programs).
+    pdays: List[Dict[str, Any]] = []
+    _eff_vid, _weeks_rows = _resolve_variant_weeks(
+        db, req.program_id, req.variant_id
     )
-    planned = plan["planned"]
-    deload_weeks = set(plan["deload_weeks"])
+    if _weeks_rows:
+        # Fast path — NO normalize/ExerciseResolver.
+        prog = _published_program_or_404(db, req.program_id)
+        display_name = _program_display_name(prog)
+        plan = plan_variant_schedule(
+            _weeks_rows, assigned_days=assigned_days, start_date=start
+        )
+        for p in plan["planned"]:
+            sess = p["session"]
+            pdays.append({
+                "week_number": p["week_number"],
+                "target_date": p["target_date"],
+                "weekday": p["weekday"],
+                "session_name": (
+                    sess.get("workout_name") or sess.get("name")
+                    or f"Day {p['session_idx'] + 1}"
+                ),
+                "workout_type": (
+                    sess.get("type") or sess.get("workout_type") or "strength"
+                ),
+                "exercises_count": len(sess.get("exercises") or []),
+                "is_deload": False,
+            })
+        weeks = plan["weeks_used"]
+        sessions_per_week = plan["sessions_per_week"]
+    else:
+        resolved = _resolve_program_days_for_preview(
+            db, program_id=req.program_id, variant_id=req.variant_id,
+            user_id=user_id,
+        )
+        program = resolved["program"]
+        display_name = resolved["display_name"]
+        normalized = resolved["normalized"]
+        days = resolved["days"]
+        weeks = req.duration_weeks or program.get("duration_weeks") or 8
+        weeks = max(1, min(int(weeks), MAX_WEEKS))
+        day_alignment = "calendar_weekday" if assigned_days else "start_today"
+        plan = plan_template_days(
+            days,
+            week_length=int(normalized.get("week_length") or 7),
+            deload_every=normalized.get("deload_every_n_weeks"),
+            start_date=start,
+            weeks=weeks,
+            day_alignment=day_alignment,
+            day_times={},
+            assigned_days=assigned_days,
+        )
+        deload_weeks = set(plan["deload_weeks"])
+        for p in plan["planned"]:
+            day = p["day"]
+            pdays.append({
+                "week_number": p["week"],
+                "target_date": p["target_date"],
+                "weekday": p["target_date"].weekday(),
+                "session_name": (
+                    day.get("day_name") or f"Day {p['day_index'] + 1}"
+                ),
+                "workout_type": day.get("workout_type") or "strength",
+                "exercises_count": len(
+                    [e for e in (day.get("exercises") or []) if e]
+                ),
+                "is_deload": p["week"] in deload_weeks,
+            })
+        sessions_per_week = len([d for d in days if not d.get("is_rest")])
+
+    # Order each calendar week's sessions by date for display.
+    pdays.sort(key=lambda d: (d["week_number"], d["target_date"]))
 
     # --- existing materialized workouts on the planned dates -----------------
-    target_dates = sorted({p["target_date"] for p in planned})
+    target_dates = sorted({p["target_date"] for p in pdays})
     existing_by_date: Dict[str, List[Dict[str, Any]]] = {}
     if target_dates:
         try:
@@ -2845,21 +2955,20 @@ def _build_assign_preview(
     week_bucket: Optional[Dict[str, Any]] = None
     replace_count = stack_count = new_count = 0
 
-    for p in planned:
-        day = p["day"]
-        wk = p["week"]
+    for p in pdays:
+        wk = p["week_number"]
         td = p["target_date"]
         iso = td.isoformat()
-        weekday = td.weekday()
-        session_name = day.get("day_name") or f"Day {p['day_index'] + 1}"
-        ex_count = len([e for e in (day.get("exercises") or []) if e])
-        intensity = "deload" if wk in deload_weeks else "normal"
+        weekday = p["weekday"]
+        session_name = p["session_name"]
+        ex_count = p["exercises_count"]
+        intensity = "deload" if p["is_deload"] else "normal"
 
         if wk != cur_week:
             cur_week = wk
             week_bucket = {
                 "week_number": wk,
-                "is_deload": wk in deload_weeks,
+                "is_deload": p["is_deload"],
                 "days": [],
             }
             weeks_out.append(week_bucket)
@@ -2908,7 +3017,7 @@ def _build_assign_preview(
             "weekday": weekday,
             "weekday_name": _WEEKDAY_NAMES[weekday],
             "session_name": session_name,
-            "workout_type": day.get("workout_type") or "strength",
+            "workout_type": p["workout_type"],
             "exercises_count": ex_count,
             "intensity_mode": intensity,
             "resolution": resolution,
@@ -2948,8 +3057,7 @@ def _build_assign_preview(
         except Exception as e:  # noqa: BLE001
             logger.warning("preview replace-ends lookup failed: %s", e)
 
-    total = len(planned)
-    sessions_per_week = len([d for d in days if not d.get("is_rest")])
+    total = len(pdays)
     summary = _deterministic_preview_summary(
         program_name=display_name,
         weeks=weeks,
