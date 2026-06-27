@@ -560,7 +560,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Selector row — two dropdown controls + one static stat ─────────
-          Row(
+          // IntrinsicHeight bounds the row height so crossAxisAlignment.stretch
+          // resolves to the tallest control — without it the sliver's unbounded
+          // height makes stretch throw "BoxConstraints forces an infinite height".
+          IntrinsicHeight(
+            child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // WEEKS — opens the duration picker.
@@ -591,6 +595,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                 ),
               ),
             ],
+            ),
           ),
 
           // Intensity chip row — only when there are distinct intensities.
