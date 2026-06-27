@@ -74,23 +74,45 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// The currently-selected variant id. Null = program default (or single plan).
   String? _selectedVariantId;
 
+  /// True once the user has explicitly picked a variant (via the picker sheet).
+  /// While false we keep re-syncing [_selectedVariantId] to the program default
+  /// as richer detail loads, so the screen always opens on the recommended
+  /// plan (e.g. HYROX → 8 weeks / 4 per week) rather than the first list card.
+  bool _userPickedVariant = false;
+
   /// The selected week index (0-based) in the schedule tab. Resets to 0
   /// whenever the variant changes so the user always lands on week 1.
   int _selectedWeekIndex = 0;
-
-  /// Which selector pill row is currently expanded: 'weeks', 'sessions', or
-  /// null (both collapsed). Toggled by tapping a selector tile.
-  String? _expandedSelector;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _card = widget.card;
-    // Seed the variant from whatever the tapped card already knows. Upgraded
-    // once the detail fetch resolves with the full editorial card.
+    // Seed the variant from whatever the tapped card already knows. The list
+    // card usually has no defaultVariantId, so this is often null until the
+    // full detail fetch resolves and _syncDefaultVariant() runs below.
     _selectedVariantId = widget.card?.defaultVariantId;
+    _syncDefaultVariant(widget.card);
     _load();
+  }
+
+  /// Re-point [_selectedVariantId] at the program's default/recommended variant
+  /// from [card]'s `variantOptions`, unless the user has manually picked one.
+  /// Prefers the `is_default` option, falling back to [card.defaultVariantId],
+  /// then the first option. No-op for single-plan programs.
+  void _syncDefaultVariant(ProgramLibraryCard? card) {
+    if (_userPickedVariant || card == null) return;
+    final variants = card.variantOptions;
+    if (variants.length <= 1) return;
+    final defaultVariant = variants.firstWhere(
+      (v) => v.isDefault,
+      orElse: () => variants.firstWhere(
+        (v) => v.variantId == card.defaultVariantId,
+        orElse: () => variants.first,
+      ),
+    );
+    _selectedVariantId = defaultVariant.variantId;
   }
 
   /// Whether the program is favorited, preferring the optimistic override, then
@@ -169,8 +191,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       if (!mounted) return;
       setState(() {
         _card = result.card;
-        // Seed variant from the full card if the tapped card didn't have it.
-        _selectedVariantId ??= result.card.defaultVariantId;
+        // The full editorial card carries variant_options + default_variant_id.
+        // Re-point to the recommended variant now that we know it — unless the
+        // user already picked one — so the screen opens on the default (e.g.
+        // HYROX → 8 weeks / 4 per week), not the lowest-weeks list-card option.
+        _syncDefaultVariant(result.card);
       });
     }).catchError((_) {
       // Swallow — the FutureBuilder below surfaces the error state.
@@ -188,20 +213,30 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     ProgramLibraryStartFlow.open(context, card);
   }
 
-  /// Called when the user picks a different variant from the selector tiles.
-  /// Resets the week index, collapses the pill row, and triggers a schedule
-  /// refetch via the provider.
+  /// Called when the user picks a variant from the picker sheet. Marks the
+  /// choice as user-driven (so the default-sync stops overriding it), resets the
+  /// week index, and triggers a schedule refetch via the provider.
   void _selectVariant(String variantId) {
     if (variantId == _selectedVariantId) {
-      // Tapping the already-selected pill just closes the row.
-      setState(() => _expandedSelector = null);
+      _userPickedVariant = true;
       return;
     }
     HapticService.selection();
     setState(() {
       _selectedVariantId = variantId;
+      _userPickedVariant = true;
       _selectedWeekIndex = 0;
-      _expandedSelector = null;
+    });
+  }
+
+  /// Reset the selection back to the program's default/recommended variant.
+  /// Clears the user-picked flag so future detail refreshes can re-sync.
+  void _resetVariantToDefault() {
+    HapticService.selection();
+    setState(() {
+      _userPickedVariant = false;
+      _selectedWeekIndex = 0;
+      _syncDefaultVariant(_card);
     });
   }
 
@@ -450,7 +485,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     final variants = card.variantOptions;
     final hasVariants = variants.length > 1;
 
-    // Resolve the currently-selected variant's data (fallback to card defaults).
+    // Resolve the currently-selected variant's data. When _selectedVariantId
+    // doesn't match (stale list card / mid-load), fall back to the DEFAULT
+    // option — never variants.first (the lowest-weeks plan).
     ProgramVariantOption? selectedVariant;
     if (hasVariants) {
       for (final v in variants) {
@@ -461,7 +498,10 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       }
       selectedVariant ??= variants.firstWhere(
         (v) => v.isDefault,
-        orElse: () => variants.first,
+        orElse: () => variants.firstWhere(
+          (v) => v.variantId == card.defaultVariantId,
+          orElse: () => variants.first,
+        ),
       );
     }
 
@@ -501,25 +541,15 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       );
     }
 
-    // Multi-variant: tiles look identical to the static ones (big number +
-    // label) but include a subtle ⌄ chevron. Tapping a tile toggles an
-    // animated pill row that slides in below the tile row — no layout pop.
-    final distinctWeeks = variants.map((v) => v.weeks).toSet().toList()
-      ..sort();
-
-    // Sessions available for the currently-selected week only — sparse guard.
-    final currentWeeks = selectedVariant?.weeks ?? variants.first.weeks;
-    final sessionsForCurrentWeek = variants
-        .where((v) => v.weeks == currentWeeks)
-        .map((v) => v.sessionsPerWeek)
-        .toSet()
-        .toList()
-      ..sort();
-
+    // Multi-variant: WEEKS and PER WEEK render as unmistakable dropdown
+    // controls (bordered "select" box + ▾ chevron) that open a bottom-sheet
+    // picker. MINUTES stays a plain static stat tile.
     final distinctIntensities =
         variants.map((v) => v.intensity).toSet().toList();
 
-    final weeksLabel   = selectedVariant?.weeks.toString() ??
+    final currentWeeks = selectedVariant?.weeks ?? variants.first.weeks;
+
+    final weeksLabel = selectedVariant?.weeks.toString() ??
         displayWeeks?.toString() ?? '—';
     final sessionsLabel = selectedVariant?.sessionsPerWeek.toString() ??
         displaySessions?.toString() ?? '—';
@@ -529,38 +559,31 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Tile row — always looks like static tiles ──────────────────────
+          // ── Selector row — two dropdown controls + one static stat ─────────
           Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // WEEKS — tappable tile that toggles the weeks pill row.
+              // WEEKS — opens the duration picker.
               Expanded(
-                child: _SelectableTile(
+                child: _DropdownControl(
+                  caption: 'DURATION',
                   value: weeksLabel,
-                  label: 'WEEKS',
-                  accented: true,
-                  expanded: _expandedSelector == 'weeks',
-                  onTap: () => setState(() {
-                    _expandedSelector =
-                        _expandedSelector == 'weeks' ? null : 'weeks';
-                  }),
+                  unit: 'WK',
+                  onTap: () => _openWeeksPicker(card, selectedVariant),
                 ),
               ),
               const SizedBox(width: 10),
-              // PER WEEK — tappable tile that toggles the sessions pill row.
+              // PER WEEK — opens the sessions picker.
               Expanded(
-                child: _SelectableTile(
+                child: _DropdownControl(
+                  caption: 'PER WEEK',
                   value: sessionsLabel,
-                  label: 'PER WEEK',
-                  accented: false,
-                  expanded: _expandedSelector == 'sessions',
-                  onTap: () => setState(() {
-                    _expandedSelector =
-                        _expandedSelector == 'sessions' ? null : 'sessions';
-                  }),
+                  unit: '×',
+                  onTap: () => _openSessionsPicker(card, selectedVariant),
                 ),
               ),
               const SizedBox(width: 10),
-              // MINUTES — always static.
+              // MINUTES — always a plain static stat.
               Expanded(
                 child: _StatTile(
                   value: card.sessionDurationMinutes?.toString() ?? '—',
@@ -568,45 +591,6 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                 ),
               ),
             ],
-          ),
-
-          // ── Animated pill row — slides in below tiles ──────────────────────
-          AnimatedSize(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: _expandedSelector == 'weeks'
-                ? _PillRow(
-                    key: const ValueKey('weeks-pills'),
-                    values: distinctWeeks.map((w) => w.toString()).toList(),
-                    selectedValue: weeksLabel,
-                    onSelect: (val) {
-                      final w = int.tryParse(val);
-                      if (w == null) return;
-                      final currentSessions =
-                          selectedVariant?.sessionsPerWeek ??
-                              variants.first.sessionsPerWeek;
-                      _selectVariant(
-                          _resolveVariant(variants, w, currentSessions)
-                              .variantId);
-                    },
-                  )
-                : _expandedSelector == 'sessions'
-                    ? _PillRow(
-                        key: const ValueKey('sessions-pills'),
-                        values: sessionsForCurrentWeek
-                            .map((s) => s.toString())
-                            .toList(),
-                        selectedValue: sessionsLabel,
-                        onSelect: (val) {
-                          final s = int.tryParse(val);
-                          if (s == null) return;
-                          _selectVariant(
-                              _resolveVariant(variants, currentWeeks, s)
-                                  .variantId);
-                        },
-                      )
-                    : const SizedBox.shrink(),
           ),
 
           // Intensity chip row — only when there are distinct intensities.
@@ -618,9 +602,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               onSelect: (intensity) {
                 final candidate = variants.firstWhere(
                   (v) =>
-                      v.intensity == intensity &&
-                      v.weeks ==
-                          (selectedVariant?.weeks ?? variants.first.weeks),
+                      v.intensity == intensity && v.weeks == currentWeeks,
                   orElse: () =>
                       variants.firstWhere((v) => v.intensity == intensity,
                           orElse: () => variants.first),
@@ -631,6 +613,153 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           ],
         ],
       ),
+    );
+  }
+
+  /// The program's default/recommended variant for [card], or null when single
+  /// plan. Used to tag the "✓ Recommended" option in the picker sheets.
+  ProgramVariantOption? _defaultVariant(ProgramLibraryCard card) {
+    final variants = card.variantOptions;
+    if (variants.length <= 1) return null;
+    return variants.firstWhere(
+      (v) => v.isDefault,
+      orElse: () => variants.firstWhere(
+        (v) => v.variantId == card.defaultVariantId,
+        orElse: () => variants.first,
+      ),
+    );
+  }
+
+  /// Bottom-sheet picker for the program DURATION (distinct week values).
+  /// Selecting resolves to the matching variant for the current sessions count.
+  void _openWeeksPicker(
+    ProgramLibraryCard card,
+    ProgramVariantOption? selectedVariant,
+  ) {
+    HapticService.light();
+    final variants = card.variantOptions;
+    final distinctWeeks = variants.map((v) => v.weeks).toSet().toList()..sort();
+    final currentSessions =
+        selectedVariant?.sessionsPerWeek ?? variants.first.sessionsPerWeek;
+    final defaultVariant = _defaultVariant(card);
+
+    _showVariantPicker(
+      title: 'Program length',
+      options: [
+        for (final w in distinctWeeks)
+          _PickerOption(
+            label: '$w weeks',
+            isSelected: selectedVariant?.weeks == w,
+            // The week value is "recommended" when the default variant uses it.
+            isRecommended: defaultVariant?.weeks == w,
+            onTap: () => _selectVariant(
+                _resolveVariant(variants, w, currentSessions).variantId),
+          ),
+      ],
+    );
+  }
+
+  /// Bottom-sheet picker for sessions PER WEEK — the distinct session counts
+  /// available for the currently-selected duration (sparse-matrix guard).
+  void _openSessionsPicker(
+    ProgramLibraryCard card,
+    ProgramVariantOption? selectedVariant,
+  ) {
+    HapticService.light();
+    final variants = card.variantOptions;
+    final currentWeeks = selectedVariant?.weeks ?? variants.first.weeks;
+    final sessionsForCurrentWeek = variants
+        .where((v) => v.weeks == currentWeeks)
+        .map((v) => v.sessionsPerWeek)
+        .toSet()
+        .toList()
+      ..sort();
+    final defaultVariant = _defaultVariant(card);
+
+    _showVariantPicker(
+      title: 'Sessions per week',
+      options: [
+        for (final s in sessionsForCurrentWeek)
+          _PickerOption(
+            label: '$s per week',
+            isSelected: selectedVariant?.sessionsPerWeek == s,
+            // Recommended only when the default variant matches this exact
+            // weeks × sessions combination.
+            isRecommended:
+                defaultVariant?.weeks == currentWeeks &&
+                    defaultVariant?.sessionsPerWeek == s,
+            onTap: () => _selectVariant(
+                _resolveVariant(variants, currentWeeks, s).variantId),
+          ),
+      ],
+    );
+  }
+
+  /// Shared bottom-sheet shell for the weeks / sessions pickers. Renders each
+  /// option as a tappable row (with a ✓ Recommended tag on the default) plus a
+  /// "Reset to default" button at the bottom.
+  void _showVariantPicker({
+    required String title,
+    required List<_PickerOption> options,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Grab handle.
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  title.toUpperCase(),
+                  style: ZType.lbl(12,
+                      color: AppColors.textMuted, letterSpacing: 1.6),
+                ),
+                const SizedBox(height: 8),
+                for (final opt in options)
+                  _PickerRow(
+                    option: opt,
+                    onTap: () {
+                      opt.onTap();
+                      Navigator.of(sheetContext).pop();
+                    },
+                  ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    _resetVariantToDefault();
+                    Navigator.of(sheetContext).pop();
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.orange,
+                  ),
+                  icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                  label: const Text('Reset to default'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1032,23 +1161,24 @@ class _DiagonalStripePainter extends CustomPainter {
 }
 
 // ===========================================================================
-// Selectable stat tile — looks like _StatTile but shows a small ⌄/⌃ chevron
-// in the bottom-right corner when the program has >1 option for this
-// dimension. Tapping toggles the pill row that slides in below.
+// Dropdown control — an unmistakable "select"-style box used for WEEKS and
+// PER WEEK when a program has >1 variant. Caption + big value + a full-opacity
+// ▾ chevron, visually distinct from the static MINUTES _StatTile, reading
+// clearly as "tap to change". Opens a bottom-sheet picker.
 // ===========================================================================
 
-class _SelectableTile extends StatelessWidget {
+class _DropdownControl extends StatelessWidget {
+  final String caption;
   final String value;
-  final String label;
-  final bool accented;
-  final bool expanded;
+
+  /// Small unit suffix beside the value (e.g. "WK", "×").
+  final String unit;
   final VoidCallback onTap;
 
-  const _SelectableTile({
+  const _DropdownControl({
+    required this.caption,
     required this.value,
-    required this.label,
-    required this.accented,
-    required this.expanded,
+    required this.unit,
     required this.onTap,
   });
 
@@ -1058,54 +1188,49 @@ class _SelectableTile extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
         decoration: BoxDecoration(
-          color: accented
-              ? AppColors.orange.withValues(alpha: 0.14)
-              : AppColors.surface2,
+          color: AppColors.surface2,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: accented
-                ? AppColors.orange
-                : (expanded ? AppColors.orange : AppColors.cardBorder),
-          ),
+          border: Border.all(color: AppColors.cardBorder),
         ),
-        child: Stack(
-          clipBehavior: Clip.none,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
+            Text(
+              caption,
+              style: ZType.lbl(10,
+                  color: AppColors.textMuted, letterSpacing: 1.4),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: Text(
                     value,
-                    style: ZType.disp(28,
-                        color: accented
-                            ? AppColors.orange
-                            : AppColors.textPrimary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ZType.disp(26, color: AppColors.textPrimary),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: ZType.lbl(10,
-                        color: AppColors.textMuted, letterSpacing: 1.4),
+                ),
+                if (unit.isNotEmpty) ...[
+                  const SizedBox(width: 3),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      unit,
+                      style: ZType.lbl(10,
+                          color: AppColors.textMuted, letterSpacing: 0.5),
+                    ),
                   ),
                 ],
-              ),
-            ),
-            // Subtle affordance chevron anchored to bottom-right.
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Icon(
-                expanded
-                    ? Icons.keyboard_arrow_up_rounded
-                    : Icons.keyboard_arrow_down_rounded,
-                size: 14,
-                color: accented
-                    ? AppColors.orange.withValues(alpha: 0.7)
-                    : AppColors.textMuted,
-              ),
+                const Spacer(),
+                // Full-opacity, decent-size chevron — the obvious affordance.
+                const Icon(Icons.keyboard_arrow_down_rounded,
+                    size: 22, color: AppColors.orange),
+              ],
             ),
           ],
         ),
@@ -1115,63 +1240,86 @@ class _SelectableTile extends StatelessWidget {
 }
 
 // ===========================================================================
-// Pill row — horizontal scrollable strip of option chips that animates in
-// below the tile row when a _SelectableTile is tapped.
+// Variant picker rows — one option in the weeks / sessions bottom sheet.
 // ===========================================================================
 
-class _PillRow extends StatelessWidget {
-  final List<String> values;
-  final String selectedValue;
-  final ValueChanged<String> onSelect;
+/// One option in a variant picker bottom sheet.
+class _PickerOption {
+  final String label;
+  final bool isSelected;
+  final bool isRecommended;
+  final VoidCallback onTap;
 
-  const _PillRow({
-    super.key,
-    required this.values,
-    required this.selectedValue,
-    required this.onSelect,
+  const _PickerOption({
+    required this.label,
+    required this.isSelected,
+    required this.isRecommended,
+    required this.onTap,
   });
+}
+
+class _PickerRow extends StatelessWidget {
+  final _PickerOption option;
+  final VoidCallback onTap;
+
+  const _PickerRow({required this.option, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: option.isSelected
+              ? AppColors.orange.withValues(alpha: 0.12)
+              : AppColors.surface2,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color:
+                option.isSelected ? AppColors.orange : AppColors.cardBorder,
+          ),
+        ),
         child: Row(
-          children: values.map((v) {
-            final isSelected = v == selectedValue;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: () => onSelect(v),
-                behavior: HitTestBehavior.opaque,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 18, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.orange
-                        : AppColors.surface2,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.orange
-                          : AppColors.cardBorder,
-                    ),
-                  ),
-                  child: Text(
-                    v,
-                    style: ZType.sans(14,
-                        color: isSelected
-                            ? Colors.white
-                            : AppColors.textPrimary,
-                        weight: FontWeight.w700),
-                  ),
+          children: [
+            Expanded(
+              child: Text(
+                option.label,
+                style: ZType.sans(15,
+                    color: AppColors.textPrimary,
+                    weight: option.isSelected
+                        ? FontWeight.w700
+                        : FontWeight.w500),
+              ),
+            ),
+            if (option.isRecommended) ...[
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.orange.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '✓ Recommended',
+                  style: ZType.lbl(9,
+                      color: AppColors.orange, letterSpacing: 0.8),
                 ),
               ),
-            );
-          }).toList(),
+              const SizedBox(width: 10),
+            ],
+            Icon(
+              option.isSelected
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              size: 20,
+              color: option.isSelected
+                  ? AppColors.orange
+                  : AppColors.textMuted,
+            ),
+          ],
         ),
       ),
     );
