@@ -1592,8 +1592,9 @@ async def library_program_schedule(
                 media_resp = (
                     db.client.table("program_exercises_with_media")
                     .select(
-                        "week_number, workout_idx, exercise_name_normalized, "
-                        "canonical_name, image_s3_path, video_s3_path, gif_url"
+                        "week_number, workout_idx, exercise_idx, "
+                        "exercise_name_normalized, canonical_name, "
+                        "image_s3_path, video_s3_path, gif_url"
                     )
                     .eq("variant_id", effective_variant_id)
                     .execute()
@@ -1622,6 +1623,18 @@ async def library_program_schedule(
                 cn = (mr.get("canonical_name") or "").lower()
                 if cn and cn not in _media_name_map:
                     _media_name_map[cn] = mr
+
+            # PRIMARY map: positional (week_number, workout_idx, exercise_idx).
+            # The view's idx columns are 1-based; the JSON flatten loop below is
+            # 0-based, so we look up (week, wi+1, ei+1). Positional matching is
+            # exact regardless of raw-name vs canonical_name differences — which
+            # is what made many thumbnails (Pull-ups, Sled Push, Plank, …) miss
+            # when we keyed only on canonical_name.
+            _media_pos_map: Dict[tuple, Dict[str, Any]] = {}
+            for mr in media_rows:
+                pkey = (mr.get("week_number"), mr.get("workout_idx"), mr.get("exercise_idx"))
+                if pkey not in _media_pos_map:
+                    _media_pos_map[pkey] = mr
 
             # ── 2b. Resolve canonical_name → exercise_library_cleaned.id ──────
             canonical_names = {
@@ -1659,7 +1672,9 @@ async def library_program_schedule(
                         continue
                     raw_exercises = w.get("exercises") or []
                     exercises_out: List[Dict[str, Any]] = []
-                    for ex in (raw_exercises if isinstance(raw_exercises, list) else []):
+                    for ei, ex in enumerate(
+                        raw_exercises if isinstance(raw_exercises, list) else []
+                    ):
                         if not isinstance(ex, dict):
                             continue
                         ex_name = (
@@ -1667,10 +1682,13 @@ async def library_program_schedule(
                             or ex.get("name")
                             or ""
                         ).strip()
-                        # Match to media by (week_number, canonical_name).
                         ex_name_lower = ex_name.lower()
+                        # PRIMARY: positional match (view idx is 1-based; loop is
+                        # 0-based). Falls back to name-based maps only if position
+                        # has no row (e.g. view/JSON length drift).
                         media = (
-                            _media_map.get((week_num, ex_name_lower))
+                            _media_pos_map.get((week_num, wi + 1, ei + 1))
+                            or _media_map.get((week_num, ex_name_lower))
                             or _media_name_map.get(ex_name_lower)
                             or {}
                         )
