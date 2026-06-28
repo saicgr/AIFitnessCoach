@@ -9,6 +9,7 @@ import '../../../data/models/workout_screen_summary.dart';
 import '../../../data/providers/branded_program_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/tooltips/tooltip_anchors.dart';
 import '../../../widgets/design_system/zealova.dart';
 import '../../home/widgets/edit_program_sheet.dart';
 import '../../workout/widgets/quick_workout_sheet.dart';
@@ -71,7 +72,12 @@ class WorkoutsSignatureBody extends ConsumerWidget {
               // QUICK GENERATE — one-tap AI workout for "I just want to train
               // now" days. Launches the existing quick-workout sheet (5–30 min,
               // built around equipment + recovery) and jumps to the result.
-              const _QuickGenerateBlock(),
+              // Tour anchor: "Quick generate" step targets this (eagerly built,
+              // above the fold — unlike the deep "+ BUILD A WORKOUT" affordance).
+              KeyedSubtree(
+                key: TooltipAnchors.workoutsQuickGenerate,
+                child: const _QuickGenerateBlock(),
+              ),
               const SizedBox(height: 26),
               const _ProgramBlock(),
               const SizedBox(height: 24),
@@ -320,41 +326,56 @@ class _ProgramBlock extends ConsumerWidget {
         // links to an evenly-distributed 3-up icon+label tile row so they read
         // as deliberate navigation, not a footer. PROGRAMS owns "browse all
         // programs" now that the title is a plain label.
-        Row(
-          children: [
-            Expanded(
-              child: _ProgramToolTile(
-                icon: Icons.menu_book_rounded,
-                label: 'LIBRARY',
-                onTap: () {
-                  HapticService.light();
-                  context.push('/library');
-                },
+        // Tour anchor: "Build & browse" step spotlights the whole 3-up row.
+        KeyedSubtree(
+          key: TooltipAnchors.workoutsPrograms,
+          child: Row(
+            children: [
+              Expanded(
+                child: _ProgramToolTile(
+                  icon: Icons.calendar_month_rounded,
+                  label: 'SCHEDULE',
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/schedule');
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ProgramToolTile(
-                icon: Icons.handyman_rounded,
-                label: 'BUILDER',
-                onTap: () {
-                  HapticService.light();
-                  context.push('/workout/build');
-                },
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ProgramToolTile(
+                  icon: Icons.menu_book_rounded,
+                  label: 'LIBRARY',
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/library');
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ProgramToolTile(
-                icon: Icons.list_alt_rounded,
-                label: 'PROGRAMS',
-                onTap: () {
-                  HapticService.light();
-                  context.push('/workout/program-library');
-                },
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ProgramToolTile(
+                  icon: Icons.handyman_rounded,
+                  label: 'BUILDER',
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/workout/build');
+                  },
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ProgramToolTile(
+                  icon: Icons.list_alt_rounded,
+                  label: 'PROGRAMS',
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/workout/program-library');
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

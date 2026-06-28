@@ -6,7 +6,9 @@ import '../../../core/providers/training_preferences_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/user.dart';
+import '../../../data/models/user_program_assignment.dart';
 import '../../../data/providers/branded_program_provider.dart';
+import '../../../data/providers/program_assignments_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -61,10 +63,12 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
     }
     try {
       final prefs = await ref.read(workoutRepositoryProvider).getProgramPreferences(userId);
-      if (mounted) setState(() {
-            _prefs = prefs;
-            _loading = false;
-          });
+      if (mounted) {
+        setState(() {
+          _prefs = prefs;
+          _loading = false;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
@@ -121,9 +125,30 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
     final workoutDays = (user?.workoutDays ?? const <int>[]).toSet();
     final overrides = user?.workoutDayOverrides ?? const <int, WorkoutDayOverride>{};
 
-    final daysPerWeek = workoutDays.isNotEmpty
-        ? workoutDays.length
-        : (prefs?.workoutDays.length ?? 0);
+    // Active CURATED program assignments (primary + add-ons). When present, the
+    // weekly schedule below reflects the program's REAL training days — not just
+    // the AI-preference days — so a started program (e.g. HYROX on Wed–Sun) no
+    // longer shows the stale AI Fri/Sat grid. AI-preference days that no program
+    // covers still render (the merged-calendar reality).
+    // /assignments also returns paused/completed rows — the weekly grid should
+    // only reflect programs that are actively running right now.
+    final assignments = (ref.watch(programAssignmentsProvider).valueOrNull ??
+            const <UserProgramAssignment>[])
+        .where((a) => a.isActive && a.status == 'active')
+        .toList();
+    final hasCurated = assignments.isNotEmpty;
+
+    // Union of every training day across curated assignments + AI prefs.
+    final trainingDays = <int>{...workoutDays};
+    for (final a in assignments) {
+      trainingDays.addAll(a.assignedDays);
+    }
+
+    final daysPerWeek = hasCurated
+        ? trainingDays.length
+        : (workoutDays.isNotEmpty
+            ? workoutDays.length
+            : (prefs?.workoutDays.length ?? 0));
     final sessionMin = prefs?.durationMinutes;
     final level = prefs?.difficulty ?? user?.fitnessLevel;
     final focusAreas = prefs?.focusAreas ?? const <String>[];
@@ -198,7 +223,14 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
             _sectionLabel(tc, 'WEEKLY SCHEDULE'),
             const SizedBox(height: 8),
             for (var d = 0; d < 7; d++)
-              _dayRow(tc, d, workoutDays.contains(d), overrides[d], sessionMin),
+              _dayRow(
+                tc,
+                d,
+                workoutDays.contains(d),
+                overrides[d],
+                sessionMin,
+                _curatedForDay(assignments, d),
+              ),
 
             // ── Equipment ──
             if (!_loading && (prefs?.equipment.isNotEmpty ?? false)) ...[
@@ -256,8 +288,69 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
         ),
       );
 
+  /// The curated label for [day] (0=Mon..6=Sun), or null if no active program
+  /// covers it. Primary program drives the label; add-ons append "+N". Returns
+  /// the busiest match so a covered day is never shown as an AI/rest day.
+  ({String label, String? sub})? _curatedForDay(
+      List<UserProgramAssignment> assignments, int day) {
+    if (assignments.isEmpty) return null;
+    String? primaryName;
+    final addonNames = <String>[];
+    for (final a in assignments) {
+      if (!a.coversWeekday(day)) continue;
+      final name = (a.displayName?.trim().isNotEmpty == true)
+          ? a.displayName!.trim()
+          : 'Program';
+      if (a.isPrimary) {
+        primaryName ??= name;
+      } else {
+        addonNames.add(name);
+      }
+    }
+    final label = primaryName ?? (addonNames.isNotEmpty ? addonNames.first : null);
+    if (label == null) return null;
+    // If primary + add-on(s) stack, or multiple add-ons, surface the extra count.
+    final extras = primaryName != null
+        ? addonNames.length
+        : (addonNames.length - 1);
+    return (label: label, sub: extras > 0 ? '+$extras' : null);
+  }
+
   Widget _dayRow(ThemeColors tc, int day, bool isWorkout,
-      WorkoutDayOverride? override, int? sessionMin) {
+      WorkoutDayOverride? override, int? sessionMin,
+      [({String label, String? sub})? curated]) {
+    // A curated program covering this day always wins over the AI-preference
+    // view — show the program name, not "Rest day" or an AI focus.
+    if (curated != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 40,
+              child: Text(_dayNames[day],
+                  style: ZType.lbl(11,
+                      color: tc.textSecondary, letterSpacing: 1.2)),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.fitness_center_rounded, size: 16, color: tc.accent),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                curated.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.sans(14,
+                    color: tc.textPrimary, weight: FontWeight.w600),
+              ),
+            ),
+            if (curated.sub != null)
+              Text(curated.sub!, style: ZType.data(11, color: tc.accent)),
+          ],
+        ),
+      );
+    }
+
     final isRest = !isWorkout;
     final focus = isWorkout ? _focus(override?.focus) : null;
     final dur = override?.durationMin ?? (isWorkout ? sessionMin : null);

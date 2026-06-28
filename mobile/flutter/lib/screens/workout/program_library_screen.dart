@@ -11,7 +11,9 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/providers/workout_mutation_coordinator.dart';
 import '../../core/theme/app_typography.dart';
+import '../../data/providers/branded_program_provider.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/signature/signature.dart';
 import '../../data/models/assign_preview.dart';
@@ -2177,6 +2179,9 @@ class _StartProgramFlowSheetState
     final repo = ref.read(programTemplateRepositoryProvider);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    // Navigator's own context stays mounted after the sheet pops — use it for
+    // the post-assign "VIEW" deep-link into /schedule.
+    final rootContext = navigator.context;
     final card = widget.card;
     try {
       final result = await repo.assignProgram(
@@ -2196,13 +2201,34 @@ class _StartProgramFlowSheetState
       );
       if (!mounted) return;
       navigator.pop();
+      // Refresh EVERY surface that reflects the active program: Home today +
+      // hero carousel, Workout-tab lists, the date-strip dots, program-progress,
+      // and the schedule. Without this the assign succeeds server-side but the UI
+      // keeps painting the pre-assign (stale) program — the "nothing happened"
+      // report after Confirm & Start.
+      final uid = ref.read(currentUserProvider).valueOrNull?.id;
+      unawaited(refreshAfterWorkoutMutation(
+        source: 'program_assign',
+        userId: uid,
+      ));
+      // The Workout-tab "MY PROGRAM" label reads the legacy currentProgramProvider
+      // (GET /branded-programs/current) — refresh it so it flips to the started
+      // program instead of the AI default.
+      unawaited(ref.read(currentProgramProvider.notifier).refresh(userId: uid));
       messenger.showSnackBar(
         SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.surface2,
+          duration: const Duration(seconds: 4),
           content: Text(
             result.workoutsCreated > 0
                 ? '${card.displayName} started — ${result.workoutsCreated} '
-                    'workouts scheduled'
+                    'workouts on your schedule'
                 : '${card.displayName} started',
+          ),
+          action: SnackBarAction(
+            label: 'VIEW',
+            onPressed: () => rootContext.push('/schedule'),
           ),
         ),
       );
