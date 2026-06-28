@@ -127,6 +127,74 @@ class _FoodBrowserItem extends StatelessWidget {
 }
 
 
+// ─── Verified-Source Badge ─────────────────────────────────────
+//
+// A small, tasteful trust marker shown next to a food name when the
+// underlying data carries a server-derived `verification_level`. Icon-only
+// (with an accessible tooltip) so it never crowds tight result rows or
+// overflows on small screens.
+//   • curated / lab_verified / manufacturer_verified → solid "Verified" check
+//     (blue), tooltip differentiates the exact tier where it adds signal
+//   • community_verified                             → lighter "Community"
+//     outline (muted green)
+//   • user_saved / null / unknown                    → nothing (the user's own
+//     saved foods aren't a third-party trust claim)
+class _VerifiedBadge extends StatelessWidget {
+  final String? level;
+  final bool isDark;
+  final double size;
+
+  const _VerifiedBadge({
+    required this.level,
+    required this.isDark,
+    this.size = 14,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = level;
+    if (l == null) return const SizedBox.shrink();
+
+    final IconData icon;
+    final Color color;
+    final String tooltip;
+    switch (l) {
+      case 'curated':
+        icon = Icons.verified_rounded;
+        color = isDark ? AppColors.info : AppColorsLight.info;
+        tooltip = 'Verified source';
+        break;
+      case 'lab_verified':
+        icon = Icons.verified_rounded;
+        color = isDark ? AppColors.info : AppColorsLight.info;
+        tooltip = 'Lab-verified nutrition';
+        break;
+      case 'manufacturer_verified':
+        icon = Icons.verified_rounded;
+        color = isDark ? AppColors.info : AppColorsLight.info;
+        tooltip = 'Manufacturer-verified nutrition';
+        break;
+      case 'community_verified':
+        icon = Icons.verified_user_outlined;
+        color = isDark ? AppColors.green : AppColorsLight.green;
+        tooltip = 'Community-verified';
+        break;
+      default:
+        // 'user_saved' and any unknown level: no third-party trust claim.
+        return const SizedBox.shrink();
+    }
+
+    return Tooltip(
+      message: tooltip,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Icon(icon, size: size, color: color),
+      ),
+    );
+  }
+}
+
+
 // ─── Goal Tag Chip ─────────────────────────────────────────────
 
 class _GoalTag extends StatelessWidget {

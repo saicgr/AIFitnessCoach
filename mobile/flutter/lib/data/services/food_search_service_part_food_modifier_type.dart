@@ -313,6 +313,11 @@ class FoodSearchResult {
   final int? defaultCount; // Default number of pieces (e.g. 10 for 10pc nuggets)
   final double? servingWeightG; // Standard serving weight in grams
   final String? matchedQuery; // Which sub-query matched (for multi-food queries)
+  /// Provenance/trust signal for the underlying food data, derived server-side
+  /// from the source row. One of: 'curated', 'lab_verified',
+  /// 'manufacturer_verified', 'community_verified', 'user_saved', or null
+  /// (unverified). Drives the verified-source badge in search results.
+  final String? verificationLevel;
 
   const FoodSearchResult({
     required this.id,
@@ -330,6 +335,7 @@ class FoodSearchResult {
     this.defaultCount,
     this.servingWeightG,
     this.matchedQuery,
+    this.verificationLevel,
   });
 
   /// Create from SavedFood model
@@ -397,6 +403,7 @@ class FoodSearchResult {
       source: FoodSearchSource.database,
       distance: (result['distance'] as num?)?.toDouble(),
       originalData: result,
+      verificationLevel: result['verification_level'] as String?,
     );
   }
 }

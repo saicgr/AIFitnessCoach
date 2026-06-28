@@ -193,11 +193,22 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.result.name,
-                        style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.result.name,
+                              style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          _VerifiedBadge(
+                            level: widget.result.verificationLevel,
+                            isDark: widget.isDark,
+                          ),
+                        ],
                       ),
                       if (widget.result.brand != null || widget.result.servingSize != null)
                         Text(
@@ -786,11 +797,23 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
-              child: Text(
-                result.name,
-                style: TextStyle(color: textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: Text(
+                      result.name,
+                      style: TextStyle(color: textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  _VerifiedBadge(
+                    level: result.verificationLevel,
+                    isDark: widget.isDark,
+                    size: 12,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 4),

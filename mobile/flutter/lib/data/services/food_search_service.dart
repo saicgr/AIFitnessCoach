@@ -412,6 +412,7 @@ class FoodSearchService {
           servingSize: r.servingSize,
           source: FoodSearchSource.saved,
           originalData: r.originalData,
+          verificationLevel: r.verificationLevel,
         ));
       } else {
         dbResults.add(r);
@@ -590,6 +591,9 @@ class FoodSearchService {
           defaultCount: defaultCount,
           servingWeightG: servingWeight,
           matchedQuery: item['matched_query'] as String?,
+          // Trust signal derived server-side ('curated' | 'lab_verified' |
+          // 'manufacturer_verified' | 'community_verified' | 'user_saved' | null)
+          verificationLevel: item['verification_level'] as String?,
         );
       }).toList();
     } on DioException catch (e) {
