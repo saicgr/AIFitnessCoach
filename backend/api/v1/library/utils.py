@@ -162,6 +162,23 @@ _STATIC_PREFIXES = (
 )
 
 
+def _canonical_illustration_prefix(s3_path: Optional[str]) -> Optional[str]:
+    """Rewrite the legacy, non-existent `ILLUSTRATIONS/` key prefix to the real
+    `ILLUSTRATIONS ALL/` one.
+
+    The bucket only ever had `ILLUSTRATIONS ALL/` (trailing-space + ALL). Some
+    legacy rows — notably `exercise_demos` (the canonical/demos fallback the
+    Program schedule + active-workout resolver use) — stored the bare
+    `ILLUSTRATIONS/` prefix, which 404s on every fetch. Normalizing here, at the
+    URL choke point, guarantees a stale or future wrong-prefix value can never
+    serve a 404. The match is exact: `ILLUSTRATIONS ALL/` contains a space (not a
+    slash) after the word, so it is never double-rewritten.
+    """
+    if s3_path and "/ILLUSTRATIONS/" in s3_path:
+        return s3_path.replace("/ILLUSTRATIONS/", "/ILLUSTRATIONS ALL/", 1)
+    return s3_path
+
+
 def presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
     """Convert an S3 path (s3://bucket/key) to a presigned HTTPS URL.
 
@@ -174,6 +191,8 @@ def presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
     global _presign_error_logged
     if not s3_path or not s3_path.startswith('s3://'):
         return s3_path
+    # Guard direct presign callers against the legacy ILLUSTRATIONS/ prefix too.
+    s3_path = _canonical_illustration_prefix(s3_path)
     try:
         from api.v1.videos import s3_client, PRESIGNED_URL_EXPIRATION
         path_without_prefix = s3_path[5:]  # Remove 's3://'
@@ -237,6 +256,9 @@ def resolve_image_url(s3_path: Optional[str]) -> Optional[str]:
     Tries static_url() first (permanent, cacheable forever).
     Falls back to presign_s3_path() for private content.
     """
+    # Normalize the legacy `ILLUSTRATIONS/` prefix so a corrected path routes
+    # through static_url() (public, non-expiring) instead of 404ing.
+    s3_path = _canonical_illustration_prefix(s3_path)
     url = static_url(s3_path)
     if url:
         return url
