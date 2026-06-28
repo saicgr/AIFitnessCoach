@@ -16638,6 +16638,17 @@ class AppLocalizationsTl extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'TINGNAN ANG PLANO BUKAS';
 
   @override
+  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+
+  @override
+  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+
+  @override
+  String heroWorkoutCardMoreExercises(int count) {
+    return '+$count more';
+  }
+
+  @override
   String get heroWorkoutCardShareToSocial => 'Ibahagi sa Social';
 
   @override

@@ -16511,6 +16511,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'BEKIJK HET PLAN VOOR MORGEN';
 
   @override
+  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+
+  @override
+  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+
+  @override
+  String heroWorkoutCardMoreExercises(int count) {
+    return '+$count more';
+  }
+
+  @override
   String get heroWorkoutCardShareToSocial => 'Delen op social media';
 
   @override

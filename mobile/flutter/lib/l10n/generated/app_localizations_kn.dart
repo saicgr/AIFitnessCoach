@@ -16610,6 +16610,17 @@ class AppLocalizationsKn extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'ನಾಳೆಯ ಯೋಜನೆಯನ್ನು ನೋಡಿ';
 
   @override
+  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+
+  @override
+  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+
+  @override
+  String heroWorkoutCardMoreExercises(int count) {
+    return '+$count more';
+  }
+
+  @override
   String get heroWorkoutCardShareToSocial => 'ಸೋಷಿಯಲ್ ಮೀಡಿಯಾದಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ';
 
   @override

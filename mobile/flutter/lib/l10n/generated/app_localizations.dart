@@ -27857,6 +27857,24 @@ abstract class AppLocalizations {
   /// **'SEE TOMORROW’S PLAN'**
   String get heroWorkoutCardSeeTomorrowSPlan;
 
+  /// No description provided for @heroWorkoutCardHidePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'HIDE PLAN'**
+  String get heroWorkoutCardHidePlan;
+
+  /// No description provided for @heroWorkoutCardOpenFullPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Open full plan'**
+  String get heroWorkoutCardOpenFullPlan;
+
+  /// No description provided for @heroWorkoutCardMoreExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String heroWorkoutCardMoreExercises(int count);
+
   /// No description provided for @heroWorkoutCardShareToSocial.
   ///
   /// In en, this message translates to:

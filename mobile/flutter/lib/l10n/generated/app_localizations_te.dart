@@ -16606,6 +16606,17 @@ class AppLocalizationsTe extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'రేపటి ప్లాన్ చూడండి';
 
   @override
+  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+
+  @override
+  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+
+  @override
+  String heroWorkoutCardMoreExercises(int count) {
+    return '+$count more';
+  }
+
+  @override
   String get heroWorkoutCardShareToSocial => 'సోషల్‌లో షేర్ చేయండి';
 
   @override

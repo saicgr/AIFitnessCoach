@@ -16741,6 +16741,17 @@ class AppLocalizationsTa extends AppLocalizations {
       'நாளைக்கான திட்டத்தைப் பாருங்கள்';
 
   @override
+  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+
+  @override
+  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+
+  @override
+  String heroWorkoutCardMoreExercises(int count) {
+    return '+$count more';
+  }
+
+  @override
   String get heroWorkoutCardShareToSocial => 'சமூக ஊடகங்களில் பகிரவும்';
 
   @override

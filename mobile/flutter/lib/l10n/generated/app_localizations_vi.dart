@@ -16490,6 +16490,17 @@ class AppLocalizationsVi extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'XEM KẾ HOẠCH NGÀY MAI';
 
   @override
+  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+
+  @override
+  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+
+  @override
+  String heroWorkoutCardMoreExercises(int count) {
+    return '+$count more';
+  }
+
+  @override
   String get heroWorkoutCardShareToSocial => 'Chia sẻ lên mạng xã hội';
 
   @override

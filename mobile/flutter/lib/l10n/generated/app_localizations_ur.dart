@@ -16475,6 +16475,17 @@ class AppLocalizationsUr extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'کل کا پلان دیکھیں';
 
   @override
+  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+
+  @override
+  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+
+  @override
+  String heroWorkoutCardMoreExercises(int count) {
+    return '+$count more';
+  }
+
+  @override
   String get heroWorkoutCardShareToSocial => 'سوشل میڈیا پر شیئر کریں';
 
   @override

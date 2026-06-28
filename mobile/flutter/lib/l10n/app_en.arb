@@ -20366,6 +20366,14 @@
   "heroWorkoutCardResume": "RESUME",
   "heroWorkoutCardResumeNow": "RESUME NOW",
   "heroWorkoutCardSeeTomorrowSPlan": "SEE TOMORROW’S PLAN",
+  "heroWorkoutCardHidePlan": "HIDE PLAN",
+  "heroWorkoutCardOpenFullPlan": "Open full plan",
+  "heroWorkoutCardMoreExercises": "+{count} more",
+  "@heroWorkoutCardMoreExercises": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "heroWorkoutCardShareToSocial": "Share to Social",
   "heroWorkoutCardSkipWorkout": "Skip Workout?",
   "heroWorkoutCardStartAnyway": "Start anyway",
