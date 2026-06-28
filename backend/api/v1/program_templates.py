@@ -2732,7 +2732,6 @@ async def assign_program_core(
                 .in_("assignment_id", superseded_assignment_ids)
                 .eq("user_id", user_id)
                 .eq("is_completed", False)
-                .gte("scheduled_date", now)
                 .execute()
             )
             ghost_ids = [
@@ -3695,8 +3694,16 @@ async def delete_assignment(
     assignment_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """End an assignment (is_active=false, status='abandoned') and remove its
-    future incomplete workouts. Completed/past rows are kept for history."""
+    """End an assignment (is_active=false, status='abandoned') and remove ALL
+    its INCOMPLETE workouts. Completed rows are kept for history.
+
+    Purge is intentionally NOT date-filtered. A date filter (scheduled_date >=
+    utc-now) leaked the user's own TODAY workout: program rows are stored at
+    12:00 UTC, so a removal later in the UTC day treated today's session as
+    "past" and left it behind — an orphan of an abandoned assignment that
+    list_workouts still surfaced (the "I removed the program but Saturday's
+    workout is still here" bug). Removing a program clears everything it
+    scheduled that the user hasn't actually done."""
     try:
         db = get_supabase()
         row = _assignment_or_404(db, assignment_id)
@@ -3711,7 +3718,6 @@ async def delete_assignment(
             }
         ).eq("id", assignment_id).execute()
 
-        now_iso = datetime.utcnow().isoformat()
         removed = 0
         try:
             res = (
@@ -3719,13 +3725,12 @@ async def delete_assignment(
                 .delete()
                 .eq("assignment_id", assignment_id)
                 .eq("user_id", user_id)
-                .gte("scheduled_date", now_iso)
                 .eq("is_completed", False)
                 .execute()
             )
             removed = len(res.data or [])
         except Exception as e:  # noqa: BLE001
-            logger.warning("assignment delete: future-row purge failed: %s", e)
+            logger.warning("assignment delete: workout purge failed: %s", e)
 
         await _clear_today_cache(user_id)
         return {

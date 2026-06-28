@@ -139,7 +139,9 @@ class WorkoutDB(BaseDB):
                 .range(offset, offset + limit - 1)
                 .execute()
             )
-            return result.data or []
+            return self._filter_inactive_assignment_workouts(
+                user_id, result.data or []
+            )
 
         # Fetch more than needed to account for duplicates, then deduplicate
         fetch_limit = (limit + offset) * 3
@@ -155,6 +157,14 @@ class WorkoutDB(BaseDB):
         if not result.data:
             return []
 
+        # Safety net: drop incomplete workouts of inactive assignments before
+        # dedup (abandoned/paused/completed programs must not linger).
+        filtered_rows = self._filter_inactive_assignment_workouts(
+            user_id, result.data
+        )
+        if not filtered_rows:
+            return []
+
         # Deduplicate canonical (is_current=TRUE) workouts to one-per-date —
         # this collapses the SCD2 history. User-manual extras
         # (is_current=FALSE) are NEVER deduplicated against the canonical
@@ -162,7 +172,7 @@ class WorkoutDB(BaseDB):
         # day's planned workout.
         seen_canonical_dates = set()
         deduplicated = []
-        for workout in result.data:
+        for workout in filtered_rows:
             scheduled_date = workout.get("scheduled_date", "")
             if scheduled_date:
                 date_only = scheduled_date.split("T")[0]
@@ -179,6 +189,64 @@ class WorkoutDB(BaseDB):
                 deduplicated.append(workout)
 
         return deduplicated[offset : offset + limit]
+
+    def _filter_inactive_assignment_workouts(
+        self, user_id: str, rows: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Drop INCOMPLETE workouts whose program assignment is no longer active.
+
+        The durable guarantee behind "I removed/paused a program but its workouts
+        still show": program workouts carry an assignment_id, and list_workouts
+        surfaces them by that id. If the assignment is later abandoned (removed),
+        paused, or completed, its leftover incomplete sessions must not render —
+        even if a purge missed them (timezone edge, partial failure, a write path
+        that forgot to clean up). COMPLETED rows are always kept (history).
+
+        Cost: one small indexed lookup, and ONLY when the result actually
+        contains incomplete assignment-tagged rows (skipped entirely for the
+        common AI-only user whose workouts have no assignment_id).
+        """
+        asg_ids = {
+            str(w["assignment_id"])
+            for w in rows
+            if w.get("assignment_id") and not w.get("is_completed")
+        }
+        if not asg_ids:
+            return rows
+        try:
+            resp = (
+                self.client.table("user_program_assignments")
+                .select("id, status, is_active")
+                .eq("user_id", user_id)
+                .in_("id", list(asg_ids))
+                .execute()
+            )
+            inactive = {
+                str(r["id"])
+                for r in (resp.data or [])
+                if (r.get("status") != "active" or r.get("is_active") is False)
+            }
+            # An assignment_id present on a workout but ABSENT from the table
+            # (hard-deleted assignment) is also inactive — treat it as such.
+            found = {str(r["id"]) for r in (resp.data or [])}
+            inactive |= {aid for aid in asg_ids if aid not in found}
+        except Exception as e:  # noqa: BLE001 — never block reads on this guard
+            from core.logger import get_logger
+            get_logger(__name__).debug(
+                "inactive-assignment filter skipped: %s", e
+            )
+            return rows
+        if not inactive:
+            return rows
+        return [
+            w
+            for w in rows
+            if not (
+                w.get("assignment_id")
+                and not w.get("is_completed")
+                and str(w["assignment_id"]) in inactive
+            )
+        ]
 
     def create_workout(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
