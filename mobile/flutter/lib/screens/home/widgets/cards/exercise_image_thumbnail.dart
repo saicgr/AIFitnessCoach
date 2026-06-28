@@ -31,6 +31,9 @@ class _ExerciseImageThumbnailState
   String? _imageUrl;
   bool _isLoading = true;
   bool _hasError = false;
+  // Guards the self-heal so a genuinely-missing image can't loop: we re-resolve
+  // a failed cached URL at most once.
+  bool _healedAfterError = false;
 
   @override
   void initState() {
@@ -165,9 +168,27 @@ class _ExerciseImageThumbnailState
           ),
         ),
       ),
-      // On network error loading the image, show the lettered placeholder so
-      // the tile stays the same size as its siblings.
-      errorWidget: (_, __, ___) => _buildPlaceholder(),
+      // On network error loading the image, self-heal once: a cached URL can be
+      // stale (wrong S3 prefix, moved file, expired presign). Evict it and
+      // re-resolve a fresh URL from the server. If that ALSO fails, fall back to
+      // the lettered placeholder (genuinely missing image). This is why we never
+      // need to bump the cache version for a stale-URL bug again.
+      errorWidget: (_, __, ___) {
+        if (!_healedAfterError) {
+          _healedAfterError = true;
+          final name = widget.exercise.name;
+          ImageUrlCache.evict(name).then((_) {
+            if (mounted) {
+              setState(() {
+                _imageUrl = null;
+                _isLoading = true;
+              });
+              _fetchImageUrl(name);
+            }
+          });
+        }
+        return _buildPlaceholder();
+      },
     );
   }
 }

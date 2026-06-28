@@ -106,6 +106,10 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
   String? _imageUrl;
   bool _isLoading = true;
   bool _hasError = false;
+  // Self-heal guard: a failed cached URL is evicted + re-resolved at most once
+  // per exercise (reset in didUpdateWidget), so a genuinely-missing image can't
+  // loop while a stale URL (wrong prefix / moved file / expired presign) heals.
+  bool _healedAfterError = false;
 
   @override
   void initState() {
@@ -124,6 +128,7 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.exerciseName != widget.exerciseName ||
         oldWidget.imageUrl != widget.imageUrl) {
+      _healedAfterError = false; // new exercise → allow one fresh heal
       _loadImageUrl();
     }
   }
@@ -325,8 +330,24 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
       placeholder: (_, __) => widget.brandFallback
           ? const SizedBox.expand()
           : _placeholder(fallbackIconColor),
-      errorWidget: (_, __, ___) =>
-          widget.brandFallback ? _brandMark() : _placeholder(fallbackIconColor),
+      errorWidget: (_, __, ___) {
+        // Self-heal once: evict the (possibly stale) cached URL and re-resolve a
+        // fresh one. If it fails again, the placeholder/brand mark stands.
+        if (!_healedAfterError && widget.imageUrl == null) {
+          _healedAfterError = true;
+          final cacheKey = widget.exerciseId ?? widget.exerciseName;
+          () async {
+            await ImageUrlCache.evict(cacheKey);
+            if (cacheKey != widget.exerciseName) {
+              await ImageUrlCache.evict(widget.exerciseName);
+            }
+            if (mounted) _loadImageUrl();
+          }();
+        }
+        return widget.brandFallback
+            ? _brandMark()
+            : _placeholder(fallbackIconColor);
+      },
     );
   }
 }

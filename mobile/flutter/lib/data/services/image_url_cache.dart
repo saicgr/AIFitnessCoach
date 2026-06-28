@@ -153,6 +153,19 @@ class ImageUrlCache {
     await _persistCache();
   }
 
+  /// Evict a single entry (memory + disk). Call this when a cached URL fails to
+  /// load (e.g. 404) so the next resolve re-fetches a fresh URL from the server.
+  /// This is the self-heal that makes manual cache-version bumps unnecessary: a
+  /// stale URL (wrong prefix, moved file, expired presign) is dropped on first
+  /// failed load instead of being replayed forever.
+  static Future<void> evict(String exerciseName) async {
+    if (_memoryCache == null) return;
+    final key = exerciseName.toLowerCase();
+    final existed = _memoryCache!.remove(key) != null;
+    _recency.remove(key);
+    if (existed) await _persistCache();
+  }
+
   /// Evict least-recently-used entries when the in-memory map exceeds its cap.
   static void _evictMemoryIfNeeded() {
     if (_memoryCache == null) return;
