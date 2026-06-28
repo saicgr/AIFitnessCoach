@@ -393,6 +393,16 @@ List<RouteBase> _preAuthRoutes() => [
         builder: (context, state) => const HealthConnectOnboardingScreen(),
       ),
 
+      // OPTIONAL nutrition-import step — feature-flagged
+      // (`kNutritionImportOnboardingEnabled`, OFF by default). Sits between
+      // health-connect and permissions-primer ONLY when the flag is on; the
+      // Health-Connect step routes here instead of straight to the primer.
+      // Fully skippable — never gates onboarding completion.
+      GoRoute(
+        path: OnboardingNutritionImportScreen.routePath,
+        builder: (context, state) => const OnboardingNutritionImportScreen(),
+      ),
+
       // Notification pre-permission screen — shown once after onboarding/paywall
       // before the user lands on /home. The OS notification prompt only fires
       // if the user opts in here (soft prompt → hard prompt pattern).

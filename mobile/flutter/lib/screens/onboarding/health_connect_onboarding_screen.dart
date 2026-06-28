@@ -8,12 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/config/feature_flags.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/health_service.dart';
 import '../../widgets/health_connect_sheet.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'onboarding_experiments.dart';
+import 'onboarding_nutrition_import_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 
@@ -56,6 +58,13 @@ class _HealthConnectOnboardingScreenState
 
   String get _platformName =>
       Platform.isAndroid ? 'Health Connect' : 'Apple Health';
+
+  /// Next step after this screen. When the optional nutrition-import step is
+  /// enabled it slots in here; otherwise we go straight to the permissions
+  /// primer (the original, unchanged behavior).
+  String _nextRoute() => kNutritionImportOnboardingEnabled
+      ? OnboardingNutritionImportScreen.routePath
+      : '/permissions-primer';
 
   @override
   void initState() {
@@ -144,7 +153,7 @@ class _HealthConnectOnboardingScreenState
 
     if (connectedOk) {
       await _markShown();
-      router.go('/permissions-primer');
+      router.go(_nextRoute());
     } else if (failureMessage != null) {
       // Stay on the screen — the "Maybe later" button still lets them skip,
       // so this surfaces the problem without trapping onboarding.
@@ -159,7 +168,7 @@ class _HealthConnectOnboardingScreenState
         .capture(eventName: 'onboarding_health_connect_skipped');
     await _markShown();
     if (!mounted) return;
-    context.go('/permissions-primer');
+    context.go(_nextRoute());
   }
 
   @override

@@ -54,6 +54,12 @@ extension HealthServiceExt on HealthService {
 
     // Diabetic metrics
     HealthDataType.BLOOD_GLUCOSE,
+
+    // NOTE: NUTRITION *read* is intentionally NOT in this global read list —
+    // requesting READ_NUTRITION on Android would re-expand the Health Connect
+    // scope trimmed for Play approval. Nutrition read is iOS-only and requested
+    // on-demand at import time (see readDailyNutritionFromHealth). NUTRITION
+    // *write* remains in `_writeTypes` (cross-platform meal write-back).
   ];
 
   // Data types we want to write to Health Connect / HealthKit.
@@ -74,6 +80,88 @@ extension HealthServiceExt on HealthService {
     HealthDataType.WATER,
     HealthDataType.NUTRITION,
   ];
+
+  /// iOS-ONLY: read daily dietary macros (+ weight) that OTHER apps logged into
+  /// Apple Health (e.g. MacroFactor, Bevel), for the nutrition importer. Returns
+  /// rows shaped for `POST /nutrition/import` (source=apple_health):
+  /// `[{date:'yyyy-MM-dd', calories, protein_g, carbs_g, fat_g, weight_kg?}]`.
+  ///
+  /// Daily aggregates only (HealthKit dietary samples carry no meal grouping we
+  /// trust). **Excludes our own written meals** (sourceId == our bundle id) so a
+  /// user who already logs in Zealova doesn't double-count their own data.
+  /// Returns [] on Android — the Android nutrition migration path is CSV import
+  /// (requesting READ_NUTRITION on Health Connect re-expands the Play scope).
+  Future<List<Map<String, dynamic>>> readDailyNutritionFromHealth(
+      {int daysBack = 365}) async {
+    if (!Platform.isIOS) return const [];
+    try {
+      await _ensureConfigured();
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, now.day)
+          .subtract(Duration(days: daysBack));
+      final types = [HealthDataType.NUTRITION, HealthDataType.WEIGHT];
+      // On-demand READ auth (kept out of the global/Android scope on purpose).
+      try {
+        await _health.requestAuthorization(
+          types,
+          permissions: List.filled(types.length, HealthDataAccess.READ),
+        );
+      } catch (e) {
+        debugPrint('⚠️ [HealthImport] nutrition read auth: $e');
+      }
+
+      String? ownId;
+      try {
+        ownId = (await PackageInfo.fromPlatform()).packageName;
+      } catch (_) {}
+
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: types,
+      );
+      final dedup = _health.removeDuplicates(data);
+
+      String two(int n) => n.toString().padLeft(2, '0');
+      final byDay = <String, Map<String, double>>{};
+      for (final p in dedup) {
+        if (ownId != null && p.sourceId == ownId) continue; // skip our writes
+        final d = p.dateFrom.toLocal();
+        final key = '${d.year}-${two(d.month)}-${two(d.day)}';
+        final m = byDay.putIfAbsent(key, () => <String, double>{});
+        final v = p.value;
+        if (p.type == HealthDataType.NUTRITION && v is NutritionHealthValue) {
+          m['calories'] = (m['calories'] ?? 0) + (v.calories ?? 0);
+          m['protein_g'] = (m['protein_g'] ?? 0) + (v.protein ?? 0);
+          m['carbs_g'] = (m['carbs_g'] ?? 0) + (v.carbs ?? 0);
+          m['fat_g'] = (m['fat_g'] ?? 0) + (v.fat ?? 0);
+        } else if (p.type == HealthDataType.WEIGHT && v is NumericHealthValue) {
+          m['weight_kg'] = v.numericValue.toDouble(); // last sample wins
+        }
+      }
+
+      final rows = <Map<String, dynamic>>[];
+      byDay.forEach((day, m) {
+        final row = <String, dynamic>{'date': day};
+        if ((m['calories'] ?? 0) > 0) {
+          row['calories'] = (m['calories'] ?? 0).round();
+          row['protein_g'] = double.parse((m['protein_g'] ?? 0).toStringAsFixed(1));
+          row['carbs_g'] = double.parse((m['carbs_g'] ?? 0).toStringAsFixed(1));
+          row['fat_g'] = double.parse((m['fat_g'] ?? 0).toStringAsFixed(1));
+        }
+        if (m.containsKey('weight_kg')) {
+          row['weight_kg'] = double.parse(m['weight_kg']!.toStringAsFixed(2));
+        }
+        if (row.length > 1) rows.add(row);
+      });
+      rows.sort((a, b) => (a['date'] as String).compareTo(b['date'] as String));
+      debugPrint('🏥 [HealthImport] read ${rows.length} day(s) of nutrition/weight');
+      return rows;
+    } catch (e, st) {
+      debugPrint('❌ [HealthImport] readDailyNutritionFromHealth: $e\n$st');
+      return const [];
+    }
+  }
 
   /// Check if Health Connect is available on the device
   Future<bool> isHealthConnectAvailable() async {

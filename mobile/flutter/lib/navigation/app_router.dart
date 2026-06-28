@@ -39,6 +39,7 @@ import '../screens/onboarding/onboarding_experiments.dart';
 import '../screens/onboarding/notification_prime_screen.dart';
 import '../screens/onboarding/permissions_primer_screen.dart';
 import '../screens/onboarding/health_connect_onboarding_screen.dart';
+import '../screens/onboarding/onboarding_nutrition_import_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
 import '../screens/onboarding/personal_info_screen.dart';
 import '../screens/onboarding/fitness_assessment_screen.dart';

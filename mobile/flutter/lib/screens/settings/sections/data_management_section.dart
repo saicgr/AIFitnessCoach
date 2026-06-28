@@ -11,6 +11,7 @@ import '../../../data/services/video_cache_service.dart';
 import '../dialogs/export_dialog.dart';
 import '../dialogs/import_dialog.dart';
 import '../export_data_screen.dart';
+import '../nutrition_import_screen.dart';
 import '../subscription/request_refund_screen.dart';
 import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -87,6 +88,15 @@ class DataManagementSection extends ConsumerWidget {
               title: AppLocalizations.of(context)!.dataManagementSectionImportData(Branding.appName),
               subtitle: AppLocalizations.of(context)!.dataManagementSectionRestoreFromABackup(Branding.appName),
               onTap: () => showImportDialog(context, ref),
+            ),
+            // Cross-app nutrition importer — FREE, no paywall. Pulls food
+            // history from MyFitnessPal / MacroFactor / Cronometer (CSV) or
+            // Apple Health, previews it, then commits with overlap handling.
+            SettingItemData(
+              icon: Icons.restaurant_outlined,
+              title: 'Import nutrition from another app',
+              subtitle: 'MyFitnessPal, MacroFactor, Cronometer, Apple Health',
+              onTap: () => _navigateToNutritionImport(context),
             ),
             // SLICE_DEDUP — surface the cross-source dedup management
             // screen here so users can re-pick a primary or unlink a
@@ -220,6 +230,15 @@ class DataManagementSection extends ConsumerWidget {
       context,
       AppPageRoute(
         builder: (context) => const ExportDataScreen(),
+      ),
+    );
+  }
+
+  void _navigateToNutritionImport(BuildContext context) {
+    Navigator.push(
+      context,
+      AppPageRoute(
+        builder: (context) => const NutritionImportScreen(),
       ),
     );
   }
