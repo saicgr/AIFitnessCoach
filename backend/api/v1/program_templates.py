@@ -103,7 +103,7 @@ def _presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
 # `source` field + branded rows). Bumping the prefix retires any pre-merge
 # cached payloads without a manual flush.
 _library_browse_cache = ResponseCache(
-    prefix="program_library_browse_v5", ttl_seconds=6 * 3600, max_size=256
+    prefix="program_library_browse_v6", ttl_seconds=6 * 3600, max_size=256
 )
 
 
@@ -809,35 +809,11 @@ async def browse_library(
             # When searching, only keep rows that scored a match.
             if search_terms and str(row["id"]) not in _search_ranks:
                 continue
-            cards.append(
-                LibraryProgramCard(
-                    id=str(row["id"]),
-                    program_name=row.get("program_name") or "Program",
-                    program_category=row.get("program_category"),
-                    program_subcategory=row.get("program_subcategory"),
-                    # No celebrity tags anywhere in the library (incl. the few
-                    # Sport Training rows that carry a celebrity_name).
-                    celebrity_name=None,
-                    difficulty_level=row.get("difficulty_level"),
-                    duration_weeks=row.get("duration_weeks"),
-                    sessions_per_week=row.get("sessions_per_week"),
-                    session_duration_minutes=row.get(
-                        "session_duration_minutes"
-                    ),
-                    description=(
-                        row.get("short_description")
-                        or row.get("description")
-                    ),
-                    goals=row.get("goals") or [],
-                    editorial_name=row.get("editorial_name"),
-                    tagline=row.get("tagline"),
-                    who_for=row.get("who_for"),
-                    who_not_for=row.get("who_not_for"),
-                    equipment_summary=row.get("equipment_summary"),
-                    progression_note=row.get("progression_note"),
-                    source="library",
-                )
-            )
+            # _row_to_card resolves the cover (image_url) AND strips celebrity —
+            # same field shape as /library/featured, so covers render on the
+            # browse grid + rails too. (Hand-building the card here previously
+            # dropped image_url, leaving browse cards image-less.)
+            cards.append(_row_to_card(row))
 
         # --- Merge in branded_programs, then apply the SAME filters in Python
         # so both taxonomies are filtered identically. The category filter must

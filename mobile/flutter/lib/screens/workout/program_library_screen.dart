@@ -790,16 +790,20 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
             if (count > 0) ...[
               const SizedBox(width: 7),
               Container(
-                constraints:
-                    const BoxConstraints(minWidth: 17, minHeight: 17),
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                // Fixed height + equal min-width keeps a single digit a clean
+                // circle (was minHeight-only, so the digit's line-height grew it
+                // into a tall vertical pill); widens to a pill for 2 digits.
+                height: 18,
+                constraints: const BoxConstraints(minWidth: 18),
+                padding: const EdgeInsets.symmetric(horizontal: 5),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: AppColors.orange,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(9),
                 ),
                 child: Text(
                   '$count',
+                  textAlign: TextAlign.center,
                   style: ZType.data(10, color: Colors.white),
                 ),
               ),
