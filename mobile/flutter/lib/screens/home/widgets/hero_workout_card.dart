@@ -10,6 +10,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/workout.dart';
+import '../../../data/models/exercise.dart';
 import '../../../data/models/workout_program_context.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
@@ -22,6 +23,7 @@ import '../../../data/services/image_url_cache.dart';
 import '../../../widgets/app_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
+import '../../../widgets/program_badge.dart';
 import 'regenerate_workout_sheet.dart';
 import '../../social/widgets/create_post_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
@@ -74,6 +76,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   bool _isMarkingDone = false;
   String? _backgroundImageUrl;
   bool _isLoadingImage = true;
+  // windDown mode: whether the inline "tomorrow's plan" exercise list is
+  // expanded on the card (vs. requiring a tap-through to the detail screen).
+  bool _tomorrowPlanExpanded = false;
 
   /// Per-type illustration map. Asset directory is fail-soft — when an
   /// asset is missing the CachedNetworkImage / Image widget falls through
@@ -237,6 +242,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   }
 
   /// Check if a workout is "missed" — scheduled for a past date and not completed
+  /// Toggle the inline windDown plan. Lives on the State (not the smart-mode
+  /// extension) because `setState` is protected to State subclasses.
+  void toggleTomorrowPlan() {
+    setState(() => _tomorrowPlanExpanded = !_tomorrowPlanExpanded);
+  }
+
   bool _isMissedWorkout(Workout w) {
     if (w.scheduledDate == null) return false;
     try {
@@ -309,6 +320,36 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       }
     } catch (_) {
       return 'TODAY';
+    }
+  }
+
+  /// Human-readable date for the "Missed Workout" overlay — e.g.
+  /// "Yesterday · Jun 26" or "Friday · Jun 20" — so the user can tell WHICH
+  /// past day the missed session was scheduled for, not just that one exists.
+  String _getMissedDateLabel(String? scheduledDate) {
+    if (scheduledDate == null) return '';
+    final dateStr = scheduledDate.split('T')[0];
+    final parts = dateStr.split('-');
+    if (parts.length != 3) return '';
+    try {
+      final date = DateTime(
+          int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = today.subtract(const Duration(days: 1));
+      const weekdays = [
+        'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
+        'Saturday', 'Sunday'
+      ];
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+        'Oct', 'Nov', 'Dec'
+      ];
+      final dayName =
+          date == yesterday ? 'Yesterday' : weekdays[date.weekday - 1];
+      return '$dayName · ${months[date.month - 1]} ${date.day}';
+    } catch (_) {
+      return '';
     }
   }
 
@@ -732,12 +773,19 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                 children: [
                   // Spacer replacement - fixed top padding for badges area
                   const SizedBox(height: 4),
-                  // Top row: ⋯ overflow only — date + type collapsed into the
-                  // single meta line below (Surface 2.2). Action sheet hosts
-                  // View Details / Regenerate / Skip / Reschedule.
+                  // Top row: program badge (which program this workout is from —
+                  // AI vs HYROX vs custom) on the left, ⋯ overflow on the right.
+                  // Action sheet hosts View Details / Regenerate / Skip /
+                  // Reschedule.
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: ProgramBadge(workout: workout),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () => _showHeroActionSheet(context),
                         child: Container(
@@ -1085,6 +1133,30 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                               ),
                             ),
                           ),
+                          if (_getMissedDateLabel(workout.scheduledDate)
+                              .isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              _getMissedDateLabel(workout.scheduledDate),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.78)
+                                    : Colors.black.withValues(alpha: 0.6),
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                                shadows: isDark
+                                    ? [
+                                        Shadow(
+                                          color: Colors.black.withValues(alpha: 0.6),
+                                          blurRadius: 4,
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 24),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,

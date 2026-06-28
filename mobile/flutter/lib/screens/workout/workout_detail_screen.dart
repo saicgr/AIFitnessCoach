@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/exercise_image.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/program_badge.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -458,6 +459,22 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
+                        // Program provenance badge — which program this workout
+                        // belongs to (AI vs a curated/branded program like
+                        // HYROX), color-matched to the merged schedule.
+                        Builder(builder: (_) {
+                          final attr = workoutProgramAttribution(workout);
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _buildLabeledBadge(
+                              label: 'Program',
+                              value: attr.isAi ? 'AI' : attr.name,
+                              color: attr.color,
+                              backgroundColor:
+                                  attr.color.withValues(alpha: 0.15),
+                            ),
+                          );
+                        }),
                         // Workout Type Badge - now with semantic color
                         _buildLabeledBadge(
                           label: AppLocalizations.of(context).workoutDetailType,
