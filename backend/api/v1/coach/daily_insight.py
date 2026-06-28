@@ -313,6 +313,41 @@ def _build_coach_noticed(
     }
 
 
+# ---------------------------------------------------------------------------
+# Proactive recovery-nutrition surfacing (home card)
+# ---------------------------------------------------------------------------
+# The snapshot already carries recovery_signal (acute imported-cardio + effort)
+# and training_load_state (chronic ACWR), and the prompt already steers the body
+# toward recovery food when they fire. This surfaces that advice as a dedicated,
+# tappable chip + an inline-nutrition flag so it isn't buried under the
+# default-collapsed TRENDS header.
+_RECOVERY_FUEL_PROMPT = (
+    "Suggest a recovery meal that fits my goals and what I've eaten today"
+)
+
+
+def _recovery_focus_flagged(snapshot: Dict[str, Any]) -> bool:
+    """True when the snapshot warrants surfacing proactive recovery-nutrition.
+
+    Mirrors the daily_insight_prompt recovery branch: an ACUTE active-recovery
+    recommendation (recovery_signal) OR a chronic overreaching training-load
+    state. "go_lighter" is deliberately excluded — it steers toward an easier
+    session, not a rest-day-recovery-food story.
+    """
+    sig = snapshot.get("recovery_signal") or {}
+    if sig.get("recommendation") == "active_recovery":
+        return True
+    if snapshot.get("training_load_state") == "overreaching":
+        return True
+    return False
+
+
+def _recovery_fuel_chip() -> Dict[str, Any]:
+    """The dedicated recovery-fuel chip. Label-only schema + a `prompt` so the
+    tap deep-links into the coach chat with the fuller recovery-meal request."""
+    return {"label": "Recovery fuel", "prompt": _RECOVERY_FUEL_PROMPT}
+
+
 def _sanitize_chips(raw: Any) -> Optional[List[Dict[str, Any]]]:
     """Validate Gemini-emitted chips. Each becomes {label, route?, action?}:
     a valid route, a known action, or label-only (a plain reply chip — used by
@@ -364,6 +399,12 @@ class ChipModel(BaseModel):
     label: str
     route: Optional[str] = None
     action: Optional[str] = None
+    # Optional pre-seeded chat prompt. When set (and no route/action), tapping
+    # the chip deep-links into the coach chat with this exact message auto-sent,
+    # instead of sending the visible label. Used by the proactive recovery-fuel
+    # chip so a short label ("Recovery fuel") can send a fuller request
+    # ("Suggest a recovery meal that fits my goals and what I've eaten today").
+    prompt: Optional[str] = None
     # Action context for injury check-in chips (injury-2026-06 Phase 3): the
     # client harvests these top-level scalars into the chip's actionContext and
     # forwards them to POST /coach/injury-action. Without declaring them here
@@ -394,6 +435,12 @@ class DailyInsightResponse(BaseModel):
     # injury-aware observation + the adjustment the engine already made, with
     # an Accept action. None when there's nothing worth surfacing prominently.
     coach_noticed: Optional[Dict[str, Any]] = None
+    # True on the HOME card when today's snapshot warrants proactively surfacing
+    # recovery-nutrition (recovery_signal recommends active_recovery, OR the
+    # training_load_state is overreaching). The client uses it to render the
+    # recovery-fuel chip + pull the protein/calorie context inline instead of
+    # leaving it collapsed. Default False keeps every normal card unchanged.
+    recovery_focus: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -1726,6 +1773,10 @@ async def daily_insight(
                                 _build_coach_noticed(snapshot)
                                 if source in ("home", "morning_brief") else None
                             ),
+                            recovery_focus=(
+                                _recovery_focus_flagged(snapshot)
+                                if source == "home" else False
+                            ),
                         )
             except HTTPException:
                 raise
@@ -1989,6 +2040,21 @@ async def daily_insight(
             if not payload.get("cta_secondary"):
                 payload["cta_secondary"] = {"label": "Ask coach", "route": "/chat"}
 
+        # ---- Proactive recovery-nutrition surfacing (home only) -----------
+        # When today warrants it (active_recovery / overreaching), pin a
+        # recovery-fuel chip so the recovery->food advice is one tap away
+        # instead of buried, and flag the response so the client pulls the
+        # protein/calorie context inline. Computed from the live snapshot and
+        # injected BEFORE persist so a (re)generated row carries the chip too.
+        recovery_focus = source == "home" and _recovery_focus_flagged(snapshot)
+        if recovery_focus:
+            chips = list(payload.get("chips") or [])
+            if not any(
+                (c or {}).get("prompt") == _RECOVERY_FUEL_PROMPT for c in chips
+            ):
+                chips.insert(0, _recovery_fuel_chip())
+            payload["chips"] = chips
+
         # ---- Persist ONLY when Gemini succeeded and passed validation -----
         insight_id: Optional[str] = None
         generated_at_iso = datetime.now(timezone.utc).isoformat()
@@ -2070,6 +2136,7 @@ async def daily_insight(
                 _build_coach_noticed(snapshot)
                 if source in ("home", "morning_brief") else None
             ),
+            recovery_focus=recovery_focus,
         )
     except HTTPException:
         raise

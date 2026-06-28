@@ -49,6 +49,12 @@ class InsightChip {
   final String? route;
   final String? action;
 
+  /// Optional pre-seeded chat prompt. When set (and no route/action), tapping
+  /// the chip deep-links into the coach chat with this exact message auto-sent
+  /// (via `?prompt=`), rather than sending the visible [label]. Lets a short
+  /// label ("Recovery fuel") send a fuller request. Null for ordinary chips.
+  final String? prompt;
+
   /// Optional action context the backend attaches to a chip (e.g. the injury
   /// recovery check-in carries `body_part` / `injury_id` so the chip handler
   /// knows which injury to act on). Forwarded verbatim into the action payload
@@ -59,6 +65,7 @@ class InsightChip {
     required this.label,
     this.route,
     this.action,
+    this.prompt,
     this.actionContext = const {},
   });
 
@@ -70,8 +77,11 @@ class InsightChip {
     }
 
     // Collect any extra string/num context keys (body_part, injury_id, …) the
-    // backend attached alongside label/route/action.
-    const reserved = {'label', 'route', 'action', 'kind', 'route_or_action'};
+    // backend attached alongside label/route/action. `prompt` is reserved
+    // (handled below) so it never leaks into the action context.
+    const reserved = {
+      'label', 'route', 'action', 'kind', 'route_or_action', 'prompt',
+    };
     final ctx = <String, dynamic>{};
     json.forEach((k, v) {
       if (!reserved.contains(k) && (v is String || v is num || v is bool)) {
@@ -83,6 +93,7 @@ class InsightChip {
       label: (json['label'] as String?)?.trim() ?? '',
       route: clean(json['route']),
       action: clean(json['action']),
+      prompt: clean(json['prompt']),
       actionContext: ctx,
     );
   }
@@ -155,6 +166,12 @@ class DailyCoachInsight {
   /// Proactive "Coach noticed" card (Dr-Yaad audit #2). Null when absent.
   final CoachNoticed? coachNoticed;
 
+  /// True on the HOME card when today warrants proactively surfacing
+  /// recovery-nutrition (server `recovery_focus`). The card then renders the
+  /// recovery-fuel chip and auto-reveals the nutrition context inline instead
+  /// of leaving it behind the collapsed TRENDS header.
+  final bool recoveryFocus;
+
   const DailyCoachInsight({
     this.insightId,
     required this.headline,
@@ -167,6 +184,7 @@ class DailyCoachInsight {
     this.chips = const [],
     this.blocks = const [],
     this.coachNoticed,
+    this.recoveryFocus = false,
   });
 
   /// True when this is a RICH morning/evening briefing (vs a light greeting
@@ -217,6 +235,7 @@ class DailyCoachInsight {
       coachNoticed: json['coach_noticed'] is Map<String, dynamic>
           ? CoachNoticed.fromJson(json['coach_noticed'] as Map<String, dynamic>)
           : null,
+      recoveryFocus: json['recovery_focus'] == true,
     );
   }
 }

@@ -357,7 +357,44 @@ _TRAINING_LOAD_GUIDANCE = (
 # Builders
 # ---------------------------------------------------------------------------
 
-def _build_system_instruction(source: str, cycle_phase: str | None = None) -> str:
+# Home-only recovery exception (Delta 2). The shared rules cap the body at 3
+# sentences; on a recovery-flagged home card we allow ONE extra sentence so the
+# coach can BOTH name the recovery observation AND state the concrete recovery-
+# food response, instead of having to drop one to stay terse. Self-gating — only
+# appended when the snapshot actually warrants it, so every other home card
+# stays tight.
+_RECOVERY_HOME_EXTRA = (
+    "\n\nRECOVERY EXCEPTION (home, this card only): today_score_snapshot "
+    "warrants a recovery focus (recovery_signal recommends active_recovery, or "
+    "training_load_state is 'overreaching'). You MAY use ONE extra sentence (up "
+    "to 4 total) so you can state BOTH the observation (e.g. you trained hard / "
+    "load is high) AND the specific recovery-food response (e.g. a protein + "
+    "anti-inflammatory whole-food suggestion that respects any dietary "
+    "restriction in context). Make no medical claim. Do not pad: only spend the "
+    "extra sentence on the food response."
+)
+
+
+def _home_recovery_flagged(context: dict | None) -> bool:
+    """True when the home snapshot warrants the recovery sentence exception.
+
+    Kept local to the prompt module (no import from the API layer) to avoid a
+    circular dependency. Mirrors daily_insight._recovery_focus_flagged.
+    """
+    snap = (context or {}).get("today_score_snapshot") or {}
+    sig = snap.get("recovery_signal") or {}
+    if sig.get("recommendation") == "active_recovery":
+        return True
+    if snap.get("training_load_state") == "overreaching":
+        return True
+    return False
+
+
+def _build_system_instruction(
+    source: str,
+    cycle_phase: str | None = None,
+    home_recovery_focus: bool = False,
+) -> str:
     """Return the source-specific system instruction.
 
     `cycle_phase` ∈ {menstrual, follicular, ovulation, luteal, None}.
@@ -402,6 +439,10 @@ def _build_system_instruction(source: str, cycle_phase: str | None = None) -> st
 
     if cycle_phase and cycle_phase in _CYCLE_PHASE_GUIDANCE:
         base += _CYCLE_PHASE_GUIDANCE[cycle_phase]
+
+    # Delta 2 — relax the home sentence cap by one ONLY when recovery warrants.
+    if source == "home" and home_recovery_focus:
+        base += _RECOVERY_HOME_EXTRA
 
     # Gap 1 — cross-domain load guidance on the surfaces users actually see.
     if source in ("home", "morning_brief", "evening_recap") or source not in (
@@ -478,7 +519,9 @@ def build_daily_insight_prompt(
         (system_instruction, user_message) tuple.
     """
     system_instruction = _build_system_instruction(
-        source, cycle_phase=context.get("cycle_phase")
+        source,
+        cycle_phase=context.get("cycle_phase"),
+        home_recovery_focus=_home_recovery_flagged(context),
     )
     user_message = _build_user_message(context, source)
     return system_instruction, user_message

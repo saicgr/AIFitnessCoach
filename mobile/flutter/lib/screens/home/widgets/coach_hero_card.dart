@@ -71,6 +71,11 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   // made the card too tall) — tap the "TRENDS" header to reveal the carousel.
   bool _graphsExpanded = false;
 
+  // True once the user has manually toggled the TRENDS header. After that, the
+  // user's explicit choice wins over the recovery-focus auto-expand (so a
+  // recovery day doesn't keep re-opening a section they just collapsed).
+  bool _graphsUserToggled = false;
+
   // Visibility (expanded / minimized / dismissedToday) lives in
   // `coachCardVisibilityProvider` (Riverpod + SharedPreferences keyed by
   // local date). The notifier outlives this widget's State so the user's
@@ -314,16 +319,27 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
 
 
   /// Collapsible "TRENDS" section wrapping the grounded-graph carousel.
-  /// Collapsed by default; the header toggles the reveal.
-  Widget _graphsSection(ThemeColors c, List<Map<String, dynamic>> blocks) {
+  /// Collapsed by default; the header toggles the reveal. When [autoExpand] is
+  /// set (recovery-focus day) it opens by default so the protein/calorie context
+  /// is visible inline, until the user manually toggles it.
+  Widget _graphsSection(
+    ThemeColors c,
+    List<Map<String, dynamic>> blocks, {
+    bool autoExpand = false,
+  }) {
     final n = blocks.length;
+    final expanded =
+        _graphsUserToggled ? _graphsExpanded : (_graphsExpanded || autoExpand);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 12),
         GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => setState(() => _graphsExpanded = !_graphsExpanded),
+          onTap: () => setState(() {
+            _graphsUserToggled = true;
+            _graphsExpanded = !expanded;
+          }),
           child: Row(
             children: [
               Text('TRENDS',
@@ -333,7 +349,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
                   style: ZType.lbl(10, color: c.textMuted)),
               const Spacer(),
               AnimatedRotation(
-                turns: _graphsExpanded ? 0.5 : 0.0,
+                turns: expanded ? 0.5 : 0.0,
                 duration: const Duration(milliseconds: 180),
                 child:
                     Icon(Icons.expand_more, size: 18, color: c.textMuted),
@@ -347,7 +363,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             padding: const EdgeInsets.only(top: 10),
             child: _BlocksCarousel(blocks: blocks),
           ),
-          crossFadeState: _graphsExpanded
+          crossFadeState: expanded
               ? CrossFadeState.showSecond
               : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
@@ -405,6 +421,68 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           ],
         );
       },
+    );
+  }
+
+  /// Proactive recovery-fuel chip (recovery-focus days). The backend pins a
+  /// chip carrying a seeded recovery-meal prompt; tapping deep-links into chat
+  /// with that prompt auto-sent. Subtle accent-outlined pill (no fill) so it
+  /// stays within the accent budget alongside the rest of the card chrome.
+  Widget _recoveryFuelRow(ThemeColors c, DailyCoachInsight insight) {
+    InsightChip? chip;
+    for (final ch in insight.chips) {
+      if ((ch.prompt ?? '').isNotEmpty) {
+        chip = ch;
+        break;
+      }
+    }
+    final label =
+        (chip?.label.isNotEmpty ?? false) ? chip!.label : 'Recovery fuel';
+    final prompt = (chip?.prompt ?? '').isNotEmpty
+        ? chip!.prompt!
+        : "Suggest a recovery meal that fits my goals and what I've eaten today";
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _openChatWithPrompt(context, prompt),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: c.accent.withValues(alpha: 0.32), width: 0.8),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.restaurant_rounded, size: 15, color: c.accent),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'A recovery-friendly meal idea for today',
+                      style: TextStyle(fontSize: 11.5, color: c.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  size: 12, color: c.accent.withValues(alpha: 0.7)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -509,6 +587,11 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             c, insight.body.replaceAll('\n', ' ').replaceAll('  ', ' '),
           ),
         ],
+        // Proactive recovery-fuel chip — surfaced when the backend flags today
+        // as a recovery-focus day (active_recovery / overreaching). Deep-links
+        // into chat with the seeded recovery-meal prompt so the recovery->food
+        // advice is one tap from an answer instead of buried.
+        if (insight.recoveryFocus) _recoveryFuelRow(c, insight),
         // Stat band — promotes the buried "left" values (protein + calories
         // remaining) into a glanceable 2-cell row above the to-dos. Built from
         // the signature-v2 ZealovaStatTile so it conforms to the design system
@@ -524,7 +607,8 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         // tall). Tap to reveal the swipeable carousel. Only topics the user has
         // data for appear (the server never fabricates).
         if (insight.blocks.isNotEmpty)
-          _graphsSection(c, insight.blocks.take(3).toList()),
+          _graphsSection(c, insight.blocks.take(3).toList(),
+              autoExpand: insight.recoveryFocus),
         // Spec footer: a hairline rule, then "Adjust today" (muted) · "Ask
         // coach ›" (accent) — replaces the Log/View CTA buttons.
         const SizedBox(height: 13),
@@ -930,6 +1014,24 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     final route = '/chat?$query';
     try {
       context.push(route);
+    } catch (_) {
+      context.push('/chat');
+    }
+  }
+
+  /// Open chat with a seeded prompt auto-sent (`?prompt=`). Used by the
+  /// recovery-fuel chip so the tap lands the user on the coach's answer to the
+  /// recovery-meal question rather than an empty thread.
+  void _openChatWithPrompt(BuildContext context, String prompt) {
+    final params = <String, String>{
+      'source': 'coach_hero',
+      'prompt': prompt,
+    };
+    final query = params.entries
+        .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}')
+        .join('&');
+    try {
+      context.push('/chat?$query');
     } catch (_) {
       context.push('/chat');
     }
