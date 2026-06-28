@@ -773,19 +773,13 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                 children: [
                   // Spacer replacement - fixed top padding for badges area
                   const SizedBox(height: 4),
-                  // Top row: program badge (which program this workout is from —
-                  // AI vs HYROX vs custom) on the left, ⋯ overflow on the right.
-                  // Action sheet hosts View Details / Regenerate / Skip /
-                  // Reschedule.
+                  // Top row: ⋯ overflow only — the program badge is drawn on top
+                  // of the whole card Stack (so it shows on the missed/completed
+                  // overlays too). Action sheet hosts View Details / Regenerate /
+                  // Skip / Reschedule.
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: ProgramBadge(workout: workout),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () => _showHeroActionSheet(context),
                         child: Container(
@@ -1185,6 +1179,19 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                   ),
                 ),
               ),
+            // Program attribution — drawn on TOP of every card state (base
+            // start card, missed overlay, completed overlay) so the carousel
+            // ALWAYS names the workout's program (AI vs HYROX vs custom).
+            // Top-left, clear of the ⋯ overflow at top-right.
+            Positioned(
+              top: 14,
+              left: 14,
+              right: 64,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ProgramBadge(workout: workout),
+              ),
+            ),
           ],
         ),
       ),
