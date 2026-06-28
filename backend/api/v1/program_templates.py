@@ -2589,6 +2589,7 @@ async def assign_program_core(
     # superseded the prior primary, leaving DUPLICATE active primaries
     # (e.g. a failed-then-retried Start stacked two active assignments).
     # Disjoint-day primaries still coexist (the merged multi-program model).
+    superseded_assignment_ids: List[str] = []
     if slot == "primary":
         try:
             existing = (
@@ -2615,6 +2616,7 @@ async def assign_program_core(
                             "updated_at": now,
                         }
                     ).eq("id", ex["id"]).execute()
+                    superseded_assignment_ids.append(str(ex["id"]))
         except Exception as e:  # noqa: BLE001
             logger.warning("primary supersede failed: %s", e)
 
@@ -2701,6 +2703,54 @@ async def assign_program_core(
             day_resolutions=day_resolutions or {},
             resolve_collisions=True,
         )
+
+    # Purge ghost workouts from any superseded primary (step 3). When you switch
+    # primary program A -> B, A's future incomplete workouts on days B does NOT
+    # cover would otherwise linger on the schedule as orphans of an abandoned
+    # assignment (they used to be invisible — is_current=false template rows were
+    # filtered out of list_workouts — but are now surfaced). Keep A's workouts on
+    # dates B DID schedule (those are the per-day "Add alongside" choices the user
+    # made — B created an addon there and the old workout is intentionally kept).
+    # Completed/past A rows are untouched (history).
+    if superseded_assignment_ids:
+        try:
+            b_dates = set()
+            b_rows = (
+                db.client.table("workouts")
+                .select("scheduled_date")
+                .eq("assignment_id", assignment_id)
+                .eq("user_id", user_id)
+                .execute()
+            )
+            for r in (b_rows.data or []):
+                sd = str(r.get("scheduled_date") or "")[:10]
+                if sd:
+                    b_dates.add(sd)
+            old_rows = (
+                db.client.table("workouts")
+                .select("id, scheduled_date")
+                .in_("assignment_id", superseded_assignment_ids)
+                .eq("user_id", user_id)
+                .eq("is_completed", False)
+                .gte("scheduled_date", now)
+                .execute()
+            )
+            ghost_ids = [
+                r["id"]
+                for r in (old_rows.data or [])
+                if str(r.get("scheduled_date") or "")[:10] not in b_dates
+            ]
+            if ghost_ids:
+                db.client.table("workouts").delete().in_(
+                    "id", [str(x) for x in ghost_ids]
+                ).execute()
+                logger.info(
+                    "supersede: purged %d ghost workouts from %d abandoned "
+                    "primary assignment(s)",
+                    len(ghost_ids), len(superseded_assignment_ids),
+                )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("supersede ghost purge failed: %s", e)
 
     # Record total_workouts on the assignment now that we know the count.
     try:
