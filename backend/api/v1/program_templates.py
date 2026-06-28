@@ -2579,8 +2579,17 @@ async def assign_program_core(
         raise HTTPException(status_code=500, detail="Failed to create template")
     template = created_tpl.data[0]
 
-    # --- 3. End overlapping active PRIMARY assignments (primary + replace) --
-    if slot == "primary" and replace:
+    # --- 3. End overlapping active PRIMARY assignments --------------------
+    # A new PRIMARY program ends any prior active primary whose days overlap,
+    # REGARDLESS of the global `replace` flag. The per-day `day_resolutions`
+    # map governs per-DATE workout collisions (replace vs stack); the
+    # assignment-level "one primary program per overlapping day" invariant is
+    # separate. The old `and replace` gate meant the new per-day Start flow
+    # (which sends replace=False and resolves conflicts per day) never
+    # superseded the prior primary, leaving DUPLICATE active primaries
+    # (e.g. a failed-then-retried Start stacked two active assignments).
+    # Disjoint-day primaries still coexist (the merged multi-program model).
+    if slot == "primary":
         try:
             existing = (
                 db.client.table("user_program_assignments")
