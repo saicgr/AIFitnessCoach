@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -339,6 +340,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     final subtitle = (card.tagline?.trim().isNotEmpty == true)
         ? card.tagline!.trim()
         : (card.programCategory ?? '').trim();
+    final hasCover = (card.imageUrl ?? '').isNotEmpty;
 
     return SliverAppBar(
       backgroundColor: AppColors.pureBlack,
@@ -388,26 +390,53 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         background: Stack(
           fit: StackFit.expand,
           children: [
-            // Tinted gradient base + diagonal stripes.
-            DecoratedBox(
-              decoration: BoxDecoration(gradient: theme.headerGradient),
-            ),
-            CustomPaint(
-              painter: _DiagonalStripePainter(
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-            ),
-            // Bottom scrim so the title reads against the panel.
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0xCC000000)],
-                  stops: [0.45, 1.0],
+            if (hasCover) ...[
+              // Cover art fills the hero; scrim top+bottom keeps the back/heart
+              // controls and the title legible over any photo.
+              CachedNetworkImage(
+                imageUrl: card.imageUrl!,
+                fit: BoxFit.cover,
+                fadeInDuration: const Duration(milliseconds: 200),
+                errorWidget: (_, __, ___) => DecoratedBox(
+                  decoration: BoxDecoration(gradient: theme.headerGradient),
                 ),
               ),
-            ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x73000000),
+                      Color(0x1A000000),
+                      Color(0xE6000000),
+                    ],
+                    stops: [0.0, 0.4, 1.0],
+                  ),
+                ),
+              ),
+            ] else ...[
+              // Tinted gradient base + diagonal stripes.
+              DecoratedBox(
+                decoration: BoxDecoration(gradient: theme.headerGradient),
+              ),
+              CustomPaint(
+                painter: _DiagonalStripePainter(
+                  color: Colors.white.withValues(alpha: 0.05),
+                ),
+              ),
+              // Bottom scrim so the title reads against the panel.
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Color(0xCC000000)],
+                    stops: [0.45, 1.0],
+                  ),
+                ),
+              ),
+            ],
             // Title block anchored to the bottom of the expanded area.
             Positioned(
               left: 16,

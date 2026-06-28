@@ -103,7 +103,7 @@ def _presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
 # `source` field + branded rows). Bumping the prefix retires any pre-merge
 # cached payloads without a manual flush.
 _library_browse_cache = ResponseCache(
-    prefix="program_library_browse_v4", ttl_seconds=6 * 3600, max_size=256
+    prefix="program_library_browse_v5", ttl_seconds=6 * 3600, max_size=256
 )
 
 
@@ -988,13 +988,13 @@ _FITNESS_LEVELS = ("beginner", "intermediate", "advanced")
 
 # Featured / recommended caches — same long TTL + dict-only rule as browse.
 _library_featured_cache = ResponseCache(
-    prefix="program_library_featured_v4", ttl_seconds=6 * 3600, max_size=8
+    prefix="program_library_featured_v5", ttl_seconds=6 * 3600, max_size=8
 )
 _library_categories_cache = ResponseCache(
-    prefix="program_library_categories_v4", ttl_seconds=6 * 3600, max_size=8
+    prefix="program_library_categories_v5", ttl_seconds=6 * 3600, max_size=8
 )
 _library_recommended_cache = ResponseCache(
-    prefix="program_library_recommended_v4", ttl_seconds=6 * 3600, max_size=256
+    prefix="program_library_recommended_v5", ttl_seconds=6 * 3600, max_size=256
 )
 
 
