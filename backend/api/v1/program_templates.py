@@ -30,6 +30,7 @@ Endpoints:
 from __future__ import annotations
 
 import asyncio
+import copy
 import logging
 import uuid
 from datetime import date, datetime, timedelta
@@ -245,6 +246,7 @@ class AssignPreviewRequest(BaseModel):
     replace: bool = True
     duration_weeks: Optional[int] = Field(default=None, ge=1)
     variant_id: Optional[str] = None
+    customize: Optional[CustomizeOptions] = None
     day_resolutions: Dict[str, str] = Field(
         default_factory=dict,
         description="Per-day conflict override {ISO date → 'replace' | 'add'}; "
@@ -974,6 +976,21 @@ _library_recommended_cache = ResponseCache(
     prefix="program_library_recommended_v5", ttl_seconds=6 * 3600, max_size=256
 )
 
+# Per-program detail cache (GET /library/{id}). The detail payload is STATIC for
+# a given program — the heavy cost is ExerciseResolver loading the 2192-row
+# library MV + per-exercise RAG (Gemini embed + ChromaDB) resolution, which is
+# user-independent (the preview resolves catalog names to the SHARED library, so
+# we build it with user_id=None — see _build_library_detail_static). Caching it
+# turns a cold 10-20s build into a one-time cost shared across every user. Keyed
+# on (program_id, programs-data-version) so any `programs` write busts it (the
+# same data-driven token the browse/featured caches use); the 6h TTL bounds
+# staleness for branded rows whose writes don't bump the curated token. The one
+# dynamic field — joined_count — is overlaid fresh on every response, never
+# cached, so social proof stays live.
+_library_detail_cache = ResponseCache(
+    prefix="program_library_detail_v1", ttl_seconds=6 * 3600, max_size=512
+)
+
 # Data-driven cache invalidation. The library content caches key on this token,
 # which is `cache_versions.version` for the `programs` table — bumped by a
 # statement-level trigger on ANY write to `programs` (API write OR raw
@@ -1405,6 +1422,156 @@ def _fetch_variant_options(
         return []
 
 
+def _build_library_detail_static(db, program_id: str) -> Dict[str, Any]:
+    """Build the STATIC (user-independent, cacheable) detail payload for one
+    program — everything except the live `joined_count`, which the async route
+    overlays fresh.
+
+    Resolves exercises with user_id=None so the payload is identical for every
+    user (a curated catalog program's exercises ARE shared-library exercises;
+    per-user custom-exercise substitution belongs to the user's OWN saved
+    program, not the read-only catalog preview). That user-independence is what
+    makes the result safe to cache across users. Heavy: this is the function the
+    route runs off the event loop via asyncio.to_thread.
+
+    Raises HTTPException(404/422) exactly as the route contract requires.
+    """
+    # --- Branded preview path ---------------------------------------------
+    if program_id.startswith(_BRANDED_ID_PREFIX):
+        branded_id = _strip_branded_prefix(program_id)
+        bresp = (
+            db.client.table("branded_programs")
+            .select("*")
+            .eq("id", branded_id)
+            .eq("is_active", True)
+            .limit(1)
+            .execute()
+        )
+        if not bresp.data:
+            raise HTTPException(status_code=404, detail="Program not found")
+        branded = bresp.data[0]
+        program_name = branded.get("name")
+        week_workouts = _fetch_branded_first_week_workouts(
+            db, branded_id, program_name or ""
+        )
+        base = {
+            "program_id": program_id,
+            "program_name": program_name,
+            "celebrity_name": None,
+            "difficulty_level": branded_difficulty_label(
+                branded.get("difficulty_level")
+            ),
+            "duration_weeks": branded.get("duration_weeks"),
+            "source": "branded",
+            "category": branded_category_label(branded.get("category")),
+            "description": (
+                branded.get("description") or branded.get("tagline")
+            ),
+        }
+        if not week_workouts:
+            # No structured weeks -> card-level info + a flag, never fake.
+            return {
+                **base,
+                "preview_available": False,
+                "name": program_name,
+                "week_length": 7,
+                "days": [],
+                "progression_strategy": derive_progression_strategy(
+                    branded.get("category")
+                ),
+                "deload_every_n_weeks": derive_deload_every_n(
+                    branded.get("category")
+                ),
+                "source_program_id": branded_id,
+            }
+        resolver = ExerciseResolver(user_id=None)
+        days = _branded_week_workouts_to_days(
+            week_workouts,
+            difficulty_level=branded.get("difficulty_level"),
+            resolver=resolver,
+        )
+        return {
+            **base,
+            "preview_available": True,
+            "name": program_name or "Imported Program",
+            "week_length": max(7, len(days)),
+            "days": days,
+            "progression_strategy": derive_progression_strategy(
+                branded.get("category")
+            ),
+            "deload_every_n_weeks": derive_deload_every_n(
+                branded.get("category")
+            ),
+            "source_program_id": branded_id,
+        }
+
+    # --- Curated `programs` preview path -----------------------------------
+    resp = (
+        db.client.table("programs")
+        .select("*")
+        .eq("id", program_id)
+        .limit(1)
+        .execute()
+    )
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Program not found")
+    program = resp.data[0]
+    if not _has_workouts(program):
+        # X4 - a metadata-only / empty program is not importable.
+        raise HTTPException(
+            status_code=422,
+            detail="This program has no structured workouts to preview",
+        )
+    normalized = normalize_program_blob_for_preview(program, user_id=None)
+    # Variant options (migration 2289): when this program is linked to a
+    # branded_programs base, surface the available duration/session choices.
+    variant_base_id = program.get("variant_base_id")
+    default_variant_id = program.get("default_variant_id")
+    variant_options = _fetch_variant_options(db, variant_base_id, default_variant_id)
+    # Use the EFFECTIVE default from the (non-empty) options so the FE never
+    # initialises the schedule with an empty variant.
+    _eff_default = next(
+        (o["variant_id"] for o in variant_options if o.get("is_default")), None
+    )
+    if _eff_default:
+        default_variant_id = _eff_default
+    # Cover art — same resolver as the browse/featured cards so the detail
+    # header KEEPS the cover after this re-fetch replaces the tapped card
+    # (a hand-built dict here previously omitted image_url -> cover flickered
+    # off once detail loaded).
+    from api.v1.library.utils import resolve_image_url as _resolve_img
+    return {
+        "program_id": str(program["id"]),
+        "program_name": program.get("program_name"),
+        "celebrity_name": program.get("celebrity_name"),
+        "difficulty_level": program.get("difficulty_level"),
+        "duration_weeks": program.get("duration_weeks"),
+        "sessions_per_week": program.get("sessions_per_week"),
+        "session_duration_minutes": program.get("session_duration_minutes"),
+        "goals": program.get("goals") or [],
+        # Editorial copy (migration 2283) for the detail screen.
+        "editorial_name": program.get("editorial_name"),
+        "tagline": program.get("tagline"),
+        "who_for": program.get("who_for"),
+        "who_not_for": program.get("who_not_for"),
+        "equipment_summary": program.get("equipment_summary"),
+        "progression_note": program.get("progression_note"),
+        "image_url": _resolve_img(program.get("image_url")),
+        "is_published": program.get("is_published", False),
+        # Multi-week phase breakdown (migration 2286 `programs.phases` jsonb).
+        # [] when the content agent hasn't authored phases for this program.
+        "phases": _normalize_phases(program.get("phases")),
+        "source": "library",
+        "preview_available": True,
+        # Variant chooser (migration 2289): [] + null for single-plan programs.
+        "variant_options": variant_options,
+        "default_variant_id": (
+            str(default_variant_id) if default_variant_id else None
+        ),
+        **normalized,
+    }
+
+
 @router.get("/library/{program_id}")
 async def library_program_detail(
     program_id: str,
@@ -1418,150 +1585,37 @@ async def library_program_detail(
     no structured weeks, returns card-level info + `preview_available: false`
     so the client shows "Preview not available, you can still start it" rather
     than crashing — we never fabricate workout data.
+
+    Cache-first: the heavy, user-independent build (exercise resolution over the
+    2192-row library MV + RAG) is cached by (program_id, programs-data-version)
+    and run off the event loop on a cold miss. Only `joined_count` is computed
+    live per request, so the 10-20s first build is paid once and shared.
     """
     try:
         db = get_supabase()
 
-        # --- Branded preview path -----------------------------------------
-        if program_id.startswith(_BRANDED_ID_PREFIX):
-            branded_id = _strip_branded_prefix(program_id)
-            bresp = (
-                db.client.table("branded_programs")
-                .select("*")
-                .eq("id", branded_id)
-                .eq("is_active", True)
-                .limit(1)
-                .execute()
+        # Cache-first on the static payload, busted by the programs data-version.
+        version = await _programs_cache_version(db)
+        cache_key = _library_detail_cache.make_key(program_id, version)
+        static = await _library_detail_cache.get(cache_key)
+        if static is None:
+            # Cold miss — build off the event loop so the heavy resolver/RAG
+            # work never blocks other in-flight requests.
+            static = await asyncio.to_thread(
+                _build_library_detail_static, db, program_id
             )
-            if not bresp.data:
-                raise HTTPException(
-                    status_code=404, detail="Program not found"
-                )
-            branded = bresp.data[0]
-            program_name = branded.get("name")
-            week_workouts = _fetch_branded_first_week_workouts(
-                db, branded_id, program_name or ""
-            )
-            base = {
-                "program_id": program_id,
-                "program_name": program_name,
-                "celebrity_name": None,
-                "difficulty_level": branded_difficulty_label(
-                    branded.get("difficulty_level")
-                ),
-                "duration_weeks": branded.get("duration_weeks"),
-                "source": "branded",
-                "category": branded_category_label(branded.get("category")),
-                "description": (
-                    branded.get("description") or branded.get("tagline")
-                ),
-            }
-            if not week_workouts:
-                # No structured weeks -> card-level info + a flag, never fake.
-                return {
-                    **base,
-                    "preview_available": False,
-                    "name": program_name,
-                    "week_length": 7,
-                    "days": [],
-                    "progression_strategy": derive_progression_strategy(
-                        branded.get("category")
-                    ),
-                    "deload_every_n_weeks": derive_deload_every_n(
-                        branded.get("category")
-                    ),
-                    "source_program_id": branded_id,
-                }
-            resolver = ExerciseResolver(user_id=str(current_user["id"]))
-            days = _branded_week_workouts_to_days(
-                week_workouts,
-                difficulty_level=branded.get("difficulty_level"),
-                resolver=resolver,
-            )
-            return {
-                **base,
-                "preview_available": True,
-                "name": program_name or "Imported Program",
-                "week_length": max(7, len(days)),
-                "days": days,
-                "progression_strategy": derive_progression_strategy(
-                    branded.get("category")
-                ),
-                "deload_every_n_weeks": derive_deload_every_n(
-                    branded.get("category")
-                ),
-                "source_program_id": branded_id,
-            }
+            await _library_detail_cache.set(cache_key, static)
 
-        # --- Curated `programs` preview path ---------------------------------
-        resp = (
-            db.client.table("programs")
-            .select("*")
-            .eq("id", program_id)
-            .limit(1)
-            .execute()
-        )
-        if not resp.data:
-            raise HTTPException(status_code=404, detail="Program not found")
-        program = resp.data[0]
-        if not _has_workouts(program):
-            # X4 - a metadata-only / empty program is not importable.
-            raise HTTPException(
-                status_code=422,
-                detail="This program has no structured workouts to preview",
+        payload = dict(static)
+        # Live social-proof count — never cached, overlaid fresh on every hit.
+        # Only curated library programs surface it (branded preview has none).
+        if payload.get("source") == "library":
+            payload["joined_count"] = await asyncio.to_thread(
+                _program_joined_count,
+                db,
+                str(payload.get("program_id") or program_id),
             )
-        normalized = normalize_program_blob_for_preview(
-            program, user_id=str(current_user["id"])
-        )
-        # Variant options (migration 2289): when this program is linked to a
-        # branded_programs base, surface the available duration/session choices.
-        variant_base_id = program.get("variant_base_id")
-        default_variant_id = program.get("default_variant_id")
-        variant_options = _fetch_variant_options(db, variant_base_id, default_variant_id)
-        # Use the EFFECTIVE default from the (non-empty) options so the FE never
-        # initialises the schedule with an empty variant.
-        _eff_default = next(
-            (o["variant_id"] for o in variant_options if o.get("is_default")), None
-        )
-        if _eff_default:
-            default_variant_id = _eff_default
-        # Cover art — same resolver as the browse/featured cards so the detail
-        # header KEEPS the cover after this re-fetch replaces the tapped card
-        # (a hand-built dict here previously omitted image_url -> cover flickered
-        # off once detail loaded).
-        from api.v1.library.utils import resolve_image_url as _resolve_img
-        return {
-            "program_id": str(program["id"]),
-            "program_name": program.get("program_name"),
-            "celebrity_name": program.get("celebrity_name"),
-            "difficulty_level": program.get("difficulty_level"),
-            "duration_weeks": program.get("duration_weeks"),
-            "sessions_per_week": program.get("sessions_per_week"),
-            "session_duration_minutes": program.get("session_duration_minutes"),
-            "goals": program.get("goals") or [],
-            # Editorial copy (migration 2283) for the detail screen.
-            "editorial_name": program.get("editorial_name"),
-            "tagline": program.get("tagline"),
-            "who_for": program.get("who_for"),
-            "who_not_for": program.get("who_not_for"),
-            "equipment_summary": program.get("equipment_summary"),
-            "progression_note": program.get("progression_note"),
-            "image_url": _resolve_img(program.get("image_url")),
-            "is_published": program.get("is_published", False),
-            # Multi-week phase breakdown (migration 2286 `programs.phases` jsonb).
-            # [] when the content agent hasn't authored phases for this program.
-            "phases": _normalize_phases(program.get("phases")),
-            # Real social-proof count of users who have started this program.
-            "joined_count": _program_joined_count(db, str(program["id"])),
-            "source": "library",
-            "preview_available": True,
-            # Variant chooser (migration 2289): [] + null for single-plan programs.
-            "variant_options": variant_options,
-            "default_variant_id": (
-                str(default_variant_id) if default_variant_id else None
-            ),
-            **normalized,
-        }
+        return payload
     except HTTPException:
         raise
     except Exception as e:  # noqa: BLE001
@@ -2551,6 +2605,7 @@ async def assign_program_core(
     customize_summary: Optional[Dict[str, Any]] = None
     if customize is not None:
         from services.program_customizer import (
+            customize_status,
             customize_template_days,
             resolve_user_context,
         )
@@ -2583,10 +2638,18 @@ async def assign_program_core(
                     swap_for_injuries=customize.swap_for_injuries,
                     fit_equipment=customize.fit_equipment,
                 )
+            # Stamp whether the tailoring actually changed anything, so the client
+            # can confirm it honestly ("swapped 2 …") vs say nothing was needed —
+            # instead of silently showing a generic "started" with no signal.
+            customize_summary["status"] = customize_status(customize_summary)
         except Exception as ce:  # noqa: BLE001 — never block Start on customize
             logger.warning(
                 "assign customize failed (using uncustomized plan): %s", ce
             )
+            # Report the failure explicitly (was silently None) so the client can
+            # say "couldn't tailor — started with the standard plan" rather than
+            # leaving the user believing it applied. No silent degradation.
+            customize_summary = {"status": "failed"}
 
     now = datetime.utcnow().isoformat()
     template_id = str(uuid.uuid4())
@@ -3030,7 +3093,7 @@ def _resolve_training_weekdays(
     return set()
 
 
-def _build_assign_preview(
+async def _build_assign_preview(
     db, *, user_id: str, req: "AssignPreviewRequest"
 ) -> Dict[str, Any]:
     """Compute the dated schedule + collisions a Start would create. No writes."""
@@ -3291,6 +3354,44 @@ def _build_assign_preview(
         assigned_days=assigned_days,
     )
 
+    # AI-tailoring estimate (caveat fix): a DRY-RUN of the same customize passes
+    # the commit runs, so the Start sheet can show "what AI will change" live —
+    # and surface the honest no-op case (no injuries / gear covers it / level
+    # matches). Runs on ONE representative week (the commit tailors all weeks) to
+    # bound the injury-RAG cost; injury-free / gear-less users hit the early
+    # guards in the passes and pay ~0. NEVER mutates the resolved plan (deep
+    # copy) and NEVER persists. Only computed when the client opts in (customize
+    # set — i.e. the AI tailor toggle is on).
+    customize_summary: Optional[Dict[str, Any]] = None
+    if req.customize is not None:
+        from services.program_customizer import (
+            customize_status,
+            customize_template_days,
+        )
+        try:
+            if _weeks_rows:
+                first_week = min(
+                    _weeks_rows, key=lambda w: w.get("week_number") or 0
+                )
+                sample = copy.deepcopy([
+                    s for s in (first_week.get("workouts") or [])
+                    if isinstance(s, dict)
+                ])
+            else:
+                sample = copy.deepcopy(days)
+            cs = await customize_template_days(
+                sample,
+                user_id=user_id,
+                adapt_to_level=req.customize.adapt_to_level,
+                swap_for_injuries=req.customize.swap_for_injuries,
+                fit_equipment=req.customize.fit_equipment,
+            )
+            cs["status"] = customize_status(cs)
+            customize_summary = cs
+        except Exception as e:  # noqa: BLE001 — never block the preview
+            logger.warning("preview customize dry-run failed: %s", e)
+            customize_summary = {"status": "failed"}
+
     return {
         "program_id": req.program_id,
         "program_name": display_name,
@@ -3309,6 +3410,8 @@ def _build_assign_preview(
             "new_count": new_count,
         },
         "summary": summary,
+        # Per-week AI-tailoring estimate, or null when the client didn't opt in.
+        "customize_summary": customize_summary,
     }
 
 
@@ -3359,7 +3462,7 @@ async def assign_program_preview(
     the instant deterministic impact line."""
     try:
         db = get_supabase()
-        return _build_assign_preview(
+        return await _build_assign_preview(
             db, user_id=str(current_user["id"]), req=request
         )
     except HTTPException:
@@ -3381,7 +3484,7 @@ async def assign_program_review(
     Fail-soft: returns the deterministic summary if the LLM is unavailable."""
     db = get_supabase()
     try:
-        preview = _build_assign_preview(
+        preview = await _build_assign_preview(
             db, user_id=str(current_user["id"]), req=request
         )
     except HTTPException:

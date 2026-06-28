@@ -407,6 +407,24 @@ def _apply_level_adaptation(
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
+def customize_status(summary: Dict[str, Any]) -> str:
+    """Classify a customize summary so the client can be honest about whether
+    the tailoring DID anything: 'applied' when at least one exercise was
+    swapped/dropped/added or a set count was tweaked, else 'noop'. The route
+    layer stamps 'failed' separately when a pass raises. Pure — no side effects.
+    """
+    if not isinstance(summary, dict):
+        return "noop"
+    changed = (
+        bool(summary.get("dropped_for_injury"))
+        or bool(summary.get("added_for_injury"))
+        or bool(summary.get("dropped_for_equipment"))
+        or bool(summary.get("added_for_equipment"))
+        or int(summary.get("level_tweaks") or 0) > 0
+    )
+    return "applied" if changed else "noop"
+
+
 async def customize_template_days(
     days: List[Dict[str, Any]],
     *,
