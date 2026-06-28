@@ -1189,7 +1189,18 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
               right: 64,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: ProgramBadge(workout: workout),
+                child: ProgramBadge(
+                  workout: workout,
+                  onOpenProgram: () {
+                    final pid = workout.programContext?.programId;
+                    if (pid == null || pid.isEmpty) return;
+                    HapticService.selection();
+                    context.push(
+                      '/workout/program-detail',
+                      extra: {'programId': pid},
+                    );
+                  },
+                ),
               ),
             ),
           ],

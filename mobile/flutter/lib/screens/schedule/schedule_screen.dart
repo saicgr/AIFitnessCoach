@@ -17,6 +17,7 @@ import '../../data/providers/program_assignments_provider.dart';
 import '../../data/providers/schedule_provider.dart';
 import '../../data/repositories/schedule_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/services/haptic_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/glass_sheet.dart';
@@ -775,14 +776,60 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       slotBadge = 'Extra';
     }
 
+    // AI when there's no curated-program name to attribute (after the
+    // assignment fallback) — mirrors the home hero's program/AI vocabulary.
+    final isAi = _programNameFor(ctx, assignment) == null;
+
+    // The curated program to open from the tag pill — prefer the assignment's
+    // authoritative `sourceProgramId`, fall back to the workout's context id.
+    final openId = _firstNonEmpty([
+      assignment?.sourceProgramId,
+      ctx?.programId,
+    ]);
+
     return ProgramSessionCard(
       workout: w,
       tagLabel: _tagFor(w, ctx, assignment, day),
       accent: accent,
       slotBadge: slotBadge,
+      isAi: isAi,
       compact: isAddon,
       onTap: () => _openWorkout(context, w),
+      onOpenProgram: (!isAi && openId != null)
+          ? () {
+              HapticService.selection();
+              context.push(
+                '/workout/program-detail',
+                extra: {'programId': openId},
+              );
+            }
+          : null,
     );
+  }
+
+  /// First trimmed non-empty string in [values], or null.
+  String? _firstNonEmpty(List<String?> values) {
+    for (final v in values) {
+      final t = v?.trim();
+      if (t != null && t.isNotEmpty) return t;
+    }
+    return null;
+  }
+
+  /// The curated-program name for a session, preferring the workout's own
+  /// program context, then the matched assignment (renamed → editorial name).
+  /// Null when the session has no program provenance (a pure AI workout).
+  String? _programNameFor(
+    WorkoutProgramContext? ctx,
+    UserProgramAssignment? assignment,
+  ) {
+    final fromCtx = ctx?.programName?.trim();
+    if (fromCtx != null && fromCtx.isNotEmpty) return fromCtx;
+    final custom = assignment?.customProgramName?.trim();
+    if (custom != null && custom.isNotEmpty) return custom;
+    final display = assignment?.displayName?.trim();
+    if (display != null && display.isNotEmpty) return display;
+    return null;
   }
 
   /// "HYROX · W1D3" for program workouts; a type label otherwise.
@@ -792,10 +839,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     UserProgramAssignment? assignment,
     DateTime day,
   ) {
-    final name = ctx?.programName?.trim();
+    final name = _programNameFor(ctx, assignment);
     if (name != null && name.isNotEmpty) {
       final sb = StringBuffer(name);
-      final wk = ctx?.programWeek;
+      final wk = ctx?.programWeek ?? assignment?.currentWeek;
       if (wk != null && wk > 0) {
         sb.write(' · W$wk');
         final dn = _dayNumberInProgram(assignment, day);

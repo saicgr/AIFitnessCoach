@@ -24,10 +24,20 @@ class ProgramSessionCard extends StatelessWidget {
   /// "Main" / "Extra" pill shown on stacked (multi-session) days; null hides it.
   final String? slotBadge;
 
+  /// True when the workout has no curated-program provenance (the always-on AI
+  /// program). Surfaces a sparkle "AI" badge mirroring the home hero so the
+  /// agenda names a session's source the same way the carousel does.
+  final bool isAi;
+
   /// Slimmer card used for add-on / extra sessions.
   final bool compact;
 
   final VoidCallback onTap;
+
+  /// When provided AND the session belongs to a curated program (not AI), the
+  /// program tag pill becomes tappable and grows a trailing chevron that opens
+  /// that program's detail screen — parity with the home hero's program badge.
+  final VoidCallback? onOpenProgram;
 
   const ProgramSessionCard({
     super.key,
@@ -36,7 +46,9 @@ class ProgramSessionCard extends StatelessWidget {
     required this.accent,
     required this.onTap,
     this.slotBadge,
+    this.isAi = false,
     this.compact = false,
+    this.onOpenProgram,
   });
 
   @override
@@ -119,13 +131,17 @@ class ProgramSessionCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                         ],
-                        Flexible(
-                          child: _Pill(
-                            text: tagLabel,
-                            bg: accent,
+                        if (isAi) ...[
+                          _Pill(
+                            text: 'AI',
+                            bg: ProgramColors.ai.withValues(alpha: 0.20),
                             fg: Colors.white,
+                            icon: Icons.auto_awesome_rounded,
+                            iconColor: ProgramColors.ai,
                           ),
-                        ),
+                          const SizedBox(width: 6),
+                        ],
+                        Flexible(child: _buildProgramPill()),
                       ],
                     ),
                     const SizedBox(height: 7),
@@ -174,27 +190,75 @@ class ProgramSessionCard extends StatelessWidget {
       ),
     );
   }
+
+  /// The program tag pill — tappable with a trailing chevron when there's a
+  /// curated program to open (mirrors the home hero badge); plain otherwise.
+  Widget _buildProgramPill() {
+    final canOpen = onOpenProgram != null && !isAi;
+    final pill = _Pill(
+      text: tagLabel,
+      bg: accent,
+      fg: Colors.white,
+      trailingIcon: canOpen ? Icons.chevron_right_rounded : null,
+    );
+    if (!canOpen) return pill;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onOpenProgram,
+      child: pill,
+    );
+  }
 }
 
 class _Pill extends StatelessWidget {
   final String text;
   final Color bg;
   final Color fg;
-  const _Pill({required this.text, required this.bg, required this.fg});
+  final IconData? icon;
+  final Color? iconColor;
+  final IconData? trailingIcon;
+  const _Pill({
+    required this.text,
+    required this.bg,
+    required this.fg,
+    this.icon,
+    this.iconColor,
+    this.trailingIcon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: EdgeInsets.fromLTRB(
+        icon != null ? 6 : 7,
+        3,
+        trailingIcon != null ? 4 : 7,
+        3,
+      ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(
-        text.toUpperCase(),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: ZType.lbl(9.5, color: fg, letterSpacing: 0.6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: iconColor ?? fg),
+            const SizedBox(width: 3),
+          ],
+          Flexible(
+            child: Text(
+              text.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ZType.lbl(9.5, color: fg, letterSpacing: 0.6),
+            ),
+          ),
+          if (trailingIcon != null) ...[
+            const SizedBox(width: 1),
+            Icon(trailingIcon, size: 14, color: fg.withValues(alpha: 0.92)),
+          ],
+        ],
       ),
     );
   }

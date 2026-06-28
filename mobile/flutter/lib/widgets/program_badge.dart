@@ -33,13 +33,25 @@ import '../screens/schedule/widgets/program_color.dart';
 class ProgramBadge extends StatelessWidget {
   final Workout workout;
 
-  const ProgramBadge({super.key, required this.workout});
+  /// When provided AND the workout belongs to a curated program (i.e. it has a
+  /// real `programId` to open — not the always-on AI program), the badge
+  /// becomes tappable and grows a trailing chevron inviting the user to open
+  /// that program's detail screen. Null = purely presentational (the default).
+  final VoidCallback? onOpenProgram;
+
+  const ProgramBadge({super.key, required this.workout, this.onOpenProgram});
 
   @override
   Widget build(BuildContext context) {
     final attr = workoutProgramAttribution(workout);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(9, 5, 12, 5),
+    final pid = workout.programContext?.programId;
+    final canOpen = onOpenProgram != null &&
+        !attr.isAi &&
+        pid != null &&
+        pid.isNotEmpty;
+
+    final pill = Container(
+      padding: EdgeInsets.fromLTRB(9, 5, canOpen ? 6 : 12, 5),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.46),
         borderRadius: BorderRadius.circular(999),
@@ -70,8 +82,23 @@ class ProgramBadge extends StatelessWidget {
               ),
             ),
           ),
+          if (canOpen) ...[
+            const SizedBox(width: 1),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 17,
+              color: Colors.white.withValues(alpha: 0.92),
+            ),
+          ],
         ],
       ),
+    );
+
+    if (!canOpen) return pill;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onOpenProgram,
+      child: pill,
     );
   }
 }
