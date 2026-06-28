@@ -71,6 +71,44 @@ class _ManageProgramsBodyState extends ConsumerState<_ManageProgramsBody> {
     }
   }
 
+  Future<void> _togglePause(UserProgramAssignment a) async {
+    if (_busy) return;
+    final pausing = a.status != 'paused';
+    HapticService.light();
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(userProgramAssignmentRepositoryProvider);
+      await repo.updateAssignment(a.id, status: pausing ? 'paused' : 'active');
+      await refreshProgramAssignmentsW(ref);
+      // Pausing hides the program's future workouts; resuming restores them.
+      // Keep the merged calendar + home hero in lock-step either way.
+      ref.read(workoutsProvider.notifier).silentRefresh();
+      TodayWorkoutNotifier.markExplicitProgramRegen();
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              pausing ? '"${a.title}" paused' : '"${a.title}" resumed',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not ${pausing ? 'pause' : 'resume'} the program.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _openManage(UserProgramAssignment a) async {
     // Close this sheet first, then open the full per-program manage sheet.
     Navigator.of(context).pop();
@@ -86,8 +124,11 @@ class _ManageProgramsBodyState extends ConsumerState<_ManageProgramsBody> {
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
     final assignmentsAsync = ref.watch(programAssignmentsProvider);
+    // Include paused programs (is_active=false) so they can be resumed here.
     final assignments =
-        assignmentsAsync.valueOrNull?.where((a) => a.isActive).toList() ??
+        assignmentsAsync.valueOrNull
+            ?.where((a) => a.isActive || a.status == 'paused')
+            .toList() ??
         const <UserProgramAssignment>[];
 
     return SafeArea(
@@ -130,8 +171,9 @@ class _ManageProgramsBodyState extends ConsumerState<_ManageProgramsBody> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Tap ✕ to remove a program. Removing them all leaves '
-                        'you on the AI program.',
+                        'Pause to hide a program\'s workouts (resume keeps your '
+                        'progress); ✕ removes it. Removing all leaves the AI '
+                        'program.',
                         style: TextStyle(
                           fontSize: 12.5,
                           color: tc.textSecondary,
@@ -162,6 +204,7 @@ class _ManageProgramsBodyState extends ConsumerState<_ManageProgramsBody> {
                     colors: tc,
                     onTap: _busy ? null : () => _openManage(a),
                     onRemove: _busy ? null : () => _remove(a),
+                    onTogglePause: _busy ? null : () => _togglePause(a),
                   ),
                 ),
               ),
@@ -216,6 +259,7 @@ class _ProgramRow extends StatelessWidget {
   final ThemeColors colors;
   final VoidCallback? onTap;
   final VoidCallback? onRemove;
+  final VoidCallback? onTogglePause;
 
   const _ProgramRow({
     required this.assignment,
@@ -223,10 +267,15 @@ class _ProgramRow extends StatelessWidget {
     required this.colors,
     required this.onTap,
     required this.onRemove,
+    required this.onTogglePause,
   });
 
+  bool get _isPaused => assignment.status == 'paused';
+
   String get _subtitle {
-    final parts = <String>[assignment.weekLabel];
+    final parts = <String>[];
+    if (_isPaused) parts.add('Paused');
+    parts.add(assignment.weekLabel);
     parts.add(assignment.isAddon ? 'Extra' : 'Primary');
     return parts.join(' · ');
   }
@@ -236,78 +285,104 @@ class _ProgramRow extends StatelessWidget {
     final initial = assignment.title.isNotEmpty
         ? assignment.title[0].toUpperCase()
         : '•';
+    // Paused programs read as dimmed; the swatch desaturates to a muted tone.
+    final swatch = _isPaused ? colors.textMuted : color;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(11),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: colors.cardBorder),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      assignment.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      _subtitle,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: onRemove,
-                child: Container(
-                  width: 30,
-                  height: 30,
+        child: Opacity(
+          opacity: _isPaused ? 0.62 : 1.0,
+          child: Container(
+            padding: const EdgeInsets.all(11),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: colors.cardBorder),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(9),
-                    border: Border.all(color: colors.cardBorder),
+                    color: swatch,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.close, size: 15, color: colors.warning),
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        assignment.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        _subtitle,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Pause / resume toggle.
+                GestureDetector(
+                  onTap: onTogglePause,
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: colors.cardBorder),
+                    ),
+                    child: Icon(
+                      _isPaused
+                          ? Icons.play_arrow_rounded
+                          : Icons.pause_rounded,
+                      size: 17,
+                      color: _isPaused ? colors.accent : colors.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: colors.cardBorder),
+                    ),
+                    child: Icon(Icons.close, size: 15, color: colors.warning),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
