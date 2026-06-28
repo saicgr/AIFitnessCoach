@@ -112,10 +112,14 @@ class WorkoutDB(BaseDB):
             "and(is_current.eq.false,valid_to.is.null,assignment_id.not.is.null)"
         )
 
-        # Exclude generation placeholders (status='generating') — these are temporary
-        # rows inserted during workout generation to prevent duplicates.
+        # Exclude generation placeholders (status='generating') — temporary rows
+        # inserted during generation to prevent duplicates — AND paused-program
+        # rows (status='paused' — a paused assignment's future workouts are
+        # hidden until resumed; see program_templates.patch_assignment).
         # Normal workouts have status=NULL, so we must allow NULLs through.
-        query = query.or_("status.is.null,status.neq.generating")
+        query = query.or_(
+            "status.is.null,and(status.neq.generating,status.neq.paused)"
+        )
 
         if is_completed is not None:
             query = query.eq("is_completed", is_completed)

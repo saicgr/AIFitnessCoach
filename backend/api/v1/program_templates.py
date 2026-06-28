@@ -3562,8 +3562,45 @@ async def patch_assignment(
             except Exception as e:  # noqa: BLE001
                 logger.debug("template rename cascade skipped: %s", e)
 
+        # Pause / resume cascade to the assignment's scheduled workouts.
+        # We HIDE rather than delete so resume restores the exact remaining
+        # plan (same dates, week alignment, and variant-accurate content) —
+        # re-expanding would restart the program from week 1 at today, losing
+        # progress. Pause flips future incomplete 'scheduled' rows to
+        # status='paused' (excluded by list_workouts); resume flips them back.
+        prev_status = (row.get("status") or "").lower()
+        paused_now = (
+            updates.get("status") == "paused" and prev_status != "paused"
+        )
+        resumed_now = (
+            updates.get("status") == "active" and prev_status == "paused"
+        )
+        if paused_now:
+            try:
+                db.client.table("workouts").update(
+                    {"status": "paused"}
+                ).eq("assignment_id", assignment_id).eq(
+                    "user_id", user_id
+                ).gte(
+                    "scheduled_date", datetime.utcnow().isoformat()
+                ).eq("is_completed", False).eq(
+                    "status", "scheduled"
+                ).execute()
+            except Exception as e:  # noqa: BLE001
+                logger.warning("pause: hide future rows failed: %s", e)
+        elif resumed_now:
+            try:
+                db.client.table("workouts").update(
+                    {"status": "scheduled"}
+                ).eq("assignment_id", assignment_id).eq(
+                    "user_id", user_id
+                ).eq("status", "paused").execute()
+            except Exception as e:  # noqa: BLE001
+                logger.warning("resume: unhide rows failed: %s", e)
+
         # Reschedule on a day/slot change: rebuild this assignment's future
-        # workouts against the new schedule.
+        # workouts against the new schedule. (Resume does NOT reschedule — it
+        # restores the hidden rows above so progress/week alignment is kept.)
         needs_reschedule = (
             "assigned_days" in updates or "slot" in updates
         ) and row.get("template_id")
