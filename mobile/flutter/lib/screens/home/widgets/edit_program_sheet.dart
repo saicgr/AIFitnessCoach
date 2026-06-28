@@ -10,7 +10,9 @@ import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/models/user.dart';
+import '../../../data/models/user_program_assignment.dart';
 import '../../../data/providers/gym_profile_provider.dart';
+import '../../../data/providers/program_assignments_provider.dart';
 import '../../../data/providers/root_messenger.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/services/data_cache_service.dart';
@@ -21,6 +23,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'add_gym_profile_sheet.dart';
 import '../../workout/widgets/per_day_focus_chips.dart';
+import '../../workout/widgets/program_manage_sheet.dart';
 import 'components/components.dart';
 import '../../../l10n/generated/app_localizations.dart';
 

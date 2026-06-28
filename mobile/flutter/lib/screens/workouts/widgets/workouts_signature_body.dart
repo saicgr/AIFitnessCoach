@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/models/user_program_assignment.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/workout_screen_summary.dart';
 import '../../../data/providers/branded_program_provider.dart';
+import '../../../data/providers/program_assignments_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/tooltips/tooltip_anchors.dart';
@@ -233,11 +235,35 @@ class _ProgramBlock extends ConsumerWidget {
     final tc = ThemeColors.of(context);
     final program = ref.watch(activeUserProgramProvider);
 
-    final bool hasProgram = program?.displayName.trim().isNotEmpty == true;
-    final String programLabel =
-        hasProgram ? program!.displayName.trim().toUpperCase() : 'MY PROGRAM';
-    final int? currentWeek = program?.currentWeek;
-    final int totalWeeks = program?.totalWeeks ?? 0;
+    // Headline the active PRIMARY curated program (e.g. HYROX) when present —
+    // that's the user's real program. Fall back to the AI/branded program, then
+    // a generic label.
+    final assignments = ref.watch(programAssignmentsProvider).valueOrNull ??
+        const <UserProgramAssignment>[];
+    UserProgramAssignment? primary;
+    for (final a in assignments) {
+      if (a.isActive && a.status == 'active' && a.isPrimary) {
+        primary = a;
+        break;
+      }
+    }
+
+    final String programLabel;
+    final int? currentWeek;
+    final int totalWeeks;
+    if (primary != null) {
+      programLabel = primary.title.toUpperCase();
+      currentWeek = primary.currentWeek;
+      totalWeeks = primary.durationWeeks ?? 0;
+    } else if (program?.displayName.trim().isNotEmpty == true) {
+      programLabel = program!.displayName.trim().toUpperCase();
+      currentWeek = program.currentWeek;
+      totalWeeks = program.totalWeeks;
+    } else {
+      programLabel = 'MY PROGRAM';
+      currentWeek = null;
+      totalWeeks = 0;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

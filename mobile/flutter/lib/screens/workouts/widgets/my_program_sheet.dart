@@ -5,8 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers/training_preferences_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
-import '../../../data/models/user.dart';
 import '../../../data/models/user_program_assignment.dart';
+import '../../../data/models/workout.dart';
+import '../../../data/models/workout_program_context.dart';
 import '../../../data/providers/branded_program_provider.dart';
 import '../../../data/providers/program_assignments_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -16,17 +17,14 @@ import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/components/training_program_selector.dart'
     show defaultTrainingPrograms;
 import '../../home/widgets/edit_program_sheet.dart';
-import '../../workout/widgets/per_day_focus_chips.dart' show kFocusOptions;
+import '../../schedule/widgets/program_color.dart';
+import '../../workout/widgets/program_manage_sheet.dart';
 
-/// Opens the "My Program" detail sheet — the user's CURRENT program in one
-/// place: the AI-chosen training split, the weekly schedule (per-day focus),
-/// and the edit-preferences (session length, intensity, equipment, injuries),
-/// with Edit + Browse-all actions.
-///
-/// Sourced primarily from [ProgramPreferences] + the user's per-day overrides,
-/// because for most users the program IS their preference set (the AI-decided
-/// split), not a branded [UserProgram]. The branded program — when present —
-/// only enriches the header (name + week/progress).
+/// Opens the "My Program" detail sheet — the user's CURRENT programs in one
+/// place: every active program stacked (curated assignments + the always-on AI
+/// base), the weekly schedule (mirrored from the REAL scheduled workouts), and
+/// the AI edit-preferences (split, session length, equipment, injuries), with
+/// Edit + Browse-all actions.
 Future<void> showMyProgramSheet(BuildContext context, WidgetRef ref) {
   return showGlassSheet<void>(
     context: context,
@@ -44,6 +42,7 @@ class _MyProgramSheet extends ConsumerStatefulWidget {
 class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
   ProgramPreferences? _prefs;
   bool _loading = true;
+  bool _equipExpanded = false;
 
   static const List<String> _dayNames = [
     'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'
@@ -84,71 +83,49 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
   /// Human label for a training-split id (e.g. 'push_pull_legs' → 'Push/Pull/Legs').
   String _splitLabel(String? id) {
     if (id == null || id.isEmpty) return '—';
+    // "Let the coach choose" sentinels read as AI Decides, not a prettified id.
+    const aiSentinels = {'ai_decide', 'ai decide', 'dont_know', 'nothing_structured'};
+    if (aiSentinels.contains(id.toLowerCase())) return 'AI Decides';
     for (final p in defaultTrainingPrograms) {
       if (p.id == id) return p.name;
     }
-    // Fallback: prettify the raw id.
-    return id
-        .split('_')
-        .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
-        .join(' ');
+    // Fallback: prettify the raw id ("ai" → "AI", never "Ai").
+    return id.split('_').map(_word).join(' ');
   }
 
-  ({String label, IconData icon}) _focus(String? value) {
-    for (final f in kFocusOptions) {
-      if (f.value == value) return (label: f.label, icon: f.icon);
-    }
-    return (label: 'AI decides', icon: Icons.auto_awesome_rounded);
+  /// Title-case a token, but keep "AI" all-caps (never "Ai").
+  String _word(String w) {
+    if (w.isEmpty) return w;
+    if (w.toLowerCase() == 'ai') return 'AI';
+    return w[0].toUpperCase() + w.substring(1);
   }
+
+  String _prettyToken(String t) =>
+      t.replaceAll('_', ' ').split(' ').map(_word).join(' ');
 
   // ── build ───────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
-    final program = ref.watch(activeUserProgramProvider);
     final user = ref.watch(authStateProvider).user;
     final style = ref.watch(trainingPreferencesProvider).workoutType.value;
 
     final prefs = _prefs;
     final splitId = prefs?.trainingSplit;
-    final title = (program?.displayName.trim().isNotEmpty == true)
-        ? program!.displayName.trim()
-        : (splitId != null && splitId.isNotEmpty
-            ? '${_splitLabel(splitId)} Program'
-            : 'Your Program');
 
-    final currentWeek = program?.currentWeek;
-    final totalWeeks = program?.totalWeeks ?? 0;
-
-    // Which weekdays are training days (0=Mon..6=Sun) + their focus overrides.
-    final workoutDays = (user?.workoutDays ?? const <int>[]).toSet();
-    final overrides = user?.workoutDayOverrides ?? const <int, WorkoutDayOverride>{};
-
-    // Active CURATED program assignments (primary + add-ons). When present, the
-    // weekly schedule below reflects the program's REAL training days — not just
-    // the AI-preference days — so a started program (e.g. HYROX on Wed–Sun) no
-    // longer shows the stale AI Fri/Sat grid. AI-preference days that no program
-    // covers still render (the merged-calendar reality).
-    // /assignments also returns paused/completed rows — the weekly grid should
-    // only reflect programs that are actively running right now.
+    // Active CURATED program assignments (primary + add-ons), running right now.
     final assignments = (ref.watch(programAssignmentsProvider).valueOrNull ??
             const <UserProgramAssignment>[])
         .where((a) => a.isActive && a.status == 'active')
-        .toList();
-    final hasCurated = assignments.isNotEmpty;
+        .toList()
+      ..sort((a, b) => a.isPrimary == b.isPrimary ? 0 : (a.isPrimary ? -1 : 1));
 
-    // Union of every training day across curated assignments + AI prefs.
-    final trainingDays = <int>{...workoutDays};
-    for (final a in assignments) {
-      trainingDays.addAll(a.assignedDays);
-    }
-
-    final daysPerWeek = hasCurated
-        ? trainingDays.length
-        : (workoutDays.isNotEmpty
-            ? workoutDays.length
-            : (prefs?.workoutDays.length ?? 0));
+    // AI overview is sourced from the user's preferences (the AI base program).
+    final workoutDays = (user?.workoutDays ?? const <int>[]).toSet();
+    final daysPerWeek = workoutDays.isNotEmpty
+        ? workoutDays.length
+        : (prefs?.workoutDays.length ?? 0);
     final sessionMin = prefs?.durationMinutes;
     final level = prefs?.difficulty ?? user?.fitnessLevel;
     final focusAreas = prefs?.focusAreas ?? const <String>[];
@@ -163,32 +140,36 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
             // ── Header ──
             Text('MY PROGRAM',
                 style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 2)),
-            const SizedBox(height: 6),
-            Text(title,
-                style: ZType.disp(26, color: tc.textPrimary)),
-            if (currentWeek != null && totalWeeks > 0) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Text('WEEK $currentWeek OF $totalWeeks',
-                      style: ZType.lbl(11, color: tc.accent, letterSpacing: 1.6)),
-                ],
+            const SizedBox(height: 12),
+
+            // ── Active programs (curated stacked over the AI base) ──
+            for (final a in assignments) ...[
+              _ProgramRowTile(
+                tc: tc,
+                title: a.title,
+                subtitle: '${a.weekLabel} · ${a.isAddon ? 'Extra' : 'Primary'}',
+                color: ProgramColors.forKey(a.id),
+                initial: a.title.isNotEmpty ? a.title[0].toUpperCase() : '•',
+                onTap: () async {
+                  HapticService.light();
+                  await showProgramManageSheet(context, ref, a);
+                },
               ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: LinearProgressIndicator(
-                  value: (currentWeek / totalWeeks).clamp(0.0, 1.0),
-                  minHeight: 4,
-                  backgroundColor: tc.cardBorder,
-                  valueColor: AlwaysStoppedAnimation<Color>(tc.accent),
-                ),
-              ),
+              const SizedBox(height: 9),
             ],
+            _AiBaseRowTile(
+              tc: tc,
+              onTap: () async {
+                HapticService.light();
+                Navigator.of(context).pop();
+                final changed = await showEditProgramSheet(context, ref);
+                if (changed == true) ref.invalidate(activeUserProgramProvider);
+              },
+            ),
 
             const SizedBox(height: 20),
 
-            // ── Overview grid ──
+            // ── Overview grid (the AI base program) ──
             _sectionLabel(tc, 'OVERVIEW'),
             const SizedBox(height: 10),
             if (_loading)
@@ -219,25 +200,17 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
 
             const SizedBox(height: 22),
 
-            // ── Weekly schedule ──
+            // ── Weekly schedule (mirrors the real /schedule) ──
             _sectionLabel(tc, 'WEEKLY SCHEDULE'),
             const SizedBox(height: 8),
-            for (var d = 0; d < 7; d++)
-              _dayRow(
-                tc,
-                d,
-                workoutDays.contains(d),
-                overrides[d],
-                sessionMin,
-                _curatedForDay(assignments, d),
-              ),
+            _weeklySchedule(tc, assignments),
 
-            // ── Equipment ──
+            // ── Equipment (collapsed summary + expand) ──
             if (!_loading && (prefs?.equipment.isNotEmpty ?? false)) ...[
               const SizedBox(height: 22),
               _sectionLabel(tc, 'EQUIPMENT'),
               const SizedBox(height: 10),
-              _chipWrap(tc, prefs!.equipment.map(_prettyToken).toList()),
+              _equipmentBlock(tc, prefs!.equipment),
             ],
 
             // ── Injuries / training-around ──
@@ -245,7 +218,7 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
               const SizedBox(height: 22),
               _sectionLabel(tc, 'TRAINING AROUND'),
               const SizedBox(height: 10),
-              _chipWrap(tc, prefs!.injuries.map(_prettyToken).toList(),
+              _chipWrap(tc, _dedup(prefs!.injuries.map(_prettyToken)),
                   warn: true),
             ],
 
@@ -270,6 +243,174 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
     );
   }
 
+  // ── weekly schedule ────────────────────────────────────────────────────────
+
+  /// Builds the 7-day grid from the REAL scheduled workouts for the current
+  /// Mon–Sun week, so it always matches the Schedule screen day-for-day.
+  Widget _weeklySchedule(
+      ThemeColors tc, List<UserProgramAssignment> assignments) {
+    final workoutsAsync = ref.watch(workoutsProvider);
+    final workouts = workoutsAsync.valueOrNull;
+    if (workouts == null) return _loadingRow(tc);
+
+    final now = DateTime.now();
+    final monday = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: (now.weekday - 1) % 7));
+
+    return Column(
+      children: [
+        for (var d = 0; d < 7; d++)
+          _dayRow(tc, d, _dayInfo(workouts, assignments, monday, d)),
+      ],
+    );
+  }
+
+  /// Resolve what runs on weekday [d] (0=Mon..6=Sun) from the real workouts.
+  ({String label, String? sub, bool rest}) _dayInfo(
+    List<Workout> workouts,
+    List<UserProgramAssignment> assignments,
+    DateTime monday,
+    int d,
+  ) {
+    final date = monday.add(Duration(days: d));
+    final dateStr =
+        '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dayWorkouts =
+        workouts.where((w) => w.scheduledDateKey == dateStr).toList();
+    if (dayWorkouts.isEmpty) return (label: 'Rest day', sub: null, rest: true);
+
+    // Primary (non-add-on) workout drives the label; add-ons surface as "+N".
+    final primary = dayWorkouts.firstWhere(
+      (w) => !(w.programContext?.isAddon ?? false),
+      orElse: () => dayWorkouts.first,
+    );
+    final ctx = primary.programContext;
+    final assignment = assignmentForWeekday(assignments, d);
+    final name = _programNameFor(ctx, assignment) ??
+        (primary.type?.trim().isNotEmpty == true
+            ? _cap(primary.type!.trim())
+            : 'Workout');
+    final extra = dayWorkouts.length - 1;
+    return (label: name, sub: extra > 0 ? '+$extra' : null, rest: false);
+  }
+
+  /// Curated-program name for a session, preferring the workout's own context,
+  /// then the matched assignment. Null for a pure AI workout.
+  String? _programNameFor(
+      WorkoutProgramContext? ctx, UserProgramAssignment? assignment) {
+    final fromCtx = ctx?.programName?.trim();
+    if (fromCtx != null && fromCtx.isNotEmpty) return fromCtx;
+    final custom = assignment?.customProgramName?.trim();
+    if (custom != null && custom.isNotEmpty) return custom;
+    final display = assignment?.displayName?.trim();
+    if (display != null && display.isNotEmpty) return display;
+    return null;
+  }
+
+  Widget _dayRow(
+      ThemeColors tc, int day, ({String label, String? sub, bool rest}) info) {
+    final isRest = info.rest;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 40,
+            child: Text(_dayNames[day],
+                style: ZType.lbl(11,
+                    color: isRest ? tc.textMuted : tc.textSecondary,
+                    letterSpacing: 1.2)),
+          ),
+          const SizedBox(width: 8),
+          Icon(
+            isRest ? Icons.nightlight_round : Icons.fitness_center_rounded,
+            size: 16,
+            color: isRest ? tc.textMuted.withValues(alpha: 0.5) : tc.accent,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              info.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ZType.sans(14,
+                  color: isRest ? tc.textMuted : tc.textPrimary,
+                  weight: FontWeight.w600),
+            ),
+          ),
+          if (info.sub != null)
+            Text(info.sub!, style: ZType.data(11, color: tc.accent)),
+        ],
+      ),
+    );
+  }
+
+  // ── equipment ────────────────────────────────────────────────────────────
+
+  /// De-duplicate by case-insensitive label, preserving first-seen order.
+  List<String> _dedup(Iterable<String> items) {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final it in items) {
+      final k = it.toLowerCase();
+      if (seen.add(k)) out.add(it);
+    }
+    return out;
+  }
+
+  /// Collapsed one-line summary that expands to the full (deduped) chip list.
+  Widget _equipmentBlock(ThemeColors tc, List<String> raw) {
+    final items = _dedup(raw.map(_prettyToken));
+    final hasFullGym =
+        raw.any((t) => t.toLowerCase().replaceAll(' ', '_') == 'full_gym');
+    final summary = hasFullGym
+        ? 'Full Gym · ${items.length} items'
+        : '${items.length} item${items.length == 1 ? '' : 's'}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            HapticService.light();
+            setState(() => _equipExpanded = !_equipExpanded);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: tc.accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: tc.accent.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.fitness_center_rounded, size: 16, color: tc.accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(summary,
+                      style: ZType.sans(13.5,
+                          color: tc.textPrimary, weight: FontWeight.w600)),
+                ),
+                Icon(
+                  _equipExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  size: 20,
+                  color: tc.textMuted,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_equipExpanded) ...[
+          const SizedBox(height: 10),
+          _chipWrap(tc, items),
+        ],
+      ],
+    );
+  }
+
   // ── sub-widgets ──────────────────────────────────────────────────────────
 
   Widget _sectionLabel(ThemeColors tc, String text) => Text(text,
@@ -287,117 +428,6 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
           ),
         ),
       );
-
-  /// The curated label for [day] (0=Mon..6=Sun), or null if no active program
-  /// covers it. Primary program drives the label; add-ons append "+N". Returns
-  /// the busiest match so a covered day is never shown as an AI/rest day.
-  ({String label, String? sub})? _curatedForDay(
-      List<UserProgramAssignment> assignments, int day) {
-    if (assignments.isEmpty) return null;
-    String? primaryName;
-    final addonNames = <String>[];
-    for (final a in assignments) {
-      if (!a.coversWeekday(day)) continue;
-      final name = (a.displayName?.trim().isNotEmpty == true)
-          ? a.displayName!.trim()
-          : 'Program';
-      if (a.isPrimary) {
-        primaryName ??= name;
-      } else {
-        addonNames.add(name);
-      }
-    }
-    final label = primaryName ?? (addonNames.isNotEmpty ? addonNames.first : null);
-    if (label == null) return null;
-    // If primary + add-on(s) stack, or multiple add-ons, surface the extra count.
-    final extras = primaryName != null
-        ? addonNames.length
-        : (addonNames.length - 1);
-    return (label: label, sub: extras > 0 ? '+$extras' : null);
-  }
-
-  Widget _dayRow(ThemeColors tc, int day, bool isWorkout,
-      WorkoutDayOverride? override, int? sessionMin,
-      [({String label, String? sub})? curated]) {
-    // A curated program covering this day always wins over the AI-preference
-    // view — show the program name, not "Rest day" or an AI focus.
-    if (curated != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 40,
-              child: Text(_dayNames[day],
-                  style: ZType.lbl(11,
-                      color: tc.textSecondary, letterSpacing: 1.2)),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.fitness_center_rounded, size: 16, color: tc.accent),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                curated.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: ZType.sans(14,
-                    color: tc.textPrimary, weight: FontWeight.w600),
-              ),
-            ),
-            if (curated.sub != null)
-              Text(curated.sub!, style: ZType.data(11, color: tc.accent)),
-          ],
-        ),
-      );
-    }
-
-    final isRest = !isWorkout;
-    final focus = isWorkout ? _focus(override?.focus) : null;
-    final dur = override?.durationMin ?? (isWorkout ? sessionMin : null);
-    final intensity = override?.intensity;
-    final sub = <String>[
-      if (dur != null) '${dur}m',
-      if (intensity != null) _cap(intensity),
-    ].join(' · ');
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 40,
-            child: Text(_dayNames[day],
-                style: ZType.lbl(11,
-                    color: isRest ? tc.textMuted : tc.textSecondary,
-                    letterSpacing: 1.2)),
-          ),
-          const SizedBox(width: 8),
-          Icon(
-            isRest ? Icons.nightlight_round : focus!.icon,
-            size: 16,
-            color: isRest ? tc.textMuted.withValues(alpha: 0.5) : tc.accent,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              isRest ? 'Rest day' : focus!.label,
-              style: ZType.sans(14,
-                  color: isRest ? tc.textMuted : tc.textPrimary,
-                  weight: FontWeight.w600),
-            ),
-          ),
-          if (!isRest && sub.isNotEmpty)
-            Text(sub, style: ZType.data(11, color: tc.textMuted)),
-        ],
-      ),
-    );
-  }
-
-  String _prettyToken(String t) => t
-      .replaceAll('_', ' ')
-      .split(' ')
-      .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
-      .join(' ');
 
   Widget _chipWrap(ThemeColors tc, List<String> items, {bool warn = false}) {
     final color = warn ? Colors.orange : tc.accent;
@@ -472,6 +502,134 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
                     fontSize: 15,
                     fontWeight: FontWeight.w600)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A tappable program row in the stacked "active programs" list (curated).
+class _ProgramRowTile extends StatelessWidget {
+  final ThemeColors tc;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final String initial;
+  final VoidCallback onTap;
+  const _ProgramRowTile({
+    required this.tc,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.initial,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            color: tc.glassSurface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: tc.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(initial,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ZType.sans(14,
+                            color: tc.textPrimary, weight: FontWeight.w700)),
+                    const SizedBox(height: 1),
+                    Text(subtitle,
+                        style: ZType.sans(11.5, color: tc.textSecondary)),
+                  ],
+                ),
+              ),
+              Icon(Icons.tune_rounded, size: 17, color: tc.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The always-on AI base row beneath the curated programs.
+class _AiBaseRowTile extends StatelessWidget {
+  final ThemeColors tc;
+  final VoidCallback onTap;
+  const _AiBaseRowTile({required this.tc, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    const cyan = ProgramColors.ai;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            color: cyan.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: cyan.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: cyan.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.auto_awesome, size: 17, color: cyan),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('AI Program',
+                        style: ZType.sans(14,
+                            color: tc.textPrimary, weight: FontWeight.w700)),
+                    const SizedBox(height: 1),
+                    Text('Always on · fills uncovered training days',
+                        style: ZType.sans(11.5, color: tc.textSecondary)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.lock_outline, size: 14, color: cyan),
+            ],
+          ),
         ),
       ),
     );

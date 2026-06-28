@@ -17,6 +17,11 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
   ];
   late final TabController _tabController;
 
+  // Top-level program switcher: 0 = AI program (the 4-tab editor below);
+  // 1..N = the user's active curated programs (HYROX, etc.) shown with their
+  // own manage UI. Only rendered when curated programs exist.
+  int _topSegment = 0;
+
   bool _isLoading = false;
 
   // Step 0: Schedule
@@ -731,6 +736,17 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
   Widget build(BuildContext context) {
     final colors = context.sheetColors;
 
+    // Active curated programs (HYROX, etc.) the user is running, primary first.
+    final assignments = (ref.watch(programAssignmentsProvider).valueOrNull ??
+            const <UserProgramAssignment>[])
+        .where((a) => a.isActive && a.status == 'active')
+        .toList()
+      ..sort((a, b) => a.isPrimary == b.isPrimary ? 0 : (a.isPrimary ? -1 : 1));
+    final hasCurated = assignments.isNotEmpty;
+    // 0 = AI; 1..N = assignments[seg-1]. Clamp in case a program was removed.
+    final seg = hasCurated ? _topSegment.clamp(0, assignments.length) : 0;
+    final aiMode = seg == 0;
+
     return GlassSheet(
       maxHeightFraction: 0.95,
       showHandle: false,
@@ -741,22 +757,101 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
           children: [
             _buildHeader(colors),
             Divider(height: 1, color: colors.cardBorder),
-            _buildTabBar(colors),
-            Flexible(
-              child: _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(color: colors.cyan))
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildScheduleTab(colors),
-                        _buildPerDayStep(colors),
-                        _buildEquipmentStep(colors),
-                        _buildHealthStep(colors),
-                      ],
-                    ),
+            if (hasCurated) _buildProgramSwitcher(colors, assignments, seg),
+            if (aiMode) ...[
+              _buildTabBar(colors),
+              Flexible(
+                child: _isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(color: colors.cyan))
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildScheduleTab(colors),
+                          _buildPerDayStep(colors),
+                          _buildEquipmentStep(colors),
+                          _buildHealthStep(colors),
+                        ],
+                      ),
+              ),
+              _buildSaveBar(colors),
+            ] else
+              Flexible(
+                // The curated-program manage UI (rename / days / slot /
+                // pause / remove). Owns its own Save + provider refresh.
+                child: ManageProgramBody(
+                  key: ValueKey(assignments[seg - 1].id),
+                  assignment: assignments[seg - 1],
+                  parentRef: ref,
+                  embedded: true,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Top-level segmented switcher: [ AI ] [ HYROX ] [ …add-ons ]. Lets a user on
+  /// a curated/combination program edit the AI base OR manage the selected
+  /// program with the right controls, without nesting tab bars.
+  Widget _buildProgramSwitcher(
+    SheetColors colors,
+    List<UserProgramAssignment> assignments,
+    int seg,
+  ) {
+    Widget pill(int index, String label, IconData icon) {
+      final selected = index == seg;
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _topSegment = index);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected
+                  ? colors.cyan.withValues(alpha: 0.14)
+                  : colors.elevated,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: selected ? colors.cyan : colors.cardBorder,
+              ),
             ),
-            _buildSaveBar(colors),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon,
+                    size: 15,
+                    color: selected ? colors.cyan : colors.textMuted),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? colors.cyan : colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            pill(0, 'AI Program', Icons.auto_awesome),
+            for (var i = 0; i < assignments.length; i++)
+              pill(i + 1, assignments[i].title, Icons.fitness_center_rounded),
           ],
         ),
       ),

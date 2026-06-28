@@ -36,21 +36,33 @@ Future<void> showProgramManageSheet(
   return showGlassSheet<void>(
     context: context,
     builder: (_) => GlassSheet(
-      child: _ManageSheetBody(assignment: assignment, parentRef: ref),
+      child: ManageProgramBody(assignment: assignment, parentRef: ref),
     ),
   );
 }
 
-class _ManageSheetBody extends ConsumerStatefulWidget {
+/// The program-assignment management UI (rename / training days / slot /
+/// pause-resume / remove / edit plan). Self-contained — owns its repo calls and
+/// refreshes the assignments + today providers on every mutation.
+///
+/// Rendered standalone via [showProgramManageSheet], OR embedded as a tab inside
+/// the Edit Program sheet (pass [embedded] = true to drop the duplicate title).
+class ManageProgramBody extends ConsumerStatefulWidget {
   final UserProgramAssignment assignment;
   final WidgetRef parentRef;
-  const _ManageSheetBody({required this.assignment, required this.parentRef});
+  final bool embedded;
+  const ManageProgramBody({
+    super.key,
+    required this.assignment,
+    required this.parentRef,
+    this.embedded = false,
+  });
 
   @override
-  ConsumerState<_ManageSheetBody> createState() => _ManageSheetBodyState();
+  ConsumerState<ManageProgramBody> createState() => _ManageProgramBodyState();
 }
 
-class _ManageSheetBodyState extends ConsumerState<_ManageSheetBody> {
+class _ManageProgramBodyState extends ConsumerState<ManageProgramBody> {
   late final TextEditingController _nameController;
   late List<int> _days;
   late ProgramSlot _slot;
@@ -201,21 +213,18 @@ class _ManageSheetBodyState extends ConsumerState<_ManageSheetBody> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: GlassSheetHandle(
-                isDark: Theme.of(context).brightness == Brightness.dark,
+            // Handle is rendered by the wrapping GlassSheet — don't add a second.
+            if (!widget.embedded) ...[
+              Text(
+                'Manage program',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: tc.textPrimary,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Manage program',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: tc.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
+            ],
 
             // Rename
             Text('NAME',
