@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -89,6 +90,9 @@ class ProgramLibraryCardTile extends StatelessWidget {
     required bool showDescription,
     required bool narrow,
   }) {
+    // Cover art (program library) when present — photo background; falls back
+    // to the category gradient + glyph for the ~240 image-free programs.
+    final hasImage = (data.imageUrl ?? '').isNotEmpty;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -114,17 +118,45 @@ class ProgramLibraryCardTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
             child: Stack(
               children: [
-                // Oversized category glyph bleeding off the bottom-right —
-                // gives the card visual weight without an image asset.
-                Positioned(
-                  right: -18,
-                  bottom: -22,
-                  child: Icon(
-                    theme.icon,
-                    size: narrow ? 96 : 128,
-                    color: Colors.white.withValues(alpha: 0.14),
+                if (hasImage) ...[
+                  // Cover photo fills the card; a 3-stop scrim keeps the white
+                  // eyebrow/title/chips legible over any image.
+                  Positioned.fill(
+                    child: CachedNetworkImage(
+                      imageUrl: data.imageUrl!,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 200),
+                      errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                    ),
                   ),
-                ),
+                  const Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0x59000000),
+                            Color(0x26000000),
+                            Color(0xCC000000),
+                          ],
+                          stops: [0.0, 0.45, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else
+                  // Oversized category glyph bleeding off the bottom-right —
+                  // gives the card visual weight without an image asset.
+                  Positioned(
+                    right: -18,
+                    bottom: -22,
+                    child: Icon(
+                      theme.icon,
+                      size: narrow ? 96 : 128,
+                      color: Colors.white.withValues(alpha: 0.14),
+                    ),
+                  ),
                 Padding(
                   // Padding + type scale come from LayoutBuilder so the card
                   // fits the 3-up grid cell (~110px) without overflow.
@@ -171,6 +203,15 @@ class ProgramLibraryCardTile extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                           height: 1.15,
                           color: Colors.white,
+                          shadows: hasImage
+                              ? const [
+                                  Shadow(
+                                    color: Color(0xB3000000),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ]
+                              : null,
                         ),
                       ),
                       if (showDescription) ...[
