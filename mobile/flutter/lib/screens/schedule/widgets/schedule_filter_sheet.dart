@@ -310,12 +310,7 @@ class _FilterSheetBodyState extends State<_FilterSheetBody> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: GlassSheetHandle(
-                isDark: Theme.of(context).brightness == Brightness.dark,
-              ),
-            ),
-            const SizedBox(height: 12),
+            // Handle is rendered by the wrapping GlassSheet — don't add a second.
             Row(
               children: [
                 Container(
