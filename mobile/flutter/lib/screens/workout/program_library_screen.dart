@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -3937,21 +3938,57 @@ class _BigHeroCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(gradient: theme.headerGradient),
-                  ),
-                  CustomPaint(
-                    painter: _HeroStripePainter(
-                      color: Colors.white.withValues(alpha: 0.05),
+                  // Background: cover art when present, else the category
+                  // gradient + diagonal stripes (the fallback).
+                  if (card.imageUrl != null && card.imageUrl!.isNotEmpty)
+                    Positioned.fill(
+                      child: CachedNetworkImage(
+                        imageUrl: card.imageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => DecoratedBox(
+                          decoration:
+                              BoxDecoration(gradient: theme.headerGradient),
+                        ),
+                        errorWidget: (_, __, ___) => Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                  gradient: theme.headerGradient),
+                            ),
+                            CustomPaint(
+                              painter: _HeroStripePainter(
+                                color: Colors.white.withValues(alpha: 0.05),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else ...[
+                    DecoratedBox(
+                      decoration: BoxDecoration(gradient: theme.headerGradient),
                     ),
-                  ),
+                    CustomPaint(
+                      painter: _HeroStripePainter(
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ],
+                  // Legibility scrim — a stronger 3-stop ramp so the title /
+                  // subtitle / chips read over ANY cover art (incl. brighter
+                  // ones like the beach-body window light): 0.05 → 0.25 → 0.78.
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0xCC000000)],
-                        stops: [0.4, 1.0],
+                        colors: [
+                          Color(0x0D000000),
+                          Color(0x40000000),
+                          Color(0xC7000000),
+                        ],
+                        stops: [0.0, 0.45, 1.0],
                       ),
                     ),
                   ),
@@ -3973,7 +4010,16 @@ class _BigHeroCard extends StatelessWidget {
                           card.displayName.toUpperCase(),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: ZType.disp(38, color: AppColors.textPrimary),
+                          style: ZType.disp(38, color: AppColors.textPrimary)
+                              .copyWith(
+                            shadows: const [
+                              Shadow(
+                                color: Color(0xBF000000),
+                                blurRadius: 12,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
                         ),
                         if (subtitle.isNotEmpty) ...[
                           const SizedBox(height: 6),
@@ -3981,8 +4027,16 @@ class _BigHeroCard extends StatelessWidget {
                             subtitle,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style:
-                                ZType.ser(14, color: AppColors.textSecondary),
+                            style: ZType.ser(14, color: AppColors.textSecondary)
+                                .copyWith(
+                              shadows: const [
+                                Shadow(
+                                  color: Color(0x99000000),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                         const SizedBox(height: 12),

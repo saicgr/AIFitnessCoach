@@ -957,6 +957,10 @@ class ProgramLibraryCard {
   /// variant with `is_default: true`. Null for single-plan programs.
   final String? defaultVariantId;
 
+  /// Per-program cover art (already resolved to a usable URL by the backend).
+  /// Null → the card draws its category-gradient fallback.
+  final String? imageUrl;
+
   const ProgramLibraryCard({
     required this.id,
     required this.programName,
@@ -981,6 +985,7 @@ class ProgramLibraryCard {
     this.previewAvailable = true,
     this.variantOptions = const [],
     this.defaultVariantId,
+    this.imageUrl,
   });
 
   factory ProgramLibraryCard.fromJson(Map<String, dynamic> json) {
@@ -1026,6 +1031,7 @@ class ProgramLibraryCard {
       previewAvailable: _asBool(json['preview_available'], fallback: true),
       variantOptions: variantOptions,
       defaultVariantId: json['default_variant_id']?.toString(),
+      imageUrl: json['image_url'] as String?,
     );
   }
 

@@ -131,6 +131,9 @@ class LibraryProgramCard(BaseModel):
     who_not_for: Optional[str] = None
     equipment_summary: Optional[str] = None
     progression_note: Optional[str] = None
+    # Per-program cover art (S3 path or URL). Null → the client draws its
+    # category-gradient fallback. Rendered on the featured hero + browse cards.
+    image_url: Optional[str] = None
     # 'library' for `programs` rows (bare uuid id), 'branded' for
     # `branded_programs` rows (id prefixed "branded:<uuid>"). Default keeps
     # existing clients/responses unchanged.
@@ -743,7 +746,7 @@ async def browse_library(
             "celebrity_name, difficulty_level, duration_weeks, "
             "sessions_per_week, session_duration_minutes, description, "
             "short_description, goals, editorial_name, tagline, who_for, "
-            "who_not_for, equipment_summary, progression_note"
+            "who_not_for, equipment_summary, progression_note, image_url"
         )
         if search:
             _card_cols += ", tags, workouts"
@@ -921,12 +924,21 @@ _LIBRARY_CARD_COLS = (
     "sessions_per_week, session_duration_minutes, description, "
     "short_description, goals, featured_rank, "
     "editorial_name, tagline, who_for, who_not_for, "
-    "equipment_summary, progression_note"
+    "equipment_summary, progression_note, image_url"
 )
 
 
 def _row_to_card(row: Dict[str, Any]) -> LibraryProgramCard:
     """Hydrate a programs row into the lightweight browse card."""
+    # Resolve cover art (s3:// → presigned/public URL; pass-through for an
+    # already-http URL or null). Same resolver the exercise images use.
+    _img = row.get("image_url")
+    if _img:
+        try:
+            from api.v1.library.utils import resolve_image_url
+            _img = resolve_image_url(_img)
+        except Exception:  # noqa: BLE001 — never block a card on cover resolve
+            pass
     return LibraryProgramCard(
         id=str(row["id"]),
         program_name=row.get("program_name") or "Program",
@@ -946,6 +958,7 @@ def _row_to_card(row: Dict[str, Any]) -> LibraryProgramCard:
         who_not_for=row.get("who_not_for"),
         equipment_summary=row.get("equipment_summary"),
         progression_note=row.get("progression_note"),
+        image_url=_img,
         source="library",
     )
 
