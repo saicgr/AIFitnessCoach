@@ -102,4 +102,9 @@ class TooltipAnchors {
   static final workoutsLibrary = GlobalKey(debugLabel: 'tour_workoutsLibrary');
   static final workoutsExercisePrefs =
       GlobalKey(debugLabel: 'tip.workouts.exercisePrefs');
+  static final workoutsQuickGenerate =
+      GlobalKey(debugLabel: 'tour_workoutsQuickGenerate');
+  static final workoutsPrograms =
+      GlobalKey(debugLabel: 'tour_workoutsPrograms');
+  static final workoutsStats = GlobalKey(debugLabel: 'tour_workoutsStats');
 }

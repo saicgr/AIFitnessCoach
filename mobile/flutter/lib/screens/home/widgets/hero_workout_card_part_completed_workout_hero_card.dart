@@ -218,39 +218,70 @@ class GeneratingHeroCard extends ConsumerStatefulWidget {
 
 
 class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _shimmerController;
+    with TickerProviderStateMixin {
+  // A polished, multi-layer loading motif (richer than a single shimmer):
+  //   • _pulseController  — breathing glow halo behind the icon
+  //   • _sweepController  — a rotating "comet" highlight around the ring
+  //   • _shimmerController — the moving sheen on the progress bar
+  // plus a timer that rotates the status line through real generation stages.
+  late final AnimationController _pulseController;
+  late final AnimationController _sweepController;
+  late final AnimationController _shimmerController;
+  Timer? _stageTimer;
+  int _stageIndex = 0;
+
+  // Shown only when the caller didn't pass a custom subtitle — cycles so the
+  // wait reads as active work rather than a frozen "please wait".
+  static const List<String> _stages = [
+    'Reviewing your plan…',
+    'Picking your exercises…',
+    'Balancing your volume…',
+    'Adding warm-ups…',
+    'Finishing touches…',
+  ];
 
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1700),
+    )..repeat(reverse: true);
+    _sweepController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat();
     _shimmerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1400),
     )..repeat();
+    _stageTimer = Timer.periodic(const Duration(milliseconds: 1700), (_) {
+      if (!mounted) return;
+      setState(() => _stageIndex = (_stageIndex + 1) % _stages.length);
+    });
   }
 
   @override
   void dispose() {
+    _stageTimer?.cancel();
+    _pulseController.dispose();
+    _sweepController.dispose();
     _shimmerController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-      '🔄 [GeneratingHeroCard] build() called with message: ${widget.message}',
-    );
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final textSecondary = isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
+
+    final statusLine = widget.subtitle ?? _stages[_stageIndex];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -260,7 +291,16 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
             constraints: const BoxConstraints(minHeight: 180),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: cardBg,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.alphaBlend(
+                      accentColor.withValues(alpha: isDark ? 0.10 : 0.06),
+                      cardBg),
+                  cardBg,
+                ],
+              ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: accentColor.withValues(alpha: 0.3),
@@ -270,105 +310,59 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: accentColor.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      width: 56,
-                      height: 56,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 4,
-                        color: accentColor,
-                        backgroundColor: accentColor.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    Icon(
-                      Icons.fitness_center_rounded,
-                      color: accentColor,
-                      size: 24,
-                    ),
-                  ],
+                RepaintBoundary(
+                  child: _buildMotif(accentColor, cardBg),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 22),
                 Text(
-                  widget.message ?? AppLocalizations.of(context).heroWorkoutCardLoadingYourWorkout,
+                  widget.message ??
+                      AppLocalizations.of(context)
+                          .heroWorkoutCardLoadingYourWorkout,
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: textPrimary,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  widget.subtitle ?? AppLocalizations.of(context).heroWorkoutCardThisMayTakeA,
-                  style: TextStyle(fontSize: 14, color: textSecondary),
-                  textAlign: TextAlign.center,
+                // Rotating stage copy — fades/slides between stages.
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 350),
+                  transitionBuilder: (child, anim) => FadeTransition(
+                    opacity: anim,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.25),
+                        end: Offset.zero,
+                      ).animate(anim),
+                      child: child,
+                    ),
+                  ),
+                  child: Text(
+                    statusLine,
+                    key: ValueKey(statusLine),
+                    style: TextStyle(fontSize: 14, color: textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 if (widget.onRetry != null) ...[
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     onPressed: widget.onRetry,
                     icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: Text(AppLocalizations.of(context).upNextCardTapToRetry),
+                    label:
+                        Text(AppLocalizations.of(context).upNextCardTapToRetry),
                     style: FilledButton.styleFrom(
                       backgroundColor: accentColor,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
-                AnimatedBuilder(
-                  animation: _shimmerController,
-                  builder: (context, child) {
-                    return Container(
-                      height: 4,
-                      width: 120,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(2),
-                        color: accentColor.withValues(alpha: 0.2),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              left: _shimmerController.value * 140 - 40,
-                              child: Container(
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.transparent,
-                                      accentColor,
-                                      Colors.transparent,
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                const SizedBox(height: 18),
+                RepaintBoundary(child: _buildProgressBar(accentColor)),
               ],
             ),
           ),
@@ -389,6 +383,131 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
           ),
         ],
       ),
+    );
+  }
+
+  /// Animated hero motif: a breathing glow halo, a rotating comet ring, a faint
+  /// static track, and the dumbbell at center.
+  Widget _buildMotif(Color accentColor, Color cardBg) {
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Breathing glow halo.
+          AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, _) {
+              final t = _pulseController.value; // 0..1
+              return Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: 0.20 + 0.22 * t),
+                      blurRadius: 14 + 14 * t,
+                      spreadRadius: 1 + 4 * t,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Faint full track ring.
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: accentColor.withValues(alpha: 0.16),
+                width: 4,
+              ),
+            ),
+          ),
+          // Rotating comet highlight (sweep gradient disk masked to a ring).
+          RotationTransition(
+            turns: _sweepController,
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: SweepGradient(
+                  colors: [
+                    accentColor.withValues(alpha: 0.0),
+                    accentColor.withValues(alpha: 0.0),
+                    accentColor,
+                    accentColor.withValues(alpha: 0.0),
+                  ],
+                  stops: const [0.0, 0.55, 0.88, 1.0],
+                ),
+              ),
+            ),
+          ),
+          // Inner mask carves the disk into a 4px ring.
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: cardBg),
+          ),
+          // Gently pulsing dumbbell.
+          ScaleTransition(
+            scale: Tween<double>(begin: 0.9, end: 1.06).animate(
+              CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+            ),
+            child: Icon(
+              Icons.fitness_center_rounded,
+              color: accentColor,
+              size: 26,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A wider, rounded progress track with a bright moving sheen.
+  Widget _buildProgressBar(Color accentColor) {
+    const barWidth = 150.0;
+    return AnimatedBuilder(
+      animation: _shimmerController,
+      builder: (context, child) {
+        return Container(
+          height: 5,
+          width: barWidth,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(3),
+            color: accentColor.withValues(alpha: 0.16),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: Stack(
+              children: [
+                Positioned(
+                  left: _shimmerController.value * (barWidth + 60) - 60,
+                  child: Container(
+                    width: 60,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          accentColor.withValues(alpha: 0.0),
+                          accentColor,
+                          accentColor.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

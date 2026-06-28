@@ -208,17 +208,8 @@ class _CustomExerciseCard extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
-        HapticService.light();
-        // Convert CustomExercise to LibraryExercise for the detail sheet
-        final libraryExercise = LibraryExercise(
-          nameValue: exercise.name,
-          bodyPart: exercise.primaryMuscle,
-          equipmentValue: exercise.equipment,
-        );
-        showGlassSheet(
-          context: context,
-          builder: (context) => ExerciseDetailSheet(exercise: libraryExercise),
-        );
+        // Custom exercises resolve media/stats by name (no library row id).
+        openExerciseBrowse(context, name: exercise.name);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -333,18 +324,7 @@ class _CustomExerciseCard extends ConsumerWidget {
               // Edit button
               GestureDetector(
                 onTap: () {
-                  HapticService.light();
-                  // Open detail sheet which has edit capabilities
-                  final libraryExercise = LibraryExercise(
-                    nameValue: exercise.name,
-                    bodyPart: exercise.primaryMuscle,
-                    equipmentValue: exercise.equipment,
-                  );
-                  showGlassSheet(
-                    context: context,
-                    builder: (context) =>
-                        ExerciseDetailSheet(exercise: libraryExercise),
-                  );
+                  openExerciseBrowse(context, name: exercise.name);
                 },
                 child: Container(
                   padding: const EdgeInsets.all(8),
@@ -728,10 +708,11 @@ class _CompactExerciseCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        HapticService.light();
-        showGlassSheet(
-          context: context,
-          builder: (context) => ExerciseDetailSheet(exercise: exercise),
+        openExerciseBrowse(
+          context,
+          name: exercise.name,
+          exerciseId: exercise.id,
+          libraryId: exercise.id,
         );
       },
       child: SizedBox(

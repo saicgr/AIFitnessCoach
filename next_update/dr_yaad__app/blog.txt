@@ -1,0 +1,55 @@
+I'm a medical doctor with 15 years of calisthenics behind me. I coach online, I make videos, I train people who want to get genuinely good at calisthenics strength. And I keep hitting the same wall.
+
+Workout apps don't think. They deliver a plan. They don't react to your body. They don't notice the pattern building across weeks. They don't know you slept four hours and your elbows feel cooked.
+
+A coach does. A good calisthenics coach is paying attention to a lot at once: which movement patterns you trained, which tissues took the load, how local fatigue is stacking up across exercises that share a category, whether your goals match what your body can actually tolerate this week. They hold all of that in their head. And they change the session in front of you when the situation changes.
+
+But a coach can only really hold maybe five athletes that way. Beyond that, it falls apart. You start running similar programs for everyone. You miss the patterns. You give a planche progression to someone whose elbows are quietly screaming and you don't notice until they're out for six weeks.
+
+So I started building the thing I wished existed.
+
+A coach can hold five athletes in their head. This system can hold every variable, every session, for every athlete, at once.
+
+01
+A training decision system, not a workout app
+This is not a workout app with a chatbot bolted on. It is a training decision system. Every coaching rule I follow, every constraint I weigh, every if-then I run in my head, formalized into code.
+
+Most fitness apps think in terms of static workouts and broad muscle groups. This system thinks in categories. Movement categories like vertical pull and horizontal press. Skill categories. Isolation. Prehab. Stress and recovery.
+
+Exercises aren't items in a flat list. They're tools that serve a category, with a measurable effect profile: what they stimulate, what they stress, how recoverable they are, how time-costly they are.
+
+02
+Four ledgers, every set
+Every set you log updates four ledgers. Decisions are made from these, not from "did you finish your workout."
+
+•
+Category stimulus. So the system knows what got trained, not just what muscle group was hit.
+•
+Tissue fatigue. So it sees the load building in your elbows or wrists before they flare.
+•
+Systemic load. So it knows when your whole engine is dipping, not just one body part.
+•
+Skill exposure. So straddle planche minutes get counted whether they were in a warmup or a working set.
+03
+AI for the messy. Deterministic for the safety-critical
+It separates the AI from the safety-critical stuff on purpose.
+
+AI handles the messy things. Interpreting your check-ins, summarizing progress, explaining why something changed, drafting recommendations in plain language.
+
+The deterministic engine handles the things you can't get wrong. Progression, volume tracking, deload decisions, constraint enforcement.
+
+When the AI suggests a meaningful change to your training, you see the reason, and you approve, reject, or modify it. It never silently swaps things on you. That's intentional. The app is also teaching you how to think about training.
+
+04
+Personalization, earned over time
+Personalization isn't a setup quiz. It's earned, over time, from what your body actually does.
+
+The longer you use it, the more confident it gets about you specifically: that you handle vertical pulling volume well, that your elbow flexors get hot fast in hypertrophy phases, that you respond poorly to skill work after heavy pulling. Where it has data, it gets assertive. Where it doesn't, it stays conservative.
+
+And every day, it reads what you tell it: sleep, soreness, time, how you feel. Then it rewrites the session on the spot. Less time today? It cuts the lower-priority work and preserves the things that matter. Bad night? It pulls the load back. Sore elbows? It swaps planche work for something that lets the joint cool down. The way I would, if I were standing next to you.
+
+It's for people who train seriously. People going after skills that take years. People who are tired of guessing why their progression stalled. People who can't afford a personal coach but want the same level of thought going into their training.
+
+I'm not building this as a side project. It's the most serious thing I've worked on in a long time. The waitlist is open. Founding members get early access and founding pricing, locked for life. When I open the doors, you'll be first to know.
+
+Help me decide what ships first. 5 questions, under 90 seconds.

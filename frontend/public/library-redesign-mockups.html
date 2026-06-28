@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zealova — Library Redesign Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================= */
+/* SHELL — page band + sticky tab nav (signature-v2)             */
+/* near-black #0A0A0B · orange #F97316 · Anton / Barlow Condensed */
+/* ============================================================= */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#09090b;-webkit-font-smoothing:antialiased}
+body{color:#FAFAFA;font-family:Inter,-apple-system,sans-serif}
+
+.combined-head{max-width:1280px;margin:0 auto;padding:40px 40px 18px}
+.combined-head .kicker{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;font-size:13px;text-transform:uppercase;color:#F97316;margin-bottom:10px}
+.combined-head h1{font-family:Anton,'Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:.5px;font-size:44px;line-height:.98;margin:0 0 12px;color:#FAFAFA}
+.combined-head h1 .o{color:#F97316}
+.combined-head p.sub{font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#9D9DA6;font-size:14px;line-height:1.55;max-width:880px;margin:0}
+
+.topnav{position:sticky;top:0;z-index:1000;background:rgba(10,10,11,.88);backdrop-filter:saturate(140%) blur(14px);-webkit-backdrop-filter:saturate(140%) blur(14px);border-bottom:1px solid #26262B}
+.topnav-inner{max-width:1280px;margin:0 auto;padding:12px 40px;display:flex;gap:12px;flex-wrap:wrap}
+.topnav .tabbtn{flex:1 1 0;min-width:160px;display:flex;flex-direction:column;gap:3px;cursor:pointer;text-align:left;background:#141416;border:1px solid #26262B;border-radius:14px;padding:14px 18px;color:#9D9DA6;transition:.16s;-webkit-tap-highlight-color:transparent}
+.topnav .tabbtn .lbl{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:18px;color:#FAFAFA;line-height:1}
+.topnav .tabbtn .hint{font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;font-size:11px;color:#5C5C64}
+.topnav .tabbtn:hover{border-color:#3a3a40}
+.topnav .tabbtn.active{background:rgba(249,115,22,.10);border-color:#F97316;box-shadow:0 0 0 3px rgba(249,115,22,.14)}
+.topnav .tabbtn.active .lbl{color:#F97316}
+.topnav .tabbtn.active .hint{color:#9D9DA6}
+
+.screen-section[hidden]{display:none}
+
+@media (max-width:520px){
+  .combined-head{padding:26px 16px 12px}
+  .combined-head h1{font-size:32px}
+  .topnav-inner{padding:10px 14px;gap:8px}
+  .topnav .tabbtn{min-width:0;padding:10px 12px}
+  .topnav .tabbtn .lbl{font-size:15px}
+}
+
+/* ============================================================= */
+/* PROGRAM LIBRARY — original scoped styles (#screen-program)     */
+/* ============================================================= */
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROGRAM LIBRARY — Signature v2 redesign directions
+   Every selector scoped under #screen-program so this file concatenates
+   cleanly with the sibling exercise-library file. Tokens declared on the
+   #screen-program wrapper, not :root. Only a shared page reset touches *.
+   ═══════════════════════════════════════════════════════════════════ */
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+#screen-program{
+  /* ===== Signature v2 token system ===== */
+  --d-bg:#0A0A0B; --d-surface:#141416; --d-surface2:#0F0F11;
+  --d-border:#26262B; --d-rule:#2A2A2E; --d-text:#FAFAFA; --d-mut:#9D9DA6; --d-faint:#5C5C64;
+  --d-accent:#F97316; --d-rust:#C2410C; --d-ember:#7C2D12; --d-radius:14px;
+  /* data colours */
+  --cyan:#06B6D4; --green:#2ECC71; --gold:#FFD54A; --red:#EF4444; --purple:#A855F7;
+  /* difficulty */
+  --beg:#2ECC71; --int:#FFD54A; --adv:#F97316; --elite:#EF4444;
+  /* phone — native 390×844, displayed at .8 scale */
+  --phone-w:390px; --phone-h:844px;
+
+  background:#09090b; color:var(--d-text);
+  font-family:Inter,-apple-system,sans-serif; font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding:46px 40px 90px;
+  min-height:100vh;
+}
+
+#screen-program .anton{font-family:Anton,'Arial Narrow',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.5px}
+#screen-program .cond{font-family:'Barlow Condensed',sans-serif}
+#screen-program .mono{font-family:'Space Mono',monospace}
+#screen-program .ser{font-family:Fraunces,Georgia,serif}
+
+/* ===== page header ===== */
+#screen-program .page-head{max-width:1280px;margin:0 auto 30px;position:relative}
+#screen-program .page-head .kicker{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;font-size:13px;text-transform:uppercase;color:var(--d-accent);margin-bottom:10px}
+#screen-program .page-head h1{font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.5px;font-size:46px;line-height:.98;margin-bottom:16px}
+#screen-program .page-head h1 .o{color:var(--d-accent)}
+#screen-program .page-head p{color:var(--d-mut);font-size:14px;line-height:1.65;max-width:880px}
+#screen-program .page-head p b{color:#cfcfd6}
+#screen-program .legend{display:flex;flex-wrap:wrap;gap:9px 18px;margin-top:22px;align-items:center}
+#screen-program .legend .swatch{display:inline-flex;align-items:center;gap:7px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:11.5px;color:var(--d-mut)}
+#screen-program .legend .dot{width:11px;height:11px;border-radius:50%}
+
+/* ===== ★ Recommended callout ===== */
+#screen-program .reco-callout{max-width:1280px;margin:0 auto 44px;background:var(--d-surface);border:1px solid var(--d-border);border-left:3px solid var(--d-accent);border-radius:14px;padding:18px 22px;box-shadow:0 16px 34px -18px rgba(0,0,0,.75)}
+#screen-program .reco-callout .rch{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;font-size:13px;color:var(--d-accent);display:flex;align-items:center;gap:9px;margin-bottom:11px}
+#screen-program .reco-callout p{color:#d9d5cf;font-size:13.5px;line-height:1.6;max-width:1000px;margin-bottom:8px}
+#screen-program .reco-callout p:last-child{margin-bottom:0}
+#screen-program .reco-callout b{color:var(--d-text);font-weight:700}
+#screen-program .reco-callout .lead{color:var(--d-accent)}
+
+/* ===== gallery grid ===== */
+#screen-program .gallery{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:30px;align-items:start}
+#screen-program .frame{display:flex;flex-direction:column;position:relative}
+
+/* badges on frames */
+#screen-program .fbadge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);z-index:6;font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:11px;padding:5px 13px;border-radius:999px;white-space:nowrap;box-shadow:0 8px 20px -6px rgba(0,0,0,.7)}
+#screen-program .fbadge.lead{background:var(--d-accent);color:#160B03;border:1px solid var(--d-accent)}
+#screen-program .fbadge.graft{background:rgba(249,115,22,.12);color:var(--d-accent);border:1px solid rgba(249,115,22,.55)}
+#screen-program .fbadge.runner{background:var(--d-surface);color:var(--d-mut);border:1px solid var(--d-border)}
+
+/* ===== phone frame ===== */
+#screen-program .fwrap{width:312px;height:675.2px;position:relative;margin:0 auto}
+#screen-program .phone{
+  width:var(--phone-w);height:var(--phone-h);transform:scale(.8);transform-origin:top left;
+  border-radius:46px;padding:4px;position:relative;
+  background:linear-gradient(150deg,#5d5d66 0%,#1e1e23 22%,#0b0b0d 50%,#2a2a30 78%,#4e4e57 100%);
+  box-shadow:0 30px 70px -22px rgba(0,0,0,.9);
+}
+#screen-program .screen{width:100%;height:100%;border-radius:42px;overflow:hidden;position:relative;background:var(--d-bg);color:var(--d-text)}
+#screen-program .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:110px;height:26px;background:#000;border-radius:16px;z-index:40}
+#screen-program .homebar{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:120px;height:4px;background:rgba(255,255,255,.28);border-radius:2px;z-index:41}
+#screen-program .sbar{position:absolute;top:14px;left:0;right:0;display:flex;justify-content:space-between;padding:0 30px;font-size:13.5px;font-weight:600;z-index:39}
+#screen-program .sbar .sigs{letter-spacing:-1px;opacity:.9}
+
+/* ===== app header band (back ‹ · ZEALOVA eyebrow · Anton title) ===== */
+#screen-program .app-head{position:absolute;left:0;right:0;top:0;height:108px;background:#09090b;border-bottom:1px solid var(--d-rule);z-index:20;display:flex;align-items:flex-end;gap:12px;padding:0 22px 13px}
+#screen-program .back{width:30px;height:30px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:26px;line-height:1;color:var(--d-text);margin-bottom:-2px}
+#screen-program .app-head .ht{flex:1;min-width:0}
+#screen-program .app-head .eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:10px;color:var(--d-accent)}
+#screen-program .app-head h2{font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.5px;font-size:26px;line-height:.96;margin-top:2px}
+#screen-program .app-head .sub{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:9.5px;color:var(--d-faint);margin-top:4px}
+#screen-program .app-head .hicon{width:30px;height:30px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:var(--d-mut);font-size:15px;margin-bottom:-1px;filter:grayscale(1);opacity:.7}
+
+/* ===== scroll body (between header and nav) ===== */
+#screen-program .body{position:absolute;left:0;right:0;top:108px;bottom:94px;overflow:hidden;display:flex;flex-direction:column}
+#screen-program .scroll{flex:1;overflow:hidden;position:relative}
+#screen-program .scroll::-webkit-scrollbar{display:none}
+#screen-program .pad{padding:0 18px}
+
+/* ===== bottom nav (.nv-bar idiom) ===== */
+#screen-program .nv-bar{position:absolute;left:0;right:0;bottom:0;height:94px;z-index:30;background:var(--d-bg);border-top:1px solid var(--d-rule);display:flex;align-items:flex-start;padding:11px 6px 0}
+#screen-program .nv-it{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+#screen-program .nv-gl{font-size:17px;line-height:1;color:var(--d-mut)}
+#screen-program .nv-gl svg{display:block}
+#screen-program .nv-lb{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--d-mut)}
+#screen-program .nv-ul{width:18px;height:2px;border-radius:1px;background:transparent}
+#screen-program .nv-it.on .nv-gl,#screen-program .nv-it.on .nv-gl svg{color:var(--d-accent);stroke:var(--d-accent)}
+#screen-program .nv-it.on .nv-lb{color:var(--d-accent)}
+#screen-program .nv-it.on .nv-ul{background:var(--d-accent)}
+#screen-program .nv-plus{position:absolute;right:22px;bottom:108px;width:46px;height:46px;z-index:31;border:1px solid var(--d-accent);border-radius:12px;background:var(--d-surface);display:flex;align-items:center;justify-content:center;color:var(--d-accent);font-size:26px;font-weight:300;line-height:1;box-shadow:0 12px 28px -6px rgba(249,115,22,.4)}
+
+/* ===== shared in-phone primitives ===== */
+#screen-program .rule{height:1px;background:var(--d-rule)}
+#screen-program .rowlabel{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:10px;color:var(--d-faint);padding:2px 18px 8px}
+#screen-program .micro{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;font-size:10px;color:var(--d-mut)}
+
+/* difficulty dot/label */
+#screen-program .dchip{display:inline-flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;font-size:10px}
+#screen-program .ddot{width:7px;height:7px;border-radius:50%;background:currentColor}
+#screen-program .d-beg{color:var(--beg)} #screen-program .d-int{color:var(--int)} #screen-program .d-adv{color:var(--adv)} #screen-program .d-elite{color:var(--elite)}
+
+/* stat group (mono numerals) */
+#screen-program .stats{display:flex;gap:13px;color:var(--d-faint);font-family:'Space Mono',monospace;font-size:11px}
+#screen-program .stats b{color:var(--d-text);font-weight:700}
+
+/* goal pills */
+#screen-program .gpill{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:9.5px;color:var(--d-mut);border:1px solid var(--d-border);border-radius:999px;padding:3px 9px}
+
+/* search */
+#screen-program .search{display:flex;align-items:center;gap:10px;background:var(--d-surface2);border:1px solid var(--d-border);border-radius:10px;padding:11px 14px;margin:0 18px 12px}
+#screen-program .search .ph{color:var(--d-faint);font-size:13px}
+
+/* chips */
+#screen-program .chiprow{display:flex;gap:8px;overflow:hidden;padding:0 18px 12px;mask-image:linear-gradient(90deg,#000 88%,transparent)}
+#screen-program .chip{flex:0 0 auto;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:11px;padding:7px 13px;border-radius:999px;background:transparent;border:1px solid var(--d-border);color:var(--d-mut);white-space:nowrap}
+#screen-program .chip.on{color:var(--d-text);border-color:var(--d-accent);background:rgba(249,115,22,.1)}
+
+/* primary button */
+#screen-program .btn-pri{display:inline-flex;align-items:center;justify-content:center;background:var(--d-accent);color:#160B03;font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;font-size:13px;padding:11px 18px;border-radius:6px}
+#screen-program .btn-ghost{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--d-border);color:var(--d-text);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:12px;padding:10px 16px;border-radius:6px}
+
+/* ===== list row (hairline rule, NOT boxed) ===== */
+#screen-program .lrow{display:flex;align-items:center;gap:13px;padding:13px 18px;border-bottom:1px solid var(--d-rule)}
+#screen-program .lrow .ln{font-weight:700;font-size:14px;letter-spacing:-.1px;margin-bottom:4px}
+#screen-program .lrow .lm{font-family:'Space Mono',monospace;font-size:10.5px;color:var(--d-faint)}
+#screen-program .lrow .thumb{flex:0 0 44px;height:44px;border-radius:9px;position:relative;overflow:hidden;border:1px solid var(--d-border)}
+
+/* ===== featured / hero card (the reserved card idiom) ===== */
+#screen-program .heroc{margin:0 18px 16px;border:1px solid var(--d-border);border-left:3px solid var(--d-accent);border-radius:14px;background:var(--d-surface);overflow:hidden;box-shadow:0 16px 34px -18px rgba(0,0,0,.75)}
+
+/* ============ caption block ============ */
+#screen-program .cap{margin-top:16px;padding:15px 17px;background:var(--d-surface);border:1px solid var(--d-border);border-radius:12px;max-width:312px;margin-left:auto;margin-right:auto}
+#screen-program .cap .num{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;font-size:11px;color:var(--d-accent)}
+#screen-program .cap h3{font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.4px;font-size:21px;line-height:1;margin:5px 0 8px}
+#screen-program .cap .concept{color:#c9c9cf;font-size:12.5px;line-height:1.55;margin-bottom:9px}
+#screen-program .cap .bestfor{font-size:12px;color:var(--d-text);margin-bottom:10px}
+#screen-program .cap .bestfor span{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:9.5px;color:var(--d-accent);margin-right:7px}
+#screen-program .cap ul{list-style:none}
+#screen-program .cap ul li{font-size:12px;color:var(--d-mut);line-height:1.5;padding-left:15px;position:relative;margin-bottom:4px}
+#screen-program .cap ul li:before{content:"";position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;background:var(--d-accent)}
+#screen-program .cap.crit{border-color:rgba(239,68,68,.3)}
+#screen-program .cap.crit .num{color:#ff8a8a}
+#screen-program .cap.crit ul li:before{background:#ff8a8a}
+
+/* ============ FRAME 0 — Current (boxed, intentionally flat) ============ */
+#screen-program .cur-card{background:var(--d-surface);border:1px solid var(--d-border);border-radius:14px;padding:13px;margin:0 18px 10px}
+#screen-program .cur-card .name{font-size:14.5px;font-weight:700;margin-bottom:3px}
+#screen-program .cur-card .cat{font-size:11.5px;color:var(--d-faint);margin-bottom:9px}
+#screen-program .cur-card .meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px}
+#screen-program .cur-card .goals{display:flex;gap:6px;flex-wrap:wrap}
+#screen-program .critique-box{margin:6px 18px 14px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.28);border-radius:12px;padding:12px 14px}
+#screen-program .critique-box h4{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;font-size:10px;color:#ff8a8a;margin-bottom:8px}
+#screen-program .critique-box li{font-size:11.5px;color:var(--d-mut);line-height:1.45;list-style:none;padding-left:14px;position:relative;margin-bottom:4px}
+#screen-program .critique-box li:before{content:"–";position:absolute;left:2px;color:#ff8a8a}
+
+/* ============ FRAME 1 — Editorial ============ */
+#screen-program .hero-ed{margin:14px 18px;height:218px;border-radius:16px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:17px;border:1px solid var(--d-border);background:radial-gradient(120% 100% at 18% 6%,#1f1206 0%,#150d08 46%,var(--d-surface2) 100%)}
+#screen-program .hero-ed:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.55) 100%)}
+#screen-program .hero-ed .eyebrow{position:relative;z-index:2;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;font-size:10px;color:var(--d-accent);margin-bottom:8px}
+#screen-program .hero-ed h3{position:relative;z-index:2;font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.4px;font-size:27px;line-height:.96;margin-bottom:8px}
+#screen-program .hero-ed .out{position:relative;z-index:2;font-size:12.5px;color:#d9d5cf;line-height:1.4;margin-bottom:14px}
+#screen-program .hero-ed .row{position:relative;z-index:2;display:flex;align-items:center;gap:11px}
+#screen-program .story{display:flex;gap:13px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--d-rule)}
+#screen-program .story .thumb{flex:0 0 60px;height:60px;border-radius:11px;position:relative;overflow:hidden;border:1px solid var(--d-border)}
+#screen-program .story .thumb svg{position:absolute;right:-6px;bottom:-8px;opacity:.3}
+#screen-program .story .t-name{font-size:14px;font-weight:700;margin-bottom:3px}
+#screen-program .story .t-sub{font-size:11px;color:var(--d-faint);margin-bottom:7px}
+
+/* ============ FRAME 2 — Netflix rails ============ */
+#screen-program .rail{margin-bottom:18px}
+#screen-program .rail .rt{display:flex;align-items:baseline;justify-content:space-between;padding:0 18px 9px}
+#screen-program .rail .rt b{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:13px}
+#screen-program .rail .rt span{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:10px;color:var(--d-accent)}
+#screen-program .posters{display:flex;gap:11px;overflow:hidden;padding:0 18px;mask-image:linear-gradient(90deg,#000 86%,transparent)}
+#screen-program .poster{flex:0 0 118px;height:154px;border-radius:13px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;border:1px solid var(--d-border)}
+#screen-program .poster:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.7))}
+#screen-program .poster .ribbon{position:absolute;top:9px;left:9px;z-index:2;font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1px;font-size:9px;padding:2px 7px;border-radius:999px;text-transform:uppercase}
+#screen-program .poster .pn{position:relative;z-index:2;font-size:12px;font-weight:700;line-height:1.18;margin-bottom:4px}
+#screen-program .poster .pd{position:relative;z-index:2;font-family:'Space Mono',monospace;font-size:9.5px;color:#cfcfd6}
+#screen-program .poster svg{position:absolute;right:-10px;top:30px;opacity:.16;z-index:1}
+
+/* ============ FRAME 3 — Goal-first ============ */
+#screen-program .goaltiles{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:0 18px 16px}
+#screen-program .goaltile{aspect-ratio:1.5/1;border-radius:14px;padding:13px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;border:1px solid var(--d-border);background:var(--d-surface2)}
+#screen-program .goaltile.on{border:2px solid var(--d-accent);background:rgba(249,115,22,.08)}
+#screen-program .goaltile .gt-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:rgba(255,255,255,.05);border:1px solid var(--d-border)}
+#screen-program .goaltile .gt-n{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1px;text-transform:uppercase;font-size:14px}
+#screen-program .goaltile .gt-c{font-family:'Space Mono',monospace;font-size:10px;color:var(--d-mut)}
+#screen-program .goaltile.on .gt-c{color:var(--d-accent)}
+#screen-program .shelf-h{display:flex;align-items:center;gap:9px;padding:2px 18px 10px}
+#screen-program .shelf-h .dotline{flex:1;height:1px;background:var(--d-rule)}
+
+/* ============ FRAME 4 — Pro data table ============ */
+#screen-program .tbl{margin:0 14px}
+#screen-program .tbl .thead,#screen-program .tbl .trow{display:grid;grid-template-columns:1fr 34px 30px 32px 34px;align-items:center}
+#screen-program .tbl .thead{padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;font-size:9.5px;color:var(--d-mut);border-bottom:1px solid var(--d-rule)}
+#screen-program .tbl .thead .sortable.act{color:var(--d-accent)}
+#screen-program .tbl .trow{padding:10px 4px;font-size:12px;border-bottom:1px solid var(--d-rule)}
+#screen-program .tbl .trow .tn{font-weight:600;font-size:12.5px;padding-right:6px;line-height:1.2}
+#screen-program .tbl .trow .tc{text-align:center;color:var(--d-mut);font-family:'Space Mono',monospace;font-size:11px}
+#screen-program .tbl .trow .tlvl{display:grid;place-items:center}
+#screen-program .lvltag{width:9px;height:9px;border-radius:3px}
+
+/* ============ FRAME 5 — Poster grid 2-up ============ */
+#screen-program .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 16px}
+#screen-program .pgcard{border-radius:14px;overflow:hidden;border:1px solid var(--d-border);background:var(--d-surface2)}
+#screen-program .pgcard .ph{height:78px;position:relative;display:flex;align-items:flex-start;justify-content:flex-end;padding:9px}
+#screen-program .pgcard .ph svg{position:absolute;left:-6px;bottom:-10px;opacity:.24}
+#screen-program .pgcard .ph .ribbon{font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:1px;font-size:9px;padding:3px 7px;border-radius:999px;position:relative;z-index:2}
+#screen-program .pgcard .pb{padding:11px}
+#screen-program .pgcard .pb .pn{font-size:12.5px;font-weight:700;line-height:1.18;margin-bottom:7px;min-height:30px}
+#screen-program .pgcard .pb .ps{display:flex;gap:8px;font-family:'Space Mono',monospace;font-size:10px;color:var(--d-mut);margin-bottom:9px}
+#screen-program .pgcard .pb .ps b{color:var(--d-text)}
+#screen-program .pgcard .pb .gg{display:flex;gap:5px;flex-wrap:wrap}
+
+/* ============ FRAME 6 — Coach feed ============ */
+#screen-program .coachline{display:flex;gap:11px;align-items:flex-start;padding:4px 18px 16px}
+#screen-program .avatar{flex:0 0 36px;height:36px;border-radius:999px;background:var(--d-surface2);border:1px solid var(--d-border);display:grid;place-items:center;font-family:Anton,sans-serif;color:var(--d-mut);font-size:15px}
+#screen-program .coachline .ct{font-size:13px;line-height:1.5;color:#d9d5cf}
+#screen-program .coachline .ct b{color:var(--d-text)}
+#screen-program .coachline .ct .nm{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;font-size:10px;color:var(--d-faint);margin-bottom:5px}
+#screen-program .coachline .whisper{font-family:Fraunces,Georgia,serif;font-style:italic;font-size:14px;color:#CBB9A4;line-height:1.4}
+#screen-program .rec{border:1px solid var(--d-border);border-left:3px solid var(--d-accent);border-radius:14px;background:var(--d-surface);padding:14px;margin:0 18px 12px;box-shadow:0 16px 34px -18px rgba(0,0,0,.75)}
+#screen-program .rec .reason{display:inline-flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:10px;color:var(--d-accent);border:1px solid rgba(249,115,22,.4);border-radius:999px;padding:4px 10px;margin-bottom:11px}
+#screen-program .rec .name{font-size:15.5px;font-weight:700;margin-bottom:4px}
+#screen-program .rec .cat{font-size:11.5px;color:var(--d-faint);margin-bottom:10px}
+#screen-program .rec .acts{display:flex;gap:9px;margin-top:13px}
+
+/* ============ FRAME 7 — Sticky filter ============ */
+#screen-program .sticky-filter{background:var(--d-surface2);border-bottom:1px solid var(--d-rule);padding:12px 18px 13px;position:relative;z-index:5}
+#screen-program .sf-row{display:flex;gap:8px;margin-bottom:9px}
+#screen-program .sf-drop{flex:1;display:flex;align-items:center;justify-content:space-between;background:var(--d-surface);border:1px solid var(--d-border);border-radius:8px;padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:11px}
+#screen-program .seg{display:flex;background:var(--d-surface);border:1px solid var(--d-border);border-radius:8px;overflow:hidden}
+#screen-program .seg div{flex:1;text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;font-size:10.5px;padding:8px 0;color:var(--d-mut)}
+#screen-program .seg div.on{background:var(--d-accent);color:#160B03}
+#screen-program .stepper{display:flex;align-items:center;justify-content:space-between;background:var(--d-surface);border:1px solid var(--d-border);border-radius:8px;padding:6px 8px;flex:1}
+#screen-program .stepper .b{width:24px;height:24px;border-radius:6px;background:var(--d-surface2);border:1px solid var(--d-border);display:grid;place-items:center;font-weight:700;color:var(--d-accent)}
+#screen-program .stepper .v{font-family:'Space Mono',monospace;font-size:13px;font-weight:700}
+#screen-program .range{flex:1.6;background:var(--d-surface);border:1px solid var(--d-border);border-radius:8px;padding:8px 11px}
+#screen-program .range .track{height:4px;border-radius:3px;background:var(--d-rule);position:relative;margin-top:7px}
+#screen-program .range .fill{position:absolute;left:18%;right:34%;top:0;bottom:0;background:var(--d-accent);border-radius:3px}
+#screen-program .range .knob{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)}
+#screen-program .count-bar{padding:10px 18px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:11px;color:var(--d-mut);display:flex;justify-content:space-between;align-items:center}
+#screen-program .count-bar b{color:var(--d-accent)}
+#screen-program .res-row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--d-rule)}
+#screen-program .res-row .rn{font-size:13.5px;font-weight:700;margin-bottom:3px}
+#screen-program .res-row .rm{font-family:'Space Mono',monospace;font-size:10px;color:var(--d-faint)}
+
+/* ============ FRAME 8 — Outcome cards ============ */
+#screen-program .oc-card{display:flex;gap:14px;align-items:center;padding:15px 18px;border-bottom:1px solid var(--d-rule)}
+#screen-program .ring{flex:0 0 60px;width:60px;height:60px;position:relative;display:grid;place-items:center}
+#screen-program .ring .rt{position:absolute;font-family:'Space Mono',monospace;font-size:12px;font-weight:700}
+#screen-program .oc-card .oh{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:.6px;text-transform:uppercase;font-size:15px;line-height:1.05;margin-bottom:5px}
+#screen-program .oc-card .od{font-size:11.5px;color:var(--d-mut);line-height:1.4;margin-bottom:8px}
+
+/* ============ FRAME 9 — Discovery deck ============ */
+#screen-program .deck{position:relative;margin:6px 18px 8px;height:288px}
+#screen-program .deck .card{position:absolute;inset:0;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:19px;border:1px solid var(--d-border)}
+#screen-program .deck .card.back1{transform:scale(.93) translateY(16px);opacity:.5;z-index:1}
+#screen-program .deck .card.back2{transform:scale(.86) translateY(32px);opacity:.25;z-index:0}
+#screen-program .deck .card.top{z-index:2;box-shadow:0 20px 40px -16px rgba(0,0,0,.7)}
+#screen-program .deck .card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 32%,rgba(0,0,0,.62))}
+#screen-program .deck .card .eb{position:relative;z-index:2;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;font-size:10px;color:var(--d-accent);margin-bottom:9px}
+#screen-program .deck .card h3{position:relative;z-index:2;font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.4px;font-size:26px;line-height:.96;margin-bottom:9px}
+#screen-program .deck .card .dm{position:relative;z-index:2;display:flex;gap:12px;align-items:center;font-family:'Space Mono',monospace;font-size:11px;color:#dfeaef}
+#screen-program .deck .card .dm b{color:#fff}
+#screen-program .deck .nav{position:absolute;bottom:17px;left:0;right:0;z-index:3;display:flex;align-items:center;justify-content:center;gap:9px}
+#screen-program .deck .nav .ar{color:#fff;font-size:18px;opacity:.85}
+#screen-program .deck .dots{display:flex;gap:6px}
+#screen-program .deck .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35)}
+#screen-program .deck .dots i.on{background:var(--d-accent);width:18px;border-radius:3px}
+#screen-program .browse-h{display:flex;justify-content:space-between;align-items:baseline;padding:14px 18px 8px}
+#screen-program .browse-h b{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:13px}
+
+/* ============ FRAME 10 — Category hub ============ */
+#screen-program .hubgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 16px}
+#screen-program .hub{border-radius:14px;padding:14px;height:104px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;border:1px solid var(--d-border);background:var(--d-surface2)}
+#screen-program .hub .hi{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:rgba(255,255,255,.05);border:1px solid var(--d-border)}
+#screen-program .hub .hn{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:.8px;text-transform:uppercase;font-size:13px;line-height:1.05}
+#screen-program .hub .hc{position:absolute;top:13px;right:13px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--d-mut)}
+#screen-program .hub svg{position:absolute;right:-12px;bottom:-14px;opacity:.18}
+
+/* ===== responsive ===== */
+@media(max-width:520px){
+  #screen-program{padding:24px 10px 60px}
+  #screen-program .gallery{grid-template-columns:1fr;justify-items:center}
+  #screen-program .page-head h1{font-size:34px}
+}
+
+
+/* ============================================================= */
+/* EXERCISE LIBRARY — original scoped styles (#screen-exercise)   */
+/* ============================================================= */
+
+/* ═══════════════════════════════════════════════════════════════════
+   ZEALOVA · EXERCISE LIBRARY — SIGNATURE v2 REDESIGN DIRECTIONS
+   Self-contained showcase. Every selector scoped under #screen-exercise.
+   Tokens declared on #screen-exercise (NOT :root) so this file can be
+   concatenated alongside the sibling program file with zero collision.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* minimal shared reset (the only global rules) */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#09090b;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+
+/* ===== scope root: tokens + base type ===== */
+#screen-exercise{
+  /* surfaces */
+  --d-bg:#0A0A0B; --d-surface:#141416; --d-surface2:#0F0F11;
+  --d-border:#26262B; --d-rule:#2A2A2E;
+  /* text */
+  --d-text:#FAFAFA; --d-mut:#9D9DA6; --d-faint:#5C5C64;
+  /* accent (orange is the ONLY chromatic accent) */
+  --d-accent:#F97316; --d-rust:#C2410C; --d-ember:#7C2D12; --d-radius:14px;
+  /* data colors */
+  --cyan:#06B6D4; --green:#2ECC71; --gold:#FFD54A; --red:#EF4444; --purple:#A855F7;
+  /* difficulty */
+  --d-beg:#2ECC71; --d-int:#FFD54A; --d-adv:#F97316; --d-elite:#EF4444;
+
+  display:block;
+  background:#09090b; color:var(--d-text);
+  font-family:Inter,-apple-system,sans-serif; font-size:15px; line-height:1.5;
+  padding:48px 32px 96px;
+}
+#screen-exercise .anton{font-family:Anton,'Arial Narrow',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.5px}
+#screen-exercise .cond{font-family:'Barlow Condensed',sans-serif}
+#screen-exercise .mono{font-family:'Space Mono',monospace;font-variant-numeric:tabular-nums}
+#screen-exercise .ser{font-family:Fraunces,Georgia,serif}
+
+/* ===== page header ===== */
+#screen-exercise .page-head{max-width:1180px;margin:0 auto 40px;position:relative}
+#screen-exercise .page-head .eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--d-accent);margin-bottom:14px}
+#screen-exercise .page-head h1{font-family:Anton,sans-serif;text-transform:uppercase;font-size:46px;line-height:.98;letter-spacing:.5px;margin-bottom:16px}
+#screen-exercise .page-head h1 .o{color:var(--d-accent)}
+#screen-exercise .page-head p.intro{color:var(--d-mut);font-size:14.5px;line-height:1.65;max-width:780px}
+#screen-exercise .page-head p.intro b{color:#cfcfd6}
+
+/* ★ recommended callout */
+#screen-exercise .rec-callout{margin-top:24px;background:var(--d-surface2);border:1px solid var(--d-border);border-left:3px solid var(--d-accent);border-radius:14px;padding:16px 18px;max-width:780px;box-shadow:0 16px 34px -18px rgba(0,0,0,.75)}
+#screen-exercise .rec-callout .rh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+#screen-exercise .rec-callout .rh .star{color:var(--d-accent);font-size:15px}
+#screen-exercise .rec-callout .rh .k{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--d-accent)}
+#screen-exercise .rec-callout p{font-size:13px;color:#C9C9CF;line-height:1.6}
+#screen-exercise .rec-callout p b{color:var(--d-text);font-weight:700}
+#screen-exercise .rec-callout .legend{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:13px}
+#screen-exercise .rec-callout .legend .lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--d-faint)}
+#screen-exercise .rec-callout .legend .chip{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--d-mut);background:var(--d-surface);border:1px solid var(--d-border);padding:5px 11px;border-radius:999px}
+#screen-exercise .rec-callout .legend .dot{width:8px;height:8px;border-radius:50%}
+
+/* ===== gallery grid ===== */
+#screen-exercise .gallery{max-width:1480px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:30px;align-items:start}
+
+/* ===== device frame ===== */
+#screen-exercise .frame-card{display:flex;flex-direction:column;gap:16px;position:relative}
+#screen-exercise .phone{
+  width:100%;max-width:390px;height:800px;margin:0 auto;
+  background:linear-gradient(150deg,#5d5d66 0%,#1e1e23 22%,#0b0b0d 50%,#2a2a30 78%,#4e4e57 100%);
+  border-radius:46px;padding:4px;position:relative;
+  box-shadow:0 30px 70px -22px rgba(0,0,0,.9);
+}
+#screen-exercise .screen{position:relative;width:100%;height:100%;background:var(--d-bg);border-radius:42px;overflow:hidden;display:flex;flex-direction:column}
+#screen-exercise .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:110px;height:26px;background:#000;border-radius:16px;z-index:40}
+#screen-exercise .homebar{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:120px;height:4px;background:rgba(255,255,255,.28);border-radius:2px;z-index:40}
+
+/* status bar */
+#screen-exercise .statusbar{display:flex;align-items:center;justify-content:space-between;padding:15px 26px 4px;font-size:13.5px;font-weight:600;flex:0 0 auto;position:relative;z-index:5}
+#screen-exercise .statusbar .time{font-variant-numeric:tabular-nums}
+#screen-exercise .statusbar .ic{display:flex;align-items:center;gap:6px}
+
+/* header band: back chevron · ZEALOVA eyebrow · Anton title */
+#screen-exercise .appbar{display:flex;align-items:center;gap:13px;padding:8px 20px 12px;flex:0 0 auto;background:#09090b;border-bottom:1px solid var(--d-rule)}
+#screen-exercise .appbar .back{width:34px;height:34px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--d-border);background:var(--d-surface);color:var(--d-text);font-size:17px;line-height:1}
+#screen-exercise .appbar .htxt{flex:1;min-width:0}
+#screen-exercise .appbar .eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:var(--d-accent);line-height:1}
+#screen-exercise .appbar h2{font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.5px;font-size:24px;line-height:1;margin-top:3px}
+#screen-exercise .appbar .right{margin-left:auto;display:flex;gap:8px}
+#screen-exercise .iconbtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--d-border);background:var(--d-surface);display:flex;align-items:center;justify-content:center;color:var(--d-mut);font-size:15px}
+
+/* in-library sub-tab strip (nn-tab idiom) */
+#screen-exercise .subtabs{display:flex;align-items:center;gap:17px;padding:11px 20px 0;border-bottom:1px solid var(--d-rule);flex:0 0 auto;overflow:hidden}
+#screen-exercise .nn-tab{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:2px;text-transform:uppercase;color:var(--d-faint);padding-bottom:7px;white-space:nowrap}
+#screen-exercise .nn-tab.on{color:var(--d-text);border-bottom:2px solid var(--d-accent)}
+
+/* generic micro label (Barlow) */
+#screen-exercise .micro{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--d-mut)}
+#screen-exercise .micro.faint{color:var(--d-faint)}
+#screen-exercise .micro b{color:var(--d-text)}
+
+/* search pill */
+#screen-exercise .searchpill{display:flex;align-items:center;gap:10px;background:var(--d-surface);border:1px solid var(--d-border);border-radius:999px;padding:11px 15px;margin:13px 20px 0;color:var(--d-faint);font-size:13.5px;flex:0 0 auto}
+#screen-exercise .searchpill svg{flex:0 0 auto;color:var(--d-mut)}
+
+/* muscle / quick chips */
+#screen-exercise .qchips{display:flex;gap:8px;overflow:hidden;padding:0 20px}
+#screen-exercise .qchip{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--d-mut);background:transparent;border:1px solid var(--d-border);border-radius:999px;padding:7px 13px;white-space:nowrap}
+#screen-exercise .qchip.on{background:rgba(249,115,22,.12);border-color:var(--d-accent);color:var(--d-accent)}
+
+/* difficulty dot */
+#screen-exercise .ddot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:0 0 auto}
+
+/* monochrome editorial thumbnails — near-black gradient + faint body glyph */
+#screen-exercise .thumb{position:relative;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:1px solid var(--d-border)}
+#screen-exercise .thumb .glyph{font-size:20px;opacity:.5;filter:grayscale(1)}
+#screen-exercise .g-chest{background:linear-gradient(150deg,#1c1c1f,#0c0c0e)}
+#screen-exercise .g-back{background:linear-gradient(150deg,#1a1a1d,#0b0b0d)}
+#screen-exercise .g-legs{background:linear-gradient(150deg,#1d1d20,#0d0d0f)}
+#screen-exercise .g-shoulders{background:linear-gradient(150deg,#1b1b1e,#0c0c0e)}
+#screen-exercise .g-core{background:linear-gradient(150deg,#1c1c1f,#0b0b0d)}
+#screen-exercise .g-arms{background:linear-gradient(150deg,#1a1a1d,#0c0c0e)}
+#screen-exercise .g-cardio{background:linear-gradient(150deg,#1d1d20,#0c0c0e)}
+
+/* canonical hairline exercise row */
+#screen-exercise .exrow{display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--d-rule)}
+#screen-exercise .exrow:last-child{border-bottom:0}
+#screen-exercise .exrow .thumb{width:54px;height:54px}
+#screen-exercise .exrow .meta{flex:1 1 auto;min-width:0}
+#screen-exercise .exrow .name{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px;letter-spacing:-.1px}
+#screen-exercise .exrow .sub{display:flex;align-items:center;gap:7px;margin-top:5px}
+#screen-exercise .exrow .sub .txt{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--d-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#screen-exercise .exrow .chev{color:var(--d-faint);font-size:16px;flex:0 0 auto}
+#screen-exercise .newbadge{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--d-accent);border:1px solid var(--d-accent);padding:2px 6px;border-radius:4px}
+
+/* bottom nav (.nv-bar idiom) */
+#screen-exercise .nv-bar{position:relative;height:90px;background:var(--d-bg);border-top:1px solid var(--d-rule);display:flex;align-items:flex-start;padding:11px 8px 0;flex:0 0 auto;z-index:30}
+#screen-exercise .nv-it{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+#screen-exercise .nv-gl{font-size:15px;line-height:1;color:var(--d-mut);filter:grayscale(1);opacity:.55}
+#screen-exercise .nv-lb{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--d-mut)}
+#screen-exercise .nv-ul{width:18px;height:2px;border-radius:1px;background:var(--d-accent);opacity:0}
+#screen-exercise .nv-it.on .nv-gl{filter:none;opacity:1;color:var(--d-accent)}
+#screen-exercise .nv-it.on .nv-lb{color:var(--d-accent)}
+#screen-exercise .nv-it.on .nv-ul{opacity:1}
+#screen-exercise .nv-plus{position:absolute;right:22px;bottom:104px;width:44px;height:44px;z-index:31;border:1.5px solid var(--d-accent);border-radius:999px;background:var(--d-bg);display:flex;align-items:center;justify-content:center;color:var(--d-accent);font-size:25px;font-weight:300;line-height:1;box-shadow:0 10px 24px rgba(0,0,0,.55),0 0 0 4px rgba(249,115,22,.08)}
+
+/* scroll body */
+#screen-exercise .body{flex:1 1 auto;overflow:hidden;position:relative}
+
+/* caption block */
+#screen-exercise .caption{padding:0 2px;position:relative}
+#screen-exercise .caption .num{font-family:'Space Mono',monospace;font-size:12px;color:var(--d-accent);font-weight:700;letter-spacing:1px}
+#screen-exercise .caption h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:1px;text-transform:uppercase;font-size:19px;margin:4px 0 7px}
+#screen-exercise .caption .concept{font-size:13px;color:#c9c9cf;line-height:1.55;margin-bottom:11px}
+#screen-exercise .caption .best{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--d-faint);margin-bottom:10px}
+#screen-exercise .caption .best b{color:var(--d-text)}
+#screen-exercise .caption .wins{list-style:none;display:flex;flex-direction:column;gap:6px}
+#screen-exercise .caption .wins li{font-size:12.5px;color:var(--d-mut);line-height:1.45;padding-left:18px;position:relative}
+#screen-exercise .caption .wins li::before{content:"✦";position:absolute;left:0;color:var(--d-accent);font-size:10px;top:2px}
+#screen-exercise .caption.is-current h3 .tag{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:2px;background:var(--d-surface);border:1px solid var(--d-border);color:var(--d-mut);padding:3px 8px;border-radius:6px;vertical-align:middle;margin-left:8px;text-transform:uppercase}
+
+/* recommendation badge ribbon on the frame card */
+#screen-exercise .rec-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);z-index:5;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;border-radius:999px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+#screen-exercise .rec-badge.lead{background:var(--d-accent);color:#160B03;box-shadow:0 8px 22px -6px rgba(249,115,22,.6)}
+#screen-exercise .rec-badge.graft{background:var(--d-surface);color:var(--d-accent);border:1px solid var(--d-accent)}
+#screen-exercise .rec-badge.runner{background:var(--d-surface);color:var(--d-mut);border:1px solid var(--d-border)}
+#screen-exercise .frame-card.featured .phone{box-shadow:0 30px 70px -18px rgba(249,115,22,.4),0 0 0 1px rgba(249,115,22,.25)}
+
+/* critique callout (current frame) */
+#screen-exercise .critique{margin:13px 18px 4px;background:var(--d-surface2);border:1px solid var(--d-border);border-left:3px solid var(--d-faint);border-radius:12px;padding:13px 14px}
+#screen-exercise .critique h4{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--d-mut);margin-bottom:9px;display:flex;align-items:center;gap:7px}
+#screen-exercise .critique ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+#screen-exercise .critique li{font-size:11.5px;color:#b8b8be;line-height:1.45;padding-left:15px;position:relative}
+#screen-exercise .critique li::before{content:"–";position:absolute;left:2px;color:var(--d-faint)}
+
+/* ===================== direction-specific ===================== */
+
+/* D1 poster grid */
+#screen-exercise .poster-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 20px}
+#screen-exercise .poster{border-radius:14px;overflow:hidden;position:relative;border:1px solid var(--d-border);background:var(--d-surface2)}
+#screen-exercise .poster .img{height:118px;position:relative;display:flex;align-items:flex-start;justify-content:flex-end;padding:8px;background:linear-gradient(165deg,#1c1c1f,#0a0a0c)}
+#screen-exercise .poster .img .glyph{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);font-size:34px;opacity:.42;filter:grayscale(1)}
+#screen-exercise .poster .mg{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;background:rgba(10,10,11,.7);backdrop-filter:blur(4px);padding:4px 8px;border-radius:999px;color:var(--d-mut);border:1px solid var(--d-border)}
+#screen-exercise .poster .pbody{padding:10px 11px 12px}
+#screen-exercise .poster .pname{font-size:13px;font-weight:600;line-height:1.25;letter-spacing:-.1px}
+#screen-exercise .poster .prow{display:flex;align-items:center;gap:6px;margin-top:8px}
+#screen-exercise .poster .prow .lvl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-mut)}
+
+/* D2 muscle map */
+#screen-exercise .mmap-wrap{display:flex;flex-direction:column;height:100%}
+#screen-exercise .mmap{padding:10px 20px 4px;display:flex;justify-content:center;flex:0 0 auto}
+#screen-exercise .mmap svg{display:block}
+#screen-exercise .mmap-legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;padding:2px 18px 10px}
+#screen-exercise .mmap-legend .l{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-mut);display:flex;align-items:center;gap:5px}
+#screen-exercise .mmap-results{flex:1 1 auto;overflow:hidden;border-top:1px solid var(--d-rule);padding:11px 20px}
+#screen-exercise .mmap-head{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:var(--d-text);margin-bottom:9px;display:flex;align-items:baseline;gap:8px}
+#screen-exercise .mmap-head .cnt{font-family:'Space Mono',monospace;font-size:10px;color:var(--d-faint);letter-spacing:0}
+
+/* D3 pro dense */
+#screen-exercise .dense-wrap{display:flex;height:100%}
+#screen-exercise .dense-list{flex:1 1 auto;overflow:hidden;padding:4px 6px 6px 20px}
+#screen-exercise .dense-row{display:flex;align-items:center;gap:11px;padding:9px 4px;border-bottom:1px solid var(--d-rule)}
+#screen-exercise .dense-row .t{width:36px;height:36px;border-radius:8px;border:1px solid var(--d-border)}
+#screen-exercise .dense-row .nm{flex:1 1 auto;min-width:0}
+#screen-exercise .dense-row .nm .n{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.1px}
+#screen-exercise .dense-row .nm .e{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-faint);margin-top:3px}
+#screen-exercise .dense-row .stat{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--d-mut);border:1px solid var(--d-border);border-radius:6px;padding:3px 7px;white-space:nowrap}
+#screen-exercise .alpha{width:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:8px 0;color:var(--d-faint)}
+#screen-exercise .alpha span{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:8.5px;line-height:1.2}
+#screen-exercise .alpha span.hot{color:var(--d-accent)}
+
+/* D4 quick action */
+#screen-exercise .qa-row{display:flex;align-items:stretch;gap:0;margin:0 20px 10px;background:var(--d-surface2);border:1px solid var(--d-border);border-radius:14px;overflow:hidden}
+#screen-exercise .qa-stripe{width:3px;flex:0 0 auto}
+#screen-exercise .qa-inner{display:flex;align-items:center;gap:12px;padding:11px 13px;flex:1 1 auto;min-width:0}
+#screen-exercise .qa-inner .t{width:46px;height:46px;border-radius:10px;border:1px solid var(--d-border)}
+#screen-exercise .qa-inner .nm{flex:1 1 auto;min-width:0}
+#screen-exercise .qa-inner .nm .n{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.1px}
+#screen-exercise .qa-inner .nm .s{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--d-mut);margin-top:4px}
+#screen-exercise .qa-acts{display:flex;gap:7px}
+#screen-exercise .qa-acts .b{width:30px;height:30px;border-radius:9px;border:1px solid var(--d-border);background:var(--d-surface);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--d-mut)}
+#screen-exercise .qa-acts .b.on{color:var(--d-accent);border-color:var(--d-accent);background:rgba(249,115,22,.1)}
+
+/* D5 equipment first */
+#screen-exercise .equip-bar{display:flex;gap:10px;overflow:hidden;padding:14px 20px 12px}
+#screen-exercise .equip{flex:0 0 auto;width:62px;display:flex;flex-direction:column;align-items:center;gap:7px}
+#screen-exercise .equip .e-ic{width:54px;height:54px;border-radius:14px;background:var(--d-surface);border:1px solid var(--d-border);display:flex;align-items:center;justify-content:center;font-size:23px;filter:grayscale(1);opacity:.85}
+#screen-exercise .equip.on .e-ic{background:rgba(249,115,22,.1);border-color:var(--d-accent);filter:none;opacity:1;box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+#screen-exercise .equip .e-lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--d-mut)}
+#screen-exercise .equip.on .e-lbl{color:var(--d-accent)}
+#screen-exercise .equip-grid{padding:4px 20px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#screen-exercise .eg-card{background:var(--d-surface2);border:1px solid var(--d-border);border-radius:13px;padding:10px;display:flex;flex-direction:column;gap:9px}
+#screen-exercise .eg-card .t{height:62px;border-radius:9px;position:relative;display:flex;align-items:center;justify-content:center;border:1px solid var(--d-border);background:linear-gradient(150deg,#1b1b1e,#0b0b0d)}
+#screen-exercise .eg-card .t .glyph{font-size:22px;opacity:.45;filter:grayscale(1)}
+#screen-exercise .eg-card .n{font-size:12.5px;font-weight:600;line-height:1.25;letter-spacing:-.1px}
+#screen-exercise .eg-card .m{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-mut);display:flex;align-items:center;gap:5px;margin-top:3px}
+
+/* D6 search centric */
+#screen-exercise .sc-search{margin:14px 20px 4px;background:var(--d-surface);border:1.5px solid var(--d-accent);border-radius:14px;padding:15px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 0 0 4px rgba(249,115,22,.1)}
+#screen-exercise .sc-search .q{font-size:17px;font-weight:600;color:var(--d-text)}
+#screen-exercise .sc-search .cur{width:2px;height:20px;background:var(--d-accent);display:inline-block;animation:sxBlink 1s steps(1) infinite}
+@keyframes sxBlink{50%{opacity:0}}
+#screen-exercise .sc-dym{margin:8px 20px 0;font-size:12.5px;color:var(--d-mut);display:flex;gap:6px;align-items:center}
+#screen-exercise .sc-dym b{color:var(--d-accent)}
+#screen-exercise .sc-sect{padding:14px 20px 2px}
+#screen-exercise .sc-sect .h{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--d-faint);margin-bottom:11px}
+#screen-exercise .sc-recent{display:flex;flex-wrap:wrap;gap:8px}
+#screen-exercise .sc-recent .r{font-size:12.5px;color:var(--d-mut);background:var(--d-surface);border:1px solid var(--d-border);border-radius:999px;padding:7px 13px;display:flex;align-items:center;gap:7px}
+#screen-exercise .sc-trend{display:flex;flex-direction:column;gap:0}
+#screen-exercise .sc-tr{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--d-rule)}
+#screen-exercise .sc-tr:last-child{border-bottom:0}
+#screen-exercise .sc-tr .rank{font-family:Anton,sans-serif;font-size:16px;color:var(--d-faint);width:18px}
+#screen-exercise .sc-tr .t{width:32px;height:32px;border-radius:8px;border:1px solid var(--d-border)}
+#screen-exercise .sc-tr .n{font-size:13.5px;font-weight:600;flex:1 1 auto;letter-spacing:-.1px}
+#screen-exercise .sc-tr .up{font-family:'Space Mono',monospace;font-size:10px;color:var(--d-mut)}
+
+/* D7 rails */
+#screen-exercise .rail{padding:6px 0 14px}
+#screen-exercise .rail-h{display:flex;align-items:baseline;justify-content:space-between;padding:0 20px 11px}
+#screen-exercise .rail-h .t{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:1.5px;text-transform:uppercase}
+#screen-exercise .rail-h .all{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-mut)}
+#screen-exercise .rail-track{display:flex;gap:11px;overflow:hidden;padding:0 20px}
+#screen-exercise .rcard{flex:0 0 auto;width:122px}
+#screen-exercise .rcard .t{width:122px;height:86px;border-radius:12px;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:8px;overflow:hidden;border:1px solid var(--d-border);background:linear-gradient(150deg,#1c1c1f,#0b0b0d)}
+#screen-exercise .rcard .t .glyph{font-size:28px;opacity:.42;filter:grayscale(1)}
+#screen-exercise .rcard .t .lv{position:absolute;top:7px;right:7px}
+#screen-exercise .rcard .n{font-size:12px;font-weight:600;line-height:1.25;letter-spacing:-.1px}
+#screen-exercise .rcard .eq{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-faint);margin-top:3px}
+
+/* D8 editorial */
+#screen-exercise .feat{margin:14px 20px 6px;border-radius:16px;overflow:hidden;border:1px solid var(--d-border);background:var(--d-surface2);box-shadow:0 16px 34px -18px rgba(0,0,0,.75)}
+#screen-exercise .feat .fimg{height:138px;position:relative;display:flex;align-items:flex-end;padding:14px;background:linear-gradient(165deg,#1f1f23,#0a0a0c)}
+#screen-exercise .feat .fimg .glyph{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-size:46px;opacity:.4;filter:grayscale(1)}
+#screen-exercise .feat .ribbon{position:absolute;top:12px;left:12px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:9px;letter-spacing:1.8px;text-transform:uppercase;background:var(--d-accent);color:#160B03;padding:4px 10px;border-radius:999px}
+#screen-exercise .feat .ftitle{font-family:Anton,sans-serif;text-transform:uppercase;letter-spacing:.5px;font-size:24px;position:relative;z-index:2;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+#screen-exercise .feat .fcue{padding:12px 14px 13px;font-size:12.5px;color:#CBB9A4;line-height:1.5;border-top:1px solid var(--d-rule);font-family:Fraunces,Georgia,serif;font-style:italic}
+#screen-exercise .feat .fcue b{color:var(--d-mut);font-style:normal;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:10px;display:block;margin-bottom:4px}
+#screen-exercise .ed-row{display:flex;align-items:center;gap:13px;padding:11px 20px;border-bottom:1px solid var(--d-rule)}
+#screen-exercise .ed-row .t{width:48px;height:48px;border-radius:11px;border:1px solid var(--d-border)}
+#screen-exercise .ed-row .nm{flex:1 1 auto;min-width:0}
+#screen-exercise .ed-row .nm .n{font-size:14px;font-weight:600;letter-spacing:-.1px}
+#screen-exercise .ed-row .nm .c{font-size:11.5px;color:#CBB9A4;margin-top:4px;line-height:1.35;font-style:italic;font-family:Fraunces,Georgia,serif}
+
+/* D9 faceted */
+#screen-exercise .facet-bar{display:flex;gap:8px;overflow:hidden;padding:14px 20px 10px;flex-wrap:wrap}
+#screen-exercise .facet{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--d-mut);background:var(--d-surface);border:1px solid var(--d-border);border-radius:999px;padding:7px 13px;display:flex;align-items:center;gap:6px}
+#screen-exercise .facet .ar{color:var(--d-faint);font-size:9px}
+#screen-exercise .facet.on{background:rgba(249,115,22,.12);border-color:var(--d-accent);color:var(--d-accent)}
+#screen-exercise .facet-active{display:flex;gap:7px;overflow:hidden;padding:0 20px 10px}
+#screen-exercise .facet-active .fa{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-accent);background:rgba(249,115,22,.1);border:1px solid var(--d-accent);border-radius:999px;padding:5px 10px;display:flex;align-items:center;gap:6px}
+#screen-exercise .facet-active .fa .x{opacity:.7}
+#screen-exercise .facet-count{padding:2px 20px 10px;display:flex;align-items:center;justify-content:space-between}
+#screen-exercise .facet-count .n{font-size:13px;color:var(--d-mut)}
+#screen-exercise .facet-count .n b{font-family:Anton,sans-serif;font-size:18px;color:var(--d-text);margin-right:3px;vertical-align:-1px}
+#screen-exercise .facet-count .clr{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-faint)}
+#screen-exercise .facet-grid{padding:2px 20px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#screen-exercise .fg-card{background:var(--d-surface2);border:1px solid var(--d-border);border-radius:12px;padding:9px;display:flex;gap:10px;align-items:center}
+#screen-exercise .fg-card .t{width:42px;height:42px;border-radius:9px;flex:0 0 auto;border:1px solid var(--d-border)}
+#screen-exercise .fg-card .n{font-size:12.5px;font-weight:600;line-height:1.2;letter-spacing:-.1px}
+#screen-exercise .fg-card .m{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-mut);margin-top:4px;display:flex;align-items:center;gap:4px}
+
+/* D10 collections */
+#screen-exercise .coll-big{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:14px 20px 0}
+#screen-exercise .cbig{border-radius:14px;padding:14px;height:114px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;border:1px solid var(--d-border);background:var(--d-surface2)}
+#screen-exercise .cbig.lead{border-left:3px solid var(--d-accent)}
+#screen-exercise .cbig .glyph{font-size:24px;opacity:.6;filter:grayscale(1)}
+#screen-exercise .cbig.lead .glyph{filter:none;opacity:1;color:var(--d-accent)}
+#screen-exercise .cbig .ct{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:.8px;text-transform:uppercase;line-height:1.1}
+#screen-exercise .cbig .cn{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--d-faint);margin-top:4px}
+#screen-exercise .coll-list{padding:14px 20px 4px}
+#screen-exercise .coll-list .h{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--d-faint);margin-bottom:10px}
+#screen-exercise .coll-pl{display:flex;align-items:center;gap:13px;padding:9px 0;border-bottom:1px solid var(--d-rule)}
+#screen-exercise .coll-pl:last-child{border-bottom:0}
+#screen-exercise .coll-pl .t{width:46px;height:46px;border-radius:11px;border:1px solid var(--d-border)}
+#screen-exercise .coll-pl .nm{flex:1 1 auto}
+#screen-exercise .coll-pl .nm .n{font-size:13.5px;font-weight:600;letter-spacing:-.1px}
+#screen-exercise .coll-pl .nm .s{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--d-mut);margin-top:3px}
+#screen-exercise .coll-pl .play{width:30px;height:30px;border-radius:50%;background:rgba(249,115,22,.1);border:1px solid var(--d-accent);display:flex;align-items:center;justify-content:center;color:var(--d-accent);font-size:12px}
+
+@media (max-width:520px){
+  #screen-exercise{padding:24px 12px 60px}
+}
+
+</style>
+</head>
+<body>
+
+<header class="combined-head">
+  <div class="kicker">Zealova · Library Redesign · June 2026</div>
+  <h1>Zealova <span class="o">—</span> Library Redesign</h1>
+  <p class="sub">Two library screens · current shipping design + ten redesign directions each · use the tabs to switch</p>
+</header>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <button class="tabbtn active" id="tab-program" type="button" onclick="showScreen('program')">
+      <span class="lbl">Program Library</span>
+      <span class="hint">1 current + 10 directions</span>
+    </button>
+    <button class="tabbtn" id="tab-exercise" type="button" onclick="showScreen('exercise')">
+      <span class="lbl">Exercise Library</span>
+      <span class="hint">1 current + 10 directions</span>
+    </button>
+  </div>
+</nav>
+
+<section class="screen-section" id="sec-program">
+<div id="screen-program">
+
+<header class="page-head">
+  <div class="kicker">Zealova · Library Redesign · June 2026</div>
+  <h1>Program Library — <span class="o">Signature v2 Directions</span></h1>
+  <p>Eleven full-screen proofs for Zealova's Program Library, rebuilt in the canonical <b>signature v2</b> design language — tinted near-black surfaces, Anton mastheads, Barlow Condensed labels, Fraunces serif at the warm beats, Space&nbsp;Mono telemetry, and orange spent exactly once per screen. Frame 00 renders today's flat chip-filtered list plus an honest critique; the ten directions that follow each propose a distinct browsing paradigm. Every frame now reads as a <b>sub-screen pushed from the Workouts tab</b> — back chevron + ZEALOVA/Anton header up top, the five-room bottom nav with <b>WORKOUTS active</b> below, and the floating <b>+</b> FAB. Real program names, real numbers — nothing is placeholder.</p>
+  <div class="legend">
+    <span class="swatch"><span class="dot" style="background:var(--beg)"></span>Beginner</span>
+    <span class="swatch"><span class="dot" style="background:var(--int)"></span>Intermediate</span>
+    <span class="swatch"><span class="dot" style="background:var(--adv)"></span>Advanced</span>
+    <span class="swatch"><span class="dot" style="background:var(--elite)"></span>Elite</span>
+    <span class="swatch"><span class="dot" style="background:var(--d-accent)"></span>Accent / selected</span>
+  </div>
+</header>
+
+<!-- ★ RECOMMENDED CALLOUT -->
+<div class="reco-callout">
+  <div class="rch">★ Recommended direction</div>
+  <p><b class="lead">Lead with #03 Goal-First.</b> It maps to how users actually arrive — with a goal, not a category — and one tap collapses 212 programs into a confident shortlist with live counts. It's the strongest answer to "where do I even start?"</p>
+  <p>Graft in <b>#02 Netflix Rails</b> (intent-titled poster rails for mood-based discovery) and <b>#06 Coach-Curated Feed</b> (leans on Zealova's real moat — the AI coach + your training history). <b>#10 Category Hub</b> is the runner-up: a clean fallback for specialized seekers browsing by domain.</p>
+</div>
+
+<main class="gallery">
+
+<!-- ============================================================= -->
+<!-- FRAME 0 — CURRENT (as-is)                                     -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>Program Library</h2></div>
+    </div>
+    <div class="body">
+      <div style="padding-top:12px"></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" fill="none" stroke="#5C5C64" stroke-width="1.6"/><line x1="11" y1="11" x2="14.5" y2="14.5" stroke="#5C5C64" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="ph">Search programs</span>
+      </div>
+      <div class="chiprow"><span class="chip on">All</span><span class="chip">Sport</span><span class="chip">Goal-Based</span><span class="chip">Specialized</span><span class="chip">Yoga</span></div>
+      <div class="rowlabel">Level</div>
+      <div class="chiprow"><span class="chip on">Any</span><span class="chip">Beginner</span><span class="chip">Intermediate</span><span class="chip">Advanced</span></div>
+      <div class="scroll">
+        <div class="cur-card">
+          <div class="name">Push Pull Legs Routine</div>
+          <div class="cat">Goal-Based · Hypertrophy</div>
+          <div class="meta"><span class="dchip d-int"><span class="ddot"></span>Intermediate</span><span class="stats"><span><b>12</b> wk</span><span><b>6×</b>/wk</span><span><b>60</b> min</span></span></div>
+          <div class="goals"><span class="gpill">Build Muscle</span><span class="gpill">Strength</span></div>
+        </div>
+        <div class="cur-card">
+          <div class="name">German Volume Training 10×10</div>
+          <div class="cat">Specialized · Volume</div>
+          <div class="meta"><span class="dchip d-adv"><span class="ddot"></span>Advanced</span><span class="stats"><span><b>6</b> wk</span><span><b>4×</b>/wk</span><span><b>75</b> min</span></span></div>
+          <div class="goals"><span class="gpill">Build Muscle</span><span class="gpill">Hypertrophy</span></div>
+        </div>
+        <div class="cur-card">
+          <div class="name">Couch to 5K Beginner</div>
+          <div class="cat">Sport · Running</div>
+          <div class="meta"><span class="dchip d-beg"><span class="ddot"></span>Beginner</span><span class="stats"><span><b>9</b> wk</span><span><b>3×</b>/wk</span><span><b>30</b> min</span></span></div>
+          <div class="goals"><span class="gpill">Endurance</span><span class="gpill">Lose Fat</span></div>
+        </div>
+        <div class="critique-box">
+          <h4>⚠ What's weak today</h4>
+          <ul>
+            <li>Text-heavy cards, zero imagery — nothing to scan or feel</li>
+            <li>Programs blur together; hard to tell apart at a glance</li>
+            <li>No personalization — no "for you," no reason to pick one</li>
+            <li>212 programs, but no sense of where to start</li>
+            <li>Flat chips with no live result preview or count</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap crit">
+    <div class="num">00 — As-is</div>
+    <h3>Current Screen</h3>
+    <p class="concept">The shipping experience: search pill, two flat chip rows, and an endless single-column list of metadata-only cards.</p>
+    <div class="bestfor"><span>Critique</span>Faithful render of today + the honest gaps the redesigns must close.</div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 1 — Editorial Feature                                   -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>Programs</h2><div class="sub">Featured</div></div>
+    </div>
+    <div class="body">
+      <div class="scroll">
+        <div class="hero-ed">
+          <div class="eyebrow">Program of the week</div>
+          <h3>Build a stronger base in 12 weeks</h3>
+          <div class="out">Men's Starting Strength — linear progression, 3 days a week, zero guesswork.</div>
+          <div class="row"><span class="btn-pri">Start program</span><span class="dchip d-beg"><span class="ddot"></span>Beginner · 12 wk</span></div>
+        </div>
+        <div class="rowlabel">Editor's picks</div>
+        <div class="story">
+          <div class="thumb" style="background:linear-gradient(135deg,#2a211a,#15110d)"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.5"><path d="M3 12h2l2-5 4 12 3-9 2 4h5"/></svg></div>
+          <div><div class="t-name">Push Pull Legs Routine</div><div class="t-sub">The internet's favourite split, structured</div><span class="dchip d-int"><span class="ddot"></span>Intermediate · 12 wk</span></div>
+        </div>
+        <div class="story">
+          <div class="thumb" style="background:linear-gradient(135deg,#1a221d,#0d120f)"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.5"><circle cx="12" cy="12" r="8"/></svg></div>
+          <div><div class="t-name">Couch to 5K Beginner</div><div class="t-sub">From sofa to your first 5K in 9 weeks</div><span class="dchip d-beg"><span class="ddot"></span>Beginner · 9 wk</span></div>
+        </div>
+        <div class="story" style="border-bottom:0">
+          <div class="thumb" style="background:linear-gradient(135deg,#241719,#130c0d)"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.5"><rect x="3" y="9" width="18" height="6" rx="2"/></svg></div>
+          <div><div class="t-name">Powerlifting Meet Preparation</div><div class="t-sub">Peak the big three for competition day</div><span class="dchip d-elite"><span class="ddot"></span>Elite · 8 wk</span></div>
+        </div>
+        <div style="height:14px"></div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">01</div>
+    <h3>Editorial Feature</h3>
+    <p class="concept">A full-bleed "Program of the week" hero with an outcome headline, then stacked editorial story rows beneath.</p>
+    <div class="bestfor"><span>Best for</span>First-timers who want a confident, curated lead-in.</div>
+    <ul><li>Outcome-led copy beats raw metadata at the top of funnel</li><li>Apple Fitness+ / Centr polish signals premium quality</li><li>One clear "start here" answer to "212 programs, where?"</li></ul>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 2 — Netflix Rails  (◆ GRAFT IN)                          -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fbadge graft">◆ Recommended — Graft in</div>
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>Browse Programs</h2></div>
+    </div>
+    <div class="body">
+      <div class="scroll" style="padding-top:8px">
+        <div class="rail">
+          <div class="rt"><b>Because you lift</b><span>See all</span></div>
+          <div class="posters">
+            <div class="poster" style="background:linear-gradient(160deg,#241c16,#11100e)"><span class="ribbon" style="background:var(--int);color:#3a2c00">Int</span><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><rect x="3" y="9" width="18" height="6" rx="2"/></svg><div class="pn">Push Pull Legs Routine</div><div class="pd">12 wk · 6×/wk</div></div>
+            <div class="poster" style="background:linear-gradient(160deg,#221a18,#100d0c)"><span class="ribbon" style="background:var(--adv);color:#3a2300">Adv</span><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M4 12h16M4 7h16M4 17h16"/></svg><div class="pn">German Volume 10×10</div><div class="pd">6 wk · 4×/wk</div></div>
+            <div class="poster" style="background:linear-gradient(160deg,#1a201d,#0d100f)"><span class="ribbon" style="background:var(--beg);color:#0a2a0c">Beg</span><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="12" cy="12" r="8"/></svg><div class="pn">Men's Starting Strength</div><div class="pd">12 wk · 3×/wk</div></div>
+          </div>
+        </div>
+        <div class="rail">
+          <div class="rt"><b>Goal: Fat loss</b><span>See all</span></div>
+          <div class="posters">
+            <div class="poster" style="background:linear-gradient(160deg,#241616,#130c0c)"><span class="ribbon" style="background:var(--int);color:#3a2c00">Int</span><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2c4 4 6 7 6 11a6 6 0 11-12 0c0-4 2-7 6-11z"/></svg><div class="pn">Tabata HIIT 4-Minute</div><div class="pd">4 wk · 5×/wk</div></div>
+            <div class="poster" style="background:linear-gradient(160deg,#1a201d,#0d100f)"><span class="ribbon" style="background:var(--beg);color:#0a2a0c">Beg</span><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="12" cy="12" r="8"/></svg><div class="pn">Couch to 5K Beginner</div><div class="pd">9 wk · 3×/wk</div></div>
+            <div class="poster" style="background:linear-gradient(160deg,#1e1a20,#0f0d11)"><span class="ribbon" style="background:var(--adv);color:#3a2300">Adv</span><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M3 12h2l2-5 4 12 3-9 2 4h5"/></svg><div class="pn">Marathon Training Adv</div><div class="pd">16 wk · 5×/wk</div></div>
+          </div>
+        </div>
+        <div class="rail">
+          <div class="rt"><b>Quick · ≤30 min</b><span>See all</span></div>
+          <div class="posters">
+            <div class="poster" style="background:linear-gradient(160deg,#1c211f,#0e110f)"><span class="ribbon" style="background:var(--beg);color:#0a2a0c">Beg</span><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><div class="pn">Tabata HIIT 4-Minute</div><div class="pd">4 wk · 5×/wk</div></div>
+            <div class="poster" style="background:linear-gradient(160deg,#1d1c21,#0e0e11)"><span class="ribbon" style="background:var(--beg);color:#0a2a0c">Beg</span><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 4c-3 3-5 6-5 9a5 5 0 0010 0c0-3-2-6-5-9z"/></svg><div class="pn">Beginner Yoga Flow</div><div class="pd">8 wk · 4×/wk</div></div>
+          </div>
+        </div>
+        <div style="height:14px"></div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">02</div>
+    <h3>Netflix Rails</h3>
+    <p class="concept">Horizontal poster rails titled by intent — "Because you lift", "Goal: Fat loss", "Quick ≤30 min" — with level ribbons.</p>
+    <div class="bestfor"><span>Best for</span>Casual browsers who discover by mood, not by filter.</div>
+    <ul><li>Familiar streaming pattern — zero learning curve</li><li>Rail titles do the personalization without a settings screen</li><li>Posters give 212 programs visual variety and momentum</li></ul>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 3 — Goal-First  (★ LEAD)                                 -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fbadge lead">★ Recommended — Lead</div>
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>What's your goal?</h2><div class="sub">Pick one — we'll match the program</div></div>
+    </div>
+    <div class="body">
+      <div class="scroll" style="padding-top:12px">
+        <div class="goaltiles">
+          <div class="goaltile on">
+            <div class="gt-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="1.7"><rect x="2" y="10" width="4" height="4" rx="1"/><rect x="18" y="10" width="4" height="4" rx="1"/><rect x="6" y="8" width="12" height="8" rx="2"/></svg></div>
+            <div><div class="gt-n">Build Muscle</div><div class="gt-c">38 programs</div></div>
+          </div>
+          <div class="goaltile">
+            <div class="gt-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><path d="M12 2c4 4 6 7 6 11a6 6 0 11-12 0c0-4 2-7 6-11z"/></svg></div>
+            <div><div class="gt-n">Lose Fat</div><div class="gt-c">31 programs</div></div>
+          </div>
+          <div class="goaltile">
+            <div class="gt-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><rect x="3" y="9" width="18" height="6" rx="2"/></svg></div>
+            <div><div class="gt-n">Get Strong</div><div class="gt-c">27 programs</div></div>
+          </div>
+          <div class="goaltile">
+            <div class="gt-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><path d="M12 4c-3 3-5 6-5 9a5 5 0 0010 0c0-3-2-6-5-9z"/></svg></div>
+            <div><div class="gt-n">Mobility &amp; Health</div><div class="gt-c">44 programs</div></div>
+          </div>
+        </div>
+        <div class="shelf-h"><span class="micro" style="color:var(--d-accent)">Matching · Build Muscle</span><span class="dotline"></span></div>
+        <div class="lrow">
+          <div class="thumb" style="background:linear-gradient(135deg,#241c16,#120f0c)"></div>
+          <div style="flex:1"><div class="ln">Full Body Mass Builder</div><div class="lm">Goal-Based · 10 wk · 4×/wk</div></div>
+          <span class="dchip d-int"><span class="ddot"></span>Int</span>
+        </div>
+        <div class="lrow">
+          <div class="thumb" style="background:linear-gradient(135deg,#221a18,#100d0c)"></div>
+          <div style="flex:1"><div class="ln">German Volume Training 10×10</div><div class="lm">Specialized · 6 wk · 4×/wk</div></div>
+          <span class="dchip d-adv"><span class="ddot"></span>Adv</span>
+        </div>
+        <div class="lrow">
+          <div class="thumb" style="background:linear-gradient(135deg,#1f1c21,#0f0d11)"></div>
+          <div style="flex:1"><div class="ln">Women's Glute Building Program</div><div class="lm">Goal-Based · 12 wk · 4×/wk</div></div>
+          <span class="dchip d-int"><span class="ddot"></span>Int</span>
+        </div>
+        <div class="lrow" style="border-bottom:0">
+          <div class="thumb" style="background:linear-gradient(135deg,#241c16,#120f0c)"></div>
+          <div style="flex:1"><div class="ln">Push Pull Legs Routine</div><div class="lm">Goal-Based · 12 wk · 6×/wk</div></div>
+          <span class="dchip d-int"><span class="ddot"></span>Int</span>
+        </div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">03</div>
+    <h3>Goal-First</h3>
+    <p class="concept">Four big goal tiles up top; selecting one reveals a hairline-ruled shelf of matching programs, with live counts.</p>
+    <div class="bestfor"><span>Best for</span>Outcome-driven users who know the "why" before the "what".</div>
+    <ul><li>Maps directly to how users think (a goal, not a category)</li><li>Count badges turn 212 programs into a confident shortlist</li><li>One tap collapses the whole library to the relevant subset</li></ul>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 4 — Pro Data Table                                      -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>All Programs</h2><div class="sub">212 results · sorted by weeks ↑</div></div>
+    </div>
+    <div class="body">
+      <div style="padding-top:12px"></div>
+      <div class="chiprow"><span class="chip on">All</span><span class="chip">Goal</span><span class="chip">Sport</span><span class="chip">Yoga</span><span class="chip">Health</span></div>
+      <div class="scroll">
+        <div class="tbl">
+          <div class="thead">
+            <div class="sortable">Program</div><div class="sortable act" style="text-align:center">Lvl</div><div class="sortable act" style="text-align:center">Wks↑</div><div class="sortable" style="text-align:center">×/wk</div><div class="sortable" style="text-align:center">min</div>
+          </div>
+          <div class="trow"><div class="tn">Tabata HIIT 4-Minute</div><div class="tlvl"><span class="lvltag" style="background:var(--int)"></span></div><div class="tc">4</div><div class="tc">5</div><div class="tc">25</div></div>
+          <div class="trow"><div class="tn">German Volume 10×10</div><div class="tlvl"><span class="lvltag" style="background:var(--adv)"></span></div><div class="tc">6</div><div class="tc">4</div><div class="tc">75</div></div>
+          <div class="trow"><div class="tn">Powerlifting Meet Prep</div><div class="tlvl"><span class="lvltag" style="background:var(--elite)"></span></div><div class="tc">8</div><div class="tc">4</div><div class="tc">90</div></div>
+          <div class="trow"><div class="tn">Couch to 5K Beginner</div><div class="tlvl"><span class="lvltag" style="background:var(--beg)"></span></div><div class="tc">9</div><div class="tc">3</div><div class="tc">30</div></div>
+          <div class="trow"><div class="tn">Full Body Mass Builder</div><div class="tlvl"><span class="lvltag" style="background:var(--int)"></span></div><div class="tc">10</div><div class="tc">4</div><div class="tc">55</div></div>
+          <div class="trow"><div class="tn">Push Pull Legs Routine</div><div class="tlvl"><span class="lvltag" style="background:var(--int)"></span></div><div class="tc">12</div><div class="tc">6</div><div class="tc">60</div></div>
+          <div class="trow"><div class="tn">Men's Starting Strength</div><div class="tlvl"><span class="lvltag" style="background:var(--beg)"></span></div><div class="tc">12</div><div class="tc">3</div><div class="tc">50</div></div>
+          <div class="trow"><div class="tn">Women's Glute Building</div><div class="tlvl"><span class="lvltag" style="background:var(--int)"></span></div><div class="tc">12</div><div class="tc">4</div><div class="tc">45</div></div>
+          <div class="trow" style="border-bottom:0"><div class="tn">Marathon Training Adv</div><div class="tlvl"><span class="lvltag" style="background:var(--adv)"></span></div><div class="tc">16</div><div class="tc">5</div><div class="tc">70</div></div>
+        </div>
+        <div style="height:14px"></div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">04</div>
+    <h3>Pro Data Table</h3>
+    <p class="concept">A dense, sortable table — tap any column header (Lvl · Wks · ×/wk · min) to reorder. Hairline rows, tiny level swatches, Space&nbsp;Mono numerals.</p>
+    <div class="bestfor"><span>Best for</span>Power users comparing programs on hard numbers.</div>
+    <ul><li>Compare 9+ programs in one viewport — no card scrolling</li><li>Sortable columns = "shortest 4-day plans" in a tap</li><li>Boostcamp / spreadsheet credibility for serious lifters</li></ul>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 5 — Poster Grid 2-up                                    -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>Program Library</h2></div>
+    </div>
+    <div class="body">
+      <div style="padding-top:12px"></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" fill="none" stroke="#5C5C64" stroke-width="1.6"/><line x1="11" y1="11" x2="14.5" y2="14.5" stroke="#5C5C64" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="ph">Search programs</span>
+      </div>
+      <div class="chiprow"><span class="chip on">All</span><span class="chip">Goal</span><span class="chip">Sport</span><span class="chip">Yoga</span></div>
+      <div class="scroll">
+        <div class="pgrid">
+          <div class="pgcard"><div class="ph" style="background:linear-gradient(150deg,#241c16,#120f0c)"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><rect x="3" y="9" width="18" height="6" rx="2"/></svg><span class="ribbon" style="background:var(--int);color:#3a2c00">Int</span></div><div class="pb"><div class="pn">Push Pull Legs Routine</div><div class="ps"><span><b>12</b>wk</span><span><b>6×</b>/wk</span><span><b>60</b>m</span></div><div class="gg"><span class="gpill">Muscle</span><span class="gpill">Strength</span></div></div></div>
+          <div class="pgcard"><div class="ph" style="background:linear-gradient(150deg,#221a18,#100d0c)"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><path d="M4 12h16M4 7h16M4 17h16"/></svg><span class="ribbon" style="background:var(--adv);color:#3a2300">Adv</span></div><div class="pb"><div class="pn">German Volume 10×10</div><div class="ps"><span><b>6</b>wk</span><span><b>4×</b>/wk</span><span><b>75</b>m</span></div><div class="gg"><span class="gpill">Muscle</span></div></div></div>
+          <div class="pgcard"><div class="ph" style="background:linear-gradient(150deg,#1a201d,#0d100f)"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><circle cx="12" cy="12" r="8"/></svg><span class="ribbon" style="background:var(--beg);color:#0a2a0c">Beg</span></div><div class="pb"><div class="pn">Couch to 5K Beginner</div><div class="ps"><span><b>9</b>wk</span><span><b>3×</b>/wk</span><span><b>30</b>m</span></div><div class="gg"><span class="gpill">Endurance</span></div></div></div>
+          <div class="pgcard"><div class="ph" style="background:linear-gradient(150deg,#241617,#130c0c)"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><rect x="3" y="9" width="18" height="6" rx="2"/></svg><span class="ribbon" style="background:var(--elite);color:#3a0808">Elite</span></div><div class="pb"><div class="pn">Powerlifting Meet Prep</div><div class="ps"><span><b>8</b>wk</span><span><b>4×</b>/wk</span><span><b>90</b>m</span></div><div class="gg"><span class="gpill">1RM</span></div></div></div>
+          <div class="pgcard"><div class="ph" style="background:linear-gradient(150deg,#1f1c21,#0f0d11)"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><rect x="6" y="8" width="12" height="8" rx="2"/></svg><span class="ribbon" style="background:var(--int);color:#3a2c00">Int</span></div><div class="pb"><div class="pn">Women's Glute Building Program</div><div class="ps"><span><b>12</b>wk</span><span><b>4×</b>/wk</span><span><b>45</b>m</span></div><div class="gg"><span class="gpill">Shape</span></div></div></div>
+          <div class="pgcard"><div class="ph" style="background:linear-gradient(150deg,#1c211f,#0e110f)"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><path d="M12 4c-3 3-5 6-5 9a5 5 0 0010 0c0-3-2-6-5-9z"/></svg><span class="ribbon" style="background:var(--beg);color:#0a2a0c">Beg</span></div><div class="pb"><div class="pn">Beginner Yoga Fundamentals</div><div class="ps"><span><b>8</b>wk</span><span><b>4×</b>/wk</span><span><b>35</b>m</span></div><div class="gg"><span class="gpill">Mobility</span></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">05</div>
+    <h3>Poster Grid 2-up</h3>
+    <p class="concept">A 2-column visual grid: category-keyed gradient header, level ribbon, name, mono stat row, goal pills.</p>
+    <div class="bestfor"><span>Best for</span>Visual scanners who want density + imagery together.</div>
+    <ul><li>Twice the programs per screen vs the current single column</li><li>Gradient + ribbon make each card instantly distinguishable</li><li>Smallest leap from today's card — lowest build risk</li></ul>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 6 — Coach-Curated Feed  (◆ GRAFT IN)                     -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fbadge graft">◆ Recommended — Graft in</div>
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>Coach Picks</h2></div>
+    </div>
+    <div class="body">
+      <div class="scroll" style="padding-top:12px">
+        <div class="coachline">
+          <div class="avatar">Z</div>
+          <div class="ct"><div class="nm">Your coach</div>Based on your last 4 weeks of <b>PPL training</b>, here are three programs that fit how you're already lifting.</div>
+        </div>
+        <div class="rec">
+          <span class="reason">✓ Matches your PPL split</span>
+          <div class="name">Push Pull Legs Routine</div>
+          <div class="cat">Goal-Based · Hypertrophy</div>
+          <div class="meta" style="display:flex;align-items:center;gap:10px"><span class="dchip d-int"><span class="ddot"></span>Intermediate</span><span class="stats"><span><b>12</b> wk</span><span><b>6×</b>/wk</span></span></div>
+          <div class="acts"><span class="btn-pri" style="flex:1">Import &amp; customize</span><span class="btn-ghost">Preview</span></div>
+        </div>
+        <div class="rec">
+          <span class="reason">✓ Fits your 4 days / week</span>
+          <div class="name">Full Body Mass Builder</div>
+          <div class="cat">Goal-Based · Hypertrophy</div>
+          <div class="meta" style="display:flex;align-items:center;gap:10px"><span class="dchip d-int"><span class="ddot"></span>Intermediate</span><span class="stats"><span><b>10</b> wk</span><span><b>4×</b>/wk</span></span></div>
+          <div class="acts"><span class="btn-pri" style="flex:1">Import &amp; customize</span><span class="btn-ghost">Preview</span></div>
+        </div>
+        <div class="coachline" style="padding-top:0;padding-bottom:12px">
+          <div class="avatar">Z</div>
+          <div class="ct"><span class="whisper">Want to push intensity? This one's a step up.</span></div>
+        </div>
+        <div class="rec" style="margin-bottom:14px">
+          <span class="reason">✓ Builds on your volume</span>
+          <div class="name">German Volume Training 10×10</div>
+          <div class="cat">Specialized · Volume</div>
+          <div class="meta" style="display:flex;align-items:center;gap:10px"><span class="dchip d-adv"><span class="ddot"></span>Advanced</span><span class="stats"><span><b>6</b> wk</span><span><b>4×</b>/wk</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">06</div>
+    <h3>Coach-Curated Feed</h3>
+    <p class="concept">A single conversational column: the AI coach opens with your context, then recommends programs each with a reasoning chip.</p>
+    <div class="bestfor"><span>Best for</span>Returning users who trust the coach to filter for them.</div>
+    <ul><li>Leans on Zealova's actual moat — the AI coach + your history</li><li>"Why this" reasoning chips remove all decision paralysis</li><li>Feels personal — 3 picks, not 212 choices</li></ul>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 7 — Sticky Filter + Results                             -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>Find a Program</h2></div>
+    </div>
+    <div class="body">
+      <div class="sticky-filter">
+        <div class="sf-row">
+          <div class="sf-drop">Goal-Based <svg width="11" height="7" viewBox="0 0 11 7"><path d="M1 1l4.5 4.5L10 1" fill="none" stroke="#9D9DA6" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        </div>
+        <div class="seg" style="margin-bottom:9px"><div>Any</div><div>Beg</div><div class="on">Int</div><div>Adv</div></div>
+        <div class="sf-row">
+          <div class="stepper"><span class="micro" style="font-size:9.5px">Days/wk</span><div style="display:flex;align-items:center;gap:9px"><span class="b">–</span><span class="v">4</span><span class="b">+</span></div></div>
+          <div class="range"><span class="micro" style="font-size:9px">Duration · 8–14 wk</span><div class="track"><div class="fill"></div><span class="knob" style="left:18%"></span><span class="knob" style="left:66%"></span></div></div>
+        </div>
+      </div>
+      <div class="count-bar"><span><b>17</b> programs match</span><span class="micro" style="color:var(--d-accent)">Reset</span></div>
+      <div class="scroll">
+        <div class="res-row"><div style="flex:1"><div class="rn">Push Pull Legs Routine</div><div class="rm">Goal-Based · Int · 12 wk · 6×/wk</div></div><span class="dchip d-int"><span class="ddot"></span>Int</span></div>
+        <div class="res-row"><div style="flex:1"><div class="rn">Full Body Mass Builder</div><div class="rm">Goal-Based · Int · 10 wk · 4×/wk</div></div><span class="dchip d-int"><span class="ddot"></span>Int</span></div>
+        <div class="res-row"><div style="flex:1"><div class="rn">Women's Glute Building Program</div><div class="rm">Goal-Based · Int · 12 wk · 4×/wk</div></div><span class="dchip d-int"><span class="ddot"></span>Int</span></div>
+        <div class="res-row"><div style="flex:1"><div class="rn">Upper / Lower Power Build</div><div class="rm">Goal-Based · Int · 12 wk · 4×/wk</div></div><span class="dchip d-int"><span class="ddot"></span>Int</span></div>
+        <div class="res-row" style="border-bottom:0"><div style="flex:1"><div class="rn">Hypertrophy Block Cycle</div><div class="rm">Goal-Based · Int · 9 wk · 4×/wk</div></div><span class="dchip d-int"><span class="ddot"></span>Int</span></div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">07</div>
+    <h3>Sticky Filter + Results</h3>
+    <p class="concept">A pinned compact filter — category dropdown, level segments, days/wk stepper, duration range — with a live "N match" count.</p>
+    <div class="bestfor"><span>Best for</span>Users with hard constraints (time, schedule, level).</div>
+    <ul><li>Live count gives instant feedback as constraints tighten</li><li>Real filter axes (days/wk, duration) the chip rows can't express</li><li>Filter stays put while results scroll — no hunting back up</li></ul>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 8 — Outcome Cards                                       -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>Pick an Outcome</h2><div class="sub">Where you'll be when you finish</div></div>
+    </div>
+    <div class="body">
+      <div class="scroll" style="padding-top:8px">
+        <div class="oc-card">
+          <div class="ring">
+            <svg width="60" height="60" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="6"/><circle cx="32" cy="32" r="27" fill="none" stroke="#FFD54A" stroke-width="6" stroke-linecap="round" stroke-dasharray="170" stroke-dashoffset="40" transform="rotate(-90 32 32)"/></svg>
+            <span class="rt" style="color:#FFD54A">12wk</span>
+          </div>
+          <div style="flex:1"><div class="oh">A real strength base</div><div class="od">Add 40–60 lb to your big three with linear progression.</div><span class="gpill">Push Pull Legs Routine</span></div>
+        </div>
+        <div class="oc-card">
+          <div class="ring">
+            <svg width="60" height="60" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="6"/><circle cx="32" cy="32" r="27" fill="none" stroke="#2ECC71" stroke-width="6" stroke-linecap="round" stroke-dasharray="170" stroke-dashoffset="80" transform="rotate(-90 32 32)"/></svg>
+            <span class="rt" style="color:#2ECC71">9wk</span>
+          </div>
+          <div style="flex:1"><div class="oh">Run 5K without stopping</div><div class="od">From your first jog to a continuous 5K, 3 runs a week.</div><span class="gpill">Couch to 5K Beginner</span></div>
+        </div>
+        <div class="oc-card">
+          <div class="ring">
+            <svg width="60" height="60" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="6"/><circle cx="32" cy="32" r="27" fill="none" stroke="#F97316" stroke-width="6" stroke-linecap="round" stroke-dasharray="170" stroke-dashoffset="120" transform="rotate(-90 32 32)"/></svg>
+            <span class="rt" style="color:#F97316">6wk</span>
+          </div>
+          <div style="flex:1"><div class="oh">Visible muscle gain</div><div class="od">High-volume hypertrophy block — slabs of size, fast.</div><span class="gpill">German Volume 10×10</span></div>
+        </div>
+        <div class="oc-card" style="border-bottom:0">
+          <div class="ring">
+            <svg width="60" height="60" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="6"/><circle cx="32" cy="32" r="27" fill="none" stroke="#06B6D4" stroke-width="6" stroke-linecap="round" stroke-dasharray="170" stroke-dashoffset="55" transform="rotate(-90 32 32)"/></svg>
+            <span class="rt" style="color:#06B6D4">8wk</span>
+          </div>
+          <div style="flex:1"><div class="oh">A pain-free lower back</div><div class="od">Restore mobility and bulletproof your spine, gently.</div><span class="gpill">Lower Back Pain Relief Foundation</span></div>
+        </div>
+        <div style="height:14px"></div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">08</div>
+    <h3>Outcome Cards</h3>
+    <p class="concept">Each row leads with the transformation and a duration ring — raw metadata is demoted to a single quiet pill.</p>
+    <div class="bestfor"><span>Best for</span>Motivation-driven users picking by the promised result.</div>
+    <ul><li>Sells the destination, not the spec sheet</li><li>Duration ring makes commitment legible at a glance</li><li>Emotionally resonant — answers "what do I get out of this?"</li></ul>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 9 — Discovery Deck                                      -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>Discover Programs</h2></div>
+    </div>
+    <div class="body">
+      <div class="scroll" style="padding-top:8px">
+        <div class="deck">
+          <div class="card back2" style="background:linear-gradient(150deg,#1a201d,#0d100f)"></div>
+          <div class="card back1" style="background:linear-gradient(150deg,#221a18,#100d0c)"></div>
+          <div class="card top" style="background:radial-gradient(120% 95% at 22% 8%,#1f1206,#150d08 52%,var(--d-surface2))">
+            <div class="eb">Featured · Strength</div>
+            <h3>Men's Starting Strength</h3>
+            <div class="dm"><span class="dchip d-beg"><span class="ddot"></span>Beginner</span><span><b>12</b> wk</span><span><b>3×</b>/wk</span></div>
+            <div class="nav"><span class="ar">‹</span><div class="dots"><i></i><i class="on"></i><i></i><i></i></div><span class="ar">›</span></div>
+          </div>
+        </div>
+        <div class="browse-h"><b>Browse all</b><span class="micro" style="color:var(--d-accent)">212</span></div>
+        <div class="lrow">
+          <div class="thumb" style="background:linear-gradient(135deg,#241c16,#120f0c)"></div>
+          <div style="flex:1"><div class="ln">Push Pull Legs Routine</div><div class="lm">Int · 12 wk · 6×/wk</div></div><span class="dchip d-int"><span class="ddot"></span>Int</span>
+        </div>
+        <div class="lrow">
+          <div class="thumb" style="background:linear-gradient(135deg,#1a201d,#0d100f)"></div>
+          <div style="flex:1"><div class="ln">Couch to 5K Beginner</div><div class="lm">Beg · 9 wk · 3×/wk</div></div><span class="dchip d-beg"><span class="ddot"></span>Beg</span>
+        </div>
+        <div class="lrow" style="border-bottom:0">
+          <div class="thumb" style="background:linear-gradient(135deg,#221a18,#100d0c)"></div>
+          <div style="flex:1"><div class="ln">German Volume Training 10×10</div><div class="lm">Adv · 6 wk · 4×/wk</div></div><span class="dchip d-adv"><span class="ddot"></span>Adv</span>
+        </div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">09</div>
+    <h3>Discovery Deck</h3>
+    <p class="concept">A swipeable featured card deck up top with ‹ • • • › dots, then a compact "Browse all" hairline list for the long tail.</p>
+    <div class="bestfor"><span>Best for</span>Exploratory users who enjoy a tactile, playful intro.</div>
+    <ul><li>The swipe gesture makes featured picks feel curated, not random</li><li>Deck + list balances delight (top) with utility (bottom)</li><li>Stacked cards hint there's always "one more" to discover</li></ul>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- FRAME 10 — Category Hub  (RUNNER-UP)                           -->
+<!-- ============================================================= -->
+<section class="frame">
+  <div class="fbadge runner">Runner-up</div>
+  <div class="fwrap"><div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="sbar"><span>9:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+    <div class="app-head">
+      <div class="back">‹</div>
+      <div class="ht"><div class="eyebrow">Zealova</div><h2>Browse by Category</h2><div class="sub">212 programs · 8 collections</div></div>
+    </div>
+    <div class="body">
+      <div class="scroll" style="padding-top:12px">
+        <div class="hubgrid">
+          <div class="hub"><span class="hc">38</span><div class="hi"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="1.7"><rect x="6" y="8" width="12" height="8" rx="2"/></svg></div><div class="hn">Goal-Based</div><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="1.4"><rect x="6" y="8" width="12" height="8" rx="2"/></svg></div>
+          <div class="hub"><span class="hc">29</span><div class="hi"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><circle cx="12" cy="12" r="8"/></svg></div><div class="hn">Sport Training</div><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.4"><circle cx="12" cy="12" r="8"/></svg></div>
+          <div class="hub"><span class="hc">26</span><div class="hi"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><path d="M12 4c-3 3-5 6-5 9a5 5 0 0010 0c0-3-2-6-5-9z"/></svg></div><div class="hn">Yoga</div><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.4"><path d="M12 4c-3 3-5 6-5 9a5 5 0 0010 0c0-3-2-6-5-9z"/></svg></div>
+          <div class="hub"><span class="hc">22</span><div class="hi"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2 4 4 0 017 2c0 5.5-7 10-7 10z"/></svg></div><div class="hn">Pain Management</div><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.4"><path d="M12 21s-7-4.5-7-10a4 4 0 017-2 4 4 0 017 2c0 5.5-7 10-7 10z"/></svg></div>
+          <div class="hub"><span class="hc">24</span><div class="hi"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><circle cx="12" cy="7" r="4"/><path d="M5 21c0-4 3-6 7-6s7 2 7 6"/></svg></div><div class="hn">Women's Health</div><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.4"><circle cx="12" cy="9" r="5"/></svg></div>
+          <div class="hub"><span class="hc">21</span><div class="hi"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><circle cx="12" cy="7" r="4"/><path d="M5 21c0-4 3-6 7-6s7 2 7 6"/></svg></div><div class="hn">Men's Health</div><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.4"><circle cx="12" cy="9" r="5"/></svg></div>
+          <div class="hub"><span class="hc">18</span><div class="hi"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><path d="M4 12c4-4 12-4 16 0"/><circle cx="12" cy="12" r="2"/></svg></div><div class="hn">Stretching</div><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.4"><path d="M4 14c4-5 12-5 16 0"/></svg></div>
+          <div class="hub"><span class="hc">14</span><div class="hi"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div><div class="hn">Senior Fitness</div><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#9D9DA6" stroke-width="1.4"><circle cx="12" cy="12" r="8"/></svg></div>
+        </div>
+      </div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">▦</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◐</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+  <div class="cap">
+    <div class="num">10</div>
+    <h3>Category Hub</h3>
+    <p class="concept">A grid of category tiles — each with an icon, a count badge ("38"), and a hairline frame — that drill in on tap.</p>
+    <div class="bestfor"><span>Best for</span>Specialized seekers (yoga, pain, senior) who browse by domain.</div>
+    <ul><li>Surfaces the full breadth of all 8 collections instantly</li><li>Count badges set expectations before drilling in</li><li>Hairline tiles make the library feel organized, not endless</li></ul>
+  </div>
+</section>
+
+</main>
+</div>
+</section>
+
+<section class="screen-section" id="sec-exercise" hidden>
+<div id="screen-exercise">
+
+<header class="page-head">
+  <div class="eyebrow">Zealova · Library Redesign · 2026-06</div>
+  <h1>Exercise Library — <span class="o">Signature v2</span> Directions</h1>
+  <p class="intro">
+    The Exercise Library is a sub-screen of the <b>Workouts</b> tab, surfacing a catalog of
+    <b>~1,500</b> exercises across strength, cardio, core, plyometric and mobility work. Below: the
+    current screen rendered as-is with an honest critique, then ten distinct layout paradigms — each a
+    real, shippable iOS direction re-skinned to Zealova's signature v2 system (tinted near-black, Anton
+    display, Barlow labels, hairline rows, orange as the single accent).
+  </p>
+  <div class="rec-callout">
+    <div class="rh"><span class="star">★</span><span class="k">Recommended</span></div>
+    <p><b>Lead with #4 Quick-Action Rows</b> — it kills the buried-actions problem and ties the library straight into today's workout. <b>Graft in #2 Muscle-Map Browse</b> as an alternate entry and <b>#9 Faceted Filter Bar</b> for power narrowing. <b>#1 Visual Poster Grid</b> is the runner-up for a more image-forward feel.</p>
+    <div class="legend">
+      <span class="lbl">Difficulty</span>
+      <span class="chip"><span class="dot" style="background:var(--d-beg)"></span>Beginner</span>
+      <span class="chip"><span class="dot" style="background:var(--d-int)"></span>Intermediate</span>
+      <span class="chip"><span class="dot" style="background:var(--d-adv)"></span>Advanced</span>
+      <span class="chip"><span class="dot" style="background:var(--d-elite)"></span>Elite</span>
+      <span class="chip" style="margin-left:6px"><span class="dot" style="background:var(--d-accent)"></span>Orange · primary action</span>
+    </div>
+  </div>
+</header>
+
+<main class="gallery">
+
+<!-- ============================================================ -->
+<!-- FRAME 0 — CURRENT (AS-IS) -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="ic">
+        <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 2.2c2.2 0 4.2.85 5.7 2.25l1.4-1.45C13.3 1.2 10.77.2 8 .2S2.7 1.2.9 3l1.4 1.45C3.8 3.05 5.8 2.2 8 2.2z" fill="#FAFAFA"/><circle cx="8" cy="9.3" r="1.5" fill="#FAFAFA"/></svg>
+        <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+      </span>
+    </div>
+    <div class="appbar">
+      <div class="back">‹</div>
+      <div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div>
+    </div>
+    <div class="subtabs">
+      <span class="nn-tab">Discover</span><span class="nn-tab on">Exercises</span><span class="nn-tab">Workouts</span><span class="nn-tab">Custom</span><span class="nn-tab">You</span>
+    </div>
+    <div class="searchpill">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Search exercises
+    </div>
+    <div class="body">
+      <div style="display:flex;align-items:center;padding:12px 20px 8px"><span class="micro"><b>212</b> Exercises</span>
+        <span style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="iconbtn">+</span><span class="iconbtn">✦</span></span>
+      </div>
+      <div class="qchips" style="padding-bottom:10px"><span class="qchip on">Chest</span><span class="qchip">Back</span><span class="qchip">Legs</span><span class="qchip">Shoulders</span><span class="qchip">Core</span><span class="qchip">Arms</span></div>
+      <div style="padding:0 20px">
+        <div class="exrow"><div class="thumb g-chest"><span class="glyph">🏋</span></div><div class="meta"><div class="name">Bench Press</div><div class="sub"><span class="ddot" style="background:var(--d-int)"></span><span class="txt">Chest · Intermediate · Barbell</span></div></div><div class="chev">›</div></div>
+        <div class="exrow"><div class="thumb g-chest"><span class="glyph">💪</span></div><div class="meta"><div class="name">Incline Dumbbell Press <span class="newbadge">New</span></div><div class="sub"><span class="ddot" style="background:var(--d-int)"></span><span class="txt">Chest · Intermediate · Dumbbell</span></div></div><div class="chev">›</div></div>
+        <div class="exrow"><div class="thumb g-legs"><span class="glyph">🦵</span></div><div class="meta"><div class="name">Barbell Back Squat</div><div class="sub"><span class="ddot" style="background:var(--d-adv)"></span><span class="txt">Legs · Advanced · Barbell</span></div></div><div class="chev">›</div></div>
+        <div class="exrow"><div class="thumb g-back"><span class="glyph">🏋</span></div><div class="meta"><div class="name">Romanian Deadlift</div><div class="sub"><span class="ddot" style="background:var(--d-adv)"></span><span class="txt">Back · Advanced · Barbell</span></div></div><div class="chev">›</div></div>
+        <div class="exrow"><div class="thumb g-back"><span class="glyph">🔗</span></div><div class="meta"><div class="name">Lat Pulldown</div><div class="sub"><span class="ddot" style="background:var(--d-beg)"></span><span class="txt">Back · Beginner · Cable</span></div></div><div class="chev">›</div></div>
+      </div>
+      <div class="critique">
+        <h4>⚠ What's weak today</h4>
+        <ul>
+          <li>56px thumbnails with placeholder glyphs — low visual appeal for a 1,500-exercise catalog.</li>
+          <li>Metadata line is cramped: muscle · difficulty · equipment jammed into one ellipsised row.</li>
+          <li>Favorite &amp; "add to workout" buried behind a tap → sheet — no quick inline actions.</li>
+          <li>Muscle filter is a flat chip row; no body map. Discovery is just scroll + search.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="nv-bar">
+      <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div>
+      <div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div>
+      <div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div>
+    </div>
+    <div class="nv-plus">+</div>
+    <div class="homebar"></div>
+  </div></div>
+  <div class="caption is-current">
+    <div class="num">00</div>
+    <h3>Current <span class="tag">As-is</span></h3>
+    <p class="concept">The live Exercises tab inside Workouts: search bar under the sub-tabs, a muscle chip row, and a flat scroll list of 54px-thumb rows. Actions live behind a tap sheet.</p>
+    <div class="best"><b>Reference frame</b> for the ten directions below.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 1 — VISUAL POSTER GRID  (RUNNER-UP) -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="rec-badge runner">RUNNER-UP</div>
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div><div class="right"><span class="iconbtn">✦</span></div></div>
+    <div class="searchpill"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Search exercises</div>
+    <div class="qchips" style="margin-top:13px;padding-bottom:10px"><span class="qchip on">All</span><span class="qchip">Chest</span><span class="qchip">Back</span><span class="qchip">Legs</span><span class="qchip">Core</span></div>
+    <div class="body">
+      <div class="poster-grid">
+        <div class="poster"><div class="img"><span class="glyph">🦵</span><span class="mg">Legs</span></div><div class="pbody"><div class="pname">Barbell Back Squat</div><div class="prow"><span class="ddot" style="background:var(--d-adv)"></span><span class="lvl">Advanced</span></div></div></div>
+        <div class="poster"><div class="img"><span class="glyph">🏋</span><span class="mg">Chest</span></div><div class="pbody"><div class="pname">Bench Press</div><div class="prow"><span class="ddot" style="background:var(--d-int)"></span><span class="lvl">Intermediate</span></div></div></div>
+        <div class="poster"><div class="img"><span class="glyph">🏋</span><span class="mg">Back</span></div><div class="pbody"><div class="pname">Romanian Deadlift</div><div class="prow"><span class="ddot" style="background:var(--d-adv)"></span><span class="lvl">Advanced</span></div></div></div>
+        <div class="poster"><div class="img"><span class="glyph">🙆</span><span class="mg">Shoulders</span></div><div class="pbody"><div class="pname">DB Shoulder Press</div><div class="prow"><span class="ddot" style="background:var(--d-int)"></span><span class="lvl">Intermediate</span></div></div></div>
+        <div class="poster"><div class="img"><span class="glyph">🧘</span><span class="mg">Core</span></div><div class="pbody"><div class="pname">Hanging Leg Raise</div><div class="prow"><span class="ddot" style="background:var(--d-adv)"></span><span class="lvl">Advanced</span></div></div></div>
+        <div class="poster"><div class="img"><span class="glyph">💪</span><span class="mg">Arms</span></div><div class="pbody"><div class="pname">Face Pull</div><div class="prow"><span class="ddot" style="background:var(--d-beg)"></span><span class="lvl">Beginner</span></div></div></div>
+      </div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">01</div>
+    <h3>Visual Poster Grid</h3>
+    <p class="concept">Two-column image-forward tiles — a near-black gradient thumbnail per exercise with name, a muscle tag chip and a small difficulty dot. Gym-poster energy.</p>
+    <div class="best"><b>Best for:</b> visual browsers who recognize moves by sight, not name.</div>
+    <ul class="wins">
+      <li>Thumbnails become the hero instead of 54px afterthoughts.</li>
+      <li>Muscle + difficulty legible at a glance per tile.</li>
+      <li>Feels premium and scrollable, like a board of lifts.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 2 — MUSCLE MAP BROWSE  (GRAFT IN) -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="rec-badge graft">◆ RECOMMENDED — GRAFT IN</div>
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div></div>
+    <div class="subtabs"><span class="nn-tab">Discover</span><span class="nn-tab on">Exercises</span><span class="nn-tab">Workouts</span><span class="nn-tab">Custom</span><span class="nn-tab">You</span></div>
+    <div class="mmap-wrap">
+      <div class="mmap">
+        <svg width="148" height="262" viewBox="0 0 150 270">
+          <circle cx="75" cy="22" r="15" fill="#1B1B1E" stroke="#26262B"/>
+          <rect x="64" y="36" width="22" height="10" rx="4" fill="#1B1B1E"/>
+          <ellipse cx="48" cy="56" rx="14" ry="11" fill="#1f1f23"/>
+          <ellipse cx="102" cy="56" rx="14" ry="11" fill="#1f1f23"/>
+          <!-- chest (selected → orange) -->
+          <path d="M55 50 h40 a8 8 0 0 1 8 8 v18 a14 14 0 0 1 -14 10 h-28 a14 14 0 0 1 -14 -10 v-18 a8 8 0 0 1 8 -8 z" fill="#F97316" opacity=".88"/>
+          <rect x="30" y="58" width="13" height="48" rx="6" fill="#1f1f23"/>
+          <rect x="107" y="58" width="13" height="48" rx="6" fill="#1f1f23"/>
+          <rect x="56" y="90" width="38" height="42" rx="8" fill="#1f1f23"/>
+          <rect x="55" y="136" width="18" height="80" rx="9" fill="#1f1f23"/>
+          <rect x="77" y="136" width="18" height="80" rx="9" fill="#1f1f23"/>
+          <rect x="56" y="220" width="16" height="42" rx="7" fill="#191919"/>
+          <rect x="78" y="220" width="16" height="42" rx="7" fill="#191919"/>
+        </svg>
+      </div>
+      <div class="mmap-legend">
+        <span class="l"><span class="ddot" style="background:var(--d-accent)"></span>Chest · selected</span>
+        <span class="l"><span class="ddot" style="background:#1f1f23;border:1px solid #2A2A2E"></span>Tap any region</span>
+      </div>
+      <div class="mmap-results">
+        <div class="mmap-head">Chest <span class="cnt">184 in catalog</span></div>
+        <div class="exrow"><div class="thumb g-chest" style="width:46px;height:46px"><span class="glyph" style="font-size:17px">🏋</span></div><div class="meta"><div class="name" style="font-size:14px">Bench Press</div><div class="sub"><span class="ddot" style="background:var(--d-int)"></span><span class="txt">Barbell · Mid Chest</span></div></div><div class="chev">›</div></div>
+        <div class="exrow"><div class="thumb g-chest" style="width:46px;height:46px"><span class="glyph" style="font-size:17px">💪</span></div><div class="meta"><div class="name" style="font-size:14px">Incline Dumbbell Press</div><div class="sub"><span class="ddot" style="background:var(--d-int)"></span><span class="txt">Dumbbell · Upper Chest</span></div></div><div class="chev">›</div></div>
+        <div class="exrow"><div class="thumb g-chest" style="width:46px;height:46px"><span class="glyph" style="font-size:17px">🔗</span></div><div class="meta"><div class="name" style="font-size:14px">Cable Fly</div><div class="sub"><span class="ddot" style="background:var(--d-beg)"></span><span class="txt">Cable · Inner Chest</span></div></div><div class="chev">›</div></div>
+      </div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">02</div>
+    <h3>Muscle-Map Browse</h3>
+    <p class="concept">An anterior body diagram with tappable regions, the active one tinted orange. Tap a region and the catalog below scrolls to that muscle's exercises.</p>
+    <div class="best"><b>Best for:</b> anatomy-first learners and rehab/symmetry-focused lifters.</div>
+    <ul class="wins">
+      <li>Turns 1,500 exercises into a body you can point at.</li>
+      <li>Answers "what hits my chest?" with zero typing.</li>
+      <li>Visually teaches muscle groups while you browse.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 3 — PRO DENSE LIST -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div><div class="right"><span class="iconbtn">⚙</span></div></div>
+    <div class="searchpill"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Search 1,512 exercises</div>
+    <div style="display:flex;align-items:center;padding:11px 20px 4px"><span class="micro">A–Z · <b>1,512</b> Exercises</span></div>
+    <div class="body">
+      <div class="dense-wrap">
+        <div class="dense-list">
+          <div class="dense-row"><div class="t g-chest"></div><div class="nm"><div class="n">Bench Press</div><div class="e">Barbell · Chest</div></div><span class="stat">3×8–10</span></div>
+          <div class="dense-row"><div class="t g-legs"></div><div class="nm"><div class="n">Bulgarian Split Squat</div><div class="e">Dumbbell · Legs</div></div><span class="stat">3×10</span></div>
+          <div class="dense-row"><div class="t g-back"></div><div class="nm"><div class="n">Cable Row</div><div class="e">Cable · Back</div></div><span class="stat">4×12</span></div>
+          <div class="dense-row"><div class="t g-arms"></div><div class="nm"><div class="n">Face Pull</div><div class="e">Cable · Rear Delt</div></div><span class="stat">3×15</span></div>
+          <div class="dense-row"><div class="t g-legs"></div><div class="nm"><div class="n">Goblet Squat</div><div class="e">Dumbbell · Legs</div></div><span class="stat">3×12</span></div>
+          <div class="dense-row"><div class="t g-core"></div><div class="nm"><div class="n">Hanging Leg Raise</div><div class="e">Bodyweight · Core</div></div><span class="stat">3×12</span></div>
+          <div class="dense-row"><div class="t g-chest"></div><div class="nm"><div class="n">Incline Dumbbell Press</div><div class="e">Dumbbell · Chest</div></div><span class="stat">3×10</span></div>
+          <div class="dense-row"><div class="t g-back"></div><div class="nm"><div class="n">Lat Pulldown</div><div class="e">Cable · Back</div></div><span class="stat">3×12</span></div>
+          <div class="dense-row"><div class="t g-core"></div><div class="nm"><div class="n">Plank</div><div class="e">Bodyweight · Core</div></div><span class="stat">3×60s</span></div>
+          <div class="dense-row" style="border:none"><div class="t g-back"></div><div class="nm"><div class="n">Pull-Up</div><div class="e">Bodyweight · Back</div></div><span class="stat">3×AMRAP</span></div>
+        </div>
+        <div class="alpha"><span class="hot">A</span><span class="hot">B</span><span class="hot">C</span><span>D</span><span class="hot">F</span><span class="hot">G</span><span class="hot">H</span><span class="hot">I</span><span>J</span><span>K</span><span class="hot">L</span><span>M</span><span>N</span><span>O</span><span class="hot">P</span><span>Q</span><span class="hot">R</span><span>S</span><span>T</span><span>U</span><span>V</span><span>W</span></div>
+      </div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">03</div>
+    <h3>Pro Dense List</h3>
+    <p class="concept">Hevy / Strong-style ultra-compact hairline rows — small square thumb, name, right-aligned sets×reps + equipment, plus a fast-scroll alphabet index rail at the edge.</p>
+    <div class="best"><b>Best for:</b> power users who already know what they're looking for.</div>
+    <ul class="wins">
+      <li>Maximum density — twice the exercises per screen.</li>
+      <li>Alphabet rail jumps the catalog instantly, no infinite scroll.</li>
+      <li>Suggested sets×reps add real planning value inline.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 4 — QUICK-ACTION ROWS  (PRIMARY / LEAD) -->
+<!-- ============================================================ -->
+<div class="frame-card featured">
+  <div class="rec-badge lead">★ RECOMMENDED — LEAD</div>
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div></div>
+    <div class="subtabs"><span class="nn-tab">Discover</span><span class="nn-tab on">Exercises</span><span class="nn-tab">Workouts</span><span class="nn-tab">Custom</span><span class="nn-tab">You</span></div>
+    <div class="searchpill"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Search exercises</div>
+    <div style="display:flex;align-items:center;padding:12px 20px 8px"><span class="micro">Tap ♥ or + without opening anything</span></div>
+    <div class="body">
+      <div class="qa-row"><div class="qa-stripe" style="background:var(--d-int)"></div><div class="qa-inner"><div class="t g-chest"></div><div class="nm"><div class="n">Bench Press</div><div class="s">Chest · Barbell</div></div><div class="qa-acts"><div class="b on">♥</div><div class="b">+</div><div class="b">⇄</div></div></div></div>
+      <div class="qa-row"><div class="qa-stripe" style="background:var(--d-adv)"></div><div class="qa-inner"><div class="t g-legs"></div><div class="nm"><div class="n">Bulgarian Split Squat</div><div class="s">Legs · Dumbbell</div></div><div class="qa-acts"><div class="b">♡</div><div class="b on">+</div><div class="b">⇄</div></div></div></div>
+      <div class="qa-row"><div class="qa-stripe" style="background:var(--d-beg)"></div><div class="qa-inner"><div class="t g-back"></div><div class="nm"><div class="n">Lat Pulldown</div><div class="s">Back · Cable</div></div><div class="qa-acts"><div class="b on">♥</div><div class="b">+</div><div class="b">⇄</div></div></div></div>
+      <div class="qa-row"><div class="qa-stripe" style="background:var(--d-int)"></div><div class="qa-inner"><div class="t g-shoulders"></div><div class="nm"><div class="n">DB Shoulder Press</div><div class="s">Shoulders · Dumbbell</div></div><div class="qa-acts"><div class="b">♡</div><div class="b">+</div><div class="b">⇄</div></div></div></div>
+      <div class="qa-row"><div class="qa-stripe" style="background:var(--d-beg)"></div><div class="qa-inner"><div class="t g-core"></div><div class="nm"><div class="n">Plank</div><div class="s">Core · Bodyweight</div></div><div class="qa-acts"><div class="b">♡</div><div class="b">+</div><div class="b">⇄</div></div></div></div>
+      <div class="qa-row"><div class="qa-stripe" style="background:var(--d-int)"></div><div class="qa-inner"><div class="t g-cardio"></div><div class="nm"><div class="n">Rowing Machine</div><div class="s">Cardio · Machine</div></div><div class="qa-acts"><div class="b">♡</div><div class="b">+</div><div class="b">⇄</div></div></div></div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">04</div>
+    <h3>Quick-Action Rows</h3>
+    <p class="concept">Each hairline-carded row exposes inline actions — ♥ favorite, + add to workout, ⇄ swap — monochrome until active, orange when tapped, with a colored left difficulty stripe.</p>
+    <div class="best"><b>Best for:</b> active planners building a workout while they browse.</div>
+    <ul class="wins">
+      <li>Kills the buried-actions problem — favorite/add in one tap.</li>
+      <li>Difficulty stripe reads faster than a text label.</li>
+      <li>Swap action ties the library directly to today's workout.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 5 — EQUIPMENT-FIRST -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div></div>
+    <div style="padding:10px 20px 0"><span class="micro faint">What can I do with…</span></div>
+    <div class="equip-bar">
+      <div class="equip on"><div class="e-ic">🏋</div><div class="e-lbl">Barbell</div></div>
+      <div class="equip"><div class="e-ic">💪</div><div class="e-lbl">Dumbbell</div></div>
+      <div class="equip"><div class="e-ic">⚙️</div><div class="e-lbl">Machine</div></div>
+      <div class="equip"><div class="e-ic">🔗</div><div class="e-lbl">Cable</div></div>
+      <div class="equip"><div class="e-ic">🤸</div><div class="e-lbl">Bodywt</div></div>
+      <div class="equip"><div class="e-ic">🔔</div><div class="e-lbl">Kettle</div></div>
+    </div>
+    <div style="display:flex;align-items:center;padding:2px 20px 6px"><span class="micro">Barbell · <b>138</b> Exercises</span></div>
+    <div class="body">
+      <div class="equip-grid">
+        <div class="eg-card"><div class="t"><span class="glyph">🏋</span></div><div><div class="n">Bench Press</div><div class="m"><span class="ddot" style="background:var(--d-int)"></span>Chest</div></div></div>
+        <div class="eg-card"><div class="t"><span class="glyph">🦵</span></div><div><div class="n">Back Squat</div><div class="m"><span class="ddot" style="background:var(--d-adv)"></span>Legs</div></div></div>
+        <div class="eg-card"><div class="t"><span class="glyph">🏋</span></div><div><div class="n">Romanian Deadlift</div><div class="m"><span class="ddot" style="background:var(--d-adv)"></span>Back</div></div></div>
+        <div class="eg-card"><div class="t"><span class="glyph">🙆</span></div><div><div class="n">Overhead Press</div><div class="m"><span class="ddot" style="background:var(--d-int)"></span>Shoulders</div></div></div>
+        <div class="eg-card"><div class="t"><span class="glyph">⬆️</span></div><div><div class="n">Bent-Over Row</div><div class="m"><span class="ddot" style="background:var(--d-int)"></span>Back</div></div></div>
+        <div class="eg-card"><div class="t"><span class="glyph">💪</span></div><div><div class="n">Barbell Curl</div><div class="m"><span class="ddot" style="background:var(--d-beg)"></span>Arms</div></div></div>
+      </div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">05</div>
+    <h3>Equipment-First</h3>
+    <p class="concept">A horizontal equipment selector up top — Barbell, Dumbbell, Machine, Cable, Bodyweight, Kettlebell — filters a grid below to only what that gear can do; the active one tints orange.</p>
+    <div class="best"><b>Best for:</b> travelers and home-gym users with constrained equipment.</div>
+    <ul class="wins">
+      <li>Answers "what can I do with just a kettlebell?" in one tap.</li>
+      <li>Big tactile equipment icons map to the real gym floor.</li>
+      <li>Cuts a 1,500-list down to the achievable subset instantly.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 6 — SEARCH-CENTRIC -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div></div>
+    <div class="sc-search">
+      <svg width="20" height="20" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="var(--d-accent)" stroke-width="1.7"/><path d="M10.5 10.5l3 3" stroke="var(--d-accent)" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <span class="q">squa</span><span class="cur"></span>
+    </div>
+    <div class="sc-dym">Did you mean <b>Squat</b>?</div>
+    <div class="body">
+      <div class="sc-sect">
+        <div class="h">Recent</div>
+        <div class="sc-recent"><span class="r">🕘 Romanian Deadlift</span><span class="r">🕘 Face Pull</span><span class="r">🕘 Plank</span><span class="r">🕘 Goblet Squat</span></div>
+      </div>
+      <div class="sc-sect">
+        <div class="h">Trending this week</div>
+        <div class="sc-trend">
+          <div class="sc-tr"><span class="rank">1</span><div class="t g-legs"></div><span class="n">Bulgarian Split Squat</span><span class="up">▲ 42%</span></div>
+          <div class="sc-tr"><span class="rank">2</span><div class="t g-back"></div><span class="n">Cable Row</span><span class="up">▲ 31%</span></div>
+          <div class="sc-tr"><span class="rank">3</span><div class="t g-arms"></div><span class="n">Face Pull</span><span class="up">▲ 28%</span></div>
+          <div class="sc-tr"><span class="rank">4</span><div class="t g-cardio"></div><span class="n">Rowing Machine</span><span class="up">▲ 19%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">06</div>
+    <h3>Search-Centric</h3>
+    <p class="concept">A dominant, orange-ringed search field is the whole screen. Below it: recent searches, trending exercises with momentum arrows, and a live "did you mean" suggestion as you type.</p>
+    <div class="best"><b>Best for:</b> users who arrive knowing the name and want zero friction.</div>
+    <ul class="wins">
+      <li>Search is the hero, not a thin pill above the tabs.</li>
+      <li>Recents + trending fill the empty state with momentum.</li>
+      <li>Typo-tolerant "did you mean" rescues fat-fingered queries.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 7 — BODY-PART RAILS -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div><div class="right"><span class="iconbtn">⚙</span></div></div>
+    <div class="searchpill"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Search exercises</div>
+    <div class="body" style="padding-top:10px">
+      <div class="rail">
+        <div class="rail-h"><span class="t">Chest</span><span class="all">See all 184 ›</span></div>
+        <div class="rail-track">
+          <div class="rcard"><div class="t"><span class="glyph">🏋</span><span class="ddot lv" style="background:var(--d-int)"></span></div><div class="n">Bench Press</div><div class="eq">Barbell</div></div>
+          <div class="rcard"><div class="t"><span class="glyph">💪</span><span class="ddot lv" style="background:var(--d-int)"></span></div><div class="n">Incline DB Press</div><div class="eq">Dumbbell</div></div>
+          <div class="rcard"><div class="t"><span class="glyph">🔗</span><span class="ddot lv" style="background:var(--d-beg)"></span></div><div class="n">Cable Fly</div><div class="eq">Cable</div></div>
+        </div>
+      </div>
+      <div class="rail">
+        <div class="rail-h"><span class="t">Back</span><span class="all">See all 211 ›</span></div>
+        <div class="rail-track">
+          <div class="rcard"><div class="t"><span class="glyph">🏋</span><span class="ddot lv" style="background:var(--d-adv)"></span></div><div class="n">Romanian Deadlift</div><div class="eq">Barbell</div></div>
+          <div class="rcard"><div class="t"><span class="glyph">⬇️</span><span class="ddot lv" style="background:var(--d-beg)"></span></div><div class="n">Lat Pulldown</div><div class="eq">Cable</div></div>
+          <div class="rcard"><div class="t"><span class="glyph">↔️</span><span class="ddot lv" style="background:var(--d-int)"></span></div><div class="n">Cable Row</div><div class="eq">Cable</div></div>
+        </div>
+      </div>
+      <div class="rail">
+        <div class="rail-h"><span class="t">Legs</span><span class="all">See all 240 ›</span></div>
+        <div class="rail-track">
+          <div class="rcard"><div class="t"><span class="glyph">🦵</span><span class="ddot lv" style="background:var(--d-adv)"></span></div><div class="n">Back Squat</div><div class="eq">Barbell</div></div>
+          <div class="rcard"><div class="t"><span class="glyph">🏃</span><span class="ddot lv" style="background:var(--d-adv)"></span></div><div class="n">Bulgarian Split Sq.</div><div class="eq">Dumbbell</div></div>
+          <div class="rcard"><div class="t"><span class="glyph">⬇️</span><span class="ddot lv" style="background:var(--d-beg)"></span></div><div class="n">Goblet Squat</div><div class="eq">Dumbbell</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">07</div>
+    <h3>Body-Part Rails</h3>
+    <p class="concept">Netflix-style horizontal rails grouped by body part — Chest, Back, Legs… — each a swipeable row of thumbnail cards with a "See all" jump into the full muscle list.</p>
+    <div class="best"><b>Best for:</b> casual browsers who want a guided lean-back experience.</div>
+    <ul class="wins">
+      <li>Every body part gets equal billing — no scroll fatigue.</li>
+      <li>Familiar streaming-app pattern needs zero learning.</li>
+      <li>Per-rail counts hint at catalog depth without overwhelming.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 8 — EDITORIAL + PREVIEW -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div></div>
+    <div class="body" style="padding-top:4px">
+      <div class="feat">
+        <div class="fimg"><span class="glyph">🦵</span><span class="ribbon">Move of the day</span><span class="ftitle">Bulgarian Split Squat</span></div>
+        <div class="fcue"><b>Form cue</b>Keep your front shin vertical and drive through the heel — let the rear leg balance, not push. 80% of the load belongs on the front quad and glute.</div>
+      </div>
+      <div style="padding:11px 20px 4px"><span class="micro faint">From today's session</span></div>
+      <div class="ed-row"><div class="t g-chest"></div><div class="nm"><div class="n">Bench Press</div><div class="c">"Tuck elbows ~45°, drive the bar in a slight arc to lockout."</div></div><div class="chev" style="color:var(--d-faint)">›</div></div>
+      <div class="ed-row"><div class="t g-back"></div><div class="nm"><div class="n">Romanian Deadlift</div><div class="c">"Hinge at the hips, soft knees — feel the hamstring stretch."</div></div><div class="chev" style="color:var(--d-faint)">›</div></div>
+      <div class="ed-row"><div class="t g-arms"></div><div class="nm"><div class="n">Face Pull</div><div class="c">"Pull to the forehead, thumbs back — externally rotate at the end."</div></div><div class="chev" style="color:var(--d-faint)">›</div></div>
+      <div class="ed-row" style="border:none"><div class="t g-core"></div><div class="nm"><div class="n">Plank</div><div class="c">"Squeeze glutes, tuck ribs — a straight line head to heel."</div></div><div class="chev" style="color:var(--d-faint)">›</div></div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">08</div>
+    <h3>Editorial + Preview</h3>
+    <p class="concept">A large featured "move of the day" with a form cue, then a clean hairline list where each exercise carries a thumbnail and a one-line Fraunces coaching cue. Teaching-forward.</p>
+    <div class="best"><b>Best for:</b> beginners and form-curious lifters learning technique.</div>
+    <ul class="wins">
+      <li>Surfaces Zealova's real instruction-quality engine as a feature.</li>
+      <li>Fraunces serif cues give it a coached-magazine feel.</li>
+      <li>One-line cues add value the bare current list never showed.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 9 — FACETED FILTER BAR  (GRAFT IN) -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="rec-badge graft">◆ RECOMMENDED — GRAFT IN</div>
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div></div>
+    <div class="facet-bar">
+      <span class="facet on">Muscle: Back <span class="ar">▾</span></span>
+      <span class="facet on">Equip: Cable <span class="ar">▾</span></span>
+      <span class="facet">Level <span class="ar">▾</span></span>
+      <span class="facet">Type <span class="ar">▾</span></span>
+    </div>
+    <div class="facet-active">
+      <span class="fa">Back <span class="x">✕</span></span>
+      <span class="fa">Cable <span class="x">✕</span></span>
+    </div>
+    <div class="facet-count"><span class="n"><b>27</b> exercises match</span><span class="clr">Clear all</span></div>
+    <div class="body">
+      <div class="facet-grid">
+        <div class="fg-card"><div class="t g-back"></div><div><div class="n">Lat Pulldown</div><div class="m"><span class="ddot" style="background:var(--d-beg)"></span>Beginner</div></div></div>
+        <div class="fg-card"><div class="t g-back"></div><div><div class="n">Cable Row</div><div class="m"><span class="ddot" style="background:var(--d-int)"></span>Intermed.</div></div></div>
+        <div class="fg-card"><div class="t g-back"></div><div><div class="n">Straight-Arm Pulldown</div><div class="m"><span class="ddot" style="background:var(--d-beg)"></span>Beginner</div></div></div>
+        <div class="fg-card"><div class="t g-back"></div><div><div class="n">Face Pull</div><div class="m"><span class="ddot" style="background:var(--d-beg)"></span>Beginner</div></div></div>
+        <div class="fg-card"><div class="t g-back"></div><div><div class="n">Single-Arm Row</div><div class="m"><span class="ddot" style="background:var(--d-int)"></span>Intermed.</div></div></div>
+        <div class="fg-card"><div class="t g-back"></div><div><div class="n">Cable Pullover</div><div class="m"><span class="ddot" style="background:var(--d-int)"></span>Intermed.</div></div></div>
+      </div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">09</div>
+    <h3>Faceted Filter Bar</h3>
+    <p class="concept">A persistent multi-facet bar — Muscle, Equipment, Level, Type — with a live "N exercises match" count, orange active chips, and results in a tidy two-column grid.</p>
+    <div class="best"><b>Best for:</b> precise lifters narrowing on exact constraints.</div>
+    <ul class="wins">
+      <li>Filters live on-screen, not hidden in a sheet behind a badge.</li>
+      <li>Live match count gives instant feedback on each tap.</li>
+      <li>Active chips make the current query obvious and removable.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FRAME 10 — COLLECTIONS / PLAYLISTS -->
+<!-- ============================================================ -->
+<div class="frame-card">
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span class="time">9:41</span><span class="ic">
+      <svg width="17" height="11" viewBox="0 0 17 11"><g fill="#FAFAFA"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" rx="3" fill="none" stroke="#FAFAFA" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="#FAFAFA"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#FAFAFA" fill-opacity=".5"/></svg>
+    </span></div>
+    <div class="appbar"><div class="back">‹</div><div class="htxt"><div class="eyebrow">Zealova</div><h2>Exercise Library</h2></div><div class="right"><span class="iconbtn">⚙</span></div></div>
+    <div class="subtabs"><span class="nn-tab">Discover</span><span class="nn-tab">Exercises</span><span class="nn-tab">Workouts</span><span class="nn-tab">Custom</span><span class="nn-tab on">You</span></div>
+    <div class="body" style="padding-top:0">
+      <div class="coll-big">
+        <div class="cbig lead"><span class="glyph">📈</span><div><div class="ct">Your performed</div><div class="cn">48 exercises</div></div></div>
+        <div class="cbig"><span class="glyph">♥</span><div><div class="ct">Favorites</div><div class="cn">12 exercises</div></div></div>
+        <div class="cbig"><span class="glyph">🔥</span><div><div class="ct">Push-day staples</div><div class="cn">16 exercises</div></div></div>
+        <div class="cbig"><span class="glyph">🤸</span><div><div class="ct">Bodyweight only</div><div class="cn">90 exercises</div></div></div>
+      </div>
+      <div class="coll-list">
+        <div class="h">Made for you</div>
+        <div class="coll-pl"><div class="t g-back"></div><div class="nm"><div class="n">Pull-day power</div><div class="s">Back · Biceps · 14 moves</div></div><div class="play">▶</div></div>
+        <div class="coll-pl"><div class="t g-legs"></div><div class="nm"><div class="n">Leg-day essentials</div><div class="s">Quads · Glutes · 18 moves</div></div><div class="play">▶</div></div>
+        <div class="coll-pl"><div class="t g-cardio"></div><div class="nm"><div class="n">Quick cardio finishers</div><div class="s">Conditioning · 9 moves</div></div><div class="play">▶</div></div>
+      </div>
+      <div style="padding:6px 20px 0"><span class="qchip on" style="display:inline-flex;gap:6px">📚 Browse all 1,512 ›</span></div>
+    </div>
+    <div class="nv-bar"><div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><span class="nv-ul"></span></div><div class="nv-it on"><span class="nv-gl">≣</span><span class="nv-lb">Workouts</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◷</span><span class="nv-lb">Nutrition</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◎</span><span class="nv-lb">Discover</span><span class="nv-ul"></span></div><div class="nv-it"><span class="nv-gl">◔</span><span class="nv-lb">Profile</span><span class="nv-ul"></span></div></div>
+    <div class="nv-plus">+</div><div class="homebar"></div>
+  </div></div>
+  <div class="caption">
+    <div class="num">10</div>
+    <h3>Collections / Playlists</h3>
+    <p class="concept">A collection-forward home — orange-edged cards for "Your performed", "Favorites", "Push-day staples", "Bodyweight only", plus made-for-you sets and a "Browse all". Spotify for exercises.</p>
+    <div class="best"><b>Best for:</b> returning users who curate and re-use their own sets.</div>
+    <ul class="wins">
+      <li>Personal collections become the front door, not a buried filter.</li>
+      <li>Playlist metaphor makes a 1,500-catalog feel owned, not vast.</li>
+      <li>"Browse all" stays one tap away for full-catalog dives.</li>
+    </ul>
+  </div>
+</div>
+
+</main>
+</div>
+</section>
+
+<script>
+function showScreen(which){
+  var isEx = which === 'exercise';
+  document.getElementById('sec-program').hidden = isEx;
+  document.getElementById('sec-exercise').hidden = !isEx;
+  document.getElementById('tab-program').classList.toggle('active', !isEx);
+  document.getElementById('tab-exercise').classList.toggle('active', isEx);
+  if (location.hash !== '#' + which) history.replaceState(null, '', '#' + which);
+}
+(function(){
+  var h = (location.hash || '').replace('#','');
+  showScreen(h === 'exercise' ? 'exercise' : 'program');
+})();
+window.addEventListener('hashchange', function(){
+  var h = (location.hash || '').replace('#','');
+  showScreen(h === 'exercise' ? 'exercise' : 'program');
+});
+</script>
+
+</body>
+</html>

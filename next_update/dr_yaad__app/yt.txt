@@ -1,0 +1,320 @@
+https://www.youtube.com/watch?v=dzEykjn22K8
+I am building the most ambitious fitness
+app [music] in the world, and I've been
+trying to build it for over eight years,
+failing many times. But this time
+I actually think I'm going to pull it
+off. So, let me show you what I've built
+so far and what this whole thing is even
+about.
+About seven years ago, I built my first
+app, Leanko Fitness. And here's the
+thing, it was actually good. Like real
+people got their first full planche on
+it. They got their first front lever. It
+worked.
+But it
+wasn't what I wanted.
+And even though
+even by today's standards, I think it
+was one of the best calisthenics apps
+out there,
+it just didn't do the thing that I
+wanted, the thing that felt impossible
+to do.
+You see, I don't want a good training
+app. I want a deterministic engine,
+something that could out-coach me,
+out-coach any coach, be smarter than me.
+You know, even though I've been doing
+this for over 15 years, I wanted it to
+calculate exactly how much every tissue
+gets taxed and make every decision off
+that. I wanted it to see injuries coming
+before they even happen and learn from
+the ones that do happen. I wanted it to
+find the exact amount of volume a person
+needs, not just the person, but each
+tissue in the person at every stage in
+every type of training.
+And for seven years, I just couldn't
+build this. I I wasn't good enough of a
+coach yet. I didn't know medicine. I I
+mean, I wasn't even a doctor. And the
+technology back then just wasn't good
+enough to build something like this. So,
+for years, I kept failing.
+But all three of those things
+finally have changed.
+Oh, nice. Okay, so earlier this year, I
+went to Bali for three weeks. And the
+plan was simple: relax, train, get
+stronger.
+But in the first few days, it hit me.
+3 weeks where I'm not working as a
+doctor? That almost never happens to me.
+This kind of time is rare.
+So, I made a call. I was going to use
+this time to finally build my dream.
+And, boy, I went all in. Like, 8, 10, 12
+hours a day every single day. People
+thought I was crazy. People out there
+were worried about me. It's been only a
+few weeks. Look how white I am. I
+haven't seen the sun. My friends and
+family back home worried about I
+I even have pictures. Look at this in
+the chat of friends being worried.
+But, honestly,
+I was happy. Like, genuinely happy.
+Because for the first time in 7 years, I
+was building the thing
+I couldn't stop thinking about.
+So, why do all of this? A few reasons.
+I've spent 15 years in calisthenics. 12
+of those years coaching people through
+it.
+I became a medical doctor
+uh specifically so I could help
+calisthenics athletes when they get
+hurt.
+But, I kept hitting the same wall.
+I'm only one person. I can only take
+five coaching clients at a time, which
+also makes me super expensive, out of
+reach for most people.
+And, that [music] genuinely makes me
+sad.
+There's also uh a selfish reason.
+I need a coach for myself. I'm terrible
+at coaching myself. I always find a way
+to manipulate myself into, you know,
+doing the things that I at that
+emotional moment think I should be
+doing.
+And,
+>> [music]
+>> there's one more reason.
+A few weeks ago, I genuinely didn't
+believe that this was even possible.
+And, I wanted to see if it was. There
+was just this inner curiosity inside of
+me.
+And, well, since a few weeks,
+I know it's possible. Okay, enough
+yapping around. Let me show you the
+actual app. So, this is what we have
+now.
+The onboarding is quite simple. You just
+give your name, mail,
+um how tall am I? I'm 168
+and
+I'm 60
+kg I think, yeah.
+It can also be imperial.
+Advance level.
+And here we see that there is a bunch of
+skills coming soon. Planche from levers
+done and one of the most important
+cycles out there, foundational strength
+is done. This is basically the best
+option for most people who don't already
+have a Maltese or like 51 on pull-ups
+etc.
+I'm going to choose all of them
+and [music]
+I'm going to choose Monday, Wednesday,
+Friday and we start today.
+And now we can choose our equipment and
+the app actually looks at all the
+equipment we have available and based on
+that [music] it makes a program
+customized to the equipment that you
+have. It will actually even do
+progressively overload differently than
+people who have all equipment.
+Um
+freaking sick. Like it took me a long
+time.
+Continue.
+How strong am I? So we can say [music]
+we can do pull-ups body weight,
+weighted. I'm going to choose weighted
+and I'm just going to pretend that I'm
+>> [music]
+>> at 30 kg reps.
+Weighted dips, let's pretend I am at 40
+kg reps.
+And then overhead press, let's say
+barbell.
+Let's say 35 kg reps.
+Let's say I can do an advanced tuck
+planche and let's say I can do a
+straddle front lever. Boom. Now it
+recommends a block. So it can recommend
+either skill, foundational strength or
+hypertrophy. And it does this
+recommendation based on everything I put
+in. One of the most deciding factors is
+it looks at how strong are you in these
+basic lifts versus how strong are you in
+the skill and it creates a ratio and
+based on that it makes a good
+recommendation on what fits your level
+at that moment. So I'm going to do
+foundational strength. It's building my
+plan and this is my plan. So I can skim
+through it like this.
+I can change certain things like
+advanced tuck if I think it's too easy.
+Boom, now it's trial bench. I can also
+talk to the to the AI bot chat.
+Um this is actually an LLM that is
+connected through
+um my entire deterministic engine. So,
+all the calculations and everything is
+done by the engine, not by the AI. The
+AI is just to make it easy for you to
+interface with [music] the engine. Okay,
+so let's start with the plan.
+Coaches ready, plan is loaded.
+And now it's doing bunch of back-end
+stuff to make sure the program fits
+perfectly. And uh it should be done
+almost now. Boom.
+Done. So, we can immediately just start
+a workout. And when you start a workout,
+it first asks for a check-in. So, based
+on your sleeping readiness, it looks at,
+[music]
+you know, how ready is your CNS for
+certain skills. So, we're just going to
+say that we are completely fine. We can
+also let it know if we have pain, for
+example. So, let's say I have pain on my
+shoulder. Uh based on that, and it can
+it asks which exercises impact it, um
+>> [music]
+>> it makes adjustments. So, I don't want
+to do that now.
+I just want to pretend we are completely
+fine.
+Uh and we finished the check-in.
+So,
+if I had pain, it would have adjusted
+the entire program based on that. So,
+let's start the workout. And this is
+something really proud of. So, obviously
+there should be videos and stuff in
+there. Nothing is in it right now, but
+there will be [music] in the future.
+And look how fast I can
+log something. I did a banded front
+lever uh
+with 10 kilos, nine reps. You see the
+green thing? That's my goal. So, that's
+the minimal goal you should be doing.
+And the nice thing is, and I can't show
+it now because I would have to do a few
+more workouts, it will also show a blue
+dial of which you did previous time. So,
+you can quickly see what the target
+range [music] is, what your goal is, you
+know, what the engine recommends, and
+what you did last time. And
+theoretically, you only need to do two
+swipes max per exercise, and you can log
+it. How sick is that? Is it too easy?
+You can swap exercises like this. Boom.
+You felt pain? You can let it know like
+this, and it'll actually ask you where
+you felt it. Let's say it's only like a
+two out of two out of 10. Boom, and we
+log the pain.
+And we can keep doing this all the way
+till the end. We can also, you know, tap
+out of it, and you know, check the other
+sections of the app, check what's in
+next week and the week after. We can go
+to the coach chat, we can go to the
+history. There's nothing in here right
+now, but there will be progress bars if
+you work on this, and we can go back to
+the workout just like that.
+Um
+Yeah, after you finish your workout, so
+I do a good job at it.
+Save your my session, and it's going to
+give me some recommendations. So,
+>> [music]
+>> uh right now it actually noticed the
+pain, and it's asking me where I have
+the pain.
+Um this system is almost completely
+done.
+Um
+so, I'm just going to skip, and I'm
+going to save the pain context, and it's
+going to ask [music]
+Now it ask, "Do you want to Oh yeah, so
+because it's two out of 10,
+it wants me to monitor it. If it was
+higher, it would actually ask me certain
+questions, and I'd make a rehab plan
+based on that. Um
+that function is pretty much done today,
+probably.
+This is what I wanted to show you guys.
+There's so much more that actually goes
+on in the app. Um
+but yeah, this is what we have working
+right now. So, when do we release this
+app? Right now, I'm working on getting
+this app in the hands of 10 handpicked
+[music] athletes. These are athletes of,
+you know, beginner level all the way to
+world athletes. And [music] I want them
+to test out the app and find out if
+there's any bugs in it. And I also want
+to make sure that it works as intended.
+So, some of these athletes are genuinely
+injured and I want to see if this app
+actually helps them.
+After we've done thorough testing, I
+will release the app to about 25 and 50
+people [music] that are on my waiting
+list right now. You can get on the
+waiting list by going to
+doctorja.com/theapp.
+And the reason I'm doing this is
+a super complicated app like like this,
+you can't just release to everyone. I
+want to make sure that I can personally
+surveillance all the data and make sure
+that the work that the app is working as
+intended.
+The pro side is if you're on the waiting
+list, you're going to get updates, but
+you're also going to get early access to
+the app and you're going to get a
+discount. You're going to get the
+foundational price. So, this is a
+lifetime discount that you're going to
+get for the app.
+>> [clears throat]
+>> After this app is released, that
+discount will never be there again. So,
+if you want to support me, if you truly
+believe in this app, and if you want
+this app as fast as possible,
+>> [music]
+>> go to doctorja.com/theapp.
+On the app the website, you can actually
+also learn a lot more about the app.
+There's a much more information on
+there.
+Um I worked really hard on that and
+yeah, thank you so much for watching
+this and uh hopefully
+hopefully I'll be done soon and we can
+all enjoy this app and get stronger.

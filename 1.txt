@@ -1,0 +1,48 @@
+---
+  Task: Custom-program builder gaps to fold into the combined program-view work
+
+  Context: You're building the new combined AI + custom program-view screen. While you're in the custom-program area, these gaps live in the same files (program_template_builder_screen.dart and its part files /
+  program_template.dart model). They're mostly UI wiring — the data model and active-workout playback already support most of it. A separate session owns the AI-program swap-persist + overload-follows-swap
+  mechanic; this brief is custom-program only so we don't collide.
+
+  Verified current state (file:line evidence included):
+
+  1. Day add / remove / reorder — ABSENT
+  - program_template_builder_screen.dart:409 loops draft.days as a fixed list; empty draft hardcodes 7 days (:179). No UI to add, remove, or reorder days.
+  - Fix: wrap days in a ReorderableListView — mirror the existing exercise reorder pattern already in this file at :904. Add add/remove-day affordances. Persist new day_index order.
+
+  2. Per-exercise rest timer in builder — PARTIAL (field + playback exist, UI absent)
+  - ProgramExercise.restSeconds exists (program_template.dart:231), defaults to 75s on add (program_builder_part_exercise_picker.dart:147), and is already honored in the active workout ("authored rest always
+  wins" — RestDurationPolicy.dart:48).
+  - Gap: the builder's _ExerciseRow (program_template_builder_screen.dart:947) shows only name + sets×reps + remove. No way to edit rest. Also no program-level rest default
+  (program_builder_part_template_meta.dart only offers progression/deload/staples).
+  - Fix: add an exercise-edit sheet (tap _ExerciseRow) that writes restSeconds via the existing copyWith mutation helpers (:534–608). Optional: a program-level default rest in the meta strip.
+
+  3. Supersets in custom template — ABSENT (stub field only)
+  - ProgramExercise.supersetGroup exists (program_template.dart:238) but the builder never sets it, and there's no supersetOrder on ProgramExercise (it lives only on WorkoutExercise). In-workout drag-to-pair
+  (active_workout_screen_refactored.dart:162) is ephemeral — not saved back to the template.
+  - Fix: add superset_order to ProgramExercise; add a grouping affordance in the builder (reuse the in-workout superset-pair sheet pattern); persist superset_group + superset_order so the played workout honors
+  the pairing. The superset engine already exists app-wide (7 pairing types) — this is just letting authored templates carry pairs.
+
+  4. Exercise edit / swap in builder — ABSENT
+  - _ExerciseRow is remove-and-re-add only (:947–1021); once added, sets/reps/rest/notes are immutable.
+  - Fix: the same edit sheet from (2) should allow editing sets/reps/RIR/notes and swapping the exercise. For custom programs a swap = edit the template directly (persistent by nature) — no
+  progression-migration needed (that's the AI-program session's problem).
+
+  5. Cycle length (weekLength) — read-only
+  - Hardcoded 7 (:179, label at :407); editable only via multi-week import/parse. Duration in weeks is editable (program_builder_part_template_meta.dart:153–222, 1–24 + Auto).
+  - Optional: make weekLength editable for non-7-day cycles.
+
+  Saved template shape (where new fields attach):
+  ProgramTemplate { name, week_length, duration_weeks, deload_every_n_weeks,
+    progression_strategy, apply_staples, source,
+    days: [{ day_index, day_name, is_rest, workout_type,
+      exercises: [{ name, sets, reps, reps_spec, rest_seconds,
+        target_rir, target_weight_kg, superset_group /*+ add superset_order*/,
+        notes, unresolved }] }] }
+
+  Priority for the custom side: (1) day reorder and (2) rest-timer UI are the cheapest wins (field/playback already done). (3) supersets needs one new model field. (4) edit/swap sheet is the unlock that makes
+  (2) usable.
+
+  Coordination boundary: AI-program swap-persist + overload-follows-swap is being built in a separate session (workout_operations.py, strength_recalc.py, weight_suggestions.py, swap sheet). Please don't touch
+  those; we'll align on the substitution data model if your new view wants to surface "manage substitutions."

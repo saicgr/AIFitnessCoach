@@ -14,6 +14,10 @@ class WorkoutsTour {
 
   // TODO(i18n): static method — no BuildContext available.
   // Refactor to instance method accepting BuildContext to enable l10n.
+  // Every step targets an eagerly-built, above-the-fold anchor so the
+  // spotlight always has an on-screen rect to ring. (The old "Make it yours"
+  // step pointed at the deep, lazily-built "+ BUILD A WORKOUT" affordance,
+  // which was never built when the tour reached it → no highlight.)
   static List<EmptyStateTip> steps() => [
         EmptyStateTip(
           icon: Icons.play_circle_outline_rounded,
@@ -25,13 +29,22 @@ class WorkoutsTour {
           targetRadius: 22,
         ),
         EmptyStateTip(
-          icon: Icons.tune_rounded,
-          title: 'Make it yours',
+          icon: Icons.bolt_rounded,
+          title: 'Generate in one tap',
           body:
-              'Use Custom, Browse, or Favorites to build, swap, or repeat a workout.',
-          targetKey: TooltipAnchors.workoutsQuickActions,
-          targetPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              'Short on time? Quick Generate builds a 5–30 min workout around your equipment and recovery.',
+          targetKey: TooltipAnchors.workoutsQuickGenerate,
+          targetPadding: const EdgeInsets.all(8),
           targetRadius: 16,
+        ),
+        EmptyStateTip(
+          icon: Icons.grid_view_rounded,
+          title: 'Build & browse',
+          body:
+              'Open the Library for moves, the Builder to make your own, or Programs for multi-week plans.',
+          targetKey: TooltipAnchors.workoutsPrograms,
+          targetPadding: const EdgeInsets.all(8),
+          targetRadius: 14,
         ),
         EmptyStateTip(
           icon: Icons.favorite_outline_rounded,
@@ -41,6 +54,15 @@ class WorkoutsTour {
           targetKey: TooltipAnchors.workoutsExercisePrefs,
           targetPadding: const EdgeInsets.all(8),
           targetRadius: 18,
+        ),
+        EmptyStateTip(
+          icon: Icons.bar_chart_rounded,
+          title: 'Track your stats',
+          body:
+              'Open Stats to see your strength score, volume, PRs, and progress over time.',
+          targetKey: TooltipAnchors.workoutsStats,
+          targetPadding: const EdgeInsets.all(6),
+          targetRadius: 14,
         ),
       ];
 

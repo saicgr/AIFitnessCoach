@@ -249,13 +249,17 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                     child: GymProfileSwitcher(large: true),
                   ),
                   const SizedBox(width: 8),
-                  _HairlineActionPill(
-                    icon: Icons.bar_chart_rounded,
-                    tint: accentColor,
-                    onTap: () {
-                      HapticService.light();
-                      context.push('/stats');
-                    },
+                  // Tour anchor: "Track your stats" step targets this pill.
+                  KeyedSubtree(
+                    key: TooltipAnchors.workoutsStats,
+                    child: _HairlineActionPill(
+                      icon: Icons.bar_chart_rounded,
+                      tint: accentColor,
+                      onTap: () {
+                        HapticService.light();
+                        context.push('/stats');
+                      },
+                    ),
                   ),
                   const SizedBox(width: 8),
                   _HairlineActionPill(

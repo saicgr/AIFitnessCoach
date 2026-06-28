@@ -116,7 +116,14 @@ def load_candidates():
     files = {
         "free-exercise-db": "compact.json", "gym-popular": "popular.json",
         "power/oly/strongman": "power.json", "bodyweight/core/yoga": "bw.json",
-        "viral/celebrity": "viral.json",
+        "viral/celebrity": "viral.json", "machines/bars/implements": "machines.json",
+        "calisthenics/animal-flow": "calisthenics.json", "rehab/prehab/mobility": "rehab.json",
+        "sport/accessibility": "sport.json", "vo2max/hyrox": "vo2max_hyrox.json",
+        "planks": "planks.json", "warmups": "warmups.json", "stretches-deep": "stretches.json",
+        "gym-variations": "gym_variations.json", "martial-arts": "martial.json",
+        "progressions": "progressions.json", "sports-running": "sports_running.json",
+        "athletic-progressions": "athletic_progressions.json",
+        "goal-ladders": "goal_ladders.json", "movement-variations": "movement_variations.json",
     }
     for src, fn in files.items():
         p = os.path.join(SCRATCH, fn)
@@ -134,18 +141,9 @@ def load_candidates():
             seen.add(key)
             cands.append({"name": nm, "equipment": o.get("equipment"),
                           "muscle": o.get("muscle"), "category": o.get("category"), "src": src})
-    # thin-equipment 158 from the doc table
-    if os.path.exists(DOC):
-        with open(DOC) as f:
-            for line in f:
-                m = re.match(r"\|\s*\d+\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|", line)
-                if m and "Equipment" not in line and "--" not in line:
-                    equip, nm = m.group(1).strip(), m.group(2).strip()
-                    key = nospace(nm)
-                    if key and key not in seen and len(nm) > 2:
-                        seen.add(key)
-                        cands.append({"name": nm, "equipment": equip, "muscle": None,
-                                      "category": "thin-equipment", "src": "thin-equipment-doc"})
+    # NOTE: the 158 trusted equip-gap variants are NOT diffed here (fuzzy match would wrongly
+    # collapse e.g. "Trap Bar RDL" -> "Romanian Deadlift"). They live in the doc's equip-gap rows
+    # and are merged in separately by the master-table builder.
     return cands
 
 def main():
@@ -170,9 +168,11 @@ def main():
             if j > best:
                 best, best_name = j, dn
         c["score"] = round(best, 2); c["closest"] = best_name
-        if matched or best >= 0.62:
+        # surface distinct variations: only call HAVE on a strong/exact match; a shared base
+        # word (e.g. "plank") is not enough — a qualifier the DB lacks => it's a missing variation.
+        if matched or best >= 0.72:
             have.append(c)
-        elif best >= 0.40:
+        elif best >= 0.55:
             review.append(c)
         else:
             missing.append(c)
