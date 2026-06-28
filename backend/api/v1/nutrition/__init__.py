@@ -36,6 +36,7 @@ from api.v1.nutrition import (
     food_logging,
     food_logging_stream,
     scan_imports,
+    import_logs,
     menu_analyses,
     saved_foods,
     recipes,
@@ -87,6 +88,7 @@ router.include_router(usual_meal.router)  # Gap 16 — proactive "your usual?"
 router.include_router(glucose_insights.router)  # Gap 15 — glucose↔food correlation
 # Parity A2 — direct label-scan / app-screenshot-scan (non-chat OCR import)
 router.include_router(scan_imports.router)
+router.include_router(import_logs.router)  # Part A — nutrition data importer
 router.include_router(menu_analyses.router)
 router.include_router(saved_foods.router)
 
