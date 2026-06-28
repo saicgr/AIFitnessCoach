@@ -93,10 +93,23 @@ class WorkoutDB(BaseDB):
         # generation_source so we can distinguish them from old superseded
         # rows. Per product spec: "one current per day unless the user
         # created manually then they can have two."
+        #
+        # Program-expanded workouts (the Program Library expander) are ALSO
+        # written is_current=FALSE by design: a multi-week expansion
+        # forward-schedules many dated rows and there can be only ONE
+        # is_current=true row per user per day. They are NOT superseded
+        # (valid_to IS NULL) and are uniquely identified by a non-null
+        # assignment_id (no other flow sets it), so we admit them by that
+        # discriminator rather than by matching generation_source strings.
+        # Without this branch a started curated program's workouts are
+        # silently dropped from /today, /schedule, and the workout-tab list
+        # (they only ever surfaced through assign-preview's separate direct
+        # query). valid_to IS NULL keeps genuinely superseded program rows out.
         query = query.or_(
             "is_current.eq.true,"
             "and(is_current.eq.false,valid_to.is.null,"
-            "generation_source.in.(manual,user_created,quick_workout,manual_create))"
+            "generation_source.in.(manual,user_created,quick_workout,manual_create)),"
+            "and(is_current.eq.false,valid_to.is.null,assignment_id.not.is.null)"
         )
 
         # Exclude generation placeholders (status='generating') — these are temporary

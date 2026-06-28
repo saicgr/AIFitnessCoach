@@ -1206,7 +1206,17 @@ async def get_today_workout(
         ]
 
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        is_today_workout_day = _is_today_a_workout_day(selected_days, user_today_str=today_str)
+        # A day counts as a workout day if it's in the user's AI-preference days
+        # OR a started program prescribes it. Without the program clause a
+        # curated program that trains on a day outside the user's AI schedule
+        # (e.g. HYROX on Sun for a Fri/Sat user) would have its prescribed
+        # workout DEMOTED off the TODAY card (the gate below at _safe_today_rows
+        # only keeps rows whose day is a workout day).
+        _today_weekday = datetime.strptime(today_str, "%Y-%m-%d").weekday()
+        is_today_workout_day = (
+            _is_today_a_workout_day(selected_days, user_today_str=today_str)
+            or _today_weekday in program_covered_weekdays
+        )
 
         # Enhanced user context logging for debugging (downgraded to debug)
         user_preferences = parse_json_field(user.get("preferences"), {})
