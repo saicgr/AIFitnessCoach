@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -34,6 +35,11 @@ class ZPosterCard extends StatelessWidget {
   /// A short Space-Mono stat line (e.g. "6 WK · 5/WK"). Omitted when null.
   final String? stat;
 
+  /// Optional cover-art URL. When non-empty the poster becomes photo-forward
+  /// (full-bleed image + scrim + text overlaid); otherwise the category
+  /// gradient + glyph header is used.
+  final String? imageUrl;
+
   /// Tap handler.
   final VoidCallback? onTap;
 
@@ -49,6 +55,7 @@ class ZPosterCard extends StatelessWidget {
     this.category,
     this.difficultyLevel,
     this.stat,
+    this.imageUrl,
     this.onTap,
     this.width = 118,
     this.height = 154,
@@ -59,6 +66,7 @@ class ZPosterCard extends StatelessWidget {
     final theme = categoryTheme(category);
     final hasDifficulty =
         difficultyLevel != null && difficultyLevel!.trim().isNotEmpty;
+    final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
 
     final card = Container(
       width: width,
@@ -69,55 +77,9 @@ class ZPosterCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.cardBorder),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Tinted gradient header with the category icon.
-          Container(
-            height: height * 0.42,
-            decoration: BoxDecoration(gradient: theme.headerGradient),
-            alignment: Alignment.center,
-            child: Icon(
-              theme.icon,
-              size: 26,
-              color: AppColors.textPrimary.withValues(alpha: 0.85),
-            ),
-          ),
-          // Body.
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 9),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hasDifficulty) ...[
-                    _DifficultyRibbon(level: difficultyLevel!),
-                    const SizedBox(height: 6),
-                  ],
-                  Expanded(
-                    child: Text(
-                      name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: ZType.sans(13,
-                          color: AppColors.textPrimary,
-                          weight: FontWeight.w700,
-                          height: 1.15),
-                    ),
-                  ),
-                  if (stat != null && stat!.trim().isNotEmpty)
-                    Text(
-                      stat!.toUpperCase(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ZType.data(9.5, color: AppColors.textMuted),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+      child: hasImage
+          ? _imageContent(theme, hasDifficulty)
+          : _gradientContent(theme, hasDifficulty),
     );
 
     if (onTap == null) return card;
@@ -125,6 +87,127 @@ class ZPosterCard extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: card,
+    );
+  }
+
+  /// Category gradient header + glyph above name/stat — the image-free default.
+  Widget _gradientContent(CategoryTheme theme, bool hasDifficulty) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Tinted gradient header with the category icon.
+        Container(
+          height: height * 0.42,
+          decoration: BoxDecoration(gradient: theme.headerGradient),
+          alignment: Alignment.center,
+          child: Icon(
+            theme.icon,
+            size: 26,
+            color: AppColors.textPrimary.withValues(alpha: 0.85),
+          ),
+        ),
+        // Body.
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 9),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasDifficulty) ...[
+                  _DifficultyRibbon(level: difficultyLevel!),
+                  const SizedBox(height: 6),
+                ],
+                Expanded(
+                  child: Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: ZType.sans(13,
+                        color: AppColors.textPrimary,
+                        weight: FontWeight.w700,
+                        height: 1.15),
+                  ),
+                ),
+                if (stat != null && stat!.trim().isNotEmpty)
+                  Text(
+                    stat!.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ZType.data(9.5, color: AppColors.textMuted),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Photo-forward: full-bleed cover + 3-stop scrim, name/ribbon/stat overlaid
+  /// at the bottom. Falls back to the gradient header if the image errors.
+  Widget _imageContent(CategoryTheme theme, bool hasDifficulty) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CachedNetworkImage(
+          imageUrl: imageUrl!,
+          fit: BoxFit.cover,
+          fadeInDuration: const Duration(milliseconds: 200),
+          errorWidget: (_, __, ___) => DecoratedBox(
+            decoration: BoxDecoration(gradient: theme.headerGradient),
+          ),
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x59000000), Color(0x26000000), Color(0xCC000000)],
+              stops: [0.0, 0.45, 1.0],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 9),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (hasDifficulty) ...[
+                _DifficultyRibbon(level: difficultyLevel!),
+                const SizedBox(height: 6),
+              ],
+              Text(
+                name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.sans(13,
+                    color: Colors.white,
+                    weight: FontWeight.w700,
+                    height: 1.15).copyWith(
+                  shadows: const [
+                    Shadow(
+                      color: Color(0xB3000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+              ),
+              if (stat != null && stat!.trim().isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  stat!.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.data(9.5,
+                      color: Colors.white.withValues(alpha: 0.88)),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

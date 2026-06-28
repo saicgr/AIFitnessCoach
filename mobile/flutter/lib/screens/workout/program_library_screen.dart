@@ -122,13 +122,6 @@ const List<String> _kGoals = [
   'Mobility',
 ];
 
-/// A rail short enough to fit ~30-minute sessions. The library exposes
-/// `session_duration_minutes` only through the card model (not a server filter),
-/// so the QUICK rail filters Beginner programs and we cap the rendered posters
-/// to those ≤30 min, falling back to the shortest available if the server has
-/// no minute data — labeled honestly as "QUICK · ≤30 MIN".
-const int _kQuickMaxMinutes = 30;
-
 class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   String? _category;
   String? _difficulty;
@@ -871,11 +864,12 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   // Rails — each backed by a distinct browse filter.
   // -------------------------------------------------------------------------
 
-  /// QUICK · ≤30 MIN — Beginner programs, capped to short sessions client-side.
+  /// QUICK · ≤30 MIN — the "Quick Hits" category (7-minute / plank /
+  /// no-equipment short programs); distinct from the Beginner rail.
   Widget _buildQuickRail() {
     const filter = (
-      category: null,
-      difficulty: 'Beginner',
+      category: 'Quick Hits',
+      difficulty: null,
       sessionsPerWeek: null,
       search: null,
       goals: null,
@@ -887,16 +881,10 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       filter: filter,
       onSeeAll: () {
         setState(() {
-          _difficulty = 'Beginner';
+          _difficulty = null;
+          _goals.clear();
+          _category = 'Quick Hits';
         });
-      },
-      transform: (programs) {
-        final short = programs
-            .where((p) =>
-                p.sessionDurationMinutes != null &&
-                p.sessionDurationMinutes! <= _kQuickMaxMinutes)
-            .toList(growable: false);
-        return short.isNotEmpty ? short : programs;
       },
       onTapCard: _openPreview,
     );
@@ -915,7 +903,11 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     return _Rail(
       title: 'BEGINNER-FRIENDLY',
       filter: filter,
-      onSeeAll: () => setState(() => _difficulty = 'Beginner'),
+      onSeeAll: () => setState(() {
+        _category = null;
+        _goals.clear();
+        _difficulty = 'Beginner';
+      }),
       onTapCard: _openPreview,
     );
   }
@@ -934,9 +926,13 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     return _Rail(
       title: 'GOAL · BUILD MUSCLE',
       filter: filter,
-      onSeeAll: () => setState(() => _goals
-        ..clear()
-        ..add(goal)),
+      onSeeAll: () => setState(() {
+        _category = null;
+        _difficulty = null;
+        _goals
+          ..clear()
+          ..add(goal);
+      }),
       onTapCard: _openPreview,
     );
   }
@@ -1245,17 +1241,11 @@ class _Rail extends ConsumerWidget {
   final VoidCallback? onSeeAll;
   final void Function(ProgramLibraryCard) onTapCard;
 
-  /// Optional client-side transform on the fetched programs (e.g. cap to short
-  /// sessions for the QUICK rail). Receives the server list, returns the list
-  /// to render. Never substitutes mock data — only filters/reorders real rows.
-  final List<ProgramLibraryCard> Function(List<ProgramLibraryCard>)? transform;
-
   const _Rail({
     required this.title,
     required this.filter,
     required this.onTapCard,
     this.onSeeAll,
-    this.transform,
   });
 
   @override
@@ -1269,8 +1259,7 @@ class _Rail extends ConsumerWidget {
       // it quietly collapses (the other rails + categories still render).
       error: (_, __) => const SizedBox.shrink(),
       data: (result) {
-        var programs = result.programs;
-        if (transform != null) programs = transform!(programs);
+        final programs = result.programs;
         if (programs.isEmpty) return const SizedBox.shrink();
         return _scaffold(
           SizedBox(
@@ -1287,6 +1276,7 @@ class _Rail extends ConsumerWidget {
                   category: p.programCategory,
                   difficultyLevel: p.difficultyLevel,
                   stat: _posterStat(p),
+                  imageUrl: p.imageUrl,
                   onTap: () => onTapCard(p),
                 );
               },

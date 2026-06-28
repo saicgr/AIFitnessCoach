@@ -1525,6 +1525,11 @@ async def library_program_detail(
         )
         if _eff_default:
             default_variant_id = _eff_default
+        # Cover art — same resolver as the browse/featured cards so the detail
+        # header KEEPS the cover after this re-fetch replaces the tapped card
+        # (a hand-built dict here previously omitted image_url -> cover flickered
+        # off once detail loaded).
+        from api.v1.library.utils import resolve_image_url as _resolve_img
         return {
             "program_id": str(program["id"]),
             "program_name": program.get("program_name"),
@@ -1541,6 +1546,7 @@ async def library_program_detail(
             "who_not_for": program.get("who_not_for"),
             "equipment_summary": program.get("equipment_summary"),
             "progression_note": program.get("progression_note"),
+            "image_url": _resolve_img(program.get("image_url")),
             "is_published": program.get("is_published", False),
             # Multi-week phase breakdown (migration 2286 `programs.phases` jsonb).
             # [] when the content agent hasn't authored phases for this program.

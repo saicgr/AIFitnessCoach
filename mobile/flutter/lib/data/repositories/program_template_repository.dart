@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../models/assign_preview.dart';
 import '../models/program_template.dart';
 import '../models/user_program_assignment.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 
 /// Response for `POST /program-templates/assign` (the unified Start-program
 /// flow). Kept here (not in the read-only model file) so this stream owns it.
@@ -58,28 +60,77 @@ typedef ProgramLibraryFilter = ({
   int? durationMax,
 });
 
+/// Cache-first `AsyncValue` notifier shared by every Program Library lane.
+///
+/// It paints the disk-cached value INSTANTLY (even if stale) on construction,
+/// then revalidates over the network in the background and emits the fresh
+/// result. This is the "instant tabs" pattern (mirrors `TodayWorkoutNotifier`):
+/// a plain `FutureProvider` can't emit twice, so it always blocked on the
+/// network and showed a skeleton on the first open per launch.
+///
+/// Error posture: a revalidation failure with a painted cache is swallowed
+/// (the user keeps seeing real data); a cold miss + failure surfaces as
+/// `AsyncError` so the screen's existing error + Retry card shows. Never any
+/// mock/fallback data.
+class LibraryAsyncNotifier<T> extends StateNotifier<AsyncValue<T>> {
+  LibraryAsyncNotifier({required this.seed, required this.fetch})
+      : super(const AsyncValue.loading()) {
+    _boot();
+  }
+
+  /// Reads the disk cache (returns null on a cold miss).
+  final Future<T?> Function() seed;
+
+  /// Fetches fresh from the network (and write-throughs the disk cache).
+  final Future<T> Function() fetch;
+
+  Future<void> _boot() async {
+    try {
+      final cached = await seed();
+      if (cached != null && mounted && !state.hasValue) {
+        state = AsyncValue.data(cached);
+      }
+    } catch (_) {
+      // Cache read failure is non-fatal — fall through to the network.
+    }
+    await refresh();
+  }
+
+  /// Revalidate over the network. Called on construction and on manual refresh.
+  Future<void> refresh() async {
+    try {
+      final fresh = await fetch();
+      if (mounted) state = AsyncValue.data(fresh);
+    } catch (e, st) {
+      // Keep the cached value if we already painted one; only surface the error
+      // on a true cold miss so the Retry card shows (no mock data).
+      if (mounted && !state.hasValue) state = AsyncValue.error(e, st);
+    }
+  }
+}
+
 /// Cache-first browse of the curated program library, keyed by the active
-/// filter tuple. `keepAlive` means a returning user (same filters) sees the
-/// last result instantly instead of a blocking skeleton every open; the first
-/// load with no cached value still resolves through the normal async states.
+/// filter tuple. Paints the last disk-cached result for these filters
+/// instantly, then revalidates. `keepAlive` holds the value across screen
+/// rebuilds / quick back-and-forth navigation.
 ///
 /// The screen invalidates this provider for the current filter to force a
-/// silent refresh. Errors propagate so the existing error + Retry card shows
-/// (we never substitute mock/fallback data).
-final programLibraryBrowseProvider = FutureProvider.autoDispose
-    .family<ProgramLibraryResult, ProgramLibraryFilter>((ref, filter) async {
-  // Hold the result across screen rebuilds / quick back-and-forth navigation
-  // so it's served instantly on return. autoDispose still reclaims it once no
-  // longer referenced for a while.
+/// refresh (recreates the notifier → reseeds from cache, then refetches — so a
+/// pull-to-refresh still paints instantly, no skeleton flash).
+final programLibraryBrowseProvider = StateNotifierProvider.autoDispose.family<
+    LibraryAsyncNotifier<ProgramLibraryResult>,
+    AsyncValue<ProgramLibraryResult>,
+    ProgramLibraryFilter>((ref, filter) {
   ref.keepAlive();
   final repo = ref.watch(programTemplateRepositoryProvider);
-  // Scoped resilience: the library is static reference data behind a single
-  // GET. A transient backend blip — a deploy restart, a cold cache prewarm, a
-  // whole-backend stall — shouldn't dump the user straight to the "could not
-  // load the program library" card on the first failure. Retry a couple of
-  // times on TRANSIENT failures only; real errors (auth / 4xx) propagate
-  // immediately so we never mask a genuine problem or substitute mock data.
-  return _browseLibraryWithRetry(repo, filter);
+  return LibraryAsyncNotifier<ProgramLibraryResult>(
+    seed: () => repo.cachedBrowse(filter),
+    // Scoped resilience: the library is static reference data behind a single
+    // GET. A transient backend blip shouldn't dump the user to the error card
+    // on the first failure — retry TRANSIENT failures only; real errors
+    // (auth / 4xx) propagate so we never mask a genuine problem.
+    fetch: () => _browseLibraryWithRetry(repo, filter),
+  );
 });
 
 /// Browse the library, retrying up to 3 times on transient network/server
@@ -123,33 +174,44 @@ bool _isTransientLibraryFailure(DioException e) {
   }
 }
 
-/// Cache-first curated-featured programs (`GET /library/featured`). Same
-/// cache-first + transient-retry posture as [programLibraryBrowseProvider]:
-/// `keepAlive` so a returning user sees the last result instantly. Errors
-/// propagate so the screen's error + Retry card shows; never mock data.
-final programFeaturedProvider =
-    FutureProvider.autoDispose<ProgramLibraryResult>((ref) async {
+/// Cache-first curated-featured programs (`GET /library/featured`). Paints the
+/// disk-cached hero carousel instantly, then revalidates. `keepAlive` holds it
+/// across navigation. Errors on a cold miss surface the Retry card; never mock.
+final programFeaturedProvider = StateNotifierProvider.autoDispose<
+    LibraryAsyncNotifier<ProgramLibraryResult>,
+    AsyncValue<ProgramLibraryResult>>((ref) {
   ref.keepAlive();
   final repo = ref.watch(programTemplateRepositoryProvider);
-  return repo.getFeatured();
+  return LibraryAsyncNotifier<ProgramLibraryResult>(
+    seed: () => repo.cachedFeatured(),
+    fetch: () => repo.getFeatured(),
+  );
 });
 
 /// Cache-first personalized recommendations (`GET /library/recommended`).
-/// Same posture as [programFeaturedProvider].
-final programRecommendedProvider =
-    FutureProvider.autoDispose<ProgramLibraryResult>((ref) async {
+/// Same posture as [programFeaturedProvider]; the disk cache is user-scoped.
+final programRecommendedProvider = StateNotifierProvider.autoDispose<
+    LibraryAsyncNotifier<ProgramLibraryResult>,
+    AsyncValue<ProgramLibraryResult>>((ref) {
   ref.keepAlive();
   final repo = ref.watch(programTemplateRepositoryProvider);
-  return repo.getRecommended();
+  return LibraryAsyncNotifier<ProgramLibraryResult>(
+    seed: () => repo.cachedRecommended(),
+    fetch: () => repo.getRecommended(),
+  );
 });
 
 /// Cache-first category facet counts (`GET /library/categories`) — drives the
 /// category chips / filter rail. Same posture as [programFeaturedProvider].
-final programCategoryCountsProvider = FutureProvider.autoDispose<
-    List<({String category, int count})>>((ref) async {
+final programCategoryCountsProvider = StateNotifierProvider.autoDispose<
+    LibraryAsyncNotifier<List<({String category, int count})>>,
+    AsyncValue<List<({String category, int count})>>>((ref) {
   ref.keepAlive();
   final repo = ref.watch(programTemplateRepositoryProvider);
-  return repo.getCategoryCounts();
+  return LibraryAsyncNotifier<List<({String category, int count})>>(
+    seed: () => repo.cachedCategories(),
+    fetch: () => repo.getCategoryCounts(),
+  );
 });
 
 /// Per-variant schedule provider keyed by (programId, variantId).
@@ -229,27 +291,36 @@ class ProgramTemplateRepository {
       '$_base/library',
       queryParameters: query.isEmpty ? null : query,
     );
-    return ProgramLibraryResult.fromJson(
-      Map<String, dynamic>.from(resp.data as Map),
-    );
+    final data = Map<String, dynamic>.from(resp.data as Map);
+    // Write-through the RAW response so the next cold open paints instantly
+    // (see cache-first providers). Skip free-text searches — a stale search
+    // result is confusing, and they're one-off queries not worth persisting.
+    if ((search ?? '').trim().isEmpty) {
+      _cacheRaw(_browseCacheKey(_filterFromQuery(query)), data);
+    }
+    return ProgramLibraryResult.fromJson(data);
   }
 
   /// GET /library/featured — curated/editorial featured programs.
   ///
   /// Same `{total, programs}` shape as [browseLibrary]. Wrapped in the shared
   /// transient-retry so a deploy blip doesn't dump the user to the error card.
-  Future<ProgramLibraryResult> getFeatured() {
+  Future<ProgramLibraryResult> getFeatured() async {
     debugPrint('🏋️ [ProgramTemplate] getFeatured');
-    return _getLibraryResultWithRetry('$_base/library/featured');
+    final data = await _getMapWithRetry('$_base/library/featured');
+    _cacheRaw(_kFeaturedCacheKey, data);
+    return ProgramLibraryResult.fromJson(data);
   }
 
   /// GET /library/recommended — personalized program recommendations.
   ///
   /// Same `{total, programs}` shape as [browseLibrary]. Wrapped in the shared
-  /// transient-retry.
-  Future<ProgramLibraryResult> getRecommended() {
+  /// transient-retry. Cache is user-scoped (recommendations are personalized).
+  Future<ProgramLibraryResult> getRecommended() async {
     debugPrint('🏋️ [ProgramTemplate] getRecommended');
-    return _getLibraryResultWithRetry('$_base/library/recommended');
+    final data = await _getMapWithRetry('$_base/library/recommended');
+    _cacheRaw(_kRecommendedCacheKey, data, userScoped: true);
+    return ProgramLibraryResult.fromJson(data);
   }
 
   /// GET /library/categories — category facet counts for the filter rail.
@@ -259,6 +330,14 @@ class ProgramTemplateRepository {
   Future<List<({String category, int count})>> getCategoryCounts() async {
     debugPrint('🏋️ [ProgramTemplate] getCategoryCounts');
     final data = await _getMapWithRetry('$_base/library/categories');
+    _cacheRaw(_kCategoriesCacheKey, data);
+    return _parseCategories(data);
+  }
+
+  /// Shared parse for the `{categories:[{category, count}]}` payload — used by
+  /// both the network path and the disk-cache read.
+  List<({String category, int count})> _parseCategories(
+      Map<String, dynamic> data) {
     final raw = data['categories'];
     final out = <({String category, int count})>[];
     if (raw is List) {
@@ -274,6 +353,108 @@ class ProgramTemplateRepository {
     return out;
   }
 
+  // -------------------------------------------------------------------------
+  // Cache-first disk cache (instant Program Library paint). We persist the RAW
+  // response map (not a serialized model) so reads round-trip through the same
+  // `fromJson` the network path uses — no model `toJson` needed, no drift risk.
+  // -------------------------------------------------------------------------
+
+  static const String _kFeaturedCacheKey = 'cache_program_featured';
+  static const String _kRecommendedCacheKey = 'cache_program_recommended';
+  static const String _kCategoriesCacheKey = 'cache_program_categories';
+  static const String _kBrowseCachePrefix = 'cache_program_browse_';
+
+  /// Live user id (never a cached field — JWT-expiry rule). Scopes the
+  /// personalized recommendations cache so user B never inherits user A's.
+  String? _uid() {
+    try {
+      return Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Deterministic disk key for a browse filter tuple. Library content is the
+  /// same for everyone, so browse/featured/categories caches are global
+  /// (userId null); only recommendations are user-scoped.
+  String _browseCacheKey(ProgramLibraryFilter f) {
+    final parts = [
+      f.category ?? '',
+      f.difficulty ?? '',
+      f.sessionsPerWeek?.toString() ?? '',
+      (f.goals ?? const <String>[]).join('|'),
+      f.durationMin?.toString() ?? '',
+      f.durationMax?.toString() ?? '',
+    ];
+    final hash = parts.join('~');
+    return '$_kBrowseCachePrefix${hash.replaceAll('~', '') == '' ? 'default' : hash}';
+  }
+
+  /// Reconstruct the filter tuple from a built query map (so [browseLibrary]
+  /// can derive its own cache key without the caller threading the filter in).
+  ProgramLibraryFilter _filterFromQuery(Map<String, dynamic> q) {
+    final rawGoals = q['goals'];
+    return (
+      category: q['category'] as String?,
+      difficulty: q['difficulty_level'] as String?,
+      sessionsPerWeek: q['sessions_per_week'] as int?,
+      search: q['search'] as String?,
+      goals: rawGoals is String ? rawGoals.split(',') : null,
+      durationMin: q['duration_min'] as int?,
+      durationMax: q['duration_max'] as int?,
+    );
+  }
+
+  /// Fire-and-forget disk write of a raw response map. Never throws into the
+  /// caller — a cache failure must not break a successful fetch.
+  void _cacheRaw(String key, Map<String, dynamic> data, {bool userScoped = false}) {
+    DataCacheService.instance
+        .cache(key, data, userId: userScoped ? _uid() : null)
+        .catchError((Object e) =>
+            debugPrint('⚠️ [ProgramTemplate] cache write ($key) failed: $e'));
+  }
+
+  /// Read a cached raw map (expired entries allowed — the provider revalidates
+  /// in the background, so a stale-but-instant first paint is the whole point).
+  Future<Map<String, dynamic>?> _readRaw(String key, {bool userScoped = false}) async {
+    try {
+      return await DataCacheService.instance.getCached(
+        key,
+        userId: userScoped ? _uid() : null,
+        returnExpiredOnMiss: true,
+      );
+    } catch (e) {
+      debugPrint('⚠️ [ProgramTemplate] cache read ($key) failed: $e');
+      return null;
+    }
+  }
+
+  /// Disk-cached featured programs, or null on a cold miss.
+  Future<ProgramLibraryResult?> cachedFeatured() async {
+    final data = await _readRaw(_kFeaturedCacheKey);
+    return data == null ? null : ProgramLibraryResult.fromJson(data);
+  }
+
+  /// Disk-cached recommendations (user-scoped), or null on a cold miss.
+  Future<ProgramLibraryResult?> cachedRecommended() async {
+    final data = await _readRaw(_kRecommendedCacheKey, userScoped: true);
+    return data == null ? null : ProgramLibraryResult.fromJson(data);
+  }
+
+  /// Disk-cached category counts, or null on a cold miss.
+  Future<List<({String category, int count})>?> cachedCategories() async {
+    final data = await _readRaw(_kCategoriesCacheKey);
+    return data == null ? null : _parseCategories(data);
+  }
+
+  /// Disk-cached browse result for a filter, or null on a cold miss. Searches
+  /// are never cached, so they always miss (and fetch fresh).
+  Future<ProgramLibraryResult?> cachedBrowse(ProgramLibraryFilter f) async {
+    if ((f.search ?? '').trim().isNotEmpty) return null;
+    final data = await _readRaw(_browseCacheKey(f));
+    return data == null ? null : ProgramLibraryResult.fromJson(data);
+  }
+
   /// Coerce a loose JSON number/string into an int, defaulting to 0.
   int _toInt(dynamic v) {
     if (v is int) return v;
@@ -282,22 +463,21 @@ class ProgramTemplateRepository {
     return 0;
   }
 
-  /// GET a `{total, programs}` route with the shared transient-retry posture
-  /// (same backoff + transient classification as [_browseLibraryWithRetry]).
-  Future<ProgramLibraryResult> _getLibraryResultWithRetry(String path) async {
-    final data = await _getMapWithRetry(path);
-    return ProgramLibraryResult.fromJson(data);
-  }
-
   /// GET a JSON object with up to 3 attempts, retrying only TRANSIENT failures
   /// (timeouts / dropped connections / 502-503-504). Non-transient errors
   /// (auth / 4xx) rethrow immediately. Mirrors [_browseLibraryWithRetry] for
   /// the static library reference routes.
-  Future<Map<String, dynamic>> _getMapWithRetry(String path) async {
+  Future<Map<String, dynamic>> _getMapWithRetry(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
     const maxAttempts = 3;
     for (var attempt = 1;; attempt++) {
       try {
-        final resp = await _client.get(path);
+        final resp = await _client.get(
+          path,
+          queryParameters: query == null || query.isEmpty ? null : query,
+        );
         return Map<String, dynamic>.from(resp.data as Map);
       } on DioException catch (e) {
         if (attempt >= maxAttempts || !_isTransientLibraryFailure(e)) rethrow;
@@ -324,8 +504,10 @@ class ProgramTemplateRepository {
   Future<({ProgramLibraryCard card, ProgramTemplate sampleWeek})>
       getLibraryDetail(String programId) async {
     debugPrint('🏋️ [ProgramTemplate] getLibraryDetail | id=$programId');
-    final resp = await _client.get('$_base/library/$programId');
-    final data = Map<String, dynamic>.from(resp.data as Map);
+    // Retry transient failures (e.g. a backend deploy restart) so the detail
+    // header + variant picker don't blank out on a single blip, matching the
+    // browse/featured/recommended routes.
+    final data = await _getMapWithRetry('$_base/library/$programId');
     // The detail payload carries the id as `program_id` (not `id`), so seed the
     // id the card model reads — preserving the caller's prefixed/branded form
     // — before parsing. Don't clobber an `id` if the backend ever sends one.
@@ -767,13 +949,14 @@ class ProgramTemplateRepository {
     if (variantId != null && variantId.isNotEmpty) {
       query['variant_id'] = variantId;
     }
-    final resp = await _client.get(
+    // Retry transient failures (e.g. a backend deploy restart) so the Schedule
+    // tab doesn't show "We could not load this program" on a single blip,
+    // matching the browse/featured/recommended routes.
+    final data = await _getMapWithRetry(
       '$_base/library/$programId/schedule',
-      queryParameters: query.isEmpty ? null : query,
+      query: query,
     );
-    return ProgramScheduleResponse.fromJson(
-      Map<String, dynamic>.from(resp.data as Map),
-    );
+    return ProgramScheduleResponse.fromJson(data);
   }
 
   // -------------------------------------------------------------------------
