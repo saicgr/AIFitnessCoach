@@ -168,6 +168,33 @@ services:
       - key: GEMINI_API_KEY
         sync: false
 
+  # Weekly adaptive-nutrition auto-adjust. Monday 05:00 UTC (low-traffic, after
+  # the weekend's logging has settled). For every user with
+  # nutrition_preferences.auto_adjust_weekly = true (migration 2296), recomputes
+  # the adaptive TDEE (services/adaptive_tdee_service) and AUTO-APPLIES the new
+  # target_calories + macro split — but ONLY when the service's data-quality
+  # score is >= 0.6. Below threshold it leaves a pending weekly recommendation
+  # instead of silently applying a low-confidence number. Idempotent: re-running
+  # the same week just re-applies the same number (no-op when the delta is tiny).
+  # See backend/services/adaptive_weekly_job.py (run_full_sweep / main).
+  - type: cron
+    name: fitwiz-adaptive-weekly
+    schedule: "0 5 * * 1"
+    env: python
+    region: ohio
+    plan: starter
+    branch: main
+    rootDir: backend
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: python -m services.adaptive_weekly_job
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+
   # ── DISABLED (commented out per request) ───────────────────────────────
   # Reviewer-demo health reseed. Daily at 04:00 UTC. Re-runs the seed so the
   # 45-day reviewer demo window always slides forward to END ON TODAY — without

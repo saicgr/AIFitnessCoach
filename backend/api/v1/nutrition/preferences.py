@@ -205,6 +205,74 @@ async def update_nutrition_preferences(user_id: str, request: NutritionPreferenc
         raise safe_internal_error(e, "nutrition")
 
 
+# ─── Weekly adaptive auto-adjust opt-in (migration 2296) ──────────────────────
+# Governs the unattended weekly job (services/adaptive_weekly_job.py): when true,
+# the job recomputes the adaptive TDEE and auto-applies the new target when the
+# data-quality score is high (>= 0.6). Stored as a single boolean column on
+# nutrition_preferences. Read/written here without touching the big preferences
+# model (kept deliberately narrow so it's a cheap toggle).
+from pydantic import BaseModel as _AutoAdjustBaseModel
+
+
+class _AutoAdjustUpdate(_AutoAdjustBaseModel):
+    enabled: bool
+
+
+@router.get("/preferences/{user_id}/auto-adjust")
+async def get_auto_adjust_weekly(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Read the weekly adaptive auto-adjust opt-in flag for a user."""
+    verify_user_ownership(current_user, user_id)
+    try:
+        db = get_supabase_db()
+        res = (
+            db.client.table("nutrition_preferences")
+            .select("auto_adjust_weekly")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        enabled = bool(res.data.get("auto_adjust_weekly")) if (res and res.data) else False
+        return {"auto_adjust_weekly": enabled}
+    except Exception as e:
+        logger.error(f"Failed to get auto_adjust_weekly: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+@router.put("/preferences/{user_id}/auto-adjust")
+async def set_auto_adjust_weekly(
+    user_id: str,
+    body: _AutoAdjustUpdate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Enable/disable the weekly adaptive auto-adjust opt-in for a user.
+
+    Upserts so a user with no nutrition_preferences row yet still gets one.
+    """
+    verify_user_ownership(current_user, user_id)
+    try:
+        db = get_supabase_db()
+        payload = {
+            "auto_adjust_weekly": body.enabled,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        existing = (
+            db.client.table("nutrition_preferences")
+            .select("id")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        if existing and existing.data:
+            db.client.table("nutrition_preferences").update(payload).eq("user_id", user_id).execute()
+        else:
+            payload["user_id"] = user_id
+            db.client.table("nutrition_preferences").insert(payload).execute()
+        return {"auto_adjust_weekly": body.enabled}
+    except Exception as e:
+        logger.error(f"Failed to set auto_adjust_weekly: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
 # ─── Per-meal P/C/F targets (migration 2275) ──────────────────────────────────
 # Default per-meal calorie weights. Filtered to the user's ACTIVE meals and
 # re-normalized to sum to 1.0 (so 3-meal users get ~0.30/0.35/0.35).

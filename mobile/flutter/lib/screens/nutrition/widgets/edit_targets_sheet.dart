@@ -15,6 +15,7 @@ import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../widgets/design_system/zealova.dart';
 import 'ai_recommendation_sheet.dart';
+import 'auto_adjust_targets_card.dart';
 import '../../onboarding/widgets/calorie_macro_estimator.dart';
 import 'nutrition_goals_card.dart' show showNutritionCalculationSheet;
 
@@ -2335,6 +2336,28 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                     fontSize: 11, color: Colors.orange, height: 1.4),
               ),
             ),
+          // B1: weekly auto-adjust opt-in + one-tap "apply suggested target"
+          // (writes the adaptive-TDEE-derived target from the user's 14-day
+          // trend). Self-contained — syncs this sheet's fields via onApplied.
+          const ZealovaRule(margin: EdgeInsets.symmetric(vertical: 8)),
+          AutoAdjustTargetsCard(
+            userId: widget.userId,
+            onApplied: (cal, protein, carbs, fat) {
+              if (!mounted) return;
+              _balancing = true;
+              _caloriesController.text = cal.toString();
+              _proteinController.text = protein.toString();
+              _carbsController.text = carbs.toString();
+              _fatController.text = fat.toString();
+              _balancing = false;
+              setState(() {
+                _isPercentageMode = false;
+                _macroOverflowWarning = null;
+              });
+              _rememberCarbsFatRatio();
+              _recalculate();
+            },
+          ),
           const SizedBox(height: 4),
           ], // end Daily pane
 

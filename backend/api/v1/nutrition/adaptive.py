@@ -130,6 +130,118 @@ async def get_adaptive_calculation(user_id: str, current_user: dict = Depends(ge
         raise safe_internal_error(e, "nutrition")
 
 
+@router.post("/adaptive/{user_id}/apply")
+async def apply_adaptive_target(
+    request: Request,
+    user_id: str,
+    days: int = Query(14, description="Trailing window (days) for the recompute"),
+    current_user: dict = Depends(get_current_user),
+):
+    """One-tap apply: write the latest adaptive-TDEE recommendation onto the
+    user's nutrition_preferences (target_calories + macro split).
+
+    Recomputes the adaptive TDEE fresh over the trailing window (reusing
+    services/adaptive_tdee_service via services/adaptive_weekly_job) and applies
+    the goal-based recommended target. Falls back to the most recent persisted
+    `adaptive_nutrition_calculations` row when there isn't enough fresh data to
+    recompute. Returns the old → new targets so the client can show the change.
+
+    NOTE: this endpoint is independent of the `auto_adjust_weekly` opt-in flag —
+    it always applies on an explicit user tap (no confidence gate). The
+    unattended weekly sweep is the path that gates on data quality.
+    """
+    logger.info(f"Applying adaptive target for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        from services.adaptive_weekly_job import (
+            apply_targets,
+            compute_recommended_targets,
+            recompute_adaptive_tdee,
+        )
+
+        # 1) Prefer a fresh recompute over the trailing window.
+        calc = recompute_adaptive_tdee(db, user_id, days=days)
+        tdee: Optional[int] = None
+        quality: Optional[float] = None
+        source = "recomputed"
+        if calc and calc.get("tdee"):
+            tdee = int(calc["tdee"])
+            quality = float(calc["data_quality_score"])
+        else:
+            # 2) Fall back to the latest persisted calculation.
+            latest = (
+                db.client.table("adaptive_nutrition_calculations")
+                .select("calculated_tdee, data_quality_score")
+                .eq("user_id", user_id)
+                .order("calculated_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            rows = latest.data or []
+            if rows and rows[0].get("calculated_tdee"):
+                tdee = int(rows[0]["calculated_tdee"])
+                quality = (
+                    float(rows[0].get("data_quality_score") or 0)
+                    if rows[0].get("data_quality_score") is not None
+                    else None
+                )
+                source = "persisted"
+
+        if not tdee:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Not enough tracking data to compute an adaptive target yet "
+                    "(need ~6+ days logged and 2+ weight entries). Keep logging."
+                ),
+            )
+
+        # 3) Resolve the recommendation from the user's goal + TDEE, then apply.
+        prefs_res = (
+            db.client.table("nutrition_preferences")
+            .select("*")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        prefs = (prefs_res.data if prefs_res and prefs_res.data else None) or {}
+        rec = compute_recommended_targets(tdee, prefs)
+        result = apply_targets(db, user_id, rec, tdee=tdee, prefs=prefs)
+
+        # 4) Bust the per-user caches a target change invalidates (mirrors the
+        # PUT /preferences path). Best-effort — never fail the write on a miss.
+        try:
+            from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+            from api.v1.nutrition.food_patterns import invalidate_patterns_cache
+            from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+            await invalidate_daily_summary_cache(user_id)
+            await invalidate_patterns_cache(user_id)
+            await invalidate_bootstrap_cache(user_id)
+        except Exception as cache_exc:  # noqa: BLE001
+            logger.warning(
+                f"Adaptive-apply cache invalidation failed for {user_id}: {cache_exc}"
+            )
+
+        return {
+            "success": True,
+            "source": source,
+            "calculated_tdee": tdee,
+            "data_quality_score": quality,
+            "goal": rec["goal"],
+            "old": result["old"],
+            "new": result["new"],
+            "calorie_delta": result["calorie_delta"],
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to apply adaptive target: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
 @router.post("/adaptive/{user_id}/calculate", response_model=AdaptiveCalculationResponse)
 async def calculate_adaptive_tdee(
     request: Request,
