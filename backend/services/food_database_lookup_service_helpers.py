@@ -10,6 +10,7 @@ Provides single and batch food lookups with in-memory TTL caching.
 
 """
 import asyncio
+import re
 import time
 from typing import Dict, List, Optional
 import logging
@@ -18,6 +19,30 @@ from sqlalchemy.exc import SQLAlchemyError
 from core.supabase_client import get_supabase
 from services.food_database_lookup_service_helpers_part2 import FoodDatabaseLookupServicePart2
 logger = logging.getLogger(__name__)
+
+# ── User-scoped food corrections (B4) ──────────────────────────────────
+# Report statuses whose user corrections are auto-applied to that user's OWN
+# searches. 'dismissed' is intentionally excluded (a moderator rejected the
+# correction). 'pending' IS included by default — it's the user's own data, so
+# we trust it before any human review. Tighten by removing entries here.
+_APPLIED_CORRECTION_STATUSES = ("pending", "reviewed", "resolved")
+
+# Clamp for the per-macro correction ratio, so a single bad report (e.g. a
+# stray 9999 or a value entered in the wrong field) can't blow up a canonical
+# per-100g value by orders of magnitude.
+_CORRECTION_RATIO_MIN = 0.05
+_CORRECTION_RATIO_MAX = 20.0
+
+
+def _correction_status_in_clause() -> str:
+    """Build a safe SQL ``IN (...)`` list from the trusted status constant.
+
+    The values are hard-coded identifiers (never user input); we still validate
+    them as alphabetic before interpolation as a belt-and-suspenders guard."""
+    safe = [s for s in _APPLIED_CORRECTION_STATUSES if s.isalpha()]
+    return "(" + ", ".join(f"'{s}'" for s in safe) + ")"
+
+
 class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
     """
     Service for looking up foods in Supabase with two-tier search.
@@ -52,6 +77,15 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
         # for the full 1h cache.
         self._empty_override_prefixes: Dict[str, float] = {}
         self._empty_prefix_ttl = 300  # 5 minutes
+        # User-scoped food corrections (B4): a user's own `food_reports`
+        # wrong_nutrition corrections are overlaid onto THAT user's search
+        # results. Cached per-user with a short TTL so a just-submitted
+        # correction surfaces within ~1 min. The result cache stores RAW
+        # canonical values; this overlay is applied fresh on top of every
+        # search (see apply_user_corrections), so it never pollutes the shared
+        # (non-user) result cache. {user_id: (loaded_at, {norm_name: row})}.
+        self._user_corrections_cache: Dict[str, tuple] = {}
+        self._user_corrections_ttl = 60  # 1 minute
 
     # ── Cache helpers ──────────────────────────────────────────────
 
@@ -737,6 +771,185 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             logger.debug(f"[FoodDB] Override DB lookup failed for '{food_name}': {e}")
 
         return None
+
+    # ── User-scoped corrections (B4) ───────────────────────────────────
+    # A user who reports a food's nutrition as wrong (POST /nutrition/food-
+    # report, report_type='wrong_nutrition') gets THEIR own corrected macros
+    # back on future searches for that food — a personal override layered on
+    # top of the canonical/global data. This NEVER mutates the shared override
+    # DB (global promotion is a separate curation path); it is strictly scoped
+    # to the requesting user.
+
+    @staticmethod
+    def _normalize_food_name(name: Optional[str]) -> str:
+        """Normalize a food name for correction matching: lowercase, trim, and
+        collapse internal whitespace. Brand qualifiers (e.g. "Domino's") live
+        inside the name for branded items, so a plain normalized-name match
+        already honours brand without a separate field."""
+        if not name:
+            return ""
+        return re.sub(r"\s+", " ", str(name).strip().lower())
+
+    async def _fetch_user_correction_rows(self, user_id: str) -> List[Dict]:
+        """Fetch this user's applicable wrong_nutrition corrections from
+        food_reports, newest first. Returns raw row dicts (caller dedupes by
+        name). Fail-open: any DB error returns [] so search never breaks.
+
+        food_reports.user_id references public.users.id (the app id carried in
+        the search `user_id` query param), so no auth_id translation is needed.
+        Uses the existing idx_food_reports_user_id index — a single user has
+        only a handful of reports, so no extra index is required."""
+        if not user_id:
+            return []
+        try:
+            sb = get_supabase()
+            status_in = _correction_status_in_clause()
+            async with sb.get_managed_session() as session:
+                result = await asyncio.wait_for(
+                    session.execute(
+                        text(f"""
+                            SELECT food_name, food_database_id,
+                                   original_calories, original_protein,
+                                   original_carbs, original_fat,
+                                   corrected_calories, corrected_protein,
+                                   corrected_carbs, corrected_fat,
+                                   created_at
+                            FROM food_reports
+                            WHERE user_id = CAST(:uid AS uuid)
+                              AND report_type = 'wrong_nutrition'
+                              AND corrected_calories IS NOT NULL
+                              AND status IN {status_in}
+                            ORDER BY created_at DESC
+                            LIMIT 200
+                        """),
+                        {"uid": user_id},
+                    ),
+                    timeout=3.0,
+                )
+                return [dict(row._mapping) for row in result.fetchall()]
+        except Exception as e:
+            logger.warning(
+                f"[FoodDB] user-correction fetch failed for user={str(user_id)[:8]}…: {e}"
+            )
+            return []
+
+    async def _get_user_corrections(self, user_id: str) -> Dict[str, Dict]:
+        """Return {normalized_food_name: most-recent correction row} for a user,
+        cached for `_user_corrections_ttl` seconds."""
+        if not user_id:
+            return {}
+        now = time.time()
+        entry = self._user_corrections_cache.get(user_id)
+        if entry and (now - entry[0] < self._user_corrections_ttl):
+            return entry[1]
+
+        rows = await self._fetch_user_correction_rows(user_id)
+        by_name: Dict[str, Dict] = {}
+        # Rows are newest-first; keep the FIRST (most recent) per food name.
+        for r in rows:
+            key = self._normalize_food_name(r.get("food_name"))
+            if key and key not in by_name:
+                by_name[key] = r
+
+        self._user_corrections_cache[user_id] = (now, by_name)
+        # Cap growth across many users.
+        if len(self._user_corrections_cache) > 500:
+            oldest = sorted(
+                self._user_corrections_cache.items(), key=lambda kv: kv[1][0]
+            )[:100]
+            for k, _ in oldest:
+                self._user_corrections_cache.pop(k, None)
+        return by_name
+
+    def _apply_correction_to_item(self, item: Dict, corr: Dict) -> bool:
+        """Overlay a user's correction onto one search-result dict (mutated in
+        place). Returns True if any macro was changed.
+
+        The reported corrected_* values are in the units the user SAW (a serving
+        / displayed portion), while search results are per-100g. We therefore
+        apply each macro's correction as a dimensionless RATIO
+        (corrected/original) to the canonical per-100g value — which is exactly
+        the implied per-100g correction when the serving weight is unchanged,
+        and is correct regardless of whether the displayed value was per-serving
+        or per-100g. Macros the user left unchanged keep ratio 1.0 (no-op)."""
+        pairs = (
+            ("calories_per_100g", corr.get("original_calories"), corr.get("corrected_calories")),
+            ("protein_per_100g", corr.get("original_protein"), corr.get("corrected_protein")),
+            ("carbs_per_100g", corr.get("original_carbs"), corr.get("corrected_carbs")),
+            ("fat_per_100g", corr.get("original_fat"), corr.get("corrected_fat")),
+        )
+        changed = False
+        for field, orig, corrected in pairs:
+            if corrected is None:
+                continue
+            base = item.get(field)
+            if base is None:
+                continue
+            try:
+                base_f = float(base)
+                corrected_f = float(corrected)
+            except (TypeError, ValueError):
+                continue
+            orig_f = None
+            if orig is not None:
+                try:
+                    orig_f = float(orig)
+                except (TypeError, ValueError):
+                    orig_f = None
+
+            if orig_f and orig_f > 0:
+                ratio = corrected_f / orig_f
+                ratio = max(_CORRECTION_RATIO_MIN, min(ratio, _CORRECTION_RATIO_MAX))
+                item[field] = round(base_f * ratio, 2)
+                changed = True
+            elif not base_f:
+                # No usable original to scale from AND the canonical value is
+                # ~0 — take the corrected number directly as a best-effort
+                # per-100g value. (If base is non-zero we skip, to avoid mixing
+                # a per-serving correction into a per-100g field.)
+                item[field] = round(corrected_f, 2)
+                changed = True
+
+        if changed:
+            item["user_corrected"] = True
+        return changed
+
+    async def apply_user_corrections(
+        self, foods: List[Dict], user_id: str
+    ) -> List[Dict]:
+        """Overlay a user's own food corrections onto a list of search results.
+
+        Returns a NEW list of (shallow-copied) result dicts so the shared
+        result cache is never mutated. Items without a matching correction are
+        passed through unchanged. Fail-open: on any error the original list is
+        returned untouched."""
+        if not foods or not user_id:
+            return foods
+        try:
+            corrections = await self._get_user_corrections(user_id)
+        except Exception as e:
+            logger.warning(f"[FoodDB] user-correction overlay skipped: {e}")
+            return foods
+        if not corrections:
+            return foods
+
+        out: List[Dict] = []
+        applied = 0
+        for item in foods:
+            corr = corrections.get(self._normalize_food_name(item.get("name")))
+            if not corr:
+                out.append(item)
+                continue
+            new_item = dict(item)
+            if self._apply_correction_to_item(new_item, corr):
+                applied += 1
+            out.append(new_item)
+        if applied:
+            logger.info(
+                f"[FoodDB] Applied {applied} user correction(s) for "
+                f"user={str(user_id)[:8]}… across {len(foods)} result(s)"
+            )
+        return out
 
     # ── Cooking-method stem map (bidirectional) ────────────────────────
     _COOKING_STEMS: Dict[str, str] = {

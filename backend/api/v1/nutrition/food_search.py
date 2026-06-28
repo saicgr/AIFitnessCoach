@@ -45,6 +45,7 @@ class USDAFoodResponse(BaseModel):
     verification_level: Optional[str] = None  # 'curated', 'lab_verified', 'manufacturer_verified', 'community_verified'
     total_calories: Optional[int] = None  # Total calories for saved foods (per-serving, not per-100g)
     partial_match: bool = False  # True if food_match_gate only accepted this as a partial (tier-B/C) match; frontend should show "Closest matches" banner
+    user_corrected: bool = False  # True if the requesting user's OWN prior food-report correction was applied to this result's macros (user-scoped override); frontend can show a "you corrected this" hint
 
 
 class USDASearchResponse(BaseModel):
@@ -159,6 +160,13 @@ async def search_foods(
             )
         _search_time_ms = int((time.time() - _search_start) * 1000)
 
+        # Overlay the requesting user's OWN prior food-report corrections
+        # (report_type='wrong_nutrition') on top of the canonical results, so a
+        # user who fixed a food's macros sees their values on future searches.
+        # User-scoped only — never mutates the shared override DB. Fail-open.
+        if user_id and results:
+            results = await food_db_service.apply_user_corrections(results, user_id)
+
         # Convert local DB results to USDAFoodResponse format for compatibility
         foods = []
         for item in results:
@@ -237,6 +245,7 @@ async def search_foods(
                 verification_level=v_level,
                 total_calories=total_cal,
                 partial_match=bool(item.get("partial_match", False)),
+                user_corrected=bool(item.get("user_corrected", False)),
             ))
 
         total_hits = len(foods)
