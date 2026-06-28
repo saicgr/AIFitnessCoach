@@ -716,7 +716,9 @@ async def browse_library(
         # Serve from cache when present — library is static reference data.
         # RedisCache.get/set take a SINGLE string key — build one via make_key
         # (the old `.get(*cache_key)` unpacked a 4-tuple → TypeError 500).
+        db = get_supabase()
         cache_key = _library_browse_cache.make_key(
+            await _programs_cache_version(db),
             category or "",
             difficulty_level or "",
             sessions_per_week if sessions_per_week is not None else -1,
@@ -735,7 +737,6 @@ async def browse_library(
         if isinstance(cached, dict):
             return cached
 
-        db = get_supabase()
         # Light card columns. When a free-text `search` is present we ALSO pull
         # `tags` + the `workouts` JSONB so the broadened Python matcher can search
         # category/goals/tags/description AND exercise names. The curated
@@ -973,6 +974,42 @@ _library_recommended_cache = ResponseCache(
     prefix="program_library_recommended_v5", ttl_seconds=6 * 3600, max_size=256
 )
 
+# Data-driven cache invalidation. The library content caches key on this token,
+# which is `cache_versions.version` for the `programs` table — bumped by a
+# statement-level trigger on ANY write to `programs` (API write OR raw
+# SQL/migration; migration 2299). So a cover/editorial change flips the token
+# and every library cache misses on the next request — no manual prefix bump,
+# no redeploy. The token itself is cached briefly so we don't hit the DB on
+# every library request; max staleness after a write = this short TTL.
+_library_version_cache = ResponseCache(
+    prefix="programs_data_version", ttl_seconds=45, max_size=1
+)
+
+
+async def _programs_cache_version(db) -> str:
+    """Current `programs` data-version token (see migration 2299). Cached ~45s.
+    Fail-open: any error returns "0" so the library still serves (just without
+    the dynamic bust) rather than 500ing on a cache-key build."""
+    key = _library_version_cache.make_key("programs")
+    cached = await _library_version_cache.get(key)
+    if cached is not None:
+        return str(cached)
+    ver = "0"
+    try:
+        resp = (
+            db.client.table("cache_versions")
+            .select("version")
+            .eq("key", "programs")
+            .limit(1)
+            .execute()
+        )
+        if resp.data:
+            ver = str(resp.data[0].get("version", 0))
+    except Exception as e:  # noqa: BLE001
+        logger.warning("programs cache-version lookup failed: %s", e)
+    await _library_version_cache.set(key, ver)
+    return ver
+
 
 def _goal_keywords_for(primary_goal: Optional[str]) -> List[str]:
     """Resolve a user's primary_goal to program-goal keywords (lowercase)."""
@@ -1005,12 +1042,14 @@ async def library_featured(
     Cached (in-memory, long TTL) as a plain dict — the library is static.
     """
     try:
-        cache_key = _library_featured_cache.make_key("featured")
+        db = get_supabase()
+        cache_key = _library_featured_cache.make_key(
+            await _programs_cache_version(db), "featured"
+        )
         cached = await _library_featured_cache.get(cache_key)
         if isinstance(cached, dict):
             return cached
 
-        db = get_supabase()
         resp = (
             db.client.table("programs")
             .select(_LIBRARY_CARD_COLS)
@@ -1054,12 +1093,14 @@ async def library_categories(
     Cached (in-memory, long TTL) as a plain dict.
     """
     try:
-        cache_key = _library_categories_cache.make_key("categories")
+        db = get_supabase()
+        cache_key = _library_categories_cache.make_key(
+            await _programs_cache_version(db), "categories"
+        )
         cached = await _library_categories_cache.get(cache_key)
         if isinstance(cached, dict):
             return cached
 
-        db = get_supabase()
         resp = (
             db.client.table("programs")
             .select("program_category")
@@ -1165,6 +1206,7 @@ async def library_recommended(
             return await library_featured(current_user=current_user)
 
         cache_key = _library_recommended_cache.make_key(
+            await _programs_cache_version(db),
             str(primary_goal or "").lower(),
             user_level or "",
         )
