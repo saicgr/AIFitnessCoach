@@ -67,6 +67,17 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// fetched (editorial-complete) card once the detail resolves.
   ProgramLibraryCard? _card;
 
+  /// True once the FULL editorial detail (cache OR network) has resolved. Until
+  /// then [_card] is the lightweight browse card, which lacks phases / variant
+  /// options / joined-count — so the Overview tab shows a phases SKELETON rather
+  /// than fabricating "Foundation → Build → Peak" placeholders that then swap
+  /// out under the user (the "why did it change?" jank this fixes).
+  bool _detailLoaded = false;
+
+  /// Guards the cache-vs-network race: if the network result lands first (rare —
+  /// a disk read is normally faster), don't let the stale-cache read clobber it.
+  bool _gotFreshDetail = false;
+
   /// Optimistic favorite override — null means "defer to the server set"
   /// ([favoriteProgramIdsProvider]); non-null is the in-flight toggle target
   /// shown immediately while the add/remove call + invalidation settle.
@@ -92,6 +103,17 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// The selected week index (0-based) in the schedule tab. Resets to 0
   /// whenever the variant changes so the user always lands on week 1.
   int _selectedWeekIndex = 0;
+
+  /// Overscroll distance (px) the user has pulled past the top — drives the
+  /// stretchy-zoom of the hero. Done MANUALLY because `SliverAppBar.stretch` /
+  /// `StretchMode.zoomBackground` do NOT fire inside a [NestedScrollView] (the
+  /// inner tab body absorbs the overscroll, so the outer header never
+  /// stretches). A [ValueNotifier] so only the hero image's transform rebuilds.
+  final ValueNotifier<double> _headerZoom = ValueNotifier<double>(0);
+
+  /// One light haptic per pull once the zoom crosses a threshold (re-armed when
+  /// the pull releases). Mirrors the SliverAppBar `onStretchTrigger` feel.
+  bool _zoomHapticArmed = true;
 
   @override
   void initState() {
@@ -185,22 +207,57 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   void dispose() {
     _tabController.dispose();
     _variantRev.dispose();
+    _headerZoom.dispose();
     super.dispose();
   }
+
+  /// Track overscroll-past-top to drive the manual hero zoom. The inner tab
+  /// body's [ScrollPosition] overshoots below `minScrollExtent` when pulled
+  /// down at the top (BouncingScrollPhysics), so `minScrollExtent - pixels` is
+  /// the pull distance. We only ACT on real overscroll and reset on scroll-end,
+  /// so interleaved non-overscrolling notifications can't reset mid-pull.
+  bool _onScrollForZoom(ScrollNotification n) {
+    if (n.metrics.axis != Axis.vertical) return false;
+    if (n is ScrollEndNotification) {
+      _headerZoom.value = 0;
+      _zoomHapticArmed = true;
+      return false;
+    }
+    final over = n.metrics.minScrollExtent - n.metrics.pixels;
+    if (over > 0) {
+      _headerZoom.value = over;
+      if (over > 64 && _zoomHapticArmed) {
+        _zoomHapticArmed = false;
+        HapticService.light();
+      }
+    }
+    return false;
+  }
+
+  /// Max extra header height a hard overscroll pull can add (px). The hero
+  /// grows from 280 → 420 at full stretch, then springs back on release.
+  static const double _kMaxHeaderStretch = 140;
 
   String get _resolveId => _card?.id ?? widget.programId ?? '';
 
   void _load() {
     final id = _resolveId;
     if (id.isEmpty) return;
-    final future =
-        ref.read(programTemplateRepositoryProvider).getLibraryDetail(id);
-    _detail = future;
-    // Upgrade the header card to the editorial-complete one once it lands.
-    future.then((result) {
+    _gotFreshDetail = false;
+    final repo = ref.read(programTemplateRepositoryProvider);
+
+    // Network fetch (also write-through caches to disk). Seed _detail so the
+    // deep-link FutureBuilder + Schedule-tab fallback always have a future to
+    // await, even before the disk-cache read below returns.
+    final fresh = repo.getLibraryDetail(id);
+    _detail = fresh;
+    fresh.then((result) {
       if (!mounted) return;
+      _gotFreshDetail = true;
       setState(() {
+        _detail = Future.value(result);
         _card = result.card;
+        _detailLoaded = true;
         // The full editorial card carries variant_options + default_variant_id.
         // Re-point to the recommended variant now that we know it — unless the
         // user already picked one — so the screen opens on the default (e.g.
@@ -209,6 +266,21 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       });
     }).catchError((_) {
       // Swallow — the FutureBuilder below surfaces the error state.
+    });
+
+    // Cache-first: paint the REAL disk-cached detail (phases / variants /
+    // joined) instantly on a repeat open, unless the network already won the
+    // race. Kills the placeholder→real swap entirely after the first visit.
+    repo.cachedLibraryDetail(id).then((cached) {
+      if (cached == null || !mounted || _gotFreshDetail) return;
+      setState(() {
+        _detail = Future.value(cached);
+        _card = cached.card;
+        _detailLoaded = true;
+        _syncDefaultVariant(cached.card);
+      });
+    }).catchError((_) {
+      // Cache miss / parse failure is non-fatal — the network path covers it.
     });
   }
 
@@ -301,9 +373,27 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           // it collapses to a slim bar (status-bar-height + kToolbarHeight) as
           // the user scrolls. The tab bar in a SliverPersistentHeader pins
           // BELOW the collapsed app-bar — never under the Dynamic Island.
-          child: NestedScrollView(
+          child: NotificationListener<ScrollNotification>(
+            onNotification: _onScrollForZoom,
+            child: NestedScrollView(
+            // BouncingScrollPhysics on BOTH platforms so the body overscrolls
+            // at the top (Android's default ClampingScrollPhysics doesn't) —
+            // that overscroll is what `_onScrollForZoom` reads to drive the
+            // manual hero zoom.
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
             headerSliverBuilder: (context, innerBoxIsScrolled) => [
-              _buildSliverAppBar(card, innerBoxIsScrolled),
+              // Only the app bar rebuilds as the overscroll grows its height —
+              // not the whole NestedScrollView — so the stretch stays smooth.
+              ValueListenableBuilder<double>(
+                valueListenable: _headerZoom,
+                builder: (_, over, __) => _buildSliverAppBar(
+                  card,
+                  innerBoxIsScrolled,
+                  over.clamp(0.0, _kMaxHeaderStretch),
+                ),
+              ),
               SliverToBoxAdapter(child: _buildStatTiles(card)),
               SliverPersistentHeader(
                 pinned: true,
@@ -321,6 +411,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               ],
             ),
           ),
+          ),
         ),
         _buildBottomBar(card),
       ],
@@ -333,7 +424,8 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   // When collapsed → slim bar with back ‹ + program name + favorite heart.
   // -------------------------------------------------------------------------
 
-  Widget _buildSliverAppBar(ProgramLibraryCard card, bool innerBoxIsScrolled) {
+  Widget _buildSliverAppBar(
+      ProgramLibraryCard card, bool innerBoxIsScrolled, double stretch) {
     final theme = categoryTheme(card.programCategory);
     final hasDifficulty =
         card.difficultyLevel != null && card.difficultyLevel!.trim().isNotEmpty;
@@ -344,7 +436,10 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
 
     return SliverAppBar(
       backgroundColor: AppColors.pureBlack,
-      expandedHeight: 280,
+      // Grows with the overscroll pull (drag-down stretch). The taller header
+      // pushes the stat tiles + tabs down and the BoxFit.cover hero fills (and
+      // visually zooms into) the new space — matching the exercise-detail feel.
+      expandedHeight: 280 + stretch,
       pinned: true,
       automaticallyImplyLeading: false,
       // Collapsed bar: back ‹ + program title + favorite heart.
@@ -392,7 +487,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           children: [
             if (hasCover) ...[
               // Cover art fills the hero; scrim top+bottom keeps the back/heart
-              // controls and the title legible over any photo.
+              // controls and the title legible over any photo. BoxFit.cover
+              // means it fills (and visually zooms into) the taller header as
+              // the overscroll grows `expandedHeight`.
               CachedNetworkImage(
                 imageUrl: card.imageUrl!,
                 fit: BoxFit.cover,
@@ -571,9 +668,12 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   // -------------------------------------------------------------------------
 
   Widget _buildOverviewTab(ProgramLibraryCard card) {
-    final phases = card.phases.isNotEmpty
-        ? card.phases
-        : _fallbackPhases(card.durationWeeks);
+    final phases = card.phases;
+    // While the full editorial detail is still loading we show a SKELETON
+    // instead of fabricating generic phases — the lightweight browse card has
+    // none, and inventing "Foundation → Build → Peak" only to swap it for the
+    // real authored phases is exactly the jank we're removing.
+    final showPhaseSkeleton = phases.isEmpty && !_detailLoaded;
 
     return ListView(
       key: const PageStorageKey<String>('program_detail_overview'),
@@ -583,17 +683,21 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
             style: ZType.lbl(13,
                 color: AppColors.textPrimary, letterSpacing: 1.8)),
         const SizedBox(height: 12),
-        for (final phase in phases)
-          _PhaseBlock(
-            phase: phase,
-            onTap: () => _jumpToScheduleWeek(phase.weekStart ?? 1),
-          ),
-        if (phases.isEmpty)
-          Text(
-            'This program runs as a single continuous block.',
-            style: ZType.sans(13,
-                color: AppColors.textSecondary, weight: FontWeight.w500),
-          ),
+        if (showPhaseSkeleton)
+          const _PhaseSkeleton()
+        else ...[
+          for (final phase in phases)
+            _PhaseBlock(
+              phase: phase,
+              onTap: () => _jumpToScheduleWeek(phase.weekStart ?? 1),
+            ),
+          if (phases.isEmpty)
+            Text(
+              'This program runs as a single continuous block.',
+              style: ZType.sans(13,
+                  color: AppColors.textSecondary, weight: FontWeight.w500),
+            ),
+        ],
 
         if ((card.whoFor ?? '').trim().isNotEmpty)
           _OverviewNote(
@@ -625,31 +729,6 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           ),
       ],
     );
-  }
-
-  /// Derive a sensible phase split from [durationWeeks] when the program has no
-  /// authored phases — never invents content, just a plain Foundation → Build →
-  /// Peak structure proportional to length. Returns empty for very short plans.
-  List<ProgramPhase> _fallbackPhases(int? durationWeeks) {
-    final w = durationWeeks ?? 0;
-    if (w < 3) return const [];
-    if (w <= 5) {
-      final mid = (w / 2).ceil();
-      return [
-        ProgramPhase(
-            index: 1, title: 'Foundation', weekStart: 1, weekEnd: mid),
-        ProgramPhase(index: 2, title: 'Build', weekStart: mid + 1, weekEnd: w),
-      ];
-    }
-    final third = (w / 3).floor();
-    return [
-      ProgramPhase(
-          index: 1, title: 'Foundation', weekStart: 1, weekEnd: third),
-      ProgramPhase(
-          index: 2, title: 'Build', weekStart: third + 1, weekEnd: third * 2),
-      ProgramPhase(
-          index: 3, title: 'Peak', weekStart: third * 2 + 1, weekEnd: w),
-    ];
   }
 
   // -------------------------------------------------------------------------
@@ -999,6 +1078,69 @@ class _StatTile extends StatelessWidget {
 // ===========================================================================
 // Overview pieces — phase block + note.
 // ===========================================================================
+
+/// Placeholder shown in the Overview tab's PHASES section while the full
+/// editorial detail loads. Mirrors [_PhaseBlock]'s geometry so the real phases
+/// drop in without a layout jump — and, crucially, shows nothing the user could
+/// mistake for content, so there's no "why did it change?" swap.
+class _PhaseSkeleton extends StatelessWidget {
+  const _PhaseSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < 3; i++)
+          Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surface2,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.cardBorder),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const _SkeletonBar(width: 30, height: 26),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      _SkeletonBar(width: 120, height: 14),
+                      SizedBox(height: 7),
+                      _SkeletonBar(width: 180, height: 12),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Tiny static (non-animated) skeleton bar — matches the program library's
+/// `_ShimmerBox` look so loading states feel consistent across the feature.
+class _SkeletonBar extends StatelessWidget {
+  final double width;
+  final double height;
+  const _SkeletonBar({required this.width, required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
+  }
+}
 
 class _PhaseBlock extends StatelessWidget {
   final ProgramPhase phase;

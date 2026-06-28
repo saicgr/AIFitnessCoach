@@ -17,11 +17,16 @@ class AssignResult {
   final String? templateId;
   final int workoutsCreated;
 
+  /// What the AI-tailoring actually did on commit (`CustomizeSummary.none` when
+  /// the user didn't enable tailoring). Drives the honest post-Start toast.
+  final CustomizeSummary customizeSummary;
+
   const AssignResult({
     required this.success,
     this.assignmentId,
     this.templateId,
     this.workoutsCreated = 0,
+    this.customizeSummary = CustomizeSummary.none,
   });
 
   factory AssignResult.fromJson(Map<String, dynamic> json) {
@@ -38,6 +43,10 @@ class AssignResult {
       assignmentId: json['assignment_id']?.toString(),
       templateId: json['template_id']?.toString(),
       workoutsCreated: toInt(json['workouts_created']),
+      customizeSummary: json['customize_summary'] is Map
+          ? CustomizeSummary.fromJson(
+              Map<String, dynamic>.from(json['customize_summary'] as Map))
+          : CustomizeSummary.none,
     );
   }
 }
@@ -363,6 +372,14 @@ class ProgramTemplateRepository {
   static const String _kRecommendedCacheKey = 'cache_program_recommended';
   static const String _kCategoriesCacheKey = 'cache_program_categories';
   static const String _kBrowseCachePrefix = 'cache_program_browse_';
+  static const String _kDetailCachePrefix = 'cache_program_detail_';
+
+  /// Disk key for one program's full detail payload (the `GET /library/{id}`
+  /// response). Keyed by program id so re-opening a program paints the real
+  /// phases / variants / joined-count instantly instead of the lightweight
+  /// browse card's fabricated placeholder.
+  String _detailCacheKey(String programId) =>
+      '$_kDetailCachePrefix$programId';
 
   /// Live user id (never a cached field — JWT-expiry rule). Scopes the
   /// personalized recommendations cache so user B never inherits user A's.
@@ -455,6 +472,26 @@ class ProgramTemplateRepository {
     return data == null ? null : ProgramLibraryResult.fromJson(data);
   }
 
+  /// Disk-cached program detail (editorial card + sample week) for [programId],
+  /// or null on a cold miss. Parses the cached RAW payload through the SAME
+  /// `fromJson` paths the network response uses, so a repeat open paints the
+  /// real phases / variant selectors / joined badge instantly while
+  /// [getLibraryDetail] revalidates in the background.
+  Future<({ProgramLibraryCard card, ProgramTemplate sampleWeek})?>
+      cachedLibraryDetail(String programId) async {
+    final data = await _readRaw(_detailCacheKey(programId));
+    if (data == null) return null;
+    final cardData = Map<String, dynamic>.from(data);
+    cardData.putIfAbsent('id', () => data['program_id'] ?? programId);
+    if ((cardData['id']?.toString() ?? '').isEmpty) {
+      cardData['id'] = programId;
+    }
+    return (
+      card: ProgramLibraryCard.fromJson(cardData),
+      sampleWeek: ProgramTemplate.fromJson(data),
+    );
+  }
+
   /// Coerce a loose JSON number/string into an int, defaulting to 0.
   int _toInt(dynamic v) {
     if (v is int) return v;
@@ -508,6 +545,11 @@ class ProgramTemplateRepository {
     // header + variant picker don't blank out on a single blip, matching the
     // browse/featured/recommended routes.
     final data = await _getMapWithRetry('$_base/library/$programId');
+    // Write-through to disk so the next open of this program paints the real
+    // detail (phases / variants / joined) instantly instead of the browse
+    // card's fabricated placeholder. Raw payload — round-trips through the same
+    // fromJson on read (see [cachedLibraryDetail]).
+    _cacheRaw(_detailCacheKey(programId), data);
     // The detail payload carries the id as `program_id` (not `id`), so seed the
     // id the card model reads — preserving the caller's prefixed/branded form
     // — before parsing. Don't clobber an `id` if the backend ever sends one.
@@ -660,6 +702,9 @@ class ProgramTemplateRepository {
     int? durationWeeks,
     String? variantId,
     Map<String, String>? dayResolutions,
+    bool adaptToLevel = false,
+    bool swapForInjuries = false,
+    bool fitEquipment = false,
   }) {
     return <String, dynamic>{
       'program_id': programId,
@@ -677,6 +722,14 @@ class ProgramTemplateRepository {
       // first-week conflict days. Sent on BOTH preview and commit so they agree.
       if (dayResolutions != null && dayResolutions.isNotEmpty)
         'day_resolutions': dayResolutions,
+      // AI-tailoring toggles — sent on the PREVIEW so the live estimate matches
+      // what commit will do (mirrors [assignProgram]'s customize block).
+      if (adaptToLevel || swapForInjuries || fitEquipment)
+        'customize': {
+          'adapt_to_level': adaptToLevel,
+          'swap_for_injuries': swapForInjuries,
+          'fit_equipment': fitEquipment,
+        },
     };
   }
 
@@ -694,6 +747,9 @@ class ProgramTemplateRepository {
     int? durationWeeks,
     String? variantId,
     Map<String, String>? dayResolutions,
+    bool adaptToLevel = false,
+    bool swapForInjuries = false,
+    bool fitEquipment = false,
   }) async {
     final body = _assignBody(
       programId: programId,
@@ -704,6 +760,9 @@ class ProgramTemplateRepository {
       durationWeeks: durationWeeks,
       variantId: variantId,
       dayResolutions: dayResolutions,
+      adaptToLevel: adaptToLevel,
+      swapForInjuries: swapForInjuries,
+      fitEquipment: fitEquipment,
     );
     debugPrint('🏋️ [ProgramTemplate] previewAssignment | id=$programId '
         'slot=${body['slot']} days=$assignedDays replace=$replace '

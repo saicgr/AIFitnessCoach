@@ -2050,6 +2050,11 @@ class _StartProgramFlowSheetState
         durationWeeks: args.durationWeeks,
         variantId: args.variantId,
         dayResolutions: args.dayResolutions,
+        // Send the tailoring toggles so the preview carries a live per-week
+        // estimate of what AI will change (only when the master toggle is on).
+        adaptToLevel: _aiTailor && _adaptToLevel,
+        swapForInjuries: _aiTailor && _swapForInjuries,
+        fitEquipment: _aiTailor && _fitEquipment,
       );
       if (!mounted || seq != _previewSeq) return;
       // AUTHORITATIVE frequency = what the backend will actually schedule. If a
@@ -2210,19 +2215,48 @@ class _StartProgramFlowSheetState
       // (GET /branded-programs/current) — refresh it so it flips to the started
       // program instead of the AI default.
       unawaited(ref.read(currentProgramProvider.notifier).refresh(userId: uid));
+      // Drop any snackbar still on screen/queued from a prior start. Two
+      // SnackBars with identical text share a Hero tag (Flutter derives the tag
+      // from the content), and overlapping them during the sheet-pop route
+      // transition throws "multiple heroes share the same tag".
+      messenger.clearSnackBars();
+      // Honest confirmation of what AI tailoring actually did (caveat: the card
+      // promised tailoring but never confirmed it). Auto-dismisses with the
+      // toast; on failure we say so rather than implying it applied.
+      final cs = result.customizeSummary;
+      final base = result.workoutsCreated > 0
+          ? '${card.displayName} started · ${result.workoutsCreated} '
+              'workouts added'
+          : '${card.displayName} started';
+      String message = base;
+      if (cs.isApplied) {
+        message = '$base\nTailored: ${cs.humanPhrase}';
+      } else if (cs.isFailed) {
+        message =
+            "$base\nTailoring couldn't run — started with the standard plan.";
+      }
       messenger.showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.surface2,
-          duration: const Duration(seconds: 4),
-          content: Text(
-            result.workoutsCreated > 0
-                ? '${card.displayName} started — ${result.workoutsCreated} '
-                    'workouts on your schedule'
-                : '${card.displayName} started',
+          backgroundColor: AppColors.elevated,
+          duration: Duration(seconds: cs.isApplied || cs.isFailed ? 6 : 4),
+          content: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.check_circle_rounded,
+                  color: AppColors.green, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
           action: SnackBarAction(
             label: 'VIEW',
+            textColor: AppColors.orange,
             onPressed: () => rootContext.push('/schedule'),
           ),
         ),
@@ -2230,10 +2264,12 @@ class _StartProgramFlowSheetState
     } on ProgramParseException catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
+      messenger.clearSnackBars();
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (!mounted) return;
       setState(() => _submitting = false);
+      messenger.clearSnackBars();
       messenger.showSnackBar(
         const SnackBar(
             content: Text('Could not start this program. Please try again.')),
@@ -2339,6 +2375,10 @@ class _StartProgramFlowSheetState
 
                     // AI tailor.
                     _buildAiTailor(),
+
+                    // Live "what AI will change" estimate — its own labeled
+                    // block so it's never conflated with the schedule footer.
+                    _buildAiTailorImpact(),
 
                     // Impact restate just above the pinned CONFIRM bar.
                     _buildImpactRestate(),
@@ -3271,14 +3311,22 @@ class _StartProgramFlowSheetState
     final i = preview.impact;
     return Padding(
       padding: const EdgeInsets.only(top: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
         children: [
-          _impactPill('${i.replaceCount} replace', AppColors.orange),
-          _impactDot(),
-          _impactPill('${i.stackCount} stack', AppColors.info),
-          _impactDot(),
-          _impactPill('${i.newCount} new', AppColors.green),
+          // Labels these as CALENDAR overlaps, not the AI tailoring above — the
+          // two used to sit unlabeled back-to-back and read as one thing.
+          _StartFlowLabel('SCHEDULE IMPACT'),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _impactPill('${i.replaceCount} replace', AppColors.orange),
+              _impactDot(),
+              _impactPill('${i.stackCount} stack', AppColors.info),
+              _impactDot(),
+              _impactPill('${i.newCount} new', AppColors.green),
+            ],
+          ),
         ],
       ),
     );
@@ -3310,6 +3358,14 @@ class _StartProgramFlowSheetState
       );
 
   Widget _buildAiTailor() {
+    // Live profile context so each toggle shows WHAT it will act on — making the
+    // honest no-op case visible ("No injuries on file") instead of a silent
+    // toggle that changes nothing.
+    final user = ref.watch(currentUserProvider).valueOrNull;
+    final injuries = user?.injuriesList ?? const <String>[];
+    final equipment = user?.equipmentList ?? const <String>[];
+    final level = (user?.fitnessLevel ?? '').trim();
+
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
       decoration: BoxDecoration(
@@ -3326,7 +3382,10 @@ class _StartProgramFlowSheetState
             dense: true,
             value: _aiTailor,
             activeThumbColor: AppColors.orange,
-            onChanged: (v) => setState(() => _aiTailor = v),
+            onChanged: (v) {
+              setState(() => _aiTailor = v);
+              _schedulePreview(); // refresh the live tailoring estimate
+            },
             secondary: const Icon(Icons.auto_awesome_rounded,
                 size: 18, color: AppColors.orange),
             title: Text(
@@ -3345,17 +3404,40 @@ class _StartProgramFlowSheetState
             _aiSubToggle(
               'Adapt sets/reps to my level',
               _adaptToLevel,
-              (v) => setState(() => _adaptToLevel = v),
+              (v) {
+                setState(() => _adaptToLevel = v);
+                _schedulePreview();
+              },
+              hint: _levelHint(level),
             ),
             _aiSubToggle(
               'Swap exercises for my injuries',
               _swapForInjuries,
-              (v) => setState(() => _swapForInjuries = v),
+              (v) {
+                setState(() => _swapForInjuries = v);
+                _schedulePreview();
+              },
+              hint: injuries.isEmpty
+                  ? 'No injuries on file'
+                  : 'Using: ${injuries.join(', ')}',
+              actionLabel: injuries.isEmpty ? 'Add' : null,
+              onAction:
+                  injuries.isEmpty ? () => context.push('/injuries/report') : null,
             ),
             _aiSubToggle(
               'Fit my available equipment',
               _fitEquipment,
-              (v) => setState(() => _fitEquipment = v),
+              (v) {
+                setState(() => _fitEquipment = v);
+                _schedulePreview();
+              },
+              hint: equipment.isEmpty
+                  ? 'No equipment set'
+                  : 'Using: ${_equipmentSummary(equipment)}',
+              actionLabel: equipment.isEmpty ? 'Add' : null,
+              onAction: equipment.isEmpty
+                  ? () => context.push('/settings/equipment')
+                  : null,
             ),
           ],
         ],
@@ -3363,22 +3445,168 @@ class _StartProgramFlowSheetState
     );
   }
 
-  Widget _aiSubToggle(String label, bool value, ValueChanged<bool> onChanged) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: ZType.sans(12.5,
-                color: AppColors.textSecondary, weight: FontWeight.w500),
+  /// Honest one-liner for the level toggle. Intermediate is a deliberate no-op
+  /// (the program baseline already sits at intermediate), so say so.
+  String _levelHint(String level) {
+    final l = level.toLowerCase();
+    if (l.isEmpty) return 'Level not set';
+    final cap = '${level[0].toUpperCase()}${level.substring(1)}';
+    if (l == 'intermediate') return 'Your level: $cap — already fits';
+    return "Your level: $cap — we'll adjust your volume";
+  }
+
+  /// Compact equipment list for the toggle subtitle (first few + overflow).
+  String _equipmentSummary(List<String> equipment) {
+    if (equipment.length <= 3) return equipment.join(', ');
+    return '${equipment.take(3).join(', ')} +${equipment.length - 3}';
+  }
+
+  Widget _aiSubToggle(
+    String label,
+    bool value,
+    ValueChanged<bool> onChanged, {
+    String? hint,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: ZType.sans(12.5,
+                      color: AppColors.textSecondary, weight: FontWeight.w500),
+                ),
+                if (hint != null && hint.isNotEmpty) ...[
+                  const SizedBox(height: 1),
+                  GestureDetector(
+                    onTap: onAction,
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            hint,
+                            style: ZType.sans(10.5,
+                                color: AppColors.textMuted,
+                                weight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (actionLabel != null && onAction != null)
+                          Text(
+                            ' · $actionLabel →',
+                            style: ZType.sans(10.5,
+                                color: AppColors.orange,
+                                weight: FontWeight.w600),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-        Checkbox(
-          value: value,
-          activeColor: AppColors.orange,
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          onChanged: (v) => onChanged(v ?? false),
+          const SizedBox(width: 8),
+          Checkbox(
+            value: value,
+            activeColor: AppColors.orange,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onChanged: (v) => onChanged(v ?? false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Live "what AI will change" estimate — its own labeled block, distinct from
+  // the SCHEDULE IMPACT (calendar-collision) footer.
+  // -------------------------------------------------------------------------
+
+  Widget _buildAiTailorImpact() {
+    if (!_aiTailor) return const SizedBox.shrink();
+    final cs = _preview?.customizeSummary ?? CustomizeSummary.none;
+    final loading = _previewLoading && cs.isNone;
+    // Nothing to show yet (no days picked / no estimate) and not loading.
+    if (!loading && cs.isNone) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _StartFlowLabel('WHAT AI WILL CHANGE'),
+          const SizedBox(height: 8),
+          if (loading)
+            const _ShimmerBox(width: 220, height: 12)
+          else
+            _aiTailorImpactBody(cs),
+        ],
+      ),
+    );
+  }
+
+  Widget _aiTailorImpactBody(CustomizeSummary cs) {
+    if (cs.isFailed) {
+      return _tailorImpactRow(
+        Icons.error_outline_rounded,
+        AppColors.orange,
+        "Couldn't preview tailoring — it'll still run on Start.",
+      );
+    }
+    if (cs.isApplied) {
+      final weeks = _preview?.durationWeeks ?? 0;
+      return _tailorImpactRow(
+        Icons.check_circle_outline_rounded,
+        AppColors.green,
+        cs.humanPhrase,
+        caption: weeks > 1
+            ? 'Estimated from week 1 · applied across all $weeks weeks on Start'
+            : null,
+      );
+    }
+    // noop
+    return _tailorImpactRow(
+      Icons.info_outline_rounded,
+      AppColors.textMuted,
+      'Nothing to change for your profile.',
+    );
+  }
+
+  Widget _tailorImpactRow(IconData icon, Color tint, String text,
+      {String? caption}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 15, color: tint),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                text,
+                style: ZType.sans(12,
+                    color: AppColors.textSecondary, weight: FontWeight.w500),
+              ),
+              if (caption != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  caption,
+                  style: ZType.sans(10.5,
+                      color: AppColors.textMuted, weight: FontWeight.w500),
+                ),
+              ],
+            ],
+          ),
         ),
       ],
     );

@@ -198,6 +198,100 @@ class PreviewImpact {
   static const empty = PreviewImpact(replaceCount: 0, stackCount: 0, newCount: 0);
 }
 
+/// Coerce a loose JSON list into a `List<String>` of non-empty trimmed values.
+List<String> _toStrList(dynamic raw) {
+  final out = <String>[];
+  if (raw is List) {
+    for (final e in raw) {
+      final s = e?.toString().trim() ?? '';
+      if (s.isNotEmpty) out.add(s);
+    }
+  }
+  return out;
+}
+
+/// What the AI-tailoring passes did (or would do) to the plan — the honest
+/// answer to "did checking those boxes actually change anything?".
+///
+/// `status`:
+///  - `applied` — at least one exercise was swapped/dropped or a set count tweaked
+///  - `noop`    — tailoring ran but had nothing to do for this profile
+///                (no injuries on file / gear covers it / level already matches)
+///  - `failed`  — a pass raised; the standard (untailored) plan was used
+///  - `none`    — not requested (AI tailor off) → no section shown
+///
+/// On the PREVIEW it's a per-week estimate; on the COMMIT result it's the real
+/// applied change. Same shape both places.
+class CustomizeSummary {
+  final String status;
+  final List<String> injuries;
+  final List<String> droppedForInjury;
+  final List<String> addedForInjury;
+  final List<String> droppedForEquipment;
+  final List<String> addedForEquipment;
+  final int levelTweaks;
+  final String? fitnessLevel;
+
+  const CustomizeSummary({
+    required this.status,
+    this.injuries = const [],
+    this.droppedForInjury = const [],
+    this.addedForInjury = const [],
+    this.droppedForEquipment = const [],
+    this.addedForEquipment = const [],
+    this.levelTweaks = 0,
+    this.fitnessLevel,
+  });
+
+  static const none = CustomizeSummary(status: 'none');
+
+  bool get isApplied => status == 'applied';
+  bool get isNoop => status == 'noop';
+  bool get isFailed => status == 'failed';
+  bool get isNone => status == 'none';
+
+  int get injurySwaps => droppedForInjury.length;
+  int get equipmentSwaps => droppedForEquipment.length;
+  int get totalChanges => injurySwaps + equipmentSwaps + levelTweaks;
+
+  /// One honest, human sentence about what tailoring did. Caller may prefix it
+  /// (e.g. "Per week: ") on the live estimate.
+  String get humanPhrase {
+    if (isFailed) return "Couldn't tailor — using the standard plan.";
+    if (isNone) return '';
+    final parts = <String>[];
+    if (injurySwaps > 0) {
+      final who = injuries.isNotEmpty ? ' for your ${injuries.join(', ')}' : '';
+      parts.add('swapped $injurySwaps$who');
+    }
+    if (equipmentSwaps > 0) {
+      parts.add('fit $equipmentSwaps to your gear');
+    }
+    if (levelTweaks > 0) {
+      final lvl = (fitnessLevel ?? '').trim();
+      parts.add('adjusted $levelTweaks set${levelTweaks == 1 ? '' : 's'}'
+          '${lvl.isNotEmpty ? ' for $lvl' : ''}');
+    }
+    if (parts.isEmpty) return 'No changes needed for your profile.';
+    // Capitalize the first clause.
+    final joined = parts.join(' · ');
+    return '${joined[0].toUpperCase()}${joined.substring(1)}.';
+  }
+
+  factory CustomizeSummary.fromJson(Map<String, dynamic> json) {
+    return CustomizeSummary(
+      status: _toStr(json['status']).isEmpty ? 'noop' : _toStr(json['status']),
+      injuries: _toStrList(json['injuries']),
+      droppedForInjury: _toStrList(json['dropped_for_injury']),
+      addedForInjury: _toStrList(json['added_for_injury']),
+      droppedForEquipment: _toStrList(json['dropped_for_equipment']),
+      addedForEquipment: _toStrList(json['added_for_equipment']),
+      levelTweaks: _toInt(json['level_tweaks']),
+      fitnessLevel: json['fitness_level']?.toString(),
+    );
+  }
+}
+
 /// Full response of `POST /program-templates/assign-preview` — a deterministic,
 /// LLM-free projection of what assigning this program will schedule and overlap.
 class AssignPreview {
@@ -219,6 +313,10 @@ class AssignPreview {
   final PreviewImpact impact;
   final String summary;
 
+  /// Per-week AI-tailoring estimate. `CustomizeSummary.none` when the client
+  /// didn't opt in (AI tailor off) or the backend omitted it.
+  final CustomizeSummary customizeSummary;
+
   const AssignPreview({
     required this.programId,
     required this.programName,
@@ -233,6 +331,7 @@ class AssignPreview {
     required this.replaceEnds,
     required this.impact,
     required this.summary,
+    this.customizeSummary = CustomizeSummary.none,
   });
 
   /// Fast lookup: existing-name keyed by date, for annotating day rows with the
@@ -277,6 +376,10 @@ class AssignPreview {
           ? PreviewImpact.fromJson(Map<String, dynamic>.from(impactRaw))
           : PreviewImpact.empty,
       summary: _toStr(json['summary']),
+      customizeSummary: json['customize_summary'] is Map
+          ? CustomizeSummary.fromJson(
+              Map<String, dynamic>.from(json['customize_summary'] as Map))
+          : CustomizeSummary.none,
     );
   }
 }
