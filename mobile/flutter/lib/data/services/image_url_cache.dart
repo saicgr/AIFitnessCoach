@@ -23,7 +23,16 @@ import 'api_client.dart';
 /// end. Persistence writes only the [_maxPersistedEntries] most-recent keys.
 class ImageUrlCache {
   /// SharedPreferences key under which the URL map is persisted.
-  static const String _cacheKey = 'exercise_image_urls_v2';
+  ///
+  /// Bumped v2 -> v3 (2026-06-28): the v2 blob cached presigned URLs built from
+  /// the legacy wrong `ILLUSTRATIONS/` S3 prefix (exercise_demos data bug). Those
+  /// URLs 404 forever and survive hot restart. v3 starts clean and the poisoned
+  /// v2 blob is purged on [initialize] (NOT migrated — its contents are stale).
+  static const String _cacheKey = 'exercise_image_urls_v3';
+
+  /// Stale key whose cached URLs may point at the dead `ILLUSTRATIONS/` prefix.
+  /// Purged once on [initialize]; never migrated.
+  static const String _stalePrefixCacheKey = 'exercise_image_urls_v2';
 
   /// Legacy v1 key — read once on [initialize] for a one-time migration, then
   /// removed. Keeps URLs warm for users upgrading from the pre-A9 build.
@@ -55,7 +64,13 @@ class ImageUrlCache {
     _memoryCache = {};
     _recency.clear();
 
-    // Preferred: the v2 ordered blob (already LRU-ordered, oldest first).
+    // One-time purge of the poisoned v2 blob (legacy ILLUSTRATIONS/ prefix
+    // URLs that 404 forever). Do NOT migrate it — start clean under v3.
+    if (prefs.containsKey(_stalePrefixCacheKey)) {
+      await prefs.remove(_stalePrefixCacheKey);
+    }
+
+    // Preferred: the v3 ordered blob (already LRU-ordered, oldest first).
     final cached = prefs.getString(_cacheKey);
     if (cached != null) {
       try {
