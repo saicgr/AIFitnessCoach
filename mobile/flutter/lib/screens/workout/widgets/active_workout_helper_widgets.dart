@@ -14,6 +14,7 @@ import '../../../data/models/exercise.dart';
 import '../../settings/equipment/environment_list_screen.dart';
 import 'breathing_guide_sheet.dart';
 import 'exercise_info_sheet.dart';
+import '../shared/exercise_instruction_copy.dart';
 
 
 part 'active_workout_helper_widgets_part_exercise_details_sheet_content_state.dart';

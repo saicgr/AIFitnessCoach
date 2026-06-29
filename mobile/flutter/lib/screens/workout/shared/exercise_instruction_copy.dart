@@ -17,12 +17,37 @@ library;
 /// If the splitter can't produce at least two parts, return the original
 /// text as a single-element list so the caller can still show it.
 List<String> splitInstructionsIntoSteps(String text) {
-  final parts = text
+  final trimmed = text.trim();
+
+  // 1. Numbered steps ("1. … 2. …" or "1) …") — the shape most DB
+  // instructions use. Split on the markers and drop them from the output.
+  final numbered = RegExp(r'(?:^|\s)\d+[.)]\s+');
+  if (numbered.allMatches(trimmed).length >= 2) {
+    final parts = trimmed
+        .split(numbered)
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.length >= 2) return parts;
+  }
+
+  // 2. Explicit line breaks — strip any leading "N." marker per line.
+  if (trimmed.contains('\n')) {
+    final parts = trimmed
+        .split(RegExp(r'\n+'))
+        .map((s) => s.replaceFirst(RegExp(r'^\s*\d+[.)]\s*'), '').trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.length >= 2) return parts;
+  }
+
+  // 3. Fall back to sentence boundaries.
+  final parts = trimmed
       .split(RegExp(r'(?<=[.!?])\s+'))
       .map((s) => s.trim())
       .where((s) => s.isNotEmpty)
       .toList();
-  return parts.length >= 2 ? parts : [text];
+  return parts.length >= 2 ? parts : [trimmed];
 }
 
 /// Whether `exercise.instructions` is substantial enough to prefer over the
@@ -212,7 +237,18 @@ _ExClass _classify(String exerciseName, String? equipment) {
       name.contains('stepper') ||
       name.contains('rowing machine') ||
       name.contains('rower') ||
+      name.contains('row erg') ||
       name.contains('concept2') ||
+      // SkiErg / ski ergometer (double-pole cardio machine)
+      name.contains('skierg') ||
+      name.contains('ski erg') ||
+      name.contains('ski-erg') ||
+      name.contains('ergometer') ||
+      // Vertical / ladder climbers
+      name.contains('versaclimber') ||
+      name.contains('versa climber') ||
+      name.contains('jacobs ladder') ||
+      name.contains('jacob\'s ladder') ||
       name.contains('jump rope') ||
       name.contains('jumprope') ||
       name.contains('jumping rope') ||
@@ -399,6 +435,47 @@ List<String> getSetupSteps(String exerciseName, {String? equipment}) {
         'Aim for a midfoot strike under your hips, not heel-striking out front.',
         'Keep your cadence around 170–180 steps per minute when possible.',
         'Cool down with 3–5 minutes of easy walking, then stretch.',
+      ];
+    }
+    // SkiErg / ski ergometer — Concept2 double-pole technique.
+    if (name.contains('skierg') ||
+        name.contains('ski erg') ||
+        name.contains('ski-erg') ||
+        name.contains('ergometer')) {
+      return [
+        'Stand tall, feet hip-width, about 18–24 in (45–60 cm) from the flywheel.',
+        'Reach up and grip the handles slightly above eye height; elbows soft, core braced.',
+        'Drive by hinging at the hips — drop your head, chest and shoulders, pulling the handles down past your hips.',
+        'Power comes from your lats and core, not the arms; finish the pull with a slight crunch.',
+        'Stand back up smoothly and let the handles rise to the start — keep it one fluid, continuous motion.',
+      ];
+    }
+    // Air / assault bike — fan-resistance, push-pull arms + legs.
+    if (name.contains('assault bike') ||
+        name.contains('air bike') ||
+        name.contains('echo bike') ||
+        name.contains('airdyne') ||
+        name.contains('air dyne') ||
+        name.contains('fan bike')) {
+      return [
+        'Set seat height so your knee keeps a slight bend at the bottom of the pedal stroke.',
+        'Sit tall with a neutral back and braced core — don\'t round forward over the handles.',
+        'Push and pull the handles in sync with the pedals so arms and legs share the load.',
+        'Resistance is from the fan — it rises automatically as you work harder, so pace by effort.',
+        'Drive through full pedal strokes; ease off to recover rather than coasting abruptly.',
+      ];
+    }
+    // Vertical / ladder climbers — VersaClimber, Jacob's Ladder.
+    if (name.contains('versaclimber') ||
+        name.contains('versa climber') ||
+        name.contains('jacobs ladder') ||
+        name.contains('jacob\'s ladder')) {
+      return [
+        'Set up facing the machine and brace your core; keep a tall spine, not a hunched back.',
+        'Move opposite arm and leg together in a smooth, natural climbing rhythm.',
+        'Use full but controlled strokes — long reaches climb more efficiently than short choppy ones.',
+        'Let the legs drive most of the work; the arms guide and add power.',
+        'Start slow to find the cadence, then build pace; keep impact light and continuous.',
       ];
     }
     return [
@@ -1303,6 +1380,37 @@ List<String> getFormTips(String exerciseName, {String? equipment}) {
         'Cadence target: 170–180 steps per minute when possible.',
         'Relax the shoulders and unclench the hands.',
         'Match breathing to pace; if you cannot talk, slow down.',
+      ];
+    }
+    if (name.contains('skierg') || name.contains('ski erg') ||
+        name.contains('ski-erg') || name.contains('ergometer')) {
+      return [
+        'Hinge at the hips to drive the handles down — don\'t just yank with the arms.',
+        'Power from the lats and core; the arms only finish the stroke.',
+        'Keep it one smooth, continuous motion — no pause at the top or bottom.',
+        'Stay tall on the return; let the handles pull you back up under control.',
+        'Longer, stronger pulls beat short frantic ones for pace.',
+      ];
+    }
+    if (name.contains('assault bike') || name.contains('air bike') ||
+        name.contains('echo bike') || name.contains('airdyne') ||
+        name.contains('air dyne') || name.contains('fan bike')) {
+      return [
+        'Sit tall with a braced core — don\'t collapse forward over the handles.',
+        'Drive the handles and pedals together so arms and legs share the work.',
+        'Push AND pull the handles; the return stroke is free power.',
+        'The fan scales to your effort — pace by how hard you push, not a fixed level.',
+        'Keep the strokes full and even; ragged form wastes energy fast.',
+      ];
+    }
+    if (name.contains('versaclimber') || name.contains('versa climber') ||
+        name.contains('jacobs ladder') || name.contains('jacob\'s ladder')) {
+      return [
+        'Keep a tall spine — don\'t hunch into the machine.',
+        'Move opposite arm and leg together in a steady climbing rhythm.',
+        'Use long, full strokes rather than short choppy ones.',
+        'Let the legs do most of the driving; the arms guide and assist.',
+        'Build pace gradually; keep the motion smooth and low-impact.',
       ];
     }
     return [
