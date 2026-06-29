@@ -423,6 +423,13 @@ def _row_to_summary(
     # active-workout card can render the chip (Dr-Yaad audit #8).
     _attach_movement_meta(exercises if isinstance(exercises, list) else [])
 
+    # Tag each exercise with structured tracking metadata (tracking_type +
+    # distance_meters + reps_spec) so cardio / carry / timed / bodyweight
+    # stations stop rendering as "weight × reps" with a phantom default. Pure +
+    # serve-time, so curated, AI-generated, and custom workouts all benefit.
+    from services.exercise_tracking_metric import attach_tracking_metadata
+    attach_tracking_metadata(exercises if isinstance(exercises, list) else [])
+
     # Get scheduled date
     scheduled_date = row.get("scheduled_date", "")
     if scheduled_date:

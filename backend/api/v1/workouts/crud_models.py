@@ -155,6 +155,9 @@ class SetLogInfo(BaseModel):
     started_at: Optional[str] = None
     set_duration_seconds: Optional[int] = None
     rest_duration_seconds: Optional[int] = None
+    # Distance-tracked sets (SkiErg/sled/carry/run) — meters logged for this
+    # set. NULL for weight/bodyweight/timed sets. Migration 2298.
+    distance_meters: Optional[float] = None
     logging_mode: Optional[str] = None
     ai_input_source: Optional[str] = None
     is_ai_recommended_set_type: Optional[bool] = None

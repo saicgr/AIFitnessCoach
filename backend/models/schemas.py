@@ -537,6 +537,10 @@ class PerformanceLogCreate(BaseModel):
     progression_model: Optional[str] = Field(default=None, max_length=50, description="Progression pattern: pyramidUp, straightSets, reversePyramid, dropSets, etc.")
     set_duration_seconds: Optional[int] = Field(default=None, ge=0, le=600, description="Time in seconds from set start to completion")
     rest_duration_seconds: Optional[int] = Field(default=None, ge=0, le=3600, description="Actual rest taken before this set (null for first set)")
+    # Distance-tracked sets (SkiErg, sled push/pull, loaded carries, runs).
+    # NULL for weight/bodyweight/timed sets. Migration 2298. Duration for these
+    # stations rides on set_duration_seconds above.
+    distance_meters: Optional[float] = Field(default=None, ge=0, le=1000000, description="Logged distance in meters for distance-tracked sets (cardio/carry/run). NULL otherwise.")
     # Active-workout UI tier the user was on when they marked this set complete.
     # 'easy' | 'simple' | 'advanced'. NULL on legacy rows — treat as 'advanced' in analytics.
     logging_mode: Optional[str] = Field(default=None, max_length=10, description="Which UI tier was active when this set was logged")

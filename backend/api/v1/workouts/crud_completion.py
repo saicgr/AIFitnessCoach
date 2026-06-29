@@ -1186,6 +1186,11 @@ async def get_workout_completion_summary(workout_id: str,
                             is_ai_recommended_set_type=pl.get("is_ai_recommended_set_type"),
                             tempo=pl.get("tempo"),
                             is_completed=pl.get("is_completed"),
+                            distance_meters=(
+                                float(pl["distance_meters"])
+                                if pl.get("distance_meters") is not None
+                                else None
+                            ),
                         ))
                     except Exception as row_err:
                         skipped_rows += 1

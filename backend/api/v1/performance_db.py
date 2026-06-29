@@ -144,6 +144,7 @@ def row_to_performance_log(row: dict) -> PerformanceLog:
         notes=row.get("notes"),
         recorded_at=row.get("recorded_at"),
         logging_mode=row.get("logging_mode"),
+        distance_meters=row.get("distance_meters"),
     )
 
 
@@ -237,6 +238,7 @@ async def create_performance_log(log: PerformanceLogCreate,
             "set_duration_seconds": log.set_duration_seconds,
             "rest_duration_seconds": log.rest_duration_seconds,
             "logging_mode": log.logging_mode,
+            "distance_meters": log.distance_meters,
             "gym_profile_id": derived_gym_profile_id,
         }
 
@@ -303,6 +305,7 @@ async def create_performance_logs_bulk(
                 "set_duration_seconds": log.set_duration_seconds,
                 "rest_duration_seconds": log.rest_duration_seconds,
                 "logging_mode": log.logging_mode,
+                "distance_meters": log.distance_meters,
                 "gym_profile_id": _gym_for(log.workout_log_id, log.user_id),
             }
             for log in logs

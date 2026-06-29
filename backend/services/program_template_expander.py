@@ -316,6 +316,20 @@ def _day_to_exercises_json(
             obj["weight_kg"] = weight
         if ex.get("unresolved"):
             obj["unresolved"] = True
+        # Bake tracking_type + distance_meters at EXPANSION time, while the
+        # unit-bearing reps_spec ("1000 m", "8 minutes") is still intact — a
+        # later AI-tailoring pass may rewrite reps into bare numbers and destroy
+        # the unit. Only set the two new keys; leave the structured reps_spec
+        # dict untouched for downstream readers (serve-time stringifies it).
+        try:
+            from services.exercise_tracking_metric import derive_tracking_metadata
+            _tm = derive_tracking_metadata(obj)
+            if _tm.get("tracking_type"):
+                obj["tracking_type"] = _tm["tracking_type"]
+            if _tm.get("distance_meters") is not None:
+                obj["distance_meters"] = _tm["distance_meters"]
+        except Exception:
+            pass  # never block program expansion on metadata derivation
         out.append(obj)
     return out
 

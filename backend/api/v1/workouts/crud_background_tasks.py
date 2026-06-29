@@ -533,9 +533,17 @@ async def populate_performance_logs(
                 ai_input_source = set_data.get("ai_input_source")
                 set_duration_seconds = set_data.get("set_duration_seconds")
                 rest_duration_seconds = set_data.get("rest_duration_seconds")
+                # Distance-tracked sets (SkiErg/sled/carry/run) carry meters
+                # instead of weight×reps. Migration 2298.
+                distance_meters = set_data.get("distance_meters")
 
-                # Skip sets with no meaningful data
-                if reps_completed <= 0 and weight_kg <= 0:
+                # Skip sets with no meaningful data. A distance- or duration-only
+                # set (cardio/carry/timed station) legitimately has reps=0 &
+                # weight=0 — keep it when it carries distance or duration so the
+                # set is not silently dropped from history.
+                _has_distance = distance_meters is not None and float(distance_meters or 0) > 0
+                _has_duration = set_duration_seconds is not None and int(set_duration_seconds or 0) > 0
+                if reps_completed <= 0 and weight_kg <= 0 and not _has_distance and not _has_duration:
                     continue
 
                 # Determine if this set type was AI-recommended
@@ -587,6 +595,7 @@ async def populate_performance_logs(
                     **({"ai_input_source": ai_input_source} if ai_input_source else {}),
                     **({"set_duration_seconds": int(set_duration_seconds)} if set_duration_seconds is not None else {}),
                     **({"rest_duration_seconds": int(rest_duration_seconds)} if rest_duration_seconds is not None else {}),
+                    **({"distance_meters": float(distance_meters)} if distance_meters is not None else {}),
                 }
 
                 records_to_insert.append(record)

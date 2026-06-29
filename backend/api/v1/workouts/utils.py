@@ -1108,6 +1108,14 @@ def row_to_workout(row: dict, enrich_videos: bool = True) -> Workout:
     if enrich_videos and exercises_list:
         exercises_list = enrich_exercises_with_video_urls(exercises_list)
 
+    # Structured tracking metadata (tracking_type + distance_meters + reps_spec)
+    # so the workout-detail / active-workout client renders cardio / carry /
+    # timed / bodyweight stations correctly instead of "weight × reps". Pure +
+    # serve-time; response-only (never written back to the row).
+    if isinstance(exercises_list, list) and exercises_list:
+        from services.exercise_tracking_metric import attach_tracking_metadata
+        attach_tracking_metadata(exercises_list)
+
     exercises_json = json.dumps(exercises_list) if exercises_list else "[]"
 
     generation_metadata = row.get("generation_metadata")
