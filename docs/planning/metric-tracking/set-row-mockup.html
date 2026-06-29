@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Metric Tracking — Set Row Mockup (before / after)</title>
+<style>
+  :root{
+    --bg:#070809; --panel:#0f1113; --panel2:#15181b; --line:#23282d;
+    --ink:#f4f6f8; --muted:#8c949c; --faint:#5b636b;
+    --accent:#5b9bff; --green:#4cd07d; --orange:#e8772a; --red:#e2574b;
+    --cell:#101417; --cellline:#2a3036; --dash:#3a4047;
+    --new:#1d2a1f; --newline:#3a7d4e;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(900px 600px at 70% -10%, #0d1622 0%, var(--bg) 55%);
+    color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:32px 20px 80px}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 26px;max-width:760px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 26px;font-size:12.5px;color:var(--muted)}
+  .legend b{color:var(--ink);font-weight:600}
+  .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .case{background:linear-gradient(180deg,#0e1418, #0b0f12);border:1px solid var(--line);
+    border-radius:var(--radius);padding:18px 18px 20px;grid-column:1 / -1}
+  .case h2{font-size:15px;margin:0 0 2px;font-weight:700;letter-spacing:-.01em}
+  .case .meta{color:var(--faint);font-size:12px;margin:0 0 16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:880px){.cols{grid-template-columns:1fr}}
+  .ba{border:1px solid var(--line);border-radius:14px;padding:14px 14px 16px;background:var(--panel)}
+  .ba .tag{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;margin-bottom:12px}
+  .ba.before .tag{color:#caa; background:#2a1213;border:1px solid #4a2122}
+  .ba.after  .tag{color:#bfe9cd;background:#10241a;border:1px solid #2f6b46}
+  .ba.same .tag{color:var(--muted);background:#16191c;border:1px solid var(--line)}
+
+  /* exercise card mimic */
+  .exercard{background:linear-gradient(180deg,#11161b,#0c1014);border:1px solid #1d242b;border-radius:14px;
+    padding:12px 12px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}
+  .exhead{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:0 2px}
+  .exhead .nm{font-weight:700;font-size:13.5px}
+  .pill{font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:6px;text-transform:uppercase}
+  .pill.ai{color:#bfe9ff;background:#0e2730;border:1px solid #1d4d5e}
+  .pill.str{color:#dfe9ff;background:#16243f;border:1px solid #29406b}
+
+  table.sets{width:100%;border-collapse:separate;border-spacing:0 7px}
+  table.sets th{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--muted);
+    text-transform:uppercase;text-align:center;padding:0 4px 2px}
+  table.sets th.setcol,table.sets td.setcol{width:34px}
+  td.set{color:var(--muted);font-weight:800;text-align:center;font-size:12px}
+  .cell{height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:13px;background:var(--cell);border:1px solid var(--cellline);min-width:54px}
+  .cell.input{color:var(--ink)}
+  .cell.input.optional{color:var(--faint);font-weight:600}
+  .cell.metric{background:transparent;border:1px solid transparent;color:var(--muted);gap:5px;font-weight:600}
+  .cell.metric .ic{opacity:.7;font-size:12px}
+  .cell.dash{background:#0c0f12;border:1px dashed var(--dash);color:var(--dash);font-weight:700}
+  .cell.new{background:var(--new);border:1px solid var(--newline);color:#d8f5e1;box-shadow:0 0 0 3px rgba(58,125,78,.12)}
+  .cell.add{background:transparent;border:1px dashed #2f6b46;color:#7fd6a0;font-weight:700;font-size:12px;cursor:pointer}
+  .check{width:34px;height:34px;border-radius:9px;border:1.5px solid #2c343b;display:flex;align-items:center;justify-content:center;color:var(--faint)}
+  .check.done{background:#10241a;border-color:#2f6b46;color:var(--green)}
+  .scrollnote{font-size:11px;color:var(--faint);margin-top:8px;text-align:right}
+  .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  .hscroll::-webkit-scrollbar{height:7px}
+  .hscroll::-webkit-scrollbar-thumb{background:#2a3036;border-radius:99px}
+  .hscroll::-webkit-scrollbar-track{background:transparent}
+  .ann{font-size:11.5px;margin-top:10px;display:flex;gap:7px;align-items:flex-start}
+  .ann .dot{flex:0 0 auto;width:7px;height:7px;border-radius:50%;margin-top:5px}
+  .ann.bad .dot{background:var(--red)} .ann.good .dot{background:var(--green)}
+  .ann.bad{color:#e7a59e} .ann.good{color:#a7e6bf}
+
+  /* add-column picker + custom + rail/summary */
+  .section{margin-top:30px}
+  .section h3{font-size:13px;letter-spacing:.02em;color:var(--muted);text-transform:uppercase;margin:0 0 12px;font-weight:800}
+  .picker{max-width:330px;background:#0e1316;border:1px solid #222a30;border-radius:14px;padding:8px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .picker .ttl{font-size:12px;color:var(--muted);padding:6px 8px 8px;font-weight:700}
+  .mrow{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px}
+  .mrow:hover{background:#151b20}
+  .mrow .mi{width:26px;height:26px;border-radius:7px;background:#172029;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .mrow .ml{font-weight:600;font-size:13px}
+  .mrow .mu{margin-left:auto;color:var(--faint);font-size:11px;font-family:ui-monospace,monospace}
+  .mrow.custom{color:#7fd6a0;border-top:1px solid #1c2329;margin-top:4px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;max-width:560px}
+  .chip{font-size:12px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:#0f1316}
+  .chip.on{color:#dff;background:#10243a;border-color:#2a4d72;color:#cfe6ff}
+  .chip.on::before{content:"✓ ";color:var(--accent)}
+  .chip.add{color:#7fd6a0;border-style:dashed;border-color:#2f6b46}
+  .rail{display:flex;gap:8px;flex-wrap:wrap}
+  .railpill{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#cbd3da;background:#0f1316;border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+  .railpill .ck{color:var(--green)}
+  .railpill .x{color:var(--accent)}
+  .summary{max-width:420px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+  .summary .sh{display:grid;grid-template-columns:38px 1fr 1fr 1fr;gap:6px;padding:10px 12px;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--line)}
+  .summary .sr{display:grid;grid-template-columns:38px 1fr 1fr 1fr;gap:6px;padding:11px 12px;font-size:13px;border-top:1px solid #161a1e}
+  .summary .sr .n{color:var(--muted);font-weight:800}
+  .foot{color:var(--faint);font-size:11.5px;margin-top:34px;border-top:1px solid var(--line);padding-top:14px}
+  code{font-family:ui-monospace,monospace;background:#11161a;border:1px solid var(--line);padding:1px 6px;border-radius:6px;color:#cbd3da;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Active-workout set row — dynamic metric columns</h1>
+  <p class="sub">Each exercise declares an ordered list of metric keys; the set row renders one column per metric (scrollable when many), plus a live <b>+ Add column</b>. Below: the current app (<b>before</b>) vs the proposed model (<b>after</b>).</p>
+
+  <div class="legend">
+    <span><span class="swatch" style="background:#0c0f12;border:1px dashed var(--dash)"></span>inert dash (can't log)</span>
+    <span><span class="swatch" style="background:var(--cell);border:1px solid var(--cellline)"></span>editable cell</span>
+    <span><span class="swatch" style="background:var(--new);border:1px solid var(--newline)"></span>newly enabled cell</span>
+    <span><span class="swatch" style="background:transparent;border:1px dashed #2f6b46"></span>+ add column</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- SLED PUSH — the headline fix -->
+    <div class="case">
+      <h2>Sled Push <span class="pill str" style="margin-left:6px">the fix</span></h2>
+      <p class="meta">profile: [weight, distance] · primary = distance</p>
+      <div class="cols">
+        <div class="ba before">
+          <div class="tag">● Before</div>
+          <div class="exercard">
+            <div class="exhead"><span class="pill ai">✦ AI</span><span class="pill str">Strength</span><span class="nm">Sled Push</span></div>
+            <table class="sets">
+              <tr><th class="setcol">Set</th><th>KG</th><th>Dist</th><th class="setcol"></th></tr>
+              <tr><td class="set setcol">1</td><td><div class="cell dash">—</div></td><td><div class="cell metric"><span class="ic">↔</span>20m</div></td><td><div class="check">○</div></td></tr>
+              <tr><td class="set setcol">2</td><td><div class="cell dash">—</div></td><td><div class="cell metric"><span class="ic">↔</span>20m</div></td><td><div class="check">○</div></td></tr>
+            </table>
+          </div>
+          <div class="ann bad"><span class="dot"></span><span>Weight is an inert dash — there is no way to log the load you put on the sled.</span></div>
+        </div>
+        <div class="ba after">
+          <div class="tag">● After</div>
+          <div class="exercard">
+            <div class="exhead"><span class="pill ai">✦ AI</span><span class="pill str">Strength</span><span class="nm">Sled Push</span></div>
+            <table class="sets">
+              <tr><th class="setcol">Set</th><th>KG</th><th>Dist</th><th class="setcol"></th></tr>
+              <tr><td class="set setcol">1</td><td><div class="cell new">60</div></td><td><div class="cell metric"><span class="ic">↔</span>20m</div></td><td><div class="check done">✓</div></td></tr>
+              <tr><td class="set setcol">2</td><td><div class="cell new">60</div></td><td><div class="cell metric"><span class="ic">↔</span>20m</div></td><td><div class="check">○</div></td></tr>
+            </table>
+          </div>
+          <div class="ann good"><span class="dot"></span><span>Weight cell now editable alongside distance. One set stores both <code>weight_kg</code> + <code>distance_m</code>.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOX JUMP — live add column -->
+    <div class="case">
+      <h2>Box Jump <span class="pill str" style="margin-left:6px">+ add column</span></h2>
+      <p class="meta">profile: [reps] → user adds box_height → [reps, box_height]</p>
+      <div class="cols">
+        <div class="ba before">
+          <div class="tag">● Before</div>
+          <div class="exercard">
+            <div class="exhead"><span class="pill str">Plyo</span><span class="nm">Box Jump</span></div>
+            <table class="sets">
+              <tr><th class="setcol">Set</th><th>Reps</th><th></th><th class="setcol"></th></tr>
+              <tr><td class="set setcol">1</td><td><div class="cell input">10</div></td><td><div class="cell add">+ Add column</div></td><td><div class="check">○</div></td></tr>
+            </table>
+          </div>
+          <div class="ann bad"><span class="dot"></span><span>No place to record the box height you jumped.</span></div>
+        </div>
+        <div class="ba after">
+          <div class="tag">● After</div>
+          <div class="exercard">
+            <div class="exhead"><span class="pill str">Plyo</span><span class="nm">Box Jump</span></div>
+            <table class="sets">
+              <tr><th class="setcol">Set</th><th>Reps</th><th>HT</th><th class="setcol"></th></tr>
+              <tr><td class="set setcol">1</td><td><div class="cell input">10</div></td><td><div class="cell new">60cm</div></td><td><div class="check done">✓</div></td></tr>
+            </table>
+          </div>
+          <div class="ann good"><span class="dot"></span><span>Tapped <b>+ Add column → Box Height</b>; the column sticks for this exercise and logs to <code>metrics.box_height_cm</code>.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEIGHTED RUN — N columns / scroll -->
+    <div class="case">
+      <h2>Weighted Run <span class="pill str" style="margin-left:6px">3 metrics · scroll</span></h2>
+      <p class="meta">profile: [weight, distance, time] · primary = distance</p>
+      <div class="cols">
+        <div class="ba same">
+          <div class="tag">● Today</div>
+          <div class="exercard">
+            <div class="exhead"><span class="pill str">Conditioning</span><span class="nm">Weighted Vest Run</span></div>
+            <table class="sets">
+              <tr><th class="setcol">Set</th><th>Dist</th><th class="setcol"></th></tr>
+              <tr><td class="set setcol">1</td><td><div class="cell metric"><span class="ic">↔</span>2km</div></td><td><div class="check">○</div></td></tr>
+            </table>
+          </div>
+          <div class="ann bad"><span class="dot"></span><span>Only one metric; vest load and split time are lost.</span></div>
+        </div>
+        <div class="ba after">
+          <div class="tag">● After</div>
+          <div class="exercard">
+            <div class="exhead"><span class="pill str">Conditioning</span><span class="nm">Weighted Vest Run</span></div>
+            <table class="sets">
+              <tr><th class="setcol">Set</th><th>KG</th><th>Dist</th><th>Time</th><th class="setcol"></th></tr>
+              <tr><td class="set setcol">1</td><td><div class="cell new">10</div></td><td><div class="cell metric"><span class="ic">↔</span>2km</div></td><td><div class="cell metric"><span class="ic">◷</span>9:30</div></td><td><div class="check done">✓</div></td></tr>
+            </table>
+          </div>
+          <div class="scrollnote">↔ row scrolls horizontally when columns exceed width</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW MANY COLUMNS -->
+    <div class="case">
+      <h2>How many columns? <span class="pill str" style="margin-left:6px">no hard cap</span></h2>
+      <p class="meta">unlimited in storage (JSONB bag) · row scrolls horizontally · choices saved per user + per exercise</p>
+      <div class="ba after">
+        <div class="tag">● After — 6 metrics, horizontally scrollable</div>
+        <div class="exercard">
+          <div class="exhead"><span class="pill str">Custom</span><span class="nm">Loaded Hill Sprint</span></div>
+          <div class="hscroll">
+            <table class="sets" style="min-width:600px">
+              <tr><th class="setcol">Set</th><th>KG</th><th>Dist</th><th>Time</th><th>HT</th><th>Cal</th><th>RPE</th><th class="setcol"></th></tr>
+              <tr>
+                <td class="set setcol">1</td>
+                <td><div class="cell new">12</div></td>
+                <td><div class="cell metric"><span class="ic">↔</span>400m</div></td>
+                <td><div class="cell metric"><span class="ic">◷</span>1:40</div></td>
+                <td><div class="cell new">30cm</div></td>
+                <td><div class="cell new">38</div></td>
+                <td><div class="cell new">8</div></td>
+                <td><div class="check done">✓</div></td>
+              </tr>
+            </table>
+          </div>
+          <div class="scrollnote">← scroll → add as many columns as the exercise needs (no fixed max)</div>
+        </div>
+        <div class="ann good"><span class="dot"></span><span>The 3-column examples above are just illustrative. Each added column persists <b>per user, per exercise</b> (<code>user_exercise_metric_prefs</code>) — your choice sticks for that exercise, only for you. Effective columns = exercise defaults + your additions.</span></div>
+      </div>
+    </div>
+
+    <!-- UNCHANGED CASES -->
+    <div class="case">
+      <h2>Unchanged exercises <span class="pill str" style="margin-left:6px">no regression</span></h2>
+      <p class="meta">existing shapes are preserved by the same model</p>
+      <div class="cols">
+        <div class="ba same">
+          <div class="tag">● Bench Press — [weight, reps]</div>
+          <div class="exercard">
+            <table class="sets">
+              <tr><th class="setcol">Set</th><th>KG</th><th>Reps</th><th class="setcol"></th></tr>
+              <tr><td class="set setcol">1</td><td><div class="cell input">60</div></td><td><div class="cell input">8</div></td><td><div class="check done">✓</div></td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="ba same">
+          <div class="tag">● Plank — [time] &nbsp;·&nbsp; Push-up — [reps] (+opt load)</div>
+          <div class="exercard">
+            <table class="sets">
+              <tr><th class="setcol">Set</th><th>KG</th><th>Time</th><th class="setcol"></th></tr>
+              <tr><td class="set setcol">1</td><td><div class="cell dash">—</div></td><td><div class="cell metric"><span class="ic">◷</span>0:45</div></td><td><div class="check done">✓</div></td></tr>
+            </table>
+            <table class="sets" style="margin-top:2px">
+              <tr><td class="set setcol">P</td><td><div class="cell input optional">–</div></td><td><div class="cell input">12</div></td><td><div class="check">○</div></td></tr>
+            </table>
+          </div>
+          <div class="ann good"><span class="dot"></span><span>Push-up keeps today's optional-load behavior (tap the “–” to add a weighted-vest load).</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ADD COLUMN PICKER -->
+  <div class="section">
+    <h3>“+ Add column” picker (Advanced &amp; Easy)</h3>
+    <div class="picker">
+      <div class="ttl">Add a metric to this exercise</div>
+      <div class="mrow"><div class="mi">↔</div><div class="ml">Distance</div><div class="mu">m</div></div>
+      <div class="mrow"><div class="mi">⤒</div><div class="ml">Box Height</div><div class="mu">cm</div></div>
+      <div class="mrow"><div class="mi">🔥</div><div class="ml">Calories</div><div class="mu">kcal</div></div>
+      <div class="mrow"><div class="mi">◷</div><div class="ml">Time</div><div class="mu">s</div></div>
+      <div class="mrow"><div class="mi">∿</div><div class="ml">RPE (as data)</div><div class="mu">0–10</div></div>
+      <div class="mrow custom"><div class="mi">＋</div><div class="ml">Define custom metric…</div></div>
+    </div>
+  </div>
+
+  <!-- CUSTOM EXERCISE PREFERRED METRICS -->
+  <div class="section">
+    <h3>Custom exercise builder — “Preferred metrics” section</h3>
+    <p class="sub" style="margin-bottom:12px">When creating a custom exercise, pick which columns it should track by default (writes <code>custom_exercises.metric_keys</code>).</p>
+    <div class="chips">
+      <span class="chip on">Weight</span>
+      <span class="chip on">Reps</span>
+      <span class="chip">Distance</span>
+      <span class="chip">Time</span>
+      <span class="chip on">Box Height</span>
+      <span class="chip">Calories</span>
+      <span class="chip add">+ Custom…</span>
+    </div>
+  </div>
+
+  <!-- RAIL + SUMMARY -->
+  <div class="section">
+    <h3>Completed-set rail &amp; post-workout summary</h3>
+    <div class="rail" style="margin-bottom:18px">
+      <span class="railpill">1 <span class="ck">✓</span> <span>60kg</span> · <span class="x">20m</span></span>
+      <span class="railpill">2 <span class="ck">✓</span> <span>60kg</span> · <span class="x">20m</span></span>
+      <span class="railpill">1 <span class="ck">✓</span> <span>10</span> reps · <span class="x">60cm</span></span>
+    </div>
+    <div class="summary">
+      <div class="sh"><div>#</div><div>WEIGHT</div><div>DIST</div><div>TIME</div></div>
+      <div class="sr"><div class="n">1</div><div>60 kg</div><div>20 m</div><div>—</div></div>
+      <div class="sr"><div class="n">2</div><div>60 kg</div><div>20 m</div><div>—</div></div>
+    </div>
+  </div>
+
+  <p class="foot">Mockup is a visual contract only — no app code yet. Storage: every set writes a canonical <code>metrics</code> JSONB bag; the well-known keys are also mirrored to the existing typed <code>performance_logs</code> columns so PRs / strength / history keep working. Approve this and Phase A (storage + logging) begins.</p>
+</div>
+</body>
+</html>
