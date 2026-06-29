@@ -47,6 +47,37 @@ VIDEO_BASE_PREFIX = "VERTICAL VIDEOS ALL/"  # Base folder for all videos
 IMAGE_BASE_PREFIX = "ILLUSTRATIONS ALL/"  # Base folder for all images
 PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
 
+# Resolution cache for /videos/by-exercise. We cache the *resolution* (which
+# library row / S3 path a requested name resolves to, or a miss) — NOT the
+# presigned URL, which we regenerate locally on every request so it never
+# serves an expired link. This turns the expensive miss path (Gemini embedding
+# + two ChromaDB queries + per-candidate DB lookups, ~3s) into a <50ms repeat.
+# Keyed by user (the RAG substitute step can return a user's own custom
+# exercise video, so resolutions are not globally shareable).
+from core.redis_cache import RedisCache
+_video_resolve_cache = RedisCache(prefix="video_resolve", ttl_seconds=21600, max_size=1000)  # 6h positive
+_VIDEO_NEG_TTL = 900  # 15 min for misses, so a newly-added video surfaces quickly
+
+# Durable, regen-proof overrides for workout/program exercise names that the
+# generated `program_exercise_name_map` fragments or maps wrongly. Keys are
+# normalize_exercise_name() output; values are exact exercise_library names
+# that carry a video. Keep this small — the curated name-map below covers the
+# bulk; this is only for names it gets wrong.
+_STATIC_NAME_ALIASES = {
+    "skierg": "Ski Ergometer Cross Country Ski Basic Pull",
+    "skierg interval": "Ski Ergometer Cross Country Ski Basic Pull",
+    "skierg intervals": "Ski Ergometer Cross Country Ski Basic Pull",
+    "ski erg interval": "Ski Ergometer Cross Country Ski Basic Pull",
+    "ski erg intervals": "Ski Ergometer Cross Country Ski Basic Pull",
+    # HYROX "Plank"/"Plank Hold" is a static FOREARM/ELBOW plank — not the
+    # straight-arm "High plank" and not "Bench Reverse Plank Hold". Resolve to
+    # "plank on elbows" (has a video) to match the image path (see migration
+    # 2299_fix_plank_alias_elbow_plank.sql, which repoints the alias canonical
+    # to "Plank on elbows").
+    "plank": "plank on elbows",
+    "plank hold": "plank on elbows",
+}
+
 
 # NOTE: More specific routes must come BEFORE catch-all routes
 
@@ -231,6 +262,74 @@ async def _find_substitute_video(
     return None
 
 
+def _lookup_library_video(db, search_names: list) -> Optional[dict]:
+    """Try each name (exact then prefix-wildcard, case-insensitive) against
+    exercise_library and return the first row that has a video, or None."""
+    for name in search_names:
+        result = db.client.table("exercise_library").select(
+            "video_s3_path, exercise_name"
+        ).ilike("exercise_name", name).limit(1).execute()
+        if result.data and result.data[0].get("video_s3_path"):
+            return result.data[0]
+        result = db.client.table("exercise_library").select(
+            "video_s3_path, exercise_name"
+        ).ilike("exercise_name", f"{name}%").limit(1).execute()
+        if result.data and result.data[0].get("video_s3_path"):
+            return result.data[0]
+    return None
+
+
+def _resolve_alias_name(db, exercise_name: str) -> Optional[dict]:
+    """Translate a workout/program exercise name that has no direct video into a
+    canonical exercise_library name that DOES — using (1) the static override
+    map, then (2) the curated `program_exercise_name_map` bridge. Cheap: at most
+    two indexed DB reads, no embedding/RAG. Returns {library_name, confidence,
+    source} or None.
+
+    This runs BEFORE the expensive `_find_substitute_video` RAG path, so common
+    functional/HYROX names (Sled Push, Plank Hold, SkiErg Interval, …) resolve
+    to their real library video in one query instead of a ~3s embedding+Chroma
+    search that previously still 404'd.
+    """
+    norm = normalize_exercise_name(exercise_name)
+    if not norm:
+        return None
+
+    # (1) Static overrides — durable, regen-proof.
+    if norm in _STATIC_NAME_ALIASES:
+        return {
+            "library_name": _STATIC_NAME_ALIASES[norm],
+            "confidence": 95,
+            "source": "static_alias",
+        }
+
+    # (2) Curated program_exercise_name_map bridge. Match the requested name's
+    # normalized form against either the map's normalized or singularized key.
+    # Only accept confident mappings (>= 50) that point at a real library row.
+    for column in ("raw_normalized", "raw_singularized"):
+        try:
+            res = (
+                db.client.table("program_exercise_name_map")
+                .select("library_name, confidence")
+                .eq(column, norm)
+                .gte("confidence", 50)
+                .order("confidence", desc=True)
+                .limit(3)
+                .execute()
+            )
+        except Exception as e:
+            logger.warning(f"[Video Alias] name_map ({column}) lookup failed for '{exercise_name}': {e}")
+            continue
+        for row in (res.data or []):
+            if row.get("library_name"):
+                return {
+                    "library_name": row["library_name"],
+                    "confidence": row.get("confidence", 50),
+                    "source": "name_map",
+                }
+    return None
+
+
 @router.get("/videos/by-exercise/{exercise_name:path}")
 async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
     current_user: dict = Depends(get_current_user),
@@ -261,10 +360,40 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
     try:
         db = get_supabase_db()
 
-        # Build list of exercise names to try
         # Strip any existing gender suffix to get base name
         base_name = exercise_name.replace('_male', '').replace('_female', '')
+        user_id = current_user.get("id") if isinstance(current_user, dict) else None
+        cache_key = f"{user_id or 'anon'}|{normalize_exercise_name(base_name)}|{gender or ''}"
 
+        def _presign(s3_path: str) -> str:
+            # s3_path format: s3://bucket/key — extract key and sign locally.
+            key = s3_path.replace(f"s3://{BUCKET_NAME}/", "")
+            return s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': BUCKET_NAME, 'Key': key},
+                ExpiresIn=PRESIGNED_URL_EXPIRATION,
+            )
+
+        # --- Cache: serve a cached resolution (with a fresh presigned URL) or a
+        # cached miss, skipping the whole resolution path below. ---
+        cached = await _video_resolve_cache.get(cache_key)
+        if cached is not None:
+            if not cached.get("hit"):
+                raise HTTPException(status_code=404, detail="Video not found for exercise")
+            response = {
+                "url": _presign(cached["s3_path"]),
+                "expires_in": PRESIGNED_URL_EXPIRATION,
+                "exercise_name": cached["exercise_name"],
+                "current_gender": cached.get("current_gender"),
+                "has_male": cached.get("has_male", False),
+                "has_female": cached.get("has_female", False),
+            }
+            if cached.get("is_substitute"):
+                response["is_substitute"] = True
+                response["similar_to"] = cached.get("similar_to")
+            return response
+
+        # Build list of exercise names to try
         search_names = []
         if gender in ('male', 'female'):
             search_names.append(f"{base_name}_{gender}")
@@ -277,33 +406,49 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
             expanded_names.extend(generate_name_variants(name))
         search_names = list(dict.fromkeys(expanded_names))  # Dedupe preserving order
 
-        # Try each name variant - use wildcard pattern for partial matches
-        found_result = None
-        for name in search_names:
-            # First try exact match (case-insensitive)
-            result = db.client.table("exercise_library").select(
-                "video_s3_path, exercise_name"
-            ).ilike("exercise_name", name).limit(1).execute()
-
-            if result.data and result.data[0].get("video_s3_path"):
-                found_result = result.data[0]
-                break
-
-            # Try partial match with wildcards (handles gender suffixes like _female, _male)
-            result = db.client.table("exercise_library").select(
-                "video_s3_path, exercise_name"
-            ).ilike("exercise_name", f"{name}%").limit(1).execute()
-
-            if result.data and result.data[0].get("video_s3_path"):
-                found_result = result.data[0]
-                break
+        # 1) Direct lookup against exercise_library.
+        found_result = _lookup_library_video(db, search_names)
 
         is_substitute = False
         similar_to = None
+
+        # 2) Curated alias bridge (static overrides + program_exercise_name_map).
+        #    Cheap and indexed — runs BEFORE the expensive RAG substitute so
+        #    common functional/HYROX names (Sled Push, Plank Hold, SkiErg
+        #    Interval, …) resolve to a real library video in one query instead
+        #    of a ~3s embedding+ChromaDB search that previously still 404'd.
         if not found_result:
-            user_id = current_user.get("id") if isinstance(current_user, dict) else None
+            alias = _resolve_alias_name(db, exercise_name)
+            if alias:
+                alias_names = []
+                if gender in ('male', 'female'):
+                    alias_names.append(f"{alias['library_name']}_{gender}")
+                alias_names.append(alias["library_name"])
+                alias_search = []
+                for name in alias_names:
+                    alias_search.extend(generate_name_variants(name))
+                alias_search = list(dict.fromkeys(alias_search))
+                found_result = _lookup_library_video(db, alias_search)
+                if found_result:
+                    is_substitute = True
+                    similar_to = {
+                        "original": exercise_name,
+                        "matched": found_result["exercise_name"],
+                        "similarity": round(min(1.0, alias["confidence"] / 100.0), 3),
+                        "source": alias["source"],
+                    }
+                    logger.info(
+                        f"[Video Alias] '{exercise_name}' → '{found_result['exercise_name']}' "
+                        f"(source={alias['source']}, confidence={alias['confidence']})"
+                    )
+
+        # 3) RAG substitute (Gemini embedding + ChromaDB) — last resort.
+        if not found_result:
             substitute = await _find_substitute_video(db, exercise_name, user_id)
             if substitute is None:
+                # Cache the miss (short TTL) so the next identical request is
+                # instant instead of re-running embedding + ChromaDB.
+                await _video_resolve_cache.set(cache_key, {"hit": False}, ttl_override=_VIDEO_NEG_TTL)
                 raise HTTPException(status_code=404, detail="Video not found for exercise")
             found_result = {
                 "video_s3_path": substitute["video_s3_path"],
@@ -326,16 +471,6 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
         s3_path = found_result["video_s3_path"]
         found_exercise_name = found_result["exercise_name"]
 
-        # s3_path format: s3://bucket/key
-        # Extract key from s3:// URI
-        key = s3_path.replace(f"s3://{BUCKET_NAME}/", "")
-
-        url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': BUCKET_NAME, 'Key': key},
-            ExpiresIn=PRESIGNED_URL_EXPIRATION
-        )
-
         # Determine current gender from found exercise name
         current_gender = None
         if "_male" in found_exercise_name.lower():
@@ -347,8 +482,22 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
         has_male = check_exercise_variant_exists(db, f"{base_name}_male")
         has_female = check_exercise_variant_exists(db, f"{base_name}_female")
 
+        # Cache the resolution (not the presigned URL — that is regenerated per
+        # request). Key includes user_id, so a user's own custom-exercise video
+        # is never shared across users.
+        await _video_resolve_cache.set(cache_key, {
+            "hit": True,
+            "s3_path": s3_path,
+            "exercise_name": found_exercise_name,
+            "current_gender": current_gender,
+            "has_male": has_male,
+            "has_female": has_female,
+            "is_substitute": is_substitute,
+            "similar_to": similar_to,
+        })
+
         response: dict = {
-            "url": url,
+            "url": _presign(s3_path),
             "expires_in": PRESIGNED_URL_EXPIRATION,
             "exercise_name": found_exercise_name,
             "current_gender": current_gender,
