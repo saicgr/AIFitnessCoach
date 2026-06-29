@@ -64,7 +64,9 @@ import 'easy_sheet_helpers.dart';
 import 'score_target_service.dart';
 import 'widgets/easy_exercise_actions_sheet.dart';
 import 'widgets/easy_exercise_header.dart' show showEasyExerciseHistorySheet;
-import 'widgets/easy_help_sheet.dart';
+import '../../../core/providers/workout_ui_mode_provider.dart';
+import '../../../core/services/workout_tour_steps.dart';
+import '../../../widgets/app_tour/app_tour_controller.dart' show AppTourState;
 import 'widgets/easy_warmup_runner.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -129,9 +131,14 @@ class EasyActiveWorkoutScreenState
   List<Map<String, dynamic>>? _warmup;
   bool _warmupPhase = false;
 
+  /// Mirrors the spotlight tour's dismiss → `tour_seen_easy` so the first-run
+  /// Easy walkthrough fires exactly once. Closed in [dispose].
+  ProviderSubscription<AppTourState>? _tourSeenSub;
+
   @override
   void initState() {
     super.initState();
+    _tourSeenSub = WorkoutTourSeenListener.attach(ref);
     _exercises = List<WorkoutExercise>.from(widget.workout.exercises);
     if (_exercises.isEmpty) {
       _timer = WorkoutTimerController();
@@ -263,11 +270,21 @@ class EasyActiveWorkoutScreenState
     if (!mounted) return;
     if (_warmupPhase) setState(() => _warmupPhase = false);
     ref.read(activeWorkoutWarmupDoneProvider.notifier).state = true;
-    EasyHelpSheet.showIfNeverSeen(context, onSkipToNext: _skipToNextExercise);
+    // First-run Easy walkthrough — the shared spotlight tour (same
+    // `tour_seen_easy` flag the old bottom-card used, so existing users who
+    // saw onboarding aren't re-shown). Fired post-frame so the AppTourKeys
+    // anchors on the exercise header + focal column are mounted and the
+    // spotlight can find them.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        WorkoutTourService.maybeShowForTier(ref, WorkoutUiMode.easy);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _tourSeenSub?.close();
     _timer.dispose();
     _restBroadcaster?.dispose();
     super.dispose();
@@ -296,6 +313,12 @@ class EasyActiveWorkoutScreenState
 
   void _setDuration(double v) {
     setState(() => _perExercise[_currentIndex]!.durationSeconds = v.round());
+    HapticService.instance.tick();
+  }
+
+  void _setDistance(double v) {
+    setState(() =>
+        _perExercise[_currentIndex]!.distanceMeters = v.clamp(0, 100000));
     HapticService.instance.tick();
   }
 
@@ -678,14 +701,17 @@ class EasyActiveWorkoutScreenState
 
     // Timed exercises (planks, wall sits): the user-entered hold seconds
     // ARE the metric — write them into durationSeconds and zero out
-    // weight/reps so volume/PR math stays correct.
+    // weight/reps so volume/PR math stays correct. Distance moves (SkiErg,
+    // sled, carries) write the meters into distanceMeters, zero weight/reps.
     final isTimed = state.isTimed;
+    final isDistance = state.isDistance;
     final setLog = SetLog(
-      reps: isTimed ? 0 : state.reps,
-      weight: isTimed ? 0 : weightKg,
+      reps: (isTimed || isDistance) ? 0 : state.reps,
+      weight: (isTimed || isDistance) ? 0 : weightKg,
       targetReps: state.targetReps,
       startedAt: _currentSetStartTime,
       durationSeconds: isTimed ? state.durationSeconds : setDuration,
+      distanceMeters: isDistance ? state.distanceMeters : null,
       loggingMode: 'easy',
       notes: _pendingNoteText.trim().isNotEmpty
           ? [_pendingNoteText.trim()]
@@ -1197,7 +1223,12 @@ class EasyActiveWorkoutScreenState
     // Warm-up phase (Easy redesign) — guided warm-up runner before the working
     // sets. Kept separate from the logged session (no stats/index impact).
     if (_warmupPhase && _warmup != null) {
-      return EasyWarmupRunner(warmup: _warmup!, onDone: _finishWarmupPhase);
+      return EasyWarmupRunner(
+        warmup: _warmup!,
+        onDone: _finishWarmupPhase,
+        workoutId: widget.workout.id,
+        useKg: ref.read(useKgForWorkoutProvider),
+      );
     }
 
     // Saving / completing pipeline is running — show the same trophy +
@@ -1381,6 +1412,7 @@ class EasyActiveWorkoutScreenState
       onWeightChanged: _setWeight,
       onRepsChanged: _setReps,
       onDurationChanged: _setDuration,
+      onDistanceChanged: _setDistance,
       onLogSet: _logCurrentSet,
       editingSetIndex: _editingSetIndex,
       onEditSet: _editSet,

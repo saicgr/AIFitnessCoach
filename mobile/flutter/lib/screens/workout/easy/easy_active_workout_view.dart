@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/app_tour/app_tour_controller.dart' show AppTourKeys;
 import '../models/workout_state.dart';
 import '../widgets/workout_stats_strip.dart';
 import 'easy_active_workout_state_models.dart';
@@ -59,6 +60,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
   final ValueChanged<double> onWeightChanged;
   final ValueChanged<double> onRepsChanged;
   final ValueChanged<double> onDurationChanged;
+  final ValueChanged<double> onDistanceChanged;
   final Future<void> Function() onLogSet;
 
   /// 0-indexed past set currently being edited; null ⇒ live set.
@@ -136,6 +138,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     required this.onWeightChanged,
     required this.onRepsChanged,
     required this.onDurationChanged,
+    required this.onDistanceChanged,
     required this.onLogSet,
     this.editingSetIndex,
     this.onEditSet,
@@ -183,20 +186,25 @@ class EasyActiveWorkoutView extends StatelessWidget {
               // a wearable streaming, never a fabricated number.
               showEffort: true,
             ),
-            EasyExerciseHeader(
-              exercise: exercise,
-              currentSet: currentSetNumber,
-              totalSets: state.totalSets,
-              compact: compact,
-              onShowVideo: onShowVideo,
-              onOpenPlan: onOpenPlan,
-              onShowInfo: onShowInfo,
-              onFormCheck: onFormCheck,
-              onAddSet: onAddSet,
-              onRemoveSet: onRemoveSet,
-              onEditNote: onEditNote,
-              hasNote: hasNote,
-              onShowMore: onShowExerciseActions,
+            // Tour anchor: the first-run Easy spotlight ("Today's exercise")
+            // targets this header via AppTourKeys.exerciseCardKey.
+            KeyedSubtree(
+              key: AppTourKeys.exerciseCardKey,
+              child: EasyExerciseHeader(
+                exercise: exercise,
+                currentSet: currentSetNumber,
+                totalSets: state.totalSets,
+                compact: compact,
+                onShowVideo: onShowVideo,
+                onOpenPlan: onOpenPlan,
+                onShowInfo: onShowInfo,
+                onFormCheck: onFormCheck,
+                onAddSet: onAddSet,
+                onRemoveSet: onRemoveSet,
+                onEditNote: onEditNote,
+                hasNote: hasNote,
+                onShowMore: onShowExerciseActions,
+              ),
             ),
             EasyCompletedDots(
               completedSetsForCurrentExercise: state.completed,
@@ -222,14 +230,19 @@ class EasyActiveWorkoutView extends StatelessWidget {
             // above already shows the per-set ledger (previous sets inline).
             // The focal poster + LOG SET now own the residual height.
             Expanded(
-              // Long-press anywhere on the focal column body opens the same
-              // actions sheet as the "•••" header chip. `behavior: deferToChild`
-              // ensures the inner +/− stepper buttons and the big Log set CTA
-              // still get their own taps before this gesture wins.
-              child: GestureDetector(
-                behavior: HitTestBehavior.deferToChild,
-                onLongPress: onShowExerciseActions,
-                child: EasyFocalColumn(
+              // Tour anchor: the "Log your effort" + "Finish the set" Easy
+              // spotlight steps target the focal column (steppers + LOG SET)
+              // via AppTourKeys.setLoggingKey.
+              child: KeyedSubtree(
+                key: AppTourKeys.setLoggingKey,
+                // Long-press anywhere on the focal column body opens the same
+                // actions sheet as the "•••" header chip. `behavior: deferToChild`
+                // ensures the inner +/− stepper buttons and the big Log set CTA
+                // still get their own taps before this gesture wins.
+                child: GestureDetector(
+                  behavior: HitTestBehavior.deferToChild,
+                  onLongPress: onShowExerciseActions,
+                  child: EasyFocalColumn(
                   state: state,
                   exerciseName: exercise.name,
                   useKg: useKg,
@@ -239,10 +252,12 @@ class EasyActiveWorkoutView extends StatelessWidget {
                   onWeightChanged: onWeightChanged,
                   onRepsChanged: onRepsChanged,
                   onDurationChanged: onDurationChanged,
+                  onDistanceChanged: onDistanceChanged,
                   onLogSet: onLogSet,
                   editingSetIndex: editingSetIndex,
                   // "Next: <name>" preview shown just above LOG SET (mockup).
                   nextExerciseName: nextExerciseName,
+                ),
                 ),
               ),
             ),
