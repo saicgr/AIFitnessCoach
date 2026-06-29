@@ -580,7 +580,7 @@ class EasyFocalColumn extends StatelessWidget {
         // PLUS the universal "+ metric" add affordance — rendered on EVERY
         // exercise so any move can gain a tracked column. A Wrap lets 1–N
         // steppers flow onto new rows without ever pushing LOG SET off-screen.
-        final List<Widget> extraTiles = [
+        final extraSteppers = <Widget>[
           for (final key in state.extraMetricKeys)
             SizedBox(
               width: 150,
@@ -599,27 +599,35 @@ class EasyFocalColumn extends StatelessWidget {
                 _extraMetricLabel(key),
               ),
             ),
-          if (onAddMetric != null)
-            SizedBox(
-              width: 120,
-              child: _AddMetricTile(
-                accent: colors.accent,
-                muted: colors.textMuted,
-                onTap: onAddMetric!,
-              ),
-            ),
         ];
-        final extrasSection = extraTiles.isEmpty
-            ? null
-            : Padding(
-                padding: EdgeInsets.only(top: tight ? 12 : 18),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: gapBetweenSteppers + 8,
-                  runSpacing: tight ? 10 : 16,
-                  children: extraTiles,
-                ),
-              );
+        final extrasSection =
+            (extraSteppers.isEmpty && onAddMetric == null)
+                ? null
+                : Padding(
+                    padding: EdgeInsets.only(top: tight ? 12 : 18),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (extraSteppers.isNotEmpty)
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: gapBetweenSteppers + 8,
+                            runSpacing: tight ? 10 : 16,
+                            children: extraSteppers,
+                          ),
+                        // Unmissable "+ Add metric" pill on EVERY exercise.
+                        if (onAddMetric != null) ...[
+                          if (extraSteppers.isNotEmpty)
+                            SizedBox(height: tight ? 10 : 14),
+                          _AddMetricPill(
+                            accent: colors.accent,
+                            onTap: onAddMetric!,
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
 
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPad),
@@ -684,45 +692,40 @@ class EasyFocalColumn extends StatelessWidget {
   }
 }
 
-/// The universal "+ metric" tile in the extra-metric stepper stack. Styled to
-/// echo a `stepperColumn` (a round control above a small caption) so it reads
-/// as "one more column you can add" rather than a foreign button.
-class _AddMetricTile extends StatelessWidget {
+/// The universal "+ Add metric" pill beneath the steppers. Full-width + clearly
+/// labeled so it's unmissable (vs the old subtle round tile) — tapping opens the
+/// metric picker to add a tracked column to this exercise.
+class _AddMetricPill extends StatelessWidget {
   final Color accent;
-  final Color muted;
   final Future<void> Function() onTap;
-  const _AddMetricTile(
-      {required this.accent, required this.muted, required this.onTap});
+  const _AddMetricPill({required this.accent, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            HapticService.instance.tap();
-            onTap();
-          },
-          child: Container(
-            height: 46,
-            width: 46,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border:
-                  Border.all(color: accent.withValues(alpha: 0.55), width: 1.5),
-            ),
-            child: Icon(Icons.add_rounded, color: accent, size: 26),
-          ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticService.instance.tap();
+        onTap();
+      },
+      child: Container(
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          color: accent.withValues(alpha: 0.08),
+          border: Border.all(color: accent.withValues(alpha: 0.5), width: 1.5),
         ),
-        const SizedBox(height: 5),
-        Text('METRIC',
-            style: ZType.lbl(11, color: muted, letterSpacing: 1.5),
-            textAlign: TextAlign.center),
-      ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add_rounded, color: accent, size: 20),
+            const SizedBox(width: 8),
+            Text('ADD METRIC',
+                style: ZType.lbl(13, color: accent, letterSpacing: 1.8)),
+          ],
+        ),
+      ),
     );
   }
 }
