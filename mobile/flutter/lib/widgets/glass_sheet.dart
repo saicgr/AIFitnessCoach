@@ -23,6 +23,13 @@ class GlassSheetStyle {
   /// sheet reads as foreground, not a translucent floater over content.
   static Color opaqueBarrierColor() => Colors.black.withValues(alpha: 0.55);
 
+  /// Scrim for a glass sheet opened ON TOP of another glass sheet. The default
+  /// 0.2 barrier is too weak to hide the parent sheet's drag handle + content,
+  /// which then bleed through the new (translucent) glass surface. This darker
+  /// scrim makes the sheet behind recede while keeping the new sheet's glass
+  /// aesthetic. Use via `showGlassSheet(barrierColor: ...)`.
+  static Color nestedBarrierColor() => Colors.black.withValues(alpha: 0.6);
+
   static Color backgroundColor(bool isDark) => isDark
       ? Colors.black.withValues(alpha: 0.5)
       : Colors.white.withValues(alpha: 0.7);
@@ -68,6 +75,10 @@ Future<T?> showGlassSheet<T>({
   /// mandatory prompts (RPE, confirmation dialogs) where legibility matters
   /// more than the glass aesthetic. Defaults to false for back-compat.
   bool opaque = false,
+  /// Overrides the scrim color. Pass `GlassSheetStyle.nestedBarrierColor()`
+  /// when opening this sheet on top of another glass sheet so the parent
+  /// doesn't bleed through. Defaults to the standard glass/opaque scrim.
+  Color? barrierColor,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -76,9 +87,10 @@ Future<T?> showGlassSheet<T>({
     useRootNavigator: useRootNavigator,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
-    barrierColor: opaque
-        ? GlassSheetStyle.opaqueBarrierColor()
-        : GlassSheetStyle.barrierColor(),
+    barrierColor: barrierColor ??
+        (opaque
+            ? GlassSheetStyle.opaqueBarrierColor()
+            : GlassSheetStyle.barrierColor()),
     builder: (ctx) {
       final child = builder(ctx);
       if (!opaque) return child;
@@ -114,6 +126,13 @@ class GlassSheet extends StatelessWidget {
   final bool showHandle;
   final EdgeInsetsGeometry? padding;
 
+  /// When false, the sheet does NOT append its own transparent bottom spacer
+  /// for the home-indicator inset. Use this when the child has a bottom-pinned
+  /// bar that should paint its background all the way to the bezel — the child
+  /// is then responsible for adding `viewPadding.bottom` to its own padding.
+  /// Keyboard avoidance is unaffected (the sheet still rises with the keyboard).
+  final bool reserveBottomInset;
+
   /// When true, renders a fully opaque surface without `BackdropFilter` blur.
   /// Required for mandatory prompt sheets (RPE, confirmations) where the
   /// background must NOT be visible through the sheet.
@@ -128,6 +147,7 @@ class GlassSheet extends StatelessWidget {
     this.showHandle = true,
     this.padding,
     this.opaque = false,
+    this.reserveBottomInset = true,
   });
 
   @override
@@ -177,7 +197,9 @@ class GlassSheet extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
             padding: EdgeInsets.only(
-              bottom: keyboardInset > 0 ? keyboardInset : safeAreaBottom,
+              bottom: keyboardInset > 0
+                  ? keyboardInset
+                  : (reserveBottomInset ? safeAreaBottom : 0),
             ),
           ),
         ],

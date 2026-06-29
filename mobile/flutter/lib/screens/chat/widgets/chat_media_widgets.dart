@@ -207,13 +207,16 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
   void _openMenuSheet(BuildContext context, bool isDark) {
     showGlassSheet<void>(
       context: context,
-      builder: (_) => GlassSheet(
-        child: MenuAnalysisSheet(
-          foodItems: foodItems,
-          analysisType: 'plate',
-          isDark: isDark,
-          onLogItems: (selected) => onViewAll?.call(selected),
-        ),
+      // Opened from a chat bubble that may sit over other glass surfaces —
+      // darken the scrim so nothing bleeds through this glass sheet.
+      barrierColor: GlassSheetStyle.nestedBarrierColor(),
+      // MenuAnalysisSheet self-wraps in a GlassSheet — don't double-wrap
+      // (a second wrap renders a duplicate drag handle + nested blur).
+      builder: (_) => MenuAnalysisSheet(
+        foodItems: foodItems,
+        analysisType: 'plate',
+        isDark: isDark,
+        onLogItems: (selected) => onViewAll?.call(selected),
       ),
     );
   }

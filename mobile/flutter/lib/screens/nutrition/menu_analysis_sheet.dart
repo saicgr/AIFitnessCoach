@@ -1373,6 +1373,11 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       // Island / notch on top while keeping a tall working surface. The
       // drag handle and glass blur are preserved at this height.
       maxHeightFraction: 0.92,
+      // The bottom action bar paints its own tint into the home-indicator
+      // inset (see _bottomBar), so suppress GlassSheet's transparent spacer —
+      // otherwise the footer's grey stops ~34pt above the bezel and reads as a
+      // detached floating box.
+      reserveBottomInset: false,
       child: Stack(
         children: [
           Column(
@@ -2356,12 +2361,14 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Widget _bottomBar(ThemeColors colors) {
     final totals = _selectedTotals;
     final hasSelection = _selected.isNotEmpty;
-    // GlassSheet already appends a bottom spacer equal to the home-indicator
-    // inset. Wrapping in SafeArea here would double that padding and push
-    // the Log pill ~34pt above the bezel. Render the bar flush — the parent
-    // sheet handles the gesture-area clearance.
+    // The parent GlassSheet is opted out of its bottom spacer
+    // (reserveBottomInset: false), so the bar itself extends its tinted
+    // background through the home-indicator inset — the grey reaches the bezel
+    // instead of floating ~34pt above it. viewPadding (not padding) is used so
+    // the inset stays stable while the keyboard is up.
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
+      padding: EdgeInsets.fromLTRB(16, 6, 16, 2 + bottomInset),
       decoration: BoxDecoration(
         color: _glassTint(context, 0.35),
         border: Border(top: BorderSide(color: _glassBorder(context, 0.10))),

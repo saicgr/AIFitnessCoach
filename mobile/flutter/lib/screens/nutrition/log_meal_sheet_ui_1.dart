@@ -2118,7 +2118,13 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         });
         await showGlassSheet<void>(
           context: context,
-          builder: (_) => GlassSheet(child: MenuAnalysisSheet(
+          // Opened over the Log Meal sheet — darken the scrim so the parent
+          // sheet's handle/content don't bleed through this glass surface.
+          barrierColor: GlassSheetStyle.nestedBarrierColor(),
+          // MenuAnalysisSheet already wraps itself in a GlassSheet (see its
+          // build()). Do NOT wrap again here — a second GlassSheet renders a
+          // duplicate drag handle + nested blur surface.
+          builder: (_) => MenuAnalysisSheet(
             foodItems: initial,
             analysisType: type,
             isDark: widget.isDark,
@@ -2139,7 +2145,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                 Navigator.of(context).pop();
               }
             },
-          )),
+          ),
         );
       }
 
@@ -2413,7 +2419,11 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       if (!mounted) return;
       showGlassSheet<void>(
         context: context,
-        builder: (_) => GlassSheet(child: MenuAnalysisSheet(
+        // Opened over the Log Meal sheet — darken the scrim so the parent
+        // sheet doesn't bleed through this glass surface.
+        barrierColor: GlassSheetStyle.nestedBarrierColor(),
+        // MenuAnalysisSheet self-wraps in a GlassSheet — don't double-wrap.
+        builder: (_) => MenuAnalysisSheet(
           foodItems: foodItems,
           analysisType: analysisType,
           isDark: widget.isDark,
@@ -2436,7 +2446,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
               Navigator.of(context).pop(); // close LogMealSheet
             }
           },
-        )),
+        ),
       );
     } catch (e) {
       _loadingDelayTimer?.cancel();
@@ -2674,7 +2684,11 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
     await showGlassSheet<void>(
       context: context,
-      builder: (_) => GlassSheet(child: MenuAnalysisSheet(
+      // Opened over the Log Meal sheet — darken the scrim so the parent
+      // sheet doesn't bleed through this glass surface.
+      barrierColor: GlassSheetStyle.nestedBarrierColor(),
+      // MenuAnalysisSheet self-wraps in a GlassSheet — don't double-wrap.
+      builder: (_) => MenuAnalysisSheet(
         foodItems: refreshedItems,
         analysisType: refreshedType,
         isDark: widget.isDark,
@@ -2703,7 +2717,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             Navigator.of(context).pop(); // close LogMealSheet
           }
         },
-      )),
+      ),
     );
   }
 
