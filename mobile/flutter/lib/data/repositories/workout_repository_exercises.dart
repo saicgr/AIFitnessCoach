@@ -1,5 +1,20 @@
 part of 'workout_repository.dart';
 
+/// Short-lived per-workout cache for warmup/stretch reads so the workout-detail
+/// screen's prefetch (on mount) warms the active-workout screen's read — the
+/// warm-up appears instantly on "Start" instead of after a fresh network
+/// round-trip. TTL is deliberately short so a regeneration/reorder isn't served
+/// stale; mutations also evict.
+class _WarmupStretchCacheEntry {
+  final DateTime at;
+  final List<Map<String, dynamic>>? warmup;
+  final List<Map<String, dynamic>>? stretches;
+  const _WarmupStretchCacheEntry(this.at, this.warmup, this.stretches);
+}
+
+final Map<String, _WarmupStretchCacheEntry> _warmupStretchCache = {};
+const Duration _warmupStretchCacheTtl = Duration(seconds: 90);
+
 /// Extension on WorkoutRepository for exercise management methods:
 /// warmup/stretches generation, exercise suggestions, swap, add,
 /// parse input, extend workout, custom workout creation.
@@ -21,6 +36,8 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       if (response.statusCode == 200) {
+        // Regeneration changed the persisted list → drop the read cache.
+        _warmupStretchCache.remove(workoutId);
         final data = response.data as Map<String, dynamic>;
         return List<Map<String, dynamic>>.from(data['exercises'] ?? []);
       }
@@ -48,6 +65,8 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       if (response.statusCode == 200) {
+        // Regeneration changed the persisted list → drop the read cache.
+        _warmupStretchCache.remove(workoutId);
         final data = response.data as Map<String, dynamic>;
         return List<Map<String, dynamic>>.from(data['exercises'] ?? []);
       }
@@ -79,6 +98,8 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       if (response.statusCode == 200) {
+        // Regeneration changed the persisted lists → drop the read cache.
+        _warmupStretchCache.remove(workoutId);
         final data = response.data as Map<String, dynamic>;
         return {
           'warmup': List<Map<String, dynamic>>.from(data['warmup']?['exercises_json'] ?? data['warmup']?['exercises'] ?? []),
@@ -100,7 +121,14 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
   /// UI can surface a retry state instead of silently showing a misleading
   /// hardcoded default list (see `feedback_no_silent_fallbacks`).
   Future<({List<Map<String, dynamic>>? warmup, List<Map<String, dynamic>>? stretches})>
-      fetchWarmupAndStretches(String workoutId) async {
+      fetchWarmupAndStretches(String workoutId, {bool forceRefresh = false}) async {
+    // Cache hit (fresh) → instant, no network. Bridges detail → active.
+    final cached = _warmupStretchCache[workoutId];
+    if (!forceRefresh &&
+        cached != null &&
+        DateTime.now().difference(cached.at) < _warmupStretchCacheTtl) {
+      return (warmup: cached.warmup, stretches: cached.stretches);
+    }
     Future<List<Map<String, dynamic>>?> readSection(String section) async {
       try {
         final response =
@@ -122,6 +150,8 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       readSection('warmup'),
       readSection('stretches'),
     ]);
+    _warmupStretchCache[workoutId] =
+        _WarmupStretchCacheEntry(DateTime.now(), results[0], results[1]);
     return (warmup: results[0], stretches: results[1]);
   }
 
@@ -139,6 +169,9 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       '${ApiConstants.workouts}/$workoutId/$section',
       data: {'exercises': exercises},
     );
+    // A reorder changes the persisted list — drop the cache so the next read
+    // (active screen) reflects it instead of the pre-reorder order.
+    _warmupStretchCache.remove(workoutId);
   }
 
   /// Get AI exercise swap suggestions.
