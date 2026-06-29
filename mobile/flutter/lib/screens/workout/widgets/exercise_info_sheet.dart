@@ -19,6 +19,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/exercise_image.dart';
+import '../shared/exercise_instruction_copy.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Show the exercise instructions as a full screen page.
@@ -372,9 +373,22 @@ class _ExerciseInstructionsScreenState
       } catch (_) {}
       _videoController = null;
       if (mounted) {
+        // If the URL that failed was only a SUBSTITUTE (the exercise has no
+        // canonical video and the backend offered another move's clip), a
+        // hard "Couldn't load — Retry" is wrong: retrying re-fetches the same
+        // broken substitute. Fall back quietly to the still illustration —
+        // exactly what cardio/functional stations (SkiErg, Plank Hold) want.
+        final wasSubstitute = _substituteMatchedName != null;
         setState(() {
-          _videoError = true;
           _isLoadingVideo = false;
+          if (wasSubstitute) {
+            _videoUrl = null;
+            _videoError = false;
+            _substituteOriginalName = null;
+            _substituteMatchedName = null;
+          } else {
+            _videoError = true;
+          }
         });
       }
     }
@@ -1179,403 +1193,37 @@ class _ExerciseInstructionsScreenState
     return out.join(' ');
   }
 
-  /// Routes an exercise to its setup template. Routing table is intentionally
-  /// ordered most-specific first so compound names ("dumbbell fly flat bench")
-  /// don't fall into the bench-press bucket.
-  ///
-  /// Expected routing for plan test fixtures:
-  ///   - "dumbbell fly flat bench slow"     → fly
-  ///   - "barbell romanian deadlift"        → romanian deadlift
-  ///   - "bulgarian split squat"            → split squat (rear-foot-elevated)
-  ///   - "dumbbell shoulder press"          → overhead press
-  ///   - "bodyweight squat"                 → bodyweight squat
-  ///   - "hip thrust"                       → hip thrust
-  ///   - "t-bar row"                        → row
-  ///   - "farmer's carry"                   → generic safety blurb
-  ///   - "push-ups"                         → generic safety blurb
-  String _routeKey() {
-    final name = _exercise.name.toLowerCase();
-    final eq = (_exercise.equipment ?? '').toLowerCase();
-
-    // Most specific first.
-    if (name.contains('fly') || name.contains('flye')) return 'fly';
-    if (name.contains('romanian deadlift') || name.contains('rdl')) {
-      return 'rdl';
-    }
-    if (name.contains('bulgarian split squat') ||
-        name.contains('rear foot elevated') ||
-        name.contains('rear-foot-elevated')) {
-      return 'bulgarian_split_squat';
-    }
-    if (name.contains('t-bar row') ||
-        name.contains('barbell row') ||
-        name.contains('dumbbell row') ||
-        name.contains('cable row') ||
-        name.contains('seated row') ||
-        (name.contains('row') && !name.contains('rower'))) {
-      return 'row';
-    }
-    if (name.contains('overhead squat')) return 'overhead_squat';
-    if (name.contains('goblet squat')) return 'goblet_squat';
-    if (name.contains('bodyweight squat') ||
-        name.contains('air squat') ||
-        (name.contains('squat') && eq.contains('bodyweight'))) {
-      return 'bodyweight_squat';
-    }
-    if (name.contains('split squat')) return 'split_squat';
-    if (name.contains('back squat') ||
-        name.contains('front squat') ||
-        name.contains('barbell squat') ||
-        (name.contains('squat') && eq.contains('barbell'))) {
-      return 'barbell_squat';
-    }
-    if (name.contains('hip thrust') || name.contains('glute bridge')) {
-      return 'hip_thrust';
-    }
-    if (name.contains('leg curl')) return 'hamstring_curl';
-    if (name.contains('curl')) return 'bicep_curl';
-    if (name.contains('shoulder press') ||
-        name.contains('military press') ||
-        name.contains('overhead press')) {
-      return 'overhead_press';
-    }
-    if (name.contains('bench press') ||
-        (name.contains('press') && name.contains('bench'))) {
-      return 'bench_press';
-    }
-    if (name.contains('deadlift')) return 'deadlift';
-    if (name.contains('pull') &&
-        (name.contains('up') || name.contains('down'))) {
-      return 'pull';
-    }
-    return 'generic';
-  }
-
-  /// DB-backed instruction steps if the exercise model has them populated.
-  /// Returns null if no DB content is available — caller falls through to
-  /// the keyword router.
-  List<String>? _dbInstructionSteps() {
-    final steps = _exercise.instructions;
-    if (steps == null || steps.isEmpty) return null;
-    // Reuse the model's parser if present (handles numbered/sentence-split).
-    final parsed = _exercise.instructions.toString();
-    if (parsed.trim().isEmpty) return null;
-    // Try splitting on common separators.
-    final lines = parsed
-        .split(RegExp(r'(?:\d+[.)]\s*)|(?:\n+)|(?<=\.)\s+(?=[A-Z])'))
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-    return lines.length >= 2 ? lines : null;
-  }
+  // NOTE: setup/form-tip routing now lives in the SHARED engine
+  // `exercise_instruction_copy.dart` (`getSetupSteps` / `getFormTips`).
+  // This sheet used to carry its own duplicate keyword classifier + DB-split
+  // helper; both were removed so a fix (e.g. a missing cardio machine) lands
+  // in one place for every surface.
 
   List<String> _getSetupInstructions() {
-    final db = _dbInstructionSteps();
-    if (db != null) return db;
-
-    // If the model carries an explicit `setup` cue, prefer that as the first
-    // step alongside the template.
-    final setup = _exercise.setup;
-    final List<String> base;
-    switch (_routeKey()) {
-      case 'fly':
-        base = [
-          'Lie back on the bench with feet planted firmly on the floor.',
-          'Press the dumbbells up so they meet over your chest, palms facing in.',
-          'Keep a soft bend in your elbows — lock that angle for the entire set.',
-          'Lower the weights in a wide arc until you feel a stretch across your chest.',
-          'Squeeze your pecs to bring the dumbbells back together along the same arc.',
-        ];
-        break;
-      case 'rdl':
-        base = [
-          'Stand tall holding the bar at hip level, feet hip-width apart.',
-          'Soften the knees slightly and keep them locked at that angle.',
-          'Hinge at the hips, pushing them straight back as the bar slides down your thighs.',
-          'Lower until you feel a strong hamstring stretch (around mid-shin for most lifters).',
-          'Drive your hips forward to stand back up — squeeze the glutes at the top.',
-        ];
-        break;
-      case 'bulgarian_split_squat':
-        base = [
-          'Place the top of your rear foot on a bench behind you.',
-          'Step the front foot forward far enough that the front knee tracks over the laces.',
-          'Stay tall through the chest, brace your core, and shift weight onto the front leg.',
-          'Lower straight down until the front thigh is roughly parallel to the floor.',
-          'Drive through the front heel to return to the start.',
-        ];
-        break;
-      case 'row':
-        base = [
-          'Hinge at the hips with a slight knee bend, back flat.',
-          'Grip the bar/handle with arms fully extended.',
-          'Brace your core and pin your shoulder blades down before pulling.',
-          'Pull the weight to your lower chest / upper abdomen, leading with the elbows.',
-          'Lower under control to a full stretch — no body english.',
-        ];
-        break;
-      case 'overhead_squat':
-        base = [
-          'Hold the bar overhead with a wide grip, arms locked out.',
-          'Stand with feet slightly wider than shoulder-width, toes slightly out.',
-          'Brace hard and keep the bar stacked over mid-foot the whole rep.',
-          'Squat down with the chest tall and the bar tracking straight up.',
-          'Drive through the floor to stand back up with the bar still locked overhead.',
-        ];
-        break;
-      case 'goblet_squat':
-        base = [
-          'Hold a single dumbbell or kettlebell at chest height, elbows tucked under.',
-          'Stand with feet just outside shoulder-width, toes slightly out.',
-          'Brace the core and squat straight down between the knees.',
-          'Use your elbows to gently push the knees out at the bottom.',
-          'Drive through mid-foot to stand back up tall.',
-        ];
-        break;
-      case 'bodyweight_squat':
-        base = [
-          'Stand with feet shoulder-width apart, toes slightly pointed out.',
-          'Reach your arms forward for balance as you sit your hips back.',
-          'Squat down until thighs are at least parallel to the floor.',
-          'Keep your knees tracking in line with your toes — no caving in.',
-          'Drive through your whole foot to stand back up tall.',
-        ];
-        break;
-      case 'split_squat':
-        base = [
-          'Step into a long lunge stance, feet roughly hip-width apart.',
-          'Stay tall through the torso with the core braced.',
-          'Lower straight down until the back knee hovers just above the floor.',
-          'Keep the front knee tracking over the laces, not collapsing inward.',
-          'Drive through the front heel to return to the start position.',
-        ];
-        break;
-      case 'barbell_squat':
-        base = [
-          'Position the bar on your upper back (not your neck).',
-          'Stand with feet shoulder-width apart, toes slightly pointed out.',
-          'Brace your core hard before descending.',
-          'Sit between the hips, knees tracking over toes.',
-          'Descend until thighs are at least parallel, then drive up through the floor.',
-        ];
-        break;
-      case 'hip_thrust':
-        base = [
-          'Sit on the floor with your upper back against a bench, knees bent.',
-          'Roll the bar (with a pad) over your hips, feet flat and shoulder-width.',
-          'Brace your core and tuck your chin slightly.',
-          'Drive through your heels to lift your hips until your body forms a straight line.',
-          'Squeeze the glutes hard at the top, then lower under control.',
-        ];
-        break;
-      case 'bicep_curl':
-        base = [
-          'Stand tall with the weight at arm\'s length, palms facing forward.',
-          'Pin your elbows to your sides — they don\'t move during the rep.',
-          'Curl the weight up by flexing at the elbow only.',
-          'Squeeze the biceps at the top of the rep.',
-          'Lower slowly to full extension — no swinging on the way down.',
-        ];
-        break;
-      case 'hamstring_curl':
-        base = [
-          'Set the machine so the pad sits just above your heels (or below for seated).',
-          'Lie/sit with your knees aligned with the machine pivot.',
-          'Brace your core and hold the handles for stability.',
-          'Curl the pad through a full range, leading with the heels.',
-          'Lower under control — don\'t let the stack slam back.',
-        ];
-        break;
-      case 'overhead_press':
-        base = [
-          'Stand with feet shoulder-width, weight at shoulder height.',
-          'Brace your core and squeeze your glutes — no leaning back.',
-          'Press the weight straight up overhead, finishing with biceps near your ears.',
-          'Lock out at the top with shoulders shrugged into the bar/dumbbells.',
-          'Lower under control back to the shoulders.',
-        ];
-        break;
-      case 'bench_press':
-        base = [
-          'Set up the bench at the appropriate angle (flat, incline, or decline).',
-          'Grip the bar slightly wider than shoulder-width.',
-          'Plant your feet firmly on the ground.',
-          'Retract your shoulder blades and maintain a slight arch in the lower back.',
-          'Unrack and position the bar directly above the chest before the first rep.',
-        ];
-        break;
-      case 'deadlift':
-        base = [
-          'Stand with feet hip-width apart, bar over mid-foot.',
-          'Hinge down and grip the bar just outside your legs.',
-          'Set a flat back, chest up, lats tight.',
-          'Take the slack out of the bar before pulling.',
-          'Drive through your whole foot and push your hips through to lockout.',
-        ];
-        break;
-      case 'pull':
-        base = [
-          'Grip the bar slightly wider than shoulder-width.',
-          'Hang with arms fully extended.',
-          'Engage your lats before pulling.',
-          'Pull your elbows down and back, chest to bar.',
-          'Lower with control to full arm extension.',
-        ];
-        break;
-      case 'generic':
-      default:
-        // Honest fallback — never bench-press copy. Per project rule:
-        // "no silent fallbacks" — surface that this is a generic blurb.
-        base = [
-          'Set up with proper posture and check your form in a mirror if available.',
-          'Brace your core before the first rep.',
-          'Move under control through the full range of motion.',
-          'Breathe out on exertion, in on the way back.',
-          'Keep tension on the target muscle — don\'t use momentum.',
-        ];
-        break;
+    // Single source of truth: substantial server/DB instructions win, else the
+    // shared pattern engine (which classifies cardio/bodyweight/machine/etc.).
+    final serverText = (_exercise.instructions ?? '').trim();
+    if (serverInstructionsAreSubstantial(serverText)) {
+      return splitInstructionsIntoSteps(serverText);
     }
-
+    final base = getSetupSteps(_exercise.name, equipment: _exercise.equipment);
+    // If the model carries an explicit `setup` cue, prepend it so it's not lost.
+    final setup = _exercise.setup;
     if (setup != null && setup.trim().isNotEmpty) {
-      // Prepend the AI-coach-provided setup line so it's not lost.
       return [setup.trim(), ...base];
     }
     return base;
   }
 
   List<String> _getFormTips() {
-    // DB-backed form cue takes precedence as the first tip.
+    // Shared pattern engine is the single source; DB cues take precedence.
+    final base = List<String>.from(
+        getFormTips(_exercise.name, equipment: _exercise.equipment));
     final cue = _exercise.formCue;
-    final breathing = _exercise.breathingCue;
-    final List<String> base;
-    switch (_routeKey()) {
-      case 'fly':
-        base = [
-          'Keep that elbow angle locked — it\'s a fly, not a press.',
-          'Stop just past the line of the bench; deeper isn\'t better here.',
-          'Squeeze the chest at the top, don\'t just clank the dumbbells.',
-        ];
-        break;
-      case 'rdl':
-        base = [
-          'Push the hips back — don\'t just bend forward at the waist.',
-          'Bar stays in contact with your legs the whole way down.',
-          'Stop where your hamstrings stop — not where your back rounds.',
-        ];
-        break;
-      case 'bulgarian_split_squat':
-        base = [
-          'Most of your weight stays on the front leg the whole set.',
-          'Front shin can travel over the toes — that\'s fine, it\'s a knee-flexion movement.',
-          'Stay tall through the chest; don\'t fold over the front leg.',
-        ];
-        break;
-      case 'row':
-        base = [
-          'Pull with your back — initiate from the lats, not the biceps.',
-          'No body english; the torso angle stays put.',
-          'Squeeze the shoulder blades together at the top.',
-        ];
-        break;
-      case 'overhead_squat':
-        base = [
-          'Bar stays directly over mid-foot the entire rep.',
-          'Push the hands up and out — keep the lats packed.',
-          'Mobility is the gate here — don\'t chase weight if depth disappears.',
-        ];
-        break;
-      case 'goblet_squat':
-        base = [
-          'Keep elbows tucked under the weight — don\'t flare them.',
-          'Chest tall the whole rep; the dumbbell shouldn\'t pull you forward.',
-          'Use the elbows to gently nudge the knees out at the bottom.',
-        ];
-        break;
-      case 'bodyweight_squat':
-        base = [
-          'Drive through the whole foot, not just the heels.',
-          'Don\'t let the knees cave inward.',
-          'Keep your torso upright — sit between the hips, not over them.',
-        ];
-        break;
-      case 'split_squat':
-        base = [
-          'Lower straight down — don\'t lunge forward.',
-          'Keep the front knee tracking over the second toe.',
-          'Brace the core to stay upright — no folding forward.',
-        ];
-        break;
-      case 'barbell_squat':
-        base = [
-          'Knees track over toes — don\'t let them cave.',
-          'Brace the core like you\'re about to be punched.',
-          'Drive through the floor on the way up; lead with the chest.',
-        ];
-        break;
-      case 'hip_thrust':
-        base = [
-          'Finish each rep with a hard glute squeeze, not a back arch.',
-          'Keep your chin tucked — eyes track over the knees at the top.',
-          'Don\'t over-extend the lower back at lockout.',
-        ];
-        break;
-      case 'bicep_curl':
-        base = [
-          'Elbows stay pinned at your sides the whole set.',
-          'No body english — if you have to swing, the weight is too heavy.',
-          'Lower slowly. Eccentrics build biceps.',
-        ];
-        break;
-      case 'hamstring_curl':
-        base = [
-          'Lead with the heels, don\'t pull with the hip flexors.',
-          'Pause briefly in the contracted position.',
-          'Lower the weight slowly — fight the eccentric.',
-        ];
-        break;
-      case 'overhead_press':
-        base = [
-          'Glutes squeezed, ribs down — no lower-back hyperextension.',
-          'Bar/dumbbell path is straight up over the shoulders, not in front.',
-          'Lock out at the top with shoulders shrugged into the weight.',
-        ];
-        break;
-      case 'bench_press':
-        base = [
-          'Wrists stay straight and stacked over the elbows.',
-          'Lower to mid-chest under control — no bouncing.',
-          'Drive through the chest, not just the triceps.',
-          'Keep your feet planted; don\'t lift your hips off the bench.',
-        ];
-        break;
-      case 'deadlift':
-        base = [
-          'Never round the lower back — set the lats before you pull.',
-          'Bar stays in contact with your legs the whole rep.',
-          'Lock out by squeezing the glutes, not by hyperextending.',
-        ];
-        break;
-      case 'pull':
-        base = [
-          'Initiate the pull with the lats, not the biceps.',
-          'Avoid kipping or swinging.',
-          'Lower under control to a full hang or full extension.',
-        ];
-        break;
-      case 'generic':
-      default:
-        base = [
-          'Move under control — don\'t let the weight dictate the tempo.',
-          'Keep tension on the target muscle through the full range.',
-          'If form breaks down, drop the weight rather than push another rep.',
-          'Breathe out on the hard part, in on the easy part.',
-        ];
-        break;
-    }
-
     if (cue != null && cue.trim().isNotEmpty) {
       base.insert(0, cue.trim());
     }
+    final breathing = _exercise.breathingCue;
     if (breathing != null && breathing.trim().isNotEmpty) {
       base.add('Breathing: ${breathing.trim()}');
     }

@@ -244,6 +244,11 @@ class _WideMedia extends ConsumerStatefulWidget {
 class _WideMediaState extends ConsumerState<_WideMedia> {
   VideoPlayerController? _controller;
   bool _ready = false;
+  // Whether a real video URL was resolved for this move. Distinct from `_ready`
+  // (init complete): this is true the moment we know a video EXISTS, so the ▶
+  // affordance is shown only for moves that actually have a video — image-only
+  // illustrations (most cardio/functional stations) show no play triangle.
+  bool _hasVideoSource = false;
 
   @override
   void initState() {
@@ -259,6 +264,7 @@ class _WideMediaState extends ConsumerState<_WideMedia> {
       _controller?.dispose();
       _controller = null;
       _ready = false;
+      _hasVideoSource = false;
       _resolveAndPlay();
     }
   }
@@ -283,6 +289,9 @@ class _WideMediaState extends ConsumerState<_WideMedia> {
       }
     }
     if (url == null || url.isEmpty || !mounted) return;
+    // A real video exists → flag it so the ▶ affordance can render over the
+    // still while the controller initializes.
+    setState(() => _hasVideoSource = true);
     try {
       final c = VideoPlayerController.networkUrl(Uri.parse(url));
       await c.initialize();
@@ -350,15 +359,20 @@ class _WideMediaState extends ConsumerState<_WideMedia> {
                   width: double.infinity,
                   height: double.infinity,
                   borderRadius: 0,
-                  fit: BoxFit.cover,
+                  // Illustrations are PORTRAIT on white; this hero frame is
+                  // landscape. `cover` zoom-crops the figure (head/legs cut +
+                  // soft from the heavy zoom) — `contain` shows the whole
+                  // figure crisp, letterboxed on the illustration's own white.
+                  fit: BoxFit.contain,
                   backgroundColor: (isDark ? Colors.white : Colors.black)
                       .withValues(alpha: 0.04),
                   iconColor: (isDark ? Colors.white : Colors.black)
                       .withValues(alpha: 0.22),
                 ),
-              // Centered play affordance — only while showing the still (the
-              // video, once playing, needs none).
-              if (!hasVideo)
+              // Centered play affordance — only when a real video EXISTS but
+              // isn't playing yet (still resolving/initializing). Image-only
+              // moves (most cardio/functional stations) have no video, so no ▶.
+              if (_hasVideoSource && !hasVideo)
                 Center(
                   child: Container(
                     width: 56,

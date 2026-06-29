@@ -416,7 +416,15 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                         // live below as direct siblings — they're always
                         // visible and never pushed off-screen by a long set
                         // list.
-                        Expanded(
+                        // Flexible (loose), NOT Expanded (tight): a few-set /
+                        // cardio exercise has a short table — forcing it to
+                        // fill all remaining height top-aligned the rows and
+                        // left a large dead zone above the pinned plate/AI bar
+                        // (the "so much gap in Advanced" report). Loose fit
+                        // sizes the table to its content; the table's own
+                        // maxVisibleRows budget still caps tall set lists.
+                        Flexible(
+                          fit: FlexFit.loose,
                           child: Container(
                             key: AppTourKeys.setLoggingKey,
                             child: SetTrackingTable(
