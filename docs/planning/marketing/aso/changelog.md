@@ -36,3 +36,30 @@ Stale duplicates (do NOT use as source of truth — they were not updated):
 (Append readout here 30 days post-live:)
 
 - **Readout (due ~2026-06-18):** install conversion rate before → after; keyword rank for "intermittent fasting" / "fasting timer" before → after; verdict: kept / reverted / iterated
+
+---
+
+## 2026-06-29 — Full screenshot deck rebuild (post-signature-v2 reskin + Program Library + Form Check + Menu Scan)
+
+- **Store(s):** Play + App Store (both)
+- **Asset(s) changed:** All 8 Play phone screenshots + 10 App Store screenshots (complete rebuild — previous May 2026 deck is one full reskin + 442 feature commits out of date)
+- **Before:** May 2026 deck — 8 frames: coach/exercise detail/menu+fridge composite/chat-swap/voice-log/strength/body/shareables. Missing: Program Library, program customizability, AI Form Check, Easy mode active workout, Overload Dashboard. Chat-swap frame (F4 old) violates hard constraint (excluded per founder directive 2026-06-29).
+- **After (core-8, Play + App Store):**
+  - F1: "Your fitness coach, IN CHAT." — Home redesign (signature-v2 metric deck + timeline). Background: cream `#FAF8F4`.
+  - F2: "Real programs. PICK YOURS." — Program Library cinematic carousel with HYROX in hero. Background: deep charcoal `#1A1A2E`.
+  - F3: "Built for YOUR gym." — Edit Program sheet (day swap + gym picker + AI-tailor). Background: warm indigo `#3D3A6B`. (Required by founder.)
+  - F4: "Film a set. GET COACHED." — AI Form Check critique card with 7.4/10 score + item notes. Background: muted amber `#4A3728`.
+  - F5: "Snap the menu. BEST PICK." — Menu scan result with TOP PICK badge + ranked dish list. Background: warm peach `#FBE2C8`. (Required by founder.)
+  - F6: "Set by set. YOU'RE READY." — Easy mode active workout (warmup done, rest timer, large weight focal). Background: soft sky `#D6E9F5`.
+  - F7: "Just say what YOU ATE." — Chat logging: 3 exchanges (tacos, yoga, run). Background: soft green `#D4ECD7`.
+  - F8: "Watch your strength CLIMB." — Overload Dashboard (1RM chart + muscle heatmap + PR badge). Background: steel blue `#2563EB`.
+  - App Store F9: "Open fridge. GET RECIPES." — Fridge scan → 3 high-protein recipe cards.
+  - App Store F10: "Bring your history. KEEP GOING." — Imports/switcher (MFP, MacroFactor, Cronometer, Apple Health).
+- **Hypothesis:** +15-25% listing-page-to-install conversion from: (a) narrative story arc (Problem→Solution→Trust) replacing independent feature enumeration; (b) two required high-visual-wow frames (AI Form Check + Menu Scan) that no competitor in workout AI or nutrition tracking shows together; (c) Program Library differentiator visible in frame 2 (inside the 70% install-decision window — first 3 frames). Fitbod at frame 2 comparison: they show a workout list; Zealova shows a cinematic HYROX carousel with variant selectors. Visually stronger.
+- **Measurement:** Install conversion rate (Play Console listing-page views → installs), 4 weeks post-live. Run Play Store Listing Experiment if variant budget allows (test F1 dark background vs cream background). Track at 2-week and 4-week marks.
+- **Audit reference:** Screenshot rebuild run 2026-06-29. Draft at `/Users/saichetangrandhe/AIFitnessCoach/next_update/screenshots_2026-06.md`.
+- **Status:** DRAFTED 2026-06-29. Awaiting: (1) Sai review and approval of deck; (2) reliability confirmation on AI Form Check (F4) and fridge scan (F9); (3) staging / screen capture; (4) paste into Play Console + App Store Connect.
+
+(Append readout 30 days post-live:)
+
+- **Readout (due ~2026-07-29):** install conversion rate before → after; verdict: kept / reverted / iterated

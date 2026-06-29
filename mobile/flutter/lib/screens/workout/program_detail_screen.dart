@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/program_template.dart';
+import '../../data/providers/equipment_coverage_provider.dart';
 import '../../data/providers/program_favorites_provider.dart';
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
@@ -727,8 +729,101 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
             label: 'EQUIPMENT',
             body: card.equipmentSummary!.trim(),
           ),
+        _buildEquipmentFitBadge(card),
       ],
     );
+  }
+
+  /// Compact fit-check pill vs the active gym profile — sets expectations BEFORE
+  /// the Start sheet. Reactive to variant switches (via [_variantRev]) and the
+  /// active gym profile (the coverage provider re-runs on profile change).
+  /// Branded programs / loading / empty programs render nothing.
+  Widget _buildEquipmentFitBadge(ProgramLibraryCard card) {
+    if (card.isBranded) return const SizedBox.shrink();
+    return ValueListenableBuilder<int>(
+      valueListenable: _variantRev,
+      builder: (context, _, __) {
+        return Consumer(
+          builder: (context, ref, __) {
+            final cov = ref
+                .watch(equipmentCoverageProvider(
+                    (programId: _resolveId, variantId: _selectedVariantId)))
+                .valueOrNull;
+            if (cov == null || cov.totalExercises == 0) {
+              return const SizedBox.shrink();
+            }
+
+            late final IconData icon;
+            late final Color tint;
+            late final String text;
+            VoidCallback? onTap;
+            if (cov.isCovered) {
+              icon = Icons.check_circle_rounded;
+              tint = AppColors.success;
+              text = 'Fits your gym';
+            } else if (cov.isUnknown) {
+              icon = Icons.fitness_center_rounded;
+              tint = AppColors.textMuted;
+              text = 'Set your gym equipment to tailor this';
+              onTap = () => context.push('/settings/equipment');
+            } else {
+              icon = Icons.handyman_rounded;
+              tint = AppColors.warning;
+              final n = cov.swappableCount;
+              text = 'Needs ${_humanizeEquipmentSlugs(cov.missingEquipment)}'
+                  " — we'll swap $n on Start";
+            }
+
+            return Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: GestureDetector(
+                onTap: onTap,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: tint.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: tint.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, size: 15, color: tint),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          text,
+                          style: ZType.sans(12,
+                              color: AppColors.textSecondary,
+                              weight: FontWeight.w600),
+                        ),
+                      ),
+                      if (onTap != null)
+                        Text('Add →',
+                            style: ZType.sans(12,
+                                color: AppColors.orange,
+                                weight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Pretty equipment-slug list for copy ("barbell" → "Barbell"), capped at 2.
+  String _humanizeEquipmentSlugs(List<String> slugs) {
+    String cap(String s) => s
+        .split(' ')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
+    final names = slugs.map(cap).toList();
+    if (names.length <= 2) return names.join(' + ');
+    return '${names.take(2).join(' + ')} +${names.length - 2}';
   }
 
   // -------------------------------------------------------------------------

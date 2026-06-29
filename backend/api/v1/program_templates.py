@@ -1906,6 +1906,121 @@ async def library_program_schedule(
         raise safe_internal_error(e, "program_templates")
 
 
+def _enumerate_program_exercise_names(db, program_id: str,
+                                      variant_id: Optional[str]) -> List[str]:
+    """Flat list of every exercise NAME in a program variant (all weeks), or the
+    curated single-plan `programs.workouts` blob when there's no variant. Names
+    only — the equipment fit-check needs nothing else. Fail-open: [] on error."""
+    effective_variant_id = variant_id
+    program = None
+    if not effective_variant_id:
+        presp = (
+            db.client.table("programs")
+            .select("id, workouts, default_variant_id")
+            .eq("id", program_id)
+            .limit(1)
+            .execute()
+        )
+        if not presp.data:
+            raise HTTPException(status_code=404, detail="Program not found")
+        program = presp.data[0]
+        default_vid = program.get("default_variant_id")
+        if default_vid:
+            effective_variant_id = str(default_vid)
+
+    names: List[str] = []
+
+    def _collect(workouts_blob: Any) -> None:
+        if not isinstance(workouts_blob, list):
+            return
+        for w in workouts_blob:
+            if not isinstance(w, dict):
+                continue
+            for ex in (w.get("exercises") or []):
+                if not isinstance(ex, dict):
+                    continue
+                nm = (ex.get("exercise_name") or ex.get("name") or "").strip()
+                if nm:
+                    names.append(nm)
+
+    if effective_variant_id:
+        weeks_resp = (
+            db.client.table("program_variant_weeks")
+            .select("workouts")
+            .eq("variant_id", effective_variant_id)
+            .order("week_number", desc=False)
+            .execute()
+        )
+        if weeks_resp.data:
+            for wrow in weeks_resp.data:
+                _collect(wrow.get("workouts"))
+            return names
+
+    # Single-plan fallback (no variant / empty variant).
+    if program is None:
+        presp = (
+            db.client.table("programs")
+            .select("id, workouts")
+            .eq("id", program_id)
+            .limit(1)
+            .execute()
+        )
+        if not presp.data:
+            raise HTTPException(status_code=404, detail="Program not found")
+        program = presp.data[0]
+    blob = program.get("workouts") or {}
+    raw = blob.get("workouts") if isinstance(blob, dict) else blob
+    _collect(raw)
+    return names
+
+
+@router.get("/library/{program_id}/equipment-coverage")
+async def library_program_equipment_coverage(
+    program_id: str,
+    variant_id: Optional[str] = Query(default=None),
+    gym_profile_id: Optional[str] = Query(default=None),
+    current_user: dict = Depends(get_current_user),
+):
+    """Pre-flight equipment fit-check for a curated program against a gym profile.
+
+    Compares every exercise the program prescribes (across all variant weeks)
+    with the user's available equipment, using the SAME name-token detection the
+    assign-time equipment-fit pass uses — so the warning the client shows never
+    disagrees with what assignment actually swaps. Read-only, fail-open.
+
+    `gym_profile_id` defaults to the user's active profile. Returns the coverage
+    struct from `compute_equipment_coverage` (status / coverage_pct /
+    missing_equipment / swappable_count / ...).
+
+    NOTE: registered under the /library/ prefix so it matches before the generic
+    @router.get("/{template_id}") catch-all.
+    """
+    try:
+        db = get_supabase()
+        user_id = current_user["id"]
+        from services.program_customizer import (
+            compute_equipment_coverage,
+            resolve_profile_equipment,
+        )
+
+        names = _enumerate_program_exercise_names(db, program_id, variant_id)
+        prof = resolve_profile_equipment(user_id, gym_profile_id)
+        coverage = compute_equipment_coverage(
+            names,
+            prof.get("equipment") or [],
+            environment=prof.get("environment"),
+        )
+        coverage["gym_profile_id"] = prof.get("gym_profile_id")
+        return coverage
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        logger.error(
+            "Failed equipment-coverage for %s: %s", program_id, e, exc_info=True
+        )
+        raise safe_internal_error(e, "program_templates")
+
+
 class ImportFromProgramRequest(BaseModel):
     """Optional body for POST /from-program/{program_id}.
 

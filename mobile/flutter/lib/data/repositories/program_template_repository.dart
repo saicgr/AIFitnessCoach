@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../models/assign_preview.dart';
+import '../models/equipment_coverage.dart';
 import '../models/program_template.dart';
 import '../models/user_program_assignment.dart';
 import '../services/api_client.dart';
@@ -1016,6 +1017,31 @@ class ProgramTemplateRepository {
       query: query,
     );
     return ProgramScheduleResponse.fromJson(data);
+  }
+
+  /// GET /library/{program_id}/equipment-coverage — pre-flight equipment
+  /// fit-check of a curated program against a gym profile (defaults to the
+  /// user's active profile). Read-only; the backend never blocks on it.
+  ///
+  /// [variantId] scopes the check to a specific variant (the selected
+  /// duration/sessions option); [gymProfileId] overrides the active profile.
+  Future<EquipmentCoverage> getEquipmentCoverage(
+    String programId, {
+    String? variantId,
+    String? gymProfileId,
+  }) async {
+    final query = <String, dynamic>{};
+    if (variantId != null && variantId.isNotEmpty) {
+      query['variant_id'] = variantId;
+    }
+    if (gymProfileId != null && gymProfileId.isNotEmpty) {
+      query['gym_profile_id'] = gymProfileId;
+    }
+    final data = await _getMapWithRetry(
+      '$_base/library/$programId/equipment-coverage',
+      query: query,
+    );
+    return EquipmentCoverage.fromJson(data);
   }
 
   // -------------------------------------------------------------------------

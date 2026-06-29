@@ -20,6 +20,7 @@ import '../../core/providers/exercise_queue_provider.dart';
 import '../../core/providers/avoided_provider.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/exercise_stats_widgets.dart';
+import '../../widgets/fullscreen_image_viewer.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/exercise_history.dart';
 import '../../data/providers/exercise_history_provider.dart';
@@ -421,6 +422,31 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     setState(() {});
   }
 
+  /// True when the hero is currently showing the still image (not a playing
+  /// video). Image-only exercises — the common écorché case — are always true.
+  bool get _showingHeroImage =>
+      !(_videoInitialized && _showVideo && _videoController != null);
+
+  /// Tap on the hero: play/pause the video if it's showing, otherwise open the
+  /// still image in the pinch-zoom fullscreen viewer.
+  void _onMediaTap() {
+    if (_showingHeroImage) {
+      _openFullscreenImage();
+    } else {
+      _toggleVideo();
+    }
+  }
+
+  void _openFullscreenImage() {
+    if (_imageUrl == null) return;
+    HapticFeedback.lightImpact();
+    showFullscreenImage(
+      context,
+      networkUrl: _imageUrl,
+      heroTag: 'exercise_hero_${widget.exercise.id ?? widget.exercise.name}',
+    );
+  }
+
   void _startRestTimer() {
     final restTime = widget.exercise.restSeconds ?? 120;
     setState(() {
@@ -507,14 +533,27 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
         children: [
           CustomScrollView(
             controller: _scrollController,
+            // BouncingScrollPhysics on BOTH platforms so the SliverAppBar
+            // overscroll-stretch (zoomBackground) fires on Android too —
+            // Android's default ClampingScrollPhysics has no top overscroll, so
+            // the drag-down zoom wouldn't trigger without this.
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
             slivers: [
               // App bar with video
               SliverAppBar(
                 expandedHeight: 300,
                 pinned: true,
+                // Overscroll-drag-down zooms the hero media (iOS "stretchy
+                // header"). `stretch` lets the bar grow past 300pt on pull;
+                // zoomBackground scales the écorché/video to fill it.
+                stretch: true,
+                onStretchTrigger: () async => HapticFeedback.lightImpact(),
                 backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
                 automaticallyImplyLeading: false, // Remove default back button
                 flexibleSpace: FlexibleSpaceBar(
+                  stretchModes: const [StretchMode.zoomBackground],
                   background: _buildVideoSection(elevated, textMuted),
                 ),
               ),
@@ -632,6 +671,29 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
           forceDarkScrim: true,
         ),
       ),
+      // Expand-to-fullscreen button — mirrors the back button at top-right.
+      // Only while the still image is showing (a playing video doesn't expand),
+      // not while the header is collapsed, and only once media has resolved.
+      if (_showingHeroImage && _imageUrl != null && !_headerCollapsed)
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 8,
+          right: 16,
+          child: GestureDetector(
+            onTap: _openFullscreenImage,
+            child: Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.45),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.fullscreen,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
+        ),
       // Floating pill bar at bottom
       Positioned(
         left: 0,
@@ -832,7 +894,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
 
   Widget _buildVideoSection(Color elevated, Color textMuted) {
     return GestureDetector(
-      onTap: _toggleVideo,
+      onTap: _onMediaTap,
       child: Container(
         color: elevated,
         child: Stack(

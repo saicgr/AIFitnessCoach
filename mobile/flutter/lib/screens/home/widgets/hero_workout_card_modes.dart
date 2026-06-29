@@ -110,16 +110,25 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         );
 
       case WorkoutCardMode.windDown:
+        final expanded = _tomorrowPlanExpanded;
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillWindDown,
           pillColor: accent.withValues(alpha: 0.5),
           body: l10n.heroModesBodyWindDown,
+          // Tapping "See tomorrow's plan" reveals the exercise list INLINE
+          // on the card (toggle) instead of bouncing to another screen the
+          // user has to keep clicking through. Collapsed by default so the
+          // wind-down message stays the focus.
+          expandedContent: expanded ? _buildTomorrowPlan(workout, accent) : null,
           primary: _PrimaryButton(
-            label: l10n.heroWorkoutCardSeeTomorrowSPlan,
+            label: expanded
+                ? l10n.heroWorkoutCardHidePlan
+                : l10n.heroWorkoutCardSeeTomorrowSPlan,
+            icon: expanded ? Icons.expand_less : Icons.expand_more,
             onTap: () {
               HapticService.selection();
-              context.go('/workouts'); // branch-root: go, not push (dup-GlobalKey)
+              toggleTomorrowPlan();
             },
             accent: accent,
             outline: true,
@@ -399,6 +408,156 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
     }
   }
 
+  /// Inline "tomorrow's plan" exercise list for the windDown card — rendered
+  /// over the dark illustration scrim, so all copy is white. Caps the visible
+  /// rows so a long session doesn't blow out the card height; the overflow is
+  /// summarised ("+N more") with an "Open full plan" link to the detail screen.
+  Widget _buildTomorrowPlan(Workout workout, Color accent) {
+    final l10n = AppLocalizations.of(context);
+    final exercises = workout.exercises;
+    if (exercises.isEmpty) {
+      // No parsed exercises cached on this list payload — fall back to a single
+      // link into the detail screen rather than showing an empty box.
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: () {
+            HapticService.selection();
+            context.push('/workout/${workout.id}', extra: workout);
+          },
+          icon: const Icon(Icons.open_in_new, size: 16, color: Colors.white),
+          label: Text(
+            l10n.heroWorkoutCardOpenFullPlan,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      );
+    }
+
+    const maxRows = 6;
+    final visible = exercises.take(maxRows).toList();
+    final overflow = exercises.length - visible.length;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.32),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < visible.length; i++) ...[
+            if (i > 0) const SizedBox(height: 9),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 20,
+                  child: Text(
+                    '${i + 1}',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    visible[i].name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+                if (_exMeta(visible[i]).isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    _exMeta(visible[i]),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.72),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+          if (overflow > 0) ...[
+            const SizedBox(height: 9),
+            Text(
+              l10n.heroWorkoutCardMoreExercises(overflow),
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () {
+                HapticService.selection();
+                context.push('/workout/${workout.id}', extra: workout);
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: Icon(Icons.open_in_new, size: 15, color: accent),
+              label: Text(
+                l10n.heroWorkoutCardOpenFullPlan,
+                style: TextStyle(
+                  color: accent,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Compact "3 × 10" / "3 × 30s" / "45s" meta for one exercise row.
+  String _exMeta(WorkoutExercise ex) {
+    final timed = ex.isTimed == true ||
+        (ex.holdSeconds != null && ex.holdSeconds! > 0);
+    if (timed) {
+      final secs = ex.holdSeconds ?? ex.durationSeconds ?? 0;
+      if (secs > 0) {
+        final sets = ex.sets ?? 0;
+        return sets > 1 ? '$sets × ${secs}s' : '${secs}s';
+      }
+    }
+    final sets = ex.sets;
+    final reps = ex.reps;
+    if (sets != null && sets > 0 && reps != null && reps > 0) {
+      return '$sets × $reps';
+    }
+    if (sets != null && sets > 0) return '$sets sets';
+    if (reps != null && reps > 0) return '$reps reps';
+    return '';
+  }
+
   Widget _modeAskCoach(Workout workout, String mode) {
     return AskCoachButton(
       contextLabel: 'Workout card · $mode',
@@ -449,6 +608,11 @@ class _HeroBase extends StatelessWidget {
   final bool inCarousel;
   final bool dimmed;
 
+  /// Optional content rendered between the body line and the primary button
+  /// (e.g. the windDown card's inline "tomorrow's plan" exercise list when
+  /// expanded). Null in every other mode.
+  final Widget? expandedContent;
+
   /// Optional illustrated backdrop — feed `_buildBackground(isDark)` from
   /// the host card state so smart-mode cards (luteal, fasting, equipment
   /// mismatch, etc.) keep the same workout illustration the default card
@@ -467,6 +631,7 @@ class _HeroBase extends StatelessWidget {
     this.inCarousel = false,
     this.dimmed = false,
     this.background,
+    this.expandedContent,
   });
 
   @override
@@ -555,6 +720,10 @@ class _HeroBase extends StatelessWidget {
                   : null,
             ),
           ),
+          if (expandedContent != null) ...[
+            const SizedBox(height: 12),
+            expandedContent!,
+          ],
           const SizedBox(height: 12),
           primary,
           if (secondary != null) ...[

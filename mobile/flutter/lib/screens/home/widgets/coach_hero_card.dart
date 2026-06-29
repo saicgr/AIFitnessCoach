@@ -176,6 +176,13 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     final pTarget = prefs.currentProteinTarget;
     if (calTarget <= 0) return const SizedBox.shrink();
 
+    // Today's dynamic targets aren't resolved yet (cold start on a day whose
+    // workout/rest status differs from the last open). The headline numbers
+    // could still shift by the workout-day boost (+200 kcal / +protein), so
+    // shimmer the values instead of flashing a base number that's about to
+    // jump. Resolves in ~300-500ms, then never jumps. (dynamicTargetsPending)
+    final pending = prefs.dynamicTargetsPending;
+
     final eatenCal = (nut.summary?.totalCalories ?? 0).round();
     final eatenP = (nut.summary?.totalProteinG ?? 0).round();
     final calLeft = (calTarget - eatenCal).clamp(0, calTarget);
@@ -194,27 +201,48 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         child: Row(
           children: [
             Expanded(
-              child: ZealovaStatTile(
-                value: pTarget > 0 ? '$pLeft' : '—',
-                unit: pTarget > 0 ? 'g' : null,
-                label: 'Protein left',
-                valueSize: 24,
-                accentValue: true,
-              ),
+              child: pending
+                  ? _statTilePlaceholder(c, 'Protein left')
+                  : ZealovaStatTile(
+                      value: pTarget > 0 ? '$pLeft' : '—',
+                      unit: pTarget > 0 ? 'g' : null,
+                      label: 'Protein left',
+                      valueSize: 24,
+                      accentValue: true,
+                    ),
             ),
             Container(width: 1, height: 30, color: c.cardBorder),
             const SizedBox(width: 14),
             Expanded(
-              child: ZealovaStatTile(
-                value: nf.format(calLeft),
-                unit: 'kcal',
-                label: 'Calories left',
-                valueSize: 24,
-              ),
+              child: pending
+                  ? _statTilePlaceholder(c, 'Calories left')
+                  : ZealovaStatTile(
+                      value: nf.format(calLeft),
+                      unit: 'kcal',
+                      label: 'Calories left',
+                      valueSize: 24,
+                    ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Layout-matched shimmer stand-in for a [ZealovaStatTile] value while today's
+  /// dynamic targets resolve. Keeps the static label so only the number moves,
+  /// and matches the tile's 24pt value + 3pt gap so the placeholder → value swap
+  /// doesn't reflow the row.
+  Widget _statTilePlaceholder(ThemeColors c, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SkeletonBox(width: 58, height: 24, radius: 6),
+        const SizedBox(height: 3),
+        Text(label.toUpperCase(),
+            style: ZType.lbl(9, color: c.textMuted, letterSpacing: 1.3)),
+      ],
     );
   }
 
@@ -230,7 +258,11 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     final nut = ref.watch(dailyNutritionProvider(todayNutritionKey()));
     final pTarget = prefs.currentProteinTarget;
     final pCur = (nut.summary?.totalProteinG ?? 0).round();
-    if (pTarget > 0) {
+    // Skip the protein task while today's target is still resolving — its label
+    // embeds the number ("Hit 128g protein"), so rendering it now would flash
+    // the base value then re-render with the boosted one. Reappears (correct)
+    // the moment dynamic targets land. See [_statBand]/dynamicTargetsPending.
+    if (pTarget > 0 && !prefs.dynamicTargetsPending) {
       final remaining = (pTarget - pCur).clamp(0, pTarget);
       tasks.add(_TodoTask(
         icon: Icons.restaurant_rounded,

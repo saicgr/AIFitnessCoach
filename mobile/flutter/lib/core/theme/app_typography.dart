@@ -45,9 +45,11 @@ class ZType {
         color: color ?? AppColors.textSecondary,
       );
 
-  /// Fraunces — the human/emotional line (greetings, coach whispers, exhales).
-  /// Upright by default (NOT italic) — the user dislikes the cursive look; pass
-  /// `style: FontStyle.italic` explicitly where italics are still wanted.
+  /// Human/emotional line (greetings, coach whispers, exhales, instructions).
+  /// Backed by Archivo — the clean grotesque sans. The Fraunces serif was
+  /// retired app-wide (the user disliked the face); this role keeps the `ser`
+  /// name so the ~50 callsites are unchanged, but renders as Archivo now.
+  /// Upright by default; `style: FontStyle.italic` still works (synthesized).
   static TextStyle ser(
     double size, {
     Color? color,
@@ -56,7 +58,7 @@ class ZType {
     double height = 1.3,
   }) =>
       TextStyle(
-        fontFamily: 'Fraunces',
+        fontFamily: 'Archivo',
         fontStyle: style,
         fontWeight: weight,
         fontSize: size,

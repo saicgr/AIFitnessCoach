@@ -15,6 +15,8 @@ import '../../core/providers/user_provider.dart';
 import '../../core/providers/workout_mutation_coordinator.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/providers/branded_program_provider.dart';
+import '../../data/providers/equipment_coverage_provider.dart';
+import '../../data/providers/gym_profile_provider.dart' show activeGymProfileProvider;
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/signature/signature.dart';
 import '../../data/models/assign_preview.dart';
@@ -1902,7 +1904,15 @@ class _StartProgramFlowSheetState
   bool _aiTailor = false;
   bool _adaptToLevel = true;
   bool _swapForInjuries = true;
+  /// Apply the equipment-fit swap. Defaulted ON. Single source of truth for BOTH
+  /// the prominent fit-check banner (shown on a gap) AND the AI-tailor sub-toggle
+  /// — so the two surfaces can never disagree about whether to swap.
   bool _fitEquipment = true;
+
+  /// One-shot guard so the live preview is re-fetched once when the equipment
+  /// coverage first resolves to "gaps" (the initial preview ran before coverage
+  /// was known, so it wouldn't yet reflect the default-on auto-swap).
+  bool _coverageGapPreviewSynced = false;
 
   bool _submitting = false;
 
@@ -2015,6 +2025,38 @@ class _StartProgramFlowSheetState
     );
   }
 
+  /// Coverage family args for THIS program + selected variant, or null when the
+  /// fit-check doesn't apply (branded programs aren't in the curated `programs`
+  /// table the coverage endpoint enumerates).
+  EquipmentCoverageArgs? _coverageArgs() {
+    final card = widget.card;
+    if (card.isBranded) return null;
+    return (programId: card.id, variantId: _selectedVariantId);
+  }
+
+  /// Whether to send `fit_equipment` to preview/assign. True when the user
+  /// turned on AI-tailor's equipment toggle OR the coverage check found a gap
+  /// and they left "auto-swap to fit my gym" on (the decoupled path — equipment
+  /// fit must work even with the AI-tailor master toggle off).
+  bool _shouldFitEquipment() {
+    if (!_fitEquipment) return false;
+    if (_aiTailor) return true; // AI master on → fit applies (it's a sub-option)
+    // AI master off → only fit when the coverage check found a real gap.
+    final args = _coverageArgs();
+    if (args == null) return false;
+    final cov = ref.read(equipmentCoverageProvider(args)).valueOrNull;
+    return cov?.hasGaps ?? false;
+  }
+
+  /// True when the coverage check found equipment the active gym profile lacks
+  /// (the banner is then the owner of the `_fitEquipment` control).
+  bool _coverageHasGaps() {
+    final args = _coverageArgs();
+    if (args == null) return false;
+    return ref.watch(equipmentCoverageProvider(args)).valueOrNull?.hasGaps ??
+        false;
+  }
+
   /// Fetch the deterministic schedule preview (and kick off the AI review in
   /// parallel). Guarded by [_previewSeq] so a slow, stale response can never
   /// clobber a newer one, and by `mounted` for the async gap.
@@ -2054,7 +2096,7 @@ class _StartProgramFlowSheetState
         // estimate of what AI will change (only when the master toggle is on).
         adaptToLevel: _aiTailor && _adaptToLevel,
         swapForInjuries: _aiTailor && _swapForInjuries,
-        fitEquipment: _aiTailor && _fitEquipment,
+        fitEquipment: _shouldFitEquipment(),
       );
       if (!mounted || seq != _previewSeq) return;
       // AUTHORITATIVE frequency = what the backend will actually schedule. If a
@@ -2194,7 +2236,7 @@ class _StartProgramFlowSheetState
         variantId: _selectedVariantId,
         adaptToLevel: _aiTailor && _adaptToLevel,
         swapForInjuries: _aiTailor && _swapForInjuries,
-        fitEquipment: _aiTailor && _fitEquipment,
+        fitEquipment: _shouldFitEquipment(),
         dayResolutions: _dayResolutions.isEmpty
             ? null
             : Map<String, String>.from(_dayResolutions),
@@ -2279,6 +2321,22 @@ class _StartProgramFlowSheetState
 
   @override
   Widget build(BuildContext context) {
+    // When coverage first resolves to a gap, the initial preview (fetched before
+    // coverage was known) doesn't yet reflect the default-on auto-swap. Re-run
+    // it once so the "what AI will change" estimate is honest from the start.
+    final coverageArgs = _coverageArgs();
+    if (coverageArgs != null) {
+      ref.listen(equipmentCoverageProvider(coverageArgs), (prev, next) {
+        final cov = next.valueOrNull;
+        if (!_coverageGapPreviewSynced &&
+            cov != null &&
+            cov.hasGaps &&
+            _fitEquipment) {
+          _coverageGapPreviewSynced = true;
+          _schedulePreview();
+        }
+      });
+    }
     return DraggableScrollableSheet(
       initialChildSize: 0.82,
       minChildSize: 0.5,
@@ -2372,6 +2430,11 @@ class _StartProgramFlowSheetState
                     _buildCoachReviewSection(),
 
                     const SizedBox(height: 20),
+
+                    // Equipment fit-check vs the active gym profile — warns on a
+                    // mismatch and offers a one-tap auto-swap (decoupled from the
+                    // AI-tailor master toggle below).
+                    _buildEquipmentFitBanner(),
 
                     // AI tailor.
                     _buildAiTailor(),
@@ -3357,6 +3420,157 @@ class _StartProgramFlowSheetState
             style: ZType.sans(12, color: AppColors.textMuted)),
       );
 
+  /// Pretty equipment-slug list for copy ("barbell" → "Barbell"), capped.
+  String _humanizeEquipment(List<String> slugs) {
+    String cap(String s) => s
+        .split(' ')
+        .map((w) =>
+            w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
+    final names = slugs.map(cap).toList();
+    if (names.length <= 2) return names.join(' + ');
+    return '${names.take(2).join(' + ')} +${names.length - 2}';
+  }
+
+  /// Equipment fit-check vs the active gym profile. Three states:
+  ///  • gaps    → amber warning + a default-ON "auto-swap to fit my gym" toggle
+  ///              (resolves the mismatch WITHOUT the AI-tailor master toggle).
+  ///  • unknown → neutral nudge to set equipment (never a false alarm).
+  ///  • covered → a quiet "✓ Fits your gym" confirmation.
+  /// Branded programs / loading / empty programs render nothing.
+  Widget _buildEquipmentFitBanner() {
+    final args = _coverageArgs();
+    if (args == null) return const SizedBox.shrink();
+    final cov = ref.watch(equipmentCoverageProvider(args)).valueOrNull;
+    if (cov == null || cov.totalExercises == 0) {
+      return const SizedBox.shrink();
+    }
+    final profileName = ref.watch(activeGymProfileProvider)?.name;
+
+    // ── Covered: quiet confirmation chip ─────────────────────────────────────
+    if (cov.isCovered) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded,
+                size: 16, color: AppColors.success),
+            const SizedBox(width: 6),
+            Text(
+              profileName == null
+                  ? 'Fits your gym'
+                  : 'Fits your $profileName',
+              style: ZType.sans(12,
+                  color: AppColors.success, weight: FontWeight.w600),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── Unknown: neutral "set your equipment" nudge ──────────────────────────
+    if (cov.isUnknown) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface2,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.fitness_center_rounded,
+                  size: 16, color: AppColors.textMuted),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Add the gear in your gym so we can match this program to '
+                  'what you have.',
+                  style: ZType.sans(11.5,
+                      color: AppColors.textSecondary,
+                      weight: FontWeight.w500),
+                ),
+              ),
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: () => context.push('/settings/equipment'),
+                behavior: HitTestBehavior.opaque,
+                child: Text('Add →',
+                    style: ZType.sans(11.5,
+                        color: AppColors.orange, weight: FontWeight.w700)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ── Gaps: amber warning + auto-swap toggle ───────────────────────────────
+    final missing = _humanizeEquipment(cov.missingEquipment);
+    final n = cov.swappableCount;
+    final whereTxt = profileName == null ? 'your gym' : 'your $profileName';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        decoration: BoxDecoration(
+          color: AppColors.warning.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.warning.withValues(alpha: 0.45)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.handyman_rounded,
+                    size: 17, color: AppColors.warning),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Needs gear not in $whereTxt',
+                        style: ZType.sans(13,
+                            color: AppColors.textPrimary,
+                            weight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Uses $missing. '
+                        "We'll swap $n exercise${n == 1 ? '' : 's'} to fit "
+                        'what you have.',
+                        style: ZType.sans(11.5,
+                            color: AppColors.textSecondary,
+                            weight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _aiSubToggle(
+              'Auto-swap to fit my gym',
+              _fitEquipment,
+              (v) {
+                setState(() => _fitEquipment = v);
+                _schedulePreview(); // re-estimate with/without the swaps
+              },
+              hint: _fitEquipment
+                  ? 'Recommended — keeps every session doable'
+                  : 'Run as written — some exercises may need gear you lack',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAiTailor() {
     // Live profile context so each toggle shows WHAT it will act on — making the
     // honest no-op case visible ("No injuries on file") instead of a silent
@@ -3424,21 +3638,24 @@ class _StartProgramFlowSheetState
               onAction:
                   injuries.isEmpty ? () => context.push('/injuries/report') : null,
             ),
-            _aiSubToggle(
-              'Fit my available equipment',
-              _fitEquipment,
-              (v) {
-                setState(() => _fitEquipment = v);
-                _schedulePreview();
-              },
-              hint: equipment.isEmpty
-                  ? 'No equipment set'
-                  : 'Using: ${_equipmentSummary(equipment)}',
-              actionLabel: equipment.isEmpty ? 'Add' : null,
-              onAction: equipment.isEmpty
-                  ? () => context.push('/settings/equipment')
-                  : null,
-            ),
+            // When the fit-check banner is already showing a gap it owns this
+            // control (same `_fitEquipment` field) — don't duplicate it here.
+            if (!_coverageHasGaps())
+              _aiSubToggle(
+                'Fit my available equipment',
+                _fitEquipment,
+                (v) {
+                  setState(() => _fitEquipment = v);
+                  _schedulePreview();
+                },
+                hint: equipment.isEmpty
+                    ? 'No equipment set'
+                    : 'Using: ${_equipmentSummary(equipment)}',
+                actionLabel: equipment.isEmpty ? 'Add' : null,
+                onAction: equipment.isEmpty
+                    ? () => context.push('/settings/equipment')
+                    : null,
+              ),
           ],
         ],
       ),
@@ -3533,7 +3750,10 @@ class _StartProgramFlowSheetState
   // -------------------------------------------------------------------------
 
   Widget _buildAiTailorImpact() {
-    if (!_aiTailor) return const SizedBox.shrink();
+    // Show whenever ANY tailoring is being sent — the AI master toggle OR the
+    // decoupled equipment auto-swap (so the estimate isn't hidden when the user
+    // only resolved an equipment gap).
+    if (!_aiTailor && !_shouldFitEquipment()) return const SizedBox.shrink();
     final cs = _preview?.customizeSummary ?? CustomizeSummary.none;
     final loading = _previewLoading && cs.isNone;
     // Nothing to show yet (no days picked / no estimate) and not loading.

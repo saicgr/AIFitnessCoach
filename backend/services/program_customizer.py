@@ -276,6 +276,149 @@ def _user_has_equipment(slug: str, have: set) -> bool:
     return False
 
 
+# ---------------------------------------------------------------------------
+# Equipment coverage (pre-flight fit-check, read-only)
+# ---------------------------------------------------------------------------
+def resolve_profile_equipment(
+    user_id: str, gym_profile_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """Resolve the equipment + environment for the fit-check.
+
+    When `gym_profile_id` is given, reads THAT profile; otherwise the active
+    profile (falling back to the account-level list via `resolve_user_context`).
+    Returns {equipment:[...], environment:str|None, gym_profile_id:str|None}.
+    Always returns a dict — any failure yields empty equipment (→ 'unknown').
+    """
+    db = get_supabase()
+    if gym_profile_id:
+        try:
+            gp = (
+                db.client.table("gym_profiles")
+                .select("id, equipment, workout_environment")
+                .eq("id", gym_profile_id)
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if gp.data:
+                row = gp.data[0]
+                return {
+                    "equipment": _normalize_equipment(row.get("equipment")),
+                    "environment": row.get("workout_environment"),
+                    "gym_profile_id": str(row.get("id")),
+                }
+        except Exception as e:  # noqa: BLE001
+            logger.warning("resolve_profile_equipment: profile read failed: %s", e)
+        # Fall through to active/account context if the named profile vanished.
+
+    # Active profile (or account-level fallback) + its environment.
+    ctx = resolve_user_context(user_id)
+    environment: Optional[str] = None
+    pid = ctx.get("gym_profile_id")
+    if pid:
+        try:
+            gp = (
+                db.client.table("gym_profiles")
+                .select("workout_environment")
+                .eq("id", pid)
+                .limit(1)
+                .execute()
+            )
+            if gp.data:
+                environment = gp.data[0].get("workout_environment")
+        except Exception as e:  # noqa: BLE001
+            logger.debug("resolve_profile_equipment: env read failed: %s", e)
+    return {
+        "equipment": ctx.get("equipment") or [],
+        "environment": environment,
+        "gym_profile_id": pid,
+    }
+
+
+# Environments where an empty equipment list means "assume a fully-stocked gym"
+# rather than "we don't know" — a commercial gym has everything by default.
+_FULL_GYM_ENVIRONMENTS = ("commercial_gym",)
+
+
+def compute_equipment_coverage(
+    exercise_names: List[str],
+    equipment: List[str],
+    *,
+    environment: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Pure pre-flight coverage of a program's exercises against the user's
+    available equipment, using the SAME detection the assign-time equipment-fit
+    pass uses (`_BODYWEIGHT_HINTS` + `_detect_required_equipment` +
+    `_user_has_equipment`) so the warning never disagrees with what assign does.
+
+    Returns:
+      {status: 'covered'|'gaps'|'unknown',
+       coverage_pct: 0-100, total_exercises: int,
+       required_equipment: [...], missing_equipment: [...],
+       swappable_count: int, unswappable_count: int, fully_coverable: bool}
+
+    status='unknown' when we can't tell (no equipment list AND not a full-gym
+    environment) — the client shows a soft "set your equipment" nudge, never a
+    false warning. Mirrors the customizer's fail-open contract.
+    """
+    names = [n.strip() for n in exercise_names if n and n.strip()]
+    total = len(names)
+
+    have = {e.lower() for e in (equipment or [])}
+    env = (environment or "").strip().lower()
+    full_gym_assumed = not have and env in _FULL_GYM_ENVIRONMENTS
+    # We can only judge "available vs missing" when we know the user's gear (a
+    # non-empty list) or can assume a fully-stocked commercial gym.
+    known = bool(have) or full_gym_assumed
+    have.update(("bodyweight", "none"))
+
+    required: set = set()
+    missing: set = set()
+    mismatch_count = 0
+    for name in names:
+        name_lc = name.lower()
+        if any(h in name_lc for h in _BODYWEIGHT_HINTS):
+            continue
+        req = _detect_required_equipment(name_lc)
+        if req is None:
+            continue  # unknown equipment → treated as available (fail-open)
+        required.add(req)
+        if not known or full_gym_assumed or _user_has_equipment(req, have):
+            continue
+        missing.add(req)
+        mismatch_count += 1
+
+    # Can't verify the user's gear: only nag ('unknown') when the program
+    # actually prescribes detectable equipment — a bodyweight/cardio program
+    # needs nothing, so it's 'covered' regardless.
+    if not known:
+        return {
+            "status": "unknown" if required else "covered",
+            "coverage_pct": 100,
+            "total_exercises": total,
+            "required_equipment": sorted(required),
+            "missing_equipment": [],
+            "swappable_count": 0,
+            "unswappable_count": 0,
+            "fully_coverable": True,
+        }
+
+    covered = total - mismatch_count
+    coverage_pct = round(100 * covered / total) if total else 100
+    # The assign-time pass backfills every dropped exercise from the injury-safe
+    # candidate fetch, so detected mismatches are treated as swappable here.
+    return {
+        "status": "gaps" if missing else "covered",
+        "coverage_pct": coverage_pct,
+        "total_exercises": total,
+        "required_equipment": sorted(required),
+        "missing_equipment": sorted(missing),
+        "swappable_count": mismatch_count,
+        "unswappable_count": 0,
+        "fully_coverable": True,
+    }
+
+
 async def _apply_equipment_fit(
     days: List[Dict[str, Any]],
     equipment: List[str],

@@ -7,6 +7,7 @@ import '../models/nutrition_preferences.dart';
 import '../models/meal_macro_targets.dart';
 import '../repositories/nutrition_preferences_repository.dart';
 import '../repositories/auth_repository.dart';
+import '../../utils/tz.dart';
 
 /// Tracks the user_id this static cache belongs to, so we can flush it on a
 /// real account switch and avoid the new user inheriting the prior user's
@@ -51,8 +52,16 @@ class _NutritionPrefsDiskCache {
   /// Read the persisted preferences + last-known dynamic targets, or null on
   /// miss / schema mismatch / malformed JSON. Never throws — a stale render is
   /// corrected by the network revalidation.
-  static Future<({NutritionPreferences preferences, DynamicNutritionTargets? dynamicTargets})?>
-      read(String userId) async {
+  static Future<
+      ({
+        NutritionPreferences preferences,
+        DynamicNutritionTargets? dynamicTargets,
+        // Local YYYY-MM-DD the persisted dynamic targets were computed for.
+        // Null on legacy envelopes written before date-stamping; callers must
+        // treat a null/non-today date as STALE (dynamic targets are day-specific
+        // — isTrainingDay etc. — so yesterday's block must not seed today's UI).
+        String? dynamicTargetsDate,
+      })?> read(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_key(userId));
@@ -70,7 +79,11 @@ class _NutritionPrefsDiskCache {
           dynamicTargets = DynamicNutritionTargets.fromJson(dyn);
         } catch (_) {/* tolerate a malformed dynamic block; prefs still usable */}
       }
-      return (preferences: preferences, dynamicTargets: dynamicTargets);
+      return (
+        preferences: preferences,
+        dynamicTargets: dynamicTargets,
+        dynamicTargetsDate: envelope['dynamic_targets_date'] as String?,
+      );
     } catch (e) {
       debugPrint('🥗 [NutritionPrefsDiskCache] read failed: $e');
       return null;
@@ -92,7 +105,14 @@ class _NutritionPrefsDiskCache {
           'v': _schemaVersion,
           'cached_at': DateTime.now().toIso8601String(),
           'preferences': value.toJson(),
-          if (dynamicTargets != null) 'dynamic_targets': dynamicTargets.toJson(),
+          if (dynamicTargets != null) ...{
+            'dynamic_targets': dynamicTargets.toJson(),
+            // Stamp the local date the dynamic targets are FOR. Every caller
+            // fetches them for "today" (DateTime.now()), so the write-time local
+            // date is the day they apply to. The next cold start uses this to
+            // discard a cross-day block instead of flashing it.
+            'dynamic_targets_date': Tz.localDate(),
+          },
         }),
       );
     } catch (e) {
@@ -122,6 +142,13 @@ class NutritionPreferencesState {
   final List<WeightLog> weightHistory;
   final WeightTrend? weightTrend;
   final DynamicNutritionTargets? dynamicTargets;
+
+  /// Local YYYY-MM-DD that [dynamicTargets] were computed for. Used to detect a
+  /// stale cross-day disk seed: dynamic targets are day-specific (workout-day
+  /// +200, training-day flags, cycle phase), so yesterday's block must not be
+  /// presented as today's. Null when no dynamic targets are loaded yet.
+  final String? dynamicTargetsDate;
+
   final AdaptiveCalculation? adaptiveCalculation;
   final bool isLoading;
   final String? error;
@@ -155,6 +182,7 @@ class NutritionPreferencesState {
     this.weightHistory = const [],
     this.weightTrend,
     this.dynamicTargets,
+    this.dynamicTargetsDate,
     this.adaptiveCalculation,
     this.isLoading = false,
     this.error,
@@ -171,6 +199,8 @@ class NutritionPreferencesState {
     List<WeightLog>? weightHistory,
     WeightTrend? weightTrend,
     DynamicNutritionTargets? dynamicTargets,
+    String? dynamicTargetsDate,
+    bool clearDynamicTargetsDate = false,
     AdaptiveCalculation? adaptiveCalculation,
     bool? isLoading,
     String? error,
@@ -190,6 +220,9 @@ class NutritionPreferencesState {
       weightHistory: weightHistory ?? this.weightHistory,
       weightTrend: weightTrend ?? this.weightTrend,
       dynamicTargets: dynamicTargets ?? this.dynamicTargets,
+      dynamicTargetsDate: clearDynamicTargetsDate
+          ? null
+          : (dynamicTargetsDate ?? this.dynamicTargetsDate),
       adaptiveCalculation: adaptiveCalculation ?? this.adaptiveCalculation,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
@@ -236,6 +269,20 @@ class NutritionPreferencesState {
   /// Get current fat target. See note on [currentCalorieTarget].
   int get currentFatTarget =>
       dynamicTargets?.targetFatG ?? preferences?.targetFatG ?? 65;
+
+  /// True when we hold dynamic targets that were actually computed for TODAY
+  /// (not a stale cross-day disk seed).
+  bool get _dynamicTargetsFreshForToday =>
+      dynamicTargets?.targetCalories != null &&
+      dynamicTargetsDate == Tz.localDate();
+
+  /// True while the day's dynamic targets are still being resolved and we do
+  /// NOT yet hold today's value — i.e. the headline calorie/protein numbers
+  /// could still shift (e.g. the workout-day +200 boost). Boost-sensitive UI
+  /// should render a placeholder rather than a base value that's about to jump.
+  /// Goes false the moment today's targets land OR loading finishes (a failed
+  /// fetch falls through to the real base target — no infinite shimmer).
+  bool get dynamicTargetsPending => isLoading && !_dynamicTargetsFreshForToday;
 
   /// Check if today is a training day
   bool get isTrainingDay => dynamicTargets?.isTrainingDay ?? false;
@@ -376,14 +423,23 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     if (state.preferences == null) {
       final cached = await _NutritionPrefsDiskCache.read(userId);
       if (cached != null && state.preferences == null) {
-        debugPrint('🥗 [NutritionPrefsProvider] Seeded preferences (+dynamic) from disk cache');
+        // Only seed the cached dynamic targets when they were computed for
+        // TODAY. A cross-day block (e.g. yesterday was a rest day, today is a
+        // workout day) would flash yesterday's base value and then visibly jump
+        // to today's boosted value once the network confirms — the exact UX the
+        // user reported. When stale, leave dynamicTargets null so
+        // `dynamicTargetsPending` stays true and boost-sensitive UI shimmers
+        // instead of showing a number that's about to change.
+        final freshCachedDynamic =
+            cached.dynamicTargetsDate == Tz.localDate() ? cached.dynamicTargets : null;
+        debugPrint(
+            '🥗 [NutritionPrefsProvider] Seeded preferences from disk cache (dynamic: ${freshCachedDynamic != null ? 'today' : 'stale/absent → defer'})');
         state = state.copyWith(
           preferences: cached.preferences,
-          // Seed the last-known dynamic targets too, so the calorie ring shows
-          // the real adjusted value (e.g. 1700) on a cold start instead of the
-          // base `target_calories` (e.g. 2000) until the network confirms. Only
-          // when we don't already hold a fresher one in memory.
-          dynamicTargets: state.dynamicTargets ?? cached.dynamicTargets,
+          dynamicTargets: state.dynamicTargets ?? freshCachedDynamic,
+          dynamicTargetsDate: state.dynamicTargets != null
+              ? state.dynamicTargetsDate
+              : (freshCachedDynamic != null ? cached.dynamicTargetsDate : null),
           // Honour the cached backend flag so onboarding gating is correct
           // even before the network confirms.
           onboardingCompleted: state.onboardingCompleted ||
@@ -465,6 +521,9 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       state = state.copyWith(
         preferences: preferences,
         dynamicTargets: dynamicTargets,
+        // Stamp the day these resolved for (the fetch used today's date). On a
+        // failed fetch dynamicTargets is null → keep any prior date.
+        dynamicTargetsDate: dynamicTargets != null ? Tz.localDate() : null,
         isLoading: false,
         onboardingCompleted: wasOnboardingCompleted || backendOnboardingCompleted,
         perMealTargetsEnabled: perMealPrefs.enabled,
@@ -639,11 +698,13 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       state = state.copyWith(
         preferences: preferences,
         dynamicTargets: dynamicTargets,
+        // getDynamicTargets returns a non-null value here (today's targets).
+        dynamicTargetsDate: Tz.localDate(),
         onboardingCompleted: true,
         isLoading: false,
       );
       _nutritionPrefsInMemoryCache = state;
-      unawaited(_NutritionPrefsDiskCache.write(userId, preferences));
+      unawaited(_NutritionPrefsDiskCache.write(userId, preferences, dynamicTargets));
       debugPrint('✅ [NutritionPrefsProvider] Onboarding completed (saved to backend)');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Onboarding error: $e');
@@ -770,6 +831,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       state = state.copyWith(
         preferences: preferences,
         dynamicTargets: dynamicTargets,
+        dynamicTargetsDate: dynamicTargets != null ? Tz.localDate() : null,
       );
       _nutritionPrefsInMemoryCache = state;
       if (preferences != null) {
@@ -785,7 +847,10 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
   Future<void> refreshDynamicTargets(String userId) async {
     try {
       final targets = await _repository.getDynamicTargets(userId: userId, date: DateTime.now());
-      state = state.copyWith(dynamicTargets: targets);
+      state = state.copyWith(
+        dynamicTargets: targets,
+        dynamicTargetsDate: Tz.localDate(),
+      );
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Refresh targets error: $e');
     }
@@ -826,10 +891,12 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       state = state.copyWith(
         preferences: preferences,
         dynamicTargets: dynamicTargets ?? state.dynamicTargets,
+        dynamicTargetsDate: dynamicTargets != null ? Tz.localDate() : null,
         isLoading: false,
       );
       _nutritionPrefsInMemoryCache = state;
-      unawaited(_NutritionPrefsDiskCache.write(userId, preferences));
+      unawaited(_NutritionPrefsDiskCache.write(
+          userId, preferences, dynamicTargets ?? state.dynamicTargets));
       debugPrint('✅ [NutritionPrefsProvider] Targets recalculated');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Recalculate error: $e');
@@ -979,11 +1046,13 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     state = state.copyWith(
       preferences: updatedPreferences,
       dynamicTargets: optimisticDynamic,
+      dynamicTargetsDate: optimisticDynamic != null ? Tz.localDate() : null,
       isLoading: false,
       clearError: true,
     );
     _nutritionPrefsInMemoryCache = state;
-    unawaited(_NutritionPrefsDiskCache.write(userId, updatedPreferences));
+    unawaited(
+        _NutritionPrefsDiskCache.write(userId, updatedPreferences, optimisticDynamic));
 
     debugPrint(
         '📝 [NutritionPrefsProvider] Optimistic update applied: cal=$targetCalories, p=$targetProteinG, c=$targetCarbsG, f=$targetFatG');
@@ -1009,12 +1078,14 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
           debugPrint(
               '⚠️ [NutritionPrefsProvider] Dynamic refresh failed: $e (keeping optimistic)');
         }
+        final confirmedOrPrior = confirmedDynamic ?? state.dynamicTargets;
         state = state.copyWith(
           preferences: saved,
-          dynamicTargets: confirmedDynamic ?? state.dynamicTargets,
+          dynamicTargets: confirmedOrPrior,
+          dynamicTargetsDate: confirmedOrPrior != null ? Tz.localDate() : null,
         );
         _nutritionPrefsInMemoryCache = state;
-        unawaited(_NutritionPrefsDiskCache.write(userId, saved));
+        unawaited(_NutritionPrefsDiskCache.write(userId, saved, confirmedOrPrior));
         debugPrint('✅ [NutritionPrefsProvider] Targets persisted to backend');
       } catch (e) {
         debugPrint('❌ [NutritionPrefsProvider] Persist failed, rolling back: $e');
@@ -1023,10 +1094,12 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         state = state.copyWith(
           preferences: previousPreferences,
           dynamicTargets: previousDynamicTargets,
+          dynamicTargetsDate: previousDynamicTargets != null ? Tz.localDate() : null,
           error: e.toString(),
         );
         _nutritionPrefsInMemoryCache = state;
-        unawaited(_NutritionPrefsDiskCache.write(userId, previousPreferences));
+        unawaited(_NutritionPrefsDiskCache.write(
+            userId, previousPreferences, previousDynamicTargets));
       }
     }());
   }
@@ -1080,7 +1153,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
             userId: userId,
             date: DateTime.now(),
           );
-          state = state.copyWith(dynamicTargets: dyn);
+          state = state.copyWith(
+              dynamicTargets: dyn, dynamicTargetsDate: Tz.localDate());
           _nutritionPrefsInMemoryCache = state;
         } catch (e) {
           debugPrint(
@@ -1146,7 +1220,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
             userId: userId,
             date: DateTime.now(),
           );
-          state = state.copyWith(dynamicTargets: dyn);
+          state = state.copyWith(
+              dynamicTargets: dyn, dynamicTargetsDate: Tz.localDate());
           _nutritionPrefsInMemoryCache = state;
         } catch (e) {
           debugPrint(
