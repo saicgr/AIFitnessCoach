@@ -1,0 +1,678 @@
+1 km Run -> Running
+1km Run -> Running
+800m Run -> Running
+90/90 Hip Switch -> Hip 90/90 Switch
+90/90 Hip Switch with Reach -> Hip 90/90 Switch (verify)
+Ab Rollouts -> Ab Wheel All The Way Out
+Ab Wheel Rollout -> Ab Wheel All The Way Out
+Ab Wheel Rollouts -> Ab Wheel All The Way Out
+Alternating Reverse Lunge -> Bodyweight Rear Lunge
+Ankle Dorsiflexion Mobilization -> Ankle Dorsiflexion Stretch (verify)
+Archer Push Ups -> Archer Push-Up
+Archer Pushups -> Archer Push-Up
+Arm Circles -> Arm Circle
+Arnold Press -> Arnold Press Dumbbell
+Assault Bike -> Stationary Exercise Bike
+Back Extension -> Back Extension Machine
+Back Extensions -> Back Extension Machine
+Back Squat -> Barbell Full Squat
+Band Face Pulls -> Band Face Pull
+Band Lat Pulldown -> Band Kneeling Lat Pulldown
+Band Pull Apart -> Resistance Band Pull Apart
+Band Pull Aparts -> Resistance Band Pull Apart
+Band Row -> Band Bent-Over Row
+Banded Clamshells -> Banded Clamshell
+Banded Glute Kickback -> Resistance Band Standing Balance Glute Kickback
+Banded Lateral Walk -> Lateral Band Walks
+Banded Monster Walk -> Monster Walk
+Banded Pull-Apart -> Resistance Band Pull Apart
+Banded Pull-Aparts -> Resistance Band Pull Apart
+Banded Row -> Band Bent-Over Row
+Banded Shoulder Dislocations -> Band Shoulder Pass-Through (verify)
+Banded Shoulder Pass-throughs -> Band Shoulder Pass-Through
+Banded Side Lying Clamshells -> Banded Clamshell
+Barbell Back Squat -> Barbell Full Squat
+Barbell Bicep Curl -> Barbell Bicep Curl Normal Grip
+Barbell Conventional Deadlift -> Barbell Deadlift
+Barbell High Bar Squat -> Barbell Full Squat
+Barbell Overhead Press -> Barbell Standing Shoulder Press
+Barbell Row -> Barbell Bent-Over Row
+Barbell Seal Row -> Barbell Lying Row
+Barbell Squat -> Barbell Full Squat
+Battle Ropes -> Battle Rope Alternating Arm Waves
+Bear Crawl Hold -> Bear Crawls
+Bench Dips -> Bench Dip (Knees Bent)
+Bench Press -> Barbell Bench Press
+Bent Over Dumbbell Row -> Dumbbell Bent-Over Row
+Bent Over Rear Delt Flyes -> Bent-Over Rear Delt Fly Dumbbell
+Bent Over Row -> Barbell Bent-Over Row
+Bicep Cable Curl -> Cable Bicep Curl
+Bicep Curl -> Dumbbell Curls
+Bicycle Crunch -> Bicycles Crunches
+Bicycle Crunches -> Bicycles Crunches
+Bird Dog Hold -> Bird Dog
+Bird Dog Row -> NEW
+Bird Dog with Elbow to Knee -> NEW
+Bird Dog with Pause -> Bird Dog
+Bird Dog with Weight -> Bird Dog
+Bird-Dog Crunch -> NEW
+Bird-Dog Plank -> NEW
+Bodyweight Box Squat -> Bodyweight Squats (verify)
+Bodyweight Lunge -> Bodyweight Rear Lunge
+Bodyweight Rows -> Suspension Trainer With Grips Inverted Row
+Box Jump Overs -> Box Jump Over
+Box Squat -> Barbell Box Squat
+Box Step Ups -> Box Step-Up
+Bridge Pose -> Bridge Pose Setu Bandhasana
+Bridge with Reach -> NEW
+Brisk Walk -> Briskly Walking
+Brisk Walking -> Briskly Walking
+Cable Chest Fly -> Flat Bench Cable Fly
+Cable Chest Flyes -> Flat Bench Cable Fly
+Cable Crossover -> Cable Standing Up Straight Crossovers
+Cable Crossovers -> Cable Standing Up Straight Crossovers
+Cable Crunches -> High Cable Kneeling Crunch
+Cable Face Pulls -> Cable Face Pull With Rope
+Cable Fly -> Flat Bench Cable Fly
+Cable Fly Low to High -> Cable Low Fly
+Cable Flyes -> Flat Bench Cable Fly
+Cable Lat Pulldown -> Lat Pulldown
+Cable Overhead Tricep Extension -> Cable Overhead Extension Rope
+Cable Pec Flyes -> Flat Bench Cable Fly
+Cable Pull-over -> Cable Lying Extension Pullover (With Cables Attachment)
+Cable Row -> Cable Seated Row
+Cable Shrugs -> Cable 30 Degree Shrug
+Cable Tricep Extension -> Cable Lying Triceps Extension
+Cable Tricep Extensions -> Cable Lying Triceps Extension
+Cable Tricep Overhead Extension -> Cable Overhead Extension Rope
+Cable Tricep Pushdowns -> Cable Triceps Push Down Straight Bar
+Cable Woodchopper -> Cable Woodchop
+Cable Woodchoppers -> Cable Woodchop
+Cable Woodchops -> Cable Woodchop
+Cactus Arms -> SKIP
+Calf Press -> Calf Raise Leg Press Machine
+Calf Raise Hold -> Calf Raise
+Calf Stretch -> Standing Calf Stretch
+Carry -> Farmer's Carry
+Cat Cow -> Cat-Cow Stretch
+Cat-Cow Flow -> Cat-Cow Stretch
+Cat-Cow with Resistance -> Cat-Cow Stretch (verify)
+Chair Dips -> Bench Dip (Knees Bent)
+Chest Dips -> Chest Dip
+Chest Press -> Chest Press Machine
+Chest Supported Dumbbell Row -> Dumbbell Incline Row
+Chest Supported Row -> Dumbbell Incline Row
+Chest Supported T-Bar Row -> Dumbbell Incline Row (verify)
+Child's Pose with Reach -> Child's Pose
+Childs Pose with Lateral Reach -> Child's Pose (verify)
+Clamshells -> Clamshell
+Close Grip Bench Press -> Close-Grip Barbell Bench Press
+Close Grip Dumbbell Press -> Dumbbell Seated Close-Grip Press
+Close Grip Push Ups -> Diamond Push-Up
+Close Grip Pushups -> Diamond Push-Up
+Close Grip Tricep Pushdowns -> Cable Triceps Push Down Ez Bar Close-Grip
+Close-Grip EZ Bar Skull Crushers -> Barbell Lying Triceps Skull Crushers
+Commando Planks -> Elbow-Up And Down Dynamic Plank (verify)
+Commando Push Ups -> Elbow-Up And Down Dynamic Plank (verify)
+Commandos -> Elbow-Up And Down Dynamic Plank (verify)
+Complete Rest -> SKIP
+Concentration Curl -> Concentration Curls Dumbbell
+Concept2 Rower -> Gym Rowing Machine Normal Speed
+Conventional Barbell Deadlift -> Barbell Deadlift
+Conventional Deadlift -> Barbell Deadlift
+Cool-down walk + stretch -> SKIP
+Corpse Pose -> SKIP
+Couch Stretch -> Hip Flexor Couch Stretch
+Cow Face Arms -> Single-Arm Cow Face Pose - Easy (verify)
+Cow Face Pose -> Single-Arm Cow Face Pose - Easy (verify)
+Crescent Lunge -> Low Lunge (Anjaneyasana)
+Crescent Lunge with Overhead Reach -> Reverse Lunge With Overhead Reach
+Crescent Lunge with Reach -> Spiderman Lunge With Reach
+Curtsy Lunge -> Curtsy Lunge Bodyweight
+Dead Bug Level 1 -> Dead Bug
+Dead Bug Level 2 -> Dead Bug Extended Arms
+Dead Bug with Weight -> Dead Bug
+Dead Bugs -> Dead Bug
+Deadbug -> Dead Bug
+Deadlift -> Barbell Deadlift
+Deadlifts -> Barbell Deadlift
+Decline Barbell Press -> Barbell Bench Press Decline
+Decline Dumbbell Press -> Dumbbell Chest Press Decline
+Decline Push Ups -> Decline Push-Up
+Decline Pushups -> Decline Push-Up
+Deep Breathing -> SKIP
+Deep Goblet Squat Hold -> Deep Squat Hold
+Deficit Push Ups -> Plate Deficit Pushup
+Deficit Reverse Lunges -> Plate Deficit Lunge
+Deficit Romanian Deadlift -> Barbell Romanian Deadlift
+Diamond Push Ups -> Diamond Push-Up
+Diamond Pushups -> Diamond Push-Up
+Diaphragmatic Breathing -> SKIP
+Dips -> Chest Dip (On Dip Station)
+Dips on Chair -> Chair Triceps Dips
+Donkey Kicks -> Donkey Kicks Bodyweight
+Doorway Chest Stretch -> Chest Doorway Stretch
+Doorway Pec Stretch -> Doorway Pec Stretch High
+Doorway Rows -> NEW
+Downward Dog -> Downward Facing Dog
+Downward Dog Calf Stretch -> Downward Dog Toe To Heel
+Downward Dog to Plank Flow -> NEW
+Downward Dog with Pedal -> Downward Dog Toe To Heel
+Downward Dog with Twist -> NEW
+Downward Facing Dog with Pedal -> Downward Dog Toe To Heel
+Dumbbell Alternating Rows -> Dumbbell Alternating Pendlay Row
+Dumbbell Bent Over Flys -> Bent-Over Rear Delt Fly Dumbbell
+Dumbbell Bicep Curl -> Dumbbell Curls
+Dumbbell Bicep Curl to Overhead Press -> Dumbbell Bicep Curl To Shoulder Press
+Dumbbell Calf Raise -> Dumbbell Standing Calf Raise
+Dumbbell Carry -> Dumbbell Suitcase Carry
+Dumbbell Chest Fly -> Dumbbell Fly Flat Bench
+Dumbbell Chest Press -> Dumbbell Chest Press Flat
+Dumbbell Chest Supported Row -> Dumbbell Incline Row
+Dumbbell Concentration Curls -> Concentration Curls Dumbbell
+Dumbbell Curl to Press -> Dumbbell Curl Press
+Dumbbell Deadlift -> Dumbbell Romanian Deadlift
+Dumbbell Decline Press -> Dumbbell Chest Press Decline
+Dumbbell Farmer Carry -> Dumbbell Farmer Walks
+Dumbbell Farmer's Carry -> Dumbbell Farmer Walks
+Dumbbell Flat Bench Press -> Dumbbell Bench Press
+Dumbbell Flat Press -> Dumbbell Chest Press Flat
+Dumbbell Floor Press -> Dumbbell Single-Arm Floor Press
+Dumbbell Flyes -> Dumbbell Fly Flat Bench
+Dumbbell Goblet Lunge -> Dumbbell Goblet Forward Lunge
+Dumbbell Goblet Thruster -> Dumbbell Squats To Shoulder Press
+Dumbbell Incline Bench -> Dumbbell Incline Bench Press
+Dumbbell Incline Curls -> Incline Dumbbell Curl
+Dumbbell Incline Flyes -> Dumbbell Incline Fly
+Dumbbell Incline Press -> Dumbbell Incline Bench Press
+Dumbbell Lat Pullover -> Dumbbell Pullover
+Dumbbell Lateral Raise -> Lateral Raises Dumbbell
+Dumbbell Leg Curl -> Lying Leg Curl (verify)
+Dumbbell Low-Incline Press -> Dumbbell Incline Bench Press
+Dumbbell Lunge -> Dumbbell Static Lunge
+Dumbbell Lunge & Twist -> Alternating Lunge With Rotation
+Dumbbell Overhead Carry -> Dumbbell Single-Arm Overhead Carry
+Dumbbell Overhead Extension -> Dumbbell Overhead Extension Seated
+Dumbbell Overhead Press -> Dumbbell Standing Overhead Press
+Dumbbell Overhead Tricep Extension -> Dumbbell Overhead Extension Seated
+Dumbbell Press -> Dumbbell Chest Press Flat
+Dumbbell Pullovers -> Dumbbell Pullover
+Dumbbell RDL -> Dumbbell Romanian Deadlift
+Dumbbell Rear Delt Flyes -> Seated Dumbbell Rear Delt Fly
+Dumbbell Reverse Lunges -> Dumbbell Rear Lunge
+Dumbbell Romanian Deadlifts -> Dumbbell Romanian Deadlift
+Dumbbell Row -> Dumbbell Bent-Over Row
+Dumbbell Russian Twist -> Dumbbell Straight Leg Russian Twist
+Dumbbell Seated Press -> Dumbbell Seated Shoulder Press
+Dumbbell Shoulder Press -> Dumbbell Seated Shoulder Press
+Dumbbell Shrug -> Dumbbell Shrugs
+Dumbbell Skull Crushers -> Dumbbell Skullcrusher
+Dumbbell Skullcrushers -> Dumbbell Skullcrusher
+Dumbbell Snatch -> Dumbbell Single-Arm Snatch
+Dumbbell Squat to Press -> Dumbbell Press Squat
+Dumbbell Step Ups -> Dumbbell Step-Up On Bench
+Dumbbell Sumo Deadlift -> Kettlebell Sumo Deadlift (verify)
+Dumbbell Sumo Squat -> Dumbbell Bar Grip Sumo Squat
+Dumbbell Thruster -> Dumbbell Squats To Shoulder Press
+Dumbbell Tricep Extension -> Dumbbell Lying Triceps Extension
+Dumbbell Upright Row -> Upright Row Dumbbell
+Dumbbell Walking Lunge -> NEW
+Dumbbell Y-Raises -> Dumbbell Chest Supported Y Raise
+Dynamic warm-up -> SKIP
+Eagle Arms -> Eagle Arms Chin Into Chest
+Easy Run -> Running
+Endurance Run -> Running
+Explosive Jump Squats -> Jump Squat
+Extended Child's Pose -> Child Pose Arms Extended Left Right
+Extended Puppy Pose -> Puppy Pose (Uttana Shishosana)
+EZ Bar Bicep Curl -> Ez Bar Biceps Curl Normal Grip
+EZ Bar Curl -> Ez Barbell Curl
+EZ Bar Preacher Curl -> Preacher Curl Ez Bar
+EZ Bar Skull Crushers -> NEW
+EZ Bar Skullcrushers -> NEW
+Face Pull -> Cable Face Pull
+Face Pulls -> Cable Face Pull
+Farmer Carry -> Farmer's Carry
+Farmer's Carries -> Farmer's Carry
+Farmer's Walk -> Farmer's Carry
+Fire Hydrants -> Fire Hydrant Bodyweight
+Flat Barbell Bench Press -> Barbell Bench Press
+Flat Dumbbell Bench Press -> Dumbbell Bench Press
+Flat Dumbbell Press -> Dumbbell Bench Press
+Floor Press -> Barbell Floor Chest Press
+Floor Tricep Dips -> Floor Tricep Dip
+Flutter Kicks -> Flutter Kick
+Foam Rolling -> SKIP
+Foam Rolling: Thoracic -> SKIP
+Forearm Plank -> Plank On Elbows
+Forward Fold -> Standing Forward Fold (Uttanasana)
+Frog Pose -> Frog Stretch
+Front Foot Elevated Split Squat -> Dumbbell Goblet Split Squat Front Foot Elevanted
+Front Plate Raise -> Plate Front Raise
+Front Raise -> Dumbbell Front Raise
+Front Squat -> Barbell Front Squat
+Gate Pose -> Gate Pose Variation Arm Extended On Side
+Glute Bridge -> Barbell Glute Bridge
+Glute Bridge Hold -> NEW
+Glute Bridge March -> Glute March
+Glute Bridge Pulse -> NEW
+Glute Bridge with Resistance Band -> Resistance Band Glute Bridge
+Glute Ham Raise -> NEW
+Glute Kickback -> Cable Individual Glute Kickbacks
+Glute Kickbacks -> Cable Individual Glute Kickbacks
+Glute Squeeze Hinge -> NEW
+Glute Stretch -> Lying Glute Stretch
+Glute-Focused Kettlebell Deadlift -> Single Kettlebell Deadlift (verify)
+Goblet Box Squat -> Dumbbell Goblet Squat (verify)
+Goblet Bulgarian Split Squat -> Dumbbell Goblet Split Squat
+Goblet Lateral Lunge -> Landmine Goblet Lateral Lunge
+Goblet Lunge -> Dumbbell Goblet Forward Lunge
+Goblet Reverse Lunge -> Dumbbell Goblet Reverse Lunge
+Goblet Squat -> Dumbbell Goblet Squat
+Goblet Squat to Stand -> Squat To Stand
+Goddess Pose -> NEW
+Half Split -> Half Splits (Ardha Hanumanasana)
+Hammer Curl -> Dumbbell Hammer Curl
+Hamstring Stretch -> Standing Bow Hamstring Stretch
+Handstand Hold -> Chest-To-Wall Handstand Hold
+Hanging Toes-to-Bar -> NEW
+Happy Baby Pose -> Happy Baby
+Heavy Dumbbell Farmers Carry -> Farmer's Carry
+Heavy Farmer's Carry -> Farmer's Carry
+Heavy Kettlebell Carry -> Farmer's Carry
+Heel Slides -> SKIP
+High Lunge -> NEW
+High Lunge Twist -> NEW
+High Plank Hold -> High Plank
+High Plank Shoulder Taps -> Plank Shoulder Taps
+High Plank to Down Dog Flow -> NEW
+Hip 90/90 -> 90/90 Hip Stretch
+Hip Flexor Stretch -> Kneeling Hip Flexor Stretch
+Hip Thrust -> Barbell Hip Thrust
+Hollow Body Hold -> Hollow Hold
+Hydration -> SKIP
+Hyperextension -> 45 Degree Hyperextension (Arms In Front Of Chest)
+Hyperextensions -> 45 Degree Hyperextension (Arms In Front Of Chest)
+Inchworms -> Inchworm
+Incline Barbell Bench Press -> Barbell Incline Bench Press
+Incline Barbell Press -> Barbell Incline Bench Press
+Incline Bench Press -> Barbell Incline Bench Press
+Incline Bicep Curl -> Incline Dumbbell Curl
+Incline Cable Flyes -> Incline Bench Cable Fly
+Incline DB Press -> Dumbbell Incline Bench Press
+Incline Dumbbell Bench Press -> Dumbbell Incline Bench Press
+Incline Dumbbell Fly -> Dumbbell Incline Fly
+Incline Dumbbell Flyes -> Dumbbell Incline Fly
+Incline Dumbbell Row -> Dumbbell Incline Row
+Incline Press -> Barbell Incline Bench Press
+Incline Push Ups -> Incline Push-Up (On Box)
+Incline Pushups -> Incline Push-Up (On Box)
+Incline Wall Push-Up -> Wall Push-Up
+Incline Wall Push-Ups -> Wall Push-Up
+Interval Run -> Running
+Interval Running -> Running
+Inverted Row -> Inverted Rows On Smith Machine
+Jump Lunges -> Jumping Lunge
+Jump Rope -> Jump Rope Basic Jump
+Kettlebell Deadlift -> Single Kettlebell Deadlift
+Kettlebell Farmers Carry -> Farmer's Carry
+Kettlebell Lunges -> Kettlebell Reverse Lunge (verify)
+Kettlebell Romanian Deadlift -> NEW
+Kettlebell Walking Lunge -> NEW
+Knee Hugs -> Lying Knee Hugs Lower Back Stretch
+Knee-To-Chest -> Knee To Chest Stretch
+Lat Pulldown Wide Grip -> Lat Pull Down Wide-Grip
+Lateral Arm Raises -> Dumbbell Single-Arm Lateral Raise
+Lateral Plank Walk -> NEW
+Lateral Raise -> Dumbbell Single-Arm Lateral Raise
+Lateral Shuffles -> Lateral Shuffle
+Lateral Squat Walks -> Lateral Band Walks
+Lateral Step-Out -> Alternating Step Out
+Lateral Step-Ups -> Barbell Bench Lateral Step-Up
+Leg Curl -> Lying Leg Curl Machine
+Leg Curl Machine -> Lying Leg Curl Machine
+Leg Extension Machine -> Lever Leg Extension
+Leg Extensions -> Lever Leg Extension
+Leg Swings -> Dynamic Leg Swing
+Legs Up Wall -> Legs Up The Wall
+Light Cycle -> Stationary Exercise Bike
+Light Cycle/Walk -> Stationary Exercise Bike
+Light Jog -> Running
+Light Stretching -> SKIP
+Light Walk -> Walking
+Light Walk/Jog -> Running
+Light Walking -> Walking
+Low Lunge with Deep Twist -> Low Lunge (Anjaneyasana) (verify)
+Low Lunge with Overhead Reach -> Reverse Lunge With Overhead Reach
+Low Lunge with Reach -> Spiderman Lunge With Reach
+Low Lunge with Twist -> Low Lunge (Anjaneyasana) (verify)
+Low to High Cable Fly -> Cable Machine Low To High
+Low-to-High Cable Flyes -> Cable Machine Low To High
+Lunge -> Forward Lunge
+Lunge Jumps -> Jumping Lunge
+Lunge to Wall Support -> SKIP
+Lunge with Overhead Reach -> Reverse Lunge With Overhead Reach
+Lunge with Reach -> Spiderman Lunge With Reach
+Lunge with Spinal Twist -> Alternating Lunge With Rotation
+Lunge with Thoracic Rotation -> Alternating Lunge With Rotation
+Lunge with Thoracic Twist -> Alternating Lunge With Rotation
+Lunge with Twist -> Alternating Lunge With Rotation
+Lunges with Weight -> Dumbbell Static Lunge
+Lying Hamstring Curl -> Lying Leg Curl Machine
+Lying Hamstring Stretch -> Supine Hamstring Stretch
+Lying Tricep Extensions -> Dumbbell Lying Triceps Extension
+Lying Triceps Extension -> Dumbbell Lying Triceps Extension
+Lying Triceps Extensions -> Dumbbell Lying Triceps Extension
+Meadows Row -> Barbell Meadows Row
+Med Ball Slam -> Ball Slams
+Medicine Ball Russian Twist -> Russian Twist Weighted Ball
+Medicine Ball Slam -> Ball Slams
+Medicine Ball Slams -> Ball Slams
+Meditation -> SKIP
+Military Press -> Barbell Standing Shoulder Press
+Mobility -> SKIP
+Modified Plank -> NEW
+Modified Side Plank -> NEW
+Mountain Climber Slow -> Mountain Climber
+Mountain Climber Twists -> Mountain Climber (verify)
+Mountain Climbers -> Mountain Climber
+Narrow Squat -> Barbell Narrow Stance Squat
+Neck Retraction -> SKIP
+Neck Stretch -> Easy Pose Neck Stretch
+Neutral Grip Lat Pulldown -> Cable Twin Handle Parallel Grip Lat Pulldown
+Nutrition -> SKIP
+One-Arm Dumbbell Row -> Dumbbell Single-Arm Row (Rack Support)
+Overhead Barbell Press -> Barbell Standing Shoulder Press
+Overhead Cable Tricep Extension -> Cable Triceps Overhead Extension (Ez Bar)
+Overhead Dumbbell Extension -> Dumbbell Overhead Extension Standing
+Overhead Dumbbell Press -> Dumbbell Standing Overhead Press
+Overhead Press -> Barbell Standing Shoulder Press
+Overhead Tricep Extension -> Dumbbell Overhead Extension Standing
+Overhead Triceps Extension -> Dumbbell Overhead Extension Standing
+Pallof Press -> Cable Core Palloff Press
+Parighasana (Gate Pose) -> Gate Pose Rounding Spine Looking Up
+Pause Squats -> Barbell Squat With 2 Sec Hold (verify)
+Paused Romanian Deadlift -> Barbell Romanian Deadlift
+Pelvic Floor Contractions -> SKIP
+Pelvic Tilt -> SKIP
+Pelvic Tilts -> SKIP
+Pendlay Row -> Barbell Pendlay Row
+Pigeon Pose Advanced -> Pigeon Pose
+Pike Push Ups -> Pike Push-Up
+Pike Push-up Pulses -> Pike Push-Up
+Pike Pushups -> Pike Push-Up
+Pistol Squat Progression -> Pistol Squat To Box
+Pistol Squat Progressions -> Pistol Squat To Box
+Plank -> Plank On Elbows
+Plank hold -> Plank On Elbows
+Plank Pose -> High Plank
+Plank Reach -> Plank Individual Arm Reach
+Plank Rotations -> NEW
+Plank Rows -> Dumbbell Renegade Row
+Plank Shoulder Tap -> Plank Shoulder Taps
+Plank Shoulder Touches -> Plank Shoulder Taps
+Plank T-Rotations -> NEW
+Plank to Down Dog -> NEW
+Plank to Downward Dog -> NEW
+Plank to Push Up -> Plank Pushup
+Plank to Pushup -> Plank Pushup
+Plank Up-Downs -> Elbow-Up And Down Dynamic Plank
+Plank Walkouts -> Walkout
+Plank with Hip Extension -> Alternate Single-Leg Raise Plank
+Plank with Leg Lifts -> Alternate Single-Leg Raises Plank
+Plank with Plate -> NEW
+Plank with Reach -> Plank Individual Arm Reach
+Plank with Shoulder Tap -> Plank Shoulder Taps
+Plank with Shoulder Taps -> Plank Shoulder Taps
+Plank with Weight -> NEW
+Preacher Curl -> Preacher Curl Ez Bar
+Prone Cobra -> Cobra Yoga Pose Hold
+Prone Hip Extension -> NEW
+Prone T-Raises -> Band Incline T Raise
+Pull ups -> Pull-Up Normal Grip
+Pull-Up -> Pull-Up Normal Grip
+Pullups -> Pull-Up Normal Grip
+Push Press -> Dumbbell Push Press
+Push Up to Plank Tap -> Plank Shoulder Taps
+Push Ups -> Push-Up
+Push-up to Plank Rotation -> Push-Up And Rotation
+Push-up to Renegade Row -> Dumbbell Renegade Row
+Push-up to T-Rotation -> Push-Up And Rotation
+Pushups -> Push-Up
+Pyramid Pose -> NEW
+Quadruped Reach -> NEW
+Quadruped Thoracic Rotation -> Thoracic Rotation Quadruped
+Rear Delt Cable Fly -> Cable Rear Delt Fly
+Rear Delt Fly -> Bent-Over Rear Delt Fly Dumbbell
+Rear Delt Flyes -> Bent-Over Rear Delt Fly Dumbbell
+Renegade Row -> Dumbbell Renegade Row
+Resistance Band Pull Aparts -> Resistance Band Pull Apart
+Resistance Band Row -> Resistance Band - Cable Row
+Reverse Crunches -> Reverse Crunch
+Reverse Fly -> Dumbbell Reverse Fly
+Reverse Flyes -> Dumbbell Reverse Fly
+Reverse Lunge -> Bodyweight Rear Lunge
+Reverse Lunge with DB -> Dumbbell Reverse Lunge On The Spot
+Reverse Lunge with Dumbbells -> Dumbbell Reverse Lunge On The Spot
+Reverse Snow Angels -> NEW
+Reverse Tabletop -> Crab Pose
+Romanian Deadlift -> Romanian Deadlift Barbell
+Romanian Deadlifts -> Romanian Deadlift Barbell
+Row 1000m -> Gym Rowing Machine Normal Speed
+Row 2000m -> Gym Rowing Machine Normal Speed
+Rowing -> Gym Rowing Machine Normal Speed
+Rowing 1000m -> Gym Rowing Machine Normal Speed
+Rowing 500m -> Gym Rowing Machine Normal Speed
+Rowing Intervals -> Rowing Machine Intervals
+Rowing Machine -> Gym Rowing Machine Normal Speed
+Rowing Sprints -> Gym Rowing Machine Sprint Speed
+Run -> Running
+Run 1km -> Running
+Run Intervals -> Running
+Running Interval -> Running
+Running Intervals -> Running
+Running Sprints -> Running
+Russian Kettlebell Swings -> Kettlebell Swing
+Safety Bar Squat -> NEW
+Sandbag Carry -> Sandbag Shoulder Carry
+Sandbag Lunge -> Sandbag Walking Lunge
+Scapular Push Ups -> Scapula Push-Up
+Scapular Pushups -> Scapula Push-Up
+Scapular Retraction Holds -> Resistance Band Pull Apart
+Scapular Retractions -> Resistance Band Pull Apart
+Scapular Wall Slides -> Wall Slide
+Scissor Kicks -> Scissors Kick
+Seated Band Row -> Seated Resistance Band - Cable Rows
+Seated Cable Row -> Cable Seated Row
+Seated Calf Raise -> Dumbbell Seated Calf Raise
+Seated Dumbbell Overhead Press -> Dumbbell Seated Shoulder Press
+Seated Dumbbell Press -> Dumbbell Seated Shoulder Press
+Seated Dumbbell Shoulder Press -> Dumbbell Seated Shoulder Press
+Seated Lat Pulldown -> Lat Pull Down Normal Grip
+Seated Leg Press -> Leg Press Machine Normal Stance
+Seated Overhead Press -> Barbell Seated Overhead Press
+Seated Resistance Band Row -> Seated Resistance Band - Cable Rows
+Seated Row -> Seated Row Machine Rows
+Seated Side Bend -> Seated Side Stretch
+Shoulder Circles -> Shoulder Circle
+Shoulder Taps -> Plank Shoulder Taps
+Shuttle Run -> NEW
+Side Angle Pose -> Extended Side Angle Pose
+Side Lunge -> Side Lunges Bodyweight
+Side Lying Clamshell -> Clamshell
+Side Lying Clamshells -> Clamshell
+Side Lying Leg Lift -> Side Lying Leg Lift Left
+Side Lying Leg Lifts -> Side Lying Leg Lift Left
+Side Lying Leg Raise -> Side Lying Leg Lift Left
+Side Plank Hold (Left) -> Side Plank
+Side Plank Rotations -> NEW
+Single Arm Cable Pushdown -> Cable Pushdown
+Single Arm Cable Row -> Single-Arm Cable Row Left
+Single Arm Dumbbell Row -> Dumbbell Single-Arm Row
+Single Arm Farmer's Carry -> Dumbbell Suitcase Carry
+Single Arm Overhead Press -> Dumbbell Single-Arm Shoulder Press
+Single Arm Press -> Dumbbell Single-Arm Shoulder Press
+Single Arm Row -> Dumbbell Single-Arm Row
+Single Leg Balance -> NEW
+Single Leg Box Squat -> NEW
+Single Leg Bulgarian Split Squat -> Bulgarian Split Squat
+Single Leg Calf Raise -> Dumbbell Single-Leg Calf Raise Wall Support
+Single Leg Deadlift -> Dumbbell Single-Leg Deadlift
+Single Leg Glute Bridge -> Dumbbell Single-Leg Glute Bridge
+Single Leg Lunge -> Forward Lunge
+Single Leg RDL -> Single-Leg Romanian Deadlift Dumbbell
+Single Leg RDL Balance -> Single-Leg Romanian Deadlift Dumbbell
+Single Leg Romanian Deadlift -> Single-Leg Romanian Deadlift Dumbbell
+Single-Leg Kettlebell RDL -> Kettlebell Single-Leg Romanian Deadlifts
+Ski Erg -> Ski Ergometer Cross Country Ski Basic Pull
+SkiErg -> Ski Ergometer Cross Country Ski Basic Pull
+SkiErg Interval -> Ski Erg Intervals
+SkiErg Intervals -> Ski Erg Intervals
+SkiErg Recovery Pace -> Ski Erg Easy
+SkiErg Sprint -> Ski Erg Intervals
+SkiErg Sprint Intervals -> Ski Erg Intervals
+SkiErg Steady State -> Ski Ergometer Cross Country Ski Basic Pull
+Skull Crushers -> Dumbbell Skullcrusher
+Skullcrushers -> Dumbbell Skullcrusher
+Slam Balls -> Ball Slams
+Sleep -> SKIP
+Speed Skaters -> Skater Hops
+Split Jump -> Split Squat Jump
+Split Squat -> Barbell Split Squat
+Squat Jumps -> Jump Squat
+Squat Pulse -> Bodyweight Pulse Squat
+Squat Pulses -> Bodyweight Pulse Squat
+Squats -> Bodyweight Squats
+Stability Ball Leg Curls -> Exercise Ball Leg Curl
+Staff Pose -> NEW
+Standard Push-up -> Push-Up
+Standard Push-ups -> Push-Up
+Standard Pushups -> Push-Up
+Standing Barbell OHP -> Barbell Standing Shoulder Press
+Standing Barbell Overhead Press -> Barbell Standing Shoulder Press
+Standing Barbell Press -> Barbell Standing Shoulder Press
+Standing Chest Press (Band) -> Chest Press Front Resistance Band
+Standing Dumbbell Overhead Press -> Dumbbell Standing Overhead Press
+Standing Hip Abduction -> Resistance Band Standing Hip Abduction
+Standing Hip Circles -> Hip Circle
+Standing Hip Hinge -> NEW
+Standing Lateral Raise -> Lateral Raises Dumbbell
+Standing March -> SKIP
+Standing Military Press -> Barbell Standing Shoulder Press
+Standing Overhead Barbell Press -> Barbell Standing Shoulder Press
+Standing Overhead Dumbbell Press -> Dumbbell Standing Overhead Press
+Standing Overhead Press -> Barbell Standing Shoulder Press
+Standing Press -> Barbell Standing Shoulder Press
+Standing Row -> Barbell Bent-Over Row
+Standing Row with Resistance Band -> Bent-Over Row Resistance Band
+Standing Single Arm Row -> Single-Arm Standing Low Cable Row
+Static Lunge -> Dumbbell Static Lunge
+Stationary Bike -> Stationary Exercise Bike
+Stationary Lunge -> Dumbbell Static Lunge
+Steady State Run -> Running
+Step Up -> Box Step-Up
+Step Ups -> Box Step-Up
+Stiff Leg Deadlift -> Barbell Stiff Leg Deadlift
+Stiff-Legged Deadlift -> Barbell Stiff Leg Deadlift
+Straight Arm Pulldown -> Cable Straight Arm Pulldown
+Stretching -> SKIP
+Strict Press -> Barbell Standing Shoulder Press
+Strict Pull-ups -> Pull-Up Normal Grip
+Suitcase Carry -> Dumbbell Suitcase Carry
+Sumo Deadlift -> Barbell Sumo Deadlift
+Sumo Deadlift High Pull -> Kettlebell Sumo Deadlift With High Pull
+Sumo Squat -> Kettlebell Sumo Squat
+Sumo Squat Pulse -> NEW
+Sumo Squat Pulses -> NEW
+Sun Salutation -> Sun Salutation A
+Superman Hold -> Superman Holds
+Superman Pulses -> Superman (verify)
+Supine Leg Stretch -> Supine Hamstring Stretch (verify)
+Supine Twist -> Supine Spinal Twist
+Supported Headstand -> Headstand
+Swimming -> NEW
+T-Bar Row -> Landmine Row
+T-Push Ups -> Push-Up And Rotation
+Tempo Run -> Treadmill Tempo Run
+Tempo Squats -> Barbell Squat With 2 Sec Hold
+Thoracic Extension -> Thoracic Extension Stretch
+Thoracic Extension over Foam Roller -> Foam Roll Thoracic Spine (verify)
+Thoracic Extensions -> Thoracic Extension Stretch
+Thoracic Rotation -> Thoracic Rotation Quadruped
+Thoracic Rotations -> Thoracic Rotation Quadruped
+Thoracic Spine Rotation -> Thoracic Rotation Quadruped (verify)
+Threshold Run -> Running
+Thrusters -> Barbell Thruster
+Toes to Bar -> NEW
+Treadmill Intervals -> Treadmill Sprint Intervals
+Treadmill Run Intervals -> Treadmill Sprint Intervals
+Treadmill Sprints -> Treadmill Sprint Intervals
+Tricep Cable Pushdown -> Cable Tricep Pushdown
+Tricep Cable Pushdowns -> Cable Tricep Pushdown
+Tricep Dips -> Bench Triceps Dip Straight Legs
+Tricep Extension -> Dumbbell Lying Triceps Extension
+Tricep Extensions -> Dumbbell Lying Triceps Extension
+Tricep Kickback -> Dumbbell Triceps Kick Back Single-Arm
+Tricep Kickbacks -> Dumbbell Triceps Kick Back Single-Arm
+Tricep Overhead Cable Extension -> Cable Overhead Extension Rope
+Tricep Overhead Extension -> Dumbbell Overhead Extension Seated
+Tricep Pushdown -> Cable Tricep Pushdown
+Tricep Pushdowns -> Cable Tricep Pushdown
+Tricep Rope Pushdown -> Tricep Rope Extension On Crossover Machine
+Tricep Rope Pushdowns -> Tricep Rope Extension On Crossover Machine
+Triceps Cable Pushdown -> Cable Tricep Pushdown
+Triceps Cable Pushdowns -> Cable Tricep Pushdown
+Triceps Dips -> Bench Triceps Dip Straight Legs
+Triceps Overhead Extension -> Dumbbell Overhead Extension Seated
+Triceps Pushdown -> Cable Tricep Pushdown
+Triceps Rope Pushdown -> Tricep Rope Extension On Crossover Machine
+Triceps Rope Pushdowns -> Tricep Rope Extension On Crossover Machine
+Triceps Skullcrushers -> Barbell Lying Triceps Skull Crusher
+Upright Row -> Upright Row Barbell
+V-Ups -> V Up
+Waiters Walk -> Dumbbell Single-Arm Overhead Carry
+Walking Lunge -> Treadmill Walking Lunge
+Wall Ball Shot -> The Wall Ball
+Wall Ball Shots -> The Wall Ball
+Wall Balls -> The Wall Ball
+Wall Chest Stretch -> Corner Wall Chest Stretch
+Wall Pec Stretch -> Corner Wall Chest Stretch (verify)
+Wall Push Ups -> Wall Push-Up
+Wall Sit With Arm Raises -> Wall Sit
+Wall Sit With March -> Wall Sit
+Wall Slides -> Wall Slide
+Warrior II Pose -> Warrior Ii
+Weighted Box Step Ups -> Dumbbell Step-Up On Bench
+Weighted Bridge Pose -> Dumbbell Glute Bridge
+Weighted Bulgarian Split Squat -> Dumbbell Bulgarian Split Squat
+Weighted Calf Raise -> Calf Raise
+Weighted Carry -> Farmer's Carry
+Weighted Chin-Ups -> NEW
+Weighted Curtsy Lunge -> Dumbbell Curtsy Lunge
+Weighted Dips -> Chest Dip Weighted
+Weighted Forward Lunge -> Dumbbell Goblet Forward Lunge
+Weighted Glute Bridge -> Dumbbell Glute Bridge
+Weighted Lateral Lunge -> Barbell Lateral Lunge
+Weighted Lunges -> Barbell Lunges
+Weighted Plank -> High Plank
+Weighted Pull Up -> NEW
+Weighted Pull Ups -> NEW
+Weighted Russian Twist -> Russian Twist Weighted Ball
+Weighted Side Plank -> Dumbbell Hand Side Plank
+Weighted Step Up -> Dumbbell Step-Up On Bench
+Weighted Step Ups -> Dumbbell Step-Up On Bench
+Weighted Walking Lunge -> NEW
+Weighted Wall Sit -> Wall Sit
+Wide Grip Pull Ups -> Pull-Up Wide-Grip
+Wide Grip Pulldowns -> Lat Pull Down Wide-Grip
+Wide Grip Push Ups -> Wide Push Ups Bodyweight
+Wide Grip Pushups -> Wide Push Ups Bodyweight
+Wide Leg Fold -> Wide-Legged Forward Fold (Prasarita Padottanasana) (verify)
+Wide Leg Forward Fold -> Wide-Legged Forward Fold (Prasarita Padottanasana)
+Wide Push-Ups -> Wide Push Ups Bodyweight
+Wide Stance Fold -> Wide-Legged Forward Fold (Prasarita Padottanasana) (verify)
+Windshield Wipers -> Wind Wipers
+Yoga -> SKIP
+Yoga Flow -> SKIP
+Yoga Sun Salutations -> SKIP
+Zercher Carry -> Sandbag Zercher Carry

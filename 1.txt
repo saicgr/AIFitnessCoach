@@ -1,48 +1,271 @@
----
-  Task: Custom-program builder gaps to fold into the combined program-view work
-
-  Context: You're building the new combined AI + custom program-view screen. While you're in the custom-program area, these gaps live in the same files (program_template_builder_screen.dart and its part files /
-  program_template.dart model). They're mostly UI wiring — the data model and active-workout playback already support most of it. A separate session owns the AI-program swap-persist + overload-follows-swap
-  mechanic; this brief is custom-program only so we don't collide.
-
-  Verified current state (file:line evidence included):
-
-  1. Day add / remove / reorder — ABSENT
-  - program_template_builder_screen.dart:409 loops draft.days as a fixed list; empty draft hardcodes 7 days (:179). No UI to add, remove, or reorder days.
-  - Fix: wrap days in a ReorderableListView — mirror the existing exercise reorder pattern already in this file at :904. Add add/remove-day affordances. Persist new day_index order.
-
-  2. Per-exercise rest timer in builder — PARTIAL (field + playback exist, UI absent)
-  - ProgramExercise.restSeconds exists (program_template.dart:231), defaults to 75s on add (program_builder_part_exercise_picker.dart:147), and is already honored in the active workout ("authored rest always
-  wins" — RestDurationPolicy.dart:48).
-  - Gap: the builder's _ExerciseRow (program_template_builder_screen.dart:947) shows only name + sets×reps + remove. No way to edit rest. Also no program-level rest default
-  (program_builder_part_template_meta.dart only offers progression/deload/staples).
-  - Fix: add an exercise-edit sheet (tap _ExerciseRow) that writes restSeconds via the existing copyWith mutation helpers (:534–608). Optional: a program-level default rest in the meta strip.
-
-  3. Supersets in custom template — ABSENT (stub field only)
-  - ProgramExercise.supersetGroup exists (program_template.dart:238) but the builder never sets it, and there's no supersetOrder on ProgramExercise (it lives only on WorkoutExercise). In-workout drag-to-pair
-  (active_workout_screen_refactored.dart:162) is ephemeral — not saved back to the template.
-  - Fix: add superset_order to ProgramExercise; add a grouping affordance in the builder (reuse the in-workout superset-pair sheet pattern); persist superset_group + superset_order so the played workout honors
-  the pairing. The superset engine already exists app-wide (7 pairing types) — this is just letting authored templates carry pairs.
-
-  4. Exercise edit / swap in builder — ABSENT
-  - _ExerciseRow is remove-and-re-add only (:947–1021); once added, sets/reps/rest/notes are immutable.
-  - Fix: the same edit sheet from (2) should allow editing sets/reps/RIR/notes and swapping the exercise. For custom programs a swap = edit the template directly (persistent by nature) — no
-  progression-migration needed (that's the AI-program session's problem).
-
-  5. Cycle length (weekLength) — read-only
-  - Hardcoded 7 (:179, label at :407); editable only via multi-week import/parse. Duration in weeks is editable (program_builder_part_template_meta.dart:153–222, 1–24 + Auto).
-  - Optional: make weekLength editable for non-7-day cycles.
-
-  Saved template shape (where new fields attach):
-  ProgramTemplate { name, week_length, duration_weeks, deload_every_n_weeks,
-    progression_strategy, apply_staples, source,
-    days: [{ day_index, day_name, is_rest, workout_type,
-      exercises: [{ name, sets, reps, reps_spec, rest_seconds,
-        target_rir, target_weight_kg, superset_group /*+ add superset_order*/,
-        notes, unresolved }] }] }
-
-  Priority for the custom side: (1) day reorder and (2) rest-timer UI are the cheapest wins (field/playback already done). (3) supersets needs one new model field. (4) edit/swap sheet is the unlock that makes
-  (2) usable.
-
-  Coordination boundary: AI-program swap-persist + overload-follows-swap is being built in a separate session (workout_operations.py, strength_recalc.py, weight_suggestions.py, swap sheet). Please don't touch
-  those; we'll align on the substitution data model if your new view wants to surface "manage substitutions."
+Cable Woodchopper -> Cable Woodchop
+Cool-down walk + stretch -> Treadmill Walk
+Dumbbell RDL -> Dumbbell Romanian Deadlift
+Front Foot Elevated Split Squat -> Dumbbell Goblet Split Squat Front Foot Elevanted
+Goddess Pose -> NEW
+Lateral Plank Walk -> NEW
+Light Cycle -> Stationary Exercise Bike
+Prone Hip Extension -> NEW
+Scissor Kicks -> Scissors Kick
+Single Arm Row -> Dumbbell Single-Arm Row
+Split Jump -> Split Squat Jump
+Supported Headstand -> Headstand
+Weighted Calf Raise -> Dumbbell Standing Calf Raise
+1 km Run -> Running
+1km Run -> Running
+Air Squats -> Air Squat
+Arnold Press -> Dumbbell Arnold Press
+Back Extension -> Back Extension Machine
+Back Squat -> Barbell Full Squat(Back)
+Banded Pull-Aparts -> Resistance Band Pull Apart
+Barbell Back Squat -> Barbell Full Squat(Back)
+Barbell Bicep Curl -> Barbell Biceps Curl
+Barbell Row -> Barbell Bent-Over Row
+Barbell Seal Row -> Barbell Lying Row
+Battle Ropes -> Battle Rope Double Waves (verify)
+Bear Crawl -> Bear Crawl
+Bench Dips -> Bench Dip (Knees Bent)
+Bent Over Rear Delt Flyes -> Bent-Over Rear Delt Fly Dumbbell
+Bent Over Rows -> Barbell Bent-Over Row
+Bicycle Crunches -> Bicycles Crunches
+Boat Pose -> Boat Pose (Navasana)
+Box Jumps -> Box Jump
+Box Squat -> Barbell Box Squat
+Box Step Ups -> Box Step-Up
+Bridge Pose -> Bridge Pose Setu Bandhasana
+Broad Jumps -> Broad Jump
+Burpee Broad Jumps -> Burpee Broad Jump
+Butterfly Stretch -> Butterfly Stretch
+Cable Face Pull -> Cable Face Pull
+Cable Face Pulls -> Cable Face Pull
+Cable Flyes -> Cable Middle Fly (verify)
+Cable Lateral Raise -> Cable Lateral Raises
+Cable Tricep Extensions -> Cable Tricep Pushdown (verify)
+Cable Tricep Overhead Extension -> Cable Triceps Overhead Extension (Ez Bar)
+Cable Tricep Pushdown -> Cable Tricep Pushdown
+Cable Tricep Pushdowns -> Cable Tricep Pushdown
+Calf Raises -> Calf Raise
+Cat Cow -> Cat-Cow Stretch
+Chest Supported Row -> Dumbbell Incline Row (verify)
+Childs Pose -> Child's Pose
+Close-Grip Bench Press -> Barbell Close-Grip Bench Press
+Cobra Pose -> Cobra Pose
+Conventional Deadlift -> Barbell Deadlift
+Cow Face Pose -> Single-Arm Cow Face Pose - Easy (verify)
+Crescent Lunge -> Low Lunge (Anjaneyasana) (verify)
+Curtsy Lunge -> Dumbbell Curtsy Lunge (verify)
+Dead Bugs -> Dead Bug
+Dead Hang -> Dead Hang
+Decline Push-ups -> Decline Push-Up
+Diamond Push Ups -> Diamond Push-Up
+Dips -> Ring Dips (verify - no parallel-bar dip in library)
+Doorway Chest Stretch -> Chest Doorway Stretch
+Downward Facing Dog -> Downward Facing Dog
+Dumbbell Bicep Curl -> Dumbbell Curls
+Dumbbell Calf Raise -> Dumbbell Standing Calf Raise
+Dumbbell Chest Press -> Dumbbell Chest Press Flat
+Dumbbell Decline Press -> Dumbbell Decline Bench Press
+Dumbbell Floor Press -> Dumbbell Lying On Floor Chest Press
+Dumbbell Goblet Lunge -> Dumbbell Goblet Forward Lunge
+Dumbbell Incline Bench -> Dumbbell Incline Bench Press
+Dumbbell Incline Press -> Dumbbell Incline Bench Press
+Dumbbell Lateral Raise -> Lateral Raises Dumbbell
+Dumbbell Lunge -> Dumbbell Static Lunge
+Dumbbell Overhead Press -> Dumbbell Standing Overhead Press
+Dumbbell Row -> Dumbbell Bent-Over Row
+Dumbbell Seated Press -> Dumbbell Seated Shoulder Press
+Dumbbell Shoulder Press -> Standing Shoulder Press Dumbbell
+Dumbbell Shrug -> Dumbbell Shrugs
+Dumbbell Skullcrushers -> Dumbbell Skullcrusher
+Dumbbell Snatch -> Dumbbell Single-Arm Snatch
+Dumbbell Step Ups -> Dumbbell Step-Up On Bench
+Dumbbell Thrusters -> Dumbbell Squats To Shoulder Press (verify)
+Dumbbell Tricep Extension -> Dumbbell Lying Triceps Extension (verify)
+Dumbbell Walking Lunge -> NEW
+Dynamic warm-up -> Dynamic Leg Swing (verify - category, not single exercise)
+Eagle Arms -> Eagle Arms Chin Into Chest (verify)
+Extended Puppy Pose -> Puppy Pose (Uttana Shishosana)
+EZ Bar Curl -> Ez Barbell Curl
+EZ Bar Skullcrushers -> NEW
+Face Pull -> Cable Face Pull
+Face Pulls -> Cable Face Pull
+Farmer Carry -> Farmer's Carry
+Farmer's Carry -> Farmer's Carry
+Flat Dumbbell Bench Press -> Dumbbell Bench Press
+Flat Dumbbell Press -> Dumbbell Chest Press Flat
+Foam Rolling -> Foam Roll Lats (verify - category, not single exercise)
+Forward Fold -> Standing Forward Fold (Uttanasana)
+Forward Lunge -> Forward Lunge
+Glute Bridge -> Dumbbell Glute Bridge (verify - no plain bodyweight glute bridge in library)
+Glute Bridge March -> Glute March
+Glute Kickbacks -> Cable Individual Glute Kickbacks (verify)
+Goblet Bulgarian Split Squat -> Dumbbell Bulgarian Split Squat (verify)
+Goblet Reverse Lunge -> Dumbbell Goblet Reverse Lunge
+Goblet Squat -> Dumbbell Goblet Squat
+Hammer Curl -> Dumbbell Hammer Curl
+Hanging Leg Raise -> Hanging Leg Raises
+Happy Baby Pose -> Happy Baby
+Hyperextensions -> 45 Degree Hyperextension (Arms In Front Of Chest)
+Incline Barbell Press -> Barbell Incline Bench Press
+Incline Bench Press -> Barbell Incline Bench Press (verify)
+Incline Dumbbell Press -> Dumbbell Incline Bench Press
+Incline Push-ups -> Incline Push-Up (On Box)
+Interval Run -> Running
+Interval Running -> Running
+Jump Squat -> Jump Squat
+Kettlebell Swing -> Kettlebell Swing
+Lat Pulldown -> Lat Pulldown
+Lateral Band Walks -> Lateral Band Walks
+Lateral Lunges -> Lateral Lunge
+Lateral Raise -> Lateral Raises Dumbbell
+Lateral Step-Ups -> Barbell Bench Lateral Step-Up (verify - no bodyweight/DB lateral step-up in library)
+Leg Curl -> Lying Leg Curl
+Leg Extension -> Leg Extension
+Leg Extension Machine -> Leg Extension
+Leg Extensions -> Leg Extension
+Leg Press -> Leg Press
+Legs Up The Wall -> Legs Up The Wall
+Lizard Pose -> Lizard Pose
+Low Lunge -> Low Lunge (Anjaneyasana)
+Low Lunge with Twist -> Low Lunge (Anjaneyasana) (verify - drops the twist)
+Low-to-High Cable Fly -> Cable Machine Low To High
+Lunges -> Forward Lunge (verify)
+Lying Leg Curl -> Lying Leg Curl
+Lying Tricep Extensions -> Dumbbell Lying Triceps Extension (verify)
+Mountain Climbers -> Mountain Climber
+Overhead Barbell Press -> Barbell Standing Shoulder Press (verify)
+Overhead Dumbbell Press -> Dumbbell Standing Overhead Press
+Overhead Press -> Barbell Standing Shoulder Press (verify)
+Overhead Tricep Extension -> Barbell Standing Overhead Triceps Extension
+Pendlay Row -> Barbell Pendlay Row
+Pigeon Pose -> Pigeon Pose
+Pike Push-ups -> Pike Push-Up
+Plank Pose -> Plank On Elbows
+Plank Reach -> Plank Reach Through (verify)
+Plank to Push-up -> Plank Pushup (verify)
+Preacher Curls -> Barbell Preacher Curl (verify)
+Pull Ups -> Pull-Up Normal Grip
+Push Ups -> Push-Up
+Push-up -> Push-Up
+Pushups -> Push-Up
+Renegade Row -> Dumbbell Renegade Row
+Reverse Fly -> Dumbbell Reverse Fly
+Reverse Lunge -> Dumbbell Reverse Lunge On The Spot
+Reverse Tabletop -> NEW
+Rowing -> Gym Rowing Machine Normal Speed
+Rowing Intervals -> Rowing Machine Intervals
+Rowing Sprints -> Gym Rowing Machine Sprint Speed
+Run Intervals -> Running
+Sandbag Lunge -> Sandbag Walking Lunge (verify)
+Seated Calf Raise -> Dumbbell Seated Calf Raise (verify)
+Seated Dumbbell Overhead Press -> Dumbbell Seated Shoulder Press (verify)
+Seated Dumbbell Press -> Dumbbell Seated Shoulder Press (verify)
+Seated Leg Curl -> Seated Leg Curl
+Seated Overhead Press -> Barbell Seated Overhead Press
+Seated Spinal Twist -> Seated Spinal Twist (Ardha Matsyendrasana)
+Side Lunge -> Side Lunges Bodyweight
+Side Lying Clamshells -> Clamshell (verify)
+Side Lying Leg Lifts -> Side Lying Leg Lift Left (verify)
+Side Lying Leg Raise -> Side Lying Leg Lift Left (verify)
+Single Arm Dumbbell Row -> Dumbbell Single-Arm Row
+Single Leg Glute Bridge -> Dumbbell Single-Leg Glute Bridge (verify)
+Single Leg Romanian Deadlift -> Single-Leg Romanian Deadlift Dumbbell
+Ski Erg -> Ski Ergometer Cross Country Ski Basic Pull
+SkiErg -> Ski Ergometer Cross Country Ski Basic Pull
+SkiErg Intervals -> Ski Erg Intervals
+Skull Crushers -> Dumbbell Skullcrusher (verify)
+Skullcrushers -> Dumbbell Skullcrusher (verify)
+Split Squats -> Dumbbell Split Squat (verify)
+Squat Pulse -> Bodyweight Pulse Squat
+Standard Push-up -> Push-Up
+Standing Calf Raise -> Standing Calf Raise
+Standing Dumbbell Overhead Press -> Dumbbell Standing Overhead Press
+Standing Military Press -> Barbell Standing Military Press
+Standing Overhead Barbell Press -> Barbell Standing Military Press (verify)
+Standing Overhead Press -> Dumbbell Standing Overhead Press (verify)
+Steady State Run -> Running
+Step-Ups -> Box Step-Up (verify)
+Stiff Leg Deadlift -> Barbell Stiff Leg Deadlift
+Sumo Deadlift -> Barbell Sumo Deadlift
+Sumo Squat -> Kettlebell Sumo Squat (verify)
+Supine Spinal Twist -> Supine Spinal Twist
+T-Bar Row -> Landmine Row
+Thoracic Extension -> Thoracic Extension Stretch
+Thread the Needle -> Thread The Needle
+Treadmill Sprints -> Treadmill Sprint Intervals
+Tricep Cable Pushdowns -> Cable Tricep Pushdown
+Tricep Dips -> Chair Triceps Dips (verify)
+Tricep Overhead Extension -> Barbell Standing Overhead Triceps Extension
+Tricep Pushdown -> Cable Tricep Pushdown
+Triceps Rope Pushdown -> Cable Tricep Pushdown
+V-Ups -> V Up
+Walking Lunge -> Sandbag Walking Lunge (verify)
+Wall Ball Shots -> Wall Ball
+Wall Balls -> Wall Ball
+Wall Push-Ups -> Wall Push-Up
+Wall Sit -> Wall Sit
+Weighted Chin-Ups -> NEW
+Weighted Dips -> Chest Dip Weighted
+Weighted Glute Bridge -> Barbell Glute Bridge
+Weighted Pull Up -> NEW
+Weighted Pull Ups -> NEW
+Weighted Walking Lunges -> NEW
+Wide Grip Lat Pulldown -> Wide-Grip Lat Pulldown
+Wide Grip Pull Ups -> Pull-Up Wide-Grip
+Wide Grip Push-ups -> Wide Push Ups Bodyweight
+Yoga Flow -> Sun Salutation A
+Barbell Bench Press -> Barbell Bench Press
+Barbell Bent Over Row -> Barbell Bent-Over Row
+Barbell Pendlay Row -> Barbell Pendlay Row
+Barbell Shrugs -> Barbell Shrugs
+Bent Over Barbell Row -> Bent-Over Barbell Row
+Bird Dog -> Bird Dog
+Bodyweight Squat -> Bodyweight Squats
+Bulgarian Split Squat -> Bulgarian Split Squat
+Burpees -> Burpee
+Child Pose -> Child Pose
+Dead Bug -> Dead Bug
+Deadlift -> Barbell Deadlift
+Dumbbell Bench Press -> Dumbbell Bench Press
+Dumbbell Bent Over Row -> Dumbbell Bent-Over Row
+Dumbbell Bulgarian Split Squat -> Dumbbell Bulgarian Split Squat
+Dumbbell Goblet Squat -> Dumbbell Goblet Squat
+Dumbbell Hammer Curl -> Dumbbell Hammer Curl
+Dumbbell Incline Bench Press -> Dumbbell Incline Bench Press
+Dumbbell Pullover -> Dumbbell Pullover
+Dumbbell Renegade Row -> Dumbbell Renegade Row
+Dumbbell Romanian Deadlift -> Dumbbell Romanian Deadlift
+Dumbbell Shrugs -> Dumbbell Shrugs
+Dumbbell Split Squat -> Dumbbell Split Squat
+Farmers Walk -> Dumbbell Farmer Walks
+Front Squat -> Barbell Front Squat
+Hack Squat Machine -> Hack Squat Machine
+Hanging Knee Raise -> Hanging Knee Raises
+High plank -> High Plank
+Hip Flexor Stretch -> Hip Flexor Couch Stretch
+Incline Dumbbell Curl -> Incline Dumbbell Curl
+Incline Dumbbell Fly -> Dumbbell Incline Fly
+Lying Leg Raises -> Lying Leg Raise
+Pallof Press -> Band Pallof Press (verify)
+Plank -> Plank On Elbows (verify)
+Plank Jacks -> Plank Jack
+plank on elbows -> Plank On Elbows
+plank shoulder taps -> Plank Shoulder Taps
+Pyramid Pose -> NEW
+Romanian Deadlift -> Barbell Romanian Deadlift
+Run -> Running
+Russian Twist -> Russian Twist
+Seated Cable Row -> Cable Seated Row
+Seated Dumbbell Shoulder Press -> Dumbbell Seated Shoulder Press
+Seated Forward Fold -> Seated Forward Fold
+side plank -> Side Plank
+Sled Pull -> Sled Pull
+Sled Push -> Sled Push
+Sphinx Pose -> Sphinx Pose
+Sun Salutation A -> Sun Salutation A
+Superman -> Superman
+Tree Pose -> Tree Pose (Vrksasana)
+Triangle Pose -> Triangle Pose (Trikonasana)
+Walking -> Walking
+Warrior II -> Warrior Ii
+Wide-Legged Forward Fold -> Wide-Legged Forward Fold (Prasarita Padottanasana)
