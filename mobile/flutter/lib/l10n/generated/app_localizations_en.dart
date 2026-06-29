@@ -7769,10 +7769,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get easyHelpGotIt => 'Got it';
 
   @override
-  String get easyHelpLogASet => 'Log a set';
+  String get easyHelpLogASet => 'Finish the set';
 
   @override
-  String get easyHelpLogASetBody => 'Log a set body';
+  String get easyHelpLogASetBody =>
+      'Hit the big LOG SET when you\'re done — we track your progress automatically.';
 
   @override
   String get easyHelpSkipToNextExercise => 'Skip to next exercise';
@@ -7792,16 +7793,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get easyHelpTodaySExercise => 'Today\'s exercise';
 
   @override
-  String get easyHelpTodaysExercise => 'Todays exercise';
+  String get easyHelpTodaysExercise => 'Today\'s exercise';
 
   @override
-  String get easyHelpTodaysExerciseBody => 'Todays exercise body';
+  String get easyHelpTodaysExerciseBody =>
+      'Your move for this set, with a demo and form cues. Tap the card to watch it full-screen.';
 
   @override
-  String get easyHelpWeightAndReps => 'Weight and reps';
+  String get easyHelpWeightAndReps => 'Log your effort';
 
   @override
-  String get easyHelpWeightAndRepsBody => 'Weight and reps body';
+  String get easyHelpWeightAndRepsBody =>
+      'Dial in weight and reps — or distance and time for cardio moves — with − and +. Tap a number to type it.';
 
   @override
   String get easyRestOverlayRest => 'Rest';

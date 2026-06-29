@@ -54,37 +54,50 @@ WorkoutUiMode? _tierForTourId(String? tourId) => switch (tourId) {
     };
 
 /// Easy tour — 3 steps. First-timer vocabulary; avoids any advanced concepts.
-/// TODO(tier-ui): swap the target keys to the real Easy-screen widget keys
-/// (`easyExerciseHeaderKey`, `easyStepperKey`, `easyLogSetButtonKey`) once
-/// the Easy active-workout screen ships (owned by another agent). Until
-/// then we spotlight the nearest visible Advanced-screen targets so the
-/// tour works on the currently-rendered Advanced UI in this branch.
+/// The Easy active-workout screen now attaches the real anchors —
+/// `AppTourKeys.exerciseCardKey` on the exercise header and
+/// `AppTourKeys.setLoggingKey` on the focal column (steppers + LOG SET) — so
+/// these spotlight the actual Easy widgets, with an animated highlight ring.
 List<AppTourStep> easyTourSteps() => [
       AppTourStep(
         id: 'workout_easy_step_header',
         targetKey: AppTourKeys.exerciseCardKey,
         title: "Today's exercise",
         description:
-            "This is today's exercise. Tap ▶ Show video if you need form help.",
+            "This is today's exercise. Tap ▶ to watch the demo if you need form help.",
         position: TooltipPosition.below,
+        cornerRadius: 18,
+        highlightColors: _easyHighlight,
       ),
       AppTourStep(
         id: 'workout_easy_step_stepper',
         targetKey: AppTourKeys.setLoggingKey,
-        title: 'Weight & reps',
+        title: 'Log your effort',
         description:
-            'Adjust weight and reps with − and +. Long-press for the keyboard.',
-        position: TooltipPosition.below,
+            'Dial in weight & reps — or distance/time for cardio — with − and +. Tap a number to type it.',
+        position: TooltipPosition.above,
+        cornerRadius: 18,
+        highlightColors: _easyHighlight,
       ),
       AppTourStep(
         id: 'workout_easy_step_log',
         targetKey: AppTourKeys.setLoggingKey,
         title: 'Finish the set',
         description:
-            "Tap when you finish a set. We'll handle the rest — literally.",
-        position: TooltipPosition.below,
+            "Tap LOG SET when you finish. We'll handle the rest — literally.",
+        position: TooltipPosition.above,
+        cornerRadius: 18,
+        highlightColors: _easyHighlight,
       ),
     ];
+
+/// Animated spotlight-ring gradient for the Easy tour (brand green → cyan).
+const List<Color> _easyHighlight = [
+  Color(0xFF4ADE80),
+  Color(0xFF22D3EE),
+  Color(0xFF3B82F6),
+  Color(0xFF4ADE80),
+];
 
 /// Simple tour — 5 steps. Introduces rail editing, Prev auto-fill, rest
 /// adjustment, the coach chat bar, and the tier toggle graduation path.
