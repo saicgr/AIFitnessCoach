@@ -22,6 +22,7 @@ class SetLog {
   final String? aiInputSource; // Original AI input that created this set (e.g., "135*8", "+10")
   final DateTime? startedAt; // When the set started (after rest ended)
   final int? durationSeconds; // How long the set took (start → checkmark)
+  final double? distanceMeters; // Logged distance (m) for distance/cardio moves (SkiErg, sled, carries, runs)
   final int? restDurationSeconds; // Actual rest taken before this set (null for first set)
   final double? previousWeightKg; // Weight from previous session for this set
   final int? previousReps; // Reps from previous session for this set
@@ -47,6 +48,7 @@ class SetLog {
     this.aiInputSource,
     this.startedAt,
     this.durationSeconds,
+    this.distanceMeters,
     this.restDurationSeconds,
     this.previousWeightKg,
     this.previousReps,
@@ -67,6 +69,7 @@ class SetLog {
     String? aiInputSource,
     DateTime? startedAt,
     int? durationSeconds,
+    double? distanceMeters,
     int? restDurationSeconds,
     double? previousWeightKg,
     int? previousReps,
@@ -86,6 +89,7 @@ class SetLog {
       aiInputSource: aiInputSource ?? this.aiInputSource,
       startedAt: startedAt ?? this.startedAt,
       durationSeconds: durationSeconds ?? this.durationSeconds,
+      distanceMeters: distanceMeters ?? this.distanceMeters,
       restDurationSeconds: restDurationSeconds ?? this.restDurationSeconds,
       previousWeightKg: previousWeightKg ?? this.previousWeightKg,
       previousReps: previousReps ?? this.previousReps,
@@ -136,6 +140,7 @@ class SetLog {
         'ai_input_source': aiInputSource,
         if (startedAt != null) 'started_at': startedAt!.toIso8601String(),
         if (durationSeconds != null) 'set_duration_seconds': durationSeconds,
+        if (distanceMeters != null) 'distance_meters': distanceMeters,
         if (restDurationSeconds != null) 'rest_duration_seconds': restDurationSeconds,
         if (previousWeightKg != null) 'previous_weight_kg': previousWeightKg,
         if (previousReps != null) 'previous_reps': previousReps,
@@ -165,6 +170,7 @@ class SetLog {
           ? DateTime.parse(json['started_at'] as String)
           : null,
       durationSeconds: json['set_duration_seconds'] as int?,
+      distanceMeters: (json['distance_meters'] as num?)?.toDouble(),
       restDurationSeconds: json['rest_duration_seconds'] as int?,
       previousWeightKg: (json['previous_weight_kg'] as num?)?.toDouble(),
       previousReps: json['previous_reps'] as int?,

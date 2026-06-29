@@ -73,6 +73,16 @@ class SetRowData {
   /// the TARGET cell and hide the barbell plate indicator.
   final bool isBodyweight;
 
+  /// True for distance/cardio moves (SkiErg, sled, carries, runs) — the TARGET
+  /// cell renders a distance goal and the input logs meters instead of weight.
+  final bool isDistance;
+
+  /// Target distance in METERS for distance moves (e.g. SkiErg 1000 m).
+  final double? targetDistanceMeters;
+
+  /// Logged distance (m) for a completed distance set.
+  final double? actualDistanceMeters;
+
   // ── Trend / Edited / Easy-mode plumbing (parity with ActiveSetData) ─────
   /// User has progressive overload enabled in prefs. When false the trend
   /// pill is suppressed entirely.
@@ -125,6 +135,9 @@ class SetRowData {
     this.restDurationSeconds,
     this.isTimedExercise = false,
     this.isBodyweight = false,
+    this.isDistance = false,
+    this.targetDistanceMeters,
+    this.actualDistanceMeters,
     this.progressiveOverloadEnabled = true,
     this.isEdited = false,
     this.isDeload = false,
@@ -305,6 +318,10 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
   /// labels ("Reps" → "Time"). A mixed list is rare but we fall back to false.
   bool get _isTimedExercise =>
       widget.sets.isNotEmpty && widget.sets.every((s) => s.isTimedExercise);
+
+  /// True when ALL sets are distance/cardio — header label "Reps" → "Dist".
+  bool get _isDistance =>
+      widget.sets.isNotEmpty && widget.sets.every((s) => s.isDistance);
 
   /// Effective focus index for windowed rendering. Prefers the user's manual
   /// override (set via rail tap / overflow sheet); otherwise tracks the active
@@ -923,9 +940,14 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             SizedBox(
               width: 64,
               child: Text(
-                // Swap label to "Time" for timed exercises so the rep input
-                // column doesn't mislead (planks, walking, hollow holds).
-                (_isTimedExercise ? 'Time' : 'Reps').toUpperCase(),
+                // Swap label to "Time"/"Dist" so the rep column doesn't mislead
+                // (planks → time; SkiErg/sled/carries → distance).
+                (_isDistance
+                        ? 'Dist'
+                        : _isTimedExercise
+                            ? 'Time'
+                            : 'Reps')
+                    .toUpperCase(),
                 style: headerStyle,
                 textAlign: TextAlign.center,
               ),
@@ -1222,6 +1244,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 targetDurationSeconds: set.targetDurationSeconds,
                 isTimedExercise: set.isTimedExercise,
                 isBodyweight: set.isBodyweight,
+                isDistance: set.isDistance,
+                targetDistanceMeters: set.targetDistanceMeters,
                 previousWeight: set.previousWeight,
                 previousReps: set.previousReps,
                 useKg: widget.useKg,
@@ -1252,7 +1276,10 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             // instead of a dead dash they couldn't tap.
             SizedBox(
               width: widget.isLeftRightMode ? 56 : 64,
-              child: set.isTimedExercise
+              // Timed AND distance moves have no weight column — distance logs
+              // meters (in the metric cell), so the weight slot is an inert dash
+              // instead of a misleading "0 kg" field.
+              child: (set.isTimedExercise || set.isDistance)
                   ? const _DashCell()
                   : (isEditing
                         ? _DarkInputField(
@@ -1349,7 +1376,15 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 // timer still drives logging via TimedExerciseTimer in the
                 // active-set sheet; this cell just keeps the row layout
                 // honest instead of showing a confusing "1" rep field.
-                child: set.isTimedExercise
+                child: set.isDistance
+                    ? _DistanceTargetCell(
+                        targetDistanceMeters: set.targetDistanceMeters,
+                        actualDistanceMeters: set.actualDistanceMeters,
+                        isActive: isActive,
+                        isCompleted: set.isCompleted,
+                        isDark: isDark,
+                      )
+                    : set.isTimedExercise
                     ? _TimedTargetCell(
                         targetHoldSeconds: set.targetHoldSeconds,
                         targetDurationSeconds: set.targetDurationSeconds,

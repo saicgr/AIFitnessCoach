@@ -12,6 +12,7 @@ import '../../../core/providers/weight_increments_provider.dart';
 import '../../../core/services/fatigue_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/utils/default_weights.dart';
+import '../../../core/utils/exercise_tracking_metric.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/providers/gym_profile_provider.dart';
@@ -109,6 +110,22 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
     final parsedReps = int.tryParse(repsController.text) ?? 0;
     final reps = parsedReps > 0 ? parsedReps : targetReps;
 
+    // Distance/cardio moves (SkiErg, sled, carries, runs) log METERS, not
+    // weight×reps. Advanced has no per-set distance stepper (Easy does), so we
+    // log the prescribed target distance and zero weight/reps.
+    final isDistanceEx = exercise.trackingMetric == TrackingMetric.distance;
+    final double? loggedDistanceM = isDistanceEx
+        ? (exercise.distanceMeters?.toDouble() ??
+            (() {
+              final spec = exercise.repsSpec;
+              if (spec == null) return null;
+              final parsed = ExerciseTrackingMetric.parseTarget(spec);
+              return parsed.metric == TrackingMetric.distance
+                  ? parsed.value?.toDouble()
+                  : null;
+            })())
+        : null;
+
     // Calculate set duration from start time (capped at 10 min for backgrounding edge case)
     int? setDuration;
     if (currentSetStartTime != null) {
@@ -135,11 +152,12 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
     }
 
     final setLog = SetLog(
-      reps: reps,
-      weight: useKg ? weight : weight * 0.453592,
+      reps: isDistanceEx ? 0 : reps,
+      weight: isDistanceEx ? 0 : (useKg ? weight : weight * 0.453592),
       targetReps: targetReps,
       startedAt: currentSetStartTime,
       durationSeconds: setDuration,
+      distanceMeters: loggedDistanceM,
       restDurationSeconds: restBefore,
       previousWeightKg: prevWeight,
       previousReps: prevReps,

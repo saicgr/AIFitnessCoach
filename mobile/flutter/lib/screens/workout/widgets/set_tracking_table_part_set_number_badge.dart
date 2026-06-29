@@ -58,6 +58,9 @@ class _AutoTargetCell extends StatelessWidget {
   final bool isTimedExercise;
   /// True when exercise uses no external load — render reps only, never "0 kg".
   final bool isBodyweight;
+  /// True for distance/cardio moves — render a distance goal (e.g. "1000 m").
+  final bool isDistance;
+  final double? targetDistanceMeters;
 
   // ── Trend pill / Edited chip plumbing ─────────────────────────────────
   final bool progressiveOverloadEnabled;
@@ -88,6 +91,8 @@ class _AutoTargetCell extends StatelessWidget {
     this.targetDurationSeconds,
     this.isTimedExercise = false,
     this.isBodyweight = false,
+    this.isDistance = false,
+    this.targetDistanceMeters,
     this.progressiveOverloadEnabled = true,
     this.isEdited = false,
     this.isDeload = false,
@@ -425,12 +430,21 @@ class _AutoTargetCell extends StatelessWidget {
     // Build target string
     String targetString = '';
 
+    // ── Priority 0: Distance target (SkiErg, sled, carries, runs) — meters,
+    // never a weight. Renders "1000 m" / "1.0 km".
+    if (isDistance && targetDistanceMeters != null && targetDistanceMeters! > 0) {
+      final m = targetDistanceMeters!;
+      final distStr = m >= 1000
+          ? '${(m / 1000).toStringAsFixed(m % 1000 == 0 ? 0 : 1)} km'
+          : '${m.toStringAsFixed(0)} m';
+      targetString = isWarmup ? 'Warmup · $distStr' : distStr;
+    }
     // ── Priority 1: Timed/hold target (planks, hollow body, walking, etc.)
     // Per-set hold target beats everything else — e.g. Hollow Body Hold
     // prescribes 30s→45s→45s→45s and that is the true per-set target.
-    final holdSecs = targetHoldSeconds;
-    final durSecs = targetDurationSeconds;
-    if ((holdSecs != null && holdSecs > 0) || (durSecs != null && durSecs > 0)) {
+    else if (((targetHoldSeconds ?? 0) > 0) || ((targetDurationSeconds ?? 0) > 0)) {
+      final holdSecs = targetHoldSeconds;
+      final durSecs = targetDurationSeconds;
       final secs = (holdSecs != null && holdSecs > 0) ? holdSecs : durSecs!;
       final timeStr = _formatSeconds(secs);
       // "45s hold" for static holds; plain duration for cardio (Walking 5 min).
@@ -470,11 +484,13 @@ class _AutoTargetCell extends StatelessWidget {
     // Renders on its own line under the TARGET string. Suppressed entirely
     // when progressive overload is off; renders a "Starter weight" muted hint
     // when this is the first set ever performed for the exercise.
-    final String metric = (targetHoldSeconds != null && targetHoldSeconds! > 0) ||
-            (targetDurationSeconds != null && targetDurationSeconds! > 0) ||
-            isTimedExercise
-        ? 'time'
-        : (isBodyweight ? 'reps' : 'weight');
+    final String metric = isDistance
+        ? 'distance'
+        : ((targetHoldSeconds != null && targetHoldSeconds! > 0) ||
+                (targetDurationSeconds != null && targetDurationSeconds! > 0) ||
+                isTimedExercise
+            ? 'time'
+            : (isBodyweight ? 'reps' : 'weight'));
     final double targetDisplay = (targetWeight != null && targetWeight! > 0)
         ? (useKg ? targetWeight! : WeightUtils.fromKgSnapped(targetWeight!, displayInLbs: true))
         : 0.0;
@@ -1317,6 +1333,76 @@ class _TimedTargetCell extends StatelessWidget {
   }
 }
 
+
+/// Metric cell for distance/cardio moves (SkiErg, sled, carries, runs) — shows
+/// the target meters (and the logged distance once completed), mirroring
+/// [_TimedTargetCell]. Distance is prescribed; Easy mode has the fine-tune
+/// stepper.
+class _DistanceTargetCell extends StatelessWidget {
+  final double? targetDistanceMeters;
+  final double? actualDistanceMeters;
+  final bool isActive;
+  final bool isCompleted;
+  final bool isDark;
+
+  const _DistanceTargetCell({
+    this.targetDistanceMeters,
+    this.actualDistanceMeters,
+    this.isActive = false,
+    this.isCompleted = false,
+    this.isDark = true,
+  });
+
+  static String _fmt(double m) {
+    if (m <= 0) return '—';
+    if (m >= 1000) {
+      final km = m / 1000;
+      return '${km.toStringAsFixed(km % 1 == 0 ? 0 : 1)}km';
+    }
+    return '${m.toStringAsFixed(0)}m';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isCompleted &&
+        actualDistanceMeters != null &&
+        actualDistanceMeters! > 0) {
+      return _CompletedValueCell(
+        value: _fmt(actualDistanceMeters!),
+        isCompleted: true,
+        isDark: isDark,
+      );
+    }
+    final accent = ThemeColors.of(context).accent;
+    final label = _fmt(targetDistanceMeters ?? 0);
+    final Color valueColor = isActive
+        ? accent
+        : (isDark ? AppColors.textSecondary : Colors.grey.shade700);
+    return SizedBox(
+      height: WorkoutDesign.inputFieldHeight,
+      child: Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.straighten_rounded,
+              size: 12,
+              color: isActive
+                  ? accent
+                  : (isDark ? AppColors.textMuted : Colors.grey.shade500),
+            ),
+            const SizedBox(width: 3),
+            Text(
+              label,
+              style: ZType.data(13, color: valueColor, weight: FontWeight.w400),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// RIR quick-select bar shown below the active set row
 class _RirQuickSelectBar extends StatelessWidget {

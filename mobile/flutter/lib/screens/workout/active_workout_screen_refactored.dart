@@ -32,6 +32,7 @@ import '../../core/services/workout_tour_steps.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../core/utils/default_weights.dart';
+import '../../core/utils/exercise_tracking_metric.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/parsed_exercise.dart';
 import '../../data/models/rest_suggestion.dart';
@@ -2014,14 +2015,27 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         actualRir = completedSets[i].rir;
       }
 
-      // Detect bodyweight / timed so the TARGET cell renders the right shape.
-      final eqLower = (exercise.equipment ?? '').toLowerCase();
-      final isBodyweightEx =
-          eqLower.contains('bodyweight') ||
-          eqLower.contains('body weight') ||
-          eqLower == 'none' ||
-          eqLower == 'no equipment';
-      final isTimedEx = exercise.isTimedExercise;
+      // Detect the log metric (weight | bodyweight | time | distance) via the
+      // exercise-agnostic classifier so cardio / functional / timed / bodyweight
+      // moves render the right shape and NEVER get a phantom "10 kg" default.
+      // Prefers the backend `tracking_type`; falls back to name/equipment/units.
+      final trackingMetric = exercise.trackingMetric;
+      final isDistanceEx = trackingMetric.isDistance;
+      final isBodyweightEx = trackingMetric.isBodyweight;
+      final isTimedEx = trackingMetric.isTime || exercise.isTimedExercise;
+      // Target distance (m): backend `distance_meters` → parsed from the raw
+      // unit-bearing target string ("1000 m") as a fallback.
+      final double? targetDistanceM = isDistanceEx
+          ? (exercise.distanceMeters?.toDouble() ??
+              (() {
+                final spec = exercise.repsSpec;
+                if (spec == null) return null;
+                final parsed = ExerciseTrackingMetric.parseTarget(spec);
+                return parsed.metric == TrackingMetric.distance
+                    ? parsed.value?.toDouble()
+                    : null;
+              })())
+          : null;
 
       rows.add(
         SetRowData(
@@ -2041,7 +2055,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           targetDurationSeconds: exercise.durationSeconds,
           // TARGET weight: use history → AI (if reliable) → equipment default
           // targetWeight is in kg internally — display layer converts to user's unit
+          isDistance: isDistanceEx,
+          targetDistanceMeters: targetDistanceM,
           targetWeight: (() {
+            // Non-weight metrics (bodyweight / time / distance) NEVER carry a
+            // load — this is what kills the phantom "10 kg × 1" on planks,
+            // burpees, SkiErg, sleds and carries.
+            if (trackingMetric != TrackingMetric.weight) return null;
             // If a progression pattern wrote this setTarget, trust it directly
             final hasProgression = _exerciseProgressionPattern.containsKey(
               exerciseIndex,
@@ -2081,6 +2101,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           previousRir: prevRir,
           durationSeconds: isCompleted
               ? completedSets[i].durationSeconds
+              : null,
+          actualDistanceMeters: isCompleted
+              ? completedSets[i].distanceMeters
               : null,
           // Show rest taken AFTER this set (from actualRestDurations), not rest before
           restDurationSeconds: isCompleted

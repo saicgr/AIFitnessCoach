@@ -43,6 +43,14 @@ class EasyExerciseState {
   /// meaningful when [isTimed] is true. Persists into `SetLog.durationSeconds`.
   int durationSeconds;
 
+  /// True for distance/cardio moves (SkiErg, sled, carries, runs). Drives the
+  /// focal column to render a distance (meters) stepper instead of weight×reps.
+  final bool isDistance;
+
+  /// User-entered distance for the current set, in METERS. Only meaningful
+  /// when [isDistance] is true. Persists into `SetLog.distanceMeters`.
+  double distanceMeters;
+
   EasyExerciseState({
     required this.displayWeight,
     required this.reps,
@@ -51,6 +59,8 @@ class EasyExerciseState {
     required this.totalSets,
     this.isTimed = false,
     this.durationSeconds = 30,
+    this.isDistance = false,
+    this.distanceMeters = 0,
     this.userEditedWeight = false,
     List<SetLog>? completed,
   }) : completed = completed ?? <SetLog>[];

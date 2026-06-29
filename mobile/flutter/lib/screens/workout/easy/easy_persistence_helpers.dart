@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/cache/offline_write_queue.dart';
 import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../core/utils/default_weights.dart';
+import '../../../core/utils/exercise_tracking_metric.dart';
 
 import '../../../data/models/exercise.dart';
 import '../../../data/services/rating_prompt_service.dart';
@@ -455,23 +456,43 @@ Map<int, EasyExerciseState> seedEasyExerciseStates(
     final ex = exercises[i];
     final firstTarget = ex.getTargetForSet(1);
     final targetReps = firstTarget?.targetReps ?? ex.reps ?? 10;
-    final targetWeightKg =
-        (firstTarget?.targetWeightKg ?? ex.weight ?? 0).toDouble();
+    // Classify the log metric so cardio / functional / timed / bodyweight moves
+    // never seed a phantom load — this is the Easy-mode counterpart to the
+    // Advanced fix and is what kills "10 kg × 1" on SkiErg / Plank / Burpees.
+    final metric = ex.trackingMetric;
+    final isWeighted = metric == TrackingMetric.weight;
+    final targetWeightKg = isWeighted
+        ? (firstTarget?.targetWeightKg ?? ex.weight ?? 0).toDouble()
+        : 0.0; // bodyweight / time / distance → no load (renders "BW")
     // Snap kg→lb through the SAME equipment-aware pipeline Advanced uses
     // (barbell bar+plate floor, dumbbell/cable/machine stacks) so Easy shows a
     // plate-friendly number — not a raw 44.0/38.07 conversion, and never a
     // 25 lb prescription that's below the empty bar.
-    final displayWeight = useKg
+    final displayWeight = (!isWeighted || useKg)
         ? targetWeightKg
         : kgToDisplayLbs(targetWeightKg, ex.equipment, exerciseName: ex.name);
     final total = (ex.setTargets != null && ex.setTargets!.isNotEmpty)
         ? ex.setTargets!.length
         : (ex.sets ?? 3);
-    final timed = ex.isTimedExercise;
+    final timed = metric.isTime || ex.isTimedExercise;
     final defaultDuration = ex.holdSeconds ??
         (firstTarget?.targetHoldSeconds) ??
         ex.durationSeconds ??
         30;
+    // Distance target (m): backend `distance_meters` → parsed from the raw
+    // unit-bearing target string ("1000 m") as a fallback.
+    final isDistance = metric.isDistance;
+    final double targetDistanceM = isDistance
+        ? (ex.distanceMeters?.toDouble() ??
+            (() {
+              final spec = ex.repsSpec;
+              if (spec == null) return 0.0;
+              final parsed = ExerciseTrackingMetric.parseTarget(spec);
+              return parsed.metric == TrackingMetric.distance
+                  ? (parsed.value?.toDouble() ?? 0.0)
+                  : 0.0;
+            })())
+        : 0.0;
     out[i] = EasyExerciseState(
       displayWeight: displayWeight,
       reps: targetReps,
@@ -480,6 +501,8 @@ Map<int, EasyExerciseState> seedEasyExerciseStates(
       totalSets: total.clamp(1, 20),
       isTimed: timed,
       durationSeconds: defaultDuration.clamp(5, 600),
+      isDistance: isDistance,
+      distanceMeters: targetDistanceM,
     );
   }
   return out;

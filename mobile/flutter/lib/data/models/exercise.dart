@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 
+import '../../core/utils/exercise_tracking_metric.dart';
+
 part 'exercise.g.dart';
 
 /// Per-set AI target (like Gravl/Hevy style)
@@ -144,6 +146,12 @@ class WorkoutExercise extends Equatable {
   final int? dropSetCount; // Number of drop sets (typically 2-3)
   @JsonKey(name: 'drop_set_percentage')
   final int? dropSetPercentage; // Percentage to reduce weight each drop (typically 20-25%)
+  @JsonKey(name: 'tracking_type')
+  final String? trackingType; // Backend-emitted log metric: weight|bodyweight|time|distance (null → frontend classifier infers)
+  @JsonKey(name: 'distance_meters')
+  final num? distanceMeters; // Target distance in METERS for distance/cardio moves (SkiErg, sled, carries, runs)
+  @JsonKey(name: 'reps_spec')
+  final String? repsSpec; // Raw unit-bearing target string ("1000 m"/"100 reps"/"8 minutes") — last-resort classifier signal
   @JsonKey(name: 'movement_pattern')
   final String? movementPattern; // Coarse pattern (press/pull/squat/hinge/bodyweight_core…) — migration 235 / classifier
   @JsonKey(name: 'movement_category')
@@ -215,6 +223,9 @@ class WorkoutExercise extends Equatable {
     this.isDropSet,
     this.dropSetCount,
     this.dropSetPercentage,
+    this.trackingType,
+    this.distanceMeters,
+    this.repsSpec,
     this.movementPattern,
     this.movementCategory,
     this.isChallenge,
@@ -304,6 +315,20 @@ class WorkoutExercise extends Equatable {
       (isTimed == true) ||
       (durationSeconds != null && durationSeconds! > 0) ||
       (holdSeconds != null && holdSeconds! > 0);
+
+  /// How this exercise is logged — by load, bodyweight reps, time, or distance.
+  /// Prefers the backend `tracking_type`; otherwise the exercise-agnostic
+  /// classifier infers it from name/equipment/units (offline + custom safe).
+  TrackingMetric get trackingMetric => ExerciseTrackingMetric.resolve(
+        name: name,
+        equipment: equipment,
+        isTimed: isTimed == true,
+        holdSeconds: holdSeconds,
+        durationSeconds: durationSeconds,
+        trackingTypeHint: trackingType,
+        distanceMeters: distanceMeters,
+        repsSpec: repsSpec,
+      );
 
   /// Get the timer duration in seconds (for timed exercises)
   int get timerDurationSeconds =>
@@ -433,6 +458,9 @@ class WorkoutExercise extends Equatable {
     int? dropSetPercentage,
     bool? isFailureSet,
     bool? isFinisher,
+    String? trackingType,
+    num? distanceMeters,
+    String? repsSpec,
     String? movementPattern,
     String? movementCategory,
     List<SetTarget>? setTargets,
@@ -481,6 +509,9 @@ class WorkoutExercise extends Equatable {
       dropSetPercentage: dropSetPercentage ?? this.dropSetPercentage,
       isFailureSet: isFailureSet ?? this.isFailureSet,
       isFinisher: isFinisher ?? this.isFinisher,
+      trackingType: trackingType ?? this.trackingType,
+      distanceMeters: distanceMeters ?? this.distanceMeters,
+      repsSpec: repsSpec ?? this.repsSpec,
       movementPattern: movementPattern ?? this.movementPattern,
       movementCategory: movementCategory ?? this.movementCategory,
       setTargets: setTargets ?? this.setTargets,

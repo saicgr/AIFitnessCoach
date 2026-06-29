@@ -37,6 +37,7 @@ class EasyFocalColumn extends StatelessWidget {
   final ValueChanged<double> onWeightChanged;
   final ValueChanged<double> onRepsChanged;
   final ValueChanged<double> onDurationChanged;
+  final ValueChanged<double> onDistanceChanged;
   final Future<void> Function() onLogSet;
 
   /// When non-null, the user is editing a previously-logged set. The Log
@@ -61,6 +62,7 @@ class EasyFocalColumn extends StatelessWidget {
     required this.onWeightChanged,
     required this.onRepsChanged,
     required this.onDurationChanged,
+    required this.onDistanceChanged,
     required this.onLogSet,
     this.editingSetIndex,
     this.nextExerciseName,
@@ -85,8 +87,26 @@ class EasyFocalColumn extends StatelessWidget {
               ? state.displayWeight.toStringAsFixed(0)
               : state.displayWeight.toStringAsFixed(1));
 
-    // Timed exercises poster: a single big seconds numeral.
-    final List<Widget> posterChildren = state.isTimed
+    // Distance poster: a single big meters numeral.
+    final List<Widget> posterChildren = state.isDistance
+        ? [
+            Text(
+              state.distanceMeters % 1 == 0
+                  ? state.distanceMeters.toStringAsFixed(0)
+                  : state.distanceMeters.toStringAsFixed(0),
+              style: ZType.disp(posterSize,
+                  color: colors.textPrimary, letterSpacing: 0),
+            ),
+            const SizedBox(width: 4),
+            Padding(
+              padding: EdgeInsets.only(bottom: posterSize * 0.10),
+              child: Text('M',
+                  style: ZType.lbl(unitSize,
+                      color: colors.textMuted, letterSpacing: 1.0)),
+            ),
+          ]
+        // Timed exercises poster: a single big seconds numeral.
+        : state.isTimed
         ? [
             Text(
               '${state.durationSeconds}',
@@ -187,6 +207,10 @@ class EasyFocalColumn extends StatelessWidget {
   /// Returns null when there's nothing meaningful to whisper (keeps the
   /// poster block tight on SE).
   String? _whisperLine(BuildContext context) {
+    if (state.isDistance) {
+      final m = state.distanceMeters;
+      return m > 0 ? 'Cover the distance. ${m.toStringAsFixed(0)} m.' : null;
+    }
     if (state.isTimed) {
       final t = state.durationSeconds;
       return t > 0 ? 'Hold the line. $t seconds.' : null;
@@ -213,6 +237,9 @@ class EasyFocalColumn extends StatelessWidget {
   String _ctaLabel() {
     if (editingSetIndex != null) {
       return 'UPDATE SET ${editingSetIndex! + 1}';
+    }
+    if (state.isDistance) {
+      return 'LOG SET — ${state.distanceMeters.toStringAsFixed(0)} m';
     }
     if (state.isTimed) {
       return 'LOG SET — ${state.durationSeconds}s';
@@ -363,11 +390,41 @@ class EasyFocalColumn extends StatelessWidget {
           ],
         );
 
+        // Distance body (SkiErg, sled, carries, runs): a single meters stepper
+        // (±25 m) under the meters poster. Writes into SetLog.distanceMeters.
+        final distanceBody = Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _poster(ctx, tight: tight),
+            SizedBox(height: tight ? 14 : 22),
+            Center(
+              child: SizedBox(
+                width: 220,
+                child: stepperColumn(
+                  FocalStepper(
+                    value: state.distanceMeters,
+                    step: 25,
+                    unit: '',
+                    integerOnly: true,
+                    min: 0,
+                    max: 100000,
+                    compact: stepperCompact,
+                    dense: true,
+                    onChanged: onDistanceChanged,
+                  ),
+                  'DISTANCE (M)',
+                ),
+              ),
+            ),
+          ],
+        );
+
         // Helper line under the steppers: increment + interaction affordances.
         final stepTok = weightStep % 1 == 0
             ? weightStep.toStringAsFixed(0)
             : weightStep.toStringAsFixed(1);
-        final helperLine = state.isTimed
+        final helperLine = (state.isTimed || state.isDistance)
             ? null
             : Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -426,7 +483,11 @@ class EasyFocalColumn extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [state.isTimed ? timedBody : repsBody],
+                        children: [
+                          state.isDistance
+                              ? distanceBody
+                              : (state.isTimed ? timedBody : repsBody)
+                        ],
                       ),
                     ),
                   ),
