@@ -17,3 +17,7 @@ review_gallery.html
 # Keep tracked (the reusable pipeline + reports):
 #   run_pipeline.py, brand_stamp.py, style_prompt.txt,
 #   missing_images_tracker.md, flagged_report.md, flagged_findings.json, .gitignore
+
+# scratch run-lists / smoke tests
+only_*.txt
+smoke.json
