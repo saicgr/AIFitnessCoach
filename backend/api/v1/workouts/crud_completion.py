@@ -241,6 +241,11 @@ async def complete_workout(
                 # past 6s on PR-heavy workouts. gather() collects exceptions as
                 # values so one failure doesn't skip the others.
                 async def _celebrate(pr):
+                    # Per-metric PRs (distance/carry/box-height/…) carry weight=0;
+                    # the weight-centric AI celebration would read oddly, so use
+                    # the deterministic metric message built at detection time.
+                    if pr.pr_type and pr.pr_type.startswith("metric_"):
+                        return pr.celebration_message
                     try:
                         return await ai_insights_service.generate_pr_celebration(
                             pr_data={
@@ -287,6 +292,13 @@ async def complete_workout(
                         # FEATURE 3A: PR type ('weight'/'reps') so the UI + analytics
                         # can distinguish bodyweight rep PRs from loaded PRs.
                         "pr_type": pr.pr_type,
+                        # Generic per-metric PRs (distance/carry_load/box_height/…)
+                        # ride the generic record_* columns. NULL for weight/rep PRs.
+                        "record_type": pr.record_type,
+                        "record_value": pr.record_value,
+                        "record_unit": pr.record_unit,
+                        "previous_value": pr.previous_value,
+                        "improvement_percentage": pr.improvement_percentage,
                     })
                     detected_prs.append(PersonalRecordInfo(
                         exercise_name=pr.exercise_name,

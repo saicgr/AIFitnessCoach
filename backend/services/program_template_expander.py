@@ -280,6 +280,40 @@ def _inject_staples(
 
 
 # ---------------------------------------------------------------------------
+# Library-metadata lookup (process-cached: a program repeats the same exercise
+# across many weeks/days, so we never re-query the same exercise_id twice).
+# ---------------------------------------------------------------------------
+_LIBRARY_META_CACHE: Dict[str, Optional[Dict[str, Any]]] = {}
+
+
+def _library_meta_for(exercise_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Fetch the canonical exercise_library row (equipment/is_timed/
+    movement_pattern/default_hold_seconds) for an exercise_id, cached per
+    process. Fail-open: any error returns None so expansion never blocks."""
+    if not exercise_id:
+        return None
+    if exercise_id in _LIBRARY_META_CACHE:
+        return _LIBRARY_META_CACHE[exercise_id]
+    meta: Optional[Dict[str, Any]] = None
+    try:
+        from core.db import get_supabase_db
+        db = get_supabase_db()
+        res = (
+            db.client.table("exercise_library")
+            .select("equipment,is_timed,movement_pattern,default_hold_seconds")
+            .eq("id", exercise_id)
+            .limit(1)
+            .execute()
+        )
+        if res.data:
+            meta = res.data[0]
+    except Exception:  # noqa: BLE001 — never block expansion on a lookup
+        meta = None
+    _LIBRARY_META_CACHE[exercise_id] = meta
+    return meta
+
+
+# ---------------------------------------------------------------------------
 # Per-day -> exercises_json
 # ---------------------------------------------------------------------------
 def _day_to_exercises_json(
@@ -323,11 +357,23 @@ def _day_to_exercises_json(
         # dict untouched for downstream readers (serve-time stringifies it).
         try:
             from services.exercise_tracking_metric import derive_tracking_metadata
-            _tm = derive_tracking_metadata(obj)
+            # Consult the canonical library row first (authoritative equipment /
+            # is_timed / movement_pattern) so the derived tracking_type +
+            # metric_keys are correct even when the template blob is sparse.
+            _lib = _library_meta_for(ex.get("exercise_id"))
+            _tm = derive_tracking_metadata(obj, library_meta=_lib)
             if _tm.get("tracking_type"):
                 obj["tracking_type"] = _tm["tracking_type"]
+            if _tm.get("metric_keys"):
+                obj["metric_keys"] = _tm["metric_keys"]
             if _tm.get("distance_meters") is not None:
                 obj["distance_meters"] = _tm["distance_meters"]
+            # Pass through authoritative library fields so the client has them.
+            if _lib:
+                if _lib.get("equipment") is not None:
+                    obj["equipment"] = _lib["equipment"]
+                if _lib.get("is_timed") is not None:
+                    obj["is_timed"] = _lib["is_timed"]
         except Exception:
             pass  # never block program expansion on metadata derivation
         out.append(obj)

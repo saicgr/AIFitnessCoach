@@ -934,6 +934,7 @@ async def list_custom_metrics(user_id: str,
             .select("id, key, label, unit, good_direction, is_active, created_at") \
             .eq("user_id", user_id) \
             .eq("is_active", True) \
+            .eq("scope", "health") \
             .order("created_at", desc=False) \
             .execute()
         return [_custom_metric_row_to_dict(r) for r in (result.data or [])]

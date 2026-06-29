@@ -220,6 +220,14 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
                     detail=f"Failed to generate workout: {str(ai_error)}"
                 )
 
+        # Tag AI-generated exercises with tracking_type + metric_keys so the
+        # active-workout UI renders the right input columns (in-place).
+        try:
+            from services.exercise_tracking_metric import attach_tracking_metadata
+            attach_tracking_metadata(exercises)
+        except Exception:
+            pass
+
         workout_db_data = {
             "user_id": body.user_id,
             "name": workout_name,
@@ -348,6 +356,12 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 return
 
             user_tz = resolve_timezone(request, db, body.user_id)
+            _stream_exercises = workout_data.get("exercises", [])
+            try:
+                from services.exercise_tracking_metric import attach_tracking_metadata
+                attach_tracking_metadata(_stream_exercises)
+            except Exception:
+                pass
             workout_db_data = {
                 "user_id": body.user_id,
                 "name": workout_data.get("name", "Generated Workout"),
@@ -356,7 +370,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "scheduled_date": target_date_to_utc_iso(
                     body.scheduled_date or get_user_today(user_tz), user_tz,
                 ),
-                "exercises_json": workout_data.get("exercises", []),
+                "exercises_json": _stream_exercises,
                 "duration_minutes": body.duration_minutes or 45,
                 "generation_method": "ai",
                 "generation_source": "gemini_streaming",

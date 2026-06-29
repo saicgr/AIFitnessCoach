@@ -172,6 +172,13 @@ router.include_router(performance_db.router, prefix="/performance", tags=["Perfo
 # Health metrics endpoints
 router.include_router(metrics.router, tags=["Health Metrics"])
 
+# Per-exercise tracking-metric CRUD (custom set-metrics + per-exercise prefs).
+# Its router also carries prefix "/metrics" but on DISTINCT sub-paths
+# (/metrics/exercise-custom, /metrics/exercise-prefs) so it never collides with
+# the health /metrics/custom endpoints above.
+from api.v1 import metrics_db  # noqa: E402
+router.include_router(metrics_db.router, tags=["Exercise Metrics"])
+
 # S3 video streaming endpoints
 router.include_router(videos.router, tags=["Videos"])
 

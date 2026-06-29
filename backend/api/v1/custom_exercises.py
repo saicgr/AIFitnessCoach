@@ -65,6 +65,11 @@ class CustomExerciseCreate(BaseModel):
     is_stretch_suitable: bool = False
     is_cooldown_suitable: bool = False
 
+    # Per-set tracking metrics (generic metric feature). e.g. ['weight','reps']
+    # or ['weight','distance'] for a loaded carry. NULL -> client/derivation
+    # decides. See services/metric_registry.py for valid keys.
+    metric_keys: Optional[List[str]] = None
+
     # Visibility
     is_public: bool = False
 
@@ -89,6 +94,7 @@ class CustomExerciseUpdate(BaseModel):
     is_stretch_suitable: Optional[bool] = None
     is_cooldown_suitable: Optional[bool] = None
     is_public: Optional[bool] = None
+    metric_keys: Optional[List[str]] = None
     image_url: Optional[str] = None
     video_url: Optional[str] = None
     thumbnail_url: Optional[str] = None
@@ -119,6 +125,7 @@ class CustomExerciseResponse(BaseModel):
     is_stretch_suitable: bool = False
     is_cooldown_suitable: bool = False
     is_public: bool = False
+    metric_keys: Optional[List[str]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -337,6 +344,8 @@ async def create_custom_exercise(user_id: str, request: CustomExerciseCreate, cu
             "is_cooldown_suitable": request.is_cooldown_suitable,
             "is_public": request.is_public,
         }
+        if request.metric_keys is not None:
+            insert_data["metric_keys"] = request.metric_keys
 
         result = db.client.table("custom_exercises").insert(insert_data).execute()
 

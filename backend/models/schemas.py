@@ -544,6 +544,11 @@ class PerformanceLogCreate(BaseModel):
     # Active-workout UI tier the user was on when they marked this set complete.
     # 'easy' | 'simple' | 'advanced'. NULL on legacy rows — treat as 'advanced' in analytics.
     logging_mode: Optional[str] = Field(default=None, max_length=10, description="Which UI tier was active when this set was logged")
+    # Canonical per-set metric bag — any metric key->value in canonical units
+    # (e.g. {'weight_kg':60,'distance_m':20,'box_height_cm':60}). Superset of the
+    # typed columns above; powers generic multi-metric tracking. The server
+    # completes it from the typed fields so the bag is always whole.
+    metrics: Optional[Dict[str, Any]] = Field(default=None, description="Canonical per-set metric bag keyed by canonical-unit bag_key (see services/metric_registry.py)")
     # Per-gym progress tracking. Inherited from the parent workout_log row
     # server-side (which itself derives from workouts.gym_profile_id); any
     # client value is advisory and gets overridden. NULL is valid (legacy).

@@ -48,6 +48,28 @@ class PersonalRecord:
     gym_profile_id: Optional[str] = None
     is_gym_pr: bool = False          # beats this gym's prior best (per-gym PR)
     is_first_at_gym: bool = False    # first-ever logged set at this gym
+    # Generic per-metric PRs (sled distance, heaviest carry load, max box height,
+    # longest hold, custom metrics…). Stored in the generic record_* columns with
+    # a `metric_<key>` pr_type. These NEVER feed the weight-based strength score.
+    record_type: Optional[str] = None        # metric key: 'distance','carry_load','box_height'…
+    record_value: Optional[float] = None      # best value in the metric's canonical unit
+    record_unit: Optional[str] = None         # 'm' | 's' | 'cm' | 'kg' | 'kcal' …
+    previous_value: Optional[float] = None
+    improvement_percentage: Optional[float] = None
+
+
+# Per-metric PR config: metrics.bag_key -> (record_type, canonical unit). weight
+# and reps are handled by the dedicated 1RM / rep branches and excluded here.
+_METRIC_PR_UNITS = {
+    "distance_m": ("distance", "m"),
+    "time_s": ("time", "s"),
+    "box_height_cm": ("box_height", "cm"),
+    "calories": ("calories", "kcal"),
+    "incline_pct": ("incline", "pct"),
+    "speed_kmh": ("speed", "kmh"),
+    "rpm": ("rpm", "rpm"),
+    "height_cm": ("height", "cm"),
+}
 
 
 @dataclass
@@ -450,7 +472,124 @@ class PersonalRecordsService:
                         "gym_profile_id": effective_gym_id,
                     })
 
+            # Generic per-metric PRs (sled distance, heaviest carry load, max box
+            # height, longest hold, custom metrics). Independent of the 1RM/rep
+            # axes above — this is what catches loaded carries (reps == 0, so the
+            # weight branch skipped them) and any "+ Add column" metric.
+            new_prs.extend(
+                self._detect_metric_prs(exercise, sets, existing_prs, effective_gym_id)
+            )
+
         return new_prs
+
+    def _detect_metric_prs(
+        self,
+        exercise: Dict,
+        sets: List[Dict],
+        existing_prs: List[Dict],
+        effective_gym_id: Optional[str],
+    ) -> List[PersonalRecord]:
+        """Best-value PRs for non-1RM metrics, keyed `metric_<record_type>`.
+
+        Higher is better for every metric we track (distance, load carried, box
+        height, calories, hold seconds…). For each metric we take the best value
+        across the workout's completed sets and emit a PR when it beats the
+        all-time best of that `pr_type` (or is the first one ever).
+        """
+        exercise_name = exercise.get("exercise_name", "")
+        # pr_type -> (value, unit, record_type, set_data)
+        best: Dict[str, tuple] = {}
+
+        def _consider(pr_type: str, value: float, unit: str, record_type: str, s: Dict):
+            if value is None or value <= 0:
+                return
+            if pr_type not in best or value > best[pr_type][0]:
+                best[pr_type] = (value, unit, record_type, s)
+
+        for s in sets:
+            if not s.get("completed", True):
+                continue
+            # Distance (typed column on the set, or the bag below).
+            d = s.get("distance_meters")
+            if d:
+                _consider("metric_distance", float(d), "m", "distance", s)
+            # Loaded carry: a load on a distance/time station logs no reps, so the
+            # weight 1RM branch skipped it — capture heaviest-carried here.
+            try:
+                w = float(s.get("weight_kg", 0) or 0)
+            except (TypeError, ValueError):
+                w = 0.0
+            reps = int(s.get("reps", 0) or s.get("reps_completed", 0) or 0)
+            if w > 0 and reps <= 0:
+                _consider("metric_carry_load", w, "kg", "carry_load", s)
+            # Long-tail metrics from the canonical bag.
+            bag = s.get("metrics")
+            if isinstance(bag, dict):
+                for bag_key, raw in bag.items():
+                    if bag_key in ("weight_kg", "reps"):
+                        continue
+                    try:
+                        v = float(raw)
+                    except (TypeError, ValueError):
+                        continue
+                    rtype, unit = _METRIC_PR_UNITS.get(bag_key, (bag_key, ""))
+                    _consider(f"metric_{rtype}", v, unit, rtype, s)
+
+        out: List[PersonalRecord] = []
+        for pr_type, (value, unit, record_type, s) in best.items():
+            prev = max(
+                (
+                    float(p.get("record_value") or 0)
+                    for p in existing_prs
+                    if p.get("pr_type") == pr_type
+                ),
+                default=0.0,
+            )
+            if value <= prev:
+                continue
+            improvement_pct = ((value - prev) / prev * 100.0) if prev > 0 else None
+            out.append(PersonalRecord(
+                exercise_name=exercise_name,
+                exercise_id=exercise.get("exercise_id"),
+                muscle_group=None,
+                # Mirror the load into weight_kg for carry PRs so existing
+                # weight-aware UI still shows a number; other metrics keep 0.
+                weight_kg=value if record_type == "carry_load" else 0.0,
+                reps=0,
+                estimated_1rm_kg=0.0,
+                set_type=s.get("set_type", "working"),
+                rpe=s.get("rpe"),
+                achieved_at=datetime.now(),
+                workout_id=exercise.get("workout_id"),
+                previous_weight_kg=None,
+                previous_1rm_kg=None,
+                improvement_kg=None,
+                improvement_percent=improvement_pct,
+                is_all_time_pr=(prev == 0),
+                celebration_message=self._metric_celebration(
+                    exercise_name, record_type, value, unit, prev
+                ),
+                gym_profile_id=effective_gym_id,
+                pr_type=pr_type,
+                record_type=record_type,
+                record_value=value,
+                record_unit=unit,
+                previous_value=prev or None,
+                improvement_percentage=improvement_pct,
+            ))
+            # Carry into the baseline so later sets/exercises compare correctly.
+            existing_prs.append({"pr_type": pr_type, "record_value": value})
+        return out
+
+    @staticmethod
+    def _metric_celebration(
+        exercise_name: str, record_type: str, value: float, unit: str, prev: float
+    ) -> str:
+        label = record_type.replace("_", " ")
+        v = f"{value:.0f}{unit}" if value == int(value) else f"{value:.1f}{unit}"
+        if prev <= 0:
+            return f"First {label} logged on {exercise_name}: {v}!"
+        return f"New {label} best on {exercise_name}: {v}!"
 
     # -------------------------------------------------------------------------
     # PR Statistics

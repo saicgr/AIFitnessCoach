@@ -99,6 +99,47 @@ _BODYWEIGHT_PATTERNS = {
 }
 _CARRY_PATTERNS = {"carry"}
 
+# Loaded sleds / carries: a distance/time station that ALSO takes a load, so its
+# metric set includes `weight`. Mirrored in the Flutter classifier
+# (ExerciseTrackingMetric.isLoadedCarry).
+_LOADED_CARRY_HINTS = (
+    "sled", "prowler", "yoke", "farmer", "suitcase carry", "loaded carry",
+    "overhead carry", "waiter walk", "sandbag carry", "sandbag lunge",
+)
+_LOADED_EQUIPMENT = {
+    "sled", "sandbag", "dumbbell", "dumbbells", "kettlebell", "kettlebells",
+    "barbell", "weight plate", "trap bar", "yoke",
+}
+
+
+def _is_loaded_carry(name: str, equipment_tokens: List[str]) -> bool:
+    if _name_matches(name, _LOADED_CARRY_HINTS):
+        return True
+    return any(t in _LOADED_EQUIPMENT for t in equipment_tokens)
+
+
+def _metric_keys_for(result: Dict[str, Any], exercise: Dict[str, Any],
+                     library_meta: Optional[Dict[str, Any]]) -> Optional[List[str]]:
+    """Ordered metric columns for an exercise, from its primary tracking_type +
+    the loaded-carry rule. weight lift -> [weight,reps]; bodyweight -> [reps];
+    time -> [time]; distance -> [distance]; loaded carry -> weight prepended."""
+    tt = result.get("tracking_type")
+    if tt == TRACK_WEIGHT:
+        keys = ["weight", "reps"]
+    elif tt == TRACK_BODYWEIGHT:
+        keys = ["reps"]
+    elif tt == TRACK_TIME:
+        keys = ["time"]
+    elif tt == TRACK_DISTANCE:
+        keys = ["distance"]
+    else:
+        return None
+    if tt in (TRACK_DISTANCE, TRACK_TIME) and _is_loaded_carry(
+        _name_of(exercise), _equipment_tokens(exercise, library_meta)
+    ):
+        keys = ["weight"] + keys
+    return keys
+
 
 # ---------------------------------------------------------------------------
 # String parsers (robust, unit-bearing).
@@ -235,7 +276,7 @@ def _name_matches(name: str, hints: tuple) -> bool:
 # ---------------------------------------------------------------------------
 # The single derivation entry point.
 # ---------------------------------------------------------------------------
-def derive_tracking_metadata(
+def _derive_core(
     exercise: Dict[str, Any],
     library_meta: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
@@ -334,6 +375,23 @@ def derive_tracking_metadata(
     return result
 
 
+def derive_tracking_metadata(
+    exercise: Dict[str, Any],
+    library_meta: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Derive tracking metadata for one exercise: the primary ``tracking_type``,
+    structured targets (distance/duration/hold), AND the ordered ``metric_keys``
+    column list (the generic capability set — e.g. a loaded sled push yields
+    ``["weight","distance"]``). Pure + fail-open. ``library_meta`` is consulted
+    first when supplied. See module docstring.
+    """
+    result = _derive_core(exercise, library_meta)
+    keys = _metric_keys_for(result, exercise, library_meta)
+    if keys:
+        result["metric_keys"] = keys
+    return result
+
+
 # ---------------------------------------------------------------------------
 # In-place applier used at the serve-time chokepoints.
 # ---------------------------------------------------------------------------
@@ -359,6 +417,8 @@ def attach_tracking_metadata(exercises: Any) -> None:
             continue
         if meta.get("tracking_type"):
             ex["tracking_type"] = meta["tracking_type"]
+        if meta.get("metric_keys"):
+            ex["metric_keys"] = meta["metric_keys"]
         if meta.get("distance_meters") is not None:
             ex["distance_meters"] = meta["distance_meters"]
         # Backfill duration/hold/reps_spec without overwriting real values.

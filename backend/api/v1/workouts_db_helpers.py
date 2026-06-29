@@ -206,9 +206,48 @@ def row_to_workout(row: dict) -> Workout:
     elif exercises_json is None:
         exercises_json = "[]"
 
+    # Tag list-path workouts (schedule / workout-tab) with tracking_type +
+    # metric_keys so they render the right input columns even when opened from
+    # the list rather than /today. Defensive: any failure keeps the original.
+    try:
+        from services.exercise_tracking_metric import attach_tracking_metadata
+        _ex_list = json.loads(exercises_json)
+        if isinstance(_ex_list, list):
+            attach_tracking_metadata(_ex_list)
+            exercises_json = json.dumps(_ex_list)
+    except Exception:
+        pass
+
     generation_metadata = row.get("generation_metadata")
     if isinstance(generation_metadata, (dict, list)):
         generation_metadata = json.dumps(generation_metadata)
+
+    # Fold program-assignment provenance (migration 2285) into
+    # generation_metadata so the workouts-LIST path (schedule + workout tab)
+    # carries the same program tags the /today path emits. The list query
+    # selects assignment_id / program_slot / template_week as COLUMNS (not
+    # inside generation_metadata), so without this merge every program card
+    # falls back to the generic type color + "Main" badge — the per-program
+    # accent + slot badge + name label only ever lit up on /today.
+    # program_id/program_name are resolved client-side from the loaded
+    # assignments list (keyed by assignment_id); we only need the id + slot
+    # + week here to make WorkoutProgramContext non-null and color-stable.
+    _assignment_id = row.get("assignment_id")
+    if _assignment_id:
+        _meta_obj = {}
+        if generation_metadata:
+            try:
+                _parsed = json.loads(generation_metadata)
+                if isinstance(_parsed, dict):
+                    _meta_obj = _parsed
+            except (ValueError, TypeError):
+                _meta_obj = {}
+        _meta_obj.setdefault("assignment_id", str(_assignment_id))
+        if row.get("program_slot"):
+            _meta_obj.setdefault("program_slot", row.get("program_slot"))
+        if row.get("template_week") is not None:
+            _meta_obj.setdefault("program_week", row.get("template_week"))
+        generation_metadata = json.dumps(_meta_obj)
 
     modification_history = row.get("modification_history")
     if isinstance(modification_history, (dict, list)):

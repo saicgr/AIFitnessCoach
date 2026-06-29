@@ -41,6 +41,7 @@ from models.schemas import (
     DrinkIntakeCreate, DrinkIntake,
     RestIntervalCreate, RestInterval,
 )
+from services.metric_registry import build_metrics_bag, mirror_first_class_to_columns
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -241,6 +242,12 @@ async def create_performance_log(log: PerformanceLogCreate,
             "distance_meters": log.distance_meters,
             "gym_profile_id": derived_gym_profile_id,
         }
+        # Generic metric bag (canonical store) + defensive mirror back to the
+        # typed columns so existing analytics keep reading them. See
+        # services/metric_registry.py.
+        _bag = build_metrics_bag(log)
+        log_data["metrics"] = _bag
+        mirror_first_class_to_columns(_bag, log_data)
 
         created = db.create_performance_log(log_data)
         logger.info(f"Performance log created: id={created['id']}, user_id={log.user_id}")
@@ -282,8 +289,8 @@ async def create_performance_logs_bulk(
                 )
             return gym_cache[key]
 
-        records = [
-            {
+        def _record_for(log) -> dict:
+            rec = {
                 "workout_log_id": log.workout_log_id,
                 "user_id": log.user_id,
                 "exercise_id": log.exercise_id,
@@ -308,8 +315,13 @@ async def create_performance_logs_bulk(
                 "distance_meters": log.distance_meters,
                 "gym_profile_id": _gym_for(log.workout_log_id, log.user_id),
             }
-            for log in logs
-        ]
+            # Canonical metric bag + defensive mirror to the typed columns.
+            _bag = build_metrics_bag(log)
+            rec["metrics"] = _bag
+            mirror_first_class_to_columns(_bag, rec)
+            return rec
+
+        records = [_record_for(log) for log in logs]
         result = db.client.table("performance_logs").insert(records).execute()
         inserted = len(result.data or [])
         logger.info(f"Performance logs bulk-inserted: count={inserted}, user_id={logs[0].user_id}")
