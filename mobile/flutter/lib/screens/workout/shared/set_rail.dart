@@ -40,6 +40,18 @@ class RailSetSummary {
   /// the pill reads "1 ✓ BW×12" instead of "1✓×12" (which looks like tick+X).
   final bool isBodyweight;
 
+  /// Distance in meters for distance / loaded-carry sets (sled, SkiErg, run).
+  /// Non-null → the pill renders a distance token (e.g. "20m" / "1.5km").
+  final double? distanceMeters;
+
+  /// Duration in seconds for timed / hold sets (plank, wall sit, cardio-by-time).
+  /// Non-null → the pill renders a time token (e.g. "0:45").
+  final int? durationSeconds;
+
+  /// Extra tracked metrics keyed by catalog `bagKey` (e.g. {'box_height_cm': 60}).
+  /// Non-empty → each is rendered as a "value+unit" token via `kMetricCatalog`.
+  final Map<String, num>? extraMetrics;
+
   const RailSetSummary({
     required this.displayIndex,
     required this.status,
@@ -47,6 +59,9 @@ class RailSetSummary {
     this.reps,
     this.weightLabel,
     this.isBodyweight = false,
+    this.distanceMeters,
+    this.durationSeconds,
+    this.extraMetrics,
   });
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/exercise_tracking_metric.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
@@ -322,19 +323,128 @@ class _ExpandableSummaryExerciseCardState
 
   Widget _buildSetTable() {
     final hasRpe = widget.setLogs.any((s) => s.rpe != null);
+    final cols = _buildColumns();
 
     return Column(
       children: [
         // Header row
-        _buildTableHeaderRow(hasRpe),
+        _buildTableHeaderRow(cols, hasRpe),
         const SizedBox(height: 4),
         // Data rows
-        ...widget.setLogs.map((setLog) => _buildSetRow(setLog, hasRpe)),
+        ...widget.setLogs.map((setLog) => _buildSetRow(setLog, cols, hasRpe)),
       ],
     );
   }
 
-  Widget _buildTableHeaderRow(bool hasRpe) {
+  /// The metric value columns to render between the SET and RPE columns, in
+  /// canonical order (reps → weight → distance → time → extra metrics). Derived
+  /// from the exercise's [TrackingProfile] plus any metric data actually present
+  /// on the logged sets, so a loaded carry shows DIST, a plank shows TIME, and a
+  /// box jump shows its box-height column — while ordinary lifts keep the exact
+  /// REPS | WEIGHT layout.
+  List<_SummaryColumn> _buildColumns() {
+    final profile = widget.exercise.trackingProfile;
+    final cols = <_SummaryColumn>[];
+
+    // First-class metrics handled by dedicated SetLogInfo fields.
+    const reservedBagKeys = {'weight_kg', 'reps', 'distance_m', 'time_s'};
+
+    final hasDistanceData = widget.setLogs
+        .any((s) => s.distanceMeters != null && s.distanceMeters! > 0);
+    final hasTimeData = widget.setLogs
+        .any((s) => s.setDurationSeconds != null && s.setDurationSeconds! > 0);
+
+    if (profile.tracksReps) {
+      cols.add(_SummaryColumn(
+        AppLocalizations.of(context).workoutSummaryGeneralReps,
+        (s) => '${s.repsCompleted}',
+      ));
+    }
+    if (profile.tracksWeight) {
+      cols.add(_SummaryColumn(
+        AppLocalizations.of(context).workoutSummaryAdvancedWeight,
+        (s) => WeightUtils.formatWorkoutWeight(s.weightKg, useKg: widget.useKg),
+      ));
+    }
+    if (profile.tracksDistance && hasDistanceData) {
+      cols.add(_SummaryColumn(
+        kMetricCatalog['distance']!.shortLabel,
+        (s) => _formatDistanceMeters(s.distanceMeters),
+      ));
+    }
+    if (profile.tracksTime && hasTimeData) {
+      cols.add(_SummaryColumn(
+        kMetricCatalog['time']!.shortLabel,
+        (s) => s.setDurationSeconds != null && s.setDurationSeconds! > 0
+            ? _formatSeconds(s.setDurationSeconds!)
+            : '-',
+      ));
+    }
+
+    // Extra (non-first-class) metrics present on any logged set, e.g. box height.
+    final extraKeys = <String>[];
+    for (final s in widget.setLogs) {
+      final m = s.metrics;
+      if (m == null) continue;
+      for (final k in m.keys) {
+        if (!reservedBagKeys.contains(k) && !extraKeys.contains(k)) {
+          extraKeys.add(k);
+        }
+      }
+    }
+    for (final bagKey in extraKeys) {
+      final def = _metricDefForBagKey(bagKey);
+      cols.add(_SummaryColumn(
+        def?.shortLabel ?? bagKey.toUpperCase(),
+        (s) {
+          final v = s.metrics?[bagKey];
+          if (v == null) return '-';
+          final unit = def?.canonicalUnit ?? '';
+          return '${_formatNum(v)}$unit';
+        },
+      ));
+    }
+
+    // Fallback: an exercise with an inconclusive profile and no metric data
+    // keeps the legacy REPS | WEIGHT layout so nothing renders blank.
+    if (cols.isEmpty) {
+      cols.add(_SummaryColumn(
+        AppLocalizations.of(context).workoutSummaryGeneralReps,
+        (s) => '${s.repsCompleted}',
+      ));
+      cols.add(_SummaryColumn(
+        AppLocalizations.of(context).workoutSummaryAdvancedWeight,
+        (s) => WeightUtils.formatWorkoutWeight(s.weightKg, useKg: widget.useKg),
+      ));
+    }
+    return cols;
+  }
+
+  MetricDef? _metricDefForBagKey(String bagKey) {
+    for (final def in kMetricCatalog.values) {
+      if (def.bagKey == bagKey) return def;
+    }
+    return null;
+  }
+
+  String _formatNum(num v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+
+  /// "20 m" under 1 km; "1.5 km" / "1 km" at/above 1 km.
+  String _formatDistanceMeters(double? meters) {
+    if (meters == null || meters <= 0) return '-';
+    if (meters >= 1000) {
+      final km = meters / 1000;
+      final s =
+          km == km.roundToDouble() ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
+      return '$s km';
+    }
+    return '${meters.round()} m';
+  }
+
+  Widget _buildTableHeaderRow(List<_SummaryColumn> cols, bool hasRpe) {
+    final headerColor =
+        widget.isDark ? AppColors.textMuted : Colors.grey.shade500;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -346,40 +456,25 @@ class _ExpandableSummaryExerciseCardState
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: widget.isDark
-                    ? AppColors.textMuted
-                    : Colors.grey.shade500,
+                color: headerColor,
               ),
             ),
           ),
-          Expanded(
-            child: Center(
-              child: Text(
-                AppLocalizations.of(context).workoutSummaryGeneralReps,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: widget.isDark
-                      ? AppColors.textMuted
-                      : Colors.grey.shade500,
+          for (final col in cols)
+            Expanded(
+              child: Center(
+                child: Text(
+                  col.header,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: headerColor,
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: Center(
-              child: Text(
-                AppLocalizations.of(context).workoutSummaryAdvancedWeight,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: widget.isDark
-                      ? AppColors.textMuted
-                      : Colors.grey.shade500,
-                ),
-              ),
-            ),
-          ),
           if (hasRpe)
             SizedBox(
               width: 44,
@@ -390,9 +485,7 @@ class _ExpandableSummaryExerciseCardState
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: widget.isDark
-                        ? AppColors.textMuted
-                        : Colors.grey.shade500,
+                    color: headerColor,
                   ),
                 ),
               ),
@@ -402,9 +495,10 @@ class _ExpandableSummaryExerciseCardState
     );
   }
 
-  Widget _buildSetRow(SetLogInfo setLog, bool hasRpe) {
+  Widget _buildSetRow(SetLogInfo setLog, List<_SummaryColumn> cols, bool hasRpe) {
     final setType = setLog.setType.toLowerCase();
     final rowColor = _setTypeRowColor(setType);
+    final cellColor = widget.isDark ? AppColors.textPrimary : Colors.black87;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 2),
@@ -424,9 +518,7 @@ class _ExpandableSummaryExerciseCardState
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: widget.isDark
-                        ? AppColors.textPrimary
-                        : Colors.black87,
+                    color: cellColor,
                   ),
                 ),
                 if (setType != 'working') ...[
@@ -436,34 +528,21 @@ class _ExpandableSummaryExerciseCardState
               ],
             ),
           ),
-          Expanded(
-            child: Center(
-              child: Text(
-                '${setLog.repsCompleted}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: widget.isDark
-                      ? AppColors.textPrimary
-                      : Colors.black87,
+          for (final col in cols)
+            Expanded(
+              child: Center(
+                child: Text(
+                  col.value(setLog),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: cellColor,
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: Center(
-              child: Text(
-                WeightUtils.formatWorkoutWeight(setLog.weightKg, useKg: widget.useKg),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: widget.isDark
-                      ? AppColors.textPrimary
-                      : Colors.black87,
-                ),
-              ),
-            ),
-          ),
           if (hasRpe)
             SizedBox(
               width: 44,
@@ -477,9 +556,7 @@ class _ExpandableSummaryExerciseCardState
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: setLog.rpe != null
-                        ? (widget.isDark
-                            ? AppColors.textPrimary
-                            : Colors.black87)
+                        ? cellColor
                         : (widget.isDark
                             ? AppColors.textMuted
                             : Colors.grey.shade400),
@@ -1035,6 +1112,15 @@ class _ExpandableSummaryExerciseCardState
     ];
     return '${months[date.month - 1]} ${date.day}';
   }
+}
+
+/// One adaptive value column in the per-set summary table: a header label plus
+/// a function that renders the cell text for a given set. Built by
+/// `_buildColumns` from the exercise's tracked metrics.
+class _SummaryColumn {
+  final String header;
+  final String Function(SetLogInfo) value;
+  const _SummaryColumn(this.header, this.value);
 }
 
 /// Per-exercise session records (Gravl-parity). Any field may be null when it

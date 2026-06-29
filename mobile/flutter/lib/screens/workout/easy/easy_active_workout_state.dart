@@ -34,10 +34,12 @@ import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
 import '../../../core/providers/workout_mini_player_provider.dart';
 import '../../../core/utils/default_weights.dart';
+import '../../../core/utils/exercise_tracking_metric.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/providers/exercise_metrics_provider.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -51,6 +53,7 @@ import '../widgets/enhanced_notes_sheet.dart';
 import '../widgets/exercise_swap_sheet.dart';
 import '../widgets/form_analysis_sheet.dart';
 import '../widgets/how_did_i_do_pill.dart';
+import '../widgets/metric_picker_sheet.dart';
 import '../widgets/report_pain_sheet.dart';
 import 'easy_active_workout_screen.dart';
 import '../providers/active_workout_session_provider.dart';
@@ -314,6 +317,43 @@ class EasyActiveWorkoutScreenState
   void _setDuration(double v) {
     setState(() => _perExercise[_currentIndex]!.durationSeconds = v.round());
     HapticService.instance.tick();
+  }
+
+  /// Edit a dynamic EXTRA metric (box_height, calories, custom…) for the
+  /// current set. Keyed by metric KEY; snapshotted to the SetLog on log.
+  void _setExtraMetric(String key, double value) {
+    setState(() {
+      _perExercise[_currentIndex]!.extraMetrics[key] = value;
+    });
+    HapticService.instance.tick();
+  }
+
+  /// "+ metric" — open the picker, persist the chosen column to this exercise's
+  /// prefs, and optimistically surface it so the new stepper appears at once.
+  Future<void> _addMetric() async {
+    final exercise = _exercises[_currentIndex];
+    final exId = exercise.exerciseId ?? exercise.libraryId ?? exercise.name;
+    final st = _perExercise[_currentIndex]!;
+    // Hide every column already on the exercise (the four standard ones live in
+    // the profile; the extras are what we render) from the add list.
+    final currentKeys = <String>{
+      ...exercise.trackingProfile.metricKeys,
+      ...st.extraMetricKeys,
+    }.toList();
+    final chosen =
+        await MetricPickerSheet.show(context, currentKeys: currentKeys);
+    if (chosen == null || !mounted) return;
+    // Persist as the user's per-exercise EXTRA prefs (defaults stay implicit).
+    final prefs =
+        ref.read(exerciseMetricPrefsProvider(exId)).valueOrNull ?? const [];
+    final nextPrefs = <String>[...prefs, if (!prefs.contains(chosen)) chosen];
+    await ref
+        .read(exerciseMetricsServiceProvider)
+        .saveExerciseMetricKeys(exId, nextPrefs);
+    if (!mounted) return;
+    setState(() {
+      if (!st.extraMetricKeys.contains(chosen)) st.extraMetricKeys.add(chosen);
+    });
   }
 
   void _setDistance(double v) {
@@ -676,6 +716,10 @@ class EasyActiveWorkoutScreenState
           targetReps: original.targetReps,
           startedAt: original.startedAt,
           durationSeconds: original.durationSeconds,
+          // Preserve the metric-bag + distance captured when the set was first
+          // logged — a weight/reps correction must not drop them.
+          distanceMeters: original.distanceMeters,
+          extraMetrics: original.extraMetrics,
           loggingMode: 'easy',
         );
         state.completed[idx] = updated;
@@ -705,13 +749,27 @@ class EasyActiveWorkoutScreenState
     // sled, carries) write the meters into distanceMeters, zero weight/reps.
     final isTimed = state.isTimed;
     final isDistance = state.isDistance;
+    // Loaded carries (sled push, prowler, yoke, farmer's carry, weighted hold)
+    // track a LOAD alongside their distance/time metric. Persist the weight
+    // instead of zeroing it so the set logs e.g. 60 kg over 20 m. Pure
+    // distance/time moves (SkiErg, plank) still zero out the load.
+    final isLoadedCarry = (isTimed || isDistance) && weightKg > 0;
+    // Snapshot the dynamic EXTRA metrics (box_height, calories, custom…) into
+    // the canonical metric bag, keyed by bagKey (KEY→bagKey). Mirrors Advanced
+    // `SetLog.extraMetrics`. Zero/absent values are dropped.
+    final extraBag = <String, num>{
+      for (final e in state.extraMetrics.entries)
+        if (e.value != 0)
+          (kMetricCatalog[e.key]?.bagKey ?? e.key): e.value,
+    };
     final setLog = SetLog(
       reps: (isTimed || isDistance) ? 0 : state.reps,
-      weight: (isTimed || isDistance) ? 0 : weightKg,
+      weight: ((isTimed || isDistance) && !isLoadedCarry) ? 0 : weightKg,
       targetReps: state.targetReps,
       startedAt: _currentSetStartTime,
       durationSeconds: isTimed ? state.durationSeconds : setDuration,
       distanceMeters: isDistance ? state.distanceMeters : null,
+      extraMetrics: extraBag,
       loggingMode: 'easy',
       notes: _pendingNoteText.trim().isNotEmpty
           ? [_pendingNoteText.trim()]
@@ -937,7 +995,9 @@ class EasyActiveWorkoutScreenState
                 ..completed.addAll(old.completed)
                 ..displayWeight = old.displayWeight
                 ..reps = old.reps
-                ..durationSeconds = old.durationSeconds;
+                ..durationSeconds = old.durationSeconds
+                ..distanceMeters = old.distanceMeters
+                ..extraMetrics.addAll(old.extraMetrics);
             } else {
               _perExercise[entry.key] = entry.value;
             }
@@ -1292,6 +1352,27 @@ class EasyActiveWorkoutScreenState
     final state = _perExercise[_currentIndex]!;
     final currentSetNumber = state.completedCount + 1;
 
+    // EXTRA metric columns = the exercise's effective metrics (classifier
+    // profile ∪ the user's saved per-exercise prefs ∪ any optimistic add)
+    // MINUS the four standard ones the poster + load/reps steppers already own.
+    // WATCH the prefs family so a freshly added column appears immediately.
+    final exId = exercise.exerciseId ?? exercise.libraryId ?? exercise.name;
+    final savedMetricPrefs =
+        ref.watch(exerciseMetricPrefsProvider(exId)).valueOrNull ??
+            const <String>[];
+    const standardMetricKeys = {'weight', 'reps', 'distance', 'time'};
+    final effectiveExtras = <String>[];
+    for (final k in [
+      ...exercise.trackingProfile.metricKeys,
+      ...savedMetricPrefs,
+      ...state.extraMetricKeys,
+    ]) {
+      if (!standardMetricKeys.contains(k) && !effectiveExtras.contains(k)) {
+        effectiveExtras.add(k);
+      }
+    }
+    state.extraMetricKeys = effectiveExtras;
+
     // Use the user's configured per-equipment increment (same source as
     // Advanced), expressed in the workout's DISPLAY unit. The increment is a
     // separate setting with its own unit (feedback_weight_unit_separation), so
@@ -1413,6 +1494,8 @@ class EasyActiveWorkoutScreenState
       onRepsChanged: _setReps,
       onDurationChanged: _setDuration,
       onDistanceChanged: _setDistance,
+      onMetricChanged: _setExtraMetric,
+      onAddMetric: _addMetric,
       onLogSet: _logCurrentSet,
       editingSetIndex: _editingSetIndex,
       onEditSet: _editSet,

@@ -62,6 +62,9 @@ WorkoutExercise _$WorkoutExerciseFromJson(Map<String, dynamic> json) =>
       dropSetCount: (json['drop_set_count'] as num?)?.toInt(),
       dropSetPercentage: (json['drop_set_percentage'] as num?)?.toInt(),
       trackingType: json['tracking_type'] as String?,
+      metricKeys: (json['metric_keys'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       distanceMeters: json['distance_meters'] as num?,
       repsSpec: json['reps_spec'] as String?,
       movementPattern: json['movement_pattern'] as String?,
@@ -120,6 +123,7 @@ Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
       'drop_set_count': instance.dropSetCount,
       'drop_set_percentage': instance.dropSetPercentage,
       'tracking_type': instance.trackingType,
+      'metric_keys': instance.metricKeys,
       'distance_meters': instance.distanceMeters,
       'reps_spec': instance.repsSpec,
       'movement_pattern': instance.movementPattern,

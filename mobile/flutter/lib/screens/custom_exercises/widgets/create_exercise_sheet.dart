@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
+import '../../../core/utils/exercise_tracking_metric.dart' show kMetricCatalog;
+import '../../../data/providers/exercise_metrics_provider.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
@@ -43,6 +45,9 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   int _defaultSets = 3;
   int _defaultReps = 10;
   bool _isCompound = false;
+  // Preferred tracked-metric columns for this exercise (Phase C). Empty → the
+  // classifier picks sensible defaults at workout time.
+  final Set<String> _metricKeys = {'weight', 'reps'};
 
   // Advanced fields
   final _restController = TextEditingController();
@@ -288,6 +293,32 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
               items: _equipmentOptions,
               onChanged: (v) => setState(() => _equipment = v!),
               isDark: isDark,
+            ),
+            const SizedBox(height: 20),
+
+            // Preferred metrics (Phase C): the tracked columns this exercise
+            // defaults to in the active workout. Persisted per user+exercise.
+            _buildLabel('Preferred metrics', isDark),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final key in const [
+                  'weight', 'reps', 'distance', 'time', 'box_height', 'calories'
+                ])
+                  FilterChip(
+                    label: Text(kMetricCatalog[key]?.label ?? key),
+                    selected: _metricKeys.contains(key),
+                    onSelected: (sel) => setState(() {
+                      if (sel) {
+                        _metricKeys.add(key);
+                      } else {
+                        _metricKeys.remove(key);
+                      }
+                    }),
+                  ),
+              ],
             ),
             const SizedBox(height: 20),
 
@@ -1228,7 +1259,14 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
     setState(() => _isSubmitting = false);
 
     if (result != null && mounted) {
-      Navigator.pop(context);
+      // Persist the chosen preferred-metric columns for this exercise so the
+      // active workout renders them by default.
+      try {
+        await ref
+            .read(exerciseMetricsServiceProvider)
+            .saveExerciseMetricKeys(result.id, _metricKeys.toList());
+      } catch (_) {/* non-fatal — exercise still created */}
+      if (mounted) Navigator.pop(context);
     }
   }
 

@@ -35,6 +35,10 @@ class SetLog {
   // Optional photo notes for this set. Same local-path → S3-URL lifecycle
   // as `notesAudioPath`. Default: empty list.
   final List<String> notesPhotoPaths;
+  // Generic per-set metric bag for metrics BEYOND the typed weight/reps/
+  // distance/duration fields above (e.g. {'box_height_cm': 60}). Merged with
+  // the typed fields server-side into performance_logs.metrics. Empty normally.
+  final Map<String, num> extraMetrics;
 
   SetLog({
     required this.reps,
@@ -55,6 +59,7 @@ class SetLog {
     this.loggingMode,
     this.notesAudioPath,
     this.notesPhotoPaths = const [],
+    this.extraMetrics = const {},
   }) : completedAt = completedAt ?? DateTime.now();
 
   SetLog copyWith({
@@ -76,6 +81,7 @@ class SetLog {
     String? loggingMode,
     String? notesAudioPath,
     List<String>? notesPhotoPaths,
+    Map<String, num>? extraMetrics,
   }) {
     return SetLog(
       reps: reps ?? this.reps,
@@ -96,6 +102,7 @@ class SetLog {
       loggingMode: loggingMode ?? this.loggingMode,
       notesAudioPath: notesAudioPath ?? this.notesAudioPath,
       notesPhotoPaths: notesPhotoPaths ?? this.notesPhotoPaths,
+      extraMetrics: extraMetrics ?? this.extraMetrics,
     );
   }
 

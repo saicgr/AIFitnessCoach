@@ -178,6 +178,11 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     int? targetReps,
     String? progressionModel,
     int? setDurationSeconds,
+    // Distance (m) for distance/loaded-carry sets, + the generic metric bag
+    // (box height, calories, custom…) keyed by canonical bagKey. The backend
+    // merges these into performance_logs.metrics + mirrors the typed columns.
+    double? distanceMeters,
+    Map<String, num>? metrics,
     int? restDurationSeconds,
     // Active-workout UI tier the user was on when they tapped ✓.
     // 'easy' | 'simple' | 'advanced'. NULL = unknown (legacy behavior).
@@ -222,6 +227,8 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
           if (targetReps != null) 'target_reps': targetReps,
           if (progressionModel != null) 'progression_model': progressionModel,
           if (setDurationSeconds != null) 'set_duration_seconds': setDurationSeconds,
+          if (distanceMeters != null) 'distance_meters': distanceMeters,
+          if (metrics != null && metrics.isNotEmpty) 'metrics': metrics,
           if (restDurationSeconds != null) 'rest_duration_seconds': restDurationSeconds,
           if (loggingMode != null) 'logging_mode': loggingMode,
           if (notesAudioUrl != null && notesAudioUrl.isNotEmpty)

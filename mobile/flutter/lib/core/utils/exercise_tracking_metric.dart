@@ -234,4 +234,139 @@ class ExerciseTrackingMetric {
     // Plain number → assume reps for a weighted/strength prescription.
     return TargetSpec(TrackingMetric.weight, value?.round());
   }
+
+  // ── Loaded carries (weight + distance/time) ─────────────────────────────
+  /// Loaded sleds / carries whose PRIMARY metric is distance/time but which
+  /// ALSO take a load — when true, a distance/time exercise additionally shows
+  /// an editable weight column. Mirrors backend `_LOADED_*` in
+  /// services/exercise_tracking_metric.py.
+  static const List<String> _loadedCarryFragments = [
+    'sled', 'prowler', 'yoke', 'farmer', 'suitcase carry', 'loaded carry',
+    'overhead carry', 'waiter walk', 'sandbag carry', 'sandbag lunge',
+  ];
+  static const Set<String> _loadedEquipment = {
+    'sled', 'sandbag', 'dumbbell', 'dumbbells', 'kettlebell', 'kettlebells',
+    'barbell', 'weight plate', 'trap bar', 'yoke',
+  };
+
+  /// True when a distance/time move is loaded (sled, prowler, yoke, carry,
+  /// sandbag, or a loaded-equipment token).
+  static bool isLoadedCarry(String name, String? equipment) {
+    final n = name.toLowerCase();
+    for (final f in _loadedCarryFragments) {
+      if (n.contains(f)) return true;
+    }
+    final eq = (equipment ?? '').toLowerCase();
+    return _loadedEquipment.contains(eq);
+  }
+
+  /// Resolve the full capability profile (ordered metric columns + primary).
+  /// Prefers an explicit backend `metric_keys` list; otherwise derives from the
+  /// single-metric [resolve] + the loaded-carry rule. Distance/time stay the
+  /// primary metric; `weight` is added for loaded carries.
+  static TrackingProfile resolveProfile({
+    required String name,
+    String? equipment,
+    bool isTimed = false,
+    int? holdSeconds,
+    int? durationSeconds,
+    String? trackingTypeHint,
+    num? distanceMeters,
+    String? repsSpec,
+    List<String>? explicitKeys,
+  }) {
+    if (explicitKeys != null && explicitKeys.isNotEmpty) {
+      return TrackingProfile(
+        List<String>.from(explicitKeys),
+        _primaryFor(explicitKeys),
+      );
+    }
+    final metric = resolve(
+      name: name,
+      equipment: equipment,
+      isTimed: isTimed,
+      holdSeconds: holdSeconds,
+      durationSeconds: durationSeconds,
+      trackingTypeHint: trackingTypeHint,
+      distanceMeters: distanceMeters,
+      repsSpec: repsSpec,
+    );
+    final keys = <String>[];
+    switch (metric) {
+      case TrackingMetric.weight:
+        keys.addAll(['weight', 'reps']);
+        break;
+      case TrackingMetric.bodyweight:
+        keys.add('reps');
+        break;
+      case TrackingMetric.time:
+        keys.add('time');
+        break;
+      case TrackingMetric.distance:
+        keys.add('distance');
+        break;
+    }
+    // Loaded carry: a distance/time station that also takes a load.
+    if ((metric == TrackingMetric.distance || metric == TrackingMetric.time) &&
+        isLoadedCarry(name, equipment)) {
+      keys.insert(0, 'weight');
+    }
+    final primary = switch (metric) {
+      TrackingMetric.distance => 'distance',
+      TrackingMetric.time => 'time',
+      _ => 'reps',
+    };
+    return TrackingProfile(keys, primary);
+  }
+
+  /// Headline metric from an explicit key list: first non-weight key, else first.
+  static String _primaryFor(List<String> keys) {
+    for (final k in keys) {
+      if (k != 'weight') return k;
+    }
+    return keys.isNotEmpty ? keys.first : 'reps';
+  }
 }
+
+/// The resolved capability profile of an exercise: the ordered metric columns
+/// it logs, plus the headline (`primary`) metric. Built by
+/// [ExerciseTrackingMetric.resolveProfile].
+class TrackingProfile {
+  final List<String> metricKeys;
+  final String primary;
+  const TrackingProfile(this.metricKeys, this.primary);
+
+  bool tracks(String key) => metricKeys.contains(key);
+  bool get tracksWeight => metricKeys.contains('weight');
+  bool get tracksReps => metricKeys.contains('reps');
+  bool get tracksDistance => metricKeys.contains('distance');
+  bool get tracksTime => metricKeys.contains('time');
+}
+
+/// One metric definition in the shared registry. Mirrors backend
+/// services/metric_registry.py — keep the `bagKey` strings identical.
+class MetricDef {
+  final String key;
+  final String bagKey; // JSON key in performance_logs.metrics
+  final String label;
+  final String shortLabel; // set-table column header
+  final String canonicalUnit;
+  final String input; // 'number' | 'integer' | 'duration'
+  final bool firstClass; // mirrors to a typed performance_logs column
+  const MetricDef(this.key, this.bagKey, this.label, this.shortLabel,
+      this.canonicalUnit, this.input, this.firstClass);
+}
+
+/// Built-in metric catalog (extensible; user-custom metrics merge on top).
+const Map<String, MetricDef> kMetricCatalog = {
+  'weight': MetricDef('weight', 'weight_kg', 'Weight', 'KG', 'kg', 'number', true),
+  'reps': MetricDef('reps', 'reps', 'Reps', 'REPS', 'count', 'integer', true),
+  'distance': MetricDef('distance', 'distance_m', 'Distance', 'DIST', 'm', 'number', true),
+  'time': MetricDef('time', 'time_s', 'Time', 'TIME', 's', 'duration', true),
+  'box_height': MetricDef('box_height', 'box_height_cm', 'Box Height', 'HT', 'cm', 'number', false),
+  'calories': MetricDef('calories', 'calories', 'Calories', 'CAL', 'kcal', 'number', false),
+  'incline': MetricDef('incline', 'incline_pct', 'Incline', 'INC', 'pct', 'number', false),
+  'speed': MetricDef('speed', 'speed_kmh', 'Speed', 'SPD', 'kmh', 'number', false),
+  'rpm': MetricDef('rpm', 'rpm', 'RPM', 'RPM', 'rpm', 'integer', false),
+  'height': MetricDef('height', 'height_cm', 'Height', 'HT', 'cm', 'number', false),
+};

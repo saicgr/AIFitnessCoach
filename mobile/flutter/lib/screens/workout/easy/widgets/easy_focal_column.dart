@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
+import '../../../../core/utils/exercise_tracking_metric.dart';
 import '../../shared/focal_stepper.dart';
 import '../../widgets/timed_exercise_timer.dart';
 import '../easy_active_workout_state_models.dart';
@@ -39,6 +40,15 @@ class EasyFocalColumn extends StatelessWidget {
   final ValueChanged<double> onDurationChanged;
   final ValueChanged<double> onDistanceChanged;
   final Future<void> Function() onLogSet;
+
+  /// Edits one of the dynamic EXTRA metrics (box_height, calories, custom…) on
+  /// the current set. `key` is the metric KEY. Null disables the extra steppers
+  /// (e.g. the warm-up runner, which never carries extra metrics).
+  final void Function(String key, double value)? onMetricChanged;
+
+  /// Opens the "+ metric" picker to add a tracked column to this exercise.
+  /// Null hides the add affordance.
+  final Future<void> Function()? onAddMetric;
 
   /// When non-null, the user is editing a previously-logged set. The Log
   /// button re-captions to "Update set N" so the action is obvious.
@@ -64,10 +74,64 @@ class EasyFocalColumn extends StatelessWidget {
     required this.onDurationChanged,
     required this.onDistanceChanged,
     required this.onLogSet,
+    this.onMetricChanged,
+    this.onAddMetric,
     this.editingSetIndex,
     this.nextExerciseName,
     this.nextDetail,
   });
+
+  /// Step granularity for an extra-metric stepper. Coarse for the moves where a
+  /// 1-unit nudge is meaningless (box height, calories); fine elsewhere.
+  double _stepForMetric(String key) {
+    switch (key) {
+      case 'box_height':
+      case 'height':
+        return 5;
+      case 'calories':
+        return 10;
+      case 'rpm':
+        return 5;
+      default:
+        return 1;
+    }
+  }
+
+  /// "Box Height (cm)" — the label below an extra-metric stepper. Custom metrics
+  /// (absent from [kMetricCatalog]) fall back to their key + no unit.
+  String _extraMetricLabel(String key) {
+    final def = kMetricCatalog[key];
+    final label = (def?.label ?? key).toUpperCase();
+    final unit = def?.canonicalUnit ?? '';
+    return unit.isEmpty || unit == 'count' ? label : '$label ($unit)';
+  }
+
+  /// " · 60 cm · 320 kcal" — the live extra-metric values appended to the CTA.
+  String _extrasCtaSuffix() {
+    final sb = StringBuffer();
+    for (final key in state.extraMetricKeys) {
+      final v = state.extraMetrics[key];
+      if (v == null || v == 0) continue;
+      final tok = v % 1 == 0 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+      final unit = kMetricCatalog[key]?.canonicalUnit ?? '';
+      sb.write(unit.isEmpty || unit == 'count' ? ' · $tok' : ' · $tok $unit');
+    }
+    return sb.toString();
+  }
+
+  /// A loaded carry tracks a LOAD on top of its distance/time metric (sled
+  /// push, prowler, yoke, farmer's carry, weighted hold). The persistence layer
+  /// seeds a non-zero displayWeight for these (and zero for pure SkiErg/plank),
+  /// so a positive load on a distance/timed move is the reliable signal.
+  bool get _isLoadedCarry =>
+      (state.isDistance || state.isTimed) && state.displayWeight > 0;
+
+  /// "60 kg" / "132.5 lb" — the load token reused by the carry badge + CTA.
+  String _loadToken(bool useKg) {
+    final w = state.displayWeight;
+    final v = w % 1 == 0 ? w.toStringAsFixed(0) : w.toStringAsFixed(1);
+    return '$v ${useKg ? 'kg' : 'lb'}';
+  }
 
   /// Builds the signature-v2 poster + whisper block (`.rw-poster` /
   /// `.rw-whisper`). The poster is the screen's dominant element: the live
@@ -188,6 +252,17 @@ class EasyFocalColumn extends StatelessWidget {
             children: posterChildren,
           ),
         ),
+        // Loaded carries surface the load beneath the distance/time numeral so
+        // BOTH metrics read on the poster (the load is editable via the stepper
+        // below). Pure distance/time moves never hit this branch.
+        if (_isLoadedCarry) ...[
+          SizedBox(height: tight ? 4 : 6),
+          Text(
+            '+ ${_loadToken(useKg).toUpperCase()} LOAD',
+            style: ZType.lbl(tight ? 12 : 13,
+                color: accent, letterSpacing: 1.0),
+          ),
+        ],
         if (whisper != null) ...[
           SizedBox(height: tight ? 5 : 8),
           Text(
@@ -238,18 +313,21 @@ class EasyFocalColumn extends StatelessWidget {
     if (editingSetIndex != null) {
       return 'UPDATE SET ${editingSetIndex! + 1}';
     }
+    final extras = _extrasCtaSuffix();
     if (state.isDistance) {
-      return 'LOG SET — ${state.distanceMeters.toStringAsFixed(0)} m';
+      final base = 'LOG SET — ${state.distanceMeters.toStringAsFixed(0)} m';
+      return '${_isLoadedCarry ? '$base · ${_loadToken(useKg)}' : base}$extras';
     }
     if (state.isTimed) {
-      return 'LOG SET — ${state.durationSeconds}s';
+      final base = 'LOG SET — ${state.durationSeconds}s';
+      return '${_isLoadedCarry ? '$base · ${_loadToken(useKg)}' : base}$extras';
     }
     final wTok = state.displayWeight <= 0
         ? 'BW'
         : (state.displayWeight % 1 == 0
               ? state.displayWeight.toStringAsFixed(0)
               : state.displayWeight.toStringAsFixed(1));
-    return '✓  LOG SET — $wTok × ${state.reps}';
+    return '✓  LOG SET — $wTok × ${state.reps}$extras';
   }
 
   @override
@@ -270,6 +348,36 @@ class EasyFocalColumn extends StatelessWidget {
         final logBtnHeight = tight ? 56.0 : 64.0;
         final verticalPad = tight ? 4.0 : 8.0;
         final logFontSize = tight ? 15.0 : 17.0;
+
+        // Caption rendered BELOW each stepper (per the approved mockup): the
+        // value stays bare ("60" / "12") inside the −/+ controls and the unit
+        // lives in the label below ("WEIGHT (LB)" / "REPS"). Defined up here so
+        // both the timed-carry and distance bodies can reuse it.
+        final stepLabel = ZType.lbl(11, color: colors.textMuted, letterSpacing: 1.5);
+        Widget stepperColumn(Widget stepper, String label) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                stepper,
+                const SizedBox(height: 5),
+                Text(label, style: stepLabel, textAlign: TextAlign.center),
+              ],
+            );
+        // Loaded-carry LOAD stepper — reused by the distance + timed bodies so a
+        // sled push / weighted hold can log its kg alongside the m/s metric.
+        Widget loadStepperColumn() => stepperColumn(
+              FocalStepper(
+                value: state.displayWeight,
+                step: weightStep,
+                unit: '',
+                min: 0,
+                max: 999,
+                compact: stepperCompact,
+                dense: true,
+                onChanged: onWeightChanged,
+              ),
+              'LOAD (${useKg ? 'KG' : 'LB'})',
+            );
 
         // Timed exercises (planks, wall sits, dead-hangs) measure hold
         // duration, not weight × reps. Render a single seconds stepper
@@ -321,25 +429,15 @@ class EasyFocalColumn extends StatelessWidget {
                 ),
               ],
             ),
+            // Loaded timed holds (weighted plank, loaded carry-for-time) get an
+            // editable LOAD stepper beneath the countdown so the kg logs too.
+            if (_isLoadedCarry) ...[
+              SizedBox(height: tight ? 16 : 22),
+              SizedBox(width: 220, child: loadStepperColumn()),
+            ],
           ],
         );
 
-        // Caption rendered BELOW each stepper (per the approved mockup): the
-        // value stays bare ("60" / "12") inside the −/+ controls and the unit
-        // lives in the label below ("WEIGHT (LB)" / "REPS"). The two steppers
-        // sit SIDE BY SIDE on one row (not stacked) so the focal block never
-        // pushes the LOG button off-screen. The kg|lb toggle lives in the
-        // header tab row.
-        final stepLabel = ZType.lbl(11, color: colors.textMuted, letterSpacing: 1.5);
-        Widget stepperColumn(Widget stepper, String label) => Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                stepper,
-                const SizedBox(height: 5),
-                Text(label, style: stepLabel, textAlign: TextAlign.center),
-              ],
-            );
         final repsBody = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -392,31 +490,41 @@ class EasyFocalColumn extends StatelessWidget {
 
         // Distance body (SkiErg, sled, carries, runs): a single meters stepper
         // (±25 m) under the meters poster. Writes into SetLog.distanceMeters.
+        // Loaded carries pair the meters stepper with the LOAD stepper so a
+        // sled push logs e.g. 60 kg over 20 m.
+        final distanceStepperColumn = stepperColumn(
+          FocalStepper(
+            value: state.distanceMeters,
+            step: 25,
+            unit: '',
+            integerOnly: true,
+            min: 0,
+            max: 100000,
+            compact: stepperCompact,
+            dense: true,
+            onChanged: onDistanceChanged,
+          ),
+          'DISTANCE (M)',
+        );
         final distanceBody = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _poster(ctx, tight: tight),
             SizedBox(height: tight ? 14 : 22),
-            Center(
-              child: SizedBox(
-                width: 220,
-                child: stepperColumn(
-                  FocalStepper(
-                    value: state.distanceMeters,
-                    step: 25,
-                    unit: '',
-                    integerOnly: true,
-                    min: 0,
-                    max: 100000,
-                    compact: stepperCompact,
-                    dense: true,
-                    onChanged: onDistanceChanged,
-                  ),
-                  'DISTANCE (M)',
-                ),
+            if (_isLoadedCarry)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: loadStepperColumn()),
+                  SizedBox(width: gapBetweenSteppers + 8),
+                  Expanded(child: distanceStepperColumn),
+                ],
+              )
+            else
+              Center(
+                child: SizedBox(width: 220, child: distanceStepperColumn),
               ),
-            ),
           ],
         );
 
@@ -424,7 +532,9 @@ class EasyFocalColumn extends StatelessWidget {
         final stepTok = weightStep % 1 == 0
             ? weightStep.toStringAsFixed(0)
             : weightStep.toStringAsFixed(1);
-        final helperLine = (state.isTimed || state.isDistance)
+        // Pure distance/time moves have no editable load → no weight helper.
+        // Loaded carries DO (the LOAD stepper is now present), so show it.
+        final helperLine = ((state.isTimed || state.isDistance) && !_isLoadedCarry)
             ? null
             : Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -466,6 +576,51 @@ class EasyFocalColumn extends StatelessWidget {
                 ),
               );
 
+        // Dynamic EXTRA-metric stepper stack (box height, calories, custom…)
+        // PLUS the universal "+ metric" add affordance — rendered on EVERY
+        // exercise so any move can gain a tracked column. A Wrap lets 1–N
+        // steppers flow onto new rows without ever pushing LOG SET off-screen.
+        final List<Widget> extraTiles = [
+          for (final key in state.extraMetricKeys)
+            SizedBox(
+              width: 150,
+              child: stepperColumn(
+                FocalStepper(
+                  value: (state.extraMetrics[key] ?? 0).toDouble(),
+                  step: _stepForMetric(key),
+                  unit: '',
+                  integerOnly: kMetricCatalog[key]?.input == 'integer',
+                  min: 0,
+                  max: 100000,
+                  compact: stepperCompact,
+                  dense: true,
+                  onChanged: (v) => onMetricChanged?.call(key, v),
+                ),
+                _extraMetricLabel(key),
+              ),
+            ),
+          if (onAddMetric != null)
+            SizedBox(
+              width: 120,
+              child: _AddMetricTile(
+                accent: colors.accent,
+                muted: colors.textMuted,
+                onTap: onAddMetric!,
+              ),
+            ),
+        ];
+        final extrasSection = extraTiles.isEmpty
+            ? null
+            : Padding(
+                padding: EdgeInsets.only(top: tight ? 12 : 18),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: gapBetweenSteppers + 8,
+                  runSpacing: tight ? 10 : 16,
+                  children: extraTiles,
+                ),
+              );
+
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPad),
           child: Column(
@@ -486,7 +641,8 @@ class EasyFocalColumn extends StatelessWidget {
                         children: [
                           state.isDistance
                               ? distanceBody
-                              : (state.isTimed ? timedBody : repsBody)
+                              : (state.isTimed ? timedBody : repsBody),
+                          if (extrasSection != null) extrasSection,
                         ],
                       ),
                     ),
@@ -524,6 +680,49 @@ class EasyFocalColumn extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// The universal "+ metric" tile in the extra-metric stepper stack. Styled to
+/// echo a `stepperColumn` (a round control above a small caption) so it reads
+/// as "one more column you can add" rather than a foreign button.
+class _AddMetricTile extends StatelessWidget {
+  final Color accent;
+  final Color muted;
+  final Future<void> Function() onTap;
+  const _AddMetricTile(
+      {required this.accent, required this.muted, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            HapticService.instance.tap();
+            onTap();
+          },
+          child: Container(
+            height: 46,
+            width: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border:
+                  Border.all(color: accent.withValues(alpha: 0.55), width: 1.5),
+            ),
+            child: Icon(Icons.add_rounded, color: accent, size: 26),
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text('METRIC',
+            style: ZType.lbl(11, color: muted, letterSpacing: 1.5),
+            textAlign: TextAlign.center),
+      ],
     );
   }
 }

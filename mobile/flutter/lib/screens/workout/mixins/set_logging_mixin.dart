@@ -15,6 +15,7 @@ import '../../../core/utils/default_weights.dart';
 import '../../../core/utils/exercise_tracking_metric.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/providers/exercise_metrics_provider.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -110,11 +111,13 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
     final parsedReps = int.tryParse(repsController.text) ?? 0;
     final reps = parsedReps > 0 ? parsedReps : targetReps;
 
-    // Distance/cardio moves (SkiErg, sled, carries, runs) log METERS, not
-    // weight×reps. Advanced has no per-set distance stepper (Easy does), so we
-    // log the prescribed target distance and zero weight/reps.
-    final isDistanceEx = exercise.trackingMetric == TrackingMetric.distance;
-    final double? loggedDistanceM = isDistanceEx
+    // Capability profile drives WHAT this set logs. A move can track several
+    // metrics at once (e.g. a loaded sled push = weight + distance), so we no
+    // longer zero weight/reps just because distance is present — we keep every
+    // metric the profile declares. (This is the original sled-push "can't log
+    // load" fix.)
+    final profile = exercise.trackingProfile;
+    final double? loggedDistanceM = profile.tracksDistance
         ? (exercise.distanceMeters?.toDouble() ??
             (() {
               final spec = exercise.repsSpec;
@@ -151,9 +154,21 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
       prevReps = prevSets[setIndex]['reps'] as int?;
     }
 
+    // Long-tail extra metrics (box height, calories, custom…) drafted in the
+    // active set's extra-metric cells. Parsed to numbers, keyed by bagKey.
+    final Map<String, num> loggedExtra = {};
+    ref.read(activeSetExtraMetricsProvider).forEach((k, v) {
+      final n = num.tryParse(v.trim());
+      if (n != null) loggedExtra[k] = n;
+    });
+    if (loggedExtra.isNotEmpty) {
+      ref.read(activeSetExtraMetricsProvider.notifier).state = {};
+    }
+
     final setLog = SetLog(
-      reps: isDistanceEx ? 0 : reps,
-      weight: isDistanceEx ? 0 : (useKg ? weight : weight * 0.453592),
+      reps: profile.tracksReps ? reps : 0,
+      weight: profile.tracksWeight ? (useKg ? weight : weight * 0.453592) : 0,
+      extraMetrics: loggedExtra,
       targetReps: targetReps,
       startedAt: currentSetStartTime,
       durationSeconds: setDuration,
@@ -1000,7 +1015,12 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
         // Zero-stamped placeholder rows from "Complete workout now"
         // (weight 0 + reps 0) are tagged is_completed: false so summary
         // aggregation ignores them in volume / streak / PR detection.
-        final isPlaceholder = sets[j].reps <= 0 && sets[j].weight <= 0;
+        // A real set has SOME logged value — weight, reps, distance, or an
+        // extra metric (loaded carries / distance-only sleds log no reps).
+        final isPlaceholder = sets[j].reps <= 0 &&
+            sets[j].weight <= 0 &&
+            (sets[j].distanceMeters ?? 0) <= 0 &&
+            sets[j].extraMetrics.isEmpty;
         allSets.add({
           'exercise_index': i,
           'exercise_id': exercise.exerciseId ?? exercise.libraryId,
@@ -1024,6 +1044,8 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
           if (exercise.supersetGroup != null) 'superset_group': exercise.supersetGroup,
           if (exercise.supersetOrder != null) 'superset_order': exercise.supersetOrder,
           if (sets[j].durationSeconds != null) 'set_duration_seconds': sets[j].durationSeconds,
+          if (sets[j].distanceMeters != null) 'distance_meters': sets[j].distanceMeters,
+          if (sets[j].extraMetrics.isNotEmpty) 'metrics': sets[j].extraMetrics,
           if (sets[j].restDurationSeconds != null) 'rest_duration_seconds': sets[j].restDurationSeconds,
           if (exerciseBarType.containsKey(i)) 'bar_type': exerciseBarType[i],
           if (sets[j].previousWeightKg != null) 'previous_weight_kg': sets[j].previousWeightKg,

@@ -51,6 +51,19 @@ class EasyExerciseState {
   /// when [isDistance] is true. Persists into `SetLog.distanceMeters`.
   double distanceMeters;
 
+  /// EXTRA metric columns this exercise tracks BEYOND the four standard ones
+  /// (weight / reps / distance / time) already owned by the poster + load/reps
+  /// steppers — e.g. box_height, calories, or any user-custom key. Recomputed
+  /// each build from the classifier profile unioned with the user's saved
+  /// per-exercise prefs (`exerciseMetricPrefsProvider`), so a freshly added
+  /// column appears immediately. Drives the dynamic stepper stack.
+  List<String> extraMetricKeys;
+
+  /// Live values for the current set's extra metrics, keyed by metric KEY (NOT
+  /// bagKey). Snapshotted (KEY→bagKey) into `SetLog.extraMetrics` when the set
+  /// logs. Sticky across sets like [displayWeight] — not cleared on log.
+  Map<String, num> extraMetrics;
+
   EasyExerciseState({
     required this.displayWeight,
     required this.reps,
@@ -62,8 +75,12 @@ class EasyExerciseState {
     this.isDistance = false,
     this.distanceMeters = 0,
     this.userEditedWeight = false,
+    List<String>? extraMetricKeys,
+    Map<String, num>? extraMetrics,
     List<SetLog>? completed,
-  }) : completed = completed ?? <SetLog>[];
+  })  : extraMetricKeys = extraMetricKeys ?? <String>[],
+        extraMetrics = extraMetrics ?? <String, num>{},
+        completed = completed ?? <SetLog>[];
 
   int get completedCount => completed.length;
   bool get isFinished => completed.length >= totalSets;

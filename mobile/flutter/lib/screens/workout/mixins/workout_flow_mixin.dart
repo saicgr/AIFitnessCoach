@@ -717,6 +717,10 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
           // 'advanced' is the default tier when this mixin's bulk path
           // runs (Easy / Simple paths log via their own helpers).
           'logging_mode': setLog.loggingMode ?? 'advanced',
+          // Generic metric bag (box height, calories, …) beyond the typed
+          // columns. Server merges it with the typed fields into
+          // performance_logs.metrics. Omitted when empty (ordinary sets).
+          if (setLog.extraMetrics.isNotEmpty) 'metrics': setLog.extraMetrics,
         });
       }
     }

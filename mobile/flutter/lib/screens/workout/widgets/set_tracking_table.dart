@@ -10,8 +10,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/exercise_tracking_metric.dart' show kMetricCatalog;
+import '../../../data/providers/exercise_metrics_provider.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
@@ -21,6 +24,7 @@ import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
+import 'metric_picker_sheet.dart';
 import '../shared/set_rail.dart';
 import '../shared/set_rail_overflow_sheet.dart';
 import 'pre_set_coaching_banner.dart';
@@ -76,6 +80,19 @@ class SetRowData {
   /// True for distance/cardio moves (SkiErg, sled, carries, runs) — the TARGET
   /// cell renders a distance goal and the input logs meters instead of weight.
   final bool isDistance;
+
+  /// True when this exercise tracks a LOAD even if its primary metric is
+  /// distance/time (loaded carries: sled push, prowler, yoke, farmer's carry).
+  /// Drives an editable weight column alongside the distance/time cell, instead
+  /// of the inert dash distance/time normally shows.
+  final bool tracksWeight;
+
+  /// Extra (long-tail) metric column keys beyond weight/reps/distance/time —
+  /// e.g. ['box_height','calories']. Each renders an additional input column.
+  final List<String> extraMetricKeys;
+
+  /// Logged extra-metric values (bagKey → value) for a completed set.
+  final Map<String, num>? actualExtraMetrics;
 
   /// Target distance in METERS for distance moves (e.g. SkiErg 1000 m).
   final double? targetDistanceMeters;
@@ -136,6 +153,9 @@ class SetRowData {
     this.isTimedExercise = false,
     this.isBodyweight = false,
     this.isDistance = false,
+    this.tracksWeight = false,
+    this.extraMetricKeys = const [],
+    this.actualExtraMetrics,
     this.targetDistanceMeters,
     this.actualDistanceMeters,
     this.progressiveOverloadEnabled = true,
@@ -307,6 +327,34 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
   TextEditingController? _editWeightController;
   TextEditingController? _editRepsController;
 
+  // Per-bagKey controllers for the active set's EXTRA metric input cells
+  // (box height, calories, custom…). Seeded from / synced to
+  // activeSetExtraMetricsProvider so completeSet can read them.
+  final Map<String, TextEditingController> _extraCtrls = {};
+
+  TextEditingController _extraCtrl(String bagKey) =>
+      _extraCtrls.putIfAbsent(bagKey, () => TextEditingController());
+
+  /// The table's extra-metric column keys (taken from the first set; all rows
+  /// of one exercise share the same set).
+  List<String> get _extraKeys =>
+      widget.sets.isNotEmpty ? widget.sets.first.extraMetricKeys : const [];
+
+  String _bagKeyOf(String metricKey) =>
+      kMetricCatalog[metricKey]?.bagKey ?? metricKey;
+
+  String _shortLabelOf(String metricKey) =>
+      kMetricCatalog[metricKey]?.shortLabel ?? metricKey.toUpperCase();
+
+  /// Format a logged extra-metric value with its canonical unit ("60cm").
+  String _fmtExtraValue(String metricKey, num? value) {
+    if (value == null) return '–';
+    final unit = kMetricCatalog[metricKey]?.canonicalUnit ?? '';
+    final v = value % 1 == 0 ? value.toStringAsFixed(0) : value.toStringAsFixed(1);
+    return unit.isEmpty || unit == 'count' ? v : '$v$unit';
+  }
+
+
   /// Center of the rendered window when in Rail+Window mode. Defaults to
   /// `widget.activeSetIndex`; updated when the user taps a rail pill or opens
   /// the overflow sheet. Ignored when `sets.length <= maxVisibleRows`.
@@ -341,6 +389,11 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     if (oldWidget.activeSetIndex != widget.activeSetIndex ||
         oldWidget.exercise.name != widget.exercise.name) {
       _focusOverride = null;
+      // New active set → clear the extra-metric drafts so the next set starts
+      // blank (the draft provider is cleared by completeSet on log).
+      for (final c in _extraCtrls.values) {
+        c.clear();
+      }
     }
     // If the sets list shrinks below the override, clear it so we don't render
     // a stale window that points past the end.
@@ -351,6 +404,9 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
   @override
   void dispose() {
+    for (final c in _extraCtrls.values) {
+      c.dispose();
+    }
     _editWeightController?.dispose();
     _editRepsController?.dispose();
     super.dispose();
@@ -953,6 +1009,45 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               ),
             ),
 
+          // Extra metric column headers (box height, calories, custom…).
+          for (final mk in _extraKeys) ...[
+            const SizedBox(width: 6),
+            SizedBox(
+              width: 54,
+              child: Text(
+                _shortLabelOf(mk),
+                style: headerStyle,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+
+          // "+ Add column" — attach another tracked metric to this exercise.
+          Consumer(builder: (ctx, ref, _) {
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () async {
+                final exId = widget.exercise.exerciseId ??
+                    widget.exercise.libraryId ??
+                    widget.exercise.name;
+                final current = <String>{
+                  ...widget.exercise.trackingProfile.metricKeys,
+                  ..._extraKeys,
+                }.toList();
+                final key = await MetricPickerSheet.show(ctx,
+                    currentKeys: current);
+                if (key == null) return;
+                await ref
+                    .read(exerciseMetricsServiceProvider)
+                    .saveExerciseMetricKeys(exId, [..._extraKeys, key]);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(Icons.add, size: 14, color: headerColor),
+              ),
+            );
+          }),
+
           const SizedBox(width: 4),
 
           // RIR column header
@@ -1276,10 +1371,13 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             // instead of a dead dash they couldn't tap.
             SizedBox(
               width: widget.isLeftRightMode ? 56 : 64,
-              // Timed AND distance moves have no weight column — distance logs
-              // meters (in the metric cell), so the weight slot is an inert dash
-              // instead of a misleading "0 kg" field.
-              child: (set.isTimedExercise || set.isDistance)
+              // Timed/distance moves normally have no weight column (distance
+              // logs meters in the metric cell). EXCEPTION: loaded carries
+              // (sled push, prowler, yoke, farmer's carry) track a load too —
+              // when `tracksWeight`, show the editable weight field alongside
+              // the distance/time cell instead of the inert dash.
+              child: ((set.isTimedExercise || set.isDistance) &&
+                      !set.tracksWeight)
                   ? const _DashCell()
                   : (isEditing
                         ? _DarkInputField(
@@ -1410,6 +1508,39 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                               isDark: isDark,
                             )),
               ),
+
+            // Extra metric columns (box height, calories, custom…): active set
+            // → editable (writes the draft provider that completeSet reads);
+            // completed → the logged value; otherwise an inert dash.
+            for (final mk in set.extraMetricKeys) ...[
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 54,
+                child: set.isCompleted
+                    ? _CompletedValueCell(
+                        value: _fmtExtraValue(
+                            mk, set.actualExtraMetrics?[_bagKeyOf(mk)]),
+                        isCompleted: true,
+                        isDark: isDark,
+                      )
+                    : isActive
+                        ? Consumer(builder: (ctx, ref, _) {
+                            final bagKey = _bagKeyOf(mk);
+                            return _DarkInputField(
+                              controller: _extraCtrl(bagKey),
+                              isDark: isDark,
+                              hintText: _shortLabelOf(mk),
+                              onChanged: (v) => ref
+                                  .read(activeSetExtraMetricsProvider.notifier)
+                                  .state = {
+                                ...ref.read(activeSetExtraMetricsProvider),
+                                bagKey: v,
+                              },
+                            );
+                          })
+                        : const _DashCell(),
+              ),
+            ],
 
             const SizedBox(width: 4),
 

@@ -148,6 +148,8 @@ class WorkoutExercise extends Equatable {
   final int? dropSetPercentage; // Percentage to reduce weight each drop (typically 20-25%)
   @JsonKey(name: 'tracking_type')
   final String? trackingType; // Backend-emitted log metric: weight|bodyweight|time|distance (null → frontend classifier infers)
+  @JsonKey(name: 'metric_keys')
+  final List<String>? metricKeys; // Backend-emitted ordered tracked metric columns (null → derive via trackingProfile)
   @JsonKey(name: 'distance_meters')
   final num? distanceMeters; // Target distance in METERS for distance/cardio moves (SkiErg, sled, carries, runs)
   @JsonKey(name: 'reps_spec')
@@ -224,6 +226,7 @@ class WorkoutExercise extends Equatable {
     this.dropSetCount,
     this.dropSetPercentage,
     this.trackingType,
+    this.metricKeys,
     this.distanceMeters,
     this.repsSpec,
     this.movementPattern,
@@ -328,6 +331,21 @@ class WorkoutExercise extends Equatable {
         trackingTypeHint: trackingType,
         distanceMeters: distanceMeters,
         repsSpec: repsSpec,
+      );
+
+  /// The full capability profile — ordered metric columns + primary metric.
+  /// Prefers the backend `metric_keys`; otherwise derives from
+  /// name/equipment/units + the loaded-carry rule (offline + custom safe).
+  TrackingProfile get trackingProfile => ExerciseTrackingMetric.resolveProfile(
+        name: name,
+        equipment: equipment,
+        isTimed: isTimed == true,
+        holdSeconds: holdSeconds,
+        durationSeconds: durationSeconds,
+        trackingTypeHint: trackingType,
+        distanceMeters: distanceMeters,
+        repsSpec: repsSpec,
+        explicitKeys: metricKeys,
       );
 
   /// Get the timer duration in seconds (for timed exercises)
@@ -459,6 +477,7 @@ class WorkoutExercise extends Equatable {
     bool? isFailureSet,
     bool? isFinisher,
     String? trackingType,
+    List<String>? metricKeys,
     num? distanceMeters,
     String? repsSpec,
     String? movementPattern,
@@ -510,6 +529,7 @@ class WorkoutExercise extends Equatable {
       isFailureSet: isFailureSet ?? this.isFailureSet,
       isFinisher: isFinisher ?? this.isFinisher,
       trackingType: trackingType ?? this.trackingType,
+      metricKeys: metricKeys ?? this.metricKeys,
       distanceMeters: distanceMeters ?? this.distanceMeters,
       repsSpec: repsSpec ?? this.repsSpec,
       movementPattern: movementPattern ?? this.movementPattern,

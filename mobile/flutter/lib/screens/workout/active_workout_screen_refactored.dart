@@ -17,6 +17,7 @@ import '../../core/models/set_progression.dart';
 import '../../core/providers/favorites_provider.dart';
 import '../../core/providers/sound_preferences_provider.dart';
 import '../../core/providers/tts_provider.dart';
+import '../../data/providers/exercise_metrics_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/weight_increments_provider.dart';
 import '../../core/providers/window_mode_provider.dart';
@@ -2023,6 +2024,30 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       final isDistanceEx = trackingMetric.isDistance;
       final isBodyweightEx = trackingMetric.isBodyweight;
       final isTimedEx = trackingMetric.isTime || exercise.isTimedExercise;
+      // Loaded carries (sled push, prowler, yoke, farmer's carry) track a LOAD
+      // even though their primary metric is distance/time → render the weight
+      // column + allow a target-load prefill.
+      final tracksWeightEx = exercise.trackingProfile.tracksWeight;
+      // Extra (long-tail) metric columns = the exercise's classifier metric
+      // keys + the user's saved per-exercise additions, minus the four standard
+      // metrics already handled by the weight/metric cells.
+      final _exMetricId =
+          exercise.exerciseId ?? exercise.libraryId ?? exercise.name;
+      // watch (not read) so a freshly added "+ Add column" metric appears
+      // immediately — buildSetRowsForExercise runs inside the screen's build.
+      final _prefKeys =
+          ref.watch(exerciseMetricPrefsProvider(_exMetricId)).valueOrNull ??
+              const <String>[];
+      const _stdMetricKeys = {'weight', 'reps', 'distance', 'time'};
+      final extraMetricKeys = <String>[];
+      for (final k in [
+        ...exercise.trackingProfile.metricKeys,
+        ..._prefKeys,
+      ]) {
+        if (!_stdMetricKeys.contains(k) && !extraMetricKeys.contains(k)) {
+          extraMetricKeys.add(k);
+        }
+      }
       // Target distance (m): backend `distance_meters` → parsed from the raw
       // unit-bearing target string ("1000 m") as a fallback.
       final double? targetDistanceM = isDistanceEx
@@ -2056,12 +2081,16 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           // TARGET weight: use history → AI (if reliable) → equipment default
           // targetWeight is in kg internally — display layer converts to user's unit
           isDistance: isDistanceEx,
+          tracksWeight: tracksWeightEx,
           targetDistanceMeters: targetDistanceM,
           targetWeight: (() {
             // Non-weight metrics (bodyweight / time / distance) NEVER carry a
             // load — this is what kills the phantom "10 kg × 1" on planks,
-            // burpees, SkiErg, sleds and carries.
-            if (trackingMetric != TrackingMetric.weight) return null;
+            // burpees, SkiErg, sleds and carries. EXCEPTION: loaded carries
+            // (tracksWeight) DO prefill a load alongside distance/time.
+            if (trackingMetric != TrackingMetric.weight && !tracksWeightEx) {
+              return null;
+            }
             // If a progression pattern wrote this setTarget, trust it directly
             final hasProgression = _exerciseProgressionPattern.containsKey(
               exerciseIndex,
@@ -2105,6 +2134,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           actualDistanceMeters: isCompleted
               ? completedSets[i].distanceMeters
               : null,
+          extraMetricKeys: extraMetricKeys,
+          actualExtraMetrics:
+              isCompleted ? completedSets[i].extraMetrics : null,
           // Show rest taken AFTER this set (from actualRestDurations), not rest before
           restDurationSeconds: isCompleted
               ? (() {

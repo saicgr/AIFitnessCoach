@@ -1036,12 +1036,14 @@ class _PreviousCellWithRir extends StatelessWidget {
 class _DarkInputField extends StatelessWidget {
   final TextEditingController controller;
   final void Function(String)? onSubmitted;
+  final void Function(String)? onChanged;
   final bool isDark;
   final String? hintText;
 
   const _DarkInputField({
     required this.controller,
     this.onSubmitted,
+    this.onChanged,
     this.isDark = true,
     this.hintText,
   });
@@ -1055,6 +1057,7 @@ class _DarkInputField extends StatelessWidget {
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         textAlign: TextAlign.center,
+        onChanged: onChanged,
         // Signature telemetry numerals (Space Mono) for the editable value.
         style: ZType.data(
           16,

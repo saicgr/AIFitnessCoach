@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/haptic_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/utils/exercise_tracking_metric.dart';
 import 'set_rail.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -85,13 +86,26 @@ class RailPill extends StatelessWidget {
       case RailSetStatus.done:
       case RailSetStatus.warmup:
         if (compact) return '$prefix✓';
-        final r = summary.reps?.toString() ?? '-';
-        // "BW" token for bodyweight so the pill never reads "✓×12" (tick+X);
-        // spaces around the ✓ separate it from the × glyph for weighted sets.
-        final w = summary.isBodyweight
-            ? 'BW'
-            : (summary.weightLabel ?? _formatWeight(summary.weight));
-        return '$prefix ✓ $w×$r';
+        // Multi-metric sets (distance / time / box-height …) render their full
+        // metric set joined by " · "; ordinary weight×reps lifts keep the exact
+        // legacy "W×r" token so nothing regresses.
+        final hasDistance =
+            summary.distanceMeters != null && summary.distanceMeters! > 0;
+        final hasTime =
+            summary.durationSeconds != null && summary.durationSeconds! > 0;
+        final hasExtra =
+            summary.extraMetrics != null && summary.extraMetrics!.isNotEmpty;
+        if (!hasDistance && !hasTime && !hasExtra) {
+          final r = summary.reps?.toString() ?? '-';
+          // "BW" token for bodyweight so the pill never reads "✓×12" (tick+X);
+          // spaces around the ✓ separate it from the × glyph for weighted sets.
+          final w = summary.isBodyweight
+              ? 'BW'
+              : (summary.weightLabel ?? _formatWeight(summary.weight));
+          return '$prefix ✓ $w×$r';
+        }
+        final tokens = _metricTokens();
+        return tokens.isEmpty ? '$prefix✓' : '$prefix ✓ ${tokens.join(' · ')}';
       case RailSetStatus.current:
         return compact ? '●$prefix' : '● $prefix';
       case RailSetStatus.upcoming:
@@ -105,19 +119,97 @@ class RailPill extends StatelessWidget {
     return w.toStringAsFixed(1);
   }
 
+  /// Ordered, compact tokens for a multi-metric completed set, e.g.
+  /// ["60kg", "20m"] (loaded sled) · ["0:45"] (plank) · ["10", "60cm"] (box jump).
+  /// Canonical order: weight → reps → distance → time → extra metrics.
+  List<String> _metricTokens() {
+    final tokens = <String>[];
+    if (!summary.isBodyweight &&
+        summary.weight != null &&
+        summary.weight! > 0) {
+      // weightLabel already carries the unit ("60 kg" / "65 lb"); strip the
+      // inner space so the tight pill reads "60kg".
+      tokens.add(summary.weightLabel?.replaceAll(' ', '') ??
+          _formatWeight(summary.weight));
+    }
+    if (summary.reps != null && summary.reps! > 0) {
+      tokens.add(summary.reps.toString());
+    }
+    if (summary.distanceMeters != null && summary.distanceMeters! > 0) {
+      tokens.add(_formatDistance(summary.distanceMeters!));
+    }
+    if (summary.durationSeconds != null && summary.durationSeconds! > 0) {
+      tokens.add(_formatTime(summary.durationSeconds!));
+    }
+    final extra = summary.extraMetrics;
+    if (extra != null) {
+      extra.forEach((bagKey, value) {
+        tokens.add(_formatMetric(bagKey, value));
+      });
+    }
+    return tokens;
+  }
+
+  /// "20m" under 1 km; "1.5km" / "1km" at/above 1 km.
+  String _formatDistance(double meters) {
+    if (meters >= 1000) {
+      final km = meters / 1000;
+      final s = km == km.roundToDouble()
+          ? km.toStringAsFixed(0)
+          : km.toStringAsFixed(1);
+      return '${s}km';
+    }
+    return '${meters.round()}m';
+  }
+
+  /// m:ss (minutes may be 0, e.g. 45s → "0:45").
+  String _formatTime(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  /// A catalog extra metric ("box_height_cm": 60 → "60cm"), unit from the
+  /// registry; falls back to a bare value when the bagKey is unknown.
+  String _formatMetric(String bagKey, num value) {
+    final v = value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toString();
+    final def = _metricDefForBagKey(bagKey);
+    return def != null ? '$v${def.canonicalUnit}' : v;
+  }
+
+  MetricDef? _metricDefForBagKey(String bagKey) {
+    for (final def in kMetricCatalog.values) {
+      if (def.bagKey == bagKey) return def;
+    }
+    return null;
+  }
+
   String _a11yLabel() {
     switch (summary.status) {
       case RailSetStatus.done:
       case RailSetStatus.warmup:
         final isWarmup = summary.status == RailSetStatus.warmup;
         final reps = summary.reps;
+        final hasLoad = !summary.isBodyweight &&
+            summary.weight != null &&
+            summary.weight! > 0;
         final loadPart = summary.isBodyweight
             ? 'bodyweight'
-            : (summary.weightLabel ??
-                (summary.weight != null ? _formatWeight(summary.weight) : null));
+            : (hasLoad
+                ? (summary.weightLabel ?? _formatWeight(summary.weight))
+                : null);
         final detail = [
           if (loadPart != null) loadPart,
-          if (reps != null) '$reps reps',
+          if (reps != null && reps > 0) '$reps reps',
+          if (summary.distanceMeters != null && summary.distanceMeters! > 0)
+            _formatDistance(summary.distanceMeters!),
+          if (summary.durationSeconds != null && summary.durationSeconds! > 0)
+            _formatTime(summary.durationSeconds!),
+          if (summary.extraMetrics != null)
+            ...summary.extraMetrics!.entries
+                .map((e) => _formatMetric(e.key, e.value)),
         ].join(', ');
         final head = isWarmup
             ? 'Warm-up set, completed'

@@ -63,6 +63,13 @@ class EasyActiveWorkoutView extends StatelessWidget {
   final ValueChanged<double> onDistanceChanged;
   final Future<void> Function() onLogSet;
 
+  /// Edits a dynamic EXTRA metric (box_height, calories, custom…) on the
+  /// current set, keyed by metric KEY. Forwarded to [EasyFocalColumn].
+  final void Function(String key, double value)? onMetricChanged;
+
+  /// Opens the "+ metric" picker to add a tracked column to this exercise.
+  final Future<void> Function()? onAddMetric;
+
   /// 0-indexed past set currently being edited; null ⇒ live set.
   final int? editingSetIndex;
   final ValueChanged<int>? onEditSet;
@@ -140,6 +147,8 @@ class EasyActiveWorkoutView extends StatelessWidget {
     required this.onDurationChanged,
     required this.onDistanceChanged,
     required this.onLogSet,
+    this.onMetricChanged,
+    this.onAddMetric,
     this.editingSetIndex,
     this.onEditSet,
     this.onReturnToCurrent,
@@ -254,6 +263,8 @@ class EasyActiveWorkoutView extends StatelessWidget {
                   onDurationChanged: onDurationChanged,
                   onDistanceChanged: onDistanceChanged,
                   onLogSet: onLogSet,
+                  onMetricChanged: onMetricChanged,
+                  onAddMetric: onAddMetric,
                   editingSetIndex: editingSetIndex,
                   // "Next: <name>" preview shown just above LOG SET (mockup).
                   nextExerciseName: nextExerciseName,

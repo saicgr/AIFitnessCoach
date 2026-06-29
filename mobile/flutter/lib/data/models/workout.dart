@@ -962,6 +962,16 @@ class SetLogInfo {
   final String? tempo;
   final bool? isCompleted;
 
+  /// Logged distance in meters for distance / loaded-carry sets (sled, SkiErg,
+  /// run). Null for ordinary lifts. Parsed from `distance_meters`.
+  final double? distanceMeters;
+
+  /// Extra tracked metrics keyed by catalog `bagKey` (e.g. {'box_height_cm':
+  /// 60}). Includes non-first-class metrics; first-class ones (weight/reps/
+  /// distance/time) are surfaced via their dedicated fields. Parsed from
+  /// `metrics`.
+  final Map<String, num>? metrics;
+
   const SetLogInfo({
     required this.exerciseName,
     this.exerciseIndex = 0,
@@ -986,6 +996,8 @@ class SetLogInfo {
     this.isAiRecommendedSetType,
     this.tempo,
     this.isCompleted,
+    this.distanceMeters,
+    this.metrics,
   });
 
   factory SetLogInfo.fromJson(Map<String, dynamic> json) {
@@ -1017,7 +1029,25 @@ class SetLogInfo {
       isAiRecommendedSetType: json['is_ai_recommended_set_type'] as bool?,
       tempo: json['tempo'] as String?,
       isCompleted: json['is_completed'] as bool?,
+      distanceMeters: (json['distance_meters'] as num?)?.toDouble(),
+      metrics: _coerceMetrics(json['metrics']),
     );
+  }
+
+  /// Coerce a `metrics` jsonb bag into `Map<String, num>`, tolerating
+  /// stringified numbers and dropping non-numeric entries. Null/empty → null.
+  static Map<String, num>? _coerceMetrics(dynamic raw) {
+    if (raw is! Map) return null;
+    final out = <String, num>{};
+    raw.forEach((key, value) {
+      if (value is num) {
+        out[key.toString()] = value;
+      } else if (value is String) {
+        final n = num.tryParse(value);
+        if (n != null) out[key.toString()] = n;
+      }
+    });
+    return out.isEmpty ? null : out;
   }
 
   /// Backwards-compatible: list (new) | string (legacy) | null → List<String>.

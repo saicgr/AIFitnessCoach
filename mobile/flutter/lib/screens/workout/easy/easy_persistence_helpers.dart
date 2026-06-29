@@ -85,7 +85,13 @@ Future<String?> persistEasySet({
       }
     }
 
-    final isPlaceholder = log.reps <= 0 && log.weight <= 0;
+    // A set with a distance or an extra metric (SkiErg, a logged box-jump
+    // height, etc.) is REAL even with zero reps/weight — only the truly empty
+    // "Complete workout now" padding rows are placeholders.
+    final isPlaceholder = log.reps <= 0 &&
+        log.weight <= 0 &&
+        (log.distanceMeters == null || log.distanceMeters! <= 0) &&
+        log.extraMetrics.isEmpty;
     await repo.logSetPerformance(
       workoutLogId: logId,
       userId: userId,
@@ -98,6 +104,12 @@ Future<String?> persistEasySet({
       targetWeightKg: state.targetWeightKg > 0 ? state.targetWeightKg : null,
       targetReps: state.targetReps,
       setDurationSeconds: log.durationSeconds,
+      distanceMeters: log.distanceMeters,
+      // SetLog.extraMetrics is ALREADY keyed by canonical bagKey (box_height_cm,
+      // …) — same convention as Advanced — so it's sent as-is, no re-mapping.
+      metrics: log.extraMetrics.isEmpty
+          ? null
+          : Map<String, num>.from(log.extraMetrics),
       loggingMode: 'easy',
       notes: log.notes,
       notesAudioUrl: audioUrl,
@@ -235,7 +247,12 @@ EasyLocalAggregates computeEasyAggregates({
 
     for (int sIdx = 0; sIdx < st.completed.length; sIdx++) {
       final s = st.completed[sIdx];
-      final isPlaceholder = s.reps <= 0 && s.weight <= 0;
+      // Distance / extra-metric sets count as real even at zero reps+weight
+      // (a SkiErg block, a logged box-jump height) — don't drop them as padding.
+      final hasOtherMetric =
+          (s.distanceMeters != null && s.distanceMeters! > 0) ||
+              s.extraMetrics.isNotEmpty;
+      final isPlaceholder = s.reps <= 0 && s.weight <= 0 && !hasOtherMetric;
       if (!isPlaceholder) {
         totalSets++;
         totalReps += s.reps;
@@ -280,6 +297,11 @@ EasyLocalAggregates computeEasyAggregates({
         if (s.previousReps != null) 'previous_reps': s.previousReps,
         'completed_at': s.completedAt.toIso8601String(),
         if (s.durationSeconds != null) 'set_duration_seconds': s.durationSeconds,
+        if (s.distanceMeters != null && s.distanceMeters! > 0)
+          'distance_meters': s.distanceMeters,
+        // Generic metric bag (box_height_cm, calories, custom…), already keyed
+        // by bagKey at log time — so PR detection + the server bag see them.
+        if (s.extraMetrics.isNotEmpty) 'metrics': s.extraMetrics,
         if (s.restDurationSeconds != null)
           'rest_duration_seconds': s.restDurationSeconds,
         if (s.notes.isNotEmpty) 'notes': s.notes,
@@ -460,7 +482,11 @@ Map<int, EasyExerciseState> seedEasyExerciseStates(
     // never seed a phantom load — this is the Easy-mode counterpart to the
     // Advanced fix and is what kills "10 kg × 1" on SkiErg / Plank / Burpees.
     final metric = ex.trackingMetric;
-    final isWeighted = metric == TrackingMetric.weight;
+    // Loaded carries (sled push, prowler, yoke, farmer's carry) track a LOAD
+    // even though their primary metric is distance/time — seed the load so Easy
+    // captures + persists it alongside the distance, matching Advanced.
+    final tracksWeight = ex.trackingProfile.tracksWeight;
+    final isWeighted = metric == TrackingMetric.weight || tracksWeight;
     final targetWeightKg = isWeighted
         ? (firstTarget?.targetWeightKg ?? ex.weight ?? 0).toDouble()
         : 0.0; // bodyweight / time / distance → no load (renders "BW")
