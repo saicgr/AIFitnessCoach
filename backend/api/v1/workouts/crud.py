@@ -33,6 +33,8 @@ from .utils import (
     row_to_workout,
     log_workout_change,
     index_workout_to_rag,
+    fetch_program_assignment_meta,
+    apply_program_meta_to_row,
 )
 from .today import invalidate_today_workout_cache
 
@@ -156,6 +158,14 @@ async def list_workouts(
             allow_multiple_per_date=allow_multiple_per_date,
         )
         logger.info(f"Found {len(rows)} workouts for user {user_id} (profile: {profile_filter})")
+        # Tag program-expanded rows with their curated program name/id so the
+        # carousel + workout-detail badge shows the program (not "AI Program").
+        # /today does this via migration 2285; the list endpoint must too since
+        # the home carousel prefers the list-sourced row on id collision.
+        assignment_meta = fetch_program_assignment_meta(db, user_id)
+        if assignment_meta:
+            for row in rows:
+                apply_program_meta_to_row(row, assignment_meta)
         return [row_to_workout(row) for row in rows]
 
     except Exception as e:
@@ -177,6 +187,11 @@ async def get_workout(
         db = get_supabase_db()
         row = db.get_workout(workout_id)
         verify_resource_ownership(current_user, row, "Workout")
+        # Tag with curated program provenance so the detail screen's PROGRAM chip
+        # shows the program name instead of "AI" for a started curated program.
+        assignment_meta = fetch_program_assignment_meta(db, str(row.get("user_id")))
+        if assignment_meta:
+            apply_program_meta_to_row(row, assignment_meta)
         return row_to_workout(row)
     except HTTPException:
         raise

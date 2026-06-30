@@ -1157,6 +1157,78 @@ def row_to_workout(row: dict, enrich_videos: bool = True) -> Workout:
     )
 
 
+def fetch_program_assignment_meta(db, user_id: str) -> dict:
+    """{assignment_id: {program_id, program_name, slot}} for the user's ACTIVE
+    program assignments.
+
+    The list (`GET /workouts/`) and detail (`GET /workouts/{id}`) endpoints serve
+    raw workout rows, which carry `assignment_id` / `program_slot` columns but NOT
+    the program's display name (that lives on `user_program_assignments`). Without
+    this lookup those surfaces can't show the curated program name, so the
+    carousel + workout-detail badge falls back to "AI Program" even for a started
+    curated program. This mirrors `/today`'s tagging (migration 2285).
+
+    Fail-open: any error returns {} so the endpoints degrade to untagged rows
+    rather than 500ing.
+    """
+    try:
+        resp = (
+            db.client.table("user_program_assignments")
+            .select("id, source_program_id, custom_program_name, slot")
+            .eq("user_id", user_id)
+            .eq("is_active", True)
+            .eq("status", "active")
+            .execute()
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"[PROGRAM] assignment meta fetch failed (fail-open): {e}")
+        return {}
+    meta = {}
+    for a in (resp.data or []):
+        meta[str(a["id"])] = {
+            "program_id": (
+                str(a["source_program_id"]) if a.get("source_program_id") else None
+            ),
+            "program_name": a.get("custom_program_name"),
+            "slot": a.get("slot") or "primary",
+        }
+    return meta
+
+
+def apply_program_meta_to_row(row: dict, meta: dict) -> None:
+    """Inject program provenance into a workout row's `generation_metadata` so
+    `row_to_workout` carries program_id/name/week/slot/assignment_id to the
+    client (the carousel + workout-detail program badge). No-op for non-program
+    rows (no assignment_id) and for assignments missing from `meta`.
+
+    Mutates `row` in place; safe to call on rows whose `generation_metadata` is
+    absent, a JSON string, or already a dict.
+    """
+    aid = row.get("assignment_id")
+    if not aid:
+        return
+    m = meta.get(str(aid))
+    if not m:
+        return
+    gm = row.get("generation_metadata")
+    if isinstance(gm, str):
+        try:
+            gm = json.loads(gm)
+        except (json.JSONDecodeError, TypeError):
+            gm = {}
+    if not isinstance(gm, dict):
+        gm = {}
+    if m.get("program_id"):
+        gm["program_id"] = m["program_id"]
+    if m.get("program_name"):
+        gm["program_name"] = m["program_name"]
+    gm["program_slot"] = row.get("program_slot") or m.get("slot") or "primary"
+    gm["assignment_id"] = str(aid)
+    if row.get("template_week") is not None:
+        gm["program_week"] = row.get("template_week")
+    row["generation_metadata"] = gm
+
+
 def log_workout_change(
     workout_id: str,
     user_id: str,
