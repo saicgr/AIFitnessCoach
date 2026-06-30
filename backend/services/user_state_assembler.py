@@ -58,6 +58,8 @@ class UserState:
     hooper_index: Optional[int] = None     # 4..28 sum of sleep/fatigue/stress/soreness
     muscle_soreness: Optional[int] = None  # Hooper component, 1..7
     rhr_delta_pct: Optional[float] = None  # +X% vs baseline = stressed
+    pre_workout_sleep_0_10: Optional[int] = None      # reshape-gate gauge, 0..10
+    pre_workout_readiness_0_10: Optional[int] = None  # reshape-gate gauge, 0..10
 
     # ----- Sleep / strain ---------------------------------------------------
     sleep_hours_7d_avg: Optional[float] = None
@@ -153,7 +155,10 @@ def assemble_user_state(user_id: str, supabase, force: bool = False) -> UserStat
     try:
         res = (
             supabase.table("readiness_scores")
-            .select("rhr_delta_pct,weekly_trimp,cardio_load_state,sleep_quality")
+            .select(
+                "rhr_delta_pct,weekly_trimp,cardio_load_state,sleep_quality,"
+                "pre_workout_sleep_0_10,pre_workout_readiness_0_10"
+            )
             .eq("user_id", user_id)
             .order("score_date", desc=True)
             .limit(1)
@@ -164,6 +169,8 @@ def assemble_user_state(user_id: str, supabase, force: bool = False) -> UserStat
             state.rhr_delta_pct = r.get("rhr_delta_pct")
             state.weekly_trimp = r.get("weekly_trimp")
             state.cardio_load_state = r.get("cardio_load_state")
+            state.pre_workout_sleep_0_10 = r.get("pre_workout_sleep_0_10")
+            state.pre_workout_readiness_0_10 = r.get("pre_workout_readiness_0_10")
     except Exception as e:  # pragma: no cover
         logger.debug(f"[user_state] readiness_scores skipped: {e}")
 

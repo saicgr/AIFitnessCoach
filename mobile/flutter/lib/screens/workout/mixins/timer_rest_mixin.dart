@@ -26,6 +26,7 @@ import '../models/workout_state.dart';
 import '../../../core/models/set_progression.dart';
 import '../widgets/inline_rest_row.dart';
 import '../../../widgets/tooltips/tooltip_anchors.dart';
+import '../../../core/services/workout_tour_steps.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 import '../../../services/intra_workout_autoregulator.dart';
 import 'package:dio/dio.dart';
@@ -366,6 +367,15 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       debugPrint('🔴 [StartRest] Fetching AI tip and achievement prompt');
       fetchInlineRestAiTip(exercise);
       fetchInlineRestAchievementPrompt(exercise);
+
+      // Contextual Rest Timer coach-mark: the first time a real between-set
+      // rest appears, the keyed inline rest row is now mounted, so the tour
+      // overlay can spotlight the ACTUAL rest timer (the upfront tour can't —
+      // the row doesn't exist yet). Fires once per user; no-op thereafter.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        WorkoutTourService.maybeShowRestCoachmark(ref);
+      });
     }
 
     restIntervals.add({

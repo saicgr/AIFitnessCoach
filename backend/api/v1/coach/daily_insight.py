@@ -799,7 +799,8 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
     try:
         _yest_iso = (date.fromisoformat(local_date_iso) - timedelta(days=1)).isoformat()
         rs = sb.client.table("readiness_scores").select(
-            "score_date, readiness_score, sleep_quality, muscle_soreness"
+            "score_date, readiness_score, sleep_quality, muscle_soreness, "
+            "pre_workout_sleep_0_10, pre_workout_readiness_0_10"
         ).eq("user_id", user_id).in_(
             "score_date", [local_date_iso, _yest_iso]
         ).order("score_date", desc=True).limit(1).execute()
@@ -808,6 +809,14 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
             rec: Dict[str, Any] = {}
             if r0.get("readiness_score") is not None:
                 rec["readiness_score_0to100"] = int(r0["readiness_score"])
+            # Pre-workout "Quick check-in" gauges (0-10, higher = better) — how
+            # the user felt going into today's session via the reshape gate.
+            if r0.get("pre_workout_sleep_0_10") is not None:
+                rec["pre_workout_sleep_0to10"] = int(r0["pre_workout_sleep_0_10"])
+            if r0.get("pre_workout_readiness_0_10") is not None:
+                rec["pre_workout_readiness_0to10"] = int(
+                    r0["pre_workout_readiness_0_10"]
+                )
 
             def _band(v, low_hi, mid_hi):  # 1-7 Hooper → qualitative
                 if v is None:

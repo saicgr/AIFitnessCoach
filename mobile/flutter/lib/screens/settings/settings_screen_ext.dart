@@ -201,7 +201,13 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
         'Active Workout',
         'Easy / Simple / Advanced walkthroughs',
         Icons.fitness_center,
-        ['tour_seen_easy', 'tour_seen_simple', 'tour_seen_advanced'],
+        [
+          'tour_seen_easy',
+          'tour_seen_simple',
+          'tour_seen_advanced',
+          // Contextual Rest Timer coach-mark (fires on first real rest).
+          'tour_seen_rest_coachmark',
+        ],
       ),
       (
         'nutrition_tour',

@@ -73,9 +73,18 @@ def resolve_collision(
         return "add"
     if (slot or "primary") == "addon":
         return "stack"
-    if (slot or "primary") == "primary" and replace:
-        return "replace"
-    return "stack"  # primary, run-alongside
+    # Primary program sessions OWN their covered days. A colliding existing
+    # workout — typically a leftover AI-plan workout that predates the program —
+    # is REPLACED, not stacked, so the started program is the sole primary
+    # content on that day. This matches the Start sheet's documented contract
+    # ("absent day_resolution == backend default 'replace'") and the same
+    # AI-ownership intent as today.py's AI-gen suppression on covered weekdays:
+    # once a primary program covers a day, the AI plan steps aside. The user can
+    # still opt to keep both per-day via day_resolutions[date]='add' (handled at
+    # the top). The request-level `replace` flag governs ending overlapping
+    # primary *assignments* (a separate concern), not this per-day collision —
+    # which is why we no longer gate on it here.
+    return "replace"  # primary owns the day
 
 
 def _find_colliding_workouts(

@@ -564,35 +564,43 @@ class _ExerciseInstructionsScreenState
   Widget _buildSubstituteBanner(Color textPrimary, Color textMuted) {
     final original = _substituteOriginalName ?? _exercise.name;
     final matched = _substituteMatchedName ?? '';
+    // This banner overlays the exercise video, whose brightness is
+    // unpredictable (white while loading, dark mid-clip). A translucent
+    // light-yellow background with theme `textPrimary` rendered near-white text
+    // on near-white video → invisible. Use a dark scrim + fixed near-white text
+    // with amber emphasis so it's guaranteed legible in every theme/media state.
+    const amber = Color(0xFFFCD34D);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFCD34D).withValues(alpha: 0.18),
+        color: Colors.black.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFFCD34D).withValues(alpha: 0.6),
+          color: amber.withValues(alpha: 0.6),
           width: 1,
         ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded,
-              size: 16, color: Color(0xFFFCD34D)),
+          const Icon(Icons.info_outline_rounded, size: 16, color: amber),
           const SizedBox(width: 8),
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: TextStyle(fontSize: 12, color: textPrimary, height: 1.3),
+                style: const TextStyle(
+                    fontSize: 12, color: Color(0xFFFAFAFA), height: 1.3),
                 children: [
                   const TextSpan(text: 'Showing '),
                   TextSpan(
                     text: matched,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, color: amber),
                   ),
                   const TextSpan(text: ' — closest match for '),
                   TextSpan(
                     text: original,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, color: amber),
                   ),
                   const TextSpan(text: '.'),
                 ],

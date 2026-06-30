@@ -196,9 +196,11 @@ class EasyActiveWorkoutView extends StatelessWidget {
               showEffort: true,
             ),
             // Tour anchor: the first-run Easy spotlight ("Today's exercise")
-            // targets this header via AppTourKeys.exerciseCardKey.
+            // targets this header via AppTourKeys.easyExerciseHeaderKey — an
+            // Easy-OWN key (NOT the Advanced `exerciseCard` key), so the two
+            // mode trees never collide during the E/A AnimatedSwitcher.
             KeyedSubtree(
-              key: AppTourKeys.exerciseCardKey,
+              key: AppTourKeys.easyExerciseHeaderKey,
               child: EasyExerciseHeader(
                 exercise: exercise,
                 currentSet: currentSetNumber,
@@ -239,19 +241,20 @@ class EasyActiveWorkoutView extends StatelessWidget {
             // above already shows the per-set ledger (previous sets inline).
             // The focal poster + LOG SET now own the residual height.
             Expanded(
-              // Tour anchor: the "Log your effort" + "Finish the set" Easy
-              // spotlight steps target the focal column (steppers + LOG SET)
-              // via AppTourKeys.setLoggingKey.
-              child: KeyedSubtree(
-                key: AppTourKeys.setLoggingKey,
-                // Long-press anywhere on the focal column body opens the same
-                // actions sheet as the "•••" header chip. `behavior: deferToChild`
-                // ensures the inner +/− stepper buttons and the big Log set CTA
-                // still get their own taps before this gesture wins.
-                child: GestureDetector(
-                  behavior: HitTestBehavior.deferToChild,
-                  onLongPress: onShowExerciseActions,
-                  child: EasyFocalColumn(
+              // Long-press anywhere on the focal column body opens the same
+              // actions sheet as the "•••" header chip. `behavior: deferToChild`
+              // ensures the inner +/− stepper buttons and the big Log set CTA
+              // still get their own taps before this gesture wins.
+              //
+              // Tour anchors now live INSIDE EasyFocalColumn — `easyStepperKey`
+              // on the weight/reps steppers ("Log your effort") and
+              // `easyLogSetButtonKey` on the LOG SET button ("Finish the set").
+              // Split so the two steps spotlight DISTINCT widgets, and so the
+              // Easy tree shares NO tour key with the Advanced tree.
+              child: GestureDetector(
+                behavior: HitTestBehavior.deferToChild,
+                onLongPress: onShowExerciseActions,
+                child: EasyFocalColumn(
                   state: state,
                   exerciseName: exercise.name,
                   useKg: useKg,
@@ -270,7 +273,6 @@ class EasyActiveWorkoutView extends StatelessWidget {
                   nextExerciseName: nextExerciseName,
                 ),
                 ),
-              ),
             ),
             // Full-width "✦ Ask coach" below LOG SET — the only secondary CTA,
             // visually lighter than the primary Log Set (per the mockup). Skip

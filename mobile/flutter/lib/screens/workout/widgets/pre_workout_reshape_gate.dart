@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../providers/active_workout_live_provider.dart';
 
 /// Keys ("$workoutId|$yyyymmdd") for which the reshape gate already ran today.
@@ -58,10 +59,8 @@ Future<void> maybeRunPreWorkoutReshape(
   // Mark done up-front so a rebuild/re-entry can't double-prompt.
   ref.read(preWorkoutReshapeDoneProvider.notifier).state = {...done, key};
 
-  final input = await showModalBottomSheet<_CheckInInput>(
+  final input = await showGlassSheet<_CheckInInput>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (_) => const _ReshapeCheckInSheet(),
   );
   if (input == null || !context.mounted) return; // dismissed → no change
@@ -119,14 +118,21 @@ class _CheckInInput {
     this.painLevel,
   });
 
-  Map<String, dynamic> toJson({required bool apply}) => {
-        'sleep_score': sleep,
-        'readiness_score': readiness,
-        if (availableMinutes != null) 'available_minutes': availableMinutes,
-        if (painPart != null) 'pain_part': painPart,
-        if (painLevel != null) 'pain_level': painLevel,
-        'apply': apply,
-      };
+  Map<String, dynamic> toJson({required bool apply}) {
+    final now = DateTime.now();
+    final localDate = '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    return {
+      'sleep_score': sleep,
+      'readiness_score': readiness,
+      if (availableMinutes != null) 'available_minutes': availableMinutes,
+      if (painPart != null) 'pain_part': painPart,
+      if (painLevel != null) 'pain_level': painLevel,
+      'local_date': localDate,
+      'apply': apply,
+    };
+  }
 }
 
 class _ReshapeResult {
@@ -180,32 +186,18 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.surface : AppColorsLight.surface;
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-          20, 14, 20, 20 + MediaQuery.of(context).viewInsets.bottom),
+    // Frosted glass surface — GlassSheet supplies the BackdropFilter blur,
+    // translucent background, rounded top, border, the standard drag handle,
+    // and keyboard/home-indicator inset handling. We only own the content.
+    return GlassSheet(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: muted.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
           Text(
             _step == 0 ? 'Quick check-in' : 'Anything to flag?',
             style: TextStyle(

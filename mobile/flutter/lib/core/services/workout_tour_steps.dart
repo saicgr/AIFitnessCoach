@@ -54,14 +54,17 @@ WorkoutUiMode? _tierForTourId(String? tourId) => switch (tourId) {
     };
 
 /// Easy tour — 3 steps. First-timer vocabulary; avoids any advanced concepts.
-/// The Easy active-workout screen now attaches the real anchors —
-/// `AppTourKeys.exerciseCardKey` on the exercise header and
-/// `AppTourKeys.setLoggingKey` on the focal column (steppers + LOG SET) — so
-/// these spotlight the actual Easy widgets, with an animated highlight ring.
+/// The Easy active-workout screen attaches Easy-OWN anchors —
+/// `easyExerciseHeaderKey` on the exercise header, `easyStepperKey` on the
+/// weight/reps steppers, and `easyLogSetButtonKey` on the LOG SET button — so
+/// each step spotlights a DISTINCT Easy widget (steps 2 & 3 no longer share a
+/// target) with an animated highlight ring. These keys are also separate from
+/// the Advanced tree's `exerciseCard`/`setLogging` keys, so the two screens
+/// never collide during the Easy↔Advanced AnimatedSwitcher transition.
 List<AppTourStep> easyTourSteps() => [
       AppTourStep(
         id: 'workout_easy_step_header',
-        targetKey: AppTourKeys.exerciseCardKey,
+        targetKey: AppTourKeys.easyExerciseHeaderKey,
         title: "Today's exercise",
         description:
             "This is today's exercise. Tap ▶ to watch the demo if you need form help.",
@@ -71,7 +74,7 @@ List<AppTourStep> easyTourSteps() => [
       ),
       AppTourStep(
         id: 'workout_easy_step_stepper',
-        targetKey: AppTourKeys.setLoggingKey,
+        targetKey: AppTourKeys.easyStepperKey,
         title: 'Log your effort',
         description:
             'Dial in weight & reps — or distance/time for cardio — with − and +. Tap a number to type it.',
@@ -81,7 +84,7 @@ List<AppTourStep> easyTourSteps() => [
       ),
       AppTourStep(
         id: 'workout_easy_step_log',
-        targetKey: AppTourKeys.setLoggingKey,
+        targetKey: AppTourKeys.easyLogSetButtonKey,
         title: 'Finish the set',
         description:
             "Tap LOG SET when you finish. We'll handle the rest — literally.",
@@ -153,9 +156,10 @@ List<AppTourStep> simpleTourSteps() => [
       ),
     ];
 
-/// Advanced tour — 7 steps. Existing 6-step walkthrough (verbatim) plus a
-/// final step pointing at the tier toggle so experienced users know they can
-/// step down to Simple/Easy if they want a calmer screen.
+/// Advanced tour — 6 steps. Exercise → sets → RIR → swap → AI coach → tier
+/// toggle. (The old "Rest Timer" step was pulled out into a contextual
+/// coach-mark — see `restCoachmarkSteps()` — because its target only exists on
+/// screen during an active rest, never at upfront-tour time.)
 /// TODO(tier-ui): once the tier toggle is added to `workout_top_bar_v2.dart`,
 /// wrap it with `key: AppTourKeys.tierToggleKey` and swap the final step's
 /// target from `swapExerciseKey` to `tierToggleKey`.
@@ -192,14 +196,12 @@ List<AppTourStep> advancedTourSteps() => [
             'Swap any exercise for a suitable alternative, create a superset, or switch sides with L/R.',
         position: TooltipPosition.above,
       ),
-      AppTourStep(
-        id: 'workout_step_rest',
-        targetKey: AppTourKeys.restTimerKey,
-        title: 'Rest Timer',
-        description:
-            "Starts automatically between sets. Skip it whenever you're ready to go again.",
-        position: TooltipPosition.below,
-      ),
+      // NOTE: the "Rest Timer" step is intentionally NOT here. The rest-timer
+      // widget (inline rest row) only mounts during an active between-set rest,
+      // so it's never on screen when this upfront tour runs — the spotlight had
+      // no target and showed a dimmed screen with no highlight. It's now a
+      // contextual one-time coach-mark fired the first time a real rest starts
+      // (see `restCoachmarkSteps()` + `WorkoutTourService.maybeShowRestCoachmark`).
       AppTourStep(
         id: 'workout_step_ai',
         targetKey: AppTourKeys.workoutAiKey,
@@ -223,6 +225,21 @@ List<AppTourStep> advancedTourSteps() => [
         title: 'Switch tiers anytime',
         description:
             'Want a calmer screen? Switch to Easy from this toggle anytime.',
+        position: TooltipPosition.below,
+      ),
+    ];
+
+/// Single-step contextual coach-mark for the Rest Timer. Fired the first time a
+/// real between-set rest begins (when the keyed inline rest row is actually on
+/// screen), NOT as part of the upfront tour. See
+/// `WorkoutTourService.maybeShowRestCoachmark`.
+List<AppTourStep> restCoachmarkSteps() => [
+      AppTourStep(
+        id: 'workout_rest_coachmark',
+        targetKey: AppTourKeys.restTimerKey,
+        title: 'Rest Timer',
+        description:
+            "Starts automatically between sets. Skip it whenever you're ready to go again.",
         position: TooltipPosition.below,
       ),
     ];
@@ -297,6 +314,43 @@ class WorkoutTourService {
       '🎯 [WorkoutTour] Firing ${tier.asString} tour (${steps.length} steps)',
     );
     controller.show(tourIdForTier(tier), steps);
+  }
+
+  /// SharedPreferences flag for the one-time Rest Timer coach-mark.
+  static const String _restCoachmarkSeenKey = 'tour_seen_rest_coachmark';
+  static const String _restCoachmarkTourId = 'workout_rest_coachmark';
+
+  /// Contextual Rest Timer coach-mark. Call this the first moment a real
+  /// between-set rest starts (so the keyed inline rest row is mounted). Shows a
+  /// single-step spotlight on the actual rest timer exactly once per user, then
+  /// records it as seen. No-op if already seen or another tour is visible.
+  static Future<void> maybeShowRestCoachmark(WidgetRef ref) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_restCoachmarkSeenKey) ?? false) return;
+
+    final current = ref.read(appTourControllerProvider);
+    // Don't stomp an in-flight tour (e.g. the upfront tier walkthrough). The
+    // next rest will re-invoke this; the seen flag isn't written until it
+    // actually shows.
+    if (current.isVisible) {
+      debugPrint(
+        '🔍 [WorkoutTour] rest coach-mark deferred (${current.tourId} visible)',
+      );
+      return;
+    }
+
+    await prefs.setBool(_restCoachmarkSeenKey, true);
+    debugPrint('🎯 [WorkoutTour] Firing Rest Timer coach-mark');
+    ref
+        .read(appTourControllerProvider.notifier)
+        .show(_restCoachmarkTourId, restCoachmarkSteps());
+  }
+
+  /// Clear the Rest Timer coach-mark seen flag — used by "Replay Tutorials".
+  static Future<void> resetRestCoachmark() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_restCoachmarkSeenKey);
+    await prefs.remove('has_seen_$_restCoachmarkTourId');
   }
 
   /// Abort any in-flight tier tour (Easy/Simple/Advanced) without marking it

@@ -13296,13 +13296,13 @@ abstract class AppLocalizations {
   /// No description provided for @easyHelpLogASet.
   ///
   /// In en, this message translates to:
-  /// **'Log a set'**
+  /// **'Finish the set'**
   String get easyHelpLogASet;
 
   /// No description provided for @easyHelpLogASetBody.
   ///
   /// In en, this message translates to:
-  /// **'Log a set body'**
+  /// **'Hit the big LOG SET when you\'re done — we track your progress automatically.'**
   String get easyHelpLogASetBody;
 
   /// No description provided for @easyHelpSkipToNextExercise.
@@ -13338,25 +13338,25 @@ abstract class AppLocalizations {
   /// No description provided for @easyHelpTodaysExercise.
   ///
   /// In en, this message translates to:
-  /// **'Todays exercise'**
+  /// **'Today\'s exercise'**
   String get easyHelpTodaysExercise;
 
   /// No description provided for @easyHelpTodaysExerciseBody.
   ///
   /// In en, this message translates to:
-  /// **'Todays exercise body'**
+  /// **'Your move for this set, with a demo and form cues. Tap the card to watch it full-screen.'**
   String get easyHelpTodaysExerciseBody;
 
   /// No description provided for @easyHelpWeightAndReps.
   ///
   /// In en, this message translates to:
-  /// **'Weight and reps'**
+  /// **'Log your effort'**
   String get easyHelpWeightAndReps;
 
   /// No description provided for @easyHelpWeightAndRepsBody.
   ///
   /// In en, this message translates to:
-  /// **'Weight and reps body'**
+  /// **'Dial in weight and reps — or distance and time for cardio moves — with − and +. Tap a number to type it.'**
   String get easyHelpWeightAndRepsBody;
 
   /// No description provided for @easyRestOverlayRest.

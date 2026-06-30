@@ -23,6 +23,7 @@ import '../../../../core/utils/exercise_tracking_metric.dart';
 import '../../shared/focal_stepper.dart';
 import '../../widgets/timed_exercise_timer.dart';
 import '../easy_active_workout_state_models.dart';
+import '../../../../widgets/tooltips/tooltip_anchors.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 
@@ -647,9 +648,15 @@ class EasyFocalColumn extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          state.isDistance
-                              ? distanceBody
-                              : (state.isTimed ? timedBody : repsBody),
+                          // Tour anchor ("Log your effort"): the weight/reps
+                          // (or distance/time) steppers + poster. Easy-OWN key,
+                          // distinct from the LOG SET button below.
+                          KeyedSubtree(
+                            key: TooltipAnchors.easyStepper,
+                            child: state.isDistance
+                                ? distanceBody
+                                : (state.isTimed ? timedBody : repsBody),
+                          ),
                           if (extrasSection != null) extrasSection,
                         ],
                       ),
@@ -662,23 +669,28 @@ class EasyFocalColumn extends StatelessWidget {
               SizedBox(height: tight ? 8 : 12),
               // The rounded accent CTA pill (`.rw-cta`): caption restates the
               // live `weight × reps` ("LOG SET — 60 × 12"), matching the frame.
-              SizedBox(
-                height: logBtnHeight,
-                child: ElevatedButton(
-                  onPressed: onLogSet,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.accent,
-                    foregroundColor: colors.accentContrast,
-                    shape: const StadiumBorder(),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    _ctaLabel(),
-                    style: ZType.lbl(
-                      logFontSize,
-                      color: colors.accentContrast,
-                      weight: FontWeight.w800,
-                      letterSpacing: 2.5,
+              // Tour anchor ("Finish the set") — Easy-OWN key, distinct from the
+              // steppers above and from the Advanced tree's setLogging key.
+              KeyedSubtree(
+                key: TooltipAnchors.easyLogSetButton,
+                child: SizedBox(
+                  height: logBtnHeight,
+                  child: ElevatedButton(
+                    onPressed: onLogSet,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.accent,
+                      foregroundColor: colors.accentContrast,
+                      shape: const StadiumBorder(),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      _ctaLabel(),
+                      style: ZType.lbl(
+                        logFontSize,
+                        color: colors.accentContrast,
+                        weight: FontWeight.w800,
+                        letterSpacing: 2.5,
+                      ),
                     ),
                   ),
                 ),

@@ -22,6 +22,7 @@ original session untouched with `reshaped=false`, never a 500 that blocks Start.
 from __future__ import annotations
 
 import logging
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Path
@@ -50,6 +51,10 @@ class ReshapeRequest(BaseModel):
     pain_level: Optional[int] = None  # 0–10; ≥4 triggers a swap
     available_minutes: Optional[int] = None
     note: Optional[str] = None
+    # User's local date (YYYY-MM-DD) so the persisted check-in is keyed to the
+    # day the user actually trained, not the server's UTC day. Optional —
+    # falls back to the server date when absent.
+    local_date: Optional[str] = None
     # When true the reshaped session is persisted back to the workout (the user
     # tapped Accept). When false the endpoint only previews the diff.
     apply: bool = False
@@ -86,6 +91,35 @@ def _readiness_0_100(req: ReshapeRequest) -> Optional[int]:
         return None
     avg10 = sum(vals) / len(vals)
     return max(0, min(100, round(avg10 * 10)))
+
+
+def _persist_checkin_gauges(sb, user_id: str, req: ReshapeRequest) -> None:
+    """Best-effort: store the raw 0-10 Sleep/Readiness gauges on the user's
+    `readiness_scores` row for today so the AI coach can see how the user felt
+    going into the session (user_state_assembler + daily_insight read this
+    table). Upsert on (user_id, score_date) only touches the new columns, so it
+    never clobbers a same-day Hooper check-in. Failures are swallowed — a
+    persistence error must never block the workout start."""
+    if req.sleep_score is None and req.readiness_score is None:
+        return
+    try:
+        score_date = req.local_date or date.today().isoformat()
+        record: Dict[str, Any] = {
+            "user_id": user_id,
+            "score_date": score_date,
+            "pre_workout_checkin_at": datetime.now().isoformat(),
+        }
+        if req.sleep_score is not None:
+            record["pre_workout_sleep_0_10"] = max(0, min(10, int(req.sleep_score)))
+        if req.readiness_score is not None:
+            record["pre_workout_readiness_0_10"] = max(
+                0, min(10, int(req.readiness_score))
+            )
+        sb.client.table("readiness_scores").upsert(
+            record, on_conflict="user_id,score_date"
+        ).execute()
+    except Exception as e:
+        logger.warning(f"[reshape] check-in gauge persist skipped: {e}")
 
 
 def _estimate_minutes(exercises: List[Dict[str, Any]]) -> float:
@@ -177,6 +211,10 @@ async def reshape_for_readiness(
         raise HTTPException(status_code=404, detail="Workout not found")
     if str(row.data.get("user_id")) != user_id:
         raise HTTPException(status_code=403, detail="Access denied")
+
+    # Persist the raw check-in gauges so the coach knows how the user felt today
+    # (independent of whether the engine reshaped anything). Best-effort.
+    _persist_checkin_gauges(sb, user_id, req)
 
     original = row.data.get("exercises_json") or []
     if not isinstance(original, list) or not original:

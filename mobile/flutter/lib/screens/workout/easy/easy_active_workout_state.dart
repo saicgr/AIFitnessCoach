@@ -134,6 +134,12 @@ class EasyActiveWorkoutScreenState
   List<Map<String, dynamic>>? _warmup;
   bool _warmupPhase = false;
 
+  // True from initState until `_resolveWarmupPhase` decides whether a guided
+  // warm-up runs. While true the build shows a neutral warm-up placeholder
+  // (NOT the working-set screen) so the active screen never flashes in before
+  // the warm-up data arrives. Set only when a warm-up is actually eligible.
+  bool _warmupResolving = false;
+
   /// Mirrors the spotlight tour's dismiss → `tour_seen_easy` so the first-run
   /// Easy walkthrough fires exactly once. Closed in [dispose].
   ProviderSubscription<AppTourState>? _tourSeenSub;
@@ -227,7 +233,18 @@ class EasyActiveWorkoutScreenState
     _currentSetStartTime = DateTime.now();
 
     // Easy now STARTS WITH WARM-UP (present but skippable) instead of skipping
-    // it. Resolve the warm-up phase after the first frame (so the checkpoint
+    // it. Decide ELIGIBILITY synchronously here so the FIRST build can show a
+    // warm-up placeholder instead of the working-set screen — otherwise the
+    // active screen paints first and the warm-up appears on top of it (flash).
+    // The actual warm-up data is still fetched async in _resolveWarmupPhase.
+    final warmupAlreadyDone = ref.read(activeWorkoutWarmupDoneProvider);
+    final warmupHasLoggedSets =
+        _perExercise.values.any((s) => s.completed.isNotEmpty);
+    _warmupResolving = !(warmupAlreadyDone ||
+        warmupHasLoggedSets ||
+        widget.workout.id == null);
+
+    // Resolve the warm-up phase after the first frame (so the checkpoint
     // restore above has had a chance to run).
     WidgetsBinding.instance.addPostFrameCallback((_) => _resolveWarmupPhase());
   }
@@ -257,6 +274,7 @@ class EasyActiveWorkoutScreenState
         setState(() {
           _warmup = warm;
           _warmupPhase = true;
+          _warmupResolving = false;
         });
         return;
       }
@@ -271,7 +289,14 @@ class EasyActiveWorkoutScreenState
   /// the runner's onDone (finished OR skipped) and the no-warmup path.
   void _finishWarmupPhase() {
     if (!mounted) return;
-    if (_warmupPhase) setState(() => _warmupPhase = false);
+    // Clear both the active phase and the resolving placeholder so the build
+    // falls through to the working sets (covers the no-warm-up / error paths).
+    if (_warmupPhase || _warmupResolving) {
+      setState(() {
+        _warmupPhase = false;
+        _warmupResolving = false;
+      });
+    }
     ref.read(activeWorkoutWarmupDoneProvider.notifier).state = true;
     // First-run Easy walkthrough — the shared spotlight tour (same
     // `tour_seen_easy` flag the old bottom-card used, so existing users who
@@ -1278,6 +1303,24 @@ class EasyActiveWorkoutScreenState
   Widget build(BuildContext context) {
     if (_exercises.isEmpty) {
       return const Scaffold(body: SizedBox.shrink());
+    }
+
+    // Warm-up is eligible but its data hasn't resolved yet — show a neutral
+    // placeholder that matches EasyWarmupRunner's background (black/white) so
+    // the working-set screen never flashes in before the warm-up appears.
+    if (_warmupResolving && _warmup == null) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final accent = AccentColorScope.of(context).getColor(isDark);
+      return Scaffold(
+        backgroundColor: isDark ? Colors.black : Colors.white,
+        body: Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(strokeWidth: 2.5, color: accent),
+          ),
+        ),
+      );
     }
 
     // Warm-up phase (Easy redesign) — guided warm-up runner before the working
