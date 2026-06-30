@@ -1,346 +1,353 @@
-# Zealova Play Store Screenshots Guide
+# Zealova Play Store / App Store Screenshots Guide
+
+> **Rebuilt 2026-06-29** for the post-redesign update (signature-v2 reskin + 442 net-new-feature commits since the prior May 10 version). This deck fully replaces the May 2026 deck (no Program Library, parallel programs, customizability, Form Check, or Menu Scan). Research backing + competitor teardown live in `next_update/screenshots_2026-06.md`.
 
 ## Setup
 - **Tool**: [theapplaunchpad.com](https://theapplaunchpad.com)
-- **Play Store size**: 1080x1920px (portrait, 9:16), PNG/JPEG, max 8 MB
-- **App Store size**: 1320x2868px (6.9" iPhone 16 Pro Max — 2026 required), PNG/JPEG, no alpha, 72 DPI
-- **Counts**: Play allows **8 phone screenshots max** per Console docs (some apps like Mob ship 14 via API/custom listings — try uploading >8 in Console; if it caps you, use the 8 below). App Store allows **up to 10**.
-- **Template style**: Mob-inspired — cream/off-white background, single phone tilted, prop objects bleeding off the edges, caption stacked top with one accent word
-- **App mode**: Dark mode ON for in-phone screen capture; light cream backgrounds for the frame around the phone
+- **Play Store size**: **1080×2400px** (20:9, Pixel 9 / Galaxy S25 era — preferred over the legacy 1080×1920), PNG/JPEG, max 8 MB
+- **App Store size**: 1320×2868px (6.9" iPhone 16 Pro Max — 2026 required), PNG/JPEG, no alpha, 72 DPI
+- **Counts**: Play allows **8 phone screenshots max**; App Store allows **up to 10**. Minimum to publish is 2.
+- **Caption text area**: keep under 20% of image area (Play compliance).
+- **Template style**: Mob-inspired — cream/off-white frame around a single tilted phone, prop objects bleeding off the edges, caption stacked top with one accent word. (Live research confirms this IS the category-winning pattern in 2026.)
+- **App mode**: Dark mode ON for the in-phone capture; light/neutral frame backgrounds around the phone.
 
 ---
 
-## ASO Research Notes (2026)
+## 2026 ASO rules driving this deck (live research, 2026-06-29)
 
-These rules drive the deck below. Sources: [Apptweak](https://www.apptweak.com/en/aso-blog/how-to-optimize-your-app-screenshots), [ASO Mobile](https://asomobile.net/en/blog/screenshots-for-app-store-and-google-play-in-2025-a-complete-guide/), [AppScreenshotStudio](https://medium.com/@AppScreenshotStudio/app-store-screenshots-that-convert-the-2026-design-guide-4438994689d6), [Sensor Tower](https://sensortower.com/blog/top-10-health-and-fitness-apps-what-their-screenshots-teach-us-about-optimization), [SnapMonk](https://www.snapmonk.com/screenshot-templates/fitness), [Promodo](https://www.promodo.com/blog/aso-trends), [SplitMetrics](https://splitmetrics.com/blog/master-the-official-splitmetrics-a-b-testing-validation-framework-to-win-on-the-app-store/).
-
-- **~90% of users don't scroll past frame 3** — first 3 frames must each stand alone as install reasons.
-- **Main caption: 2-6 words** — longer becomes an unread text block at thumbnail.
-- **Sub-caption: 8-12 words** with concrete details (numbers, timeframes, specific use cases).
-- **Apple OCRs caption text into search keyword index** — captions need keyword density.
-- **Outcome > feature**: *"Never forget a deadline again"* beats *"Advanced Task Management"*.
-- **Specific numbers convert** — *"1,700+ exercises"* beats *"Tons of exercises"*.
-- **Time-bounded outcomes work** — *"7-day yoga challenge starts today"* got +12% conversion.
-- **Social proof on frame 1 → up to +90% conversion** (rating, install count, media logos, "as seen in").
-- **Top-left of each frame** is where the eye lands first.
-- **High-contrast text** Apple OCR can read.
-- **Plain honest captions** outperform marketing speak.
-- **Video preview** especially strong for fitness — first 3 sec must show value, not animated logo.
+- **Main caption: 5 words MAX**; **sub-caption: 8–12 words** with a concrete number/timeframe.
+- **First 3 frames carry ~70% of conversion weight** — each must stand alone as a complete install reason, and together they must cover BOTH audiences (workout + nutrition).
+- **Story Flow arc beats feature enumeration** — frames form a mini-narrative (Value → How → Trust), not a feature list. **One idea per frame.**
+- **Social proof lives in frames 6–8** (the Trust act), not frame 1. Pre-reviews, a small capability pill on frame 1 is the credibility proxy.
+- **Apple OCRs caption text** into the search index → captions need keyword density. **Outcome > feature; specific numbers convert.**
+- **Feature graphic (Play, 1024×500)** now meaningfully affects CTR — spec'd below.
+- **A/B**: 7+ days, 25K impressions/variant, ONE element per test.
 
 ---
 
-## The 8 Frames
+## Why this top-3 (persona-tested)
 
-| # | Main caption (orange in **bold**) | Sub-caption | Screen | Chars |
+Frames 1–3 are ~70% of the install decision, so they were stress-tested against five buyer "hats." The earlier all-workout top-3 sold the experienced lifter but **lost the nutrition-first installer** (no nutrition until frame 4) and **intimidated beginners** (a "stack multiple programs" frame reads as complexity). The fix:
+
+| Frame | Closes which hat |
+|---|---|
+| 1 — One coach, workouts AND food | Skeptic / value shopper ("stop paying for 3 apps") + all-in-one seeker |
+| 2 — Real programs, run several | Experienced lifter + skeptic (the moat, **shown** not claimed) |
+| 3 — Snap the menu, best pick | Nutrition-first / dieter + beginner (universal — everyone eats out) |
+
+Both halves of the app (workout + nutrition) and the category-unique moat all land before the scroll drop-off. The power-user depth (parallel detail, customization) and form check sit just below, where the lifters who care will scroll.
+
+---
+
+## The 8 Frames (final order)
+
+**Founder calls baked in:** lead with the **all-in-one** value prop (frame 1); fold "real programs" + the category-unique **parallel scheduler** into ONE frame (frame 2) so the moat is *shown* AND a top-3 slot is freed for nutrition; **menu scan in the top-3** (frame 3); **no coach-adapt / advise→act frame**; Form Check kept but flagged as the swap-out (frame 7).
+
+| # | Main caption (accent word in **CAPS**) | Sub-caption | Screen | Required |
 |---|---|---|---|---|
-| 1 | Your fitness coach in **chat.** | *1,700+ exercises. Workouts + macros. Adapts to you.* | Home dashboard + props (dumbbell, meal bowl) — single phone, brand composition, capability pill top-left | 27 |
-| 2 | Always know **what to lift** next | *Adapts to your last session, every time* | Exercise detail (Bench Press) — warmup sets + effective sets w/ green/blue progression bars + Start Workout button | 29 |
-| 3 | Menu picks. **Fridge recipes.** | *Scored, ranked, logged — in seconds.* | 2-mockup composite — menu scan w/ TOP PICK badge + scores (left) + fridge scan w/ recipe suggestions (right) | 28 |
-| 4 | Don't feel like it? **Swap it.** | *Coach swaps any exercise — by chat* | Chat: user *"swap deadlifts for trap bar"* → coach reply with updated workout card inline | 27 |
-| 5 | Just **say what you ate.** | *Or what you trained — yoga, runs, anything* | Chat showing voice log of meal + yoga + cardio | 22 |
-| 6 | Watch your **strength climb** | *Every PR, charted automatically* | Progress dashboard — heatmap, 1RM line chart, recent PR callout, streak counter | 25 |
-| 7 | Photos & pounds, **side by side** | *See the change you can't feel* | Body tracking — weight trend line + before/after photo split-screen | 30 |
-| 8 | Brag worthy. **Built-in.** | *15 ways to share your wins — Wrapped, receipt, trading card, more* | Shareable gallery — grid of 15+ viral format thumbnails | 22 |
+| 1 | One coach. Workouts **AND FOOD** | *Programs, form, meals — just ask. One app, any question.* | Signature-v2 Home | |
+| 2 | Real programs. **RUN SEVERAL** | *HYROX, strength, mobility — run several at once, one schedule.* | Program-aware merged Schedule | ✅ unique |
+| 3 | Snap the menu. **BEST PICK** | *Scored, ranked — sort every dish by protein, carbs or calories.* | Menu scan result | ✅ |
+| 4 | Any length. **ANY DAYS** | *4 weeks or 16, 2 days or 6 — your gym, AI tailors it.* | Edit Program (variants + customize) | ✅ |
+| 5 | Set by set. **YOU'RE READY** | *Warm up, lift, rest, repeat — one clean screen guides every set.* | Easy-mode active workout | |
+| 6 | Just say what **YOU ATE** | *Or what you trained — runs, yoga, anything. Coach hears it.* | Coach chat multi-input logging | |
+| 7 | Film a set. **GET COACHED** | *Your squat, your deadlift — real AI notes in 30 seconds.* | AI Form Check result | |
+| 8 | Watch your strength **CLIMB** | *Every PR tracked automatically. 16 muscle groups. All your lifts.* | Overload Dashboard | |
 
 ---
 
 ## Story arc
 
 ```
-1. WHAT IT IS (fitness coach in chat) →
-2. WORKOUT INTELLIGENCE (knows what you should lift) →
-3. NUTRITION INTELLIGENCE (picks + recipes from scans) →
-4. WORKOUT FLEXIBILITY (chat-swap any exercise) →
-5. MULTI-INPUT (voice log meals + yoga) →
-6. WORKOUT PAYOFF (strength climbs) →
-7. BODY PAYOFF (photos + pounds) →
-8. SHARE/RETENTION (brag worthy)
+1. WHAT IT IS        (one coach — workouts AND food, all-in-one)   ┐
+2. THE MOAT          (real programs, run several at once)          ├─ Top-3: 70% of install decision
+3. SNAP THE MENU     (menu scan — nutrition, universal pull)       ┘
+4. MAKE IT YOURS     (program customizability — your gym)          ┐
+5. YOU'RE READY      (Easy-mode active workout)                    ├─ How / depth
+6. JUST SAY IT       (multi-input chat logging)                    │
+7. FILM A SET        (AI Form Check — bonus differentiator)        ┘
+8. THE PAYOFF        (strength climbs — Overload Dashboard)        ─ Trust / outcome
 ```
-
-Frame 1 = setup. Frames 2-5 = unfair advantages spread across workout (2, 4) and nutrition (3, 5). Frames 6-7 = payoffs. Frame 8 = retention/viral.
-
-**Top 3 carry ~90% of the install decision** — each must stand alone as an install reason:
-- Frame 1: chat-coach claim establishes category positioning
-- Frame 2: exercise intelligence (proof on workout side)
-- Frame 3: menu picks + fridge recipes (proof on nutrition side, output > input)
 
 ---
 
 ## Frame-by-Frame Capture Details
 
-### Frame 1 — Brand Hero + Capability Pill (Mob-style)
+### Frame 1 — All-in-One Coach (Hero)
+**Caption**: `One coach. Workouts AND FOOD.` — "AND FOOD" oversized, brand green.
+**Sub**: *Programs, form, meals — just ask. One app, any question.*
+**Background**: Cream / off-white `#FAF8F4`
 
-**Main caption** (stacked top, last word oversized + orange):
-```
-Your fitness
-coach in chat.    ← "chat" 1.5× size, brand green
-```
+**In-phone**: Signature-v2 Home — metric deck at top (calorie ring, workout ring, steps, sleep), today's workout card on the timeline, coach nudge card showing a real positive insight ("Your bench is up 12 lbs this week"). Dark mode, clean.
 
-**Sub-caption** (smaller, below main):
-*1,700+ exercises. Workouts + macros. Adapts to you.*
+**Pre-conditions**: dark mode; 1 workout logged today/yesterday; calorie ring partially filled; coach card showing a real positive insight; clean status bar.
 
-**Capability pill** (top-left corner, small pill, brand green on cream):
-```
-1,700+ exercises · Workouts + macros · Adapts to you
-```
+**Composition**: phone tilted ~10–12° clockwise, low-centered; bottom-left half a meal bowl bleeding off; bottom-right dumbbell head; top-left capability pill; top-right optional herbs/water glass.
 
-This pre-launch pill substitutes for social proof. **Swap to real social proof badge as soon as you have it** — see Post-Launch Badge Progression below.
+**Out-position**: the all-in-one claim *is* the differentiator — no rival does workouts + programs + nutrition + form well. Google Health is broad but workout/health-only; MFP is nutrition-only; Fitbod/Hevy are workout-only. "Stop paying for 3 apps" is the value-shopper's hook.
 
-**What to capture (in-phone screen)**: Home dashboard — clean state, today's workout card visible, no error banners, no debug overlays.
-
-**Frame composition**:
-- Phone tilted ~12° clockwise, centered slightly low
-- Bottom-left: half a meal bowl (oats + berries) bleeding off
-- Bottom-right: dumbbell head bleeding off
-- Top-right: optional sprig of herbs or water glass
-- Top-left: the capability pill (do not bury it — eye lands top-left first)
+**Shippability**: CLEAN.
 
 ---
 
-### Frame 2 — Workout Intelligence (Progressive Overload Bars)
+### Frame 2 — Real Programs, Run Several (Category-Unique) — REQUIRED
+**Caption**: `Real programs. RUN SEVERAL.` — "RUN SEVERAL" oversized, brand green.
+**Sub**: *HYROX, strength, mobility — run several at once, one schedule.*
+**Background**: Deep charcoal `#1A1A2E` (cinematic, matches the in-app program aesthetic)
 
-**Main caption**: `Always know what to lift next`
-**Sub-caption**: *Adapts to your last session, every time*
+**This frame merges "real curated programs" + "run them in parallel" into one idea — Zealova's program system — and PROVES the parallel moat on-screen rather than claiming it in copy.**
+
+**In-phone**: Program-aware merged **Schedule** (`/schedule`) showing **multiple active programs at once on one calendar**:
+- An active-programs strip up top with **cover-art chips** (keeps the visual richness of the carousel): "HYROX · 12 wk", "PPL Hypertrophy · 8 wk", "Mobility · daily"
+- A weekly view below where each day's sessions are **badged/color-coded to their program**, and **at least one day stacks two programs** (e.g. Mon: HYROX + Mobility; Wed: PPL Push; Fri: HYROX + PPL Pull) — the per-day collision engine resolves replace-vs-add cleanly
+- Pick a week where ≥4 of 7 days carry a session from a *different* program, so "run several" is unmistakable
+
+**Pre-conditions**: 2–3 programs **started/active at the same time** on the test account; merged schedule populated across a visible week; per-program cover chips + color coding rendering; no empty days mid-week.
+
+**Out-position**: genuinely **category-unique** — no app runs multiple structured programs concurrently on one reconciled calendar. Fitbod / Future / Caliber / Freeletics give you **one plan at a time**; Hevy/Strong are manual routines with no multi-program scheduler; Gravl is a single adaptive plan. Backed by Zealova's per-day multi-assignment + collision-resolution engine (mig 2285; `today.py` multi-program tagging; Manage Programs sheet). "RUN SEVERAL" is the one claim no competitor can echo.
+
+**Shippability**: CLEAN — multi-program assignment + merged schedule shipped this cycle. Stage 2–3 active programs.
+
+**Carousel note**: the cinematic HYROX hero carousel (previously its own frame) is repurposed as the **Play feature graphic** and the program beat in the **preview video** — its aspirational wow still works hard in browse/search, while the listing frame proves the unique capability. (Alternative rendering, NOT recommended: use the carousel as this frame's screen and carry "run several" only in the sub-caption — but then the moat is *told*, not *shown*.)
+
+---
+
+### Frame 3 — Menu Scan (Nutrition Intelligence) — REQUIRED
+**Caption**: `Snap the menu. BEST PICK.` — "BEST PICK" oversized, brand green.
+**Sub**: *Scored, ranked — sort every dish by protein, carbs or calories.*
+**Background**: Warm peach `#FBE2C8` (warm = food context, proven)
+**Emotional angle**: the pain it kills is "eat out without guessing."
+
+**In-phone**: Menu scan result —
+- Restaurant menu photo thumbnail at top (small — shows input)
+- **Sort/filter pill row** under the photo (this is the differentiator — capture it visibly): `Sort: Protein ↓` active + chips `Carbs · Calories · Score` + a `High-protein` quick-filter chip. The dish list below is sorted by the active macro (protein-high first), so the sortability is unmistakable, not just claimed.
+- Parsed dish list with scores (sorted by protein here):
+  - "Grilled Salmon Salad — 38g protein · 420 cal — Score 91" + **TOP PICK** badge (brand green)
+  - "Chicken Caesar Wrap — 32g protein · 680 cal — Score 74"
+  - "BBQ Burger — 45g protein · 890 cal — Score 52"
+- "Best macro fit for your goal: Grilled Salmon Salad" callout under the top pick
+- "Log TOP PICK" button at bottom
+
+> **A/B idea**: this frame is a natural test candidate — variant A (auto "BEST PICK", passive/beginner appeal) vs variant B with the sort pills foregrounded (macro-tracker control appeal). Both legit; test which converts.
+
+**Pre-conditions**: scan a real menu (physical/printed/PDF) via Nutrition → camera → menu mode; clean result with ≥3 dishes + a TOP PICK badge; sort set to Protein ↓ so the list visibly ranks by macro; no spinner/loading state.
+
+**Out-position**: MacroFactor has **no food photo AI** (confirmed 2026). MFP's scan is Premium ($19.99/mo) with no scored menu mode. Cal AI is food-photo only (now inside MFP). **None of them let you sort a scanned menu by macro** — Zealova's live re-sort (protein/carbs/calories/score) + dietary filters (high-protein, low-carb, glycemic-load for diabetes, FODMAP for IBS) is unmatched in menu mode. **No workout-AI competitor (Fitbod, Hevy, Gravl) has any nutrition scanning at all.** Universally relatable — everyone eats out and struggles with it. Clean win in both category directions.
+
+**Shippability**: CLEAN — need a real menu to scan; output must show 3+ scored items + TOP PICK.
+
+---
+
+### Frame 4 — Total Customization (Any Length, Any Frequency, Your Gym) — REQUIRED
+**Caption**: `Any length. ANY DAYS.` — "ANY DAYS" oversized, brand green.
+**Sub**: *4 weeks or 16, 2 days or 6 — your gym, AI tailors it.*
+**Background**: Warm indigo `#3D3A6B`
+
+**This frame owns every flexibility dimension EXCEPT parallel (which is frame 2): pick the program length, pick how many sessions per week, assign your gym, swap any day, and AI re-tailors it.**
+
+**In-phone**: Edit Program / unified editor — lead with the **variant selectors** (this is what the caption promises), then show the rest:
+- **Duration selector** prominent: "Length: 12 weeks" (dropdown hinting 4 / 8 / 12 / 16)
+- **Frequency selector** prominent: "Days/week: 4" (showing 2 · 3 · 4 · 5 · 6 options)
+- Gym chip: "Iron Athletics" (one of the user's gyms)
+- AI-tailor toggle ON ("Tailor to my equipment")
+- A reordered day row hinting day-swap (e.g. "Leg Day → Tuesday"); "Save" at bottom; program name up top ("My HYROX Plan")
+
+**Pre-conditions**: an assigned program with a multi-duration / multi-frequency variant matrix (so the selectors show real choices); ≥2 gym profiles created; AI-tailor ON. Capture a state where the duration + days/week selectors are both clearly visible — they're the headline. (For curated programs the options come from the variant matrix; custom/AI-built programs can be any length/frequency.)
+
+**Out-position**: No competitor lets you reshape a program across **all** of length + frequency + gym + day-order + AI-tailor. Fitbod adjusts exercises but can't set program length or rearrange days. Caliber/Future hand you a fixed coach-set plan. **Gravl has no program customization.** This is the "it bends to *your* life, not the other way around" frame.
+
+**Shippability**: MODERATE — stage the editor with both variant selectors visible; use a static (not mid-drag) day-row state.
+
+---
+
+### Frame 5 — Easy-Mode Active Workout (In-Gym Confidence)
+**Caption**: `Set by set. YOU'RE READY.` — "YOU'RE READY" oversized, brand green.
+**Sub**: *Warm up, lift, rest, repeat — one clean screen guides every set.*
 **Background**: Soft sky `#D6E9F5`
 
-**What to capture**: Exercise detail screen (Barbell Bench Press) showing:
-- Warmup sets table (e.g. Set 1: 10 reps @ 20 kg, Set 2: 5 reps @ 37.5 kg)
-- Effective sets table with green/blue progression bars (green = matched last session, blue = PR target)
-- Start Workout button visible at bottom
-- Clean state — no notes, no errors
+**In-phone**: Easy-mode active workout —
+- Current exercise focal: "Barbell Bench Press — Set 3 of 4"
+- Weight + reps large and clean ("80 kg × 8 reps")
+- Warmup runner above showing green checkmarks (completed)
+- Rest timer in progress ("Rest 1:43")
+- Next set preview ("Set 4: 80 kg × 8 reps") + progress indicator ("Exercise 2 of 6")
 
-**How to get this state**: Open today's workout → tap any exercise (must have prior bench sessions logged so progression bars have data) → screenshot the detail view.
+**Pre-conditions**: start a real Easy-mode session; complete warmup sets; capture mid-rest with the timer visible; a major compound as current exercise.
 
-**Pre-condition**: At least 2 prior bench sessions logged so progression bars render meaningfully.
+**Out-position**: Hevy/Strong have fast logging but they're pure input forms — the "80 kg × 8" on Zealova is **AI-generated from your history**; on Hevy it's what you type. "YOU'RE READY" = the app did the thinking.
 
----
-
-### Frame 3 — Nutrition Intelligence (Menu Picks + Fridge Recipes)
-
-**Main caption**: `Menu picks. Fridge recipes.`
-**Sub-caption**: *Scored, ranked, logged — in seconds.*
-**Background**: Warm peach `#FBE2C8`
-
-**What to capture**: 2-mockup composite (composited in launchpad tool):
-
-**Left mini phone — Menu scan result**:
-- Restaurant menu photo at top (small)
-- Parsed dish list below with health scores (e.g. "85", "72", "55")
-- "TOP PICK" badge on the highest-scoring item
-- Per-item cal + protein
-- "Best macro fit" subtext on the top pick
-
-**Right mini phone — Fridge scan result**:
-- Fridge photo at top (small)
-- Detected ingredients chips ("chicken breast", "broccoli", "rice", "eggs")
-- 3 recipe cards below: "Chicken Stir-Fry · 32g protein · 25 min", "Veggie Bowl · 18g protein · 15 min", "Egg Scramble · 24g protein · 10 min"
-
-**Why two phones, not three**: Showing OUTPUT (picks/recipes) is more compelling than input (camera viewfinder). Two clean output screens > three small ones.
+**Shippability**: CLEAN — Easy mode shipped this cycle.
 
 ---
 
-### Frame 4 — Chat-Modify Workouts
-
-**Main caption**: `Don't feel like it? Swap it.`
-**Sub-caption**: *Coach swaps any exercise — by chat*
-**Background**: Soft pink `#F4D5DA`
-
-**What to capture**: Coach chat screen showing:
-- User message: *"swap deadlifts for trap bar deadlifts"*
-- Coach reply: confirmation message + updated workout card preview inline ("Tomorrow's workout: Trap bar deadlifts 4×5, …")
-- Quick-action pills visible at bottom
-- Coach avatar visible
-
-**How to get this state**: Open chat with coach → request an exercise swap on a real generated workout → wait for the coach to confirm + display the updated plan card → screenshot.
-
----
-
-### Frame 5 — Voice/Chat Multi-Input Logging
-
-**Main caption**: `Just say what you ate.`
-**Sub-caption**: *Or what you trained — yoga, runs, anything*
+### Frame 6 — Multi-Input Chat Logging (Effortless)
+**Caption**: `Just say what YOU ATE.` — "YOU ATE" oversized, brand green.
+**Sub**: *Or what you trained — runs, yoga, anything. Coach hears it.*
 **Background**: Soft green `#D4ECD7`
 
-**What to capture**: Coach chat screen showing 3 stacked example messages:
-1. *"two slices of pizza and a coke"* → parsed macro card reply
-2. *"did 30 min yoga at home"* → ✓ workout logged confirmation
-3. *"30 min run, easy pace"* → ✓ cardio logged confirmation
+**In-phone**: Coach chat with 3 stacked exchanges —
+1. *"two chicken tacos and a Corona at dinner"* → macro card (580 cal, 32g P, 48g C, 18g F) + "Logged to dinner"
+2. *"30 min yoga this morning, pretty easy"* → "Logged 30 min yoga (easy, ~120 cal). Nice active recovery."
+3. *"evening run, 4 miles, easy pace"* → "Logged 4-mile run (~400 cal). Solid day."
 
-This frame proves the chat coach handles meals AND non-strength workouts (yoga, runs) which is uniquely Zealova — Strong/Hevy/Fitbod can't log yoga via chat.
+**Pre-conditions**: send each message in a clean thread in sequence; let each reply finish; screenshot with all 3 visible. **Do NOT include an exercise-swap message** (hard constraint: no coach-swap framing).
 
-**How to get this state**: Send each test message in sequence in a clean chat thread → screenshot the resulting chat with all 3 exchanges visible.
+**Out-position**: Strong/Hevy/JEFIT can't log meals; Fitbod has no nutrition; Gravl excludes it. Logging "two chicken tacos and a Corona" by voice-style message is a fundamentally different interaction model.
+
+**Shippability**: CLEAN.
 
 ---
 
-### Frame 6 — Workout Payoff (Progress Dashboard)
+### Frame 7 — AI Form Check (Bonus Differentiator)
+**Caption**: `Film a set. GET COACHED.` — "GET COACHED" oversized, brand green.
+**Sub**: *Your squat, your deadlift — real AI notes in 30 seconds.*
+**Background**: Muted amber `#4A3728` (warm, gym-grounded)
 
-**Main caption**: `Watch your strength climb`
-**Sub-caption**: *Every PR, charted automatically*
+**In-phone**: Form check result —
+- Video frame at top (user squat/deadlift, full body, good lighting)
+- AI critique card: overall score (e.g. "7.4 / 10")
+- 3–4 critique items: "Depth: Good — reached parallel" / "Knee cave: slight inward collapse at bottom — cue knees out" / "Bar path: slight forward drift — engage lats"
+- "Reps counted: 3" top-right; bottom nav still visible (signals "one tab of a full coach, not a standalone camera app")
+
+**Pre-conditions**: film a real set, submit via Form Check, wait for the Gemini Vision critique, capture clean (no spinner/debug).
+
+**Out-position**: Sculptor (4 ratings) and Gymscore (21 ratings) are single-feature form apps. Zealova has form check **inside** a full coach.
+
+> **⚠️ Reliability flag — this is the swap-out frame.** Form Check was on a reliability hold in `_ZEALOVA_FACTS.md` §2G (as of 2026-05-14); it shipped this cycle. It sits at frame 7 *on purpose* — outside the top-3 decision zone — so if the upload→keyframe→Vision→critique pipeline doesn't return a clean, accurate result every time, swap it without touching the install argument. **Swap-out options:** (a) **"Every health signal, ONE HUB"** — Combined Health hub (sleep + cycle + mindfulness + steps); zero reliability risk; (b) **Imports / switcher** (see App Store Frame 9).
+
+---
+
+### Frame 8 — Overload Dashboard (The Payoff)
+**Caption**: `Watch your strength CLIMB.` — "CLIMB" oversized, brand green.
+**Sub**: *Every PR tracked automatically. 16 muscle groups. All your lifts.*
 **Background**: Steel blue `#2563EB`
 
-**What to capture**: Progress dashboard with:
-- GitHub-style activity heatmap (green squares filling)
-- 1RM line chart trending upward
-- Recent PR callout ("+15 lbs Bench")
-- Streak counter (current streak prominent)
+**In-phone**: Stats tab → **Overload Dashboard** (tab index 1) —
+- Bench Press 1RM line chart trending up (+15 lbs / 8 weeks)
+- Muscle heatmap (front/back, 16 groups color-coded by volume)
+- Composite Strength Score (e.g. "184")
+- Recent PR badge ("+15 lbs Bench Press — NEW PR") + week-over-week volume bars
 
-**Pre-condition**: 20+ workouts logged for a good-looking heatmap; at least one PR detected.
+**Pre-conditions**: 20+ workouts across ≥6 weeks; ≥1 PR in last 4 weeks; varied muscle coverage. The QA reviewer account (`reviewer@zealova.com`, permanently premium) may already have this history.
 
----
+**Out-position**: Hevy shows history; Fitbod shows volume by muscle; neither shows composite score + PR auto-detection + heatmap on one screen. Gravl's Strength Score is a single number, not a full overload dashboard.
 
-### Frame 7 — Body Payoff (Photos + Pounds)
-
-**Main caption**: `Photos & pounds, side by side`
-**Sub-caption**: *See the change you can't feel*
-**Background**: Lavender purple `#B39DDB`
-
-**What to capture**: Body tracking screen with:
-- Weight trend line chart at top (real downward or upward trend)
-- Before/after photo comparison below — split-screen with week labels (e.g. "Week 1" left, "Week 12" right)
-- Visible composition change
-
-**Pre-condition**: Weight entries + 2 progress photos at different timepoints.
+**Shippability**: MODERATE — needs sufficient history.
 
 ---
 
-### Frame 8 — Share/Retention (Shareable Gallery)
+## App Store Extended Slots (9–10)
 
-**Main caption**: `Brag worthy. Built-in.`
-**Sub-caption**: *15 ways to share your wins — Wrapped, receipt, trading card, more*
-**Background**: Muted gold `#B45309`
+Slots 1–8 are identical to Play. Add:
 
-**What to capture**: Shareable gallery view with grid of 15+ format thumbnails:
-- Wrapped card (center, largest if hierarchy)
-- Receipt format
-- Trading card format
-- Newspaper format
-- X.com card
-- IG story
-- Polaroid
-- Stat sheet
-- (etc — all 15+ visible in grid layout)
+### Frame 9 — Imports / Bring Your History
+**Caption**: `Bring your history. KEEP GOING.`
+**Sub**: *Import from MyFitnessPal, MacroFactor, Cronometer, or Apple Health.*
+**Background**: Muted lavender `#E8E0F0`
+**In-phone**: import source list with logos (MFP, MacroFactor, Cronometer, Apple Health) + progress ("Importing 847 food logs from MyFitnessPal…") or success ("Imported 847 entries. Your nutrition history is ready.").
+**Out-position**: switching cost is the #1 reason people don't leave MFP. A visible "bring your history" frame addresses MFP switchers directly — no other workout-AI competitor shows an import switcher.
+**Shippability**: CLEAN if the import/switcher screen ships in this update.
 
-**How to get this state**: Navigate to share gallery from any logged workout → screenshot the full gallery view.
+### Frame 10 — Combined Health Hub
+**Caption**: `Every signal. ONE HUB.`
+**Sub**: *Sleep, cycle, mood, steps — all wired to your coach.*
+**Background**: Deep teal `#0F3D3A`
+**In-phone**: Combined Health hub — sleep score, cycle phase, mindfulness minutes, steps, resting HR in one grid, with a coach insight tying them together.
+**Alternate**: Fridge Scan + Recipes (`Open fridge. GET RECIPES.`) — verify fridge scan → recipe reliability (was in §2G hold) before using.
 
 ---
 
-## Post-Launch Badge Progression (Frame 1)
+## Frame-1 Badge Progression (capability pill → social proof)
 
-The capability pill on frame 1 is a pre-launch placeholder. Swap it for real social proof as soon as you have data — research shows up to **+90% conversion** lift from frame 1 social proof.
+The top-left pill on frame 1 stands in for social proof until reviews accumulate. Each threshold triggers an update to **frame 1 only**.
 
-| Stage | Top-left badge on frame 1 | When to switch |
+| Stage | Top-left pill | Trigger |
 |---|---|---|
-| **Pre-launch (now)** | `1,700+ exercises · Workouts + macros · Adapts to you` | Ship state |
-| **First 50 reviews** | `★ 4.7 · Trusted by early users` | Around Week 2-4 post-launch |
-| **500+ reviews** | `★ 4.7 · 500+ five-star reviews` | Once you cross 500 |
-| **5k+ installs** | `★ 4.7 · 10,000+ workouts logged this month` | Once active usage hits |
-| **Press hits** | `As seen in: Product Hunt · TechCrunch` | After PR coverage |
-| **Combined (peak)** | `★ 4.7 · 10,000+ users · Featured in TechCrunch` | Stack what's most credible |
+| **NOW** (pre-reviews) | `1,700+ exercises · Programs + menu scan + form check` | Ship state. **Do NOT show a star rating below 4.5 or under 50 reviews.** |
+| 50+ reviews, 4.5★+ | `★ 4.7 · Early adopters love it` | First reviews land |
+| 250+ reviews | `★ 4.7 · 250+ five-star reviews` | Cross 250 |
+| 1K+ reviews | `★ 4.7 · Trusted by 1,000+ athletes` | Cross 1K |
+| Press / PH | `As seen on Product Hunt #1` (or press logo) | After coverage |
+| 5K+ reviews | `★ 4.8 · 10,000+ workouts logged this month` | Use activity # if more credible |
 
-Update the pill in `theapplaunchpad.com` and re-export frame 1 each time you cross a threshold. No need to redo other frames.
+**Hard rule**: never fabricate a rating, never show one below 4.5. Below 4.5 → capability pill only. Once you clear 250 reviews at 4.5★+, swap to the star badge.
 
----
-
-## Bottom-Testimonial Slots (Frames 2, 3, 6)
-
-Once you have real reviews, add ★★★★★ + a short testimonial below the phone on the **install-decision frames**. Frame 1 = badge (broad trust). Frames 2/3/6 = testimonials (deepen trust on specific features).
-
-| Frame | Testimonial slot pattern (post-launch only) |
-|---|---|
-| **2** (what to lift) | ★★★★★ *"Finally know what to lift each session"* — @username |
-| **3** (menu picks) | ★★★★★ *"Used it at 4 restaurants this week"* — @username |
-| **6** (strength climb) | ★★★★★ *"Up 25 lbs on bench in 8 weeks"* — @username |
-
-**Pre-launch**: leave the bottom area blank. Do NOT use fake testimonials — Apple/Play can reject for fabricated social proof.
+**Post-launch testimonial slots** (frames 7–8, the Trust act, once you have real reviews): ★★★★★ + a short real quote below the phone. Never fabricate testimonials — Apple/Play can reject for it.
 
 ---
 
-## Extended Deck (Slots 9-12)
+## App Preview Video (30s) — beat sheet
 
-For when Play Console accepts >8 (Mob ships 14 via API/custom listings — try uploading more in Console as a stretch), or for App Store's 10 slots:
-
-| # | Main caption (orange in **bold**) | Sub-caption | Screen |
+| Sec | Scene | Show | Burned-in caption |
 |---|---|---|---|
-| 9 | **Import any recipe**, batch cook | *Paste any URL — IG, blog, TikTok. Cook once, eat 4 days.* | Recipe import sheet showing parsed recipe + batch-cook plan card |
-| 10 | Hit your macros **without thinking** | *Macros, vitamins, water — auto-tracked from your logs* | Fuel tab — macros ring + micro pills + water glasses |
-| 11 | Pick your **coach. Pick your vibe.** | *Voice, tone, style — all customizable* | Coach persona picker w/ avatar grid + voice samples |
-| 12 | See **where you rank** — worldwide | *Weekly XP leaderboards, near-you boards, friend boards* | Discover screen — percentile hero card + Top 10 list |
+| 0–3 | HOOK | Real person opens phone, Home loads, today's workout card visible. **No logo intro.** | "One coach. Workouts and food." |
+| 4–8 | PROGRAM BROWSE | Cinematic Program Library carousel → HYROX into hero → tap → variant selector slides up | "Real expert programs." |
+| 9–12 | PARALLEL | Merged Schedule fills in — two programs' sessions land on one calendar, color-coded | "Run several at once." |
+| 13–16 | MENU SCAN | Camera on a restaurant menu → TOP PICK badge appears on Grilled Salmon Salad | "Snap the menu. Pick the best." |
+| 17–20 | CUSTOMIZE | Edit Program → set length (12 wks) + days/week (4), gym → "Home Gym", AI-tailor on | "Any length. Any days." |
+| 21–25 | ACTIVE WORKOUT | Easy-mode screen — bar slides warmup → effective set, weight large, rest counts down | "Set by set." |
+| 26–28 | PAYOFF | Overload Dashboard — 1RM line up, PR badge "+15 lbs Bench" | "Your strength climbs." |
+| 29–30 | END CARD | App icon + "Zealova — AI fitness coach" + "Start free — 7 days, no charge" | |
 
-Order on Play (when uncapped): 1-8 stays. Then 9 (recipes), 10 (Fuel), 11 (persona), 12 (Discover) — fans out from "the app does X" → "the app makes you better" → "the app is uniquely yours" → "and there's a community."
+**Rules**: captions burned in (no voiceover — watched muted); no animated logo before sec 0; real app UI throughout; 1080×1920 min, 1080×2400 preferred; 30s cap. (The carousel lives here at 4–8s, so its visual wow still works even though frame 2 of the listing uses the merged Schedule.)
 
 ---
 
-## Foldable Showcase (3 smaller mockups)
+## Play Feature Graphic (1024×500)
 
-A single caption spans all three — the row of foldable mockups reads as one "Fits every form factor" beat without needing per-device copy.
+Shown in category browse / search cards / featured placements — a hook *before* the listing opens. JPEG/PNG, ≤15 MB. **Center is a dead zone** (Play button overlay). Keep key content 15% from edges.
+
+| Zone | Content |
+|---|---|
+| Left third | App icon (large) + "Zealova" wordmark below |
+| Right two-thirds | Headline: "Workouts AND food. One coach." (large sans-serif) |
+| Background | The cinematic HYROX program carousel art (repurposed here) as a dark gradient backdrop |
+| Bottom strip | "7-day free trial · $7.99/mo" (smaller) |
+| Dead center | EMPTY |
+
+---
+
+## Foldable Showcase (optional, 3 smaller mockups, one shared caption)
 
 **Caption (shared)**: *"Fold, Flip, Unfold. Fully Loaded."*
 
-| # | Device | Orientation | Screen to capture |
-|---|--------|-------------|-------------------|
-| F1 | Samsung Z Fold (inner screen) | Portrait, book-unfolded | Full day view — home dashboard or nutrition tab so the taller canvas reads as "more at a glance" |
-| F2 | Samsung Z Fold (inner screen) | Landscape, wide-unfolded | Chat + workout side-by-side layout so the wide mode reads as "coach on one side, set on the other" |
-| F3 | Samsung Z Flip | Half-folded or cover display | Quick-log action (meal add / water log / start workout) — whatever surfaces best at that aspect ratio |
-
-**Layout**: render the three mockups smaller than the main 8 screenshots and group them on a single card/frame so the caption applies to the row as one unit.
-
----
-
-## App Preview Video (recommended for fitness)
-
-Fitness apps see disproportionate lift from a 15-30s app preview video.
-
-- **First 3 seconds**: a real-world scene (person snapping a meal, recording a set) — NO logo intro.
-- **Order to demo** (mirrors the screenshot deck): chat-log meal → fridge scan → workout generation → active set → progress chart. Reinforcement compounds.
-- **Captions burned into video** (not voiceover) — most users watch muted.
-- **End frame**: app icon + "Zealova — your fitness coach in chat".
-
----
-
-## Adding New Features Later
-
-When a new feature ships, evaluate against three rules before changing the deck:
-
-1. **Does it deserve its own frame, or is it a secondary mention on an existing one?**
-   - Standalone if it's a category differentiator (form video analysis, fridge scan).
-   - Secondary mention if it deepens an existing frame.
-2. **Does it bump anything out of the top 8?**
-   - Only if it ranks higher on **Visual wow × Differentiation × Daily-use** than the current frame it would replace.
-   - Most new features land in the extended deck (slots 9-12), not the core 8.
-3. **Does it change the frame-1 badge?**
-   - Big partnerships, awards, or milestone numbers (10k users, App Store featuring) go into the social-proof badge.
-
----
-
-## In-App Intro Screen
-
-The app intro screen mirrors the first 7 of these screenshots — same captions, same background colors, one phone per page. Screenshot assets go in `assets/images/`:
-
-| Page | Asset filename | Matches Frame # |
-|------|---------------|-----------------|
-| 1 | `intro_brand.png` | #1 |
-| 2 | `intro_what_to_lift.png` | #2 |
-| 3 | `intro_menu_fridge.png` | #3 |
-| 4 | `intro_swap_exercise.png` | #4 |
-| 5 | `intro_voice_log.png` | #5 |
-| 6 | `intro_strength_climb.png` | #6 |
-| 7 | `intro_body_track.png` | #7 |
-
-(Frame 8 — Shareable gallery — is not in the intro; sharing/gamification is a retention scaffold, not a first-run hook.)
+| # | Device | Orientation | Screen |
+|---|---|---|---|
+| F1 | Z Fold (inner) | Portrait, unfolded | Merged Schedule — taller canvas shows more parallel-program weeks at a glance |
+| F2 | Z Fold (inner) | Landscape, unfolded | Chat + workout side-by-side |
+| F3 | Z Flip | Half-folded / cover | Quick-log (meal / water / start workout) |
 
 ---
 
 ## Pre-Capture Checklist
 
-- [ ] Dark mode enabled (in-phone screen)
-- [ ] 20+ workouts logged (heatmap/stats — frame 6)
-- [ ] At least one PR detected (frame 6)
-- [ ] At least 2 progress photos at different dates (frame 7)
-- [ ] At least 2 prior bench sessions logged so progression bars render (frame 2)
-- [ ] At least one menu scan + fridge scan + 3 recipe outputs available (frame 3)
-- [ ] Test chat messages drafted: pizza+coke, yoga 30min, easy run (frame 5)
-- [ ] Test exercise-swap conversation drafted (frame 4)
-- [ ] Shareable gallery has 15+ formats visible (frame 8)
-- [ ] No sensitive personal data visible in any screenshot
-- [ ] Status bar clean (good signal, battery, time)
-- [ ] No debug banners showing
+- [ ] Dark mode on device (all in-phone screens)
+- [ ] Signature-v2 Home live on the test device (frame 1)
+- [ ] **2–3 programs started/active simultaneously**, merged Schedule populated across a visible week with cover-art chips + ≥4 days carrying different-program sessions (frame 2)
+- [ ] Real restaurant menu (physical/PDF) staged for menu scan (frame 3)
+- [ ] 2 gym profiles created + an assigned 5+ day program (frame 4)
+- [ ] Easy-mode session staged with warmup sets completed, mid-rest (frame 5)
+- [ ] Clean chat thread ready for the 3-message nutrition/cardio sequence (frame 6)
+- [ ] Form Check pipeline confirmed reliable, real set filmed (frame 7 — else swap-out)
+- [ ] 20+ workouts logged + ≥1 PR for the Overload Dashboard (frame 8)
+- [ ] Cinematic HYROX carousel captured separately for the feature graphic + video
+- [ ] Clean status bar; no debug banners / error toasts / loading spinners; no sensitive personal data visible
+- [ ] Export at 1080×2400 (Play) / 1320×2868 (App Store 6.9")
+
+---
+
+## In-App Intro Screen (needs re-render)
+
+The first-run intro (`mobile/flutter/assets/images/intro_phone_1–7.png`, mirrored at `frontend/public/screenshots/`) mirrors the **OLD** May deck and is now stale. When the new shots are produced, re-render the intro pages to match frames 1–7 of this deck. Frame 8 (payoff) is not in the intro — the outcome is a retention beat, not a first-run hook.
+
+---
+
+## Adding New Features Later
+
+1. **Own frame, or secondary mention?** Standalone only if it's a category differentiator (parallel programs, menu scan). Otherwise it deepens an existing frame.
+2. **Does it bump anything out of the 8?** Only if it ranks higher on *Visual wow × Differentiation × Daily-use*. Most new features land in extended slots (9–10).
+3. **Does it change the frame-1 badge?** Milestone numbers / awards / featuring go into the social-proof pill.
+
+---
+
+**Last rebuilt:** 2026-06-29 · Research + competitor teardown: `next_update/screenshots_2026-06.md` · Changelog: `docs/planning/marketing/aso/changelog.md`
