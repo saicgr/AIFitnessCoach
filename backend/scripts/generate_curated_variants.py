@@ -343,6 +343,65 @@ def generate_for_program(program_id: str, smoke_test: bool = False) -> dict:
         gp.get_full_program_prompt = _full_prompt_boosted
         gp._volume_boost_applied = True
 
+    # ── Deterministic top-up safety net (monkeypatch) ─────────────────────────
+    # Even with the volume-clause prompt boost, Flash-Lite still occasionally
+    # under-delivers a session. Rather than ship a thin week (the 2026-06 bug) or
+    # just fail it, we top every thin/non-exempt session up to its duration floor
+    # with library-resolved accessory exercises BEFORE ingest. Same engine the
+    # backfill uses (services/program_session_filler.py) → equipment-gated (a
+    # bodyweight program never gets gym gear), media auto-resolves, idempotent.
+    # Equipment + difficulty are derived from the week itself so the patch is
+    # program-independent and safe to apply once. See the plan file.
+    if not getattr(gp, "_topup_applied", False):
+        import asyncio as _asyncio
+        import re as _re
+        from collections import Counter as _Counter
+        from services.program_session_filler import fill_thin_sessions as _fill
+
+        def _week_equipment_union(workouts):
+            eq = set()
+            for w in workouts or []:
+                for e in (w.get("exercises") or []):
+                    val = (e.get("equipment") or "").strip().lower()
+                    if val:
+                        eq.update(p.strip() for p in _re.split(r"[/,]| or | and ", val))
+            eq = {x for x in eq if x}
+            eq.update({"bodyweight", "none"})  # bodyweight accessories always allowed
+            return sorted(eq)
+
+        def _week_difficulty(workouts):
+            c = _Counter()
+            for w in workouts or []:
+                for e in (w.get("exercises") or []):
+                    d = (e.get("difficulty") or "").strip().lower()
+                    if d in ("beginner", "intermediate", "advanced", "elite"):
+                        c[d] += 1
+            return c.most_common(1)[0][0] if c else "intermediate"
+
+        _orig_ingest = gp.ingest_week_to_supabase
+
+        def _ingest_with_topup(supabase, variant_id, week_num, week_data,
+                               program_metadata=None):
+            try:
+                workouts = week_data.get("workouts", [])
+                res = _asyncio.run(_fill(
+                    workouts,
+                    equipment=_week_equipment_union(workouts),
+                    difficulty_ceiling=_week_difficulty(workouts),
+                    program_name=(program_metadata or {}).get("name"),
+                ))
+                week_data["workouts"] = res["workouts"]
+                if res["added"]:
+                    print(f"      🔧 top-up: +{len(res['added'])} accessory "
+                          f"exercises (week {week_num})")
+            except Exception as _e:  # never block ingest on the safety net
+                print(f"      ⚠️ top-up skipped (week {week_num}): {_e}")
+            return _orig_ingest(supabase, variant_id, week_num, week_data,
+                                program_metadata)
+
+        gp.ingest_week_to_supabase = _ingest_with_topup
+        gp._topup_applied = True
+
     total_cost = 0.0
     variants_ok = 0
     variants_failed = 0

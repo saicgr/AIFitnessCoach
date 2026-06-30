@@ -377,6 +377,41 @@ If it fails, a new import reused a template or shipped empty instructions — ru
 release. 6 templated instructions remain (niche sandbag/tire/ladder/composite
 moves awaiting a human/advisor pass) — that is the gate's baseline.
 
+## Curated program session volume (don't ship thin sessions)
+
+The 18 launch programs (`programs.is_published`) schedule their content from
+`program_variant_weeks.workouts` (the per-variant per-week session array — NOT
+the `programs.workouts` demo blob). Each non-exempt session must hold a
+**duration-scaled FLOOR** of main exercises: ≤30min→4, 31-50→5, 51-65→6, 66+→7.
+
+A 2026-06 audit found ~1,133 sessions across 48 variants had only **3** exercises
+in a 45-60min slot. Root cause: the generator's gate
+(`backend/scripts/generate_programs.py:validate_week`) only required
+`sessions*3` as a WEEK TOTAL, so Gemini Flash-Lite's thin 3/session weeks shipped.
+Fixed in three places (see `.claude/plans/one-more-change-to-tingly-wreath.md`):
+
+1. **`validate_week`** now enforces a PER-SESSION floor (`_session_volume_floor`
+   + `_session_exempt_from_floor`) — yoga/mobility/recovery/warmup/express(≤10min)/
+   pure-distance-time sessions are exempt.
+2. **`backend/services/program_session_filler.py`** (`fill_thin_sessions`) — the
+   single deterministic top-up engine. Adds library-resolved accessory exercises
+   (carry a real `exercise_id` → media auto-maps), **equipment-gated per program**
+   (a bodyweight program never gets gym gear), inherits sets/reps from a same-week
+   sibling (so the existing sets+deload periodization carries through), appends as
+   straight sets, never pads a distance/time conditioning block, idempotent
+   (`"backfilled": true` marker). The generator monkeypatches this before ingest
+   (`generate_curated_variants.py`) so new thin weeks self-heal.
+3. **`backend/scripts/backfill_thin_program_sessions.py`** repairs already-shipped
+   data. Dry-run by default; `--apply` to write; `--program-id` to partition.
+   Self-contained (supabase-py + in-memory curated candidate selector — junk-filtered,
+   one-per-movement-bucket for diversity). NO MV refresh needed (writes only
+   `program_variant_weeks`). Verify after: per-session `n_ex < floor` count → ~0.
+
+**After any program/variant (re)generation, run the backfill dry-run to confirm
+no thin sessions slipped through.** The library is the noisy free-exercise dataset
+— never select accessories alphabetically (ships junk like "180 Jump Turns"); the
+backfill's junk filter + movement buckets are what keep picks clean.
+
 ## Remember
 
 > "Test first, deploy later. A senior developer tests the API before touching the device."

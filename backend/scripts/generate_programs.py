@@ -609,6 +609,73 @@ Return ONLY JSON."""
 # VALIDATION
 # ============================================================================
 
+# --- per-session volume floor (2026-06 under-population fix) ----------------
+# The old gate only checked a WEEK TOTAL of `sessions * 3` exercises, so a thin
+# 3/session week (Flash-Lite's typical output) cleared it and shipped — leaving
+# ~1,133 launch-program sessions with 3 exercises in a 45-60min slot that should
+# hold ~5. We now enforce a duration-scaled PER-SESSION floor (a minimum, not an
+# equality), with the SAME exemptions the deterministic top-up uses. The actual
+# top-up lives in services/program_session_filler.py and runs before ingest (see
+# generate_curated_variants.py); this gate is the assertion that no thin,
+# non-exempt session ever ships. See .claude/plans/one-more-change-to-tingly-wreath.md.
+def _session_volume_floor(workout: dict) -> int:
+    """Duration-scaled minimum main-exercise count: <=30->4, 31-50->5,
+    51-65->6, 66+->7, missing duration->5."""
+    try:
+        dur = int(workout.get("duration_minutes") or 0)
+    except (TypeError, ValueError):
+        dur = 0
+    if dur <= 0:
+        return 5
+    if dur <= 30:
+        return 4
+    if dur <= 50:
+        return 5
+    if dur <= 65:
+        return 6
+    return 7
+
+
+def _session_exempt_from_floor(workout: dict) -> bool:
+    """Genuinely-short / non-strength sessions skip the volume floor: yoga,
+    mobility, recovery, warmup/cooldown/rest, express <=10min, and pure
+    distance/time conditioning blocks (a run/row/timed circuit)."""
+    name = (workout.get("workout_name") or workout.get("name") or "").lower()
+    wtype = (workout.get("type") or workout.get("workout_type") or "").lower()
+    try:
+        dur = int(workout.get("duration_minutes") or 0)
+    except (TypeError, ValueError):
+        dur = 0
+    exempt_types = {"yoga", "mobility", "recovery", "stretch", "stretching",
+                    "warmup", "warm-up", "cooldown", "cool-down", "rest",
+                    "conditioning"}
+    exempt_name_tokens = {"yoga", "mobility", "express", "plank", "warm-up",
+                          "warmup", "cooldown", "cool-down", "recovery",
+                          "stretch", "finisher", "flow"}
+    if wtype in exempt_types:
+        return True
+    if any(tok in name for tok in exempt_name_tokens):
+        return True
+    if dur and dur <= 10:
+        return True
+    # Pure distance/time conditioning → reuse the same classifier the top-up uses.
+    exercises = workout.get("exercises") or []
+    if exercises:
+        try:
+            from services.exercise_tracking_metric import (
+                TRACK_DISTANCE, TRACK_TIME, derive_tracking_metadata,
+            )
+            kinds = {
+                (derive_tracking_metadata(e).get("tracking_type") or "weight")
+                for e in exercises
+            }
+            if kinds.issubset({TRACK_DISTANCE, TRACK_TIME}):
+                return True
+        except Exception:
+            pass
+    return False
+
+
 def validate_week(week_data: dict, expected_sessions: int) -> dict:
     """Validate a single week of workouts. STRICT validation - sets/reps MUST be positive integers."""
     issues = []
@@ -625,6 +692,7 @@ def validate_week(week_data: dict, expected_sessions: int) -> dict:
 
     exercises_found = 0
     invalid_exercises = 0
+    thin_sessions = 0
 
     for workout in workouts:
         if not workout.get('warmup'):
@@ -634,6 +702,19 @@ def validate_week(week_data: dict, expected_sessions: int) -> dict:
             issues.append(f"Day {workout.get('day', '?')} missing exercises")
             score -= 10
             continue
+
+        # Per-session volume floor (2026-06): a non-exempt session must hold at
+        # least its duration-scaled minimum of main exercises. This is what stops
+        # thin 3/session weeks from shipping silently.
+        if not _session_exempt_from_floor(workout):
+            floor = _session_volume_floor(workout)
+            if len(exercises) < floor:
+                thin_sessions += 1
+                issues.append(
+                    f"Session '{workout.get('workout_name', workout.get('day', '?'))}' "
+                    f"has {len(exercises)}/{floor} main exercises"
+                )
+                score -= 8
 
         for ex in exercises:
             exercises_found += 1
@@ -661,7 +742,9 @@ def validate_week(week_data: dict, expected_sessions: int) -> dict:
             if not ex.get('weight_guidance'):
                 score -= 1  # Minor deduction
 
-    if exercises_found < expected_sessions * 3:  # At least 3 exercises per workout
+    # Week-total backstop (kept, but raised). The PER-SESSION floor above is the
+    # real gate now; this catches a week that is broadly thin across the board.
+    if exercises_found < expected_sessions * 4:
         issues.append(f"Low exercise count: {exercises_found}")
         score -= 10
 
