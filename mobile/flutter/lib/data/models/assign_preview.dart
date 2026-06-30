@@ -269,7 +269,7 @@ class CustomizeSummary {
     }
     if (levelTweaks > 0) {
       final lvl = (fitnessLevel ?? '').trim();
-      parts.add('adjusted $levelTweaks set${levelTweaks == 1 ? '' : 's'}'
+      parts.add('tuned $levelTweaks exercise${levelTweaks == 1 ? '' : 's'}'
           '${lvl.isNotEmpty ? ' for $lvl' : ''}');
     }
     if (parts.isEmpty) return 'No changes needed for your profile.';

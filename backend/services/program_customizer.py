@@ -518,31 +518,126 @@ async def _apply_equipment_fit(
 # ---------------------------------------------------------------------------
 # Pass 3 — level adaptation (light deterministic volume tweak)
 # ---------------------------------------------------------------------------
+# Intensity techniques a beginner shouldn't run unsupervised — training to
+# failure / drop sets / rest-pause with unrefined form is an injury risk. We
+# detune these to a normal set with 2 reps in reserve.
+_RISKY_SET_TYPES = {
+    "failure", "to_failure", "tofailure", "amrap",
+    "drop", "dropset", "drop_set", "myo", "myo_reps",
+    "rest_pause", "rest-pause", "restpause", "cluster",
+}
+
+
+def _is_rep_based(ex: Dict[str, Any]) -> bool:
+    """True when an exercise's target is a plain rep COUNT we can safely rewrite.
+
+    False for distance/time/calorie specs (e.g. '1000 m', '8 minutes', '30 sec')
+    — rewriting those to a bare rep number destroys the unit (see the expander's
+    reps_spec note). Conservative: anything we can't read as pure reps is treated
+    as NOT rep-based and left untouched."""
+    import re
+    spec = ex.get("reps_spec")
+    if isinstance(spec, dict):
+        unit = str(spec.get("unit") or "").strip().lower()
+        return unit in ("", "reps", "rep", "count")
+    spec_txt = spec if isinstance(spec, str) else ""
+    blob = f"{ex.get('reps') or ''} {spec_txt}".lower()
+    # Strip everything that legitimately appears in a REP scheme; if any letters
+    # survive (m, min, sec, cal, km …) it carries a non-rep unit → not rep-based.
+    cleaned = re.sub(
+        r"[0-9\s\-,/x×+]|amrap|failure|fail|max|each|side|per|rep[s]?|to",
+        "", blob,
+    )
+    return cleaned == ""
+
+
+def _rep_target_ceiling(reps: Any) -> Optional[int]:
+    """Top of a numeric rep target ('8-12'→12, '10'→10). None when no concrete
+    number is present (e.g. 'AMRAP')."""
+    if isinstance(reps, bool):
+        return None
+    if isinstance(reps, int):
+        return reps
+    import re
+    nums = re.findall(r"\d+", str(reps or ""))
+    return max(int(n) for n in nums) if nums else None
+
+
 def _apply_level_adaptation(
     days: List[Dict[str, Any]], fitness_level: Optional[str]
 ) -> int:
-    """Nudge set counts toward the user's level. Beginner: cap working sets at
-    3 and trim AMRAP/failure to normal on accessory volume; advanced: +1 set on
-    compound work up to 5. Returns the number of exercises tweaked."""
+    """Right-size each exercise toward the user's level. Returns the number of
+    EXERCISES changed (any field) — a light, deterministic tweak, never a regen.
+
+    Beginner — keep volume + intensity learnable:
+      • cap working sets at 3,
+      • detune failure/AMRAP/drop-set/rest-pause intensity to a normal set
+        leaving 2 reps in reserve (failure with unrefined form is an injury
+        risk),
+      • pull sky-high rep targets (>20) down to a hypertrophy-range 15,
+      • guarantee >=60s rest so form holds between sets.
+    Advanced/Elite — add one working set to sub-5-set work.
+
+    Rep/intensity rewrites are skipped for distance/time/calorie exercises
+    (see [_is_rep_based]) so a cardio or timed move never loses its unit."""
     level = (fitness_level or "").strip().lower()
     if level not in ("beginner", "advanced", "elite"):
         return 0
+    is_beginner = level == "beginner"
     tweaked = 0
     for day in days:
         if day.get("is_rest"):
             continue
         for ex in day.get("exercises") or []:
+            changed = False
+
+            # --- working sets ---
             try:
                 sets = int(ex.get("sets") or 3)
             except (TypeError, ValueError):
-                continue
-            new_sets = sets
-            if level == "beginner" and sets > 3:
-                new_sets = 3
-            elif level in ("advanced", "elite") and sets < 5:
-                new_sets = sets + 1
-            if new_sets != sets:
-                ex["sets"] = new_sets
+                sets = None
+            if sets is not None:
+                if is_beginner and sets > 3:
+                    ex["sets"] = 3
+                    changed = True
+                elif not is_beginner and sets < 5:
+                    ex["sets"] = sets + 1
+                    changed = True
+
+            if is_beginner:
+                rep_based = _is_rep_based(ex)
+                set_type = str(ex.get("set_type") or "normal").strip().lower()
+                reps_txt = str(ex.get("reps") or "").lower()
+                risky = set_type in _RISKY_SET_TYPES or any(
+                    k in reps_txt for k in ("amrap", "fail", "max")
+                )
+
+                # --- detune risky intensity techniques ---
+                if risky:
+                    ex["set_type"] = "normal"
+                    ex["target_rir"] = 2  # leave 2 in the tank, not failure
+                    if rep_based:
+                        ex["reps"] = "10"
+                        ex["reps_spec"] = None
+                    changed = True
+                # --- cap sky-high rep targets (rep-based only) ---
+                elif rep_based:
+                    ceil = _rep_target_ceiling(ex.get("reps"))
+                    if ceil is not None and ceil > 20:
+                        ex["reps"] = "15"
+                        ex["reps_spec"] = None
+                        changed = True
+
+                # --- guarantee adequate inter-set rest ---
+                try:
+                    rest = int(ex.get("rest_seconds") or 0)
+                except (TypeError, ValueError):
+                    rest = 0
+                if 0 < rest < 60:
+                    ex["rest_seconds"] = 60
+                    changed = True
+
+            if changed:
                 tweaked += 1
     return tweaked
 
