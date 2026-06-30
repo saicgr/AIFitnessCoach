@@ -105,13 +105,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1379,13 +1372,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2045,26 +2031,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2120,16 +2086,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3327,13 +3283,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4017,13 +3966,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4375,13 +4317,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5039,20 +4974,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6501,26 +6422,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7228,13 +7135,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7457,13 +7357,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7856,13 +7749,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8506,13 +8392,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8719,13 +8598,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8839,20 +8711,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8983,13 +8841,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9383,13 +9234,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9407,13 +9251,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9754,13 +9591,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10532,13 +10362,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10755,7 +10578,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11023,16 +10846,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11064,16 +10877,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11950,13 +11753,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12132,13 +11928,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13605,7 +13394,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14527,16 +14316,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14715,13 +14494,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15168,13 +14940,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15871,7 +15636,6 @@
   "activeWorkoutHelperWhenToUse": "Kdy použít",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Cvičení bylo úspěšně vyměněno",
   "activeWorkoutScreenRefactoredExerciseSAdded": "Přidán(y) {_exercises} cvik(y)",
-  "activeWorkoutScreenRefactoredFor": ") pro (name)",
   "activeWorkoutScreenUndo": "Zpět",
   "activeWorkoutScreenWorkoutAdapted": "Cvičení přizpůsobeno.",
   "activityCardAdditionalDetailsOptional": "Další podrobnosti (nepovinné)",
@@ -16078,7 +15842,6 @@
   "aiCoachMealPreWorkoutFuel": "Palivo před tréninkem?",
   "aiCoachMealQuickSnackIdeas": "Nápady na rychlé občerstvení?",
   "aiCoachMealRecoveryDayEating": "Stravování v den zotavení?",
-  "aiCoachMealSearchQuestionsTryAngry": "Vyhledávací otázky (zkuste „angry“, „fibe mexican“)",
   "aiCoachMealSomethingWentWrong": "Něco se pokazilo.",
   "aiCoachMealStressedWhatHelps": "Stres – co pomáhá?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "Asijské {meal} – jeden tip (rýžová miska, nudle, sushi, stir fry), makra a příprava.{budgetTail}",
@@ -16558,7 +16321,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · {phase} fáze",
   "caloriesSummaryCardCalories": "Kalorie",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "zbývá",
   "cancelConfirmationAnythingElseYouD": "Chcete se ještě o něco podělit? (volitelné)",
   "cancelConfirmationCancelAnyway": "Přesto zrušit",
   "cancelConfirmationHelpUsImprove": "Pomozte nám se zlepšit",
@@ -16747,7 +16509,6 @@
   "chatGotIt": "Rozumím",
   "chatLanguageChangedSystem": "🌐 AI Coach nyní odpovídá v jazyce {nativeName}",
   "chatLanguageResetSystem": "🌐 Jazyk AI Coach byl resetován — používá se jazyk aplikace",
-  "chatLeftToday": ") zbývá dnes",
   "chatMediaWidgetsCalTotal": "Celkem {totalCal} cal",
   "chatMediaWidgetsGProtein": "{totalProtein}g bílkovin",
   "chatMediaWidgetsGoTo": "Přejít na {workoutName}",
@@ -16782,7 +16543,6 @@
   "chatScreenCoachIsThinkingLonger": "Trenér přemýšlí déle než obvykle.",
   "chatScreenCouldntReachCoach": "Trenéra se nepodařilo kontaktovat.",
   "chatScreenExtAboutAiCoach": "O AI kouči",
-  "chatScreenExtAs": ") jako (mealType)",
   "chatScreenExtChangeCoach": "Změnit kouče",
   "chatScreenExtChatTips": "Tipy pro chat",
   "chatScreenExtChooseMultiplePhotos": "Vybrat více fotek",
@@ -17120,11 +16880,11 @@
   "completeViewGoals": "Zobrazit cíle",
   "complianceRingCardAllWorkoutsCompleted": "Všechny tréninky dokončeny",
   "complianceRingCardGetStartedToday": "Začni ještě dnes",
-  "complianceRingCardGreatPace": "Skvělé tempo {arg0}",
+  "complianceRingCardGreatPace": "Skvělé tempo! Zbývá {arg0}",
   "complianceRingCardNoWorkoutsScheduledThis": "Tento týden nejsou naplánovány žádné tréninky",
-  "complianceRingCardOnTrack": "Na správné cestě {arg0}",
+  "complianceRingCardOnTrack": "Na dobré cestě — zbývá {arg0}",
   "complianceRingCardWorkoutCompliance": "Dodržování tréninkového plánu",
-  "complianceRingCardWorkoutsRemaining": "Zbývající tréninky {arg0}",
+  "complianceRingCardWorkoutsRemaining": "Zbývá tréninků: {arg0}",
   "comprehensiveStatsStatsScores": "Statistiky a skóre",
   "connectedAppsAutoImportEvery15": "Automatický import každých 15 min",
   "connectedAppsConnect": "Propojit",
@@ -17206,7 +16966,6 @@
   "cookingConverterSelectFood": "Vybrat potravinu",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Použít tuto hodnotu",
-  "cookingConverterWeight": ") Hmotnost",
   "cosmeticsGalleryCosmetics": "Kosmetika",
   "cosmeticsGalleryEquip": "Vybavit",
   "cosmeticsGalleryEquipped": "Vybaveno",
@@ -17358,8 +17117,6 @@
   "customExercisesNoExercisesMatchYour": "Žádné cviky neodpovídají vašemu vyhledávání",
   "customExercisesScreenAreYouSureYou": "Opravdu chcete smazat \"{name}\"? Tuto akci nelze vrátit zpět.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} cviků, {totalUses} použití",
-  "customExercisesScreenUsedTimes": "Použito (usageCount) krát(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Hledat cviky...",
   "customExercisesSimple": "Jednoduché",
   "customFoodBuilderAiFillFromName": "AI doplnění z názvu",
@@ -17401,7 +17158,6 @@
   "customTrendScreenLastCycle": "{displayName} · poslední cyklus",
   "customTrendScreenMaxOverlaysRemoveOne": "Max. {_kMaxOverlays} překryvů — pro přidání dalšího jeden odstraňte",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} sdílených dní",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "Přidat cvik",
   "customWorkoutBuilderBuildCustomWorkout": "Vytvořit vlastní trénink",
   "customWorkoutBuilderCustomWorkoutCreated": "Vlastní trénink vytvořen!",
@@ -17472,7 +17228,6 @@
   "cycleScreenUiLogAPeriod": "Zaznamenat periodu",
   "cycleScreenUiLogPeriod": "Zaznamenat periodu",
   "cycleScreenUiLogYourFirstPeriod": "Zaznamenejte svou první menstruaci pro zahájení předpovědí.",
-  "cycleScreenUiPhase": ") fáze",
   "cycleScreenUiPhaseLabel": "Fáze {displayName}",
   "cycleScreenUiPredictionsAreEstimates": "Předpovědi jsou odhady založené na vašich zaznamenaných datech, nikoli metoda antikoncepce ani lékařské doporučení. V případě jakýchkoli zdravotních obav se poraďte s lékařem.",
   "cycleScreenUiPregnancyModeIsOn": "Režim těhotenství je zapnutý",
@@ -18045,7 +17800,7 @@
   "editProgramSheetContinue": "Pokračovat",
   "editProgramSheetCurrent": "AKTUÁLNÍ",
   "editProgramSheetCustomProgram": "Vlastní program",
-  "editProgramSheetCustomValue": "Vlastní hodnota {arg0}",
+  "editProgramSheetCustomValue": "Vlastní: {arg0}",
   "editProgramSheetCustomizeProgram": "Přizpůsobit program",
   "editProgramSheetDays": "Dny",
   "editProgramSheetDaysAgo": "Před {days} dny",
@@ -18057,8 +17812,8 @@
   "editProgramSheetEquipment": "Vybavení",
   "editProgramSheetEquipmentLabel": "Štítek vybavení",
   "editProgramSheetExamples": "Příklady",
-  "editProgramSheetFailedToLoadHistory": "Načíst historii {arg0}",
-  "editProgramSheetFailedToRestore": "Obnovit {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Nepodařilo se načíst historii: {arg0}",
+  "editProgramSheetFailedToRestore": "Nepodařilo se obnovit: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Aktualizovat program",
   "editProgramSheetFocus": "Zaměření",
   "editProgramSheetHealth": "Zdraví",
@@ -18504,7 +18259,6 @@
   "exerciseDetailSheetDownloading": "Stahuji {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Stahování videa...",
   "exerciseDetailSheetFavorite": "Oblíbený",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Načítání...",
   "exerciseDetailSheetLog1rm": "Protokol 1RM",
   "exerciseDetailSheetMS": "{restMins}m {restSecs}s",
@@ -18846,7 +18600,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Přidejte poznámky zde...",
   "exerciseSetTrackerAddSet": "Přidat sérii",
-  "exerciseSetTrackerBarbell": ") velká činka",
   "exerciseSetTrackerReps": "Opakování",
   "exerciseSetTrackerRestTarget": "Cíl odpočinku",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18890,7 +18643,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "Výběr AI není dostupný",
   "exerciseSwapSheetAnyEquipment": "Jakékoli vybavení",
   "exerciseSwapSheetAskAiForSuggestions": "Požádejte AI o návrhy",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Popište své vybavení nebo preference\nnapř. \"Mám špatné rameno, pouze vlastní váha\"",
   "exerciseSwapSheetEGIOnly": "např. \"Mám pouze jednoručky\"",
   "exerciseSwapSheetFailedToSwapExercise": "Výměna cviku selhala",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Hledám alternativy zaměřené na stejné svaly...",
@@ -18941,7 +18693,6 @@
   "expandableSummaryExerciseWeight": "Váha",
   "expandedExerciseCardAddToFavorites": "Přidat k oblíbeným",
   "expandedExerciseCardAlternatingHands": "Střídání rukou",
-  "expandedExerciseCardBarbell": ") velká činka",
   "expandedExerciseCardBreathing": "Dýchání",
   "expandedExerciseCardBreathingGuide": "Průvodce dýcháním",
   "expandedExerciseCardCollapse": "Sbalit",
@@ -19154,7 +18905,6 @@
   "fastingScoreCardProtocolLevel": "Úroveň protokolu",
   "fastingScoreCardScore": "Skóre",
   "fastingScoreCardStreakBonus": "Bonus za sérii",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "oproti minulému týdnu",
@@ -19423,7 +19173,6 @@
   "flexibilityProgressChartFirst": "První",
   "flexibilityProgressChartLatest": "Poslední",
   "flexibilityProgressChartNoDataAvailable": "Žádná dostupná data",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Podle oblastí",
   "flexibilityScoreCardFocusAreas": "Zaměřené oblasti",
   "flexibilityScoreCardOverallFlexibility": "Celková flexibilita",
@@ -19595,7 +19344,6 @@
   "foodHistorySearchMealsFoodsHigh": "Hledat jídla, potraviny, \"vysoký obsah bílkovin\"...",
   "foodHistoryUndo": "Zpět",
   "foodItemRankingAddFood": "Přidat jídlo",
-  "foodItemRankingDetails": ") podrobnosti",
   "foodItemRankingNFoodItems": "{count} potravin",
   "foodItemRankingScore": "Skóre",
   "foodItemRankingTapToHideDetails": "Klepnutím skryjete podrobnosti",
@@ -19738,7 +19486,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Takže jsem postavil osobu, ne účetní knihu. Udělejte si jakékoli menu – doma nebo v zahraničí – a trenér vám ho přečte v makrech. Vynechejte úterý a středeční ráno vás to stáhne zpět bez výčitek svědomí. Učí se vaše jídla, vaše posilovna, vaše skluzové vzorce – za méně než jedno PT sezení za měsíc.",
   "founderNoteTheFriendsWhoActually": "Přátelé, kteří se skutečně dostali do formy, měli někoho, kdo jim psal. Skutečná zodpovědnost stojí asi dvě stě dolarů měsíčně, což je přesně důvod, proč ji většina z nás nikdy nemá, a přesně důvod, proč propast mezi „sledováním“ a „změnou“ zůstává roky otevřená.",
-  "freshnessDecayCardAgo": ") před",
   "freshnessDecayCardControlsHowQuicklyExercise": "Určuje, jak rychle vyprchá čerstvost cvičení: e^(-k * tréninky)",
   "freshnessDecayCardFreshnessDecayTuner": "Ladění vyprchání čerstvosti",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19810,8 +19557,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "SÉRIE {currentSetNumber} Z {totalSets}",
   "futuristicSetCardSkipExercise": "Přeskočit cvik",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "Vytvořte si komplexní plán, který propojí vaše tréninky, výživu a půst.",
   "generatePlanFastingProtocol": "Protokol půstu",
   "generatePlanGeneratePlan": "Generovat plán",
@@ -20070,8 +19815,8 @@
   "habitsCardAddYourFirstHabit": "Přidej svůj první návyk",
   "habitsCardAllHabitsCompleted": "Všechny návyky splněny!",
   "habitsCardBuildDailyHabits": "Buduj denní návyky",
-  "habitsCardCompletedCount": "Počet dokončených {arg0} {arg1}",
-  "habitsCardDayStreak": "Denní série {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} dokončeno",
+  "habitsCardDayStreak": "Série {arg0} dní",
   "habitsCardFailedToLoadHabits": "Nahrávání návyků selhalo",
   "habitsCardGreatJobKeepingUp": "Skvělá práce, jen tak dál",
   "habitsCardQuickStart": "Rychlý start:",
@@ -20079,7 +19824,7 @@
   "habitsCardTodaySHabits": "Dnešní návyky",
   "habitsCardTryAgain": "Zkusit znovu",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Zobrazit všechny návyky {arg0}",
+  "habitsCardViewAllHabits": "Zobrazit všechny návyky ({arg0})",
   "habitsCompleted": "Splněno",
   "habitsDeleteHabit": "Smazat návyk?",
   "habitsHoldToReorderSwipe": "Podrž pro změnu pořadí • Přejeď pro smazání",
@@ -20507,7 +20252,6 @@
   "homeEmptyWorkout_v2": "Den odpočinku? Nebo připraven se hýbat? Je to na tobě.",
   "homeEmptyWorkout_v3": "Mezi programy — začni nový, ať se vrátíš do tempa.",
   "homeEmptyWorkout_v4": "Zatím žádný plán. Nech AI, ať jeden vytvoří podle tvých cílů.",
-  "homeFromHealthConnect": ") z Health Connect",
   "homeGreetingAfternoon_v1": "Odpolední energie, {name}!",
   "homeGreetingAfternoon_v2": "Ahoj {name}, čas se hýbat?",
   "homeGreetingAfternoon_v3": "Čas na protažení, {name}?",
@@ -21087,13 +20831,11 @@
   "insightsSummaryTemplateCalories": "KALORIE",
   "insightsSummaryTemplatePrs": "PR",
   "insightsSummaryTemplateSummary": "SHRNUTÍ",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "TRÉNINKY",
   "intensityPrompt1Left": "1 zbývá",
   "intensityPrompt2Left": "2 zbývají",
   "intensityPrompt3Left": "3+ zbývají",
   "intensityPromptHard": "Těžké",
-  "intensityPromptHideRpeSlideDial": "Skrýt RPE posuvník      Nastav (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Jak těžká byla tato série?",
   "intensityPromptMax": "Max",
   "intensityPromptModerate": "Střední",
@@ -21101,7 +20843,6 @@
   "intensityPromptSheetSet": "Série {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "AI kouč, který sestaví plán, pozná tvé tělo a každý týden se přizpůsobí.",
   "introBuildMyPlan": "Sestavit můj plán",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) sérií",
   "introCardMonth": "měsíc.",
   "introIAlreadyHaveAnAccount": "Již mám účet",
   "introScreenV": "v{_appVersion}",
@@ -21391,7 +21132,6 @@
   "logMealSheetBarcode": "Čárový kód",
   "logMealSheetBarcodeScan": "Skenování čárového kódu",
   "logMealSheetCached": "(Uloženo do mezipaměti)",
-  "logMealSheetCaptured": ") zachyceno",
   "logMealSheetChooseFoodPhotos": "Vyberte Fotky jídla",
   "logMealSheetChooseFromGallery": "Vybrat z galerie",
   "logMealSheetChooseFromLibrary": "Vybrat z knihovny",
@@ -21552,7 +21292,6 @@
   "logWeightSheetDAvg": "7denní průměr · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} od vašeho předchozího minima",
   "logWeightSheetValidRange": "Platný rozsah: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Synchronizováno z Apple Zdraví",
   "logWeightSyncedToAppleHealth": "Synchronizováno s Apple Zdraví",
   "logWeightTapToEdit": "Klepnutím upravíte",
@@ -21677,7 +21416,7 @@
   "logoutSignOut2": "Odhlásit se?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Makra",
-  "mainShellPartChatsLeftToday": "Zbývající chaty dnes {arg0}",
+  "mainShellPartChatsLeftToday": "Dnes zbývá chatů: {arg0}",
   "mainShellPartGuestMode": "Režim hosta",
   "mainShellPartQuickActions": "Rychlé akce",
   "mainShellPartSignUp": "Registrovat se",
@@ -21690,7 +21429,6 @@
   "manageDuplicateImportsPrimary": "Primární",
   "manageDuplicateImportsScreenSources": "{length} zdrojů",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(row)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Odpojit ze skupiny",
   "manageDuplicateImportsUnlinkedFromGroup": "Odpojeno ze skupiny",
   "manageGymProfilesActive": "Aktivní",
@@ -21949,7 +21687,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} dalších",
   "menuAnalysisSheetSelected": "{length} vybráno",
   "menuAnalysisSheetSort": "Řadit: {label}",
-  "menuAnalysisSheetValue": ")(uplynulo)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Už jsi uložil menu pro \"{restaurantName}\"",
   "menuAnalysisSort": "Seřadit:",
@@ -22075,7 +21812,7 @@
   "metricsDashboardMetricType": "TYP METRIKY",
   "metricsDashboardMuscleMass": "Svalová hmota",
   "metricsDashboardNoDataAvailable": "Žádná data nejsou k dispozici",
-  "metricsDashboardNoMetricDataYet": "Zatím žádná data metrik {arg0}",
+  "metricsDashboardNoMetricDataYet": "Zatím žádná data {arg0}",
   "metricsDashboardQuickStats": "RYCHLÉ STATISTIKY",
   "metricsDashboardRestingHeartRate": "Klidová tepová frekvence",
   "metricsDashboardRestingHr": "Klidová TF",
@@ -22266,7 +22003,7 @@
   "muscleHeatmapOther": "Ostatní",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Dokončete tréninky pro zobrazení dat o svalech",
   "muscleHeatmapTileCouldnTLoad": "Nepodařilo se načíst",
-  "muscleHeatmapTileMostTrained": "Nejvíce procvičované {arg0}",
+  "muscleHeatmapTileMostTrained": "Nejvíce trénováno: {arg0}",
   "muscleHeatmapTileMuscles": "Svaly",
   "muscleHeatmapTileRetry": "Zkusit znovu",
   "muscleHeatmapUpperBody": "Horní část těla",
@@ -22383,7 +22120,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Oblíbené ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Základní ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Nejlepší: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Nedávná aktivita",
   "myLibraryTabViewAll": "Zobrazit vše",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22463,14 +22199,14 @@
   "neatGamificationWidgetsCasualMover": "Příležitostný pohyb",
   "neatGamificationWidgetsClaimReward": "Vyzvednout odměnu",
   "neatGamificationWidgetsCouchPotato": "Povaleč",
-  "neatGamificationWidgetsCurrentXp": "Aktuální XP {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Denní výzva",
   "neatGamificationWidgetsExpired": "Vypršelo",
-  "neatGamificationWidgetsHoursMinutesLeft": "Zbývá hodin a minut {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "Zbývá {arg0} h {arg1} m",
   "neatGamificationWidgetsLevel": "Úroveň {level}",
   "neatGamificationWidgetsLevelUp": "LEVEL UP!",
   "neatGamificationWidgetsMaxLevel": "Maximální úroveň!",
-  "neatGamificationWidgetsMinutesLeft": "Zbývá minut {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "Zbývá {arg0} m",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Šampion",
   "neatGamificationWidgetsNeatEnthusiast": "Nadšenec",
@@ -22478,9 +22214,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Tento týden zatím žádné žebříčky",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Skóre",
-  "neatGamificationWidgetsStepGoal": "Cíl kroků {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Kroky",
-  "neatGamificationWidgetsTargetActiveHours": "Cílové aktivní hodiny {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} hod.",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22494,7 +22230,6 @@
   "neatScoreDisplayScoreBreakdown": "ROZPIS SKÓRE",
   "neatScoreDisplayTapForBreakdown": "Klepni pro rozpis",
   "neatScoreDisplayTrend": "Trend: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Načítání...",
   "netflixExerciseCarouselSeeAll": "Zobrazit vše",
   "netflixExercisesAddYourOwnExercises": "Přidej vlastní cviky s nastavením opakování, sérií a instrukcí.",
@@ -22561,8 +22296,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Počítám optimální další sérii...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% intenzita",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Poslední série",
   "nextSetPreviewKg": " kg",
@@ -22725,7 +22458,6 @@
   "nutrientExplorerTopContributors": "HLAVNÍ ZDROJE",
   "nutrientExplorerUnknown": "Neznámé",
   "nutrientExplorerUnpinNutrient": "Odepnout živinu",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VITAMÍNY",
   "nutrientRushGameCatchTheGoldenZealova": "Chyťte zlatou značku Zealova pro vylepšení!",
   "nutrientRushGameNewBest": "🎉 NOVÝ REKORD!",
@@ -22993,11 +22725,9 @@
   "nutritionTabPartWeeklyOverview": "Týdenní přehled",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "prům. {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Prům. příjem: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/den {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Hmotnost: {formattedWeeklyRate}",
@@ -23041,33 +22771,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, všechno v jednom",
   "onboardingWhyFirstTheWhy": "NEJDŘÍVE PROČ",
   "onboardingWhyWhatSDrivingThis": "Co vás k tomu vede?",
-  "openAllCrates24HoursOf2xXp": "24 hodin dvojnásobných XP",
+  "openAllCrates24HoursOf2xXp": "24 hodin 2x XP",
   "openAllCratesActivityCrate": "Bedna aktivity",
   "openAllCratesBonusCrateToOpen": "Bonusová bedna k otevření",
-  "openAllCratesCollect": "Vybrat {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Otevřené bedny {arg0}",
+  "openAllCratesCollect": "Sebrat ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "Otevřeno beden: {arg0}!",
   "openAllCratesDailyCrate": "Denní bedna",
   "openAllCratesDone": "Hotovo",
-  "openAllCratesDoubleXpToken": "Token na dvojnásobné XP",
+  "openAllCratesDoubleXpToken": "Žeton dvojitého XP",
   "openAllCratesFailedToOpenCrates": "Nepodařilo se otevřít bedny. Zkuste to prosím znovu.",
   "openAllCratesFitnessCrate": "Fitness bedna",
-  "openAllCratesGainedXp": "Získané XP {arg0}",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Maximální úroveň",
-  "openAllCratesOpenYourCrates": "Otevřete své bedny",
-  "openAllCratesOpened": ") otevřeno!",
-  "openAllCratesOpeningYourCrates": "Otevírání vašich beden",
-  "openAllCratesPickRewardPerDay": "Vyberte odměnu za den {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Vyberte svou odměnu {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Otevřete své bedny",
+  "openAllCratesOpeningYourCrates": "🎁 Otevírání beden…",
+  "openAllCratesPickRewardPerDay": "Vyberte 1 odměnu denně • {arg0}/{arg1} vybráno",
+  "openAllCratesPickYourReward": "Vyberte odměnu • {arg0}/{arg1} vybráno",
   "openAllCratesProtectYourStreak": "Chraňte svou sérii",
   "openAllCratesSelectAll": "Vybrat vše",
   "openAllCratesStreakCrate": "Bedna série",
   "openAllCratesStreakShield": "Štít série",
   "openAllCratesToday": "Dnes",
-  "openAllCratesTotalXpFormatted": "Celkové XP {arg0}",
-  "openAllCratesTotalXpLevel": "Celková úroveň XP {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} celkem",
+  "openAllCratesTotalXpLevel": "Celkem: {arg0} XP • Úroveň {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 Odměny!",
-  "openAllCratesXpInLevel": "XP v úrovni {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP do další úrovně {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP do úr. {arg1}",
   "openAllCratesYesterday": "Včera",
   "overallScoreHeroOverall": "CELKOVĚ",
   "overviewActiveSkill": "AKTIVNÍ DOVEDNOST",
@@ -23308,7 +23037,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Vaše tréninková osobnost je...",
   "phaseRecommendationBannerBasedOn": "Založeno na: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-confidence estimate\" : \"\")",
   "phaseRecommendationBannerCycleDay": "{cycleDay}. den cyklu",
   "phaseRecommendationBannerEvidence": "Důkaz: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Rozumím",
@@ -23421,9 +23149,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Vybudujte silové základy",
   "planPreviewScreenBuildingYour4Week": "Sestavování vašeho 4týdenního plánu...",
   "planPreviewScreenContinueFree": "Pokračovat zdarma",
-  "planPreviewScreenDaysPerWeek": "Dní v týdnu {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} dní/týden",
   "planPreviewScreenDesignedBasedOnYour": "Navrženo na základě vašich odpovědí v kvízu",
-  "planPreviewScreenEquipmentCount": "Počet vybavení {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} vybavení",
   "planPreviewScreenExercisesMin": "Cviky min {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Zvyšte intenzitu a objem",
   "planPreviewScreenMasterTheMovement": "Ovládněte pohyb",
@@ -23517,7 +23245,6 @@
   "prInlineCelebrationPersonalRecords": "{length} osobních rekordů!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") OD POSLEDNĚ",
   "prShareCardCopiedToClipboard": "Zkopírováno do schránky!",
   "prShareCardCopyText": "Kopírovat text",
   "prShareCardFailedToCaptureImage": "Nepodařilo se pořídit snímek",
@@ -23720,7 +23447,7 @@
   "programSummaryLevel": "Úroveň",
   "programSummaryLoseWeight": "Hubnutí",
   "programSummaryMacrosAndMealsAligned": "Makroživiny a jídla sladěná s vaším tréninkem",
-  "programSummaryNItems": "Položek {arg0}",
+  "programSummaryNItems": "{arg0} položek",
   "programSummaryNutritionIntegration": "Integrace výživy",
   "programSummaryPersonalizedForYourGoals": "Personalizováno pro vaše cíle a vybavení",
   "programSummaryProgressiveOverload": "Progresivní přetížení",
@@ -23950,7 +23677,6 @@
   "prsTemplateKeepPushing": "Nepolevujte!",
   "prsTemplateNewPersonalRecords": "NOVÉ OSOBNÍ REKORDY",
   "prsTemplateNewPrsAreJust": "Nová PR jsou za rohem",
-  "prsTemplateValue": ") (jednotka)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Ingredience",
   "publicRecipeInstructions": "Postup",
@@ -24070,7 +23796,7 @@
   "quickLogMeasurementsTapToViewFull": "Klepnutím zobrazíte celou historii a trendy",
   "quickLogMeasurementsTrackYourBodyChanges": "Sledujte změny svého těla v čase",
   "quickLogMeasurementsUpdate": "Aktualizovat",
-  "quickLogMeasurementsUpdatedDaysAgo": "Před {arg0} dny",
+  "quickLogMeasurementsUpdatedDaysAgo": "Aktualizováno před {arg0} dny",
   "quickLogMeasurementsUpdatedToday": "Dnes",
   "quickLogMeasurementsUpdatedYesterday": "Včera",
   "quickLogMeasurementsWaist": "Pas",
@@ -24196,16 +23922,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI generuje tréninky ve zvoleném rozsahu",
   "quizDaysSelectorBest": "Nejlepší",
   "quizDaysSelectorConsistencyBeatsIntensity": "Konzistence je víc než intenzita – vyber si to, co zvládneš udržet",
-  "quizDaysSelectorDays": "Dny {arg0}",
-  "quizDaysSelectorDaysSelected": "Vybrané dny {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") pro tvé tréninky",
+  "quizDaysSelectorDays": "{arg0, plural, one {den} few {dny} many {dne} other {dní}}",
+  "quizDaysSelectorDaysSelected": "Vybráno {arg0} / {arg1} dní",
   "quizDaysSelectorFri": "Pá",
   "quizDaysSelectorHowLongAreYour": "Jak dlouhé jsou tvé tréninky?",
   "quizDaysSelectorHowManyDaysPer": "Kolik dní v týdnu můžeš trénovat?",
   "quizDaysSelectorMin": "Min",
   "quizDaysSelectorMon": "Po",
   "quizDaysSelectorSat": "So",
-  "quizDaysSelectorSelectNDays": "Vyberte {arg0} dní",
+  "quizDaysSelectorSelectNDays": "Vyberte {arg0} dní, které vám vyhovují",
   "quizDaysSelectorSun": "Ne",
   "quizDaysSelectorThu": "Čt",
   "quizDaysSelectorTue": "Út",
@@ -24235,13 +23960,13 @@
   "quizEquipmentHomeGym": "Domácí posilovna",
   "quizEquipmentHomeKettlebell": "Domů + kettlebell",
   "quizEquipmentHotel": "Hotel",
-  "quizEquipmentIdentifiedCount": "Identifikovaný počet {arg0}",
+  "quizEquipmentIdentifiedCount": "Identifikováno položek: {arg0}. Klepnutím kteroukoli zrušíte výběr.",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "Medicinbal",
   "quizEquipmentMinimalEquipmentBodyweight": "Minimální vybavení – vlastní váha, podložka",
   "quizEquipmentNeededForBarbell": "Potřebné pro velkou činku",
   "quizEquipmentNoEquipmentIdentifiedPick": "Nebylo identifikováno žádné vybavení. Vyber si ze seznamu níže.",
-  "quizEquipmentOtherCount": "Ostatní počet {arg0}",
+  "quizEquipmentOtherCount": "Vybráno: {arg0}",
   "quizEquipmentOtherEquipment": "Další vybavení",
   "quizEquipmentPullUpBar": "Hrazda",
   "quizEquipmentQuickPresets": "Rychlé předvolby",
@@ -24507,7 +24232,6 @@
   "recipeCreateRecipeNameRequired": "Název receptu je vyžadován",
   "recipeCreateRemovePhoto": "Odstranit fotku",
   "recipeCreateSaving": "Ukládání...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Pořídit fotku",
   "recipeCreateTapToEdit": "Klepnutím upravíte",
@@ -24533,7 +24257,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Na porci (×{servings} porcí)",
   "recipeDetailScreenUForkedFrom": "✨ Vytvořeno z {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" bude trvale odstraněno.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Vybraný recept",
   "recipeDetailView": "Zobrazit",
@@ -24753,7 +24476,7 @@
   "regenerateSheetConsideringFocusAreas": "Zohledňování oblastí zaměření",
   "regenerateSheetCustomize": "Přizpůsobit",
   "regenerateSheetCustomizeOrLetAi": "Přizpůsobte si trénink nebo nechte AI navrhnout změny",
-  "regenerateSheetCustomizeOrLetAiSuggest": "Přizpůsobte nebo nechte AI navrhnout",
+  "regenerateSheetCustomizeOrLetAiSuggest": "Přizpůsobte si to nebo nechte AI navrhnout",
   "regenerateSheetDescribeYourIdealWorkout": "Popište svůj ideální trénink",
   "regenerateSheetDesigningYourWorkout": "Navrhování vašeho tréninku",
   "regenerateSheetDialingInSetsAndReps": "Ladění sérií a opakování",
@@ -24765,7 +24488,7 @@
   "regenerateSheetFinalizingDetails": "Dokončuji podrobnosti…",
   "regenerateSheetFinalizingYourWorkout": "Dokončování vašeho tréninku",
   "regenerateSheetFineTuningTheDetails": "Ladění detailů",
-  "regenerateSheetGeneratingElapsed": "Generování trvá {arg0}",
+  "regenerateSheetGeneratingElapsed": "Generování… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Generuji návrhy…",
   "regenerateSheetGetSuggestions": "Získat návrhy",
   "regenerateSheetGettingCreative": "Tvořím",
@@ -24991,21 +24714,20 @@
   "restSuggestionCardUseSuggested": "Použít doporučené",
   "restSuggestionQuick": "Rychlý",
   "restSuggestionQuickRest": "Rychlý odpočinek",
-  "restSuggestionSaveTime": "Ušetřete čas {arg0}",
+  "restSuggestionSaveTime": "Ušetřete {arg0}",
   "restSuggestionSuggested": "Doporučeno",
   "restSuggestionUseSuggested": "Použít doporučené",
   "restTimerCardBaseRest": "Základní odpočinek",
   "restTimerCardControlRestPeriodsBetween": "Ovládejte dobu odpočinku mezi sériemi",
   "restTimerCardCustomRestTimer": "Vlastní časovač odpočinku",
   "restTimerCardFormula": "Vzorec",
-  "restTimerCardFormulaBaserestRpe7": "Vzorec: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Živý náhled",
   "restTimerCardMultiplier": "Násobitel",
   "restTimerCardRestBaserestRpe7": "Odpočinek = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s} s",
-  "restTimerCardVariablesBaseRpeMultipli": "Proměnné: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Proměnné: základ, RPE, násobitel, úroveň",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "Analyzuji váš výkon...",
@@ -25098,7 +24820,7 @@
   "rtpGraduated": "Dokončeno",
   "rtpTitle": "Návrat k tréninku",
   "safetyDisclaimerBannerDismissDisclaimer": "Zavřít upozornění",
-  "safetyDisclaimerBannerInjuriesFlagged": "Nahlášená zranění {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "Označeno zranění: {arg0}",
   "safetyDisclaimerBannerInjuryBody": "Tělo se zraněním",
   "safetyDisclaimerBannerLearnMore": "Více informací",
   "safetyDisclaimerBannerMore": "+{overflow} dalších",
@@ -25291,7 +25013,6 @@
   "sessionDetailSet": "Série",
   "sessionDetailSetCount": "{count, plural, other{{count} sérií}} · hlavní série zvýrazněna",
   "sessionDetailTime": "Čas",
-  "sessionDetailTopSetHighlighted": ") • zvýrazněná hlavní série",
   "sessionDetailWeight": "Váha",
   "setAdjustmentAdditionalNotesOptional": "Další poznámky (volitelné)",
   "setAdjustmentConfirm": "Potvrdit",
@@ -25307,7 +25028,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "hotovo {completedCount}",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "zbývá {remainingCount}",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "odstraněno {length}",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") z (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "z {totalSets} plánovaných",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "dokončeno {completedSets} sérií",
   "setAdjustmentSheetReps": "Opakování",
@@ -25372,7 +25092,6 @@
   "setTrackingSectionSetTapToExpand": "Série {currentSetNumber}/{totalSets} • Klepnutím rozbalíte",
   "setTrackingSectionSets": "{widget} sérií",
   "setTrackingSectionSetsCompleted": "{length} sérií dokončeno",
-  "setTrackingSectionValue": ")×(opakování)",
   "setTrackingSheetsAmountToAdjustWeight": "Množství pro úpravu váhy",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "Historie cviku",
@@ -25555,7 +25274,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject=Žádost o podporu {appName}",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} dní",
   "settingsScreenUiNoSettingsFound": "Nebylo nalezeno žádné nastavení",
-  "settingsScreenUiTryDifferentKeywordsLike": "Zkuste jiná klíčová slova jako \"vzhled\", \"oznámení\" nebo \"ai hlas\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Zkuste jiná klíčová slova jako „motiv“, „oznámení“ nebo „hlas AI“",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Hledat v nastavení",
   "settingsSetProgressionResearch": "Nastavit progresi a výzkum",
@@ -25600,7 +25319,7 @@
   "shareInsightsSheetMyReport": "Můj přehled {appName} za {periodName}",
   "shareInsightsSheetMyReport2": "Můj přehled {appName}",
   "shareMotivationalCompleted": "HOTOVO",
-  "sharePrNewPr": "Nový PR",
+  "sharePrNewPr": "NOVÉ PR",
   "shareStatsCalories": "Kalorie",
   "shareStatsDuration": "Doba trvání",
   "shareStatsEliteTemplate": "ELITE TEMPLATE",
@@ -26029,7 +25748,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "ODMĚNY",
   "streakMilestoneStreakMilestone": "MILNÍK SÉRIE!",
-  "streakMilestoneToGo": ") do cíle!",
   "streakMilestoneYouVeReachedThe": "Dosáhli jste ultimátního milníku série!",
   "streakSavedDialogWeUsedStreakShield": "Použili jsme 1 Štít série, abychom udrželi vaši {savedStreakCount}denní sérii.",
   "streakSavedKeepItGoing": "Jen tak dál",
@@ -26551,16 +26269,16 @@
   "todayScoreCardConnect": "Připojit",
   "todayScoreCardCustomize": "PŘIZPŮSOBIT",
   "todayScoreCardToday": "Dnes",
-  "todayScoreDetailDown": "Pokles {arg0}",
-  "todayScoreDetailEarnedPts": "Získané body {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Pokles o {arg0} od rána",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} b.",
   "todayScoreDetailHowItWorks": "Jak to funguje",
-  "todayScoreDetailInactiveExplanation": "Vysvětlení neaktivity {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Momentum s průměrem {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {se dnes nepočítá} few {se dnes nepočítají} many {se dnes nepočítá} other {se dnes nepočítá}}, takže zbytek si rozdělí plných 100 bodů. Vaše skóre vždy odráží jen to, co dnes skutečně platí.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7denní průměr {arg1}",
   "todayScoreDetailNotCounted": "Nezapočítáno",
   "todayScoreDetailSetupText": "Nastavení textu",
   "todayScoreDetailSteady": "Stabilní",
   "todayScoreDetailTodayScore": "Dnešní skóre",
-  "todayScoreDetailUp": "Nárůst {arg0}",
+  "todayScoreDetailUp": "▲ Nárůst o {arg0} od rána",
   "todayScoreSetupAddAWorkoutPlan": "Přidat tréninkový plán",
   "todayScoreSetupCardContinue": "Pokračovat: {label}",
   "todayScoreSetupCardGetStarted": "ZAČÍT · {completedCount}/{length}",
@@ -26689,20 +26407,19 @@
   "trophiesEarnedCardioAchievements": "Kardio úspěchy",
   "trophiesEarnedDayStreak": "Denní série",
   "trophiesEarnedFirstTime": "POPRVÉ!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Milník dosažen",
   "trophiesEarnedMilestoneReachedNice": "Milník dosažen — skvělá práce!",
   "trophiesEarnedMilestones": "Milníky",
-  "trophiesEarnedNewBadges": "Odznaky {arg0}",
-  "trophiesEarnedNewCardioPRs": "Kardio PR {arg0}",
-  "trophiesEarnedNewPR": "Nový PR",
-  "trophiesEarnedNewPRs": "PR {arg0}",
+  "trophiesEarnedNewBadges": "Nové odznaky: {arg0}",
+  "trophiesEarnedNewCardioPRs": "Nové cardio PR: {arg0}",
+  "trophiesEarnedNewPR": "NOVÉ PR",
+  "trophiesEarnedNewPRs": "Nové PR: {arg0}!",
   "trophiesEarnedNewPr": "NOVÝ PR",
   "trophiesEarnedNextMilestones": "Další milníky",
   "trophiesEarnedNoNewRecords": "Žádné nové rekordy",
   "trophiesEarnedNoNewRecordsThis": "V této relaci žádné nové rekordy — zde je to, na čem pracujete:",
   "trophiesEarnedPersonalRecords": "Osobní rekordy",
-  "trophiesEarnedRemainingToUnlock": "Zbývá odemknout {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "Ještě {arg0} {arg1} k odemčení",
   "trophiesEarnedSessionHighlights": "Hlavní body tréninku",
   "trophiesEarnedSheetPts": "+{points} bodů",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26755,7 +26472,7 @@
   "typingIndicatorIsTyping2": "{userName} píše",
   "typingIndicatorIsTyping3": "{agentName} píše...",
   "unifiedHomeWidgetsActivity": "AKTIVITA",
-  "unifiedHomeWidgetsBreakfastLogged": "Snídaně zaznamenána: {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Snídaně zaznamenána {arg0} ze 7 posledních rán",
   "unifiedHomeWidgetsBreakfastSuggestion": "Návrh snídaně",
   "unifiedHomeWidgetsCarbs": "Sacharidy",
   "unifiedHomeWidgetsConnect": "Připojit",
@@ -26768,7 +26485,7 @@
   "unifiedHomeWidgetsFat": "Tuky",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal celkem dnes",
+  "unifiedHomeWidgetsKcalBurned": "Spáleno {arg0} kcal",
   "unifiedHomeWidgetsKcalLeft": " kcal zbývá",
   "unifiedHomeWidgetsLastNight": "minulou noc",
   "unifiedHomeWidgetsLog16oz": "Zaznamenat 16oz",
@@ -26970,7 +26687,7 @@
   "weekDurationSelectorW": "{first}t",
   "weekDurationSelectorWeeks": "{selectedWeeks} týdnů",
   "weekDurationSelectorWk": "{spw}/týdně",
-  "weekProgressStripCompletedCount": "Dokončeno {arg0} z {arg1}",
+  "weekProgressStripCompletedCount": "Dokončeno {arg0} z {arg1} tréninků",
   "weekProgressStripCouldNotLoadProgress": "Nepodařilo se načíst pokrok",
   "weekProgressStripLoading": "Načítání...",
   "weekProgressStripNoWorkoutsScheduled": "Žádné naplánované tréninky",
@@ -27160,8 +26877,8 @@
   "weightTrackingCardSeeAll": "Zobrazit vše",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Sledování hmotnosti",
-  "weightTrendCardDownThisWeek": "Tento týden pokles {arg0}",
-  "weightTrendCardDownVsLastCycle": "Pokles oproti minulému cyklu {arg0}",
+  "weightTrendCardDownThisWeek": "Pokles o {arg0} tento týden!",
+  "weightTrendCardDownVsLastCycle": "Pokles o {arg0} lbs oproti stejnému dni cyklu minulý měsíc",
   "weightTrendCardLoadingWeight": "Načítání hmotnosti...",
   "weightTrendCardLogYourWeightTo": "Zaznamenejte svou hmotnost pro zobrazení trendů",
   "weightTrendCardMaintaining": "Udržování",
@@ -27172,9 +26889,9 @@
   "weightTrendCardSameAsLastCycle": "Stejné jako v minulém cyklu",
   "weightTrendCardTapToLogWeight": "Klepnutím zaznamenejte hmotnost",
   "weightTrendCardTargetHeld": "Cíl držen",
-  "weightTrendCardTargetHeldWindow": "Cíl držen v rozmezí {arg0}",
-  "weightTrendCardUpThisWeek": "Tento týden nárůst {arg0}",
-  "weightTrendCardUpVsLastCycle": "Nárůst oproti minulému cyklu {arg0}",
+  "weightTrendCardTargetHeldWindow": "Cíl udržen {arg0} — vyrovnávání vody v luteální fázi",
+  "weightTrendCardUpThisWeek": "Nárůst o {arg0} tento týden",
+  "weightTrendCardUpVsLastCycle": "Nárůst o {arg0} lbs oproti stejnému dni cyklu minulý měsíc",
   "weightTrendCardWeightStableThisWeek": "Váha tento týden stabilní",
   "weightTrendCardWeightTrends": "Trendy hmotnosti",
   "welcomeAffirmationGreatChoice": "Skvělá volba.",
@@ -27221,7 +26938,6 @@
   "workoutActionsRevertToThisVersion": "Vrátit se k této verzi?",
   "workoutActionsShareWorkout": "Sdílejte cvičení",
   "workoutActionsSheetGetALinkFor": "Získat odkaz {marketingDomain} pro přátele",
-  "workoutActionsSheetN": ") — (Zealova)\n(url)",
   "workoutActionsSheetRestore": "Obnovit \"{name}\"?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27310,7 +27026,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} opakování",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} sérií, {currentReps} opakování",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "V tuto chvíli nelze vyzvat přátele",
   "workoutCompleteScreenUnableToExtendWorkout": "Trénink nelze prodloužit",
   "workoutCompleteScreenViewAllMetrics": "Zobrazit všechny metriky",
@@ -27374,12 +27089,11 @@
   "workoutDetailEquipment": "ZAŘÍZENÍ",
   "workoutDetailExercises": "CVIČENÍ",
   "workoutDetailFailedToLoadWorkout": "Nepodařilo se načíst trénink",
-  "workoutDetailHelpersForAvailableEquipment": ") pro dostupné vybavení...",
   "workoutDetailHelpersHell": "Peklo",
   "workoutDetailHelpersUpdatingExercises": "Aktualizace cvičení",
   "workoutDetailMoreInfo": "VÍCE INFORMACÍ",
   "workoutDetailProgram": "Naprogramovat",
-  "workoutDetailReplacingExercises": "Nahrazování cviků {arg0}",
+  "workoutDetailReplacingExercises": "Nahrazování cviků ({arg0}) podle dostupného vybavení…",
   "workoutDetailRevert": "Vrátit zpět",
   "workoutDetailScreenBreakSuperset": "Přerušit superset?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} spálených kalorií",
@@ -27508,7 +27222,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "V jaké jednotce je sloupec hmotnosti? A pokud znáte zdrojovou aplikaci, vyberte ji — pomáhá odlišit sourozenecké formáty (Hevy vs. silné CSV).",
   "workoutHistoryImportYourStrengthData": "Vaše údaje o síle",
-  "workoutImportAsDone": ")\" jako hotové",
   "workoutImportCalories": "Kalorie",
   "workoutImportCardio": "Kardio",
   "workoutImportCycling": "Cyklistika",
@@ -27516,7 +27229,7 @@
   "workoutImportDuration": "Trvání",
   "workoutImportEasy": "Lehký",
   "workoutImportFlexibility": "Flexibilita",
-  "workoutImportFromSource": "Ze zdroje {arg0}",
+  "workoutImportFromSource": "z {arg0}",
   "workoutImportHard": "Těžký",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Jak těžké bylo toto cvičení?",
@@ -27601,13 +27314,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Tyto systémové výzvy můžete vidět během tréninku. Obojí je volitelné – přeskočte jedno a cvičení stále funguje.",
   "workoutPlanDrawerAddExercise": "Přidejte cvičení",
   "workoutPlanDrawerCurrent": "Proud",
-  "workoutPlanDrawerExerciseCount": "Počet cviků {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") zaznamenáno. Budou smazány.",
+  "workoutPlanDrawerExerciseCount": "{arg0} cviků",
   "workoutPlanDrawerNow": "Teď",
   "workoutPlanDrawerRemove": "Odstranit",
-  "workoutPlanDrawerRemoveExercise": "Odstranit cvik {arg0}",
+  "workoutPlanDrawerRemoveExercise": "Odebrat {arg0}?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Odstranit cvik",
-  "workoutPlanDrawerSetsLogged": "Zaznamenané série {arg0}",
+  "workoutPlanDrawerSetsLogged": "Máte zaznamenáno sérií: {arg0}. Budou smazány.",
   "workoutPlanDrawerSwapExercise": "Vyměnit cvik",
   "workoutPlanDrawerTitle": "Název",
   "workoutPlanDrawerWorkoutPlan": "Tréninkový plán",
@@ -27753,7 +27465,7 @@
   "workoutShowcaseLinearLabel": "Lineární štítek",
   "workoutShowcaseLogAllSets": "Všechny série",
   "workoutShowcaseLogDrink": "Zaznamenat nápoj",
-  "workoutShowcaseLogSet": "Série {arg0}",
+  "workoutShowcaseLogSet": "✓ Zaznamenat sérii {arg0}",
   "workoutShowcaseLogWater": "Zaznamenat vodu",
   "workoutShowcaseMovedThisSession": "zvednuto v tomto tréninku",
   "workoutShowcaseNewPr": "NOVÝ PR",
@@ -27768,7 +27480,6 @@
   "workoutShowcaseReps": "Zástupci",
   "workoutShowcaseScreenDay": "Den {day}",
   "workoutShowcaseScreenDuration": "DOBA TRVÁNÍ: {duration}",
-  "workoutShowcaseScreenPrs": "PR: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PR · ZADÁNO",
   "workoutShowcaseScreenSession": "TRÉNINK: {title}",
   "workoutShowcaseScreenTotalPrs": "CELKEM {duration} · {volume} · {prs} PR",
@@ -28028,20 +27739,20 @@
   "xpGoalsDaily": "Denní",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 úrovní v 11 kategoriích",
   "xpGoalsDialogBeginnerToTranscendent": "Od začátečníka po transcendenci",
-  "xpGoalsDialogCompleteWorkoutXp": "XP za dokončení tréninku",
+  "xpGoalsDialogCompleteWorkoutXp": "Dokonči trénink: +100 XP",
   "xpGoalsDialogDailyGoals": "Denní cíle",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "XP za první chat s AI trenérem",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "XP za první měření jídla",
-  "xpGoalsDialogFirstPrXp": "XP za první PR",
-  "xpGoalsDialogFirstProgressPhotoXp": "XP za první fotku pokroku",
-  "xpGoalsDialogFirstProteinGoalXp": "XP za první splnění cíle bílkovin",
-  "xpGoalsDialogFirstWorkoutXp": "XP za první trénink",
-  "xpGoalsDialogHitProteinGoalXp": "XP za splnění cíle bílkovin",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "První chat s AI koučem: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "První jídlo/váha/míry: +50 XP za každé",
+  "xpGoalsDialogFirstPrXp": "První PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "První foto pokroku: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "První cíl bílkovin: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "První trénink: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Splň cíl bílkovin: +50 XP",
   "xpGoalsDialogLevels": "Úrovně",
-  "xpGoalsDialogLogBodyMeasurementsXp": "XP za měření těla",
-  "xpGoalsDialogLogMealXp": "XP za zaznamenání jídla",
-  "xpGoalsDialogLogWeightXp": "XP za zaznamenání hmotnosti",
-  "xpGoalsDialogLoginXp": "XP za přihlášení",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Zaznamenej tělesné míry: +20 XP",
+  "xpGoalsDialogLogMealXp": "Zaznamenej jídlo: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Zaznamenej váhu: +15 XP",
+  "xpGoalsDialogLoginXp": "Přihlášení: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Odměny za milníky",
   "xpGoalsFirstTimeBonuses": "Bonusy za první splnění",
   "xpGoalsGotIt": "Rozumím!",
@@ -28065,7 +27776,7 @@
   "xpGoalsScreenHitProteinGoal": "Dosáhnout cíle v příjmu bílkovin",
   "xpGoalsScreenInventory": "Inventář",
   "xpGoalsScreenLegendary": "LEGENDÁRNÍ",
-  "xpGoalsScreenLevelCurrentTotal": "Aktuální celková úroveň {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Úroveň {arg0} • 249 úrovní celkem",
   "xpGoalsScreenLevelProgress": "Pokrok úrovně",
   "xpGoalsScreenLogBodyMeasurements": "Zaznamenat tělesné míry",
   "xpGoalsScreenLogFirstMeal": "Zaznamenat první jídlo",
@@ -28094,10 +27805,10 @@
   "xpGoalsTrophyRoom": "Síň slávy",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Týdenní",
-  "xpGoalsXpAvailable": "Dostupné {arg0}",
-  "xpGoalsXpEarnedToday": "Dnes získáno {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP k dispozici",
+  "xpGoalsXpEarnedToday": "+{arg0} XP získáno dnes",
   "xpGoalsXpGoals": "XP cíle",
-  "xpGoalsXpMultiplierActive": "Aktivní násobič {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP aktivní!",
   "xpHeroTileDayStreak": "{streak}denní série",
   "xpHeroTileLv": "Úroveň {level}",
   "xpHeroTileLv2": "Úroveň {nextLevel} → {label}",

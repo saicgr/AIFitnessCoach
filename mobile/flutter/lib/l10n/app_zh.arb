@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "何时使用",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "动作替换成功",
   "activeWorkoutScreenRefactoredExerciseSAdded": "已添加 {_exercises} 个练习",
-  "activeWorkoutScreenRefactoredFor": ") 用于 (name)",
   "activeWorkoutScreenUndo": "撤销",
   "activeWorkoutScreenWorkoutAdapted": "训练已调整。",
   "activityCardAdditionalDetailsOptional": "附加详情（可选）",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "训练前补给？",
   "aiCoachMealQuickSnackIdeas": "快速零食点子？",
   "aiCoachMealRecoveryDayEating": "恢复日饮食？",
-  "aiCoachMealSearchQuestionsTryAngry": "搜索问题（尝试“生气”、“纤维”、“墨西哥”）",
   "aiCoachMealSomethingWentWrong": "出错了。",
   "aiCoachMealStressedWhatHelps": "压力大 — 什么有帮助？",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "亚洲风味 {meal} ——一个选择（盖饭、面条、寿司、炒菜），宏量营养素及准备建议。{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} 卡路里 · {phase} 阶段",
   "caloriesSummaryCardCalories": "热量",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "剩余",
   "cancelConfirmationAnythingElseYouD": "还有什么想分享的吗？（可选）",
   "cancelConfirmationCancelAnyway": "仍然取消",
   "cancelConfirmationHelpUsImprove": "帮助我们改进",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "知道了",
   "chatLanguageChangedSystem": "🌐 AI Coach 现在使用 {nativeName} 回复",
   "chatLanguageResetSystem": "🌐 AI Coach 语言已重置 — 使用应用语言",
-  "chatLeftToday": ") 今日剩余",
   "chatMediaWidgetsCalTotal": "总计 {totalCal} 卡路里",
   "chatMediaWidgetsGProtein": "{totalProtein}g 蛋白质",
   "chatMediaWidgetsGoTo": "前往 {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "教练正在思考，比平时稍久一些。",
   "chatScreenCouldntReachCoach": "无法联系教练。",
   "chatScreenExtAboutAiCoach": "关于AI教练",
-  "chatScreenExtAs": ") 作为 (mealType)",
   "chatScreenExtChangeCoach": "更换教练",
   "chatScreenExtChatTips": "聊天小贴士",
   "chatScreenExtChooseMultiplePhotos": "选择多张照片",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "查看目标",
   "complianceRingCardAllWorkoutsCompleted": "已完成所有训练",
   "complianceRingCardGetStartedToday": "今天开始训练",
-  "complianceRingCardGreatPace": "进度良好 {arg0}",
+  "complianceRingCardGreatPace": "节奏不错！还剩 {arg0}",
   "complianceRingCardNoWorkoutsScheduledThis": "本周无计划训练",
-  "complianceRingCardOnTrack": "进度正常 {arg0}",
+  "complianceRingCardOnTrack": "进展顺利 — 还差 {arg0}",
   "complianceRingCardWorkoutCompliance": "训练合规度",
-  "complianceRingCardWorkoutsRemaining": "剩余训练 {arg0}",
+  "complianceRingCardWorkoutsRemaining": "还剩 {arg0} 次锻炼",
   "comprehensiveStatsStatsScores": "统计与评分",
   "connectedAppsAutoImportEvery15": "每15分钟自动导入",
   "connectedAppsConnect": "连接",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "选择食物",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "使用此数值",
-  "cookingConverterWeight": ") 重量",
   "cosmeticsGalleryCosmetics": "装饰",
   "cosmeticsGalleryEquip": "装备",
   "cosmeticsGalleryEquipped": "已装备",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "没有匹配搜索的动作",
   "customExercisesScreenAreYouSureYou": "确定要删除 “{name}” 吗？此操作无法撤销。",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} 个动作，{totalUses} 次使用",
-  "customExercisesScreenUsedTimes": "已使用 (usageCount) 次(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "搜索动作...",
   "customExercisesSimple": "简单",
   "customFoodBuilderAiFillFromName": "AI 根据名称填充",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · 上个周期",
   "customTrendScreenMaxOverlaysRemoveOne": "最多 {_kMaxOverlays} 个叠加层 — 请移除一个后再添加",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} 个共同记录日",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "添加动作",
   "customWorkoutBuilderBuildCustomWorkout": "构建自定义训练",
   "customWorkoutBuilderCustomWorkoutCreated": "自定义训练已创建！",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "记录经期",
   "cycleScreenUiLogPeriod": "记录经期",
   "cycleScreenUiLogYourFirstPeriod": "记录你的第一次月经以开始预测。",
-  "cycleScreenUiPhase": ") 阶段",
   "cycleScreenUiPhaseLabel": "{displayName} 阶段",
   "cycleScreenUiPredictionsAreEstimates": "预测结果基于你的记录数据，仅供参考，并非避孕方法，也不构成医疗建议。如有健康顾虑，请咨询医生。",
   "cycleScreenUiPregnancyModeIsOn": "孕期模式已开启",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "继续",
   "editProgramSheetCurrent": "当前",
   "editProgramSheetCustomProgram": "自定义计划",
-  "editProgramSheetCustomValue": "自定义值 {arg0}",
+  "editProgramSheetCustomValue": "自定义：{arg0}",
   "editProgramSheetCustomizeProgram": "自定义计划",
   "editProgramSheetDays": "天数",
   "editProgramSheetDaysAgo": "{days} 天前",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "器械",
   "editProgramSheetEquipmentLabel": "器械标签",
   "editProgramSheetExamples": "示例",
-  "editProgramSheetFailedToLoadHistory": "加载历史记录 {arg0}",
-  "editProgramSheetFailedToRestore": "恢复 {arg0}",
+  "editProgramSheetFailedToLoadHistory": "加载历史记录失败：{arg0}",
+  "editProgramSheetFailedToRestore": "恢复失败：{arg0}",
   "editProgramSheetFailedToUpdateProgram": "更新计划",
   "editProgramSheetFocus": "重点",
   "editProgramSheetHealth": "健康",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "下载中 {pct}%",
   "exerciseDetailSheetDownloadingVideo": "正在下载视频...",
   "exerciseDetailSheetFavorite": "收藏",
-  "exerciseDetailSheetLbs": ") 磅 × (repRange)",
   "exerciseDetailSheetLoading": "加载中...",
   "exerciseDetailSheetLog1rm": "记录 1RM",
   "exerciseDetailSheetMS": "{restMins} 分 {restSecs} 秒",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15秒",
   "exerciseSetTrackerAddNotesHere": "在此添加备注...",
   "exerciseSetTrackerAddSet": "添加组",
-  "exerciseSetTrackerBarbell": ") 杠铃",
   "exerciseSetTrackerReps": "次数",
   "exerciseSetTrackerRestTarget": "休息目标",
   "exerciseSetTrackerS": "{seconds}秒",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI 推荐不可用",
   "exerciseSwapSheetAnyEquipment": "任何器械",
   "exerciseSwapSheetAskAiForSuggestions": "向 AI 寻求建议",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "描述您的器械或偏好\n例如：“肩膀不适，仅限自重”",
   "exerciseSwapSheetEGIOnly": "例如：“我只有哑铃”",
   "exerciseSwapSheetFailedToSwapExercise": "替换动作失败",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "正在寻找肌肉匹配的替代动作...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "重量",
   "expandedExerciseCardAddToFavorites": "添加到收藏",
   "expandedExerciseCardAlternatingHands": "交替手",
-  "expandedExerciseCardBarbell": ") 杠铃",
   "expandedExerciseCardBreathing": "呼吸",
   "expandedExerciseCardBreathingGuide": "呼吸指南",
   "expandedExerciseCardCollapse": "收起",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "方案等级",
   "fastingScoreCardScore": "评分",
   "fastingScoreCardStreakBonus": "连胜奖励",
-  "fastingScoreCardValue": "{scoreChange}",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "与上周相比",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "首次",
   "flexibilityProgressChartLatest": "最新",
   "flexibilityProgressChartNoDataAvailable": "暂无数据",
-  "flexibilityProgressChartValue": "{improvementAbsolute}",
   "flexibilityScoreCardByArea": "按区域",
   "flexibilityScoreCardFocusAreas": "重点区域",
   "flexibilityScoreCardOverallFlexibility": "整体柔韧性",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "搜索餐次、食物，“高蛋白”...",
   "foodHistoryUndo": "撤销",
   "foodItemRankingAddFood": "添加食物",
-  "foodItemRankingDetails": ") 详情",
   "foodItemRankingNFoodItems": "{count} 个食物项目",
   "foodItemRankingScore": "评分",
   "foodItemRankingTapToHideDetails": "点击隐藏详情",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "所以我建立的是人，而不是账本。拍下任何菜单——无论是在国内还是国外——教练都会以宏的方式将其读给你听。跳过周二，周三早上你就会回到过去，而不会感到内疚。它可以了解您的食物、您的健身情况、您的滑倒模式——每月只需不到一次的 PT 疗程。",
   "founderNoteTheFriendsWhoActually": "那些真正瘦下来的朋友都有一个随时发信息给他们的人。真正的监督每月大约需要两百美元，这正是我们大多数人从未拥有它的原因，也正是“记录”与“改变”之间的鸿沟多年来无法弥合的原因。",
-  "freshnessDecayCardAgo": "前",
   "freshnessDecayCardControlsHowQuicklyExercise": "控制运动新鲜度衰减的速度：e^(-k * 会话数)",
   "freshnessDecayCardFreshnessDecayTuner": "新鲜度衰减调节器",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "第 {currentSetNumber} 组，共 {totalSets} 组",
   "futuristicSetCardSkipExercise": "跳过动作",
-  "futuristicSetCardValue": "{targetReps}",
-  "futuristicSetCardValue2": "{reps}",
   "generatePlanCreateAHolisticPlan": "创建一个协调您的锻炼、营养和禁食的整体计划。",
   "generatePlanFastingProtocol": "禁食方案",
   "generatePlanGeneratePlan": "生成计划",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "添加您的第一个习惯",
   "habitsCardAllHabitsCompleted": "所有习惯已完成！",
   "habitsCardBuildDailyHabits": "养成日常习惯",
-  "habitsCardCompletedCount": "完成次数 {arg0} {arg1}",
-  "habitsCardDayStreak": "连续打卡 {arg0} 天",
+  "habitsCardCompletedCount": "已完成 {arg0}/{arg1}",
+  "habitsCardDayStreak": "连续 {arg0} 天",
   "habitsCardFailedToLoadHabits": "无法加载习惯",
   "habitsCardGreatJobKeepingUp": "保持连续记录，做得好",
   "habitsCardQuickStart": "快速开始：",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "今日习惯",
   "habitsCardTryAgain": "重试",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "查看所有习惯 {arg0}",
+  "habitsCardViewAllHabits": "查看全部 {arg0} 个习惯",
   "habitsCompleted": "已完成",
   "habitsDeleteHabit": "删除习惯？",
   "habitsHoldToReorderSwipe": "长按以排序 • 滑动以删除",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "休息日？还是准备好运动了？由你决定。",
   "homeEmptyWorkout_v3": "处于计划间隙——开启新计划以重回正轨。",
   "homeEmptyWorkout_v4": "暂无计划。让AI根据你的目标为你定制一个。",
-  "homeFromHealthConnect": ") 来自 Health Connect",
   "homeGreetingAfternoon_v1": "下午能量满满，{name}！",
   "homeGreetingAfternoon_v2": "嗨 {name}，该活动一下了吗？",
   "homeGreetingAfternoon_v3": "拉伸一下吗，{name}？",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "卡路里",
   "insightsSummaryTemplatePrs": "PR",
   "insightsSummaryTemplateSummary": "总结",
-  "insightsSummaryTemplateValue": "{pct}%",
   "insightsSummaryTemplateWorkouts": "训练",
   "intensityPrompt1Left": "剩余 1 次",
   "intensityPrompt2Left": "剩余 2 次",
   "intensityPrompt3Left": "剩余 3 次以上",
   "intensityPromptHard": "困难",
-  "intensityPromptHideRpeSlideDial": "隐藏 RPE 滑块      精准设定 (RPE 1-10)",
   "intensityPromptHowHardWasThat": "这组训练难度如何？",
   "intensityPromptMax": "极限",
   "intensityPromptModerate": "中等",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "第 {setNumber} 组 · {exerciseName}",
   "introAnAiCoachThat": "一位能制定计划、了解你的身体并每周进行调整的 AI 教练。",
   "introBuildMyPlan": "制定我的计划",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) 磅 · (totalSets) 组",
   "introCardMonth": "月。",
   "introIAlreadyHaveAnAccount": "我已有账号",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "条形码",
   "logMealSheetBarcodeScan": "条形码扫描",
   "logMealSheetCached": "（已缓存）",
-  "logMealSheetCaptured": "）已拍摄",
   "logMealSheetChooseFoodPhotos": "选择食物照片",
   "logMealSheetChooseFromGallery": "从相册选择",
   "logMealSheetChooseFromLibrary": "从图库选择",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7天平均 · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label}，低于您之前的最低记录",
   "logWeightSheetValidRange": "有效范围：{minValue}-{maxValue} {label}",
-  "logWeightSheetValue": "{changeInUnit}",
   "logWeightSyncedFromAppleHealth": "已从 Apple Health 同步",
   "logWeightSyncedToAppleHealth": "已同步至 Apple Health",
   "logWeightTapToEdit": "点击编辑",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "退出登录？",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "宏量营养素",
-  "mainShellPartChatsLeftToday": "今日剩余聊天次数 {arg0}",
+  "mainShellPartChatsLeftToday": "今日剩余 {arg0} 次对话",
   "mainShellPartGuestMode": "访客模式",
   "mainShellPartQuickActions": "快捷操作",
   "mainShellPartSignUp": "注册",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "主要项",
   "manageDuplicateImportsScreenSources": "{length} 个来源",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "{row}",
   "manageDuplicateImportsUnlinkFromGroup": "从组中取消关联",
   "manageDuplicateImportsUnlinkedFromGroup": "已从组中取消关联",
   "manageGymProfilesActive": "活跃",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} 更多",
   "menuAnalysisSheetSelected": "已选择 {length} 项",
   "menuAnalysisSheetSort": "排序：{label}",
-  "menuAnalysisSheetValue": "{elapsed}",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "您已经为“{restaurantName}”保存过菜单",
   "menuAnalysisSort": "排序：",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "公制类型",
   "metricsDashboardMuscleMass": "肌肉量",
   "metricsDashboardNoDataAvailable": "暂无数据",
-  "metricsDashboardNoMetricDataYet": "暂无指标数据 {arg0}",
+  "metricsDashboardNoMetricDataYet": "暂无 {arg0} 数据",
   "metricsDashboardQuickStats": "快速统计",
   "metricsDashboardRestingHeartRate": "静息心率",
   "metricsDashboardRestingHr": "静息心率",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "其他",
   "muscleHeatmapTileCompleteWorkoutsToSee": "完成训练以查看肌肉数据",
   "muscleHeatmapTileCouldnTLoad": "无法加载",
-  "muscleHeatmapTileMostTrained": "最常训练 {arg0}",
+  "muscleHeatmapTileMostTrained": "最常训练：{arg0}",
   "muscleHeatmapTileMuscles": "肌肉",
   "muscleHeatmapTileRetry": "重试",
   "muscleHeatmapUpperBody": "上肢",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "收藏 ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "常用 ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "最佳: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "近期活动",
   "myLibraryTabViewAll": "查看全部",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "日常活动者",
   "neatGamificationWidgetsClaimReward": "领取奖励",
   "neatGamificationWidgetsCouchPotato": "沙发土豆",
-  "neatGamificationWidgetsCurrentXp": "当前 XP {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "每日挑战",
   "neatGamificationWidgetsExpired": "已过期",
-  "neatGamificationWidgetsHoursMinutesLeft": "剩余 {arg0} 小时 {arg1} 分钟",
+  "neatGamificationWidgetsHoursMinutesLeft": "还剩 {arg0} 小时 {arg1} 分钟",
   "neatGamificationWidgetsLevel": "等级 {level}",
   "neatGamificationWidgetsLevelUp": "升级！",
   "neatGamificationWidgetsMaxLevel": "已达最高等级！",
-  "neatGamificationWidgetsMinutesLeft": "剩余 {arg0} 分钟",
+  "neatGamificationWidgetsMinutesLeft": "还剩 {arg0} 分钟",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "冠军",
   "neatGamificationWidgetsNeatEnthusiast": "爱好者",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "本周暂无排名",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "分数",
-  "neatGamificationWidgetsStepGoal": "步数目标 {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "步数",
-  "neatGamificationWidgetsTargetActiveHours": "目标活跃时长 {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} 小时",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "分数明细",
   "neatScoreDisplayTapForBreakdown": "点击查看明细",
   "neatScoreDisplayTrend": "趋势：{name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "加载中...",
   "netflixExerciseCarouselSeeAll": "查看全部",
   "netflixExercisesAddYourOwnExercises": "添加自定义动作，设置重复次数、组数和说明。",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "正在计算最佳下一组数据...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% 强度",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "最后一组",
   "nextSetPreviewKg": " 公斤",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "主要来源",
   "nutrientExplorerUnknown": "未知",
   "nutrientExplorerUnpinNutrient": "取消置顶营养素",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "维生素",
   "nutrientRushGameCatchTheGoldenZealova": "抓住金色 Zealova 标记以获得强化！",
   "nutrientRushGameNewBest": "🎉 新纪录！",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "每周概览",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "平均 {averageDailyCalories} 大卡",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "平均摄入：{avgIntake} 大卡",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) 大卡",
   "nutritionTabPartWeeklyOverviewCardCalDay": "大卡/天 {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein} 克",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams} 克",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) 公斤",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "体重：{formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova，全部包含",
   "onboardingWhyFirstTheWhy": "首先，为什么",
   "onboardingWhyWhatSDrivingThis": "是什么驱动了这一切？",
-  "openAllCrates24HoursOf2xXp": "24 小时双倍 XP",
+  "openAllCrates24HoursOf2xXp": "24 小时 2x XP",
   "openAllCratesActivityCrate": "活动宝箱",
   "openAllCratesBonusCrateToOpen": "待开启奖励宝箱",
-  "openAllCratesCollect": "领取 {arg0} {arg1}",
-  "openAllCratesCratesOpened": "已开启宝箱 {arg0}",
+  "openAllCratesCollect": "领取（{arg0}/{arg1}）",
+  "openAllCratesCratesOpened": "已开启 {arg0} 个宝箱！",
   "openAllCratesDailyCrate": "每日宝箱",
   "openAllCratesDone": "完成",
-  "openAllCratesDoubleXpToken": "双倍 XP 卡",
+  "openAllCratesDoubleXpToken": "双倍 XP 代币",
   "openAllCratesFailedToOpenCrates": "开启宝箱失败。请重试。",
   "openAllCratesFitnessCrate": "健身宝箱",
-  "openAllCratesGainedXp": "获得 XP {arg0}",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "最高等级",
-  "openAllCratesOpenYourCrates": "开启你的宝箱",
-  "openAllCratesOpened": ") 已开启！",
-  "openAllCratesOpeningYourCrates": "正在开启你的宝箱",
-  "openAllCratesPickRewardPerDay": "每日选择奖励 {arg0} {arg1}",
-  "openAllCratesPickYourReward": "选择你的奖励 {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 打开宝箱",
+  "openAllCratesOpeningYourCrates": "🎁 正在打开宝箱…",
+  "openAllCratesPickRewardPerDay": "每天选择 1 个奖励 • 已选 {arg0}/{arg1}",
+  "openAllCratesPickYourReward": "选择你的奖励 • 已选 {arg0}/{arg1}",
   "openAllCratesProtectYourStreak": "保护你的连胜",
   "openAllCratesSelectAll": "全选",
   "openAllCratesStreakCrate": "连胜宝箱",
   "openAllCratesStreakShield": "连胜护盾",
   "openAllCratesToday": "今天",
-  "openAllCratesTotalXpFormatted": "总XP {arg0}",
-  "openAllCratesTotalXpLevel": "总XP等级 {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "共 {arg0}",
+  "openAllCratesTotalXpLevel": "总计：{arg0} XP • 等级 {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 奖励！",
-  "openAllCratesXpInLevel": "当前等级XP {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "距离下一级XP {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "距等级 {arg1} 还需 {arg0} XP",
   "openAllCratesYesterday": "昨天",
   "overallScoreHeroOverall": "总分",
   "overviewActiveSkill": "活跃技能",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "您的健身人格是...",
   "phaseRecommendationBannerBasedOn": "基于：{evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(置信度)-置信度估计\" : \"\")",
   "phaseRecommendationBannerCycleDay": "周期第 {cycleDay} 天",
   "phaseRecommendationBannerEvidence": "依据：{evidenceCitation}",
   "phaseRecommendationBannerGotIt": "知道了",
@@ -23424,7 +23152,7 @@
   "planPreviewScreenContinueFree": "继续免费使用",
   "planPreviewScreenDaysPerWeek": "每周 {arg0} 天",
   "planPreviewScreenDesignedBasedOnYour": "根据您的问卷回答设计",
-  "planPreviewScreenEquipmentCount": "器械数量 {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} 件器材",
   "planPreviewScreenExercisesMin": "训练动作最少 {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "增加强度与容量",
   "planPreviewScreenMasterTheMovement": "掌握动作技巧",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} 项个人纪录！",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") 较上次",
   "prShareCardCopiedToClipboard": "已复制到剪贴板！",
   "prShareCardCopyText": "复制文本",
   "prShareCardFailedToCaptureImage": "截图失败",
@@ -23721,7 +23448,7 @@
   "programSummaryLevel": "等级",
   "programSummaryLoseWeight": "减脂",
   "programSummaryMacrosAndMealsAligned": "宏量营养素和饮食与你的训练保持一致",
-  "programSummaryNItems": "{arg0} 个项目",
+  "programSummaryNItems": "{arg0} 项",
   "programSummaryNutritionIntegration": "营养整合",
   "programSummaryPersonalizedForYourGoals": "根据你的目标和器械进行个性化定制",
   "programSummaryProgressiveOverload": "渐进式超负荷",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "继续努力！",
   "prsTemplateNewPersonalRecords": "新的个人记录",
   "prsTemplateNewPrsAreJust": "新的 PR 即将到来",
-  "prsTemplateValue": ") (单位)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "配料",
   "publicRecipeInstructions": "步骤",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI 将在您选择的范围内生成训练",
   "quizDaysSelectorBest": "最佳",
   "quizDaysSelectorConsistencyBeatsIntensity": "坚持胜过强度 - 选择您能保持的频率",
-  "quizDaysSelectorDays": "{arg0} 天",
-  "quizDaysSelectorDaysSelected": "已选 {arg0} 天 {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") 用于您的训练",
+  "quizDaysSelectorDays": "{arg0, plural, one {天} other {天}}",
+  "quizDaysSelectorDaysSelected": "已选 {arg0} / {arg1} 天",
   "quizDaysSelectorFri": "周五",
   "quizDaysSelectorHowLongAreYour": "您的训练时长是多少？",
   "quizDaysSelectorHowManyDaysPer": "您每周可以训练几天？",
   "quizDaysSelectorMin": "最少",
   "quizDaysSelectorMon": "周一",
   "quizDaysSelectorSat": "周六",
-  "quizDaysSelectorSelectNDays": "选择 {arg0} 天",
+  "quizDaysSelectorSelectNDays": "选择 {arg0} 个适合你的日子",
   "quizDaysSelectorSun": "周日",
   "quizDaysSelectorThu": "周四",
   "quizDaysSelectorTue": "周二",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "家庭健身房",
   "quizEquipmentHomeKettlebell": "居家 + 壶铃",
   "quizEquipmentHotel": "酒店",
-  "quizEquipmentIdentifiedCount": "已识别数量 {arg0}",
+  "quizEquipmentIdentifiedCount": "已识别 {arg0} 件。点按任意项可取消选择。",
   "quizEquipmentKettlebell": "壶铃",
   "quizEquipmentMedicineBall": "药球",
   "quizEquipmentMinimalEquipmentBodyweight": "极简器械 - 自重、瑜伽垫",
   "quizEquipmentNeededForBarbell": "杠铃所需",
   "quizEquipmentNoEquipmentIdentifiedPick": "未识别到器械。请从下方列表中选择。",
-  "quizEquipmentOtherCount": "其他数量 {arg0}",
+  "quizEquipmentOtherCount": "已选 {arg0} 件",
   "quizEquipmentOtherEquipment": "其他器械",
   "quizEquipmentPullUpBar": "引体向上杆",
   "quizEquipmentQuickPresets": "快速预设",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "食谱名称必填",
   "recipeCreateRemovePhoto": "移除照片",
   "recipeCreateSaving": "保存中…",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "拍照",
   "recipeCreateTapToEdit": "点击编辑",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "每份 (×{servings} 份)",
   "recipeDetailScreenUForkedFrom": "✨ 衍生自 {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "“{name}” 将被永久删除。",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 精选食谱",
   "recipeDetailView": "查看",
@@ -24754,7 +24477,7 @@
   "regenerateSheetConsideringFocusAreas": "正在考虑重点区域",
   "regenerateSheetCustomize": "自定义",
   "regenerateSheetCustomizeOrLetAi": "自定义或让 AI 提供建议",
-  "regenerateSheetCustomizeOrLetAiSuggest": "自定义或让 AI 建议",
+  "regenerateSheetCustomizeOrLetAiSuggest": "自定义或让 AI 推荐",
   "regenerateSheetDescribeYourIdealWorkout": "描述您理想的训练",
   "regenerateSheetDesigningYourWorkout": "正在设计您的训练",
   "regenerateSheetDialingInSetsAndReps": "正在调整组数和次数",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "正在确定最终细节…",
   "regenerateSheetFinalizingYourWorkout": "正在完成您的训练",
   "regenerateSheetFineTuningTheDetails": "正在微调细节",
-  "regenerateSheetGeneratingElapsed": "生成耗时 {arg0}",
+  "regenerateSheetGeneratingElapsed": "生成中… {arg0}",
   "regenerateSheetGeneratingSuggestions": "正在生成建议…",
   "regenerateSheetGetSuggestions": "获取建议",
   "regenerateSheetGettingCreative": "正在发挥创意",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "使用建议",
   "restSuggestionQuick": "快速",
   "restSuggestionQuickRest": "快速休息",
-  "restSuggestionSaveTime": "节省时间 {arg0}",
+  "restSuggestionSaveTime": "节省 {arg0}",
   "restSuggestionSuggested": "建议",
   "restSuggestionUseSuggested": "使用建议值",
   "restTimerCardBaseRest": "基础休息",
   "restTimerCardControlRestPeriodsBetween": "控制组间休息时间",
   "restTimerCardCustomRestTimer": "自定义休息计时器",
   "restTimerCardFormula": "公式",
-  "restTimerCardFormulaBaserestRpe7": "公式: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "实时预览",
   "restTimerCardMultiplier": "乘数",
   "restTimerCardRestBaserestRpe7": "休息 = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value} 秒",
   "restTimerCardS2": "{restTimerBaseRest} 秒",
   "restTimerCardS3": "{s} 秒",
-  "restTimerCardVariablesBaseRpeMultipli": "变量: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "变量：基准、RPE、系数、等级",
   "restTimerCardX": "{restTimerMultiplier} 倍",
   "restTimerOverlayAiWeightCoach": "AI 重量教练",
   "restTimerOverlayAnalyzingYourPerformance": "正在分析您的表现...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "已完成",
   "rtpTitle": "重返训练",
   "safetyDisclaimerBannerDismissDisclaimer": "关闭免责声明",
-  "safetyDisclaimerBannerInjuriesFlagged": "已标记伤病 {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "已标记 {arg0} 处伤情",
   "safetyDisclaimerBannerInjuryBody": "伤病部位",
   "safetyDisclaimerBannerLearnMore": "了解更多",
   "safetyDisclaimerBannerMore": "+{overflow} 更多",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "组",
   "sessionDetailSetCount": "{count, plural, other{{count} 组}} · 高亮显示最高组",
   "sessionDetailTime": "时间",
-  "sessionDetailTopSetHighlighted": ") • 已高亮显示顶峰组",
   "sessionDetailWeight": "重量",
   "setAdjustmentAdditionalNotesOptional": "补充说明（可选）",
   "setAdjustmentConfirm": "确认",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "已完成 {completedCount} 组",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "剩余 {remainingCount} 组",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "已移除 {length} 组",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") / (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "共计划 {totalSets} 组",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "已完成 {completedSets} 组",
   "setAdjustmentSheetReps": "次数",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "第 {currentSetNumber}/{totalSets} 组 • 点击展开",
   "setTrackingSectionSets": "{widget} 组",
   "setTrackingSectionSetsCompleted": "已完成 {length} 组",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "重量调整幅度",
   "setTrackingSheetsDropSet": "递减组",
   "setTrackingSheetsExerciseHistory": "动作历史",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} 支持请求",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} 天",
   "settingsScreenUiNoSettingsFound": "未找到相关设置",
-  "settingsScreenUiTryDifferentKeywordsLike": "尝试使用不同的关键词，例如“主题”、“通知”或“AI 语音”",
+  "settingsScreenUiTryDifferentKeywordsLike": "试试其他关键词，如\"主题\"、\"通知\"或\"AI 语音\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "搜索设置",
   "settingsSetProgressionResearch": "设置进度与研究",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "我的 {appName} {periodName} 报告",
   "shareInsightsSheetMyReport2": "我的 {appName} 报告",
   "shareMotivationalCompleted": "已完成",
-  "sharePrNewPr": "新 PR",
+  "sharePrNewPr": "新纪录 PR",
   "shareStatsCalories": "卡路里",
   "shareStatsDuration": "时长",
   "shareStatsEliteTemplate": "精英模板",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "奖励",
   "streakMilestoneStreakMilestone": "连胜里程碑！",
-  "streakMilestoneToGo": ") 即可达成！",
   "streakMilestoneYouVeReachedThe": "你已达到终极连胜里程碑！",
   "streakSavedDialogWeUsedStreakShield": "我们使用了1个连胜保护盾，以保持你的{savedStreakCount}天连胜。",
   "streakSavedKeepItGoing": "继续保持",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "连接",
   "todayScoreCardCustomize": "自定义",
   "todayScoreCardToday": "今天",
-  "todayScoreDetailDown": "下降 {arg0}",
-  "todayScoreDetailEarnedPts": "获得积分 {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ 较今早下降 {arg0}",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} 分",
   "todayScoreDetailHowItWorks": "如何运作",
-  "todayScoreDetailInactiveExplanation": "不活跃说明 {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "动力趋势，平均值 {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0}今天{arg1, plural, one {不计入} other {不计入}}，因此其余项目分摊全部 100 分。你的得分始终只反映今天实际适用的项目。",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7 天平均 {arg1}",
   "todayScoreDetailNotCounted": "未计入",
   "todayScoreDetailSetupText": "设置文本",
   "todayScoreDetailSteady": "平稳",
   "todayScoreDetailTodayScore": "今日评分",
-  "todayScoreDetailUp": "上升 {arg0}",
+  "todayScoreDetailUp": "▲ 较今早上升 {arg0}",
   "todayScoreSetupAddAWorkoutPlan": "添加训练计划",
   "todayScoreSetupCardContinue": "继续：{label}",
   "todayScoreSetupCardGetStarted": "开始训练 · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "有氧成就",
   "trophiesEarnedDayStreak": "连续打卡",
   "trophiesEarnedFirstTime": "首次达成！",
-  "trophiesEarnedKg": ") 公斤",
   "trophiesEarnedMilestoneReached": "达成里程碑",
   "trophiesEarnedMilestoneReachedNice": "达成里程碑 — 干得漂亮！",
   "trophiesEarnedMilestones": "里程碑",
-  "trophiesEarnedNewBadges": "徽章 {arg0}",
-  "trophiesEarnedNewCardioPRs": "有氧 PR {arg0}",
-  "trophiesEarnedNewPR": "获得新PR",
-  "trophiesEarnedNewPRs": "PR {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} 个新徽章",
+  "trophiesEarnedNewCardioPRs": "{arg0} 个新有氧 PR",
+  "trophiesEarnedNewPR": "新纪录 PR",
+  "trophiesEarnedNewPRs": "{arg0} 个新 PR！",
   "trophiesEarnedNewPr": "新 PR",
   "trophiesEarnedNextMilestones": "下一里程碑",
   "trophiesEarnedNoNewRecords": "暂无新纪录",
   "trophiesEarnedNoNewRecordsThis": "本次训练无新纪录 — 以下是你正在努力的目标：",
   "trophiesEarnedPersonalRecords": "个人纪录",
-  "trophiesEarnedRemainingToUnlock": "剩余解锁 {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "再获得 {arg0} 个{arg1}即可解锁",
   "trophiesEarnedSessionHighlights": "训练亮点",
   "trophiesEarnedSheetPts": "+{points} 分",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} 正在输入",
   "typingIndicatorIsTyping3": "{agentName} 正在输入...",
   "unifiedHomeWidgetsActivity": "活动",
-  "unifiedHomeWidgetsBreakfastLogged": "已记录早餐 {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "最近 7 个早晨中有 {arg0} 个早晨记录了早餐",
   "unifiedHomeWidgetsBreakfastSuggestion": "早餐建议",
   "unifiedHomeWidgetsCarbs": "碳水化合物",
   "unifiedHomeWidgetsConnect": "连接",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "脂肪",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "今日总计 {arg0} 千卡",
+  "unifiedHomeWidgetsKcalBurned": "消耗 {arg0} kcal",
   "unifiedHomeWidgetsKcalLeft": " kcal 剩余",
   "unifiedHomeWidgetsLastNight": "昨晚",
   "unifiedHomeWidgetsLog16oz": "记录 16oz",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}周",
   "weekDurationSelectorWeeks": "{selectedWeeks} 周",
   "weekDurationSelectorWk": "{spw}次/周",
-  "weekProgressStripCompletedCount": "已完成 {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "已完成 {arg0}/{arg1} 次锻炼",
   "weekProgressStripCouldNotLoadProgress": "无法加载进度",
   "weekProgressStripLoading": "加载中...",
   "weekProgressStripNoWorkoutsScheduled": "暂无计划训练",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "查看全部",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "体重追踪",
-  "weightTrendCardDownThisWeek": "本周下降 {arg0}",
-  "weightTrendCardDownVsLastCycle": "较上一周期下降 {arg0}",
+  "weightTrendCardDownThisWeek": "本周减少 {arg0}！",
+  "weightTrendCardDownVsLastCycle": "比上月同一周期日减少 {arg0} lbs",
   "weightTrendCardLoadingWeight": "正在加载体重...",
   "weightTrendCardLogYourWeightTo": "记录体重以查看趋势",
   "weightTrendCardMaintaining": "保持中",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "与上一周期持平",
   "weightTrendCardTapToLogWeight": "点击记录体重",
   "weightTrendCardTargetHeld": "已达标",
-  "weightTrendCardTargetHeldWindow": "达标区间 {arg0}",
-  "weightTrendCardUpThisWeek": "本周上升 {arg0}",
-  "weightTrendCardUpVsLastCycle": "较上一周期上升 {arg0}",
+  "weightTrendCardTargetHeldWindow": "目标保持 {arg0} — 黄体期水分平滑",
+  "weightTrendCardUpThisWeek": "本周增加 {arg0}",
+  "weightTrendCardUpVsLastCycle": "比上月同一周期日增加 {arg0} lbs",
   "weightTrendCardWeightStableThisWeek": "本周体重稳定",
   "weightTrendCardWeightTrends": "体重趋势",
   "welcomeAffirmationGreatChoice": "明智的选择。",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "确定还原到此版本吗？",
   "workoutActionsShareWorkout": "分享训练",
   "workoutActionsSheetGetALinkFor": "获取 {marketingDomain} 链接分享给好友",
-  "workoutActionsSheetN": ") — Zealova\n(url)",
   "workoutActionsSheetRestore": "恢复 “{name}”？",
   "workoutActionsSheetS": "{duration} 秒",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} 次",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} 组，{currentReps} 次",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "目前无法挑战好友",
   "workoutCompleteScreenUnableToExtendWorkout": "无法延长训练",
   "workoutCompleteScreenViewAllMetrics": "查看所有指标",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "器械",
   "workoutDetailExercises": "动作",
   "workoutDetailFailedToLoadWorkout": "加载训练失败",
-  "workoutDetailHelpersForAvailableEquipment": ") 用于可用器械...",
   "workoutDetailHelpersHell": "地狱",
   "workoutDetailHelpersUpdatingExercises": "正在更新动作",
   "workoutDetailMoreInfo": "更多信息",
   "workoutDetailProgram": "计划",
-  "workoutDetailReplacingExercises": "正在替换动作 {arg0}",
+  "workoutDetailReplacingExercises": "正在为可用器材替换 {arg0} 个动作…",
   "workoutDetailRevert": "还原",
   "workoutDetailScreenBreakSuperset": "拆分超级组？",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} 卡路里消耗",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "重量列使用的是什么单位？如果你知道来源应用，请选择它——这有助于区分相似的格式（例如 Hevy 与 Strong 的 CSV）。",
   "workoutHistoryImportYourStrengthData": "你的力量训练数据",
-  "workoutImportAsDone": ")\" 标记为完成",
   "workoutImportCalories": "卡路里",
   "workoutImportCardio": "有氧运动",
   "workoutImportCycling": "骑行",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "时长",
   "workoutImportEasy": "轻松",
   "workoutImportFlexibility": "柔韧性",
-  "workoutImportFromSource": "来自来源 {arg0}",
+  "workoutImportFromSource": "来自 {arg0}",
   "workoutImportHard": "高强度",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "这次训练难度如何？",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "你在训练期间可能会看到这些系统提示。两者都是可选的 — 跳过任何一个，训练仍可正常进行。",
   "workoutPlanDrawerAddExercise": "添加动作",
   "workoutPlanDrawerCurrent": "当前",
-  "workoutPlanDrawerExerciseCount": "动作数量 {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") 已记录。它们将被删除。",
+  "workoutPlanDrawerExerciseCount": "{arg0} 个动作",
   "workoutPlanDrawerNow": "现在",
   "workoutPlanDrawerRemove": "移除",
-  "workoutPlanDrawerRemoveExercise": "移除动作 {arg0}",
+  "workoutPlanDrawerRemoveExercise": "移除 {arg0}？",
   "workoutPlanDrawerRemoveExerciseTooltip": "移除动作提示",
-  "workoutPlanDrawerSetsLogged": "已记录组数 {arg0}",
+  "workoutPlanDrawerSetsLogged": "你已记录 {arg0} 组。它们将被删除。",
   "workoutPlanDrawerSwapExercise": "替换动作",
   "workoutPlanDrawerTitle": "标题",
   "workoutPlanDrawerWorkoutPlan": "训练计划",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "你记录的每一组",
   "workoutShowcaseEveryWorkoutFlows": "每一次训练流程",
   "workoutShowcaseFinishWorkout": "完成训练",
-  "workoutShowcaseFormat1Rm": "1RM 格式",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "登机牌",
   "workoutShowcaseFormatCard": "卡片",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "线性标签",
   "workoutShowcaseLogAllSets": "所有组",
   "workoutShowcaseLogDrink": "记录饮品",
-  "workoutShowcaseLogSet": "第 {arg0} 组",
+  "workoutShowcaseLogSet": "✓ 记录第 {arg0} 组",
   "workoutShowcaseLogWater": "记录饮水",
   "workoutShowcaseMovedThisSession": "本次训练总量",
   "workoutShowcaseNewPr": "新 PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "次数",
   "workoutShowcaseScreenDay": "第 {day} 天",
   "workoutShowcaseScreenDuration": "时长：{duration}",
-  "workoutShowcaseScreenPrs": "PR：{prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PR · 已录入",
   "workoutShowcaseScreenSession": "训练：{title}",
   "workoutShowcaseScreenTotalPrs": "总计 {duration} · {volume} · {prs} PR",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "第 1 组（共 4 组）",
   "workoutShowcaseSet2": "第 2 组",
   "workoutShowcaseSet3": "第 3 组",
-  "workoutShowcaseSetNOf3": "训练展示：第 {arg0} 组（共 3 组）",
+  "workoutShowcaseSetNOf3": "第 {arg0} 组，共 3 组",
   "workoutShowcaseShareYourWorkout": "分享你的训练",
   "workoutShowcaseSideA": "A 面",
   "workoutShowcaseSuperset": "超级组",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "每日",
   "xpGoalsDialog250LevelsAcross11Tiers": "XP 目标对话框：11 个等级阶梯，共 250 级",
   "xpGoalsDialogBeginnerToTranscendent": "从新手到超凡",
-  "xpGoalsDialogCompleteWorkoutXp": "完成训练 XP",
+  "xpGoalsDialogCompleteWorkoutXp": "完成锻炼：+100 XP",
   "xpGoalsDialogDailyGoals": "每日目标",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "首次与AI教练对话 XP",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "首次记录饮食重量 XP",
-  "xpGoalsDialogFirstPrXp": "首次 PR XP",
-  "xpGoalsDialogFirstProgressPhotoXp": "首次进度照片 XP",
-  "xpGoalsDialogFirstProteinGoalXp": "首次达成蛋白质目标 XP",
-  "xpGoalsDialogFirstWorkoutXp": "首次训练 XP",
-  "xpGoalsDialogHitProteinGoalXp": "达成蛋白质目标 XP",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "首次与 AI 教练对话：+15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "首次记录餐食/体重/身体数据：各 +50 XP",
+  "xpGoalsDialogFirstPrXp": "首个 PR：+100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "首张进度照片：+75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "首个蛋白质目标：+100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "首次锻炼：+150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "达成蛋白质目标：+50 XP",
   "xpGoalsDialogLevels": "等级",
-  "xpGoalsDialogLogBodyMeasurementsXp": "记录身体测量数据 XP",
-  "xpGoalsDialogLogMealXp": "记录饮食 XP",
-  "xpGoalsDialogLogWeightXp": "记录体重 XP",
-  "xpGoalsDialogLoginXp": "登录 XP",
+  "xpGoalsDialogLogBodyMeasurementsXp": "记录身体围度：+20 XP",
+  "xpGoalsDialogLogMealXp": "记录餐食：+25 XP",
+  "xpGoalsDialogLogWeightXp": "记录体重：+15 XP",
+  "xpGoalsDialogLoginXp": "登录：+5 XP",
   "xpGoalsDialogMilestoneRewards": "里程碑奖励",
   "xpGoalsFirstTimeBonuses": "首次奖励",
   "xpGoalsGotIt": "知道了！",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "达到蛋白质目标",
   "xpGoalsScreenInventory": "物品栏",
   "xpGoalsScreenLegendary": "传奇",
-  "xpGoalsScreenLevelCurrentTotal": "当前等级总计 {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "等级 {arg0} • 共 249 级",
   "xpGoalsScreenLevelProgress": "等级进度",
   "xpGoalsScreenLogBodyMeasurements": "记录身体测量数据",
   "xpGoalsScreenLogFirstMeal": "记录第一餐",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "奖杯室",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "每周",
-  "xpGoalsXpAvailable": "可用 {arg0}",
-  "xpGoalsXpEarnedToday": "今日获得 {arg0}",
+  "xpGoalsXpAvailable": "可获得 +{arg0} XP",
+  "xpGoalsXpEarnedToday": "今日已获得 +{arg0} XP",
   "xpGoalsXpGoals": "XP 目标",
-  "xpGoalsXpMultiplierActive": "倍率已激活 {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP 已激活！",
   "xpHeroTileDayStreak": "连续 {streak} 天",
   "xpHeroTileLv": "等级 {level}",
   "xpHeroTileLv2": "等级 {nextLevel} → {label}",

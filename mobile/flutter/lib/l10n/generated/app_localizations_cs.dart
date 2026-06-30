@@ -335,11 +335,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') pro (name)';
-  }
-
-  @override
   String get activeWorkoutScreenUndo => 'Zpět';
 
   @override
@@ -1042,10 +1037,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get aiCoachMealRecoveryDayEating => 'Stravování v den zotavení?';
-
-  @override
-  String get aiCoachMealSearchQuestionsTryAngry =>
-      'Vyhledávací otázky (zkuste „angry“, „fibe mexican“)';
 
   @override
   String get aiCoachMealSomethingWentWrong => 'Něco se pokazilo.';
@@ -2855,9 +2846,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get caloriesSummaryCardOveLeft => 'zbývá';
-
-  @override
   String get cancelConfirmationAnythingElseYouD =>
       'Chcete se ještě o něco podělit? (volitelné)';
 
@@ -3515,9 +3503,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get chatGotIt => 'Rozumím';
 
   @override
-  String get chatLeftToday => ') zbývá dnes';
-
-  @override
   String chatMediaWidgetsCalTotal(Object totalCal) {
     return 'Celkem $totalCal cal';
   }
@@ -3636,11 +3621,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get chatScreenExtAboutAiCoach => 'O AI kouči';
-
-  @override
-  String chatScreenExtAs(Object mealType) {
-    return ') jako (mealType)';
-  }
 
   @override
   String get chatScreenExtChangeCoach => 'Změnit kouče';
@@ -4849,7 +4829,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String complianceRingCardGreatPace(Object arg0) {
-    return 'Skvělé tempo $arg0';
+    return 'Skvělé tempo! Zbývá $arg0';
   }
 
   @override
@@ -4858,7 +4838,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
-    return 'Na správné cestě $arg0';
+    return 'Na dobré cestě — zbývá $arg0';
   }
 
   @override
@@ -4867,7 +4847,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String complianceRingCardWorkoutsRemaining(Object arg0) {
-    return 'Zbývající tréninky $arg0';
+    return 'Zbývá tréninků: $arg0';
   }
 
   @override
@@ -5161,9 +5141,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get cookingConverterUseThisValue => 'Použít tuto hodnotu';
-
-  @override
-  String get cookingConverterWeight => ') Hmotnost';
 
   @override
   String get cosmeticsGalleryCosmetics => 'Kosmetika';
@@ -5694,19 +5671,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenUsedTimes(
-    Object lastUsedFormatted,
-    Object usageCount,
-  ) {
-    return 'Použito (usageCount) krát(lastUsedFormatted)\" : \"\")';
-  }
-
-  @override
-  String customExercisesScreenValue(Object name, Object targetDisplay) {
-    return '(name) (targetDisplay))\" : \"\")';
-  }
-
-  @override
   String get customExercisesSearchExercises => 'Hledat cviky...';
 
   @override
@@ -5851,11 +5815,6 @@ class AppLocalizationsCs extends AppLocalizations {
     Object pairedPoints,
   ) {
     return '$pairedPoints/$kMinCorrelationPairs sdílených dní';
-  }
-
-  @override
-  String customTrendScreenValue(Object strengthLabel, Object value) {
-    return ')(value) · (strengthLabel)';
   }
 
   @override
@@ -6109,9 +6068,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get cycleScreenUiLogYourFirstPeriod =>
       'Zaznamenejte svou první menstruaci pro zahájení předpovědí.';
-
-  @override
-  String get cycleScreenUiPhase => ') fáze';
 
   @override
   String cycleScreenUiPhaseLabel(Object displayName) {
@@ -8117,7 +8073,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String editProgramSheetCustomValue(Object arg0) {
-    return 'Vlastní hodnota $arg0';
+    return 'Vlastní: $arg0';
   }
 
   @override
@@ -8160,12 +8116,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return 'Načíst historii $arg0';
+    return 'Nepodařilo se načíst historii: $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return 'Obnovit $arg0';
+    return 'Nepodařilo se obnovit: $arg0';
   }
 
   @override
@@ -9731,11 +9687,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get exerciseDetailSheetFavorite => 'Oblíbený';
 
   @override
-  String exerciseDetailSheetLbs(Object repRange) {
-    return ') lbs × (repRange)';
-  }
-
-  @override
   String get exerciseDetailSheetLoading => 'Načítání...';
 
   @override
@@ -10996,9 +10947,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get exerciseSetTrackerAddSet => 'Přidat sérii';
 
   @override
-  String get exerciseSetTrackerBarbell => ') velká činka';
-
-  @override
   String get exerciseSetTrackerReps => 'Opakování';
 
   @override
@@ -11140,10 +11088,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetAskAiForSuggestions => 'Požádejte AI o návrhy';
-
-  @override
-  String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Popište své vybavení nebo preference\nnapř. \"Mám špatné rameno, pouze vlastní váha\"';
 
   @override
   String get exerciseSwapSheetEGIOnly => 'např. \"Mám pouze jednoručky\"';
@@ -11316,9 +11260,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get expandedExerciseCardAlternatingHands => 'Střídání rukou';
-
-  @override
-  String get expandedExerciseCardBarbell => ') velká činka';
 
   @override
   String get expandedExerciseCardBreathing => 'Dýchání';
@@ -12062,11 +12003,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get fastingScoreCardStreakBonus => 'Bonus za sérii';
-
-  @override
-  String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
-  }
 
   @override
   String fastingScoreCardValue2(Object value) {
@@ -13050,11 +12986,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get flexibilityProgressChartNoDataAvailable => 'Žádná dostupná data';
 
   @override
-  String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
-  }
-
-  @override
   String get flexibilityScoreCardByArea => 'Podle oblastí';
 
   @override
@@ -13721,9 +13652,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get foodItemRankingAddFood => 'Přidat jídlo';
 
   @override
-  String get foodItemRankingDetails => ') podrobnosti';
-
-  @override
   String foodItemRankingNFoodItems(Object count) {
     return '$count potravin';
   }
@@ -14241,9 +14169,6 @@ class AppLocalizationsCs extends AppLocalizations {
       'Přátelé, kteří se skutečně dostali do formy, měli někoho, kdo jim psal. Skutečná zodpovědnost stojí asi dvě stě dolarů měsíčně, což je přesně důvod, proč ji většina z nás nikdy nemá, a přesně důvod, proč propast mezi „sledováním“ a „změnou“ zůstává roky otevřená.';
 
   @override
-  String get freshnessDecayCardAgo => ') před';
-
-  @override
   String get freshnessDecayCardControlsHowQuicklyExercise =>
       'Určuje, jak rychle vyprchá čerstvost cvičení: e^(-k * tréninky)';
 
@@ -14497,16 +14422,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get futuristicSetCardSkipExercise => 'Přeskočit cvik';
-
-  @override
-  String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
-  }
-
-  @override
-  String futuristicSetCardValue2(Object reps) {
-    return ')×(reps)';
-  }
 
   @override
   String get generatePlanCreateAHolisticPlan =>
@@ -15405,12 +15320,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return 'Počet dokončených $arg0 $arg1';
+    return '$arg0/$arg1 dokončeno';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return 'Denní série $arg0';
+    return 'Série $arg0 dní';
   }
 
   @override
@@ -15437,7 +15352,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String habitsCardViewAllHabits(Object arg0) {
-    return 'Zobrazit všechny návyky $arg0';
+    return 'Zobrazit všechny návyky ($arg0)';
   }
 
   @override
@@ -17006,9 +16921,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get homeEmptyWorkout_v4 =>
       'Zatím žádný plán. Nech AI, ať jeden vytvoří podle tvých cílů.';
-
-  @override
-  String get homeFromHealthConnect => ') z Health Connect';
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
@@ -18993,11 +18905,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get insightsSummaryTemplateSummary => 'SHRNUTÍ';
 
   @override
-  String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
-  }
-
-  @override
   String get insightsSummaryTemplateWorkouts => 'TRÉNINKY';
 
   @override
@@ -19011,10 +18918,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get intensityPromptHard => 'Těžké';
-
-  @override
-  String get intensityPromptHideRpeSlideDial =>
-      'Skrýt RPE posuvník      Nastav (RPE 1-10)';
 
   @override
   String get intensityPromptHowHardWasThat => 'Jak těžká byla tato série?';
@@ -19039,11 +18942,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get introBuildMyPlan => 'Sestavit můj plán';
-
-  @override
-  String introCardFormatDataTotalvolumelbsRound(Object totalSets) {
-    return ').format(data.totalVolumeLbs.round())) lbs · (totalSets) sérií';
-  }
 
   @override
   String get introCardMonth => 'měsíc.';
@@ -20094,9 +19992,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get logMealSheetCached => '(Uloženo do mezipaměti)';
 
   @override
-  String get logMealSheetCaptured => ') zachyceno';
-
-  @override
   String get logMealSheetChooseFoodPhotos => 'Vyberte Fotky jídla';
 
   @override
@@ -20717,11 +20612,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValue(Object changeInUnit) {
-    return ')(changeInUnit)';
-  }
-
-  @override
   String get logWeightSyncedFromAppleHealth => 'Synchronizováno z Apple Zdraví';
 
   @override
@@ -21164,7 +21054,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return 'Zbývající chaty dnes $arg0';
+    return 'Dnes zbývá chatů: $arg0';
   }
 
   @override
@@ -21208,11 +21098,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String manageDuplicateImportsScreenValue(Object primary) {
     return '$primary · ';
-  }
-
-  @override
-  String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
   }
 
   @override
@@ -22143,11 +22028,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String menuAnalysisSheetValue(Object elapsed) {
-    return ')(uplynulo)';
-  }
-
-  @override
   String menuAnalysisSheetValue2(Object rank) {
     return '#$rank';
   }
@@ -22599,7 +22479,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String metricsDashboardNoMetricDataYet(Object arg0) {
-    return 'Zatím žádná data metrik $arg0';
+    return 'Zatím žádná data $arg0';
   }
 
   @override
@@ -23271,7 +23151,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return 'Nejvíce procvičované $arg0';
+    return 'Nejvíce trénováno: $arg0';
   }
 
   @override
@@ -23709,11 +23589,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardValue(Object item) {
-    return ')(item)%';
-  }
-
-  @override
   String get myLibraryTabRecentActivity => 'Nedávná aktivita';
 
   @override
@@ -24001,7 +23876,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return 'Aktuální XP $arg0';
+    return '$arg0 XP';
   }
 
   @override
@@ -24012,7 +23887,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return 'Zbývá hodin a minut $arg0 $arg1';
+    return 'Zbývá $arg0 h $arg1 m';
   }
 
   @override
@@ -24028,7 +23903,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return 'Zbývá minut $arg0';
+    return 'Zbývá $arg0 m';
   }
 
   @override
@@ -24057,7 +23932,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return 'Cíl kroků $arg0';
+    return '/ $arg0';
   }
 
   @override
@@ -24065,7 +23940,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return 'Cílové aktivní hodiny $arg0';
+    return '/ $arg0 hod.';
   }
 
   @override
@@ -24111,11 +23986,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String neatScoreDisplayTrend(Object name) {
     return 'Trend: $name';
-  }
-
-  @override
-  String neatScoreDisplayValue(Object widget) {
-    return '))(widget)';
   }
 
   @override
@@ -24363,16 +24233,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String nextSetPreviewCardKg(Object recommendedWeight) {
     return '$recommendedWeight kg';
-  }
-
-  @override
-  String nextSetPreviewCardKg2(Object weightDelta) {
-    return ')(weightDelta) kg';
-  }
-
-  @override
-  String nextSetPreviewCardValue(Object weightDelta) {
-    return ')(weightDelta)';
   }
 
   @override
@@ -24944,11 +24804,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get nutrientExplorerUnpinNutrient => 'Odepnout živinu';
-
-  @override
-  String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
-  }
 
   @override
   String get nutrientExplorerVitamins => 'VITAMÍNY';
@@ -25928,11 +25783,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
-  }
-
-  @override
   String nutritionTabPartWeeklyOverviewCardCalDay(Object uncertaintyDisplay) {
     return 'cal/den $uncertaintyDisplay';
   }
@@ -25945,11 +25795,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String nutritionTabPartWeeklyOverviewCardG2(Object grams) {
     return '${grams}g';
-  }
-
-  @override
-  String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
   }
 
   @override
@@ -26106,7 +25951,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get onboardingWhyWhatSDrivingThis => 'Co vás k tomu vede?';
 
   @override
-  String get openAllCrates24HoursOf2xXp => '24 hodin dvojnásobných XP';
+  String get openAllCrates24HoursOf2xXp => '24 hodin 2x XP';
 
   @override
   String get openAllCratesActivityCrate => 'Bedna aktivity';
@@ -26116,12 +25961,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String openAllCratesCollect(Object arg0, Object arg1) {
-    return 'Vybrat $arg0 $arg1';
+    return 'Sebrat ($arg0/$arg1)';
   }
 
   @override
   String openAllCratesCratesOpened(Object arg0) {
-    return 'Otevřené bedny $arg0';
+    return 'Otevřeno beden: $arg0!';
   }
 
   @override
@@ -26131,7 +25976,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get openAllCratesDone => 'Hotovo';
 
   @override
-  String get openAllCratesDoubleXpToken => 'Token na dvojnásobné XP';
+  String get openAllCratesDoubleXpToken => 'Žeton dvojitého XP';
 
   @override
   String get openAllCratesFailedToOpenCrates =>
@@ -26142,29 +25987,26 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String openAllCratesGainedXp(Object arg0) {
-    return 'Získané XP $arg0';
+    return '+$arg0 XP';
   }
 
   @override
   String get openAllCratesMaxLevel => 'Maximální úroveň';
 
   @override
-  String get openAllCratesOpenYourCrates => 'Otevřete své bedny';
+  String get openAllCratesOpenYourCrates => '🎁 Otevřete své bedny';
 
   @override
-  String get openAllCratesOpened => ') otevřeno!';
-
-  @override
-  String get openAllCratesOpeningYourCrates => 'Otevírání vašich beden';
+  String get openAllCratesOpeningYourCrates => '🎁 Otevírání beden…';
 
   @override
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
-    return 'Vyberte odměnu za den $arg0 $arg1';
+    return 'Vyberte 1 odměnu denně • $arg0/$arg1 vybráno';
   }
 
   @override
   String openAllCratesPickYourReward(Object arg0, Object arg1) {
-    return 'Vyberte svou odměnu $arg0 $arg1';
+    return 'Vyberte odměnu • $arg0/$arg1 vybráno';
   }
 
   @override
@@ -26184,12 +26026,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String openAllCratesTotalXpFormatted(Object arg0) {
-    return 'Celkové XP $arg0';
+    return '$arg0 celkem';
   }
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return 'Celková úroveň XP $arg0 $arg1';
+    return 'Celkem: $arg0 XP • Úroveň $arg1';
   }
 
   @override
@@ -26197,12 +26039,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String openAllCratesXpInLevel(Object arg0, Object arg1) {
-    return 'XP v úrovni $arg0 $arg1';
+    return '$arg0 / $arg1 XP';
   }
 
   @override
   String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
-    return 'XP do další úrovně $arg0 $arg1';
+    return '$arg0 XP do úr. $arg1';
   }
 
   @override
@@ -27047,11 +26889,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-confidence estimate\" : \"\")';
-  }
-
-  @override
   String phaseRecommendationBannerCycleDay(Object cycleDay) {
     return '$cycleDay. den cyklu';
   }
@@ -27439,7 +27276,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return 'Dní v týdnu $arg0';
+    return '$arg0 dní/týden';
   }
 
   @override
@@ -27448,7 +27285,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
-    return 'Počet vybavení $arg0';
+    return '$arg0 vybavení';
   }
 
   @override
@@ -27781,9 +27618,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String prInlineCelebrationValue2(Object exerciseName, Object formattedValue) {
     return '$exerciseName • $formattedValue';
   }
-
-  @override
-  String get prPosterTemplateFromLast => ') OD POSLEDNĚ';
 
   @override
   String get prShareCardCopiedToClipboard => 'Zkopírováno do schránky!';
@@ -28500,7 +28334,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String programSummaryNItems(Object arg0) {
-    return 'Položek $arg0';
+    return '$arg0 položek';
   }
 
   @override
@@ -29318,11 +29152,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get prsTemplateNewPrsAreJust => 'Nová PR jsou za rohem';
 
   @override
-  String prsTemplateValue(Object unit) {
-    return ') (jednotka)';
-  }
-
-  @override
   String prsTemplateValue2(Object improvement, Object unit) {
     return '+$improvement $unit';
   }
@@ -29723,7 +29552,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return 'Před $arg0 dny';
+    return 'Aktualizováno před $arg0 dny';
   }
 
   @override
@@ -30162,17 +29991,22 @@ class AppLocalizationsCs extends AppLocalizations {
       'Konzistence je víc než intenzita – vyber si to, co zvládneš udržet';
 
   @override
-  String quizDaysSelectorDays(Object arg0) {
-    return 'Dny $arg0';
+  String quizDaysSelectorDays(int arg0) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg0,
+      locale: localeName,
+      other: 'dní',
+      many: 'dne',
+      few: 'dny',
+      one: 'den',
+    );
+    return '$_temp0';
   }
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return 'Vybrané dny $arg0 $arg1';
+    return 'Vybráno $arg0 / $arg1 dní';
   }
-
-  @override
-  String get quizDaysSelectorForYourWorkouts => ') pro tvé tréninky';
 
   @override
   String get quizDaysSelectorFri => 'Pá';
@@ -30195,7 +30029,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
-    return 'Vyberte $arg0 dní';
+    return 'Vyberte $arg0 dní, které vám vyhovují';
   }
 
   @override
@@ -30292,7 +30126,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return 'Identifikovaný počet $arg0';
+    return 'Identifikováno položek: $arg0. Klepnutím kteroukoli zrušíte výběr.';
   }
 
   @override
@@ -30314,7 +30148,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return 'Ostatní počet $arg0';
+    return 'Vybráno: $arg0';
   }
 
   @override
@@ -31253,11 +31087,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get recipeCreateSaving => 'Ukládání...';
 
   @override
-  String recipeCreateScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
-  }
-
-  @override
   String recipeCreateScreenValue2(Object selected) {
     return '✨ $selected';
   }
@@ -31341,11 +31170,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String recipeDetailScreenUForkedFrom(Object sourceName) {
     return '✨ Vytvořeno z $sourceName';
-  }
-
-  @override
-  String recipeDetailScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
   }
 
   @override
@@ -32126,7 +31950,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get regenerateSheetCustomizeOrLetAiSuggest =>
-      'Přizpůsobte nebo nechte AI navrhnout';
+      'Přizpůsobte si to nebo nechte AI navrhnout';
 
   @override
   String get regenerateSheetDescribeYourIdealWorkout =>
@@ -32167,7 +31991,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return 'Generování trvá $arg0';
+    return 'Generování… $arg0';
   }
 
   @override
@@ -32987,7 +32811,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String restSuggestionSaveTime(Object arg0) {
-    return 'Ušetřete čas $arg0';
+    return 'Ušetřete $arg0';
   }
 
   @override
@@ -33008,10 +32832,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get restTimerCardFormula => 'Vzorec';
-
-  @override
-  String get restTimerCardFormulaBaserestRpe7 =>
-      'Vzorec: BaseRest * (RPE / 7) * Multiplier';
 
   @override
   String get restTimerCardLivePreview => 'Živý náhled';
@@ -33040,7 +32860,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get restTimerCardVariablesBaseRpeMultipli =>
-      'Proměnné: base, rpe, multiplier, tier';
+      'Proměnné: základ, RPE, násobitel, úroveň';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -33349,7 +33169,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
-    return 'Nahlášená zranění $arg0';
+    return 'Označeno zranění: $arg0';
   }
 
   @override
@@ -34058,9 +33878,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get sessionDetailTime => 'Čas';
 
   @override
-  String get sessionDetailTopSetHighlighted => ') • zvýrazněná hlavní série';
-
-  @override
   String get sessionDetailWeight => 'Váha';
 
   @override
@@ -34121,11 +33938,6 @@ class AppLocalizationsCs extends AppLocalizations {
     Object length,
   ) {
     return 'odstraněno $length';
-  }
-
-  @override
-  String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') z (exerciseName)';
   }
 
   @override
@@ -34374,11 +34186,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String setTrackingSectionSetsCompleted(Object length) {
     return '$length sérií dokončeno';
-  }
-
-  @override
-  String setTrackingSectionValue(Object reps) {
-    return ')×(opakování)';
   }
 
   @override
@@ -35010,7 +34817,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get settingsScreenUiTryDifferentKeywordsLike =>
-      'Zkuste jiná klíčová slova jako \"vzhled\", \"oznámení\" nebo \"ai hlas\"';
+      'Zkuste jiná klíčová slova jako „motiv“, „oznámení“ nebo „hlas AI“';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -35174,7 +34981,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get shareMotivationalCompleted => 'HOTOVO';
 
   @override
-  String get sharePrNewPr => 'Nový PR';
+  String get sharePrNewPr => 'NOVÉ PR';
 
   @override
   String get shareStatsCalories => 'Kalorie';
@@ -36712,9 +36519,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get streakMilestoneStreakMilestone => 'MILNÍK SÉRIE!';
-
-  @override
-  String get streakMilestoneToGo => ') do cíle!';
 
   @override
   String get streakMilestoneYouVeReachedThe =>
@@ -38540,25 +38344,33 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return 'Pokles $arg0';
+    return '▼ Pokles o $arg0 od rána';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return 'Získané body $arg0 $arg1';
+    return '$arg0 / $arg1 b.';
   }
 
   @override
   String get todayScoreDetailHowItWorks => 'Jak to funguje';
 
   @override
-  String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return 'Vysvětlení neaktivity $arg0 $arg1';
+  String todayScoreDetailInactiveExplanation(Object arg0, int arg1) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg1,
+      locale: localeName,
+      other: 'se dnes nepočítá',
+      many: 'se dnes nepočítá',
+      few: 'se dnes nepočítají',
+      one: 'se dnes nepočítá',
+    );
+    return '$arg0 $_temp0, takže zbytek si rozdělí plných 100 bodů. Vaše skóre vždy odráží jen to, co dnes skutečně platí.';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return 'Momentum s průměrem $arg0 $arg1';
+    return '$arg0  ·  7denní průměr $arg1';
   }
 
   @override
@@ -38575,7 +38387,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return 'Nárůst $arg0';
+    return '▲ Nárůst o $arg0 od rána';
   }
 
   @override
@@ -39037,9 +38849,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get trophiesEarnedFirstTime => 'POPRVÉ!';
 
   @override
-  String get trophiesEarnedKg => ') kg';
-
-  @override
   String get trophiesEarnedMilestoneReached => 'Milník dosažen';
 
   @override
@@ -39051,20 +38860,20 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return 'Odznaky $arg0';
+    return 'Nové odznaky: $arg0';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return 'Kardio PR $arg0';
+    return 'Nové cardio PR: $arg0';
   }
 
   @override
-  String get trophiesEarnedNewPR => 'Nový PR';
+  String get trophiesEarnedNewPR => 'NOVÉ PR';
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return 'PR $arg0';
+    return 'Nové PR: $arg0!';
   }
 
   @override
@@ -39085,7 +38894,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
-    return 'Zbývá odemknout $arg0 $arg1';
+    return 'Ještě $arg0 $arg1 k odemčení';
   }
 
   @override
@@ -39285,7 +39094,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsBreakfastLogged(Object arg0) {
-    return 'Snídaně zaznamenána: $arg0';
+    return 'Snídaně zaznamenána $arg0 ze 7 posledních rán';
   }
 
   @override
@@ -39335,7 +39144,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '$arg0 kcal celkem dnes';
+    return 'Spáleno $arg0 kcal';
   }
 
   @override
@@ -40046,7 +39855,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return 'Dokončeno $arg0 z $arg1';
+    return 'Dokončeno $arg0 z $arg1 tréninků';
   }
 
   @override
@@ -40745,12 +40554,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return 'Tento týden pokles $arg0';
+    return 'Pokles o $arg0 tento týden!';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return 'Pokles oproti minulému cyklu $arg0';
+    return 'Pokles o $arg0 lbs oproti stejnému dni cyklu minulý měsíc';
   }
 
   @override
@@ -40786,17 +40595,17 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return 'Cíl držen v rozmezí $arg0';
+    return 'Cíl udržen $arg0 — vyrovnávání vody v luteální fázi';
   }
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return 'Tento týden nárůst $arg0';
+    return 'Nárůst o $arg0 tento týden';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return 'Nárůst oproti minulému cyklu $arg0';
+    return 'Nárůst o $arg0 lbs oproti stejnému dni cyklu minulý měsíc';
   }
 
   @override
@@ -40958,11 +40767,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String workoutActionsSheetGetALinkFor(Object marketingDomain) {
     return 'Získat odkaz $marketingDomain pro přátele';
-  }
-
-  @override
-  String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (Zealova)\n(url)';
   }
 
   @override
@@ -41310,11 +41114,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2Value(Object workoutComp) {
-    return ')(workoutComp)';
-  }
-
-  @override
   String get workoutCompleteScreenUnableToChallengeFriends =>
       'V tuto chvíli nelze vyzvat přátele';
 
@@ -41534,10 +41333,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get workoutDetailFailedToLoadWorkout => 'Nepodařilo se načíst trénink';
 
   @override
-  String get workoutDetailHelpersForAvailableEquipment =>
-      ') pro dostupné vybavení...';
-
-  @override
   String get workoutDetailHelpersHell => 'Peklo';
 
   @override
@@ -41551,7 +41346,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return 'Nahrazování cviků $arg0';
+    return 'Nahrazování cviků ($arg0) podle dostupného vybavení…';
   }
 
   @override
@@ -42016,9 +41811,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get workoutHistoryImportYourStrengthData => 'Vaše údaje o síle';
 
   @override
-  String get workoutImportAsDone => ')\" jako hotové';
-
-  @override
   String get workoutImportCalories => 'Kalorie';
 
   @override
@@ -42041,7 +41833,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return 'Ze zdroje $arg0';
+    return 'z $arg0';
   }
 
   @override
@@ -42351,12 +42143,8 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutPlanDrawerExerciseCount(Object arg0) {
-    return 'Počet cviků $arg0';
+    return '$arg0 cviků';
   }
-
-  @override
-  String get workoutPlanDrawerLoggedTheyWillBe =>
-      ') zaznamenáno. Budou smazány.';
 
   @override
   String get workoutPlanDrawerNow => 'Teď';
@@ -42366,7 +42154,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutPlanDrawerRemoveExercise(Object arg0) {
-    return 'Odstranit cvik $arg0';
+    return 'Odebrat $arg0?';
   }
 
   @override
@@ -42374,7 +42162,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
-    return 'Zaznamenané série $arg0';
+    return 'Máte zaznamenáno sérií: $arg0. Budou smazány.';
   }
 
   @override
@@ -42856,7 +42644,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return 'Série $arg0';
+    return '✓ Zaznamenat sérii $arg0';
   }
 
   @override
@@ -42904,11 +42692,6 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String workoutShowcaseScreenDuration(Object duration) {
     return 'DOBA TRVÁNÍ: $duration';
-  }
-
-  @override
-  String workoutShowcaseScreenPrs(Object prs) {
-    return 'PR: $prs';
   }
 
   @override
@@ -43835,49 +43618,49 @@ class AppLocalizationsCs extends AppLocalizations {
       'Od začátečníka po transcendenci';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp => 'XP za dokončení tréninku';
+  String get xpGoalsDialogCompleteWorkoutXp => 'Dokonči trénink: +100 XP';
 
   @override
   String get xpGoalsDialogDailyGoals => 'Denní cíle';
 
   @override
   String get xpGoalsDialogFirstChatWithAiCoachXp =>
-      'XP za první chat s AI trenérem';
+      'První chat s AI koučem: +15 XP';
 
   @override
   String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'XP za první měření jídla';
+      'První jídlo/váha/míry: +50 XP za každé';
 
   @override
-  String get xpGoalsDialogFirstPrXp => 'XP za první PR';
+  String get xpGoalsDialogFirstPrXp => 'První PR: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp => 'XP za první fotku pokroku';
+  String get xpGoalsDialogFirstProgressPhotoXp => 'První foto pokroku: +75 XP';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp =>
-      'XP za první splnění cíle bílkovin';
+  String get xpGoalsDialogFirstProteinGoalXp => 'První cíl bílkovin: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => 'XP za první trénink';
+  String get xpGoalsDialogFirstWorkoutXp => 'První trénink: +150 XP';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp => 'XP za splnění cíle bílkovin';
+  String get xpGoalsDialogHitProteinGoalXp => 'Splň cíl bílkovin: +50 XP';
 
   @override
   String get xpGoalsDialogLevels => 'Úrovně';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp => 'XP za měření těla';
+  String get xpGoalsDialogLogBodyMeasurementsXp =>
+      'Zaznamenej tělesné míry: +20 XP';
 
   @override
-  String get xpGoalsDialogLogMealXp => 'XP za zaznamenání jídla';
+  String get xpGoalsDialogLogMealXp => 'Zaznamenej jídlo: +25 XP';
 
   @override
-  String get xpGoalsDialogLogWeightXp => 'XP za zaznamenání hmotnosti';
+  String get xpGoalsDialogLogWeightXp => 'Zaznamenej váhu: +15 XP';
 
   @override
-  String get xpGoalsDialogLoginXp => 'XP za přihlášení';
+  String get xpGoalsDialogLoginXp => 'Přihlášení: +5 XP';
 
   @override
   String get xpGoalsDialogMilestoneRewards => 'Odměny za milníky';
@@ -43954,7 +43737,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return 'Aktuální celková úroveň $arg0';
+    return 'Úroveň $arg0 • 249 úrovní celkem';
   }
 
   @override
@@ -44071,12 +43854,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return 'Dostupné $arg0';
+    return '+$arg0 XP k dispozici';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return 'Dnes získáno $arg0';
+    return '+$arg0 XP získáno dnes';
   }
 
   @override
@@ -44084,7 +43867,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return 'Aktivní násobič $arg0';
+    return '${arg0}x XP aktivní!';
   }
 
   @override

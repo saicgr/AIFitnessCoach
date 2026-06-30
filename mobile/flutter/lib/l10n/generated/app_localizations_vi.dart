@@ -334,11 +334,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') cho (name)';
-  }
-
-  @override
   String get activeWorkoutScreenUndo => 'Hoàn tác';
 
   @override
@@ -1047,10 +1042,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get aiCoachMealRecoveryDayEating => 'Ăn uống ngày phục hồi?';
-
-  @override
-  String get aiCoachMealSearchQuestionsTryAngry =>
-      'Tìm kiếm câu hỏi (thử \"giận dữ\", \"chất xơ\", \"Mexico\")';
 
   @override
   String get aiCoachMealSomethingWentWrong => 'Đã có lỗi xảy ra.';
@@ -2864,9 +2855,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get caloriesSummaryCardOveLeft => 'còn lại';
-
-  @override
   String get cancelConfirmationAnythingElseYouD =>
       'Bạn có muốn chia sẻ thêm điều gì không? (tùy chọn)';
 
@@ -3529,9 +3517,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get chatGotIt => 'Đã hiểu';
 
   @override
-  String get chatLeftToday => ') còn lại hôm nay';
-
-  @override
   String chatMediaWidgetsCalTotal(Object totalCal) {
     return 'Tổng $totalCal cal';
   }
@@ -3651,11 +3636,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get chatScreenExtAboutAiCoach => 'Về Huấn luyện viên AI';
-
-  @override
-  String chatScreenExtAs(Object mealType) {
-    return ') dưới dạng (mealType)';
-  }
 
   @override
   String get chatScreenExtChangeCoach => 'Đổi huấn luyện viên';
@@ -4871,7 +4851,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String complianceRingCardGreatPace(Object arg0) {
-    return 'Nhịp độ tuyệt vời $arg0';
+    return 'Nhịp độ tốt! Còn $arg0';
   }
 
   @override
@@ -4880,7 +4860,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
-    return 'Đúng tiến độ $arg0';
+    return 'Đúng tiến độ — còn $arg0';
   }
 
   @override
@@ -4888,7 +4868,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String complianceRingCardWorkoutsRemaining(Object arg0) {
-    return 'Số bài tập còn lại $arg0';
+    return 'Còn $arg0 buổi tập';
   }
 
   @override
@@ -5181,9 +5161,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get cookingConverterUseThisValue => 'Sử dụng giá trị này';
-
-  @override
-  String get cookingConverterWeight => ') Khối lượng';
 
   @override
   String get cosmeticsGalleryCosmetics => 'Mỹ phẩm';
@@ -5714,19 +5691,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenUsedTimes(
-    Object lastUsedFormatted,
-    Object usageCount,
-  ) {
-    return 'Đã dùng (usageCount) lần(lastUsedFormatted)\" : \"\")';
-  }
-
-  @override
-  String customExercisesScreenValue(Object name, Object targetDisplay) {
-    return '(name) (targetDisplay))\" : \"\")';
-  }
-
-  @override
   String get customExercisesSearchExercises => 'Tìm kiếm bài tập...';
 
   @override
@@ -5872,11 +5836,6 @@ class AppLocalizationsVi extends AppLocalizations {
     Object pairedPoints,
   ) {
     return '$pairedPoints/$kMinCorrelationPairs ngày chia sẻ';
-  }
-
-  @override
-  String customTrendScreenValue(Object strengthLabel, Object value) {
-    return ')(giá trị) · (nhãn độ mạnh)';
   }
 
   @override
@@ -6130,9 +6089,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get cycleScreenUiLogYourFirstPeriod =>
       'Ghi lại kỳ kinh nguyệt đầu tiên của bạn để bắt đầu dự đoán.';
-
-  @override
-  String get cycleScreenUiPhase => ') giai đoạn';
 
   @override
   String cycleScreenUiPhaseLabel(Object displayName) {
@@ -8140,7 +8096,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String editProgramSheetCustomValue(Object arg0) {
-    return 'Giá trị tùy chỉnh $arg0';
+    return 'Tùy chỉnh: $arg0';
   }
 
   @override
@@ -8184,12 +8140,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return 'Tải lịch sử $arg0';
+    return 'Không tải được lịch sử: $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return 'Khôi phục $arg0';
+    return 'Không khôi phục được: $arg0';
   }
 
   @override
@@ -9754,11 +9710,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exerciseDetailSheetFavorite => 'Yêu thích';
 
   @override
-  String exerciseDetailSheetLbs(Object repRange) {
-    return ') lbs × (repRange)';
-  }
-
-  @override
   String get exerciseDetailSheetLoading => 'Đang tải...';
 
   @override
@@ -11015,9 +10966,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exerciseSetTrackerAddSet => 'Thêm hiệp';
 
   @override
-  String get exerciseSetTrackerBarbell => ') đòn tạ';
-
-  @override
   String get exerciseSetTrackerReps => 'Số lần';
 
   @override
@@ -11160,10 +11108,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetAskAiForSuggestions => 'Hỏi AI để nhận gợi ý';
-
-  @override
-  String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Mô tả thiết bị hoặc sở thích của bạn\nví dụ: \"Tôi bị đau vai, chỉ tập bodyweight\"';
 
   @override
   String get exerciseSwapSheetEGIOnly => 'ví dụ: \"Tôi chỉ có tạ đơn\"';
@@ -11337,9 +11281,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get expandedExerciseCardAlternatingHands => 'Đổi tay';
-
-  @override
-  String get expandedExerciseCardBarbell => ') đòn tạ';
 
   @override
   String get expandedExerciseCardBreathing => 'Hít thở';
@@ -12086,11 +12027,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get fastingScoreCardStreakBonus => 'Thưởng chuỗi';
-
-  @override
-  String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
-  }
 
   @override
   String fastingScoreCardValue2(Object value) {
@@ -13078,11 +13014,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get flexibilityProgressChartNoDataAvailable => 'Không có dữ liệu';
 
   @override
-  String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
-  }
-
-  @override
   String get flexibilityScoreCardByArea => 'Theo vùng';
 
   @override
@@ -13749,9 +13680,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get foodItemRankingAddFood => 'Thêm thực phẩm';
 
   @override
-  String get foodItemRankingDetails => ') chi tiết';
-
-  @override
   String foodItemRankingNFoodItems(Object count) {
     return '$count loại thực phẩm';
   }
@@ -14267,9 +14195,6 @@ class AppLocalizationsVi extends AppLocalizations {
       'Những người bạn thực sự đạt được vóc dáng cân đối đều có một người nhắn tin cho họ. Sự trách nhiệm thực sự tốn khoảng hai trăm đô la một tháng, đó chính là lý do tại sao hầu hết chúng ta không bao giờ có được nó, và cũng là lý do tại sao khoảng cách giữa \"theo dõi\" và \"thay đổi\" vẫn tồn tại trong nhiều năm.';
 
   @override
-  String get freshnessDecayCardAgo => ') trước';
-
-  @override
   String get freshnessDecayCardControlsHowQuicklyExercise =>
       'Kiểm soát tốc độ suy giảm độ tươi mới của bài tập: e^(-k * số buổi tập)';
 
@@ -14525,16 +14450,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get futuristicSetCardSkipExercise => 'Bỏ qua bài tập';
-
-  @override
-  String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
-  }
-
-  @override
-  String futuristicSetCardValue2(Object reps) {
-    return ')×(reps)';
-  }
 
   @override
   String get generatePlanCreateAHolisticPlan =>
@@ -15430,12 +15345,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return 'Số lần hoàn thành $arg0 $arg1';
+    return 'Đã hoàn thành $arg0/$arg1';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return 'Chuỗi ngày $arg0';
+    return 'Chuỗi $arg0 ngày';
   }
 
   @override
@@ -15463,7 +15378,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String habitsCardViewAllHabits(Object arg0) {
-    return 'Xem tất cả thói quen $arg0';
+    return 'Xem tất cả $arg0 thói quen';
   }
 
   @override
@@ -17041,9 +16956,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get homeEmptyWorkout_v4 =>
       'Chưa có kế hoạch. Hãy để AI xây dựng một kế hoạch phù hợp với mục tiêu của bạn.';
-
-  @override
-  String get homeFromHealthConnect => ') từ Health Connect';
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
@@ -19027,11 +18939,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get insightsSummaryTemplateSummary => 'TỔNG QUAN';
 
   @override
-  String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
-  }
-
-  @override
   String get insightsSummaryTemplateWorkouts => 'BÀI TẬP';
 
   @override
@@ -19045,10 +18952,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get intensityPromptHard => 'Nặng';
-
-  @override
-  String get intensityPromptHideRpeSlideDial =>
-      'Ẩn thanh RPE      Điều chỉnh (RPE 1-10)';
 
   @override
   String get intensityPromptHowHardWasThat => 'Hiệp này nặng thế nào?';
@@ -19073,11 +18976,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get introBuildMyPlan => 'Xây dựng kế hoạch của tôi';
-
-  @override
-  String introCardFormatDataTotalvolumelbsRound(Object totalSets) {
-    return ').format(data.totalVolumeLbs.round())) lbs · (totalSets) hiệp';
-  }
 
   @override
   String get introCardMonth => 'tháng.';
@@ -20131,9 +20029,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get logMealSheetCached => '(Đã lưu bộ nhớ đệm)';
 
   @override
-  String get logMealSheetCaptured => ') đã chụp';
-
-  @override
   String get logMealSheetChooseFoodPhotos => 'Chọn ảnh món ăn';
 
   @override
@@ -20751,11 +20646,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValue(Object changeInUnit) {
-    return ')(thay đổi theo đơn vị)';
-  }
-
-  @override
   String get logWeightSyncedFromAppleHealth => 'Đã đồng bộ từ Apple Health';
 
   @override
@@ -21198,7 +21088,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return 'Số lượt chat còn lại hôm nay $arg0';
+    return 'Còn $arg0 lượt trò chuyện hôm nay';
   }
 
   @override
@@ -21242,11 +21132,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String manageDuplicateImportsScreenValue(Object primary) {
     return '$primary · ';
-  }
-
-  @override
-  String manageDuplicateImportsScreenValue2(Object row) {
-    return '(hàng)\" : \"\")';
   }
 
   @override
@@ -22184,11 +22069,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String menuAnalysisSheetValue(Object elapsed) {
-    return ')(đã trôi qua)';
-  }
-
-  @override
   String menuAnalysisSheetValue2(Object rank) {
     return '#$rank';
   }
@@ -22637,7 +22517,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String metricsDashboardNoMetricDataYet(Object arg0) {
-    return 'Chưa có dữ liệu chỉ số $arg0';
+    return 'Chưa có dữ liệu $arg0';
   }
 
   @override
@@ -23311,7 +23191,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return 'Tập luyện nhiều nhất $arg0';
+    return 'Tập nhiều nhất: $arg0';
   }
 
   @override
@@ -23750,11 +23630,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardValue(Object item) {
-    return ')(mục)%';
-  }
-
-  @override
   String get myLibraryTabRecentActivity => 'Hoạt động gần đây';
 
   @override
@@ -24042,7 +23917,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return 'XP hiện tại $arg0';
+    return '$arg0 XP';
   }
 
   @override
@@ -24053,7 +23928,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return 'Còn lại $arg0 giờ $arg1 phút';
+    return 'Còn $arg0 giờ $arg1 phút';
   }
 
   @override
@@ -24069,7 +23944,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return 'Còn lại $arg0 phút';
+    return 'Còn $arg0 phút';
   }
 
   @override
@@ -24098,7 +23973,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return 'Mục tiêu bước chân $arg0';
+    return '/ $arg0';
   }
 
   @override
@@ -24106,7 +23981,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return 'Mục tiêu giờ hoạt động $arg0';
+    return '/ $arg0 giờ';
   }
 
   @override
@@ -24153,11 +24028,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String neatScoreDisplayTrend(Object name) {
     return 'Xu hướng: $name';
-  }
-
-  @override
-  String neatScoreDisplayValue(Object widget) {
-    return '))(widget)';
   }
 
   @override
@@ -24406,16 +24276,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String nextSetPreviewCardKg(Object recommendedWeight) {
     return '$recommendedWeight kg';
-  }
-
-  @override
-  String nextSetPreviewCardKg2(Object weightDelta) {
-    return ')(weightDelta) kg';
-  }
-
-  @override
-  String nextSetPreviewCardValue(Object weightDelta) {
-    return ')(weightDelta)';
   }
 
   @override
@@ -24990,11 +24850,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get nutrientExplorerUnpinNutrient => 'Bỏ ghim chất dinh dưỡng';
-
-  @override
-  String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
-  }
 
   @override
   String get nutrientExplorerVitamins => 'VITAMIN';
@@ -25976,11 +25831,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
-  }
-
-  @override
   String nutritionTabPartWeeklyOverviewCardCalDay(Object uncertaintyDisplay) {
     return 'cal/ngày $uncertaintyDisplay';
   }
@@ -25993,11 +25843,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String nutritionTabPartWeeklyOverviewCardG2(Object grams) {
     return '${grams}g';
-  }
-
-  @override
-  String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
   }
 
   @override
@@ -26157,65 +26002,62 @@ class AppLocalizationsVi extends AppLocalizations {
   String get onboardingWhyWhatSDrivingThis => 'Điều gì thúc đẩy điều này?';
 
   @override
-  String get openAllCrates24HoursOf2xXp => '24 giờ nhân đôi XP';
+  String get openAllCrates24HoursOf2xXp => '24 giờ 2x XP';
 
   @override
-  String get openAllCratesActivityCrate => 'Hộp hoạt động';
+  String get openAllCratesActivityCrate => 'Rương Hoạt động';
 
   @override
   String get openAllCratesBonusCrateToOpen => 'Hộp thưởng cần mở';
 
   @override
   String openAllCratesCollect(Object arg0, Object arg1) {
-    return 'Thu thập $arg0 $arg1';
+    return 'Nhận ($arg0/$arg1)';
   }
 
   @override
   String openAllCratesCratesOpened(Object arg0) {
-    return 'Số hộp đã mở $arg0';
+    return 'Đã mở $arg0 rương!';
   }
 
   @override
-  String get openAllCratesDailyCrate => 'Hộp hàng ngày';
+  String get openAllCratesDailyCrate => 'Rương Hằng ngày';
 
   @override
   String get openAllCratesDone => 'Xong';
 
   @override
-  String get openAllCratesDoubleXpToken => 'Thẻ nhân đôi XP';
+  String get openAllCratesDoubleXpToken => 'Mã thông báo XP gấp đôi';
 
   @override
   String get openAllCratesFailedToOpenCrates =>
       'Không thể mở thùng. Vui lòng thử lại.';
 
   @override
-  String get openAllCratesFitnessCrate => 'Hộp thể hình';
+  String get openAllCratesFitnessCrate => 'Rương Thể hình';
 
   @override
   String openAllCratesGainedXp(Object arg0) {
-    return 'Đã nhận $arg0 XP';
+    return '+$arg0 XP';
   }
 
   @override
   String get openAllCratesMaxLevel => 'Cấp tối đa';
 
   @override
-  String get openAllCratesOpenYourCrates => 'Mở hộp của bạn';
+  String get openAllCratesOpenYourCrates => '🎁 Mở rương của bạn';
 
   @override
-  String get openAllCratesOpened => ') đã mở!';
-
-  @override
-  String get openAllCratesOpeningYourCrates => 'Đang mở hộp của bạn';
+  String get openAllCratesOpeningYourCrates => '🎁 Đang mở rương…';
 
   @override
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
-    return 'Chọn phần thưởng mỗi ngày $arg0 $arg1';
+    return 'Chọn 1 phần thưởng mỗi ngày • đã chọn $arg0/$arg1';
   }
 
   @override
   String openAllCratesPickYourReward(Object arg0, Object arg1) {
-    return 'Chọn phần thưởng của bạn $arg0 $arg1';
+    return 'Chọn phần thưởng • đã chọn $arg0/$arg1';
   }
 
   @override
@@ -26225,22 +26067,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get openAllCratesSelectAll => 'Chọn tất cả';
 
   @override
-  String get openAllCratesStreakCrate => 'Thùng Streak';
+  String get openAllCratesStreakCrate => 'Rương Chuỗi';
 
   @override
-  String get openAllCratesStreakShield => 'Khiên Streak';
+  String get openAllCratesStreakShield => 'Khiên Chuỗi';
 
   @override
   String get openAllCratesToday => 'Hôm nay';
 
   @override
   String openAllCratesTotalXpFormatted(Object arg0) {
-    return 'Tổng XP $arg0';
+    return 'Tổng $arg0';
   }
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return 'Tổng XP cấp $arg0 $arg1';
+    return 'Tổng: $arg0 XP • Cấp $arg1';
   }
 
   @override
@@ -26248,12 +26090,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String openAllCratesXpInLevel(Object arg0, Object arg1) {
-    return 'XP trong cấp $arg0 $arg1';
+    return '$arg0 / $arg1 XP';
   }
 
   @override
   String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
-    return 'XP đến cấp tiếp theo $arg0 $arg1';
+    return '$arg0 XP để lên Cấp $arg1';
   }
 
   @override
@@ -27100,11 +26942,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-confidence estimate\" : \"\")';
-  }
-
-  @override
   String phaseRecommendationBannerCycleDay(Object cycleDay) {
     return 'Ngày chu kỳ $cycleDay';
   }
@@ -27491,7 +27328,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return 'Số ngày mỗi tuần $arg0';
+    return '$arg0 ngày/tuần';
   }
 
   @override
@@ -27500,7 +27337,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
-    return 'Số lượng thiết bị $arg0';
+    return '$arg0 thiết bị';
   }
 
   @override
@@ -27835,9 +27672,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String prInlineCelebrationValue2(Object exerciseName, Object formattedValue) {
     return '$exerciseName • $formattedValue';
   }
-
-  @override
-  String get prPosterTemplateFromLast => ') TỪ LẦN TRƯỚC';
 
   @override
   String get prShareCardCopiedToClipboard => 'Đã sao chép vào bộ nhớ tạm!';
@@ -29381,11 +29215,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get prsTemplateNewPrsAreJust => 'Những kỷ lục mới đang chờ đón bạn';
 
   @override
-  String prsTemplateValue(Object unit) {
-    return ') (đơn vị)';
-  }
-
-  @override
   String prsTemplateValue2(Object improvement, Object unit) {
     return '+$improvement $unit';
   }
@@ -29787,7 +29616,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return '$arg0 ngày trước';
+    return 'Cập nhật $arg0 ngày trước';
   }
 
   @override
@@ -30226,17 +30055,20 @@ class AppLocalizationsVi extends AppLocalizations {
       'Sự kiên trì quan trọng hơn cường độ - hãy chọn mức bạn có thể duy trì';
 
   @override
-  String quizDaysSelectorDays(Object arg0) {
-    return '$arg0 ngày';
+  String quizDaysSelectorDays(int arg0) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg0,
+      locale: localeName,
+      other: 'ngày',
+      one: 'ngày',
+    );
+    return '$_temp0';
   }
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return 'Đã chọn $arg0 ngày $arg1';
+    return 'Đã chọn $arg0 / $arg1 ngày';
   }
-
-  @override
-  String get quizDaysSelectorForYourWorkouts => ') cho các buổi tập của bạn';
 
   @override
   String get quizDaysSelectorFri => 'Thứ 6';
@@ -30260,7 +30092,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
-    return 'Chọn $arg0 ngày';
+    return 'Chọn $arg0 ngày phù hợp với bạn';
   }
 
   @override
@@ -30358,7 +30190,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return 'Số lượng đã xác định $arg0';
+    return 'Đã nhận diện $arg0 mục. Chạm để bỏ chọn.';
   }
 
   @override
@@ -30380,7 +30212,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return 'Số lượng khác $arg0';
+    return 'Đã chọn $arg0';
   }
 
   @override
@@ -31323,11 +31155,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get recipeCreateSaving => 'Đang lưu...';
 
   @override
-  String recipeCreateScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
-  }
-
-  @override
   String recipeCreateScreenValue2(Object selected) {
     return '✨ $selected';
   }
@@ -31411,11 +31238,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String recipeDetailScreenUForkedFrom(Object sourceName) {
     return '✨ Được tạo từ $sourceName';
-  }
-
-  @override
-  String recipeDetailScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
   }
 
   @override
@@ -32247,7 +32069,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return 'Đang tạo $arg0';
+    return 'Đang tạo… $arg0';
   }
 
   @override
@@ -33072,7 +32894,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String restSuggestionSaveTime(Object arg0) {
-    return 'Tiết kiệm thời gian $arg0';
+    return 'Tiết kiệm $arg0';
   }
 
   @override
@@ -33093,10 +32915,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get restTimerCardFormula => 'Công thức';
-
-  @override
-  String get restTimerCardFormulaBaserestRpe7 =>
-      'Công thức: BaseRest * (RPE / 7) * Multiplier';
 
   @override
   String get restTimerCardLivePreview => 'Xem trước trực tiếp';
@@ -33124,7 +32942,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get restTimerCardVariablesBaseRpeMultipli =>
-      'Biến số: base, rpe, multiplier, tier';
+      'Biến số: cơ bản, RPE, hệ số, bậc';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -33433,7 +33251,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
-    return 'Đã gắn cờ chấn thương $arg0';
+    return 'Đã ghi nhận $arg0 chấn thương';
   }
 
   @override
@@ -34142,10 +33960,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get sessionDetailTime => 'Thời gian';
 
   @override
-  String get sessionDetailTopSetHighlighted =>
-      ') • hiệp chính được làm nổi bật';
-
-  @override
   String get sessionDetailWeight => 'Trọng lượng';
 
   @override
@@ -34206,11 +34020,6 @@ class AppLocalizationsVi extends AppLocalizations {
     Object length,
   ) {
     return 'đã xóa $length';
-  }
-
-  @override
-  String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') của (exerciseName)';
   }
 
   @override
@@ -34459,11 +34268,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String setTrackingSectionSetsCompleted(Object length) {
     return 'Đã hoàn thành $length hiệp';
-  }
-
-  @override
-  String setTrackingSectionValue(Object reps) {
-    return ')×(số lần)';
   }
 
   @override
@@ -35093,7 +34897,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get settingsScreenUiTryDifferentKeywordsLike =>
-      'Thử các từ khóa khác như \"chủ đề\", \"thông báo\" hoặc \"giọng nói ai\"';
+      'Thử các từ khóa khác như \"giao diện\", \"thông báo\" hoặc \"giọng nói AI\"';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -35258,7 +35062,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shareMotivationalCompleted => 'ĐÃ HOÀN THÀNH';
 
   @override
-  String get sharePrNewPr => 'PR mới';
+  String get sharePrNewPr => 'PR MỚI';
 
   @override
   String get shareStatsCalories => 'Calo';
@@ -36794,9 +36598,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get streakMilestoneStreakMilestone => 'CỘT MỐC CHUỖI!';
-
-  @override
-  String get streakMilestoneToGo => ') nữa!';
 
   @override
   String get streakMilestoneYouVeReachedThe =>
@@ -38621,25 +38422,31 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return 'Giảm $arg0';
+    return '▼ Giảm $arg0 so với sáng nay';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return 'Điểm đã đạt $arg0 $arg1';
+    return '$arg0 / $arg1 điểm';
   }
 
   @override
   String get todayScoreDetailHowItWorks => 'Cách thức hoạt động';
 
   @override
-  String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return 'Giải thích trạng thái không hoạt động $arg0 $arg1';
+  String todayScoreDetailInactiveExplanation(Object arg0, int arg1) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg1,
+      locale: localeName,
+      other: 'không được tính',
+      one: 'không được tính',
+    );
+    return '$arg0 $_temp0 hôm nay, nên phần còn lại chia nhau trọn 100 điểm. Điểm của bạn luôn chỉ phản ánh những gì thực sự áp dụng hôm nay.';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return 'Đà phát triển với trung bình $arg0 $arg1';
+    return '$arg0  ·  trung bình 7 ngày $arg1';
   }
 
   @override
@@ -38656,7 +38463,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return 'Tăng $arg0';
+    return '▲ Tăng $arg0 so với sáng nay';
   }
 
   @override
@@ -39118,9 +38925,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get trophiesEarnedFirstTime => 'LẦN ĐẦU TIÊN!';
 
   @override
-  String get trophiesEarnedKg => ') kg';
-
-  @override
   String get trophiesEarnedMilestoneReached => 'Đã đạt cột mốc';
 
   @override
@@ -39132,20 +38936,20 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return 'Huy hiệu $arg0';
+    return '$arg0 huy hiệu mới';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return 'PR Cardio $arg0';
+    return '$arg0 PR cardio mới';
   }
 
   @override
-  String get trophiesEarnedNewPR => 'Đã đạt PR mới';
+  String get trophiesEarnedNewPR => 'PR MỚI';
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return 'PR $arg0';
+    return '$arg0 PR mới!';
   }
 
   @override
@@ -39166,7 +38970,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
-    return 'Còn lại để mở khóa $arg0 $arg1';
+    return 'Cần thêm $arg0 $arg1 để mở khóa';
   }
 
   @override
@@ -39368,7 +39172,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsBreakfastLogged(Object arg0) {
-    return 'Đã ghi lại bữa sáng $arg0';
+    return 'Đã ghi bữa sáng $arg0 trong 7 buổi sáng gần nhất';
   }
 
   @override
@@ -39417,7 +39221,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '$arg0 kcal tổng cộng hôm nay';
+    return 'Đã đốt $arg0 kcal';
   }
 
   @override
@@ -40126,7 +39930,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return 'Số lượng đã hoàn thành $arg0 $arg1';
+    return 'Đã hoàn thành $arg0 trong $arg1 buổi tập';
   }
 
   @override
@@ -40831,12 +40635,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return 'Giảm trong tuần này $arg0';
+    return 'Giảm $arg0 tuần này!';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return 'Giảm so với chu kỳ trước $arg0';
+    return 'Giảm $arg0 lbs so với cùng ngày chu kỳ tháng trước';
   }
 
   @override
@@ -40872,17 +40676,17 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return 'Đã đạt mục tiêu trong khoảng $arg0';
+    return 'Giữ mục tiêu $arg0 — làm mượt nước giai đoạn hoàng thể';
   }
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return 'Tăng trong tuần này $arg0';
+    return 'Tăng $arg0 tuần này';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return 'Tăng so với chu kỳ trước $arg0';
+    return 'Tăng $arg0 lbs so với cùng ngày chu kỳ tháng trước';
   }
 
   @override
@@ -41045,11 +40849,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String workoutActionsSheetGetALinkFor(Object marketingDomain) {
     return 'Lấy liên kết $marketingDomain cho bạn bè';
-  }
-
-  @override
-  String workoutActionsSheetN(Object appName, Object url) {
-    return ') — Zealova\n(url)';
   }
 
   @override
@@ -41395,11 +41194,6 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2Value(Object workoutComp) {
-    return ')(workoutComp)';
-  }
-
-  @override
   String get workoutCompleteScreenUnableToChallengeFriends =>
       'Không thể thách đấu bạn bè vào lúc này';
 
@@ -41617,10 +41411,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutDetailFailedToLoadWorkout => 'Không tải được bài tập';
 
   @override
-  String get workoutDetailHelpersForAvailableEquipment =>
-      ') cho thiết bị khả dụng...';
-
-  @override
   String get workoutDetailHelpersHell => 'Cực khó';
 
   @override
@@ -41634,7 +41424,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return 'Đang thay thế bài tập $arg0';
+    return 'Đang thay $arg0 bài tập cho thiết bị hiện có…';
   }
 
   @override
@@ -42101,9 +41891,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutHistoryImportYourStrengthData => 'Dữ liệu sức mạnh của bạn';
 
   @override
-  String get workoutImportAsDone => ')\" là đã hoàn thành';
-
-  @override
   String get workoutImportCalories => 'Calo';
 
   @override
@@ -42126,7 +41913,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return 'Từ nguồn $arg0';
+    return 'từ $arg0';
   }
 
   @override
@@ -42438,11 +42225,8 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutPlanDrawerExerciseCount(Object arg0) {
-    return 'Số lượng bài tập $arg0';
+    return '$arg0 bài tập';
   }
-
-  @override
-  String get workoutPlanDrawerLoggedTheyWillBe => ') đã ghi. Chúng sẽ bị xóa.';
 
   @override
   String get workoutPlanDrawerNow => 'Bây giờ';
@@ -42452,7 +42236,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutPlanDrawerRemoveExercise(Object arg0) {
-    return 'Xóa bài tập $arg0';
+    return 'Xóa $arg0?';
   }
 
   @override
@@ -42460,7 +42244,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
-    return 'Số hiệp đã ghi $arg0';
+    return 'Bạn có $arg0 hiệp đã ghi. Chúng sẽ bị xóa.';
   }
 
   @override
@@ -42869,7 +42653,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutShowcaseFinishWorkout => 'Kết thúc buổi tập';
 
   @override
-  String get workoutShowcaseFormat1Rm => 'Định dạng 1RM';
+  String get workoutShowcaseFormat1Rm => '1RM';
 
   @override
   String get workoutShowcaseFormatBoarding => 'Boarding';
@@ -42943,7 +42727,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return 'Hiệp $arg0';
+    return '✓ Ghi hiệp $arg0';
   }
 
   @override
@@ -42991,11 +42775,6 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String workoutShowcaseScreenDuration(Object duration) {
     return 'THỜI GIAN: $duration';
-  }
-
-  @override
-  String workoutShowcaseScreenPrs(Object prs) {
-    return 'PRS: $prs';
   }
 
   @override
@@ -43051,7 +42830,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutShowcaseSetNOf3(Object arg0) {
-    return 'Bộ tập $arg0 của Zealova';
+    return 'Hiệp $arg0 trên 3';
   }
 
   @override
@@ -43431,7 +43210,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutSummaryAdvancedWorkoutEndedEarly => 'Buổi tập kết thúc sớm';
 
   @override
-  String get workoutSummaryAdvancedYesU2705 => 'Có \\u2705';
+  String get workoutSummaryAdvancedYesU2705 => 'Có ✅';
 
   @override
   String get workoutSummaryBodyweightSession => 'Buổi tập thể trọng';
@@ -43919,48 +43698,50 @@ class AppLocalizationsVi extends AppLocalizations {
   String get xpGoalsDialogBeginnerToTranscendent => 'Từ người mới đến bậc thầy';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp => 'XP hoàn thành buổi tập';
+  String get xpGoalsDialogCompleteWorkoutXp => 'Hoàn thành buổi tập: +100 XP';
 
   @override
   String get xpGoalsDialogDailyGoals => 'Mục tiêu hàng ngày';
 
   @override
   String get xpGoalsDialogFirstChatWithAiCoachXp =>
-      'XP trò chuyện với huấn luyện viên AI';
+      'Trò chuyện đầu tiên với HLV AI: +15 XP';
 
   @override
   String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'XP đo lường cân nặng bữa ăn';
+      'Bữa ăn/Cân nặng/Số đo đầu tiên: +50 XP mỗi loại';
 
   @override
-  String get xpGoalsDialogFirstPrXp => 'XP PR đầu tiên';
+  String get xpGoalsDialogFirstPrXp => 'PR đầu tiên: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp => 'XP ảnh tiến trình đầu tiên';
+  String get xpGoalsDialogFirstProgressPhotoXp =>
+      'Ảnh tiến độ đầu tiên: +75 XP';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp => 'XP mục tiêu protein đầu tiên';
+  String get xpGoalsDialogFirstProteinGoalXp =>
+      'Mục tiêu protein đầu tiên: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => 'XP buổi tập đầu tiên';
+  String get xpGoalsDialogFirstWorkoutXp => 'Buổi tập đầu tiên: +150 XP';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp => 'XP đạt mục tiêu protein';
+  String get xpGoalsDialogHitProteinGoalXp => 'Đạt mục tiêu protein: +50 XP';
 
   @override
   String get xpGoalsDialogLevels => 'Cấp độ';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp => 'XP đo lường cơ thể';
+  String get xpGoalsDialogLogBodyMeasurementsXp => 'Ghi số đo cơ thể: +20 XP';
 
   @override
-  String get xpGoalsDialogLogMealXp => 'XP ghi bữa ăn';
+  String get xpGoalsDialogLogMealXp => 'Ghi bữa ăn: +25 XP';
 
   @override
-  String get xpGoalsDialogLogWeightXp => 'XP ghi cân nặng';
+  String get xpGoalsDialogLogWeightXp => 'Ghi cân nặng: +15 XP';
 
   @override
-  String get xpGoalsDialogLoginXp => 'XP đăng nhập';
+  String get xpGoalsDialogLoginXp => 'Đăng nhập: +5 XP';
 
   @override
   String get xpGoalsDialogMilestoneRewards => 'Phần thưởng cột mốc';
@@ -44039,7 +43820,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return 'Tổng cấp độ hiện tại $arg0';
+    return 'Cấp $arg0 • tổng 249 cấp';
   }
 
   @override
@@ -44155,12 +43936,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return 'Khả dụng $arg0';
+    return 'Có sẵn +$arg0 XP';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return 'Đã nhận hôm nay $arg0';
+    return 'Đã kiếm +$arg0 XP hôm nay';
   }
 
   @override
@@ -44168,7 +43949,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return 'Hệ số nhân đang hoạt động $arg0';
+    return '${arg0}x XP đang hoạt động!';
   }
 
   @override

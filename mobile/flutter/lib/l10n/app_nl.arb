@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "Wanneer gebruiken",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Oefening succesvol gewisseld",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} oefening(en) toegevoegd",
-  "activeWorkoutScreenRefactoredFor": ") voor (name)",
   "activeWorkoutScreenUndo": "Ongedaan maken",
   "activeWorkoutScreenWorkoutAdapted": "Workout aangepast.",
   "activityCardAdditionalDetailsOptional": "Aanvullende details (optioneel)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Brandstof voor de training?",
   "aiCoachMealQuickSnackIdeas": "Snelle snackideeën?",
   "aiCoachMealRecoveryDayEating": "Eten op een hersteldag?",
-  "aiCoachMealSearchQuestionsTryAngry": "Zoek vragen (probeer \"boos\", \"vezels\", \"Mexicaans\")",
   "aiCoachMealSomethingWentWrong": "Er ging iets mis.",
   "aiCoachMealStressedWhatHelps": "Gestrest — wat helpt?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "Aziatisch geïnspireerde {meal} — één keuze (rijstbowl, noedels, sushi, roerbak), macro's en bereiding.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · {phase} fase",
   "caloriesSummaryCardCalories": "Calorieën",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "nog over",
   "cancelConfirmationAnythingElseYouD": "Wil je nog iets anders delen? (optioneel)",
   "cancelConfirmationCancelAnyway": "Toch annuleren",
   "cancelConfirmationHelpUsImprove": "Help ons verbeteren",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Begrepen",
   "chatLanguageChangedSystem": "🌐 AI Coach reageert nu in het {nativeName}",
   "chatLanguageResetSystem": "🌐 Taal van AI Coach gereset — app-taal wordt gebruikt",
-  "chatLeftToday": ") vandaag over",
   "chatMediaWidgetsCalTotal": "{totalCal} cal totaal",
   "chatMediaWidgetsGProtein": "{totalProtein}g eiwit",
   "chatMediaWidgetsGoTo": "Ga naar {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "De coach denkt langer na dan normaal.",
   "chatScreenCouldntReachCoach": "Kon de coach niet bereiken.",
   "chatScreenExtAboutAiCoach": "Over AI-coach",
-  "chatScreenExtAs": ") als (mealType)",
   "chatScreenExtChangeCoach": "Coach wijzigen",
   "chatScreenExtChatTips": "Chattips",
   "chatScreenExtChooseMultiplePhotos": "Meerdere foto's kiezen",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "Bekijk doelen",
   "complianceRingCardAllWorkoutsCompleted": "Alle trainingen voltooid",
   "complianceRingCardGetStartedToday": "Begin vandaag",
-  "complianceRingCardGreatPace": "Geweldig tempo {arg0}",
+  "complianceRingCardGreatPace": "Mooi tempo! Nog {arg0} te gaan",
   "complianceRingCardNoWorkoutsScheduledThis": "Geen trainingen gepland deze week",
-  "complianceRingCardOnTrack": "Op schema {arg0}",
+  "complianceRingCardOnTrack": "Op schema — nog {arg0} te gaan",
   "complianceRingCardWorkoutCompliance": "Trainingsnaleving",
-  "complianceRingCardWorkoutsRemaining": "Resterende trainingen {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} workouts over",
   "comprehensiveStatsStatsScores": "Statistieken & Scores",
   "connectedAppsAutoImportEvery15": "Automatisch importeren elke 15 min",
   "connectedAppsConnect": "Verbinden",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Selecteer voedingsmiddel",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Gebruik deze waarde",
-  "cookingConverterWeight": ") Gewicht",
   "cosmeticsGalleryCosmetics": "Cosmetica",
   "cosmeticsGalleryEquip": "Uitrusten",
   "cosmeticsGalleryEquipped": "Uitgerust",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Geen oefeningen gevonden die overeenkomen met je zoekopdracht",
   "customExercisesScreenAreYouSureYou": "Weet je zeker dat je \"{name}\" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} oefeningen, {totalUses} keer gebruikt",
-  "customExercisesScreenUsedTimes": "Gebruikt (usageCount) keer(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "{name} {targetDisplay}",
   "customExercisesSearchExercises": "Zoek oefeningen...",
   "customExercisesSimple": "Eenvoudig",
   "customFoodBuilderAiFillFromName": "AI invullen op basis van naam",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · laatste cyclus",
   "customTrendScreenMaxOverlaysRemoveOne": "Max {_kMaxOverlays} overlays — verwijder er een om een andere toe te voegen",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} gedeelde dagen",
-  "customTrendScreenValue": "{value} · {strengthLabel}",
   "customWorkoutBuilderAddExercise": "Oefening toevoegen",
   "customWorkoutBuilderBuildCustomWorkout": "Aangepaste workout bouwen",
   "customWorkoutBuilderCustomWorkoutCreated": "Aangepaste workout aangemaakt!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Menstruatie loggen",
   "cycleScreenUiLogPeriod": "Log menstruatie",
   "cycleScreenUiLogYourFirstPeriod": "Log je eerste menstruatie om voorspellingen te starten.",
-  "cycleScreenUiPhase": ") fase",
   "cycleScreenUiPhaseLabel": "{displayName} fase",
   "cycleScreenUiPredictionsAreEstimates": "Voorspellingen zijn schattingen op basis van je gelogde gegevens, geen anticonceptiemethode en geen medisch advies. Raadpleeg een arts bij gezondheidsproblemen.",
   "cycleScreenUiPregnancyModeIsOn": "Zwangerschapsmodus is ingeschakeld",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Doorgaan",
   "editProgramSheetCurrent": "HUIDIG",
   "editProgramSheetCustomProgram": "Aangepast programma",
-  "editProgramSheetCustomValue": "Aangepaste waarde {arg0}",
+  "editProgramSheetCustomValue": "Aangepast: {arg0}",
   "editProgramSheetCustomizeProgram": "Programma aanpassen",
   "editProgramSheetDays": "Dagen",
   "editProgramSheetDaysAgo": "{days} dagen geleden",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Apparatuur",
   "editProgramSheetEquipmentLabel": "Apparatuur label",
   "editProgramSheetExamples": "Voorbeelden",
-  "editProgramSheetFailedToLoadHistory": "Geschiedenis laden {arg0}",
-  "editProgramSheetFailedToRestore": "Herstellen {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Geschiedenis laden mislukt: {arg0}",
+  "editProgramSheetFailedToRestore": "Herstellen mislukt: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Programma bijwerken",
   "editProgramSheetFocus": "Focus",
   "editProgramSheetHealth": "Gezondheid",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "Downloaden {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Video downloaden...",
   "exerciseDetailSheetFavorite": "Favoriet",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Laden...",
   "exerciseDetailSheetLog1rm": "Log 1RM",
   "exerciseDetailSheetMS": "{restMins}m {restSecs}s",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Voeg hier notities toe...",
   "exerciseSetTrackerAddSet": "Set toevoegen",
-  "exerciseSetTrackerBarbell": ") halter",
   "exerciseSetTrackerReps": "Herhalingen",
   "exerciseSetTrackerRestTarget": "Rustdoel",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI-keuzes niet beschikbaar",
   "exerciseSwapSheetAnyEquipment": "Elke uitrusting",
   "exerciseSwapSheetAskAiForSuggestions": "Vraag AI om suggesties",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Beschrijf je uitrusting of voorkeuren\nbijv. \"Ik heb last van mijn schouder\" of \"alleen lichaamsgewicht\"",
   "exerciseSwapSheetEGIOnly": "bijv. \"Ik heb alleen dumbbells\"",
   "exerciseSwapSheetFailedToSwapExercise": "Oefening wisselen mislukt",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Zoeken naar spier-gepaste alternatieven...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Gewicht",
   "expandedExerciseCardAddToFavorites": "Toevoegen aan favorieten",
   "expandedExerciseCardAlternatingHands": "Afwisselende handen",
-  "expandedExerciseCardBarbell": ") barbell",
   "expandedExerciseCardBreathing": "Ademhaling",
   "expandedExerciseCardBreathingGuide": "Ademhalingsgids",
   "expandedExerciseCardCollapse": "Inklappen",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Protocolniveau",
   "fastingScoreCardScore": "Score",
   "fastingScoreCardStreakBonus": "Streak-bonus",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "vs. vorige week",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "Eerste",
   "flexibilityProgressChartLatest": "Laatste",
   "flexibilityProgressChartNoDataAvailable": "Geen gegevens beschikbaar",
-  "flexibilityProgressChartValue": "{improvementAbsolute}",
   "flexibilityScoreCardByArea": "Per gebied",
   "flexibilityScoreCardFocusAreas": "Focusgebieden",
   "flexibilityScoreCardOverallFlexibility": "Algehele flexibiliteit",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Zoek maaltijden, voedingsmiddelen, \"hoog eiwit\"...",
   "foodHistoryUndo": "Ongedaan maken",
   "foodItemRankingAddFood": "Voedsel toevoegen",
-  "foodItemRankingDetails": "details",
   "foodItemRankingNFoodItems": "{count} voedingsmiddelen",
   "foodItemRankingScore": "Score",
   "foodItemRankingTapToHideDetails": "Tik om details te verbergen",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Dus ik heb de persoon gebouwd, niet het grootboek. Maak een menu uit – thuis of in het buitenland – en de coach leest het in macro's voor. Als je een dinsdag overslaat, kom je woensdagochtend terug zonder schuldgevoel. Het leert uw voedsel, uw sportschool, uw slippatronen – voor minder dan één PT-sessie per maand.",
   "founderNoteTheFriendsWhoActually": "De vrienden die echt fit werden, hadden iemand die hen appte. Echte verantwoording kost ongeveer tweehonderd dollar per maand, wat precies de reden is waarom de meesten van ons het nooit hebben, en precies waarom de kloof tussen \"tracken\" en \"veranderen\" jarenlang blijft bestaan.",
-  "freshnessDecayCardAgo": ") geleden",
   "freshnessDecayCardControlsHowQuicklyExercise": "Bepaalt hoe snel de versheid van een oefening afneemt: e^(-k * sessies)",
   "freshnessDecayCardFreshnessDecayTuner": "Versheidsverval-tuner",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "SET {currentSetNumber} VAN {totalSets}",
   "futuristicSetCardSkipExercise": "Oefening overslaan",
-  "futuristicSetCardValue": "{targetReps}",
-  "futuristicSetCardValue2": "{reps}",
   "generatePlanCreateAHolisticPlan": "Maak een holistisch plan dat je workouts, voeding en vasten coördineert.",
   "generatePlanFastingProtocol": "Vastprotocol",
   "generatePlanGeneratePlan": "Plan genereren",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "Voeg je eerste gewoonte toe",
   "habitsCardAllHabitsCompleted": "Alle gewoontes voltooid!",
   "habitsCardBuildDailyHabits": "Bouw dagelijkse gewoontes op",
-  "habitsCardCompletedCount": "Voltooid aantal {arg0} {arg1}",
-  "habitsCardDayStreak": "Dagenreeks {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} voltooid",
+  "habitsCardDayStreak": "{arg0} dagen reeks",
   "habitsCardFailedToLoadHabits": "Kon gewoontes niet laden",
   "habitsCardGreatJobKeepingUp": "Goed gedaan met het volhouden van je reeksen",
   "habitsCardQuickStart": "Snelstart:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Gewoontes van vandaag",
   "habitsCardTryAgain": "Probeer opnieuw",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Bekijk alle gewoontes {arg0}",
+  "habitsCardViewAllHabits": "Bekijk alle {arg0} gewoonten",
   "habitsCompleted": "Voltooid",
   "habitsDeleteHabit": "Gewoonte verwijderen?",
   "habitsHoldToReorderSwipe": "Houd vast om te sorteren • Veeg om te verwijderen",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "Rustdag? Of klaar om te bewegen? Aan jou de keuze.",
   "homeEmptyWorkout_v3": "Tussen programma's — start een nieuwe om weer op schema te komen.",
   "homeEmptyWorkout_v4": "Nog geen plan. Laat de AI er een bouwen rond jouw doelen.",
-  "homeFromHealthConnect": ") van Health Connect",
   "homeGreetingAfternoon_v1": "Middagenergie, {name}!",
   "homeGreetingAfternoon_v2": "Hi {name}, tijd om te bewegen?",
   "homeGreetingAfternoon_v3": "Even rekken, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "CALORIEËN",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "SAMENVATTING",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "TRAININGEN",
   "intensityPrompt1Left": "1 over",
   "intensityPrompt2Left": "2 over",
   "intensityPrompt3Left": "3+ over",
   "intensityPromptHard": "Zwaar",
-  "intensityPromptHideRpeSlideDial": "Verberg RPE-schuifregelaar      Stel in (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Hoe zwaar was deze set?",
   "intensityPromptMax": "Max",
   "intensityPromptModerate": "Gemiddeld",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "Set {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "Een AI-coach die het plan opbouwt, je lichaam leert kennen en elke week aanpast.",
   "introBuildMyPlan": "Stel mijn plan samen",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) sets",
   "introCardMonth": "maand.",
   "introIAlreadyHaveAnAccount": "Ik heb al een account",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "Barcode",
   "logMealSheetBarcodeScan": "Barcodescan",
   "logMealSheetCached": "(In cache)",
-  "logMealSheetCaptured": ") vastgelegd",
   "logMealSheetChooseFoodPhotos": "Kies voedselfoto's",
   "logMealSheetChooseFromGallery": "Kies uit galerij",
   "logMealSheetChooseFromLibrary": "Kies uit bibliotheek",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7d gem · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} vanaf je vorige dieptepunt",
   "logWeightSheetValidRange": "Geldig bereik: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Gesynchroniseerd vanuit Apple Health",
   "logWeightSyncedToAppleHealth": "Gesynchroniseerd naar Apple Health",
   "logWeightTapToEdit": "Tik om te bewerken",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Uitloggen?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Macro's",
-  "mainShellPartChatsLeftToday": "Chats over voor vandaag {arg0}",
+  "mainShellPartChatsLeftToday": "Nog {arg0} chats vandaag",
   "mainShellPartGuestMode": "Gastmodus",
   "mainShellPartQuickActions": "Snelle acties",
   "mainShellPartSignUp": "Aanmelden",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Primair",
   "manageDuplicateImportsScreenSources": "{length} bronnen",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(rij)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Ontkoppelen van groep",
   "manageDuplicateImportsUnlinkedFromGroup": "Ontkoppeld van groep",
   "manageGymProfilesActive": "Actief",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} meer",
   "menuAnalysisSheetSelected": "{length} geselecteerd",
   "menuAnalysisSheetSort": "Sorteren: {label}",
-  "menuAnalysisSheetValue": ")(verstreken)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Je hebt al een menu opgeslagen voor \"{restaurantName}\"",
   "menuAnalysisSort": "Sorteren:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "METRIEKTYPE",
   "metricsDashboardMuscleMass": "Spiermassa",
   "metricsDashboardNoDataAvailable": "Geen gegevens beschikbaar",
-  "metricsDashboardNoMetricDataYet": "Nog geen meetgegevens {arg0}",
+  "metricsDashboardNoMetricDataYet": "Nog geen {arg0}-gegevens",
   "metricsDashboardQuickStats": "SNELLE STATISTIEKEN",
   "metricsDashboardRestingHeartRate": "Rusthartslag",
   "metricsDashboardRestingHr": "Rusthartslag",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Overig",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Voltooi trainingen om spiergegevens te zien",
   "muscleHeatmapTileCouldnTLoad": "Kon niet laden",
-  "muscleHeatmapTileMostTrained": "Meest getraind {arg0}",
+  "muscleHeatmapTileMostTrained": "Meest getraind: {arg0}",
   "muscleHeatmapTileMuscles": "Spieren",
   "muscleHeatmapTileRetry": "Opnieuw proberen",
   "muscleHeatmapUpperBody": "Bovenlichaam",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Favorieten ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Basis ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Beste: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Recente activiteit",
   "myLibraryTabViewAll": "Bekijk alles",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Casual beweger",
   "neatGamificationWidgetsClaimReward": "Beloning claimen",
   "neatGamificationWidgetsCouchPotato": "Bankhanger",
-  "neatGamificationWidgetsCurrentXp": "Huidige XP {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Dagelijkse uitdaging",
   "neatGamificationWidgetsExpired": "Verlopen",
-  "neatGamificationWidgetsHoursMinutesLeft": "Uren minuten over {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "Nog {arg0}u {arg1}m",
   "neatGamificationWidgetsLevel": "Level {level}",
   "neatGamificationWidgetsLevelUp": "LEVEL UP!",
   "neatGamificationWidgetsMaxLevel": "Max level!",
-  "neatGamificationWidgetsMinutesLeft": "Minuten over {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "Nog {arg0}m",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Kampioen",
   "neatGamificationWidgetsNeatEnthusiast": "Enthousiasteling",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Nog geen ranglijsten deze week",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Score",
-  "neatGamificationWidgetsStepGoal": "Stappendoel {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Stappen",
-  "neatGamificationWidgetsTargetActiveHours": "Doel actieve uren {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} u",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "SCORE-UITSLITSING",
   "neatScoreDisplayTapForBreakdown": "Tik voor overzicht",
   "neatScoreDisplayTrend": "Trend: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Laden...",
   "netflixExerciseCarouselSeeAll": "Bekijk alles",
   "netflixExercisesAddYourOwnExercises": "Voeg je eigen oefeningen toe met aangepaste herhalingen, sets en instructies.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Optimale volgende set berekenen...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% intensiteit",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Laatste set",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "BELANGRIJKSTE BRONNEN",
   "nutrientExplorerUnknown": "Onbekend",
   "nutrientExplorerUnpinNutrient": "Voedingsstof losmaken",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VITAMINEN",
   "nutrientRushGameCatchTheGoldenZealova": "Vang de gouden Zealova-markering voor een power-up!",
   "nutrientRushGameNewBest": "🎉 NIEUW RECORD!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Wekelijks overzicht",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "gem {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Gem. inname: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/dag {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Gewicht: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, alles inbegrepen",
   "onboardingWhyFirstTheWhy": "EERST, HET WAAROM",
   "onboardingWhyWhatSDrivingThis": "Wat drijft dit?",
-  "openAllCrates24HoursOf2xXp": "24 uur lang 2x XP",
-  "openAllCratesActivityCrate": "Activiteitskrat",
+  "openAllCrates24HoursOf2xXp": "24 uur 2x XP",
+  "openAllCratesActivityCrate": "Activiteitskist",
   "openAllCratesBonusCrateToOpen": "Bonus krat te openen",
-  "openAllCratesCollect": "Verzamel {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Kratten geopend {arg0}",
-  "openAllCratesDailyCrate": "Dagelijks krat",
+  "openAllCratesCollect": "Verzamelen ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} kisten geopend!",
+  "openAllCratesDailyCrate": "Dagelijkse kist",
   "openAllCratesDone": "Klaar",
   "openAllCratesDoubleXpToken": "Dubbele XP-token",
   "openAllCratesFailedToOpenCrates": "Openen van kratten mislukt. Probeer het opnieuw.",
-  "openAllCratesFitnessCrate": "Fitnesskrat",
-  "openAllCratesGainedXp": "XP behaald {arg0}",
+  "openAllCratesFitnessCrate": "Fitnesskist",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Max niveau",
-  "openAllCratesOpenYourCrates": "Open je kratten",
-  "openAllCratesOpened": ") geopend!",
-  "openAllCratesOpeningYourCrates": "Je kratten openen",
-  "openAllCratesPickRewardPerDay": "Kies beloning per dag {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Kies je beloning {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Open je kisten",
+  "openAllCratesOpeningYourCrates": "🎁 Je kisten worden geopend…",
+  "openAllCratesPickRewardPerDay": "Kies 1 beloning per dag • {arg0}/{arg1} gekozen",
+  "openAllCratesPickYourReward": "Kies je beloning • {arg0}/{arg1} gekozen",
   "openAllCratesProtectYourStreak": "Bescherm je reeks",
   "openAllCratesSelectAll": "Alles selecteren",
-  "openAllCratesStreakCrate": "Streak-krat",
-  "openAllCratesStreakShield": "Streak-schild",
+  "openAllCratesStreakCrate": "Reekskist",
+  "openAllCratesStreakShield": "Reeksschild",
   "openAllCratesToday": "Vandaag",
-  "openAllCratesTotalXpFormatted": "Totale XP {arg0}",
-  "openAllCratesTotalXpLevel": "Totale XP-niveau {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} totaal",
+  "openAllCratesTotalXpLevel": "Totaal: {arg0} XP • Level {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 Beloningen!",
-  "openAllCratesXpInLevel": "XP in niveau {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP tot volgende niveau {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP tot level {arg1}",
   "openAllCratesYesterday": "Gisteren",
   "overallScoreHeroOverall": "TOTAAL",
   "overviewActiveSkill": "ACTIEVE VAARDIGHEID",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Jouw gym-persoonlijkheid is...",
   "phaseRecommendationBannerBasedOn": "Gebaseerd op: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-betrouwbaarheidsschatting\" : \"\")",
   "phaseRecommendationBannerCycleDay": "Cyclusdag {cycleDay}",
   "phaseRecommendationBannerEvidence": "Bewijs: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Begrepen",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Bouw een krachtfundament",
   "planPreviewScreenBuildingYour4Week": "Je 4-wekenplan opbouwen...",
   "planPreviewScreenContinueFree": "Ga gratis verder",
-  "planPreviewScreenDaysPerWeek": "Dagen per week {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} dagen/week",
   "planPreviewScreenDesignedBasedOnYour": "Ontworpen op basis van je antwoorden op de quiz",
-  "planPreviewScreenEquipmentCount": "Aantal apparaten {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} apparaten",
   "planPreviewScreenExercisesMin": "Oefeningen min {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Verhoog intensiteit en volume",
   "planPreviewScreenMasterTheMovement": "Beheers de beweging",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} Persoonlijke Records!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") VANAF LAATST",
   "prShareCardCopiedToClipboard": "Gekopieerd naar klembord!",
   "prShareCardCopyText": "Tekst kopiëren",
   "prShareCardFailedToCaptureImage": "Kon afbeelding niet vastleggen",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Blijf pushen!",
   "prsTemplateNewPersonalRecords": "NIEUWE PERSOONLIJKE RECORDS",
   "prsTemplateNewPrsAreJust": "Nieuwe PRs zijn in aantocht",
-  "prsTemplateValue": ") (eenheid)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Ingrediënten",
   "publicRecipeInstructions": "Instructies",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "Tik om de volledige geschiedenis en trends te bekijken",
   "quickLogMeasurementsTrackYourBodyChanges": "Volg je lichaamsveranderingen in de loop van de tijd",
   "quickLogMeasurementsUpdate": "Bijwerken",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} dagen geleden",
+  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} dagen geleden bijgewerkt",
   "quickLogMeasurementsUpdatedToday": "Vandaag",
   "quickLogMeasurementsUpdatedYesterday": "Gisteren",
   "quickLogMeasurementsWaist": "Taille",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI genereert workouts binnen je gekozen bereik",
   "quizDaysSelectorBest": "Beste",
   "quizDaysSelectorConsistencyBeatsIntensity": "Consistentie wint van intensiteit - kies wat je kunt volhouden",
-  "quizDaysSelectorDays": "Dagen {arg0}",
-  "quizDaysSelectorDaysSelected": "Geselecteerde dagen {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") voor je workouts",
+  "quizDaysSelectorDays": "{arg0, plural, one {dag} other {dagen}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} dagen geselecteerd",
   "quizDaysSelectorFri": "Vr",
   "quizDaysSelectorHowLongAreYour": "Hoe lang duren je workouts?",
   "quizDaysSelectorHowManyDaysPer": "Hoeveel dagen per week kun je trainen?",
   "quizDaysSelectorMin": "Min",
   "quizDaysSelectorMon": "Ma",
   "quizDaysSelectorSat": "Za",
-  "quizDaysSelectorSelectNDays": "Selecteer {arg0} dagen",
+  "quizDaysSelectorSelectNDays": "Kies {arg0} dagen die jou uitkomen",
   "quizDaysSelectorSun": "Zo",
   "quizDaysSelectorThu": "Do",
   "quizDaysSelectorTue": "Di",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Thuisgym",
   "quizEquipmentHomeKettlebell": "Thuis + Kettlebell",
   "quizEquipmentHotel": "Hotel",
-  "quizEquipmentIdentifiedCount": "Geïdentificeerd aantal {arg0}",
+  "quizEquipmentIdentifiedCount": "{arg0} items herkend. Tik op een item om het te deselecteren.",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "Medicine ball",
   "quizEquipmentMinimalEquipmentBodyweight": "Minimale uitrusting - lichaamsgewicht, matje",
   "quizEquipmentNeededForBarbell": "Nodig voor barbell",
   "quizEquipmentNoEquipmentIdentifiedPick": "Geen apparatuur geïdentificeerd. Kies uit de lijst hieronder.",
-  "quizEquipmentOtherCount": "Overig aantal {arg0}",
+  "quizEquipmentOtherCount": "{arg0} geselecteerd",
   "quizEquipmentOtherEquipment": "Overige apparatuur",
   "quizEquipmentPullUpBar": "Optrekstang",
   "quizEquipmentQuickPresets": "Snelle voorinstellingen",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Receptnaam vereist",
   "recipeCreateRemovePhoto": "Foto verwijderen",
   "recipeCreateSaving": "Opslaan...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Foto maken",
   "recipeCreateTapToEdit": "Tik om te bewerken",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Per portie (×{servings} porties)",
   "recipeDetailScreenUForkedFrom": "✨ Gevorkt van {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" wordt permanent verwijderd.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Samengesteld recept",
   "recipeDetailView": "Bekijk",
@@ -24745,7 +24468,7 @@
   "regenerateSheetApply": "Toepassen",
   "regenerateSheetApplyThisWorkout": "Pas deze workout toe",
   "regenerateSheetBalancingMuscleGroups": "Spiergroepen in balans brengen",
-  "regenerateSheetBootingUpTheAi": "AI opstarten",
+  "regenerateSheetBootingUpTheAi": "AI wordt opgestart",
   "regenerateSheetBuildingYourPlan": "Je plan opbouwen",
   "regenerateSheetBuildingYourWorkout": "Workout opbouwen…",
   "regenerateSheetCheckingEquipment": "Apparatuur controleren",
@@ -24754,7 +24477,7 @@
   "regenerateSheetConsideringFocusAreas": "Focusgebieden overwegen",
   "regenerateSheetCustomize": "Aanpassen",
   "regenerateSheetCustomizeOrLetAi": "Pas aan of laat AI suggesties doen",
-  "regenerateSheetCustomizeOrLetAiSuggest": "Aanpassen of laat de AI suggesties doen",
+  "regenerateSheetCustomizeOrLetAiSuggest": "Pas aan of laat de AI voorstellen doen",
   "regenerateSheetDescribeYourIdealWorkout": "Beschrijf je ideale workout",
   "regenerateSheetDesigningYourWorkout": "Je workout ontwerpen",
   "regenerateSheetDialingInSetsAndReps": "Sets en reps instellen",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Details afronden…",
   "regenerateSheetFinalizingYourWorkout": "Je workout afronden",
   "regenerateSheetFineTuningTheDetails": "De details verfijnen",
-  "regenerateSheetGeneratingElapsed": "Genereren verstreken {arg0}",
+  "regenerateSheetGeneratingElapsed": "Genereren… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Suggesties genereren…",
   "regenerateSheetGetSuggestions": "Suggesties ophalen",
   "regenerateSheetGettingCreative": "Creatief aan de slag",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Gebruik aanbevolen",
   "restSuggestionQuick": "Snel",
   "restSuggestionQuickRest": "Snelle rust",
-  "restSuggestionSaveTime": "Bespaar tijd {arg0}",
+  "restSuggestionSaveTime": "Bespaar {arg0}",
   "restSuggestionSuggested": "Voorgesteld",
   "restSuggestionUseSuggested": "Gebruik voorgestelde",
   "restTimerCardBaseRest": "Basisrust",
   "restTimerCardControlRestPeriodsBetween": "Beheer rustperiodes tussen sets",
   "restTimerCardCustomRestTimer": "Aangepaste rusttimer",
   "restTimerCardFormula": "Formule",
-  "restTimerCardFormulaBaserestRpe7": "Formule: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Live voorbeeld",
   "restTimerCardMultiplier": "Vermenigvuldiger",
   "restTimerCardRestBaserestRpe7": "Rust = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "Variabelen: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Variabelen: basis, RPE, vermenigvuldiger, niveau",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "Je prestaties analyseren...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "Voltooid",
   "rtpTitle": "Terug naar training",
   "safetyDisclaimerBannerDismissDisclaimer": "Disclaimer sluiten",
-  "safetyDisclaimerBannerInjuriesFlagged": "Blessures gemarkeerd {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} blessures gemarkeerd",
   "safetyDisclaimerBannerInjuryBody": "Blessurelichaam",
   "safetyDisclaimerBannerLearnMore": "Meer informatie",
   "safetyDisclaimerBannerMore": "+{overflow} meer",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Set",
   "sessionDetailSetCount": "{count, plural, other{{count} sets}} · top set gemarkeerd",
   "sessionDetailTime": "Tijd",
-  "sessionDetailTopSetHighlighted": ") • top set gemarkeerd",
   "sessionDetailWeight": "Gewicht",
   "setAdjustmentAdditionalNotesOptional": "Aanvullende notities (optioneel)",
   "setAdjustmentConfirm": "Bevestigen",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} voltooid",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} resterend",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} verwijderd",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") van (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "van {totalSets} gepland",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} sets voltooid",
   "setAdjustmentSheetReps": "Herhalingen",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Set {currentSetNumber}/{totalSets} • Tik om uit te vouwen",
   "setTrackingSectionSets": "{widget} sets",
   "setTrackingSectionSetsCompleted": "{length} sets voltooid",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "Hoeveelheid om gewicht aan te passen",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "Oefeninggeschiedenis",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} Ondersteuningsverzoek",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} dagen",
   "settingsScreenUiNoSettingsFound": "Geen instellingen gevonden",
-  "settingsScreenUiTryDifferentKeywordsLike": "Probeer andere trefwoorden zoals \"thema\", \"meldingen\" of \"ai voice\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Probeer andere zoekwoorden zoals \"thema\", \"meldingen\" of \"AI-stem\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Instellingen doorzoeken",
   "settingsSetProgressionResearch": "Progressie & onderzoek instellen",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "Mijn {appName} {periodName} rapport",
   "shareInsightsSheetMyReport2": "Mijn {appName} rapport",
   "shareMotivationalCompleted": "VOLTOOID",
-  "sharePrNewPr": "Nieuw PR",
+  "sharePrNewPr": "NIEUW PR",
   "shareStatsCalories": "Calorieën",
   "shareStatsDuration": "Duur",
   "shareStatsEliteTemplate": "ELITE TEMPLATE",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "BELONINGEN",
   "streakMilestoneStreakMilestone": "STREAK MIJLPAAL!",
-  "streakMilestoneToGo": ") te gaan!",
   "streakMilestoneYouVeReachedThe": "Je hebt de ultieme streak-mijlpaal bereikt!",
   "streakSavedDialogWeUsedStreakShield": "We hebben 1 Streak Shield gebruikt om je streak van {savedStreakCount} dagen te behouden.",
   "streakSavedKeepItGoing": "Ga zo door",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Verbinden",
   "todayScoreCardCustomize": "AANPASSEN",
   "todayScoreCardToday": "Vandaag",
-  "todayScoreDetailDown": "Omlaag {arg0}",
-  "todayScoreDetailEarnedPts": "Punten verdiend {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ {arg0} omlaag sinds vanochtend",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} ptn",
   "todayScoreDetailHowItWorks": "Hoe het werkt",
-  "todayScoreDetailInactiveExplanation": "Inactieve uitleg {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Momentum met gem. {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {telt} other {tellen}} vandaag niet mee, dus de rest verdeelt de volledige 100 punten. Je score weerspiegelt altijd alleen wat vandaag echt van toepassing is.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7-daags gemiddelde {arg1}",
   "todayScoreDetailNotCounted": "Niet meegeteld",
   "todayScoreDetailSetupText": "Instellingstekst",
   "todayScoreDetailSteady": "Stabiel",
   "todayScoreDetailTodayScore": "Dagscore",
-  "todayScoreDetailUp": "Omhoog {arg0}",
+  "todayScoreDetailUp": "▲ {arg0} omhoog sinds vanochtend",
   "todayScoreSetupAddAWorkoutPlan": "Voeg een trainingsschema toe",
   "todayScoreSetupCardContinue": "Doorgaan: {label}",
   "todayScoreSetupCardGetStarted": "BEGINNEN · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Cardio-prestaties",
   "trophiesEarnedDayStreak": "Dagenreeks",
   "trophiesEarnedFirstTime": "EERSTE KEER!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Mijlpaal bereikt",
   "trophiesEarnedMilestoneReachedNice": "Mijlpaal bereikt — goed zo!",
   "trophiesEarnedMilestones": "Mijlpalen",
-  "trophiesEarnedNewBadges": "Badges {arg0}",
-  "trophiesEarnedNewCardioPRs": "Cardio PR's {arg0}",
-  "trophiesEarnedNewPR": "Nieuw PR",
-  "trophiesEarnedNewPRs": "PR's {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} nieuwe badges",
+  "trophiesEarnedNewCardioPRs": "{arg0} nieuwe cardio-PR's",
+  "trophiesEarnedNewPR": "NIEUW PR",
+  "trophiesEarnedNewPRs": "{arg0} nieuwe PR's!",
   "trophiesEarnedNewPr": "NIEUW PR",
   "trophiesEarnedNextMilestones": "Volgende mijlpalen",
   "trophiesEarnedNoNewRecords": "Geen nieuwe records",
   "trophiesEarnedNoNewRecordsThis": "Geen nieuwe records deze sessie — hier is waar je aan werkt:",
   "trophiesEarnedPersonalRecords": "Persoonlijke records",
-  "trophiesEarnedRemainingToUnlock": "Nog te ontgrendelen {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "Nog {arg0} {arg1} te ontgrendelen",
   "trophiesEarnedSessionHighlights": "Hoogtepunten van de sessie",
   "trophiesEarnedSheetPts": "+{points} ptn",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} is aan het typen",
   "typingIndicatorIsTyping3": "{agentName} is aan het typen...",
   "unifiedHomeWidgetsActivity": "ACTIVITEIT",
-  "unifiedHomeWidgetsBreakfastLogged": "Ontbijt gelogd {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Ontbijt geregistreerd op {arg0} van de laatste 7 ochtenden",
   "unifiedHomeWidgetsBreakfastSuggestion": "Ontbijtsuggestie",
   "unifiedHomeWidgetsCarbs": "Koolhydraten",
   "unifiedHomeWidgetsConnect": "Verbinden",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Vet",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal totaal vandaag",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal verbrand",
   "unifiedHomeWidgetsKcalLeft": " kcal over",
   "unifiedHomeWidgetsLastNight": "afgelopen nacht",
   "unifiedHomeWidgetsLog16oz": "Log 16oz",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}w",
   "weekDurationSelectorWeeks": "{selectedWeeks} weken",
   "weekDurationSelectorWk": "{spw}/wk",
-  "weekProgressStripCompletedCount": "Voltooid aantal {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg0} van {arg1} workouts voltooid",
   "weekProgressStripCouldNotLoadProgress": "Kon voortgang niet laden",
   "weekProgressStripLoading": "Laden...",
   "weekProgressStripNoWorkoutsScheduled": "Geen workouts gepland",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Alles bekijken",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Gewicht bijhouden",
-  "weightTrendCardDownThisWeek": "Deze week omlaag {arg0}",
-  "weightTrendCardDownVsLastCycle": "Omlaag t.o.v. vorige cyclus {arg0}",
+  "weightTrendCardDownThisWeek": "{arg0} omlaag deze week!",
+  "weightTrendCardDownVsLastCycle": "{arg0} lbs minder dan op dezelfde cyclusdag vorige maand",
   "weightTrendCardLoadingWeight": "Gewicht laden...",
   "weightTrendCardLogYourWeightTo": "Log je gewicht om trends te zien",
   "weightTrendCardMaintaining": "Op gewicht blijven",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Gelijk aan vorige cyclus",
   "weightTrendCardTapToLogWeight": "Tik om gewicht te loggen",
   "weightTrendCardTargetHeld": "Doel behouden",
-  "weightTrendCardTargetHeldWindow": "Doel behouden venster {arg0}",
-  "weightTrendCardUpThisWeek": "Deze week omhoog {arg0}",
-  "weightTrendCardUpVsLastCycle": "Omhoog t.o.v. vorige cyclus {arg0}",
+  "weightTrendCardTargetHeldWindow": "Doel behouden {arg0} — luteale vochtafvlakking",
+  "weightTrendCardUpThisWeek": "{arg0} omhoog deze week",
+  "weightTrendCardUpVsLastCycle": "{arg0} lbs meer dan op dezelfde cyclusdag vorige maand",
   "weightTrendCardWeightStableThisWeek": "Gewicht stabiel deze week",
   "weightTrendCardWeightTrends": "Gewichtstrends",
   "welcomeAffirmationGreatChoice": "Goede keuze.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "Terugkeren naar deze versie?",
   "workoutActionsShareWorkout": "Deel training",
   "workoutActionsSheetGetALinkFor": "Verkrijg een {marketingDomain} link voor vrienden",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "\"{name}\" herstellen?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} herh.",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} sets, {currentReps} herh.",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Kan op dit moment geen vrienden uitdagen",
   "workoutCompleteScreenUnableToExtendWorkout": "Kan training niet verlengen",
   "workoutCompleteScreenViewAllMetrics": "Bekijk alle statistieken",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "APPARATUUR",
   "workoutDetailExercises": "OEFENINGEN",
   "workoutDetailFailedToLoadWorkout": "Laden van workout mislukt",
-  "workoutDetailHelpersForAvailableEquipment": ") voor beschikbare apparatuur...",
   "workoutDetailHelpersHell": "Hel",
   "workoutDetailHelpersUpdatingExercises": "Oefeningen bijwerken",
   "workoutDetailMoreInfo": "MEER INFO",
   "workoutDetailProgram": "Programma",
-  "workoutDetailReplacingExercises": "Oefeningen vervangen {arg0}",
+  "workoutDetailReplacingExercises": "{arg0} oefeningen worden vervangen voor beschikbare apparatuur…",
   "workoutDetailRevert": "Terugdraaien",
   "workoutDetailScreenBreakSuperset": "Superset verbreken?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} cal verbrand",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "In welke eenheid staat de gewichtskolom? En als je de bron-app kent, selecteer deze dan — dit helpt bij het onderscheiden van vergelijkbare formaten (Hevy vs. Strong CSV's).",
   "workoutHistoryImportYourStrengthData": "Jouw krachtgegevens",
-  "workoutImportAsDone": ")\" als voltooid",
   "workoutImportCalories": "Calorieën",
   "workoutImportCardio": "Cardio",
   "workoutImportCycling": "Wielrennen",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Duur",
   "workoutImportEasy": "Makkelijk",
   "workoutImportFlexibility": "Flexibiliteit",
-  "workoutImportFromSource": "Van bron {arg0}",
+  "workoutImportFromSource": "uit {arg0}",
   "workoutImportHard": "Zwaar",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Hoe zwaar was deze training?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Je ziet mogelijk deze systeemmeldingen tijdens je workout. Beide zijn optioneel — sla ze over en de workout werkt nog steeds.",
   "workoutPlanDrawerAddExercise": "Oefening toevoegen",
   "workoutPlanDrawerCurrent": "Huidig",
-  "workoutPlanDrawerExerciseCount": "Aantal oefeningen {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") gelogd. Ze worden verwijderd.",
+  "workoutPlanDrawerExerciseCount": "{arg0} oefeningen",
   "workoutPlanDrawerNow": "Nu",
   "workoutPlanDrawerRemove": "Verwijderen",
-  "workoutPlanDrawerRemoveExercise": "Verwijder oefening {arg0}",
+  "workoutPlanDrawerRemoveExercise": "{arg0} verwijderen?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Verwijder oefening tooltip",
-  "workoutPlanDrawerSetsLogged": "Sets gelogd {arg0}",
+  "workoutPlanDrawerSetsLogged": "Je hebt {arg0} sets geregistreerd. Ze worden verwijderd.",
   "workoutPlanDrawerSwapExercise": "Oefening wisselen",
   "workoutPlanDrawerTitle": "Titel",
   "workoutPlanDrawerWorkoutPlan": "Workoutplan",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Lineair label",
   "workoutShowcaseLogAllSets": "Alle sets",
   "workoutShowcaseLogDrink": "Drank loggen",
-  "workoutShowcaseLogSet": "Set {arg0}",
+  "workoutShowcaseLogSet": "✓ Set {arg0} registreren",
   "workoutShowcaseLogWater": "Water loggen",
   "workoutShowcaseMovedThisSession": "verplaatst deze sessie",
   "workoutShowcaseNewPr": "NIEUW PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Herhalingen",
   "workoutShowcaseScreenDay": "Dag {day}",
   "workoutShowcaseScreenDuration": "DUUR: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · INGEVOERD",
   "workoutShowcaseScreenSession": "SESSIE: {title}",
   "workoutShowcaseScreenTotalPrs": "TOTAAL {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "Set 1 van 4",
   "workoutShowcaseSet2": "Set 2",
   "workoutShowcaseSet3": "Set 3",
-  "workoutShowcaseSetNOf3": "Workout showcase set n of {arg0}",
+  "workoutShowcaseSetNOf3": "Set {arg0} van 3",
   "workoutShowcaseShareYourWorkout": "Deel je training",
   "workoutShowcaseSideA": "KANT A",
   "workoutShowcaseSuperset": "Superset",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Dagelijks",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 levels verdeeld over 11 niveaus",
   "xpGoalsDialogBeginnerToTranscendent": "Beginner tot transcendent",
-  "xpGoalsDialogCompleteWorkoutXp": "Workout voltooien xp",
+  "xpGoalsDialogCompleteWorkoutXp": "Workout voltooien: +100 XP",
   "xpGoalsDialogDailyGoals": "Dagelijkse doelen",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "Chat met ai coach xp",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Maaltijd gewicht metingen xp",
-  "xpGoalsDialogFirstPrXp": "Pr xp",
-  "xpGoalsDialogFirstProgressPhotoXp": "Voortgangsfoto xp",
-  "xpGoalsDialogFirstProteinGoalXp": "Eiwitdoel xp",
-  "xpGoalsDialogFirstWorkoutXp": "Eerste workout xp",
-  "xpGoalsDialogHitProteinGoalXp": "Eiwitdoel behaald xp",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Eerste chat met de AI-coach: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Eerste maaltijd/gewicht/metingen: +50 XP elk",
+  "xpGoalsDialogFirstPrXp": "Eerste PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Eerste voortgangsfoto: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Eerste eiwitdoel: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Eerste workout: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Eiwitdoel behalen: +50 XP",
   "xpGoalsDialogLevels": "Niveaus",
-  "xpGoalsDialogLogBodyMeasurementsXp": "Lichaamsmetingen xp",
-  "xpGoalsDialogLogMealXp": "Maaltijd xp",
-  "xpGoalsDialogLogWeightXp": "Gewicht xp",
-  "xpGoalsDialogLoginXp": "Inlog xp",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Lichaamsmetingen registreren: +20 XP",
+  "xpGoalsDialogLogMealXp": "Maaltijd registreren: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Gewicht registreren: +15 XP",
+  "xpGoalsDialogLoginXp": "Inloggen: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Mijlpaalbeloningen",
   "xpGoalsFirstTimeBonuses": "Eenmalige bonussen",
   "xpGoalsGotIt": "Begrepen!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Haal eiwitdoel",
   "xpGoalsScreenInventory": "Inventaris",
   "xpGoalsScreenLegendary": "LEGENDARY",
-  "xpGoalsScreenLevelCurrentTotal": "Huidig totaal niveau {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Level {arg0} • 249 levels in totaal",
   "xpGoalsScreenLevelProgress": "Niveauvoortgang",
   "xpGoalsScreenLogBodyMeasurements": "Log lichaamsmaten",
   "xpGoalsScreenLogFirstMeal": "Log eerste maaltijd",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Trofeeënkamer",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Wekelijks",
-  "xpGoalsXpAvailable": "Beschikbaar {arg0}",
-  "xpGoalsXpEarnedToday": "Vandaag verdiend {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP beschikbaar",
+  "xpGoalsXpEarnedToday": "+{arg0} XP vandaag verdiend",
   "xpGoalsXpGoals": "XP doelen",
-  "xpGoalsXpMultiplierActive": "Multiplier actief {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP actief!",
   "xpHeroTileDayStreak": "{streak}-daagse streak",
   "xpHeroTileLv": "Lv {level}",
   "xpHeroTileLv2": "Lv {nextLevel} → {label}",

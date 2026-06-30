@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "Milloin käyttää",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Liike vaihdettu onnistuneesti",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} liikettä lisätty",
-  "activeWorkoutScreenRefactoredFor": ") käyttäjälle (name)",
   "activeWorkoutScreenUndo": "Kumoa",
   "activeWorkoutScreenWorkoutAdapted": "Treeni mukautettu.",
   "activityCardAdditionalDetailsOptional": "Lisätiedot (valinnainen)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Polttoaine ennen harjoittelua?",
   "aiCoachMealQuickSnackIdeas": "Nopeita välipala ideoita?",
   "aiCoachMealRecoveryDayEating": "Toipumispäivän syöminen?",
-  "aiCoachMealSearchQuestionsTryAngry": "Hae kysymyksiä (kokeile \"vihainen\", \"fibe mexican\")",
   "aiCoachMealSomethingWentWrong": "Jotain meni pieleen.",
   "aiCoachMealStressedWhatHelps": "Stressaantunut – mikä auttaa?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "Aasialaisvaikutteinen {meal} – yksi valinta (riisikulho, nuudelit, sushi, stir fry), makrot ja valmistus.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} kal · {phase}-vaihe",
   "caloriesSummaryCardCalories": "Kalorit",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "jäljellä",
   "cancelConfirmationAnythingElseYouD": "Haluatko kertoa jotain muuta? (vapaaehtoinen)",
   "cancelConfirmationCancelAnyway": "Peruuta silti",
   "cancelConfirmationHelpUsImprove": "Auta meitä kehittymään",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Selvä",
   "chatLanguageChangedSystem": "🌐 AI-valmentaja vastaa nyt kielellä {nativeName}",
   "chatLanguageResetSystem": "🌐 AI-valmentajan kieli palautettu — käytetään sovelluksen kieltä",
-  "chatLeftToday": ") jäljellä tänään",
   "chatMediaWidgetsCalTotal": "{totalCal} kcal yhteensä",
   "chatMediaWidgetsGProtein": "{totalProtein}g proteiinia",
   "chatMediaWidgetsGoTo": "Siirry treeniin {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "Valmentaja miettii tavallista pidempään.",
   "chatScreenCouldntReachCoach": "Valmentajaan ei saatu yhteyttä.",
   "chatScreenExtAboutAiCoach": "Tietoa AI-valmentajasta",
-  "chatScreenExtAs": ") muodossa (mealType)",
   "chatScreenExtChangeCoach": "Vaihda valmentajaa",
   "chatScreenExtChatTips": "Vinkkejä keskusteluun",
   "chatScreenExtChooseMultiplePhotos": "Valitse useita kuvia",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "Näytä tavoitteet",
   "complianceRingCardAllWorkoutsCompleted": "Kaikki treenit suoritettu",
   "complianceRingCardGetStartedToday": "Aloita tänään",
-  "complianceRingCardGreatPace": "Hyvä tahti {arg0}",
+  "complianceRingCardGreatPace": "Hyvä tahti! {arg0} jäljellä",
   "complianceRingCardNoWorkoutsScheduledThis": "Tälle viikolle ei ole suunniteltu treenejä",
-  "complianceRingCardOnTrack": "Aikataulussa {arg0}",
+  "complianceRingCardOnTrack": "Aikataulussa — {arg0} jäljellä",
   "complianceRingCardWorkoutCompliance": "Treenien noudattaminen",
-  "complianceRingCardWorkoutsRemaining": "Treeniä jäljellä {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} treeniä jäljellä",
   "comprehensiveStatsStatsScores": "Tilastot ja pisteet",
   "connectedAppsAutoImportEvery15": "Automaattinen tuonti 15 min välein",
   "connectedAppsConnect": "Yhdistä",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Valitse ruoka",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Käytä tätä arvoa",
-  "cookingConverterWeight": ") Paino",
   "cosmeticsGalleryCosmetics": "Kosmetiikka",
   "cosmeticsGalleryEquip": "Varusta",
   "cosmeticsGalleryEquipped": "Käytössä",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Mikään liike ei vastaa hakuasi",
   "customExercisesScreenAreYouSureYou": "Haluatko varmasti poistaa liikkeen \"{name}\"? Tätä ei voi kumota.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} liikettä, {totalUses} käyttökertaa",
-  "customExercisesScreenUsedTimes": "Käytetty (usageCount) kertaa(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Etsi liikkeitä...",
   "customExercisesSimple": "Yksinkertainen",
   "customFoodBuilderAiFillFromName": "Täytä tekoälyllä nimen perusteella",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · edellinen sykli",
   "customTrendScreenMaxOverlaysRemoveOne": "Enintään {_kMaxOverlays} kerrosta — poista yksi lisätäksesi uuden",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} jaettua päivää",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "Lisää liike",
   "customWorkoutBuilderBuildCustomWorkout": "Luo oma treeni",
   "customWorkoutBuilderCustomWorkoutCreated": "Oma treeni luotu!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Kirjaa kuukautiset",
   "cycleScreenUiLogPeriod": "Kirjaa kuukautiset",
   "cycleScreenUiLogYourFirstPeriod": "Kirjaa ensimmäiset kuukautisesi aloittaaksesi ennusteet.",
-  "cycleScreenUiPhase": ") vaihe",
   "cycleScreenUiPhaseLabel": "{displayName}-vaihe",
   "cycleScreenUiPredictionsAreEstimates": "Ennusteet ovat kirjattuihin tietoihin perustuvia arvioita, eivät ehkäisymenetelmä tai lääketieteellinen neuvo. Ota yhteys lääkäriin, jos olet huolissasi terveydestäsi.",
   "cycleScreenUiPregnancyModeIsOn": "Raskaustila on päällä",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Jatka",
   "editProgramSheetCurrent": "NYKYINEN",
   "editProgramSheetCustomProgram": "Mukautettu ohjelma",
-  "editProgramSheetCustomValue": "Mukautettu arvo {arg0}",
+  "editProgramSheetCustomValue": "Mukautettu: {arg0}",
   "editProgramSheetCustomizeProgram": "Mukauta ohjelmaa",
   "editProgramSheetDays": "Päivät",
   "editProgramSheetDaysAgo": "{days} päivää sitten",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Välineet",
   "editProgramSheetEquipmentLabel": "Välineiden nimi",
   "editProgramSheetExamples": "Esimerkkejä",
-  "editProgramSheetFailedToLoadHistory": "Lataa historia {arg0}",
-  "editProgramSheetFailedToRestore": "Palauta {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Historian lataus epäonnistui: {arg0}",
+  "editProgramSheetFailedToRestore": "Palautus epäonnistui: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Päivitä ohjelma",
   "editProgramSheetFocus": "Painopiste",
   "editProgramSheetHealth": "Terveys",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "Ladataan {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Ladataan videota...",
   "exerciseDetailSheetFavorite": "Suosikki",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Ladataan...",
   "exerciseDetailSheetLog1rm": "Loki 1RM",
   "exerciseDetailSheetMS": "{restMins}m {restSecs}s",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Lisää muistiinpanoja tähän...",
   "exerciseSetTrackerAddSet": "Lisää sarja",
-  "exerciseSetTrackerBarbell": ") levytanko",
   "exerciseSetTrackerReps": "Toistot",
   "exerciseSetTrackerRestTarget": "Tavoitelepo",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI-valinnat eivät ole käytettävissä",
   "exerciseSwapSheetAnyEquipment": "Kaikki välineet",
   "exerciseSwapSheetAskAiForSuggestions": "Pyydä AI-ehdotuksia",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Kuvaile välineesi tai mieltymyksesi\nesim. \"Minulla on kipeä olkapää, vain kehonpainoliikkeitä\"",
   "exerciseSwapSheetEGIOnly": "esim. \"Minulla on vain käsipainot\"",
   "exerciseSwapSheetFailedToSwapExercise": "Liikkeen vaihtaminen epäonnistui",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Etsitään lihasryhmän mukaisia vaihtoehtoja...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Paino",
   "expandedExerciseCardAddToFavorites": "Lisää suosikkeihin",
   "expandedExerciseCardAlternatingHands": "Vuorokäsin",
-  "expandedExerciseCardBarbell": ") levytanko",
   "expandedExerciseCardBreathing": "Hengitys",
   "expandedExerciseCardBreathingGuide": "Hengitysohje",
   "expandedExerciseCardCollapse": "Tiivistä",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Protokollataso",
   "fastingScoreCardScore": "Pisteet",
   "fastingScoreCardStreakBonus": "Putkibonus",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "vs viime viikko",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "Ensimmäinen",
   "flexibilityProgressChartLatest": "Viimeisin",
   "flexibilityProgressChartNoDataAvailable": "Ei saatavilla olevaa dataa",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Alueittain",
   "flexibilityScoreCardFocusAreas": "Painopistealueet",
   "flexibilityScoreCardOverallFlexibility": "Yleinen liikkuvuus",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Etsi aterioita, ruokia, \"korkea proteiini\"...",
   "foodHistoryUndo": "Kumoa",
   "foodItemRankingAddFood": "Lisää ruoka",
-  "foodItemRankingDetails": ") tiedot",
   "foodItemRankingNFoodItems": "{count} ruokatuotetta",
   "foodItemRankingScore": "Pisteet",
   "foodItemRankingTapToHideDetails": "Napauta piilottaaksesi tiedot",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Joten rakensin henkilön, en pääkirjaa. Nappaa mikä tahansa ruokalista – kotimaassa tai ulkomailla – ja valmentaja lukee sen sinulle takaisin makroissa. Ohita tiistai ja se vetää sinut takaisin keskiviikkoaamuna ilman syyllisyyttä. Se oppii ruokasi, kuntosalisi, liukastumismallisi – alle yhden PT-istunnon kuukaudessa.",
   "founderNoteTheFriendsWhoActually": "Ystävillä, jotka todella pääsivät kuntoon, oli ihminen lähettämässä heille viestejä. Todellinen vastuullisuus maksaa noin kaksisataa dollaria kuukaudessa, mikä on juuri syy siihen, miksi useimmilla meistä ei ole sitä, ja miksi kuilu \"seuraamisen\" ja \"muuttamisen\" välillä pysyy avoimena vuosia.",
-  "freshnessDecayCardAgo": ") sitten",
   "freshnessDecayCardControlsHowQuicklyExercise": "Säätelee, kuinka nopeasti harjoituksen tuoreus heikkenee: e^(-k * harjoitukset)",
   "freshnessDecayCardFreshnessDecayTuner": "Tuoreuden heikkenemisen säädin",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "SARJA {currentSetNumber} / {totalSets}",
   "futuristicSetCardSkipExercise": "Ohita liike",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(toistoa)",
   "generatePlanCreateAHolisticPlan": "Luo kokonaisvaltainen suunnitelma, joka yhdistää treenit, ravinnon ja paaston.",
   "generatePlanFastingProtocol": "Paastoprotokolla",
   "generatePlanGeneratePlan": "Luo suunnitelma",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "Lisää ensimmäinen tapasi",
   "habitsCardAllHabitsCompleted": "Kaikki tavat suoritettu!",
   "habitsCardBuildDailyHabits": "Rakenna päivittäisiä tapoja",
-  "habitsCardCompletedCount": "Suoritettu määrä {arg0} {arg1}",
-  "habitsCardDayStreak": "Päiväputki {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} valmiina",
+  "habitsCardDayStreak": "{arg0} päivän putki",
   "habitsCardFailedToLoadHabits": "Tapojen lataaminen epäonnistui",
   "habitsCardGreatJobKeepingUp": "Hienoa työtä putkien ylläpitämisessä",
   "habitsCardQuickStart": "Pika-aloitus:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Päivän tavat",
   "habitsCardTryAgain": "Yritä uudelleen",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Näytä kaikki tavat {arg0}",
+  "habitsCardViewAllHabits": "Näytä kaikki {arg0} tapaa",
   "habitsCompleted": "Suoritettu",
   "habitsDeleteHabit": "Poista tapa?",
   "habitsHoldToReorderSwipe": "Pidä pohjassa järjestääksesi • Pyyhkäise poistaaksesi",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "Lepopäivä? Vai valmis liikkumaan? Sinä päätät.",
   "homeEmptyWorkout_v3": "Ohjelmien välissä — aloita uusi päästäksesi takaisin raiteille.",
   "homeEmptyWorkout_v4": "Ei suunnitelmaa vielä. Anna tekoälyn luoda sellainen tavoitteidesi mukaan.",
-  "homeFromHealthConnect": ") lähteestä Health Connect",
   "homeGreetingAfternoon_v1": "Iltapäivän energiaa, {name}!",
   "homeGreetingAfternoon_v2": "Hei {name}, aika liikkua?",
   "homeGreetingAfternoon_v3": "Venyttelytauko, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "KALORIT",
   "insightsSummaryTemplatePrs": "ENNÄTYKSET",
   "insightsSummaryTemplateSummary": "YHTEENVETO",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "TREENIT",
   "intensityPrompt1Left": "1 jäljellä",
   "intensityPrompt2Left": "2 jäljellä",
   "intensityPrompt3Left": "3+ jäljellä",
   "intensityPromptHard": "Raskas",
-  "intensityPromptHideRpeSlideDial": "Piilota RPE-liukusäädin      Määritä (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Kuinka raskas sarja oli?",
   "intensityPromptMax": "Maks.",
   "intensityPromptModerate": "Kohtalainen",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "Sarja {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "AI-valmentaja, joka rakentaa suunnitelman, oppii tuntemaan kehosi ja mukautuu joka viikko.",
   "introBuildMyPlan": "Luo suunnitelmani",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) sarjaa",
   "introCardMonth": "kuukausi.",
   "introIAlreadyHaveAnAccount": "Minulla on jo tili",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "Viivakoodi",
   "logMealSheetBarcodeScan": "Viivakoodin skannaus",
   "logMealSheetCached": "(Välimuistissa)",
-  "logMealSheetCaptured": ") tallennettu",
   "logMealSheetChooseFoodPhotos": "Valitse ruokakuvat",
   "logMealSheetChooseFromGallery": "Valitse galleriasta",
   "logMealSheetChooseFromLibrary": "Valitse kirjastosta",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7 pv ka. · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} edellisestä alimmasta",
   "logWeightSheetValidRange": "Sallittu väli: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Synkronoitu kohdasta Apple Terveys",
   "logWeightSyncedToAppleHealth": "Synkronoitu Apple Healthiin",
   "logWeightTapToEdit": "Napauta muokataksesi",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Kirjaudu ulos?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Makrot",
-  "mainShellPartChatsLeftToday": "Chatteja jäljellä tänään {arg0}",
+  "mainShellPartChatsLeftToday": "{arg0} chattia jäljellä tänään",
   "mainShellPartGuestMode": "Vierastila",
   "mainShellPartQuickActions": "Pikatoiminnot",
   "mainShellPartSignUp": "Rekisteröidy",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Ensisijainen",
   "manageDuplicateImportsScreenSources": "{length} lähdettä",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(rivi)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Poista linkitys ryhmästä",
   "manageDuplicateImportsUnlinkedFromGroup": "Linkitys ryhmästä poistettu",
   "manageGymProfilesActive": "Aktiivinen",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} lisää",
   "menuAnalysisSheetSelected": "{length} valittu",
   "menuAnalysisSheetSort": "Lajittele: {label}",
-  "menuAnalysisSheetValue": ")(kulunut)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Olet jo tallentanut menun ravintolalle \"{restaurantName}\"",
   "menuAnalysisSort": "Lajittele:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "MITTARITYYPPI",
   "metricsDashboardMuscleMass": "Lihasmassa",
   "metricsDashboardNoDataAvailable": "Ei tietoja saatavilla",
-  "metricsDashboardNoMetricDataYet": "Ei vielä mittaustietoja {arg0}",
+  "metricsDashboardNoMetricDataYet": "Ei vielä {arg0}-tietoja",
   "metricsDashboardQuickStats": "PIKATILASTOT",
   "metricsDashboardRestingHeartRate": "Leposyke",
   "metricsDashboardRestingHr": "Leposyke",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Muu",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Tee treenejä nähdäksesi lihastietoja",
   "muscleHeatmapTileCouldnTLoad": "Lataus epäonnistui",
-  "muscleHeatmapTileMostTrained": "Eniten treenattu {arg0}",
+  "muscleHeatmapTileMostTrained": "Eniten treenattu: {arg0}",
   "muscleHeatmapTileMuscles": "Lihakset",
   "muscleHeatmapTileRetry": "Yritä uudelleen",
   "muscleHeatmapUpperBody": "Ylävartalo",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Suosikit ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Perusliikkeet ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Paras: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Viimeaikainen aktiivisuus",
   "myLibraryTabViewAll": "Näytä kaikki",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Satunnainen liikkuja",
   "neatGamificationWidgetsClaimReward": "Lunasta palkinto",
   "neatGamificationWidgetsCouchPotato": "Sohvaperuna",
-  "neatGamificationWidgetsCurrentXp": "Nykyinen XP {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Päivän haaste",
   "neatGamificationWidgetsExpired": "Vanhentunut",
-  "neatGamificationWidgetsHoursMinutesLeft": "Tunteja ja minuutteja jäljellä {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0} h {arg1} min jäljellä",
   "neatGamificationWidgetsLevel": "Taso {level}",
   "neatGamificationWidgetsLevelUp": "TASO YLÖS!",
   "neatGamificationWidgetsMaxLevel": "Maksimitaso!",
-  "neatGamificationWidgetsMinutesLeft": "Minuutteja jäljellä {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0} min jäljellä",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Mestari",
   "neatGamificationWidgetsNeatEnthusiast": "Harrastaja",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Ei sijoituksia tältä viikolta vielä",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Pisteet",
-  "neatGamificationWidgetsStepGoal": "Askel tavoite {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Askeleet",
-  "neatGamificationWidgetsTargetActiveHours": "Aktiivisuustavoite tunteina {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} h",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "PISTEIDEN ERITTELY",
   "neatScoreDisplayTapForBreakdown": "Napauta nähdäksesi erittelyn",
   "neatScoreDisplayTrend": "Trendi: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Ladataan...",
   "netflixExerciseCarouselSeeAll": "Näytä kaikki",
   "netflixExercisesAddYourOwnExercises": "Lisää omia liikkeitä mukautetuilla toistoilla, sarjoilla ja ohjeilla.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Lasketaan optimaalista seuraavaa sarjaa...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% intensiteetti",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Viimeinen sarja",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "PARHAAT LÄHTEET",
   "nutrientExplorerUnknown": "Tuntematon",
   "nutrientExplorerUnpinNutrient": "Irrota ravintoaine",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VITAMIINIT",
   "nutrientRushGameCatchTheGoldenZealova": "Nappaa kultainen Zealova-merkki saadaksesi tehosteen!",
   "nutrientRushGameNewBest": "🎉 UUSI ENNÄTYS!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Viikkokatsaus",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "keskim. {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Keskim. saanti: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": "{tdee} cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/päivä {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": "{data} kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Paino: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, kaikki tämä",
   "onboardingWhyFirstTheWhy": "ENSIN, MIKSI",
   "onboardingWhyWhatSDrivingThis": "Mikä tätä ajaa?",
-  "openAllCrates24HoursOf2xXp": "24 tuntia 2x XP",
+  "openAllCrates24HoursOf2xXp": "24 tuntia 2x XP:tä",
   "openAllCratesActivityCrate": "Aktiivisuusarkku",
   "openAllCratesBonusCrateToOpen": "Bonusarkku avattavaksi",
-  "openAllCratesCollect": "Kerää {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Arkkuja avattu {arg0}",
+  "openAllCratesCollect": "Kerää ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} arkkua avattu!",
   "openAllCratesDailyCrate": "Päivittäinen arkku",
   "openAllCratesDone": "Valmis",
-  "openAllCratesDoubleXpToken": "Tupla-XP-token",
+  "openAllCratesDoubleXpToken": "Tupla-XP-poletti",
   "openAllCratesFailedToOpenCrates": "Laatikoiden avaaminen epäonnistui. Yritä uudelleen.",
-  "openAllCratesFitnessCrate": "Kuntoarkku",
-  "openAllCratesGainedXp": "Saatu XP {arg0}",
+  "openAllCratesFitnessCrate": "Kunto-arkku",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Maksimitaso",
-  "openAllCratesOpenYourCrates": "Avaa arkkusi",
-  "openAllCratesOpened": ") avattu!",
-  "openAllCratesOpeningYourCrates": "Avataan arkkuja",
-  "openAllCratesPickRewardPerDay": "Valitse palkinto per päivä {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Valitse palkintosi {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Avaa arkkusi",
+  "openAllCratesOpeningYourCrates": "🎁 Avataan arkkujasi…",
+  "openAllCratesPickRewardPerDay": "Valitse 1 palkinto päivässä • {arg0}/{arg1} valittu",
+  "openAllCratesPickYourReward": "Valitse palkintosi • {arg0}/{arg1} valittu",
   "openAllCratesProtectYourStreak": "Suojaa putkesi",
   "openAllCratesSelectAll": "Valitse kaikki",
   "openAllCratesStreakCrate": "Putkiarkku",
-  "openAllCratesStreakShield": "Putkisuoja",
+  "openAllCratesStreakShield": "Putkikilpi",
   "openAllCratesToday": "Tänään",
-  "openAllCratesTotalXpFormatted": "XP yhteensä {arg0}",
-  "openAllCratesTotalXpLevel": "XP yhteensä taso {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} yhteensä",
+  "openAllCratesTotalXpLevel": "Yhteensä: {arg0} XP • Taso {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 Palkinnot!",
-  "openAllCratesXpInLevel": "XP tasolla {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP seuraavalle tasolle {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP tasolle {arg1}",
   "openAllCratesYesterday": "Eilen",
   "overallScoreHeroOverall": "YHTEENSÄ",
   "overviewActiveSkill": "AKTIIVINEN TAITO",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Kuntosalipersoonasi on...",
   "phaseRecommendationBannerBasedOn": "Perustuu: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-luottamusarvio\" : \"\")",
   "phaseRecommendationBannerCycleDay": "Kiertopäivä {cycleDay}",
   "phaseRecommendationBannerEvidence": "Todisteet: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Selvä",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Rakenna voiman perusta",
   "planPreviewScreenBuildingYour4Week": "Luodaan 4 viikon suunnitelmaasi...",
   "planPreviewScreenContinueFree": "Jatka ilmaiseksi",
-  "planPreviewScreenDaysPerWeek": "Päivää viikossa {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} päivää/viikko",
   "planPreviewScreenDesignedBasedOnYour": "Suunniteltu kyselyvastaustesi perusteella",
-  "planPreviewScreenEquipmentCount": "Välineiden määrä {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} välinettä",
   "planPreviewScreenExercisesMin": "Liikkeitä vähintään {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Lisää intensiteettiä ja volyymia",
   "planPreviewScreenMasterTheMovement": "Hallitse liike",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} ennätystä!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") EDELTÄ",
   "prShareCardCopiedToClipboard": "Kopioitu leikepöydälle!",
   "prShareCardCopyText": "Kopioi teksti",
   "prShareCardFailedToCaptureImage": "Kuvan kaappaus epäonnistui",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Jatka puskemista!",
   "prsTemplateNewPersonalRecords": "UUSIA ENNÄTYKSIÄ",
   "prsTemplateNewPrsAreJust": "Uudet ennätykset ovat aivan kulman takana",
-  "prsTemplateValue": ") (yksikkö)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Ainekset",
   "publicRecipeInstructions": "Ohjeet",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "Napauta nähdäksesi koko historian ja trendit",
   "quickLogMeasurementsTrackYourBodyChanges": "Seuraa kehosi muutoksia ajan myötä",
   "quickLogMeasurementsUpdate": "Päivitä",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} päivää sitten",
+  "quickLogMeasurementsUpdatedDaysAgo": "Päivitetty {arg0} päivää sitten",
   "quickLogMeasurementsUpdatedToday": "Tänään",
   "quickLogMeasurementsUpdatedYesterday": "Eilen",
   "quickLogMeasurementsWaist": "Vyötärönympärys",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI luo treenit valitsemallasi välillä",
   "quizDaysSelectorBest": "Paras",
   "quizDaysSelectorConsistencyBeatsIntensity": "Jatkuvuus voittaa intensiteetin – valitse tahti, jota jaksat ylläpitää",
-  "quizDaysSelectorDays": "{arg0} päivää",
-  "quizDaysSelectorDaysSelected": "Valitut päivät {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") treeneillesi",
+  "quizDaysSelectorDays": "{arg0, plural, one {päivä} other {päivää}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} päivää valittu",
   "quizDaysSelectorFri": "Pe",
   "quizDaysSelectorHowLongAreYour": "Kuinka pitkiä treenisi ovat?",
   "quizDaysSelectorHowManyDaysPer": "Kuinka monta päivää viikossa voit treenata?",
   "quizDaysSelectorMin": "Min",
   "quizDaysSelectorMon": "Ma",
   "quizDaysSelectorSat": "La",
-  "quizDaysSelectorSelectNDays": "Valitse {arg0} päivää",
+  "quizDaysSelectorSelectNDays": "Valitse {arg0} päivää, jotka sopivat sinulle",
   "quizDaysSelectorSun": "Su",
   "quizDaysSelectorThu": "To",
   "quizDaysSelectorTue": "Ti",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Kotisali",
   "quizEquipmentHomeKettlebell": "Koti + kahvakuula",
   "quizEquipmentHotel": "Hotelli",
-  "quizEquipmentIdentifiedCount": "Tunnistettu määrä {arg0}",
+  "quizEquipmentIdentifiedCount": "Tunnistettu {arg0} kohdetta. Napauta mitä tahansa poistaaksesi valinnan.",
   "quizEquipmentKettlebell": "Kahvakuula",
   "quizEquipmentMedicineBall": "Kuntopallo",
   "quizEquipmentMinimalEquipmentBodyweight": "Minimivarusteet – kehonpaino, matto",
   "quizEquipmentNeededForBarbell": "Tarvitaan levytankoa varten",
   "quizEquipmentNoEquipmentIdentifiedPick": "Välineitä ei tunnistettu. Valitse listasta.",
-  "quizEquipmentOtherCount": "Muu määrä {arg0}",
+  "quizEquipmentOtherCount": "{arg0} valittu",
   "quizEquipmentOtherEquipment": "Muut välineet",
   "quizEquipmentPullUpBar": "Leuanvetotanko",
   "quizEquipmentQuickPresets": "Pika-asetukset",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Reseptin nimi vaaditaan",
   "recipeCreateRemovePhoto": "Poista kuva",
   "recipeCreateSaving": "Tallennetaan...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Ota kuva",
   "recipeCreateTapToEdit": "Napauta muokataksesi",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Annosta kohden (×{servings} annosta)",
   "recipeDetailScreenUForkedFrom": "✨ Haarautettu lähteestä {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" poistetaan pysyvästi.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Kuratoitu resepti",
   "recipeDetailView": "Näytä",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Viimeistellään yksityiskohtia…",
   "regenerateSheetFinalizingYourWorkout": "Viimeistellään treeniäsi",
   "regenerateSheetFineTuningTheDetails": "Hienosäädetään yksityiskohtia",
-  "regenerateSheetGeneratingElapsed": "Generointi kestänyt {arg0}",
+  "regenerateSheetGeneratingElapsed": "Luodaan… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Luodaan ehdotuksia…",
   "regenerateSheetGetSuggestions": "Hae ehdotuksia",
   "regenerateSheetGettingCreative": "Luodaan jotain uutta",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Käytä ehdotettua",
   "restSuggestionQuick": "Nopea",
   "restSuggestionQuickRest": "Nopea lepo",
-  "restSuggestionSaveTime": "Säästä aikaa {arg0}",
+  "restSuggestionSaveTime": "Säästä {arg0}",
   "restSuggestionSuggested": "Ehdotettu",
   "restSuggestionUseSuggested": "Käytä ehdotettua",
   "restTimerCardBaseRest": "Peruslepo",
   "restTimerCardControlRestPeriodsBetween": "Hallitse sarjojen välisiä lepoaikoja",
   "restTimerCardCustomRestTimer": "Mukautettu lepoajastin",
   "restTimerCardFormula": "Kaava",
-  "restTimerCardFormulaBaserestRpe7": "Kaava: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Esikatselu",
   "restTimerCardMultiplier": "Kerroin",
   "restTimerCardRestBaserestRpe7": "Lepo = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value} s",
   "restTimerCardS2": "{restTimerBaseRest} s",
   "restTimerCardS3": "{s} s",
-  "restTimerCardVariablesBaseRpeMultipli": "Muuttujat: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Muuttujat: perustaso, RPE, kerroin, taso",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "Analysoidaan suoritustasi...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "Valmis",
   "rtpTitle": "Paluu liikuntaan",
   "safetyDisclaimerBannerDismissDisclaimer": "Hylkää vastuuvapauslauseke",
-  "safetyDisclaimerBannerInjuriesFlagged": "Vammoja merkitty {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} vammaa merkitty",
   "safetyDisclaimerBannerInjuryBody": "Vamma-alue",
   "safetyDisclaimerBannerLearnMore": "Lue lisää",
   "safetyDisclaimerBannerMore": "+{overflow} lisää",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Sarja",
   "sessionDetailSetCount": "{count, plural, other{{count} sarjaa}} · huippusarja korostettu",
   "sessionDetailTime": "Aika",
-  "sessionDetailTopSetHighlighted": ") • huippusarja korostettu",
   "sessionDetailWeight": "Paino",
   "setAdjustmentAdditionalNotesOptional": "Lisähuomautukset (valinnainen)",
   "setAdjustmentConfirm": "Vahvista",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} tehty",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} jäljellä",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} poistettu",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") / (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "/ {totalSets} suunnitellusta",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} sarjaa suoritettu",
   "setAdjustmentSheetReps": "Toistot",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Sarja {currentSetNumber}/{totalSets} • Napauta laajentaaksesi",
   "setTrackingSectionSets": "{widget} sarjaa",
   "setTrackingSectionSetsCompleted": "{length} sarjaa suoritettu",
-  "setTrackingSectionValue": ")×(toistoa)",
   "setTrackingSheetsAmountToAdjustWeight": "Painon säätömäärä",
   "setTrackingSheetsDropSet": "Pudotussarja",
   "setTrackingSheetsExerciseHistory": "Liikehistoria",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} tukipyyntö",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} päivää",
   "settingsScreenUiNoSettingsFound": "Asetuksia ei löytynyt",
-  "settingsScreenUiTryDifferentKeywordsLike": "Kokeile eri hakusanoja, kuten \"teema\", \"ilmoitukset\" tai \"ai voice\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Kokeile muita hakusanoja, kuten \"teema\", \"ilmoitukset\" tai \"tekoälyääni\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Hae asetuksista",
   "settingsSetProgressionResearch": "Aseta edistyminen ja tutkimus",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "{appName} {periodName} -raporttini",
   "shareInsightsSheetMyReport2": "{appName} -raporttini",
   "shareMotivationalCompleted": "VALMIS",
-  "sharePrNewPr": "Uusi PR",
+  "sharePrNewPr": "UUSI PR",
   "shareStatsCalories": "Kalorit",
   "shareStatsDuration": "Kesto",
   "shareStatsEliteTemplate": "ELITE-POHJA",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "PALKINNOT",
   "streakMilestoneStreakMilestone": "PUTKIVIRSTANPYLVÄS!",
-  "streakMilestoneToGo": ") jäljellä!",
   "streakMilestoneYouVeReachedThe": "Olet saavuttanut äärimmäisen putkivirstanpylvään!",
   "streakSavedDialogWeUsedStreakShield": "Käytimme 1 Streak Shield -suojan pitääksemme {savedStreakCount} päivän putkesi elossa.",
   "streakSavedKeepItGoing": "Pidä se käynnissä",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Yhdistä",
   "todayScoreCardCustomize": "MUKAUTA",
   "todayScoreCardToday": "Tänään",
-  "todayScoreDetailDown": "Alas {arg0}",
-  "todayScoreDetailEarnedPts": "Ansaitut pisteet {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Laskenut {arg0} aamusta",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} p",
   "todayScoreDetailHowItWorks": "Miten se toimii",
-  "todayScoreDetailInactiveExplanation": "Passiivisuuden selitys {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Momentum keskiarvolla {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {ei lasketa} other {ei lasketa}} tänään, joten loput jakavat täydet 100 pistettä. Pisteesi heijastavat aina vain sitä, mikä todella pätee tänään.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7 päivän keskiarvo {arg1}",
   "todayScoreDetailNotCounted": "Ei laskettu",
   "todayScoreDetailSetupText": "Asetusteksti",
   "todayScoreDetailSteady": "Tasainen",
   "todayScoreDetailTodayScore": "Päivän pisteet",
-  "todayScoreDetailUp": "Ylös {arg0}",
+  "todayScoreDetailUp": "▲ Noussut {arg0} aamusta",
   "todayScoreSetupAddAWorkoutPlan": "Lisää treenisuunnitelma",
   "todayScoreSetupCardContinue": "Jatka: {label}",
   "todayScoreSetupCardGetStarted": "ALOITA · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Cardio-saavutukset",
   "trophiesEarnedDayStreak": "Päiväputki",
   "trophiesEarnedFirstTime": "ENSIMMÄISTÄ KERTAA!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Virstanpylväs saavutettu",
   "trophiesEarnedMilestoneReachedNice": "Virstanpylväs saavutettu — hienoa!",
   "trophiesEarnedMilestones": "Virstanpylväät",
-  "trophiesEarnedNewBadges": "Merkit {arg0}",
-  "trophiesEarnedNewCardioPRs": "Uudet cardio PR:t {arg0}",
-  "trophiesEarnedNewPR": "Uusi PR",
-  "trophiesEarnedNewPRs": "Uudet PR:t {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} uutta merkkiä",
+  "trophiesEarnedNewCardioPRs": "{arg0} uutta kardio-PR:ää",
+  "trophiesEarnedNewPR": "UUSI PR",
+  "trophiesEarnedNewPRs": "{arg0} uutta PR:ää!",
   "trophiesEarnedNewPr": "UUSI PR",
   "trophiesEarnedNextMilestones": "Seuraavat virstanpylväät",
   "trophiesEarnedNoNewRecords": "Ei uusia ennätyksiä",
   "trophiesEarnedNoNewRecordsThis": "Ei uusia ennätyksiä tässä treenissä — tässä on tavoitteesi:",
   "trophiesEarnedPersonalRecords": "Henkilökohtaiset ennätykset",
-  "trophiesEarnedRemainingToUnlock": "Jäljellä avattavaksi {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "{arg0} {arg1} lisää avataksesi",
   "trophiesEarnedSessionHighlights": "Treenin kohokohdat",
   "trophiesEarnedSheetPts": "+{points} pistettä",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} kirjoittaa",
   "typingIndicatorIsTyping3": "{agentName} kirjoittaa...",
   "unifiedHomeWidgetsActivity": "AKTIIVISUUS",
-  "unifiedHomeWidgetsBreakfastLogged": "Unified home widgets aamiainen kirjattu {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Aamiainen kirjattu {arg0} viimeisten 7 aamun aikana",
   "unifiedHomeWidgetsBreakfastSuggestion": "Aamiaisehdotus",
   "unifiedHomeWidgetsCarbs": "Hiilihydraatit",
   "unifiedHomeWidgetsConnect": "Yhdistä",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Rasva",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal yhteensä tänään",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal poltettu",
   "unifiedHomeWidgetsKcalLeft": " kcal jäljellä",
   "unifiedHomeWidgetsLastNight": "viime yö",
   "unifiedHomeWidgetsLog16oz": "Kirjaa 16oz",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}vko",
   "weekDurationSelectorWeeks": "{selectedWeeks} viikkoa",
   "weekDurationSelectorWk": "{spw}/vko",
-  "weekProgressStripCompletedCount": "Suoritettu määrä {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg0}/{arg1} treeniä valmiina",
   "weekProgressStripCouldNotLoadProgress": "Edistymistä ei voitu ladata",
   "weekProgressStripLoading": "Ladataan...",
   "weekProgressStripNoWorkoutsScheduled": "Ei ajastettuja treenejä",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Näytä kaikki",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Painon seuranta",
-  "weightTrendCardDownThisWeek": "Alas tällä viikolla {arg0}",
-  "weightTrendCardDownVsLastCycle": "Alas vs. edellinen sykli {arg0}",
+  "weightTrendCardDownThisWeek": "Laskenut {arg0} tällä viikolla!",
+  "weightTrendCardDownVsLastCycle": "Laskenut {arg0} lbs verrattuna saman kierron päivään viime kuussa",
   "weightTrendCardLoadingWeight": "Ladataan painoa...",
   "weightTrendCardLogYourWeightTo": "Kirjaa painosi nähdäksesi trendejä",
   "weightTrendCardMaintaining": "Ylläpito",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Sama kuin edellisessä syklissä",
   "weightTrendCardTapToLogWeight": "Napauta kirjataksesi paino",
   "weightTrendCardTargetHeld": "Tavoite saavutettu",
-  "weightTrendCardTargetHeldWindow": "Tavoite saavutettu ikkunassa {arg0}",
-  "weightTrendCardUpThisWeek": "Ylös tällä viikolla {arg0}",
-  "weightTrendCardUpVsLastCycle": "Ylös vs. edellinen sykli {arg0}",
+  "weightTrendCardTargetHeldWindow": "Tavoite pidetty {arg0} — luteaalivaiheen vesitasaus",
+  "weightTrendCardUpThisWeek": "Noussut {arg0} tällä viikolla",
+  "weightTrendCardUpVsLastCycle": "Noussut {arg0} lbs verrattuna saman kierron päivään viime kuussa",
   "weightTrendCardWeightStableThisWeek": "Paino vakaa tällä viikolla",
   "weightTrendCardWeightTrends": "Painotrendit",
   "welcomeAffirmationGreatChoice": "Loistava valinta.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "Palataanko tähän versioon?",
   "workoutActionsShareWorkout": "Jaa harjoitus",
   "workoutActionsSheetGetALinkFor": "Hae {marketingDomain}-linkki ystäville",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "Palautetaanko \"{name}\"?",
   "workoutActionsSheetS": "{duration} s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} toistoa",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} sarjaa, {currentReps} toistoa",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Ystävien haastaminen ei onnistu tällä hetkellä",
   "workoutCompleteScreenUnableToExtendWorkout": "Treenin pidentäminen ei onnistu",
   "workoutCompleteScreenViewAllMetrics": "Näytä kaikki tiedot",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "LAITTEET",
   "workoutDetailExercises": "HARJOITUKSET",
   "workoutDetailFailedToLoadWorkout": "Treenin lataaminen epäonnistui",
-  "workoutDetailHelpersForAvailableEquipment": ") käytettävissä oleville välineille...",
   "workoutDetailHelpersHell": "Helvetti",
   "workoutDetailHelpersUpdatingExercises": "Harjoitusten päivittäminen",
   "workoutDetailMoreInfo": "LISÄÄ TIETOA",
   "workoutDetailProgram": "Ohjelmoida",
-  "workoutDetailReplacingExercises": "Korvataan liikkeitä {arg0}",
+  "workoutDetailReplacingExercises": "Korvataan {arg0} liikettä saatavilla olevilla välineillä…",
   "workoutDetailRevert": "Palauta",
   "workoutDetailScreenBreakSuperset": "Poista supersarja?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} kcal kulutettu",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 3.5.1",
   "workoutHistoryImportWhichUnitIsThe": "Missä yksikössä painosarake on? Ja jos tiedät lähdesovelluksen, valitse se – auttaa erottamaan sisarusmuodot (Hevy vs. vahvat CSV-tiedostot).",
   "workoutHistoryImportYourStrengthData": "Vahvuustietosi",
-  "workoutImportAsDone": ")\" tehdyksi",
   "workoutImportCalories": "Kalorit",
   "workoutImportCardio": "Cardio",
   "workoutImportCycling": "Pyöräily",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Kesto",
   "workoutImportEasy": "Helppo",
   "workoutImportFlexibility": "Liikkuvuus",
-  "workoutImportFromSource": "Lähteet {arg0}",
+  "workoutImportFromSource": "lähteestä {arg0}",
   "workoutImportHard": "Raskas",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Kuinka vaikea tämä treeni oli?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Saatat nähdä nämä järjestelmäkehotteet harjoituksen aikana. Molemmat ovat valinnaisia ​​- ohita jompikumpi ja harjoitus toimii edelleen.",
   "workoutPlanDrawerAddExercise": "Lisää harjoitus",
   "workoutPlanDrawerCurrent": "Nykyinen",
-  "workoutPlanDrawerExerciseCount": "Liikkeiden määrä {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") kirjattu. Ne poistetaan.",
+  "workoutPlanDrawerExerciseCount": "{arg0} liikettä",
   "workoutPlanDrawerNow": "Nyt",
   "workoutPlanDrawerRemove": "Poistaa",
-  "workoutPlanDrawerRemoveExercise": "Poista liike {arg0}",
+  "workoutPlanDrawerRemoveExercise": "Poistetaanko {arg0}?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Poista liike",
-  "workoutPlanDrawerSetsLogged": "Sarjaa kirjattu {arg0}",
+  "workoutPlanDrawerSetsLogged": "Sinulla on {arg0} sarjaa kirjattuna. Ne poistetaan.",
   "workoutPlanDrawerSwapExercise": "Vaihda liike",
   "workoutPlanDrawerTitle": "Otsikko",
   "workoutPlanDrawerWorkoutPlan": "Harjoitussuunnitelma",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "Jokainen kirjaamasi sarja",
   "workoutShowcaseEveryWorkoutFlows": "Jokainen treeni etenee",
   "workoutShowcaseFinishWorkout": "Lopeta treeni",
-  "workoutShowcaseFormat1Rm": "1RM-muoto",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "Lennolle",
   "workoutShowcaseFormatCard": "Kortti",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Lineaarinen otsikko",
   "workoutShowcaseLogAllSets": "Kaikki sarjat",
   "workoutShowcaseLogDrink": "Log Juoma",
-  "workoutShowcaseLogSet": "Sarja {arg0}",
+  "workoutShowcaseLogSet": "✓ Kirjaa sarja {arg0}",
   "workoutShowcaseLogWater": "Kirjaa vesi",
   "workoutShowcaseMovedThisSession": "liikutettu tässä istunnossa",
   "workoutShowcaseNewPr": "UUSI PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Toistot",
   "workoutShowcaseScreenDay": "Päivä {day}",
   "workoutShowcaseScreenDuration": "KESTO: {duration}",
-  "workoutShowcaseScreenPrs": "PR:T: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PR:ää · KIRJATTU",
   "workoutShowcaseScreenSession": "TREENI: {title}",
   "workoutShowcaseScreenTotalPrs": "YHTEENSÄ {duration} · {volume} · {prs} PR:ää",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "Sarja 1/4",
   "workoutShowcaseSet2": "Sarja 2",
   "workoutShowcaseSet3": "Sarja 3",
-  "workoutShowcaseSetNOf3": "Sarja {arg0} / 3",
+  "workoutShowcaseSetNOf3": "Sarja {arg0}/3",
   "workoutShowcaseShareYourWorkout": "Jaa treenisi",
   "workoutShowcaseSideA": "PUOLI A",
   "workoutShowcaseSuperset": "Supersarja",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Päivittäinen",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 tasoa 11 eri tasolla",
   "xpGoalsDialogBeginnerToTranscendent": "Aloittelijasta transsendenttiseksi",
-  "xpGoalsDialogCompleteWorkoutXp": "Treenin suoritus xp",
+  "xpGoalsDialogCompleteWorkoutXp": "Suorita treeni: +100 XP",
   "xpGoalsDialogDailyGoals": "Päivittäiset tavoitteet",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "Ensimmäinen keskustelu ai coachin kanssa xp",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Ensimmäinen aterian painon mittaus xp",
-  "xpGoalsDialogFirstPrXp": "Ensimmäinen PR xp",
-  "xpGoalsDialogFirstProgressPhotoXp": "Ensimmäinen kehityskuva xp",
-  "xpGoalsDialogFirstProteinGoalXp": "Ensimmäinen proteiinitavoite xp",
-  "xpGoalsDialogFirstWorkoutXp": "Ensimmäinen treeni xp",
-  "xpGoalsDialogHitProteinGoalXp": "Proteiinitavoitteen saavuttaminen xp",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Ensimmäinen chatti AI-valmentajan kanssa: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Ensimmäinen ateria/paino/mittaus: +50 XP kukin",
+  "xpGoalsDialogFirstPrXp": "Ensimmäinen PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Ensimmäinen edistymiskuva: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Ensimmäinen proteiinitavoite: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Ensimmäinen treeni: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Saavuta proteiinitavoite: +50 XP",
   "xpGoalsDialogLevels": "Tasot",
-  "xpGoalsDialogLogBodyMeasurementsXp": "Kehon mittausten kirjaaminen xp",
-  "xpGoalsDialogLogMealXp": "Aterian kirjaaminen xp",
-  "xpGoalsDialogLogWeightXp": "Painon kirjaaminen xp",
-  "xpGoalsDialogLoginXp": "Kirjautuminen xp",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Kirjaa kehon mitat: +20 XP",
+  "xpGoalsDialogLogMealXp": "Kirjaa ateria: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Kirjaa paino: +15 XP",
+  "xpGoalsDialogLoginXp": "Kirjaudu sisään: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Virstanpylväspalkinnot",
   "xpGoalsFirstTimeBonuses": "Ensimmäisen kerran bonukset",
   "xpGoalsGotIt": "Selvä!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Saavuta proteiinitavoite",
   "xpGoalsScreenInventory": "Varasto",
   "xpGoalsScreenLegendary": "LEGENDAARINEN",
-  "xpGoalsScreenLevelCurrentTotal": "Tason nykyinen yhteismäärä {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Taso {arg0} • 249 tasoa yhteensä",
   "xpGoalsScreenLevelProgress": "Tason edistyminen",
   "xpGoalsScreenLogBodyMeasurements": "Kirjaa kehon mitat",
   "xpGoalsScreenLogFirstMeal": "Kirjaa ensimmäinen ateria",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Pokaalihylly",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Viikoittain",
-  "xpGoalsXpAvailable": "Saatavilla {arg0}",
-  "xpGoalsXpEarnedToday": "Tänään ansaittu {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP saatavilla",
+  "xpGoalsXpEarnedToday": "+{arg0} XP ansaittu tänään",
   "xpGoalsXpGoals": "XP-tavoitteet",
-  "xpGoalsXpMultiplierActive": "Kerroin aktiivinen {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP aktiivinen!",
   "xpHeroTileDayStreak": "{streak} päivän putki",
   "xpHeroTileLv": "Taso {level}",
   "xpHeroTileLv2": "Taso {nextLevel} → {label}",

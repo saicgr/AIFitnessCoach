@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "Когда использовать",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Упражнение успешно заменено",
   "activeWorkoutScreenRefactoredExerciseSAdded": "Добавлено упражнений: {_exercises}",
-  "activeWorkoutScreenRefactoredFor": ") для (name)",
   "activeWorkoutScreenUndo": "Отмена",
   "activeWorkoutScreenWorkoutAdapted": "Тренировка адаптирована.",
   "activityCardAdditionalDetailsOptional": "Дополнительные детали (необязательно)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Топливо перед тренировкой?",
   "aiCoachMealQuickSnackIdeas": "Идеи для быстрого перекуса?",
   "aiCoachMealRecoveryDayEating": "Питание в день восстановления?",
-  "aiCoachMealSearchQuestionsTryAngry": "Поиск вопросов (попробуйте \"злость\", \"клетчатка\", \"мексиканская\")",
   "aiCoachMealSomethingWentWrong": "Что-то пошло не так.",
   "aiCoachMealStressedWhatHelps": "Стресс — что поможет?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "Азиатский {meal} — один вариант (рисовый боул, лапша, суши, стир-фрай), макросы и приготовление.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} кал · фаза {phase}",
   "caloriesSummaryCardCalories": "Калории",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} ккал",
-  "caloriesSummaryCardOveLeft": "осталось",
   "cancelConfirmationAnythingElseYouD": "Хотите что-то еще добавить? (необязательно)",
   "cancelConfirmationCancelAnyway": "Все равно отменить",
   "cancelConfirmationHelpUsImprove": "Помогите нам стать лучше",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Понятно",
   "chatLanguageChangedSystem": "🌐 AI Coach теперь отвечает на {nativeName}",
   "chatLanguageResetSystem": "🌐 Язык AI Coach сброшен — используется язык приложения",
-  "chatLeftToday": ") осталось сегодня",
   "chatMediaWidgetsCalTotal": "Всего {totalCal} кал",
   "chatMediaWidgetsGProtein": "{totalProtein}г белка",
   "chatMediaWidgetsGoTo": "Перейти к {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "Тренер думает дольше обычного.",
   "chatScreenCouldntReachCoach": "Не удалось связаться с тренером.",
   "chatScreenExtAboutAiCoach": "Об AI-тренере",
-  "chatScreenExtAs": ") как (mealType)",
   "chatScreenExtChangeCoach": "Сменить тренера",
   "chatScreenExtChatTips": "Советы по чату",
   "chatScreenExtChooseMultiplePhotos": "Выбрать несколько фото",
@@ -17121,9 +16881,9 @@
   "completeViewGoals": "Посмотреть цели",
   "complianceRingCardAllWorkoutsCompleted": "Все тренировки выполнены",
   "complianceRingCardGetStartedToday": "Начните сегодня",
-  "complianceRingCardGreatPace": "Отличный темп {arg0}",
+  "complianceRingCardGreatPace": "Отличный темп! Осталось {arg0}",
   "complianceRingCardNoWorkoutsScheduledThis": "На этой неделе тренировок нет",
-  "complianceRingCardOnTrack": "По графику {arg0}",
+  "complianceRingCardOnTrack": "По плану — осталось {arg0}",
   "complianceRingCardWorkoutCompliance": "Соблюдение графика тренировок",
   "complianceRingCardWorkoutsRemaining": "Осталось тренировок: {arg0}",
   "comprehensiveStatsStatsScores": "Статистика и баллы",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Выберите продукт",
   "cookingConverterSheetG": "{inputAmount}г",
   "cookingConverterUseThisValue": "Использовать это значение",
-  "cookingConverterWeight": ") Вес",
   "cosmeticsGalleryCosmetics": "Косметика",
   "cosmeticsGalleryEquip": "Экипировать",
   "cosmeticsGalleryEquipped": "Экипировано",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Нет упражнений по вашему запросу",
   "customExercisesScreenAreYouSureYou": "Вы уверены, что хотите удалить \"{name}\"? Это действие нельзя отменить.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} упр., {totalUses} исп.",
-  "customExercisesScreenUsedTimes": "Использовано (usageCount) раз(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Поиск упражнений...",
   "customExercisesSimple": "Простые",
   "customFoodBuilderAiFillFromName": "Заполнить через ИИ по названию",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · последний цикл",
   "customTrendScreenMaxOverlaysRemoveOne": "Макс. {_kMaxOverlays} наложений — удалите одно, чтобы добавить другое",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} общих дней",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "Добавить упражнение",
   "customWorkoutBuilderBuildCustomWorkout": "Создать свою тренировку",
   "customWorkoutBuilderCustomWorkoutCreated": "Тренировка создана!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Отметить менструацию",
   "cycleScreenUiLogPeriod": "Отметить менструацию",
   "cycleScreenUiLogYourFirstPeriod": "Запишите начало первого цикла, чтобы начать прогнозы.",
-  "cycleScreenUiPhase": ") фаза",
   "cycleScreenUiPhaseLabel": "Фаза {displayName}",
   "cycleScreenUiPredictionsAreEstimates": "Прогнозы являются оценочными на основе ваших данных, не являются методом контрацепции или медицинской консультацией. При возникновении проблем со здоровьем обратитесь к врачу.",
   "cycleScreenUiPregnancyModeIsOn": "Режим беременности включен",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Продолжить",
   "editProgramSheetCurrent": "ТЕКУЩИЙ",
   "editProgramSheetCustomProgram": "Пользовательская программа",
-  "editProgramSheetCustomValue": "Пользовательское значение {arg0}",
+  "editProgramSheetCustomValue": "Свой вариант: {arg0}",
   "editProgramSheetCustomizeProgram": "Настроить программу",
   "editProgramSheetDays": "Дни",
   "editProgramSheetDaysAgo": "{days} дн. назад",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Оборудование",
   "editProgramSheetEquipmentLabel": "Метка оборудования",
   "editProgramSheetExamples": "Примеры",
-  "editProgramSheetFailedToLoadHistory": "Загрузить историю {arg0}",
-  "editProgramSheetFailedToRestore": "Восстановить {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Не удалось загрузить историю: {arg0}",
+  "editProgramSheetFailedToRestore": "Не удалось восстановить: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Обновить программу",
   "editProgramSheetFocus": "Фокус",
   "editProgramSheetHealth": "Здоровье",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "Загрузка {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Загрузка видео...",
   "exerciseDetailSheetFavorite": "Избранное",
-  "exerciseDetailSheetLbs": ") фунтов × (диапазон повт.)",
   "exerciseDetailSheetLoading": "Загрузка...",
   "exerciseDetailSheetLog1rm": "Записать 1RM",
   "exerciseDetailSheetMS": "{restMins}м {restSecs}с",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15с",
   "exerciseSetTrackerAddNotesHere": "Добавьте заметки здесь...",
   "exerciseSetTrackerAddSet": "Добавить подход",
-  "exerciseSetTrackerBarbell": ") штанга",
   "exerciseSetTrackerReps": "Повторения",
   "exerciseSetTrackerRestTarget": "Цель отдыха",
   "exerciseSetTrackerS": "{seconds}с",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "Выбор AI недоступен",
   "exerciseSwapSheetAnyEquipment": "Любое оборудование",
   "exerciseSwapSheetAskAiForSuggestions": "Попросить AI предложить варианты",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Опишите ваше оборудование или предпочтения\nнапр., \"болит плечо, только собственный вес\"",
   "exerciseSwapSheetEGIOnly": "напр., \"у меня только гантели\"",
   "exerciseSwapSheetFailedToSwapExercise": "Не удалось заменить упражнение",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Поиск альтернатив для тех же мышц...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Вес",
   "expandedExerciseCardAddToFavorites": "Добавить в избранное",
   "expandedExerciseCardAlternatingHands": "Чередование рук",
-  "expandedExerciseCardBarbell": ") штанга",
   "expandedExerciseCardBreathing": "Дыхание",
   "expandedExerciseCardBreathingGuide": "Руководство по дыханию",
   "expandedExerciseCardCollapse": "Свернуть",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Уровень протокола",
   "fastingScoreCardScore": "Оценка",
   "fastingScoreCardStreakBonus": "Бонус за серию",
-  "fastingScoreCardValue": "{scoreChange}",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "по сравнению с прошлой неделей",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "Первый",
   "flexibilityProgressChartLatest": "Последний",
   "flexibilityProgressChartNoDataAvailable": "Нет доступных данных",
-  "flexibilityProgressChartValue": "{improvementAbsolute}",
   "flexibilityScoreCardByArea": "По зонам",
   "flexibilityScoreCardFocusAreas": "Зоны внимания",
   "flexibilityScoreCardOverallFlexibility": "Общая гибкость",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Поиск блюд, продуктов, \"высокое содержание белка\"...",
   "foodHistoryUndo": "Отменить",
   "foodItemRankingAddFood": "Добавить продукт",
-  "foodItemRankingDetails": ") подробности",
   "foodItemRankingNFoodItems": "{count} продуктов",
   "foodItemRankingScore": "Оценка",
   "foodItemRankingTapToHideDetails": "Нажмите, чтобы скрыть детали",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Поэтому я создал человека, а не бухгалтерскую книгу. Прикрепите любое меню — дома или за границей — и тренер прочитает его вам в виде макросов. Пропустите вторник, и вы вернетесь в среду утром без чувства вины. Он изучает вашу еду, ваш тренажерный зал, ваши привычки скольжения — менее чем за одну тренировку в месяц.",
   "founderNoteTheFriendsWhoActually": "Друзья, которые действительно привели себя в форму, имели человека, который им писал. Реальная подотчетность стоит около двухсот долларов в месяц, именно поэтому у большинства из нас её никогда нет, и именно поэтому разрыв между «отслеживанием» и «изменениями» сохраняется годами.",
-  "freshnessDecayCardAgo": ") назад",
   "freshnessDecayCardControlsHowQuicklyExercise": "Управляет скоростью снижения свежести упражнения: e^(-k * тренировки)",
   "freshnessDecayCardFreshnessDecayTuner": "Настройка снижения свежести",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}кг",
   "futuristicSetCardSetOf": "ПОДХОД {currentSetNumber} ИЗ {totalSets}",
   "futuristicSetCardSkipExercise": "Пропустить упражнение",
-  "futuristicSetCardValue": ") × (целевые повт.)",
-  "futuristicSetCardValue2": ")×(повт.)",
   "generatePlanCreateAHolisticPlan": "Создайте комплексный план, объединяющий тренировки, питание и голодание.",
   "generatePlanFastingProtocol": "Протокол голодания",
   "generatePlanGeneratePlan": "Создать план",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "Добавьте свою первую привычку",
   "habitsCardAllHabitsCompleted": "Все привычки выполнены!",
   "habitsCardBuildDailyHabits": "Формируйте ежедневные привычки",
-  "habitsCardCompletedCount": "Выполнено {arg0} {arg1}",
-  "habitsCardDayStreak": "Серия дней: {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} выполнено",
+  "habitsCardDayStreak": "Серия {arg0} дней",
   "habitsCardFailedToLoadHabits": "Не удалось загрузить привычки",
   "habitsCardGreatJobKeepingUp": "Отличная работа по поддержанию серий",
   "habitsCardQuickStart": "Быстрый старт:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Привычки на сегодня",
   "habitsCardTryAgain": "Попробовать снова",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Все привычки {arg0}",
+  "habitsCardViewAllHabits": "Показать все привычки ({arg0})",
   "habitsCompleted": "Выполнено",
   "habitsDeleteHabit": "Удалить привычку?",
   "habitsHoldToReorderSwipe": "Удерживайте для сортировки • Смахните для удаления",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "День отдыха? Или готовы к нагрузке? Решать вам.",
   "homeEmptyWorkout_v3": "Между программами — начните новую, чтобы вернуться в строй.",
   "homeEmptyWorkout_v4": "Плана пока нет. Позвольте ИИ составить его с учетом ваших целей.",
-  "homeFromHealthConnect": ") из Health Connect",
   "homeGreetingAfternoon_v1": "Энергия на вторую половину дня, {name}!",
   "homeGreetingAfternoon_v2": "Привет, {name}, пора размяться?",
   "homeGreetingAfternoon_v3": "Время для растяжки, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "КАЛОРИИ",
   "insightsSummaryTemplatePrs": "РЕКОРДЫ",
   "insightsSummaryTemplateSummary": "ИТОГИ",
-  "insightsSummaryTemplateValue": "{pct}%",
   "insightsSummaryTemplateWorkouts": "ТРЕНИРОВКИ",
   "intensityPrompt1Left": "1 осталось",
   "intensityPrompt2Left": "2 осталось",
   "intensityPrompt3Left": "3+ осталось",
   "intensityPromptHard": "Тяжело",
-  "intensityPromptHideRpeSlideDial": "Скрыть RPE   Выберите значение (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Насколько тяжелым был этот подход?",
   "intensityPromptMax": "Макс",
   "intensityPromptModerate": "Средне",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "Подход {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "ИИ-тренер, который составляет план, изучает ваше тело и вносит коррективы каждую неделю.",
   "introBuildMyPlan": "Создать мой план",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) фунтов · (totalSets) подходов",
   "introCardMonth": "месяц.",
   "introIAlreadyHaveAnAccount": "У меня уже есть аккаунт",
   "introScreenV": "версия {_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "Штрихкод",
   "logMealSheetBarcodeScan": "Сканирование штрихкода",
   "logMealSheetCached": "(Кэшировано)",
-  "logMealSheetCaptured": ") снято",
   "logMealSheetChooseFoodPhotos": "Выберите фото еды",
   "logMealSheetChooseFromGallery": "Выбрать из галереи",
   "logMealSheetChooseFromLibrary": "Выбрать из медиатеки",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7-дневное ср. · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} от вашего предыдущего минимума",
   "logWeightSheetValidRange": "Допустимый диапазон: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Синхронизировано из Apple Health",
   "logWeightSyncedToAppleHealth": "Синхронизировано с Apple Health",
   "logWeightTapToEdit": "Нажмите для редактирования",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Выйти?",
   "macroRingsCardGG": "{consumed}г / {target}г",
   "macroRingsCardMacros": "Макросы",
-  "mainShellPartChatsLeftToday": "Осталось чатов на сегодня: {arg0}",
+  "mainShellPartChatsLeftToday": "Осталось чатов сегодня: {arg0}",
   "mainShellPartGuestMode": "Гостевой режим",
   "mainShellPartQuickActions": "Быстрые действия",
   "mainShellPartSignUp": "Регистрация",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Основной",
   "manageDuplicateImportsScreenSources": "{length} источников",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(строка)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Отвязать от группы",
   "manageDuplicateImportsUnlinkedFromGroup": "Отвязано от группы",
   "manageGymProfilesActive": "Активный",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} еще",
   "menuAnalysisSheetSelected": "{length} выбрано",
   "menuAnalysisSheetSort": "Сортировка: {label}",
-  "menuAnalysisSheetValue": ")(elapsed)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Вы уже сохранили меню для \"{restaurantName}\"",
   "menuAnalysisSort": "Сортировка:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "ТИП ПОКАЗАТЕЛЯ",
   "metricsDashboardMuscleMass": "Мышечная масса",
   "metricsDashboardNoDataAvailable": "Нет доступных данных",
-  "metricsDashboardNoMetricDataYet": "Данные метрик еще не добавлены {arg0}",
+  "metricsDashboardNoMetricDataYet": "Пока нет данных «{arg0}»",
   "metricsDashboardQuickStats": "БЫСТРАЯ СТАТИСТИКА",
   "metricsDashboardRestingHeartRate": "Пульс в покое",
   "metricsDashboardRestingHr": "Пульс в покое",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Другое",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Завершите тренировки, чтобы увидеть данные по мышцам",
   "muscleHeatmapTileCouldnTLoad": "Не удалось загрузить",
-  "muscleHeatmapTileMostTrained": "Чаще всего тренируемые: {arg0}",
+  "muscleHeatmapTileMostTrained": "Чаще всего: {arg0}",
   "muscleHeatmapTileMuscles": "Мышцы",
   "muscleHeatmapTileRetry": "Повторить",
   "muscleHeatmapUpperBody": "Верхняя часть тела",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Избранное ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Основные ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Лучший: {item}кг x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Недавняя активность",
   "myLibraryTabViewAll": "Смотреть все",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Любитель прогулок",
   "neatGamificationWidgetsClaimReward": "Получить награду",
   "neatGamificationWidgetsCouchPotato": "Домосед",
-  "neatGamificationWidgetsCurrentXp": "Текущий XP: {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Ежедневное испытание",
   "neatGamificationWidgetsExpired": "Истекло",
-  "neatGamificationWidgetsHoursMinutesLeft": "Осталось {arg0} ч. {arg1} мин.",
+  "neatGamificationWidgetsHoursMinutesLeft": "Осталось {arg0} ч {arg1} мин",
   "neatGamificationWidgetsLevel": "Уровень {level}",
   "neatGamificationWidgetsLevelUp": "НОВЫЙ УРОВЕНЬ!",
   "neatGamificationWidgetsMaxLevel": "Максимальный уровень!",
-  "neatGamificationWidgetsMinutesLeft": "Осталось {arg0} мин.",
+  "neatGamificationWidgetsMinutesLeft": "Осталось {arg0} мин",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Чемпион",
   "neatGamificationWidgetsNeatEnthusiast": "Энтузиаст",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "На этой неделе еще нет рейтингов",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Счет",
-  "neatGamificationWidgetsStepGoal": "Цель по шагам: {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Шаги",
-  "neatGamificationWidgetsTargetActiveHours": "Цель активных часов: {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} ч",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "РАСШИФРОВКА ОЦЕНКИ",
   "neatScoreDisplayTapForBreakdown": "Нажмите для расшифровки",
   "neatScoreDisplayTrend": "Тренд: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Загрузка...",
   "netflixExerciseCarouselSeeAll": "Смотреть все",
   "netflixExercisesAddYourOwnExercises": "Добавляйте свои упражнения с собственными повторениями, подходами и инструкциями.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Рассчитываем оптимальный следующий подход...",
   "nextSetPreviewCardIntensity": "Интенсивность {intensityPercentage}%",
   "nextSetPreviewCardKg": "{recommendedWeight} кг",
-  "nextSetPreviewCardKg2": ")(weightDelta) кг",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Финальный подход",
   "nextSetPreviewKg": " кг",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "ГЛАВНЫЕ ИСТОЧНИКИ",
   "nutrientExplorerUnknown": "Неизвестно",
   "nutrientExplorerUnpinNutrient": "Открепить нутриент",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "ВИТАМИНЫ",
   "nutrientRushGameCatchTheGoldenZealova": "Поймайте золотой знак Zealova для усиления!",
   "nutrientRushGameNewBest": "🎉 НОВЫЙ РЕКОРД!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Обзор за неделю",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "ср. {averageDailyCalories} кал",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Ср. потребление: {avgIntake} кал",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) кал",
   "nutritionTabPartWeeklyOverviewCardCalDay": "кал/день {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}г",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}г",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) кг",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Вес: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, всё включено",
   "onboardingWhyFirstTheWhy": "СНАЧАЛА О ПРИЧИНАХ",
   "onboardingWhyWhatSDrivingThis": "Что вас мотивирует?",
-  "openAllCrates24HoursOf2xXp": "24 часа двойного XP",
-  "openAllCratesActivityCrate": "Кейс активности",
+  "openAllCrates24HoursOf2xXp": "24 часа 2x XP",
+  "openAllCratesActivityCrate": "Ящик активности",
   "openAllCratesBonusCrateToOpen": "Бонусный кейс для открытия",
-  "openAllCratesCollect": "Забрать {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Кейсов открыто: {arg0}",
-  "openAllCratesDailyCrate": "Ежедневный кейс",
+  "openAllCratesCollect": "Забрать ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "Открыто ящиков: {arg0}!",
+  "openAllCratesDailyCrate": "Ежедневный ящик",
   "openAllCratesDone": "Готово",
-  "openAllCratesDoubleXpToken": "Токен двойного XP",
+  "openAllCratesDoubleXpToken": "Жетон двойного XP",
   "openAllCratesFailedToOpenCrates": "Не удалось открыть ящики. Пожалуйста, попробуйте снова.",
-  "openAllCratesFitnessCrate": "Фитнес-кейс",
-  "openAllCratesGainedXp": "Получено XP: {arg0}",
+  "openAllCratesFitnessCrate": "Фитнес-ящик",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Макс. уровень",
-  "openAllCratesOpenYourCrates": "Откройте свои кейсы",
-  "openAllCratesOpened": ") открыто!",
-  "openAllCratesOpeningYourCrates": "Открытие кейсов",
-  "openAllCratesPickRewardPerDay": "Выберите награду на день {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Выберите свою награду {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Откройте свои ящики",
+  "openAllCratesOpeningYourCrates": "🎁 Открываем ваши ящики…",
+  "openAllCratesPickRewardPerDay": "Выбирайте 1 награду в день • {arg0}/{arg1} выбрано",
+  "openAllCratesPickYourReward": "Выберите награду • {arg0}/{arg1} выбрано",
   "openAllCratesProtectYourStreak": "Защитите свою серию",
   "openAllCratesSelectAll": "Выбрать все",
-  "openAllCratesStreakCrate": "Сундук серии",
+  "openAllCratesStreakCrate": "Ящик серии",
   "openAllCratesStreakShield": "Щит серии",
   "openAllCratesToday": "Сегодня",
-  "openAllCratesTotalXpFormatted": "Всего XP {arg0}",
-  "openAllCratesTotalXpLevel": "Всего XP уровень {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} всего",
+  "openAllCratesTotalXpLevel": "Всего: {arg0} XP • Уровень {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 Награды!",
-  "openAllCratesXpInLevel": "XP на уровне {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP до следующего уровня {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP до ур. {arg1}",
   "openAllCratesYesterday": "Вчера",
   "overallScoreHeroOverall": "ОБЩИЙ РЕЗУЛЬТАТ",
   "overviewActiveSkill": "АКТИВНЫЙ НАВЫК",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Ваш тип личности в зале — это...",
   "phaseRecommendationBannerBasedOn": "На основе: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(уверенность)-оценка уверенности\" : \"\")",
   "phaseRecommendationBannerCycleDay": "День цикла {cycleDay}",
   "phaseRecommendationBannerEvidence": "Доказательства: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Понятно",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Создание фундамента силы",
   "planPreviewScreenBuildingYour4Week": "Создаем ваш 4-недельный план...",
   "planPreviewScreenContinueFree": "Продолжить бесплатно",
-  "planPreviewScreenDaysPerWeek": "Дней в неделю {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} дней/неделю",
   "planPreviewScreenDesignedBasedOnYour": "Разработано на основе ваших ответов в опросе",
-  "planPreviewScreenEquipmentCount": "Количество оборудования {arg0}",
+  "planPreviewScreenEquipmentCount": "Оборудование: {arg0}",
   "planPreviewScreenExercisesMin": "Упражнения мин {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Увеличение интенсивности и объема",
   "planPreviewScreenMasterTheMovement": "Освоение техники движения",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} личных рекордов!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") ОТ ПРОШЛОГО",
   "prShareCardCopiedToClipboard": "Скопировано в буфер обмена!",
   "prShareCardCopyText": "Копировать текст",
   "prShareCardFailedToCaptureImage": "Не удалось создать изображение",
@@ -23721,7 +23448,7 @@
   "programSummaryLevel": "Уровень",
   "programSummaryLoseWeight": "Снижение веса",
   "programSummaryMacrosAndMealsAligned": "Макронутриенты и питание, согласованные с вашими тренировками",
-  "programSummaryNItems": "Элементов {arg0}",
+  "programSummaryNItems": "Элементов: {arg0}",
   "programSummaryNutritionIntegration": "Интеграция питания",
   "programSummaryPersonalizedForYourGoals": "Персонализировано под ваши цели и оборудование",
   "programSummaryProgressiveOverload": "Прогрессивная перегрузка",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Не останавливайтесь!",
   "prsTemplateNewPersonalRecords": "НОВЫЕ ЛИЧНЫЕ РЕКОРДЫ",
   "prsTemplateNewPrsAreJust": "Новые личные рекорды уже близко",
-  "prsTemplateValue": ") (unit)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Ингредиенты",
   "publicRecipeInstructions": "Инструкции",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "Нажмите, чтобы просмотреть полную историю и тренды",
   "quickLogMeasurementsTrackYourBodyChanges": "Отслеживайте изменения своего тела с течением времени",
   "quickLogMeasurementsUpdate": "Обновить",
-  "quickLogMeasurementsUpdatedDaysAgo": "Дней назад {arg0}",
+  "quickLogMeasurementsUpdatedDaysAgo": "Обновлено {arg0} дней назад",
   "quickLogMeasurementsUpdatedToday": "Сегодня",
   "quickLogMeasurementsUpdatedYesterday": "Вчера",
   "quickLogMeasurementsWaist": "Талия",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "ИИ создает тренировки в выбранном вами диапазоне",
   "quizDaysSelectorBest": "Лучший вариант",
   "quizDaysSelectorConsistencyBeatsIntensity": "Регулярность важнее интенсивности — выберите то, что сможете поддерживать",
-  "quizDaysSelectorDays": "Дней: {arg0}",
-  "quizDaysSelectorDaysSelected": "Выбрано дней: {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") для ваших тренировок",
+  "quizDaysSelectorDays": "{arg0, plural, one {день} few {дня} many {дней} other {дня}}",
+  "quizDaysSelectorDaysSelected": "Выбрано {arg0} / {arg1} дней",
   "quizDaysSelectorFri": "Пт",
   "quizDaysSelectorHowLongAreYour": "Сколько длятся ваши тренировки?",
   "quizDaysSelectorHowManyDaysPer": "Сколько дней в неделю вы можете тренироваться?",
   "quizDaysSelectorMin": "Мин.",
   "quizDaysSelectorMon": "Пн",
   "quizDaysSelectorSat": "Сб",
-  "quizDaysSelectorSelectNDays": "Выберите {arg0} дней",
+  "quizDaysSelectorSelectNDays": "Выберите {arg0} дней, которые вам подходят",
   "quizDaysSelectorSun": "Вс",
   "quizDaysSelectorThu": "Чт",
   "quizDaysSelectorTue": "Вт",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Домашний зал",
   "quizEquipmentHomeKettlebell": "Дом + гиря",
   "quizEquipmentHotel": "Отель",
-  "quizEquipmentIdentifiedCount": "Определено: {arg0}",
+  "quizEquipmentIdentifiedCount": "Распознано элементов: {arg0}. Нажмите на любой, чтобы снять выбор.",
   "quizEquipmentKettlebell": "Гиря",
   "quizEquipmentMedicineBall": "Медбол",
   "quizEquipmentMinimalEquipmentBodyweight": "Минимум оборудования — собственный вес, коврик",
   "quizEquipmentNeededForBarbell": "Нужно для штанги",
   "quizEquipmentNoEquipmentIdentifiedPick": "Оборудование не распознано. Выберите из списка ниже.",
-  "quizEquipmentOtherCount": "Другое: {arg0}",
+  "quizEquipmentOtherCount": "Выбрано: {arg0}",
   "quizEquipmentOtherEquipment": "Другое оборудование",
   "quizEquipmentPullUpBar": "Турник",
   "quizEquipmentQuickPresets": "Быстрые пресеты",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Требуется название рецепта",
   "recipeCreateRemovePhoto": "Удалить фото",
   "recipeCreateSaving": "Сохранение...",
-  "recipeCreateScreenValue": "(бренд) \" : \"\")(название еды)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Сделать фото",
   "recipeCreateTapToEdit": "Нажмите для редактирования",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} ккал",
   "recipeDetailScreenPerServingUD": "На порцию (×{servings} порций)",
   "recipeDetailScreenUForkedFrom": "✨ Создано на основе {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" будет удалено навсегда.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Рекомендуемый рецепт",
   "recipeDetailView": "Просмотр",
@@ -24754,7 +24477,7 @@
   "regenerateSheetConsideringFocusAreas": "Учитываем целевые зоны",
   "regenerateSheetCustomize": "Настроить",
   "regenerateSheetCustomizeOrLetAi": "Настройте сами или позвольте ИИ предложить варианты",
-  "regenerateSheetCustomizeOrLetAiSuggest": "Настройте сами или позвольте ИИ предложить",
+  "regenerateSheetCustomizeOrLetAiSuggest": "Настройте или доверьте ИИ",
   "regenerateSheetDescribeYourIdealWorkout": "Опишите вашу идеальную тренировку",
   "regenerateSheetDesigningYourWorkout": "Разрабатываем вашу тренировку",
   "regenerateSheetDialingInSetsAndReps": "Подбираем подходы и повторения",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Завершаем детали…",
   "regenerateSheetFinalizingYourWorkout": "Завершаем тренировку",
   "regenerateSheetFineTuningTheDetails": "Уточняем детали",
-  "regenerateSheetGeneratingElapsed": "Генерация: {arg0}",
+  "regenerateSheetGeneratingElapsed": "Генерация… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Генерируем предложения…",
   "regenerateSheetGetSuggestions": "Получить предложения",
   "regenerateSheetGettingCreative": "Добавляем разнообразие",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Использовать рекомендованное",
   "restSuggestionQuick": "Быстро",
   "restSuggestionQuickRest": "Быстрый отдых",
-  "restSuggestionSaveTime": "Сэкономить время {arg0}",
+  "restSuggestionSaveTime": "Сэкономьте {arg0}",
   "restSuggestionSuggested": "Рекомендуемое",
   "restSuggestionUseSuggested": "Использовать рекомендуемое",
   "restTimerCardBaseRest": "Базовый отдых",
   "restTimerCardControlRestPeriodsBetween": "Контролируйте периоды отдыха между подходами",
   "restTimerCardCustomRestTimer": "Пользовательский таймер отдыха",
   "restTimerCardFormula": "Формула",
-  "restTimerCardFormulaBaserestRpe7": "Формула: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Предпросмотр",
   "restTimerCardMultiplier": "Множитель",
   "restTimerCardRestBaserestRpe7": "Отдых = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}с",
   "restTimerCardS2": "{restTimerBaseRest}с",
   "restTimerCardS3": "{s}с",
-  "restTimerCardVariablesBaseRpeMultipli": "Переменные: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Переменные: база, RPE, множитель, уровень",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "Анализируем вашу эффективность...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "Завершено",
   "rtpTitle": "Возвращение к нагрузке",
   "safetyDisclaimerBannerDismissDisclaimer": "Скрыть предупреждение",
-  "safetyDisclaimerBannerInjuriesFlagged": "Отмеченные травмы: {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "Отмечено травм: {arg0}",
   "safetyDisclaimerBannerInjuryBody": "Травмированная область",
   "safetyDisclaimerBannerLearnMore": "Подробнее",
   "safetyDisclaimerBannerMore": "+ еще {overflow}",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Подход",
   "sessionDetailSetCount": "{count, plural, one{{count} подход} few{{count} подхода} other{{count} подходов}} · выделен лучший подход",
   "sessionDetailTime": "Время",
-  "sessionDetailTopSetHighlighted": ") • выделен лучший подход",
   "sessionDetailWeight": "Вес",
   "setAdjustmentAdditionalNotesOptional": "Дополнительные заметки (необязательно)",
   "setAdjustmentConfirm": "Подтвердить",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} выполнено",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "осталось {remainingCount}",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} удалено",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") из (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "из {totalSets} запланированных",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} подходов выполнено",
   "setAdjustmentSheetReps": "Повторения",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Подход {currentSetNumber}/{totalSets} • Нажмите, чтобы развернуть",
   "setTrackingSectionSets": "{widget} подходов",
   "setTrackingSectionSetsCompleted": "{length} подходов выполнено",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "Величина изменения веса",
   "setTrackingSheetsDropSet": "Дроп-сет",
   "setTrackingSheetsExerciseHistory": "История упражнения",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "Мой отчет {appName} за {periodName}",
   "shareInsightsSheetMyReport2": "Мой отчет {appName}",
   "shareMotivationalCompleted": "ЗАВЕРШЕНО",
-  "sharePrNewPr": "Новый PR",
+  "sharePrNewPr": "НОВЫЙ PR",
   "shareStatsCalories": "Калории",
   "shareStatsDuration": "Длительность",
   "shareStatsEliteTemplate": "ЭЛИТНЫЙ ШАБЛОН",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "НАГРАДЫ",
   "streakMilestoneStreakMilestone": "ВЕХА СЕРИИ!",
-  "streakMilestoneToGo": ") осталось!",
   "streakMilestoneYouVeReachedThe": "Вы достигли максимальной вехи серии!",
   "streakSavedDialogWeUsedStreakShield": "Мы использовали 1 Щит серии, чтобы сохранить вашу серию из {savedStreakCount} дней.",
   "streakSavedKeepItGoing": "Продолжайте в том же духе",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Подключить",
   "todayScoreCardCustomize": "НАСТРОИТЬ",
   "todayScoreCardToday": "Сегодня",
-  "todayScoreDetailDown": "Снижение {arg0}",
-  "todayScoreDetailEarnedPts": "Заработано очков {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Снижение на {arg0} с утра",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} очк.",
   "todayScoreDetailHowItWorks": "Как это работает",
-  "todayScoreDetailInactiveExplanation": "Объяснение неактивности {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Динамика со средним значением {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {сегодня не учитывается} few {сегодня не учитываются} many {сегодня не учитываются} other {сегодня не учитывается}}, поэтому остальные делят полные 100 очков. Ваш результат всегда отражает только то, что действительно применимо сегодня.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  Среднее за 7 дней {arg1}",
   "todayScoreDetailNotCounted": "Не учитывается",
   "todayScoreDetailSetupText": "Текст настройки",
   "todayScoreDetailSteady": "Стабильно",
   "todayScoreDetailTodayScore": "Оценка дня",
-  "todayScoreDetailUp": "Рост {arg0}",
+  "todayScoreDetailUp": "▲ Рост на {arg0} с утра",
   "todayScoreSetupAddAWorkoutPlan": "Добавить план тренировок",
   "todayScoreSetupCardContinue": "Продолжить: {label}",
   "todayScoreSetupCardGetStarted": "НАЧАТЬ · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Кардио-достижения",
   "trophiesEarnedDayStreak": "Серия дней",
   "trophiesEarnedFirstTime": "ВПЕРВЫЕ!",
-  "trophiesEarnedKg": ") кг",
   "trophiesEarnedMilestoneReached": "Цель достигнута",
   "trophiesEarnedMilestoneReachedNice": "Веха достигнута — отлично!",
   "trophiesEarnedMilestones": "Вехи",
-  "trophiesEarnedNewBadges": "Значки {arg0}",
-  "trophiesEarnedNewCardioPRs": "Новые кардио PR {arg0}",
-  "trophiesEarnedNewPR": "Новый личный рекорд",
-  "trophiesEarnedNewPRs": "Новые PR {arg0}",
+  "trophiesEarnedNewBadges": "Новых значков: {arg0}",
+  "trophiesEarnedNewCardioPRs": "Новых кардио-PR: {arg0}",
+  "trophiesEarnedNewPR": "НОВЫЙ PR",
+  "trophiesEarnedNewPRs": "Новых PR: {arg0}!",
   "trophiesEarnedNewPr": "НОВЫЙ PR",
   "trophiesEarnedNextMilestones": "Следующие вехи",
   "trophiesEarnedNoNewRecords": "Нет новых рекордов",
   "trophiesEarnedNoNewRecordsThis": "В этой сессии нет новых рекордов — вот над чем вы работаете:",
   "trophiesEarnedPersonalRecords": "Личные рекорды",
-  "trophiesEarnedRemainingToUnlock": "Осталось разблокировать {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "Ещё {arg0} {arg1} для разблокировки",
   "trophiesEarnedSessionHighlights": "Основные моменты тренировки",
   "trophiesEarnedSheetPts": "+{points} очков",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} печатает",
   "typingIndicatorIsTyping3": "{agentName} печатает...",
   "unifiedHomeWidgetsActivity": "АКТИВНОСТЬ",
-  "unifiedHomeWidgetsBreakfastLogged": "Завтрак записан {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Завтрак записан {arg0} из последних 7 утр",
   "unifiedHomeWidgetsBreakfastSuggestion": "Идея для завтрака",
   "unifiedHomeWidgetsCarbs": "Углеводы",
   "unifiedHomeWidgetsConnect": "Подключить",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Жиры",
   "unifiedHomeWidgetsG": "{eaten} / {goal} г",
   "unifiedHomeWidgetsKcal": " ккал",
-  "unifiedHomeWidgetsKcalBurned": "Всего {arg0} ккал сегодня",
+  "unifiedHomeWidgetsKcalBurned": "Сожжено {arg0} kcal",
   "unifiedHomeWidgetsKcalLeft": " ккал осталось",
   "unifiedHomeWidgetsLastNight": "прошлой ночью",
   "unifiedHomeWidgetsLog16oz": "Записать 16 унций",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}нед.",
   "weekDurationSelectorWeeks": "{selectedWeeks} нед.",
   "weekDurationSelectorWk": "{spw}/нед.",
-  "weekProgressStripCompletedCount": "Выполнено {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "Выполнено {arg0} из {arg1} тренировок",
   "weekProgressStripCouldNotLoadProgress": "Не удалось загрузить прогресс",
   "weekProgressStripLoading": "Загрузка...",
   "weekProgressStripNoWorkoutsScheduled": "Нет запланированных тренировок",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Смотреть все",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Отслеживание веса",
-  "weightTrendCardDownThisWeek": "Снижение на этой неделе {arg0}",
-  "weightTrendCardDownVsLastCycle": "Снижение относительно прошлого цикла {arg0}",
+  "weightTrendCardDownThisWeek": "Снижение на {arg0} за неделю!",
+  "weightTrendCardDownVsLastCycle": "Снижение на {arg0} lbs по сравнению с тем же днём цикла в прошлом месяце",
   "weightTrendCardLoadingWeight": "Загрузка веса...",
   "weightTrendCardLogYourWeightTo": "Запишите свой вес, чтобы увидеть динамику",
   "weightTrendCardMaintaining": "Поддержание",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Как в прошлом цикле",
   "weightTrendCardTapToLogWeight": "Нажмите, чтобы записать вес",
   "weightTrendCardTargetHeld": "Цель достигнута",
-  "weightTrendCardTargetHeldWindow": "Цель достигнута в диапазоне {arg0}",
-  "weightTrendCardUpThisWeek": "Рост на этой неделе {arg0}",
-  "weightTrendCardUpVsLastCycle": "Рост относительно прошлого цикла {arg0}",
+  "weightTrendCardTargetHeldWindow": "Цель удержана {arg0} — сглаживание воды в лютеиновой фазе",
+  "weightTrendCardUpThisWeek": "Рост на {arg0} за неделю",
+  "weightTrendCardUpVsLastCycle": "Рост на {arg0} lbs по сравнению с тем же днём цикла в прошлом месяце",
   "weightTrendCardWeightStableThisWeek": "Вес стабилен на этой неделе",
   "weightTrendCardWeightTrends": "Динамика веса",
   "welcomeAffirmationGreatChoice": "Отличный выбор.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "Восстановить эту версию?",
   "workoutActionsShareWorkout": "Поделиться тренировкой",
   "workoutActionsSheetGetALinkFor": "Получить ссылку {marketingDomain} для друзей",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "Восстановить \"{name}\"?",
   "workoutActionsSheetS": "{duration}с",
   "workoutActionsSheetV": "версия {versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} кг",
   "workoutCompleteScreenUi2KgXReps": "{exComp} кг x {currentReps} повт.",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} подходов, {currentReps} повт.",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "В данный момент невозможно бросить вызов друзьям",
   "workoutCompleteScreenUnableToExtendWorkout": "Не удалось продлить тренировку",
   "workoutCompleteScreenViewAllMetrics": "Посмотреть все показатели",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "ОБОРУДОВАНИЕ",
   "workoutDetailExercises": "УПРАЖНЕНИЯ",
   "workoutDetailFailedToLoadWorkout": "Не удалось загрузить тренировку",
-  "workoutDetailHelpersForAvailableEquipment": ") для доступного оборудования...",
   "workoutDetailHelpersHell": "Ад",
   "workoutDetailHelpersUpdatingExercises": "Обновление упражнений",
   "workoutDetailMoreInfo": "ПОДРОБНЕЕ",
   "workoutDetailProgram": "Программа",
-  "workoutDetailReplacingExercises": "Замена упражнений {arg0}",
+  "workoutDetailReplacingExercises": "Замена упражнений ({arg0}) под доступное оборудование…",
   "workoutDetailRevert": "Отменить",
   "workoutDetailScreenBreakSuperset": "Разбить суперсет?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} кал сожжено",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "В каких единицах указан вес в столбце? Если вы знаете исходное приложение, выберите его — это поможет различить похожие форматы (например, CSV от Hevy или Strong).",
   "workoutHistoryImportYourStrengthData": "Ваши силовые данные",
-  "workoutImportAsDone": ")\" как выполненную",
   "workoutImportCalories": "Калории",
   "workoutImportCardio": "Кардио",
   "workoutImportCycling": "Велоспорт",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Длительность",
   "workoutImportEasy": "Легко",
   "workoutImportFlexibility": "Гибкость",
-  "workoutImportFromSource": "Из источника {arg0}",
+  "workoutImportFromSource": "из {arg0}",
   "workoutImportHard": "Тяжело",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Насколько тяжелой была эта тренировка?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Вы можете увидеть эти системные запросы во время тренировки. Оба необязательны — пропустите любой из них, и тренировка все равно будет работать.",
   "workoutPlanDrawerAddExercise": "Добавить упражнение",
   "workoutPlanDrawerCurrent": "Текущий",
-  "workoutPlanDrawerExerciseCount": "Количество упражнений {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") записано. Они будут удалены.",
+  "workoutPlanDrawerExerciseCount": "{arg0} упражнений",
   "workoutPlanDrawerNow": "Сейчас",
   "workoutPlanDrawerRemove": "Удалить",
-  "workoutPlanDrawerRemoveExercise": "Удалить упражнение {arg0}",
+  "workoutPlanDrawerRemoveExercise": "Удалить {arg0}?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Подсказка удаления упражнения",
-  "workoutPlanDrawerSetsLogged": "Записано подходов {arg0}",
+  "workoutPlanDrawerSetsLogged": "У вас записано подходов: {arg0}. Они будут удалены.",
   "workoutPlanDrawerSwapExercise": "Заменить упражнение",
   "workoutPlanDrawerTitle": "Название",
   "workoutPlanDrawerWorkoutPlan": "План тренировки",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "Каждый записанный подход",
   "workoutShowcaseEveryWorkoutFlows": "Каждая тренировка течет",
   "workoutShowcaseFinishWorkout": "Завершить тренировку",
-  "workoutShowcaseFormat1Rm": "Формат 1RM",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "Посадка",
   "workoutShowcaseFormatCard": "Карточка",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Линейная метка",
   "workoutShowcaseLogAllSets": "Все подходы",
   "workoutShowcaseLogDrink": "Записать напиток",
-  "workoutShowcaseLogSet": "Подход {arg0}",
+  "workoutShowcaseLogSet": "✓ Записать подход {arg0}",
   "workoutShowcaseLogWater": "Записать воду",
   "workoutShowcaseMovedThisSession": "перемещено за тренировку",
   "workoutShowcaseNewPr": "НОВЫЙ PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Повторения",
   "workoutShowcaseScreenDay": "День {day}",
   "workoutShowcaseScreenDuration": "ДЛИТЕЛЬНОСТЬ: {duration}",
-  "workoutShowcaseScreenPrs": "РЕКОРДЫ: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} РЕКОРДОВ · ВНЕСЕНО",
   "workoutShowcaseScreenSession": "ТРЕНИРОВКА: {title}",
   "workoutShowcaseScreenTotalPrs": "ИТОГО {duration} · {volume} · {prs} РЕКОРДОВ",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Ежедневно",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 уровней в 11 ярусах",
   "xpGoalsDialogBeginnerToTranscendent": "От новичка до трансцендентного",
-  "xpGoalsDialogCompleteWorkoutXp": "XP за завершение тренировки",
+  "xpGoalsDialogCompleteWorkoutXp": "Завершить тренировку: +100 XP",
   "xpGoalsDialogDailyGoals": "Ежедневные цели",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "XP за первый чат с AI-тренером",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "XP за первый замер веса еды",
-  "xpGoalsDialogFirstPrXp": "XP за первый PR",
-  "xpGoalsDialogFirstProgressPhotoXp": "XP за первое фото прогресса",
-  "xpGoalsDialogFirstProteinGoalXp": "XP за первую цель по белку",
-  "xpGoalsDialogFirstWorkoutXp": "XP за первую тренировку",
-  "xpGoalsDialogHitProteinGoalXp": "XP за достижение цели по белку",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Первый чат с ИИ-тренером: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Первый приём пищи/вес/замеры: +50 XP за каждое",
+  "xpGoalsDialogFirstPrXp": "Первый PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Первое фото прогресса: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Первая цель по белку: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Первая тренировка: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Достичь цели по белку: +50 XP",
   "xpGoalsDialogLevels": "Уровни",
-  "xpGoalsDialogLogBodyMeasurementsXp": "XP за замеры тела",
-  "xpGoalsDialogLogMealXp": "XP за запись приема пищи",
-  "xpGoalsDialogLogWeightXp": "XP за запись веса",
-  "xpGoalsDialogLoginXp": "XP за вход",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Записать замеры тела: +20 XP",
+  "xpGoalsDialogLogMealXp": "Записать приём пищи: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Записать вес: +15 XP",
+  "xpGoalsDialogLoginXp": "Вход: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Награды за достижения",
   "xpGoalsFirstTimeBonuses": "Бонусы за первый раз",
   "xpGoalsGotIt": "Понятно!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Достигните цели по белку",
   "xpGoalsScreenInventory": "Инвентарь",
   "xpGoalsScreenLegendary": "ЛЕГЕНДАРНЫЙ",
-  "xpGoalsScreenLevelCurrentTotal": "Текущий уровень {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Уровень {arg0} • всего 249 уровней",
   "xpGoalsScreenLevelProgress": "Прогресс уровня",
   "xpGoalsScreenLogBodyMeasurements": "Запишите замеры тела",
   "xpGoalsScreenLogFirstMeal": "Запишите первый прием пищи",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Зал трофеев",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Еженедельно",
-  "xpGoalsXpAvailable": "Доступно {arg0}",
-  "xpGoalsXpEarnedToday": "Заработано сегодня {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP доступно",
+  "xpGoalsXpEarnedToday": "+{arg0} XP получено сегодня",
   "xpGoalsXpGoals": "Цели XP",
-  "xpGoalsXpMultiplierActive": "Множитель активен {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP активно!",
   "xpHeroTileDayStreak": "Серия {streak} дн.",
   "xpHeroTileLv": "Ур. {level}",
   "xpHeroTileLv2": "Ур. {nextLevel} → {label}",

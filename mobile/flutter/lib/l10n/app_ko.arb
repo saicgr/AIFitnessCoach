@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "사용 시기",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "운동이 성공적으로 교체되었습니다",
   "activeWorkoutScreenRefactoredExerciseSAdded": "운동 {_exercises}개 추가됨",
-  "activeWorkoutScreenRefactoredFor": ") {name} (을)를 위해",
   "activeWorkoutScreenUndo": "실행 취소",
   "activeWorkoutScreenWorkoutAdapted": "운동이 조정되었습니다.",
   "activityCardAdditionalDetailsOptional": "추가 세부 정보 (선택 사항)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "운동 전 에너지 보충?",
   "aiCoachMealQuickSnackIdeas": "빠른 간식 아이디어?",
   "aiCoachMealRecoveryDayEating": "회복일 식단?",
-  "aiCoachMealSearchQuestionsTryAngry": "질문 검색(\"angry\", \"fibe mexican\"을 시도해 보세요)",
   "aiCoachMealSomethingWentWrong": "문제가 발생했습니다.",
   "aiCoachMealStressedWhatHelps": "스트레스를 받습니다. 무엇이 도움이 되나요?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "아시아 스타일 {meal} 메뉴 하나를 추천해 주세요. 매크로와 조리법 포함.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · {phase} 단계",
   "caloriesSummaryCardCalories": "칼로리",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "남음",
   "cancelConfirmationAnythingElseYouD": "공유하고 싶은 다른 의견이 있으신가요? (선택 사항)",
   "cancelConfirmationCancelAnyway": "그래도 취소",
   "cancelConfirmationHelpUsImprove": "개선에 도움을 주세요",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "확인",
   "chatLanguageChangedSystem": "🌐 AI Coach가 이제 {nativeName}(으)로 응답합니다",
   "chatLanguageResetSystem": "🌐 AI Coach 언어가 초기화되었습니다. 앱 언어를 사용합니다",
-  "chatLeftToday": ") 남음",
   "chatMediaWidgetsCalTotal": "총 {totalCal} cal",
   "chatMediaWidgetsGProtein": "단백질 {totalProtein}g",
   "chatMediaWidgetsGoTo": "{workoutName}으로 이동",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "코치가 평소보다 더 오래 생각하고 있습니다.",
   "chatScreenCouldntReachCoach": "코치에게 연결하지 못했습니다.",
   "chatScreenExtAboutAiCoach": "AI 코치 소개",
-  "chatScreenExtAs": ") (mealType)로",
   "chatScreenExtChangeCoach": "코치 변경",
   "chatScreenExtChatTips": "채팅 팁",
   "chatScreenExtChooseMultiplePhotos": "사진 여러 장 선택",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "목표 보기",
   "complianceRingCardAllWorkoutsCompleted": "모든 운동 완료",
   "complianceRingCardGetStartedToday": "오늘 시작하기",
-  "complianceRingCardGreatPace": "훌륭한 페이스 {arg0}",
+  "complianceRingCardGreatPace": "좋은 페이스예요! {arg0} 남음",
   "complianceRingCardNoWorkoutsScheduledThis": "이번 주에 예정된 운동이 없습니다",
-  "complianceRingCardOnTrack": "순항 중 {arg0}",
+  "complianceRingCardOnTrack": "순조로워요 — {arg0} 남음",
   "complianceRingCardWorkoutCompliance": "운동 준수율",
-  "complianceRingCardWorkoutsRemaining": "남은 운동 {arg0}",
+  "complianceRingCardWorkoutsRemaining": "운동 {arg0}개 남음",
   "comprehensiveStatsStatsScores": "통계 및 점수",
   "connectedAppsAutoImportEvery15": "15분마다 자동 가져오기",
   "connectedAppsConnect": "연결",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "음식 선택",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "이 값 사용",
-  "cookingConverterWeight": ") 무게",
   "cosmeticsGalleryCosmetics": "코스메틱",
   "cosmeticsGalleryEquip": "장착",
   "cosmeticsGalleryEquipped": "장착됨",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "검색 결과가 없습니다",
   "customExercisesScreenAreYouSureYou": "\"{name}\"을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
   "customExercisesScreenExercisesUses": "운동 {totalCustomExercises}개, 사용 횟수 {totalUses}회",
-  "customExercisesScreenUsedTimes": "사용 횟수 (usageCount)회(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "운동 검색...",
   "customExercisesSimple": "단일",
   "customFoodBuilderAiFillFromName": "이름으로 AI 자동 채우기",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · 지난 주기",
   "customTrendScreenMaxOverlaysRemoveOne": "최대 {_kMaxOverlays}개의 오버레이만 가능합니다. 하나를 제거하고 추가하세요.",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} 공유 일수",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "운동 추가",
   "customWorkoutBuilderBuildCustomWorkout": "맞춤 운동 구성",
   "customWorkoutBuilderCustomWorkoutCreated": "맞춤 운동이 생성되었습니다!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "생리 기록하기",
   "cycleScreenUiLogPeriod": "생리 기록",
   "cycleScreenUiLogYourFirstPeriod": "첫 생리일을 기록하여 예측을 시작하세요.",
-  "cycleScreenUiPhase": " 단계",
   "cycleScreenUiPhaseLabel": "{displayName} 단계",
   "cycleScreenUiPredictionsAreEstimates": "예측은 기록된 데이터를 기반으로 한 추정치이며, 피임 방법이나 의학적 조언이 아닙니다. 건강 관련 우려 사항은 전문의와 상담하세요.",
   "cycleScreenUiPregnancyModeIsOn": "임신 모드 활성화됨",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "계속",
   "editProgramSheetCurrent": "현재",
   "editProgramSheetCustomProgram": "맞춤 프로그램",
-  "editProgramSheetCustomValue": "사용자 지정 값 {arg0}",
+  "editProgramSheetCustomValue": "사용자 지정: {arg0}",
   "editProgramSheetCustomizeProgram": "프로그램 맞춤 설정",
   "editProgramSheetDays": "일",
   "editProgramSheetDaysAgo": "{days}일 전",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "장비",
   "editProgramSheetEquipmentLabel": "장비 라벨",
   "editProgramSheetExamples": "예시",
-  "editProgramSheetFailedToLoadHistory": "기록 불러오기 {arg0}",
-  "editProgramSheetFailedToRestore": "복원 {arg0}",
+  "editProgramSheetFailedToLoadHistory": "기록을 불러오지 못했습니다: {arg0}",
+  "editProgramSheetFailedToRestore": "복원하지 못했습니다: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "프로그램 업데이트",
   "editProgramSheetFocus": "집중 부위",
   "editProgramSheetHealth": "건강",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "다운로드 중 {pct}%",
   "exerciseDetailSheetDownloadingVideo": "동영상 다운로드 중...",
   "exerciseDetailSheetFavorite": "가장 좋아하는",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "로드 중...",
   "exerciseDetailSheetLog1rm": "로그 1RM",
   "exerciseDetailSheetMS": "{restMins}분 {restSecs}초",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15초",
   "exerciseSetTrackerAddNotesHere": "여기에 메모 추가...",
   "exerciseSetTrackerAddSet": "세트 추가",
-  "exerciseSetTrackerBarbell": ") 바벨",
   "exerciseSetTrackerReps": "횟수",
   "exerciseSetTrackerRestTarget": "휴식 목표",
   "exerciseSetTrackerS": "{seconds}초",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI 추천을 사용할 수 없습니다",
   "exerciseSwapSheetAnyEquipment": "모든 장비",
   "exerciseSwapSheetAskAiForSuggestions": "AI에게 제안 요청하기",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "장비나 선호 사항을 설명하세요\n예: \"어깨가 안 좋아요\", \"맨몸 운동만 가능\"",
   "exerciseSwapSheetEGIOnly": "예: \"덤벨만 있어요\"",
   "exerciseSwapSheetFailedToSwapExercise": "운동 교체 실패",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "근육 타겟 대체 운동 찾는 중...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "중량",
   "expandedExerciseCardAddToFavorites": "즐겨찾기에 추가",
   "expandedExerciseCardAlternatingHands": "양손 번갈아 하기",
-  "expandedExerciseCardBarbell": ") 바벨",
   "expandedExerciseCardBreathing": "호흡",
   "expandedExerciseCardBreathingGuide": "호흡 가이드",
   "expandedExerciseCardCollapse": "접기",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "프로토콜 레벨",
   "fastingScoreCardScore": "점수",
   "fastingScoreCardStreakBonus": "연속 기록 보너스",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "지난주 대비",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "처음",
   "flexibilityProgressChartLatest": "최근",
   "flexibilityProgressChartNoDataAvailable": "데이터 없음",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "부위별",
   "flexibilityScoreCardFocusAreas": "집중 부위",
   "flexibilityScoreCardOverallFlexibility": "종합 유연성",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "식사, 음식, \"고단백\" 검색...",
   "foodHistoryUndo": "실행 취소",
   "foodItemRankingAddFood": "음식 추가",
-  "foodItemRankingDetails": ") 세부 정보",
   "foodItemRankingNFoodItems": "음식 항목 {count}개",
   "foodItemRankingScore": "점수",
   "foodItemRankingTapToHideDetails": "탭하여 상세 정보 숨기기",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "그래서 장부가 아닌 사람을 지었습니다. 국내든 해외든 메뉴를 찍으면 코치가 매크로로 다시 읽어줍니다. 화요일을 건너뛰면 죄책감 없이 수요일 아침에 돌아올 수 있습니다. 한 달에 한 번 미만의 PT 세션으로 음식, 체육관, 슬립 패턴을 학습합니다.",
   "founderNoteTheFriendsWhoActually": "실제로 몸을 만든 친구들은 누군가와 계속 연락을 주고받았습니다. 실제 책임감 있는 관리는 한 달에 약 200달러가 들고, 이것이 바로 우리 대부분이 그런 관리를 받지 못하는 이유이며, '기록'과 '변화' 사이의 간극이 수년 동안 좁혀지지 않는 이유입니다.",
-  "freshnessDecayCardAgo": " 전",
   "freshnessDecayCardControlsHowQuicklyExercise": "운동 신선도가 감소하는 속도를 제어합니다: e^(-k * 세션)",
   "freshnessDecayCardFreshnessDecayTuner": "신선도 감소 튜너",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "{totalSets}세트 중 {currentSetNumber}세트",
   "futuristicSetCardSkipExercise": "운동 건너뛰기",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "운동, 영양, 단식을 아우르는 종합적인 계획을 세우세요.",
   "generatePlanFastingProtocol": "단식 프로토콜",
   "generatePlanGeneratePlan": "계획 생성",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "첫 습관 추가하기",
   "habitsCardAllHabitsCompleted": "모든 습관 완료!",
   "habitsCardBuildDailyHabits": "매일 습관 만들기",
-  "habitsCardCompletedCount": "완료 횟수 {arg0} {arg1}",
-  "habitsCardDayStreak": "{arg0}일 연속 기록",
+  "habitsCardCompletedCount": "{arg0}/{arg1} 완료",
+  "habitsCardDayStreak": "{arg0}일 연속",
   "habitsCardFailedToLoadHabits": "습관을 불러오지 못했습니다",
   "habitsCardGreatJobKeepingUp": "꾸준히 잘하고 있어요",
   "habitsCardQuickStart": "빠른 시작:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "오늘의 습관",
   "habitsCardTryAgain": "다시 시도",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "모든 습관 보기 {arg0}",
+  "habitsCardViewAllHabits": "습관 {arg0}개 모두 보기",
   "habitsCompleted": "완료",
   "habitsDeleteHabit": "습관을 삭제할까요?",
   "habitsHoldToReorderSwipe": "길게 눌러 순서 변경 • 밀어서 삭제",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "휴식일인가요? 아니면 운동할 준비가 되셨나요? 선택은 당신의 몫입니다.",
   "homeEmptyWorkout_v3": "프로그램 사이의 휴식기인가요? 새 프로그램을 시작해 다시 궤도에 오르세요.",
   "homeEmptyWorkout_v4": "아직 계획이 없네요. AI가 당신의 목표에 맞춰 계획을 짜드릴게요.",
-  "homeFromHealthConnect": ") Health Connect에서 가져옴",
   "homeGreetingAfternoon_v1": "오후의 활력, {name}님!",
   "homeGreetingAfternoon_v2": "{name}님, 이제 움직여 볼까요?",
   "homeGreetingAfternoon_v3": "{name}님, 스트레칭 한 번 할까요?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "칼로리",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "요약",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "운동",
   "intensityPrompt1Left": "1회 남음",
   "intensityPrompt2Left": "2회 남음",
   "intensityPrompt3Left": "3회 이상 남음",
   "intensityPromptHard": "힘듦",
-  "intensityPromptHideRpeSlideDial": "RPE 슬라이드 숨기기      강도 조절 (RPE 1-10)",
   "intensityPromptHowHardWasThat": "이번 세트의 강도는 어땠나요?",
   "intensityPromptMax": "최대",
   "intensityPromptModerate": "보통",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "{setNumber}세트 · {exerciseName}",
   "introAnAiCoachThat": "운동 계획을 세우고, 당신의 몸을 학습하며, 매주 조정해 주는 AI 코치입니다.",
   "introBuildMyPlan": "내 계획 만들기",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) 세트",
   "introCardMonth": "개월.",
   "introIAlreadyHaveAnAccount": "이미 계정이 있습니다",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "바코드",
   "logMealSheetBarcodeScan": "바코드 스캔",
   "logMealSheetCached": "(캐시됨)",
-  "logMealSheetCaptured": ") 캡처됨",
   "logMealSheetChooseFoodPhotos": "음식 사진 선택",
   "logMealSheetChooseFromGallery": "갤러리에서 선택",
   "logMealSheetChooseFromLibrary": "라이브러리에서 선택",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7일 평균 · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "이전 최저치 대비 -{_selectedUnit} {label}",
   "logWeightSheetValidRange": "유효 범위: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Apple 건강에서 동기화됨",
   "logWeightSyncedToAppleHealth": "Apple 건강에 동기화됨",
   "logWeightTapToEdit": "탭하여 수정",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "로그아웃하시겠습니까?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "매크로",
-  "mainShellPartChatsLeftToday": "오늘 남은 채팅 {arg0}",
+  "mainShellPartChatsLeftToday": "오늘 남은 채팅 {arg0}회",
   "mainShellPartGuestMode": "게스트 모드",
   "mainShellPartQuickActions": "빠른 작업",
   "mainShellPartSignUp": "가입하기",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "기본",
   "manageDuplicateImportsScreenSources": "소스 {length}개",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(row)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "그룹에서 연결 해제",
   "manageDuplicateImportsUnlinkedFromGroup": "그룹에서 연결 해제됨",
   "manageGymProfilesActive": "활성",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "{extraCount}개 더",
   "menuAnalysisSheetSelected": "{length}개 선택됨",
   "menuAnalysisSheetSort": "정렬: {label}",
-  "menuAnalysisSheetValue": ")(경과)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "\"{restaurantName}\"에 대한 메뉴를 이미 저장했습니다.",
   "menuAnalysisSort": "정렬:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "지표 유형",
   "metricsDashboardMuscleMass": "근육량",
   "metricsDashboardNoDataAvailable": "사용 가능한 데이터 없음",
-  "metricsDashboardNoMetricDataYet": "아직 측정 데이터 없음 {arg0}",
+  "metricsDashboardNoMetricDataYet": "{arg0} 데이터가 아직 없습니다",
   "metricsDashboardQuickStats": "빠른 통계",
   "metricsDashboardRestingHeartRate": "안정 시 심박수",
   "metricsDashboardRestingHr": "안정 시 심박수",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "기타",
   "muscleHeatmapTileCompleteWorkoutsToSee": "운동을 완료하여 근육 데이터를 확인하세요",
   "muscleHeatmapTileCouldnTLoad": "불러올 수 없음",
-  "muscleHeatmapTileMostTrained": "가장 많이 훈련한 부위 {arg0}",
+  "muscleHeatmapTileMostTrained": "가장 많이 단련: {arg0}",
   "muscleHeatmapTileMuscles": "근육",
   "muscleHeatmapTileRetry": "재시도",
   "muscleHeatmapUpperBody": "상체",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "즐겨찾기 ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "주요 운동 ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "최고 기록: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "최근 활동",
   "myLibraryTabViewAll": "모두 보기",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "캐주얼 무버",
   "neatGamificationWidgetsClaimReward": "보상 받기",
   "neatGamificationWidgetsCouchPotato": "카우치 포테이토",
-  "neatGamificationWidgetsCurrentXp": "현재 XP {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "일일 챌린지",
   "neatGamificationWidgetsExpired": "만료됨",
-  "neatGamificationWidgetsHoursMinutesLeft": "남은 시간 {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0}시간 {arg1}분 남음",
   "neatGamificationWidgetsLevel": "레벨 {level}",
   "neatGamificationWidgetsLevelUp": "레벨 업!",
   "neatGamificationWidgetsMaxLevel": "최고 레벨!",
-  "neatGamificationWidgetsMinutesLeft": "남은 분 {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0}분 남음",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "챔피언",
   "neatGamificationWidgetsNeatEnthusiast": "열정가",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "이번 주 순위가 아직 없습니다",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "점수",
-  "neatGamificationWidgetsStepGoal": "걸음 수 목표 {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "걸음 수",
-  "neatGamificationWidgetsTargetActiveHours": "목표 활동 시간 {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0}시간",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "점수 상세 분석",
   "neatScoreDisplayTapForBreakdown": "탭하여 상세 분석 보기",
   "neatScoreDisplayTrend": "추세: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "불러오는 중...",
   "netflixExerciseCarouselSeeAll": "모두 보기",
   "netflixExercisesAddYourOwnExercises": "사용자 지정 횟수, 세트, 지침으로 나만의 운동을 추가하세요.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "최적의 다음 세트 계산 중...",
   "nextSetPreviewCardIntensity": "강도 {intensityPercentage}%",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "마지막 세트",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "주요 공급원",
   "nutrientExplorerUnknown": "알 수 없음",
   "nutrientExplorerUnpinNutrient": "영양소 고정 해제",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "비타민",
   "nutrientRushGameCatchTheGoldenZealova": "황금 Zealova 마크를 잡아 파워업하세요!",
   "nutrientRushGameNewBest": "🎉 새로운 최고 기록!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "주간 개요",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "평균 {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "평균 섭취량: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/일 {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "체중: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, 모든 기능 포함",
   "onboardingWhyFirstTheWhy": "먼저, 이유부터",
   "onboardingWhyWhatSDrivingThis": "무엇이 당신을 움직이게 하나요?",
-  "openAllCrates24HoursOf2xXp": "24시간 동안 2배 XP",
-  "openAllCratesActivityCrate": "활동 상자",
+  "openAllCrates24HoursOf2xXp": "24시간 2x XP",
+  "openAllCratesActivityCrate": "액티비티 상자",
   "openAllCratesBonusCrateToOpen": "열 수 있는 보너스 상자",
-  "openAllCratesCollect": "수집 {arg0} {arg1}",
-  "openAllCratesCratesOpened": "열린 상자 {arg0}",
-  "openAllCratesDailyCrate": "일일 상자",
+  "openAllCratesCollect": "받기 ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "상자 {arg0}개 개봉!",
+  "openAllCratesDailyCrate": "데일리 상자",
   "openAllCratesDone": "완료",
-  "openAllCratesDoubleXpToken": "2배 XP 토큰",
+  "openAllCratesDoubleXpToken": "더블 XP 토큰",
   "openAllCratesFailedToOpenCrates": "상자를 여는 데 실패했습니다. 다시 시도해주세요.",
   "openAllCratesFitnessCrate": "피트니스 상자",
-  "openAllCratesGainedXp": "획득한 XP {arg0}",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "최대 레벨",
-  "openAllCratesOpenYourCrates": "상자 열기",
-  "openAllCratesOpened": ") 열림!",
-  "openAllCratesOpeningYourCrates": "상자 여는 중",
-  "openAllCratesPickRewardPerDay": "일일 보상 선택 {arg0} {arg1}",
-  "openAllCratesPickYourReward": "보상 선택 {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 상자 열기",
+  "openAllCratesOpeningYourCrates": "🎁 상자 여는 중…",
+  "openAllCratesPickRewardPerDay": "하루에 보상 1개 선택 • {arg0}/{arg1} 선택됨",
+  "openAllCratesPickYourReward": "보상 선택 • {arg0}/{arg1} 선택됨",
   "openAllCratesProtectYourStreak": "연속 기록 보호",
   "openAllCratesSelectAll": "모두 선택",
   "openAllCratesStreakCrate": "스트릭 상자",
-  "openAllCratesStreakShield": "스트릭 방패",
+  "openAllCratesStreakShield": "스트릭 실드",
   "openAllCratesToday": "오늘",
-  "openAllCratesTotalXpFormatted": "총 XP {arg0}",
-  "openAllCratesTotalXpLevel": "총 XP 레벨 {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "총 {arg0}",
+  "openAllCratesTotalXpLevel": "총: {arg0} XP • 레벨 {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 보상!",
-  "openAllCratesXpInLevel": "현재 레벨 XP {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "다음 레벨까지 XP {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "레벨 {arg1}까지 {arg0} XP",
   "openAllCratesYesterday": "어제",
   "overallScoreHeroOverall": "종합",
   "overviewActiveSkill": "활성 스킬",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "당신의 운동 성향은...",
   "phaseRecommendationBannerBasedOn": "기준: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-confidence estimate\" : \"\")",
   "phaseRecommendationBannerCycleDay": "{cycleDay}일차",
   "phaseRecommendationBannerEvidence": "근거: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "확인",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "근력 기초 다지기",
   "planPreviewScreenBuildingYour4Week": "4주 플랜 구성 중...",
   "planPreviewScreenContinueFree": "무료로 계속하기",
-  "planPreviewScreenDaysPerWeek": "주당 {arg0}일",
+  "planPreviewScreenDaysPerWeek": "주 {arg0}일",
   "planPreviewScreenDesignedBasedOnYour": "설문 답변을 바탕으로 설계됨",
-  "planPreviewScreenEquipmentCount": "장비 수 {arg0}",
+  "planPreviewScreenEquipmentCount": "장비 {arg0}개",
   "planPreviewScreenExercisesMin": "운동 최소 {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "강도 및 볼륨 증가",
   "planPreviewScreenMasterTheMovement": "동작 마스터하기",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length}개의 개인 최고 기록!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") 이전 기록 대비",
   "prShareCardCopiedToClipboard": "클립보드에 복사되었습니다!",
   "prShareCardCopyText": "텍스트 복사",
   "prShareCardFailedToCaptureImage": "이미지 캡처 실패",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "계속 밀어붙이세요!",
   "prsTemplateNewPersonalRecords": "새로운 개인 기록",
   "prsTemplateNewPrsAreJust": "새로운 PR이 곧 다가옵니다",
-  "prsTemplateValue": ") (단위)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "재료",
   "publicRecipeInstructions": "조리법",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "탭하여 전체 기록 및 추세 보기",
   "quickLogMeasurementsTrackYourBodyChanges": "시간에 따른 신체 변화 추적",
   "quickLogMeasurementsUpdate": "업데이트",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0}일 전 업데이트됨",
+  "quickLogMeasurementsUpdatedDaysAgo": "{arg0}일 전 업데이트",
   "quickLogMeasurementsUpdatedToday": "오늘 업데이트됨",
   "quickLogMeasurementsUpdatedYesterday": "어제",
   "quickLogMeasurementsWaist": "허리",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI가 선택하신 범위 내에서 운동을 생성합니다",
   "quizDaysSelectorBest": "최적",
   "quizDaysSelectorConsistencyBeatsIntensity": "강도보다 꾸준함이 중요합니다. 유지할 수 있는 만큼 선택하세요",
-  "quizDaysSelectorDays": "{arg0}일",
-  "quizDaysSelectorDaysSelected": "{arg0}일 선택됨 {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") 운동을 위해",
+  "quizDaysSelectorDays": "{arg0, plural, one {일} other {일}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1}일 선택됨",
   "quizDaysSelectorFri": "금",
   "quizDaysSelectorHowLongAreYour": "운동 시간은 어느 정도인가요?",
   "quizDaysSelectorHowManyDaysPer": "일주일에 며칠 운동할 수 있나요?",
   "quizDaysSelectorMin": "최소",
   "quizDaysSelectorMon": "월",
   "quizDaysSelectorSat": "토",
-  "quizDaysSelectorSelectNDays": "{arg0}일 선택",
+  "quizDaysSelectorSelectNDays": "맞는 날 {arg0}일을 선택하세요",
   "quizDaysSelectorSun": "일",
   "quizDaysSelectorThu": "목",
   "quizDaysSelectorTue": "화",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "홈짐",
   "quizEquipmentHomeKettlebell": "홈 + 케틀벨",
   "quizEquipmentHotel": "호텔",
-  "quizEquipmentIdentifiedCount": "확인된 개수 {arg0}",
+  "quizEquipmentIdentifiedCount": "{arg0}개를 인식했습니다. 탭하여 선택 해제하세요.",
   "quizEquipmentKettlebell": "케틀벨",
   "quizEquipmentMedicineBall": "메디신 볼",
   "quizEquipmentMinimalEquipmentBodyweight": "최소 장비 - 맨몸, 매트",
   "quizEquipmentNeededForBarbell": "바벨 운동에 필요",
   "quizEquipmentNoEquipmentIdentifiedPick": "식별된 장비가 없습니다. 아래 목록에서 선택하세요.",
-  "quizEquipmentOtherCount": "기타 개수 {arg0}",
+  "quizEquipmentOtherCount": "{arg0}개 선택됨",
   "quizEquipmentOtherEquipment": "기타 장비",
   "quizEquipmentPullUpBar": "풀업 바",
   "quizEquipmentQuickPresets": "빠른 프리셋",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "레시피 이름 필수",
   "recipeCreateRemovePhoto": "사진 제거",
   "recipeCreateSaving": "저장 중...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "사진 촬영",
   "recipeCreateTapToEdit": "탭하여 편집",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "1회 제공량당 (×{servings}인분)",
   "recipeDetailScreenUForkedFrom": "✨ {sourceName}에서 포크됨",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\"이(가) 영구적으로 삭제됩니다.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 엄선된 레시피",
   "recipeDetailView": "보기",
@@ -24745,16 +24468,16 @@
   "regenerateSheetApply": "적용",
   "regenerateSheetApplyThisWorkout": "이 운동 적용하기",
   "regenerateSheetBalancingMuscleGroups": "근육 그룹 균형 맞추는 중",
-  "regenerateSheetBootingUpTheAi": "AI 부팅 중",
+  "regenerateSheetBootingUpTheAi": "AI 시작 중",
   "regenerateSheetBuildingYourPlan": "플랜 구성 중",
   "regenerateSheetBuildingYourWorkout": "운동 구성 중…",
   "regenerateSheetCheckingEquipment": "장비 확인 중",
   "regenerateSheetCheckingPreferences": "환경 설정 확인 중",
-  "regenerateSheetConnectingToTheAi": "AI 연결 중",
+  "regenerateSheetConnectingToTheAi": "AI에 연결 중",
   "regenerateSheetConsideringFocusAreas": "집중 부위 고려 중",
   "regenerateSheetCustomize": "사용자 지정",
   "regenerateSheetCustomizeOrLetAi": "직접 지정하거나 AI에게 추천받으세요",
-  "regenerateSheetCustomizeOrLetAiSuggest": "직접 설정하거나 AI에게 맡기기",
+  "regenerateSheetCustomizeOrLetAiSuggest": "직접 설정하거나 AI에 맡기기",
   "regenerateSheetDescribeYourIdealWorkout": "이상적인 운동을 설명해주세요",
   "regenerateSheetDesigningYourWorkout": "운동 설계 중",
   "regenerateSheetDialingInSetsAndReps": "세트 및 횟수 조정 중",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "세부 사항 마무리 중…",
   "regenerateSheetFinalizingYourWorkout": "운동 마무리 중",
   "regenerateSheetFineTuningTheDetails": "세부 사항 조정 중",
-  "regenerateSheetGeneratingElapsed": "생성 경과 {arg0}",
+  "regenerateSheetGeneratingElapsed": "생성 중… {arg0}",
   "regenerateSheetGeneratingSuggestions": "추천 생성 중…",
   "regenerateSheetGetSuggestions": "추천 받기",
   "regenerateSheetGettingCreative": "창의적인 구성 중",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "제안된 시간 사용",
   "restSuggestionQuick": "빠른",
   "restSuggestionQuickRest": "빠른 휴식",
-  "restSuggestionSaveTime": "시간 절약 {arg0}",
+  "restSuggestionSaveTime": "{arg0} 단축",
   "restSuggestionSuggested": "추천",
   "restSuggestionUseSuggested": "추천 휴식 사용",
   "restTimerCardBaseRest": "기본 휴식",
   "restTimerCardControlRestPeriodsBetween": "세트 간 휴식 시간 제어",
   "restTimerCardCustomRestTimer": "사용자 지정 휴식 타이머",
   "restTimerCardFormula": "공식",
-  "restTimerCardFormulaBaserestRpe7": "공식: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "실시간 미리보기",
   "restTimerCardMultiplier": "배수",
   "restTimerCardRestBaserestRpe7": "휴식 = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}초",
   "restTimerCardS2": "{restTimerBaseRest}초",
   "restTimerCardS3": "{s}초",
-  "restTimerCardVariablesBaseRpeMultipli": "변수: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "변수: 기본, RPE, 배수, 등급",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "성과 분석 중...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "졸업",
   "rtpTitle": "복귀 프로그램",
   "safetyDisclaimerBannerDismissDisclaimer": "면책 조항 닫기",
-  "safetyDisclaimerBannerInjuriesFlagged": "부상 주의 {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "부상 {arg0}건 표시됨",
   "safetyDisclaimerBannerInjuryBody": "부상 부위",
   "safetyDisclaimerBannerLearnMore": "더 알아보기",
   "safetyDisclaimerBannerMore": "+{overflow}개 더",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "세트",
   "sessionDetailSetCount": "{count, plural, other{{count}세트}} · 최고 세트 강조됨",
   "sessionDetailTime": "시간",
-  "sessionDetailTopSetHighlighted": ") • 탑 세트 강조됨",
   "sessionDetailWeight": "중량",
   "setAdjustmentAdditionalNotesOptional": "추가 메모 (선택 사항)",
   "setAdjustmentConfirm": "확인",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount}개 완료",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount}개 남음",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length}개 삭제됨",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") / (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "/ {totalSets} 계획됨",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets}세트 완료",
   "setAdjustmentSheetReps": "횟수",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "세트 {currentSetNumber}/{totalSets} • 탭하여 펼치기",
   "setTrackingSectionSets": "{widget} 세트",
   "setTrackingSectionSetsCompleted": "{length} 세트 완료",
-  "setTrackingSectionValue": ")×(회)",
   "setTrackingSheetsAmountToAdjustWeight": "무게 조정량",
   "setTrackingSheetsDropSet": "드롭 세트",
   "setTrackingSheetsExerciseHistory": "운동 기록",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} 지원 요청",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} 일",
   "settingsScreenUiNoSettingsFound": "설정을 찾을 수 없습니다",
-  "settingsScreenUiTryDifferentKeywordsLike": "\"테마\", \"알림\" 또는 \"AI 음성\"과 같은 다른 키워드를 입력해 보세요",
+  "settingsScreenUiTryDifferentKeywordsLike": "\"테마\", \"알림\", \"AI 음성\" 같은 다른 키워드로 검색해 보세요",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "설정 검색",
   "settingsSetProgressionResearch": "진행 및 연구 설정",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "내 {appName} {periodName} 리포트",
   "shareInsightsSheetMyReport2": "내 {appName} 리포트",
   "shareMotivationalCompleted": "완료",
-  "sharePrNewPr": "새로운 PR",
+  "sharePrNewPr": "신기록 PR",
   "shareStatsCalories": "칼로리",
   "shareStatsDuration": "운동 시간",
   "shareStatsEliteTemplate": "ELITE 템플릿",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "보상",
   "streakMilestoneStreakMilestone": "스트릭 마일스톤!",
-  "streakMilestoneToGo": ") 남음!",
   "streakMilestoneYouVeReachedThe": "최고의 스트릭 마일스톤에 도달했습니다!",
   "streakSavedDialogWeUsedStreakShield": "스트릭 실드 1개를 사용하여 {savedStreakCount}일 연속 기록을 유지했습니다.",
   "streakSavedKeepItGoing": "계속 유지하세요",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "연결",
   "todayScoreCardCustomize": "사용자 지정",
   "todayScoreCardToday": "오늘",
-  "todayScoreDetailDown": "{arg0} 감소",
-  "todayScoreDetailEarnedPts": "획득한 포인트 {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ 오늘 아침보다 {arg0} 하락",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} pt",
   "todayScoreDetailHowItWorks": "작동 방식",
-  "todayScoreDetailInactiveExplanation": "비활성 설명 {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "평균 모멘텀 {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0}은(는) 오늘 {arg1, plural, one {집계되지 않습니다} other {집계되지 않습니다}}. 그래서 나머지가 100점 만점을 나눠 가집니다. 점수는 항상 오늘 실제로 해당하는 항목만 반영합니다.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7일 평균 {arg1}",
   "todayScoreDetailNotCounted": "집계되지 않음",
   "todayScoreDetailSetupText": "설정 텍스트",
   "todayScoreDetailSteady": "안정적",
   "todayScoreDetailTodayScore": "오늘의 점수",
-  "todayScoreDetailUp": "{arg0} 증가",
+  "todayScoreDetailUp": "▲ 오늘 아침보다 {arg0} 상승",
   "todayScoreSetupAddAWorkoutPlan": "운동 계획 추가",
   "todayScoreSetupCardContinue": "계속하기: {label}",
   "todayScoreSetupCardGetStarted": "시작하기 · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "유산소 업적",
   "trophiesEarnedDayStreak": "연속 운동 일수",
   "trophiesEarnedFirstTime": "첫 달성!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "마일스톤 도달",
   "trophiesEarnedMilestoneReachedNice": "마일스톤 달성 — 멋져요!",
   "trophiesEarnedMilestones": "마일스톤",
-  "trophiesEarnedNewBadges": "배지 {arg0}",
-  "trophiesEarnedNewCardioPRs": "새로운 유산소 PR {arg0}",
-  "trophiesEarnedNewPR": "새로운 PR 달성",
-  "trophiesEarnedNewPRs": "새로운 PR {arg0}",
+  "trophiesEarnedNewBadges": "새 배지 {arg0}개",
+  "trophiesEarnedNewCardioPRs": "새 유산소 PR {arg0}개",
+  "trophiesEarnedNewPR": "신기록 PR",
+  "trophiesEarnedNewPRs": "새 PR {arg0}개!",
   "trophiesEarnedNewPr": "새로운 PR",
   "trophiesEarnedNextMilestones": "다음 마일스톤",
   "trophiesEarnedNoNewRecords": "새로운 기록 없음",
   "trophiesEarnedNoNewRecordsThis": "이번 세션에 새로운 기록은 없지만, 다음 목표를 향해 나아가고 있습니다:",
   "trophiesEarnedPersonalRecords": "개인 기록",
-  "trophiesEarnedRemainingToUnlock": "잠금 해제까지 남은 항목 {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "잠금 해제까지 {arg1} {arg0}개 더",
   "trophiesEarnedSessionHighlights": "세션 하이라이트",
   "trophiesEarnedSheetPts": "+{points} pts",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} 입력 중",
   "typingIndicatorIsTyping3": "{agentName} 입력 중...",
   "unifiedHomeWidgetsActivity": "활동",
-  "unifiedHomeWidgetsBreakfastLogged": "아침 식사 기록됨: {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "최근 7일 중 {arg0}일 아침에 아침 식사를 기록함",
   "unifiedHomeWidgetsBreakfastSuggestion": "아침 식사 추천",
   "unifiedHomeWidgetsCarbs": "탄수화물",
   "unifiedHomeWidgetsConnect": "연결",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "지방",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "오늘 총 {arg0} kcal",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal 소모",
   "unifiedHomeWidgetsKcalLeft": " kcal 남음",
   "unifiedHomeWidgetsLastNight": "지난밤",
   "unifiedHomeWidgetsLog16oz": "16oz 기록",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}주",
   "weekDurationSelectorWeeks": "{selectedWeeks}주",
   "weekDurationSelectorWk": "주 {spw}회",
-  "weekProgressStripCompletedCount": "완료 횟수 {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg1}개 중 {arg0}개 운동 완료",
   "weekProgressStripCouldNotLoadProgress": "진행 상황을 불러올 수 없습니다",
   "weekProgressStripLoading": "불러오는 중...",
   "weekProgressStripNoWorkoutsScheduled": "예정된 운동 없음",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "모두 보기",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "체중 기록",
-  "weightTrendCardDownThisWeek": "이번 주 {arg0} 감소",
-  "weightTrendCardDownVsLastCycle": "지난 주기 대비 {arg0} 감소",
+  "weightTrendCardDownThisWeek": "이번 주 {arg0} 감량!",
+  "weightTrendCardDownVsLastCycle": "지난달 같은 주기일 대비 {arg0} lbs 감량",
   "weightTrendCardLoadingWeight": "체중 불러오는 중...",
   "weightTrendCardLogYourWeightTo": "체중을 기록하여 변화를 확인하세요",
   "weightTrendCardMaintaining": "유지 중",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "지난 주기와 동일",
   "weightTrendCardTapToLogWeight": "탭하여 체중 기록하기",
   "weightTrendCardTargetHeld": "목표 유지",
-  "weightTrendCardTargetHeldWindow": "목표 유지 범위 {arg0}",
+  "weightTrendCardTargetHeldWindow": "목표 유지 {arg0} — 황체기 수분 보정",
   "weightTrendCardUpThisWeek": "이번 주 {arg0} 증가",
-  "weightTrendCardUpVsLastCycle": "지난 주기 대비 {arg0} 증가",
+  "weightTrendCardUpVsLastCycle": "지난달 같은 주기일 대비 {arg0} lbs 증가",
   "weightTrendCardWeightStableThisWeek": "이번 주 체중 안정",
   "weightTrendCardWeightTrends": "체중 변화 추이",
   "welcomeAffirmationGreatChoice": "탁월한 선택입니다.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "이 버전으로 되돌리시겠습니까?",
   "workoutActionsShareWorkout": "운동 공유",
   "workoutActionsSheetGetALinkFor": "친구를 위한 {marketingDomain} 링크 가져오기",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "\"{name}\"을(를) 복원할까요?",
   "workoutActionsSheetS": "{duration}초",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps}회",
   "workoutCompleteScreenUi2SetsReps": "{currentSets}세트, {currentReps}회",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "현재 친구에게 도전할 수 없습니다",
   "workoutCompleteScreenUnableToExtendWorkout": "운동을 연장할 수 없습니다",
   "workoutCompleteScreenViewAllMetrics": "모든 지표 보기",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "장비",
   "workoutDetailExercises": "수업 과정",
   "workoutDetailFailedToLoadWorkout": "운동을 불러오지 못했습니다",
-  "workoutDetailHelpersForAvailableEquipment": ") 사용 가능한 장비...",
   "workoutDetailHelpersHell": "지옥",
   "workoutDetailHelpersUpdatingExercises": "운동 업데이트",
   "workoutDetailMoreInfo": "추가 정보",
   "workoutDetailProgram": "프로그램",
-  "workoutDetailReplacingExercises": "운동 교체 중 {arg0}",
+  "workoutDetailReplacingExercises": "사용 가능한 장비에 맞게 {arg0}개 운동 교체 중…",
   "workoutDetailRevert": "돌아가는 것",
   "workoutDetailScreenBreakSuperset": "슈퍼세트를 해제하시겠습니까?",
   "workoutDetailScreenCalBurned": "약 {estimatedCalories} kcal 소모",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "웬들러 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "중량란은 어느 단위인가요? 소스 앱을 알고 있는 경우 해당 앱을 선택하면 형제 형식(Hevy 및 Strong CSV)을 구분하는 데 도움이 됩니다.",
   "workoutHistoryImportYourStrengthData": "귀하의 근력 데이터",
-  "workoutImportAsDone": ")\" 완료로 표시",
   "workoutImportCalories": "칼로리",
   "workoutImportCardio": "유산소",
   "workoutImportCycling": "사이클링",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "지속",
   "workoutImportEasy": "쉬움",
   "workoutImportFlexibility": "유연성",
-  "workoutImportFromSource": "{arg0}에서 가져오기",
+  "workoutImportFromSource": "{arg0}에서",
   "workoutImportHard": "어려움",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "이번 운동은 얼마나 힘들었나요?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "운동 중에 이러한 시스템 메시지가 나타날 수 있습니다. 둘 다 선택 사항입니다. 둘 중 하나를 건너뛰어도 운동은 계속 작동합니다.",
   "workoutPlanDrawerAddExercise": "운동 추가",
   "workoutPlanDrawerCurrent": "현재",
-  "workoutPlanDrawerExerciseCount": "운동 횟수 {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") 기록됨. 삭제될 예정입니다.",
+  "workoutPlanDrawerExerciseCount": "운동 {arg0}개",
   "workoutPlanDrawerNow": "지금",
   "workoutPlanDrawerRemove": "제거",
-  "workoutPlanDrawerRemoveExercise": "{arg0} 운동 제거",
+  "workoutPlanDrawerRemoveExercise": "{arg0}을(를) 삭제할까요?",
   "workoutPlanDrawerRemoveExerciseTooltip": "운동 제거 툴팁",
-  "workoutPlanDrawerSetsLogged": "기록된 세트 {arg0}",
+  "workoutPlanDrawerSetsLogged": "기록된 세트가 {arg0}개 있습니다. 삭제됩니다.",
   "workoutPlanDrawerSwapExercise": "운동 교체",
   "workoutPlanDrawerTitle": "제목",
   "workoutPlanDrawerWorkoutPlan": "운동 플랜",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "기록하는 모든 세트",
   "workoutShowcaseEveryWorkoutFlows": "모든 운동 흐름",
   "workoutShowcaseFinishWorkout": "운동 완료",
-  "workoutShowcaseFormat1Rm": "1RM 형식",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "탑승권",
   "workoutShowcaseFormatCard": "카드",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "선형 라벨",
   "workoutShowcaseLogAllSets": "모든 세트",
   "workoutShowcaseLogDrink": "로그 드링크",
-  "workoutShowcaseLogSet": "세트 {arg0}",
+  "workoutShowcaseLogSet": "✓ 세트 {arg0} 기록",
   "workoutShowcaseLogWater": "수분 섭취 기록",
   "workoutShowcaseMovedThisSession": "이번 세션 이동량",
   "workoutShowcaseNewPr": "새로운 PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "회",
   "workoutShowcaseScreenDay": "{day}일차",
   "workoutShowcaseScreenDuration": "시간: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · 입력됨",
   "workoutShowcaseScreenSession": "세션: {title}",
   "workoutShowcaseScreenTotalPrs": "총합 {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "1/4 세트",
   "workoutShowcaseSet2": "2세트",
   "workoutShowcaseSet3": "세트 3",
-  "workoutShowcaseSetNOf3": "세트 {arg0}",
+  "workoutShowcaseSetNOf3": "세트 {arg0}/3",
   "workoutShowcaseShareYourWorkout": "운동 공유하기",
   "workoutShowcaseSideA": "SIDE A",
   "workoutShowcaseSuperset": "슈퍼세트",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "일일",
   "xpGoalsDialog250LevelsAcross11Tiers": "11개 티어에 걸친 250개 레벨",
   "xpGoalsDialogBeginnerToTranscendent": "초보자에서 초월자까지",
-  "xpGoalsDialogCompleteWorkoutXp": "운동 완료 XP",
+  "xpGoalsDialogCompleteWorkoutXp": "운동 완료: +100 XP",
   "xpGoalsDialogDailyGoals": "일일 목표",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "AI 코치와 첫 대화 XP",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "첫 식단 및 체중 측정 XP",
-  "xpGoalsDialogFirstPrXp": "첫 PR XP",
-  "xpGoalsDialogFirstProgressPhotoXp": "첫 진행 상황 사진 XP",
-  "xpGoalsDialogFirstProteinGoalXp": "첫 단백질 목표 XP",
-  "xpGoalsDialogFirstWorkoutXp": "첫 운동 XP",
-  "xpGoalsDialogHitProteinGoalXp": "단백질 목표 달성 XP",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "AI 코치와 첫 채팅: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "첫 식사/체중/측정: 각 +50 XP",
+  "xpGoalsDialogFirstPrXp": "첫 PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "첫 진행 사진: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "첫 단백질 목표: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "첫 운동: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "단백질 목표 달성: +50 XP",
   "xpGoalsDialogLevels": "레벨",
-  "xpGoalsDialogLogBodyMeasurementsXp": "신체 치수 기록 XP",
-  "xpGoalsDialogLogMealXp": "식단 기록 XP",
-  "xpGoalsDialogLogWeightXp": "체중 기록 XP",
-  "xpGoalsDialogLoginXp": "로그인 XP",
+  "xpGoalsDialogLogBodyMeasurementsXp": "신체 측정 기록: +20 XP",
+  "xpGoalsDialogLogMealXp": "식사 기록: +25 XP",
+  "xpGoalsDialogLogWeightXp": "체중 기록: +15 XP",
+  "xpGoalsDialogLoginXp": "로그인: +5 XP",
   "xpGoalsDialogMilestoneRewards": "마일스톤 보상",
   "xpGoalsFirstTimeBonuses": "첫 달성 보너스",
   "xpGoalsGotIt": "확인했습니다!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "단백질 목표 달성",
   "xpGoalsScreenInventory": "인벤토리",
   "xpGoalsScreenLegendary": "전설",
-  "xpGoalsScreenLevelCurrentTotal": "현재 레벨 총합 {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "레벨 {arg0} • 총 249레벨",
   "xpGoalsScreenLevelProgress": "레벨 진행도",
   "xpGoalsScreenLogBodyMeasurements": "신체 치수 기록",
   "xpGoalsScreenLogFirstMeal": "첫 식사 기록",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "트로피 룸",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "주간",
-  "xpGoalsXpAvailable": "사용 가능 {arg0}",
-  "xpGoalsXpEarnedToday": "오늘 획득 {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP 획득 가능",
+  "xpGoalsXpEarnedToday": "오늘 +{arg0} XP 획득",
   "xpGoalsXpGoals": "XP 목표",
-  "xpGoalsXpMultiplierActive": "배율 활성화 {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP 활성화!",
   "xpHeroTileDayStreak": "{streak}일 연속",
   "xpHeroTileLv": "Lv {level}",
   "xpHeroTileLv2": "Lv {nextLevel} → {label}",

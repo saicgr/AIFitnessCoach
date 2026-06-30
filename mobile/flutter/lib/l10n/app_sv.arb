@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "När ska den användas",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Övning utbytt",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} övning(ar) tillagda",
-  "activeWorkoutScreenRefactoredFor": ") för (name)",
   "activeWorkoutScreenUndo": "Ångra",
   "activeWorkoutScreenWorkoutAdapted": "Träningspass anpassat.",
   "activityCardAdditionalDetailsOptional": "Ytterligare detaljer (valfritt)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Bränsle före träning?",
   "aiCoachMealQuickSnackIdeas": "Snabba mellanmålsidéer?",
   "aiCoachMealRecoveryDayEating": "Äta på vilodag?",
-  "aiCoachMealSearchQuestionsTryAngry": "Sök frågor (prova \"arg\", \"fiber\", \"mexikanskt\")",
   "aiCoachMealSomethingWentWrong": "Något gick fel.",
   "aiCoachMealStressedWhatHelps": "Stressad – vad hjälper?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "Asien-inspirerad {meal} — ett val (risbowl, nudlar, sushi, stir fry), makron och tillagning.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} kal · {phase}-fas",
   "caloriesSummaryCardCalories": "Kalorier",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "kvar",
   "cancelConfirmationAnythingElseYouD": "Är det något annat du vill dela med dig av? (valfritt)",
   "cancelConfirmationCancelAnyway": "Avbryt ändå",
   "cancelConfirmationHelpUsImprove": "Hjälp oss att bli bättre",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Jag förstår",
   "chatLanguageChangedSystem": "🌐 AI Coach svarar nu på {nativeName}",
   "chatLanguageResetSystem": "🌐 AI Coach-språk återställt — använder appens språk",
-  "chatLeftToday": ") kvar idag",
   "chatMediaWidgetsCalTotal": "{totalCal} kcal totalt",
   "chatMediaWidgetsGProtein": "{totalProtein}g protein",
   "chatMediaWidgetsGoTo": "Gå till {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "Coachen tänker längre än vanligt.",
   "chatScreenCouldntReachCoach": "Kunde inte nå coachen.",
   "chatScreenExtAboutAiCoach": "Om AI-coach",
-  "chatScreenExtAs": ") som (mealType)",
   "chatScreenExtChangeCoach": "Byt coach",
   "chatScreenExtChatTips": "Chattips",
   "chatScreenExtChooseMultiplePhotos": "Välj flera foton",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "Visa mål",
   "complianceRingCardAllWorkoutsCompleted": "Alla träningspass slutförda",
   "complianceRingCardGetStartedToday": "Kom igång idag",
-  "complianceRingCardGreatPace": "Bra tempo {arg0}",
+  "complianceRingCardGreatPace": "Bra tempo! {arg0} kvar",
   "complianceRingCardNoWorkoutsScheduledThis": "Inga träningspass inplanerade denna vecka",
-  "complianceRingCardOnTrack": "På rätt spår {arg0}",
+  "complianceRingCardOnTrack": "På rätt spår — {arg0} kvar",
   "complianceRingCardWorkoutCompliance": "Träningsföljsamhet",
-  "complianceRingCardWorkoutsRemaining": "Träningspass kvar {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} pass kvar",
   "comprehensiveStatsStatsScores": "Statistik & poäng",
   "connectedAppsAutoImportEvery15": "Auto-importera var 15:e minut",
   "connectedAppsConnect": "Anslut",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Välj livsmedel",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Använd detta värde",
-  "cookingConverterWeight": ") Vikt",
   "cosmeticsGalleryCosmetics": "Kosmetika",
   "cosmeticsGalleryEquip": "Utrusta",
   "cosmeticsGalleryEquipped": "Utrustad",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Inga övningar matchar din sökning",
   "customExercisesScreenAreYouSureYou": "Är du säker på att du vill radera \"{name}\"? Detta går inte att ångra.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} övningar, {totalUses} användningar",
-  "customExercisesScreenUsedTimes": "Använd (usageCount) gånger(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Sök övningar...",
   "customExercisesSimple": "Enkel",
   "customFoodBuilderAiFillFromName": "AI-fyll från namn",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · förra cykeln",
   "customTrendScreenMaxOverlaysRemoveOne": "Max {_kMaxOverlays} överlägg — ta bort ett för att lägga till ett annat",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} delade dagar",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "Lägg till övning",
   "customWorkoutBuilderBuildCustomWorkout": "Bygg anpassat träningspass",
   "customWorkoutBuilderCustomWorkoutCreated": "Anpassat träningspass skapat!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Logga mens",
   "cycleScreenUiLogPeriod": "Logga mens",
   "cycleScreenUiLogYourFirstPeriod": "Logga din första mens för att starta förutsägelser.",
-  "cycleScreenUiPhase": ") fas",
   "cycleScreenUiPhaseLabel": "{displayName}-fas",
   "cycleScreenUiPredictionsAreEstimates": "Förutsägelser är uppskattningar baserade på din loggade data, inte en preventivmetod och inte medicinsk rådgivning. Kontakta läkare vid hälsoproblem.",
   "cycleScreenUiPregnancyModeIsOn": "Graviditetsläge är på",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Fortsätt",
   "editProgramSheetCurrent": "NUVARANDE",
   "editProgramSheetCustomProgram": "Anpassat program",
-  "editProgramSheetCustomValue": "Anpassat värde {arg0}",
+  "editProgramSheetCustomValue": "Anpassat: {arg0}",
   "editProgramSheetCustomizeProgram": "Anpassa program",
   "editProgramSheetDays": "Dagar",
   "editProgramSheetDaysAgo": "{days} dagar sedan",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Utrustning",
   "editProgramSheetEquipmentLabel": "Utrustningsetikett",
   "editProgramSheetExamples": "Exempel",
-  "editProgramSheetFailedToLoadHistory": "Läs in historik {arg0}",
-  "editProgramSheetFailedToRestore": "Återställ {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Kunde inte ladda historik: {arg0}",
+  "editProgramSheetFailedToRestore": "Kunde inte återställa: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Uppdatera program",
   "editProgramSheetFocus": "Fokus",
   "editProgramSheetHealth": "Hälsa",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "Laddar ner {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Laddar ner video...",
   "exerciseDetailSheetFavorite": "Favorit",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Läser in...",
   "exerciseDetailSheetLog1rm": "Logga 1RM",
   "exerciseDetailSheetMS": "{restMins}m {restSecs}s",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Lägg till anteckningar här...",
   "exerciseSetTrackerAddSet": "Lägg till set",
-  "exerciseSetTrackerBarbell": ") skivstång",
   "exerciseSetTrackerReps": "Repetitioner",
   "exerciseSetTrackerRestTarget": "Vilomål",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI-val ej tillgängliga",
   "exerciseSwapSheetAnyEquipment": "All utrustning",
   "exerciseSwapSheetAskAiForSuggestions": "Be AI om förslag",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Beskriv din utrustning eller dina preferenser\nt.ex. \"Jag har en dålig axel, endast kroppsvikt\"",
   "exerciseSwapSheetEGIOnly": "t.ex. \"Jag har bara hantlar\"",
   "exerciseSwapSheetFailedToSwapExercise": "Kunde inte byta övning",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Hittar muskelmatchade alternativ...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Vikt",
   "expandedExerciseCardAddToFavorites": "Lägg till i favoriter",
   "expandedExerciseCardAlternatingHands": "Alternerande händer",
-  "expandedExerciseCardBarbell": ") skivstång",
   "expandedExerciseCardBreathing": "Andning",
   "expandedExerciseCardBreathingGuide": "Andningsguide",
   "expandedExerciseCardCollapse": "Dölj",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Protokollnivå",
   "fastingScoreCardScore": "Poäng",
   "fastingScoreCardStreakBonus": "Streak-bonus",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "vs förra veckan",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "Första",
   "flexibilityProgressChartLatest": "Senaste",
   "flexibilityProgressChartNoDataAvailable": "Ingen data tillgänglig",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Per område",
   "flexibilityScoreCardFocusAreas": "Fokusområden",
   "flexibilityScoreCardOverallFlexibility": "Total rörlighet",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Sök måltider, livsmedel, \"högt protein\"...",
   "foodHistoryUndo": "Ångra",
   "foodItemRankingAddFood": "Lägg till livsmedel",
-  "foodItemRankingDetails": ") detaljer",
   "foodItemRankingNFoodItems": "{count} livsmedel",
   "foodItemRankingScore": "Poäng",
   "foodItemRankingTapToHideDetails": "Tryck för att dölja detaljer",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Så jag byggde personen, inte huvudboken. Knäpp valfri meny - hemma eller utomlands - och tränaren läser tillbaka den för dig i makron. Hoppa över en tisdag och det drar dig tillbaka onsdag morgon utan skuldresan. Den lär sig din mat, ditt gym, dina halkmönster - för mindre än ett PT-pass i månaden.",
   "founderNoteTheFriendsWhoActually": "Vännerna som faktiskt blev vältränade hade en person som skickade meddelanden till dem. Verklig ansvarsskyldighet kostar ungefär tvåhundra dollar i månaden, vilket är precis varför de flesta av oss aldrig har det, och precis varför klyftan mellan att \"spåra\" och att \"förändra\" förblir öppen i åratal.",
-  "freshnessDecayCardAgo": " sedan",
   "freshnessDecayCardControlsHowQuicklyExercise": "Kontrollerar hur snabbt träningsfräschör avtar: e^(-k * pass)",
   "freshnessDecayCardFreshnessDecayTuner": "Justering av fräschör",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "SET {currentSetNumber} AV {totalSets}",
   "futuristicSetCardSkipExercise": "Hoppa över övning",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "Skapa en helhetsplan som koordinerar dina träningspass, kost och fasta.",
   "generatePlanFastingProtocol": "Fasteprotokoll",
   "generatePlanGeneratePlan": "Generera plan",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "Lägg till din första vana",
   "habitsCardAllHabitsCompleted": "Alla vanor slutförda!",
   "habitsCardBuildDailyHabits": "Bygg dagliga vanor",
-  "habitsCardCompletedCount": "Slutförda {arg0} {arg1}",
-  "habitsCardDayStreak": "Daglig streak {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} klara",
+  "habitsCardDayStreak": "{arg0} dagars svit",
   "habitsCardFailedToLoadHabits": "Kunde inte ladda vanor",
   "habitsCardGreatJobKeepingUp": "Bra jobbat med att hålla igång dina streaks",
   "habitsCardQuickStart": "Snabbstart:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Dagens vanor",
   "habitsCardTryAgain": "Försök igen",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Visa alla vanor {arg0}",
+  "habitsCardViewAllHabits": "Visa alla {arg0} vanor",
   "habitsCompleted": "Slutförd",
   "habitsDeleteHabit": "Ta bort vana?",
   "habitsHoldToReorderSwipe": "Håll för att sortera om • Svep för att ta bort",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "Vilodag? Eller redo att röra på dig? Du bestämmer.",
   "homeEmptyWorkout_v3": "Mellan program — starta ett nytt för att komma tillbaka på banan.",
   "homeEmptyWorkout_v4": "Ingen plan än. Låt AI:n bygga en utifrån dina mål.",
-  "homeFromHealthConnect": ") från Health Connect",
   "homeGreetingAfternoon_v1": "Eftermiddagsenergi, {name}!",
   "homeGreetingAfternoon_v2": "Hej {name}, dags att röra på sig?",
   "homeGreetingAfternoon_v3": "Stretchpaus, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "KALORIER",
   "insightsSummaryTemplatePrs": "PR",
   "insightsSummaryTemplateSummary": "SAMMANFATTNING",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "TRÄNINGSPASS",
   "intensityPrompt1Left": "1 kvar",
   "intensityPrompt2Left": "2 kvar",
   "intensityPrompt3Left": "3+ kvar",
   "intensityPromptHard": "Hårt",
-  "intensityPromptHideRpeSlideDial": "Dölj RPE-reglage      Ställ in (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Hur hårt var det setet?",
   "intensityPromptMax": "Max",
   "intensityPromptModerate": "Måttligt",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "Set {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "En AI-coach som bygger planen, lär känna din kropp och justerar varje vecka.",
   "introBuildMyPlan": "Bygg min plan",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) set",
   "introCardMonth": "månad.",
   "introIAlreadyHaveAnAccount": "Jag har redan ett konto",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "Streckkod",
   "logMealSheetBarcodeScan": "Skanna streckkod",
   "logMealSheetCached": "(Cachad)",
-  "logMealSheetCaptured": ") fångad",
   "logMealSheetChooseFoodPhotos": "Välj matbilder",
   "logMealSheetChooseFromGallery": "Välj från galleri",
   "logMealSheetChooseFromLibrary": "Välj från bibliotek",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7d snitt · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} från din tidigare lägstanivå",
   "logWeightSheetValidRange": "Giltigt intervall: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(ändringIEnhet)",
   "logWeightSyncedFromAppleHealth": "Synkad från Apple Health",
   "logWeightSyncedToAppleHealth": "Synkad till Apple Health",
   "logWeightTapToEdit": "Tryck för att redigera",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Logga ut?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Makron",
-  "mainShellPartChatsLeftToday": "Chattar kvar idag {arg0}",
+  "mainShellPartChatsLeftToday": "{arg0} chattar kvar idag",
   "mainShellPartGuestMode": "Gästläge",
   "mainShellPartQuickActions": "Snabbåtgärder",
   "mainShellPartSignUp": "Registrera dig",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Primär",
   "manageDuplicateImportsScreenSources": "{length} källor",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(rad)",
   "manageDuplicateImportsUnlinkFromGroup": "Koppla bort från grupp",
   "manageDuplicateImportsUnlinkedFromGroup": "Bortkopplad från grupp",
   "manageGymProfilesActive": "Aktiv",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} till",
   "menuAnalysisSheetSelected": "{length} valda",
   "menuAnalysisSheetSort": "Sortera: {label}",
-  "menuAnalysisSheetValue": ")(förfluten tid)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Du har redan sparat en meny för \"{restaurantName}\"",
   "menuAnalysisSort": "Sortera:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "MÄTVÄRDETYP",
   "metricsDashboardMuscleMass": "Muskelmassa",
   "metricsDashboardNoDataAvailable": "Ingen data tillgänglig",
-  "metricsDashboardNoMetricDataYet": "Ingen mätdata ännu {arg0}",
+  "metricsDashboardNoMetricDataYet": "Ingen {arg0}-data ännu",
   "metricsDashboardQuickStats": "SNABBSTATISTIK",
   "metricsDashboardRestingHeartRate": "Vilopuls",
   "metricsDashboardRestingHr": "Vilopuls",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Annat",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Slutför träningspass för att se muskeldata",
   "muscleHeatmapTileCouldnTLoad": "Kunde inte läsas in",
-  "muscleHeatmapTileMostTrained": "Mest tränad {arg0}",
+  "muscleHeatmapTileMostTrained": "Mest tränad: {arg0}",
   "muscleHeatmapTileMuscles": "Muskler",
   "muscleHeatmapTileRetry": "Försök igen",
   "muscleHeatmapUpperBody": "Överkropp",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Favoriter ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Basövningar ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Bäst: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Senaste aktivitet",
   "myLibraryTabViewAll": "Visa alla",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Casual mover",
   "neatGamificationWidgetsClaimReward": "Hämta belöning",
   "neatGamificationWidgetsCouchPotato": "Soffpotatis",
-  "neatGamificationWidgetsCurrentXp": "Nuvarande XP {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Daglig utmaning",
   "neatGamificationWidgetsExpired": "Utgången",
-  "neatGamificationWidgetsHoursMinutesLeft": "Timmar minuter kvar {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0} h {arg1} m kvar",
   "neatGamificationWidgetsLevel": "Nivå {level}",
   "neatGamificationWidgetsLevelUp": "NIVÅ UPP!",
   "neatGamificationWidgetsMaxLevel": "Maxnivå!",
-  "neatGamificationWidgetsMinutesLeft": "Minuter kvar {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0} m kvar",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Mästare",
   "neatGamificationWidgetsNeatEnthusiast": "Entusiast",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Inga rankningar ännu denna vecka",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Poäng",
-  "neatGamificationWidgetsStepGoal": "Stegmål {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Steg",
-  "neatGamificationWidgetsTargetActiveHours": "Mål för aktiva timmar {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} tim",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "POÄNGFÖRDELNING",
   "neatScoreDisplayTapForBreakdown": "Tryck för fördelning",
   "neatScoreDisplayTrend": "Trend: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Läser in...",
   "netflixExerciseCarouselSeeAll": "Visa alla",
   "netflixExercisesAddYourOwnExercises": "Lägg till dina egna övningar med anpassade reps, set och instruktioner.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Beräknar optimalt nästa set...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% intensitet",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Sista setet",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "TOPP-BIDRAGSGIVARE",
   "nutrientExplorerUnknown": "Okänd",
   "nutrientExplorerUnpinNutrient": "Lossa näringsämne",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VITAMINER",
   "nutrientRushGameCatchTheGoldenZealova": "Fånga det gyllene Zealova-märket för en power-up!",
   "nutrientRushGameNewBest": "🎉 NYTT BÄSTA!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Veckoöversikt",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "snitt {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Snittintag: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) kal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/dag {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Vikt: {formattedWeeklyRate}",
@@ -23045,30 +22775,29 @@
   "openAllCrates24HoursOf2xXp": "24 timmar med 2x XP",
   "openAllCratesActivityCrate": "Aktivitetslåda",
   "openAllCratesBonusCrateToOpen": "Bonuslåda att öppna",
-  "openAllCratesCollect": "Samla {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Lådor öppnade {arg0}",
+  "openAllCratesCollect": "Samla ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} lådor öppnade!",
   "openAllCratesDailyCrate": "Daglig låda",
   "openAllCratesDone": "Klar",
   "openAllCratesDoubleXpToken": "Dubbel XP-token",
   "openAllCratesFailedToOpenCrates": "Kunde inte öppna lådor. Försök igen.",
-  "openAllCratesFitnessCrate": "Fitnesslåda",
-  "openAllCratesGainedXp": "Erhållen XP {arg0}",
+  "openAllCratesFitnessCrate": "Träningslåda",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Maxnivå",
-  "openAllCratesOpenYourCrates": "Öppna dina lådor",
-  "openAllCratesOpened": ") öppnade!",
-  "openAllCratesOpeningYourCrates": "Öppnar dina lådor",
-  "openAllCratesPickRewardPerDay": "Välj belöning per dag {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Välj din belöning {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Öppna dina lådor",
+  "openAllCratesOpeningYourCrates": "🎁 Öppnar dina lådor…",
+  "openAllCratesPickRewardPerDay": "Välj 1 belöning per dag • {arg0}/{arg1} valda",
+  "openAllCratesPickYourReward": "Välj din belöning • {arg0}/{arg1} valda",
   "openAllCratesProtectYourStreak": "Skydda din streak",
   "openAllCratesSelectAll": "Markera alla",
-  "openAllCratesStreakCrate": "Streak-låda",
-  "openAllCratesStreakShield": "Streak-sköld",
+  "openAllCratesStreakCrate": "Svitlåda",
+  "openAllCratesStreakShield": "Svitsköld",
   "openAllCratesToday": "Idag",
-  "openAllCratesTotalXpFormatted": "Total XP {arg0}",
-  "openAllCratesTotalXpLevel": "Total XP nivå {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} totalt",
+  "openAllCratesTotalXpLevel": "Totalt: {arg0} XP • Nivå {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 Belöningar!",
-  "openAllCratesXpInLevel": "XP i nivå {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP till nästa nivå {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP till nivå {arg1}",
   "openAllCratesYesterday": "Igår",
   "overallScoreHeroOverall": "TOTALT",
   "overviewActiveSkill": "AKTIV FÄRDIGHET",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Din gympersonlighet är...",
   "phaseRecommendationBannerBasedOn": "Baserat på: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-konfidensuppskattning\" : \"\")",
   "phaseRecommendationBannerCycleDay": "Cykel-dag {cycleDay}",
   "phaseRecommendationBannerEvidence": "Bevis: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Uppfattat",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Bygg en styrkegrund",
   "planPreviewScreenBuildingYour4Week": "Bygger din 4-veckorsplan...",
   "planPreviewScreenContinueFree": "Fortsätt gratis",
-  "planPreviewScreenDaysPerWeek": "Dagar per vecka {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} dagar/vecka",
   "planPreviewScreenDesignedBasedOnYour": "Designad baserat på dina svar i frågesporten",
-  "planPreviewScreenEquipmentCount": "Antal utrustning {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} utrustning",
   "planPreviewScreenExercisesMin": "Övningar min {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Öka intensitetsvolym",
   "planPreviewScreenMasterTheMovement": "Bemästra rörelsen",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} personliga rekord!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") FRÅN SENASTE",
   "prShareCardCopiedToClipboard": "Kopierat till urklipp!",
   "prShareCardCopyText": "Kopiera text",
   "prShareCardFailedToCaptureImage": "Kunde inte spara bild",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Fortsätt kämpa!",
   "prsTemplateNewPersonalRecords": "NYA PERSONBÄSTA",
   "prsTemplateNewPrsAreJust": "Nya PR är precis runt hörnet",
-  "prsTemplateValue": ") (enhet)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Ingredienser",
   "publicRecipeInstructions": "Instruktioner",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "Tryck för att se fullständig historik och trender",
   "quickLogMeasurementsTrackYourBodyChanges": "Följ dina kroppsförändringar över tid",
   "quickLogMeasurementsUpdate": "Uppdatera",
-  "quickLogMeasurementsUpdatedDaysAgo": "Dagar sedan {arg0}",
+  "quickLogMeasurementsUpdatedDaysAgo": "Uppdaterad för {arg0} dagar sedan",
   "quickLogMeasurementsUpdatedToday": "Idag",
   "quickLogMeasurementsUpdatedYesterday": "Igår",
   "quickLogMeasurementsWaist": "Midja",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI genererar träningspass inom ditt valda intervall",
   "quizDaysSelectorBest": "Bäst",
   "quizDaysSelectorConsistencyBeatsIntensity": "Kontinuitet slår intensitet - välj vad du kan hålla dig till",
-  "quizDaysSelectorDays": "Dagar {arg0}",
-  "quizDaysSelectorDaysSelected": "Valda dagar {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") för dina träningspass",
+  "quizDaysSelectorDays": "{arg0, plural, one {dag} other {dagar}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} dagar valda",
   "quizDaysSelectorFri": "Fre",
   "quizDaysSelectorHowLongAreYour": "Hur långa är dina träningspass?",
   "quizDaysSelectorHowManyDaysPer": "Hur många dagar i veckan kan du träna?",
   "quizDaysSelectorMin": "Min",
   "quizDaysSelectorMon": "Mån",
   "quizDaysSelectorSat": "Lör",
-  "quizDaysSelectorSelectNDays": "Välj {arg0} dagar",
+  "quizDaysSelectorSelectNDays": "Välj {arg0} dagar som passar dig",
   "quizDaysSelectorSun": "Sön",
   "quizDaysSelectorThu": "Tor",
   "quizDaysSelectorTue": "Tis",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Hemmagym",
   "quizEquipmentHomeKettlebell": "Hem + kettlebell",
   "quizEquipmentHotel": "Hotell",
-  "quizEquipmentIdentifiedCount": "Identifierat antal {arg0}",
+  "quizEquipmentIdentifiedCount": "Identifierade {arg0} objekt. Tryck på valfritt för att avmarkera.",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "Medicinboll",
   "quizEquipmentMinimalEquipmentBodyweight": "Minimal utrustning - kroppsvikt, matta",
   "quizEquipmentNeededForBarbell": "Behövs för skivstång",
   "quizEquipmentNoEquipmentIdentifiedPick": "Ingen utrustning identifierad. Välj från listan nedan.",
-  "quizEquipmentOtherCount": "Annat antal {arg0}",
+  "quizEquipmentOtherCount": "{arg0} valda",
   "quizEquipmentOtherEquipment": "Annan utrustning",
   "quizEquipmentPullUpBar": "Chinsstång",
   "quizEquipmentQuickPresets": "Snabba förinställningar",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Receptnamn krävs",
   "recipeCreateRemovePhoto": "Ta bort foto",
   "recipeCreateSaving": "Sparar...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Ta foto",
   "recipeCreateTapToEdit": "Tryck för att redigera",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Per portion (×{servings} portioner)",
   "recipeDetailScreenUForkedFrom": "✨ Forkad från {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" kommer att tas bort permanent.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Utvalt recept",
   "recipeDetailView": "Visa",
@@ -24745,16 +24468,16 @@
   "regenerateSheetApply": "Använd",
   "regenerateSheetApplyThisWorkout": "Använd detta träningspass",
   "regenerateSheetBalancingMuscleGroups": "Balanserar muskelgrupper",
-  "regenerateSheetBootingUpTheAi": "Startar AI",
+  "regenerateSheetBootingUpTheAi": "Startar AI:n",
   "regenerateSheetBuildingYourPlan": "Bygger din plan",
   "regenerateSheetBuildingYourWorkout": "Bygger ditt träningspass…",
   "regenerateSheetCheckingEquipment": "Kontrollerar utrustning",
   "regenerateSheetCheckingPreferences": "Kontrollerar inställningar",
-  "regenerateSheetConnectingToTheAi": "Ansluter till AI",
+  "regenerateSheetConnectingToTheAi": "Ansluter till AI:n",
   "regenerateSheetConsideringFocusAreas": "Tar hänsyn till fokusområden",
   "regenerateSheetCustomize": "Anpassa",
   "regenerateSheetCustomizeOrLetAi": "Anpassa eller låt AI föreslå",
-  "regenerateSheetCustomizeOrLetAiSuggest": "Anpassa eller låt AI föreslå",
+  "regenerateSheetCustomizeOrLetAiSuggest": "Anpassa eller låt AI:n föreslå",
   "regenerateSheetDescribeYourIdealWorkout": "Beskriv ditt ideala träningspass",
   "regenerateSheetDesigningYourWorkout": "Designar ditt träningspass",
   "regenerateSheetDialingInSetsAndReps": "Ställer in set och reps",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Slutför detaljer…",
   "regenerateSheetFinalizingYourWorkout": "Slutför ditt träningspass",
   "regenerateSheetFineTuningTheDetails": "Finjusterar detaljerna",
-  "regenerateSheetGeneratingElapsed": "Generering pågår {arg0}",
+  "regenerateSheetGeneratingElapsed": "Genererar… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Genererar förslag…",
   "regenerateSheetGetSuggestions": "Hämta förslag",
   "regenerateSheetGettingCreative": "Blir kreativ",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Använd föreslagen",
   "restSuggestionQuick": "Snabb",
   "restSuggestionQuickRest": "Snabbvila",
-  "restSuggestionSaveTime": "Spara tid {arg0}",
+  "restSuggestionSaveTime": "Spara {arg0}",
   "restSuggestionSuggested": "Föreslagen",
   "restSuggestionUseSuggested": "Använd föreslagen",
   "restTimerCardBaseRest": "Basvila",
   "restTimerCardControlRestPeriodsBetween": "Kontrollera viloperioder mellan set",
   "restTimerCardCustomRestTimer": "Anpassad vilotimer",
   "restTimerCardFormula": "Formel",
-  "restTimerCardFormulaBaserestRpe7": "Formel: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Live-förhandsvisning",
   "restTimerCardMultiplier": "Multiplikator",
   "restTimerCardRestBaserestRpe7": "Vila = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "Variabler: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Variabler: bas, RPE, multiplikator, nivå",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI VIKTCOACH",
   "restTimerOverlayAnalyzingYourPerformance": "Analyserar din prestation...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "Avklarad",
   "rtpTitle": "Återgång till träning",
   "safetyDisclaimerBannerDismissDisclaimer": "Avfärda ansvarsfriskrivning",
-  "safetyDisclaimerBannerInjuriesFlagged": "Skador markerade {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} skador flaggade",
   "safetyDisclaimerBannerInjuryBody": "Skadekropp",
   "safetyDisclaimerBannerLearnMore": "Läs mer",
   "safetyDisclaimerBannerMore": "+{overflow} till",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Set",
   "sessionDetailSetCount": "{count, plural, other{{count} set}} · toppset markerat",
   "sessionDetailTime": "Tid",
-  "sessionDetailTopSetHighlighted": ") • toppset markerat",
   "sessionDetailWeight": "Vikt",
   "setAdjustmentAdditionalNotesOptional": "Ytterligare anteckningar (valfritt)",
   "setAdjustmentConfirm": "Bekräfta",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} klara",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} kvar",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} borttagna",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") av (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "av {totalSets} planerade",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} set slutförda",
   "setAdjustmentSheetReps": "Repetitioner",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Set {currentSetNumber}/{totalSets} • Tryck för att expandera",
   "setTrackingSectionSets": "{widget} set",
   "setTrackingSectionSetsCompleted": "{length} set avklarade",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "Mängd att justera vikten med",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "Övningshistorik",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} Supportförfrågan",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} dagar",
   "settingsScreenUiNoSettingsFound": "Inga inställningar hittades",
-  "settingsScreenUiTryDifferentKeywordsLike": "Prova andra sökord som \"tema\", \"notiser\" eller \"ai-röst\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Prova andra sökord som \"tema\", \"aviseringar\" eller \"AI-röst\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Sök i inställningar",
   "settingsSetProgressionResearch": "Ställ in progression & forskning",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "Min {appName} {periodName}-rapport",
   "shareInsightsSheetMyReport2": "Min {appName}-rapport",
   "shareMotivationalCompleted": "KLART",
-  "sharePrNewPr": "Nytt PR",
+  "sharePrNewPr": "NYTT PR",
   "shareStatsCalories": "Kalorier",
   "shareStatsDuration": "Varaktighet",
   "shareStatsEliteTemplate": "ELITE-MALL",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "BELÖNINGAR",
   "streakMilestoneStreakMilestone": "SVIT-MILSTOLPE!",
-  "streakMilestoneToGo": ") kvar!",
   "streakMilestoneYouVeReachedThe": "Du har nått den ultimata svit-milstolpen!",
   "streakSavedDialogWeUsedStreakShield": "Vi använde 1 Streak Shield för att hålla din {savedStreakCount}-dagars streak vid liv.",
   "streakSavedKeepItGoing": "Fortsätt så",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Anslut",
   "todayScoreCardCustomize": "ANPASSA",
   "todayScoreCardToday": "Idag",
-  "todayScoreDetailDown": "Ner {arg0}",
-  "todayScoreDetailEarnedPts": "Intjänade poäng {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Ner {arg0} sedan i morse",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} p",
   "todayScoreDetailHowItWorks": "Hur det fungerar",
-  "todayScoreDetailInactiveExplanation": "Inaktivitetsförklaring {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Momentum med snitt {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {räknas inte} other {räknas inte}} idag, så resten delar på de fulla 100 poängen. Ditt resultat återspeglar alltid bara det som faktiskt gäller idag.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7-dagarssnitt {arg1}",
   "todayScoreDetailNotCounted": "Ej räknat",
   "todayScoreDetailSetupText": "Inställningstext",
   "todayScoreDetailSteady": "Stabilt",
   "todayScoreDetailTodayScore": "Dagens poäng",
-  "todayScoreDetailUp": "Upp {arg0}",
+  "todayScoreDetailUp": "▲ Upp {arg0} sedan i morse",
   "todayScoreSetupAddAWorkoutPlan": "Lägg till ett träningsschema",
   "todayScoreSetupCardContinue": "Fortsätt: {label}",
   "todayScoreSetupCardGetStarted": "KOM IGÅNG · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Konditionsprestationer",
   "trophiesEarnedDayStreak": "Daglig streak",
   "trophiesEarnedFirstTime": "FÖRSTA GÅNGEN!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Milstolpe nådd",
   "trophiesEarnedMilestoneReachedNice": "Milstolpe nådd — snyggt!",
   "trophiesEarnedMilestones": "Milstolpar",
-  "trophiesEarnedNewBadges": "Utmärkelser {arg0}",
-  "trophiesEarnedNewCardioPRs": "Nya konditions-PR {arg0}",
-  "trophiesEarnedNewPR": "Troféer intjänade nytt PR",
-  "trophiesEarnedNewPRs": "Nya PR {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} nya märken",
+  "trophiesEarnedNewCardioPRs": "{arg0} nya kondition-PR",
+  "trophiesEarnedNewPR": "NYTT PR",
+  "trophiesEarnedNewPRs": "{arg0} nya PR!",
   "trophiesEarnedNewPr": "NYTT PR",
   "trophiesEarnedNextMilestones": "Kommande milstolpar",
   "trophiesEarnedNoNewRecords": "Inga nya rekord",
   "trophiesEarnedNoNewRecordsThis": "Inga nya rekord under detta pass — här är vad du jobbar mot:",
   "trophiesEarnedPersonalRecords": "Personliga rekord",
-  "trophiesEarnedRemainingToUnlock": "Återstår att låsa upp {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "{arg0} {arg1} till för att låsa upp",
   "trophiesEarnedSessionHighlights": "Höjdpunkter från passet",
   "trophiesEarnedSheetPts": "+{points} poäng",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} skriver",
   "typingIndicatorIsTyping3": "{agentName} skriver...",
   "unifiedHomeWidgetsActivity": "AKTIVITET",
-  "unifiedHomeWidgetsBreakfastLogged": "Unified home widgets frukost loggad {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Frukost loggad {arg0} av de senaste 7 morgnarna",
   "unifiedHomeWidgetsBreakfastSuggestion": "Frukostförslag",
   "unifiedHomeWidgetsCarbs": "Kolhydrater",
   "unifiedHomeWidgetsConnect": "Anslut",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Fett",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal totalt idag",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal förbrända",
   "unifiedHomeWidgetsKcalLeft": " kcal kvar",
   "unifiedHomeWidgetsLastNight": "i natt",
   "unifiedHomeWidgetsLog16oz": "Logga 16oz",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}v",
   "weekDurationSelectorWeeks": "{selectedWeeks} veckor",
   "weekDurationSelectorWk": "{spw}/vecka",
-  "weekProgressStripCompletedCount": "Antal slutförda {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg0} av {arg1} pass klara",
   "weekProgressStripCouldNotLoadProgress": "Kunde inte läsa in framsteg",
   "weekProgressStripLoading": "Läser in...",
   "weekProgressStripNoWorkoutsScheduled": "Inga träningspass inplanerade",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Se alla",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Viktloggning",
-  "weightTrendCardDownThisWeek": "Ner denna vecka {arg0}",
-  "weightTrendCardDownVsLastCycle": "Ner jämfört med förra cykeln {arg0}",
+  "weightTrendCardDownThisWeek": "Ner {arg0} denna vecka!",
+  "weightTrendCardDownVsLastCycle": "Ner {arg0} lbs jämfört med samma cykeldag förra månaden",
   "weightTrendCardLoadingWeight": "Laddar vikt...",
   "weightTrendCardLogYourWeightTo": "Logga din vikt för att se trender",
   "weightTrendCardMaintaining": "Bibehåller",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Samma som förra cykeln",
   "weightTrendCardTapToLogWeight": "Tryck för att logga vikt",
   "weightTrendCardTargetHeld": "Mål uppnått",
-  "weightTrendCardTargetHeldWindow": "Mål uppnått inom intervall {arg0}",
-  "weightTrendCardUpThisWeek": "Upp denna vecka {arg0}",
-  "weightTrendCardUpVsLastCycle": "Upp jämfört med förra cykeln {arg0}",
+  "weightTrendCardTargetHeldWindow": "Mål bibehållet {arg0} — lutealfas-vattenutjämning",
+  "weightTrendCardUpThisWeek": "Upp {arg0} denna vecka",
+  "weightTrendCardUpVsLastCycle": "Upp {arg0} lbs jämfört med samma cykeldag förra månaden",
   "weightTrendCardWeightStableThisWeek": "Vikten stabil denna vecka",
   "weightTrendCardWeightTrends": "Vikttrender",
   "welcomeAffirmationGreatChoice": "Bra val.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "Återställ till denna version?",
   "workoutActionsShareWorkout": "Dela träning",
   "workoutActionsSheetGetALinkFor": "Hämta en {marketingDomain}-länk till vänner",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "Återställ \"{name}\"?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} reps",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} set, {currentReps} reps",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Kan inte utmana vänner just nu",
   "workoutCompleteScreenUnableToExtendWorkout": "Kunde inte förlänga träningspasset",
   "workoutCompleteScreenViewAllMetrics": "Visa all statistik",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "UTRUSTNING",
   "workoutDetailExercises": "ÖVNINGAR",
   "workoutDetailFailedToLoadWorkout": "Kunde inte läsa in träningspasset",
-  "workoutDetailHelpersForAvailableEquipment": ") för tillgänglig utrustning...",
   "workoutDetailHelpersHell": "Hårt",
   "workoutDetailHelpersUpdatingExercises": "Uppdaterar övningar",
   "workoutDetailMoreInfo": "MER INFO",
   "workoutDetailProgram": "Program",
-  "workoutDetailReplacingExercises": "Ersätter övningar {arg0}",
+  "workoutDetailReplacingExercises": "Byter ut {arg0} övningar för tillgänglig utrustning…",
   "workoutDetailRevert": "Återställ",
   "workoutDetailScreenBreakSuperset": "Bryt superset?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} kcal förbrukade",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "Vilken enhet är viktkolumnen i? Och om du vet vilken app den kommer ifrån, välj den — det hjälper till att skilja på liknande format (Hevy vs. Strong CSV-filer).",
   "workoutHistoryImportYourStrengthData": "Din styrkedata",
-  "workoutImportAsDone": ")\" som klar",
   "workoutImportCalories": "Kalorier",
   "workoutImportCardio": "Kondition",
   "workoutImportCycling": "Cykling",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Varaktighet",
   "workoutImportEasy": "Lätt",
   "workoutImportFlexibility": "Flexibilitet",
-  "workoutImportFromSource": "Från källa {arg0}",
+  "workoutImportFromSource": "från {arg0}",
   "workoutImportHard": "Hård",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Hur hårt var detta träningspass?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Du kan komma att se dessa systemmeddelanden under ditt pass. Båda är valfria – hoppa över dem så fungerar passet ändå.",
   "workoutPlanDrawerAddExercise": "Lägg till övning",
   "workoutPlanDrawerCurrent": "Nuvarande",
-  "workoutPlanDrawerExerciseCount": "Antal övningar {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") loggade. De kommer att raderas.",
+  "workoutPlanDrawerExerciseCount": "{arg0} övningar",
   "workoutPlanDrawerNow": "Nu",
   "workoutPlanDrawerRemove": "Ta bort",
-  "workoutPlanDrawerRemoveExercise": "Ta bort övning {arg0}",
+  "workoutPlanDrawerRemoveExercise": "Ta bort {arg0}?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Verktygstips för att ta bort övning",
-  "workoutPlanDrawerSetsLogged": "Set loggade {arg0}",
+  "workoutPlanDrawerSetsLogged": "Du har {arg0} set loggade. De kommer att raderas.",
   "workoutPlanDrawerSwapExercise": "Byt övning",
   "workoutPlanDrawerTitle": "Titel",
   "workoutPlanDrawerWorkoutPlan": "Träningsplan",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "Varje set du loggar",
   "workoutShowcaseEveryWorkoutFlows": "Varje träningspass flyter på",
   "workoutShowcaseFinishWorkout": "Avsluta träningspass",
-  "workoutShowcaseFormat1Rm": "Format 1RM för träningsuppvisning",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "Boarding",
   "workoutShowcaseFormatCard": "Kort",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Linjär etikett",
   "workoutShowcaseLogAllSets": "Alla set",
   "workoutShowcaseLogDrink": "Logga dryck",
-  "workoutShowcaseLogSet": "Set {arg0}",
+  "workoutShowcaseLogSet": "✓ Logga set {arg0}",
   "workoutShowcaseLogWater": "Logga vatten",
   "workoutShowcaseMovedThisSession": "flyttat detta pass",
   "workoutShowcaseNewPr": "NYTT PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Reps",
   "workoutShowcaseScreenDay": "Dag {day}",
   "workoutShowcaseScreenDuration": "VARAKTIGHET: {duration}",
-  "workoutShowcaseScreenPrs": "PRS:      {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · REGISTRERAT",
   "workoutShowcaseScreenSession": "PASS: {title}",
   "workoutShowcaseScreenTotalPrs": "TOTALT  {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "Set 1 av 4",
   "workoutShowcaseSet2": "Set 2",
   "workoutShowcaseSet3": "Set 3",
-  "workoutShowcaseSetNOf3": "Träningspass showcase set n av {arg0}",
+  "workoutShowcaseSetNOf3": "Set {arg0} av 3",
   "workoutShowcaseShareYourWorkout": "Dela ditt träningspass",
   "workoutShowcaseSideA": "SIDA A",
   "workoutShowcaseSuperset": "Superset",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Daglig",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 nivåer över 11 nivågrupper",
   "xpGoalsDialogBeginnerToTranscendent": "Nybörjare till transcendent",
-  "xpGoalsDialogCompleteWorkoutXp": "Slutför träningspass xp",
+  "xpGoalsDialogCompleteWorkoutXp": "Slutför pass: +100 XP",
   "xpGoalsDialogDailyGoals": "Dagliga mål",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "Chatta med ai coach xp",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Måltidsviktmätningar xp",
-  "xpGoalsDialogFirstPrXp": "Pr xp",
-  "xpGoalsDialogFirstProgressPhotoXp": "Framstegsfoto xp",
-  "xpGoalsDialogFirstProteinGoalXp": "Proteingol xp",
-  "xpGoalsDialogFirstWorkoutXp": "Träningspass xp",
-  "xpGoalsDialogHitProteinGoalXp": "Nå proteingol xp",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Första chatten med AI-coachen: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Första måltid/vikt/mätning: +50 XP styck",
+  "xpGoalsDialogFirstPrXp": "Första PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Första framstegsfoto: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Första proteinmål: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Första passet: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Nå proteinmål: +50 XP",
   "xpGoalsDialogLevels": "Nivåer",
-  "xpGoalsDialogLogBodyMeasurementsXp": "Kroppsmätningar xp",
-  "xpGoalsDialogLogMealXp": "Måltid xp",
-  "xpGoalsDialogLogWeightXp": "Vikt xp",
-  "xpGoalsDialogLoginXp": "Inloggning xp",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Logga kroppsmått: +20 XP",
+  "xpGoalsDialogLogMealXp": "Logga måltid: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Logga vikt: +15 XP",
+  "xpGoalsDialogLoginXp": "Logga in: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Milstolpebelöningar",
   "xpGoalsFirstTimeBonuses": "Bonusar för första gången",
   "xpGoalsGotIt": "Jag förstår!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Nå proteinmål",
   "xpGoalsScreenInventory": "Inventarie",
   "xpGoalsScreenLegendary": "LEGENDARISK",
-  "xpGoalsScreenLevelCurrentTotal": "Nuvarande totalnivå {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Nivå {arg0} • 249 nivåer totalt",
   "xpGoalsScreenLevelProgress": "Nivåframsteg",
   "xpGoalsScreenLogBodyMeasurements": "Logga kroppsmått",
   "xpGoalsScreenLogFirstMeal": "Logga första måltiden",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Troférum",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Veckovis",
-  "xpGoalsXpAvailable": "Tillgängligt {arg0}",
-  "xpGoalsXpEarnedToday": "Tjänat idag {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP tillgängligt",
+  "xpGoalsXpEarnedToday": "+{arg0} XP intjänat idag",
   "xpGoalsXpGoals": "XP-mål",
-  "xpGoalsXpMultiplierActive": "Multiplikator aktiv {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP aktivt!",
   "xpHeroTileDayStreak": "{streak}-dagars streak",
   "xpHeroTileLv": "Nivå {level}",
   "xpHeroTileLv2": "Nivå {nextLevel} → {label}",

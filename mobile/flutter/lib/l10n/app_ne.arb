@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "कहिले प्रयोग गर्ने",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "व्यायाम सफलतापूर्वक साटासाट गरियो",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} व्यायाम थपियो",
-  "activeWorkoutScreenRefactoredFor": ") को लागि ({name})",
   "activeWorkoutScreenUndo": "अनडू",
   "activeWorkoutScreenWorkoutAdapted": "वर्कआउट अनुकूलित गरियो।",
   "activityCardAdditionalDetailsOptional": "थप विवरणहरू (वैकल्पिक)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "वर्कआउट अघिको इन्धन?",
   "aiCoachMealQuickSnackIdeas": "छिटो खाजाका विचारहरू?",
   "aiCoachMealRecoveryDayEating": "रिकभरी दिनको खाना?",
-  "aiCoachMealSearchQuestionsTryAngry": "प्रश्नहरू खोज्नुहोस् (\"angry\", \"fiber\", \"mexican\" प्रयास गर्नुहोस्)",
   "aiCoachMealSomethingWentWrong": "केही गलत भयो।",
   "aiCoachMealStressedWhatHelps": "तनावमा छु — के ले मद्दत गर्छ?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "एसियाली शैलीको {meal} — एउटा विकल्प (राइस बाउल, नूडल्स, सुशी, स्टिर फ्राई), म्याक्रो र तयारी।{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · {phase} फेज",
   "caloriesSummaryCardCalories": "क्यालोरी",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "बाँकी",
   "cancelConfirmationAnythingElseYouD": "के तपाईं अरू केही साझा गर्न चाहनुहुन्छ? (वैकल्पिक)",
   "cancelConfirmationCancelAnyway": "जे भए पनि रद्द गर्नुहोस्",
   "cancelConfirmationHelpUsImprove": "हामीलाई सुधार गर्न मद्दत गर्नुहोस्",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "बुझें",
   "chatLanguageChangedSystem": "🌐 AI Coach अब {nativeName} मा जवाफ दिन्छ",
   "chatLanguageResetSystem": "🌐 AI Coach को भाषा रिसेट गरियो — एपको भाषा प्रयोग गर्दै",
-  "chatLeftToday": ") आज बाँकी",
   "chatMediaWidgetsCalTotal": "कुल {totalCal} cal",
   "chatMediaWidgetsGProtein": "{totalProtein}g प्रोटिन",
   "chatMediaWidgetsGoTo": "{workoutName} मा जानुहोस्",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "कोचले सामान्य भन्दा बढी समय लिइरहनुभएको छ।",
   "chatScreenCouldntReachCoach": "कोचसँग सम्पर्क गर्न सकिएन।",
   "chatScreenExtAboutAiCoach": "AI कोचको बारेमा",
-  "chatScreenExtAs": ") को रूपमा ({mealType})",
   "chatScreenExtChangeCoach": "कोच परिवर्तन गर्नुहोस्",
   "chatScreenExtChatTips": "च्याट सुझावहरू",
   "chatScreenExtChooseMultiplePhotos": "धेरै फोटोहरू छान्नुहोस्",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "लक्ष्यहरू हेर्नुहोस्",
   "complianceRingCardAllWorkoutsCompleted": "सबै वर्कआउटहरू पूरा भए",
   "complianceRingCardGetStartedToday": "आजै सुरु गर्नुहोस्",
-  "complianceRingCardGreatPace": "उत्कृष्ट गति {arg0}",
+  "complianceRingCardGreatPace": "राम्रो गति! {arg0} बाँकी",
   "complianceRingCardNoWorkoutsScheduledThis": "यो हप्ता कुनै वर्कआउट तय गरिएको छैन",
-  "complianceRingCardOnTrack": "ट्र्याकमा {arg0}",
+  "complianceRingCardOnTrack": "सही बाटोमा — {arg0} बाँकी",
   "complianceRingCardWorkoutCompliance": "वर्कआउट पालना",
-  "complianceRingCardWorkoutsRemaining": "बाँकी वर्कआउटहरू {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} वर्कआउट बाँकी",
   "comprehensiveStatsStatsScores": "तथ्याङ्क र स्कोरहरू",
   "connectedAppsAutoImportEvery15": "हरेक १५ मिनेटमा स्वतः-आयात गर्नुहोस्",
   "connectedAppsConnect": "जडान गर्नुहोस्",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "खाना चयन गर्नुहोस्",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "यो मान प्रयोग गर्नुहोस्",
-  "cookingConverterWeight": ") तौल",
   "cosmeticsGalleryCosmetics": "कस्मेटिक्स",
   "cosmeticsGalleryEquip": "सुसज्जित गर्नुहोस्",
   "cosmeticsGalleryEquipped": "सुसज्जित",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "तपाईंको खोजसँग कुनै व्यायाम मेल खाँदैन",
   "customExercisesScreenAreYouSureYou": "के तपाईं पक्का \"{name}\" मेटाउन चाहनुहुन्छ? यो कार्य उल्टाउन सकिँदैन।",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} अभ्यासहरू, {totalUses} पटक प्रयोग",
-  "customExercisesScreenUsedTimes": "प्रयोग गरिएको (usageCount) पटक(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "व्यायामहरू खोज्नुहोस्...",
   "customExercisesSimple": "साधारण",
   "customFoodBuilderAiFillFromName": "नामबाट AI फिल",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · अन्तिम चक्र",
   "customTrendScreenMaxOverlaysRemoveOne": "अधिकतम {_kMaxOverlays} ओभरलेहरू — अर्को थप्न एउटा हटाउनुहोस्",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} साझा दिनहरू",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "व्यायाम थप्नुहोस्",
   "customWorkoutBuilderBuildCustomWorkout": "कस्टम वर्कआउट बनाउनुहोस्",
   "customWorkoutBuilderCustomWorkoutCreated": "कस्टम वर्कआउट सिर्जना गरियो!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "पिरियड लग गर्नुहोस्",
   "cycleScreenUiLogPeriod": "पिरियड लग गर्नुहोस्",
   "cycleScreenUiLogYourFirstPeriod": "पूर्वानुमान सुरु गर्न आफ्नो पहिलो महिनावारी लग गर्नुहोस्।",
-  "cycleScreenUiPhase": ") फेज",
   "cycleScreenUiPhaseLabel": "{displayName} चरण",
   "cycleScreenUiPredictionsAreEstimates": "पूर्वानुमानहरू तपाईंको लग गरिएको डेटामा आधारित अनुमानहरू हुन्, यो गर्भनिरोधक विधि वा चिकित्सा सल्लाह होइन। कुनै पनि स्वास्थ्य समस्याको लागि चिकित्सकलाई भेट्नुहोस्।",
   "cycleScreenUiPregnancyModeIsOn": "प्रेग्नेन्सी मोड अन छ",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "जारी राख्नुहोस्",
   "editProgramSheetCurrent": "हालको",
   "editProgramSheetCustomProgram": "कस्टम प्रोग्राम",
-  "editProgramSheetCustomValue": "अनुकूल मान {arg0}",
+  "editProgramSheetCustomValue": "कस्टम: {arg0}",
   "editProgramSheetCustomizeProgram": "प्रोग्राम कस्टमाइज गर्नुहोस्",
   "editProgramSheetDays": "दिनहरू",
   "editProgramSheetDaysAgo": "{days} दिन अघि",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "उपकरण",
   "editProgramSheetEquipmentLabel": "उपकरण लेबल",
   "editProgramSheetExamples": "उदाहरणहरू",
-  "editProgramSheetFailedToLoadHistory": "इतिहास लोड गर्नुहोस् {arg0}",
-  "editProgramSheetFailedToRestore": "रिस्टोर गर्नुहोस् {arg0}",
+  "editProgramSheetFailedToLoadHistory": "इतिहास लोड गर्न असफल: {arg0}",
+  "editProgramSheetFailedToRestore": "पुनर्स्थापना गर्न असफल: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "प्रोग्राम अपडेट गर्नुहोस्",
   "editProgramSheetFocus": "फोकस",
   "editProgramSheetHealth": "स्वास्थ्य",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "{pct}% डाउनलोड हुँदैछ",
   "exerciseDetailSheetDownloadingVideo": "भिडियो डाउनलोड हुँदैछ...",
   "exerciseDetailSheetFavorite": "मनपर्ने",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "लोड हुँदैछ...",
   "exerciseDetailSheetLog1rm": "1RM लग गर्नुहोस्",
   "exerciseDetailSheetMS": "{restMins} मिनेट {restSecs} सेकेन्ड",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "यहाँ नोटहरू थप्नुहोस्...",
   "exerciseSetTrackerAddSet": "सेट थप्नुहोस्",
-  "exerciseSetTrackerBarbell": ") barbell",
   "exerciseSetTrackerReps": "पटक",
   "exerciseSetTrackerRestTarget": "आरामको लक्ष्य",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI छनोटहरू उपलब्ध छैनन्",
   "exerciseSwapSheetAnyEquipment": "कुनै पनि उपकरण",
   "exerciseSwapSheetAskAiForSuggestions": "AI लाई सुझावहरू सोध्नुहोस्",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "आफ्नो उपकरण वा प्राथमिकताहरू वर्णन गर्नुहोस्\nउदाहरण: \"मलाई काँधमा समस्या छ, केवल बडीवेट मात्र\"",
   "exerciseSwapSheetEGIOnly": "उदाहरण: \"मसँग केवल डम्बेलहरू छन्\"",
   "exerciseSwapSheetFailedToSwapExercise": "व्यायाम साट्न असफल भयो",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "मांसपेशीसँग मिल्ने विकल्पहरू खोज्दै...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "तौल",
   "expandedExerciseCardAddToFavorites": "मनपर्नेमा थप्नुहोस्",
   "expandedExerciseCardAlternatingHands": "हातहरू अदलबदल गर्दै",
-  "expandedExerciseCardBarbell": ") बार्बेल",
   "expandedExerciseCardBreathing": "सास फेर्ने प्रक्रिया",
   "expandedExerciseCardBreathingGuide": "सास फेर्ने गाइड",
   "expandedExerciseCardCollapse": "खुम्च्याउनुहोस्",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "प्रोटोकल स्तर",
   "fastingScoreCardScore": "स्कोर",
   "fastingScoreCardStreakBonus": "स्ट्रिक बोनस",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "गत हप्ताको तुलनामा",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "पहिलो",
   "flexibilityProgressChartLatest": "पछिल्लो",
   "flexibilityProgressChartNoDataAvailable": "कुनै डेटा उपलब्ध छैन",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "क्षेत्र अनुसार",
   "flexibilityScoreCardFocusAreas": "ध्यान केन्द्रित क्षेत्रहरू",
   "flexibilityScoreCardOverallFlexibility": "समग्र लचिलोपन",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "खाना, परिकार, \"high protein\" खोज्नुहोस्...",
   "foodHistoryUndo": "अनडू",
   "foodItemRankingAddFood": "खाना थप्नुहोस्",
-  "foodItemRankingDetails": ") विवरणहरू",
   "foodItemRankingNFoodItems": "{count} खाद्य वस्तुहरू",
   "foodItemRankingScore": "स्कोर",
   "foodItemRankingTapToHideDetails": "विवरण लुकाउन ट्याप गर्नुहोस्",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "त्यसैले मैले ब्यक्ति निर्माण गरें, खाता होइन। कुनै पनि मेनु स्न्याप गर्नुहोस् - घर वा विदेशमा - र कोचले यसलाई म्याक्रोमा तपाइँलाई फिर्ता पढ्छ। मंगलबार छोड्नुहोस् र यसले तपाईंलाई दोषी यात्रा बिना बुधबार बिहान फिर्ता तान्छ। यसले तपाइँको खाना, तपाइँको जिम, तपाइँको स्लिप ढाँचाहरू - महिनामा एक PT सत्र भन्दा कमको लागि सिक्छ।",
   "founderNoteTheFriendsWhoActually": "वास्तवमै फिट भएका साथीहरूसँग उनीहरूलाई म्यासेज गर्ने व्यक्ति हुन्थ्यो। वास्तविक जवाफदेहिताको लागि महिनाको करिब दुई सय डलर लाग्छ, जुन कारणले गर्दा हामीमध्ये धेरैले यो कहिल्यै पाउँदैनौं, र यही कारणले \"ट्र्याकिङ\" र \"परिवर्तन\" बीचको खाडल वर्षौंसम्म रहन्छ।",
-  "freshnessDecayCardAgo": ") पहिले",
   "freshnessDecayCardControlsHowQuicklyExercise": "व्यायामको ताजगी कति छिटो घट्छ भन्ने नियन्त्रण गर्छ: e^(-k * sessions)",
   "freshnessDecayCardFreshnessDecayTuner": "ताजगी क्षय ट्युनर",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}किग्रा",
   "futuristicSetCardSetOf": "सेट {currentSetNumber} / {totalSets}",
   "futuristicSetCardSkipExercise": "व्यायाम छोड्नुहोस्",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "तपाईंको वर्कआउट, पोषण र उपवासलाई समन्वय गर्ने एक समग्र योजना बनाउनुहोस्।",
   "generatePlanFastingProtocol": "उपवास प्रोटोकल",
   "generatePlanGeneratePlan": "योजना बनाउनुहोस्",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "तपाईंको पहिलो बानी थप्नुहोस्",
   "habitsCardAllHabitsCompleted": "सबै बानीहरू पूरा भए!",
   "habitsCardBuildDailyHabits": "दैनिक बानीहरू निर्माण गर्नुहोस्",
-  "habitsCardCompletedCount": "पूरा भएको संख्या {arg0} {arg1}",
-  "habitsCardDayStreak": "दिनको निरन्तरता {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} पूरा भयो",
+  "habitsCardDayStreak": "{arg0} दिनको स्ट्रिक",
   "habitsCardFailedToLoadHabits": "बानीहरू लोड गर्न असफल भयो",
   "habitsCardGreatJobKeepingUp": "तपाईंको निरन्तरता (Streak) कायम राखेकोमा राम्रो काम",
   "habitsCardQuickStart": "द्रुत सुरुवात:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "आजका बानीहरू",
   "habitsCardTryAgain": "पुन: प्रयास गर्नुहोस्",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "सबै बानीहरू हेर्नुहोस् {arg0}",
+  "habitsCardViewAllHabits": "सबै {arg0} बानीहरू हेर्नुहोस्",
   "habitsCompleted": "पूरा भयो",
   "habitsDeleteHabit": "बानी हटाउने?",
   "habitsHoldToReorderSwipe": "पुन: क्रमबद्ध गर्न थिचिराख्नुहोस् • हटाउन स्वाइप गर्नुहोस्",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "आराम गर्ने दिन? कि व्यायाम गर्न तयार हुनुहुन्छ? तपाईंको निर्णय।",
   "homeEmptyWorkout_v3": "कार्यक्रमहरूको बीचमा हुनुहुन्छ — ट्रयाकमा फर्कन नयाँ सुरु गर्नुहोस्।",
   "homeEmptyWorkout_v4": "अहिलेसम्म कुनै योजना छैन। AI लाई तपाईंको लक्ष्य अनुसार योजना बनाउन दिनुहोस्।",
-  "homeFromHealthConnect": ") Health Connect बाट",
   "homeGreetingAfternoon_v1": "दिउँसोको ऊर्जा, {name}!",
   "homeGreetingAfternoon_v2": "नमस्ते {name}, अब अलि कसरत गर्ने समय भयो?",
   "homeGreetingAfternoon_v3": "अलि स्ट्रेच गर्ने समय भयो, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "क्यालोरी",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "सारांश",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "वर्कआउट्स",
   "intensityPrompt1Left": "१ बाँकी",
   "intensityPrompt2Left": "२ बाँकी",
   "intensityPrompt3Left": "३+ बाँकी",
   "intensityPromptHard": "कठिन",
-  "intensityPromptHideRpeSlideDial": "RPE स्लाइड लुकाउनुहोस्      सेट गर्नुहोस् (RPE 1-10)",
   "intensityPromptHowHardWasThat": "त्यो सेट कत्तिको कठिन थियो?",
   "intensityPromptMax": "अधिकतम",
   "intensityPromptModerate": "मध्यम",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "सेट {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "एक AI कोच जसले योजना बनाउँछ, तपाईंको शरीरलाई बुझ्छ, र हरेक हप्ता समायोजन गर्छ।",
   "introBuildMyPlan": "मेरो योजना बनाउनुहोस्",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) sets",
   "introCardMonth": "महिना।",
   "introIAlreadyHaveAnAccount": "मसँग पहिले नै खाता छ",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "बारकोड",
   "logMealSheetBarcodeScan": "बारकोड स्क्यान",
   "logMealSheetCached": "(क्यास गरिएको)",
-  "logMealSheetCaptured": ") खिचियो",
   "logMealSheetChooseFoodPhotos": "खानाको फोटोहरू छान्नुहोस्",
   "logMealSheetChooseFromGallery": "ग्यालरीबाट छान्नुहोस्",
   "logMealSheetChooseFromLibrary": "लाइब्रेरीबाट छान्नुहोस्",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "७ दिनको औसत · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "तपाईंको अघिल्लो न्यूनबाट -{_selectedUnit} {label}",
   "logWeightSheetValidRange": "मान्य दायरा: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Apple Health बाट सिंक गरियो",
   "logWeightSyncedToAppleHealth": "Apple Health मा सिंक गरियो",
   "logWeightTapToEdit": "सम्पादन गर्न ट्याप गर्नुहोस्",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "साइन आउट गर्ने?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "म्याक्रोहरू",
-  "mainShellPartChatsLeftToday": "आज बाँकी च्याटहरू {arg0}",
+  "mainShellPartChatsLeftToday": "आज {arg0} च्याट बाँकी",
   "mainShellPartGuestMode": "गेस्ट मोड",
   "mainShellPartQuickActions": "द्रुत कार्यहरू",
   "mainShellPartSignUp": "साइन अप",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "प्राथमिक",
   "manageDuplicateImportsScreenSources": "{length} स्रोतहरू",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(row)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "समूहबाट अनलिंक गर्नुहोस्",
   "manageDuplicateImportsUnlinkedFromGroup": "समूहबाट अनलिंक गरियो",
   "manageGymProfilesActive": "सक्रिय",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} थप",
   "menuAnalysisSheetSelected": "{length} चयन गरियो",
   "menuAnalysisSheetSort": "क्रमबद्ध गर्नुहोस्: {label}",
-  "menuAnalysisSheetValue": ")(elapsed)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "तपाईंले \"{restaurantName}\" को लागि मेनु पहिले नै सुरक्षित गरिसक्नुभएको छ",
   "menuAnalysisSort": "क्रमबद्ध गर्नुहोस्:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "मेट्रिक प्रकार",
   "metricsDashboardMuscleMass": "मांसपेशीको पिण्ड",
   "metricsDashboardNoDataAvailable": "कुनै डेटा उपलब्ध छैन",
-  "metricsDashboardNoMetricDataYet": "अहिलेसम्म कुनै मेट्रिक डेटा छैन {arg0}",
+  "metricsDashboardNoMetricDataYet": "अहिलेसम्म {arg0} डाटा छैन",
   "metricsDashboardQuickStats": "द्रुत तथ्याङ्क",
   "metricsDashboardRestingHeartRate": "आराम गर्दाको मुटुको धड्कन",
   "metricsDashboardRestingHr": "आराम गर्दाको HR",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "अन्य",
   "muscleHeatmapTileCompleteWorkoutsToSee": "मांसपेशीको डेटा हेर्न वर्कआउट पूरा गर्नुहोस्",
   "muscleHeatmapTileCouldnTLoad": "लोड गर्न सकिएन",
-  "muscleHeatmapTileMostTrained": "सबैभन्दा बढी प्रशिक्षित {arg0}",
+  "muscleHeatmapTileMostTrained": "सबैभन्दा बढी तालिम: {arg0}",
   "muscleHeatmapTileMuscles": "मांसपेशीहरू",
   "muscleHeatmapTileRetry": "पुन: प्रयास गर्नुहोस्",
   "muscleHeatmapUpperBody": "माथिल्लो शरीर",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "मनपर्ने ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "मुख्य ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "उत्कृष्ट: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "हालैका गतिविधिहरू",
   "myLibraryTabViewAll": "सबै हेर्नुहोस्",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "सामान्य हिँडडुल गर्ने",
   "neatGamificationWidgetsClaimReward": "पुरस्कार दाबी गर्नुहोस्",
   "neatGamificationWidgetsCouchPotato": "सुस्त व्यक्ति",
-  "neatGamificationWidgetsCurrentXp": "हालको xp {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "दैनिक चुनौती",
   "neatGamificationWidgetsExpired": "म्याद सकियो",
-  "neatGamificationWidgetsHoursMinutesLeft": "घण्टा मिनेट बाँकी {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0}h {arg1}m बाँकी",
   "neatGamificationWidgetsLevel": "स्तर {level}",
   "neatGamificationWidgetsLevelUp": "लेभल अप!",
   "neatGamificationWidgetsMaxLevel": "अधिकतम लेभल!",
-  "neatGamificationWidgetsMinutesLeft": "मिनेट बाँकी {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0}m बाँकी",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "च्याम्पियन",
   "neatGamificationWidgetsNeatEnthusiast": "उत्साही",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "यस हप्ता अझै कुनै र्याङ्किङ छैन",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "स्कोर",
-  "neatGamificationWidgetsStepGoal": "चरण लक्ष्य {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "स्टेपहरू",
-  "neatGamificationWidgetsTargetActiveHours": "लक्ष्य सक्रिय घण्टा {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} hrs",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "स्कोर ब्रेकडाउन",
   "neatScoreDisplayTapForBreakdown": "ब्रेकडाउनको लागि ट्याप गर्नुहोस्",
   "neatScoreDisplayTrend": "ट्रेन्ड: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "लोड हुँदैछ...",
   "netflixExerciseCarouselSeeAll": "सबै हेर्नुहोस्",
   "netflixExercisesAddYourOwnExercises": "कस्टम रेप्स, सेट र निर्देशनहरूको साथ आफ्नै व्यायामहरू थप्नुहोस्।",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "इष्टतम अर्को सेट गणना गर्दै...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% तीव्रता",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "अन्तिम सेट",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "प्रमुख स्रोतहरू",
   "nutrientExplorerUnknown": "अज्ञात",
   "nutrientExplorerUnpinNutrient": "पोषक तत्व अनपिन गर्नुहोस्",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "भिटामिनहरू",
   "nutrientRushGameCatchTheGoldenZealova": "पावर-अपका लागि सुनौलो Zealova मार्क समात्नुहोस्!",
   "nutrientRushGameNewBest": "🎉 नयाँ उत्कृष्ट!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "साप्ताहिक अवलोकन",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "औसत {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "औसत सेवन: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/दिन {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "तौल: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, सबै कुरा",
   "onboardingWhyFirstTheWhy": "पहिले, किन",
   "onboardingWhyWhatSDrivingThis": "यसको पछाडिको कारण के हो?",
-  "openAllCrates24HoursOf2xXp": "२४ घण्टाको लागि २x XP",
-  "openAllCratesActivityCrate": "गतिविधि क्रेट",
+  "openAllCrates24HoursOf2xXp": "2x XP को 24 घण्टा",
+  "openAllCratesActivityCrate": "एक्टिभिटी क्रेट",
   "openAllCratesBonusCrateToOpen": "खोल्नको लागि बोनस क्रेट",
-  "openAllCratesCollect": "संकलन गर्नुहोस् {arg0} {arg1}",
-  "openAllCratesCratesOpened": "क्रेटहरू खोलियो {arg0}",
-  "openAllCratesDailyCrate": "दैनिक क्रेट",
+  "openAllCratesCollect": "सङ्कलन गर्नुहोस् ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} क्रेट खोलियो!",
+  "openAllCratesDailyCrate": "डेली क्रेट",
   "openAllCratesDone": "भयो",
-  "openAllCratesDoubleXpToken": "Double xp टोकन",
+  "openAllCratesDoubleXpToken": "डबल XP टोकन",
   "openAllCratesFailedToOpenCrates": "क्रेटहरू खोल्न असफल भयो। कृपया फेरि प्रयास गर्नुहोस्।",
   "openAllCratesFitnessCrate": "फिटनेस क्रेट",
-  "openAllCratesGainedXp": "प्राप्त xp {arg0}",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "अधिकतम स्तर",
-  "openAllCratesOpenYourCrates": "आफ्नो क्रेटहरू खोल्नुहोस्",
-  "openAllCratesOpened": ") खोलियो!",
-  "openAllCratesOpeningYourCrates": "तपाईंको क्रेटहरू खोलिँदै",
-  "openAllCratesPickRewardPerDay": "प्रति दिन पुरस्कार छान्नुहोस् {arg0} {arg1}",
-  "openAllCratesPickYourReward": "आफ्नो पुरस्कार छान्नुहोस् {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 आफ्ना क्रेटहरू खोल्नुहोस्",
+  "openAllCratesOpeningYourCrates": "🎁 तपाईंका क्रेटहरू खोलिँदै…",
+  "openAllCratesPickRewardPerDay": "प्रति दिन 1 इनाम छान्नुहोस् • {arg0}/{arg1} छानियो",
+  "openAllCratesPickYourReward": "आफ्नो इनाम छान्नुहोस् • {arg0}/{arg1} छानियो",
   "openAllCratesProtectYourStreak": "आफ्नो निरन्तरता सुरक्षित गर्नुहोस्",
   "openAllCratesSelectAll": "सबै चयन गर्नुहोस्",
   "openAllCratesStreakCrate": "स्ट्रिक क्रेट",
   "openAllCratesStreakShield": "स्ट्रिक शिल्ड",
   "openAllCratesToday": "आज",
-  "openAllCratesTotalXpFormatted": "कुल XP {arg0}",
-  "openAllCratesTotalXpLevel": "कुल XP स्तर {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} जम्मा",
+  "openAllCratesTotalXpLevel": "जम्मा: {arg0} XP • लेभल {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 पुरस्कार!",
-  "openAllCratesXpInLevel": "स्तरमा XP {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "अर्को स्तरको लागि XP {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "लेभल {arg1} सम्म {arg0} XP",
   "openAllCratesYesterday": "हिजो",
   "overallScoreHeroOverall": "समग्र",
   "overviewActiveSkill": "सक्रिय सीप",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "तपाईंको जिम व्यक्तित्व हो...",
   "phaseRecommendationBannerBasedOn": "आधार: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-confidence अनुमान",
   "phaseRecommendationBannerCycleDay": "साइकल दिन {cycleDay}",
   "phaseRecommendationBannerEvidence": "प्रमाण: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "बुझें",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "शक्ति आधार निर्माण गर्नुहोस्",
   "planPreviewScreenBuildingYour4Week": "तपाईंको ४-हप्ताको योजना बनाउँदै...",
   "planPreviewScreenContinueFree": "नि:शुल्क जारी राख्नुहोस्",
-  "planPreviewScreenDaysPerWeek": "प्रति हप्ता दिनहरू {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} दिन/हप्ता",
   "planPreviewScreenDesignedBasedOnYour": "तपाईंको क्विज उत्तरहरूमा आधारित डिजाइन गरिएको",
-  "planPreviewScreenEquipmentCount": "उपकरण गणना {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} उपकरण",
   "planPreviewScreenExercisesMin": "अभ्यासहरू न्यूनतम {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "तीव्रता र भोल्युम बढाउनुहोस्",
   "planPreviewScreenMasterTheMovement": "आन्दोलनमा निपुण हुनुहोस्",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} व्यक्तिगत रेकर्डहरू!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") पछिल्लो पटकबाट",
   "prShareCardCopiedToClipboard": "क्लिपबोर्डमा प्रतिलिपि गरियो!",
   "prShareCardCopyText": "टेक्स्ट प्रतिलिपि गर्नुहोस्",
   "prShareCardFailedToCaptureImage": "तस्बिर खिच्न असफल भयो",
@@ -23721,7 +23448,7 @@
   "programSummaryLevel": "स्तर",
   "programSummaryLoseWeight": "तौल घटाउनुहोस्",
   "programSummaryMacrosAndMealsAligned": "तपाईंको प्रशिक्षण अनुसार म्याक्रो र खानाहरू मिलाइएको",
-  "programSummaryNItems": "वस्तुहरू {arg0}",
+  "programSummaryNItems": "{arg0} वस्तुहरू",
   "programSummaryNutritionIntegration": "पोषण एकीकरण",
   "programSummaryPersonalizedForYourGoals": "तपाईंको लक्ष्य र उपकरणका लागि व्यक्तिगतकृत",
   "programSummaryProgressiveOverload": "प्रोग्रेसिभ ओभरलोड",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "प्रयास जारी राख्नुहोस्!",
   "prsTemplateNewPersonalRecords": "नयाँ व्यक्तिगत रेकर्डहरू",
   "prsTemplateNewPrsAreJust": "नयाँ PRs नजिकै छन्",
-  "prsTemplateValue": ") (unit)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "सामग्रीहरू",
   "publicRecipeInstructions": "निर्देशनहरू",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "पूर्ण इतिहास र प्रवृत्तिहरू हेर्न ट्याप गर्नुहोस्",
   "quickLogMeasurementsTrackYourBodyChanges": "समयसँगै आफ्नो शरीरमा आएका परिवर्तनहरू ट्र्याक गर्नुहोस्",
   "quickLogMeasurementsUpdate": "अपडेट गर्नुहोस्",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} दिन अघि",
+  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} दिन अघि अपडेट गरियो",
   "quickLogMeasurementsUpdatedToday": "आज",
   "quickLogMeasurementsUpdatedYesterday": "हिजो",
   "quickLogMeasurementsWaist": "कम्मर",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI ले तपाईंको छनौट गरिएको दायरा भित्र वर्कआउटहरू उत्पन्न गर्दछ",
   "quizDaysSelectorBest": "उत्तम",
   "quizDaysSelectorConsistencyBeatsIntensity": "निरन्तरता तीव्रता भन्दा महत्त्वपूर्ण छ - तपाईंले के कायम राख्न सक्नुहुन्छ त्यो छान्नुहोस्",
-  "quizDaysSelectorDays": "{arg0} दिनहरू",
-  "quizDaysSelectorDaysSelected": "छानिएका दिनहरू {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") तपाईंको वर्कआउटका लागि",
+  "quizDaysSelectorDays": "{arg0, plural, one {दिन} other {दिन}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} दिन छानियो",
   "quizDaysSelectorFri": "शुक्र",
   "quizDaysSelectorHowLongAreYour": "तपाईंको वर्कआउट कति लामो हुन्छ?",
   "quizDaysSelectorHowManyDaysPer": "तपाईं हप्तामा कति दिन तालिम लिन सक्नुहुन्छ?",
   "quizDaysSelectorMin": "न्यूनतम",
   "quizDaysSelectorMon": "सोम",
   "quizDaysSelectorSat": "शनि",
-  "quizDaysSelectorSelectNDays": "{arg0} दिनहरू छान्नुहोस्",
+  "quizDaysSelectorSelectNDays": "तपाईंलाई मिल्ने {arg0} दिन छान्नुहोस्",
   "quizDaysSelectorSun": "आइत",
   "quizDaysSelectorThu": "बिही",
   "quizDaysSelectorTue": "मङ्गल",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "होम जिम",
   "quizEquipmentHomeKettlebell": "घर + केटलबेल",
   "quizEquipmentHotel": "होटल",
-  "quizEquipmentIdentifiedCount": "पहिचान गरिएको संख्या {arg0}",
+  "quizEquipmentIdentifiedCount": "{arg0} वस्तुहरू पहिचान भयो। छनोट हटाउन कुनै पनिमा ट्याप गर्नुहोस्।",
   "quizEquipmentKettlebell": "केटलबेल",
   "quizEquipmentMedicineBall": "Medicine ball",
   "quizEquipmentMinimalEquipmentBodyweight": "न्यूनतम उपकरण - बडीवेट, म्याट",
   "quizEquipmentNeededForBarbell": "Barbell को लागि आवश्यक",
   "quizEquipmentNoEquipmentIdentifiedPick": "कुनै उपकरण पहिचान भएन। तलको सूचीबाट छान्नुहोस्।",
-  "quizEquipmentOtherCount": "अन्य संख्या {arg0}",
+  "quizEquipmentOtherCount": "{arg0} छानियो",
   "quizEquipmentOtherEquipment": "अन्य उपकरण",
   "quizEquipmentPullUpBar": "Pull up bar",
   "quizEquipmentQuickPresets": "द्रुत प्रिसेटहरू",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "रेसिपीको नाम आवश्यक छ",
   "recipeCreateRemovePhoto": "फोटो हटाउनुहोस्",
   "recipeCreateSaving": "सेभ गरिँदै छ...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "फोटो खिच्नुहोस्",
   "recipeCreateTapToEdit": "सम्पादन गर्न ट्याप गर्नुहोस्",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "प्रति सर्भिङ (×{servings} सर्भिङहरू)",
   "recipeDetailScreenUForkedFrom": "✨ {sourceName} बाट फोर्क गरिएको",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" स्थायी रूपमा हटाइनेछ।",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 क्युरेट गरिएको रेसिपी",
   "recipeDetailView": "हेर्नुहोस्",
@@ -24754,7 +24477,7 @@
   "regenerateSheetConsideringFocusAreas": "फोकस क्षेत्रहरू विचार गर्दै",
   "regenerateSheetCustomize": "अनुकूलन गर्नुहोस्",
   "regenerateSheetCustomizeOrLetAi": "अनुकूलन गर्नुहोस् वा AI लाई सुझाव दिन दिनुहोस्",
-  "regenerateSheetCustomizeOrLetAiSuggest": "कस्टमाइज गर्नुहोस् वा AI लाई सुझाव दिन दिनुहोस्",
+  "regenerateSheetCustomizeOrLetAiSuggest": "अनुकूलन गर्नुहोस् वा AI लाई सुझाव दिन दिनुहोस्",
   "regenerateSheetDescribeYourIdealWorkout": "तपाईंको आदर्श वर्कआउट वर्णन गर्नुहोस्",
   "regenerateSheetDesigningYourWorkout": "तपाईंको वर्कआउट डिजाइन गर्दै",
   "regenerateSheetDialingInSetsAndReps": "सेट र रेप्स मिलाउँदै",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "विवरणहरू अन्तिम रूप दिँदै…",
   "regenerateSheetFinalizingYourWorkout": "तपाईंको वर्कआउट अन्तिम रूप दिँदै",
   "regenerateSheetFineTuningTheDetails": "विवरणहरू मिलाउँदै",
-  "regenerateSheetGeneratingElapsed": "जेनेरेट हुँदैछ {arg0}",
+  "regenerateSheetGeneratingElapsed": "सिर्जना गर्दै… {arg0}",
   "regenerateSheetGeneratingSuggestions": "सुझावहरू उत्पन्न गर्दै…",
   "regenerateSheetGetSuggestions": "सुझावहरू प्राप्त गर्नुहोस्",
   "regenerateSheetGettingCreative": "केही नयाँ गर्दै",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "सुझाव प्रयोग गर्नुहोस्",
   "restSuggestionQuick": "छिटो",
   "restSuggestionQuickRest": "छिटो आराम",
-  "restSuggestionSaveTime": "समय बचत गर्नुहोस् {arg0}",
+  "restSuggestionSaveTime": "{arg0} बचत गर्नुहोस्",
   "restSuggestionSuggested": "सुझाव दिइएको",
   "restSuggestionUseSuggested": "सुझाव दिइएको प्रयोग गर्नुहोस्",
   "restTimerCardBaseRest": "आधारभूत आराम",
   "restTimerCardControlRestPeriodsBetween": "सेटहरू बीचको आराम अवधि नियन्त्रण गर्नुहोस्",
   "restTimerCardCustomRestTimer": "कस्टम आराम टाइमर",
   "restTimerCardFormula": "सूत्र",
-  "restTimerCardFormulaBaserestRpe7": "सूत्र: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "लाइभ प्रिभ्यू",
   "restTimerCardMultiplier": "मल्टिप्लायर",
   "restTimerCardRestBaserestRpe7": "Rest = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "Variables: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "चरहरू: बेस, RPE, गुणक, टियर",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "तपाईंको प्रदर्शन विश्लेषण गर्दै...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "सम्पन्न",
   "rtpTitle": "खेलमा फर्कनुहोस्",
   "safetyDisclaimerBannerDismissDisclaimer": "अस्वीकरण हटाउनुहोस्",
-  "safetyDisclaimerBannerInjuriesFlagged": "चोटपटकहरू फ्ल्याग गरिएका छन् {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} चोटहरू फ्ल्याग गरियो",
   "safetyDisclaimerBannerInjuryBody": "चोटपटक बडी",
   "safetyDisclaimerBannerLearnMore": "थप जान्नुहोस्",
   "safetyDisclaimerBannerMore": "+{overflow} थप",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "सेट",
   "sessionDetailSetCount": "{count, plural, other{{count} सेटहरू}} · शीर्ष सेट हाइलाइट गरिएको",
   "sessionDetailTime": "समय",
-  "sessionDetailTopSetHighlighted": ") • शीर्ष सेट हाइलाइट गरिएको",
   "sessionDetailWeight": "तौल",
   "setAdjustmentAdditionalNotesOptional": "थप नोटहरू (वैकल्पिक)",
   "setAdjustmentConfirm": "पुष्टि गर्नुहोस्",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} पूरा भयो",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} बाँकी",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} हटाइयो",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") of (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "{totalSets} योजना गरिएको मध्ये",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} सेटहरू पूरा भयो",
   "setAdjustmentSheetReps": "रेप्स",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "सेट {currentSetNumber}/{totalSets} • विस्तार गर्न ट्याप गर्नुहोस्",
   "setTrackingSectionSets": "{widget} सेट",
   "setTrackingSectionSetsCompleted": "{length} सेट पूरा भयो",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "तौल समायोजन गर्ने मात्रा",
   "setTrackingSheetsDropSet": "ड्रप सेट",
   "setTrackingSheetsExerciseHistory": "व्यायामको इतिहास",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} सहयोग अनुरोध",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} दिन",
   "settingsScreenUiNoSettingsFound": "कुनै सेटिङहरू फेला परेनन्",
-  "settingsScreenUiTryDifferentKeywordsLike": "विभिन्न किवर्डहरू प्रयास गर्नुहोस् जस्तै \"थिम\", \"सूचनाहरू\", वा \"ai voice\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "\"थिम\", \"सूचनाहरू\" वा \"AI आवाज\" जस्ता फरक कीवर्डहरू प्रयास गर्नुहोस्",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "सेटिङहरू खोज्नुहोस्",
   "settingsSetProgressionResearch": "प्रगति र अनुसन्धान सेट गर्नुहोस्",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "पुरस्कारहरू",
   "streakMilestoneStreakMilestone": "स्ट्रिक माइलस्टोन!",
-  "streakMilestoneToGo": ") बाँकी!",
   "streakMilestoneYouVeReachedThe": "तपाईंले अन्तिम स्ट्रिक माइलस्टोनमा पुग्नुभएको छ!",
   "streakSavedDialogWeUsedStreakShield": "हामीले तपाईंको {savedStreakCount}-दिनको स्ट्रिक कायम राख्न १ Streak Shield प्रयोग गर्यौं।",
   "streakSavedKeepItGoing": "यसलाई जारी राख्नुहोस्",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "जडान गर्नुहोस्",
   "todayScoreCardCustomize": "अनुकूलन गर्नुहोस्",
   "todayScoreCardToday": "आज",
-  "todayScoreDetailDown": "घट्यो {arg0}",
-  "todayScoreDetailEarnedPts": "प्राप्त अंक {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ आज बिहानदेखि {arg0} कम",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} अंक",
   "todayScoreDetailHowItWorks": "यो कसरी काम गर्छ",
-  "todayScoreDetailInactiveExplanation": "निष्क्रिय स्पष्टीकरण {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "औसतसँगको गति {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} आज {arg1, plural, one {गनिँदैन} other {गनिँदैनन्}}, त्यसैले बाँकीले पूरै 100 अंक साझा गर्छन्। तपाईंको स्कोरले सधैं आज वास्तवमा लागू हुने कुरा मात्र देखाउँछ।",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7-day औसत {arg1}",
   "todayScoreDetailNotCounted": "गणना गरिएको छैन",
   "todayScoreDetailSetupText": "सेटअप टेक्स्ट",
   "todayScoreDetailSteady": "स्थिर",
   "todayScoreDetailTodayScore": "आजको स्कोर",
-  "todayScoreDetailUp": "बढ्यो {arg0}",
+  "todayScoreDetailUp": "▲ आज बिहानदेखि {arg0} बढी",
   "todayScoreSetupAddAWorkoutPlan": "वर्कआउट योजना थप्नुहोस्",
   "todayScoreSetupCardContinue": "जारी राख्नुहोस्: {label}",
   "todayScoreSetupCardGetStarted": "सुरु गर्नुहोस् · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "कार्डियो उपलब्धिहरू",
   "trophiesEarnedDayStreak": "दिनको स्ट्रीक",
   "trophiesEarnedFirstTime": "पहिलो पटक!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "माइलस्टोन प्राप्त भयो",
   "trophiesEarnedMilestoneReachedNice": "माइलस्टोन पुग्यो — राम्रो!",
   "trophiesEarnedMilestones": "माइलस्टोनहरू",
-  "trophiesEarnedNewBadges": "ब्याजहरू {arg0}",
-  "trophiesEarnedNewCardioPRs": "कार्डियो PRs {arg0}",
-  "trophiesEarnedNewPR": "नयाँ PR प्राप्त भयो",
-  "trophiesEarnedNewPRs": "PRs {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} नयाँ ब्याज",
+  "trophiesEarnedNewCardioPRs": "{arg0} नयाँ कार्डियो PRs",
+  "trophiesEarnedNewPR": "नयाँ PR",
+  "trophiesEarnedNewPRs": "{arg0} नयाँ PRs!",
   "trophiesEarnedNewPr": "नयाँ PR",
   "trophiesEarnedNextMilestones": "अर्को माइलस्टोनहरू",
   "trophiesEarnedNoNewRecords": "कुनै नयाँ रेकर्ड छैन",
   "trophiesEarnedNoNewRecordsThis": "यस सत्रमा कुनै नयाँ रेकर्ड छैन — यहाँ तपाईंले के को लागि काम गर्दै हुनुहुन्छ:",
   "trophiesEarnedPersonalRecords": "व्यक्तिगत रेकर्डहरू",
-  "trophiesEarnedRemainingToUnlock": "अनलक गर्न बाँकी {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "अनलक गर्न थप {arg0} {arg1}",
   "trophiesEarnedSessionHighlights": "सत्रका मुख्य अंशहरू",
   "trophiesEarnedSheetPts": "+{points} pts",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} टाइप गर्दै हुनुहुन्छ",
   "typingIndicatorIsTyping3": "{agentName} टाइप गर्दै हुनुहुन्छ...",
   "unifiedHomeWidgetsActivity": "गतिविधि",
-  "unifiedHomeWidgetsBreakfastLogged": "बिहानको खाजा लग गरियो {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "पछिल्ला 7 बिहानमध्ये {arg0} पटक बिहानको खाना लग भयो",
   "unifiedHomeWidgetsBreakfastSuggestion": "बिहानको खाजाको सुझाव",
   "unifiedHomeWidgetsCarbs": "कार्ब्स",
   "unifiedHomeWidgetsConnect": "जडान गर्नुहोस्",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "फ्याट",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} किलोक्यालोरी आज जम्मा",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal बल्यो",
   "unifiedHomeWidgetsKcalLeft": " kcal बाँकी",
   "unifiedHomeWidgetsLastNight": "गएराती",
   "unifiedHomeWidgetsLog16oz": "16oz लग गर्नुहोस्",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}हप्ता",
   "weekDurationSelectorWeeks": "{selectedWeeks} हप्ता",
   "weekDurationSelectorWk": "{spw}/हप्ता",
-  "weekProgressStripCompletedCount": "पूरा भएको संख्या {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg1} मध्ये {arg0} वर्कआउट पूरा भयो",
   "weekProgressStripCouldNotLoadProgress": "प्रगति लोड गर्न सकिएन",
   "weekProgressStripLoading": "लोड हुँदैछ...",
   "weekProgressStripNoWorkoutsScheduled": "कुनै वर्कआउट निर्धारित छैन",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "सबै हेर्नुहोस्",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "तौल ट्र्याकिङ",
-  "weightTrendCardDownThisWeek": "यो हप्ता घट्यो {arg0}",
-  "weightTrendCardDownVsLastCycle": "पछिल्लो चक्रको तुलनामा घट्यो {arg0}",
+  "weightTrendCardDownThisWeek": "यो हप्ता {arg0} कम!",
+  "weightTrendCardDownVsLastCycle": "गत महिनाको उही साइकल दिनको तुलनामा {arg0} lbs कम",
   "weightTrendCardLoadingWeight": "तौल लोड हुँदैछ...",
   "weightTrendCardLogYourWeightTo": "ट्रेंडहरू हेर्न आफ्नो तौल लग गर्नुहोस्",
   "weightTrendCardMaintaining": "कायम राख्दै",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "पछिल्लो चक्र जस्तै",
   "weightTrendCardTapToLogWeight": "तौल लग गर्न ट्याप गर्नुहोस्",
   "weightTrendCardTargetHeld": "लक्ष्य कायम",
-  "weightTrendCardTargetHeldWindow": "लक्ष्य कायम विन्डो {arg0}",
-  "weightTrendCardUpThisWeek": "यो हप्ता बढ्यो {arg0}",
-  "weightTrendCardUpVsLastCycle": "पछिल्लो चक्रको तुलनामा बढ्यो {arg0}",
+  "weightTrendCardTargetHeldWindow": "लक्ष्य {arg0} कायम — ल्युटियल पानी सन्तुलन",
+  "weightTrendCardUpThisWeek": "यो हप्ता {arg0} बढी",
+  "weightTrendCardUpVsLastCycle": "गत महिनाको उही साइकल दिनको तुलनामा {arg0} lbs बढी",
   "weightTrendCardWeightStableThisWeek": "यो हप्ता तौल स्थिर छ",
   "weightTrendCardWeightTrends": "तौल ट्रेंडहरू",
   "welcomeAffirmationGreatChoice": "उत्कृष्ट छनोट।",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "यो संस्करणमा फिर्ता जाने?",
   "workoutActionsShareWorkout": "वर्कआउट सेयर गर्नुहोस्",
   "workoutActionsSheetGetALinkFor": "साथीहरूका लागि {marketingDomain} लिङ्क प्राप्त गर्नुहोस्",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "\"{name}\" पुनर्स्थापना गर्ने?",
   "workoutActionsSheetS": "{duration} सेकेन्ड",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} पटक",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} सेट, {currentReps} पटक",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "अहिले साथीहरूलाई चुनौती दिन असमर्थ",
   "workoutCompleteScreenUnableToExtendWorkout": "वर्कआउट विस्तार गर्न असमर्थ",
   "workoutCompleteScreenViewAllMetrics": "सबै मेट्रिक्स हेर्नुहोस्",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "उपकरण",
   "workoutDetailExercises": "अभ्यासहरू",
   "workoutDetailFailedToLoadWorkout": "वर्कआउट लोड गर्न असफल",
-  "workoutDetailHelpersForAvailableEquipment": ") उपलब्ध उपकरणका लागि...",
   "workoutDetailHelpersHell": "अत्यधिक कठिन",
   "workoutDetailHelpersUpdatingExercises": "अभ्यासहरू अपडेट गरिँदै",
   "workoutDetailMoreInfo": "थप जानकारी",
   "workoutDetailProgram": "कार्यक्रम",
-  "workoutDetailReplacingExercises": "व्यायामहरू प्रतिस्थापन गर्दै {arg0}",
+  "workoutDetailReplacingExercises": "उपलब्ध उपकरणका लागि {arg0} व्यायाम प्रतिस्थापन गर्दै…",
   "workoutDetailRevert": "पहिलेकै अवस्थामा फर्काउनुहोस्",
   "workoutDetailScreenBreakSuperset": "सुपरसेट तोड्ने?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} cal खर्च भयो",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "तौलको स्तम्भ कुन एकाइमा छ? र यदि तपाईंलाई स्रोत एप थाहा छ भने, यसलाई चयन गर्नुहोस् — यसले समान ढाँचाहरू (Hevy बनाम Strong CSVs) छुट्याउन मद्दत गर्दछ।",
   "workoutHistoryImportYourStrengthData": "तपाईंको स्ट्रेंथ डेटा",
-  "workoutImportAsDone": ")\" पूरा भयो",
   "workoutImportCalories": "क्यालोरी",
   "workoutImportCardio": "कार्डियो",
   "workoutImportCycling": "साइकल चलाउने",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "अवधि",
   "workoutImportEasy": "सजिलो",
   "workoutImportFlexibility": "लचकता",
-  "workoutImportFromSource": "स्रोतबाट {arg0}",
+  "workoutImportFromSource": "{arg0} बाट",
   "workoutImportHard": "कठिन",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "यो वर्कआउट कत्तिको कठिन थियो?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "तपाईंले आफ्नो वर्कआउटको समयमा यी प्रणाली प्रम्प्टहरू देख्न सक्नुहुन्छ। दुवै ऐच्छिक हुन् — कुनै पनि छोड्नुहोस्, वर्कआउट अझै पनि काम गर्छ।",
   "workoutPlanDrawerAddExercise": "व्यायाम थप्नुहोस्",
   "workoutPlanDrawerCurrent": "हालको",
-  "workoutPlanDrawerExerciseCount": "व्यायाम संख्या {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") लग गरियो। तिनीहरू मेटिनेछन्।",
+  "workoutPlanDrawerExerciseCount": "{arg0} व्यायाम",
   "workoutPlanDrawerNow": "अहिले",
   "workoutPlanDrawerRemove": "हटाउनुहोस्",
-  "workoutPlanDrawerRemoveExercise": "व्यायाम {arg0} हटाउनुहोस्",
+  "workoutPlanDrawerRemoveExercise": "{arg0} हटाउने?",
   "workoutPlanDrawerRemoveExerciseTooltip": "व्यायाम हटाउने टूलटिप",
-  "workoutPlanDrawerSetsLogged": "सेटहरू लग गरिएका {arg0}",
+  "workoutPlanDrawerSetsLogged": "तपाईंसँग {arg0} सेट लग छन्। ती मेटिनेछन्।",
   "workoutPlanDrawerSwapExercise": "व्यायाम साट्नुहोस्",
   "workoutPlanDrawerTitle": "शीर्षक",
   "workoutPlanDrawerWorkoutPlan": "वर्कआउट योजना",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "तपाईंले लग गर्नुहुने प्रत्येक सेट",
   "workoutShowcaseEveryWorkoutFlows": "प्रत्येक वर्कआउट प्रवाह",
   "workoutShowcaseFinishWorkout": "वर्कआउट पूरा गर्नुहोस्",
-  "workoutShowcaseFormat1Rm": "वर्कआउट शोकेस ढाँचा 1RM",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "बोर्डिङ",
   "workoutShowcaseFormatCard": "कार्ड",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "रेखीय लेबल",
   "workoutShowcaseLogAllSets": "सबै सेटहरू",
   "workoutShowcaseLogDrink": "पेय पदार्थ लग गर्नुहोस्",
-  "workoutShowcaseLogSet": "सेट {arg0}",
+  "workoutShowcaseLogSet": "✓ सेट {arg0} लग गर्नुहोस्",
   "workoutShowcaseLogWater": "पानी लग गर्नुहोस्",
   "workoutShowcaseMovedThisSession": "यस सत्रमा सारियो",
   "workoutShowcaseNewPr": "नयाँ PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "पटक",
   "workoutShowcaseScreenDay": "दिन {day}",
   "workoutShowcaseScreenDuration": "अवधि: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · प्रविष्ट गरियो",
   "workoutShowcaseScreenSession": "सत्र: {title}",
   "workoutShowcaseScreenTotalPrs": "जम्मा {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "4 मध्ये सेट 1",
   "workoutShowcaseSet2": "सेट 2",
   "workoutShowcaseSet3": "सेट 3",
-  "workoutShowcaseSetNOf3": "वर्कआउट शोकेस सेट {arg0} को 3",
+  "workoutShowcaseSetNOf3": "3 मध्ये सेट {arg0}",
   "workoutShowcaseShareYourWorkout": "आफ्नो वर्कआउट सेयर गर्नुहोस्",
   "workoutShowcaseSideA": "साइड A",
   "workoutShowcaseSuperset": "सुपरसेट",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "दैनिक",
   "xpGoalsDialog250LevelsAcross11Tiers": "XP लक्ष्य संवाद ११ टियरहरूमा २५० स्तरहरू",
   "xpGoalsDialogBeginnerToTranscendent": "शुरुआती देखि उत्कृष्ट सम्म",
-  "xpGoalsDialogCompleteWorkoutXp": "वर्कआउट पूरा गरे बापतको Xp",
+  "xpGoalsDialogCompleteWorkoutXp": "वर्कआउट पूरा गर्नुहोस्: +100 XP",
   "xpGoalsDialogDailyGoals": "दैनिक लक्ष्यहरू",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "Ai कोचसँगको पहिलो च्याट Xp",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "खानाको तौल मापन Xp",
-  "xpGoalsDialogFirstPrXp": "पहिलो Pr Xp",
-  "xpGoalsDialogFirstProgressPhotoXp": "प्रगति फोटो Xp",
-  "xpGoalsDialogFirstProteinGoalXp": "पहिलो प्रोटिन लक्ष्य Xp",
-  "xpGoalsDialogFirstWorkoutXp": "पहिलो वर्कआउट Xp",
-  "xpGoalsDialogHitProteinGoalXp": "प्रोटिन लक्ष्य पूरा गरे बापतको Xp",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "AI कोचसँग पहिलो च्याट: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "पहिलो खाना/तौल/नाप: प्रत्येक +50 XP",
+  "xpGoalsDialogFirstPrXp": "पहिलो PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "पहिलो प्रगति फोटो: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "पहिलो प्रोटिन लक्ष्य: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "पहिलो वर्कआउट: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "प्रोटिन लक्ष्य पूरा गर्नुहोस्: +50 XP",
   "xpGoalsDialogLevels": "स्तरहरू",
-  "xpGoalsDialogLogBodyMeasurementsXp": "शरीरको मापन Xp",
-  "xpGoalsDialogLogMealXp": "खाना लग Xp",
-  "xpGoalsDialogLogWeightXp": "तौल लग Xp",
-  "xpGoalsDialogLoginXp": "लगइन Xp",
+  "xpGoalsDialogLogBodyMeasurementsXp": "शरीरको नाप लग गर्नुहोस्: +20 XP",
+  "xpGoalsDialogLogMealXp": "खाना लग गर्नुहोस्: +25 XP",
+  "xpGoalsDialogLogWeightXp": "तौल लग गर्नुहोस्: +15 XP",
+  "xpGoalsDialogLoginXp": "लगइन: +5 XP",
   "xpGoalsDialogMilestoneRewards": "माइलस्टोन पुरस्कारहरू",
   "xpGoalsFirstTimeBonuses": "पहिलो पटकको बोनस",
   "xpGoalsGotIt": "बुझें!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "प्रोटिन लक्ष्य पूरा गर्नुहोस्",
   "xpGoalsScreenInventory": "इन्भेन्टरी",
   "xpGoalsScreenLegendary": "पौराणिक (LEGENDARY)",
-  "xpGoalsScreenLevelCurrentTotal": "हालको कुल स्तर {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "लेभल {arg0} • जम्मा 249 लेभल",
   "xpGoalsScreenLevelProgress": "स्तर प्रगति",
   "xpGoalsScreenLogBodyMeasurements": "शरीरको मापन लग गर्नुहोस्",
   "xpGoalsScreenLogFirstMeal": "पहिलो खाना लग गर्नुहोस्",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "ट्रफी कोठा",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "साप्ताहिक",
-  "xpGoalsXpAvailable": "उपलब्ध {arg0}",
-  "xpGoalsXpEarnedToday": "आज कमाएको {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP उपलब्ध",
+  "xpGoalsXpEarnedToday": "आज +{arg0} XP कमाइयो",
   "xpGoalsXpGoals": "XP लक्ष्यहरू",
-  "xpGoalsXpMultiplierActive": "सक्रिय मल्टिप्लायर {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP सक्रिय!",
   "xpHeroTileDayStreak": "{streak}-दिनको निरन्तरता",
   "xpHeroTileLv": "स्तर {level}",
   "xpHeroTileLv2": "स्तर {nextLevel} → {label}",

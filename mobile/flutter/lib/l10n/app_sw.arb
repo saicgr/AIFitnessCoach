@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "Wakati wa kutumia",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Zoezi limebadilishwa kwa mafanikio",
   "activeWorkoutScreenRefactoredExerciseSAdded": "Mazoezi {_exercises} yameongezwa",
-  "activeWorkoutScreenRefactoredFor": ") kwa ajili ya (name)",
   "activeWorkoutScreenUndo": "Tendua",
   "activeWorkoutScreenWorkoutAdapted": "Zoezi limebadilishwa.",
   "activityCardAdditionalDetailsOptional": "Maelezo ya ziada (hiari)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Nishati kabla ya mazoezi?",
   "aiCoachMealQuickSnackIdeas": "Mawazo ya vitafunio vya haraka?",
   "aiCoachMealRecoveryDayEating": "Kula siku ya kupumzika?",
-  "aiCoachMealSearchQuestionsTryAngry": "Tafuta maswali (jaribu \"angry\", \"fiber\", \"mexican\")",
   "aiCoachMealSomethingWentWrong": "Kitu kimeenda vibaya.",
   "aiCoachMealStressedWhatHelps": "Msongo wa mawazo - nini kinasaidia?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "{meal} ya mtindo wa Asia — chaguo moja (bakuli la wali, tambi, sushi, stir fry), macros na maandalizi.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · awamu ya {phase}",
   "caloriesSummaryCardCalories": "Kalori",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "zimebaki",
   "cancelConfirmationAnythingElseYouD": "Kuna kingine ungependa kushiriki? (hiari)",
   "cancelConfirmationCancelAnyway": "Ghairi hata hivyo",
   "cancelConfirmationHelpUsImprove": "Tusaidie kuboresha",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Sawa",
   "chatLanguageChangedSystem": "🌐 Kocha wa AI sasa anajibu kwa {nativeName}",
   "chatLanguageResetSystem": "🌐 Lugha ya Kocha wa AI imewekwa upya — inatumia lugha ya programu",
-  "chatLeftToday": ") zimebaki leo",
   "chatMediaWidgetsCalTotal": "Jumla ya kalori {totalCal}",
   "chatMediaWidgetsGProtein": "protini {totalProtein}g",
   "chatMediaWidgetsGoTo": "Nenda kwenye {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "Kocha anafikiri kwa muda mrefu kuliko kawaida.",
   "chatScreenCouldntReachCoach": "Imeshindwa kumfikia kocha.",
   "chatScreenExtAboutAiCoach": "Kuhusu Kocha wa AI",
-  "chatScreenExtAs": ") kama (mealType)",
   "chatScreenExtChangeCoach": "Badilisha Kocha",
   "chatScreenExtChatTips": "Vidokezo vya Gumzo",
   "chatScreenExtChooseMultiplePhotos": "Chagua Picha Nyingi",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "Tazama Malengo",
   "complianceRingCardAllWorkoutsCompleted": "Mazoezi yote yamekamilika",
   "complianceRingCardGetStartedToday": "Anza leo",
-  "complianceRingCardGreatPace": "Kasi nzuri {arg0}",
+  "complianceRingCardGreatPace": "Kasi nzuri! Imebaki {arg0}",
   "complianceRingCardNoWorkoutsScheduledThis": "Hakuna mazoezi yaliyopangwa wiki hii",
-  "complianceRingCardOnTrack": "Kwenye mstari {arg0}",
+  "complianceRingCardOnTrack": "Kwenye njia — {arg0} zimebaki",
   "complianceRingCardWorkoutCompliance": "Utiifu wa Mazoezi",
-  "complianceRingCardWorkoutsRemaining": "Mazoezi yaliyobaki {arg0}",
+  "complianceRingCardWorkoutsRemaining": "Mazoezi {arg0} yamebaki",
   "comprehensiveStatsStatsScores": "Takwimu na Alama",
   "connectedAppsAutoImportEvery15": "Ingiza kiotomatiki kila dakika 15",
   "connectedAppsConnect": "Unganisha",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Chagua Chakula",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Tumia Thamani Hii",
-  "cookingConverterWeight": ") Uzito",
   "cosmeticsGalleryCosmetics": "Vipodozi",
   "cosmeticsGalleryEquip": "Vaa",
   "cosmeticsGalleryEquipped": "Imevaliwa",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Hakuna mazoezi yanayolingana na utafutaji wako",
   "customExercisesScreenAreYouSureYou": "Je, una uhakika unataka kufuta \"{name}\"? Hili haliwezi kutenduliwa.",
   "customExercisesScreenExercisesUses": "Mazoezi {totalCustomExercises}, matumizi {totalUses}",
-  "customExercisesScreenUsedTimes": "Imetumika (usageCount) mara(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Tafuta mazoezi...",
   "customExercisesSimple": "Rahisi",
   "customFoodBuilderAiFillFromName": "Jaza kwa AI kutoka kwa jina",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · mzunguko wa mwisho",
   "customTrendScreenMaxOverlaysRemoveOne": "Upeo wa overlays {_kMaxOverlays} — ondoa moja ili kuongeza nyingine",
   "customTrendScreenSharedDays": "Siku {pairedPoints}/{kMinCorrelationPairs} zilizoshirikiwa",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "Ongeza Zoezi",
   "customWorkoutBuilderBuildCustomWorkout": "Jenga Mazoezi Maalum",
   "customWorkoutBuilderCustomWorkoutCreated": "Mazoezi maalum yametengenezwa!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Rekodi hedhi",
   "cycleScreenUiLogPeriod": "Rekodi hedhi",
   "cycleScreenUiLogYourFirstPeriod": "Weka kipindi chako cha kwanza ili kuanza utabiri.",
-  "cycleScreenUiPhase": ") awamu",
   "cycleScreenUiPhaseLabel": "Awamu ya {displayName}",
   "cycleScreenUiPredictionsAreEstimates": "Utabiri ni makadirio kulingana na data uliyoweka, si njia ya uzazi wa mpango na si ushauri wa kimatibabu. Muone daktari kwa wasiwasi wowote wa kiafya.",
   "cycleScreenUiPregnancyModeIsOn": "Hali ya ujauzito imewashwa",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Endelea",
   "editProgramSheetCurrent": "SASASA",
   "editProgramSheetCustomProgram": "Programu maalum",
-  "editProgramSheetCustomValue": "Thamani maalum {arg0}",
+  "editProgramSheetCustomValue": "Maalum: {arg0}",
   "editProgramSheetCustomizeProgram": "Binafsisha programu",
   "editProgramSheetDays": "Siku",
   "editProgramSheetDaysAgo": "Siku {days} zilizopita",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Vifaa",
   "editProgramSheetEquipmentLabel": "Lebo ya vifaa",
   "editProgramSheetExamples": "Mifano",
-  "editProgramSheetFailedToLoadHistory": "Pakia historia {arg0}",
-  "editProgramSheetFailedToRestore": "Rejesha {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Imeshindwa kupakia historia: {arg0}",
+  "editProgramSheetFailedToRestore": "Imeshindwa kurejesha: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Sasisha programu",
   "editProgramSheetFocus": "Lengo",
   "editProgramSheetHealth": "Afya",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "Inapakua {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Inapakua video...",
   "exerciseDetailSheetFavorite": "Unayopenda",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Inapakia...",
   "exerciseDetailSheetLog1rm": "Rekodi 1RM",
   "exerciseDetailSheetMS": "{restMins}d {restSecs}s",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Ongeza maelezo hapa...",
   "exerciseSetTrackerAddSet": "Ongeza Seti",
-  "exerciseSetTrackerBarbell": ") barbell",
   "exerciseSetTrackerReps": "Marudio",
   "exerciseSetTrackerRestTarget": "Lengo la kupumzika",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "Mapendekezo ya AI hayapatikani",
   "exerciseSwapSheetAnyEquipment": "Vifaa Vyovyote",
   "exerciseSwapSheetAskAiForSuggestions": "Muulize AI kwa mapendekezo",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Eleza vifaa vyako au mapendeleo yako\nmfano: \"Nina maumivu ya bega, natumia uzito wa mwili pekee\"",
   "exerciseSwapSheetEGIOnly": "mfano: \"Nina dambela pekee\"",
   "exerciseSwapSheetFailedToSwapExercise": "Imeshindwa kubadilisha mazoezi",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Inatafuta mazoezi mbadala yanayolingana na misuli...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Uzito",
   "expandedExerciseCardAddToFavorites": "Ongeza kwenye Vipendwa",
   "expandedExerciseCardAlternatingHands": "Kubadilisha Mikono",
-  "expandedExerciseCardBarbell": ") barbell",
   "expandedExerciseCardBreathing": "Kupumua",
   "expandedExerciseCardBreathingGuide": "Mwongozo wa Kupumua",
   "expandedExerciseCardCollapse": "Funga",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Ngazi ya Itifaki",
   "fastingScoreCardScore": "Alama",
   "fastingScoreCardStreakBonus": "Bonasi ya Mfululizo",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "dhidi ya wiki iliyopita",
@@ -19183,7 +18933,7 @@
   "fastingScreenRedesignedResumeFast": "Endeleza Mfungo",
   "fastingScreenRedesignedSignUpToUnlock": "Jisajili ili Kufungua",
   "fastingScreenRedesignedStartFast": "Anza Mfungo",
-  "fastingScreenRedesignedStartedOngoing": "Imeanza {timeFormat} \\u00B7 Inaendelea",
+  "fastingScreenRedesignedStartedOngoing": "Imeanza {timeFormat} · Inaendelea",
   "fastingScreenRedesignedTodaySPlan": "Ratiba ya leo: ",
   "fastingScreenRedesignedTotalFasts": "Jumla ya Mifungo",
   "fastingScreenRedesignedViewTrends": "Tazama mwelekeo",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "Ya Kwanza",
   "flexibilityProgressChartLatest": "Ya Hivi Karibuni",
   "flexibilityProgressChartNoDataAvailable": "Hakuna data inayopatikana",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Kwa Eneo",
   "flexibilityScoreCardFocusAreas": "Maeneo ya Kuzingatia",
   "flexibilityScoreCardOverallFlexibility": "Unyumbufu kwa Ujumla",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Tafuta milo, vyakula, \"protini nyingi\"...",
   "foodHistoryUndo": "Tendua",
   "foodItemRankingAddFood": "Ongeza chakula",
-  "foodItemRankingDetails": ") maelezo",
   "foodItemRankingNFoodItems": "{count} Vyakula",
   "foodItemRankingScore": "Alama",
   "foodItemRankingTapToHideDetails": "Gusa ili kuficha maelezo",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Kwa hivyo nilimjenga mtu, sio leja. Piga menyu yoyote - nyumbani au nje ya nchi - na mkufunzi atakusomea tena katika makro. Ruka Jumanne na itakurudisha nyuma Jumatano asubuhi bila safari ya hatia. Inajifunza vyakula vyako, ukumbi wako wa mazoezi, mifumo yako ya kuteleza - kwa chini ya kipindi kimoja cha PT kwa mwezi.",
   "founderNoteTheFriendsWhoActually": "Marafiki ambao walipata umbo zuri walikuwa na mtu anayewatumia ujumbe. Uwajibikaji wa kweli unagharimu takriban dola mia mbili kwa mwezi, ndiyo sababu wengi wetu hatuna, na ndiyo sababu pengo kati ya \"kufuatilia\" na \"kubadilika\" linabaki wazi kwa miaka.",
-  "freshnessDecayCardAgo": ") iliyopita",
   "freshnessDecayCardControlsHowQuicklyExercise": "Inadhibiti jinsi hali ya mazoezi inavyopungua haraka: e^(-k * sessions)",
   "freshnessDecayCardFreshnessDecayTuner": "Kirekebishaji cha Kupungua kwa Hali ya Mazoezi",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "SET {currentSetNumber} YA {totalSets}",
   "futuristicSetCardSkipExercise": "Ruka mazoezi",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "Tengeneza mpango kamili unaoratibu mazoezi yako, lishe, na kufunga.",
   "generatePlanFastingProtocol": "Itifaki ya Kufunga",
   "generatePlanGeneratePlan": "Tengeneza Mpango",
@@ -20071,7 +19816,7 @@
   "habitsCardAddYourFirstHabit": "Ongeza Mazoea Yako ya Kwanza",
   "habitsCardAllHabitsCompleted": "Mazoea yote yamekamilika!",
   "habitsCardBuildDailyHabits": "Jenga Mazoea ya Kila Siku",
-  "habitsCardCompletedCount": "Idadi iliyokamilika {arg0} {arg1}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} zimekamilika",
   "habitsCardDayStreak": "Mfululizo wa siku {arg0}",
   "habitsCardFailedToLoadHabits": "Imeshindwa kupakia mazoea",
   "habitsCardGreatJobKeepingUp": "Kazi nzuri ya kuendeleza mfululizo wako",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Mazoea ya Leo",
   "habitsCardTryAgain": "Jaribu Tena",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Tazama tabia zote {arg0}",
+  "habitsCardViewAllHabits": "Tazama Mazoea Yote {arg0}",
   "habitsCompleted": "Imekamilika",
   "habitsDeleteHabit": "Futa mazoea?",
   "habitsHoldToReorderSwipe": "Shikilia ili kupanga upya • Telezesha ili kufuta",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "Siku ya kupumzika? Au uko tayari kufanya mazoezi? Uamuzi ni wako.",
   "homeEmptyWorkout_v3": "Kati ya programu — anza mpya ili kurudi kwenye mstari.",
   "homeEmptyWorkout_v4": "Bado hakuna mpango. Acha AI itengeneze mpango kulingana na malengo yako.",
-  "homeFromHealthConnect": ") kutoka Health Connect",
   "homeGreetingAfternoon_v1": "Nishati ya mchana, {name}!",
   "homeGreetingAfternoon_v2": "Hi {name}, muda wa kufanya mazoezi?",
   "homeGreetingAfternoon_v3": "Muda wa kunyoosha viungo, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "KALORI",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "MUHTASARI",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "MAZOEZI",
   "intensityPrompt1Left": "1 imebaki",
   "intensityPrompt2Left": "2 imebaki",
   "intensityPrompt3Left": "3+ imebaki",
   "intensityPromptHard": "Ngumu",
-  "intensityPromptHideRpeSlideDial": "Ficha slaidi ya RPE      Chagua (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Zoezi hilo lilikuwa gumu kiasi gani?",
   "intensityPromptMax": "Upeo",
   "intensityPromptModerate": "Kiasi",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "Seti {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "Kocha wa AI anayejenga mpango, anajifunza mwili wako, na kurekebisha kila wiki.",
   "introBuildMyPlan": "Jenga Mpango Wangu",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) seti",
   "introCardMonth": "mwezi.",
   "introIAlreadyHaveAnAccount": "Tayari nina akaunti",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "Barcode",
   "logMealSheetBarcodeScan": "Changanua barcode",
   "logMealSheetCached": "(Imehifadhiwa)",
-  "logMealSheetCaptured": ") imenaswa",
   "logMealSheetChooseFoodPhotos": "Chagua Picha za Chakula",
   "logMealSheetChooseFromGallery": "Chagua kutoka kwenye ghala",
   "logMealSheetChooseFromLibrary": "Chagua kutoka kwenye maktaba",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "Wastani wa siku 7 · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} kutoka kiwango chako cha chini cha awali",
   "logWeightSheetValidRange": "Kiwango kinachokubalika: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Imesawazishwa kutoka Apple Health",
   "logWeightSyncedToAppleHealth": "Imesawazishwa kwa Apple Health",
   "logWeightTapToEdit": "Gusa ili kuhariri",
@@ -21562,8 +21301,8 @@
   "logWeightWeightHistory": "Historia ya Uzito",
   "logWeightWeightUpdate": "Sasisho la Uzito",
   "loggedMeals": "⚠️",
-  "loggedMeals1U00bc": "1\\u00BC",
-  "loggedMeals1U00bd": "1\\u00BD",
+  "loggedMeals1U00bc": "1¼",
+  "loggedMeals1U00bd": "1½",
   "loggedMeals1x": "1x",
   "loggedMeals2x": "2x",
   "loggedMeals3x": "3x",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Toka?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Makro",
-  "mainShellPartChatsLeftToday": "Gumzo zilizobaki leo {arg0}",
+  "mainShellPartChatsLeftToday": "Mazungumzo {arg0} yamebaki leo",
   "mainShellPartGuestMode": "Hali ya mgeni",
   "mainShellPartQuickActions": "Vitendo vya haraka",
   "mainShellPartSignUp": "Jisajili",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Kuu",
   "manageDuplicateImportsScreenSources": "vyanzo {length}",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(safu)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Ondoa kwenye kikundi",
   "manageDuplicateImportsUnlinkedFromGroup": "Imeondolewa kwenye kikundi",
   "manageGymProfilesActive": "Inayotumika",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} zaidi",
   "menuAnalysisSheetSelected": "{length} imechaguliwa",
   "menuAnalysisSheetSort": "Panga: {label}",
-  "menuAnalysisSheetValue": ")(elapsed)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Tayari umehifadhi menyu ya \"{restaurantName}\"",
   "menuAnalysisSort": "Panga:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "AINA YA KIPIMO",
   "metricsDashboardMuscleMass": "Misa ya misuli",
   "metricsDashboardNoDataAvailable": "Hakuna data inayopatikana",
-  "metricsDashboardNoMetricDataYet": "Hakuna data ya vipimo bado {arg0}",
+  "metricsDashboardNoMetricDataYet": "Hakuna data ya {arg0} bado",
   "metricsDashboardQuickStats": "TAKWIMU ZA HARAKA",
   "metricsDashboardRestingHeartRate": "Mapigo ya moyo wakati wa kupumzika",
   "metricsDashboardRestingHr": "Mapigo ya Moyo ya Mapumziko",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Nyingine",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Kamilisha mazoezi ili kuona data ya misuli",
   "muscleHeatmapTileCouldnTLoad": "Imeshindwa kupakia",
-  "muscleHeatmapTileMostTrained": "Zilizofanyiwa mazoezi zaidi {arg0}",
+  "muscleHeatmapTileMostTrained": "Iliyozoezwa zaidi: {arg0}",
   "muscleHeatmapTileMuscles": "Misuli",
   "muscleHeatmapTileRetry": "Jaribu tena",
   "muscleHeatmapUpperBody": "Sehemu ya Juu ya Mwili",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Unayopenda ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Mazoezi ya msingi ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Bora: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Shughuli za Hivi Karibuni",
   "myLibraryTabViewAll": "Tazama Yote",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Mtembezi wa kawaida",
   "neatGamificationWidgetsClaimReward": "Dai Zawadi",
   "neatGamificationWidgetsCouchPotato": "Mvivu",
-  "neatGamificationWidgetsCurrentXp": "XP ya sasa {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Changamoto ya Kila Siku",
   "neatGamificationWidgetsExpired": "Imeisha muda wake",
-  "neatGamificationWidgetsHoursMinutesLeft": "Saa na dakika zilizobaki {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0}h {arg1}m zimebaki",
   "neatGamificationWidgetsLevel": "Ngazi {level}",
   "neatGamificationWidgetsLevelUp": "PANDA NGAZI!",
   "neatGamificationWidgetsMaxLevel": "Kiwango cha Juu!",
-  "neatGamificationWidgetsMinutesLeft": "Dakika zilizobaki {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0}m zimebaki",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Bingwa",
   "neatGamificationWidgetsNeatEnthusiast": "Mshabiki",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Hakuna viwango bado wiki hii",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Alama",
-  "neatGamificationWidgetsStepGoal": "Lengo la hatua {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Hatua",
-  "neatGamificationWidgetsTargetActiveHours": "Lengo la saa za kuwa hai {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} hrs",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "UCHAMBUZI WA ALAMA",
   "neatScoreDisplayTapForBreakdown": "Gusa kwa uchambuzi",
   "neatScoreDisplayTrend": "Mwenendo: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Inapakia...",
   "netflixExerciseCarouselSeeAll": "Tazama Yote",
   "netflixExercisesAddYourOwnExercises": "Ongeza mazoezi yako mwenyewe na marudio, seti, na maelekezo maalum.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Inahesabu seti inayofuata bora...",
   "nextSetPreviewCardIntensity": "ukali wa {intensityPercentage}%",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Seti ya Mwisho",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "WACHANGIAJI WAKUU",
   "nutrientExplorerUnknown": "Haijulikani",
   "nutrientExplorerUnpinNutrient": "Ondoa ubandiko wa kirutubisho",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VITAMINI",
   "nutrientRushGameCatchTheGoldenZealova": "Kamata alama ya dhahabu ya Zealova kwa ajili ya nguvu zaidi!",
   "nutrientRushGameNewBest": "🎉 BORA MPYA!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Muhtasari wa kila wiki",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "wastani {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Wastani wa ulaji: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/siku {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Uzito: {formattedWeeklyRate}",
@@ -23043,32 +22773,31 @@
   "onboardingWhyFirstTheWhy": "KWANZA, KWA NINI",
   "onboardingWhyWhatSDrivingThis": "Ni nini kinachochochea hili?",
   "openAllCrates24HoursOf2xXp": "Saa 24 za 2x XP",
-  "openAllCratesActivityCrate": "Kasha la shughuli",
+  "openAllCratesActivityCrate": "Kasha la Shughuli",
   "openAllCratesBonusCrateToOpen": "Kasha la bonasi la kufungua",
-  "openAllCratesCollect": "Kusanya {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Makasha yaliyofunguliwa {arg0}",
-  "openAllCratesDailyCrate": "Kasha la kila siku",
+  "openAllCratesCollect": "Kusanya ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "Makasha {arg0} yamefunguliwa!",
+  "openAllCratesDailyCrate": "Kasha la Kila Siku",
   "openAllCratesDone": "Imekamilika",
-  "openAllCratesDoubleXpToken": "Tokeni ya XP maradufu",
+  "openAllCratesDoubleXpToken": "Tokeni ya XP Maradufu",
   "openAllCratesFailedToOpenCrates": "Imeshindwa kufungua masanduku. Tafadhali jaribu tena.",
-  "openAllCratesFitnessCrate": "Kasha la mazoezi",
-  "openAllCratesGainedXp": "XP iliyopatikana {arg0}",
+  "openAllCratesFitnessCrate": "Kasha la Siha",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Kiwango cha juu",
-  "openAllCratesOpenYourCrates": "Fungua makasha yako",
-  "openAllCratesOpened": ") imefunguliwa!",
-  "openAllCratesOpeningYourCrates": "Inafungua makasha yako",
-  "openAllCratesPickRewardPerDay": "Chagua zawadi kwa siku {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Chagua zawadi yako {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Fungua Makasha Yako",
+  "openAllCratesOpeningYourCrates": "🎁 Inafungua makasha yako…",
+  "openAllCratesPickRewardPerDay": "Chagua zawadi 1 kwa siku • {arg0}/{arg1} zimechaguliwa",
+  "openAllCratesPickYourReward": "Chagua zawadi yako • {arg0}/{arg1} zimechaguliwa",
   "openAllCratesProtectYourStreak": "Linda mfululizo wako",
   "openAllCratesSelectAll": "Chagua Yote",
-  "openAllCratesStreakCrate": "Kasha la mfululizo",
-  "openAllCratesStreakShield": "Ngao ya mfululizo",
+  "openAllCratesStreakCrate": "Kasha la Mfululizo",
+  "openAllCratesStreakShield": "Ngao ya Mfululizo",
   "openAllCratesToday": "Leo",
-  "openAllCratesTotalXpFormatted": "Jumla ya XP {arg0}",
-  "openAllCratesTotalXpLevel": "Jumla ya kiwango cha XP {arg0} {arg1}",
-  "openAllCratesUd83cUdf89Rewards": "\\uD83C\\uDF89 Zawadi!",
-  "openAllCratesXpInLevel": "XP katika kiwango {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP hadi kiwango kinachofuata {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} jumla",
+  "openAllCratesTotalXpLevel": "Jumla: {arg0} XP • Ngazi {arg1}",
+  "openAllCratesUd83cUdf89Rewards": "🎉 Zawadi!",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP hadi Ngazi {arg1}",
   "openAllCratesYesterday": "Jana",
   "overallScoreHeroOverall": "JUMLA",
   "overviewActiveSkill": "UJUZI UNAOENDELEA",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Utu wako wa mazoezi ni...",
   "phaseRecommendationBannerBasedOn": "Kulingana na: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(ukadiriaji wa kujiamini wa (confidence))",
   "phaseRecommendationBannerCycleDay": "Siku ya mzunguko {cycleDay}",
   "phaseRecommendationBannerEvidence": "Ushahidi: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Nimeelewa",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Jenga msingi wa nguvu",
   "planPreviewScreenBuildingYour4Week": "Inajenga Mpango Wako wa Wiki 4...",
   "planPreviewScreenContinueFree": "Endelea Bila Malipo",
-  "planPreviewScreenDaysPerWeek": "Siku kwa wiki {arg0}",
+  "planPreviewScreenDaysPerWeek": "Siku {arg0}/wiki",
   "planPreviewScreenDesignedBasedOnYour": "Imeundwa kulingana na majibu yako ya dodoso",
-  "planPreviewScreenEquipmentCount": "Idadi ya vifaa {arg0}",
+  "planPreviewScreenEquipmentCount": "Vifaa {arg0}",
   "planPreviewScreenExercisesMin": "Mazoezi ya chini {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Ongeza kiwango cha nguvu",
   "planPreviewScreenMasterTheMovement": "Bobea katika harakati",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "Rekodi Binafsi {length}!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") KUTOKA ILIVYOKUWA",
   "prShareCardCopiedToClipboard": "Imenakiliwa kwenye ubao wa kunakili!",
   "prShareCardCopyText": "Nakili maandishi",
   "prShareCardFailedToCaptureImage": "Imeshindwa kunasa picha",
@@ -23721,7 +23448,7 @@
   "programSummaryLevel": "Kiwango",
   "programSummaryLoseWeight": "Punguza uzito",
   "programSummaryMacrosAndMealsAligned": "Macros na milo iliyooanishwa na mafunzo yako",
-  "programSummaryNItems": "Vitu {arg0}",
+  "programSummaryNItems": "Vipengele {arg0}",
   "programSummaryNutritionIntegration": "Ujumuishaji wa Lishe",
   "programSummaryPersonalizedForYourGoals": "Imebinafsishwa kwa malengo na vifaa vyako",
   "programSummaryProgressiveOverload": "Upakiaji wa Maendeleo",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Endelea kusonga!",
   "prsTemplateNewPersonalRecords": "REKODI MPYA ZA BINAFSI",
   "prsTemplateNewPrsAreJust": "Rekodi mpya za PRs zinakaribia",
-  "prsTemplateValue": ") (unit)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Viungo",
   "publicRecipeInstructions": "Maelekezo",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "Gusa ili kuona historia kamili na mienendo",
   "quickLogMeasurementsTrackYourBodyChanges": "Fuatilia mabadiliko ya mwili wako kadiri muda unavyopita",
   "quickLogMeasurementsUpdate": "Sasisha",
-  "quickLogMeasurementsUpdatedDaysAgo": "Siku zilizopita {arg0}",
+  "quickLogMeasurementsUpdatedDaysAgo": "Imesasishwa siku {arg0} zilizopita",
   "quickLogMeasurementsUpdatedToday": "Leo",
   "quickLogMeasurementsUpdatedYesterday": "Jana",
   "quickLogMeasurementsWaist": "Kiuno",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI inatengeneza mazoezi ndani ya kiwango ulichochagua",
   "quizDaysSelectorBest": "Bora",
   "quizDaysSelectorConsistencyBeatsIntensity": "Uthabiti ni bora kuliko nguvu - chagua kile unachoweza kudumisha",
-  "quizDaysSelectorDays": "Siku {arg0}",
-  "quizDaysSelectorDaysSelected": "Siku zilizochaguliwa {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") kwa mazoezi yako",
+  "quizDaysSelectorDays": "{arg0, plural, one {siku} other {siku}}",
+  "quizDaysSelectorDaysSelected": "Siku {arg0} / {arg1} zimechaguliwa",
   "quizDaysSelectorFri": "Iju",
   "quizDaysSelectorHowLongAreYour": "Mazoezi yako huchukua muda gani?",
   "quizDaysSelectorHowManyDaysPer": "Unaweza kufanya mazoezi siku ngapi kwa wiki?",
   "quizDaysSelectorMin": "Dak",
   "quizDaysSelectorMon": "Iju",
   "quizDaysSelectorSat": "Imo",
-  "quizDaysSelectorSelectNDays": "Chagua siku {arg0}",
+  "quizDaysSelectorSelectNDays": "Chagua siku {arg0} zinazokufaa",
   "quizDaysSelectorSun": "Ipi",
   "quizDaysSelectorThu": "Alh",
   "quizDaysSelectorTue": "Tal",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Gym ya nyumbani",
   "quizEquipmentHomeKettlebell": "Nyumbani + Kettlebell",
   "quizEquipmentHotel": "Hoteli",
-  "quizEquipmentIdentifiedCount": "Idadi iliyotambuliwa {arg0}",
+  "quizEquipmentIdentifiedCount": "Vimetambuliwa vipengele {arg0}. Gusa chochote ili kuondoa uteuzi.",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "Medicine ball",
   "quizEquipmentMinimalEquipmentBodyweight": "Vifaa vichache - uzito wa mwili, mkeka",
   "quizEquipmentNeededForBarbell": "Inahitajika kwa barbell",
   "quizEquipmentNoEquipmentIdentifiedPick": "Hakuna vifaa vilivyotambuliwa. Chagua kutoka kwenye orodha hapa chini.",
-  "quizEquipmentOtherCount": "Idadi nyingine {arg0}",
+  "quizEquipmentOtherCount": "{arg0} zimechaguliwa",
   "quizEquipmentOtherEquipment": "Vifaa vingine",
   "quizEquipmentPullUpBar": "Pull up bar",
   "quizEquipmentQuickPresets": "Mipangilio ya haraka",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Jina la mapishi linahitajika",
   "recipeCreateRemovePhoto": "Ondoa picha",
   "recipeCreateSaving": "Inahifadhi...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Piga picha",
   "recipeCreateTapToEdit": "Gusa ili kuhariri",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Kwa kila mlo (×{servings} milo)",
   "recipeDetailScreenUForkedFrom": "✨ Imetokana na {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" itafutwa kabisa.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Mapishi yaliyochaguliwa",
   "recipeDetailView": "Tazama",
@@ -24754,7 +24477,7 @@
   "regenerateSheetConsideringFocusAreas": "Inazingatia maeneo ya kuzingatia",
   "regenerateSheetCustomize": "Binafsisha",
   "regenerateSheetCustomizeOrLetAi": "Binafsisha au ruhusu AI ipendekeze",
-  "regenerateSheetCustomizeOrLetAiSuggest": "Badilisha au ruhusu AI ipendekeze",
+  "regenerateSheetCustomizeOrLetAiSuggest": "Geuza kukufaa au acha AI ipendekeze",
   "regenerateSheetDescribeYourIdealWorkout": "Elezea mazoezi yako bora",
   "regenerateSheetDesigningYourWorkout": "Inasanifu mazoezi yako",
   "regenerateSheetDialingInSetsAndReps": "Inapanga seti na marudio",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Inakamilisha maelezo…",
   "regenerateSheetFinalizingYourWorkout": "Inakamilisha mazoezi yako",
   "regenerateSheetFineTuningTheDetails": "Inarekebisha maelezo",
-  "regenerateSheetGeneratingElapsed": "Inazalisha muda uliopita {arg0}",
+  "regenerateSheetGeneratingElapsed": "Inazalisha… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Inatengeneza mapendekezo…",
   "regenerateSheetGetSuggestions": "Pata mapendekezo",
   "regenerateSheetGettingCreative": "Inabuni mbinu mpya",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Tumia Iliyopendekezwa",
   "restSuggestionQuick": "Haraka",
   "restSuggestionQuickRest": "Pumziko la haraka",
-  "restSuggestionSaveTime": "Okoa muda {arg0}",
+  "restSuggestionSaveTime": "Okoa {arg0}",
   "restSuggestionSuggested": "Imependekezwa",
   "restSuggestionUseSuggested": "Tumia iliyopendekezwa",
   "restTimerCardBaseRest": "Pumziko la Msingi",
   "restTimerCardControlRestPeriodsBetween": "Dhibiti vipindi vya kupumzika kati ya seti",
   "restTimerCardCustomRestTimer": "Kipima Muda cha Pumziko Maalum",
   "restTimerCardFormula": "Mfumo",
-  "restTimerCardFormulaBaserestRpe7": "Mfumo: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Onyesho la Moja kwa Moja",
   "restTimerCardMultiplier": "Kizidishi",
   "restTimerCardRestBaserestRpe7": "Pumziko = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "Vigezo: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Vigeu: msingi, RPE, kizidishi, tabaka",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "KOCHA WA UZITO WA AI",
   "restTimerOverlayAnalyzingYourPerformance": "Inachambua utendaji wako...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "Imekamilika",
   "rtpTitle": "Rudi kwenye mazoezi",
   "safetyDisclaimerBannerDismissDisclaimer": "Ondoa onyo",
-  "safetyDisclaimerBannerInjuriesFlagged": "Majeraha yaliyoainishwa {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "Majeraha {arg0} yameripotiwa",
   "safetyDisclaimerBannerInjuryBody": "Mwili wenye jeraha",
   "safetyDisclaimerBannerLearnMore": "Jifunze zaidi",
   "safetyDisclaimerBannerMore": "+{overflow} zaidi",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Seti",
   "sessionDetailSetCount": "{count, plural, other{Seti {count}}} · seti kuu imeangaziwa",
   "sessionDetailTime": "Muda",
-  "sessionDetailTopSetHighlighted": ") • seti ya juu imeangaziwa",
   "sessionDetailWeight": "Uzito",
   "setAdjustmentAdditionalNotesOptional": "Maelezo ya ziada (hiari)",
   "setAdjustmentConfirm": "Thibitisha",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} imekamilika",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} imebaki",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} imeondolewa",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") ya (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "kati ya {totalSets} zilizopangwa",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "Seti {completedSets} zimekamilika",
   "setAdjustmentSheetReps": "Marudio",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Seti {currentSetNumber}/{totalSets} • Gusa ili kupanua",
   "setTrackingSectionSets": "Seti {widget}",
   "setTrackingSectionSetsCompleted": "Seti {length} zimekamilika",
-  "setTrackingSectionValue": ")×(marudio)",
   "setTrackingSheetsAmountToAdjustWeight": "Kiasi cha kurekebisha uzito",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "Historia ya mazoezi",
@@ -25554,9 +25273,9 @@
   "settingsScreenExtWhyIBuilt": "Kwa nini niliunda {appName}",
   "settingsScreenExtYourAiPoweredPersonal": "Kocha wako wa mazoezi ya mwili anayewezeshwa na AI. Pata mipango ya mazoezi iliyobinafsishwa, fuatilia maendeleo yako, na ufikie malengo yako ya siha.",
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject=Ombi la Usaidizi la {appName}",
-  "settingsScreenUBDays": "{splitName} \\u00B7 {daysPerWeek} siku",
+  "settingsScreenUBDays": "{splitName} · {daysPerWeek} siku",
   "settingsScreenUiNoSettingsFound": "Hakuna mipangilio iliyopatikana",
-  "settingsScreenUiTryDifferentKeywordsLike": "Jaribu maneno tofauti kama \"mandhari\", \"arifa\", au \"sauti ya ai\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Jaribu maneno tofauti kama \"mandhari\", \"arifa\" au \"sauti ya AI\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Tafuta mipangilio",
   "settingsSetProgressionResearch": "Weka maendeleo & utafiti",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "Ripoti yangu ya {periodName} ya {appName}",
   "shareInsightsSheetMyReport2": "Ripoti yangu ya {appName}",
   "shareMotivationalCompleted": "IMEKAMILIKA",
-  "sharePrNewPr": "PR mpya",
+  "sharePrNewPr": "REKODI MPYA",
   "shareStatsCalories": "Kalori",
   "shareStatsDuration": "Muda",
   "shareStatsEliteTemplate": "ELITE TEMPLATE",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "TUZO",
   "streakMilestoneStreakMilestone": "HATUA YA MFULULIZO!",
-  "streakMilestoneToGo": ") zimebaki!",
   "streakMilestoneYouVeReachedThe": "Umefikia hatua kuu ya mfululizo!",
   "streakSavedDialogWeUsedStreakShield": "Tumetumia Ngao 1 ya Streak ili kudumisha streak yako ya siku {savedStreakCount}.",
   "streakSavedKeepItGoing": "Endeleza",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Unganisha",
   "todayScoreCardCustomize": "BADILISHA",
   "todayScoreCardToday": "Leo",
-  "todayScoreDetailDown": "Imeshuka {arg0}",
-  "todayScoreDetailEarnedPts": "Pointi ulizopata {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Imeshuka kwa {arg0} tangu asubuhi hii",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} pts",
   "todayScoreDetailHowItWorks": "Jinsi inavyofanya kazi",
-  "todayScoreDetailInactiveExplanation": "Maelezo ya kutokuwa hai {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Kasi na wastani {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {haihesabiwi} other {hazihesabiwi}} leo, hivyo zilizobaki zinagawana pointi kamili 100. Alama yako daima inaakisi tu kinachotumika hasa leo.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  wastani wa 7-day {arg1}",
   "todayScoreDetailNotCounted": "Haijahesabiwa",
   "todayScoreDetailSetupText": "Maandishi ya usanidi",
   "todayScoreDetailSteady": "Imetulia",
   "todayScoreDetailTodayScore": "Alama ya leo",
-  "todayScoreDetailUp": "Imepanda {arg0}",
+  "todayScoreDetailUp": "▲ Imepanda kwa {arg0} tangu asubuhi hii",
   "todayScoreSetupAddAWorkoutPlan": "Ongeza mpango wa mazoezi",
   "todayScoreSetupCardContinue": "Endelea: {label}",
   "todayScoreSetupCardGetStarted": "ANZA · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Mafanikio ya Cardio",
   "trophiesEarnedDayStreak": "Mfululizo wa Siku",
   "trophiesEarnedFirstTime": "MARA YA KWANZA!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Hatua imefikiwa",
   "trophiesEarnedMilestoneReachedNice": "Hatua muhimu imefikiwa — vizuri!",
   "trophiesEarnedMilestones": "Hatua Muhimu",
-  "trophiesEarnedNewBadges": "Beji {arg0}",
-  "trophiesEarnedNewCardioPRs": "PR za Cardio {arg0}",
-  "trophiesEarnedNewPR": "Tuzo zimepatikana, PR mpya",
-  "trophiesEarnedNewPRs": "PR {arg0}",
+  "trophiesEarnedNewBadges": "Beji mpya {arg0}",
+  "trophiesEarnedNewCardioPRs": "PRs mpya {arg0} za cardio",
+  "trophiesEarnedNewPR": "REKODI MPYA",
+  "trophiesEarnedNewPRs": "PRs mpya {arg0}!",
   "trophiesEarnedNewPr": "PR MPYA",
   "trophiesEarnedNextMilestones": "Hatua Muhimu Zinazofuata",
   "trophiesEarnedNoNewRecords": "Hakuna rekodi mpya",
   "trophiesEarnedNoNewRecordsThis": "Hakuna rekodi mpya katika kipindi hiki — haya ndiyo unayoyafanyia kazi:",
   "trophiesEarnedPersonalRecords": "Rekodi Binafsi",
-  "trophiesEarnedRemainingToUnlock": "Zilizobaki kufungua {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "{arg1} {arg0} zaidi kufungua",
   "trophiesEarnedSessionHighlights": "Vivutio vya kikao",
   "trophiesEarnedSheetPts": "+{points} pts",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} anaandika",
   "typingIndicatorIsTyping3": "{agentName} anaandika...",
   "unifiedHomeWidgetsActivity": "SHUGHULI",
-  "unifiedHomeWidgetsBreakfastLogged": "Wijeti za nyumbani, kifungua kinywa kimeingizwa {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Kifungua kinywa kimerekodiwa {arg0} kati ya asubuhi 7 zilizopita",
   "unifiedHomeWidgetsBreakfastSuggestion": "Pendekezo la kifungua kinywa",
   "unifiedHomeWidgetsCarbs": "Kabohaidreti",
   "unifiedHomeWidgetsConnect": "Unganisha",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Mafuta",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kkal jumla leo",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal zimechomwa",
   "unifiedHomeWidgetsKcalLeft": " kcal zimebaki",
   "unifiedHomeWidgetsLastNight": "usiku uliopita",
   "unifiedHomeWidgetsLog16oz": "Ingiza 16oz",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}w",
   "weekDurationSelectorWeeks": "wiki {selectedWeeks}",
   "weekDurationSelectorWk": "{spw}/wiki",
-  "weekProgressStripCompletedCount": "Idadi iliyokamilika {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "Mazoezi {arg0} kati ya {arg1} yamekamilika",
   "weekProgressStripCouldNotLoadProgress": "Imeshindwa kupakia maendeleo",
   "weekProgressStripLoading": "Inapakia...",
   "weekProgressStripNoWorkoutsScheduled": "Hakuna mazoezi yaliyopangwa",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Ona zote",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Ufuatiliaji wa uzito",
-  "weightTrendCardDownThisWeek": "Imeshuka wiki hii {arg0}",
-  "weightTrendCardDownVsLastCycle": "Imeshuka ikilinganishwa na mzunguko uliopita {arg0}",
+  "weightTrendCardDownThisWeek": "Imeshuka kwa {arg0} wiki hii!",
+  "weightTrendCardDownVsLastCycle": "Imeshuka kwa {arg0} lbs ikilinganishwa na siku ile ile ya mzunguko mwezi uliopita",
   "weightTrendCardLoadingWeight": "Inapakia uzito...",
   "weightTrendCardLogYourWeightTo": "Rekodi uzito wako ili kuona mienendo",
   "weightTrendCardMaintaining": "Inadumisha",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Sawa na mzunguko uliopita",
   "weightTrendCardTapToLogWeight": "Gusa ili kurekodi uzito",
   "weightTrendCardTargetHeld": "Lengo limefikiwa",
-  "weightTrendCardTargetHeldWindow": "Dirisha la lengo lililofikiwa {arg0}",
-  "weightTrendCardUpThisWeek": "Imepanda wiki hii {arg0}",
-  "weightTrendCardUpVsLastCycle": "Imepanda ikilinganishwa na mzunguko uliopita {arg0}",
+  "weightTrendCardTargetHeldWindow": "Lengo limeshikiliwa {arg0} — ulainishaji wa maji wa luteal",
+  "weightTrendCardUpThisWeek": "Imepanda kwa {arg0} wiki hii",
+  "weightTrendCardUpVsLastCycle": "Imepanda kwa {arg0} lbs ikilinganishwa na siku ile ile ya mzunguko mwezi uliopita",
   "weightTrendCardWeightStableThisWeek": "Uzito umetulia wiki hii",
   "weightTrendCardWeightTrends": "Mienendo ya uzito",
   "welcomeAffirmationGreatChoice": "Uamuzi mzuri.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "Rejesha kwenye toleo hili?",
   "workoutActionsShareWorkout": "Shiriki mazoezi",
   "workoutActionsSheetGetALinkFor": "Pata kiungo cha {marketingDomain} kwa marafiki",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "Rejesha \"{name}\"?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} reps",
   "workoutCompleteScreenUi2SetsReps": "Seti {currentSets}, reps {currentReps}",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Huwezi kuwapa changamoto marafiki kwa sasa",
   "workoutCompleteScreenUnableToExtendWorkout": "Imeshindwa kuongeza muda wa mazoezi",
   "workoutCompleteScreenViewAllMetrics": "Tazama Vipimo Vyote",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "VIFAA",
   "workoutDetailExercises": "MAZOEZI",
   "workoutDetailFailedToLoadWorkout": "Imeshindwa kupakia mazoezi",
-  "workoutDetailHelpersForAvailableEquipment": ") kwa vifaa vinavyopatikana...",
   "workoutDetailHelpersHell": "Jehanamu",
   "workoutDetailHelpersUpdatingExercises": "Inasasisha Mazoezi",
   "workoutDetailMoreInfo": "MAELEZO ZAIDI",
   "workoutDetailProgram": "Programu",
-  "workoutDetailReplacingExercises": "Inabadilisha mazoezi {arg0}",
+  "workoutDetailReplacingExercises": "Inabadilisha mazoezi {arg0} kwa vifaa vinavyopatikana…",
   "workoutDetailRevert": "Rejesha",
   "workoutDetailScreenBreakSuperset": "Vunja Superset?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} cal zimeteketezwa",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "Safu ya uzito iko katika kipimo gani? Na kama unajua programu chanzo, ichague — inasaidia kutofautisha miundo inayofanana (CSV za Hevy dhidi ya Strong).",
   "workoutHistoryImportYourStrengthData": "Data yako ya nguvu",
-  "workoutImportAsDone": ")\" kama imekamilika",
   "workoutImportCalories": "Kalori",
   "workoutImportCardio": "Cardio",
   "workoutImportCycling": "Kuendesha baiskeli",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Muda",
   "workoutImportEasy": "Rahisi",
   "workoutImportFlexibility": "Kunyoosha viungo",
-  "workoutImportFromSource": "Kutoka chanzo {arg0}",
+  "workoutImportFromSource": "kutoka {arg0}",
   "workoutImportHard": "Ngumu",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Mazoezi haya yalikuwa magumu kiasi gani?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Unaweza kuona vidokezo hivi vya mfumo wakati wa mazoezi yako. Vyote ni vya hiari — ruka yoyote na mazoezi yataendelea kufanya kazi.",
   "workoutPlanDrawerAddExercise": "Ongeza Zoezi",
   "workoutPlanDrawerCurrent": "Sasa",
-  "workoutPlanDrawerExerciseCount": "Idadi ya mazoezi {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") zimeingizwa. Zitafutwa.",
+  "workoutPlanDrawerExerciseCount": "Mazoezi {arg0}",
   "workoutPlanDrawerNow": "Sasa",
   "workoutPlanDrawerRemove": "Ondoa",
-  "workoutPlanDrawerRemoveExercise": "Ondoa zoezi {arg0}",
+  "workoutPlanDrawerRemoveExercise": "Ondoa {arg0}?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Ondoa zana ya mazoezi",
-  "workoutPlanDrawerSetsLogged": "Seti zilizorekodiwa {arg0}",
+  "workoutPlanDrawerSetsLogged": "Una seti {arg0} zilizorekodiwa. Zitafutwa.",
   "workoutPlanDrawerSwapExercise": "Badilisha zoezi",
   "workoutPlanDrawerTitle": "Kichwa",
   "workoutPlanDrawerWorkoutPlan": "Mpango wa Mazoezi",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "Kila seti unayorekodi",
   "workoutShowcaseEveryWorkoutFlows": "Kila mazoezi yanatiririka",
   "workoutShowcaseFinishWorkout": "Maliza mazoezi",
-  "workoutShowcaseFormat1Rm": "Muundo wa 1RM",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "Boarding",
   "workoutShowcaseFormatCard": "Kadi",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Lebo ya mstari",
   "workoutShowcaseLogAllSets": "Seti zote",
   "workoutShowcaseLogDrink": "Ingiza Kinywaji",
-  "workoutShowcaseLogSet": "Seti {arg0}",
+  "workoutShowcaseLogSet": "✓ Rekodi seti {arg0}",
   "workoutShowcaseLogWater": "Ingiza maji",
   "workoutShowcaseMovedThisSession": "imesogezwa katika kipindi hiki",
   "workoutShowcaseNewPr": "PR MPYA",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Marudio",
   "workoutShowcaseScreenDay": "Siku {day}",
   "workoutShowcaseScreenDuration": "MUDA: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · IMEINGIZWA",
   "workoutShowcaseScreenSession": "KIPINDI: {title}",
   "workoutShowcaseScreenTotalPrs": "JUMLA {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "Seti 1 ya 4",
   "workoutShowcaseSet2": "Seti 2",
   "workoutShowcaseSet3": "Seti 3",
-  "workoutShowcaseSetNOf3": "Seti {arg0} ya 3",
+  "workoutShowcaseSetNOf3": "Seti {arg0} kati ya 3",
   "workoutShowcaseShareYourWorkout": "Shiriki mazoezi yako",
   "workoutShowcaseSideA": "UPANDE A",
   "workoutShowcaseSuperset": "Superset",
@@ -27893,7 +27604,7 @@
   "workoutSummaryAdvancedWeight": "Uzito",
   "workoutSummaryAdvancedWeightSuggestions": "Mapendekezo ya Uzito",
   "workoutSummaryAdvancedWorkoutEndedEarly": "Mazoezi Yameisha Mapema",
-  "workoutSummaryAdvancedYesU2705": "Ndiyo \\u2705",
+  "workoutSummaryAdvancedYesU2705": "Ndiyo ✅",
   "workoutSummaryBodyweightSession": "Kipindi cha uzito wa mwili",
   "workoutSummaryCollapseAll": "Kunja Yote",
   "workoutSummaryExpandAll": "Panua Yote",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Kila siku",
   "xpGoalsDialog250LevelsAcross11Tiers": "Viwango 250 katika ngazi 11",
   "xpGoalsDialogBeginnerToTranscendent": "Kuanzia mwanzilishi hadi bingwa",
-  "xpGoalsDialogCompleteWorkoutXp": "XP ya kukamilisha mazoezi",
+  "xpGoalsDialogCompleteWorkoutXp": "Kamilisha Zoezi: +100 XP",
   "xpGoalsDialogDailyGoals": "Malengo ya kila siku",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "XP ya mazungumzo na kocha wa AI",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "XP ya vipimo vya uzito wa mlo",
-  "xpGoalsDialogFirstPrXp": "XP ya PR ya kwanza",
-  "xpGoalsDialogFirstProgressPhotoXp": "XP ya picha ya maendeleo",
-  "xpGoalsDialogFirstProteinGoalXp": "XP ya lengo la protini",
-  "xpGoalsDialogFirstWorkoutXp": "XP ya mazoezi ya kwanza",
-  "xpGoalsDialogHitProteinGoalXp": "XP ya kufikia lengo la protini",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Mazungumzo ya Kwanza na Kocha wa AI: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Mlo/Uzito/Vipimo vya Kwanza: +50 XP kila kimoja",
+  "xpGoalsDialogFirstPrXp": "PR ya Kwanza: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Picha ya Kwanza ya Maendeleo: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Lengo la Kwanza la Protini: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Zoezi la Kwanza: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Fikia Lengo la Protini: +50 XP",
   "xpGoalsDialogLevels": "Viwango",
-  "xpGoalsDialogLogBodyMeasurementsXp": "XP ya vipimo vya mwili",
-  "xpGoalsDialogLogMealXp": "XP ya kurekodi mlo",
-  "xpGoalsDialogLogWeightXp": "XP ya kurekodi uzito",
-  "xpGoalsDialogLoginXp": "XP ya kuingia kwenye akaunti",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Rekodi Vipimo vya Mwili: +20 XP",
+  "xpGoalsDialogLogMealXp": "Rekodi Mlo: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Rekodi Uzito: +15 XP",
+  "xpGoalsDialogLoginXp": "Ingia: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Zawadi za hatua muhimu",
   "xpGoalsFirstTimeBonuses": "Bonasi za mara ya kwanza",
   "xpGoalsGotIt": "Sawa!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Fikia lengo la protini",
   "xpGoalsScreenInventory": "Orodha",
   "xpGoalsScreenLegendary": "LEGENDARY",
-  "xpGoalsScreenLevelCurrentTotal": "Jumla ya sasa ya kiwango {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Ngazi {arg0} • 249 levels total",
   "xpGoalsScreenLevelProgress": "Maendeleo ya Kiwango",
   "xpGoalsScreenLogBodyMeasurements": "Rekodi vipimo vya mwili",
   "xpGoalsScreenLogFirstMeal": "Rekodi Mlo wa Kwanza",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Chumba cha Tuzo",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Kila Wiki",
-  "xpGoalsXpAvailable": "Inayopatikana {arg0}",
-  "xpGoalsXpEarnedToday": "Uliyopata leo {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP zinapatikana",
+  "xpGoalsXpEarnedToday": "+{arg0} XP zimepatikana leo",
   "xpGoalsXpGoals": "Malengo ya XP",
-  "xpGoalsXpMultiplierActive": "Kizidishi kinachofanya kazi {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP Imewashwa!",
   "xpHeroTileDayStreak": "Mfululizo wa siku {streak}",
   "xpHeroTileLv": "Ngazi {level}",
   "xpHeroTileLv2": "Ngazi {nextLevel} → {label}",

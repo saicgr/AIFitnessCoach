@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "எப்போது பயன்படுத்த வேண்டும்",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "பயிற்சி வெற்றிகரமாக மாற்றப்பட்டது",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} உடற்பயிற்சி(கள்) சேர்க்கப்பட்டன",
-  "activeWorkoutScreenRefactoredFor": ") for (name)",
   "activeWorkoutScreenUndo": "செயல்தவிர்",
   "activeWorkoutScreenWorkoutAdapted": "உடற்பயிற்சி மாற்றியமைக்கப்பட்டது.",
   "activityCardAdditionalDetailsOptional": "கூடுதல் விவரங்கள் (விருப்பத்தேர்வு)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "உடற்பயிற்சிக்கு முந்தைய எரிபொருள்?",
   "aiCoachMealQuickSnackIdeas": "விரைவான சிற்றுண்டி யோசனைகள்?",
   "aiCoachMealRecoveryDayEating": "மீட்பு நாள் உணவு?",
-  "aiCoachMealSearchQuestionsTryAngry": "கேள்விகளைத் தேடுங்கள் (\"angry\", \"fiber\", \"mexican\" என முயற்சி செய்யவும்)",
   "aiCoachMealSomethingWentWrong": "ஏதோ தவறு நடந்துவிட்டது.",
   "aiCoachMealStressedWhatHelps": "மன அழுத்தம் — எது உதவும்?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "ஆசிய வகை {meal} — ஒரு தேர்வு (ரைஸ் பவுல், நூடுல்ஸ், சுஷி, ஸ்டிர் ஃபிரை), மேக்ரோக்கள் மற்றும் தயாரிப்பு முறை.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · {phase} கட்டம்",
   "caloriesSummaryCardCalories": "கலோரிகள்",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "மீதமுள்ளது",
   "cancelConfirmationAnythingElseYouD": "நீங்கள் பகிர விரும்பும் வேறு ஏதேனும் உள்ளதா? (விருப்பத்தேர்வு)",
   "cancelConfirmationCancelAnyway": "எப்படியும் ரத்து செய்",
   "cancelConfirmationHelpUsImprove": "நாங்கள் மேம்பட உதவுங்கள்",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "புரிந்தது",
   "chatLanguageChangedSystem": "🌐 AI Coach இப்போது {nativeName} மொழியில் பதிலளிக்கும்",
   "chatLanguageResetSystem": "🌐 AI Coach மொழி மீட்டமைக்கப்பட்டது — செயலியின் மொழியைப் பயன்படுத்துகிறது",
-  "chatLeftToday": ") இன்று மீதமுள்ளது",
   "chatMediaWidgetsCalTotal": "மொத்தம் {totalCal} cal",
   "chatMediaWidgetsGProtein": "{totalProtein}g புரதம்",
   "chatMediaWidgetsGoTo": "{workoutName}-க்குச் செல்",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "பயிற்சியாளர் வழக்கத்தை விட நீண்ட நேரம் யோசிக்கிறார்.",
   "chatScreenCouldntReachCoach": "பயிற்சியாளரைத் தொடர்பு கொள்ள முடியவில்லை.",
   "chatScreenExtAboutAiCoach": "AI பயிற்சியாளரைப் பற்றி",
-  "chatScreenExtAs": ") என (mealType)",
   "chatScreenExtChangeCoach": "பயிற்சியாளரை மாற்று",
   "chatScreenExtChatTips": "அரட்டை குறிப்புகள்",
   "chatScreenExtChooseMultiplePhotos": "பல புகைப்படங்களைத் தேர்ந்தெடு",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "இலக்குகளைப் பார்க்கவும்",
   "complianceRingCardAllWorkoutsCompleted": "அனைத்து உடற்பயிற்சிகளும் முடிந்துவிட்டன",
   "complianceRingCardGetStartedToday": "இன்றே தொடங்குங்கள்",
-  "complianceRingCardGreatPace": "சிறந்த வேகம் {arg0}",
+  "complianceRingCardGreatPace": "அருமையான வேகம்! {arg0} மீதம்",
   "complianceRingCardNoWorkoutsScheduledThis": "இந்த வாரம் உடற்பயிற்சிகள் எதுவும் திட்டமிடப்படவில்லை",
-  "complianceRingCardOnTrack": "சரியான பாதையில் {arg0}",
+  "complianceRingCardOnTrack": "சரியான பாதையில் — {arg0} மீதம்",
   "complianceRingCardWorkoutCompliance": "உடற்பயிற்சி இணக்கம்",
-  "complianceRingCardWorkoutsRemaining": "மீதமுள்ள உடற்பயிற்சிகள் {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} ஒர்க்அவுட்கள் மீதம்",
   "comprehensiveStatsStatsScores": "புள்ளிவிவரங்கள் & மதிப்பெண்கள்",
   "connectedAppsAutoImportEvery15": "ஒவ்வொரு 15 நிமிடங்களுக்கும் தானாக இறக்குமதி செய்யவும்",
   "connectedAppsConnect": "இணைக்கவும்",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "உணவைத் தேர்ந்தெடுக்கவும்",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "இந்த மதிப்பை பயன்படுத்தவும்",
-  "cookingConverterWeight": ") எடை",
   "cosmeticsGalleryCosmetics": "அலங்காரப் பொருட்கள்",
   "cosmeticsGalleryEquip": "பொருத்து",
   "cosmeticsGalleryEquipped": "பொருத்தப்பட்டது",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "உங்கள் தேடலுக்கு எந்தப் பயிற்சியும் பொருந்தவில்லை",
   "customExercisesScreenAreYouSureYou": "\"{name}\"-ஐ நீக்க வேண்டுமா? இதை மாற்ற முடியாது.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} பயிற்சிகள், {totalUses} பயன்பாடுகள்",
-  "customExercisesScreenUsedTimes": "பயன்படுத்தப்பட்டது (usageCount) முறை(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "பயிற்சிகளைத் தேடவும்...",
   "customExercisesSimple": "எளிமையானது",
   "customFoodBuilderAiFillFromName": "பெயரிலிருந்து AI நிரப்புதல்",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · கடைசி சுழற்சி",
   "customTrendScreenMaxOverlaysRemoveOne": "அதிகபட்சம் {_kMaxOverlays} மேலடுக்குகள் — மற்றொன்றைச் சேர்க்க ஒன்றை நீக்கவும்",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} பகிரப்பட்ட நாட்கள்",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "பயிற்சியைச் சேர்",
   "customWorkoutBuilderBuildCustomWorkout": "தனிப்பயன் உடற்பயிற்சியை உருவாக்கு",
   "customWorkoutBuilderCustomWorkoutCreated": "தனிப்பயன் உடற்பயிற்சி உருவாக்கப்பட்டது!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "மாதவிடாயைப் பதிவு செய்யுங்கள்",
   "cycleScreenUiLogPeriod": "மாதவிடாயைப் பதிவு செய்",
   "cycleScreenUiLogYourFirstPeriod": "முன்கணிப்புகளைத் தொடங்க உங்கள் முதல் மாதவிடாயைப் பதிவு செய்யவும்.",
-  "cycleScreenUiPhase": ") கட்டம்",
   "cycleScreenUiPhaseLabel": "{displayName} கட்டம்",
   "cycleScreenUiPredictionsAreEstimates": "முன்கணிப்புகள் உங்கள் பதிவு செய்யப்பட்ட தரவின் அடிப்படையில் மதிப்பிடப்பட்டவை, இது கருத்தடை முறை அல்ல மற்றும் மருத்துவ ஆலோசனை அல்ல. ஏதேனும் உடல்நலக் கவலைக்கு மருத்துவரை அணுகவும்.",
   "cycleScreenUiPregnancyModeIsOn": "கர்ப்பகால முறை ஆன் செய்யப்பட்டுள்ளது",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "தொடரவும்",
   "editProgramSheetCurrent": "தற்போதைய",
   "editProgramSheetCustomProgram": "தனிப்பயன் திட்டம்",
-  "editProgramSheetCustomValue": "தனிப்பயன் மதிப்பு {arg0}",
+  "editProgramSheetCustomValue": "தனிப்பயன்: {arg0}",
   "editProgramSheetCustomizeProgram": "திட்டத்தைத் தனிப்பயனாக்கு",
   "editProgramSheetDays": "நாட்கள்",
   "editProgramSheetDaysAgo": "{days} நாட்களுக்கு முன்பு",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "உபகரணங்கள்",
   "editProgramSheetEquipmentLabel": "உபகரண லேபிள்",
   "editProgramSheetExamples": "உதாரணங்கள்",
-  "editProgramSheetFailedToLoadHistory": "வரலாற்றை ஏற்றுவதில் தோல்வி {arg0}",
-  "editProgramSheetFailedToRestore": "மீட்டெடுப்பதில் தோல்வி {arg0}",
+  "editProgramSheetFailedToLoadHistory": "வரலாற்றை ஏற்ற முடியவில்லை: {arg0}",
+  "editProgramSheetFailedToRestore": "மீட்டெடுக்க முடியவில்லை: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "நிரலைப் புதுப்பிப்பதில் தோல்வி",
   "editProgramSheetFocus": "கவனம்",
   "editProgramSheetHealth": "ஆரோக்கியம்",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "பதிவிறக்கம் செய்யப்படுகிறது {pct}%",
   "exerciseDetailSheetDownloadingVideo": "வீடியோ பதிவிறக்கப்படுகிறது...",
   "exerciseDetailSheetFavorite": "பிடித்தவை",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "ஏற்றப்படுகிறது...",
   "exerciseDetailSheetLog1rm": "1RM பதிவு செய்",
   "exerciseDetailSheetMS": "{restMins}நி {restSecs}வி",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15வி",
   "exerciseSetTrackerAddNotesHere": "குறிப்புகளை இங்கே சேர்க்கவும்...",
   "exerciseSetTrackerAddSet": "செட் சேர்க்கவும்",
-  "exerciseSetTrackerBarbell": ") பார்பெல்",
   "exerciseSetTrackerReps": "முறை",
   "exerciseSetTrackerRestTarget": "ஓய்வு இலக்கு",
   "exerciseSetTrackerS": "{seconds}வி",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI தேர்வுகள் கிடைக்கவில்லை",
   "exerciseSwapSheetAnyEquipment": "எந்த உபகரணமும்",
   "exerciseSwapSheetAskAiForSuggestions": "பரிந்துரைகளுக்கு AI-யிடம் கேளுங்கள்",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "உங்கள் உபகரணங்கள் அல்லது விருப்பங்களை விவரிக்கவும்\nஉதாரணமாக, \"எனக்கு தோள்பட்டை வலி உள்ளது, உடல் எடை பயிற்சி மட்டும்\"",
   "exerciseSwapSheetEGIOnly": "உதாரணமாக, \"என்னிடம் டம்பல்ஸ் மட்டுமே உள்ளது\"",
   "exerciseSwapSheetFailedToSwapExercise": "பயிற்சியை மாற்ற முடியவில்லை",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "தசைக்கு ஏற்ற மாற்றுகளைத் தேடுகிறது...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "எடை",
   "expandedExerciseCardAddToFavorites": "பிடித்தவையில் சேர்",
   "expandedExerciseCardAlternatingHands": "மாறி மாறி கைகளை பயன்படுத்துதல்",
-  "expandedExerciseCardBarbell": ") பார்பெல்",
   "expandedExerciseCardBreathing": "சுவாசம்",
   "expandedExerciseCardBreathingGuide": "சுவாச வழிகாட்டி",
   "expandedExerciseCardCollapse": "சுருக்கு",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "நெறிமுறை நிலை",
   "fastingScoreCardScore": "மதிப்பெண்",
   "fastingScoreCardStreakBonus": "தொடர் போனஸ்",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "கடந்த வாரத்துடன் ஒப்பிடும்போது",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "முதல்",
   "flexibilityProgressChartLatest": "சமீபத்திய",
   "flexibilityProgressChartNoDataAvailable": "தரவு இல்லை",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "பகுதி வாரியாக",
   "flexibilityScoreCardFocusAreas": "கவனிக்க வேண்டிய பகுதிகள்",
   "flexibilityScoreCardOverallFlexibility": "ஒட்டுமொத்த நெகிழ்வுத்தன்மை",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "உணவுகள், \"high protein\" எனத் தேடவும்...",
   "foodHistoryUndo": "செயல்தவிர்",
   "foodItemRankingAddFood": "உணவைச் சேர்",
-  "foodItemRankingDetails": ") விவரங்கள்",
   "foodItemRankingNFoodItems": "{count} உணவுப் பொருட்கள்",
   "foodItemRankingScore": "மதிப்பெண்",
   "foodItemRankingTapToHideDetails": "விவரங்களை மறைக்க தட்டவும்",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "எனவே நான் நபரை கட்டினேன், பேரேடு அல்ல. உள்நாட்டிலோ வெளிநாட்டிலோ - ஏதேனும் மெனுவை எடுத்து, பயிற்சியாளர் அதை மேக்ரோக்களில் உங்களுக்குத் திரும்பப் படிக்கிறார். ஒரு செவ்வாய் கிழமையைத் தவிர்த்தால், அது குற்ற உணர்வு இல்லாமல் புதன்கிழமை காலை உங்களை பின்னுக்கு இழுக்கும். இது உங்கள் உணவுகள், உங்கள் உடற்பயிற்சி கூடம், உங்கள் சீட்டு முறைகள் - ஒரு மாதத்திற்கு ஒரு PT அமர்வுக்கு குறைவாகவே கற்றுக்கொள்கிறது.",
   "founderNoteTheFriendsWhoActually": "உண்மையில் உடல் தகுதியுடன் இருந்த நண்பர்களுக்கு அவர்களைத் தொடர்புகொள்ளும் ஒரு நபர் இருந்தார். உண்மையான பொறுப்புக்கூறலுக்கு மாதத்திற்கு சுமார் இருநூறு டாலர்கள் செலவாகும், அதனால்தான் நம்மில் பெரும்பாலோர் அதை ஒருபோதும் கொண்டிருப்பதில்லை, மேலும் அதனால்தான் \"கண்காணிப்பதற்கும்\" \"மாற்றுவதற்கும்\" இடையே உள்ள இடைவெளி பல ஆண்டுகளாக அப்படியே இருக்கிறது.",
-  "freshnessDecayCardAgo": ") முன்பு",
   "freshnessDecayCardControlsHowQuicklyExercise": "உடற்பயிற்சி புத்துணர்ச்சி எவ்வளவு விரைவாக குறைகிறது என்பதைக் கட்டுப்படுத்துகிறது: e^(-k * sessions)",
   "freshnessDecayCardFreshnessDecayTuner": "Freshness Decay Tuner",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}கி",
   "futuristicSetCardSetOf": "SET {currentSetNumber} / {totalSets}",
   "futuristicSetCardSkipExercise": "பயிற்சியைத் தவிர்",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "உங்கள் உடற்பயிற்சிகள், ஊட்டச்சத்து மற்றும் உண்ணாநோன்பு ஆகியவற்றை ஒருங்கிணைக்கும் ஒரு முழுமையான திட்டத்தை உருவாக்குங்கள்.",
   "generatePlanFastingProtocol": "உண்ணாநோன்பு நெறிமுறை",
   "generatePlanGeneratePlan": "திட்டத்தை உருவாக்கு",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "உங்கள் முதல் பழக்கத்தைச் சேர்க்கவும்",
   "habitsCardAllHabitsCompleted": "அனைத்துப் பழக்கங்களும் முடிந்துவிட்டன!",
   "habitsCardBuildDailyHabits": "தினசரி பழக்கங்களை உருவாக்குங்கள்",
-  "habitsCardCompletedCount": "முடிக்கப்பட்ட எண்ணிக்கை {arg0} {arg1}",
-  "habitsCardDayStreak": "தொடர் நாட்கள் {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} முடிந்தது",
+  "habitsCardDayStreak": "{arg0} நாள் தொடர்ச்சி",
   "habitsCardFailedToLoadHabits": "பழக்கவழக்கங்களை ஏற்ற முடியவில்லை",
   "habitsCardGreatJobKeepingUp": "உங்கள் தொடர்களைத் தக்கவைத்துக்கொள்வதில் சிறந்த வேலை",
   "habitsCardQuickStart": "விரைவான தொடக்கம்:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "இன்றைய பழக்கவழக்கங்கள்",
   "habitsCardTryAgain": "மீண்டும் முயற்சிக்கவும்",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "அனைத்து பழக்கங்களையும் பார்க்கவும் {arg0}",
+  "habitsCardViewAllHabits": "அனைத்து {arg0} பழக்கங்களையும் காண்க",
   "habitsCompleted": "முடிக்கப்பட்டது",
   "habitsDeleteHabit": "பழக்கத்தை நீக்கவா?",
   "habitsHoldToReorderSwipe": "வரிசைப்படுத்த அழுத்திப் பிடிக்கவும் • நீக்க ஸ்வைப் செய்யவும்",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "ஓய்வு நாளா? அல்லது உடற்பயிற்சி செய்யத் தயாரா? உங்கள் விருப்பம்.",
   "homeEmptyWorkout_v3": "நிகழ்ச்சிகளுக்கு இடையே உள்ளீர்கள் — மீண்டும் தொடங்க புதிய ஒன்றைத் தொடங்குங்கள்.",
   "homeEmptyWorkout_v4": "இன்னும் திட்டம் இல்லை. உங்கள் இலக்குகளுக்கு ஏற்ப AI-ஐ ஒரு திட்டத்தை உருவாக்க விடுங்கள்.",
-  "homeFromHealthConnect": ") Health Connect-லிருந்து",
   "homeGreetingAfternoon_v1": "மதிய நேர ஆற்றல், {name}!",
   "homeGreetingAfternoon_v2": "ஹாய் {name}, நகர்வதற்கு நேரமாகிவிட்டதா?",
   "homeGreetingAfternoon_v3": "ஸ்ட்ரெட்ச் இடைவேளையா, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "கலோரிகள்",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "சுருக்கம்",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "பயிற்சிகள்",
   "intensityPrompt1Left": "1 மீதமுள்ளது",
   "intensityPrompt2Left": "2 மீதமுள்ளது",
   "intensityPrompt3Left": "3+ மீதமுள்ளது",
   "intensityPromptHard": "கடினம்",
-  "intensityPromptHideRpeSlideDial": "RPE ஸ்லைடை மறைக்கவும்      அதைச் சரிசெய்யவும் (RPE 1-10)",
   "intensityPromptHowHardWasThat": "அந்த செட் எவ்வளவு கடினமாக இருந்தது?",
   "intensityPromptMax": "அதிகபட்சம்",
   "intensityPromptModerate": "மிதமானது",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "செட் {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "திட்டத்தை உருவாக்கி, உங்கள் உடலைக் கற்றுக்கொண்டு, ஒவ்வொரு வாரமும் மாற்றங்களைச் செய்யும் ஒரு AI பயிற்சியாளர்.",
   "introBuildMyPlan": "எனது திட்டத்தை உருவாக்கு",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) செட்கள்",
   "introCardMonth": "மாதம்.",
   "introIAlreadyHaveAnAccount": "எனக்கு ஏற்கனவே கணக்கு உள்ளது",
   "introScreenV": "பதிப்பு {_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "பார்கோடு",
   "logMealSheetBarcodeScan": "Barcode ஸ்கேன்",
   "logMealSheetCached": "(சேமிக்கப்பட்டது)",
-  "logMealSheetCaptured": ") எடுக்கப்பட்டது",
   "logMealSheetChooseFoodPhotos": "உணவு புகைப்படங்களைத் தேர்ந்தெடுக்கவும்",
   "logMealSheetChooseFromGallery": "கேலரியிலிருந்து தேர்ந்தெடுக்கவும்",
   "logMealSheetChooseFromLibrary": "லைப்ரரியிலிருந்து தேர்ந்தெடுக்கவும்",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7-நாள் சராசரி · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "உங்கள் முந்தைய குறைந்த அளவிலிருந்து -{_selectedUnit} {label}",
   "logWeightSheetValidRange": "செல்லுபடியாகும் வரம்பு: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Apple Health இலிருந்து ஒத்திசைக்கப்பட்டது",
   "logWeightSyncedToAppleHealth": "Apple Health உடன் ஒத்திசைக்கப்பட்டது",
   "logWeightTapToEdit": "திருத்தத் தட்டவும்",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "வெளியேறவா?",
   "macroRingsCardGG": "{consumed}கி / {target}கி",
   "macroRingsCardMacros": "மேக்ரோக்கள்",
-  "mainShellPartChatsLeftToday": "இன்று மீதமுள்ள அரட்டைகள் {arg0}",
+  "mainShellPartChatsLeftToday": "இன்று {arg0} அரட்டைகள் மீதம்",
   "mainShellPartGuestMode": "விருந்தினர் பயன்முறை",
   "mainShellPartQuickActions": "விரைவான செயல்கள்",
   "mainShellPartSignUp": "பதிவு செய்",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "முதன்மை",
   "manageDuplicateImportsScreenSources": "{length} ஆதாரங்கள்",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(வரிசை)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "குழுவிலிருந்து இணைப்பை நீக்கு",
   "manageDuplicateImportsUnlinkedFromGroup": "குழுவிலிருந்து இணைப்பு நீக்கப்பட்டது",
   "manageGymProfilesActive": "செயலில் உள்ளது",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} மேலும்",
   "menuAnalysisSheetSelected": "{length} தேர்ந்தெடுக்கப்பட்டது",
   "menuAnalysisSheetSort": "வரிசைப்படுத்து: {label}",
-  "menuAnalysisSheetValue": ")(elapsed)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "\"{restaurantName}\"-க்கு ஏற்கனவே மெனுவைச் சேமித்துவிட்டீர்கள்",
   "menuAnalysisSort": "வரிசைப்படுத்து:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "மெட்ரிக் வகை",
   "metricsDashboardMuscleMass": "தசை நிறை",
   "metricsDashboardNoDataAvailable": "தரவு கிடைக்கவில்லை",
-  "metricsDashboardNoMetricDataYet": "மெட்ரிக் தரவு இன்னும் இல்லை {arg0}",
+  "metricsDashboardNoMetricDataYet": "இன்னும் {arg0} தரவு இல்லை",
   "metricsDashboardQuickStats": "விரைவான புள்ளிவிவரங்கள்",
   "metricsDashboardRestingHeartRate": "ஓய்வு இதயத் துடிப்பு",
   "metricsDashboardRestingHr": "ஓய்வுநிலை HR",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "பிற",
   "muscleHeatmapTileCompleteWorkoutsToSee": "தசை தரவைக் காண உடற்பயிற்சிகளை முடிக்கவும்",
   "muscleHeatmapTileCouldnTLoad": "ஏற்ற முடியவில்லை",
-  "muscleHeatmapTileMostTrained": "அதிகம் பயிற்சி செய்யப்பட்டது {arg0}",
+  "muscleHeatmapTileMostTrained": "அதிகம் பயிற்சி: {arg0}",
   "muscleHeatmapTileMuscles": "தசைகள்",
   "muscleHeatmapTileRetry": "மீண்டும் முயற்சிக்கவும்",
   "muscleHeatmapUpperBody": "மேல் உடல்",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "பிடித்தவை ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "முக்கியமானவை ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "சிறந்தது: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "சமீபத்திய செயல்பாடு",
   "myLibraryTabViewAll": "அனைத்தையும் பார்க்கவும்",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "சாதாரண நகர்வாளர்",
   "neatGamificationWidgetsClaimReward": "வெகுமதியைப் பெறு",
   "neatGamificationWidgetsCouchPotato": "சோம்பேறி",
-  "neatGamificationWidgetsCurrentXp": "தற்போதைய xp {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "தினசரி சவால்",
   "neatGamificationWidgetsExpired": "காலாவதியானது",
-  "neatGamificationWidgetsHoursMinutesLeft": "மீதமுள்ள மணிநேரம் நிமிடங்கள் {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0}h {arg1}m மீதம்",
   "neatGamificationWidgetsLevel": "நிலை {level}",
   "neatGamificationWidgetsLevelUp": "நிலை உயர்வு!",
   "neatGamificationWidgetsMaxLevel": "அதிகபட்ச நிலை!",
-  "neatGamificationWidgetsMinutesLeft": "மீதமுள்ள நிமிடங்கள் {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0}m மீதம்",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "சாம்பியன்",
   "neatGamificationWidgetsNeatEnthusiast": "ஆர்வலர்",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "இந்த வாரம் இன்னும் தரவரிசை இல்லை",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "மதிப்பெண்",
-  "neatGamificationWidgetsStepGoal": "படி இலக்கு {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "படிகள்",
-  "neatGamificationWidgetsTargetActiveHours": "இலக்கு செயலில் உள்ள மணிநேரம் {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} hrs",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "ஸ்கோர் விவரம்",
   "neatScoreDisplayTapForBreakdown": "விவரத்தைப் பார்க்க தட்டவும்",
   "neatScoreDisplayTrend": "போக்கு: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "ஏற்றுகிறது...",
   "netflixExerciseCarouselSeeAll": "அனைத்தையும் பார்க்கவும்",
   "netflixExercisesAddYourOwnExercises": "தனிப்பயன் ரெப்ஸ், செட்கள் மற்றும் வழிமுறைகளுடன் உங்கள் சொந்த உடற்பயிற்சிகளைச் சேர்க்கவும்.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "சிறந்த அடுத்த செட்டை கணக்கிடுகிறது...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% தீவிரம்",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "இறுதி செட்",
   "nextSetPreviewKg": " கிலோ",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "முக்கிய பங்களிப்பாளர்கள்",
   "nutrientExplorerUnknown": "தெரியவில்லை",
   "nutrientExplorerUnpinNutrient": "ஊட்டச்சத்தை அன்-பின் செய்யவும்",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "வைட்டமின்கள்",
   "nutrientRushGameCatchTheGoldenZealova": "பவர்-அப் பெற தங்க நிற Zealova குறியீட்டைப் பிடிக்கவும்!",
   "nutrientRushGameNewBest": "🎉 புதிய சிறந்த சாதனை!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "வாராந்திர மேலோட்டம்",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "சராசரி {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "சராசரி உட்கொள்ளல்: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) கலோரி",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/நாள் {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}கி",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}கி",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) கிலோ",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "எடை: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, அனைத்தும்",
   "onboardingWhyFirstTheWhy": "முதலில், ஏன்?",
   "onboardingWhyWhatSDrivingThis": "இதற்கு என்ன காரணம்?",
-  "openAllCrates24HoursOf2xXp": "24 மணிநேர 2x XP",
-  "openAllCratesActivityCrate": "செயல்பாட்டு பெட்டி",
+  "openAllCrates24HoursOf2xXp": "2x XP-இன் 24 மணி நேரம்",
+  "openAllCratesActivityCrate": "ஆக்டிவிட்டி கிரேட்",
   "openAllCratesBonusCrateToOpen": "திறக்க வேண்டிய போனஸ் பெட்டி",
-  "openAllCratesCollect": "சேகரிக்கவும் {arg0} {arg1}",
-  "openAllCratesCratesOpened": "திறக்கப்பட்ட பெட்டிகள் {arg0}",
-  "openAllCratesDailyCrate": "தினசரி பெட்டி",
+  "openAllCratesCollect": "சேகரிக்கவும் ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} கிரேட்கள் திறக்கப்பட்டன!",
+  "openAllCratesDailyCrate": "டெய்லி கிரேட்",
   "openAllCratesDone": "முடிந்தது",
-  "openAllCratesDoubleXpToken": "Double xp டோக்கன்",
+  "openAllCratesDoubleXpToken": "டபுள் XP டோக்கன்",
   "openAllCratesFailedToOpenCrates": "கிரேட்களைத் திறக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
-  "openAllCratesFitnessCrate": "உடற்பயிற்சி பெட்டி",
-  "openAllCratesGainedXp": "பெறப்பட்ட xp {arg0}",
+  "openAllCratesFitnessCrate": "ஃபிட்னஸ் கிரேட்",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "அதிகபட்ச நிலை",
-  "openAllCratesOpenYourCrates": "உங்கள் பெட்டிகளைத் திறக்கவும்",
-  "openAllCratesOpened": ") திறக்கப்பட்டது!",
-  "openAllCratesOpeningYourCrates": "உங்கள் பெட்டிகளைத் திறக்கிறது",
-  "openAllCratesPickRewardPerDay": "தினசரி வெகுமதியைத் தேர்ந்தெடுக்கவும் {arg0} {arg1}",
-  "openAllCratesPickYourReward": "உங்கள் வெகுமதியைத் தேர்ந்தெடுக்கவும் {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 உங்கள் கிரேட்களைத் திறக்கவும்",
+  "openAllCratesOpeningYourCrates": "🎁 உங்கள் கிரேட்கள் திறக்கப்படுகின்றன…",
+  "openAllCratesPickRewardPerDay": "ஒரு நாளைக்கு 1 வெகுமதி தேர்வு • {arg0}/{arg1} தேர்வு செய்யப்பட்டது",
+  "openAllCratesPickYourReward": "உங்கள் வெகுமதியைத் தேர்வு செய்யவும் • {arg0}/{arg1} தேர்வு செய்யப்பட்டது",
   "openAllCratesProtectYourStreak": "உங்கள் தொடரைப் பாதுகாக்கவும்",
   "openAllCratesSelectAll": "அனைத்தையும் தேர்ந்தெடு",
-  "openAllCratesStreakCrate": "Streak crate",
-  "openAllCratesStreakShield": "Streak shield",
+  "openAllCratesStreakCrate": "ஸ்ட்ரீக் கிரேட்",
+  "openAllCratesStreakShield": "ஸ்ட்ரீக் ஷீல்டு",
   "openAllCratesToday": "இன்று",
-  "openAllCratesTotalXpFormatted": "மொத்த XP {arg0}",
-  "openAllCratesTotalXpLevel": "மொத்த XP நிலை {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "மொத்தம் {arg0}",
+  "openAllCratesTotalXpLevel": "மொத்தம்: {arg0} XP • நிலை {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 வெகுமதிகள்!",
-  "openAllCratesXpInLevel": "நிலையில் உள்ள XP {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "அடுத்த நிலைக்குத் தேவையான XP {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "நிலை {arg1}-க்கு {arg0} XP",
   "openAllCratesYesterday": "நேற்று",
   "overallScoreHeroOverall": "ஒட்டுமொத்தமாக",
   "overviewActiveSkill": "செயலில் உள்ள திறன்",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "உங்கள் ஜிம் ஆளுமை...",
   "phaseRecommendationBannerBasedOn": "அடிப்படை: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-நம்பகத்தன்மை மதிப்பீடு",
   "phaseRecommendationBannerCycleDay": "சுழற்சி நாள் {cycleDay}",
   "phaseRecommendationBannerEvidence": "ஆதாரம்: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "புரிந்தது",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "வலிமைக்கான அடித்தளத்தை உருவாக்குங்கள்",
   "planPreviewScreenBuildingYour4Week": "உங்கள் 4-வாரத் திட்டத்தை உருவாக்குகிறோம்...",
   "planPreviewScreenContinueFree": "இலவசமாகத் தொடரவும்",
-  "planPreviewScreenDaysPerWeek": "வாரத்திற்கு {arg0} நாட்கள்",
+  "planPreviewScreenDaysPerWeek": "{arg0} நாட்கள்/வாரம்",
   "planPreviewScreenDesignedBasedOnYour": "உங்கள் வினாடி வினா பதில்களின் அடிப்படையில் வடிவமைக்கப்பட்டது",
-  "planPreviewScreenEquipmentCount": "உபகரணங்களின் எண்ணிக்கை {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} உபகரணங்கள்",
   "planPreviewScreenExercisesMin": "குறைந்தபட்ச பயிற்சிகள் {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "தீவிரம் மற்றும் அளவை அதிகரிக்கவும்",
   "planPreviewScreenMasterTheMovement": "இயக்கத்தை முழுமையாகக் கற்றுக்கொள்ளுங்கள்",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} தனிப்பட்ட சாதனைகள்!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") கடைசியிலிருந்து",
   "prShareCardCopiedToClipboard": "கிளிப்போர்டில் நகலெடுக்கப்பட்டது!",
   "prShareCardCopyText": "உரையை நகலெடுக்கவும்",
   "prShareCardFailedToCaptureImage": "படத்தைப் பிடிக்க முடியவில்லை",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "தொடர்ந்து முயற்சி செய்யுங்கள்!",
   "prsTemplateNewPersonalRecords": "புதிய தனிப்பட்ட சாதனைகள்",
   "prsTemplateNewPrsAreJust": "புதிய PRs விரைவில் வரவுள்ளன",
-  "prsTemplateValue": ") (unit)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "தேவையான பொருட்கள்",
   "publicRecipeInstructions": "செய்முறை",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "முழு வரலாறு மற்றும் போக்குகளைக் காண தட்டவும்",
   "quickLogMeasurementsTrackYourBodyChanges": "காலப்போக்கில் உங்கள் உடல் மாற்றங்களைக் கண்காணியுங்கள்",
   "quickLogMeasurementsUpdate": "புதுப்பி",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} நாட்களுக்கு முன்பு",
+  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} நாட்களுக்கு முன் புதுப்பிக்கப்பட்டது",
   "quickLogMeasurementsUpdatedToday": "இன்று",
   "quickLogMeasurementsUpdatedYesterday": "நேற்று",
   "quickLogMeasurementsWaist": "இடுப்பு",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "நீங்கள் தேர்ந்தெடுத்த கால அளவிற்குள் AI உடற்பயிற்சிகளை உருவாக்கும்",
   "quizDaysSelectorBest": "சிறந்தது",
   "quizDaysSelectorConsistencyBeatsIntensity": "தீவிரத்தை விட தொடர்ச்சி முக்கியம் - உங்களால் எதைச் செய்ய முடியுமோ அதைத் தேர்ந்தெடுங்கள்",
-  "quizDaysSelectorDays": "{arg0} நாட்கள்",
-  "quizDaysSelectorDaysSelected": "{arg0} நாட்கள் தேர்ந்தெடுக்கப்பட்டன {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") உங்கள் உடற்பயிற்சிகளுக்கு",
+  "quizDaysSelectorDays": "{arg0, plural, one {நாள்} other {நாட்கள்}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} நாட்கள் தேர்வு செய்யப்பட்டது",
   "quizDaysSelectorFri": "வெள்ளி",
   "quizDaysSelectorHowLongAreYour": "உங்கள் உடற்பயிற்சிகள் எவ்வளவு நேரம் நீடிக்கும்?",
   "quizDaysSelectorHowManyDaysPer": "வாரத்தில் எத்தனை நாட்கள் உங்களால் பயிற்சி செய்ய முடியும்?",
   "quizDaysSelectorMin": "குறைந்தபட்சம்",
   "quizDaysSelectorMon": "திங்கள்",
   "quizDaysSelectorSat": "சனி",
-  "quizDaysSelectorSelectNDays": "{arg0} நாட்களைத் தேர்ந்தெடுக்கவும்",
+  "quizDaysSelectorSelectNDays": "உங்களுக்கு ஏற்ற {arg0} நாட்களைத் தேர்வு செய்யவும்",
   "quizDaysSelectorSun": "ஞாயிறு",
   "quizDaysSelectorThu": "வியாழன்",
   "quizDaysSelectorTue": "செவ்வாய்",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "ஹோம் ஜிம்",
   "quizEquipmentHomeKettlebell": "வீடு + கெட்டில்பெல்",
   "quizEquipmentHotel": "ஹோட்டல்",
-  "quizEquipmentIdentifiedCount": "கண்டறியப்பட்ட எண்ணிக்கை {arg0}",
+  "quizEquipmentIdentifiedCount": "{arg0} உருப்படிகள் அடையாளம் காணப்பட்டன. நீக்க எதையும் தட்டவும்.",
   "quizEquipmentKettlebell": "கெட்டில்பெல்",
   "quizEquipmentMedicineBall": "Medicine ball",
   "quizEquipmentMinimalEquipmentBodyweight": "குறைந்த உபகரணங்கள் - உடல் எடை, மேட்",
   "quizEquipmentNeededForBarbell": "Barbell-க்குத் தேவை",
   "quizEquipmentNoEquipmentIdentifiedPick": "எந்த உபகரணமும் கண்டறியப்படவில்லை. கீழே உள்ள பட்டியலில் இருந்து தேர்ந்தெடுக்கவும்.",
-  "quizEquipmentOtherCount": "பிற எண்ணிக்கை {arg0}",
+  "quizEquipmentOtherCount": "{arg0} தேர்வு செய்யப்பட்டது",
   "quizEquipmentOtherEquipment": "பிற உபகரணங்கள்",
   "quizEquipmentPullUpBar": "Pull up bar",
   "quizEquipmentQuickPresets": "விரைவான முன்னமைவுகள்",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "சமையல் குறிப்பின் பெயர் தேவை",
   "recipeCreateRemovePhoto": "புகைப்படத்தை நீக்கு",
   "recipeCreateSaving": "சேமிக்கப்படுகிறது...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "புகைப்படம் எடு",
   "recipeCreateTapToEdit": "திருத்தத் தட்டவும்",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "ஒரு பரிமாறலுக்கு (×{servings} பரிமாறல்கள்)",
   "recipeDetailScreenUForkedFrom": "✨ {sourceName}-லிருந்து பெறப்பட்டது",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" நிரந்தரமாக நீக்கப்படும்.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 தொகுக்கப்பட்ட சமையல் குறிப்பு",
   "recipeDetailView": "காண்க",
@@ -24745,16 +24468,16 @@
   "regenerateSheetApply": "பயன்படுத்து",
   "regenerateSheetApplyThisWorkout": "இந்த உடற்பயிற்சியைப் பயன்படுத்து",
   "regenerateSheetBalancingMuscleGroups": "தசை குழுக்களைச் சமநிலைப்படுத்துதல்",
-  "regenerateSheetBootingUpTheAi": "AI-ஐத் தொடங்குகிறது",
+  "regenerateSheetBootingUpTheAi": "AI தொடங்குகிறது",
   "regenerateSheetBuildingYourPlan": "உங்கள் திட்டத்தை உருவாக்குகிறது",
   "regenerateSheetBuildingYourWorkout": "உங்கள் பயிற்சியை உருவாக்குகிறது…",
   "regenerateSheetCheckingEquipment": "உபகரணங்களை சரிபார்க்கிறது",
   "regenerateSheetCheckingPreferences": "விருப்பங்களைச் சரிபார்க்கிறது",
-  "regenerateSheetConnectingToTheAi": "AI-உடன் இணைக்கிறது",
+  "regenerateSheetConnectingToTheAi": "AI உடன் இணைக்கிறது",
   "regenerateSheetConsideringFocusAreas": "கவனிக்க வேண்டிய பகுதிகளைக் கருத்தில் கொள்கிறது",
   "regenerateSheetCustomize": "தனிப்பயனாக்கு",
   "regenerateSheetCustomizeOrLetAi": "தனிப்பயனாக்கு அல்லது AI பரிந்துரைக்கட்டும்",
-  "regenerateSheetCustomizeOrLetAiSuggest": "தனிப்பயனாக்கு அல்லது AI பரிந்துரைக்கட்டும்",
+  "regenerateSheetCustomizeOrLetAiSuggest": "தனிப்பயனாக்குங்கள் அல்லது AI பரிந்துரைக்கட்டும்",
   "regenerateSheetDescribeYourIdealWorkout": "உங்கள் சிறந்த பயிற்சியை விவரிக்கவும்",
   "regenerateSheetDesigningYourWorkout": "உங்கள் உடற்பயிற்சியை வடிவமைக்கிறது",
   "regenerateSheetDialingInSetsAndReps": "செட்கள் மற்றும் ரெப்ஸ்களைச் சரிசெய்கிறது",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "விவரங்களை இறுதி செய்கிறது…",
   "regenerateSheetFinalizingYourWorkout": "உங்கள் உடற்பயிற்சியை இறுதி செய்கிறது",
   "regenerateSheetFineTuningTheDetails": "விவரங்களைச் சீரமைக்கிறது",
-  "regenerateSheetGeneratingElapsed": "உருவாக்கப்படும் நேரம் {arg0}",
+  "regenerateSheetGeneratingElapsed": "உருவாக்கப்படுகிறது… {arg0}",
   "regenerateSheetGeneratingSuggestions": "பரிந்துரைகளை உருவாக்குகிறது…",
   "regenerateSheetGetSuggestions": "பரிந்துரைகளைப் பெறு",
   "regenerateSheetGettingCreative": "படைப்பாற்றலுடன் செயல்படுகிறது",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "பரிந்துரைக்கப்பட்டதைப் பயன்படுத்து",
   "restSuggestionQuick": "விரைவான",
   "restSuggestionQuickRest": "விரைவான ஓய்வு",
-  "restSuggestionSaveTime": "நேரத்தைச் சேமிக்கவும் {arg0}",
+  "restSuggestionSaveTime": "{arg0} சேமி",
   "restSuggestionSuggested": "பரிந்துரைக்கப்பட்டது",
   "restSuggestionUseSuggested": "பரிந்துரைக்கப்பட்டதைப் பயன்படுத்து",
   "restTimerCardBaseRest": "அடிப்படை ஓய்வு",
   "restTimerCardControlRestPeriodsBetween": "செட்களுக்கு இடையிலான ஓய்வு நேரத்தைக் கட்டுப்படுத்துங்கள்",
   "restTimerCardCustomRestTimer": "தனிப்பயன் ஓய்வு டைமர்",
   "restTimerCardFormula": "சூத்திரம்",
-  "restTimerCardFormulaBaserestRpe7": "சூத்திரம்: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "நேரடி முன்னோட்டம்",
   "restTimerCardMultiplier": "பெருக்கி",
   "restTimerCardRestBaserestRpe7": "ஓய்வு = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "மாறிகள்: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "மாறிகள்: அடிப்படை, RPE, பெருக்கி, அடுக்கு",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "உங்கள் செயல்திறனை ஆய்வு செய்கிறது...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "முடிந்தது",
   "rtpTitle": "விளையாட்டிற்கு திரும்பு",
   "safetyDisclaimerBannerDismissDisclaimer": "மறுப்பை நீக்கு",
-  "safetyDisclaimerBannerInjuriesFlagged": "காயங்கள் குறிக்கப்பட்டுள்ளன {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} காயங்கள் குறிக்கப்பட்டன",
   "safetyDisclaimerBannerInjuryBody": "காய உடல்",
   "safetyDisclaimerBannerLearnMore": "மேலும் அறிக",
   "safetyDisclaimerBannerMore": "+{overflow} மேலும்",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "செட்",
   "sessionDetailSetCount": "{count, plural, other{{count} செட்கள்}} · முதன்மை செட் சிறப்பம்சப்படுத்தப்பட்டுள்ளது",
   "sessionDetailTime": "நேரம்",
-  "sessionDetailTopSetHighlighted": ") • முதன்மை செட் சிறப்பம்சப்படுத்தப்பட்டுள்ளது",
   "sessionDetailWeight": "எடை",
   "setAdjustmentAdditionalNotesOptional": "கூடுதல் குறிப்புகள் (விருப்பத்தேர்வு)",
   "setAdjustmentConfirm": "உறுதிப்படுத்து",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} முடிந்தது",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} மீதமுள்ளது",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} நீக்கப்பட்டது",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") of (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "{totalSets} திட்டமிடப்பட்டதில்",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} செட்கள் முடிந்தது",
   "setAdjustmentSheetReps": "முறை (Reps)",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "செட் {currentSetNumber}/{totalSets} • விரிவாக்கத் தட்டவும்",
   "setTrackingSectionSets": "{widget} செட்கள்",
   "setTrackingSectionSetsCompleted": "{length} செட்கள் முடிக்கப்பட்டன",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "எடையை சரிசெய்ய வேண்டிய அளவு",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "பயிற்சி வரலாறு",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} ஆதரவு கோரிக்கை",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} நாட்கள்",
   "settingsScreenUiNoSettingsFound": "அமைப்புகள் எதுவும் கண்டறியப்படவில்லை",
-  "settingsScreenUiTryDifferentKeywordsLike": "\"theme\", \"notifications\", அல்லது \"ai voice\" போன்ற வெவ்வேறு முக்கிய வார்த்தைகளை முயற்சிக்கவும்",
+  "settingsScreenUiTryDifferentKeywordsLike": "\"theme\", \"notifications\", அல்லது \"AI voice\" போன்ற வேறு சொற்களை முயற்சிக்கவும்",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "அமைப்புகளைத் தேடவும்",
   "settingsSetProgressionResearch": "முன்னேற்றம் & ஆராய்ச்சியை அமைக்கவும்",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "வெகுமதிகள்",
   "streakMilestoneStreakMilestone": "ஸ்ட்ரீக் மைல்கல்!",
-  "streakMilestoneToGo": ") இன்னும் தேவை!",
   "streakMilestoneYouVeReachedThe": "நீங்கள் இறுதி ஸ்ட்ரீக் மைல்கல்லை அடைந்துவிட்டீர்கள்!",
   "streakSavedDialogWeUsedStreakShield": "உங்கள் {savedStreakCount}-நாள் தொடர்ச்சியைத் தக்கவைக்க 1 Streak Shield-ஐப் பயன்படுத்தினோம்.",
   "streakSavedKeepItGoing": "தொடருங்கள்",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "இணை",
   "todayScoreCardCustomize": "தனிப்பயனாக்கு",
   "todayScoreCardToday": "இன்று",
-  "todayScoreDetailDown": "குறைவு {arg0}",
-  "todayScoreDetailEarnedPts": "பெறப்பட்ட புள்ளிகள் {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ இன்று காலை முதல் {arg0} குறைவு",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} pts",
   "todayScoreDetailHowItWorks": "இது எப்படி செயல்படுகிறது",
-  "todayScoreDetailInactiveExplanation": "செயலற்ற நிலை விளக்கம் {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "சராசரியுடன் கூடிய வேகம் {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} இன்று {arg1, plural, one {கணக்கிடப்படவில்லை} other {கணக்கிடப்படவில்லை}}, எனவே மீதமுள்ளவை முழு 100 புள்ளிகளைப் பகிர்ந்துகொள்கின்றன. உங்கள் மதிப்பெண் எப்போதும் இன்று உண்மையில் பொருந்துவதை மட்டுமே பிரதிபலிக்கிறது.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7-day சராசரி {arg1}",
   "todayScoreDetailNotCounted": "கணக்கிடப்படவில்லை",
   "todayScoreDetailSetupText": "அமைவு உரை",
   "todayScoreDetailSteady": "நிலையானது",
   "todayScoreDetailTodayScore": "இன்றைய ஸ்கோர்",
-  "todayScoreDetailUp": "அதிகரிப்பு {arg0}",
+  "todayScoreDetailUp": "▲ இன்று காலை முதல் {arg0} அதிகரிப்பு",
   "todayScoreSetupAddAWorkoutPlan": "உடற்பயிற்சி திட்டத்தைச் சேர்",
   "todayScoreSetupCardContinue": "தொடரவும்: {label}",
   "todayScoreSetupCardGetStarted": "தொடங்குங்கள் · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "கார்டியோ சாதனைகள்",
   "trophiesEarnedDayStreak": "நாள் தொடர்",
   "trophiesEarnedFirstTime": "முதல் முறை!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "மைல்கல் எட்டப்பட்டது",
   "trophiesEarnedMilestoneReachedNice": "மைல்கல் எட்டப்பட்டது — அருமை!",
   "trophiesEarnedMilestones": "மைல்கற்கள்",
-  "trophiesEarnedNewBadges": "பேட்ஜ்கள் {arg0}",
-  "trophiesEarnedNewCardioPRs": "கார்டியோ PRகள் {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} புதிய பேட்ஜ்கள்",
+  "trophiesEarnedNewCardioPRs": "{arg0} புதிய கார்டியோ PRs",
   "trophiesEarnedNewPR": "புதிய PR",
-  "trophiesEarnedNewPRs": "PRகள் {arg0}",
+  "trophiesEarnedNewPRs": "{arg0} புதிய PRs!",
   "trophiesEarnedNewPr": "புதிய PR",
   "trophiesEarnedNextMilestones": "அடுத்த மைல்கற்கள்",
   "trophiesEarnedNoNewRecords": "புதிய சாதனைகள் இல்லை",
   "trophiesEarnedNoNewRecordsThis": "இந்த அமர்வில் புதிய சாதனைகள் எதுவும் இல்லை — நீங்கள் எதை நோக்கி உழைக்கிறீர்கள் என்பது இதோ:",
   "trophiesEarnedPersonalRecords": "தனிப்பட்ட சாதனைகள்",
-  "trophiesEarnedRemainingToUnlock": "திறக்க மீதமுள்ளவை {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "திறக்க இன்னும் {arg0} {arg1}",
   "trophiesEarnedSessionHighlights": "அமர்வு சிறப்பம்சங்கள்",
   "trophiesEarnedSheetPts": "+{points} புள்ளிகள்",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} தட்டச்சு செய்கிறார்",
   "typingIndicatorIsTyping3": "{agentName} தட்டச்சு செய்கிறார்...",
   "unifiedHomeWidgetsActivity": "செயல்பாடு",
-  "unifiedHomeWidgetsBreakfastLogged": "காலை உணவு பதிவு செய்யப்பட்டது {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "கடந்த 7 காலைகளில் {arg0} முறை காலை உணவு பதிவு செய்யப்பட்டது",
   "unifiedHomeWidgetsBreakfastSuggestion": "காலை உணவு பரிந்துரை",
   "unifiedHomeWidgetsCarbs": "கார்போஹைட்ரேட்",
   "unifiedHomeWidgetsConnect": "இணைக்கவும்",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "கொழுப்பு",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} கிலோகலோரி இன்று மொத்தம்",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal எரிக்கப்பட்டது",
   "unifiedHomeWidgetsKcalLeft": " kcal மீதமுள்ளது",
   "unifiedHomeWidgetsLastNight": "நேற்றிரவு",
   "unifiedHomeWidgetsLog16oz": "16oz பதிவு செய்யவும்",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}வாரம்",
   "weekDurationSelectorWeeks": "{selectedWeeks} வாரங்கள்",
   "weekDurationSelectorWk": "{spw}/வாரம்",
-  "weekProgressStripCompletedCount": "முடிக்கப்பட்ட எண்ணிக்கை {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg1} இல் {arg0} ஒர்க்அவுட்கள் முடிந்தன",
   "weekProgressStripCouldNotLoadProgress": "முன்னேற்றத்தை ஏற்ற முடியவில்லை",
   "weekProgressStripLoading": "ஏற்றுகிறது...",
   "weekProgressStripNoWorkoutsScheduled": "உடற்பயிற்சிகள் திட்டமிடப்படவில்லை",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "அனைத்தையும் பார்க்க",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "எடை கண்காணிப்பு",
-  "weightTrendCardDownThisWeek": "இந்த வாரம் குறைவு {arg0}",
-  "weightTrendCardDownVsLastCycle": "கடந்த சுழற்சியுடன் ஒப்பிடும்போது குறைவு {arg0}",
+  "weightTrendCardDownThisWeek": "இந்த வாரம் {arg0} குறைவு!",
+  "weightTrendCardDownVsLastCycle": "கடந்த மாதம் அதே சுழற்சி நாளுடன் ஒப்பிடுகையில் {arg0} lbs குறைவு",
   "weightTrendCardLoadingWeight": "எடையை ஏற்றுகிறது...",
   "weightTrendCardLogYourWeightTo": "போக்குகளைப் பார்க்க உங்கள் எடையைப் பதிவு செய்யவும்",
   "weightTrendCardMaintaining": "பராமரிக்கப்படுகிறது",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "கடந்த சுழற்சியைப் போலவே உள்ளது",
   "weightTrendCardTapToLogWeight": "எடையைப் பதிவு செய்ய தட்டவும்",
   "weightTrendCardTargetHeld": "இலக்கு பராமரிக்கப்பட்டது",
-  "weightTrendCardTargetHeldWindow": "இலக்கு பராமரிப்பு காலம் {arg0}",
-  "weightTrendCardUpThisWeek": "இந்த வாரம் அதிகரிப்பு {arg0}",
-  "weightTrendCardUpVsLastCycle": "கடந்த சுழற்சியுடன் ஒப்பிடும்போது அதிகரிப்பு {arg0}",
+  "weightTrendCardTargetHeldWindow": "இலக்கு பராமரிக்கப்பட்டது {arg0} — லூட்டியல் நீர் சமன்",
+  "weightTrendCardUpThisWeek": "இந்த வாரம் {arg0} அதிகரிப்பு",
+  "weightTrendCardUpVsLastCycle": "கடந்த மாதம் அதே சுழற்சி நாளுடன் ஒப்பிடுகையில் {arg0} lbs அதிகரிப்பு",
   "weightTrendCardWeightStableThisWeek": "இந்த வாரம் எடை சீராக உள்ளது",
   "weightTrendCardWeightTrends": "எடை போக்குகள்",
   "welcomeAffirmationGreatChoice": "சிறந்த தேர்வு.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "இந்த பதிப்பிற்கு மீட்டமைக்கவா?",
   "workoutActionsShareWorkout": "பயிற்சியைப் பகிரவும்",
   "workoutActionsSheetGetALinkFor": "நண்பர்களுக்காக {marketingDomain} இணைப்பைப் பெறுங்கள்",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "\"{name}\"-ஐ மீட்டமைக்கவா?",
   "workoutActionsSheetS": "{duration} வினாடிகள்",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} கிலோ",
   "workoutCompleteScreenUi2KgXReps": "{exComp} கிலோ x {currentReps} முறை",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} செட்கள், {currentReps} முறை",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "இந்த நேரத்தில் நண்பர்களுக்கு சவால் விட முடியவில்லை",
   "workoutCompleteScreenUnableToExtendWorkout": "பயிற்சியை நீட்டிக்க முடியவில்லை",
   "workoutCompleteScreenViewAllMetrics": "அனைத்து அளவீடுகளையும் பார்க்கவும்",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "உபகரணங்கள்",
   "workoutDetailExercises": "பயிற்சிகள்",
   "workoutDetailFailedToLoadWorkout": "பயிற்சியை ஏற்றுவதில் தோல்வி",
-  "workoutDetailHelpersForAvailableEquipment": ") கிடைக்கக்கூடிய உபகரணங்களுக்கு...",
   "workoutDetailHelpersHell": "கடினம்",
   "workoutDetailHelpersUpdatingExercises": "பயிற்சிகளைப் புதுப்பிக்கிறது",
   "workoutDetailMoreInfo": "மேலும் தகவல்",
   "workoutDetailProgram": "நிரல்",
-  "workoutDetailReplacingExercises": "பயிற்சிகளை மாற்றுகிறது {arg0}",
+  "workoutDetailReplacingExercises": "கிடைக்கும் உபகரணங்களுக்கு {arg0} பயிற்சிகள் மாற்றப்படுகின்றன…",
   "workoutDetailRevert": "மீட்டமை",
   "workoutDetailScreenBreakSuperset": "சூப்பர்செட்டை பிரிக்கவா?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} cal எரிக்கப்பட்டது",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "எடை நெடுவரிசை எந்த அலகில் உள்ளது? மூல செயலி தெரிந்தால், அதைத் தேர்ந்தெடுக்கவும் — இது வெவ்வேறு வடிவங்களை (Hevy vs. Strong CSVs) வேறுபடுத்தி அறிய உதவும்.",
   "workoutHistoryImportYourStrengthData": "உங்கள் வலிமைத் தரவு",
-  "workoutImportAsDone": ")\" முடிந்ததாகக் குறி",
   "workoutImportCalories": "கலோரிகள்",
   "workoutImportCardio": "கார்டியோ",
   "workoutImportCycling": "சைக்கிள் ஓட்டுதல்",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "கால அளவு",
   "workoutImportEasy": "எளிதானது",
   "workoutImportFlexibility": "நெகிழ்வுத்தன்மை",
-  "workoutImportFromSource": "மூலத்திலிருந்து {arg0}",
+  "workoutImportFromSource": "{arg0} இலிருந்து",
   "workoutImportHard": "கடினமானது",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "இந்த உடற்பயிற்சி எவ்வளவு கடினமாக இருந்தது?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "வொர்க்அவுட்டின் போது இந்த சிஸ்டம் ப்ராம்ப்டுகளை நீங்கள் பார்க்கலாம். இவை இரண்டும் விருப்பத்தேர்வுதான் — எதைத் தவிர்த்தாலும் வொர்க்அவுட் தொடர்ந்து செயல்படும்.",
   "workoutPlanDrawerAddExercise": "பயிற்சியைச் சேர்",
   "workoutPlanDrawerCurrent": "தற்போதைய",
-  "workoutPlanDrawerExerciseCount": "பயிற்சிகளின் எண்ணிக்கை {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") பதிவு செய்யப்பட்டது. அவை நீக்கப்படும்.",
+  "workoutPlanDrawerExerciseCount": "{arg0} பயிற்சிகள்",
   "workoutPlanDrawerNow": "இப்போது",
   "workoutPlanDrawerRemove": "நீக்கு",
-  "workoutPlanDrawerRemoveExercise": "{arg0} பயிற்சியை நீக்கு",
+  "workoutPlanDrawerRemoveExercise": "{arg0} ஐ அகற்றவா?",
   "workoutPlanDrawerRemoveExerciseTooltip": "பயிற்சியை நீக்குவதற்கான கருவிக்குறிப்பு",
-  "workoutPlanDrawerSetsLogged": "பதிவு செய்யப்பட்ட செட்கள் {arg0}",
+  "workoutPlanDrawerSetsLogged": "உங்களிடம் {arg0} செட்கள் பதிவு செய்யப்பட்டுள்ளன. அவை நீக்கப்படும்.",
   "workoutPlanDrawerSwapExercise": "பயிற்சியை மாற்று",
   "workoutPlanDrawerTitle": "தலைப்பு",
   "workoutPlanDrawerWorkoutPlan": "வொர்க்அவுட் திட்டம்",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "நீங்கள் பதிவு செய்யும் ஒவ்வொரு செட்",
   "workoutShowcaseEveryWorkoutFlows": "ஒவ்வொரு பயிற்சியும் சீராக அமையும்",
   "workoutShowcaseFinishWorkout": "பயிற்சியை முடிக்கவும்",
-  "workoutShowcaseFormat1Rm": "1RM வடிவம்",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "போர்டிங்",
   "workoutShowcaseFormatCard": "கார்டு",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "நேரியல் லேபிள்",
   "workoutShowcaseLogAllSets": "அனைத்து செட்கள்",
   "workoutShowcaseLogDrink": "குடித்ததை பதிவு செய்யவும்",
-  "workoutShowcaseLogSet": "செட் {arg0}",
+  "workoutShowcaseLogSet": "✓ செட் {arg0} பதிவு செய்",
   "workoutShowcaseLogWater": "தண்ணீரைப் பதிவு செய்யவும்",
   "workoutShowcaseMovedThisSession": "இந்த அமர்வில் நகர்த்தப்பட்டது",
   "workoutShowcaseNewPr": "புதிய PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Reps",
   "workoutShowcaseScreenDay": "நாள் {day}",
   "workoutShowcaseScreenDuration": "கால அளவு: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · உள்ளிடப்பட்டது",
   "workoutShowcaseScreenSession": "அமர்வு: {title}",
   "workoutShowcaseScreenTotalPrs": "TOTAL {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "4-ல் Set 1",
   "workoutShowcaseSet2": "செட் 2",
   "workoutShowcaseSet3": "செட் 3",
-  "workoutShowcaseSetNOf3": "செட் {arg0} / 3",
+  "workoutShowcaseSetNOf3": "3 இல் செட் {arg0}",
   "workoutShowcaseShareYourWorkout": "உங்கள் உடற்பயிற்சியைப் பகிரவும்",
   "workoutShowcaseSideA": "SIDE A",
   "workoutShowcaseSuperset": "சூப்பர்செட்",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "தினசரி",
   "xpGoalsDialog250LevelsAcross11Tiers": "11 நிலைகளில் 250 லெவல்கள்",
   "xpGoalsDialogBeginnerToTranscendent": "தொடக்கநிலையாளர் முதல் மேதமை வரை",
-  "xpGoalsDialogCompleteWorkoutXp": "பயிற்சியை முடிப்பதற்கான Xp",
+  "xpGoalsDialogCompleteWorkoutXp": "ஒர்க்அவுட்டை முடிக்கவும்: +100 XP",
   "xpGoalsDialogDailyGoals": "தினசரி இலக்குகள்",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "Ai coach உடன் முதல் உரையாடலுக்கான Xp",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "உணவு எடை அளவீடுகளுக்கான Xp",
-  "xpGoalsDialogFirstPrXp": "Pr-க்கான Xp",
-  "xpGoalsDialogFirstProgressPhotoXp": "முன்னேற்ற புகைப்படத்திற்கான Xp",
-  "xpGoalsDialogFirstProteinGoalXp": "புரத இலக்கிற்கான Xp",
-  "xpGoalsDialogFirstWorkoutXp": "முதல் பயிற்சிக்கான Xp",
-  "xpGoalsDialogHitProteinGoalXp": "புரத இலக்கை அடைந்ததற்கான Xp",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "AI கோச்சுடன் முதல் அரட்டை: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "முதல் உணவு/எடை/அளவீடுகள்: ஒவ்வொன்றும் +50 XP",
+  "xpGoalsDialogFirstPrXp": "முதல் PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "முதல் முன்னேற்ற புகைப்படம்: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "முதல் புரத இலக்கு: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "முதல் ஒர்க்அவுட்: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "புரத இலக்கை அடையவும்: +50 XP",
   "xpGoalsDialogLevels": "நிலைகள்",
-  "xpGoalsDialogLogBodyMeasurementsXp": "உடல் அளவீடுகளைப் பதிவு செய்வதற்கான Xp",
-  "xpGoalsDialogLogMealXp": "உணவைப் பதிவு செய்வதற்கான Xp",
-  "xpGoalsDialogLogWeightXp": "எடையைப் பதிவு செய்வதற்கான Xp",
-  "xpGoalsDialogLoginXp": "உள்நுழைந்ததற்கான Xp",
+  "xpGoalsDialogLogBodyMeasurementsXp": "உடல் அளவீடுகளைப் பதிவு செய்: +20 XP",
+  "xpGoalsDialogLogMealXp": "உணவைப் பதிவு செய்: +25 XP",
+  "xpGoalsDialogLogWeightXp": "எடையைப் பதிவு செய்: +15 XP",
+  "xpGoalsDialogLoginXp": "உள்நுழைவு: +5 XP",
   "xpGoalsDialogMilestoneRewards": "மைல்கல் வெகுமதிகள்",
   "xpGoalsFirstTimeBonuses": "முதல்முறை போனஸ்கள்",
   "xpGoalsGotIt": "புரிந்தது!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "புரத இலக்கை அடையுங்கள்",
   "xpGoalsScreenInventory": "பொருட்கள்",
   "xpGoalsScreenLegendary": "LEGENDARY",
-  "xpGoalsScreenLevelCurrentTotal": "தற்போதைய நிலை மொத்தம் {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "நிலை {arg0} • மொத்தம் 249 நிலைகள்",
   "xpGoalsScreenLevelProgress": "நிலை முன்னேற்றம்",
   "xpGoalsScreenLogBodyMeasurements": "உடல் அளவீடுகளைப் பதிவு செய்யவும்",
   "xpGoalsScreenLogFirstMeal": "முதல் உணவைப் பதிவு செய்யவும்",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "கோப்பை அறை",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "வாராந்திர",
-  "xpGoalsXpAvailable": "கிடைக்கக்கூடியது {arg0}",
-  "xpGoalsXpEarnedToday": "இன்று ஈட்டியது {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP கிடைக்கிறது",
+  "xpGoalsXpEarnedToday": "இன்று +{arg0} XP சம்பாதித்தீர்கள்",
   "xpGoalsXpGoals": "XP இலக்குகள்",
-  "xpGoalsXpMultiplierActive": "செயலில் உள்ள பெருக்கி {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP செயலில்!",
   "xpHeroTileDayStreak": "{streak}-நாள் தொடர்",
   "xpHeroTileLv": "நிலை {level}",
   "xpHeroTileLv2": "நிலை {nextLevel} → {label}",

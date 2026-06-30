@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "Kailan gagamitin",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Matagumpay na na-swap ang ehersisyo",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} exercise ang naidagdag",
-  "activeWorkoutScreenRefactoredFor": ") para sa (name)",
   "activeWorkoutScreenUndo": "I-undo",
   "activeWorkoutScreenWorkoutAdapted": "Na-adapt na ang workout.",
   "activityCardAdditionalDetailsOptional": "Karagdagang detalye (optional)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Fuel bago ang workout?",
   "aiCoachMealQuickSnackIdeas": "Ideya para sa mabilis na snack?",
   "aiCoachMealRecoveryDayEating": "Pagkain sa recovery day?",
-  "aiCoachMealSearchQuestionsTryAngry": "Maghanap ng tanong (subukan ang \"angry\", \"fiber\", \"mexican\")",
   "aiCoachMealSomethingWentWrong": "May mali na nangyari.",
   "aiCoachMealStressedWhatHelps": "Stress — ano ang makakatulong?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "Asian-inspired {meal} — isang opsyon (rice bowl, noodles, sushi, stir fry), macros at paghahanda.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · {phase} na yugto",
   "caloriesSummaryCardCalories": "Mga Calorie",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "natitira",
   "cancelConfirmationAnythingElseYouD": "May iba ka pa bang gustong ibahagi? (opsyonal)",
   "cancelConfirmationCancelAnyway": "I-cancel pa rin",
   "cancelConfirmationHelpUsImprove": "Tulungan kaming mag-improve",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Nakuha ko",
   "chatLanguageChangedSystem": "🌐 Ang AI Coach ay sumasagot na sa {nativeName}",
   "chatLanguageResetSystem": "🌐 Na-reset ang wika ng AI Coach — ginagamit ang wika ng app",
-  "chatLeftToday": ") ang natitira ngayong araw",
   "chatMediaWidgetsCalTotal": "{totalCal} cal sa kabuuan",
   "chatMediaWidgetsGProtein": "{totalProtein}g protina",
   "chatMediaWidgetsGoTo": "Punta sa {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "Mas matagal mag-isip ang coach kaysa sa dati.",
   "chatScreenCouldntReachCoach": "Hindi maabot ang coach.",
   "chatScreenExtAboutAiCoach": "Tungkol sa AI Coach",
-  "chatScreenExtAs": ") bilang (mealType)",
   "chatScreenExtChangeCoach": "Palitan ang Coach",
   "chatScreenExtChatTips": "Mga Tip sa Chat",
   "chatScreenExtChooseMultiplePhotos": "Pumili ng Maramihang Larawan",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "Tingnan ang mga Layunin",
   "complianceRingCardAllWorkoutsCompleted": "Tapos na ang lahat ng workout",
   "complianceRingCardGetStartedToday": "Magsimula ngayong araw",
-  "complianceRingCardGreatPace": "Magandang bilis {arg0}",
+  "complianceRingCardGreatPace": "Mahusay na bilis! {arg0} pa ang natitira",
   "complianceRingCardNoWorkoutsScheduledThis": "Walang naka-iskedyul na workout ngayong linggo",
-  "complianceRingCardOnTrack": "On track {arg0}",
+  "complianceRingCardOnTrack": "Nasa tamang landas — {arg0} na lang",
   "complianceRingCardWorkoutCompliance": "Pagsunod sa Workout",
-  "complianceRingCardWorkoutsRemaining": "Mga natitirang workout {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} workout pa ang natitira",
   "comprehensiveStatsStatsScores": "Mga Estadistika at Iskor",
   "connectedAppsAutoImportEvery15": "Auto-import tuwing 15 minuto",
   "connectedAppsConnect": "Ikonekta",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Pumili ng Pagkain",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Gamitin ang Halagang Ito",
-  "cookingConverterWeight": ") Timbang",
   "cosmeticsGalleryCosmetics": "Mga Kosmetiko",
   "cosmeticsGalleryEquip": "I-equip",
   "cosmeticsGalleryEquipped": "Naka-equip",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Walang ehersisyong tumutugma sa iyong paghahanap",
   "customExercisesScreenAreYouSureYou": "Sigurado ka bang gusto mong burahin ang \"{name}\"? Hindi na ito maibabalik.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} na ehersisyo, {totalUses} na gamit",
-  "customExercisesScreenUsedTimes": "Nagamit ng (usageCount) na beses(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Maghanap ng mga ehersisyo...",
   "customExercisesSimple": "Payak",
   "customFoodBuilderAiFillFromName": "AI fill mula sa pangalan",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · huling cycle",
   "customTrendScreenMaxOverlaysRemoveOne": "Max {_kMaxOverlays} overlays — mag-alis ng isa para makapagdagdag ng iba",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} na araw na magkapareho",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "Magdagdag ng Ehersisyo",
   "customWorkoutBuilderBuildCustomWorkout": "Bumuo ng Custom na Workout",
   "customWorkoutBuilderCustomWorkoutCreated": "Nagawa na ang custom workout!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Mag-log ng period",
   "cycleScreenUiLogPeriod": "I-log ang period",
   "cycleScreenUiLogYourFirstPeriod": "I-log ang iyong unang period para magsimula ang mga prediksyon.",
-  "cycleScreenUiPhase": ") na yugto",
   "cycleScreenUiPhaseLabel": "Yugto ng {displayName}",
   "cycleScreenUiPredictionsAreEstimates": "Ang mga prediksyon ay mga pagtatantya lamang batay sa iyong naka-log na data, hindi ito paraan ng birth-control at hindi medikal na payo. Kumunsulta sa doktor para sa anumang alalahanin sa kalusugan.",
   "cycleScreenUiPregnancyModeIsOn": "Naka-on ang pregnancy mode",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Magpatuloy",
   "editProgramSheetCurrent": "KASALUKUYAN",
   "editProgramSheetCustomProgram": "Pasadyang Programa",
-  "editProgramSheetCustomValue": "Custom na halaga {arg0}",
+  "editProgramSheetCustomValue": "Pasadya: {arg0}",
   "editProgramSheetCustomizeProgram": "I-customize ang Program",
   "editProgramSheetDays": "Mga araw",
   "editProgramSheetDaysAgo": "{days} araw ang nakalipas",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Kagamitan",
   "editProgramSheetEquipmentLabel": "Label ng kagamitan",
   "editProgramSheetExamples": "Mga Halimbawa",
-  "editProgramSheetFailedToLoadHistory": "I-load ang history {arg0}",
-  "editProgramSheetFailedToRestore": "I-restore {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Nabigong i-load ang kasaysayan: {arg0}",
+  "editProgramSheetFailedToRestore": "Nabigong ibalik: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "I-update ang program",
   "editProgramSheetFocus": "Pokus",
   "editProgramSheetHealth": "Kalusugan",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "Nagda-download {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Dina-download ang video...",
   "exerciseDetailSheetFavorite": "Paborito",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Naglo-load...",
   "exerciseDetailSheetLog1rm": "I-log ang 1RM",
   "exerciseDetailSheetMS": "{restMins}m {restSecs}s",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Magdagdag ng mga tala dito...",
   "exerciseSetTrackerAddSet": "Magdagdag ng Set",
-  "exerciseSetTrackerBarbell": ") barbell",
   "exerciseSetTrackerReps": "Mga Rep",
   "exerciseSetTrackerRestTarget": "Target na pahinga",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "Hindi available ang AI Picks",
   "exerciseSwapSheetAnyEquipment": "Anumang Equipment",
   "exerciseSwapSheetAskAiForSuggestions": "Humingi ng mungkahi sa AI",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Ilarawan ang iyong equipment o mga preference\nhalimbawa, \"May masakit akong balikat, bodyweight lang\"",
   "exerciseSwapSheetEGIOnly": "halimbawa, \"Dumbbells lang ang meron ako\"",
   "exerciseSwapSheetFailedToSwapExercise": "Nabigong palitan ang exercise",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Hinahanap ang mga alternatibong tumutugma sa muscle...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Timbang",
   "expandedExerciseCardAddToFavorites": "Idagdag sa Favorites",
   "expandedExerciseCardAlternatingHands": "Salitang Kamay",
-  "expandedExerciseCardBarbell": ") barbell",
   "expandedExerciseCardBreathing": "Paghinga",
   "expandedExerciseCardBreathingGuide": "Gabay sa Paghinga",
   "expandedExerciseCardCollapse": "I-collapse",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Antas ng Protokol",
   "fastingScoreCardScore": "Marka",
   "fastingScoreCardStreakBonus": "Bonus sa Tuloy-tuloy na Araw",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "vs noong nakaraang linggo",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "Una",
   "flexibilityProgressChartLatest": "Pinakabago",
   "flexibilityProgressChartNoDataAvailable": "Walang available na data",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Ayon sa Bahagi",
   "flexibilityScoreCardFocusAreas": "Mga Focus Area",
   "flexibilityScoreCardOverallFlexibility": "Pangkalahatang Flexibility",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Maghanap ng pagkain, \"high protein\"...",
   "foodHistoryUndo": "I-undo",
   "foodItemRankingAddFood": "Magdagdag ng pagkain",
-  "foodItemRankingDetails": ") mga detalye",
   "foodItemRankingNFoodItems": "{count} na Food Items",
   "foodItemRankingScore": "Marka",
   "foodItemRankingTapToHideDetails": "I-tap para itago ang mga detalye",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Kaya itinayo ko ang tao, hindi ang ledger. Kumuha ng anumang menu — sa bahay o sa ibang bansa — at babasahin ito ng coach pabalik sa iyo sa mga macro. Laktawan ang isang Martes at ibabalik ka nito sa Miyerkules ng umaga nang walang kasalanan. Natututunan nito ang iyong mga pagkain, ang iyong gym, ang iyong mga slip pattern — nang wala pang isang PT session sa isang buwan.",
   "founderNoteTheFriendsWhoActually": "Ang mga kaibigan ko na talagang pumayat ay may taong nagte-text sa kanila. Ang totoong accountability ay nagkakahalaga ng halos dalawang daang dolyar bawat buwan, na siyang dahilan kung bakit karamihan sa atin ay hindi ito nakukuha, at kung bakit ang agwat sa pagitan ng \"pag-track\" at \"pagbabago\" ay nananatiling bukas sa loob ng maraming taon.",
-  "freshnessDecayCardAgo": ") ang nakalipas",
   "freshnessDecayCardControlsHowQuicklyExercise": "Kinokontrol kung gaano kabilis mawala ang freshness ng ehersisyo: e^(-k * sessions)",
   "freshnessDecayCardFreshnessDecayTuner": "Tuner ng Pagkabulok ng Kasariwaan",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "SET {currentSetNumber} NG {totalSets}",
   "futuristicSetCardSkipExercise": "Laktawan ang Exercise",
-  "futuristicSetCardValue": ") × (target na reps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "Gumawa ng holistic na plano na nag-uugnay sa iyong mga workout, nutrisyon, at fasting.",
   "generatePlanFastingProtocol": "Protocol sa Pag-aayuno",
   "generatePlanGeneratePlan": "Gumawa ng Plano",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "Idagdag ang Iyong Unang Habit",
   "habitsCardAllHabitsCompleted": "Nakumpleto na ang lahat ng habit!",
   "habitsCardBuildDailyHabits": "Bumuo ng mga Pang-araw-araw na Habit",
-  "habitsCardCompletedCount": "Bilang ng natapos {arg0} {arg1}",
-  "habitsCardDayStreak": "Day streak {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} natapos",
+  "habitsCardDayStreak": "{arg0} araw na streak",
   "habitsCardFailedToLoadHabits": "Hindi na-load ang mga habit",
   "habitsCardGreatJobKeepingUp": "Magaling, tuloy-tuloy lang ang iyong streaks",
   "habitsCardQuickStart": "Mabilisang Simula:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Mga Habit Ngayong Araw",
   "habitsCardTryAgain": "Subukan Muli",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Tingnan ang lahat ng habits {arg0}",
+  "habitsCardViewAllHabits": "Tingnan Lahat ng {arg0} na Gawi",
   "habitsCompleted": "Tapos na",
   "habitsDeleteHabit": "Burahin ang Habit?",
   "habitsHoldToReorderSwipe": "Pindutin nang matagal para ayusin • I-swipe para burahin",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "Rest day? O handa ka nang kumilos? Ikaw ang bahala.",
   "homeEmptyWorkout_v3": "Pagitan ng mga program — magsimula ng bago para makabalik sa track.",
   "homeEmptyWorkout_v4": "Wala pang plano. Hayaan ang AI na gumawa ng isa base sa iyong mga layunin.",
-  "homeFromHealthConnect": ") mula sa Health Connect",
   "homeGreetingAfternoon_v1": "Enerhiya sa hapon, {name}!",
   "homeGreetingAfternoon_v2": "Hi {name}, oras na para gumalaw?",
   "homeGreetingAfternoon_v3": "Break para mag-stretch, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "MGA KALORYA",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "BUOD",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "MGA EHERSISYO",
   "intensityPrompt1Left": "1 ang natitira",
   "intensityPrompt2Left": "2 ang natitira",
   "intensityPrompt3Left": "3+ ang natitira",
   "intensityPromptHard": "Mahirap",
-  "intensityPromptHideRpeSlideDial": "Itago ang RPE slide      I-set ito (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Gaano kahirap ang set na iyon?",
   "intensityPromptMax": "Pinakamataas",
   "intensityPromptModerate": "Katamtaman",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "Set {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "Isang AI coach na gumagawa ng plano, nag-aaral sa iyong katawan, at nag-aadjust linggo-linggo.",
   "introBuildMyPlan": "Buuin ang Aking Plano",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) na set",
   "introCardMonth": "buwan.",
   "introIAlreadyHaveAnAccount": "May account na ako",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "Barcode",
   "logMealSheetBarcodeScan": "Pag-scan ng barcode",
   "logMealSheetCached": "(Naka-cache)",
-  "logMealSheetCaptured": ") nakuha",
   "logMealSheetChooseFoodPhotos": "Pumili ng mga larawan ng pagkain",
   "logMealSheetChooseFromGallery": "Pumili mula sa gallery",
   "logMealSheetChooseFromLibrary": "Pumili mula sa library",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7d avg · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} mula sa iyong nakaraang low",
   "logWeightSheetValidRange": "Validong saklaw: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Naka-sync mula sa Apple Health",
   "logWeightSyncedToAppleHealth": "Naka-sync sa Apple Health",
   "logWeightTapToEdit": "I-tap para i-edit",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Mag-sign out?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Macros",
-  "mainShellPartChatsLeftToday": "Mga chat na natitira ngayong araw {arg0}",
+  "mainShellPartChatsLeftToday": "{arg0} chat na lang ngayong araw",
   "mainShellPartGuestMode": "Guest Mode",
   "mainShellPartQuickActions": "Mabilisang Aksyon",
   "mainShellPartSignUp": "Mag-sign up",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Pangunahin",
   "manageDuplicateImportsScreenSources": "{length} sources",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(row)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "I-unlink mula sa grupo",
   "manageDuplicateImportsUnlinkedFromGroup": "Na-unlink mula sa grupo",
   "manageGymProfilesActive": "Aktibo",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} pa",
   "menuAnalysisSheetSelected": "{length} ang napili",
   "menuAnalysisSheetSort": "I-sort: {label}",
-  "menuAnalysisSheetValue": ")(lumipas)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Naka-save ka na ng menu para sa \"{restaurantName}\"",
   "menuAnalysisSort": "I-sort:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "URI NG METRIC",
   "metricsDashboardMuscleMass": "Muscle mass",
   "metricsDashboardNoDataAvailable": "Walang available na data",
-  "metricsDashboardNoMetricDataYet": "Wala pang data ng metric {arg0}",
+  "metricsDashboardNoMetricDataYet": "Wala pang datos ng {arg0}",
   "metricsDashboardQuickStats": "MGA QUICK STAT",
   "metricsDashboardRestingHeartRate": "Resting heart rate",
   "metricsDashboardRestingHr": "Resting HR",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Iba pa",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Tapusin ang mga workout para makita ang muscle data",
   "muscleHeatmapTileCouldnTLoad": "Hindi ma-load",
-  "muscleHeatmapTileMostTrained": "Pinakamadalas sanayin {arg0}",
+  "muscleHeatmapTileMostTrained": "Pinaka-trained: {arg0}",
   "muscleHeatmapTileMuscles": "Mga Kalamnan",
   "muscleHeatmapTileRetry": "Subukan muli",
   "muscleHeatmapUpperBody": "Itaas ng Katawan",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Mga Paborito ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Pangunahin ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Pinakamahusay: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Kamakailang Activity",
   "myLibraryTabViewAll": "Tingnan Lahat",
   "myProgramSummaryCardValue": "{workoutDays} • {experience} • {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Casual mover",
   "neatGamificationWidgetsClaimReward": "Kunin ang Reward",
   "neatGamificationWidgetsCouchPotato": "Couch potato",
-  "neatGamificationWidgetsCurrentXp": "Kasalukuyang xp {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Pang-araw-araw na Hamon",
   "neatGamificationWidgetsExpired": "Expired",
-  "neatGamificationWidgetsHoursMinutesLeft": "Mga oras at minutong natitira {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0}h {arg1}m na lang",
   "neatGamificationWidgetsLevel": "Antas {level}",
   "neatGamificationWidgetsLevelUp": "TUMAAS ANG ANTAS!",
   "neatGamificationWidgetsMaxLevel": "Pinakamataas na Antas!",
-  "neatGamificationWidgetsMinutesLeft": "Mga minutong natitira {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0}m na lang",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Champion",
   "neatGamificationWidgetsNeatEnthusiast": "Enthusiast",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Wala pang mga ranking ngayong linggo",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Score",
-  "neatGamificationWidgetsStepGoal": "Step goal {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Mga Hakbang",
-  "neatGamificationWidgetsTargetActiveHours": "Target na active hours {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} hrs",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "PAGHIHIMAY NG SCORE",
   "neatScoreDisplayTapForBreakdown": "I-tap para sa breakdown",
   "neatScoreDisplayTrend": "Trend: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Naglo-load...",
   "netflixExerciseCarouselSeeAll": "Tingnan Lahat",
   "netflixExercisesAddYourOwnExercises": "Magdagdag ng sariling exercises na may custom reps, sets, at instructions.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Kinakalkula ang optimal na susunod na set...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% intensidad",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Huling Set",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "MGA PANGUNAHING PINAGMUMULAN",
   "nutrientExplorerUnknown": "Hindi alam",
   "nutrientExplorerUnpinNutrient": "I-unpin ang nutrient",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "MGA BITAMINA",
   "nutrientRushGameCatchTheGoldenZealova": "Abutin ang golden Zealova mark para sa power-up!",
   "nutrientRushGameNewBest": "🎉 BAGONG BEST!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Lingguhang Overview",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "avg {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Avg intake: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(TDEE) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/araw {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Timbang: {formattedWeeklyRate}",
@@ -23043,32 +22773,31 @@
   "onboardingWhyFirstTheWhy": "UNA, ANG DAHILAN",
   "onboardingWhyWhatSDrivingThis": "Ano ang nagtutulak nito?",
   "openAllCrates24HoursOf2xXp": "24 oras ng 2x XP",
-  "openAllCratesActivityCrate": "Activity crate",
+  "openAllCratesActivityCrate": "Activity Crate",
   "openAllCratesBonusCrateToOpen": "Bonus crate na bubuksan",
-  "openAllCratesCollect": "Kunin {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Mga crate na nabuksan {arg0}",
-  "openAllCratesDailyCrate": "Daily crate",
+  "openAllCratesCollect": "Kolektahin ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} crate ang nabuksan!",
+  "openAllCratesDailyCrate": "Daily Crate",
   "openAllCratesDone": "Tapos na",
-  "openAllCratesDoubleXpToken": "Double xp token",
+  "openAllCratesDoubleXpToken": "Double XP Token",
   "openAllCratesFailedToOpenCrates": "Hindi nabuksan ang mga crate. Pakisubukang muli.",
-  "openAllCratesFitnessCrate": "Fitness crate",
-  "openAllCratesGainedXp": "Nakuha na xp {arg0}",
+  "openAllCratesFitnessCrate": "Fitness Crate",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Pinakamataas na antas",
-  "openAllCratesOpenYourCrates": "Buksan ang iyong mga crate",
-  "openAllCratesOpened": ") nabuksan!",
-  "openAllCratesOpeningYourCrates": "Binubuksan ang iyong mga crate",
-  "openAllCratesPickRewardPerDay": "Pumili ng reward bawat araw {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Piliin ang iyong reward {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Buksan ang Iyong mga Crate",
+  "openAllCratesOpeningYourCrates": "🎁 Binubuksan ang iyong mga crate…",
+  "openAllCratesPickRewardPerDay": "Pumili ng 1 reward kada araw • {arg0}/{arg1} ang napili",
+  "openAllCratesPickYourReward": "Piliin ang iyong reward • {arg0}/{arg1} ang napili",
   "openAllCratesProtectYourStreak": "Protektahan ang iyong streak",
   "openAllCratesSelectAll": "Piliin lahat",
-  "openAllCratesStreakCrate": "Streak crate",
-  "openAllCratesStreakShield": "Streak shield",
+  "openAllCratesStreakCrate": "Streak Crate",
+  "openAllCratesStreakShield": "Streak Shield",
   "openAllCratesToday": "Ngayon",
-  "openAllCratesTotalXpFormatted": "Kabuuang XP {arg0}",
-  "openAllCratesTotalXpLevel": "Kabuuang XP level {arg0} {arg1}",
-  "openAllCratesUd83cUdf89Rewards": "\\uD83C\\uDF89 Mga Reward!",
-  "openAllCratesXpInLevel": "XP sa level {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP para sa susunod na level {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} kabuuan",
+  "openAllCratesTotalXpLevel": "Kabuuan: {arg0} XP • Level {arg1}",
+  "openAllCratesUd83cUdf89Rewards": "🎉 Mga Reward!",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP papuntang Lvl {arg1}",
   "openAllCratesYesterday": "Kahapon",
   "overallScoreHeroOverall": "KABUUAN",
   "overviewActiveSkill": "AKTIBONG KASANAYAN",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Ang iyong gym personality ay...",
   "phaseRecommendationBannerBasedOn": "Batay sa: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-confidence estimate\" : \"\")",
   "phaseRecommendationBannerCycleDay": "Araw ng siklo {cycleDay}",
   "phaseRecommendationBannerEvidence": "Ebidensya: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Nakuha ko",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Bumuo ng pundasyon ng lakas",
   "planPreviewScreenBuildingYour4Week": "Binubuo ang Iyong 4-Week Plan...",
   "planPreviewScreenContinueFree": "Magpatuloy nang Libre",
-  "planPreviewScreenDaysPerWeek": "Araw bawat linggo {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} araw/linggo",
   "planPreviewScreenDesignedBasedOnYour": "Dinisenyo batay sa iyong mga sagot sa quiz",
-  "planPreviewScreenEquipmentCount": "Bilang ng equipment {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} kagamitan",
   "planPreviewScreenExercisesMin": "Exercises min {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Dagdagan ang intensity volume",
   "planPreviewScreenMasterTheMovement": "Masterin ang movement",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} Personal Records!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") MULA NOON",
   "prShareCardCopiedToClipboard": "Kinopya sa clipboard!",
   "prShareCardCopyText": "Kopyahin ang Text",
   "prShareCardFailedToCaptureImage": "Hindi nakuha ang imahe",
@@ -23721,7 +23448,7 @@
   "programSummaryLevel": "Antas",
   "programSummaryLoseWeight": "Magbawas ng timbang",
   "programSummaryMacrosAndMealsAligned": "Ang mga Macro at pagkain ay naka-align sa iyong pagsasanay",
-  "programSummaryNItems": "{arg0} na item",
+  "programSummaryNItems": "{arg0} item",
   "programSummaryNutritionIntegration": "Integrasyon ng Nutrisyon",
   "programSummaryPersonalizedForYourGoals": "Personalized para sa iyong mga layunin at kagamitan",
   "programSummaryProgressiveOverload": "Progressive Overload",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Ituloy ang pagpupursige!",
   "prsTemplateNewPersonalRecords": "MGA BAGONG PERSONAL RECORDS",
   "prsTemplateNewPrsAreJust": "Malapit na ang mga bagong PR",
-  "prsTemplateValue": ") (yunit)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Mga sangkap",
   "publicRecipeInstructions": "Mga instruksyon",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "I-tap para makita ang buong history at mga trend",
   "quickLogMeasurementsTrackYourBodyChanges": "Subaybayan ang mga pagbabago sa iyong katawan sa paglipas ng panahon",
   "quickLogMeasurementsUpdate": "I-update",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} araw ang nakalipas",
+  "quickLogMeasurementsUpdatedDaysAgo": "Na-update {arg0} araw na ang nakalipas",
   "quickLogMeasurementsUpdatedToday": "Ngayon",
   "quickLogMeasurementsUpdatedYesterday": "Kahapon",
   "quickLogMeasurementsWaist": "Baywang",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "Ang AI ay gumagawa ng mga workout sa loob ng iyong napiling range",
   "quizDaysSelectorBest": "Pinakamahusay",
   "quizDaysSelectorConsistencyBeatsIntensity": "Mas mahalaga ang consistency kaysa intensity - piliin ang kaya mong panindigan",
-  "quizDaysSelectorDays": "Mga araw {arg0}",
-  "quizDaysSelectorDaysSelected": "Mga napiling araw {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") para sa iyong mga workout",
+  "quizDaysSelectorDays": "{arg0, plural, one {araw} other {araw}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} araw ang napili",
   "quizDaysSelectorFri": "Biy",
   "quizDaysSelectorHowLongAreYour": "Gaano katagal ang iyong mga workout?",
   "quizDaysSelectorHowManyDaysPer": "Ilang araw sa isang linggo ka makakapag-ensayo?",
   "quizDaysSelectorMin": "Min",
   "quizDaysSelectorMon": "Lun",
   "quizDaysSelectorSat": "Sab",
-  "quizDaysSelectorSelectNDays": "Pumili ng {arg0} araw",
+  "quizDaysSelectorSelectNDays": "Pumili ng {arg0} araw na angkop para sa iyo",
   "quizDaysSelectorSun": "Lin",
   "quizDaysSelectorThu": "Hu",
   "quizDaysSelectorTue": "Mar",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Gym sa Bahay",
   "quizEquipmentHomeKettlebell": "Bahay + Kettlebell",
   "quizEquipmentHotel": "Hotel",
-  "quizEquipmentIdentifiedCount": "Natukoy na bilang {arg0}",
+  "quizEquipmentIdentifiedCount": "Natukoy ang {arg0} item. I-tap ang alinman upang alisin sa pagkakapili.",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "Medicine ball",
   "quizEquipmentMinimalEquipmentBodyweight": "Minimal na equipment - bodyweight, mat",
   "quizEquipmentNeededForBarbell": "Kailangan para sa barbell",
   "quizEquipmentNoEquipmentIdentifiedPick": "Walang natukoy na equipment. Pumili mula sa listahan sa ibaba.",
-  "quizEquipmentOtherCount": "Iba pang bilang {arg0}",
+  "quizEquipmentOtherCount": "{arg0} ang napili",
   "quizEquipmentOtherEquipment": "Iba pang kagamitan",
   "quizEquipmentPullUpBar": "Pull up bar",
   "quizEquipmentQuickPresets": "Mga mabilis na preset",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Kailangan ng pangalan ng recipe",
   "recipeCreateRemovePhoto": "Alisin ang larawan",
   "recipeCreateSaving": "Nagse-save…",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Kumuha ng larawan",
   "recipeCreateTapToEdit": "I-tap para i-edit",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Bawat serving (×{servings} servings)",
   "recipeDetailScreenUForkedFrom": "✨ Forked mula kay {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "Permanenteng buburahin ang \"{name}\".",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Curated na recipe",
   "recipeDetailView": "Tingnan",
@@ -24684,7 +24407,7 @@
   "recordAssessmentRecordAssessment": "I-record ang Pagtatasa",
   "recordAssessmentSheetTop": "Nangungunang {assessment}%",
   "recordAssessmentTips": "Mga Tip",
-  "recordAssessmentU2022": "\\u2022 ",
+  "recordAssessmentU2022": "• ",
   "recordAssessmentYourMeasurement": "Ang Iyong Sukat",
   "recordAttemptCurrentBest": "Kasalukuyang Pinakamahusay",
   "recordAttemptDialogAdd": "Idagdag ang {unit}",
@@ -24745,7 +24468,7 @@
   "regenerateSheetApply": "Ilapat",
   "regenerateSheetApplyThisWorkout": "Gamitin ang workout na ito",
   "regenerateSheetBalancingMuscleGroups": "Binabalanse ang mga muscle group",
-  "regenerateSheetBootingUpTheAi": "Inilulunsad ang AI",
+  "regenerateSheetBootingUpTheAi": "Sinisimulan ang AI",
   "regenerateSheetBuildingYourPlan": "Binubuo ang iyong plano",
   "regenerateSheetBuildingYourWorkout": "Binubuo ang iyong workout…",
   "regenerateSheetCheckingEquipment": "Sinusuri ang kagamitan",
@@ -24754,7 +24477,7 @@
   "regenerateSheetConsideringFocusAreas": "Isinasaalang-alang ang mga focus area",
   "regenerateSheetCustomize": "I-customize",
   "regenerateSheetCustomizeOrLetAi": "I-customize o hayaan ang AI na magmungkahi",
-  "regenerateSheetCustomizeOrLetAiSuggest": "I-customize o hayaan ang AI na magmungkahi",
+  "regenerateSheetCustomizeOrLetAiSuggest": "I-customize o hayaang magmungkahi ang AI",
   "regenerateSheetDescribeYourIdealWorkout": "Ilarawan ang iyong ideal na workout",
   "regenerateSheetDesigningYourWorkout": "Dinidisenyo ang iyong workout",
   "regenerateSheetDialingInSetsAndReps": "Inaayos ang mga set at rep",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Tinatapos ang mga detalye…",
   "regenerateSheetFinalizingYourWorkout": "Tinatapos ang iyong workout",
   "regenerateSheetFineTuningTheDetails": "Pinipino ang mga detalye",
-  "regenerateSheetGeneratingElapsed": "Generating elapsed {arg0}",
+  "regenerateSheetGeneratingElapsed": "Gumagawa… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Gumagawa ng mga mungkahi…",
   "regenerateSheetGetSuggestions": "Kumuha ng mga Mungkahi",
   "regenerateSheetGettingCreative": "Nagiging malikhain",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Gamitin ang Iminungkahi",
   "restSuggestionQuick": "Mabilis",
   "restSuggestionQuickRest": "Mabilis na pahinga",
-  "restSuggestionSaveTime": "Makatipid ng oras {arg0}",
+  "restSuggestionSaveTime": "Makatipid ng {arg0}",
   "restSuggestionSuggested": "Iminungkahi",
   "restSuggestionUseSuggested": "Gamitin ang iminungkahi",
   "restTimerCardBaseRest": "Batayang Pahinga",
   "restTimerCardControlRestPeriodsBetween": "Kontrolin ang mga period ng pahinga sa pagitan ng mga set",
   "restTimerCardCustomRestTimer": "Pasadyang Pansukat ng Pahinga",
   "restTimerCardFormula": "Formula",
-  "restTimerCardFormulaBaserestRpe7": "Formula: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Live na Preview",
   "restTimerCardMultiplier": "Multiplier",
   "restTimerCardRestBaserestRpe7": "Pahinga = BatayangPahinga * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "Mga Variable: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Mga variable: base, RPE, multiplier, tier",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "Sinusuri ang iyong performance...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "Tapos na",
   "rtpTitle": "Bumalik sa laro",
   "safetyDisclaimerBannerDismissDisclaimer": "I-dismiss ang disclaimer",
-  "safetyDisclaimerBannerInjuriesFlagged": "Mga injury na na-flag {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} injury ang na-flag",
   "safetyDisclaimerBannerInjuryBody": "Injury body",
   "safetyDisclaimerBannerLearnMore": "Matuto pa",
   "safetyDisclaimerBannerMore": "+{overflow} pa",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Set",
   "sessionDetailSetCount": "{count, plural, other{{count} na sets}} · naka-highlight ang top set",
   "sessionDetailTime": "Oras",
-  "sessionDetailTopSetHighlighted": ") • naka-highlight ang top set",
   "sessionDetailWeight": "Timbang",
   "setAdjustmentAdditionalNotesOptional": "Karagdagang notes (opsyonal)",
   "setAdjustmentConfirm": "Kumpirmahin",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} tapos na",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} ang natitira",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} ang inalis",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") ng (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "mula sa {totalSets} na nakaplano",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} sets ang natapos",
   "setAdjustmentSheetReps": "Mga pag-uulit",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Set {currentSetNumber}/{totalSets} • I-tap para palawakin",
   "setTrackingSectionSets": "{widget} na set",
   "setTrackingSectionSetsCompleted": "{length} sets ang natapos",
-  "setTrackingSectionValue": ")×(mga reps)",
   "setTrackingSheetsAmountToAdjustWeight": "Halaga ng timbang na ia-adjust",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "Kasaysayan ng Ehersisyo",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject=Request ng suporta para sa {appName}",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} araw",
   "settingsScreenUiNoSettingsFound": "Walang nahanap na setting",
-  "settingsScreenUiTryDifferentKeywordsLike": "Subukan ang ibang keyword gaya ng \"theme\", \"notifications\", o \"ai voice\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Sumubok ng ibang keyword tulad ng \"tema\", \"mga abiso\", o \"boses ng AI\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Maghanap sa mga setting",
   "settingsSetProgressionResearch": "I-set ang progression at pananaliksik",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "Ang aking {appName} {periodName} report",
   "shareInsightsSheetMyReport2": "Ang aking {appName} Report",
   "shareMotivationalCompleted": "TAPOS NA",
-  "sharePrNewPr": "Bagong PR",
+  "sharePrNewPr": "BAGONG PR",
   "shareStatsCalories": "Calories",
   "shareStatsDuration": "Tagal",
   "shareStatsEliteTemplate": "ELITE TEMPLATE",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "MGA REWARD",
   "streakMilestoneStreakMilestone": "MILYAHE NG PAGKASUNOD-SUNOD!",
-  "streakMilestoneToGo": ") ang natitira!",
   "streakMilestoneYouVeReachedThe": "Naabot mo na ang ultimate streak milestone!",
   "streakSavedDialogWeUsedStreakShield": "Gumamit kami ng 1 Streak Shield para mapanatili ang iyong {savedStreakCount}-araw na streak.",
   "streakSavedKeepItGoing": "Ipagpatuloy lang",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Ikonekta",
   "todayScoreCardCustomize": "I-CUSTOMIZE",
   "todayScoreCardToday": "Ngayong Araw",
-  "todayScoreDetailDown": "Bumaba ng {arg0}",
-  "todayScoreDetailEarnedPts": "Nakamit na pts {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Bumaba ng {arg0} mula kaninang umaga",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} pts",
   "todayScoreDetailHowItWorks": "Paano ito gumagana",
-  "todayScoreDetailInactiveExplanation": "Paliwanag sa hindi aktibo {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Momentum na may average na {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {ay hindi binibilang} other {ay hindi binibilang}} ngayon, kaya pinaghahatian ng iba ang buong 100 points. Palaging sinasalamin ng iyong score ang tanging naaangkop talaga ngayon.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7-day average {arg1}",
   "todayScoreDetailNotCounted": "Hindi binilang",
   "todayScoreDetailSetupText": "Setup text",
   "todayScoreDetailSteady": "Steady",
   "todayScoreDetailTodayScore": "Score Ngayong Araw",
-  "todayScoreDetailUp": "Tumaas ng {arg0}",
+  "todayScoreDetailUp": "▲ Tumaas ng {arg0} mula kaninang umaga",
   "todayScoreSetupAddAWorkoutPlan": "Magdagdag ng workout plan",
   "todayScoreSetupCardContinue": "Magpatuloy: {label}",
   "todayScoreSetupCardGetStarted": "MAGSIMULA · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Mga Achievement sa Cardio",
   "trophiesEarnedDayStreak": "Sunod-sunod na araw",
   "trophiesEarnedFirstTime": "UNANG BESES!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Naabot ang milestone",
   "trophiesEarnedMilestoneReachedNice": "Naabot ang milestone — galing!",
   "trophiesEarnedMilestones": "Mga Milestone",
-  "trophiesEarnedNewBadges": "Mga badge {arg0}",
-  "trophiesEarnedNewCardioPRs": "Mga cardio PR {arg0}",
-  "trophiesEarnedNewPR": "Bagong PR",
-  "trophiesEarnedNewPRs": "Mga PR {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} bagong badge",
+  "trophiesEarnedNewCardioPRs": "{arg0} bagong cardio PRs",
+  "trophiesEarnedNewPR": "BAGONG PR",
+  "trophiesEarnedNewPRs": "{arg0} bagong PRs!",
   "trophiesEarnedNewPr": "BAGONG PR",
   "trophiesEarnedNextMilestones": "Susunod na mga Milestone",
   "trophiesEarnedNoNewRecords": "Walang bagong record",
   "trophiesEarnedNoNewRecordsThis": "Walang bagong record sa session na ito — narito ang mga pinagtatrabahuhan mo:",
   "trophiesEarnedPersonalRecords": "Mga Personal Record",
-  "trophiesEarnedRemainingToUnlock": "Natitira para ma-unlock {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "{arg0} pang {arg1} para ma-unlock",
   "trophiesEarnedSessionHighlights": "Mga highlight ng session",
   "trophiesEarnedSheetPts": "+{points} pts",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} ay nagta-type",
   "typingIndicatorIsTyping3": "{agentName} ay nagta-type...",
   "unifiedHomeWidgetsActivity": "AKTIBIDAD",
-  "unifiedHomeWidgetsBreakfastLogged": "Naka-log na almusal {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Na-log ang almusal sa {arg0} sa huling 7 umaga",
   "unifiedHomeWidgetsBreakfastSuggestion": "Mungkahi para sa almusal",
   "unifiedHomeWidgetsCarbs": "Carbs",
   "unifiedHomeWidgetsConnect": "Ikonekta",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Taba",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal kabuuan ngayon",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal ang nasunog",
   "unifiedHomeWidgetsKcalLeft": " kcal ang natitira",
   "unifiedHomeWidgetsLastNight": "kagabi",
   "unifiedHomeWidgetsLog16oz": "I-log ang 16oz",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}l",
   "weekDurationSelectorWeeks": "{selectedWeeks} linggo",
   "weekDurationSelectorWk": "{spw}/linggo",
-  "weekProgressStripCompletedCount": "Bilang ng natapos {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg0} sa {arg1} workout ang natapos",
   "weekProgressStripCouldNotLoadProgress": "Hindi ma-load ang progress",
   "weekProgressStripLoading": "Naglo-load...",
   "weekProgressStripNoWorkoutsScheduled": "Walang naka-schedule na workout",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Tingnan Lahat",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Pagsubaybay sa Timbang",
-  "weightTrendCardDownThisWeek": "Bumaba ngayong linggo {arg0}",
-  "weightTrendCardDownVsLastCycle": "Bumaba kumpara sa huling cycle {arg0}",
+  "weightTrendCardDownThisWeek": "Bumaba ng {arg0} ngayong linggo!",
+  "weightTrendCardDownVsLastCycle": "Bumaba ng {arg0} lbs kumpara sa parehong araw ng siklo noong nakaraang buwan",
   "weightTrendCardLoadingWeight": "Naglo-load ng timbang...",
   "weightTrendCardLogYourWeightTo": "I-log ang iyong timbang para makita ang mga trend",
   "weightTrendCardMaintaining": "Pinapanatili",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Pareho sa huling cycle",
   "weightTrendCardTapToLogWeight": "I-tap para i-log ang timbang",
   "weightTrendCardTargetHeld": "Naabot ang target",
-  "weightTrendCardTargetHeldWindow": "Naabot ang target window {arg0}",
-  "weightTrendCardUpThisWeek": "Tumaas ngayong linggo {arg0}",
-  "weightTrendCardUpVsLastCycle": "Tumaas kumpara sa huling cycle {arg0}",
+  "weightTrendCardTargetHeldWindow": "Napanatili ang target {arg0} — luteal water smoothing",
+  "weightTrendCardUpThisWeek": "Tumaas ng {arg0} ngayong linggo",
+  "weightTrendCardUpVsLastCycle": "Tumaas ng {arg0} lbs kumpara sa parehong araw ng siklo noong nakaraang buwan",
   "weightTrendCardWeightStableThisWeek": "Stable ang timbang ngayong linggo",
   "weightTrendCardWeightTrends": "Mga Trend ng Timbang",
   "welcomeAffirmationGreatChoice": "Magandang desisyon.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "I-revert sa bersyong ito?",
   "workoutActionsShareWorkout": "I-share ang Workout",
   "workoutActionsSheetGetALinkFor": "Kumuha ng {marketingDomain} link para sa mga kaibigan",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "I-restore ang \"{name}\"?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} na pag-uulit",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} set, {currentReps} na pag-uulit",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Hindi makapag-challenge ng mga kaibigan sa ngayon",
   "workoutCompleteScreenUnableToExtendWorkout": "Hindi ma-extend ang workout",
   "workoutCompleteScreenViewAllMetrics": "Tingnan ang lahat ng sukatan",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "KAGAMITAN",
   "workoutDetailExercises": "MGA EHERSISYO",
   "workoutDetailFailedToLoadWorkout": "Hindi na-load ang workout",
-  "workoutDetailHelpersForAvailableEquipment": ") para sa available na kagamitan...",
   "workoutDetailHelpersHell": "Napakahirap",
   "workoutDetailHelpersUpdatingExercises": "Ina-update ang mga Ehersisyo",
   "workoutDetailMoreInfo": "KARAGDAGANG IMPORMASYON",
   "workoutDetailProgram": "Programa",
-  "workoutDetailReplacingExercises": "Pinapalitan ang mga ehersisyo {arg0}",
+  "workoutDetailReplacingExercises": "Pinapalitan ang {arg0} exercise para sa available na kagamitan…",
   "workoutDetailRevert": "Ibalik",
   "workoutDetailScreenBreakSuperset": "I-break ang Superset?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} cal ang nasunog",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "Anong unit ang nasa column ng bigat? At kung alam mo ang source app, piliin ito — nakakatulong ito para malinawan ang mga magkakamukhang format (Hevy vs. Strong CSVs).",
   "workoutHistoryImportYourStrengthData": "Iyong Strength Data",
-  "workoutImportAsDone": ")\" bilang tapos na",
   "workoutImportCalories": "Mga Kaloriya",
   "workoutImportCardio": "Cardio",
   "workoutImportCycling": "Cycling",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Tagal",
   "workoutImportEasy": "Madali",
   "workoutImportFlexibility": "Flexibility",
-  "workoutImportFromSource": "Mula sa source {arg0}",
+  "workoutImportFromSource": "mula sa {arg0}",
   "workoutImportHard": "Mahirap",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Gaano kahirap ang workout na ito?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Maaari mong makita ang mga system prompt na ito habang nagwo-workout. Opsyonal ang pareho — laktawan ang alinman at gagana pa rin ang workout.",
   "workoutPlanDrawerAddExercise": "Magdagdag ng Exercise",
   "workoutPlanDrawerCurrent": "Kasalukuyan",
-  "workoutPlanDrawerExerciseCount": "Bilang ng ehersisyo {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") na-log. Mabubura ang mga ito.",
+  "workoutPlanDrawerExerciseCount": "{arg0} exercise",
   "workoutPlanDrawerNow": "Ngayon",
   "workoutPlanDrawerRemove": "Alisin",
-  "workoutPlanDrawerRemoveExercise": "Alisin ang exercise na {arg0}",
+  "workoutPlanDrawerRemoveExercise": "Alisin ang {arg0}?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Tooltip para sa pag-alis ng ehersisyo",
-  "workoutPlanDrawerSetsLogged": "Na-log na sets {arg0}",
+  "workoutPlanDrawerSetsLogged": "Mayroon kang {arg0} set na naka-log. Mabubura ang mga ito.",
   "workoutPlanDrawerSwapExercise": "Palitan ang exercise",
   "workoutPlanDrawerTitle": "Pamagat",
   "workoutPlanDrawerWorkoutPlan": "Plano ng Ehersisyo",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Linear label",
   "workoutShowcaseLogAllSets": "Lahat ng sets",
   "workoutShowcaseLogDrink": "I-log ang Inumin",
-  "workoutShowcaseLogSet": "Set {arg0}",
+  "workoutShowcaseLogSet": "✓ I-log ang set {arg0}",
   "workoutShowcaseLogWater": "I-log ang tubig",
   "workoutShowcaseMovedThisSession": "naigalaw sa session na ito",
   "workoutShowcaseNewPr": "BAGONG PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Mga Ulit",
   "workoutShowcaseScreenDay": "Araw {day}",
   "workoutShowcaseScreenDuration": "TAGAL: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · NA-ENTER",
   "workoutShowcaseScreenSession": "SESYON: {title}",
   "workoutShowcaseScreenTotalPrs": "KABUUAN {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "Set 1 ng 4",
   "workoutShowcaseSet2": "Set 2",
   "workoutShowcaseSet3": "Set 3",
-  "workoutShowcaseSetNOf3": "Workout showcase set n ng {arg0}",
+  "workoutShowcaseSetNOf3": "Set {arg0} ng 3",
   "workoutShowcaseShareYourWorkout": "Ibahagi ang iyong workout",
   "workoutShowcaseSideA": "PANIG A",
   "workoutShowcaseSuperset": "Superset",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Pang-araw-araw",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 levels sa 11 tiers",
   "xpGoalsDialogBeginnerToTranscendent": "Beginner hanggang transcendent",
-  "xpGoalsDialogCompleteWorkoutXp": "Xp sa pagtapos ng workout",
+  "xpGoalsDialogCompleteWorkoutXp": "Tapusin ang Workout: +100 XP",
   "xpGoalsDialogDailyGoals": "Mga pang-araw-araw na layunin",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "Xp sa pakikipag-chat sa ai coach",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Xp sa pagsukat ng pagkain",
-  "xpGoalsDialogFirstPrXp": "Pr xp",
-  "xpGoalsDialogFirstProgressPhotoXp": "Xp sa progress photo",
-  "xpGoalsDialogFirstProteinGoalXp": "Xp sa protein goal",
-  "xpGoalsDialogFirstWorkoutXp": "Workout xp",
-  "xpGoalsDialogHitProteinGoalXp": "Xp sa pag-abot ng protein goal",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Unang Chat sa AI Coach: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Unang Pagkain/Timbang/Sukat: +50 XP bawat isa",
+  "xpGoalsDialogFirstPrXp": "Unang PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Unang Progress Photo: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Unang Protein Goal: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Unang Workout: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Maabot ang Protein Goal: +50 XP",
   "xpGoalsDialogLevels": "Mga antas",
-  "xpGoalsDialogLogBodyMeasurementsXp": "Xp sa pag-log ng body measurements",
-  "xpGoalsDialogLogMealXp": "Meal xp",
-  "xpGoalsDialogLogWeightXp": "Weight xp",
-  "xpGoalsDialogLoginXp": "Login xp",
+  "xpGoalsDialogLogBodyMeasurementsXp": "I-log ang Sukat ng Katawan: +20 XP",
+  "xpGoalsDialogLogMealXp": "I-log ang Pagkain: +25 XP",
+  "xpGoalsDialogLogWeightXp": "I-log ang Timbang: +15 XP",
+  "xpGoalsDialogLoginXp": "Mag-login: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Mga gantimpala sa milestone",
   "xpGoalsFirstTimeBonuses": "Mga bonus sa unang beses",
   "xpGoalsGotIt": "Nakuha ko!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Maabot ang protein goal",
   "xpGoalsScreenInventory": "Imbentaryo",
   "xpGoalsScreenLegendary": "ALAMAT",
-  "xpGoalsScreenLevelCurrentTotal": "Kasalukuyang kabuuang level {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Level {arg0} • 249 levels total",
   "xpGoalsScreenLevelProgress": "Pag-unlad ng Level",
   "xpGoalsScreenLogBodyMeasurements": "I-log ang body measurements",
   "xpGoalsScreenLogFirstMeal": "I-log ang Unang Pagkain",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Silid ng Tropeo",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Lingguhan",
-  "xpGoalsXpAvailable": "Available {arg0}",
-  "xpGoalsXpEarnedToday": "Kinita ngayong araw {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP ang available",
+  "xpGoalsXpEarnedToday": "+{arg0} XP ang kinita ngayon",
   "xpGoalsXpGoals": "Mga Layunin sa XP",
-  "xpGoalsXpMultiplierActive": "Aktibong multiplier {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP Active!",
   "xpHeroTileDayStreak": "{streak}-araw na streak",
   "xpHeroTileLv": "Antas {level}",
   "xpHeroTileLv2": "Antas {nextLevel} → {label}",

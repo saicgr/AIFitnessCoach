@@ -333,11 +333,6 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') för (name)';
-  }
-
-  @override
   String get activeWorkoutScreenUndo => 'Ångra';
 
   @override
@@ -1038,10 +1033,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get aiCoachMealRecoveryDayEating => 'Äta på vilodag?';
-
-  @override
-  String get aiCoachMealSearchQuestionsTryAngry =>
-      'Sök frågor (prova \"arg\", \"fiber\", \"mexikanskt\")';
 
   @override
   String get aiCoachMealSomethingWentWrong => 'Något gick fel.';
@@ -2849,9 +2840,6 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String get caloriesSummaryCardOveLeft => 'kvar';
-
-  @override
   String get cancelConfirmationAnythingElseYouD =>
       'Är det något annat du vill dela med dig av? (valfritt)';
 
@@ -3512,9 +3500,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get chatGotIt => 'Jag förstår';
 
   @override
-  String get chatLeftToday => ') kvar idag';
-
-  @override
   String chatMediaWidgetsCalTotal(Object totalCal) {
     return '$totalCal kcal totalt';
   }
@@ -3632,11 +3617,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get chatScreenExtAboutAiCoach => 'Om AI-coach';
-
-  @override
-  String chatScreenExtAs(Object mealType) {
-    return ') som (mealType)';
-  }
 
   @override
   String get chatScreenExtChangeCoach => 'Byt coach';
@@ -4839,7 +4819,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String complianceRingCardGreatPace(Object arg0) {
-    return 'Bra tempo $arg0';
+    return 'Bra tempo! $arg0 kvar';
   }
 
   @override
@@ -4848,7 +4828,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
-    return 'På rätt spår $arg0';
+    return 'På rätt spår — $arg0 kvar';
   }
 
   @override
@@ -4856,7 +4836,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String complianceRingCardWorkoutsRemaining(Object arg0) {
-    return 'Träningspass kvar $arg0';
+    return '$arg0 pass kvar';
   }
 
   @override
@@ -5148,9 +5128,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get cookingConverterUseThisValue => 'Använd detta värde';
-
-  @override
-  String get cookingConverterWeight => ') Vikt';
 
   @override
   String get cosmeticsGalleryCosmetics => 'Kosmetika';
@@ -5684,19 +5661,6 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenUsedTimes(
-    Object lastUsedFormatted,
-    Object usageCount,
-  ) {
-    return 'Använd (usageCount) gånger(lastUsedFormatted)\" : \"\")';
-  }
-
-  @override
-  String customExercisesScreenValue(Object name, Object targetDisplay) {
-    return '(name) (targetDisplay))\" : \"\")';
-  }
-
-  @override
   String get customExercisesSearchExercises => 'Sök övningar...';
 
   @override
@@ -5841,11 +5805,6 @@ class AppLocalizationsSv extends AppLocalizations {
     Object pairedPoints,
   ) {
     return '$pairedPoints/$kMinCorrelationPairs delade dagar';
-  }
-
-  @override
-  String customTrendScreenValue(Object strengthLabel, Object value) {
-    return ')(value) · (strengthLabel)';
   }
 
   @override
@@ -6099,9 +6058,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get cycleScreenUiLogYourFirstPeriod =>
       'Logga din första mens för att starta förutsägelser.';
-
-  @override
-  String get cycleScreenUiPhase => ') fas';
 
   @override
   String cycleScreenUiPhaseLabel(Object displayName) {
@@ -8099,7 +8055,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String editProgramSheetCustomValue(Object arg0) {
-    return 'Anpassat värde $arg0';
+    return 'Anpassat: $arg0';
   }
 
   @override
@@ -8142,12 +8098,12 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return 'Läs in historik $arg0';
+    return 'Kunde inte ladda historik: $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return 'Återställ $arg0';
+    return 'Kunde inte återställa: $arg0';
   }
 
   @override
@@ -9708,11 +9664,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get exerciseDetailSheetFavorite => 'Favorit';
 
   @override
-  String exerciseDetailSheetLbs(Object repRange) {
-    return ') lbs × (repRange)';
-  }
-
-  @override
   String get exerciseDetailSheetLoading => 'Läser in...';
 
   @override
@@ -10977,9 +10928,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get exerciseSetTrackerAddSet => 'Lägg till set';
 
   @override
-  String get exerciseSetTrackerBarbell => ') skivstång';
-
-  @override
   String get exerciseSetTrackerReps => 'Repetitioner';
 
   @override
@@ -11121,10 +11069,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetAskAiForSuggestions => 'Be AI om förslag';
-
-  @override
-  String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Beskriv din utrustning eller dina preferenser\nt.ex. \"Jag har en dålig axel, endast kroppsvikt\"';
 
   @override
   String get exerciseSwapSheetEGIOnly => 't.ex. \"Jag har bara hantlar\"';
@@ -11296,9 +11240,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get expandedExerciseCardAlternatingHands => 'Alternerande händer';
-
-  @override
-  String get expandedExerciseCardBarbell => ') skivstång';
 
   @override
   String get expandedExerciseCardBreathing => 'Andning';
@@ -12040,11 +11981,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get fastingScoreCardStreakBonus => 'Streak-bonus';
-
-  @override
-  String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
-  }
 
   @override
   String fastingScoreCardValue2(Object value) {
@@ -13030,11 +12966,6 @@ class AppLocalizationsSv extends AppLocalizations {
       'Ingen data tillgänglig';
 
   @override
-  String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
-  }
-
-  @override
   String get flexibilityScoreCardByArea => 'Per område';
 
   @override
@@ -13696,9 +13627,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get foodItemRankingAddFood => 'Lägg till livsmedel';
 
   @override
-  String get foodItemRankingDetails => ') detaljer';
-
-  @override
   String foodItemRankingNFoodItems(Object count) {
     return '$count livsmedel';
   }
@@ -14211,9 +14139,6 @@ class AppLocalizationsSv extends AppLocalizations {
       'Vännerna som faktiskt blev vältränade hade en person som skickade meddelanden till dem. Verklig ansvarsskyldighet kostar ungefär tvåhundra dollar i månaden, vilket är precis varför de flesta av oss aldrig har det, och precis varför klyftan mellan att \"spåra\" och att \"förändra\" förblir öppen i åratal.';
 
   @override
-  String get freshnessDecayCardAgo => ' sedan';
-
-  @override
   String get freshnessDecayCardControlsHowQuicklyExercise =>
       'Kontrollerar hur snabbt träningsfräschör avtar: e^(-k * pass)';
 
@@ -14466,16 +14391,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get futuristicSetCardSkipExercise => 'Hoppa över övning';
-
-  @override
-  String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
-  }
-
-  @override
-  String futuristicSetCardValue2(Object reps) {
-    return ')×(reps)';
-  }
 
   @override
   String get generatePlanCreateAHolisticPlan =>
@@ -15375,12 +15290,12 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return 'Slutförda $arg0 $arg1';
+    return '$arg0/$arg1 klara';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return 'Daglig streak $arg0';
+    return '$arg0 dagars svit';
   }
 
   @override
@@ -15408,7 +15323,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String habitsCardViewAllHabits(Object arg0) {
-    return 'Visa alla vanor $arg0';
+    return 'Visa alla $arg0 vanor';
   }
 
   @override
@@ -16980,9 +16895,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get homeEmptyWorkout_v4 =>
       'Ingen plan än. Låt AI:n bygga en utifrån dina mål.';
-
-  @override
-  String get homeFromHealthConnect => ') från Health Connect';
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
@@ -18960,11 +18872,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get insightsSummaryTemplateSummary => 'SAMMANFATTNING';
 
   @override
-  String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
-  }
-
-  @override
   String get insightsSummaryTemplateWorkouts => 'TRÄNINGSPASS';
 
   @override
@@ -18978,10 +18885,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get intensityPromptHard => 'Hårt';
-
-  @override
-  String get intensityPromptHideRpeSlideDial =>
-      'Dölj RPE-reglage      Ställ in (RPE 1-10)';
 
   @override
   String get intensityPromptHowHardWasThat => 'Hur hårt var det setet?';
@@ -19007,11 +18910,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get introBuildMyPlan => 'Bygg min plan';
-
-  @override
-  String introCardFormatDataTotalvolumelbsRound(Object totalSets) {
-    return ').format(data.totalVolumeLbs.round())) lbs · (totalSets) set';
-  }
 
   @override
   String get introCardMonth => 'månad.';
@@ -20063,9 +19961,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get logMealSheetCached => '(Cachad)';
 
   @override
-  String get logMealSheetCaptured => ') fångad';
-
-  @override
   String get logMealSheetChooseFoodPhotos => 'Välj matbilder';
 
   @override
@@ -20684,11 +20579,6 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValue(Object changeInUnit) {
-    return ')(ändringIEnhet)';
-  }
-
-  @override
   String get logWeightSyncedFromAppleHealth => 'Synkad från Apple Health';
 
   @override
@@ -21130,7 +21020,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return 'Chattar kvar idag $arg0';
+    return '$arg0 chattar kvar idag';
   }
 
   @override
@@ -21174,11 +21064,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String manageDuplicateImportsScreenValue(Object primary) {
     return '$primary · ';
-  }
-
-  @override
-  String manageDuplicateImportsScreenValue2(Object row) {
-    return '(rad)';
   }
 
   @override
@@ -22110,11 +21995,6 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String menuAnalysisSheetValue(Object elapsed) {
-    return ')(förfluten tid)';
-  }
-
-  @override
   String menuAnalysisSheetValue2(Object rank) {
     return '#$rank';
   }
@@ -22561,7 +22441,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String metricsDashboardNoMetricDataYet(Object arg0) {
-    return 'Ingen mätdata ännu $arg0';
+    return 'Ingen $arg0-data ännu';
   }
 
   @override
@@ -23232,7 +23112,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return 'Mest tränad $arg0';
+    return 'Mest tränad: $arg0';
   }
 
   @override
@@ -23669,11 +23549,6 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardValue(Object item) {
-    return ')(item)%';
-  }
-
-  @override
   String get myLibraryTabRecentActivity => 'Senaste aktivitet';
 
   @override
@@ -23960,7 +23835,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return 'Nuvarande XP $arg0';
+    return '$arg0 XP';
   }
 
   @override
@@ -23971,7 +23846,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return 'Timmar minuter kvar $arg0 $arg1';
+    return '$arg0 h $arg1 m kvar';
   }
 
   @override
@@ -23987,7 +23862,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return 'Minuter kvar $arg0';
+    return '$arg0 m kvar';
   }
 
   @override
@@ -24016,7 +23891,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return 'Stegmål $arg0';
+    return '/ $arg0';
   }
 
   @override
@@ -24024,7 +23899,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return 'Mål för aktiva timmar $arg0';
+    return '/ $arg0 tim';
   }
 
   @override
@@ -24070,11 +23945,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String neatScoreDisplayTrend(Object name) {
     return 'Trend: $name';
-  }
-
-  @override
-  String neatScoreDisplayValue(Object widget) {
-    return '))(widget)';
   }
 
   @override
@@ -24321,16 +24191,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String nextSetPreviewCardKg(Object recommendedWeight) {
     return '$recommendedWeight kg';
-  }
-
-  @override
-  String nextSetPreviewCardKg2(Object weightDelta) {
-    return ')(weightDelta) kg';
-  }
-
-  @override
-  String nextSetPreviewCardValue(Object weightDelta) {
-    return ')(weightDelta)';
   }
 
   @override
@@ -24897,11 +24757,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get nutrientExplorerUnpinNutrient => 'Lossa näringsämne';
-
-  @override
-  String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
-  }
 
   @override
   String get nutrientExplorerVitamins => 'VITAMINER';
@@ -25873,11 +25728,6 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) kal';
-  }
-
-  @override
   String nutritionTabPartWeeklyOverviewCardCalDay(Object uncertaintyDisplay) {
     return 'cal/dag $uncertaintyDisplay';
   }
@@ -25890,11 +25740,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String nutritionTabPartWeeklyOverviewCardG2(Object grams) {
     return '${grams}g';
-  }
-
-  @override
-  String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
   }
 
   @override
@@ -26063,12 +25908,12 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String openAllCratesCollect(Object arg0, Object arg1) {
-    return 'Samla $arg0 $arg1';
+    return 'Samla ($arg0/$arg1)';
   }
 
   @override
   String openAllCratesCratesOpened(Object arg0) {
-    return 'Lådor öppnade $arg0';
+    return '$arg0 lådor öppnade!';
   }
 
   @override
@@ -26085,33 +25930,30 @@ class AppLocalizationsSv extends AppLocalizations {
       'Kunde inte öppna lådor. Försök igen.';
 
   @override
-  String get openAllCratesFitnessCrate => 'Fitnesslåda';
+  String get openAllCratesFitnessCrate => 'Träningslåda';
 
   @override
   String openAllCratesGainedXp(Object arg0) {
-    return 'Erhållen XP $arg0';
+    return '+$arg0 XP';
   }
 
   @override
   String get openAllCratesMaxLevel => 'Maxnivå';
 
   @override
-  String get openAllCratesOpenYourCrates => 'Öppna dina lådor';
+  String get openAllCratesOpenYourCrates => '🎁 Öppna dina lådor';
 
   @override
-  String get openAllCratesOpened => ') öppnade!';
-
-  @override
-  String get openAllCratesOpeningYourCrates => 'Öppnar dina lådor';
+  String get openAllCratesOpeningYourCrates => '🎁 Öppnar dina lådor…';
 
   @override
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
-    return 'Välj belöning per dag $arg0 $arg1';
+    return 'Välj 1 belöning per dag • $arg0/$arg1 valda';
   }
 
   @override
   String openAllCratesPickYourReward(Object arg0, Object arg1) {
-    return 'Välj din belöning $arg0 $arg1';
+    return 'Välj din belöning • $arg0/$arg1 valda';
   }
 
   @override
@@ -26121,22 +25963,22 @@ class AppLocalizationsSv extends AppLocalizations {
   String get openAllCratesSelectAll => 'Markera alla';
 
   @override
-  String get openAllCratesStreakCrate => 'Streak-låda';
+  String get openAllCratesStreakCrate => 'Svitlåda';
 
   @override
-  String get openAllCratesStreakShield => 'Streak-sköld';
+  String get openAllCratesStreakShield => 'Svitsköld';
 
   @override
   String get openAllCratesToday => 'Idag';
 
   @override
   String openAllCratesTotalXpFormatted(Object arg0) {
-    return 'Total XP $arg0';
+    return '$arg0 totalt';
   }
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return 'Total XP nivå $arg0 $arg1';
+    return 'Totalt: $arg0 XP • Nivå $arg1';
   }
 
   @override
@@ -26144,12 +25986,12 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String openAllCratesXpInLevel(Object arg0, Object arg1) {
-    return 'XP i nivå $arg0 $arg1';
+    return '$arg0 / $arg1 XP';
   }
 
   @override
   String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
-    return 'XP till nästa nivå $arg0 $arg1';
+    return '$arg0 XP till nivå $arg1';
   }
 
   @override
@@ -26990,11 +26832,6 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-konfidensuppskattning\" : \"\")';
-  }
-
-  @override
   String phaseRecommendationBannerCycleDay(Object cycleDay) {
     return 'Cykel-dag $cycleDay';
   }
@@ -27376,7 +27213,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return 'Dagar per vecka $arg0';
+    return '$arg0 dagar/vecka';
   }
 
   @override
@@ -27385,7 +27222,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
-    return 'Antal utrustning $arg0';
+    return '$arg0 utrustning';
   }
 
   @override
@@ -27717,9 +27554,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String prInlineCelebrationValue2(Object exerciseName, Object formattedValue) {
     return '$exerciseName • $formattedValue';
   }
-
-  @override
-  String get prPosterTemplateFromLast => ') FRÅN SENASTE';
 
   @override
   String get prShareCardCopiedToClipboard => 'Kopierat till urklipp!';
@@ -29250,11 +29084,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get prsTemplateNewPrsAreJust => 'Nya PR är precis runt hörnet';
 
   @override
-  String prsTemplateValue(Object unit) {
-    return ') (enhet)';
-  }
-
-  @override
   String prsTemplateValue2(Object improvement, Object unit) {
     return '+$improvement $unit';
   }
@@ -29651,7 +29480,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return 'Dagar sedan $arg0';
+    return 'Uppdaterad för $arg0 dagar sedan';
   }
 
   @override
@@ -30091,17 +29920,20 @@ class AppLocalizationsSv extends AppLocalizations {
       'Kontinuitet slår intensitet - välj vad du kan hålla dig till';
 
   @override
-  String quizDaysSelectorDays(Object arg0) {
-    return 'Dagar $arg0';
+  String quizDaysSelectorDays(int arg0) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg0,
+      locale: localeName,
+      other: 'dagar',
+      one: 'dag',
+    );
+    return '$_temp0';
   }
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return 'Valda dagar $arg0 $arg1';
+    return '$arg0 / $arg1 dagar valda';
   }
-
-  @override
-  String get quizDaysSelectorForYourWorkouts => ') för dina träningspass';
 
   @override
   String get quizDaysSelectorFri => 'Fre';
@@ -30125,7 +29957,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
-    return 'Välj $arg0 dagar';
+    return 'Välj $arg0 dagar som passar dig';
   }
 
   @override
@@ -30221,7 +30053,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return 'Identifierat antal $arg0';
+    return 'Identifierade $arg0 objekt. Tryck på valfritt för att avmarkera.';
   }
 
   @override
@@ -30243,7 +30075,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return 'Annat antal $arg0';
+    return '$arg0 valda';
   }
 
   @override
@@ -31182,11 +31014,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get recipeCreateSaving => 'Sparar...';
 
   @override
-  String recipeCreateScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
-  }
-
-  @override
   String recipeCreateScreenValue2(Object selected) {
     return '✨ $selected';
   }
@@ -31270,11 +31097,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String recipeDetailScreenUForkedFrom(Object sourceName) {
     return '✨ Forkad från $sourceName';
-  }
-
-  @override
-  String recipeDetailScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
   }
 
   @override
@@ -32026,7 +31848,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get regenerateSheetBalancingMuscleGroups => 'Balanserar muskelgrupper';
 
   @override
-  String get regenerateSheetBootingUpTheAi => 'Startar AI';
+  String get regenerateSheetBootingUpTheAi => 'Startar AI:n';
 
   @override
   String get regenerateSheetBuildingYourPlan => 'Bygger din plan';
@@ -32041,7 +31863,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get regenerateSheetCheckingPreferences => 'Kontrollerar inställningar';
 
   @override
-  String get regenerateSheetConnectingToTheAi => 'Ansluter till AI';
+  String get regenerateSheetConnectingToTheAi => 'Ansluter till AI:n';
 
   @override
   String get regenerateSheetConsideringFocusAreas =>
@@ -32055,7 +31877,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get regenerateSheetCustomizeOrLetAiSuggest =>
-      'Anpassa eller låt AI föreslå';
+      'Anpassa eller låt AI:n föreslå';
 
   @override
   String get regenerateSheetDescribeYourIdealWorkout =>
@@ -32097,7 +31919,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return 'Generering pågår $arg0';
+    return 'Genererar… $arg0';
   }
 
   @override
@@ -32911,7 +32733,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String restSuggestionSaveTime(Object arg0) {
-    return 'Spara tid $arg0';
+    return 'Spara $arg0';
   }
 
   @override
@@ -32932,10 +32754,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get restTimerCardFormula => 'Formel';
-
-  @override
-  String get restTimerCardFormulaBaserestRpe7 =>
-      'Formel: BaseRest * (RPE / 7) * Multiplier';
 
   @override
   String get restTimerCardLivePreview => 'Live-förhandsvisning';
@@ -32963,7 +32781,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get restTimerCardVariablesBaseRpeMultipli =>
-      'Variabler: base, rpe, multiplier, tier';
+      'Variabler: bas, RPE, multiplikator, nivå';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -33273,7 +33091,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
-    return 'Skador markerade $arg0';
+    return '$arg0 skador flaggade';
   }
 
   @override
@@ -33981,9 +33799,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get sessionDetailTime => 'Tid';
 
   @override
-  String get sessionDetailTopSetHighlighted => ') • toppset markerat';
-
-  @override
   String get sessionDetailWeight => 'Vikt';
 
   @override
@@ -34044,11 +33859,6 @@ class AppLocalizationsSv extends AppLocalizations {
     Object length,
   ) {
     return '$length borttagna';
-  }
-
-  @override
-  String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') av (exerciseName)';
   }
 
   @override
@@ -34300,11 +34110,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String setTrackingSectionSetsCompleted(Object length) {
     return '$length set avklarade';
-  }
-
-  @override
-  String setTrackingSectionValue(Object reps) {
-    return ')×(reps)';
   }
 
   @override
@@ -34935,7 +34740,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get settingsScreenUiTryDifferentKeywordsLike =>
-      'Prova andra sökord som \"tema\", \"notiser\" eller \"ai-röst\"';
+      'Prova andra sökord som \"tema\", \"aviseringar\" eller \"AI-röst\"';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -35099,7 +34904,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get shareMotivationalCompleted => 'KLART';
 
   @override
-  String get sharePrNewPr => 'Nytt PR';
+  String get sharePrNewPr => 'NYTT PR';
 
   @override
   String get shareStatsCalories => 'Kalorier';
@@ -36630,9 +36435,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get streakMilestoneStreakMilestone => 'SVIT-MILSTOLPE!';
-
-  @override
-  String get streakMilestoneToGo => ') kvar!';
 
   @override
   String get streakMilestoneYouVeReachedThe =>
@@ -38449,25 +38251,31 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return 'Ner $arg0';
+    return '▼ Ner $arg0 sedan i morse';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return 'Intjänade poäng $arg0 $arg1';
+    return '$arg0 / $arg1 p';
   }
 
   @override
   String get todayScoreDetailHowItWorks => 'Hur det fungerar';
 
   @override
-  String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return 'Inaktivitetsförklaring $arg0 $arg1';
+  String todayScoreDetailInactiveExplanation(Object arg0, int arg1) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg1,
+      locale: localeName,
+      other: 'räknas inte',
+      one: 'räknas inte',
+    );
+    return '$arg0 $_temp0 idag, så resten delar på de fulla 100 poängen. Ditt resultat återspeglar alltid bara det som faktiskt gäller idag.';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return 'Momentum med snitt $arg0 $arg1';
+    return '$arg0  ·  7-dagarssnitt $arg1';
   }
 
   @override
@@ -38484,7 +38292,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return 'Upp $arg0';
+    return '▲ Upp $arg0 sedan i morse';
   }
 
   @override
@@ -38945,9 +38753,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get trophiesEarnedFirstTime => 'FÖRSTA GÅNGEN!';
 
   @override
-  String get trophiesEarnedKg => ') kg';
-
-  @override
   String get trophiesEarnedMilestoneReached => 'Milstolpe nådd';
 
   @override
@@ -38958,20 +38763,20 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return 'Utmärkelser $arg0';
+    return '$arg0 nya märken';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return 'Nya konditions-PR $arg0';
+    return '$arg0 nya kondition-PR';
   }
 
   @override
-  String get trophiesEarnedNewPR => 'Troféer intjänade nytt PR';
+  String get trophiesEarnedNewPR => 'NYTT PR';
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return 'Nya PR $arg0';
+    return '$arg0 nya PR!';
   }
 
   @override
@@ -38992,7 +38797,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
-    return 'Återstår att låsa upp $arg0 $arg1';
+    return '$arg0 $arg1 till för att låsa upp';
   }
 
   @override
@@ -39194,7 +38999,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsBreakfastLogged(Object arg0) {
-    return 'Unified home widgets frukost loggad $arg0';
+    return 'Frukost loggad $arg0 av de senaste 7 morgnarna';
   }
 
   @override
@@ -39244,7 +39049,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '$arg0 kcal totalt idag';
+    return '$arg0 kcal förbrända';
   }
 
   @override
@@ -39957,7 +39762,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return 'Antal slutförda $arg0 $arg1';
+    return '$arg0 av $arg1 pass klara';
   }
 
   @override
@@ -40657,12 +40462,12 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return 'Ner denna vecka $arg0';
+    return 'Ner $arg0 denna vecka!';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return 'Ner jämfört med förra cykeln $arg0';
+    return 'Ner $arg0 lbs jämfört med samma cykeldag förra månaden';
   }
 
   @override
@@ -40698,17 +40503,17 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return 'Mål uppnått inom intervall $arg0';
+    return 'Mål bibehållet $arg0 — lutealfas-vattenutjämning';
   }
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return 'Upp denna vecka $arg0';
+    return 'Upp $arg0 denna vecka';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return 'Upp jämfört med förra cykeln $arg0';
+    return 'Upp $arg0 lbs jämfört med samma cykeldag förra månaden';
   }
 
   @override
@@ -40872,11 +40677,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String workoutActionsSheetGetALinkFor(Object marketingDomain) {
     return 'Hämta en $marketingDomain-länk till vänner';
-  }
-
-  @override
-  String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41222,11 +41022,6 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2Value(Object workoutComp) {
-    return ')(workoutComp)';
-  }
-
-  @override
   String get workoutCompleteScreenUnableToChallengeFriends =>
       'Kan inte utmana vänner just nu';
 
@@ -41446,10 +41241,6 @@ class AppLocalizationsSv extends AppLocalizations {
       'Kunde inte läsa in träningspasset';
 
   @override
-  String get workoutDetailHelpersForAvailableEquipment =>
-      ') för tillgänglig utrustning...';
-
-  @override
   String get workoutDetailHelpersHell => 'Hårt';
 
   @override
@@ -41463,7 +41254,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return 'Ersätter övningar $arg0';
+    return 'Byter ut $arg0 övningar för tillgänglig utrustning…';
   }
 
   @override
@@ -41928,9 +41719,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get workoutHistoryImportYourStrengthData => 'Din styrkedata';
 
   @override
-  String get workoutImportAsDone => ')\" som klar';
-
-  @override
   String get workoutImportCalories => 'Kalorier';
 
   @override
@@ -41953,7 +41741,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return 'Från källa $arg0';
+    return 'från $arg0';
   }
 
   @override
@@ -42264,12 +42052,8 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String workoutPlanDrawerExerciseCount(Object arg0) {
-    return 'Antal övningar $arg0';
+    return '$arg0 övningar';
   }
-
-  @override
-  String get workoutPlanDrawerLoggedTheyWillBe =>
-      ') loggade. De kommer att raderas.';
 
   @override
   String get workoutPlanDrawerNow => 'Nu';
@@ -42279,7 +42063,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String workoutPlanDrawerRemoveExercise(Object arg0) {
-    return 'Ta bort övning $arg0';
+    return 'Ta bort $arg0?';
   }
 
   @override
@@ -42288,7 +42072,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
-    return 'Set loggade $arg0';
+    return 'Du har $arg0 set loggade. De kommer att raderas.';
   }
 
   @override
@@ -42696,7 +42480,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get workoutShowcaseFinishWorkout => 'Avsluta träningspass';
 
   @override
-  String get workoutShowcaseFormat1Rm => 'Format 1RM för träningsuppvisning';
+  String get workoutShowcaseFormat1Rm => '1RM';
 
   @override
   String get workoutShowcaseFormatBoarding => 'Boarding';
@@ -42770,7 +42554,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return 'Set $arg0';
+    return '✓ Logga set $arg0';
   }
 
   @override
@@ -42818,11 +42602,6 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String workoutShowcaseScreenDuration(Object duration) {
     return 'VARAKTIGHET: $duration';
-  }
-
-  @override
-  String workoutShowcaseScreenPrs(Object prs) {
-    return 'PRS:      $prs';
   }
 
   @override
@@ -42878,7 +42657,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String workoutShowcaseSetNOf3(Object arg0) {
-    return 'Träningspass showcase set n av $arg0';
+    return 'Set $arg0 av 3';
   }
 
   @override
@@ -43746,47 +43525,49 @@ class AppLocalizationsSv extends AppLocalizations {
       'Nybörjare till transcendent';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp => 'Slutför träningspass xp';
+  String get xpGoalsDialogCompleteWorkoutXp => 'Slutför pass: +100 XP';
 
   @override
   String get xpGoalsDialogDailyGoals => 'Dagliga mål';
 
   @override
-  String get xpGoalsDialogFirstChatWithAiCoachXp => 'Chatta med ai coach xp';
+  String get xpGoalsDialogFirstChatWithAiCoachXp =>
+      'Första chatten med AI-coachen: +15 XP';
 
   @override
   String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'Måltidsviktmätningar xp';
+      'Första måltid/vikt/mätning: +50 XP styck';
 
   @override
-  String get xpGoalsDialogFirstPrXp => 'Pr xp';
+  String get xpGoalsDialogFirstPrXp => 'Första PR: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp => 'Framstegsfoto xp';
+  String get xpGoalsDialogFirstProgressPhotoXp =>
+      'Första framstegsfoto: +75 XP';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp => 'Proteingol xp';
+  String get xpGoalsDialogFirstProteinGoalXp => 'Första proteinmål: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => 'Träningspass xp';
+  String get xpGoalsDialogFirstWorkoutXp => 'Första passet: +150 XP';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp => 'Nå proteingol xp';
+  String get xpGoalsDialogHitProteinGoalXp => 'Nå proteinmål: +50 XP';
 
   @override
   String get xpGoalsDialogLevels => 'Nivåer';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp => 'Kroppsmätningar xp';
+  String get xpGoalsDialogLogBodyMeasurementsXp => 'Logga kroppsmått: +20 XP';
 
   @override
-  String get xpGoalsDialogLogMealXp => 'Måltid xp';
+  String get xpGoalsDialogLogMealXp => 'Logga måltid: +25 XP';
 
   @override
-  String get xpGoalsDialogLogWeightXp => 'Vikt xp';
+  String get xpGoalsDialogLogWeightXp => 'Logga vikt: +15 XP';
 
   @override
-  String get xpGoalsDialogLoginXp => 'Inloggning xp';
+  String get xpGoalsDialogLoginXp => 'Logga in: +5 XP';
 
   @override
   String get xpGoalsDialogMilestoneRewards => 'Milstolpebelöningar';
@@ -43864,7 +43645,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return 'Nuvarande totalnivå $arg0';
+    return 'Nivå $arg0 • 249 nivåer totalt';
   }
 
   @override
@@ -43979,12 +43760,12 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return 'Tillgängligt $arg0';
+    return '+$arg0 XP tillgängligt';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return 'Tjänat idag $arg0';
+    return '+$arg0 XP intjänat idag';
   }
 
   @override
@@ -43992,7 +43773,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return 'Multiplikator aktiv $arg0';
+    return '${arg0}x XP aktivt!';
   }
 
   @override

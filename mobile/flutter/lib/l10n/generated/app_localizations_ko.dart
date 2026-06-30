@@ -325,11 +325,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') $name (을)를 위해';
-  }
-
-  @override
   String get activeWorkoutScreenUndo => '실행 취소';
 
   @override
@@ -1004,10 +999,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get aiCoachMealRecoveryDayEating => '회복일 식단?';
-
-  @override
-  String get aiCoachMealSearchQuestionsTryAngry =>
-      '질문 검색(\"angry\", \"fibe mexican\"을 시도해 보세요)';
 
   @override
   String get aiCoachMealSomethingWentWrong => '문제가 발생했습니다.';
@@ -2747,9 +2738,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get caloriesSummaryCardOveLeft => '남음';
-
-  @override
   String get cancelConfirmationAnythingElseYouD =>
       '공유하고 싶은 다른 의견이 있으신가요? (선택 사항)';
 
@@ -3385,9 +3373,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get chatGotIt => '확인';
 
   @override
-  String get chatLeftToday => ') 남음';
-
-  @override
   String chatMediaWidgetsCalTotal(Object totalCal) {
     return '총 $totalCal cal';
   }
@@ -3502,11 +3487,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get chatScreenExtAboutAiCoach => 'AI 코치 소개';
-
-  @override
-  String chatScreenExtAs(Object mealType) {
-    return ') (mealType)로';
-  }
 
   @override
   String get chatScreenExtChangeCoach => '코치 변경';
@@ -4666,7 +4646,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String complianceRingCardGreatPace(Object arg0) {
-    return '훌륭한 페이스 $arg0';
+    return '좋은 페이스예요! $arg0 남음';
   }
 
   @override
@@ -4674,7 +4654,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
-    return '순항 중 $arg0';
+    return '순조로워요 — $arg0 남음';
   }
 
   @override
@@ -4682,7 +4662,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String complianceRingCardWorkoutsRemaining(Object arg0) {
-    return '남은 운동 $arg0';
+    return '운동 $arg0개 남음';
   }
 
   @override
@@ -4964,9 +4944,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get cookingConverterUseThisValue => '이 값 사용';
-
-  @override
-  String get cookingConverterWeight => ') 무게';
 
   @override
   String get cosmeticsGalleryCosmetics => '코스메틱';
@@ -5476,19 +5453,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenUsedTimes(
-    Object lastUsedFormatted,
-    Object usageCount,
-  ) {
-    return '사용 횟수 (usageCount)회(lastUsedFormatted)\" : \"\")';
-  }
-
-  @override
-  String customExercisesScreenValue(Object name, Object targetDisplay) {
-    return '(name) (targetDisplay))\" : \"\")';
-  }
-
-  @override
   String get customExercisesSearchExercises => '운동 검색...';
 
   @override
@@ -5631,11 +5595,6 @@ class AppLocalizationsKo extends AppLocalizations {
     Object pairedPoints,
   ) {
     return '$pairedPoints/$kMinCorrelationPairs 공유 일수';
-  }
-
-  @override
-  String customTrendScreenValue(Object strengthLabel, Object value) {
-    return ')(value) · (strengthLabel)';
   }
 
   @override
@@ -5878,9 +5837,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get cycleScreenUiLogYourFirstPeriod => '첫 생리일을 기록하여 예측을 시작하세요.';
-
-  @override
-  String get cycleScreenUiPhase => ' 단계';
 
   @override
   String cycleScreenUiPhaseLabel(Object displayName) {
@@ -7814,7 +7770,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String editProgramSheetCustomValue(Object arg0) {
-    return '사용자 지정 값 $arg0';
+    return '사용자 지정: $arg0';
   }
 
   @override
@@ -7857,12 +7813,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return '기록 불러오기 $arg0';
+    return '기록을 불러오지 못했습니다: $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return '복원 $arg0';
+    return '복원하지 못했습니다: $arg0';
   }
 
   @override
@@ -9362,11 +9318,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseDetailSheetFavorite => '가장 좋아하는';
 
   @override
-  String exerciseDetailSheetLbs(Object repRange) {
-    return ') lbs × (repRange)';
-  }
-
-  @override
   String get exerciseDetailSheetLoading => '로드 중...';
 
   @override
@@ -10570,9 +10521,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseSetTrackerAddSet => '세트 추가';
 
   @override
-  String get exerciseSetTrackerBarbell => ') 바벨';
-
-  @override
   String get exerciseSetTrackerReps => '횟수';
 
   @override
@@ -10712,10 +10660,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetAskAiForSuggestions => 'AI에게 제안 요청하기';
-
-  @override
-  String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      '장비나 선호 사항을 설명하세요\n예: \"어깨가 안 좋아요\", \"맨몸 운동만 가능\"';
 
   @override
   String get exerciseSwapSheetEGIOnly => '예: \"덤벨만 있어요\"';
@@ -10883,9 +10827,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get expandedExerciseCardAlternatingHands => '양손 번갈아 하기';
-
-  @override
-  String get expandedExerciseCardBarbell => ') 바벨';
 
   @override
   String get expandedExerciseCardBreathing => '호흡';
@@ -11600,11 +11541,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get fastingScoreCardStreakBonus => '연속 기록 보너스';
-
-  @override
-  String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
-  }
 
   @override
   String fastingScoreCardValue2(Object value) {
@@ -12553,11 +12489,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get flexibilityProgressChartNoDataAvailable => '데이터 없음';
 
   @override
-  String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
-  }
-
-  @override
   String get flexibilityScoreCardByArea => '부위별';
 
   @override
@@ -13204,9 +13135,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get foodItemRankingAddFood => '음식 추가';
 
   @override
-  String get foodItemRankingDetails => ') 세부 정보';
-
-  @override
   String foodItemRankingNFoodItems(Object count) {
     return '음식 항목 $count개';
   }
@@ -13706,9 +13634,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '실제로 몸을 만든 친구들은 누군가와 계속 연락을 주고받았습니다. 실제 책임감 있는 관리는 한 달에 약 200달러가 들고, 이것이 바로 우리 대부분이 그런 관리를 받지 못하는 이유이며, \'기록\'과 \'변화\' 사이의 간극이 수년 동안 좁혀지지 않는 이유입니다.';
 
   @override
-  String get freshnessDecayCardAgo => ' 전';
-
-  @override
   String get freshnessDecayCardControlsHowQuicklyExercise =>
       '운동 신선도가 감소하는 속도를 제어합니다: e^(-k * 세션)';
 
@@ -13950,16 +13875,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get futuristicSetCardSkipExercise => '운동 건너뛰기';
-
-  @override
-  String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
-  }
-
-  @override
-  String futuristicSetCardValue2(Object reps) {
-    return ')×(reps)';
-  }
 
   @override
   String get generatePlanCreateAHolisticPlan =>
@@ -14825,12 +14740,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return '완료 횟수 $arg0 $arg1';
+    return '$arg0/$arg1 완료';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return '$arg0일 연속 기록';
+    return '$arg0일 연속';
   }
 
   @override
@@ -14857,7 +14772,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String habitsCardViewAllHabits(Object arg0) {
-    return '모든 습관 보기 $arg0';
+    return '습관 $arg0개 모두 보기';
   }
 
   @override
@@ -16319,9 +16234,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeEmptyWorkout_v4 => '아직 계획이 없네요. AI가 당신의 목표에 맞춰 계획을 짜드릴게요.';
-
-  @override
-  String get homeFromHealthConnect => ') Health Connect에서 가져옴';
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
@@ -18237,11 +18149,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get insightsSummaryTemplateSummary => '요약';
 
   @override
-  String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
-  }
-
-  @override
   String get insightsSummaryTemplateWorkouts => '운동';
 
   @override
@@ -18255,10 +18162,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get intensityPromptHard => '힘듦';
-
-  @override
-  String get intensityPromptHideRpeSlideDial =>
-      'RPE 슬라이드 숨기기      강도 조절 (RPE 1-10)';
 
   @override
   String get intensityPromptHowHardWasThat => '이번 세트의 강도는 어땠나요?';
@@ -18283,11 +18186,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get introBuildMyPlan => '내 계획 만들기';
-
-  @override
-  String introCardFormatDataTotalvolumelbsRound(Object totalSets) {
-    return ').format(data.totalVolumeLbs.round())) lbs · (totalSets) 세트';
-  }
 
   @override
   String get introCardMonth => '개월.';
@@ -19296,9 +19194,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetCached => '(캐시됨)';
 
   @override
-  String get logMealSheetCaptured => ') 캡처됨';
-
-  @override
   String get logMealSheetChooseFoodPhotos => '음식 사진 선택';
 
   @override
@@ -19894,11 +19789,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValue(Object changeInUnit) {
-    return ')(changeInUnit)';
-  }
-
-  @override
   String get logWeightSyncedFromAppleHealth => 'Apple 건강에서 동기화됨';
 
   @override
@@ -20334,7 +20224,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return '오늘 남은 채팅 $arg0';
+    return '오늘 남은 채팅 $arg0회';
   }
 
   @override
@@ -20377,11 +20267,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String manageDuplicateImportsScreenValue(Object primary) {
     return '$primary · ';
-  }
-
-  @override
-  String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
   }
 
   @override
@@ -21284,11 +21169,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String menuAnalysisSheetValue(Object elapsed) {
-    return ')(경과)';
-  }
-
-  @override
   String menuAnalysisSheetValue2(Object rank) {
     return '#$rank';
   }
@@ -21721,7 +21601,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String metricsDashboardNoMetricDataYet(Object arg0) {
-    return '아직 측정 데이터 없음 $arg0';
+    return '$arg0 데이터가 아직 없습니다';
   }
 
   @override
@@ -22380,7 +22260,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return '가장 많이 훈련한 부위 $arg0';
+    return '가장 많이 단련: $arg0';
   }
 
   @override
@@ -22801,11 +22681,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardValue(Object item) {
-    return ')(item)%';
-  }
-
-  @override
   String get myLibraryTabRecentActivity => '최근 활동';
 
   @override
@@ -23088,7 +22963,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return '현재 XP $arg0';
+    return '$arg0 XP';
   }
 
   @override
@@ -23099,7 +22974,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return '남은 시간 $arg0 $arg1';
+    return '$arg0시간 $arg1분 남음';
   }
 
   @override
@@ -23115,7 +22990,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return '남은 분 $arg0';
+    return '$arg0분 남음';
   }
 
   @override
@@ -23143,7 +23018,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return '걸음 수 목표 $arg0';
+    return '/ $arg0';
   }
 
   @override
@@ -23151,7 +23026,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return '목표 활동 시간 $arg0';
+    return '/ $arg0시간';
   }
 
   @override
@@ -23197,11 +23072,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String neatScoreDisplayTrend(Object name) {
     return '추세: $name';
-  }
-
-  @override
-  String neatScoreDisplayValue(Object widget) {
-    return '))(widget)';
   }
 
   @override
@@ -23441,16 +23311,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String nextSetPreviewCardKg(Object recommendedWeight) {
     return '$recommendedWeight kg';
-  }
-
-  @override
-  String nextSetPreviewCardKg2(Object weightDelta) {
-    return ')(weightDelta) kg';
-  }
-
-  @override
-  String nextSetPreviewCardValue(Object weightDelta) {
-    return ')(weightDelta)';
   }
 
   @override
@@ -23985,11 +23845,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get nutrientExplorerUnpinNutrient => '영양소 고정 해제';
-
-  @override
-  String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
-  }
 
   @override
   String get nutrientExplorerVitamins => '비타민';
@@ -24925,11 +24780,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
-  }
-
-  @override
   String nutritionTabPartWeeklyOverviewCardCalDay(Object uncertaintyDisplay) {
     return 'cal/일 $uncertaintyDisplay';
   }
@@ -24942,11 +24792,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String nutritionTabPartWeeklyOverviewCardG2(Object grams) {
     return '${grams}g';
-  }
-
-  @override
-  String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
   }
 
   @override
@@ -25098,32 +24943,32 @@ class AppLocalizationsKo extends AppLocalizations {
   String get onboardingWhyWhatSDrivingThis => '무엇이 당신을 움직이게 하나요?';
 
   @override
-  String get openAllCrates24HoursOf2xXp => '24시간 동안 2배 XP';
+  String get openAllCrates24HoursOf2xXp => '24시간 2x XP';
 
   @override
-  String get openAllCratesActivityCrate => '활동 상자';
+  String get openAllCratesActivityCrate => '액티비티 상자';
 
   @override
   String get openAllCratesBonusCrateToOpen => '열 수 있는 보너스 상자';
 
   @override
   String openAllCratesCollect(Object arg0, Object arg1) {
-    return '수집 $arg0 $arg1';
+    return '받기 ($arg0/$arg1)';
   }
 
   @override
   String openAllCratesCratesOpened(Object arg0) {
-    return '열린 상자 $arg0';
+    return '상자 $arg0개 개봉!';
   }
 
   @override
-  String get openAllCratesDailyCrate => '일일 상자';
+  String get openAllCratesDailyCrate => '데일리 상자';
 
   @override
   String get openAllCratesDone => '완료';
 
   @override
-  String get openAllCratesDoubleXpToken => '2배 XP 토큰';
+  String get openAllCratesDoubleXpToken => '더블 XP 토큰';
 
   @override
   String get openAllCratesFailedToOpenCrates => '상자를 여는 데 실패했습니다. 다시 시도해주세요.';
@@ -25133,29 +24978,26 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String openAllCratesGainedXp(Object arg0) {
-    return '획득한 XP $arg0';
+    return '+$arg0 XP';
   }
 
   @override
   String get openAllCratesMaxLevel => '최대 레벨';
 
   @override
-  String get openAllCratesOpenYourCrates => '상자 열기';
+  String get openAllCratesOpenYourCrates => '🎁 상자 열기';
 
   @override
-  String get openAllCratesOpened => ') 열림!';
-
-  @override
-  String get openAllCratesOpeningYourCrates => '상자 여는 중';
+  String get openAllCratesOpeningYourCrates => '🎁 상자 여는 중…';
 
   @override
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
-    return '일일 보상 선택 $arg0 $arg1';
+    return '하루에 보상 1개 선택 • $arg0/$arg1 선택됨';
   }
 
   @override
   String openAllCratesPickYourReward(Object arg0, Object arg1) {
-    return '보상 선택 $arg0 $arg1';
+    return '보상 선택 • $arg0/$arg1 선택됨';
   }
 
   @override
@@ -25168,19 +25010,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get openAllCratesStreakCrate => '스트릭 상자';
 
   @override
-  String get openAllCratesStreakShield => '스트릭 방패';
+  String get openAllCratesStreakShield => '스트릭 실드';
 
   @override
   String get openAllCratesToday => '오늘';
 
   @override
   String openAllCratesTotalXpFormatted(Object arg0) {
-    return '총 XP $arg0';
+    return '총 $arg0';
   }
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return '총 XP 레벨 $arg0 $arg1';
+    return '총: $arg0 XP • 레벨 $arg1';
   }
 
   @override
@@ -25188,12 +25030,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String openAllCratesXpInLevel(Object arg0, Object arg1) {
-    return '현재 레벨 XP $arg0 $arg1';
+    return '$arg0 / $arg1 XP';
   }
 
   @override
   String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
-    return '다음 레벨까지 XP $arg0 $arg1';
+    return '레벨 $arg1까지 $arg0 XP';
   }
 
   @override
@@ -26000,11 +25842,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-confidence estimate\" : \"\")';
-  }
-
-  @override
   String phaseRecommendationBannerCycleDay(Object cycleDay) {
     return '$cycleDay일차';
   }
@@ -26381,7 +26218,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return '주당 $arg0일';
+    return '주 $arg0일';
   }
 
   @override
@@ -26389,7 +26226,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
-    return '장비 수 $arg0';
+    return '장비 $arg0개';
   }
 
   @override
@@ -26715,9 +26552,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String prInlineCelebrationValue2(Object exerciseName, Object formattedValue) {
     return '$exerciseName • $formattedValue';
   }
-
-  @override
-  String get prPosterTemplateFromLast => ') 이전 기록 대비';
 
   @override
   String get prShareCardCopiedToClipboard => '클립보드에 복사되었습니다!';
@@ -28194,11 +28028,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get prsTemplateNewPrsAreJust => '새로운 PR이 곧 다가옵니다';
 
   @override
-  String prsTemplateValue(Object unit) {
-    return ') (단위)';
-  }
-
-  @override
   String prsTemplateValue2(Object improvement, Object unit) {
     return '+$improvement $unit';
   }
@@ -28583,7 +28412,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return '$arg0일 전 업데이트됨';
+    return '$arg0일 전 업데이트';
   }
 
   @override
@@ -29010,17 +28839,20 @@ class AppLocalizationsKo extends AppLocalizations {
       '강도보다 꾸준함이 중요합니다. 유지할 수 있는 만큼 선택하세요';
 
   @override
-  String quizDaysSelectorDays(Object arg0) {
-    return '$arg0일';
+  String quizDaysSelectorDays(int arg0) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg0,
+      locale: localeName,
+      other: '일',
+      one: '일',
+    );
+    return '$_temp0';
   }
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return '$arg0일 선택됨 $arg1';
+    return '$arg0 / $arg1일 선택됨';
   }
-
-  @override
-  String get quizDaysSelectorForYourWorkouts => ') 운동을 위해';
 
   @override
   String get quizDaysSelectorFri => '금';
@@ -29042,7 +28874,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
-    return '$arg0일 선택';
+    return '맞는 날 $arg0일을 선택하세요';
   }
 
   @override
@@ -29135,7 +28967,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return '확인된 개수 $arg0';
+    return '$arg0개를 인식했습니다. 탭하여 선택 해제하세요.';
   }
 
   @override
@@ -29156,7 +28988,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return '기타 개수 $arg0';
+    return '$arg0개 선택됨';
   }
 
   @override
@@ -30053,11 +29885,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recipeCreateSaving => '저장 중...';
 
   @override
-  String recipeCreateScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
-  }
-
-  @override
   String recipeCreateScreenValue2(Object selected) {
     return '✨ $selected';
   }
@@ -30140,11 +29967,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String recipeDetailScreenUForkedFrom(Object sourceName) {
     return '✨ $sourceName에서 포크됨';
-  }
-
-  @override
-  String recipeDetailScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
   }
 
   @override
@@ -30878,7 +30700,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateSheetBalancingMuscleGroups => '근육 그룹 균형 맞추는 중';
 
   @override
-  String get regenerateSheetBootingUpTheAi => 'AI 부팅 중';
+  String get regenerateSheetBootingUpTheAi => 'AI 시작 중';
 
   @override
   String get regenerateSheetBuildingYourPlan => '플랜 구성 중';
@@ -30893,7 +30715,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateSheetCheckingPreferences => '환경 설정 확인 중';
 
   @override
-  String get regenerateSheetConnectingToTheAi => 'AI 연결 중';
+  String get regenerateSheetConnectingToTheAi => 'AI에 연결 중';
 
   @override
   String get regenerateSheetConsideringFocusAreas => '집중 부위 고려 중';
@@ -30905,7 +30727,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateSheetCustomizeOrLetAi => '직접 지정하거나 AI에게 추천받으세요';
 
   @override
-  String get regenerateSheetCustomizeOrLetAiSuggest => '직접 설정하거나 AI에게 맡기기';
+  String get regenerateSheetCustomizeOrLetAiSuggest => '직접 설정하거나 AI에 맡기기';
 
   @override
   String get regenerateSheetDescribeYourIdealWorkout => '이상적인 운동을 설명해주세요';
@@ -30942,7 +30764,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return '생성 경과 $arg0';
+    return '생성 중… $arg0';
   }
 
   @override
@@ -31709,7 +31531,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String restSuggestionSaveTime(Object arg0) {
-    return '시간 절약 $arg0';
+    return '$arg0 단축';
   }
 
   @override
@@ -31729,10 +31551,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get restTimerCardFormula => '공식';
-
-  @override
-  String get restTimerCardFormulaBaserestRpe7 =>
-      '공식: BaseRest * (RPE / 7) * Multiplier';
 
   @override
   String get restTimerCardLivePreview => '실시간 미리보기';
@@ -31759,8 +31577,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get restTimerCardVariablesBaseRpeMultipli =>
-      '변수: base, rpe, multiplier, tier';
+  String get restTimerCardVariablesBaseRpeMultipli => '변수: 기본, RPE, 배수, 등급';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -32064,7 +31881,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
-    return '부상 주의 $arg0';
+    return '부상 $arg0건 표시됨';
   }
 
   @override
@@ -32759,9 +32576,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sessionDetailTime => '시간';
 
   @override
-  String get sessionDetailTopSetHighlighted => ') • 탑 세트 강조됨';
-
-  @override
   String get sessionDetailWeight => '중량';
 
   @override
@@ -32820,11 +32634,6 @@ class AppLocalizationsKo extends AppLocalizations {
     Object length,
   ) {
     return '$length개 삭제됨';
-  }
-
-  @override
-  String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') / (exerciseName)';
   }
 
   @override
@@ -33068,11 +32877,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String setTrackingSectionSetsCompleted(Object length) {
     return '$length 세트 완료';
-  }
-
-  @override
-  String setTrackingSectionValue(Object reps) {
-    return ')×(회)';
   }
 
   @override
@@ -33679,7 +33483,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsScreenUiTryDifferentKeywordsLike =>
-      '\"테마\", \"알림\" 또는 \"AI 음성\"과 같은 다른 키워드를 입력해 보세요';
+      '\"테마\", \"알림\", \"AI 음성\" 같은 다른 키워드로 검색해 보세요';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -33840,7 +33644,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shareMotivationalCompleted => '완료';
 
   @override
-  String get sharePrNewPr => '새로운 PR';
+  String get sharePrNewPr => '신기록 PR';
 
   @override
   String get shareStatsCalories => '칼로리';
@@ -35326,9 +35130,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get streakMilestoneStreakMilestone => '스트릭 마일스톤!';
-
-  @override
-  String get streakMilestoneToGo => ') 남음!';
 
   @override
   String get streakMilestoneYouVeReachedThe => '최고의 스트릭 마일스톤에 도달했습니다!';
@@ -37085,25 +36886,31 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return '$arg0 감소';
+    return '▼ 오늘 아침보다 $arg0 하락';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return '획득한 포인트 $arg0 $arg1';
+    return '$arg0 / $arg1 pt';
   }
 
   @override
   String get todayScoreDetailHowItWorks => '작동 방식';
 
   @override
-  String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return '비활성 설명 $arg0 $arg1';
+  String todayScoreDetailInactiveExplanation(Object arg0, int arg1) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg1,
+      locale: localeName,
+      other: '집계되지 않습니다',
+      one: '집계되지 않습니다',
+    );
+    return '$arg0은(는) 오늘 $_temp0. 그래서 나머지가 100점 만점을 나눠 가집니다. 점수는 항상 오늘 실제로 해당하는 항목만 반영합니다.';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return '평균 모멘텀 $arg0 $arg1';
+    return '$arg0  ·  7일 평균 $arg1';
   }
 
   @override
@@ -37120,7 +36927,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return '$arg0 증가';
+    return '▲ 오늘 아침보다 $arg0 상승';
   }
 
   @override
@@ -37551,9 +37358,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trophiesEarnedFirstTime => '첫 달성!';
 
   @override
-  String get trophiesEarnedKg => ') kg';
-
-  @override
   String get trophiesEarnedMilestoneReached => '마일스톤 도달';
 
   @override
@@ -37564,20 +37368,20 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return '배지 $arg0';
+    return '새 배지 $arg0개';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return '새로운 유산소 PR $arg0';
+    return '새 유산소 PR $arg0개';
   }
 
   @override
-  String get trophiesEarnedNewPR => '새로운 PR 달성';
+  String get trophiesEarnedNewPR => '신기록 PR';
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return '새로운 PR $arg0';
+    return '새 PR $arg0개!';
   }
 
   @override
@@ -37598,7 +37402,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
-    return '잠금 해제까지 남은 항목 $arg0 $arg1';
+    return '잠금 해제까지 $arg1 $arg0개 더';
   }
 
   @override
@@ -37789,7 +37593,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsBreakfastLogged(Object arg0) {
-    return '아침 식사 기록됨: $arg0';
+    return '최근 7일 중 $arg0일 아침에 아침 식사를 기록함';
   }
 
   @override
@@ -37838,7 +37642,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '오늘 총 $arg0 kcal';
+    return '$arg0 kcal 소모';
   }
 
   @override
@@ -38514,7 +38318,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return '완료 횟수 $arg0 $arg1';
+    return '$arg1개 중 $arg0개 운동 완료';
   }
 
   @override
@@ -39193,12 +38997,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return '이번 주 $arg0 감소';
+    return '이번 주 $arg0 감량!';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return '지난 주기 대비 $arg0 감소';
+    return '지난달 같은 주기일 대비 $arg0 lbs 감량';
   }
 
   @override
@@ -39233,7 +39037,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return '목표 유지 범위 $arg0';
+    return '목표 유지 $arg0 — 황체기 수분 보정';
   }
 
   @override
@@ -39243,7 +39047,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return '지난 주기 대비 $arg0 증가';
+    return '지난달 같은 주기일 대비 $arg0 lbs 증가';
   }
 
   @override
@@ -39394,11 +39198,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String workoutActionsSheetGetALinkFor(Object marketingDomain) {
     return '친구를 위한 $marketingDomain 링크 가져오기';
-  }
-
-  @override
-  String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\n(url)';
   }
 
   @override
@@ -39733,11 +39532,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2Value(Object workoutComp) {
-    return ')(workoutComp)';
-  }
-
-  @override
   String get workoutCompleteScreenUnableToChallengeFriends =>
       '현재 친구에게 도전할 수 없습니다';
 
@@ -39949,9 +39743,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutDetailFailedToLoadWorkout => '운동을 불러오지 못했습니다';
 
   @override
-  String get workoutDetailHelpersForAvailableEquipment => ') 사용 가능한 장비...';
-
-  @override
   String get workoutDetailHelpersHell => '지옥';
 
   @override
@@ -39965,7 +39756,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return '운동 교체 중 $arg0';
+    return '사용 가능한 장비에 맞게 $arg0개 운동 교체 중…';
   }
 
   @override
@@ -40411,9 +40202,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutHistoryImportYourStrengthData => '귀하의 근력 데이터';
 
   @override
-  String get workoutImportAsDone => ')\" 완료로 표시';
-
-  @override
   String get workoutImportCalories => '칼로리';
 
   @override
@@ -40436,7 +40224,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return '$arg0에서 가져오기';
+    return '$arg0에서';
   }
 
   @override
@@ -40739,11 +40527,8 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutPlanDrawerExerciseCount(Object arg0) {
-    return '운동 횟수 $arg0';
+    return '운동 $arg0개';
   }
-
-  @override
-  String get workoutPlanDrawerLoggedTheyWillBe => ') 기록됨. 삭제될 예정입니다.';
 
   @override
   String get workoutPlanDrawerNow => '지금';
@@ -40753,7 +40538,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutPlanDrawerRemoveExercise(Object arg0) {
-    return '$arg0 운동 제거';
+    return '$arg0을(를) 삭제할까요?';
   }
 
   @override
@@ -40761,7 +40546,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
-    return '기록된 세트 $arg0';
+    return '기록된 세트가 $arg0개 있습니다. 삭제됩니다.';
   }
 
   @override
@@ -41149,7 +40934,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutShowcaseFinishWorkout => '운동 완료';
 
   @override
-  String get workoutShowcaseFormat1Rm => '1RM 형식';
+  String get workoutShowcaseFormat1Rm => '1RM';
 
   @override
   String get workoutShowcaseFormatBoarding => '탑승권';
@@ -41222,7 +41007,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return '세트 $arg0';
+    return '✓ 세트 $arg0 기록';
   }
 
   @override
@@ -41270,11 +41055,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String workoutShowcaseScreenDuration(Object duration) {
     return '시간: $duration';
-  }
-
-  @override
-  String workoutShowcaseScreenPrs(Object prs) {
-    return 'PRS: $prs';
   }
 
   @override
@@ -41330,7 +41110,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutShowcaseSetNOf3(Object arg0) {
-    return '세트 $arg0';
+    return '세트 $arg0/3';
   }
 
   @override
@@ -42173,46 +41953,47 @@ class AppLocalizationsKo extends AppLocalizations {
   String get xpGoalsDialogBeginnerToTranscendent => '초보자에서 초월자까지';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp => '운동 완료 XP';
+  String get xpGoalsDialogCompleteWorkoutXp => '운동 완료: +100 XP';
 
   @override
   String get xpGoalsDialogDailyGoals => '일일 목표';
 
   @override
-  String get xpGoalsDialogFirstChatWithAiCoachXp => 'AI 코치와 첫 대화 XP';
+  String get xpGoalsDialogFirstChatWithAiCoachXp => 'AI 코치와 첫 채팅: +15 XP';
 
   @override
-  String get xpGoalsDialogFirstMealWeightMeasurementsXp => '첫 식단 및 체중 측정 XP';
+  String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
+      '첫 식사/체중/측정: 각 +50 XP';
 
   @override
-  String get xpGoalsDialogFirstPrXp => '첫 PR XP';
+  String get xpGoalsDialogFirstPrXp => '첫 PR: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp => '첫 진행 상황 사진 XP';
+  String get xpGoalsDialogFirstProgressPhotoXp => '첫 진행 사진: +75 XP';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp => '첫 단백질 목표 XP';
+  String get xpGoalsDialogFirstProteinGoalXp => '첫 단백질 목표: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => '첫 운동 XP';
+  String get xpGoalsDialogFirstWorkoutXp => '첫 운동: +150 XP';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp => '단백질 목표 달성 XP';
+  String get xpGoalsDialogHitProteinGoalXp => '단백질 목표 달성: +50 XP';
 
   @override
   String get xpGoalsDialogLevels => '레벨';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp => '신체 치수 기록 XP';
+  String get xpGoalsDialogLogBodyMeasurementsXp => '신체 측정 기록: +20 XP';
 
   @override
-  String get xpGoalsDialogLogMealXp => '식단 기록 XP';
+  String get xpGoalsDialogLogMealXp => '식사 기록: +25 XP';
 
   @override
-  String get xpGoalsDialogLogWeightXp => '체중 기록 XP';
+  String get xpGoalsDialogLogWeightXp => '체중 기록: +15 XP';
 
   @override
-  String get xpGoalsDialogLoginXp => '로그인 XP';
+  String get xpGoalsDialogLoginXp => '로그인: +5 XP';
 
   @override
   String get xpGoalsDialogMilestoneRewards => '마일스톤 보상';
@@ -42287,7 +42068,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return '현재 레벨 총합 $arg0';
+    return '레벨 $arg0 • 총 249레벨';
   }
 
   @override
@@ -42401,12 +42182,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return '사용 가능 $arg0';
+    return '+$arg0 XP 획득 가능';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return '오늘 획득 $arg0';
+    return '오늘 +$arg0 XP 획득';
   }
 
   @override
@@ -42414,7 +42195,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return '배율 활성화 $arg0';
+    return '${arg0}x XP 활성화!';
   }
 
   @override

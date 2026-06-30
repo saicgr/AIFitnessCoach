@@ -743,13 +743,26 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      AppLocalizations.of(context)!.openAllCratesGainedXp(gainedXp),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        // Animated up-arrow that bounces, signalling the XP gain.
+                        const _BouncingUpArrow(),
+                        const SizedBox(width: 4),
+                        // Count-up: number ticks from +0 up to the real gain.
+                        TweenAnimationBuilder<int>(
+                          tween: IntTween(begin: 0, end: gainedXp),
+                          duration: const Duration(milliseconds: 900),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, value, _) => Text(
+                            AppLocalizations.of(context)!.openAllCratesGainedXp(value),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       AppLocalizations.of(context)!.openAllCratesTotalXpLevel(userXp.formattedTotalXp, level),
@@ -761,13 +774,27 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
             ],
           ),
           const SizedBox(height: 12),
+          // Progress bar animates from where the user *was* (pre-gain) up to
+          // the new fill, so the gain is visible as the bar sweeping forward.
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: isMax ? 1.0 : progress,
-              minHeight: 8,
-              backgroundColor: Colors.white.withOpacity(0.08),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFB300)),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(
+                begin: isMax
+                    ? 1.0
+                    : (xpToNext > 0
+                        ? ((xpInLevel - gainedXp).clamp(0, xpToNext) / xpToNext)
+                        : 0.0),
+                end: isMax ? 1.0 : progress,
+              ),
+              duration: const Duration(milliseconds: 1100),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, _) => LinearProgressIndicator(
+                value: value,
+                minHeight: 8,
+                backgroundColor: Colors.white.withOpacity(0.08),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFB300)),
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -871,5 +898,54 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
       default:
         return '';
     }
+  }
+}
+
+/// A small green up-arrow that gently bounces up and down, drawing the eye to
+/// the XP gain. Used in the rewards reveal next to the "+N XP" count-up.
+class _BouncingUpArrow extends StatefulWidget {
+  const _BouncingUpArrow();
+
+  @override
+  State<_BouncingUpArrow> createState() => _BouncingUpArrowState();
+}
+
+class _BouncingUpArrowState extends State<_BouncingUpArrow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 750),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        // Ease the bounce so it floats at the top and snaps back down.
+        final t = Curves.easeInOut.transform(_controller.value);
+        return Transform.translate(
+          offset: Offset(0, -3 * t),
+          child: Opacity(opacity: 0.65 + 0.35 * t, child: child),
+        );
+      },
+      child: const Icon(
+        Icons.arrow_upward_rounded,
+        size: 18,
+        color: Color(0xFF34D399), // emerald — "up / gain"
+      ),
+    );
   }
 }

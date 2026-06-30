@@ -333,11 +333,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') untuk (name)';
-  }
-
-  @override
   String get activeWorkoutScreenUndo => 'Urungkan';
 
   @override
@@ -1049,10 +1044,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get aiCoachMealRecoveryDayEating => 'Makan di hari pemulihan?';
-
-  @override
-  String get aiCoachMealSearchQuestionsTryAngry =>
-      'Cari pertanyaan (coba \"marah\", \"fibe mexican\")';
 
   @override
   String get aiCoachMealSomethingWentWrong => 'Ada yang tidak beres.';
@@ -2863,9 +2854,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get caloriesSummaryCardOveLeft => 'tersisa';
-
-  @override
   String get cancelConfirmationAnythingElseYouD =>
       'Ada hal lain yang ingin Anda sampaikan? (opsional)';
 
@@ -3529,9 +3517,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get chatGotIt => 'Mengerti';
 
   @override
-  String get chatLeftToday => ') tersisa hari ini';
-
-  @override
   String chatMediaWidgetsCalTotal(Object totalCal) {
     return 'Total $totalCal kal';
   }
@@ -3649,11 +3634,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get chatScreenExtAboutAiCoach => 'Tentang Pelatih AI';
-
-  @override
-  String chatScreenExtAs(Object mealType) {
-    return ') sebagai (mealType)';
-  }
 
   @override
   String get chatScreenExtChangeCoach => 'Ganti Pelatih';
@@ -4860,7 +4840,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String complianceRingCardGreatPace(Object arg0) {
-    return 'Laju yang bagus $arg0';
+    return 'Tempo bagus! Sisa $arg0';
   }
 
   @override
@@ -4869,7 +4849,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
-    return 'Sesuai jalur $arg0';
+    return 'Sesuai jalur — kurang $arg0';
   }
 
   @override
@@ -4877,7 +4857,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String complianceRingCardWorkoutsRemaining(Object arg0) {
-    return 'Sisa latihan $arg0';
+    return '$arg0 latihan tersisa';
   }
 
   @override
@@ -5170,9 +5150,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get cookingConverterUseThisValue => 'Gunakan Nilai Ini';
-
-  @override
-  String get cookingConverterWeight => ') Berat';
 
   @override
   String get cosmeticsGalleryCosmetics => 'Kosmetik';
@@ -5702,19 +5679,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenUsedTimes(
-    Object lastUsedFormatted,
-    Object usageCount,
-  ) {
-    return 'Digunakan (usageCount) kali(lastUsedFormatted)\" : \"\")';
-  }
-
-  @override
-  String customExercisesScreenValue(Object name, Object targetDisplay) {
-    return '(name) (targetDisplay))\" : \"\")';
-  }
-
-  @override
   String get customExercisesSearchExercises => 'Cari latihan...';
 
   @override
@@ -5860,11 +5824,6 @@ class AppLocalizationsId extends AppLocalizations {
     Object pairedPoints,
   ) {
     return '$pairedPoints/$kMinCorrelationPairs hari bersama';
-  }
-
-  @override
-  String customTrendScreenValue(Object strengthLabel, Object value) {
-    return ')(value) · (strengthLabel)';
   }
 
   @override
@@ -6117,9 +6076,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get cycleScreenUiLogYourFirstPeriod =>
       'Catat periode pertamamu untuk memulai prediksi.';
-
-  @override
-  String get cycleScreenUiPhase => ') fase';
 
   @override
   String cycleScreenUiPhaseLabel(Object displayName) {
@@ -8121,7 +8077,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String editProgramSheetCustomValue(Object arg0) {
-    return 'Nilai kustom $arg0';
+    return 'Kustom: $arg0';
   }
 
   @override
@@ -8165,12 +8121,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return 'Muat riwayat $arg0';
+    return 'Gagal memuat riwayat: $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return 'Pulihkan $arg0';
+    return 'Gagal memulihkan: $arg0';
   }
 
   @override
@@ -9740,11 +9696,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get exerciseDetailSheetFavorite => 'Favorit';
 
   @override
-  String exerciseDetailSheetLbs(Object repRange) {
-    return ') lbs × (repRange)';
-  }
-
-  @override
   String get exerciseDetailSheetLoading => 'Memuat...';
 
   @override
@@ -11001,9 +10952,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get exerciseSetTrackerAddSet => 'Tambah Set';
 
   @override
-  String get exerciseSetTrackerBarbell => ') barbell';
-
-  @override
   String get exerciseSetTrackerReps => 'Repetisi';
 
   @override
@@ -11147,10 +11095,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetAskAiForSuggestions => 'Minta saran AI';
-
-  @override
-  String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Jelaskan peralatan atau preferensi Anda\ncontoh: \"Saya punya cedera bahu, hanya berat badan\"';
 
   @override
   String get exerciseSwapSheetEGIOnly =>
@@ -11324,9 +11268,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get expandedExerciseCardAlternatingHands => 'Tangan Bergantian';
-
-  @override
-  String get expandedExerciseCardBarbell => ') barbell';
 
   @override
   String get expandedExerciseCardBreathing => 'Pernapasan';
@@ -12072,11 +12013,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get fastingScoreCardStreakBonus => 'Bonus Streak';
-
-  @override
-  String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
-  }
 
   @override
   String fastingScoreCardValue2(Object value) {
@@ -13063,11 +12999,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak ada data tersedia';
 
   @override
-  String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
-  }
-
-  @override
   String get flexibilityScoreCardByArea => 'Berdasarkan Area';
 
   @override
@@ -13734,9 +13665,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get foodItemRankingAddFood => 'Tambah makanan';
 
   @override
-  String get foodItemRankingDetails => ') detail';
-
-  @override
   String foodItemRankingNFoodItems(Object count) {
     return '$count Item Makanan';
   }
@@ -14252,9 +14180,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Teman-teman yang benar-benar menjadi bugar memiliki seseorang yang mengirim pesan kepada mereka. Akuntabilitas nyata memakan biaya sekitar dua ratus dolar sebulan, itulah sebabnya kebanyakan dari kita tidak pernah memilikinya, dan itulah mengapa kesenjangan antara \"melacak\" dan \"berubah\" tetap terbuka selama bertahun-tahun.';
 
   @override
-  String get freshnessDecayCardAgo => ') yang lalu';
-
-  @override
   String get freshnessDecayCardControlsHowQuicklyExercise =>
       'Mengontrol seberapa cepat kesegaran latihan berkurang: e^(-k * sesi)';
 
@@ -14509,16 +14434,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get futuristicSetCardSkipExercise => 'Lewati Latihan';
-
-  @override
-  String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
-  }
-
-  @override
-  String futuristicSetCardValue2(Object reps) {
-    return ')×(reps)';
-  }
 
   @override
   String get generatePlanCreateAHolisticPlan =>
@@ -15417,12 +15332,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return 'Jumlah selesai $arg0 $arg1';
+    return '$arg0/$arg1 selesai';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return 'Rentetan hari $arg0';
+    return 'Beruntun $arg0 hari';
   }
 
   @override
@@ -15449,7 +15364,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String habitsCardViewAllHabits(Object arg0) {
-    return 'Lihat semua kebiasaan $arg0';
+    return 'Lihat Semua $arg0 Kebiasaan';
   }
 
   @override
@@ -17023,9 +16938,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get homeEmptyWorkout_v4 =>
       'Belum ada rencana. Biarkan AI menyusunnya sesuai tujuanmu.';
-
-  @override
-  String get homeFromHealthConnect => ') dari Health Connect';
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
@@ -19012,11 +18924,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get insightsSummaryTemplateSummary => 'RINGKASAN';
 
   @override
-  String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
-  }
-
-  @override
   String get insightsSummaryTemplateWorkouts => 'LATIHAN';
 
   @override
@@ -19030,10 +18937,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get intensityPromptHard => 'Sulit';
-
-  @override
-  String get intensityPromptHideRpeSlideDial =>
-      'Sembunyikan slide RPE      Tentukan (RPE 1-10)';
 
   @override
   String get intensityPromptHowHardWasThat => 'Seberapa sulit set tersebut?';
@@ -19059,11 +18962,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get introBuildMyPlan => 'Buat Rencana Saya';
-
-  @override
-  String introCardFormatDataTotalvolumelbsRound(Object totalSets) {
-    return ').format(data.totalVolumeLbs.round())) lbs · (totalSets) set';
-  }
 
   @override
   String get introCardMonth => 'bulan.';
@@ -20117,9 +20015,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get logMealSheetCached => '(dalam cache)';
 
   @override
-  String get logMealSheetCaptured => ') diambil';
-
-  @override
   String get logMealSheetChooseFoodPhotos => 'Pilih Foto Makanan';
 
   @override
@@ -20490,7 +20385,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get logMealSheetTipAddBrandPortion =>
-      'Tips: Tambahkan merek & porsi untuk akurasi yang lebih baik (misalnya, \'Chipotle chicken bowl\' atau \'2 iris Domino\\u2019s\')';
+      'Tips: Tambahkan merek & porsi untuk akurasi yang lebih baik (misalnya, \'Chipotle chicken bowl\' atau \'2 iris Domino’s\')';
 
   @override
   String get logMealSheetTryAgain => 'Coba lagi';
@@ -20737,11 +20632,6 @@ class AppLocalizationsId extends AppLocalizations {
     Object minValue,
   ) {
     return 'Rentang valid: $minValue-$maxValue $label';
-  }
-
-  @override
-  String logWeightSheetValue(Object changeInUnit) {
-    return ')(changeInUnit)';
   }
 
   @override
@@ -21188,7 +21078,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return 'Sisa chat hari ini $arg0';
+    return 'Sisa $arg0 obrolan hari ini';
   }
 
   @override
@@ -21232,11 +21122,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String manageDuplicateImportsScreenValue(Object primary) {
     return '$primary · ';
-  }
-
-  @override
-  String manageDuplicateImportsScreenValue2(Object row) {
-    return '(baris)\" : \"\")';
   }
 
   @override
@@ -22168,11 +22053,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String menuAnalysisSheetValue(Object elapsed) {
-    return ')(berlalu)';
-  }
-
-  @override
   String menuAnalysisSheetValue2(Object rank) {
     return '#$rank';
   }
@@ -22622,7 +22502,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String metricsDashboardNoMetricDataYet(Object arg0) {
-    return 'Belum ada data metrik $arg0';
+    return 'Belum ada data $arg0';
   }
 
   @override
@@ -23297,7 +23177,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return 'Paling sering dilatih $arg0';
+    return 'Paling sering dilatih: $arg0';
   }
 
   @override
@@ -23736,11 +23616,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardValue(Object item) {
-    return ')(item)%';
-  }
-
-  @override
   String get myLibraryTabRecentActivity => 'Aktivitas Terkini';
 
   @override
@@ -24028,7 +23903,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return 'Xp saat ini $arg0';
+    return '$arg0 XP';
   }
 
   @override
@@ -24039,7 +23914,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return 'Sisa jam menit $arg0 $arg1';
+    return 'Sisa ${arg0}j ${arg1}m';
   }
 
   @override
@@ -24055,7 +23930,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return 'Sisa menit $arg0';
+    return 'Sisa ${arg0}m';
   }
 
   @override
@@ -24084,7 +23959,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return 'Target langkah $arg0';
+    return '/ $arg0';
   }
 
   @override
@@ -24092,7 +23967,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return 'Target jam aktif $arg0';
+    return '/ $arg0 jam';
   }
 
   @override
@@ -24139,11 +24014,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String neatScoreDisplayTrend(Object name) {
     return 'Tren: $name';
-  }
-
-  @override
-  String neatScoreDisplayValue(Object widget) {
-    return '))(widget)';
   }
 
   @override
@@ -24393,16 +24263,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String nextSetPreviewCardKg(Object recommendedWeight) {
     return '$recommendedWeight kg';
-  }
-
-  @override
-  String nextSetPreviewCardKg2(Object weightDelta) {
-    return ')(weightDelta) kg';
-  }
-
-  @override
-  String nextSetPreviewCardValue(Object weightDelta) {
-    return ')(weightDelta)';
   }
 
   @override
@@ -24980,11 +24840,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get nutrientExplorerUnpinNutrient => 'Lepas sematan nutrisi';
-
-  @override
-  String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
-  }
 
   @override
   String get nutrientExplorerVitamins => 'VITAMIN';
@@ -25968,11 +25823,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) kal';
-  }
-
-  @override
   String nutritionTabPartWeeklyOverviewCardCalDay(Object uncertaintyDisplay) {
     return 'cal/hari $uncertaintyDisplay';
   }
@@ -25985,11 +25835,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String nutritionTabPartWeeklyOverviewCardG2(Object grams) {
     return '${grams}g';
-  }
-
-  @override
-  String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
   }
 
   @override
@@ -26147,65 +25992,62 @@ class AppLocalizationsId extends AppLocalizations {
   String get onboardingWhyWhatSDrivingThis => 'Apa yang mendorong ini?';
 
   @override
-  String get openAllCrates24HoursOf2xXp => '24 jam XP 2x';
+  String get openAllCrates24HoursOf2xXp => '24 jam 2x XP';
 
   @override
-  String get openAllCratesActivityCrate => 'Peti aktivitas';
+  String get openAllCratesActivityCrate => 'Peti Aktivitas';
 
   @override
   String get openAllCratesBonusCrateToOpen => 'Peti bonus untuk dibuka';
 
   @override
   String openAllCratesCollect(Object arg0, Object arg1) {
-    return 'Kumpulkan $arg0 $arg1';
+    return 'Ambil ($arg0/$arg1)';
   }
 
   @override
   String openAllCratesCratesOpened(Object arg0) {
-    return 'Peti dibuka $arg0';
+    return '$arg0 peti dibuka!';
   }
 
   @override
-  String get openAllCratesDailyCrate => 'Peti harian';
+  String get openAllCratesDailyCrate => 'Peti Harian';
 
   @override
   String get openAllCratesDone => 'Selesai';
 
   @override
-  String get openAllCratesDoubleXpToken => 'Token xp ganda';
+  String get openAllCratesDoubleXpToken => 'Token XP Ganda';
 
   @override
   String get openAllCratesFailedToOpenCrates =>
       'Gagal membuka peti. Silakan coba lagi.';
 
   @override
-  String get openAllCratesFitnessCrate => 'Peti kebugaran';
+  String get openAllCratesFitnessCrate => 'Peti Kebugaran';
 
   @override
   String openAllCratesGainedXp(Object arg0) {
-    return 'Xp didapat $arg0';
+    return '+$arg0 XP';
   }
 
   @override
   String get openAllCratesMaxLevel => 'Level maksimal';
 
   @override
-  String get openAllCratesOpenYourCrates => 'Buka peti Anda';
+  String get openAllCratesOpenYourCrates => '🎁 Buka Peti Anda';
 
   @override
-  String get openAllCratesOpened => ') dibuka!';
-
-  @override
-  String get openAllCratesOpeningYourCrates => 'Membuka peti Anda';
+  String get openAllCratesOpeningYourCrates => '🎁 Membuka peti Anda…';
 
   @override
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
-    return 'Pilih hadiah per hari $arg0 $arg1';
+    return 'Pilih 1 hadiah per hari • $arg0/$arg1 dipilih';
   }
 
   @override
   String openAllCratesPickYourReward(Object arg0, Object arg1) {
-    return 'Pilih hadiah Anda $arg0 $arg1';
+    return 'Pilih hadiah Anda • $arg0/$arg1 dipilih';
   }
 
   @override
@@ -26215,22 +26057,22 @@ class AppLocalizationsId extends AppLocalizations {
   String get openAllCratesSelectAll => 'Pilih Semua';
 
   @override
-  String get openAllCratesStreakCrate => 'Peti streak';
+  String get openAllCratesStreakCrate => 'Peti Beruntun';
 
   @override
-  String get openAllCratesStreakShield => 'Perisai streak';
+  String get openAllCratesStreakShield => 'Perisai Beruntun';
 
   @override
   String get openAllCratesToday => 'Hari ini';
 
   @override
   String openAllCratesTotalXpFormatted(Object arg0) {
-    return 'Total XP $arg0';
+    return 'Total $arg0';
   }
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return 'Total XP level $arg0 $arg1';
+    return 'Total: $arg0 XP • Level $arg1';
   }
 
   @override
@@ -26238,12 +26080,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String openAllCratesXpInLevel(Object arg0, Object arg1) {
-    return 'XP di level $arg0 $arg1';
+    return '$arg0 / $arg1 XP';
   }
 
   @override
   String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
-    return 'XP ke level berikutnya $arg0 $arg1';
+    return '$arg0 XP menuju Lvl $arg1';
   }
 
   @override
@@ -27090,11 +26932,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-confidence estimate\" : \"\")';
-  }
-
-  @override
   String phaseRecommendationBannerCycleDay(Object cycleDay) {
     return 'Hari siklus $cycleDay';
   }
@@ -27482,7 +27319,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return 'Hari per minggu $arg0';
+    return '$arg0 hari/minggu';
   }
 
   @override
@@ -27491,7 +27328,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
-    return 'Jumlah peralatan $arg0';
+    return '$arg0 peralatan';
   }
 
   @override
@@ -27825,9 +27662,6 @@ class AppLocalizationsId extends AppLocalizations {
   String prInlineCelebrationValue2(Object exerciseName, Object formattedValue) {
     return '$exerciseName • $formattedValue';
   }
-
-  @override
-  String get prPosterTemplateFromLast => ') DARI TERAKHIR';
 
   @override
   String get prShareCardCopiedToClipboard => 'Disalin ke papan klip!';
@@ -29364,11 +29198,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get prsTemplateNewPrsAreJust => 'PR baru sudah di depan mata';
 
   @override
-  String prsTemplateValue(Object unit) {
-    return ') (unit)';
-  }
-
-  @override
   String prsTemplateValue2(Object improvement, Object unit) {
     return '+$improvement $unit';
   }
@@ -29765,7 +29594,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return '$arg0 hari yang lalu';
+    return 'Diperbarui $arg0 hari lalu';
   }
 
   @override
@@ -30205,17 +30034,20 @@ class AppLocalizationsId extends AppLocalizations {
       'Konsistensi mengalahkan intensitas - pilih yang bisa Anda pertahankan';
 
   @override
-  String quizDaysSelectorDays(Object arg0) {
-    return '$arg0 hari';
+  String quizDaysSelectorDays(int arg0) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg0,
+      locale: localeName,
+      other: 'hari',
+      one: 'hari',
+    );
+    return '$_temp0';
   }
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return '$arg0 hari dipilih $arg1';
+    return '$arg0 / $arg1 hari dipilih';
   }
-
-  @override
-  String get quizDaysSelectorForYourWorkouts => ') untuk latihan Anda';
 
   @override
   String get quizDaysSelectorFri => 'Jum';
@@ -30239,7 +30071,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
-    return 'Pilih $arg0 hari';
+    return 'Pilih $arg0 hari yang cocok untuk Anda';
   }
 
   @override
@@ -30335,7 +30167,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return 'Jumlah teridentifikasi $arg0';
+    return '$arg0 item teridentifikasi. Ketuk untuk membatalkan pilihan.';
   }
 
   @override
@@ -30357,7 +30189,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return 'Jumlah lainnya $arg0';
+    return '$arg0 dipilih';
   }
 
   @override
@@ -31303,11 +31135,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get recipeCreateSaving => 'Menyimpan...';
 
   @override
-  String recipeCreateScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
-  }
-
-  @override
   String recipeCreateScreenValue2(Object selected) {
     return '✨ $selected';
   }
@@ -31392,11 +31219,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String recipeDetailScreenUForkedFrom(Object sourceName) {
     return '✨ Di-fork dari $sourceName';
-  }
-
-  @override
-  String recipeDetailScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
   }
 
   @override
@@ -32149,7 +31971,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Menyeimbangkan kelompok otot';
 
   @override
-  String get regenerateSheetBootingUpTheAi => 'Memulai AI';
+  String get regenerateSheetBootingUpTheAi => 'Menyalakan AI';
 
   @override
   String get regenerateSheetBuildingYourPlan => 'Menyusun rencana Anda';
@@ -32221,7 +32043,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return 'Waktu pembuatan $arg0';
+    return 'Membuat… $arg0';
   }
 
   @override
@@ -33044,7 +32866,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String restSuggestionSaveTime(Object arg0) {
-    return 'Hemat waktu $arg0';
+    return 'Hemat $arg0';
   }
 
   @override
@@ -33065,10 +32887,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get restTimerCardFormula => 'Rumus';
-
-  @override
-  String get restTimerCardFormulaBaserestRpe7 =>
-      'Rumus: BaseRest * (RPE / 7) * Multiplier';
 
   @override
   String get restTimerCardLivePreview => 'Pratinjau Langsung';
@@ -33097,7 +32915,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get restTimerCardVariablesBaseRpeMultipli =>
-      'Variabel: base, rpe, multiplier, tier';
+      'Variabel: dasar, RPE, pengali, tingkat';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -33406,7 +33224,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
-    return 'Cedera ditandai $arg0';
+    return '$arg0 cedera ditandai';
   }
 
   @override
@@ -34117,9 +33935,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sessionDetailTime => 'Waktu';
 
   @override
-  String get sessionDetailTopSetHighlighted => ') • set teratas disorot';
-
-  @override
   String get sessionDetailWeight => 'Beban';
 
   @override
@@ -34181,11 +33996,6 @@ class AppLocalizationsId extends AppLocalizations {
     Object length,
   ) {
     return '$length dihapus';
-  }
-
-  @override
-  String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') dari (exerciseName)';
   }
 
   @override
@@ -34437,11 +34247,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String setTrackingSectionSetsCompleted(Object length) {
     return '$length set selesai';
-  }
-
-  @override
-  String setTrackingSectionValue(Object reps) {
-    return ')×(reps)';
   }
 
   @override
@@ -35071,7 +34876,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get settingsScreenUiTryDifferentKeywordsLike =>
-      'Coba kata kunci lain seperti \"tema\", \"notifikasi\", atau \"suara ai\"';
+      'Coba kata kunci lain seperti \"tema\", \"notifikasi\", atau \"suara AI\"';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -35234,7 +35039,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get shareMotivationalCompleted => 'SELESAI';
 
   @override
-  String get sharePrNewPr => 'PR baru';
+  String get sharePrNewPr => 'PR BARU';
 
   @override
   String get shareStatsCalories => 'Kalori';
@@ -36768,9 +36573,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get streakMilestoneStreakMilestone => 'MILESTONE STREAK!';
-
-  @override
-  String get streakMilestoneToGo => ') lagi!';
 
   @override
   String get streakMilestoneYouVeReachedThe =>
@@ -38593,25 +38395,31 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return 'Turun $arg0';
+    return '▼ Turun $arg0 sejak pagi ini';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return 'Poin didapat $arg0 $arg1';
+    return '$arg0 / $arg1 poin';
   }
 
   @override
   String get todayScoreDetailHowItWorks => 'Cara kerja';
 
   @override
-  String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return 'Penjelasan tidak aktif $arg0 $arg1';
+  String todayScoreDetailInactiveExplanation(Object arg0, int arg1) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg1,
+      locale: localeName,
+      other: 'tidak dihitung',
+      one: 'tidak dihitung',
+    );
+    return '$arg0 $_temp0 hari ini, jadi sisanya berbagi 100 poin penuh. Skor Anda selalu hanya mencerminkan yang benar-benar berlaku hari ini.';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return 'Momentum dengan rata-rata $arg0 $arg1';
+    return '$arg0  ·  rata-rata 7 hari $arg1';
   }
 
   @override
@@ -38628,7 +38436,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return 'Naik $arg0';
+    return '▲ Naik $arg0 sejak pagi ini';
   }
 
   @override
@@ -39090,9 +38898,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get trophiesEarnedFirstTime => 'PERTAMA KALI!';
 
   @override
-  String get trophiesEarnedKg => ') kg';
-
-  @override
   String get trophiesEarnedMilestoneReached => 'Pencapaian tercapai';
 
   @override
@@ -39104,20 +38909,20 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return 'Lencana $arg0';
+    return '$arg0 lencana baru';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return 'PR kardio $arg0';
+    return '$arg0 PR kardio baru';
   }
 
   @override
-  String get trophiesEarnedNewPR => 'PR baru';
+  String get trophiesEarnedNewPR => 'PR BARU';
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return 'PR $arg0';
+    return '$arg0 PR baru!';
   }
 
   @override
@@ -39138,7 +38943,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
-    return 'Sisa untuk dibuka $arg0 $arg1';
+    return '$arg0 $arg1 lagi untuk membuka';
   }
 
   @override
@@ -39340,7 +39145,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsBreakfastLogged(Object arg0) {
-    return 'Sarapan dicatat $arg0';
+    return 'Sarapan dicatat $arg0 dari 7 pagi terakhir';
   }
 
   @override
@@ -39390,7 +39195,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '$arg0 kkal total hari ini';
+    return '$arg0 kcal terbakar';
   }
 
   @override
@@ -40100,7 +39905,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return 'Jumlah selesai $arg0 $arg1';
+    return '$arg0 dari $arg1 latihan selesai';
   }
 
   @override
@@ -40803,12 +40608,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return 'Turun minggu ini $arg0';
+    return 'Turun $arg0 minggu ini!';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return 'Turun vs siklus terakhir $arg0';
+    return 'Turun $arg0 lbs vs hari siklus yang sama bulan lalu';
   }
 
   @override
@@ -40845,17 +40650,17 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return 'Jendela target tercapai $arg0';
+    return 'Target dipertahankan $arg0 — penghalusan air luteal';
   }
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return 'Naik minggu ini $arg0';
+    return 'Naik $arg0 minggu ini';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return 'Naik vs siklus terakhir $arg0';
+    return 'Naik $arg0 lbs vs hari siklus yang sama bulan lalu';
   }
 
   @override
@@ -41018,11 +40823,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String workoutActionsSheetGetALinkFor(Object marketingDomain) {
     return 'Dapatkan tautan $marketingDomain untuk teman';
-  }
-
-  @override
-  String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41371,11 +41171,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2Value(Object workoutComp) {
-    return ')(workoutComp)';
-  }
-
-  @override
   String get workoutCompleteScreenUnableToChallengeFriends =>
       'Tidak dapat menantang teman saat ini';
 
@@ -41594,10 +41389,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get workoutDetailFailedToLoadWorkout => 'Gagal memuat latihan';
 
   @override
-  String get workoutDetailHelpersForAvailableEquipment =>
-      ') untuk peralatan yang tersedia...';
-
-  @override
   String get workoutDetailHelpersHell => 'Neraka';
 
   @override
@@ -41611,7 +41402,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return 'Mengganti latihan $arg0';
+    return 'Mengganti $arg0 latihan untuk peralatan yang tersedia…';
   }
 
   @override
@@ -42079,9 +41870,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get workoutHistoryImportYourStrengthData => 'Data Kekuatan Anda';
 
   @override
-  String get workoutImportAsDone => ')\" sebagai selesai';
-
-  @override
   String get workoutImportCalories => 'Kalori';
 
   @override
@@ -42104,7 +41892,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return 'Dari sumber $arg0';
+    return 'dari $arg0';
   }
 
   @override
@@ -42417,12 +42205,8 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workoutPlanDrawerExerciseCount(Object arg0) {
-    return 'Jumlah latihan $arg0';
+    return '$arg0 latihan';
   }
-
-  @override
-  String get workoutPlanDrawerLoggedTheyWillBe =>
-      ') dicatat. Data ini akan dihapus.';
 
   @override
   String get workoutPlanDrawerNow => 'Sekarang';
@@ -42432,7 +42216,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workoutPlanDrawerRemoveExercise(Object arg0) {
-    return 'Hapus latihan $arg0';
+    return 'Hapus $arg0?';
   }
 
   @override
@@ -42440,7 +42224,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
-    return 'Set dicatat $arg0';
+    return 'Anda memiliki $arg0 set tercatat. Set tersebut akan dihapus.';
   }
 
   @override
@@ -42851,7 +42635,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get workoutShowcaseFinishWorkout => 'Selesaikan latihan';
 
   @override
-  String get workoutShowcaseFormat1Rm => 'Format 1RM';
+  String get workoutShowcaseFormat1Rm => '1RM';
 
   @override
   String get workoutShowcaseFormatBoarding => 'Boarding';
@@ -42925,7 +42709,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return 'Set $arg0';
+    return '✓ Catat set $arg0';
   }
 
   @override
@@ -42973,11 +42757,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String workoutShowcaseScreenDuration(Object duration) {
     return 'DURASI: $duration';
-  }
-
-  @override
-  String workoutShowcaseScreenPrs(Object prs) {
-    return 'PRS: $prs';
   }
 
   @override
@@ -43901,49 +43680,50 @@ class AppLocalizationsId extends AppLocalizations {
   String get xpGoalsDialogBeginnerToTranscendent => 'Pemula hingga transenden';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp => 'XP menyelesaikan latihan';
+  String get xpGoalsDialogCompleteWorkoutXp => 'Selesaikan Latihan: +100 XP';
 
   @override
   String get xpGoalsDialogDailyGoals => 'Tujuan harian';
 
   @override
   String get xpGoalsDialogFirstChatWithAiCoachXp =>
-      'XP chat pertama dengan pelatih AI';
+      'Obrolan Pertama dengan Pelatih AI: +15 XP';
 
   @override
   String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'XP pengukuran berat makanan pertama';
+      'Makan/Berat/Pengukuran Pertama: +50 XP masing-masing';
 
   @override
-  String get xpGoalsDialogFirstPrXp => 'XP PR pertama';
+  String get xpGoalsDialogFirstPrXp => 'PR Pertama: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp => 'XP foto progres pertama';
+  String get xpGoalsDialogFirstProgressPhotoXp =>
+      'Foto Progres Pertama: +75 XP';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp => 'XP tujuan protein pertama';
+  String get xpGoalsDialogFirstProteinGoalXp =>
+      'Target Protein Pertama: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => 'XP latihan pertama';
+  String get xpGoalsDialogFirstWorkoutXp => 'Latihan Pertama: +150 XP';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp => 'XP mencapai tujuan protein';
+  String get xpGoalsDialogHitProteinGoalXp => 'Capai Target Protein: +50 XP';
 
   @override
   String get xpGoalsDialogLevels => 'Level';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp =>
-      'XP mencatat pengukuran tubuh';
+  String get xpGoalsDialogLogBodyMeasurementsXp => 'Catat Ukuran Tubuh: +20 XP';
 
   @override
-  String get xpGoalsDialogLogMealXp => 'XP mencatat makanan';
+  String get xpGoalsDialogLogMealXp => 'Catat Makanan: +25 XP';
 
   @override
-  String get xpGoalsDialogLogWeightXp => 'XP mencatat berat badan';
+  String get xpGoalsDialogLogWeightXp => 'Catat Berat: +15 XP';
 
   @override
-  String get xpGoalsDialogLoginXp => 'XP login';
+  String get xpGoalsDialogLoginXp => 'Masuk: +5 XP';
 
   @override
   String get xpGoalsDialogMilestoneRewards => 'Hadiah pencapaian';
@@ -44019,7 +43799,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return 'Total level saat ini $arg0';
+    return 'Level $arg0 • total 249 level';
   }
 
   @override
@@ -44134,12 +43914,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return 'Tersedia $arg0';
+    return '+$arg0 XP tersedia';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return 'Diperoleh hari ini $arg0';
+    return '+$arg0 XP diperoleh hari ini';
   }
 
   @override
@@ -44147,7 +43927,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return 'Pengali aktif $arg0';
+    return '${arg0}x XP Aktif!';
   }
 
   @override

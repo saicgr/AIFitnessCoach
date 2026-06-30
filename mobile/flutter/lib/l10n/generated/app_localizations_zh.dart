@@ -322,11 +322,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') 用于 (name)';
-  }
-
-  @override
   String get activeWorkoutScreenUndo => '撤销';
 
   @override
@@ -993,9 +988,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiCoachMealRecoveryDayEating => '恢复日饮食？';
-
-  @override
-  String get aiCoachMealSearchQuestionsTryAngry => '搜索问题（尝试“生气”、“纤维”、“墨西哥”）';
 
   @override
   String get aiCoachMealSomethingWentWrong => '出错了。';
@@ -2716,9 +2708,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get caloriesSummaryCardOveLeft => '剩余';
-
-  @override
   String get cancelConfirmationAnythingElseYouD => '还有什么想分享的吗？（可选）';
 
   @override
@@ -3347,9 +3336,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatGotIt => '知道了';
 
   @override
-  String get chatLeftToday => ') 今日剩余';
-
-  @override
   String chatMediaWidgetsCalTotal(Object totalCal) {
     return '总计 $totalCal 卡路里';
   }
@@ -3462,11 +3448,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chatScreenExtAboutAiCoach => '关于AI教练';
-
-  @override
-  String chatScreenExtAs(Object mealType) {
-    return ') 作为 (mealType)';
-  }
 
   @override
   String get chatScreenExtChangeCoach => '更换教练';
@@ -4613,7 +4594,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String complianceRingCardGreatPace(Object arg0) {
-    return '进度良好 $arg0';
+    return '节奏不错！还剩 $arg0';
   }
 
   @override
@@ -4621,7 +4602,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
-    return '进度正常 $arg0';
+    return '进展顺利 — 还差 $arg0';
   }
 
   @override
@@ -4629,7 +4610,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String complianceRingCardWorkoutsRemaining(Object arg0) {
-    return '剩余训练 $arg0';
+    return '还剩 $arg0 次锻炼';
   }
 
   @override
@@ -4910,9 +4891,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cookingConverterUseThisValue => '使用此数值';
-
-  @override
-  String get cookingConverterWeight => ') 重量';
 
   @override
   String get cosmeticsGalleryCosmetics => '装饰';
@@ -5418,19 +5396,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenUsedTimes(
-    Object lastUsedFormatted,
-    Object usageCount,
-  ) {
-    return '已使用 (usageCount) 次(lastUsedFormatted)\" : \"\")';
-  }
-
-  @override
-  String customExercisesScreenValue(Object name, Object targetDisplay) {
-    return '(name) (targetDisplay))\" : \"\")';
-  }
-
-  @override
   String get customExercisesSearchExercises => '搜索动作...';
 
   @override
@@ -5572,11 +5537,6 @@ class AppLocalizationsZh extends AppLocalizations {
     Object pairedPoints,
   ) {
     return '$pairedPoints/$kMinCorrelationPairs 个共同记录日';
-  }
-
-  @override
-  String customTrendScreenValue(Object strengthLabel, Object value) {
-    return ')(value) · (strengthLabel)';
   }
 
   @override
@@ -5819,9 +5779,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cycleScreenUiLogYourFirstPeriod => '记录你的第一次月经以开始预测。';
-
-  @override
-  String get cycleScreenUiPhase => ') 阶段';
 
   @override
   String cycleScreenUiPhaseLabel(Object displayName) {
@@ -7732,7 +7689,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String editProgramSheetCustomValue(Object arg0) {
-    return '自定义值 $arg0';
+    return '自定义：$arg0';
   }
 
   @override
@@ -7774,12 +7731,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return '加载历史记录 $arg0';
+    return '加载历史记录失败：$arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return '恢复 $arg0';
+    return '恢复失败：$arg0';
   }
 
   @override
@@ -9261,11 +9218,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseDetailSheetFavorite => '收藏';
 
   @override
-  String exerciseDetailSheetLbs(Object repRange) {
-    return ') 磅 × (repRange)';
-  }
-
-  @override
   String get exerciseDetailSheetLoading => '加载中...';
 
   @override
@@ -10457,9 +10409,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseSetTrackerAddSet => '添加组';
 
   @override
-  String get exerciseSetTrackerBarbell => ') 杠铃';
-
-  @override
   String get exerciseSetTrackerReps => '次数';
 
   @override
@@ -10599,10 +10548,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetAskAiForSuggestions => '向 AI 寻求建议';
-
-  @override
-  String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      '描述您的器械或偏好\n例如：“肩膀不适，仅限自重”';
 
   @override
   String get exerciseSwapSheetEGIOnly => '例如：“我只有哑铃”';
@@ -10767,9 +10712,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expandedExerciseCardAlternatingHands => '交替手';
-
-  @override
-  String get expandedExerciseCardBarbell => ') 杠铃';
 
   @override
   String get expandedExerciseCardBreathing => '呼吸';
@@ -11466,11 +11408,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fastingScoreCardStreakBonus => '连胜奖励';
-
-  @override
-  String fastingScoreCardValue(Object scoreChange) {
-    return '$scoreChange';
-  }
 
   @override
   String fastingScoreCardValue2(Object value) {
@@ -12401,11 +12338,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get flexibilityProgressChartNoDataAvailable => '暂无数据';
 
   @override
-  String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return '$improvementAbsolute';
-  }
-
-  @override
   String get flexibilityScoreCardByArea => '按区域';
 
   @override
@@ -13048,9 +12980,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get foodItemRankingAddFood => '添加食物';
 
   @override
-  String get foodItemRankingDetails => ') 详情';
-
-  @override
   String foodItemRankingNFoodItems(Object count) {
     return '$count 个食物项目';
   }
@@ -13545,9 +13474,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '那些真正瘦下来的朋友都有一个随时发信息给他们的人。真正的监督每月大约需要两百美元，这正是我们大多数人从未拥有它的原因，也正是“记录”与“改变”之间的鸿沟多年来无法弥合的原因。';
 
   @override
-  String get freshnessDecayCardAgo => '前';
-
-  @override
   String get freshnessDecayCardControlsHowQuicklyExercise =>
       '控制运动新鲜度衰减的速度：e^(-k * 会话数)';
 
@@ -13786,16 +13712,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get futuristicSetCardSkipExercise => '跳过动作';
-
-  @override
-  String futuristicSetCardValue(Object targetReps) {
-    return '$targetReps';
-  }
-
-  @override
-  String futuristicSetCardValue2(Object reps) {
-    return '$reps';
-  }
 
   @override
   String get generatePlanCreateAHolisticPlan => '创建一个协调您的锻炼、营养和禁食的整体计划。';
@@ -14654,12 +14570,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return '完成次数 $arg0 $arg1';
+    return '已完成 $arg0/$arg1';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return '连续打卡 $arg0 天';
+    return '连续 $arg0 天';
   }
 
   @override
@@ -14685,7 +14601,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String habitsCardViewAllHabits(Object arg0) {
-    return '查看所有习惯 $arg0';
+    return '查看全部 $arg0 个习惯';
   }
 
   @override
@@ -16110,9 +16026,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeEmptyWorkout_v4 => '暂无计划。让AI根据你的目标为你定制一个。';
-
-  @override
-  String get homeFromHealthConnect => ') 来自 Health Connect';
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
@@ -17974,11 +17887,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get insightsSummaryTemplateSummary => '总结';
 
   @override
-  String insightsSummaryTemplateValue(Object pct) {
-    return '$pct%';
-  }
-
-  @override
   String get insightsSummaryTemplateWorkouts => '训练';
 
   @override
@@ -17992,10 +17900,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get intensityPromptHard => '困难';
-
-  @override
-  String get intensityPromptHideRpeSlideDial =>
-      '隐藏 RPE 滑块      精准设定 (RPE 1-10)';
 
   @override
   String get intensityPromptHowHardWasThat => '这组训练难度如何？';
@@ -18019,11 +17923,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get introBuildMyPlan => '制定我的计划';
-
-  @override
-  String introCardFormatDataTotalvolumelbsRound(Object totalSets) {
-    return ').format(data.totalVolumeLbs.round())) 磅 · (totalSets) 组';
-  }
 
   @override
   String get introCardMonth => '月。';
@@ -19021,9 +18920,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logMealSheetCached => '（已缓存）';
 
   @override
-  String get logMealSheetCaptured => '）已拍摄';
-
-  @override
   String get logMealSheetChooseFoodPhotos => '选择食物照片';
 
   @override
@@ -19614,11 +19510,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValue(Object changeInUnit) {
-    return '$changeInUnit';
-  }
-
-  @override
   String get logWeightSyncedFromAppleHealth => '已从 Apple Health 同步';
 
   @override
@@ -20054,7 +19945,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return '今日剩余聊天次数 $arg0';
+    return '今日剩余 $arg0 次对话';
   }
 
   @override
@@ -20095,11 +19986,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String manageDuplicateImportsScreenValue(Object primary) {
     return '$primary · ';
-  }
-
-  @override
-  String manageDuplicateImportsScreenValue2(Object row) {
-    return '$row';
   }
 
   @override
@@ -20998,11 +20884,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String menuAnalysisSheetValue(Object elapsed) {
-    return '$elapsed';
-  }
-
-  @override
   String menuAnalysisSheetValue2(Object rank) {
     return '#$rank';
   }
@@ -21425,7 +21306,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String metricsDashboardNoMetricDataYet(Object arg0) {
-    return '暂无指标数据 $arg0';
+    return '暂无 $arg0 数据';
   }
 
   @override
@@ -22078,7 +21959,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return '最常训练 $arg0';
+    return '最常训练：$arg0';
   }
 
   @override
@@ -22497,11 +22378,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardValue(Object item) {
-    return ')(item)%';
-  }
-
-  @override
   String get myLibraryTabRecentActivity => '近期活动';
 
   @override
@@ -22782,7 +22658,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return '当前 XP $arg0';
+    return '$arg0 XP';
   }
 
   @override
@@ -22793,7 +22669,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return '剩余 $arg0 小时 $arg1 分钟';
+    return '还剩 $arg0 小时 $arg1 分钟';
   }
 
   @override
@@ -22809,7 +22685,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return '剩余 $arg0 分钟';
+    return '还剩 $arg0 分钟';
   }
 
   @override
@@ -22837,7 +22713,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return '步数目标 $arg0';
+    return '/ $arg0';
   }
 
   @override
@@ -22845,7 +22721,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return '目标活跃时长 $arg0';
+    return '/ $arg0 小时';
   }
 
   @override
@@ -22891,11 +22767,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String neatScoreDisplayTrend(Object name) {
     return '趋势：$name';
-  }
-
-  @override
-  String neatScoreDisplayValue(Object widget) {
-    return '))(widget)';
   }
 
   @override
@@ -23133,16 +23004,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String nextSetPreviewCardKg(Object recommendedWeight) {
     return '$recommendedWeight kg';
-  }
-
-  @override
-  String nextSetPreviewCardKg2(Object weightDelta) {
-    return ')(weightDelta) kg';
-  }
-
-  @override
-  String nextSetPreviewCardValue(Object weightDelta) {
-    return ')(weightDelta)';
   }
 
   @override
@@ -23675,11 +23536,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nutrientExplorerUnpinNutrient => '取消置顶营养素';
-
-  @override
-  String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
-  }
 
   @override
   String get nutrientExplorerVitamins => '维生素';
@@ -24605,11 +24461,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) 大卡';
-  }
-
-  @override
   String nutritionTabPartWeeklyOverviewCardCalDay(Object uncertaintyDisplay) {
     return '大卡/天 $uncertaintyDisplay';
   }
@@ -24622,11 +24473,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String nutritionTabPartWeeklyOverviewCardG2(Object grams) {
     return '$grams 克';
-  }
-
-  @override
-  String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) 公斤';
   }
 
   @override
@@ -24775,7 +24621,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingWhyWhatSDrivingThis => '是什么驱动了这一切？';
 
   @override
-  String get openAllCrates24HoursOf2xXp => '24 小时双倍 XP';
+  String get openAllCrates24HoursOf2xXp => '24 小时 2x XP';
 
   @override
   String get openAllCratesActivityCrate => '活动宝箱';
@@ -24785,12 +24631,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String openAllCratesCollect(Object arg0, Object arg1) {
-    return '领取 $arg0 $arg1';
+    return '领取（$arg0/$arg1）';
   }
 
   @override
   String openAllCratesCratesOpened(Object arg0) {
-    return '已开启宝箱 $arg0';
+    return '已开启 $arg0 个宝箱！';
   }
 
   @override
@@ -24800,7 +24646,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openAllCratesDone => '完成';
 
   @override
-  String get openAllCratesDoubleXpToken => '双倍 XP 卡';
+  String get openAllCratesDoubleXpToken => '双倍 XP 代币';
 
   @override
   String get openAllCratesFailedToOpenCrates => '开启宝箱失败。请重试。';
@@ -24810,29 +24656,26 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String openAllCratesGainedXp(Object arg0) {
-    return '获得 XP $arg0';
+    return '+$arg0 XP';
   }
 
   @override
   String get openAllCratesMaxLevel => '最高等级';
 
   @override
-  String get openAllCratesOpenYourCrates => '开启你的宝箱';
+  String get openAllCratesOpenYourCrates => '🎁 打开宝箱';
 
   @override
-  String get openAllCratesOpened => ') 已开启！';
-
-  @override
-  String get openAllCratesOpeningYourCrates => '正在开启你的宝箱';
+  String get openAllCratesOpeningYourCrates => '🎁 正在打开宝箱…';
 
   @override
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
-    return '每日选择奖励 $arg0 $arg1';
+    return '每天选择 1 个奖励 • 已选 $arg0/$arg1';
   }
 
   @override
   String openAllCratesPickYourReward(Object arg0, Object arg1) {
-    return '选择你的奖励 $arg0 $arg1';
+    return '选择你的奖励 • 已选 $arg0/$arg1';
   }
 
   @override
@@ -24852,12 +24695,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String openAllCratesTotalXpFormatted(Object arg0) {
-    return '总XP $arg0';
+    return '共 $arg0';
   }
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return '总XP等级 $arg0 $arg1';
+    return '总计：$arg0 XP • 等级 $arg1';
   }
 
   @override
@@ -24865,12 +24708,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String openAllCratesXpInLevel(Object arg0, Object arg1) {
-    return '当前等级XP $arg0 $arg1';
+    return '$arg0 / $arg1 XP';
   }
 
   @override
   String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
-    return '距离下一级XP $arg0 $arg1';
+    return '距等级 $arg1 还需 $arg0 XP';
   }
 
   @override
@@ -25660,11 +25503,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(置信度)-置信度估计\" : \"\")';
-  }
-
-  @override
   String phaseRecommendationBannerCycleDay(Object cycleDay) {
     return '周期第 $cycleDay 天';
   }
@@ -26047,7 +25885,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
-    return '器械数量 $arg0';
+    return '$arg0 件器材';
   }
 
   @override
@@ -26372,9 +26210,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String prInlineCelebrationValue2(Object exerciseName, Object formattedValue) {
     return '$exerciseName • $formattedValue';
   }
-
-  @override
-  String get prPosterTemplateFromLast => ') 较上次';
 
   @override
   String get prShareCardCopiedToClipboard => '已复制到剪贴板！';
@@ -27046,7 +26881,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String programSummaryNItems(Object arg0) {
-    return '$arg0 个项目';
+    return '$arg0 项';
   }
 
   @override
@@ -27828,11 +27663,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get prsTemplateNewPrsAreJust => '新的 PR 即将到来';
-
-  @override
-  String prsTemplateValue(Object unit) {
-    return ') (单位)';
-  }
 
   @override
   String prsTemplateValue2(Object improvement, Object unit) {
@@ -28641,17 +28471,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizDaysSelectorConsistencyBeatsIntensity => '坚持胜过强度 - 选择您能保持的频率';
 
   @override
-  String quizDaysSelectorDays(Object arg0) {
-    return '$arg0 天';
+  String quizDaysSelectorDays(int arg0) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg0,
+      locale: localeName,
+      other: '天',
+      one: '天',
+    );
+    return '$_temp0';
   }
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return '已选 $arg0 天 $arg1';
+    return '已选 $arg0 / $arg1 天';
   }
-
-  @override
-  String get quizDaysSelectorForYourWorkouts => ') 用于您的训练';
 
   @override
   String get quizDaysSelectorFri => '周五';
@@ -28673,7 +28506,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
-    return '选择 $arg0 天';
+    return '选择 $arg0 个适合你的日子';
   }
 
   @override
@@ -28765,7 +28598,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return '已识别数量 $arg0';
+    return '已识别 $arg0 件。点按任意项可取消选择。';
   }
 
   @override
@@ -28785,7 +28618,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return '其他数量 $arg0';
+    return '已选 $arg0 件';
   }
 
   @override
@@ -29670,11 +29503,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recipeCreateSaving => '保存中…';
 
   @override
-  String recipeCreateScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
-  }
-
-  @override
   String recipeCreateScreenValue2(Object selected) {
     return '✨ $selected';
   }
@@ -29757,11 +29585,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String recipeDetailScreenUForkedFrom(Object sourceName) {
     return '✨ 衍生自 $sourceName';
-  }
-
-  @override
-  String recipeDetailScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
   }
 
   @override
@@ -30512,7 +30335,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get regenerateSheetCustomizeOrLetAi => '自定义或让 AI 提供建议';
 
   @override
-  String get regenerateSheetCustomizeOrLetAiSuggest => '自定义或让 AI 建议';
+  String get regenerateSheetCustomizeOrLetAiSuggest => '自定义或让 AI 推荐';
 
   @override
   String get regenerateSheetDescribeYourIdealWorkout => '描述您理想的训练';
@@ -30549,7 +30372,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return '生成耗时 $arg0';
+    return '生成中… $arg0';
   }
 
   @override
@@ -31305,7 +31128,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String restSuggestionSaveTime(Object arg0) {
-    return '节省时间 $arg0';
+    return '节省 $arg0';
   }
 
   @override
@@ -31325,10 +31148,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get restTimerCardFormula => '公式';
-
-  @override
-  String get restTimerCardFormulaBaserestRpe7 =>
-      '公式: BaseRest * (RPE / 7) * Multiplier';
 
   @override
   String get restTimerCardLivePreview => '实时预览';
@@ -31355,8 +31174,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get restTimerCardVariablesBaseRpeMultipli =>
-      '变量: base, rpe, multiplier, tier';
+  String get restTimerCardVariablesBaseRpeMultipli => '变量：基准、RPE、系数、等级';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -31656,7 +31474,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
-    return '已标记伤病 $arg0';
+    return '已标记 $arg0 处伤情';
   }
 
   @override
@@ -32337,9 +32155,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sessionDetailTime => '时间';
 
   @override
-  String get sessionDetailTopSetHighlighted => ') • 已高亮显示顶峰组';
-
-  @override
   String get sessionDetailWeight => '重量';
 
   @override
@@ -32398,11 +32213,6 @@ class AppLocalizationsZh extends AppLocalizations {
     Object length,
   ) {
     return '已移除 $length 组';
-  }
-
-  @override
-  String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') / (exerciseName)';
   }
 
   @override
@@ -32646,11 +32456,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String setTrackingSectionSetsCompleted(Object length) {
     return '已完成 $length 组';
-  }
-
-  @override
-  String setTrackingSectionValue(Object reps) {
-    return ')×(reps)';
   }
 
   @override
@@ -33253,7 +33058,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsScreenUiTryDifferentKeywordsLike =>
-      '尝试使用不同的关键词，例如“主题”、“通知”或“AI 语音”';
+      '试试其他关键词，如\"主题\"、\"通知\"或\"AI 语音\"';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -33414,7 +33219,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareMotivationalCompleted => '已完成';
 
   @override
-  String get sharePrNewPr => '新 PR';
+  String get sharePrNewPr => '新纪录 PR';
 
   @override
   String get shareStatsCalories => '卡路里';
@@ -34888,9 +34693,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get streakMilestoneStreakMilestone => '连胜里程碑！';
-
-  @override
-  String get streakMilestoneToGo => ') 即可达成！';
 
   @override
   String get streakMilestoneYouVeReachedThe => '你已达到终极连胜里程碑！';
@@ -36634,25 +36436,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return '下降 $arg0';
+    return '▼ 较今早下降 $arg0';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return '获得积分 $arg0 $arg1';
+    return '$arg0 / $arg1 分';
   }
 
   @override
   String get todayScoreDetailHowItWorks => '如何运作';
 
   @override
-  String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return '不活跃说明 $arg0 $arg1';
+  String todayScoreDetailInactiveExplanation(Object arg0, int arg1) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg1,
+      locale: localeName,
+      other: '不计入',
+      one: '不计入',
+    );
+    return '$arg0今天$_temp0，因此其余项目分摊全部 100 分。你的得分始终只反映今天实际适用的项目。';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return '动力趋势，平均值 $arg0 $arg1';
+    return '$arg0  ·  7 天平均 $arg1';
   }
 
   @override
@@ -36669,7 +36477,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return '上升 $arg0';
+    return '▲ 较今早上升 $arg0';
   }
 
   @override
@@ -37094,9 +36902,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get trophiesEarnedFirstTime => '首次达成！';
 
   @override
-  String get trophiesEarnedKg => ') 公斤';
-
-  @override
   String get trophiesEarnedMilestoneReached => '达成里程碑';
 
   @override
@@ -37107,20 +36912,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return '徽章 $arg0';
+    return '$arg0 个新徽章';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return '有氧 PR $arg0';
+    return '$arg0 个新有氧 PR';
   }
 
   @override
-  String get trophiesEarnedNewPR => '获得新PR';
+  String get trophiesEarnedNewPR => '新纪录 PR';
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return 'PR $arg0';
+    return '$arg0 个新 PR！';
   }
 
   @override
@@ -37140,7 +36945,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
-    return '剩余解锁 $arg0 $arg1';
+    return '再获得 $arg0 个$arg1即可解锁';
   }
 
   @override
@@ -37327,7 +37132,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsBreakfastLogged(Object arg0) {
-    return '已记录早餐 $arg0';
+    return '最近 7 个早晨中有 $arg0 个早晨记录了早餐';
   }
 
   @override
@@ -37376,7 +37181,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '今日总计 $arg0 千卡';
+    return '消耗 $arg0 kcal';
   }
 
   @override
@@ -38040,7 +37845,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return '已完成 $arg0 $arg1';
+    return '已完成 $arg0/$arg1 次锻炼';
   }
 
   @override
@@ -38706,12 +38511,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return '本周下降 $arg0';
+    return '本周减少 $arg0！';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return '较上一周期下降 $arg0';
+    return '比上月同一周期日减少 $arg0 lbs';
   }
 
   @override
@@ -38746,17 +38551,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return '达标区间 $arg0';
+    return '目标保持 $arg0 — 黄体期水分平滑';
   }
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return '本周上升 $arg0';
+    return '本周增加 $arg0';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return '较上一周期上升 $arg0';
+    return '比上月同一周期日增加 $arg0 lbs';
   }
 
   @override
@@ -38905,11 +38710,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String workoutActionsSheetGetALinkFor(Object marketingDomain) {
     return '获取 $marketingDomain 链接分享给好友';
-  }
-
-  @override
-  String workoutActionsSheetN(Object appName, Object url) {
-    return ') — Zealova\n(url)';
   }
 
   @override
@@ -39242,11 +39042,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2Value(Object workoutComp) {
-    return ')(workoutComp)';
-  }
-
-  @override
   String get workoutCompleteScreenUnableToChallengeFriends => '目前无法挑战好友';
 
   @override
@@ -39454,9 +39249,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutDetailFailedToLoadWorkout => '加载训练失败';
 
   @override
-  String get workoutDetailHelpersForAvailableEquipment => ') 用于可用器械...';
-
-  @override
   String get workoutDetailHelpersHell => '地狱';
 
   @override
@@ -39470,7 +39262,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return '正在替换动作 $arg0';
+    return '正在为可用器材替换 $arg0 个动作…';
   }
 
   @override
@@ -39910,9 +39702,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutHistoryImportYourStrengthData => '你的力量训练数据';
 
   @override
-  String get workoutImportAsDone => ')\" 标记为完成';
-
-  @override
   String get workoutImportCalories => '卡路里';
 
   @override
@@ -39935,7 +39724,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return '来自来源 $arg0';
+    return '来自 $arg0';
   }
 
   @override
@@ -40232,11 +40021,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutPlanDrawerExerciseCount(Object arg0) {
-    return '动作数量 $arg0';
+    return '$arg0 个动作';
   }
-
-  @override
-  String get workoutPlanDrawerLoggedTheyWillBe => ') 已记录。它们将被删除。';
 
   @override
   String get workoutPlanDrawerNow => '现在';
@@ -40246,7 +40032,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutPlanDrawerRemoveExercise(Object arg0) {
-    return '移除动作 $arg0';
+    return '移除 $arg0？';
   }
 
   @override
@@ -40254,7 +40040,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
-    return '已记录组数 $arg0';
+    return '你已记录 $arg0 组。它们将被删除。';
   }
 
   @override
@@ -40637,7 +40423,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutShowcaseFinishWorkout => '完成训练';
 
   @override
-  String get workoutShowcaseFormat1Rm => '1RM 格式';
+  String get workoutShowcaseFormat1Rm => '1RM';
 
   @override
   String get workoutShowcaseFormatBoarding => '登机牌';
@@ -40710,7 +40496,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return '第 $arg0 组';
+    return '✓ 记录第 $arg0 组';
   }
 
   @override
@@ -40758,11 +40544,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String workoutShowcaseScreenDuration(Object duration) {
     return '时长：$duration';
-  }
-
-  @override
-  String workoutShowcaseScreenPrs(Object prs) {
-    return 'PR：$prs';
   }
 
   @override
@@ -40818,7 +40599,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutShowcaseSetNOf3(Object arg0) {
-    return '训练展示：第 $arg0 组（共 3 组）';
+    return '第 $arg0 组，共 3 组';
   }
 
   @override
@@ -41649,46 +41430,47 @@ class AppLocalizationsZh extends AppLocalizations {
   String get xpGoalsDialogBeginnerToTranscendent => '从新手到超凡';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp => '完成训练 XP';
+  String get xpGoalsDialogCompleteWorkoutXp => '完成锻炼：+100 XP';
 
   @override
   String get xpGoalsDialogDailyGoals => '每日目标';
 
   @override
-  String get xpGoalsDialogFirstChatWithAiCoachXp => '首次与AI教练对话 XP';
+  String get xpGoalsDialogFirstChatWithAiCoachXp => '首次与 AI 教练对话：+15 XP';
 
   @override
-  String get xpGoalsDialogFirstMealWeightMeasurementsXp => '首次记录饮食重量 XP';
+  String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
+      '首次记录餐食/体重/身体数据：各 +50 XP';
 
   @override
-  String get xpGoalsDialogFirstPrXp => '首次 PR XP';
+  String get xpGoalsDialogFirstPrXp => '首个 PR：+100 XP';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp => '首次进度照片 XP';
+  String get xpGoalsDialogFirstProgressPhotoXp => '首张进度照片：+75 XP';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp => '首次达成蛋白质目标 XP';
+  String get xpGoalsDialogFirstProteinGoalXp => '首个蛋白质目标：+100 XP';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => '首次训练 XP';
+  String get xpGoalsDialogFirstWorkoutXp => '首次锻炼：+150 XP';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp => '达成蛋白质目标 XP';
+  String get xpGoalsDialogHitProteinGoalXp => '达成蛋白质目标：+50 XP';
 
   @override
   String get xpGoalsDialogLevels => '等级';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp => '记录身体测量数据 XP';
+  String get xpGoalsDialogLogBodyMeasurementsXp => '记录身体围度：+20 XP';
 
   @override
-  String get xpGoalsDialogLogMealXp => '记录饮食 XP';
+  String get xpGoalsDialogLogMealXp => '记录餐食：+25 XP';
 
   @override
-  String get xpGoalsDialogLogWeightXp => '记录体重 XP';
+  String get xpGoalsDialogLogWeightXp => '记录体重：+15 XP';
 
   @override
-  String get xpGoalsDialogLoginXp => '登录 XP';
+  String get xpGoalsDialogLoginXp => '登录：+5 XP';
 
   @override
   String get xpGoalsDialogMilestoneRewards => '里程碑奖励';
@@ -41761,7 +41543,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return '当前等级总计 $arg0';
+    return '等级 $arg0 • 共 249 级';
   }
 
   @override
@@ -41875,12 +41657,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return '可用 $arg0';
+    return '可获得 +$arg0 XP';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return '今日获得 $arg0';
+    return '今日已获得 +$arg0 XP';
   }
 
   @override
@@ -41888,7 +41670,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return '倍率已激活 $arg0';
+    return '${arg0}x XP 已激活！';
   }
 
   @override

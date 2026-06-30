@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "എപ്പോൾ ഉപയോഗിക്കണം",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "വ്യായാമം വിജയകരമായി മാറ്റി",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} വ്യായാമം(ങ്ങൾ) ചേർത്തു",
-  "activeWorkoutScreenRefactoredFor": ") (name)-ന് വേണ്ടി",
   "activeWorkoutScreenUndo": "അൺഡൂ",
   "activeWorkoutScreenWorkoutAdapted": "വർക്കൗട്ട് ക്രമീകരിച്ചു.",
   "activityCardAdditionalDetailsOptional": "കൂടുതൽ വിവരങ്ങൾ (ഓപ്ഷണൽ)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "വർക്കൗട്ടിന് മുമ്പുള്ള ഭക്ഷണം?",
   "aiCoachMealQuickSnackIdeas": "പെട്ടെന്നുള്ള ലഘുഭക്ഷണ ആശയങ്ങൾ?",
   "aiCoachMealRecoveryDayEating": "റിക്കവറി ദിവസത്തെ ഭക്ഷണം?",
-  "aiCoachMealSearchQuestionsTryAngry": "ചോദ്യങ്ങൾ തിരയുക (ഉദാഹരണത്തിന് \"angry\", \"fiber\", \"mexican\")",
   "aiCoachMealSomethingWentWrong": "എന്തോ തെറ്റ് സംഭവിച്ചു.",
   "aiCoachMealStressedWhatHelps": "സമ്മർദ്ദം - എന്താണ് സഹായിക്കുന്നത്?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "ഏഷ്യൻ-ഇൻസ്പയർഡ് {meal} — ഒരു ഓപ്ഷൻ (റൈസ് ബൗൾ, നൂഡിൽസ്, സുഷി, സ്റ്റിർ ഫ്രൈ), മാക്രോകളും തയ്യാറാക്കുന്ന രീതിയും.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · {phase} ഘട്ടം",
   "caloriesSummaryCardCalories": "കലോറികൾ",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "ബാക്കിയുള്ളത്",
   "cancelConfirmationAnythingElseYouD": "നിങ്ങൾക്ക് മറ്റെന്തെങ്കിലും പങ്കുവെക്കാനുണ്ടോ? (ഓപ്ഷണൽ)",
   "cancelConfirmationCancelAnyway": "എന്തായാലും റദ്ദാക്കുക",
   "cancelConfirmationHelpUsImprove": "മെച്ചപ്പെടുത്താൻ ഞങ്ങളെ സഹായിക്കൂ",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "മനസ്സിലായി",
   "chatLanguageChangedSystem": "🌐 AI കോച്ച് ഇപ്പോൾ {nativeName} ഭാഷയിൽ മറുപടി നൽകുന്നു",
   "chatLanguageResetSystem": "🌐 AI കോച്ചിന്റെ ഭാഷ പുനഃസജ്ജമാക്കി — ആപ്പ് ഭാഷ ഉപയോഗിക്കുന്നു",
-  "chatLeftToday": ") ഇന്ന് ബാക്കിയുണ്ട്",
   "chatMediaWidgetsCalTotal": "ആകെ {totalCal} cal",
   "chatMediaWidgetsGProtein": "{totalProtein}g പ്രോട്ടീൻ",
   "chatMediaWidgetsGoTo": "{workoutName}-ലേക്ക് പോകുക",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "കോച്ച് പതിവിലും കൂടുതൽ സമയം ചിന്തിക്കുന്നു.",
   "chatScreenCouldntReachCoach": "കോച്ചിനെ ബന്ധപ്പെടാൻ സാധിച്ചില്ല.",
   "chatScreenExtAboutAiCoach": "AI കോച്ചിനെക്കുറിച്ച്",
-  "chatScreenExtAs": ") എന്ന നിലയിൽ (mealType)",
   "chatScreenExtChangeCoach": "കോച്ചിനെ മാറ്റുക",
   "chatScreenExtChatTips": "ചാറ്റ് നുറുങ്ങുകൾ",
   "chatScreenExtChooseMultiplePhotos": "ഒന്നിലധികം ഫോട്ടോകൾ തിരഞ്ഞെടുക്കുക",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "ലക്ഷ്യങ്ങൾ കാണുക",
   "complianceRingCardAllWorkoutsCompleted": "എല്ലാ വർക്കൗട്ടുകളും പൂർത്തിയായി",
   "complianceRingCardGetStartedToday": "ഇന്ന് തന്നെ തുടങ്ങൂ",
-  "complianceRingCardGreatPace": "മികച്ച വേഗത {arg0}",
+  "complianceRingCardGreatPace": "നല്ല വേഗത! {arg0} ബാക്കി",
   "complianceRingCardNoWorkoutsScheduledThis": "ഈ ആഴ്ച വർക്കൗട്ടുകളൊന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല",
-  "complianceRingCardOnTrack": "ശരിയായ പാതയിൽ {arg0}",
+  "complianceRingCardOnTrack": "ട്രാക്കിലാണ് — {arg0} ബാക്കി",
   "complianceRingCardWorkoutCompliance": "വർക്കൗട്ട് പാലനം",
-  "complianceRingCardWorkoutsRemaining": "ബാക്കിയുള്ള വർക്കൗട്ടുകൾ {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} വർക്കൗട്ടുകൾ ബാക്കി",
   "comprehensiveStatsStatsScores": "സ്റ്റാറ്റ്‌സും സ്‌കോറുകളും",
   "connectedAppsAutoImportEvery15": "ഓരോ 15 മിനിറ്റിലും ഓട്ടോ-ഇംപോർട്ട് ചെയ്യുക",
   "connectedAppsConnect": "കണക്റ്റ് ചെയ്യുക",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "ഭക്ഷണം തിരഞ്ഞെടുക്കുക",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "ഈ മൂല്യം ഉപയോഗിക്കുക",
-  "cookingConverterWeight": ") ഭാരം",
   "cosmeticsGalleryCosmetics": "കോസ്മെറ്റിക്സ്",
   "cosmeticsGalleryEquip": "ഉപയോഗിക്കുക",
   "cosmeticsGalleryEquipped": "ഉപയോഗിക്കുന്നു",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "നിങ്ങളുടെ തിരയലുമായി പൊരുത്തപ്പെടുന്ന വ്യായാമങ്ങളൊന്നുമില്ല",
   "customExercisesScreenAreYouSureYou": "\"{name}\" ഡിലീറ്റ് ചെയ്യണമെന്ന് ഉറപ്പാണോ? ഇത് പിന്നീട് പഴയപടിയാക്കാൻ കഴിില്ല.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} വ്യായാമങ്ങൾ, {totalUses} ഉപയോഗങ്ങൾ",
-  "customExercisesScreenUsedTimes": "(usageCount) തവണ ഉപയോഗിച്ചു(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "വ്യായാമങ്ങൾ തിരയുക...",
   "customExercisesSimple": "ലളിതം",
   "customFoodBuilderAiFillFromName": "പേരിൽ നിന്ന് AI പൂരിപ്പിക്കുക",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · അവസാന സൈക്കിൾ",
   "customTrendScreenMaxOverlaysRemoveOne": "പരമാവധി {_kMaxOverlays} ഓവർലേകൾ മാത്രം — മറ്റൊന്ന് ചേർക്കാൻ ഒരെണ്ണം നീക്കം ചെയ്യുക",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} പങ്കിട്ട ദിവസങ്ങൾ",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "വ്യായാമം ചേർക്കുക",
   "customWorkoutBuilderBuildCustomWorkout": "കസ്റ്റം വർക്കൗട്ട് നിർമ്മിക്കുക",
   "customWorkoutBuilderCustomWorkoutCreated": "കസ്റ്റം വർക്കൗട്ട് സൃഷ്ടിച്ചു!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "ആർത്തവം രേഖപ്പെടുത്തുക",
   "cycleScreenUiLogPeriod": "ആർത്തവം രേഖപ്പെടുത്തുക",
   "cycleScreenUiLogYourFirstPeriod": "പ്രവചനങ്ങൾ ആരംഭിക്കാൻ നിങ്ങളുടെ ആദ്യ ആർത്തവ തീയതി രേഖപ്പെടുത്തുക.",
-  "cycleScreenUiPhase": ") ഘട്ടം",
   "cycleScreenUiPhaseLabel": "{displayName} ഘട്ടം",
   "cycleScreenUiPredictionsAreEstimates": "പ്രവചനങ്ങൾ നിങ്ങളുടെ ലോഗ് ചെയ്ത ഡാറ്റയെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്, ഇതൊരു ഗർഭനിരോധന മാർഗ്ഗമോ വൈദ്യോപദേശമോ അല്ല. ആരോഗ്യപരമായ ആശങ്കകൾക്ക് ഒരു ഡോക്ടറെ സമീപിക്കുക.",
   "cycleScreenUiPregnancyModeIsOn": "പ്രഗ്നൻസി മോഡ് ഓണാണ്",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "തുടരുക",
   "editProgramSheetCurrent": "നിലവിലുള്ളത്",
   "editProgramSheetCustomProgram": "കസ്റ്റം പ്രോഗ്രാം",
-  "editProgramSheetCustomValue": "ഇഷ്‌ടാനുസൃത മൂല്യം {arg0}",
+  "editProgramSheetCustomValue": "കസ്റ്റം: {arg0}",
   "editProgramSheetCustomizeProgram": "പ്രോഗ്രാം ഇഷ്ടാനുസൃതമാക്കുക",
   "editProgramSheetDays": "ദിവസങ്ങൾ",
   "editProgramSheetDaysAgo": "{days} ദിവസങ്ങൾക്ക് മുമ്പ്",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "ഉപകരണങ്ങൾ",
   "editProgramSheetEquipmentLabel": "ഉപകരണങ്ങളുടെ ലേബൽ",
   "editProgramSheetExamples": "ഉദാഹരണങ്ങൾ",
-  "editProgramSheetFailedToLoadHistory": "ചരിത്രം ലോഡ് ചെയ്യുക {arg0}",
-  "editProgramSheetFailedToRestore": "പുനഃസ്ഥാപിക്കുക {arg0}",
+  "editProgramSheetFailedToLoadHistory": "ചരിത്രം ലോഡ് ചെയ്യാനായില്ല: {arg0}",
+  "editProgramSheetFailedToRestore": "പുനഃസ്ഥാപിക്കാനായില്ല: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "പ്രോഗ്രാം അപ്‌ഡേറ്റ് ചെയ്യുക",
   "editProgramSheetFocus": "ശ്രദ്ധ കേന്ദ്രീകരിക്കേണ്ടവ",
   "editProgramSheetHealth": "ആരോഗ്യം",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "ഡൗൺലോഡ് ചെയ്യുന്നു {pct}%",
   "exerciseDetailSheetDownloadingVideo": "വീഡിയോ ഡൗൺലോഡ് ചെയ്യുന്നു...",
   "exerciseDetailSheetFavorite": "പ്രിയപ്പെട്ടത്",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "ലോഡ് ചെയ്യുന്നു...",
   "exerciseDetailSheetLog1rm": "1RM രേഖപ്പെടുത്തുക",
   "exerciseDetailSheetMS": "{restMins}m {restSecs}s",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "കുറിപ്പുകൾ ഇവിടെ ചേർക്കുക...",
   "exerciseSetTrackerAddSet": "സെറ്റ് ചേർക്കുക",
-  "exerciseSetTrackerBarbell": ") barbell",
   "exerciseSetTrackerReps": "റെപ്‌സ്",
   "exerciseSetTrackerRestTarget": "റെസ്റ്റ് ടാർഗെറ്റ്",
   "exerciseSetTrackerS": "{seconds}സെക്കൻഡ്",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI നിർദ്ദേശങ്ങൾ ലഭ്യമല്ല",
   "exerciseSwapSheetAnyEquipment": "ഏത് ഉപകരണവും",
   "exerciseSwapSheetAskAiForSuggestions": "AI-യോട് നിർദ്ദേശങ്ങൾ ചോദിക്കുക",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "നിങ്ങളുടെ ഉപകരണങ്ങളെക്കുറിച്ചോ മുൻഗണനകളെക്കുറിച്ചോ വിവരിക്കുക\nഉദാഹരണത്തിന്, \"എനിക്ക് തോളിൽ വേദനയുണ്ട്, ബോഡി വെയ്റ്റ് മാത്രം മതി\"",
   "exerciseSwapSheetEGIOnly": "ഉദാഹരണത്തിന്, \"എന്റെ കൈവശം ഡംബെല്ലുകൾ മാത്രമേയുള്ളൂ\"",
   "exerciseSwapSheetFailedToSwapExercise": "വ്യായാമം മാറ്റുന്നതിൽ പരാജയപ്പെട്ടു",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "മസിൽ-മാച്ച്ഡ് ബദലുകൾ കണ്ടെത്തുന്നു...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "ഭാരം",
   "expandedExerciseCardAddToFavorites": "പ്രിയപ്പെട്ടവയിലേക്ക് ചേർക്കുക",
   "expandedExerciseCardAlternatingHands": "കൈകൾ മാറി മാറി ഉപയോഗിക്കുക",
-  "expandedExerciseCardBarbell": ") ബാർബെൽ",
   "expandedExerciseCardBreathing": "ശ്വസനം",
   "expandedExerciseCardBreathingGuide": "ശ്വസന മാർഗ്ഗനിർദ്ദേശം",
   "expandedExerciseCardCollapse": "ചുരുക്കുക",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "പ്രോട്ടോക്കോൾ ലെവൽ",
   "fastingScoreCardScore": "സ്കോർ",
   "fastingScoreCardStreakBonus": "സ്ട്രീക്ക് ബോണസ്",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "കഴിഞ്ഞ ആഴ്ചയുമായി താരതമ്യം ചെയ്യുമ്പോൾ",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "ആദ്യത്തേത്",
   "flexibilityProgressChartLatest": "ഏറ്റവും പുതിയത്",
   "flexibilityProgressChartNoDataAvailable": "ഡാറ്റ ലഭ്യമല്ല",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "ഭാഗങ്ങൾ അനുസരിച്ച്",
   "flexibilityScoreCardFocusAreas": "ശ്രദ്ധ കേന്ദ്രീകരിക്കേണ്ട ഭാഗങ്ങൾ",
   "flexibilityScoreCardOverallFlexibility": "മൊത്തത്തിലുള്ള ഫ്ലെക്സിബിലിറ്റി",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "ഭക്ഷണങ്ങൾ, \"ഹൈ പ്രോട്ടീൻ\" എന്നിവ തിരയുക...",
   "foodHistoryUndo": "അൺഡൂ",
   "foodItemRankingAddFood": "ഭക്ഷണം ചേർക്കുക",
-  "foodItemRankingDetails": ") വിശദാംശങ്ങൾ",
   "foodItemRankingNFoodItems": "{count} ഭക്ഷണ ഇനങ്ങൾ",
   "foodItemRankingScore": "സ്കോർ",
   "foodItemRankingTapToHideDetails": "വിശദാംശങ്ങൾ മറയ്ക്കാൻ ടാപ്പ് ചെയ്യുക",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "അതിനാൽ ഞാൻ ആളെ നിർമ്മിച്ചു, ലെഡ്ജറല്ല. സ്വദേശത്തോ വിദേശത്തോ ഉള്ള ഏതെങ്കിലും മെനു സ്നാപ്പ് ചെയ്യുക, കോച്ച് അത് നിങ്ങൾക്ക് മാക്രോകളിൽ തിരികെ വായിക്കും. ഒരു ചൊവ്വാഴ്ച ഒഴിവാക്കുക, അത് ബുധനാഴ്ച രാവിലെ കുറ്റബോധമില്ലാതെ നിങ്ങളെ പിന്നോട്ട് വലിക്കും. ഇത് നിങ്ങളുടെ ഭക്ഷണങ്ങൾ, ജിം, സ്ലിപ്പ് പാറ്റേണുകൾ എന്നിവ പഠിക്കുന്നു - മാസത്തിൽ ഒരു PT സെഷനിൽ താഴെ മാത്രം.",
   "founderNoteTheFriendsWhoActually": "യഥാർത്ഥത്തിൽ ഫിറ്റ് ആയ സുഹൃത്തുക്കൾക്ക് അവരോട് സംസാരിക്കുന്ന ഒരു വ്യക്തി ഉണ്ടായിരുന്നു. യഥാർത്ഥ ഉത്തരവാദിത്തത്തിന് മാസത്തിൽ ഏകദേശം ഇരുന്നൂറ് ഡോളർ ചിലവാകും, അതുകൊണ്ടാണ് നമ്മളിൽ ഭൂരിഭാഗം പേർക്കും അത് ലഭിക്കാത്തതും, \"ട്രാക്കിംഗും\" \"മാറ്റവും\" തമ്മിലുള്ള അകലം വർഷങ്ങളോളം നിലനിൽക്കുന്നതും.",
-  "freshnessDecayCardAgo": ") മുൻപ്",
   "freshnessDecayCardControlsHowQuicklyExercise": "വ്യായാമത്തിന്റെ പുതുമ എത്ര വേഗത്തിൽ കുറയുന്നു എന്ന് നിയന്ത്രിക്കുന്നു: e^(-k * sessions)",
   "freshnessDecayCardFreshnessDecayTuner": "ഫ്രഷ്നെസ് ഡീകെ ട്യൂണർ",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "സെറ്റ് {currentSetNumber} / {totalSets}",
   "futuristicSetCardSkipExercise": "വ്യായാമം ഒഴിവാക്കുക",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "നിങ്ങളുടെ വർക്കൗട്ടുകൾ, പോഷകാഹാരം, ഉപവാസം എന്നിവ ഏകോപിപ്പിക്കുന്ന ഒരു സമഗ്രമായ പ്ലാൻ തയ്യാറാക്കുക.",
   "generatePlanFastingProtocol": "ഉപവാസ പ്രോട്ടോക്കോൾ",
   "generatePlanGeneratePlan": "പ്ലാൻ തയ്യാറാക്കുക",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "നിങ്ങളുടെ ആദ്യ ശീലം ചേർക്കുക",
   "habitsCardAllHabitsCompleted": "എല്ലാ ശീലങ്ങളും പൂർത്തിയായി!",
   "habitsCardBuildDailyHabits": "ദൈനംദിന ശീലങ്ങൾ വളർത്തുക",
-  "habitsCardCompletedCount": "പൂർത്തിയാക്കിയവ {arg0} {arg1}",
-  "habitsCardDayStreak": "ഡേ സ്ട്രീക്ക് {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} പൂർത്തിയായി",
+  "habitsCardDayStreak": "{arg0} ദിവസത്തെ സ്ട്രീക്ക്",
   "habitsCardFailedToLoadHabits": "ശീലങ്ങൾ ലോഡ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു",
   "habitsCardGreatJobKeepingUp": "നിങ്ങളുടെ സ്ട്രീക്കുകൾ നിലനിർത്തുന്നതിൽ മികച്ച പ്രകടനം",
   "habitsCardQuickStart": "പെട്ടെന്നുള്ള തുടക്കം:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "ഇന്നത്തെ ശീലങ്ങൾ",
   "habitsCardTryAgain": "വീണ്ടും ശ്രമിക്കുക",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "എല്ലാ ശീലങ്ങളും കാണുക {arg0}",
+  "habitsCardViewAllHabits": "എല്ലാ {arg0} ശീലങ്ങളും കാണുക",
   "habitsCompleted": "പൂർത്തിയായി",
   "habitsDeleteHabit": "ശീലം ഡിലീറ്റ് ചെയ്യണോ?",
   "habitsHoldToReorderSwipe": "ക്രമീകരിക്കാൻ അമർത്തിപ്പിടിക്കുക • ഡിലീറ്റ് ചെയ്യാൻ സ്വൈപ്പ് ചെയ്യുക",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "വിശ്രമ ദിവസമാണോ? അതോ വ്യായാമം ചെയ്യാൻ തയ്യാറാണോ? തീരുമാനിക്കൂ.",
   "homeEmptyWorkout_v3": "പ്രോഗ്രാമുകൾക്കിടയിലാണ് — ട്രാക്കിലേക്ക് മടങ്ങാൻ പുതിയൊരെണ്ണം തുടങ്ങൂ.",
   "homeEmptyWorkout_v4": "പ്ലാനുകളൊന്നുമില്ല. നിങ്ങളുടെ ലക്ഷ്യങ്ങൾക്കനുസരിച്ച് AI ഒരു പ്ലാൻ തയ്യാറാക്കട്ടെ.",
-  "homeFromHealthConnect": ") Health Connect-ൽ നിന്ന്",
   "homeGreetingAfternoon_v1": "ഉച്ചസമയത്തെ ഊർജ്ജം, {name}!",
   "homeGreetingAfternoon_v2": "ഹലോ {name}, ഒന്ന് അനങ്ങാൻ സമയമായോ?",
   "homeGreetingAfternoon_v3": "ഒന്ന് സ്ട്രെച്ച് ചെയ്താലോ, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "കലോറി",
   "insightsSummaryTemplatePrs": "PR-കൾ",
   "insightsSummaryTemplateSummary": "സംഗ്രഹം",
-  "insightsSummaryTemplateValue": "{pct}%",
   "insightsSummaryTemplateWorkouts": "വർക്കൗട്ടുകൾ",
   "intensityPrompt1Left": "1 ബാക്കി",
   "intensityPrompt2Left": "2 ബാക്കി",
   "intensityPrompt3Left": "3+ ബാക്കി",
   "intensityPromptHard": "കഠിനം",
-  "intensityPromptHideRpeSlideDial": "RPE സ്ലൈഡ് മറയ്ക്കുക      അത് ക്രമീകരിക്കുക (RPE 1-10)",
   "intensityPromptHowHardWasThat": "ആ സെറ്റ് എത്രത്തോളം കഠിനമായിരുന്നു?",
   "intensityPromptMax": "പരമാവധി",
   "intensityPromptModerate": "മിതമായത്",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "സെറ്റ് {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "പ്ലാൻ തയ്യാറാക്കുകയും, നിങ്ങളുടെ ശരീരം മനസ്സിലാക്കുകയും, എല്ലാ ആഴ്ചയും ക്രമീകരിക്കുകയും ചെയ്യുന്ന ഒരു AI കോച്ച്.",
   "introBuildMyPlan": "എന്റെ പ്ലാൻ തയ്യാറാക്കുക",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) സെറ്റുകൾ",
   "introCardMonth": "മാസം.",
   "introIAlreadyHaveAnAccount": "എനിക്ക് ഇതിനകം ഒരു അക്കൗണ്ട് ഉണ്ട്",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "ബാർകോഡ്",
   "logMealSheetBarcodeScan": "ബാർകോഡ് സ്കാൻ",
   "logMealSheetCached": "(കാഷെ ചെയ്‌തു)",
-  "logMealSheetCaptured": ") പകർത്തി",
   "logMealSheetChooseFoodPhotos": "ഭക്ഷണ ഫോട്ടോകൾ തിരഞ്ഞെടുക്കുക",
   "logMealSheetChooseFromGallery": "ഗാലറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക",
   "logMealSheetChooseFromLibrary": "ലൈബ്രറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7d ശരാശരി · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "മുമ്പത്തെ കുറഞ്ഞ അളവിൽ നിന്ന് -{_selectedUnit} {label}",
   "logWeightSheetValidRange": "സാധുവായ പരിധി: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": "{changeInUnit}",
   "logWeightSyncedFromAppleHealth": "Apple Health-ൽ നിന്ന് സിങ്ക് ചെയ്തു",
   "logWeightSyncedToAppleHealth": "Apple Health-ലേക്ക് സിങ്ക് ചെയ്തു",
   "logWeightTapToEdit": "എഡിറ്റ് ചെയ്യാൻ ടാപ്പ് ചെയ്യുക",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "സൈൻ ഔട്ട് ചെയ്യണോ?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "മാക്രോകൾ",
-  "mainShellPartChatsLeftToday": "ഇന്ന് ബാക്കിയുള്ള ചാറ്റുകൾ {arg0}",
+  "mainShellPartChatsLeftToday": "ഇന്ന് {arg0} ചാറ്റുകൾ ബാക്കി",
   "mainShellPartGuestMode": "ഗസ്റ്റ് മോഡ്",
   "mainShellPartQuickActions": "ക്വിക്ക് ആക്ഷനുകൾ",
   "mainShellPartSignUp": "സൈൻ അപ്പ്",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "പ്രൈമറി",
   "manageDuplicateImportsScreenSources": "{length} സ്രോതസ്സുകൾ",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(row)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "ഗ്രൂപ്പിൽ നിന്ന് അൺലിങ്ക് ചെയ്യുക",
   "manageDuplicateImportsUnlinkedFromGroup": "ഗ്രൂപ്പിൽ നിന്ന് അൺലിങ്ക് ചെയ്തു",
   "manageGymProfilesActive": "ആക്ടീവ്",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} കൂടുതൽ",
   "menuAnalysisSheetSelected": "{length} എണ്ണം തിരഞ്ഞെടുത്തു",
   "menuAnalysisSheetSort": "തരംതിരിക്കുക: {label}",
-  "menuAnalysisSheetValue": ")(elapsed)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "\"{restaurantName}\"-നായി നിങ്ങൾ ഇതിനകം ഒരു മെനു സേവ് ചെയ്തിട്ടുണ്ട്",
   "menuAnalysisSort": "തരംതിരിക്കുക:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "മെട്രിക് തരം",
   "metricsDashboardMuscleMass": "പേശികളുടെ അളവ്",
   "metricsDashboardNoDataAvailable": "വിവരങ്ങൾ ലഭ്യമല്ല",
-  "metricsDashboardNoMetricDataYet": "മെട്രിക് ഡാറ്റ ഇതുവരെ ലഭ്യമല്ല {arg0}",
+  "metricsDashboardNoMetricDataYet": "ഇതുവരെ {arg0} ഡാറ്റയില്ല",
   "metricsDashboardQuickStats": "ക്വിക്ക് സ്റ്റാറ്റ്സ്",
   "metricsDashboardRestingHeartRate": "വിശ്രമവേളയിലെ ഹൃദയമിടിപ്പ്",
   "metricsDashboardRestingHr": "റെസ്റ്റിംഗ് HR",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "മറ്റുള്ളവ",
   "muscleHeatmapTileCompleteWorkoutsToSee": "പേശികളുടെ വിവരങ്ങൾ കാണാൻ വർക്കൗട്ടുകൾ പൂർത്തിയാക്കുക",
   "muscleHeatmapTileCouldnTLoad": "ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല",
-  "muscleHeatmapTileMostTrained": "ഏറ്റവും കൂടുതൽ പരിശീലനം നൽകിയത് {arg0}",
+  "muscleHeatmapTileMostTrained": "ഏറ്റവും കൂടുതൽ പരിശീലിച്ചത്: {arg0}",
   "muscleHeatmapTileMuscles": "പേശികൾ",
   "muscleHeatmapTileRetry": "വീണ്ടും ശ്രമിക്കുക",
   "muscleHeatmapUpperBody": "അപ്പർ ബോഡി",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "പ്രിയപ്പെട്ടവ ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "പ്രധാനപ്പെട്ടവ ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "മികച്ചത്: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "സമീപകാല പ്രവർത്തനം",
   "myLibraryTabViewAll": "എല്ലാം കാണുക",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "കാഷ്വൽ മൂവർ",
   "neatGamificationWidgetsClaimReward": "റിവാർഡ് ക്ലെയിം ചെയ്യുക",
   "neatGamificationWidgetsCouchPotato": "കൗച്ച് പൊട്ടാറ്റോ",
-  "neatGamificationWidgetsCurrentXp": "നിലവിലെ xp {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "ദൈനംദിന വെല്ലുവിളി",
   "neatGamificationWidgetsExpired": "കാലാവധി കഴിഞ്ഞു",
-  "neatGamificationWidgetsHoursMinutesLeft": "മണിക്കൂറുകൾ മിനിറ്റുകൾ ബാക്കി {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0}h {arg1}m ബാക്കി",
   "neatGamificationWidgetsLevel": "ലെവൽ {level}",
   "neatGamificationWidgetsLevelUp": "ലെവൽ അപ്പ്!",
   "neatGamificationWidgetsMaxLevel": "പരമാവധി ലെവൽ!",
-  "neatGamificationWidgetsMinutesLeft": "മിനിറ്റുകൾ ബാക്കി {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0}m ബാക്കി",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "ചാമ്പ്യൻ",
   "neatGamificationWidgetsNeatEnthusiast": "എൻതൂസിയാസ്റ്റ്",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "ഈ ആഴ്ച ഇതുവരെ റാങ്കിംഗുകൾ ഒന്നുമില്ല",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "സ്കോർ",
-  "neatGamificationWidgetsStepGoal": "സ്റ്റെപ്പ് ഗോൾ {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "സ്റ്റെപ്പുകൾ",
-  "neatGamificationWidgetsTargetActiveHours": "ലക്ഷ്യമിടുന്ന ആക്ടീവ് മണിക്കൂറുകൾ {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} hrs",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "സ്കോർ ബ്രേക്ക്ഡൗൺ",
   "neatScoreDisplayTapForBreakdown": "ബ്രേക്ക്ഡൗണിനായി ടാപ്പ് ചെയ്യുക",
   "neatScoreDisplayTrend": "ട്രെൻഡ്: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "ലോഡ് ചെയ്യുന്നു...",
   "netflixExerciseCarouselSeeAll": "എല്ലാം കാണുക",
   "netflixExercisesAddYourOwnExercises": "കസ്റ്റം റെപ്പുകൾ, സെറ്റുകൾ, നിർദ്ദേശങ്ങൾ എന്നിവ ഉപയോഗിച്ച് നിങ്ങളുടെ സ്വന്തം വ്യായാമങ്ങൾ ചേർക്കുക.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "അടുത്ത ഒപ്റ്റിമൽ സെറ്റ് കണക്കാക്കുന്നു...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% തീവ്രത",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "അവസാന സെറ്റ്",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "പ്രധാന ഉറവിടങ്ങൾ",
   "nutrientExplorerUnknown": "അജ്ഞാതം",
   "nutrientExplorerUnpinNutrient": "പോഷകം അൺപിൻ ചെയ്യുക",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "വിറ്റാമിനുകൾ",
   "nutrientRushGameCatchTheGoldenZealova": "പവർ-അപ്പിനായി ഗോൾഡൻ Zealova മാർക്ക് പിടിക്കുക!",
   "nutrientRushGameNewBest": "🎉 പുതിയ ബെസ്റ്റ്!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "പ്രതിവാര അവലോകനം",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "ശരാശരി {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "ശരാശരി ഉപഭോഗം: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/ദിവസം {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "ഭാരം: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, എല്ലാം ഇതിൽ",
   "onboardingWhyFirstTheWhy": "ആദ്യം, എന്തുകൊണ്ട്",
   "onboardingWhyWhatSDrivingThis": "എന്താണ് ഇതിന് പിന്നിലെ കാരണം?",
-  "openAllCrates24HoursOf2xXp": "24 മണിക്കൂർ 2x XP",
-  "openAllCratesActivityCrate": "ആക്ടിവിറ്റി ക്രേറ്റ്",
+  "openAllCrates24HoursOf2xXp": "2x XP-യുടെ 24 മണിക്കൂർ",
+  "openAllCratesActivityCrate": "ആക്റ്റിവിറ്റി ക്രേറ്റ്",
   "openAllCratesBonusCrateToOpen": "തുറക്കാനുള്ള ബോണസ് ക്രേറ്റ്",
-  "openAllCratesCollect": "ശേഖരിക്കുക {arg0} {arg1}",
-  "openAllCratesCratesOpened": "തുറന്ന ക്രേറ്റുകൾ {arg0}",
-  "openAllCratesDailyCrate": "ഡെയിലി ക്രേറ്റ്",
+  "openAllCratesCollect": "ശേഖരിക്കുക ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} ക്രേറ്റുകൾ തുറന്നു!",
+  "openAllCratesDailyCrate": "ഡെയ്‌ലി ക്രേറ്റ്",
   "openAllCratesDone": "പൂർത്തിയായി",
-  "openAllCratesDoubleXpToken": "ഡബിൾ xp ടോക്കൺ",
+  "openAllCratesDoubleXpToken": "ഡബിൾ XP ടോക്കൺ",
   "openAllCratesFailedToOpenCrates": "ക്രെറ്റുകൾ തുറക്കുന്നതിൽ പരാജയപ്പെട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കുക.",
   "openAllCratesFitnessCrate": "ഫിറ്റ്നസ് ക്രേറ്റ്",
-  "openAllCratesGainedXp": "ലഭിച്ച xp {arg0}",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "പരമാവധി ലെവൽ",
-  "openAllCratesOpenYourCrates": "നിങ്ങളുടെ ക്രേറ്റുകൾ തുറക്കുക",
-  "openAllCratesOpened": ") തുറന്നു!",
-  "openAllCratesOpeningYourCrates": "നിങ്ങളുടെ ക്രേറ്റുകൾ തുറക്കുന്നു",
-  "openAllCratesPickRewardPerDay": "ദിവസേനയുള്ള റിവാർഡ് തിരഞ്ഞെടുക്കുക {arg0} {arg1}",
-  "openAllCratesPickYourReward": "നിങ്ങളുടെ റിവാർഡ് തിരഞ്ഞെടുക്കുക {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 നിങ്ങളുടെ ക്രേറ്റുകൾ തുറക്കുക",
+  "openAllCratesOpeningYourCrates": "🎁 നിങ്ങളുടെ ക്രേറ്റുകൾ തുറക്കുന്നു…",
+  "openAllCratesPickRewardPerDay": "ദിവസം 1 റിവാർഡ് തിരഞ്ഞെടുക്കുക • {arg0}/{arg1} തിരഞ്ഞെടുത്തു",
+  "openAllCratesPickYourReward": "നിങ്ങളുടെ റിവാർഡ് തിരഞ്ഞെടുക്കുക • {arg0}/{arg1} തിരഞ്ഞെടുത്തു",
   "openAllCratesProtectYourStreak": "നിങ്ങളുടെ സ്ട്രീക്ക് സംരക്ഷിക്കുക",
   "openAllCratesSelectAll": "എല്ലാം തിരഞ്ഞെടുക്കുക",
   "openAllCratesStreakCrate": "സ്ട്രീക്ക് ക്രേറ്റ്",
   "openAllCratesStreakShield": "സ്ട്രീക്ക് ഷീൽഡ്",
   "openAllCratesToday": "ഇന്ന്",
-  "openAllCratesTotalXpFormatted": "ആകെ XP {arg0}",
-  "openAllCratesTotalXpLevel": "ആകെ XP ലെവൽ {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} ആകെ",
+  "openAllCratesTotalXpLevel": "ആകെ: {arg0} XP • ലെവൽ {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 റിവാർഡുകൾ!",
-  "openAllCratesXpInLevel": "ലെവലിലെ XP {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "അടുത്ത ലെവലിലേക്കുള്ള XP {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "ലെവൽ {arg1}-ലേക്ക് {arg0} XP",
   "openAllCratesYesterday": "ഇന്നലെ",
   "overallScoreHeroOverall": "മൊത്തത്തിൽ",
   "overviewActiveSkill": "ആക്ടീവ് സ്കിൽ",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "നിങ്ങളുടെ ജിം പേഴ്സണാലിറ്റി ഇതാണ്...",
   "phaseRecommendationBannerBasedOn": "അടിസ്ഥാനമാക്കി: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-കോൺഫിഡൻസ് എസ്റ്റിമേറ്റ്",
   "phaseRecommendationBannerCycleDay": "സൈക്കിൾ ദിവസം {cycleDay}",
   "phaseRecommendationBannerEvidence": "തെളിവ്: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "മനസ്സിലായി",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "ശക്തിയുടെ അടിത്തറ പണിയുക",
   "planPreviewScreenBuildingYour4Week": "നിങ്ങളുടെ 4-ആഴ്ചത്തെ പ്ലാൻ തയ്യാറാക്കുന്നു...",
   "planPreviewScreenContinueFree": "സൗജന്യമായി തുടരുക",
-  "planPreviewScreenDaysPerWeek": "ആഴ്ചയിൽ {arg0} ദിവസങ്ങൾ",
+  "planPreviewScreenDaysPerWeek": "{arg0} ദിവസം/ആഴ്ച",
   "planPreviewScreenDesignedBasedOnYour": "നിങ്ങളുടെ ക്വിസ് ഉത്തരങ്ങളെ അടിസ്ഥാനമാക്കി രൂപകൽപ്പന ചെയ്തത്",
-  "planPreviewScreenEquipmentCount": "ഉപകരണങ്ങളുടെ എണ്ണം {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} ഉപകരണങ്ങൾ",
   "planPreviewScreenExercisesMin": "എക്സർസൈസുകൾ മിനിറ്റ് {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "തീവ്രതയും വ്യാപ്തിയും വർദ്ധിപ്പിക്കുക",
   "planPreviewScreenMasterTheMovement": "ചലനം സ്വായത്തമാക്കുക",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} പേഴ്സണൽ റെക്കോർഡുകൾ!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") അവസാനത്തേതിൽ നിന്ന്",
   "prShareCardCopiedToClipboard": "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി!",
   "prShareCardCopyText": "ടെക്സ്റ്റ് പകർത്തുക",
   "prShareCardFailedToCaptureImage": "ചിത്രം പകർത്തുന്നതിൽ പരാജയപ്പെട്ടു",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "തുടരുക!",
   "prsTemplateNewPersonalRecords": "പുതിയ പേഴ്സണൽ റെക്കോർഡുകൾ",
   "prsTemplateNewPrsAreJust": "പുതിയ PR-കൾ ഉടൻ വരുന്നു",
-  "prsTemplateValue": ") (unit)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "ചേരുവകൾ",
   "publicRecipeInstructions": "നിർദ്ദേശങ്ങൾ",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "പൂർണ്ണമായ ചരിത്രവും ട്രെൻഡുകളും കാണാൻ ടാപ്പ് ചെയ്യുക",
   "quickLogMeasurementsTrackYourBodyChanges": "കാലക്രമേണ നിങ്ങളുടെ ശരീരത്തിലുണ്ടാകുന്ന മാറ്റങ്ങൾ ട്രാക്ക് ചെയ്യുക",
   "quickLogMeasurementsUpdate": "അപ്‌ഡേറ്റ് ചെയ്യുക",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} ദിവസങ്ങൾക്ക് മുമ്പ്",
+  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} ദിവസം മുമ്പ് അപ്ഡേറ്റ് ചെയ്തു",
   "quickLogMeasurementsUpdatedToday": "ഇന്ന്",
   "quickLogMeasurementsUpdatedYesterday": "ഇന്നലെ",
   "quickLogMeasurementsWaist": "അരക്കെട്ട്",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "നിങ്ങൾ തിരഞ്ഞെടുത്ത പരിധിക്കുള്ളിൽ AI വർക്ക്ഔട്ടുകൾ സൃഷ്ടിക്കുന്നു",
   "quizDaysSelectorBest": "ഏറ്റവും മികച്ചത്",
   "quizDaysSelectorConsistencyBeatsIntensity": "സ്ഥിരതയാണ് പ്രധാനം - നിങ്ങൾക്ക് നിലനിർത്താൻ കഴിയുന്നത് തിരഞ്ഞെടുക്കുക",
-  "quizDaysSelectorDays": "{arg0} ദിവസങ്ങൾ",
-  "quizDaysSelectorDaysSelected": "തിരഞ്ഞെടുത്ത ദിവസങ്ങൾ {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") നിങ്ങളുടെ വർക്ക്ഔട്ടുകൾക്കായി",
+  "quizDaysSelectorDays": "{arg0, plural, one {ദിവസം} other {ദിവസങ്ങൾ}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} ദിവസങ്ങൾ തിരഞ്ഞെടുത്തു",
   "quizDaysSelectorFri": "വെള്ളി",
   "quizDaysSelectorHowLongAreYour": "നിങ്ങളുടെ വർക്ക്ഔട്ടുകൾ എത്ര സമയമെടുക്കും?",
   "quizDaysSelectorHowManyDaysPer": "ആഴ്ചയിൽ എത്ര ദിവസം നിങ്ങൾക്ക് പരിശീലിക്കാം?",
   "quizDaysSelectorMin": "മിനിറ്റ്",
   "quizDaysSelectorMon": "തിങ്കൾ",
   "quizDaysSelectorSat": "ശനി",
-  "quizDaysSelectorSelectNDays": "{arg0} ദിവസങ്ങൾ തിരഞ്ഞെടുക്കുക",
+  "quizDaysSelectorSelectNDays": "നിങ്ങൾക്ക് അനുയോജ്യമായ {arg0} ദിവസങ്ങൾ തിരഞ്ഞെടുക്കുക",
   "quizDaysSelectorSun": "ഞായർ",
   "quizDaysSelectorThu": "വ്യാഴം",
   "quizDaysSelectorTue": "ചൊവ്വ",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "ഹോം ജിം",
   "quizEquipmentHomeKettlebell": "ഹോം + കെറ്റിൽബെൽ",
   "quizEquipmentHotel": "ഹോട്ടൽ",
-  "quizEquipmentIdentifiedCount": "തിരിച്ചറിഞ്ഞവ {arg0}",
+  "quizEquipmentIdentifiedCount": "{arg0} ഇനങ്ങൾ തിരിച്ചറിഞ്ഞു. തിരഞ്ഞെടുപ്പ് മാറ്റാൻ ഏതെങ്കിലും ടാപ്പ് ചെയ്യുക.",
   "quizEquipmentKettlebell": "കെറ്റിൽബെൽ",
   "quizEquipmentMedicineBall": "മെഡിസിൻ ബോൾ",
   "quizEquipmentMinimalEquipmentBodyweight": "കുറഞ്ഞ ഉപകരണങ്ങൾ - ബോഡി വെയ്റ്റ്, മാറ്റ്",
   "quizEquipmentNeededForBarbell": "ബാർബെല്ലിന് ആവശ്യമാണ്",
   "quizEquipmentNoEquipmentIdentifiedPick": "ഉപകരണങ്ങളൊന്നും തിരിച്ചറിഞ്ഞില്ല. താഴെയുള്ള ലിസ്റ്റിൽ നിന്ന് തിരഞ്ഞെടുക്കുക.",
-  "quizEquipmentOtherCount": "മറ്റുള്ളവ {arg0}",
+  "quizEquipmentOtherCount": "{arg0} തിരഞ്ഞെടുത്തു",
   "quizEquipmentOtherEquipment": "മറ്റ് ഉപകരണങ്ങൾ",
   "quizEquipmentPullUpBar": "പുൾ അപ്പ് ബാർ",
   "quizEquipmentQuickPresets": "ക്വിക്ക് പ്രീസെറ്റുകൾ",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "റെസിപ്പിയുടെ പേര് ആവശ്യമാണ്",
   "recipeCreateRemovePhoto": "ഫോട്ടോ നീക്കം ചെയ്യുക",
   "recipeCreateSaving": "സേവ് ചെയ്യുന്നു...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "ഫോട്ടോ എടുക്കുക",
   "recipeCreateTapToEdit": "എഡിറ്റ് ചെയ്യാൻ ടാപ്പ് ചെയ്യുക",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "ഒരു സെർവിംഗിന് (×{servings} സെർവിംഗുകൾ)",
   "recipeDetailScreenUForkedFrom": "✨ {sourceName}-ൽ നിന്ന് ഫോർക്ക് ചെയ്തത്",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" എന്നെന്നേക്കുമായി നീക്കം ചെയ്യപ്പെടും.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 ക്യൂറേറ്റ് ചെയ്ത റെസിപ്പി",
   "recipeDetailView": "കാണുക",
@@ -24745,7 +24468,7 @@
   "regenerateSheetApply": "അപ്ലൈ",
   "regenerateSheetApplyThisWorkout": "ഈ വർക്ക്ഔട്ട് ഉപയോഗിക്കുക",
   "regenerateSheetBalancingMuscleGroups": "മസിൽ ഗ്രൂപ്പുകളെ ബാലൻസ് ചെയ്യുന്നു",
-  "regenerateSheetBootingUpTheAi": "AI ബൂട്ട് ചെയ്യുന്നു",
+  "regenerateSheetBootingUpTheAi": "AI ആരംഭിക്കുന്നു",
   "regenerateSheetBuildingYourPlan": "നിങ്ങളുടെ പ്ലാൻ തയ്യാറാക്കുന്നു",
   "regenerateSheetBuildingYourWorkout": "നിങ്ങളുടെ വർക്ക്ഔട്ട് തയ്യാറാക്കുന്നു…",
   "regenerateSheetCheckingEquipment": "ഉപകരണങ്ങൾ പരിശോധിക്കുന്നു",
@@ -24754,7 +24477,7 @@
   "regenerateSheetConsideringFocusAreas": "ശ്രദ്ധ കേന്ദ്രീകരിക്കേണ്ട ഭാഗങ്ങൾ പരിഗണിക്കുന്നു",
   "regenerateSheetCustomize": "ഇഷ്ടാനുസൃതമാക്കുക",
   "regenerateSheetCustomizeOrLetAi": "ഇഷ്ടാനുസൃതമാക്കുക അല്ലെങ്കിൽ AI നിർദ്ദേശിക്കാൻ അനുവദിക്കുക",
-  "regenerateSheetCustomizeOrLetAiSuggest": "സ്വയം ക്രമീകരിക്കുക അല്ലെങ്കിൽ AI നിർദ്ദേശിക്കട്ടെ",
+  "regenerateSheetCustomizeOrLetAiSuggest": "ഇഷ്ടാനുസൃതമാക്കുക അല്ലെങ്കിൽ AI നിർദ്ദേശിക്കട്ടെ",
   "regenerateSheetDescribeYourIdealWorkout": "നിങ്ങളുടെ അനുയോജ്യമായ വർക്ക്ഔട്ട് വിവരിക്കുക",
   "regenerateSheetDesigningYourWorkout": "നിങ്ങളുടെ വർക്ക്ഔട്ട് ഡിസൈൻ ചെയ്യുന്നു",
   "regenerateSheetDialingInSetsAndReps": "സെറ്റുകളും റെപ്പുകളും ക്രമീകരിക്കുന്നു",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "വിശദാംശങ്ങൾ പൂർത്തിയാക്കുന്നു…",
   "regenerateSheetFinalizingYourWorkout": "നിങ്ങളുടെ വർക്ക്ഔട്ട് പൂർത്തിയാക്കുന്നു",
   "regenerateSheetFineTuningTheDetails": "വിശദാംശങ്ങൾ കൃത്യമാക്കുന്നു",
-  "regenerateSheetGeneratingElapsed": "ജനറേറ്റ് ചെയ്ത സമയം {arg0}",
+  "regenerateSheetGeneratingElapsed": "സൃഷ്ടിക്കുന്നു… {arg0}",
   "regenerateSheetGeneratingSuggestions": "നിർദ്ദേശങ്ങൾ സൃഷ്ടിക്കുന്നു…",
   "regenerateSheetGetSuggestions": "നിർദ്ദേശങ്ങൾ നേടുക",
   "regenerateSheetGettingCreative": "ക്രിയേറ്റീവ് ആകുന്നു",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "നിർദ്ദേശിച്ചത് ഉപയോഗിക്കുക",
   "restSuggestionQuick": "വേഗത്തിൽ",
   "restSuggestionQuickRest": "പെട്ടെന്നുള്ള വിശ്രമം",
-  "restSuggestionSaveTime": "സമയം ലാഭിക്കുക {arg0}",
+  "restSuggestionSaveTime": "{arg0} ലാഭിക്കുക",
   "restSuggestionSuggested": "നിർദ്ദേശിച്ചത്",
   "restSuggestionUseSuggested": "നിർദ്ദേശിച്ചത് ഉപയോഗിക്കുക",
   "restTimerCardBaseRest": "ബേസ് റെസ്റ്റ്",
   "restTimerCardControlRestPeriodsBetween": "സെറ്റുകൾക്കിടയിലുള്ള വിശ്രമ സമയം നിയന്ത്രിക്കുക",
   "restTimerCardCustomRestTimer": "കസ്റ്റം റെസ്റ്റ് ടൈമർ",
   "restTimerCardFormula": "ഫോർമുല",
-  "restTimerCardFormulaBaserestRpe7": "ഫോർമുല: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "ലൈവ് പ്രിവ്യൂ",
   "restTimerCardMultiplier": "മൾട്ടിപ്ലയർ",
   "restTimerCardRestBaserestRpe7": "റെസ്റ്റ് = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "വേരിയബിളുകൾ: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "വേരിയബിളുകൾ: ബേസ്, RPE, മൾട്ടിപ്ലയർ, ടയർ",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "നിങ്ങളുടെ പ്രകടനം വിശകലനം ചെയ്യുന്നു...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "പൂർത്തിയായി",
   "rtpTitle": "കളിയിലേക്ക് മടങ്ങുക",
   "safetyDisclaimerBannerDismissDisclaimer": "നിരാകരണം ഒഴിവാക്കുക",
-  "safetyDisclaimerBannerInjuriesFlagged": "പരിക്കുകൾ അടയാളപ്പെടുത്തി {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} പരിക്കുകൾ ഫ്ലാഗ് ചെയ്തു",
   "safetyDisclaimerBannerInjuryBody": "പരിക്കേറ്റ ഭാഗം",
   "safetyDisclaimerBannerLearnMore": "കൂടുതലറിയുക",
   "safetyDisclaimerBannerMore": "+{overflow} കൂടുതൽ",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "സെറ്റ്",
   "sessionDetailSetCount": "{count, plural, other{{count} സെറ്റുകൾ}} · ടോപ്പ് സെറ്റ് ഹൈലൈറ്റ് ചെയ്തു",
   "sessionDetailTime": "സമയം",
-  "sessionDetailTopSetHighlighted": ") • ടോപ്പ് സെറ്റ് ഹൈലൈറ്റ് ചെയ്തു",
   "sessionDetailWeight": "ഭാരം",
   "setAdjustmentAdditionalNotesOptional": "അധിക കുറിപ്പുകൾ (ഓപ്ഷണൽ)",
   "setAdjustmentConfirm": "സ്ഥിരീകരിക്കുക",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} പൂർത്തിയായി",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} ബാക്കി",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} നീക്കം ചെയ്തു",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") of (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "{totalSets} പ്ലാൻ ചെയ്തതിൽ",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} സെറ്റുകൾ പൂർത്തിയായി",
   "setAdjustmentSheetReps": "റെപ്സ്",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "സെറ്റ് {currentSetNumber}/{totalSets} • വികസിപ്പിക്കാൻ ടാപ്പ് ചെയ്യുക",
   "setTrackingSectionSets": "{widget} സെറ്റുകൾ",
   "setTrackingSectionSetsCompleted": "{length} സെറ്റുകൾ പൂർത്തിയായി",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "ഭാരം ക്രമീകരിക്കേണ്ട അളവ്",
   "setTrackingSheetsDropSet": "ഡ്രോപ്പ് സെറ്റ്",
   "setTrackingSheetsExerciseHistory": "വ്യായാമ ചരിത്രം",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} Support Request",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} ദിവസങ്ങൾ",
   "settingsScreenUiNoSettingsFound": "ക്രമീകരണങ്ങളൊന്നും കണ്ടെത്തിയില്ല",
-  "settingsScreenUiTryDifferentKeywordsLike": "\"theme\", \"notifications\", അല്ലെങ്കിൽ \"ai voice\" പോലുള്ള വ്യത്യസ്ത കീവേഡുകൾ പരീക്ഷിക്കുക",
+  "settingsScreenUiTryDifferentKeywordsLike": "\"തീം\", \"അറിയിപ്പുകൾ\" അല്ലെങ്കിൽ \"AI ശബ്ദം\" പോലുള്ള മറ്റ് കീവേഡുകൾ പരീക്ഷിക്കുക",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "ക്രമീകരണങ്ങൾ തിരയുക",
   "settingsSetProgressionResearch": "പുരോഗതിയും ഗവേഷണവും സജ്ജമാക്കുക",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "റിവാർഡുകൾ",
   "streakMilestoneStreakMilestone": "സ്ട്രീക്ക് നാഴികക്കല്ല്!",
-  "streakMilestoneToGo": ") ബാക്കി!",
   "streakMilestoneYouVeReachedThe": "നിങ്ങൾ ഏറ്റവും വലിയ സ്ട്രീക്ക് നാഴികക്കല്ലിൽ എത്തിയിരിക്കുന്നു!",
   "streakSavedDialogWeUsedStreakShield": "നിങ്ങളുടെ {savedStreakCount}-ദിവസത്തെ സ്ട്രീക്ക് നിലനിർത്താൻ ഞങ്ങൾ 1 Streak Shield ഉപയോഗിച്ചു.",
   "streakSavedKeepItGoing": "തുടരുക",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "കണക്റ്റ് ചെയ്യുക",
   "todayScoreCardCustomize": "കസ്റ്റമൈസ് ചെയ്യുക",
   "todayScoreCardToday": "ഇന്ന്",
-  "todayScoreDetailDown": "{arg0} കുറഞ്ഞു",
-  "todayScoreDetailEarnedPts": "നേടിയ പോയിന്റുകൾ {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ ഇന്ന് രാവിലെ മുതൽ {arg0} കുറവ്",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} പോയിന്റുകൾ",
   "todayScoreDetailHowItWorks": "ഇത് എങ്ങനെ പ്രവർത്തിക്കുന്നു",
-  "todayScoreDetailInactiveExplanation": "നിഷ്ക്രിയ വിശദീകരണം {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "ശരാശരിയോടുകൂടിയ മൊമെന്റം {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} ഇന്ന് {arg1, plural, one {കണക്കാക്കുന്നില്ല} other {കണക്കാക്കുന്നില്ല}}, അതിനാൽ ബാക്കിയുള്ളവ പൂർണ്ണ 100 പോയിന്റുകൾ പങ്കിടുന്നു. നിങ്ങളുടെ സ്കോർ എപ്പോഴും ഇന്ന് യഥാർത്ഥത്തിൽ ബാധകമായത് മാത്രമേ പ്രതിഫലിപ്പിക്കൂ.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7-day ശരാശരി {arg1}",
   "todayScoreDetailNotCounted": "കണക്കാക്കിയിട്ടില്ല",
   "todayScoreDetailSetupText": "സെറ്റപ്പ് ടെക്സ്റ്റ്",
   "todayScoreDetailSteady": "സ്ഥിരത",
   "todayScoreDetailTodayScore": "ഇന്നത്തെ സ്കോർ",
-  "todayScoreDetailUp": "{arg0} കൂടി",
+  "todayScoreDetailUp": "▲ ഇന്ന് രാവിലെ മുതൽ {arg0} കൂടുതൽ",
   "todayScoreSetupAddAWorkoutPlan": "ഒരു വർക്ക്ഔട്ട് പ്ലാൻ ചേർക്കുക",
   "todayScoreSetupCardContinue": "തുടരുക: {label}",
   "todayScoreSetupCardGetStarted": "തുടങ്ങാം · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "കാർഡിയോ നേട്ടങ്ങൾ",
   "trophiesEarnedDayStreak": "ഡേ സ്ട്രീക്ക്",
   "trophiesEarnedFirstTime": "ആദ്യമായി!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "നാഴികക്കല്ല് പിന്നിട്ടു",
   "trophiesEarnedMilestoneReachedNice": "നാഴികക്കല്ല് പിന്നിട്ടു — കൊള്ളാം!",
   "trophiesEarnedMilestones": "നാഴികക്കല്ലുകൾ",
-  "trophiesEarnedNewBadges": "ബാഡ്ജുകൾ {arg0}",
-  "trophiesEarnedNewCardioPRs": "പുതിയ കാർഡിയോ PR-കൾ {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} പുതിയ ബാഡ്ജുകൾ",
+  "trophiesEarnedNewCardioPRs": "{arg0} പുതിയ കാർഡിയോ PRs",
   "trophiesEarnedNewPR": "പുതിയ PR",
-  "trophiesEarnedNewPRs": "പുതിയ PR-കൾ {arg0}",
+  "trophiesEarnedNewPRs": "{arg0} പുതിയ PRs!",
   "trophiesEarnedNewPr": "പുതിയ PR",
   "trophiesEarnedNextMilestones": "അടുത്ത നാഴികക്കല്ലുകൾ",
   "trophiesEarnedNoNewRecords": "പുതിയ റെക്കോർഡുകളൊന്നുമില്ല",
   "trophiesEarnedNoNewRecordsThis": "ഈ സെഷനിൽ പുതിയ റെക്കോർഡുകളൊന്നുമില്ല — നിങ്ങൾ ലക്ഷ്യമിടുന്നത് ഇതാ:",
   "trophiesEarnedPersonalRecords": "പേഴ്സണൽ റെക്കോർഡുകൾ",
-  "trophiesEarnedRemainingToUnlock": "അൺലോക്ക് ചെയ്യാൻ ബാക്കിയുള്ളത് {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "അൺലോക്ക് ചെയ്യാൻ ഇനിയും {arg0} {arg1}",
   "trophiesEarnedSessionHighlights": "സെഷൻ ഹൈലൈറ്റുകൾ",
   "trophiesEarnedSheetPts": "+{points} പോയിന്റുകൾ",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} ടൈപ്പ് ചെയ്യുന്നു",
   "typingIndicatorIsTyping3": "{agentName} ടൈപ്പ് ചെയ്യുന്നു...",
   "unifiedHomeWidgetsActivity": "ആക്ടിവിറ്റി",
-  "unifiedHomeWidgetsBreakfastLogged": "പ്രഭാതഭക്ഷണം രേഖപ്പെടുത്തി {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "കഴിഞ്ഞ 7 പ്രഭാതങ്ങളിൽ {arg0} തവണ പ്രഭാതഭക്ഷണം രേഖപ്പെടുത്തി",
   "unifiedHomeWidgetsBreakfastSuggestion": "പ്രഭാതഭക്ഷണ നിർദ്ദേശം",
   "unifiedHomeWidgetsCarbs": "കാർബ്സ്",
   "unifiedHomeWidgetsConnect": "കണക്ട് ചെയ്യുക",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "ഫാറ്റ്",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} കിലോകലോറി ഇന്ന് മൊത്തം",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal കത്തിച്ചു",
   "unifiedHomeWidgetsKcalLeft": " kcal ബാക്കി",
   "unifiedHomeWidgetsLastNight": "കഴിഞ്ഞ രാത്രി",
   "unifiedHomeWidgetsLog16oz": "16oz രേഖപ്പെടുത്തുക",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}w",
   "weekDurationSelectorWeeks": "{selectedWeeks} ആഴ്ചകൾ",
   "weekDurationSelectorWk": "{spw}/ആഴ്ച",
-  "weekProgressStripCompletedCount": "പൂർത്തിയാക്കിയത് {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg1}-ൽ {arg0} വർക്കൗട്ടുകൾ പൂർത്തിയായി",
   "weekProgressStripCouldNotLoadProgress": "പുരോഗതി ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല",
   "weekProgressStripLoading": "ലോഡ് ചെയ്യുന്നു...",
   "weekProgressStripNoWorkoutsScheduled": "വർക്ക്ഔട്ടുകളൊന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "എല്ലാം കാണുക",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "ഭാരം ട്രാക്ക് ചെയ്യൽ",
-  "weightTrendCardDownThisWeek": "ഈ ആഴ്ച കുറഞ്ഞു {arg0}",
-  "weightTrendCardDownVsLastCycle": "കഴിഞ്ഞ സൈക്കിളിനെ അപേക്ഷിച്ച് കുറഞ്ഞു {arg0}",
+  "weightTrendCardDownThisWeek": "ഈ ആഴ്ച {arg0} കുറവ്!",
+  "weightTrendCardDownVsLastCycle": "കഴിഞ്ഞ മാസത്തെ അതേ സൈക്കിൾ ദിവസവുമായി താരതമ്യം ചെയ്യുമ്പോൾ {arg0} lbs കുറവ്",
   "weightTrendCardLoadingWeight": "ഭാരം ലോഡ് ചെയ്യുന്നു...",
   "weightTrendCardLogYourWeightTo": "മാറ്റങ്ങൾ കാണാൻ നിങ്ങളുടെ ഭാരം രേഖപ്പെടുത്തുക",
   "weightTrendCardMaintaining": "നിലനിർത്തുന്നു",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "കഴിഞ്ഞ സൈക്കിളിന് സമാനം",
   "weightTrendCardTapToLogWeight": "ഭാരം രേഖപ്പെടുത്താൻ ടാപ്പ് ചെയ്യുക",
   "weightTrendCardTargetHeld": "ലക്ഷ്യം നിലനിർത്തി",
-  "weightTrendCardTargetHeldWindow": "ലക്ഷ്യം നിലനിർത്തിയ വിൻഡോ {arg0}",
-  "weightTrendCardUpThisWeek": "ഈ ആഴ്ച കൂടി {arg0}",
-  "weightTrendCardUpVsLastCycle": "കഴിഞ്ഞ സൈക്കിളിനെ അപേക്ഷിച്ച് കൂടി {arg0}",
+  "weightTrendCardTargetHeldWindow": "ലക്ഷ്യം {arg0} നിലനിർത്തി — ലൂട്ടിയൽ ജല സന്തുലനം",
+  "weightTrendCardUpThisWeek": "ഈ ആഴ്ച {arg0} കൂടുതൽ",
+  "weightTrendCardUpVsLastCycle": "കഴിഞ്ഞ മാസത്തെ അതേ സൈക്കിൾ ദിവസവുമായി താരതമ്യം ചെയ്യുമ്പോൾ {arg0} lbs കൂടുതൽ",
   "weightTrendCardWeightStableThisWeek": "ഈ ആഴ്ച ഭാരം സ്ഥിരമാണ്",
   "weightTrendCardWeightTrends": "ഭാരത്തിലെ മാറ്റങ്ങൾ",
   "welcomeAffirmationGreatChoice": "മികച്ച തീരുമാനം.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "ഈ പതിപ്പിലേക്ക് മടങ്ങണോ?",
   "workoutActionsShareWorkout": "വർക്കൗട്ട് പങ്കിടുക",
   "workoutActionsSheetGetALinkFor": "സുഹൃത്തുക്കൾക്കായി ഒരു {marketingDomain} ലിങ്ക് നേടുക",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "\"{name}\" പുനഃസ്ഥാപിക്കണോ?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} റെപ്സ്",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} സെറ്റുകൾ, {currentReps} റെപ്സ്",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "ഈ സമയത്ത് സുഹൃത്തുക്കളെ വെല്ലുവിളിക്കാൻ കഴിയില്ല",
   "workoutCompleteScreenUnableToExtendWorkout": "വർക്ക്ഔട്ട് നീട്ടാൻ കഴിഞ്ഞില്ല",
   "workoutCompleteScreenViewAllMetrics": "എല്ലാ അളവുകളും കാണുക",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "ഉപകരണങ്ങൾ",
   "workoutDetailExercises": "വ്യായാമങ്ങൾ",
   "workoutDetailFailedToLoadWorkout": "വർക്കൗട്ട് ലോഡ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു",
-  "workoutDetailHelpersForAvailableEquipment": ") ലഭ്യമായ ഉപകരണങ്ങൾക്കായി...",
   "workoutDetailHelpersHell": "കഠിനം",
   "workoutDetailHelpersUpdatingExercises": "വ്യായാമങ്ങൾ അപ്‌ഡേറ്റ് ചെയ്യുന്നു",
   "workoutDetailMoreInfo": "കൂടുതൽ വിവരങ്ങൾ",
   "workoutDetailProgram": "പ്രോഗ്രാം",
-  "workoutDetailReplacingExercises": "വ്യായാമങ്ങൾ മാറ്റുന്നു {arg0}",
+  "workoutDetailReplacingExercises": "ലഭ്യമായ ഉപകരണങ്ങൾക്കായി {arg0} വ്യായാമങ്ങൾ മാറ്റിസ്ഥാപിക്കുന്നു…",
   "workoutDetailRevert": "തിരികെ മാറ്റുക",
   "workoutDetailScreenBreakSuperset": "സൂപ്പർസെറ്റ് ഒഴിവാക്കണോ?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} കലോറി എരിഞ്ഞു",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "ഭാരത്തിന്റെ കോളത്തിൽ ഏത് യൂണിറ്റാണ് ഉപയോഗിച്ചിരിക്കുന്നത്? കൂടാതെ, ഉറവിട ആപ്പ് അറിയാമെങ്കിൽ അത് തിരഞ്ഞെടുക്കുക — ഇത് ഫോർമാറ്റുകൾ തിരിച്ചറിയാൻ സഹായിക്കും (Hevy vs. Strong CSVs).",
   "workoutHistoryImportYourStrengthData": "നിങ്ങളുടെ കരുത്തിന്റെ വിവരങ്ങൾ",
-  "workoutImportAsDone": ")\" പൂർത്തിയായതായി അടയാളപ്പെടുത്തുക",
   "workoutImportCalories": "കലോറി",
   "workoutImportCardio": "കാർഡിയോ",
   "workoutImportCycling": "സൈക്ലിംഗ്",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "ദൈർഘ്യം",
   "workoutImportEasy": "എളുപ്പം",
   "workoutImportFlexibility": "ഫ്ലെക്സിബിലിറ്റി",
-  "workoutImportFromSource": "ഉറവിടത്തിൽ നിന്ന് {arg0}",
+  "workoutImportFromSource": "{arg0}-ൽ നിന്ന്",
   "workoutImportHard": "കടുപ്പമുള്ളത്",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "ഈ വർക്കൗട്ട് എത്രത്തോളം കഠിനമായിരുന്നു?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "വർക്കൗട്ടിനിടെ നിങ്ങൾക്ക് ഈ സിസ്റ്റം പ്രോംപ്റ്റുകൾ കണ്ടേക്കാം. ഇവ രണ്ടും ഓപ്ഷണലാണ് — ഏത് ഒഴിവാക്കിയാലും വർക്കൗട്ട് പ്രവർത്തിക്കും.",
   "workoutPlanDrawerAddExercise": "വ്യായാമം ചേർക്കുക",
   "workoutPlanDrawerCurrent": "നിലവിലുള്ളത്",
-  "workoutPlanDrawerExerciseCount": "എക്സർസൈസ് എണ്ണം {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") രേഖപ്പെടുത്തി. അവ ഡിലീറ്റ് ചെയ്യപ്പെടും.",
+  "workoutPlanDrawerExerciseCount": "{arg0} വ്യായാമങ്ങൾ",
   "workoutPlanDrawerNow": "ഇപ്പോൾ",
   "workoutPlanDrawerRemove": "നീക്കം ചെയ്യുക",
-  "workoutPlanDrawerRemoveExercise": "{arg0} വ്യായാമം നീക്കം ചെയ്യുക",
+  "workoutPlanDrawerRemoveExercise": "{arg0} നീക്കം ചെയ്യണോ?",
   "workoutPlanDrawerRemoveExerciseTooltip": "എക്സർസൈസ് നീക്കം ചെയ്യുക",
-  "workoutPlanDrawerSetsLogged": "സെറ്റുകൾ രേഖപ്പെടുത്തി {arg0}",
+  "workoutPlanDrawerSetsLogged": "നിങ്ങൾ {arg0} സെറ്റുകൾ രേഖപ്പെടുത്തിയിട്ടുണ്ട്. അവ ഇല്ലാതാക്കും.",
   "workoutPlanDrawerSwapExercise": "വ്യായാമം മാറ്റുക",
   "workoutPlanDrawerTitle": "തലക്കെട്ട്",
   "workoutPlanDrawerWorkoutPlan": "വർക്കൗട്ട് പ്ലാൻ",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "നിങ്ങൾ രേഖപ്പെടുത്തുന്ന ഓരോ സെറ്റും",
   "workoutShowcaseEveryWorkoutFlows": "ഓരോ വർക്കൗട്ടും സുഗമമായി",
   "workoutShowcaseFinishWorkout": "വർക്കൗട്ട് പൂർത്തിയാക്കുക",
-  "workoutShowcaseFormat1Rm": "1RM ഫോർമാറ്റ്",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "ബോർഡിംഗ്",
   "workoutShowcaseFormatCard": "കാർഡ്",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "ലീനിയർ ലേബൽ",
   "workoutShowcaseLogAllSets": "എല്ലാ സെറ്റുകളും",
   "workoutShowcaseLogDrink": "പാനീയം രേഖപ്പെടുത്തുക",
-  "workoutShowcaseLogSet": "സെറ്റ് {arg0}",
+  "workoutShowcaseLogSet": "✓ സെറ്റ് {arg0} രേഖപ്പെടുത്തുക",
   "workoutShowcaseLogWater": "വെള്ളം രേഖപ്പെടുത്തുക",
   "workoutShowcaseMovedThisSession": "ഈ സെഷനിൽ നീക്കി",
   "workoutShowcaseNewPr": "പുതിയ PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "റെപ്‌സ്",
   "workoutShowcaseScreenDay": "ദിവസം {day}",
   "workoutShowcaseScreenDuration": "ദൈർഘ്യം: {duration}",
-  "workoutShowcaseScreenPrs": "PRs:      {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · നൽകി",
   "workoutShowcaseScreenSession": "സെഷൻ: {title}",
   "workoutShowcaseScreenTotalPrs": "ആകെ  {duration} · {volume} · {prs} PRs",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "4-ൽ 1-ാമത്തെ സെറ്റ്",
   "workoutShowcaseSet2": "സെറ്റ് 2",
   "workoutShowcaseSet3": "സെറ്റ് 3",
-  "workoutShowcaseSetNOf3": "സെറ്റ് {arg0} / 3",
+  "workoutShowcaseSetNOf3": "3-ൽ സെറ്റ് {arg0}",
   "workoutShowcaseShareYourWorkout": "നിങ്ങളുടെ വർക്ക്ഔട്ട് പങ്കിടുക",
   "workoutShowcaseSideA": "സൈഡ് A",
   "workoutShowcaseSuperset": "സൂപ്പർസെറ്റ്",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "ദിവസേന",
   "xpGoalsDialog250LevelsAcross11Tiers": "11 തലങ്ങളിലായി 250 ലെവലുകൾ",
   "xpGoalsDialogBeginnerToTranscendent": "തുടക്കക്കാരൻ മുതൽ ട്രാൻസെൻഡന്റ് വരെ",
-  "xpGoalsDialogCompleteWorkoutXp": "വർക്കൗട്ട് പൂർത്തിയാക്കിയതിനുള്ള XP",
+  "xpGoalsDialogCompleteWorkoutXp": "വർക്കൗട്ട് പൂർത്തിയാക്കുക: +100 XP",
   "xpGoalsDialogDailyGoals": "ദൈനംദിന ലക്ഷ്യങ്ങൾ",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "AI കോച്ചുമായുള്ള ആദ്യ ചാറ്റ് XP",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "ഭക്ഷണ ഭാരം അളന്നതിനുള്ള XP",
-  "xpGoalsDialogFirstPrXp": "ആദ്യ Pr XP",
-  "xpGoalsDialogFirstProgressPhotoXp": "ആദ്യ പ്രോഗ്രസ് ഫോട്ടോ XP",
-  "xpGoalsDialogFirstProteinGoalXp": "ആദ്യ പ്രോട്ടീൻ ലക്ഷ്യം XP",
-  "xpGoalsDialogFirstWorkoutXp": "ആദ്യ വർക്കൗട്ട് XP",
-  "xpGoalsDialogHitProteinGoalXp": "പ്രോട്ടീൻ ലക്ഷ്യം നേടിയതിനുള്ള XP",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "AI കോച്ചുമായി ആദ്യ ചാറ്റ്: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "ആദ്യ ഭക്ഷണം/ഭാരം/അളവുകൾ: ഓരോന്നിനും +50 XP",
+  "xpGoalsDialogFirstPrXp": "ആദ്യ PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "ആദ്യ പ്രോഗ്രസ് ഫോട്ടോ: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "ആദ്യ പ്രോട്ടീൻ ലക്ഷ്യം: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "ആദ്യ വർക്കൗട്ട്: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "പ്രോട്ടീൻ ലക്ഷ്യം നേടുക: +50 XP",
   "xpGoalsDialogLevels": "ലെവലുകൾ",
-  "xpGoalsDialogLogBodyMeasurementsXp": "ശരീര അളവുകൾ രേഖപ്പെടുത്തിയതിനുള്ള XP",
-  "xpGoalsDialogLogMealXp": "ഭക്ഷണം രേഖപ്പെടുത്തിയതിനുള്ള XP",
-  "xpGoalsDialogLogWeightXp": "ഭാരം രേഖപ്പെടുത്തിയതിനുള്ള XP",
-  "xpGoalsDialogLoginXp": "ലോഗിൻ XP",
+  "xpGoalsDialogLogBodyMeasurementsXp": "ശരീര അളവുകൾ രേഖപ്പെടുത്തുക: +20 XP",
+  "xpGoalsDialogLogMealXp": "ഭക്ഷണം രേഖപ്പെടുത്തുക: +25 XP",
+  "xpGoalsDialogLogWeightXp": "ഭാരം രേഖപ്പെടുത്തുക: +15 XP",
+  "xpGoalsDialogLoginXp": "ലോഗിൻ: +5 XP",
   "xpGoalsDialogMilestoneRewards": "മൈൽസ്റ്റോൺ റിവാർഡുകൾ",
   "xpGoalsFirstTimeBonuses": "ആദ്യമായി ലഭിക്കുന്ന ബോണസുകൾ",
   "xpGoalsGotIt": "മനസ്സിലായി!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "പ്രോട്ടീൻ ലക്ഷ്യം പൂർത്തിയാക്കുക",
   "xpGoalsScreenInventory": "ഇൻവെന്ററി",
   "xpGoalsScreenLegendary": "ലെജൻഡറി",
-  "xpGoalsScreenLevelCurrentTotal": "നിലവിലെ ലെവൽ ടോട്ടൽ {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "ലെവൽ {arg0} • ആകെ 249 ലെവലുകൾ",
   "xpGoalsScreenLevelProgress": "ലെവൽ പുരോഗതി",
   "xpGoalsScreenLogBodyMeasurements": "ശരീര അളവുകൾ രേഖപ്പെടുത്തുക",
   "xpGoalsScreenLogFirstMeal": "ആദ്യ ഭക്ഷണം രേഖപ്പെടുത്തുക",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "ട്രോഫി റൂം",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "പ്രതിവാരം",
-  "xpGoalsXpAvailable": "ലഭ്യമായത് {arg0}",
-  "xpGoalsXpEarnedToday": "ഇന്ന് നേടിയത് {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP ലഭ്യമാണ്",
+  "xpGoalsXpEarnedToday": "ഇന്ന് +{arg0} XP നേടി",
   "xpGoalsXpGoals": "XP ലക്ഷ്യങ്ങൾ",
-  "xpGoalsXpMultiplierActive": "മൾട്ടിപ്ലയർ സജീവമാണ് {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP സജീവം!",
   "xpHeroTileDayStreak": "{streak}-ദിവസത്തെ സ്ട്രീക്ക്",
   "xpHeroTileLv": "Lv {level}",
   "xpHeroTileLv2": "Lv {nextLevel} → {label}",

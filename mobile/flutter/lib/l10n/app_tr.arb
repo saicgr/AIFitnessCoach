@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "Ne zaman kullanılır",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Egzersiz başarıyla değiştirildi",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} egzersiz eklendi",
-  "activeWorkoutScreenRefactoredFor": ") için (name)",
   "activeWorkoutScreenUndo": "Geri al",
   "activeWorkoutScreenWorkoutAdapted": "Antrenman uyarlandı.",
   "activityCardAdditionalDetailsOptional": "Ek detaylar (isteğe bağlı)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Antrenman öncesi yakıt?",
   "aiCoachMealQuickSnackIdeas": "Hızlı atıştırmalık fikirleri?",
   "aiCoachMealRecoveryDayEating": "Toparlanma günü beslenmesi?",
-  "aiCoachMealSearchQuestionsTryAngry": "Soruları ara (örneğin \"öfkeli\", \"lif\", \"Meksika\")",
   "aiCoachMealSomethingWentWrong": "Bir şeyler yanlış gitti.",
   "aiCoachMealStressedWhatHelps": "Stresli — ne iyi gelir?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "Asya esintili {meal} — bir seçenek (pirinç kasesi, erişte, suşi, stir fry), makrolar ve hazırlık.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} kal · {phase} evresi",
   "caloriesSummaryCardCalories": "Kalori",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "kalan",
   "cancelConfirmationAnythingElseYouD": "Paylaşmak istediğiniz başka bir şey var mı? (isteğe bağlı)",
   "cancelConfirmationCancelAnyway": "Yine de iptal et",
   "cancelConfirmationHelpUsImprove": "Geliştirmemize yardımcı olun",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Anladım",
   "chatLanguageChangedSystem": "🌐 AI Coach artık {nativeName} dilinde yanıt veriyor",
   "chatLanguageResetSystem": "🌐 AI Coach dili sıfırlandı — uygulama dili kullanılıyor",
-  "chatLeftToday": ") bugün kaldı",
   "chatMediaWidgetsCalTotal": "toplam {totalCal} kal",
   "chatMediaWidgetsGProtein": "{totalProtein}g protein",
   "chatMediaWidgetsGoTo": "{workoutName} kısmına git",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "Koç her zamankinden daha uzun süre düşünüyor.",
   "chatScreenCouldntReachCoach": "Koça ulaşılamadı.",
   "chatScreenExtAboutAiCoach": "AI Koç Hakkında",
-  "chatScreenExtAs": ") olarak (mealType)",
   "chatScreenExtChangeCoach": "Koçu Değiştir",
   "chatScreenExtChatTips": "Sohbet İpuçları",
   "chatScreenExtChooseMultiplePhotos": "Birden Fazla Fotoğraf Seç",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "Hedefleri Görüntüle",
   "complianceRingCardAllWorkoutsCompleted": "Tüm antrenmanlar tamamlandı",
   "complianceRingCardGetStartedToday": "Bugün başla",
-  "complianceRingCardGreatPace": "Harika tempo {arg0}",
+  "complianceRingCardGreatPace": "Harika tempo! {arg0} kaldı",
   "complianceRingCardNoWorkoutsScheduledThis": "Bu hafta planlanmış antrenman yok",
-  "complianceRingCardOnTrack": "Yolunda {arg0}",
+  "complianceRingCardOnTrack": "Yolundasın — {arg0} kaldı",
   "complianceRingCardWorkoutCompliance": "Antrenman Uyumu",
-  "complianceRingCardWorkoutsRemaining": "Kalan antrenmanlar {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} antrenman kaldı",
   "comprehensiveStatsStatsScores": "İstatistikler ve Skorlar",
   "connectedAppsAutoImportEvery15": "Her 15 dakikada bir otomatik içe aktar",
   "connectedAppsConnect": "Bağlan",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Gıda Seç",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Bu Değeri Kullan",
-  "cookingConverterWeight": ") Ağırlık",
   "cosmeticsGalleryCosmetics": "Kozmetikler",
   "cosmeticsGalleryEquip": "Kullan",
   "cosmeticsGalleryEquipped": "Kullanılıyor",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Aramanızla eşleşen egzersiz bulunamadı",
   "customExercisesScreenAreYouSureYou": "\"{name}\" öğesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} egzersiz, {totalUses} kullanım",
-  "customExercisesScreenUsedTimes": "Kullanım (usageCount) kez(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Egzersizleri ara...",
   "customExercisesSimple": "Basit",
   "customFoodBuilderAiFillFromName": "İsimden AI ile doldur",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · son döngü",
   "customTrendScreenMaxOverlaysRemoveOne": "Maksimum {_kMaxOverlays} katman — başka bir tane eklemek için birini kaldır",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} ortak gün",
-  "customTrendScreenValue": ")(değer) · (güçEtiketi)",
   "customWorkoutBuilderAddExercise": "Egzersiz Ekle",
   "customWorkoutBuilderBuildCustomWorkout": "Özel Antrenman Oluştur",
   "customWorkoutBuilderCustomWorkoutCreated": "Özel antrenman oluşturuldu!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Adet kaydet",
   "cycleScreenUiLogPeriod": "Adet kaydet",
   "cycleScreenUiLogYourFirstPeriod": "Tahminleri başlatmak için ilk regl dönemini kaydet.",
-  "cycleScreenUiPhase": ") evresi",
   "cycleScreenUiPhaseLabel": "{displayName} evresi",
   "cycleScreenUiPredictionsAreEstimates": "Tahminler, kaydedilen verilerinize dayalı tahminlerdir; doğum kontrol yöntemi veya tıbbi tavsiye değildir. Herhangi bir sağlık sorunu için bir doktora danışın.",
   "cycleScreenUiPregnancyModeIsOn": "Hamilelik modu açık",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Devam et",
   "editProgramSheetCurrent": "MEVCUT",
   "editProgramSheetCustomProgram": "Özel Program",
-  "editProgramSheetCustomValue": "Özel değer {arg0}",
+  "editProgramSheetCustomValue": "Özel: {arg0}",
   "editProgramSheetCustomizeProgram": "Programı Özelleştir",
   "editProgramSheetDays": "Günler",
   "editProgramSheetDaysAgo": "{days} gün önce",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Ekipman",
   "editProgramSheetEquipmentLabel": "Ekipman etiketi",
   "editProgramSheetExamples": "Örnekler",
-  "editProgramSheetFailedToLoadHistory": "Geçmişi yükle {arg0}",
-  "editProgramSheetFailedToRestore": "Geri yükle {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Geçmiş yüklenemedi: {arg0}",
+  "editProgramSheetFailedToRestore": "Geri yüklenemedi: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Programı güncelle",
   "editProgramSheetFocus": "Odak",
   "editProgramSheetHealth": "Sağlık",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "İndiriliyor {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Video indiriliyor...",
   "exerciseDetailSheetFavorite": "Favori",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Yükleniyor...",
   "exerciseDetailSheetLog1rm": "1RM Kaydet",
   "exerciseDetailSheetMS": "{restMins}dk {restSecs}sn",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Buraya not ekleyin...",
   "exerciseSetTrackerAddSet": "Set Ekle",
-  "exerciseSetTrackerBarbell": ") halter",
   "exerciseSetTrackerReps": "Tekrar",
   "exerciseSetTrackerRestTarget": "Dinlenme hedefi",
   "exerciseSetTrackerS": "{seconds}sn",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI Seçimleri kullanılamıyor",
   "exerciseSwapSheetAnyEquipment": "Herhangi Bir Ekipman",
   "exerciseSwapSheetAskAiForSuggestions": "AI'dan öneri iste",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Ekipmanını veya tercihlerini tanımla\nÖrn: \"Omzum ağrıyor, sadece vücut ağırlığı\"",
   "exerciseSwapSheetEGIOnly": "Örn: \"Sadece dambılım var\"",
   "exerciseSwapSheetFailedToSwapExercise": "Egzersiz değiştirilemedi",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Kas grubuna uygun alternatifler aranıyor...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Ağırlık",
   "expandedExerciseCardAddToFavorites": "Favorilere Ekle",
   "expandedExerciseCardAlternatingHands": "Alternatif Eller",
-  "expandedExerciseCardBarbell": ") halter",
   "expandedExerciseCardBreathing": "Nefes Alma",
   "expandedExerciseCardBreathingGuide": "Nefes Alma Rehberi",
   "expandedExerciseCardCollapse": "Daralt",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Protokol Seviyesi",
   "fastingScoreCardScore": "Puan",
   "fastingScoreCardStreakBonus": "Seri Bonusu",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "%{value}",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "geçen haftaya göre",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "İlk",
   "flexibilityProgressChartLatest": "Son",
   "flexibilityProgressChartNoDataAvailable": "Veri bulunamadı",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Bölgeye Göre",
   "flexibilityScoreCardFocusAreas": "Odak Bölgeleri",
   "flexibilityScoreCardOverallFlexibility": "Genel Esneklik",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Öğünleri, yiyecekleri, \"yüksek protein\"...",
   "foodHistoryUndo": "Geri Al",
   "foodItemRankingAddFood": "Yiyecek ekle",
-  "foodItemRankingDetails": ") detaylar",
   "foodItemRankingNFoodItems": "{count} Gıda Öğesi",
   "foodItemRankingScore": "Skor",
   "foodItemRankingTapToHideDetails": "Detayları gizlemek için dokun",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Bu yüzden defteri değil kişiyi inşa ettim. Yurt içinde veya yurt dışında herhangi bir menüyü çekin ve koç bunu size makro olarak okusun. Salı gününü atlarsanız suçluluk duygusu yaşamadan Çarşamba sabahına geri dönersiniz. Ayda bir PT seansından daha az bir sürede yiyeceklerinizi, spor salonunuzu, kayma şeklinizi öğrenir.",
   "founderNoteTheFriendsWhoActually": "Gerçekten fit olan arkadaşlarımın hepsinin onlara mesaj atan bir koçu vardı. Gerçek hesap verebilirlik ayda yaklaşık iki yüz dolara mal oluyor; işte çoğu kişinin buna sahip olamamasının ve \"takip etme\" ile \"değişim\" arasındaki boşluğun yıllarca açık kalmasının nedeni tam olarak bu.",
-  "freshnessDecayCardAgo": ") önce",
   "freshnessDecayCardControlsHowQuicklyExercise": "Egzersiz tazeliğinin ne kadar hızlı azaldığını kontrol eder: e^(-k * antrenmanlar)",
   "freshnessDecayCardFreshnessDecayTuner": "Tazelik Azalma Ayarlayıcısı",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "{totalSets} SET İÇİNDEN {currentSetNumber}. SET",
   "futuristicSetCardSkipExercise": "Egzersizi Atla",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "Antrenmanlarınızı, beslenmenizi ve oruç düzeninizi koordine eden bütünsel bir plan oluşturun.",
   "generatePlanFastingProtocol": "Oruç Protokolü",
   "generatePlanGeneratePlan": "Plan Oluştur",
@@ -20071,7 +19816,7 @@
   "habitsCardAddYourFirstHabit": "İlk Alışkanlığınızı Ekleyin",
   "habitsCardAllHabitsCompleted": "Tüm alışkanlıklar tamamlandı!",
   "habitsCardBuildDailyHabits": "Günlük Alışkanlıklar Oluşturun",
-  "habitsCardCompletedCount": "Tamamlanan sayı {arg0} {arg1}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} tamamlandı",
   "habitsCardDayStreak": "{arg0} günlük seri",
   "habitsCardFailedToLoadHabits": "Alışkanlıklar yüklenemedi",
   "habitsCardGreatJobKeepingUp": "Serilerinizi sürdürme konusunda harika bir iş çıkardınız",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Bugünkü Alışkanlıklar",
   "habitsCardTryAgain": "Tekrar Dene",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Tüm alışkanlıkları görüntüle {arg0}",
+  "habitsCardViewAllHabits": "Tüm {arg0} alışkanlığı gör",
   "habitsCompleted": "Tamamlandı",
   "habitsDeleteHabit": "Alışkanlığı Sil?",
   "habitsHoldToReorderSwipe": "Sıralamak için basılı tut • Silmek için kaydır",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "Dinlenme günü mü? Yoksa harekete geçmeye hazır mısın? Karar senin.",
   "homeEmptyWorkout_v3": "Programlar arasındasın; kaldığın yerden devam etmek için yeni bir tane başlat.",
   "homeEmptyWorkout_v4": "Henüz plan yok. AI'ın hedeflerine uygun bir plan oluşturmasına izin ver.",
-  "homeFromHealthConnect": ") Health Connect üzerinden",
   "homeGreetingAfternoon_v1": "Öğleden sonra enerjisi, {name}!",
   "homeGreetingAfternoon_v2": "Selam {name}, hareket vakti mi?",
   "homeGreetingAfternoon_v3": "Esneme molası mı, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "KALORİ",
   "insightsSummaryTemplatePrs": "PR'lar",
   "insightsSummaryTemplateSummary": "ÖZET",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "ANTRENMANLAR",
   "intensityPrompt1Left": "1 kaldı",
   "intensityPrompt2Left": "2 kaldı",
   "intensityPrompt3Left": "3+ kaldı",
   "intensityPromptHard": "Zor",
-  "intensityPromptHideRpeSlideDial": "RPE kaydırıcısını gizle      Ayarla (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Bu set ne kadar zordu?",
   "intensityPromptMax": "Maks",
   "intensityPromptModerate": "Orta",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "{setNumber}. Set · {exerciseName}",
   "introAnAiCoachThat": "Planı oluşturan, vücudunu tanıyan ve her hafta kendini güncelleyen bir yapay zeka koçu.",
   "introBuildMyPlan": "Planımı Oluştur",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) set",
   "introCardMonth": "ay.",
   "introIAlreadyHaveAnAccount": "Zaten bir hesabım var",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "Barkod",
   "logMealSheetBarcodeScan": "Barkod tarama",
   "logMealSheetCached": "(Önbelleğe alındı)",
-  "logMealSheetCaptured": ") çekildi",
   "logMealSheetChooseFoodPhotos": "Yemek Fotoğrafları Seç",
   "logMealSheetChooseFromGallery": "Galeriden seç",
   "logMealSheetChooseFromLibrary": "Kütüphaneden seç",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "7g ort · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "Önceki en düşük seviyenden -{_selectedUnit} {label}",
   "logWeightSheetValidRange": "Geçerli aralık: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(birimDeğişimi)",
   "logWeightSyncedFromAppleHealth": "Apple Health ile senkronize edildi",
   "logWeightSyncedToAppleHealth": "Apple Health'e senkronize edildi",
   "logWeightTapToEdit": "Düzenlemek için dokun",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Çıkış Yap?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Makrolar",
-  "mainShellPartChatsLeftToday": "Bugün kalan sohbet hakkı {arg0}",
+  "mainShellPartChatsLeftToday": "Bugün {arg0} sohbet kaldı",
   "mainShellPartGuestMode": "Misafir Modu",
   "mainShellPartQuickActions": "Hızlı Eylemler",
   "mainShellPartSignUp": "Kaydol",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Birincil",
   "manageDuplicateImportsScreenSources": "{length} kaynak",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(satır)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Gruptan ayır",
   "manageDuplicateImportsUnlinkedFromGroup": "Gruptan ayrıldı",
   "manageGymProfilesActive": "Aktif",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} daha fazla",
   "menuAnalysisSheetSelected": "{length} seçildi",
   "menuAnalysisSheetSort": "Sırala: {label}",
-  "menuAnalysisSheetValue": ")(geçen süre)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "\"{restaurantName}\" için zaten bir menü kaydetmişsin",
   "menuAnalysisSort": "Sırala:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "METRİK TÜRÜ",
   "metricsDashboardMuscleMass": "Kas kütlesi",
   "metricsDashboardNoDataAvailable": "Veri mevcut değil",
-  "metricsDashboardNoMetricDataYet": "Henüz metrik verisi yok {arg0}",
+  "metricsDashboardNoMetricDataYet": "Henüz {arg0} verisi yok",
   "metricsDashboardQuickStats": "HIZLI İSTATİSTİKLER",
   "metricsDashboardRestingHeartRate": "Dinlenme nabzı",
   "metricsDashboardRestingHr": "Dinlenme Nabzı",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Diğer",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Kas verilerini görmek için antrenmanları tamamla",
   "muscleHeatmapTileCouldnTLoad": "Yüklenemedi",
-  "muscleHeatmapTileMostTrained": "En çok çalıştırılan {arg0}",
+  "muscleHeatmapTileMostTrained": "En çok çalışılan: {arg0}",
   "muscleHeatmapTileMuscles": "Kaslar",
   "muscleHeatmapTileRetry": "Tekrar dene",
   "muscleHeatmapUpperBody": "Üst Vücut",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Favoriler ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Temel Egzersizler ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "En iyi: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Son Aktiviteler",
   "myLibraryTabViewAll": "Tümünü Görüntüle",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Hafif hareketli",
   "neatGamificationWidgetsClaimReward": "Ödülü Al",
   "neatGamificationWidgetsCouchPotato": "Hareketsiz",
-  "neatGamificationWidgetsCurrentXp": "Mevcut XP {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Günlük Görev",
   "neatGamificationWidgetsExpired": "Süresi doldu",
-  "neatGamificationWidgetsHoursMinutesLeft": "Kalan süre {arg0} saat {arg1} dakika",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0} sa {arg1} dk kaldı",
   "neatGamificationWidgetsLevel": "Seviye {level}",
   "neatGamificationWidgetsLevelUp": "SEVİYE ATLA!",
   "neatGamificationWidgetsMaxLevel": "Maksimum Seviye!",
-  "neatGamificationWidgetsMinutesLeft": "Kalan süre {arg0} dakika",
+  "neatGamificationWidgetsMinutesLeft": "{arg0} dk kaldı",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Şampiyon",
   "neatGamificationWidgetsNeatEnthusiast": "Meraklı",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Bu hafta henüz sıralama yok",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Skor",
-  "neatGamificationWidgetsStepGoal": "Adım hedefi {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Adımlar",
-  "neatGamificationWidgetsTargetActiveHours": "Hedef aktif saat {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} sa",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "SKOR DÖKÜMÜ",
   "neatScoreDisplayTapForBreakdown": "Döküm için dokun",
   "neatScoreDisplayTrend": "Trend: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Yükleniyor...",
   "netflixExerciseCarouselSeeAll": "Tümünü Gör",
   "netflixExercisesAddYourOwnExercises": "Özel tekrar, set ve talimatlarla kendi egzersizlerini ekle.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Optimal bir sonraki set hesaplanıyor...",
   "nextSetPreviewCardIntensity": "%{intensityPercentage} yoğunluk",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Son Set",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "EN İYİ KAYNAKLAR",
   "nutrientExplorerUnknown": "Bilinmiyor",
   "nutrientExplorerUnpinNutrient": "Besin öğesini sabitlemeyi kaldır",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VİTAMİNLER",
   "nutrientRushGameCatchTheGoldenZealova": "Güçlendirme için altın Zealova işaretini yakala!",
   "nutrientRushGameNewBest": "🎉 YENİ EN İYİ!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Haftalık Genel Bakış",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "ort {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Ort. alım: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/gün {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Kilo: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, hepsi bir arada",
   "onboardingWhyFirstTheWhy": "ÖNCE, NEDENİ",
   "onboardingWhyWhatSDrivingThis": "Buna ne sebep oluyor?",
-  "openAllCrates24HoursOf2xXp": "24 saat boyunca 2x XP",
-  "openAllCratesActivityCrate": "Aktivite sandığı",
+  "openAllCrates24HoursOf2xXp": "24 saat 2x XP",
+  "openAllCratesActivityCrate": "Aktivite Sandığı",
   "openAllCratesBonusCrateToOpen": "Açılacak bonus sandık",
-  "openAllCratesCollect": "Topla {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Açılan sandıklar {arg0}",
-  "openAllCratesDailyCrate": "Günlük sandık",
+  "openAllCratesCollect": "Topla ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} sandık açıldı!",
+  "openAllCratesDailyCrate": "Günlük Sandık",
   "openAllCratesDone": "Tamam",
-  "openAllCratesDoubleXpToken": "Çift XP jetonu",
+  "openAllCratesDoubleXpToken": "Çift XP Jetonu",
   "openAllCratesFailedToOpenCrates": "Kasalar açılamadı. Lütfen tekrar deneyin.",
-  "openAllCratesFitnessCrate": "Fitness sandığı",
-  "openAllCratesGainedXp": "Kazanılan XP {arg0}",
+  "openAllCratesFitnessCrate": "Fitness Sandığı",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Maksimum seviye",
-  "openAllCratesOpenYourCrates": "Sandıklarını aç",
-  "openAllCratesOpened": ") açıldı!",
-  "openAllCratesOpeningYourCrates": "Sandıkların açılıyor",
-  "openAllCratesPickRewardPerDay": "Günlük ödülünü seç {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Ödülünü seç {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Sandıklarını Aç",
+  "openAllCratesOpeningYourCrates": "🎁 Sandıkların açılıyor…",
+  "openAllCratesPickRewardPerDay": "Günde 1 ödül seç • {arg0}/{arg1} seçildi",
+  "openAllCratesPickYourReward": "Ödülünü seç • {arg0}/{arg1} seçildi",
   "openAllCratesProtectYourStreak": "Serini koru",
   "openAllCratesSelectAll": "Tümünü Seç",
-  "openAllCratesStreakCrate": "Seri sandığı",
-  "openAllCratesStreakShield": "Seri kalkanı",
+  "openAllCratesStreakCrate": "Seri Sandığı",
+  "openAllCratesStreakShield": "Seri Kalkanı",
   "openAllCratesToday": "Bugün",
-  "openAllCratesTotalXpFormatted": "Toplam XP {arg0}",
-  "openAllCratesTotalXpLevel": "Toplam XP seviyesi {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} toplam",
+  "openAllCratesTotalXpLevel": "Toplam: {arg0} XP • Seviye {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 Ödüller!",
-  "openAllCratesXpInLevel": "Seviyedeki XP {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "Sonraki seviyeye kalan XP {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "Sv. {arg1} için {arg0} XP",
   "openAllCratesYesterday": "Dün",
   "overallScoreHeroOverall": "GENEL",
   "overviewActiveSkill": "AKTİF BECERİ",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Spor salonu kişiliğiniz...",
   "phaseRecommendationBannerBasedOn": "Dayanak: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-güven tahmini",
   "phaseRecommendationBannerCycleDay": "{cycleDay}. döngü günü",
   "phaseRecommendationBannerEvidence": "Kanıt: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Anlaşıldı",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Güç temeli oluştur",
   "planPreviewScreenBuildingYour4Week": "4 Haftalık Planınız Oluşturuluyor...",
   "planPreviewScreenContinueFree": "Ücretsiz Devam Et",
-  "planPreviewScreenDaysPerWeek": "Haftalık gün sayısı {arg0}",
+  "planPreviewScreenDaysPerWeek": "Haftada {arg0} gün",
   "planPreviewScreenDesignedBasedOnYour": "Anket yanıtlarınıza göre tasarlandı",
-  "planPreviewScreenEquipmentCount": "Ekipman sayısı {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} ekipman",
   "planPreviewScreenExercisesMin": "Egzersizler min {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Yoğunluğu ve hacmi artır",
   "planPreviewScreenMasterTheMovement": "Harekette ustalaş",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} Kişisel Rekor!",
   "prInlineCelebrationValue": "+%{improvementPercent}",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") ÖNCEKİNDEN",
   "prShareCardCopiedToClipboard": "Panoya kopyalandı!",
   "prShareCardCopyText": "Metni Kopyala",
   "prShareCardFailedToCaptureImage": "Görsel yakalanamadı",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Zorlamaya devam et!",
   "prsTemplateNewPersonalRecords": "YENİ KİŞİSEL REKORLAR",
   "prsTemplateNewPrsAreJust": "Yeni PR'lar çok yakında",
-  "prsTemplateValue": ") (birim)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Malzemeler",
   "publicRecipeInstructions": "Talimatlar",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI, seçtiğin aralıkta antrenmanlar oluşturur",
   "quizDaysSelectorBest": "En iyi",
   "quizDaysSelectorConsistencyBeatsIntensity": "Süreklilik yoğunluktan önemlidir - sürdürebileceğin bir düzen seç",
-  "quizDaysSelectorDays": "{arg0} gün",
-  "quizDaysSelectorDaysSelected": "Seçilen günler {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") antrenmanların için",
+  "quizDaysSelectorDays": "{arg0, plural, one {gün} other {gün}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} gün seçildi",
   "quizDaysSelectorFri": "Cum",
   "quizDaysSelectorHowLongAreYour": "Antrenmanların ne kadar sürüyor?",
   "quizDaysSelectorHowManyDaysPer": "Haftada kaç gün antrenman yapabilirsin?",
   "quizDaysSelectorMin": "Min",
   "quizDaysSelectorMon": "Pzt",
   "quizDaysSelectorSat": "Cmt",
-  "quizDaysSelectorSelectNDays": "{arg0} gün seçin",
+  "quizDaysSelectorSelectNDays": "Sana uygun {arg0} gün seç",
   "quizDaysSelectorSun": "Paz",
   "quizDaysSelectorThu": "Per",
   "quizDaysSelectorTue": "Sal",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Ev spor salonu",
   "quizEquipmentHomeKettlebell": "Ev + Kettlebell",
   "quizEquipmentHotel": "Otel",
-  "quizEquipmentIdentifiedCount": "Tanımlanan sayı {arg0}",
+  "quizEquipmentIdentifiedCount": "{arg0} öğe tanımlandı. Seçimi kaldırmak için herhangi birine dokunun.",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "Sağlık topu",
   "quizEquipmentMinimalEquipmentBodyweight": "Minimal ekipman - vücut ağırlığı, mat",
   "quizEquipmentNeededForBarbell": "Halter için gerekli",
   "quizEquipmentNoEquipmentIdentifiedPick": "Ekipman tanımlanamadı. Aşağıdaki listeden seç.",
-  "quizEquipmentOtherCount": "Diğer sayı {arg0}",
+  "quizEquipmentOtherCount": "{arg0} seçildi",
   "quizEquipmentOtherEquipment": "Diğer ekipmanlar",
   "quizEquipmentPullUpBar": "Barfiks demiri",
   "quizEquipmentQuickPresets": "Hızlı ön ayarlar",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Tarif adı gerekli",
   "recipeCreateRemovePhoto": "Fotoğrafı kaldır",
   "recipeCreateSaving": "Kaydediliyor...",
-  "recipeCreateScreenValue": "(marka) \" : \"\")(yiyecekAdı)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Fotoğraf çek",
   "recipeCreateTapToEdit": "Düzenlemek için dokun",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Porsiyon başına (×{servings} porsiyon)",
   "recipeDetailScreenUForkedFrom": "✨ {sourceName} kaynağından çatallandı",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" kalıcı olarak silinecek.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Seçilmiş tarif",
   "recipeDetailView": "Görüntüle",
@@ -24750,11 +24473,11 @@
   "regenerateSheetBuildingYourWorkout": "Antrenmanınız oluşturuluyor…",
   "regenerateSheetCheckingEquipment": "Ekipman kontrol ediliyor",
   "regenerateSheetCheckingPreferences": "Tercihler kontrol ediliyor",
-  "regenerateSheetConnectingToTheAi": "AI'ye bağlanılıyor",
+  "regenerateSheetConnectingToTheAi": "AI'ya bağlanılıyor",
   "regenerateSheetConsideringFocusAreas": "Odak alanları değerlendiriliyor",
   "regenerateSheetCustomize": "Özelleştir",
   "regenerateSheetCustomizeOrLetAi": "Özelleştirin veya AI öneride bulunsun",
-  "regenerateSheetCustomizeOrLetAiSuggest": "Özelleştir veya AI önerisine bırak",
+  "regenerateSheetCustomizeOrLetAiSuggest": "Özelleştirin ya da AI önersin",
   "regenerateSheetDescribeYourIdealWorkout": "İdeal antrenmanınızı tanımlayın",
   "regenerateSheetDesigningYourWorkout": "Antrenmanın tasarlanıyor",
   "regenerateSheetDialingInSetsAndReps": "Set ve tekrar sayıları ayarlanıyor",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Detaylar tamamlanıyor…",
   "regenerateSheetFinalizingYourWorkout": "Antrenmanın tamamlanıyor",
   "regenerateSheetFineTuningTheDetails": "Detaylar ince ayarlanıyor",
-  "regenerateSheetGeneratingElapsed": "Oluşturma süresi {arg0}",
+  "regenerateSheetGeneratingElapsed": "Oluşturuluyor… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Öneriler oluşturuluyor…",
   "regenerateSheetGetSuggestions": "Öneri Al",
   "regenerateSheetGettingCreative": "Yaratıcı dokunuşlar yapılıyor",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Önerileni Kullan",
   "restSuggestionQuick": "Hızlı",
   "restSuggestionQuickRest": "Hızlı dinlenme",
-  "restSuggestionSaveTime": "Zaman kazan {arg0}",
+  "restSuggestionSaveTime": "{arg0} kazan",
   "restSuggestionSuggested": "Önerilen",
   "restSuggestionUseSuggested": "Önerileni kullan",
   "restTimerCardBaseRest": "Temel Dinlenme",
   "restTimerCardControlRestPeriodsBetween": "Setler arası dinlenme sürelerini kontrol et",
   "restTimerCardCustomRestTimer": "Özel Dinlenme Zamanlayıcısı",
   "restTimerCardFormula": "Formül",
-  "restTimerCardFormulaBaserestRpe7": "Formül: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Canlı Önizleme",
   "restTimerCardMultiplier": "Çarpan",
   "restTimerCardRestBaserestRpe7": "Dinlenme = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}sn",
   "restTimerCardS2": "{restTimerBaseRest}sn",
   "restTimerCardS3": "{s}sn",
-  "restTimerCardVariablesBaseRpeMultipli": "Değişkenler: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Değişkenler: temel, RPE, çarpan, kademe",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "YAPAY ZEKA AĞIRLIK KOÇU",
   "restTimerOverlayAnalyzingYourPerformance": "Performansınız analiz ediliyor...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "Tamamlandı",
   "rtpTitle": "Spora dönüş",
   "safetyDisclaimerBannerDismissDisclaimer": "Uyarıyı kapat",
-  "safetyDisclaimerBannerInjuriesFlagged": "Sakatlıklar işaretlendi {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} sakatlık işaretlendi",
   "safetyDisclaimerBannerInjuryBody": "Sakatlık bölgesi",
   "safetyDisclaimerBannerLearnMore": "Daha fazla bilgi",
   "safetyDisclaimerBannerMore": "+{overflow} daha fazla",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Set",
   "sessionDetailSetCount": "{count, plural, other{{count} set}} · en iyi set vurgulandı",
   "sessionDetailTime": "Süre",
-  "sessionDetailTopSetHighlighted": ") • en iyi set vurgulandı",
   "sessionDetailWeight": "Ağırlık",
   "setAdjustmentAdditionalNotesOptional": "Ek notlar (isteğe bağlı)",
   "setAdjustmentConfirm": "Onayla",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} tamamlandı",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} kaldı",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} kaldırıldı",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") / (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "/ {totalSets} planlanan",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} set tamamlandı",
   "setAdjustmentSheetReps": "Tekrar",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Set {currentSetNumber}/{totalSets} • Genişletmek için dokunun",
   "setTrackingSectionSets": "{widget} set",
   "setTrackingSectionSetsCompleted": "{length} set tamamlandı",
-  "setTrackingSectionValue": ")×(tekrar)",
   "setTrackingSheetsAmountToAdjustWeight": "Ağırlık ayarlama miktarı",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "Egzersiz Geçmişi",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} Destek Talebi",
   "settingsScreenUBDays": "{splitName} · haftada {daysPerWeek} gün",
   "settingsScreenUiNoSettingsFound": "Ayarlar bulunamadı",
-  "settingsScreenUiTryDifferentKeywordsLike": "\"tema\", \"bildirimler\" veya \"ai ses\" gibi farklı anahtar kelimeler deneyin",
+  "settingsScreenUiTryDifferentKeywordsLike": "\"tema\", \"bildirimler\" veya \"AI sesi\" gibi farklı anahtar kelimeler deneyin",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Ayarları ara",
   "settingsSetProgressionResearch": "İlerlemeyi ve araştırmayı ayarla",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "{appName} {periodName} raporum",
   "shareInsightsSheetMyReport2": "{appName} Raporum",
   "shareMotivationalCompleted": "TAMAMLANDI",
-  "sharePrNewPr": "Yeni PR",
+  "sharePrNewPr": "YENİ PR",
   "shareStatsCalories": "Kalori",
   "shareStatsDuration": "Süre",
   "shareStatsEliteTemplate": "ELITE ŞABLON",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "ÖDÜLLER",
   "streakMilestoneStreakMilestone": "SERİ DÖNÜM NOKTASI!",
-  "streakMilestoneToGo": ") kaldı!",
   "streakMilestoneYouVeReachedThe": "En üst seri dönüm noktasına ulaştınız!",
   "streakSavedDialogWeUsedStreakShield": "{savedStreakCount} günlük serini korumak için 1 adet Seri Kalkanı kullandık.",
   "streakSavedKeepItGoing": "Devam ettirin",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Bağlan",
   "todayScoreCardCustomize": "ÖZELLEŞTİR",
   "todayScoreCardToday": "Bugün",
-  "todayScoreDetailDown": "{arg0} düştü",
-  "todayScoreDetailEarnedPts": "Kazanılan puan {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Bu sabahtan beri {arg0} düştü",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} puan",
   "todayScoreDetailHowItWorks": "Nasıl çalışır",
-  "todayScoreDetailInactiveExplanation": "Hareketsizlik açıklaması {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Ortalama ile momentum {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} bugün {arg1, plural, one {sayılmıyor} other {sayılmıyor}}, bu yüzden kalanlar tam 100 puanı paylaşıyor. Puanın her zaman yalnızca bugün gerçekten geçerli olanı yansıtır.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7 günlük ortalama {arg1}",
   "todayScoreDetailNotCounted": "Hesaplanmadı",
   "todayScoreDetailSetupText": "Kurulum metni",
   "todayScoreDetailSteady": "Sabit",
   "todayScoreDetailTodayScore": "Bugün Skoru",
-  "todayScoreDetailUp": "{arg0} yükseldi",
+  "todayScoreDetailUp": "▲ Bu sabahtan beri {arg0} yükseldi",
   "todayScoreSetupAddAWorkoutPlan": "Bir antrenman planı ekle",
   "todayScoreSetupCardContinue": "Devam et: {label}",
   "todayScoreSetupCardGetStarted": "BAŞLA · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Kardiyo Başarıları",
   "trophiesEarnedDayStreak": "Günlük Seri",
   "trophiesEarnedFirstTime": "İLK KEZ!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Kilometre taşına ulaşıldı",
   "trophiesEarnedMilestoneReachedNice": "Kilometre taşına ulaşıldı — harika!",
   "trophiesEarnedMilestones": "Kilometre Taşları",
-  "trophiesEarnedNewBadges": "Rozetler {arg0}",
-  "trophiesEarnedNewCardioPRs": "Yeni kardiyo PR'ları {arg0}",
-  "trophiesEarnedNewPR": "Yeni PR",
-  "trophiesEarnedNewPRs": "PR'lar {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} yeni rozet",
+  "trophiesEarnedNewCardioPRs": "{arg0} yeni kardiyo PR'ı",
+  "trophiesEarnedNewPR": "YENİ PR",
+  "trophiesEarnedNewPRs": "{arg0} yeni PR!",
   "trophiesEarnedNewPr": "YENİ PR",
   "trophiesEarnedNextMilestones": "Sıradaki Kilometre Taşları",
   "trophiesEarnedNoNewRecords": "Yeni rekor yok",
   "trophiesEarnedNoNewRecordsThis": "Bu seansta yeni bir rekor yok — işte üzerinde çalıştığın hedefler:",
   "trophiesEarnedPersonalRecords": "Kişisel Rekorlar",
-  "trophiesEarnedRemainingToUnlock": "Kilidi açmak için kalan {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "Açmak için {arg0} {arg1} daha",
   "trophiesEarnedSessionHighlights": "Antrenman öne çıkanları",
   "trophiesEarnedSheetPts": "+{points} puan",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} yazıyor",
   "typingIndicatorIsTyping3": "{agentName} yazıyor...",
   "unifiedHomeWidgetsActivity": "AKTİVİTE",
-  "unifiedHomeWidgetsBreakfastLogged": "Kahvaltı kaydedildi {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Son 7 sabahın {arg0} tanesinde kahvaltı kaydedildi",
   "unifiedHomeWidgetsBreakfastSuggestion": "Kahvaltı önerisi",
   "unifiedHomeWidgetsCarbs": "Karbonhidrat",
   "unifiedHomeWidgetsConnect": "Bağlan",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Yağ",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Bugün toplam {arg0} kcal",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal yakıldı",
   "unifiedHomeWidgetsKcalLeft": " kcal kaldı",
   "unifiedHomeWidgetsLastNight": "dün gece",
   "unifiedHomeWidgetsLog16oz": "16oz kaydet",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}h",
   "weekDurationSelectorWeeks": "{selectedWeeks} hafta",
   "weekDurationSelectorWk": "{spw}/hafta",
-  "weekProgressStripCompletedCount": "Tamamlanan sayı {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg1} antrenmandan {arg0} tanesi tamamlandı",
   "weekProgressStripCouldNotLoadProgress": "İlerleme yüklenemedi",
   "weekProgressStripLoading": "Yükleniyor...",
   "weekProgressStripNoWorkoutsScheduled": "Planlanmış antrenman yok",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Tümünü Gör",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Kilo Takibi",
-  "weightTrendCardDownThisWeek": "Bu hafta {arg0} düştü",
-  "weightTrendCardDownVsLastCycle": "Son döngüye göre {arg0} düştü",
+  "weightTrendCardDownThisWeek": "Bu hafta {arg0} düştü!",
+  "weightTrendCardDownVsLastCycle": "Geçen ayki aynı döngü gününe göre {arg0} lbs düşük",
   "weightTrendCardLoadingWeight": "Kilo yükleniyor...",
   "weightTrendCardLogYourWeightTo": "Trendleri görmek için kilonuzu kaydedin",
   "weightTrendCardMaintaining": "Korunuyor",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Son döngü ile aynı",
   "weightTrendCardTapToLogWeight": "Kilo kaydetmek için dokunun",
   "weightTrendCardTargetHeld": "Hedef korundu",
-  "weightTrendCardTargetHeldWindow": "Hedef koruma aralığı {arg0}",
+  "weightTrendCardTargetHeldWindow": "Hedef korundu {arg0} — luteal su dengeleme",
   "weightTrendCardUpThisWeek": "Bu hafta {arg0} yükseldi",
-  "weightTrendCardUpVsLastCycle": "Son döngüye göre {arg0} yükseldi",
+  "weightTrendCardUpVsLastCycle": "Geçen ayki aynı döngü gününe göre {arg0} lbs yüksek",
   "weightTrendCardWeightStableThisWeek": "Bu hafta kilo sabit",
   "weightTrendCardWeightTrends": "Kilo Trendleri",
   "welcomeAffirmationGreatChoice": "Harika seçim.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "Bu sürüme geri dönülsün mü?",
   "workoutActionsShareWorkout": "Antrenmanı Paylaş",
   "workoutActionsSheetGetALinkFor": "Arkadaşların için bir {marketingDomain} bağlantısı al",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "\"{name}\" geri yüklensin mi?",
   "workoutActionsSheetS": "{duration}sn",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} tekrar",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} set, {currentReps} tekrar",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Şu anda arkadaşlarına meydan okunamıyor",
   "workoutCompleteScreenUnableToExtendWorkout": "Antrenman uzatılamadı",
   "workoutCompleteScreenViewAllMetrics": "Tüm Metrikleri Görüntüle",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "EKİPMAN",
   "workoutDetailExercises": "EGZERSİZLER",
   "workoutDetailFailedToLoadWorkout": "Antrenman yüklenemedi",
-  "workoutDetailHelpersForAvailableEquipment": ") mevcut ekipman için...",
   "workoutDetailHelpersHell": "Cehennem",
   "workoutDetailHelpersUpdatingExercises": "Egzersizler Güncelleniyor",
   "workoutDetailMoreInfo": "DAHA FAZLA BİLGİ",
   "workoutDetailProgram": "Program",
-  "workoutDetailReplacingExercises": "Egzersizler değiştiriliyor {arg0}",
+  "workoutDetailReplacingExercises": "{arg0} egzersiz mevcut ekipmana göre değiştiriliyor…",
   "workoutDetailRevert": "Geri Al",
   "workoutDetailScreenBreakSuperset": "Superset'i Boz?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} kalori yakıldı",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "Ağırlık sütunu hangi birimde? Ayrıca kaynak uygulamayı biliyorsanız lütfen seçin; bu, benzer formatları (Hevy ve Strong CSV'leri gibi) ayırt etmeye yardımcı olur.",
   "workoutHistoryImportYourStrengthData": "Güç Verileriniz",
-  "workoutImportAsDone": ")\" olarak tamamlandı",
   "workoutImportCalories": "Kalori",
   "workoutImportCardio": "Kardiyo",
   "workoutImportCycling": "Bisiklet",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Süre",
   "workoutImportEasy": "Kolay",
   "workoutImportFlexibility": "Esneklik",
-  "workoutImportFromSource": "Kaynaktan {arg0}",
+  "workoutImportFromSource": "{arg0} kaynağından",
   "workoutImportHard": "Zor",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Bu antrenman ne kadar zordu?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Antrenmanınız sırasında bu sistem uyarılarını görebilirsiniz. Her ikisi de isteğe bağlıdır; ikisini de atlayabilirsiniz, antrenman yine de çalışacaktır.",
   "workoutPlanDrawerAddExercise": "Egzersiz Ekle",
   "workoutPlanDrawerCurrent": "Mevcut",
-  "workoutPlanDrawerExerciseCount": "Egzersiz sayısı {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") kaydedildi. Bunlar silinecektir.",
+  "workoutPlanDrawerExerciseCount": "{arg0} egzersiz",
   "workoutPlanDrawerNow": "Şimdi",
   "workoutPlanDrawerRemove": "Kaldır",
-  "workoutPlanDrawerRemoveExercise": "{arg0} egzersizini kaldır",
+  "workoutPlanDrawerRemoveExercise": "{arg0} kaldırılsın mı?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Egzersizi kaldır araç ipucu",
-  "workoutPlanDrawerSetsLogged": "Kaydedilen setler {arg0}",
+  "workoutPlanDrawerSetsLogged": "{arg0} set kaydın var. Silinecekler.",
   "workoutPlanDrawerSwapExercise": "Egzersizi değiştir",
   "workoutPlanDrawerTitle": "Başlık",
   "workoutPlanDrawerWorkoutPlan": "Antrenman Planı",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "Kaydettiğin her set",
   "workoutShowcaseEveryWorkoutFlows": "Her antrenman akışı",
   "workoutShowcaseFinishWorkout": "Antrenmanı bitir",
-  "workoutShowcaseFormat1Rm": "Antrenman vitrini format 1RM",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "Biniş",
   "workoutShowcaseFormatCard": "Kart",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Lineer etiket",
   "workoutShowcaseLogAllSets": "Tüm setler",
   "workoutShowcaseLogDrink": "İçecek Kaydet",
-  "workoutShowcaseLogSet": "Set {arg0}",
+  "workoutShowcaseLogSet": "✓ Set {arg0} kaydet",
   "workoutShowcaseLogWater": "Su kaydet",
   "workoutShowcaseMovedThisSession": "bu seansta taşındı",
   "workoutShowcaseNewPr": "YENİ PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Tekrar",
   "workoutShowcaseScreenDay": "{day}. Gün",
   "workoutShowcaseScreenDuration": "SÜRE: {duration}",
-  "workoutShowcaseScreenPrs": "PR'LAR:      {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PR · GİRİLDİ",
   "workoutShowcaseScreenSession": "OTURUM: {title}",
   "workoutShowcaseScreenTotalPrs": "TOPLAM  {duration} · {volume} · {prs} PR",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "4'te 1. Set",
   "workoutShowcaseSet2": "Set 2",
   "workoutShowcaseSet3": "Set 3",
-  "workoutShowcaseSetNOf3": "Antrenman gösterimi set {arg0} / {arg0}",
+  "workoutShowcaseSetNOf3": "3 setten {arg0}. set",
   "workoutShowcaseShareYourWorkout": "Antrenmanını paylaş",
   "workoutShowcaseSideA": "TARAF A",
   "workoutShowcaseSuperset": "Superset",
@@ -27893,7 +27604,7 @@
   "workoutSummaryAdvancedWeight": "Ağırlık",
   "workoutSummaryAdvancedWeightSuggestions": "Ağırlık Önerileri",
   "workoutSummaryAdvancedWorkoutEndedEarly": "Antrenman Erken Bitti",
-  "workoutSummaryAdvancedYesU2705": "Evet \\u2705",
+  "workoutSummaryAdvancedYesU2705": "Evet ✅",
   "workoutSummaryBodyweightSession": "Vücut ağırlığı seansı",
   "workoutSummaryCollapseAll": "Hepsini Daralt",
   "workoutSummaryExpandAll": "Hepsini Genişlet",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Günlük",
   "xpGoalsDialog250LevelsAcross11Tiers": "XP hedefleri diyaloğu 11 kademede 250 seviye",
   "xpGoalsDialogBeginnerToTranscendent": "Başlangıçtan aşkın seviyeye",
-  "xpGoalsDialogCompleteWorkoutXp": "Antrenman tamamlama XP",
+  "xpGoalsDialogCompleteWorkoutXp": "Antrenmanı Tamamla: +100 XP",
   "xpGoalsDialogDailyGoals": "Günlük hedefler",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "AI koç ile ilk sohbet XP",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "İlk öğün ve kilo ölçümü XP",
-  "xpGoalsDialogFirstPrXp": "İlk PR XP",
-  "xpGoalsDialogFirstProgressPhotoXp": "İlk gelişim fotoğrafı XP",
-  "xpGoalsDialogFirstProteinGoalXp": "İlk protein hedefi XP",
-  "xpGoalsDialogFirstWorkoutXp": "İlk antrenman XP",
-  "xpGoalsDialogHitProteinGoalXp": "Protein hedefine ulaşma XP",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "AI Koçla İlk Sohbet: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "İlk Öğün/Kilo/Ölçüm: her biri +50 XP",
+  "xpGoalsDialogFirstPrXp": "İlk PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "İlk İlerleme Fotoğrafı: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "İlk Protein Hedefi: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "İlk Antrenman: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Protein Hedefini Tuttur: +50 XP",
   "xpGoalsDialogLevels": "Seviyeler",
-  "xpGoalsDialogLogBodyMeasurementsXp": "Vücut ölçüleri kaydı XP",
-  "xpGoalsDialogLogMealXp": "Öğün kaydı XP",
-  "xpGoalsDialogLogWeightXp": "Kilo kaydı XP",
-  "xpGoalsDialogLoginXp": "Giriş yapma XP",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Vücut Ölçümlerini Kaydet: +20 XP",
+  "xpGoalsDialogLogMealXp": "Öğün Kaydet: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Kilo Kaydet: +15 XP",
+  "xpGoalsDialogLoginXp": "Giriş: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Kilometre taşı ödülleri",
   "xpGoalsFirstTimeBonuses": "İlk kez bonusları",
   "xpGoalsGotIt": "Anladım!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Protein hedefine ulaş",
   "xpGoalsScreenInventory": "Envanter",
   "xpGoalsScreenLegendary": "EFSANEVİ",
-  "xpGoalsScreenLevelCurrentTotal": "Mevcut seviye toplamı {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Seviye {arg0} • toplam 249 seviye",
   "xpGoalsScreenLevelProgress": "Seviye İlerlemesi",
   "xpGoalsScreenLogBodyMeasurements": "Vücut ölçülerini kaydet",
   "xpGoalsScreenLogFirstMeal": "İlk Öğünü Kaydet",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Kupa Odası",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Haftalık",
-  "xpGoalsXpAvailable": "Mevcut {arg0}",
-  "xpGoalsXpEarnedToday": "Bugün kazanılan {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP mevcut",
+  "xpGoalsXpEarnedToday": "Bugün +{arg0} XP kazanıldı",
   "xpGoalsXpGoals": "XP Hedefleri",
-  "xpGoalsXpMultiplierActive": "Aktif çarpan {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP Aktif!",
   "xpHeroTileDayStreak": "{streak} günlük seri",
   "xpHeroTileLv": "{level}. Seviye",
   "xpHeroTileLv2": "{nextLevel}. Seviye → {label}",

@@ -335,11 +335,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') für (name)';
-  }
-
-  @override
   String get activeWorkoutScreenUndo => 'Rückgängig';
 
   @override
@@ -1051,10 +1046,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiCoachMealRecoveryDayEating => 'Essen am Erholungstag?';
-
-  @override
-  String get aiCoachMealSearchQuestionsTryAngry =>
-      'Suchfragen (versuchen Sie es mit „angry“, „fibe mexican“)';
 
   @override
   String get aiCoachMealSomethingWentWrong => 'Etwas ist schief gelaufen.';
@@ -2872,9 +2863,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get caloriesSummaryCardOveLeft => 'übrig';
-
-  @override
   String get cancelConfirmationAnythingElseYouD =>
       'Möchtest du uns noch etwas mitteilen? (optional)';
 
@@ -3542,9 +3530,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get chatGotIt => 'Verstanden';
 
   @override
-  String get chatLeftToday => ') heute übrig';
-
-  @override
   String chatMediaWidgetsCalTotal(Object totalCal) {
     return '$totalCal kcal insgesamt';
   }
@@ -3664,11 +3649,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get chatScreenExtAboutAiCoach => 'Über den AI Coach';
-
-  @override
-  String chatScreenExtAs(Object mealType) {
-    return ') als (mealType)';
-  }
 
   @override
   String get chatScreenExtChangeCoach => 'Coach wechseln';
@@ -4890,7 +4870,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String complianceRingCardGreatPace(Object arg0) {
-    return 'Tolles Tempo $arg0';
+    return 'Tolles Tempo! Noch $arg0 übrig';
   }
 
   @override
@@ -4899,7 +4879,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
-    return 'Auf Kurs $arg0';
+    return 'Auf Kurs — noch $arg0';
   }
 
   @override
@@ -4907,7 +4887,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String complianceRingCardWorkoutsRemaining(Object arg0) {
-    return 'Verbleibende Workouts $arg0';
+    return '$arg0 Workouts übrig';
   }
 
   @override
@@ -5206,9 +5186,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get cookingConverterUseThisValue => 'Diesen Wert verwenden';
-
-  @override
-  String get cookingConverterWeight => 'Gewicht';
 
   @override
   String get cosmeticsGalleryCosmetics => 'Kosmetik';
@@ -5744,19 +5721,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenUsedTimes(
-    Object lastUsedFormatted,
-    Object usageCount,
-  ) {
-    return 'Verwendet (usageCount) Mal(lastUsedFormatted)\" : \"\")';
-  }
-
-  @override
-  String customExercisesScreenValue(Object name, Object targetDisplay) {
-    return '(name) (targetDisplay))\" : \"\")';
-  }
-
-  @override
   String get customExercisesSearchExercises => 'Übungen suchen...';
 
   @override
@@ -5905,11 +5869,6 @@ class AppLocalizationsDe extends AppLocalizations {
     Object pairedPoints,
   ) {
     return '$pairedPoints/$kMinCorrelationPairs gemeinsame Tage';
-  }
-
-  @override
-  String customTrendScreenValue(Object strengthLabel, Object value) {
-    return ')(value) · (strengthLabel)';
   }
 
   @override
@@ -6164,9 +6123,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get cycleScreenUiLogYourFirstPeriod =>
       'Protokolliere deine erste Periode, um Vorhersagen zu starten.';
-
-  @override
-  String get cycleScreenUiPhase => '-Phase';
 
   @override
   String cycleScreenUiPhaseLabel(Object displayName) {
@@ -8186,7 +8142,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String editProgramSheetCustomValue(Object arg0) {
-    return 'Benutzerdefinierter Wert $arg0';
+    return 'Benutzerdefiniert: $arg0';
   }
 
   @override
@@ -8230,12 +8186,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return 'Verlauf laden $arg0';
+    return 'Verlauf konnte nicht geladen werden: $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return 'Wiederherstellen $arg0';
+    return 'Wiederherstellung fehlgeschlagen: $arg0';
   }
 
   @override
@@ -9816,11 +9772,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get exerciseDetailSheetFavorite => 'Favorit';
 
   @override
-  String exerciseDetailSheetLbs(Object repRange) {
-    return ') lbs × (repRange)';
-  }
-
-  @override
   String get exerciseDetailSheetLoading => 'Laden...';
 
   @override
@@ -11096,9 +11047,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get exerciseSetTrackerAddSet => 'Satz hinzufügen';
 
   @override
-  String get exerciseSetTrackerBarbell => ') Langhantel';
-
-  @override
   String get exerciseSetTrackerReps => 'Wdh.';
 
   @override
@@ -11243,10 +11191,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetAskAiForSuggestions => 'KI um Vorschläge bitten';
-
-  @override
-  String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Beschreibe dein Equipment oder deine Vorlieben\nz. B. „Ich habe Schulterprobleme, nur Körpergewicht“';
 
   @override
   String get exerciseSwapSheetEGIOnly => 'z. B. „Ich habe nur Kurzhanteln“';
@@ -11420,9 +11364,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get expandedExerciseCardAlternatingHands => 'Abwechselnde Hände';
-
-  @override
-  String get expandedExerciseCardBarbell => ') Langhantel';
 
   @override
   String get expandedExerciseCardBreathing => 'Atmung';
@@ -12169,11 +12110,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get fastingScoreCardStreakBonus => 'Streak-Bonus';
-
-  @override
-  String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
-  }
 
   @override
   String fastingScoreCardValue2(Object value) {
@@ -13161,11 +13097,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get flexibilityProgressChartNoDataAvailable => 'Keine Daten verfügbar';
 
   @override
-  String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
-  }
-
-  @override
   String get flexibilityScoreCardByArea => 'Nach Bereich';
 
   @override
@@ -13834,9 +13765,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get foodItemRankingAddFood => 'Lebensmittel hinzufügen';
 
   @override
-  String get foodItemRankingDetails => ') Details';
-
-  @override
   String foodItemRankingNFoodItems(Object count) {
     return '$count Lebensmittel';
   }
@@ -14358,9 +14286,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Freunde, die tatsächlich fit wurden, hatten jemanden, der ihnen schrieb. Echte Verantwortlichkeit kostet etwa zweihundert Dollar im Monat, was genau der Grund ist, warum die meisten von uns sie nie haben, und genau der Grund, warum die Lücke zwischen „Tracken“ und „Verändern“ jahrelang offen bleibt.';
 
   @override
-  String get freshnessDecayCardAgo => ') her';
-
-  @override
   String get freshnessDecayCardControlsHowQuicklyExercise =>
       'Steuert, wie schnell die Trainingsfrische abnimmt: e^(-k * Einheiten)';
 
@@ -14616,16 +14541,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get futuristicSetCardSkipExercise => 'Übung überspringen';
-
-  @override
-  String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
-  }
-
-  @override
-  String futuristicSetCardValue2(Object reps) {
-    return ')×(Wiederholungen)';
-  }
 
   @override
   String get generatePlanCreateAHolisticPlan =>
@@ -15533,12 +15448,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return 'Abgeschlossen $arg0 $arg1';
+    return '$arg0/$arg1 abgeschlossen';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return '$arg0 Tage in Folge';
+    return '$arg0 Tage Serie';
   }
 
   @override
@@ -15567,7 +15482,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String habitsCardViewAllHabits(Object arg0) {
-    return 'Alle Gewohnheiten anzeigen $arg0';
+    return 'Alle $arg0 Gewohnheiten ansehen';
   }
 
   @override
@@ -17153,9 +17068,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get homeEmptyWorkout_v4 =>
       'Noch kein Plan. Lass die KI einen passend zu deinen Zielen erstellen.';
-
-  @override
-  String get homeFromHealthConnect => ') von Health Connect';
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
@@ -19148,11 +19060,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get insightsSummaryTemplateSummary => 'ZUSAMMENFASSUNG';
 
   @override
-  String insightsSummaryTemplateValue(Object pct) {
-    return '$pct%';
-  }
-
-  @override
   String get insightsSummaryTemplateWorkouts => 'TRAININGSEINHEITEN';
 
   @override
@@ -19166,10 +19073,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get intensityPromptHard => 'Hart';
-
-  @override
-  String get intensityPromptHideRpeSlideDial =>
-      'RPE-Schieberegler ausblenden      Einstellen (RPE 1-10)';
 
   @override
   String get intensityPromptHowHardWasThat => 'Wie hart war dieser Satz?';
@@ -19195,11 +19098,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get introBuildMyPlan => 'Meinen Plan erstellen';
-
-  @override
-  String introCardFormatDataTotalvolumelbsRound(Object totalSets) {
-    return ').format(data.totalVolumeLbs.round())) lbs · (totalSets) Sätze';
-  }
 
   @override
   String get introCardMonth => 'Monat.';
@@ -20261,9 +20159,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get logMealSheetCached => '(im Cache)';
 
   @override
-  String get logMealSheetCaptured => ') erfasst';
-
-  @override
   String get logMealSheetChooseFoodPhotos => 'Wählen Sie Food-Fotos';
 
   @override
@@ -20886,11 +20781,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValue(Object changeInUnit) {
-    return '$changeInUnit';
-  }
-
-  @override
   String get logWeightSyncedFromAppleHealth =>
       'Synchronisiert von Apple Gesundheit';
 
@@ -21338,7 +21228,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return 'Chats heute übrig: $arg0';
+    return 'Noch $arg0 Chats heute';
   }
 
   @override
@@ -21382,11 +21272,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String manageDuplicateImportsScreenValue(Object primary) {
     return '$primary · ';
-  }
-
-  @override
-  String manageDuplicateImportsScreenValue2(Object row) {
-    return '(Zeile)\" : \"\")';
   }
 
   @override
@@ -22328,11 +22213,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String menuAnalysisSheetValue(Object elapsed) {
-    return ')(verstrichen)';
-  }
-
-  @override
   String menuAnalysisSheetValue2(Object rank) {
     return '#$rank';
   }
@@ -22785,7 +22665,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String metricsDashboardNoMetricDataYet(Object arg0) {
-    return 'Noch keine Messdaten $arg0';
+    return 'Noch keine $arg0-Daten';
   }
 
   @override
@@ -23458,7 +23338,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return 'Meist trainiert $arg0';
+    return 'Am meisten trainiert: $arg0';
   }
 
   @override
@@ -23901,11 +23781,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardValue(Object item) {
-    return ')(item)%';
-  }
-
-  @override
   String get myLibraryTabRecentActivity => 'Letzte Aktivität';
 
   @override
@@ -24196,7 +24071,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return 'Aktuelle XP $arg0';
+    return '$arg0 XP';
   }
 
   @override
@@ -24208,7 +24083,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return '$arg0 Std. $arg1 Min. übrig';
+    return 'Noch ${arg0}h ${arg1}m';
   }
 
   @override
@@ -24224,7 +24099,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return '$arg0 Min. übrig';
+    return 'Noch ${arg0}m';
   }
 
   @override
@@ -24253,7 +24128,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return 'Schrittziel $arg0';
+    return '/ $arg0';
   }
 
   @override
@@ -24261,7 +24136,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return 'Ziel aktive Stunden $arg0';
+    return '/ $arg0 Std.';
   }
 
   @override
@@ -24308,11 +24183,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String neatScoreDisplayTrend(Object name) {
     return 'Trend: $name';
-  }
-
-  @override
-  String neatScoreDisplayValue(Object widget) {
-    return '))(widget)';
   }
 
   @override
@@ -24562,16 +24432,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String nextSetPreviewCardKg(Object recommendedWeight) {
     return '$recommendedWeight kg';
-  }
-
-  @override
-  String nextSetPreviewCardKg2(Object weightDelta) {
-    return ')(weightDelta) kg';
-  }
-
-  @override
-  String nextSetPreviewCardValue(Object weightDelta) {
-    return ')(weightDelta)';
   }
 
   @override
@@ -25151,11 +25011,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get nutrientExplorerUnpinNutrient => 'Nährstoff lösen';
-
-  @override
-  String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
-  }
 
   @override
   String get nutrientExplorerVitamins => 'VITAMINE';
@@ -26149,11 +26004,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) Kal';
-  }
-
-  @override
   String nutritionTabPartWeeklyOverviewCardCalDay(Object uncertaintyDisplay) {
     return 'Kal/Tag $uncertaintyDisplay';
   }
@@ -26166,11 +26016,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String nutritionTabPartWeeklyOverviewCardG2(Object grams) {
     return '${grams}g';
-  }
-
-  @override
-  String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
   }
 
   @override
@@ -26339,12 +26184,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String openAllCratesCollect(Object arg0, Object arg1) {
-    return 'Sammeln $arg0 $arg1';
+    return 'Einsammeln ($arg0/$arg1)';
   }
 
   @override
   String openAllCratesCratesOpened(Object arg0) {
-    return 'Kisten geöffnet $arg0';
+    return '$arg0 Kisten geöffnet!';
   }
 
   @override
@@ -26365,29 +26210,27 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String openAllCratesGainedXp(Object arg0) {
-    return 'XP erhalten $arg0';
+    return '+$arg0 XP';
   }
 
   @override
   String get openAllCratesMaxLevel => 'Maximales Level';
 
   @override
-  String get openAllCratesOpenYourCrates => 'Öffne deine Kisten';
+  String get openAllCratesOpenYourCrates => '🎁 Öffne deine Kisten';
 
   @override
-  String get openAllCratesOpened => ') geöffnet!';
-
-  @override
-  String get openAllCratesOpeningYourCrates => 'Öffne deine Kisten';
+  String get openAllCratesOpeningYourCrates =>
+      '🎁 Deine Kisten werden geöffnet…';
 
   @override
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
-    return 'Wähle Belohnung pro Tag $arg0 $arg1';
+    return 'Wähle 1 Belohnung pro Tag • $arg0/$arg1 gewählt';
   }
 
   @override
   String openAllCratesPickYourReward(Object arg0, Object arg1) {
-    return 'Wähle deine Belohnung $arg0 $arg1';
+    return 'Wähle deine Belohnung • $arg0/$arg1 gewählt';
   }
 
   @override
@@ -26397,35 +26240,35 @@ class AppLocalizationsDe extends AppLocalizations {
   String get openAllCratesSelectAll => 'Alle auswählen';
 
   @override
-  String get openAllCratesStreakCrate => 'Streak-Kiste';
+  String get openAllCratesStreakCrate => 'Serien-Kiste';
 
   @override
-  String get openAllCratesStreakShield => 'Streak-Schild';
+  String get openAllCratesStreakShield => 'Serien-Schild';
 
   @override
   String get openAllCratesToday => 'Heute';
 
   @override
   String openAllCratesTotalXpFormatted(Object arg0) {
-    return 'Gesamt-XP $arg0';
+    return '$arg0 insgesamt';
   }
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return 'Gesamt-XP Level $arg0 $arg1';
+    return 'Gesamt: $arg0 XP • Level $arg1';
   }
 
   @override
-  String get openAllCratesUd83cUdf89Rewards => '\\uD83C\\uDF89 Belohnungen!';
+  String get openAllCratesUd83cUdf89Rewards => '🎉 Belohnungen!';
 
   @override
   String openAllCratesXpInLevel(Object arg0, Object arg1) {
-    return 'XP in Level $arg0 $arg1';
+    return '$arg0 / $arg1 XP';
   }
 
   @override
   String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
-    return 'XP bis zum nächsten Level $arg0 $arg1';
+    return '$arg0 XP bis Level $arg1';
   }
 
   @override
@@ -27274,11 +27117,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-Konfidenzschätzung\" : \"\")';
-  }
-
-  @override
   String phaseRecommendationBannerCycleDay(Object cycleDay) {
     return 'Zyklustag $cycleDay';
   }
@@ -27666,7 +27504,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return 'Tage pro Woche $arg0';
+    return '$arg0 Tage/Woche';
   }
 
   @override
@@ -27675,7 +27513,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
-    return 'Anzahl der Geräte $arg0';
+    return '$arg0 Geräte';
   }
 
   @override
@@ -28010,9 +27848,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String prInlineCelebrationValue2(Object exerciseName, Object formattedValue) {
     return '$exerciseName • $formattedValue';
   }
-
-  @override
-  String get prPosterTemplateFromLast => ') VOM LETZTEN';
 
   @override
   String get prShareCardCopiedToClipboard => 'In die Zwischenablage kopiert!';
@@ -29561,11 +29396,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get prsTemplateNewPrsAreJust => 'Neue PRs sind gleich um die Ecke';
 
   @override
-  String prsTemplateValue(Object unit) {
-    return ') (Einheit)';
-  }
-
-  @override
   String prsTemplateValue2(Object improvement, Object unit) {
     return '+$improvement $unit';
   }
@@ -29968,7 +29798,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return 'Vor $arg0 Tagen';
+    return 'Vor $arg0 Tagen aktualisiert';
   }
 
   @override
@@ -30410,17 +30240,20 @@ class AppLocalizationsDe extends AppLocalizations {
       'Beständigkeit schlägt Intensität – wähle, was du durchhalten kannst';
 
   @override
-  String quizDaysSelectorDays(Object arg0) {
-    return 'Tage $arg0';
+  String quizDaysSelectorDays(int arg0) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg0,
+      locale: localeName,
+      other: 'Tage',
+      one: 'Tag',
+    );
+    return '$_temp0';
   }
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return 'Ausgewählte Tage $arg0 $arg1';
+    return '$arg0 / $arg1 Tage ausgewählt';
   }
-
-  @override
-  String get quizDaysSelectorForYourWorkouts => ') für deine Workouts';
 
   @override
   String get quizDaysSelectorFri => 'Fr';
@@ -30444,7 +30277,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
-    return 'Wähle $arg0 Tage';
+    return 'Wähle $arg0 Tage, die dir passen';
   }
 
   @override
@@ -30542,7 +30375,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return 'Identifizierte Anzahl $arg0';
+    return '$arg0 Elemente erkannt. Tippe auf eines, um die Auswahl aufzuheben.';
   }
 
   @override
@@ -30564,7 +30397,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return 'Andere Anzahl $arg0';
+    return '$arg0 ausgewählt';
   }
 
   @override
@@ -31513,11 +31346,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recipeCreateSaving => 'Wird gespeichert...';
 
   @override
-  String recipeCreateScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
-  }
-
-  @override
   String recipeCreateScreenValue2(Object selected) {
     return '✨ $selected';
   }
@@ -31602,11 +31430,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String recipeDetailScreenUForkedFrom(Object sourceName) {
     return '✨ Abgeleitet von $sourceName';
-  }
-
-  @override
-  String recipeDetailScreenValue(Object brand, Object foodName) {
-    return '(brand) \" : \"\")(foodName)';
   }
 
   @override
@@ -32378,8 +32201,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Einstellungen werden geprüft';
 
   @override
-  String get regenerateSheetConnectingToTheAi =>
-      'Verbindung zur KI wird hergestellt';
+  String get regenerateSheetConnectingToTheAi => 'Verbindung zur KI';
 
   @override
   String get regenerateSheetConsideringFocusAreas =>
@@ -32394,7 +32216,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get regenerateSheetCustomizeOrLetAiSuggest =>
-      'Anpassen oder KI-Vorschlag nutzen';
+      'Anpassen oder die KI vorschlagen lassen';
 
   @override
   String get regenerateSheetDescribeYourIdealWorkout =>
@@ -32436,7 +32258,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return 'Generierung läuft seit $arg0';
+    return 'Wird generiert… $arg0';
   }
 
   @override
@@ -33272,7 +33094,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String restSuggestionSaveTime(Object arg0) {
-    return 'Zeit sparen $arg0';
+    return 'Spare $arg0';
   }
 
   @override
@@ -33293,10 +33115,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get restTimerCardFormula => 'Formel';
-
-  @override
-  String get restTimerCardFormulaBaserestRpe7 =>
-      'Formel: BaseRest * (RPE / 7) * Multiplier';
 
   @override
   String get restTimerCardLivePreview => 'Live-Vorschau';
@@ -33324,7 +33142,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get restTimerCardVariablesBaseRpeMultipli =>
-      'Variablen: base, rpe, multiplier, tier';
+      'Variablen: Basis, RPE, Multiplikator, Stufe';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -33632,7 +33450,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
-    return 'Verletzungen markiert $arg0';
+    return '$arg0 Verletzungen markiert';
   }
 
   @override
@@ -34343,9 +34161,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sessionDetailTime => 'Zeit';
 
   @override
-  String get sessionDetailTopSetHighlighted => ') • Top-Satz hervorgehoben';
-
-  @override
   String get sessionDetailWeight => 'Gewicht';
 
   @override
@@ -34408,11 +34223,6 @@ class AppLocalizationsDe extends AppLocalizations {
     Object length,
   ) {
     return '$length entfernt';
-  }
-
-  @override
-  String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') von (exerciseName)';
   }
 
   @override
@@ -34665,11 +34475,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String setTrackingSectionSetsCompleted(Object length) {
     return '$length Sätze abgeschlossen';
-  }
-
-  @override
-  String setTrackingSectionValue(Object reps) {
-    return ')×(Wdh)';
   }
 
   @override
@@ -35302,7 +35107,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsScreenUiTryDifferentKeywordsLike =>
-      'Versuche es mit anderen Suchbegriffen wie \"Thema\", \"Benachrichtigungen\" oder \"KI-Stimme\"';
+      'Versuche andere Stichwörter wie „Design“, „Benachrichtigungen“ oder „KI-Stimme“';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -35468,7 +35273,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shareMotivationalCompleted => 'ABGESCHLOSSEN';
 
   @override
-  String get sharePrNewPr => 'Neuer PR';
+  String get sharePrNewPr => 'NEUER PR';
 
   @override
   String get shareStatsCalories => 'Kalorien';
@@ -37006,9 +36811,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get streakMilestoneStreakMilestone => 'SERIEN-MEILENSTEIN!';
-
-  @override
-  String get streakMilestoneToGo => ') noch!';
 
   @override
   String get streakMilestoneYouVeReachedThe =>
@@ -38838,25 +38640,31 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return 'Runter $arg0';
+    return '▼ $arg0 weniger als heute Morgen';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return 'Verdiente Punkte $arg0 $arg1';
+    return '$arg0 / $arg1 Pkt.';
   }
 
   @override
   String get todayScoreDetailHowItWorks => 'So funktioniert es';
 
   @override
-  String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return 'Inaktivitäts-Erklärung $arg0 $arg1';
+  String todayScoreDetailInactiveExplanation(Object arg0, int arg1) {
+    String _temp0 = intl.Intl.pluralLogic(
+      arg1,
+      locale: localeName,
+      other: 'werden',
+      one: 'wird',
+    );
+    return '$arg0 $_temp0 heute nicht gezählt, daher teilt sich der Rest die vollen 100 Punkte. Deine Punktzahl spiegelt immer nur das wider, was heute tatsächlich zutrifft.';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return 'Momentum mit Durchschnitt $arg0 $arg1';
+    return '$arg0  ·  7-Tage-Durchschnitt $arg1';
   }
 
   @override
@@ -38873,7 +38681,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return 'Rauf $arg0';
+    return '▲ $arg0 mehr als heute Morgen';
   }
 
   @override
@@ -39338,9 +39146,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get trophiesEarnedFirstTime => 'ERSTES MAL!';
 
   @override
-  String get trophiesEarnedKg => ') kg';
-
-  @override
   String get trophiesEarnedMilestoneReached => 'Meilenstein erreicht';
 
   @override
@@ -39352,20 +39157,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return 'Abzeichen $arg0';
+    return '$arg0 neue Abzeichen';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return 'Cardio-PRs $arg0';
+    return '$arg0 neue Cardio-PRs';
   }
 
   @override
-  String get trophiesEarnedNewPR => 'Neuer PR';
+  String get trophiesEarnedNewPR => 'NEUER PR';
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return 'PRs $arg0';
+    return '$arg0 neue PRs!';
   }
 
   @override
@@ -39386,7 +39191,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
-    return 'Verbleibend bis zum Freischalten $arg0 $arg1';
+    return 'Noch $arg0 $arg1 zum Freischalten';
   }
 
   @override
@@ -39589,7 +39394,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsBreakfastLogged(Object arg0) {
-    return 'Frühstück protokolliert: $arg0';
+    return 'Frühstück an $arg0 der letzten 7 Morgen erfasst';
   }
 
   @override
@@ -39639,7 +39444,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '$arg0 kcal gesamt heute';
+    return '$arg0 kcal verbrannt';
   }
 
   @override
@@ -40352,7 +40157,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return 'Abgeschlossen $arg0 $arg1';
+    return '$arg0 von $arg1 Workouts abgeschlossen';
   }
 
   @override
@@ -41059,12 +40864,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return 'Diese Woche runter $arg0';
+    return '$arg0 weniger diese Woche!';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return 'Runter vs. letzter Zyklus $arg0';
+    return '$arg0 lbs weniger als am selben Zyklustag im letzten Monat';
   }
 
   @override
@@ -41101,17 +40906,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return 'Ziel gehalten Fenster $arg0';
+    return 'Ziel gehalten $arg0 — luteale Wassereinlagerung geglättet';
   }
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return 'Diese Woche rauf $arg0';
+    return '$arg0 mehr diese Woche';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return 'Rauf vs. letzter Zyklus $arg0';
+    return '$arg0 lbs mehr als am selben Zyklustag im letzten Monat';
   }
 
   @override
@@ -41276,11 +41081,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String workoutActionsSheetGetALinkFor(Object marketingDomain) {
     return 'Hole dir einen $marketingDomain-Link für Freunde';
-  }
-
-  @override
-  String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41629,11 +41429,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2Value(Object workoutComp) {
-    return ')(workoutComp)';
-  }
-
-  @override
   String get workoutCompleteScreenUnableToChallengeFriends =>
       'Freunde können derzeit nicht herausgefordert werden';
 
@@ -41856,10 +41651,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Training konnte nicht geladen werden';
 
   @override
-  String get workoutDetailHelpersForAvailableEquipment =>
-      ') für verfügbare Ausrüstung...';
-
-  @override
   String get workoutDetailHelpersHell => 'Hölle';
 
   @override
@@ -41873,7 +41664,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return 'Ersetze Übungen $arg0';
+    return '$arg0 Übungen werden an die verfügbaren Geräte angepasst…';
   }
 
   @override
@@ -42341,9 +42132,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get workoutHistoryImportYourStrengthData => 'Ihre Kraftdaten';
 
   @override
-  String get workoutImportAsDone => ')\" als erledigt';
-
-  @override
   String get workoutImportCalories => 'Kalorien';
 
   @override
@@ -42366,7 +42154,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return 'Von Quelle $arg0';
+    return 'aus $arg0';
   }
 
   @override
@@ -42681,12 +42469,8 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutPlanDrawerExerciseCount(Object arg0) {
-    return 'Übungsanzahl $arg0';
+    return '$arg0 Übungen';
   }
-
-  @override
-  String get workoutPlanDrawerLoggedTheyWillBe =>
-      ') protokolliert. Sie werden gelöscht.';
 
   @override
   String get workoutPlanDrawerNow => 'Jetzt';
@@ -42696,7 +42480,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutPlanDrawerRemoveExercise(Object arg0) {
-    return 'Übung $arg0 entfernen';
+    return '$arg0 entfernen?';
   }
 
   @override
@@ -42704,7 +42488,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
-    return 'Sätze protokolliert $arg0';
+    return 'Du hast $arg0 Sätze erfasst. Sie werden gelöscht.';
   }
 
   @override
@@ -43191,7 +42975,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return 'Satz $arg0';
+    return '✓ Satz $arg0 erfassen';
   }
 
   @override
@@ -43239,11 +43023,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String workoutShowcaseScreenDuration(Object duration) {
     return 'DAUER: $duration';
-  }
-
-  @override
-  String workoutShowcaseScreenPrs(Object prs) {
-    return 'PRS:      $prs';
   }
 
   @override
@@ -44174,49 +43953,50 @@ class AppLocalizationsDe extends AppLocalizations {
       'Vom Anfänger zum Transzendenten';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp => 'XP für abgeschlossenes Workout';
+  String get xpGoalsDialogCompleteWorkoutXp => 'Workout abschließen: +100 XP';
 
   @override
   String get xpGoalsDialogDailyGoals => 'Tägliche Ziele';
 
   @override
   String get xpGoalsDialogFirstChatWithAiCoachXp =>
-      'XP für ersten Chat mit AI Coach';
+      'Erster Chat mit dem KI-Coach: +15 XP';
 
   @override
   String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'XP für erste Mahlzeiten- und Gewichtsmessung';
+      'Erste Mahlzeit/Gewicht/Maße: je +50 XP';
 
   @override
-  String get xpGoalsDialogFirstPrXp => 'XP für ersten PR';
+  String get xpGoalsDialogFirstPrXp => 'Erster PR: +100 XP';
 
   @override
   String get xpGoalsDialogFirstProgressPhotoXp =>
-      'XP für erstes Fortschrittsfoto';
+      'Erstes Fortschrittsfoto: +75 XP';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp => 'XP für erstes Proteinziel';
+  String get xpGoalsDialogFirstProteinGoalXp => 'Erstes Proteinziel: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => 'XP für erstes Workout';
+  String get xpGoalsDialogFirstWorkoutXp => 'Erstes Workout: +150 XP';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp => 'XP für erreichtes Proteinziel';
+  String get xpGoalsDialogHitProteinGoalXp => 'Proteinziel erreichen: +50 XP';
 
   @override
   String get xpGoalsDialogLevels => 'Level';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp => 'XP für Körpermaße';
+  String get xpGoalsDialogLogBodyMeasurementsXp =>
+      'Körpermaße erfassen: +20 XP';
 
   @override
-  String get xpGoalsDialogLogMealXp => 'XP für Mahlzeit';
+  String get xpGoalsDialogLogMealXp => 'Mahlzeit erfassen: +25 XP';
 
   @override
-  String get xpGoalsDialogLogWeightXp => 'XP für Gewicht';
+  String get xpGoalsDialogLogWeightXp => 'Gewicht erfassen: +15 XP';
 
   @override
-  String get xpGoalsDialogLoginXp => 'XP für Login';
+  String get xpGoalsDialogLoginXp => 'Anmeldung: +5 XP';
 
   @override
   String get xpGoalsDialogMilestoneRewards => 'Meilenstein-Belohnungen';
@@ -44292,7 +44072,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return 'Aktueller Level-Gesamtstand $arg0';
+    return 'Level $arg0 • 249 Level insgesamt';
   }
 
   @override
@@ -44408,12 +44188,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return 'Verfügbar $arg0';
+    return '+$arg0 XP verfügbar';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return 'Heute verdient $arg0';
+    return '+$arg0 XP heute verdient';
   }
 
   @override
@@ -44421,7 +44201,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return 'Multiplikator aktiv $arg0';
+    return '${arg0}x XP aktiv!';
   }
 
   @override

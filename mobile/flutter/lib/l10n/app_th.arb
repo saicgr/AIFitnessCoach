@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "เมื่อไหร่ที่ควรใช้",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "สลับท่าออกกำลังกายสำเร็จแล้ว",
   "activeWorkoutScreenRefactoredExerciseSAdded": "เพิ่มท่าออกกำลังกาย {_exercises} ท่าแล้ว",
-  "activeWorkoutScreenRefactoredFor": ") สำหรับ (name)",
   "activeWorkoutScreenUndo": "ย้อนกลับ",
   "activeWorkoutScreenWorkoutAdapted": "ปรับการออกกำลังกายแล้ว",
   "activityCardAdditionalDetailsOptional": "รายละเอียดเพิ่มเติม (ไม่บังคับ)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "พลังงานก่อนออกกำลังกาย?",
   "aiCoachMealQuickSnackIdeas": "ไอเดียของว่างด่วน?",
   "aiCoachMealRecoveryDayEating": "การกินในวันพักฟื้น?",
-  "aiCoachMealSearchQuestionsTryAngry": "ค้นหาคำถาม (ลอง \"โกรธ\", \"ไฟเบอร์\", \"เม็กซิกัน\")",
   "aiCoachMealSomethingWentWrong": "มีบางอย่างผิดพลาด",
   "aiCoachMealStressedWhatHelps": "เครียด — อะไรช่วยได้บ้าง?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "อาหารสไตล์เอเชีย {meal} — ขอ 1 เมนู (ข้าวหน้าต่างๆ, ก๋วยเตี๋ยว, ซูชิ, ผัด) สารอาหาร และวิธีเตรียม{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} แคลอรี่ · ช่วง {phase}",
   "caloriesSummaryCardCalories": "แคลอรี",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "เหลืออยู่",
   "cancelConfirmationAnythingElseYouD": "มีอะไรเพิ่มเติมที่คุณต้องการแชร์ไหม? (ไม่บังคับ)",
   "cancelConfirmationCancelAnyway": "ยกเลิกต่อไป",
   "cancelConfirmationHelpUsImprove": "ช่วยเราปรับปรุง",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "เข้าใจแล้ว",
   "chatLanguageChangedSystem": "🌐 AI Coach ตอบกลับเป็น {nativeName} แล้ว",
   "chatLanguageResetSystem": "🌐 รีเซ็ตภาษา AI Coach แล้ว — ใช้ภาษาเดียวกับแอป",
-  "chatLeftToday": ") เหลือวันนี้",
   "chatMediaWidgetsCalTotal": "รวม {totalCal} cal",
   "chatMediaWidgetsGProtein": "โปรตีน {totalProtein}g",
   "chatMediaWidgetsGoTo": "ไปที่ {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "โค้ชกำลังใช้เวลาคิดนานกว่าปกติ",
   "chatScreenCouldntReachCoach": "ไม่สามารถติดต่อโค้ชได้",
   "chatScreenExtAboutAiCoach": "เกี่ยวกับโค้ช AI",
-  "chatScreenExtAs": ") ในฐานะ (mealType)",
   "chatScreenExtChangeCoach": "เปลี่ยนโค้ช",
   "chatScreenExtChatTips": "เคล็ดลับการแชท",
   "chatScreenExtChooseMultiplePhotos": "เลือกหลายรูป",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "ดูเป้าหมาย",
   "complianceRingCardAllWorkoutsCompleted": "ออกกำลังกายครบแล้ว",
   "complianceRingCardGetStartedToday": "เริ่มวันนี้เลย",
-  "complianceRingCardGreatPace": "ทำได้ดีมาก {arg0}",
+  "complianceRingCardGreatPace": "จังหวะดีมาก! เหลืออีก {arg0}",
   "complianceRingCardNoWorkoutsScheduledThis": "ไม่มีตารางออกกำลังกายในสัปดาห์นี้",
-  "complianceRingCardOnTrack": "อยู่ในแผน {arg0}",
+  "complianceRingCardOnTrack": "เป็นไปตามแผน — อีก {arg0}",
   "complianceRingCardWorkoutCompliance": "ความสม่ำเสมอในการออกกำลังกาย",
-  "complianceRingCardWorkoutsRemaining": "เหลือการออกกำลังกายอีก {arg0}",
+  "complianceRingCardWorkoutsRemaining": "เหลือการออกกำลังกายอีก {arg0} ครั้ง",
   "comprehensiveStatsStatsScores": "สถิติและคะแนน",
   "connectedAppsAutoImportEvery15": "นำเข้าอัตโนมัติทุก 15 นาที",
   "connectedAppsConnect": "เชื่อมต่อ",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "เลือกอาหาร",
   "cookingConverterSheetG": "{inputAmount} กรัม",
   "cookingConverterUseThisValue": "ใช้ค่านี้",
-  "cookingConverterWeight": ") น้ำหนัก",
   "cosmeticsGalleryCosmetics": "ของตกแต่ง",
   "cosmeticsGalleryEquip": "สวมใส่",
   "cosmeticsGalleryEquipped": "สวมใส่อยู่",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "ไม่มีท่าออกกำลังกายที่ตรงกับการค้นหาของคุณ",
   "customExercisesScreenAreYouSureYou": "คุณแน่ใจหรือไม่ว่าต้องการลบ \"{name}\"? การกระทำนี้ไม่สามารถย้อนกลับได้",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} ท่า, ใช้งาน {totalUses} ครั้ง",
-  "customExercisesScreenUsedTimes": "ใช้งาน (usageCount) ครั้ง(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "ค้นหาท่าออกกำลังกาย...",
   "customExercisesSimple": "แบบง่าย",
   "customFoodBuilderAiFillFromName": "ให้ AI เติมข้อมูลจากชื่อ",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · รอบล่าสุด",
   "customTrendScreenMaxOverlaysRemoveOne": "ซ้อนทับได้สูงสุด {_kMaxOverlays} รายการ — ลบออกหนึ่งรายการเพื่อเพิ่มรายการใหม่",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} วันที่ใช้ร่วมกัน",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "เพิ่มท่าออกกำลังกาย",
   "customWorkoutBuilderBuildCustomWorkout": "สร้างแผนการออกกำลังกายแบบกำหนดเอง",
   "customWorkoutBuilderCustomWorkoutCreated": "สร้างแผนการออกกำลังกายแบบกำหนดเองแล้ว!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "บันทึกประจำเดือน",
   "cycleScreenUiLogPeriod": "บันทึกประจำเดือน",
   "cycleScreenUiLogYourFirstPeriod": "บันทึกรอบเดือนครั้งแรกของคุณเพื่อเริ่มการคาดการณ์",
-  "cycleScreenUiPhase": ") ระยะ",
   "cycleScreenUiPhaseLabel": "ระยะ {displayName}",
   "cycleScreenUiPredictionsAreEstimates": "การคาดการณ์เป็นเพียงการประมาณการจากข้อมูลที่คุณบันทึกไว้ ไม่ใช่วิธีการคุมกำเนิดและไม่ใช่คำแนะนำทางการแพทย์ โปรดปรึกษาแพทย์หากมีข้อกังวลด้านสุขภาพ",
   "cycleScreenUiPregnancyModeIsOn": "โหมดตั้งครรภ์เปิดอยู่",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "ดำเนินการต่อ",
   "editProgramSheetCurrent": "ปัจจุบัน",
   "editProgramSheetCustomProgram": "โปรแกรมกำหนดเอง",
-  "editProgramSheetCustomValue": "ค่ากำหนดเอง {arg0}",
+  "editProgramSheetCustomValue": "กำหนดเอง: {arg0}",
   "editProgramSheetCustomizeProgram": "ปรับแต่งโปรแกรม",
   "editProgramSheetDays": "วัน",
   "editProgramSheetDaysAgo": "{days} วันที่แล้ว",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "อุปกรณ์",
   "editProgramSheetEquipmentLabel": "ป้ายกำกับอุปกรณ์",
   "editProgramSheetExamples": "ตัวอย่าง",
-  "editProgramSheetFailedToLoadHistory": "โหลดประวัติ {arg0}",
-  "editProgramSheetFailedToRestore": "กู้คืน {arg0}",
+  "editProgramSheetFailedToLoadHistory": "โหลดประวัติไม่สำเร็จ: {arg0}",
+  "editProgramSheetFailedToRestore": "กู้คืนไม่สำเร็จ: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "อัปเดตโปรแกรม",
   "editProgramSheetFocus": "จุดเน้น",
   "editProgramSheetHealth": "สุขภาพ",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "กำลังดาวน์โหลด {pct}%",
   "exerciseDetailSheetDownloadingVideo": "กำลังดาวน์โหลดวิดีโอ...",
   "exerciseDetailSheetFavorite": "รายการโปรด",
-  "exerciseDetailSheetLbs": ") ปอนด์ × (repRange)",
   "exerciseDetailSheetLoading": "กำลังโหลด...",
   "exerciseDetailSheetLog1rm": "บันทึก 1RM",
   "exerciseDetailSheetMS": "{restMins} นาที {restSecs} วินาที",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15 วินาที",
   "exerciseSetTrackerAddNotesHere": "เพิ่มบันทึกที่นี่...",
   "exerciseSetTrackerAddSet": "เพิ่มเซต",
-  "exerciseSetTrackerBarbell": ") บาร์เบล",
   "exerciseSetTrackerReps": "ครั้ง",
   "exerciseSetTrackerRestTarget": "เป้าหมายการพัก",
   "exerciseSetTrackerS": "{seconds} วินาที",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI ไม่สามารถแนะนำได้ในขณะนี้",
   "exerciseSwapSheetAnyEquipment": "อุปกรณ์ใดก็ได้",
   "exerciseSwapSheetAskAiForSuggestions": "ให้ AI ช่วยแนะนำ",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "ระบุอุปกรณ์หรือความต้องการของคุณ\nเช่น \"ฉันมีอาการบาดเจ็บที่ไหล่\" หรือ \"ใช้น้ำหนักตัวเท่านั้น\"",
   "exerciseSwapSheetEGIOnly": "เช่น \"ฉันมีแค่ดัมเบล\"",
   "exerciseSwapSheetFailedToSwapExercise": "ไม่สามารถสลับท่าออกกำลังกายได้",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "กำลังค้นหาท่าทางเลือกที่ใช้กล้ามเนื้อกลุ่มเดียวกัน...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "น้ำหนัก",
   "expandedExerciseCardAddToFavorites": "เพิ่มในรายการโปรด",
   "expandedExerciseCardAlternatingHands": "สลับมือ",
-  "expandedExerciseCardBarbell": ") บาร์เบล",
   "expandedExerciseCardBreathing": "การหายใจ",
   "expandedExerciseCardBreathingGuide": "คู่มือการหายใจ",
   "expandedExerciseCardCollapse": "ยุบ",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "ระดับโปรโตคอล",
   "fastingScoreCardScore": "คะแนน",
   "fastingScoreCardStreakBonus": "โบนัสต่อเนื่อง",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "เทียบกับสัปดาห์ที่แล้ว",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "ครั้งแรก",
   "flexibilityProgressChartLatest": "ล่าสุด",
   "flexibilityProgressChartNoDataAvailable": "ไม่มีข้อมูล",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "แยกตามส่วน",
   "flexibilityScoreCardFocusAreas": "ส่วนที่ควรเน้น",
   "flexibilityScoreCardOverallFlexibility": "ความยืดหยุ่นโดยรวม",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "ค้นหามื้ออาหาร, อาหาร, \"โปรตีนสูง\"...",
   "foodHistoryUndo": "ย้อนกลับ",
   "foodItemRankingAddFood": "เพิ่มอาหาร",
-  "foodItemRankingDetails": ") รายละเอียด",
   "foodItemRankingNFoodItems": "{count} รายการอาหาร",
   "foodItemRankingScore": "คะแนน",
   "foodItemRankingTapToHideDetails": "แตะเพื่อซ่อนรายละเอียด",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "ดังนั้นฉันจึงสร้างบุคคล ไม่ใช่บัญชีแยกประเภท ถ่ายภาพเมนูใดก็ได้ ที่บ้านหรือต่างประเทศ แล้วโค้ชจะอ่านกลับมาให้คุณในรูปแบบมาโคร ข้ามวันอังคารแล้วมันจะดึงคุณกลับมาในเช้าวันพุธโดยไม่รู้สึกผิด โดยจะเรียนรู้อาหาร ห้องออกกำลังกาย รูปแบบการลื่นของคุณ น้อยกว่าหนึ่งครั้งต่อเดือน",
   "founderNoteTheFriendsWhoActually": "เพื่อนๆ ที่หุ่นดีจริงๆ คือคนที่มีคนคอยส่งข้อความหา ความรับผิดชอบที่แท้จริงมีค่าใช้จ่ายประมาณสองร้อยดอลลาร์ต่อเดือน ซึ่งเป็นเหตุผลว่าทำไมเราส่วนใหญ่ถึงไม่มีมัน และเป็นเหตุผลว่าทำไมช่องว่างระหว่างการ \"ติดตามผล\" กับการ \"เปลี่ยนแปลง\" ถึงยังคงอยู่มานานหลายปี",
-  "freshnessDecayCardAgo": ") ที่แล้ว",
   "freshnessDecayCardControlsHowQuicklyExercise": "ควบคุมความเร็วในการลดลงของความสดใหม่ของการออกกำลังกาย: e^(-k * sessions)",
   "freshnessDecayCardFreshnessDecayTuner": "ตัวปรับค่าความสดใหม่",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}กก.",
   "futuristicSetCardSetOf": "เซตที่ {currentSetNumber} จาก {totalSets}",
   "futuristicSetCardSkipExercise": "ข้ามท่าออกกำลังกาย",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "สร้างแผนแบบองค์รวมที่ประสานการออกกำลังกาย โภชนาการ และการทำ Fasting ของคุณเข้าด้วยกัน",
   "generatePlanFastingProtocol": "โปรโตคอลการทำ Fasting",
   "generatePlanGeneratePlan": "สร้างแผน",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "เพิ่มนิสัยแรกของคุณ",
   "habitsCardAllHabitsCompleted": "ทำนิสัยทั้งหมดสำเร็จแล้ว!",
   "habitsCardBuildDailyHabits": "สร้างนิสัยประจำวัน",
-  "habitsCardCompletedCount": "จำนวนที่ทำสำเร็จ {arg0} {arg1}",
-  "habitsCardDayStreak": "ทำต่อเนื่อง {arg0} วัน",
+  "habitsCardCompletedCount": "เสร็จ {arg0}/{arg1}",
+  "habitsCardDayStreak": "ต่อเนื่อง {arg0} วัน",
   "habitsCardFailedToLoadHabits": "ไม่สามารถโหลดนิสัยได้",
   "habitsCardGreatJobKeepingUp": "ทำได้ดีมากที่รักษาความต่อเนื่องไว้ได้",
   "habitsCardQuickStart": "เริ่มต้นอย่างรวดเร็ว:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "นิสัยของวันนี้",
   "habitsCardTryAgain": "ลองใหม่อีกครั้ง",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "ดูนิสัยทั้งหมด {arg0}",
+  "habitsCardViewAllHabits": "ดูนิสัยทั้งหมด {arg0} รายการ",
   "habitsCompleted": "เสร็จสิ้น",
   "habitsDeleteHabit": "ลบนิสัยนี้?",
   "habitsHoldToReorderSwipe": "กดค้างเพื่อจัดลำดับใหม่ • ปัดเพื่อลบ",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "วันพัก? หรือพร้อมลุย? คุณเลือกได้เลย.",
   "homeEmptyWorkout_v3": "ระหว่างโปรแกรม — เริ่มโปรแกรมใหม่เพื่อกลับมาเข้าที่เข้าทาง",
   "homeEmptyWorkout_v4": "ยังไม่มีแผน. ให้ AI สร้างแผนที่เหมาะกับเป้าหมายของคุณ",
-  "homeFromHealthConnect": ") จาก Health Connect",
   "homeGreetingAfternoon_v1": "เติมพลังยามบ่าย {name}!",
   "homeGreetingAfternoon_v2": "สวัสดี {name} ได้เวลาขยับร่างกายหรือยัง?",
   "homeGreetingAfternoon_v3": "ยืดเส้นยืดสายหน่อยไหม {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "แคลอรี",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "สรุป",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "การออกกำลังกาย",
   "intensityPrompt1Left": "เหลือ 1",
   "intensityPrompt2Left": "เหลือ 2",
   "intensityPrompt3Left": "เหลือ 3+",
   "intensityPromptHard": "หนัก",
-  "intensityPromptHideRpeSlideDial": "ซ่อนแถบ RPE      ปรับระดับ (RPE 1-10)",
   "intensityPromptHowHardWasThat": "เซตนี้หนักแค่ไหน?",
   "intensityPromptMax": "สูงสุด",
   "intensityPromptModerate": "ปานกลาง",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "เซตที่ {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "โค้ช AI ที่ช่วยสร้างแผน เรียนรู้ร่างกายของคุณ และปรับเปลี่ยนทุกสัปดาห์",
   "introBuildMyPlan": "สร้างแผนของฉัน",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) ปอนด์ · (totalSets) เซต",
   "introCardMonth": "เดือน",
   "introIAlreadyHaveAnAccount": "ฉันมีบัญชีอยู่แล้ว",
   "introScreenV": "เวอร์ชัน {_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "บาร์โค้ด",
   "logMealSheetBarcodeScan": "สแกนบาร์โค้ด",
   "logMealSheetCached": "(แคชแล้ว)",
-  "logMealSheetCaptured": ") บันทึกแล้ว",
   "logMealSheetChooseFoodPhotos": "เลือกรูปภาพอาหาร",
   "logMealSheetChooseFromGallery": "เลือกจากแกลเลอรี",
   "logMealSheetChooseFromLibrary": "เลือกจากคลังรูปภาพ",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "เฉลี่ย 7 วัน · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} จากจุดต่ำสุดก่อนหน้า",
   "logWeightSheetValidRange": "ช่วงที่ถูกต้อง: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "ซิงค์จาก Apple Health",
   "logWeightSyncedToAppleHealth": "ซิงค์ไปยัง Apple Health",
   "logWeightTapToEdit": "แตะเพื่อแก้ไข",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "ออกจากระบบ?",
   "macroRingsCardGG": "{consumed} กรัม / {target} กรัม",
   "macroRingsCardMacros": "สารอาหารหลัก",
-  "mainShellPartChatsLeftToday": "แชทที่เหลือวันนี้ {arg0}",
+  "mainShellPartChatsLeftToday": "เหลือแชทวันนี้ {arg0} ครั้ง",
   "mainShellPartGuestMode": "โหมดผู้เยี่ยมชม",
   "mainShellPartQuickActions": "การดำเนินการด่วน",
   "mainShellPartSignUp": "สมัครใช้งาน",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "หลัก",
   "manageDuplicateImportsScreenSources": "{length} แหล่งข้อมูล",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(แถว)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "ยกเลิกการเชื่อมโยงจากกลุ่ม",
   "manageDuplicateImportsUnlinkedFromGroup": "ยกเลิกการเชื่อมโยงจากกลุ่มแล้ว",
   "manageGymProfilesActive": "ใช้งานอยู่",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "เพิ่มอีก {extraCount} รายการ",
   "menuAnalysisSheetSelected": "เลือกแล้ว {length} รายการ",
   "menuAnalysisSheetSort": "เรียงตาม: {label}",
-  "menuAnalysisSheetValue": ")(elapsed)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "คุณบันทึกเมนูสำหรับ \"{restaurantName}\" ไว้แล้ว",
   "menuAnalysisSort": "จัดเรียง:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "ประเภทตัวชี้วัด",
   "metricsDashboardMuscleMass": "มวลกล้ามเนื้อ",
   "metricsDashboardNoDataAvailable": "ไม่มีข้อมูล",
-  "metricsDashboardNoMetricDataYet": "ยังไม่มีข้อมูลตัวชี้วัด {arg0}",
+  "metricsDashboardNoMetricDataYet": "ยังไม่มีข้อมูล {arg0}",
   "metricsDashboardQuickStats": "สถิติด่วน",
   "metricsDashboardRestingHeartRate": "อัตราการเต้นของหัวใจขณะพัก",
   "metricsDashboardRestingHr": "อัตราการเต้นของหัวใจขณะพัก",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "อื่นๆ",
   "muscleHeatmapTileCompleteWorkoutsToSee": "บันทึกการออกกำลังกายเพื่อดูข้อมูลกล้ามเนื้อ",
   "muscleHeatmapTileCouldnTLoad": "ไม่สามารถโหลดข้อมูลได้",
-  "muscleHeatmapTileMostTrained": "ฝึกบ่อยที่สุด {arg0}",
+  "muscleHeatmapTileMostTrained": "ฝึกบ่อยที่สุด: {arg0}",
   "muscleHeatmapTileMuscles": "กล้ามเนื้อ",
   "muscleHeatmapTileRetry": "ลองใหม่",
   "muscleHeatmapUpperBody": "ร่างกายส่วนบน",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "รายการโปรด ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "ท่าหลัก ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "ดีที่สุด: {item}กก. x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "กิจกรรมล่าสุด",
   "myLibraryTabViewAll": "ดูทั้งหมด",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "สายขยับตัว",
   "neatGamificationWidgetsClaimReward": "รับรางวัล",
   "neatGamificationWidgetsCouchPotato": "สายชิลล์",
-  "neatGamificationWidgetsCurrentXp": "XP ปัจจุบัน {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "ความท้าทายประจำวัน",
   "neatGamificationWidgetsExpired": "หมดอายุ",
-  "neatGamificationWidgetsHoursMinutesLeft": "เหลือเวลา {arg0} ชั่วโมง {arg1} นาที",
+  "neatGamificationWidgetsHoursMinutesLeft": "เหลืออีก {arg0} ชม. {arg1} นาที",
   "neatGamificationWidgetsLevel": "เลเวล {level}",
   "neatGamificationWidgetsLevelUp": "เลเวลอัป!",
   "neatGamificationWidgetsMaxLevel": "เลเวลสูงสุด!",
-  "neatGamificationWidgetsMinutesLeft": "เหลือเวลา {arg0} นาที",
+  "neatGamificationWidgetsMinutesLeft": "เหลืออีก {arg0} นาที",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "แชมเปี้ยน",
   "neatGamificationWidgetsNeatEnthusiast": "ผู้กระตือรือร้น",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "ยังไม่มีการจัดอันดับในสัปดาห์นี้",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "คะแนน",
-  "neatGamificationWidgetsStepGoal": "เป้าหมายก้าวเดิน {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "จำนวนก้าว",
-  "neatGamificationWidgetsTargetActiveHours": "เป้าหมายชั่วโมงที่ขยับร่างกาย {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} ชม.",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "รายละเอียดคะแนน",
   "neatScoreDisplayTapForBreakdown": "แตะเพื่อดูรายละเอียด",
   "neatScoreDisplayTrend": "แนวโน้ม: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "กำลังโหลด...",
   "netflixExerciseCarouselSeeAll": "ดูทั้งหมด",
   "netflixExercisesAddYourOwnExercises": "เพิ่มท่าออกกำลังกายของคุณเองพร้อมกำหนดจำนวนครั้ง เซ็ต และคำแนะนำได้เอง",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "กำลังคำนวณเซตถัดไปที่เหมาะสมที่สุด...",
   "nextSetPreviewCardIntensity": "ความเข้มข้น {intensityPercentage}%",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "เซตสุดท้าย",
   "nextSetPreviewKg": " กก.",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "แหล่งสารอาหารหลัก",
   "nutrientExplorerUnknown": "ไม่ทราบ",
   "nutrientExplorerUnpinNutrient": "เลิกปักหมุดสารอาหาร",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "วิตามิน",
   "nutrientRushGameCatchTheGoldenZealova": "จับสัญลักษณ์ Zealova สีทองเพื่อรับพลังพิเศษ!",
   "nutrientRushGameNewBest": "🎉 สถิติใหม่!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "ภาพรวมรายสัปดาห์",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "เฉลี่ย {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "ปริมาณเฉลี่ย: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) แคล",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/วัน {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}ก.",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}ก.",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) กก.",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "น้ำหนัก: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova รวมทุกอย่างไว้แล้ว",
   "onboardingWhyFirstTheWhy": "ก่อนอื่น ทำไมถึงอยากเริ่ม",
   "onboardingWhyWhatSDrivingThis": "อะไรคือแรงผลักดันในครั้งนี้?",
-  "openAllCrates24HoursOf2xXp": "รับ XP 2 เท่าเป็นเวลา 24 ชั่วโมง",
+  "openAllCrates24HoursOf2xXp": "2x XP นาน 24 ชั่วโมง",
   "openAllCratesActivityCrate": "กล่องกิจกรรม",
   "openAllCratesBonusCrateToOpen": "กล่องโบนัสที่รอการเปิด",
-  "openAllCratesCollect": "รับ {arg0} {arg1}",
-  "openAllCratesCratesOpened": "เปิดกล่องแล้ว {arg0}",
-  "openAllCratesDailyCrate": "กล่องรายวัน",
+  "openAllCratesCollect": "รับ ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "เปิดกล่องแล้ว {arg0} กล่อง!",
+  "openAllCratesDailyCrate": "กล่องประจำวัน",
   "openAllCratesDone": "เสร็จสิ้น",
-  "openAllCratesDoubleXpToken": "โทเค็น XP สองเท่า",
+  "openAllCratesDoubleXpToken": "โทเคน XP สองเท่า",
   "openAllCratesFailedToOpenCrates": "เปิดกล่องไม่สำเร็จ โปรดลองใหม่อีกครั้ง",
   "openAllCratesFitnessCrate": "กล่องฟิตเนส",
-  "openAllCratesGainedXp": "ได้รับ XP {arg0}",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "เลเวลสูงสุด",
-  "openAllCratesOpenYourCrates": "เปิดกล่องของคุณ",
-  "openAllCratesOpened": ") เปิดแล้ว!",
-  "openAllCratesOpeningYourCrates": "กำลังเปิดกล่องของคุณ",
-  "openAllCratesPickRewardPerDay": "เลือกรางวัลต่อวัน {arg0} {arg1}",
-  "openAllCratesPickYourReward": "เลือกรางวัลของคุณ {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 เปิดกล่องของคุณ",
+  "openAllCratesOpeningYourCrates": "🎁 กำลังเปิดกล่อง…",
+  "openAllCratesPickRewardPerDay": "เลือกรางวัล 1 ชิ้นต่อวัน • เลือกแล้ว {arg0}/{arg1}",
+  "openAllCratesPickYourReward": "เลือกรางวัลของคุณ • เลือกแล้ว {arg0}/{arg1}",
   "openAllCratesProtectYourStreak": "ปกป้องสถิติของคุณ",
   "openAllCratesSelectAll": "เลือกทั้งหมด",
-  "openAllCratesStreakCrate": "กล่อง Streak",
-  "openAllCratesStreakShield": "โล่ Streak",
+  "openAllCratesStreakCrate": "กล่องสตรีค",
+  "openAllCratesStreakShield": "โล่สตรีค",
   "openAllCratesToday": "วันนี้",
-  "openAllCratesTotalXpFormatted": "XP รวม {arg0}",
-  "openAllCratesTotalXpLevel": "เลเวล XP รวม {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "รวม {arg0}",
+  "openAllCratesTotalXpLevel": "รวม: {arg0} XP • เลเวล {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 รางวัล!",
-  "openAllCratesXpInLevel": "XP ในเลเวล {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP ถึงเลเวลถัดไป {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "อีก {arg0} XP ถึงเลเวล {arg1}",
   "openAllCratesYesterday": "เมื่อวานนี้",
   "overallScoreHeroOverall": "ภาพรวม",
   "overviewActiveSkill": "ทักษะที่ใช้งาน",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "บุคลิกในยิมของคุณคือ...",
   "phaseRecommendationBannerBasedOn": "อ้างอิงจาก: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-confidence estimate\" : \"\")",
   "phaseRecommendationBannerCycleDay": "วันที่ {cycleDay} ของรอบเดือน",
   "phaseRecommendationBannerEvidence": "หลักฐาน: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "เข้าใจแล้ว",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "สร้างพื้นฐานความแข็งแรง",
   "planPreviewScreenBuildingYour4Week": "กำลังสร้างแผน 4 สัปดาห์ของคุณ...",
   "planPreviewScreenContinueFree": "ดำเนินการต่อฟรี",
-  "planPreviewScreenDaysPerWeek": "วันต่อสัปดาห์ {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} วัน/สัปดาห์",
   "planPreviewScreenDesignedBasedOnYour": "ออกแบบตามคำตอบในแบบทดสอบของคุณ",
-  "planPreviewScreenEquipmentCount": "จำนวนอุปกรณ์ {arg0}",
+  "planPreviewScreenEquipmentCount": "อุปกรณ์ {arg0} ชิ้น",
   "planPreviewScreenExercisesMin": "ท่าออกกำลังกายขั้นต่ำ {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "เพิ่มความเข้มข้นและปริมาณ",
   "planPreviewScreenMasterTheMovement": "ฝึกฝนท่าทางให้เชี่ยวชาญ",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} สถิติใหม่!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") จากครั้งล่าสุด",
   "prShareCardCopiedToClipboard": "คัดลอกไปยังคลิปบอร์ดแล้ว!",
   "prShareCardCopyText": "คัดลอกข้อความ",
   "prShareCardFailedToCaptureImage": "ไม่สามารถจับภาพได้",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "พยายามต่อไป!",
   "prsTemplateNewPersonalRecords": "สถิติใหม่ส่วนบุคคล",
   "prsTemplateNewPrsAreJust": "สถิติใหม่กำลังจะเกิดขึ้นในไม่ช้า",
-  "prsTemplateValue": ") (หน่วย)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "ส่วนผสม",
   "publicRecipeInstructions": "วิธีทำ",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "แตะเพื่อดูประวัติและแนวโน้มทั้งหมด",
   "quickLogMeasurementsTrackYourBodyChanges": "ติดตามการเปลี่ยนแปลงของร่างกายคุณเมื่อเวลาผ่านไป",
   "quickLogMeasurementsUpdate": "อัปเดต",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} วันที่แล้ว",
+  "quickLogMeasurementsUpdatedDaysAgo": "อัปเดตเมื่อ {arg0} วันก่อน",
   "quickLogMeasurementsUpdatedToday": "วันนี้",
   "quickLogMeasurementsUpdatedYesterday": "เมื่อวานนี้",
   "quickLogMeasurementsWaist": "รอบเอว",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI จะสร้างตารางออกกำลังกายภายในช่วงที่คุณเลือก",
   "quizDaysSelectorBest": "ดีที่สุด",
   "quizDaysSelectorConsistencyBeatsIntensity": "ความสม่ำเสมอสำคัญกว่าความหนัก - เลือกในสิ่งที่คุณทำได้ต่อเนื่อง",
-  "quizDaysSelectorDays": "{arg0} วัน",
-  "quizDaysSelectorDaysSelected": "เลือกแล้ว {arg0} วัน {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") สำหรับการออกกำลังกายของคุณ",
+  "quizDaysSelectorDays": "{arg0, plural, one {วัน} other {วัน}}",
+  "quizDaysSelectorDaysSelected": "เลือกแล้ว {arg0} / {arg1} วัน",
   "quizDaysSelectorFri": "ศ.",
   "quizDaysSelectorHowLongAreYour": "คุณใช้เวลาออกกำลังกายนานแค่ไหน?",
   "quizDaysSelectorHowManyDaysPer": "คุณสามารถออกกำลังกายได้กี่วันต่อสัปดาห์?",
   "quizDaysSelectorMin": "ขั้นต่ำ",
   "quizDaysSelectorMon": "จ.",
   "quizDaysSelectorSat": "ส.",
-  "quizDaysSelectorSelectNDays": "เลือก {arg0} วัน",
+  "quizDaysSelectorSelectNDays": "เลือก {arg0} วันที่สะดวกสำหรับคุณ",
   "quizDaysSelectorSun": "อา.",
   "quizDaysSelectorThu": "พฤ.",
   "quizDaysSelectorTue": "อ.",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "ยิมที่บ้าน",
   "quizEquipmentHomeKettlebell": "ที่บ้าน + Kettlebell",
   "quizEquipmentHotel": "โรงแรม",
-  "quizEquipmentIdentifiedCount": "ระบุแล้ว {arg0} รายการ",
+  "quizEquipmentIdentifiedCount": "ระบุได้ {arg0} รายการ แตะเพื่อยกเลิกการเลือก",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "เมดิซินบอล",
   "quizEquipmentMinimalEquipmentBodyweight": "อุปกรณ์น้อย - น้ำหนักตัว, เสื่อ",
   "quizEquipmentNeededForBarbell": "จำเป็นสำหรับบาร์เบล",
   "quizEquipmentNoEquipmentIdentifiedPick": "ไม่พบอุปกรณ์ที่ระบุ โปรดเลือกจากรายการด้านล่าง",
-  "quizEquipmentOtherCount": "อื่นๆ {arg0} รายการ",
+  "quizEquipmentOtherCount": "เลือกแล้ว {arg0} รายการ",
   "quizEquipmentOtherEquipment": "อุปกรณ์อื่นๆ",
   "quizEquipmentPullUpBar": "บาร์โหน",
   "quizEquipmentQuickPresets": "ค่าที่ตั้งไว้ล่วงหน้า",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "ต้องระบุชื่อสูตรอาหาร",
   "recipeCreateRemovePhoto": "ลบรูปภาพ",
   "recipeCreateSaving": "กำลังบันทึก...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "ถ่ายรูป",
   "recipeCreateTapToEdit": "แตะเพื่อแก้ไข",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "ต่อหนึ่งหน่วยบริโภค (×{servings} หน่วยบริโภค)",
   "recipeDetailScreenUForkedFrom": "✨ แยกมาจาก {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" จะถูกลบอย่างถาวร",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 สูตรแนะนำ",
   "recipeDetailView": "ดู",
@@ -24745,7 +24468,7 @@
   "regenerateSheetApply": "ใช้",
   "regenerateSheetApplyThisWorkout": "ใช้การออกกำลังกายนี้",
   "regenerateSheetBalancingMuscleGroups": "กำลังสร้างสมดุลกลุ่มกล้ามเนื้อ",
-  "regenerateSheetBootingUpTheAi": "กำลังเริ่มระบบ AI",
+  "regenerateSheetBootingUpTheAi": "กำลังเริ่มต้น AI",
   "regenerateSheetBuildingYourPlan": "กำลังสร้างแผนของคุณ",
   "regenerateSheetBuildingYourWorkout": "กำลังสร้างตารางออกกำลังกาย...",
   "regenerateSheetCheckingEquipment": "กำลังตรวจสอบอุปกรณ์",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "กำลังสรุปรายละเอียด...",
   "regenerateSheetFinalizingYourWorkout": "กำลังสรุปการออกกำลังกายของคุณ",
   "regenerateSheetFineTuningTheDetails": "กำลังปรับรายละเอียด",
-  "regenerateSheetGeneratingElapsed": "เวลาที่ใช้สร้าง {arg0}",
+  "regenerateSheetGeneratingElapsed": "กำลังสร้าง… {arg0}",
   "regenerateSheetGeneratingSuggestions": "กำลังสร้างคำแนะนำ...",
   "regenerateSheetGetSuggestions": "รับคำแนะนำ",
   "regenerateSheetGettingCreative": "กำลังสร้างสรรค์ตารางใหม่",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "ใช้เวลาที่แนะนำ",
   "restSuggestionQuick": "เร็ว",
   "restSuggestionQuickRest": "พักสั้น",
-  "restSuggestionSaveTime": "ประหยัดเวลา {arg0}",
+  "restSuggestionSaveTime": "ประหยัด {arg0}",
   "restSuggestionSuggested": "แนะนำ",
   "restSuggestionUseSuggested": "ใช้ที่แนะนำ",
   "restTimerCardBaseRest": "เวลาพักพื้นฐาน",
   "restTimerCardControlRestPeriodsBetween": "ควบคุมช่วงเวลาพักระหว่างเซต",
   "restTimerCardCustomRestTimer": "ตั้งเวลาพักเอง",
   "restTimerCardFormula": "สูตรคำนวณ",
-  "restTimerCardFormulaBaserestRpe7": "สูตร: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "ดูตัวอย่างสด",
   "restTimerCardMultiplier": "ตัวคูณ",
   "restTimerCardRestBaserestRpe7": "พัก = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value} วินาที",
   "restTimerCardS2": "{restTimerBaseRest} วินาที",
   "restTimerCardS3": "{s} วินาที",
-  "restTimerCardVariablesBaseRpeMultipli": "ตัวแปร: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "ตัวแปร: ฐาน, RPE, ตัวคูณ, ระดับ",
   "restTimerCardX": "{restTimerMultiplier} เท่า",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "กำลังวิเคราะห์ประสิทธิภาพของคุณ...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "เสร็จสิ้น",
   "rtpTitle": "กลับมาฝึก",
   "safetyDisclaimerBannerDismissDisclaimer": "ปิดคำเตือน",
-  "safetyDisclaimerBannerInjuriesFlagged": "พบอาการบาดเจ็บ {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "พบการบาดเจ็บ {arg0} รายการ",
   "safetyDisclaimerBannerInjuryBody": "ส่วนของร่างกายที่บาดเจ็บ",
   "safetyDisclaimerBannerLearnMore": "เรียนรู้เพิ่มเติม",
   "safetyDisclaimerBannerMore": "+อีก {overflow} รายการ",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "เซต",
   "sessionDetailSetCount": "{count, plural, other{{count} เซต}} · ไฮไลต์เซตสูงสุด",
   "sessionDetailTime": "เวลา",
-  "sessionDetailTopSetHighlighted": ") • เน้นเซตสูงสุด",
   "sessionDetailWeight": "น้ำหนัก",
   "setAdjustmentAdditionalNotesOptional": "บันทึกเพิ่มเติม (ไม่บังคับ)",
   "setAdjustmentConfirm": "ยืนยัน",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "ทำเสร็จแล้ว {completedCount}",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "เหลืออีก {remainingCount}",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "ลบออก {length}",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") ของ (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "จากที่วางแผนไว้ {totalSets} เซ็ต",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "ทำเสร็จแล้ว {completedSets} เซ็ต",
   "setAdjustmentSheetReps": "จำนวนครั้ง",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "เซต {currentSetNumber}/{totalSets} • แตะเพื่อขยาย",
   "setTrackingSectionSets": "{widget} เซต",
   "setTrackingSectionSetsCompleted": "ทำครบ {length} เซตแล้ว",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "จำนวนที่ต้องการปรับน้ำหนัก",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "ประวัติการออกกำลังกาย",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject=คำขอรับการสนับสนุนจาก {appName}",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} วัน",
   "settingsScreenUiNoSettingsFound": "ไม่พบการตั้งค่า",
-  "settingsScreenUiTryDifferentKeywordsLike": "ลองใช้คำค้นหาอื่น เช่น \"ธีม\", \"การแจ้งเตือน\", หรือ \"เสียง AI\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "ลองคำค้นอื่น เช่น \"ธีม\" \"การแจ้งเตือน\" หรือ \"เสียง AI\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "ค้นหาการตั้งค่า",
   "settingsSetProgressionResearch": "ตั้งค่าการพัฒนา & งานวิจัย",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "รายงาน {periodName} ของ {appName} ของฉัน",
   "shareInsightsSheetMyReport2": "รายงาน {appName} ของฉัน",
   "shareMotivationalCompleted": "เสร็จสิ้น",
-  "sharePrNewPr": "สถิติใหม่ PR",
+  "sharePrNewPr": "PR ใหม่",
   "shareStatsCalories": "แคลอรี่",
   "shareStatsDuration": "ระยะเวลา",
   "shareStatsEliteTemplate": "ELITE TEMPLATE",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "รางวัล",
   "streakMilestoneStreakMilestone": "บรรลุเป้าหมาย Streak!",
-  "streakMilestoneToGo": ") ที่ต้องทำ!",
   "streakMilestoneYouVeReachedThe": "คุณบรรลุเป้าหมาย Streak สูงสุดแล้ว!",
   "streakSavedDialogWeUsedStreakShield": "เราใช้ Streak Shield 1 ครั้งเพื่อรักษา Streak {savedStreakCount} วันของคุณไว้",
   "streakSavedKeepItGoing": "รักษา Streak ต่อไป",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "เชื่อมต่อ",
   "todayScoreCardCustomize": "ปรับแต่ง",
   "todayScoreCardToday": "วันนี้",
-  "todayScoreDetailDown": "ลดลง {arg0}",
-  "todayScoreDetailEarnedPts": "คะแนนที่ได้รับ {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ ลดลง {arg0} จากเมื่อเช้า",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} คะแนน",
   "todayScoreDetailHowItWorks": "วิธีการทำงาน",
-  "todayScoreDetailInactiveExplanation": "คำอธิบายความไม่เคลื่อนไหว {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "โมเมนตัมพร้อมค่าเฉลี่ย {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0}{arg1, plural, one {ไม่ถูกนับ} other {ไม่ถูกนับ}}ในวันนี้ ส่วนที่เหลือจึงแบ่งคะแนนเต็ม 100 คะแนนกัน คะแนนของคุณจะสะท้อนเฉพาะสิ่งที่ใช้ได้จริงในวันนี้เสมอ",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  ค่าเฉลี่ย 7 วัน {arg1}",
   "todayScoreDetailNotCounted": "ไม่ได้นับ",
   "todayScoreDetailSetupText": "ข้อความตั้งค่า",
   "todayScoreDetailSteady": "คงที่",
   "todayScoreDetailTodayScore": "คะแนนวันนี้",
-  "todayScoreDetailUp": "เพิ่มขึ้น {arg0}",
+  "todayScoreDetailUp": "▲ เพิ่มขึ้น {arg0} จากเมื่อเช้า",
   "todayScoreSetupAddAWorkoutPlan": "เพิ่มแผนการออกกำลังกาย",
   "todayScoreSetupCardContinue": "ทำต่อ: {label}",
   "todayScoreSetupCardGetStarted": "เริ่มต้น · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "ความสำเร็จด้านคาร์ดิโอ",
   "trophiesEarnedDayStreak": "จำนวนวันที่ทำต่อเนื่อง",
   "trophiesEarnedFirstTime": "ครั้งแรก!",
-  "trophiesEarnedKg": ") กก.",
   "trophiesEarnedMilestoneReached": "ถึงเป้าหมายแล้ว",
   "trophiesEarnedMilestoneReachedNice": "ถึงเป้าหมายแล้ว เยี่ยมมาก!",
   "trophiesEarnedMilestones": "เป้าหมายสำคัญ",
-  "trophiesEarnedNewBadges": "เหรียญรางวัล {arg0}",
-  "trophiesEarnedNewCardioPRs": "สถิติใหม่คาร์ดิโอ PR {arg0}",
-  "trophiesEarnedNewPR": "ได้รับถ้วยรางวัลแล้ว PR ใหม่",
-  "trophiesEarnedNewPRs": "สถิติใหม่ PR {arg0}",
+  "trophiesEarnedNewBadges": "เหรียญตราใหม่ {arg0} อัน",
+  "trophiesEarnedNewCardioPRs": "PR คาร์ดิโอใหม่ {arg0} รายการ",
+  "trophiesEarnedNewPR": "PR ใหม่",
+  "trophiesEarnedNewPRs": "PR ใหม่ {arg0} รายการ!",
   "trophiesEarnedNewPr": "สถิติใหม่ (PR)",
   "trophiesEarnedNextMilestones": "เป้าหมายถัดไป",
   "trophiesEarnedNoNewRecords": "ไม่มีสถิติใหม่",
   "trophiesEarnedNoNewRecordsThis": "ไม่มีสถิติใหม่ในเซสชันนี้ — นี่คือสิ่งที่คุณกำลังมุ่งมั่นทำอยู่:",
   "trophiesEarnedPersonalRecords": "สถิติส่วนตัว",
-  "trophiesEarnedRemainingToUnlock": "เหลืออีก {arg0} {arg1} เพื่อปลดล็อก",
+  "trophiesEarnedRemainingToUnlock": "อีก {arg0} {arg1} เพื่อปลดล็อก",
   "trophiesEarnedSessionHighlights": "ไฮไลท์เซสชัน",
   "trophiesEarnedSheetPts": "+{points} คะแนน",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} กำลังพิมพ์",
   "typingIndicatorIsTyping3": "{agentName} กำลังพิมพ์...",
   "unifiedHomeWidgetsActivity": "กิจกรรม",
-  "unifiedHomeWidgetsBreakfastLogged": "บันทึกมื้อเช้าแล้ว {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "บันทึกมื้อเช้า {arg0} จาก 7 เช้าล่าสุด",
   "unifiedHomeWidgetsBreakfastSuggestion": "เมนูแนะนำสำหรับมื้อเช้า",
   "unifiedHomeWidgetsCarbs": "คาร์โบไฮเดรต",
   "unifiedHomeWidgetsConnect": "เชื่อมต่อ",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "ไขมัน",
   "unifiedHomeWidgetsG": "{eaten} / {goal} กรัม",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} กิโลแคลอรี รวมวันนี้",
+  "unifiedHomeWidgetsKcalBurned": "เผาผลาญ {arg0} kcal",
   "unifiedHomeWidgetsKcalLeft": " kcal ที่เหลือ",
   "unifiedHomeWidgetsLastNight": "เมื่อคืนนี้",
   "unifiedHomeWidgetsLog16oz": "บันทึก 16 ออนซ์",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first} สัปดาห์",
   "weekDurationSelectorWeeks": "{selectedWeeks} สัปดาห์",
   "weekDurationSelectorWk": "{spw}/สัปดาห์",
-  "weekProgressStripCompletedCount": "จำนวนที่ทำเสร็จ {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "ออกกำลังกายเสร็จ {arg0} จาก {arg1} ครั้ง",
   "weekProgressStripCouldNotLoadProgress": "ไม่สามารถโหลดความคืบหน้าได้",
   "weekProgressStripLoading": "กำลังโหลด...",
   "weekProgressStripNoWorkoutsScheduled": "ไม่มีตารางออกกำลังกาย",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "ดูทั้งหมด",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "ติดตามน้ำหนัก",
-  "weightTrendCardDownThisWeek": "ลดลงสัปดาห์นี้ {arg0}",
-  "weightTrendCardDownVsLastCycle": "ลดลงเทียบกับรอบที่แล้ว {arg0}",
+  "weightTrendCardDownThisWeek": "ลดลง {arg0} สัปดาห์นี้!",
+  "weightTrendCardDownVsLastCycle": "ลดลง {arg0} lbs เทียบกับวันเดียวกันของรอบเดือนที่แล้ว",
   "weightTrendCardLoadingWeight": "กำลังโหลดน้ำหนัก...",
   "weightTrendCardLogYourWeightTo": "บันทึกน้ำหนักของคุณเพื่อดูแนวโน้ม",
   "weightTrendCardMaintaining": "กำลังรักษา",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "เท่ากับรอบที่แล้ว",
   "weightTrendCardTapToLogWeight": "แตะเพื่อบันทึกน้ำหนัก",
   "weightTrendCardTargetHeld": "คงเป้าหมายไว้",
-  "weightTrendCardTargetHeldWindow": "คงเป้าหมายไว้ในช่วง {arg0}",
-  "weightTrendCardUpThisWeek": "เพิ่มขึ้นสัปดาห์นี้ {arg0}",
-  "weightTrendCardUpVsLastCycle": "เพิ่มขึ้นเทียบกับรอบที่แล้ว {arg0}",
+  "weightTrendCardTargetHeldWindow": "คงเป้าหมาย {arg0} — ปรับเรียบน้ำช่วงลูเทียล",
+  "weightTrendCardUpThisWeek": "เพิ่มขึ้น {arg0} สัปดาห์นี้",
+  "weightTrendCardUpVsLastCycle": "เพิ่มขึ้น {arg0} lbs เทียบกับวันเดียวกันของรอบเดือนที่แล้ว",
   "weightTrendCardWeightStableThisWeek": "น้ำหนักคงที่ในสัปดาห์นี้",
   "weightTrendCardWeightTrends": "แนวโน้มน้ำหนัก",
   "welcomeAffirmationGreatChoice": "เป็นทางเลือกที่ดีมาก",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "ย้อนกลับไปเวอร์ชันนี้?",
   "workoutActionsShareWorkout": "แชร์การออกกำลังกาย",
   "workoutActionsSheetGetALinkFor": "รับลิงก์ {marketingDomain} สำหรับเพื่อน",
-  "workoutActionsSheetN": ") — (Zealova)\n(url)",
   "workoutActionsSheetRestore": "กู้คืน \"{name}\" หรือไม่?",
   "workoutActionsSheetS": "{duration} วินาที",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} กก.",
   "workoutCompleteScreenUi2KgXReps": "{exComp} กก. x {currentReps} ครั้ง",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} เซต, {currentReps} ครั้ง",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "ไม่สามารถท้าทายเพื่อนได้ในขณะนี้",
   "workoutCompleteScreenUnableToExtendWorkout": "ไม่สามารถขยายเวลาออกกำลังกายได้",
   "workoutCompleteScreenViewAllMetrics": "ดูตัวชี้วัดทั้งหมด",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "อุปกรณ์",
   "workoutDetailExercises": "ท่าออกกำลังกาย",
   "workoutDetailFailedToLoadWorkout": "โหลดเวิร์กเอาต์ไม่สำเร็จ",
-  "workoutDetailHelpersForAvailableEquipment": ") สำหรับอุปกรณ์ที่มี...",
   "workoutDetailHelpersHell": "โหดมาก",
   "workoutDetailHelpersUpdatingExercises": "กำลังอัปเดตท่าออกกำลังกาย",
   "workoutDetailMoreInfo": "ข้อมูลเพิ่มเติม",
   "workoutDetailProgram": "โปรแกรม",
-  "workoutDetailReplacingExercises": "กำลังเปลี่ยนท่าออกกำลังกาย {arg0}",
+  "workoutDetailReplacingExercises": "กำลังเปลี่ยน {arg0} ท่าให้เข้ากับอุปกรณ์ที่มี…",
   "workoutDetailRevert": "ย้อนกลับ",
   "workoutDetailScreenBreakSuperset": "ยกเลิก Superset?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} cal ที่เผาผลาญ",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "คอลัมน์น้ำหนักใช้หน่วยอะไร? และหากคุณทราบแอปต้นทาง โปรดเลือกแอปนั้น ซึ่งจะช่วยแยกแยะรูปแบบไฟล์ที่คล้ายกันได้ (เช่น CSV ของ Hevy เทียบกับ Strong)",
   "workoutHistoryImportYourStrengthData": "ข้อมูลความแข็งแรงของคุณ",
-  "workoutImportAsDone": ")\" ว่าเสร็จสิ้น",
   "workoutImportCalories": "แคลอรี",
   "workoutImportCardio": "คาร์ดิโอ",
   "workoutImportCycling": "ปั่นจักรยาน",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "ระยะเวลา",
   "workoutImportEasy": "ง่าย",
   "workoutImportFlexibility": "ความยืดหยุ่น",
-  "workoutImportFromSource": "จากแหล่ง {arg0}",
+  "workoutImportFromSource": "จาก {arg0}",
   "workoutImportHard": "หนัก",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "การออกกำลังกายนี้หนักแค่ไหน?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "คุณอาจเห็นข้อความแจ้งเตือนของระบบเหล่านี้ระหว่างออกกำลังกาย ทั้งหมดเป็นทางเลือก คุณสามารถข้ามได้โดยที่การออกกำลังกายยังคงทำงานตามปกติ",
   "workoutPlanDrawerAddExercise": "เพิ่มท่าออกกำลังกาย",
   "workoutPlanDrawerCurrent": "ปัจจุบัน",
-  "workoutPlanDrawerExerciseCount": "จำนวนท่าออกกำลังกาย {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") ที่บันทึกไว้ จะถูกลบออก",
+  "workoutPlanDrawerExerciseCount": "{arg0} ท่า",
   "workoutPlanDrawerNow": "ตอนนี้",
   "workoutPlanDrawerRemove": "ลบ",
-  "workoutPlanDrawerRemoveExercise": "ลบท่าออกกำลังกาย {arg0}",
+  "workoutPlanDrawerRemoveExercise": "ลบ {arg0} ไหม?",
   "workoutPlanDrawerRemoveExerciseTooltip": "ลบท่าออกกำลังกาย",
-  "workoutPlanDrawerSetsLogged": "บันทึกเซตแล้ว {arg0}",
+  "workoutPlanDrawerSetsLogged": "คุณมี {arg0} เซ็ตที่บันทึกไว้ ระบบจะลบทิ้ง",
   "workoutPlanDrawerSwapExercise": "สลับท่าออกกำลังกาย",
   "workoutPlanDrawerTitle": "ชื่อ",
   "workoutPlanDrawerWorkoutPlan": "แผนการออกกำลังกาย",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "ทุกเซตที่คุณบันทึก",
   "workoutShowcaseEveryWorkoutFlows": "ทุกการออกกำลังกายที่ลื่นไหล",
   "workoutShowcaseFinishWorkout": "จบการออกกำลังกาย",
-  "workoutShowcaseFormat1Rm": "รูปแบบ 1RM ในโชว์เคส",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "Boarding",
   "workoutShowcaseFormatCard": "การ์ด",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "ป้ายกำกับแบบเส้นตรง",
   "workoutShowcaseLogAllSets": "ทุกเซต",
   "workoutShowcaseLogDrink": "บันทึกการดื่ม",
-  "workoutShowcaseLogSet": "เซต {arg0}",
+  "workoutShowcaseLogSet": "✓ บันทึกเซ็ต {arg0}",
   "workoutShowcaseLogWater": "บันทึกน้ำ",
   "workoutShowcaseMovedThisSession": "ที่เคลื่อนไหวในเซสชันนี้",
   "workoutShowcaseNewPr": "PR ใหม่",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "ครั้ง",
   "workoutShowcaseScreenDay": "วันที่ {day}",
   "workoutShowcaseScreenDuration": "ระยะเวลา: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · บันทึกแล้ว",
   "workoutShowcaseScreenSession": "เซสชัน: {title}",
   "workoutShowcaseScreenTotalPrs": "รวม {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "เซต 1 จาก 4",
   "workoutShowcaseSet2": "เซต 2",
   "workoutShowcaseSet3": "เซต 3",
-  "workoutShowcaseSetNOf3": "เซตที่ {arg0} จาก 3 ในโชว์เคส",
+  "workoutShowcaseSetNOf3": "เซ็ต {arg0} จาก 3",
   "workoutShowcaseShareYourWorkout": "แชร์การออกกำลังกายของคุณ",
   "workoutShowcaseSideA": "ด้าน A",
   "workoutShowcaseSuperset": "ซูเปอร์เซ็ต",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "รายวัน",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 เลเวลใน 11 ระดับ",
   "xpGoalsDialogBeginnerToTranscendent": "จากมือใหม่สู่ระดับสูงสุด",
-  "xpGoalsDialogCompleteWorkoutXp": "XP จากการออกกำลังกายจนจบ",
+  "xpGoalsDialogCompleteWorkoutXp": "ออกกำลังกายเสร็จ: +100 XP",
   "xpGoalsDialogDailyGoals": "เป้าหมายรายวัน",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "XP จากการแชทกับ AI Coach ครั้งแรก",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "XP จากการบันทึกน้ำหนักมื้ออาหารครั้งแรก",
-  "xpGoalsDialogFirstPrXp": "XP จากการทำ PR ครั้งแรก",
-  "xpGoalsDialogFirstProgressPhotoXp": "XP จากการบันทึกรูปภาพความก้าวหน้าครั้งแรก",
-  "xpGoalsDialogFirstProteinGoalXp": "XP จากการตั้งเป้าหมายโปรตีนครั้งแรก",
-  "xpGoalsDialogFirstWorkoutXp": "XP จากการออกกำลังกายครั้งแรก",
-  "xpGoalsDialogHitProteinGoalXp": "XP จากการทำเป้าหมายโปรตีนสำเร็จ",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "แชทกับโค้ช AI ครั้งแรก: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "มื้ออาหาร/น้ำหนัก/การวัดครั้งแรก: +50 XP ต่ออย่าง",
+  "xpGoalsDialogFirstPrXp": "PR แรก: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "รูปความคืบหน้าแรก: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "เป้าโปรตีนแรก: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "ออกกำลังกายครั้งแรก: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "ถึงเป้าโปรตีน: +50 XP",
   "xpGoalsDialogLevels": "ระดับ",
-  "xpGoalsDialogLogBodyMeasurementsXp": "XP จากการบันทึกสัดส่วนร่างกาย",
-  "xpGoalsDialogLogMealXp": "XP จากการบันทึกมื้ออาหาร",
-  "xpGoalsDialogLogWeightXp": "XP จากการบันทึกน้ำหนัก",
-  "xpGoalsDialogLoginXp": "XP จากการเข้าสู่ระบบ",
+  "xpGoalsDialogLogBodyMeasurementsXp": "บันทึกการวัดร่างกาย: +20 XP",
+  "xpGoalsDialogLogMealXp": "บันทึกมื้ออาหาร: +25 XP",
+  "xpGoalsDialogLogWeightXp": "บันทึกน้ำหนัก: +15 XP",
+  "xpGoalsDialogLoginXp": "เข้าสู่ระบบ: +5 XP",
   "xpGoalsDialogMilestoneRewards": "รางวัลความสำเร็จ",
   "xpGoalsFirstTimeBonuses": "โบนัสครั้งแรก",
   "xpGoalsGotIt": "เข้าใจแล้ว!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "บรรลุเป้าหมายโปรตีน",
   "xpGoalsScreenInventory": "คลังไอเทม",
   "xpGoalsScreenLegendary": "ระดับตำนาน",
-  "xpGoalsScreenLevelCurrentTotal": "คะแนนรวมระดับปัจจุบัน {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "เลเวล {arg0} • รวม 249 เลเวล",
   "xpGoalsScreenLevelProgress": "ความคืบหน้าของระดับ",
   "xpGoalsScreenLogBodyMeasurements": "บันทึกสัดส่วนร่างกาย",
   "xpGoalsScreenLogFirstMeal": "บันทึกมื้ออาหารแรก",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "ห้องถ้วยรางวัล",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "รายสัปดาห์",
-  "xpGoalsXpAvailable": "ที่มีอยู่ {arg0}",
-  "xpGoalsXpEarnedToday": "ที่ได้รับวันนี้ {arg0}",
+  "xpGoalsXpAvailable": "รับได้ +{arg0} XP",
+  "xpGoalsXpEarnedToday": "ได้รับ +{arg0} XP วันนี้",
   "xpGoalsXpGoals": "เป้าหมาย XP",
-  "xpGoalsXpMultiplierActive": "ตัวคูณที่ใช้งานอยู่ {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP เปิดใช้งาน!",
   "xpHeroTileDayStreak": "ทำต่อเนื่อง {streak} วัน",
   "xpHeroTileLv": "เลเวล {level}",
   "xpHeroTileLv2": "เลเวล {nextLevel} → {label}",

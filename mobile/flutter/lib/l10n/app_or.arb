@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "କେବେ ବ୍ୟବହାର କରିବେ",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "ବ୍ୟାୟାମ ସଫଳତାର ସହ ସ୍ୱାପ୍ ହୋଇଛି",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} ଟି ବ୍ୟାୟାମ ଯୋଗ କରାଯାଇଛି",
-  "activeWorkoutScreenRefactoredFor": ") {name} ପାଇଁ",
   "activeWorkoutScreenUndo": "ଅନଡୁ",
   "activeWorkoutScreenWorkoutAdapted": "ୱର୍କଆଉଟ୍ ଆଡାପ୍ଟ କରାଯାଇଛି।",
   "activityCardAdditionalDetailsOptional": "ଅତିରିକ୍ତ ବିବରଣୀ (ବୈକଳ୍ପିକ)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Pre-workout ଇନ୍ଧନ?",
   "aiCoachMealQuickSnackIdeas": "ଶୀଘ୍ର ସ୍ନାକ୍ସ ପାଇଁ ଧାରଣା?",
   "aiCoachMealRecoveryDayEating": "Recovery-ଦିନର ଖାଦ୍ୟ?",
-  "aiCoachMealSearchQuestionsTryAngry": "ପ୍ରଶ୍ନ ଖୋଜନ୍ତୁ (\"angry\", \"fiber\", \"mexican\" ଚେଷ୍ଟା କରନ୍ତୁ)",
   "aiCoachMealSomethingWentWrong": "କିଛି ଭୁଲ୍ ହୋଇଛି।",
   "aiCoachMealStressedWhatHelps": "ଚାପରେ ଅଛନ୍ତି — କଣ ସାହାଯ୍ୟ କରିବ?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "ଏସିଆନ୍-ଷ୍ଟାଇଲ୍ {meal} — ଗୋଟିଏ ଖାଦ୍ୟ (ରାଇସ୍ ବାଉଲ୍, ନୁଡୁଲ୍ସ, ସୁଶି, ଷ୍ଟିର୍ ଫ୍ରାଏ), ମାକ୍ରୋ ଏବଂ ପ୍ରସ୍ତୁତି।{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · {phase} ଫେଜ୍",
   "caloriesSummaryCardCalories": "କ୍ୟାଲୋରୀ",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "ବାକି ଅଛି",
   "cancelConfirmationAnythingElseYouD": "ଆପଣ ଆଉ କିଛି କହିବାକୁ ଚାହାଁନ୍ତି କି? (ବୈକଳ୍ପିକ)",
   "cancelConfirmationCancelAnyway": "ଯେକୌଣସି ପ୍ରକାରେ ବାତିଲ କରନ୍ତୁ",
   "cancelConfirmationHelpUsImprove": "ଆମକୁ ଉନ୍ନତ କରିବାରେ ସାହାଯ୍ୟ କରନ୍ତୁ",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "ବୁଝିଲି",
   "chatLanguageChangedSystem": "🌐 AI କୋଚ୍ ଏବେ {nativeName} ରେ ଉତ୍ତର ଦେବ",
   "chatLanguageResetSystem": "🌐 AI କୋଚ୍ ଭାଷା ରିସେଟ୍ ହୋଇଛି — ଆପ୍ ଭାଷା ବ୍ୟବହାର କରାଯାଉଛି",
-  "chatLeftToday": ") ଆଜି ବାକି ଅଛି",
   "chatMediaWidgetsCalTotal": "ମୋଟ {totalCal} କ୍ୟାଲୋରୀ",
   "chatMediaWidgetsGProtein": "{totalProtein}g ପ୍ରୋଟିନ୍",
   "chatMediaWidgetsGoTo": "{workoutName} କୁ ଯାଆନ୍ତୁ",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "କୋଚ୍ ସାଧାରଣ ଅପେକ୍ଷା ଅଧିକ ସମୟ ଚିନ୍ତା କରୁଛନ୍ତି।",
   "chatScreenCouldntReachCoach": "କୋଚ୍ ଙ୍କ ସହ ଯୋଗାଯୋଗ କରିପାରିଲୁ ନାହିଁ।",
   "chatScreenExtAboutAiCoach": "AI କୋଚ୍ ବିଷୟରେ",
-  "chatScreenExtAs": ") (mealType) ଭାବରେ",
   "chatScreenExtChangeCoach": "କୋଚ୍ ବଦଳାନ୍ତୁ",
   "chatScreenExtChatTips": "ଚାଟ୍ ଟିପ୍ସ",
   "chatScreenExtChooseMultiplePhotos": "ଏକାଧିକ ଫଟୋ ବାଛନ୍ତୁ",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "ଲକ୍ଷ୍ୟ ଦେଖନ୍ତୁ",
   "complianceRingCardAllWorkoutsCompleted": "ସମସ୍ତ ୱର୍କଆଉଟ୍ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇଛି",
   "complianceRingCardGetStartedToday": "ଆଜିଠାରୁ ଆରମ୍ଭ କରନ୍ତୁ",
-  "complianceRingCardGreatPace": "ଉତ୍ତମ ଗତି {arg0}",
+  "complianceRingCardGreatPace": "ଭଲ ଗତି! {arg0} ବାକି",
   "complianceRingCardNoWorkoutsScheduledThis": "ଏହି ସପ୍ତାହରେ କୌଣସି ୱାର୍କଆଉଟ୍ ନିର୍ଦ୍ଧାରିତ ହୋଇନାହିଁ",
-  "complianceRingCardOnTrack": "ଠିକ୍ ବାଟରେ ଅଛନ୍ତି {arg0}",
+  "complianceRingCardOnTrack": "ଠିକ୍ ବାଟରେ — {arg0} ବାକି",
   "complianceRingCardWorkoutCompliance": "ୱାର୍କଆଉଟ୍ ପାଳନ",
-  "complianceRingCardWorkoutsRemaining": "ବାକି ଥିବା ୱର୍କଆଉଟ୍ {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} ୱର୍କଆଉଟ୍ ବାକି",
   "comprehensiveStatsStatsScores": "ପରିସଂଖ୍ୟାନ ଏବଂ ସ୍କୋର",
   "connectedAppsAutoImportEvery15": "ପ୍ରତି ୧୫ ମିନିଟରେ ଅଟୋ-ଇମ୍ପୋର୍ଟ",
   "connectedAppsConnect": "ସଂଯୋଗ କରନ୍ତୁ",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "ଖାଦ୍ୟ ବାଛନ୍ତୁ",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "ଏହି ମୂଲ୍ୟ ବ୍ୟବହାର କରନ୍ତୁ",
-  "cookingConverterWeight": ") ଓଜନ",
   "cosmeticsGalleryCosmetics": "କସମେଟିକ୍ସ",
   "cosmeticsGalleryEquip": "ଇକ୍ୱିପ୍",
   "cosmeticsGalleryEquipped": "ଇକ୍ୱିପ୍ ହୋଇଛି",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "ଆପଣଙ୍କ ସର୍ଚ୍ଚ ସହିତ କୌଣସି ବ୍ୟାୟାମ ମେଳ ଖାଉନାହିଁ",
   "customExercisesScreenAreYouSureYou": "ଆପଣ ନିଶ୍ଚିତ କି ଯେ ଆପଣ \"{name}\" କୁ ଡିଲିଟ୍ କରିବାକୁ ଚାହାଁନ୍ତି? ଏହାକୁ ପୂର୍ବବତ୍ କରାଯାଇପାରିବ ନାହିଁ।",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} ବ୍ୟାୟାମ, {totalUses} ବ୍ୟବହାର",
-  "customExercisesScreenUsedTimes": "(usageCount) ଥର ବ୍ୟବହୃତ(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "ବ୍ୟାୟାମ ସର୍ଚ୍ଚ କରନ୍ତୁ...",
   "customExercisesSimple": "ସାଧାରଣ",
   "customFoodBuilderAiFillFromName": "ନାମରୁ AI ଫିଲ୍",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · ଶେଷ ଚକ୍ର",
   "customTrendScreenMaxOverlaysRemoveOne": "ସର୍ବାଧିକ {_kMaxOverlays} ଓଭରଲେ — ଅନ୍ୟଟି ଯୋଡ଼ିବା ପାଇଁ ଗୋଟିଏ ହଟାନ୍ତୁ",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} ସାଧାରଣ ଦିନ",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "ବ୍ୟାୟାମ ଯୋଡନ୍ତୁ",
   "customWorkoutBuilderBuildCustomWorkout": "କଷ୍ଟମ୍ ୱାର୍କଆଉଟ୍ ତିଆରି କରନ୍ତୁ",
   "customWorkoutBuilderCustomWorkoutCreated": "କଷ୍ଟମ୍ ୱାର୍କଆଉଟ୍ ସୃଷ୍ଟି ହୋଇଛି!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "ପିରିୟଡ୍ ଲଗ୍ କରନ୍ତୁ",
   "cycleScreenUiLogPeriod": "ପିରିୟଡ୍ ଲଗ୍",
   "cycleScreenUiLogYourFirstPeriod": "ପୂର୍ବାନୁମାନ ଆରମ୍ଭ କରିବାକୁ ଆପଣଙ୍କ ପ୍ରଥମ ପିରିୟଡ୍ ଲଗ୍ କରନ୍ତୁ।",
-  "cycleScreenUiPhase": ") ପର୍ଯ୍ୟାୟ",
   "cycleScreenUiPhaseLabel": "{displayName} ପର୍ଯ୍ୟାୟ",
   "cycleScreenUiPredictionsAreEstimates": "ପୂର୍ବାନୁମାନଗୁଡିକ ଆପଣଙ୍କ ଲଗ୍ ହୋଇଥିବା ଡାଟା ଉପରେ ଆଧାରିତ ଅଟକଳ, ଏହା କୌଣସି ଜନ୍ମ ନିୟନ୍ତ୍ରଣ ପଦ୍ଧତି ନୁହେଁ କିମ୍ବା ଚିକିତ୍ସା ପରାମର୍ଶ ନୁହେଁ। କୌଣସି ସ୍ୱାସ୍ଥ୍ୟ ସମ୍ବନ୍ଧୀୟ ଚିନ୍ତା ପାଇଁ ଡାକ୍ତରଙ୍କ ସହିତ ପରାମର୍ଶ କରନ୍ତୁ।",
   "cycleScreenUiPregnancyModeIsOn": "ପ୍ରେଗନାନ୍ସି ମୋଡ୍ ଅନ୍ ଅଛି",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "ଜାରି ରଖନ୍ତୁ",
   "editProgramSheetCurrent": "ବର୍ତ୍ତମାନର",
   "editProgramSheetCustomProgram": "କଷ୍ଟମ୍ ପ୍ରୋଗ୍ରାମ",
-  "editProgramSheetCustomValue": "କଷ୍ଟମ୍ ମୂଲ୍ୟ {arg0}",
+  "editProgramSheetCustomValue": "କଷ୍ଟମ୍: {arg0}",
   "editProgramSheetCustomizeProgram": "ପ୍ରୋଗ୍ରାମ କଷ୍ଟମାଇଜ୍ କରନ୍ତୁ",
   "editProgramSheetDays": "ଦିନ",
   "editProgramSheetDaysAgo": "{days} ଦିନ ପୂର୍ବେ",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "ଉପକରଣ",
   "editProgramSheetEquipmentLabel": "ଉପକରଣ ଲେବଲ୍",
   "editProgramSheetExamples": "ଉଦାହରଣ",
-  "editProgramSheetFailedToLoadHistory": "ଇତିହାସ ଲୋଡ୍ କରନ୍ତୁ {arg0}",
-  "editProgramSheetFailedToRestore": "ପୁନଃସ୍ଥାପନ କରନ୍ତୁ {arg0}",
+  "editProgramSheetFailedToLoadHistory": "ଇତିହାସ ଲୋଡ୍ କରିବାରେ ବିଫଳ: {arg0}",
+  "editProgramSheetFailedToRestore": "ପୁନଃସ୍ଥାପନ କରିବାରେ ବିଫଳ: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "ପ୍ରୋଗ୍ରାମ୍ ଅପଡେଟ୍ କରନ୍ତୁ",
   "editProgramSheetFocus": "ଫୋକସ୍",
   "editProgramSheetHealth": "ସ୍ୱାସ୍ଥ୍ୟ",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "{pct}% ଡାଉନଲୋଡ୍ ହେଉଛି",
   "exerciseDetailSheetDownloadingVideo": "ଭିଡିଓ ଡାଉନଲୋଡ୍ ହେଉଛି...",
   "exerciseDetailSheetFavorite": "ପସନ୍ଦ",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "ଲୋଡ୍ ହେଉଛି...",
   "exerciseDetailSheetLog1rm": "1RM ଲଗ୍ କରନ୍ତୁ",
   "exerciseDetailSheetMS": "{restMins}ମି {restSecs}ସେ",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15ସେ",
   "exerciseSetTrackerAddNotesHere": "ଏଠାରେ ନୋଟ୍ ଲେଖନ୍ତୁ...",
   "exerciseSetTrackerAddSet": "ସେଟ୍ ଯୋଡନ୍ତୁ",
-  "exerciseSetTrackerBarbell": ") ବାରବେଲ୍",
   "exerciseSetTrackerReps": "ରେପ୍ସ",
   "exerciseSetTrackerRestTarget": "ରେଷ୍ଟ ଟାର୍ଗେଟ୍",
   "exerciseSetTrackerS": "{seconds}ସେକେଣ୍ଡ",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI ପସନ୍ଦ ଉପଲବ୍ଧ ନାହିଁ",
   "exerciseSwapSheetAnyEquipment": "ଯେକୌଣସି ଉପକରଣ",
   "exerciseSwapSheetAskAiForSuggestions": "AI କୁ ପରାମର୍ଶ ମାଗନ୍ତୁ",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "ଆପଣଙ୍କ ଉପକରଣ କିମ୍ବା ପସନ୍ଦ ବିଷୟରେ ବର୍ଣ୍ଣନା କରନ୍ତୁ\nଉଦାହରଣ: \"ମୋ କାନ୍ଧରେ ଯନ୍ତ୍ରଣା ଅଛି, କେବଳ ଶରୀରର ଓଜନ ବ୍ୟବହାର କରିବି\"",
   "exerciseSwapSheetEGIOnly": "ଉଦାହରଣ: \"ମୋ ପାଖରେ କେବଳ ଡମ୍ବେଲ ଅଛି\"",
   "exerciseSwapSheetFailedToSwapExercise": "ବ୍ୟାୟାମ ବଦଳାଇବାରେ ବିଫଳ",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "ମାଂସପେଶୀ ଅନୁଯାୟୀ ବିକଳ୍ପ ଖୋଜୁଛି...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "ଓଜନ",
   "expandedExerciseCardAddToFavorites": "ଫେଭରିଟ୍‌ରେ ଯୋଗ କରନ୍ତୁ",
   "expandedExerciseCardAlternatingHands": "ହାତ ବଦଳାଇ",
-  "expandedExerciseCardBarbell": ") ବାରବେଲ",
   "expandedExerciseCardBreathing": "ଶ୍ୱାସକ୍ରିୟା",
   "expandedExerciseCardBreathingGuide": "ଶ୍ୱାସକ୍ରିୟା ଗାଇଡ୍",
   "expandedExerciseCardCollapse": "କଲ୍ୟାପ୍ସ",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "ପ୍ରୋଟୋକଲ୍ ଲେଭଲ୍",
   "fastingScoreCardScore": "ସ୍କୋର",
   "fastingScoreCardStreakBonus": "ଷ୍ଟ୍ରିକ୍ ବୋନସ୍",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "ଗତ ସପ୍ତାହ ତୁଳନାରେ",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "ପ୍ରଥମ",
   "flexibilityProgressChartLatest": "ସର୍ବଶେଷ",
   "flexibilityProgressChartNoDataAvailable": "କୌଣସି ଡାଟା ଉପଲବ୍ଧ ନାହିଁ",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "କ୍ଷେତ୍ର ଅନୁଯାୟୀ",
   "flexibilityScoreCardFocusAreas": "ଫୋକସ୍ କ୍ଷେତ୍ର",
   "flexibilityScoreCardOverallFlexibility": "ସାମଗ୍ରିକ ନମନୀୟତା",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "ମିଲ୍, ଖାଦ୍ୟ, \"high protein\" ସର୍ଚ୍ଚ କରନ୍ତୁ...",
   "foodHistoryUndo": "ଅନଡୁ",
   "foodItemRankingAddFood": "ଖାଦ୍ୟ ଯୋଡନ୍ତୁ",
-  "foodItemRankingDetails": ") ବିବରଣୀ",
   "foodItemRankingNFoodItems": "{count} ଖାଦ୍ୟ ସାମଗ୍ରୀ",
   "foodItemRankingScore": "ସ୍କୋର",
   "foodItemRankingTapToHideDetails": "ବିବରଣୀ ଲୁଚାଇବା ପାଇଁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "ତେଣୁ ମୁଁ ସେହି ବ୍ୟକ୍ତିଙ୍କୁ ନିର୍ମାଣ କଲି, ଲେଜର ନୁହେଁ | ଯେକ any ଣସି ମେନୁକୁ ସ୍ନାପ୍ କରନ୍ତୁ - ଘରେ କିମ୍ବା ବିଦେଶରେ - ଏବଂ କୋଚ୍ ଏହାକୁ ମାକ୍ରୋରେ ଆପଣଙ୍କୁ ପ s ନ୍ତି | ମଙ୍ଗଳବାର ଛାଡିଦିଅ ଏବଂ ଏହା ତୁମକୁ ବୁଧବାର ସକାଳେ ଦୋଷ ଯାତ୍ରା ବିନା ଟାଣି ନେଇଥାଏ | ଏହା ତୁମର ଖାଦ୍ୟ, ତୁମର ଜିମ୍, ତୁମର ସ୍ଲିପ୍ s ାଞ୍ଚା ଶିଖେ - ମାସରେ ଗୋଟିଏରୁ କମ୍ PT ଅଧିବେଶନ ପାଇଁ |",
   "founderNoteTheFriendsWhoActually": "ଯେଉଁ ବନ୍ଧୁମାନେ ପ୍ରକୃତରେ ଫିଟ୍ ହୋଇଥିଲେ, ସେମାନଙ୍କୁ ଜଣେ ବ୍ୟକ୍ତି ମେସେଜ୍ କରୁଥିଲେ। ପ୍ରକୃତ ଉତ୍ତରଦାୟିତ୍ୱ ପାଇଁ ମାସକୁ ପ୍ରାୟ ଦୁଇ ଶହ ଡଲାର ଖର୍ଚ୍ଚ ହୁଏ, ଯାହା ସଠିକ୍ କାରଣ ଯେ ଅଧିକାଂଶ ଲୋକଙ୍କ ପାଖରେ ଏହା ନଥାଏ, ଏବଂ ସେଥିପାଇଁ \\\"ଟ୍ରାକିଂ\\\" ଏବଂ \\\"ପରିବର୍ତ୍ତନ\\\" ମଧ୍ୟରେ ଥିବା ବ୍ୟବଧାନ ବର୍ଷ ବର୍ଷ ଧରି ରହିଯାଏ।",
-  "freshnessDecayCardAgo": ") ପୂର୍ବରୁ",
   "freshnessDecayCardControlsHowQuicklyExercise": "ବ୍ୟାୟାମର ସତେଜତା କେତେ ଶୀଘ୍ର କମିଯାଏ ତାହା ନିୟନ୍ତ୍ରଣ କରେ: e^(-k * sessions)",
   "freshnessDecayCardFreshnessDecayTuner": "ସତେଜତା କ୍ଷୟ ଟ୍ୟୁନର୍",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "ସେଟ୍ {currentSetNumber} ର {totalSets}",
   "futuristicSetCardSkipExercise": "ବ୍ୟାୟାମ ଏଡ଼ାଇ ଦିଅନ୍ତୁ",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "ଏକ ସାମଗ୍ରିକ ଯୋଜନା ପ୍ରସ୍ତୁତ କରନ୍ତୁ ଯାହା ଆପଣଙ୍କର ବ୍ୟାୟାମ, ପୁଷ୍ଟିକର ଖାଦ୍ୟ ଏବଂ ଉପବାସକୁ ସମନ୍ୱୟ କରେ।",
   "generatePlanFastingProtocol": "ଉପବାସ ପ୍ରୋଟୋକଲ",
   "generatePlanGeneratePlan": "ଯୋଜନା ପ୍ରସ୍ତୁତ କରନ୍ତୁ",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "ଆପଣଙ୍କ ପ୍ରଥମ ଅଭ୍ୟାସ ଯୋଗ କରନ୍ତୁ",
   "habitsCardAllHabitsCompleted": "ସମସ୍ତ ଅଭ୍ୟାସ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇଛି!",
   "habitsCardBuildDailyHabits": "ଦୈନିକ ଅଭ୍ୟାସ ଗଢ଼ନ୍ତୁ",
-  "habitsCardCompletedCount": "ସମ୍ପୂର୍ଣ୍ଣ ସଂଖ୍ୟା {arg0} {arg1}",
-  "habitsCardDayStreak": "ଦିନର ଷ୍ଟ୍ରିକ୍ {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} ସମ୍ପୂର୍ଣ୍ଣ",
+  "habitsCardDayStreak": "{arg0} ଦିନର ଷ୍ଟ୍ରିକ୍",
   "habitsCardFailedToLoadHabits": "ଅଭ୍ୟାସ ଲୋଡ୍ କରିବାରେ ବିଫଳ",
   "habitsCardGreatJobKeepingUp": "ଆପଣଙ୍କ ଷ୍ଟ୍ରିକ୍ ବଜାୟ ରଖିବା ପାଇଁ ବହୁତ ଭଲ କାମ କରିଛନ୍ତି",
   "habitsCardQuickStart": "କ୍ୱିକ୍ ଷ୍ଟାର୍ଟ:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "ଆଜିର ଅଭ୍ୟାସ",
   "habitsCardTryAgain": "ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "ସମସ୍ତ ଅଭ୍ୟାସ ଦେଖନ୍ତୁ {arg0}",
+  "habitsCardViewAllHabits": "ସମସ୍ତ {arg0} ଅଭ୍ୟାସ ଦେଖନ୍ତୁ",
   "habitsCompleted": "ସମ୍ପୂର୍ଣ୍ଣ ହୋଇଛି",
   "habitsDeleteHabit": "ଅଭ୍ୟାସ ଡିଲିଟ୍ କରିବେ କି?",
   "habitsHoldToReorderSwipe": "ରିଅର୍ଡର କରିବା ପାଇଁ ଦବେଇ ରଖନ୍ତୁ • ଡିଲିଟ୍ କରିବା ପାଇଁ ସ୍ୱାଇପ୍ କରନ୍ତୁ",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "ଆଜି ବିଶ୍ରାମ ଦିନ? କିମ୍ବା ବ୍ୟାୟାମ ପାଇଁ ପ୍ରସ୍ତୁତ? ନିଷ୍ପତ୍ତି ଆପଣଙ୍କର।",
   "homeEmptyWorkout_v3": "ପ୍ରୋଗ୍ରାମ୍ ମଧ୍ୟରେ ଅଛନ୍ତି — ଟ୍ରାକକୁ ଫେରିବା ପାଇଁ ନୂଆ ଗୋଟିଏ ଆରମ୍ଭ କରନ୍ତୁ।",
   "homeEmptyWorkout_v4": "କୌଣସି ପ୍ଲାନ୍ ନାହିଁ। ଆପଣଙ୍କ ଲକ୍ଷ୍ୟ ଅନୁଯାୟୀ AI କୁ ଗୋଟିଏ ପ୍ଲାନ୍ ତିଆରି କରିବାକୁ ଦିଅନ୍ତୁ।",
-  "homeFromHealthConnect": ") Health Connect ରୁ",
   "homeGreetingAfternoon_v1": "ଅପରାହ୍ନର ଶକ୍ତି, {name}!",
   "homeGreetingAfternoon_v2": "ନମସ୍କାର {name}, ବ୍ୟାୟାମ କରିବାର ସମୟ ହେଲା କି?",
   "homeGreetingAfternoon_v3": "ଷ୍ଟ୍ରେଚ୍ ବ୍ରେକ୍ ନେବେ କି, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "କ୍ୟାଲୋରୀ",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "ସାରାଂଶ",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "ୱାର୍କଆଉଟ୍",
   "intensityPrompt1Left": "୧ ବାକି",
   "intensityPrompt2Left": "୨ ବାକି",
   "intensityPrompt3Left": "୩+ ବାକି",
   "intensityPromptHard": "କଷ୍ଟକର",
-  "intensityPromptHideRpeSlideDial": "RPE ସ୍ଲାଇଡ୍ ଲୁଚାନ୍ତୁ      ଏହାକୁ ସେଟ୍ କରନ୍ତୁ (RPE 1-10)",
   "intensityPromptHowHardWasThat": "ସେହି ସେଟ୍ କେତେ କଷ୍ଟକର ଥିଲା?",
   "intensityPromptMax": "ସର୍ବାଧିକ",
   "intensityPromptModerate": "ମଧ୍ୟମ",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "ସେଟ୍ {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "ଏକ AI କୋଚ୍ ଯିଏ ପ୍ଲାନ ତିଆରି କରେ, ଆପଣଙ୍କ ଶରୀରକୁ ବୁଝେ ଏବଂ ପ୍ରତି ସପ୍ତାହରେ ଆଡଜଷ୍ଟ କରେ।",
   "introBuildMyPlan": "ମୋ ପ୍ଲାନ୍ ତିଆରି କରନ୍ତୁ",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) ସେଟ୍",
   "introCardMonth": "ମାସ।",
   "introIAlreadyHaveAnAccount": "ମୋର ପୂର୍ବରୁ ଏକ ଆକାଉଣ୍ଟ ଅଛି",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "ବାରକୋଡ୍",
   "logMealSheetBarcodeScan": "ବାରକୋଡ୍ ସ୍କ୍ୟାନ୍",
   "logMealSheetCached": "(କ୍ୟାଶ୍ ହୋଇଛି)",
-  "logMealSheetCaptured": ") କ୍ୟାପଚର୍ ହୋଇଛି",
   "logMealSheetChooseFoodPhotos": "ଖାଦ୍ୟର ଫଟୋ ବାଛନ୍ତୁ",
   "logMealSheetChooseFromGallery": "ଗ୍ୟାଲେରୀରୁ ବାଛନ୍ତୁ",
   "logMealSheetChooseFromLibrary": "ଲାଇବ୍ରେରୀରୁ ବାଛନ୍ତୁ",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "୭ ଦିନର ହାରାହାରି · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "ଆପଣଙ୍କ ପୂର୍ବର ସର୍ବନିମ୍ନଠାରୁ -{_selectedUnit} {label}",
   "logWeightSheetValidRange": "ସଠିକ୍ ସୀମା: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Apple Health ରୁ ସିଙ୍କ୍ ହୋଇଛି",
   "logWeightSyncedToAppleHealth": "Apple Health କୁ ସିଙ୍କ୍ ହୋଇଛି",
   "logWeightTapToEdit": "ଏଡିଟ୍ କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "ସାଇନ୍ ଆଉଟ୍ କରିବେ କି?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "ମାକ୍ରୋ",
-  "mainShellPartChatsLeftToday": "ଆଜି ପାଇଁ ବାକି ଚାଟ୍ {arg0}",
+  "mainShellPartChatsLeftToday": "ଆଜି {arg0} ଚାଟ୍ ବାକି",
   "mainShellPartGuestMode": "ଗେଷ୍ଟ ମୋଡ୍",
   "mainShellPartQuickActions": "କ୍ୱିକ୍ ଆକ୍ସନ୍",
   "mainShellPartSignUp": "ସାଇନ୍ ଅପ୍",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "ପ୍ରାଥମିକ",
   "manageDuplicateImportsScreenSources": "{length} ଉତ୍ସ",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(row)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "ଗ୍ରୁପରୁ ଅନଲିଙ୍କ୍ କରନ୍ତୁ",
   "manageDuplicateImportsUnlinkedFromGroup": "ଗ୍ରୁପରୁ ଅନଲିଙ୍କ୍ ହୋଇଛି",
   "manageGymProfilesActive": "ସକ୍ରିୟ",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} ଅଧିକ",
   "menuAnalysisSheetSelected": "{length} ଚୟନ କରାଯାଇଛି",
   "menuAnalysisSheetSort": "ସର୍ଟ: {label}",
-  "menuAnalysisSheetValue": ")(elapsed)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "ଆପଣ \"{restaurantName}\" ପାଇଁ ପୂର୍ବରୁ ଏକ ମେନୁ ସେଭ୍ କରିସାରିଛନ୍ତି",
   "menuAnalysisSort": "ସର୍ଟ:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "ମେଟ୍ରିକ୍ ପ୍ରକାର",
   "metricsDashboardMuscleMass": "ମାଂସପେଶୀର ବସ୍ତୁତ୍ୱ",
   "metricsDashboardNoDataAvailable": "କୌଣସି ଡାଟା ଉପଲବ୍ଧ ନାହିଁ",
-  "metricsDashboardNoMetricDataYet": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ମେଟ୍ରିକ୍ ତଥ୍ୟ ନାହିଁ {arg0}",
+  "metricsDashboardNoMetricDataYet": "ଏପର୍ଯ୍ୟନ୍ତ {arg0} ଡାଟା ନାହିଁ",
   "metricsDashboardQuickStats": "କ୍ୱିକ୍ ଷ୍ଟାଟସ୍",
   "metricsDashboardRestingHeartRate": "ବିଶ୍ରାମ ସମୟର ହୃଦସ୍ପନ୍ଦନ",
   "metricsDashboardRestingHr": "ବିଶ୍ରାମ ସମୟର HR",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "ଅନ୍ୟାନ୍ୟ",
   "muscleHeatmapTileCompleteWorkoutsToSee": "ମାଂସପେଶୀର ତଥ୍ୟ ଦେଖିବା ପାଇଁ ୱର୍କଆଉଟ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ",
   "muscleHeatmapTileCouldnTLoad": "ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ",
-  "muscleHeatmapTileMostTrained": "ସର୍ବାଧିକ ପ୍ରଶିକ୍ଷିତ {arg0}",
+  "muscleHeatmapTileMostTrained": "ସର୍ବାଧିକ ତାଲିମପ୍ରାପ୍ତ: {arg0}",
   "muscleHeatmapTileMuscles": "ମାଂସପେଶୀ",
   "muscleHeatmapTileRetry": "ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ",
   "muscleHeatmapUpperBody": "ଅପର୍ ବଡି",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "ପସନ୍ଦ ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "ମୁଖ୍ୟ ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "ସର୍ବଶ୍ରେଷ୍ଠ: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "ସାମ୍ପ୍ରତିକ ଆକ୍ଟିଭିଟି",
   "myLibraryTabViewAll": "ସବୁ ଦେଖନ୍ତୁ",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "ସାଧାରଣ ଗତିଶୀଳ",
   "neatGamificationWidgetsClaimReward": "ରିୱାର୍ଡ ଦାବି କରନ୍ତୁ",
   "neatGamificationWidgetsCouchPotato": "କାଉଚ୍ ପଟାଟୋ",
-  "neatGamificationWidgetsCurrentXp": "ବର୍ତ୍ତମାନର xp {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "ଦୈନିକ ଚ୍ୟାଲେଞ୍ଜ",
   "neatGamificationWidgetsExpired": "ମିଆଦି ଶେଷ",
-  "neatGamificationWidgetsHoursMinutesLeft": "ଘଣ୍ଟା ମିନିଟ୍ ବାକି ଅଛି {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0}h {arg1}m ବାକି",
   "neatGamificationWidgetsLevel": "ସ୍ତର {level}",
   "neatGamificationWidgetsLevelUp": "ଲେଭଲ୍ ଅପ୍!",
   "neatGamificationWidgetsMaxLevel": "ସର୍ବାଧିକ ଲେଭଲ୍!",
-  "neatGamificationWidgetsMinutesLeft": "ମିନିଟ୍ ବାକି ଅଛି {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0}m ବାକି",
   "neatGamificationWidgetsNeat": "Neat",
   "neatGamificationWidgetsNeatChampion": "ଚାମ୍ପିଅନ୍",
   "neatGamificationWidgetsNeatEnthusiast": "ଉତ୍ସାହୀ",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "ଏହି ସପ୍ତାହରେ ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ରାଙ୍କିଙ୍ଗ୍ ନାହିଁ",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "ସ୍କୋର୍",
-  "neatGamificationWidgetsStepGoal": "ପଦକ୍ଷେପ ଲକ୍ଷ୍ୟ {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "ପାଦ",
-  "neatGamificationWidgetsTargetActiveHours": "ଲକ୍ଷ୍ୟ ସକ୍ରିୟ ଘଣ୍ଟା {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} hrs",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "ସ୍କୋର ବ୍ରେକଡାଉନ୍",
   "neatScoreDisplayTapForBreakdown": "ବ୍ରେକଡାଉନ୍ ପାଇଁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
   "neatScoreDisplayTrend": "ଟ୍ରେଣ୍ଡ: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "ଲୋଡ୍ ହେଉଛି...",
   "netflixExerciseCarouselSeeAll": "ସବୁ ଦେଖନ୍ତୁ",
   "netflixExercisesAddYourOwnExercises": "କଷ୍ଟମ୍ ରେପ୍ସ, ସେଟ୍ ଏବଂ ନିର୍ଦ୍ଦେଶାବଳୀ ସହିତ ଆପଣଙ୍କ ନିଜର ଏକ୍ସରସାଇଜ୍ ଯୋଗ କରନ୍ତୁ।",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "ସର୍ବୋତ୍ତମ ପରବର୍ତ୍ତୀ ସେଟ୍ ଗଣନା କରୁଛି...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% ତୀବ୍ରତା",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "ଅନ୍ତିମ ସେଟ୍",
   "nextSetPreviewKg": " କିଗ୍ରା",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "ଶୀର୍ଷ ଅବଦାନକାରୀ",
   "nutrientExplorerUnknown": "ଅଜଣା",
   "nutrientExplorerUnpinNutrient": "ପୋଷକ ତତ୍ତ୍ୱ ଅନ୍-ପିନ୍ କରନ୍ତୁ",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "ଭିଟାମିନ୍",
   "nutrientRushGameCatchTheGoldenZealova": "ପାୱାର-ଅପ୍ ପାଇଁ ସୁନେଲି Zealova ମାର୍କ ଧରନ୍ତୁ!",
   "nutrientRushGameNewBest": "🎉 ନୂଆ ଶ୍ରେଷ୍ଠ!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "ସାପ୍ତାହିକ ସମୀକ୍ଷା",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "ହାରାହାରି {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "ହାରାହାରି ଗ୍ରହଣ: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) କ୍ୟାଲୋରୀ",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/ଦିନ {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "ଓଜନ: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, ସବୁକିଛି",
   "onboardingWhyFirstTheWhy": "ପ୍ରଥମେ, କାହିଁକି",
   "onboardingWhyWhatSDrivingThis": "ଏହା ପଛରେ କାରଣ କଣ?",
-  "openAllCrates24HoursOf2xXp": "ସମସ୍ତ କ୍ରେଟ୍ ଖୋଲନ୍ତୁ 24 ଘଣ୍ଟା 2x XP",
+  "openAllCrates24HoursOf2xXp": "2x XP ର 24 ଘଣ୍ଟା",
   "openAllCratesActivityCrate": "ଆକ୍ଟିଭିଟି କ୍ରେଟ୍",
   "openAllCratesBonusCrateToOpen": "ଖୋଲିବା ପାଇଁ ବୋନସ୍ କ୍ରେଟ୍",
-  "openAllCratesCollect": "ସଂଗ୍ରହ କରନ୍ତୁ {arg0} {arg1}",
-  "openAllCratesCratesOpened": "କ୍ରେଟ୍ ଖୋଲାଯାଇଛି {arg0}",
-  "openAllCratesDailyCrate": "ଦୈନିକ କ୍ରେଟ୍",
+  "openAllCratesCollect": "ସଂଗ୍ରହ କରନ୍ତୁ ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} କ୍ରେଟ୍ ଖୋଲାଗଲା!",
+  "openAllCratesDailyCrate": "ଡେଲି କ୍ରେଟ୍",
   "openAllCratesDone": "ସମ୍ପନ୍ନ",
-  "openAllCratesDoubleXpToken": "ଡବଲ୍ xp ଟୋକନ୍",
+  "openAllCratesDoubleXpToken": "ଡବଲ୍ XP ଟୋକନ୍",
   "openAllCratesFailedToOpenCrates": "କ୍ରେଟ୍ ଖୋଲିବାରେ ବିଫଳ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
   "openAllCratesFitnessCrate": "ଫିଟନେସ୍ କ୍ରେଟ୍",
-  "openAllCratesGainedXp": "ପ୍ରାପ୍ତ xp {arg0}",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "ସର୍ବାଧିକ ଲେଭଲ୍",
-  "openAllCratesOpenYourCrates": "ଆପଣଙ୍କ କ୍ରେଟ୍ ଖୋଲନ୍ତୁ",
-  "openAllCratesOpened": ") ଖୋଲାଗଲା!",
-  "openAllCratesOpeningYourCrates": "ଆପଣଙ୍କ କ୍ରେଟ୍ ଖୋଲାଯାଉଛି",
-  "openAllCratesPickRewardPerDay": "ପ୍ରତିଦିନ ପୁରସ୍କାର ବାଛନ୍ତୁ {arg0} {arg1}",
-  "openAllCratesPickYourReward": "ଆପଣଙ୍କ ପୁରସ୍କାର ବାଛନ୍ତୁ {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 ଆପଣଙ୍କ କ୍ରେଟ୍ ଖୋଲନ୍ତୁ",
+  "openAllCratesOpeningYourCrates": "🎁 ଆପଣଙ୍କ କ୍ରେଟ୍ ଖୋଲାଯାଉଛି…",
+  "openAllCratesPickRewardPerDay": "ଦିନକୁ 1 ପୁରସ୍କାର ବାଛନ୍ତୁ • {arg0}/{arg1} ବଛାଗଲା",
+  "openAllCratesPickYourReward": "ଆପଣଙ୍କ ପୁରସ୍କାର ବାଛନ୍ତୁ • {arg0}/{arg1} ବଛାଗଲା",
   "openAllCratesProtectYourStreak": "ଆପଣଙ୍କ ଷ୍ଟ୍ରିକ୍ ସୁରକ୍ଷିତ କରନ୍ତୁ",
   "openAllCratesSelectAll": "ସବୁ ଚୟନ କରନ୍ତୁ",
   "openAllCratesStreakCrate": "ଷ୍ଟ୍ରିକ୍ କ୍ରେଟ୍",
-  "openAllCratesStreakShield": "ଷ୍ଟ୍ରିକ୍ ସିଲ୍ଡ",
+  "openAllCratesStreakShield": "ଷ୍ଟ୍ରିକ୍ ଶିଲ୍ଡ୍",
   "openAllCratesToday": "ଆଜି",
-  "openAllCratesTotalXpFormatted": "ମୋଟ XP {arg0}",
-  "openAllCratesTotalXpLevel": "ମୋଟ XP ସ୍ତର {arg0} {arg1}",
-  "openAllCratesUd83cUdf89Rewards": "\\uD83C\\uDF89 ପୁରସ୍କାର!",
-  "openAllCratesXpInLevel": "ସ୍ତରରେ XP {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "ପରବର୍ତ୍ତୀ ସ୍ତର ପାଇଁ XP {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} ମୋଟ",
+  "openAllCratesTotalXpLevel": "ମୋଟ: {arg0} XP • ଲେଭେଲ୍ {arg1}",
+  "openAllCratesUd83cUdf89Rewards": "🎉 ପୁରସ୍କାର!",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "ଲେଭେଲ୍ {arg1} କୁ {arg0} XP",
   "openAllCratesYesterday": "ଗତକାଲି",
   "overallScoreHeroOverall": "ସାମଗ୍ରିକ",
   "overviewActiveSkill": "ସକ୍ରିୟ କୌଶଳ",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "ଆପଣଙ୍କ ଜିମ ପର୍ସନାଲିଟି ହେଉଛି...",
   "phaseRecommendationBannerBasedOn": "ଆଧାରିତ: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-confidence estimate\" : \"\")",
   "phaseRecommendationBannerCycleDay": "ସାଇକେଲ୍ ଦିନ {cycleDay}",
   "phaseRecommendationBannerEvidence": "ପ୍ରମାଣ: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "ବୁଝିଲି",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "ଶକ୍ତିର ଭିତ୍ତିଭୂମି ଗଢ଼ନ୍ତୁ",
   "planPreviewScreenBuildingYour4Week": "ଆପଣଙ୍କ ୪-ସପ୍ତାହର ପ୍ଲାନ୍ ପ୍ରସ୍ତୁତ କରାଯାଉଛି...",
   "planPreviewScreenContinueFree": "ମାଗଣାରେ ଜାରି ରଖନ୍ତୁ",
-  "planPreviewScreenDaysPerWeek": "ପ୍ରତି ସପ୍ତାହରେ ଦିନ {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} ଦିନ/ସପ୍ତାହ",
   "planPreviewScreenDesignedBasedOnYour": "ଆପଣଙ୍କ କୁଇଜ୍ ଉତ୍ତର ଆଧାରରେ ଡିଜାଇନ୍ କରାଯାଇଛି",
-  "planPreviewScreenEquipmentCount": "ଉପକରଣ ସଂଖ୍ୟା {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} ଉପକରଣ",
   "planPreviewScreenExercisesMin": "ଅଭ୍ୟାସ ସର୍ବନିମ୍ନ {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "ତୀବ୍ରତା ଏବଂ ଭଲ୍ୟୁମ୍ ବୃଦ୍ଧି କରନ୍ତୁ",
   "planPreviewScreenMasterTheMovement": "ଚଳନରେ ପାରଙ୍ଗମ ହୁଅନ୍ତୁ",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} ବ୍ୟକ୍ତିଗତ ରେକର୍ଡ!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") ଶେଷ ଥର ଠାରୁ",
   "prShareCardCopiedToClipboard": "କ୍ଲିପବୋର୍ଡରେ କପି ହୋଇଛି!",
   "prShareCardCopyText": "ଟେକ୍ସଟ୍ କପି କରନ୍ତୁ",
   "prShareCardFailedToCaptureImage": "ଇମେଜ୍ କ୍ୟାପଚର୍ କରିବାରେ ବିଫଳ",
@@ -23721,7 +23448,7 @@
   "programSummaryLevel": "ସ୍ତର",
   "programSummaryLoseWeight": "ଓଜନ କମାନ୍ତୁ",
   "programSummaryMacrosAndMealsAligned": "ଆପଣଙ୍କର ଟ୍ରେନିଂ ସହିତ ମାକ୍ରୋ ଏବଂ ଖାଦ୍ୟ ସମାନ",
-  "programSummaryNItems": "N ଆଇଟମ୍ {arg0}",
+  "programSummaryNItems": "{arg0} ଆଇଟମ୍",
   "programSummaryNutritionIntegration": "ପୁଷ୍ଟିକର ଏକୀକରଣ",
   "programSummaryPersonalizedForYourGoals": "ଆପଣଙ୍କର ଲକ୍ଷ୍ୟ ଏବଂ ଉପକରଣ ପାଇଁ ବ୍ୟକ୍ତିଗତ",
   "programSummaryProgressiveOverload": "ପ୍ରୋଗ୍ରେସିଭ୍ ଓଭରଲୋଡ୍",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "ଚେଷ୍ଟା ଜାରି ରଖନ୍ତୁ!",
   "prsTemplateNewPersonalRecords": "ନୂତନ ବ୍ୟକ୍ତିଗତ ରେକର୍ଡ",
   "prsTemplateNewPrsAreJust": "ନୂତନ PRs ବହୁତ ଶୀଘ୍ର ଆସୁଛି",
-  "prsTemplateValue": ") (ୟୁନିଟ୍)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "ଉପାଦାନ",
   "publicRecipeInstructions": "ନିର୍ଦ୍ଦେଶାବଳୀ",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "ସମ୍ପୂର୍ଣ୍ଣ ଇତିହାସ ଏବଂ ଟ୍ରେଣ୍ଡ ଦେଖିବା ପାଇଁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
   "quickLogMeasurementsTrackYourBodyChanges": "ସମୟ ସହିତ ଆପଣଙ୍କ ଶରୀରର ପରିବର୍ତ୍ତନକୁ ଟ୍ରାକ୍ କରନ୍ତୁ",
   "quickLogMeasurementsUpdate": "ଅପଡେଟ୍",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} ଦିନ ପୂର୍ବେ",
+  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} ଦିନ ପୂର୍ବେ ଅପଡେଟ୍ ହୋଇଛି",
   "quickLogMeasurementsUpdatedToday": "ଆଜି",
   "quickLogMeasurementsUpdatedYesterday": "ଗତକାଲି",
   "quickLogMeasurementsWaist": "କମର",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI ଆପଣଙ୍କ ବାଛିଥିବା ସୀମା ମଧ୍ୟରେ ୱର୍କଆଉଟ୍ ସୃଷ୍ଟି କରେ",
   "quizDaysSelectorBest": "ସର୍ବୋତ୍ତମ",
   "quizDaysSelectorConsistencyBeatsIntensity": "ତୀବ୍ରତା ଅପେକ୍ଷା ନିରନ୍ତରତା ଅଧିକ ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ - ଯାହା ଆପଣ ବଜାୟ ରଖିପାରିବେ ତାହା ବାଛନ୍ତୁ",
-  "quizDaysSelectorDays": "ଦିନ {arg0}",
-  "quizDaysSelectorDaysSelected": "ଚୟନିତ ଦିନ {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") ଆପଣଙ୍କ ୱର୍କଆଉଟ୍ ପାଇଁ",
+  "quizDaysSelectorDays": "{arg0, plural, one {ଦିନ} other {ଦିନ}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} ଦିନ ବଛାଗଲା",
   "quizDaysSelectorFri": "ଶୁକ୍ର",
   "quizDaysSelectorHowLongAreYour": "ଆପଣଙ୍କ ୱର୍କଆଉଟ୍ କେତେ ସମୟ ଧରି ଚାଲେ?",
   "quizDaysSelectorHowManyDaysPer": "ଆପଣ ସପ୍ତାହକୁ କେତେ ଦିନ ବ୍ୟାୟାମ କରିପାରିବେ?",
   "quizDaysSelectorMin": "ନିମ୍ନତମ",
   "quizDaysSelectorMon": "ସୋମ",
   "quizDaysSelectorSat": "ଶନି",
-  "quizDaysSelectorSelectNDays": "n ଦିନ ଚୟନ କରନ୍ତୁ {arg0}",
+  "quizDaysSelectorSelectNDays": "ଆପଣଙ୍କ ପାଇଁ ଉପଯୁକ୍ତ {arg0} ଦିନ ବାଛନ୍ତୁ",
   "quizDaysSelectorSun": "ରବି",
   "quizDaysSelectorThu": "ଗୁରୁ",
   "quizDaysSelectorTue": "ମଙ୍ଗଳ",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "ହୋମ୍ ଜିମ୍",
   "quizEquipmentHomeKettlebell": "ଘର + କେଟଲବେଲ୍",
   "quizEquipmentHotel": "ହୋଟେଲ",
-  "quizEquipmentIdentifiedCount": "ଚିହ୍ନଟ ସଂଖ୍ୟା {arg0}",
+  "quizEquipmentIdentifiedCount": "{arg0} ଆଇଟମ୍ ଚିହ୍ନଟ ହେଲା। ଅଚୟନ କରିବାକୁ ଯେକୌଣସିକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ।",
   "quizEquipmentKettlebell": "କେଟଲବେଲ୍",
   "quizEquipmentMedicineBall": "Medicine ball",
   "quizEquipmentMinimalEquipmentBodyweight": "ସର୍ବନିମ୍ନ ଉପକରଣ - ଶରୀରର ଓଜନ, ମ୍ୟାଟ୍",
   "quizEquipmentNeededForBarbell": "Barbell ପାଇଁ ଆବଶ୍ୟକ",
   "quizEquipmentNoEquipmentIdentifiedPick": "କୌଣସି ଉପକରଣ ଚିହ୍ନଟ ହୋଇନାହିଁ। ନିମ୍ନଲିଖିତ ତାଲିକାରୁ ବାଛନ୍ତୁ।",
-  "quizEquipmentOtherCount": "ଅନ୍ୟାନ୍ୟ ସଂଖ୍ୟା {arg0}",
+  "quizEquipmentOtherCount": "{arg0} ବଛାଗଲା",
   "quizEquipmentOtherEquipment": "ଅନ୍ୟାନ୍ୟ ଉପକରଣ",
   "quizEquipmentPullUpBar": "Pull up bar",
   "quizEquipmentQuickPresets": "କ୍ୱିକ୍ ପ୍ରିସେଟ୍",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "ରେସିପି ନାମ ଆବଶ୍ୟକ",
   "recipeCreateRemovePhoto": "ଫଟୋ ହଟାନ୍ତୁ",
   "recipeCreateSaving": "ସେଭ୍ ହେଉଛି...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "ଫଟୋ ଉଠାନ୍ତୁ",
   "recipeCreateTapToEdit": "ଏଡିଟ୍ କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "ପ୍ରତି ସର୍ଭିଂ (×{servings} ସର୍ଭିଂ)",
   "recipeDetailScreenUForkedFrom": "✨ {sourceName} ରୁ ଫର୍କ କରାଯାଇଛି",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" ସବୁଦିନ ପାଇଁ ଡିଲିଟ୍ ହୋଇଯିବ।",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 କ୍ୟୁରେଟେଡ୍ ରେସିପି",
   "recipeDetailView": "ଦେଖନ୍ତୁ",
@@ -24745,16 +24468,16 @@
   "regenerateSheetApply": "ପ୍ରୟୋଗ କରନ୍ତୁ",
   "regenerateSheetApplyThisWorkout": "ଏହି ୱାର୍କଆଉଟ୍ ପ୍ରୟୋଗ କରନ୍ତୁ",
   "regenerateSheetBalancingMuscleGroups": "ମାଂସପେଶୀ ଗୋଷ୍ଠୀଗୁଡ଼ିକୁ ସନ୍ତୁଳିତ କରୁଛି",
-  "regenerateSheetBootingUpTheAi": "AI ଆରମ୍ଭ କରୁଛି",
+  "regenerateSheetBootingUpTheAi": "AI ଆରମ୍ଭ କରାଯାଉଛି",
   "regenerateSheetBuildingYourPlan": "ଆପଣଙ୍କ ପ୍ଲାନ୍ ପ୍ରସ୍ତୁତ କରୁଛି",
   "regenerateSheetBuildingYourWorkout": "ଆପଣଙ୍କ ୱାର୍କଆଉଟ୍ ପ୍ରସ୍ତୁତ କରାଯାଉଛି…",
   "regenerateSheetCheckingEquipment": "ଉପକରଣ ଯାଞ୍ଚ କରାଯାଉଛି",
   "regenerateSheetCheckingPreferences": "ପସନ୍ଦଗୁଡ଼ିକୁ ଯାଞ୍ଚ କରୁଛି",
-  "regenerateSheetConnectingToTheAi": "AI ସହିତ ସଂଯୋଗ କରୁଛି",
+  "regenerateSheetConnectingToTheAi": "AI ସହ ସଂଯୋଗ କରାଯାଉଛି",
   "regenerateSheetConsideringFocusAreas": "ଫୋକସ୍ ଏରିଆଗୁଡ଼ିକୁ ବିଚାର କରୁଛି",
   "regenerateSheetCustomize": "କଷ୍ଟମାଇଜ୍",
   "regenerateSheetCustomizeOrLetAi": "କଷ୍ଟମାଇଜ୍ କରନ୍ତୁ କିମ୍ବା AI କୁ ସୁପାରିଶ କରିବାକୁ ଦିଅନ୍ତୁ",
-  "regenerateSheetCustomizeOrLetAiSuggest": "କଷ୍ଟମାଇଜ୍ କରନ୍ତୁ କିମ୍ବା AI କୁ ପରାମର୍ଶ ଦେବାକୁ ଦିଅନ୍ତୁ",
+  "regenerateSheetCustomizeOrLetAiSuggest": "କଷ୍ଟମାଇଜ୍ କରନ୍ତୁ କିମ୍ବା AI ସୁପାରିଶ କରୁ",
   "regenerateSheetDescribeYourIdealWorkout": "ଆପଣଙ୍କ ଆଦର୍ଶ ୱାର୍କଆଉଟ୍ ବିଷୟରେ ବର୍ଣ୍ଣନା କରନ୍ତୁ",
   "regenerateSheetDesigningYourWorkout": "ଆପଣଙ୍କ ୱାର୍କଆଉଟ୍ ଡିଜାଇନ୍ କରୁଛି",
   "regenerateSheetDialingInSetsAndReps": "ସେଟ୍ ଏବଂ ରେପ୍ସ ସେଟ୍ କରୁଛି",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "ବିବରଣୀ ଚୂଡ଼ାନ୍ତ କରାଯାଉଛି…",
   "regenerateSheetFinalizingYourWorkout": "ଆପଣଙ୍କ ୱାର୍କଆଉଟ୍ ଚୂଡ଼ାନ୍ତ କରୁଛି",
   "regenerateSheetFineTuningTheDetails": "ବିବରଣୀଗୁଡ଼ିକୁ ଠିକ୍ କରୁଛି",
-  "regenerateSheetGeneratingElapsed": "ଜେନେରେଟିଂ ସମୟ {arg0}",
+  "regenerateSheetGeneratingElapsed": "ସୃଷ୍ଟି କରାଯାଉଛି… {arg0}",
   "regenerateSheetGeneratingSuggestions": "ସୁପାରିଶ ପ୍ରସ୍ତୁତ କରାଯାଉଛି…",
   "regenerateSheetGetSuggestions": "ସୁପାରିଶ ପାଆନ୍ତୁ",
   "regenerateSheetGettingCreative": "କିଛି ନୂଆ କରାଯାଉଛି",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "ସୁପାରିଶ କରାଯାଇଥିବା ବ୍ୟବହାର କରନ୍ତୁ",
   "restSuggestionQuick": "ଶୀଘ୍ର",
   "restSuggestionQuickRest": "ଶୀଘ୍ର ବିଶ୍ରାମ",
-  "restSuggestionSaveTime": "ସମୟ ବଞ୍ଚାନ୍ତୁ {arg0}",
+  "restSuggestionSaveTime": "{arg0} ସଞ୍ଚୟ କରନ୍ତୁ",
   "restSuggestionSuggested": "ପରାମର୍ଶିତ",
   "restSuggestionUseSuggested": "ପରାମର୍ଶିତ ବ୍ୟବହାର କରନ୍ତୁ",
   "restTimerCardBaseRest": "ବେସ୍ ରେଷ୍ଟ",
   "restTimerCardControlRestPeriodsBetween": "ସେଟ୍ ମଧ୍ୟରେ ବିଶ୍ରାମ ସମୟ ନିୟନ୍ତ୍ରଣ କରନ୍ତୁ",
   "restTimerCardCustomRestTimer": "କଷ୍ଟମ୍ ରେଷ୍ଟ ଟାଇମର୍",
   "restTimerCardFormula": "ଫର୍ମୁଲା",
-  "restTimerCardFormulaBaserestRpe7": "Formula: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "ଲାଇଭ୍ ପ୍ରିଭ୍ୟୁ",
   "restTimerCardMultiplier": "ମଲ୍ଟିପ୍ଲାୟର",
   "restTimerCardRestBaserestRpe7": "Rest = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "Variables: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "ଭେରିଏବଲ୍: ବେସ୍, RPE, ଗୁଣକ, ଟାୟର",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "ଆପଣଙ୍କ ପ୍ରଦର୍ଶନ ବିଶ୍ଳେଷଣ କରୁଛି...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "ସମ୍ପୂର୍ଣ୍ଣ",
   "rtpTitle": "ଖେଳକୁ ଫେରନ୍ତୁ",
   "safetyDisclaimerBannerDismissDisclaimer": "ଡିସକ୍ଲେମର୍ ବନ୍ଦ କରନ୍ତୁ",
-  "safetyDisclaimerBannerInjuriesFlagged": "ଆଘାତ ଚିହ୍ନିତ ହୋଇଛି {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} ଆଘାତ ଫ୍ଲାଗ୍ ହୋଇଛି",
   "safetyDisclaimerBannerInjuryBody": "ଆଘାତ ଶରୀର",
   "safetyDisclaimerBannerLearnMore": "ଅଧିକ ଜାଣନ୍ତୁ",
   "safetyDisclaimerBannerMore": "+{overflow} ଅଧିକ",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "ସେଟ୍",
   "sessionDetailSetCount": "{count, plural, other{{count} ସେଟ୍}} · ଶୀର୍ଷ ସେଟ୍ ହାଇଲାଇଟ୍ ହୋଇଛି",
   "sessionDetailTime": "ସମୟ",
-  "sessionDetailTopSetHighlighted": ") • ଟପ୍ ସେଟ୍ ହାଇଲାଇଟ୍ ହୋଇଛି",
   "sessionDetailWeight": "ଓଜନ",
   "setAdjustmentAdditionalNotesOptional": "ଅତିରିକ୍ତ ନୋଟ୍ (ବୈକଳ୍ପିକ)",
   "setAdjustmentConfirm": "ନିଶ୍ଚିତ କରନ୍ତୁ",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} ସମ୍ପନ୍ନ",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} ବାକି",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} ହଟାଯାଇଛି",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") of (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "{totalSets} ପ୍ଲାନ୍ ହୋଇଥିବା ମଧ୍ୟରୁ",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} ସେଟ୍ ସମ୍ପନ୍ନ",
   "setAdjustmentSheetReps": "ରେପ୍ସ",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "ସେଟ୍ {currentSetNumber}/{totalSets} • ବିସ୍ତାର କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
   "setTrackingSectionSets": "{widget} ସେଟ୍",
   "setTrackingSectionSetsCompleted": "{length} ସେଟ୍ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇଛି",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "ଓଜନ ସଜାଡ଼ିବା ପାଇଁ ପରିମାଣ",
   "setTrackingSheetsDropSet": "ଡ୍ରପ୍ ସେଟ୍",
   "setTrackingSheetsExerciseHistory": "ବ୍ୟାୟାମ ଇତିହାସ",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} ସପୋର୍ଟ ଅନୁରୋଧ",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} ଦିନ",
   "settingsScreenUiNoSettingsFound": "କୌଣସି ସେଟିଂସ୍ ମିଳିଲା ନାହିଁ",
-  "settingsScreenUiTryDifferentKeywordsLike": "\"theme\", \"notifications\", କିମ୍ବା \"ai voice\" ପରି ଭିନ୍ନ କୀୱାର୍ଡ ଚେଷ୍ଟା କରନ୍ତୁ",
+  "settingsScreenUiTryDifferentKeywordsLike": "\"ଥିମ୍\", \"ବିଜ୍ଞପ୍ତି\" କିମ୍ବା \"AI ସ୍ୱର\" ପରି ଭିନ୍ନ କୀୱାର୍ଡ ଚେଷ୍ଟା କରନ୍ତୁ",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "ସେଟିଂସ୍ ଖୋଜନ୍ତୁ",
   "settingsSetProgressionResearch": "ପ୍ରଗ୍ରେସନ୍ ଏବଂ ଗବେଷଣା ସେଟ୍ କରନ୍ତୁ",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "ପୁରସ୍କାର",
   "streakMilestoneStreakMilestone": "ଷ୍ଟ୍ରିକ୍ ମାଇଲଷ୍ଟୋନ୍!",
-  "streakMilestoneToGo": ") ବାକି ଅଛି!",
   "streakMilestoneYouVeReachedThe": "ଆପଣ ଚୂଡ଼ାନ୍ତ ଷ୍ଟ୍ରିକ୍ ମାଇଲଷ୍ଟୋନରେ ପହଞ୍ଚିଛନ୍ତି!",
   "streakSavedDialogWeUsedStreakShield": "ଆପଣଙ୍କ {savedStreakCount}-ଦିନର ଷ୍ଟ୍ରିକ୍ ବଜାୟ ରଖିବା ପାଇଁ ଆମେ 1 Streak Shield ବ୍ୟବହାର କରିଛୁ।",
   "streakSavedKeepItGoing": "ଜାରି ରଖନ୍ତୁ",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "କନେକ୍ଟ କରନ୍ତୁ",
   "todayScoreCardCustomize": "କଷ୍ଟମାଇଜ୍ କରନ୍ତୁ",
   "todayScoreCardToday": "ଆଜି",
-  "todayScoreDetailDown": "{arg0} କମିଛି",
-  "todayScoreDetailEarnedPts": "ଅର୍ଜିତ ପଏଣ୍ଟ {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ ଆଜି ସକାଳଠାରୁ {arg0} କମ୍",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} ପଏଣ୍ଟ",
   "todayScoreDetailHowItWorks": "ଏହା କିପରି କାମ କରେ",
-  "todayScoreDetailInactiveExplanation": "ନିଷ୍କ୍ରିୟ ବ୍ୟାଖ୍ୟା {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "ହାରାହାରି ସହିତ ମୋମେଣ୍ଟମ୍ {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} ଆଜି {arg1, plural, one {ଗଣାଯାଉ ନାହିଁ} other {ଗଣାଯାଉ ନାହାନ୍ତି}}, ତେଣୁ ବାକି ସବୁ ସମ୍ପୂର୍ଣ୍ଣ 100 ପଏଣ୍ଟ ଅଂଶୀଦାର କରନ୍ତି। ଆପଣଙ୍କ ସ୍କୋର୍ ସର୍ବଦା ଆଜି ବାସ୍ତବରେ ପ୍ରଯୁଜ୍ୟ ବିଷୟକୁ ହିଁ ପ୍ରତିଫଳିତ କରେ।",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7-day ହାରାହାରି {arg1}",
   "todayScoreDetailNotCounted": "ଗଣନା କରାଯାଇନାହିଁ",
   "todayScoreDetailSetupText": "ସେଟଅପ୍ ଟେକ୍ସଟ୍",
   "todayScoreDetailSteady": "ସ୍ଥିର",
   "todayScoreDetailTodayScore": "ଆଜିର ସ୍କୋର",
-  "todayScoreDetailUp": "{arg0} ବଢ଼ିଛି",
+  "todayScoreDetailUp": "▲ ଆଜି ସକାଳଠାରୁ {arg0} ଅଧିକ",
   "todayScoreSetupAddAWorkoutPlan": "ଏକ ୱାର୍କଆଉଟ୍ ପ୍ଲାନ୍ ଯୋଡନ୍ତୁ",
   "todayScoreSetupCardContinue": "ଜାରି ରଖନ୍ତୁ: {label}",
   "todayScoreSetupCardGetStarted": "ଆରମ୍ଭ କରନ୍ତୁ · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Cardio ଉପଲବ୍ଧି",
   "trophiesEarnedDayStreak": "ଦିନର ଷ୍ଟ୍ରିକ୍",
   "trophiesEarnedFirstTime": "ପ୍ରଥମ ଥର!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "ମାଇଲଖୁଣ୍ଟରେ ପହଞ୍ଚିଲେ",
   "trophiesEarnedMilestoneReachedNice": "ମାଇଲଖୁଣ୍ଟରେ ପହଞ୍ଚିଲେ — ବହୁତ ଭଲ!",
   "trophiesEarnedMilestones": "ମାଇଲଖୁଣ୍ଟ",
-  "trophiesEarnedNewBadges": "ବ୍ୟାଜ୍ {arg0}",
-  "trophiesEarnedNewCardioPRs": "କାର୍ଡିଓ PR {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} ନୂଆ ବ୍ୟାଜ୍",
+  "trophiesEarnedNewCardioPRs": "{arg0} ନୂଆ କାର୍ଡିଓ PRs",
   "trophiesEarnedNewPR": "ନୂଆ PR",
-  "trophiesEarnedNewPRs": "PR {arg0}",
+  "trophiesEarnedNewPRs": "{arg0} ନୂଆ PRs!",
   "trophiesEarnedNewPr": "ନୂତନ PR",
   "trophiesEarnedNextMilestones": "ପରବର୍ତ୍ତୀ ମାଇଲଖୁଣ୍ଟ",
   "trophiesEarnedNoNewRecords": "କୌଣସି ନୂଆ ରେକର୍ଡ ନାହିଁ",
   "trophiesEarnedNoNewRecordsThis": "ଏହି ସେସନରେ କୌଣସି ନୂତନ ରେକର୍ଡ ନାହିଁ — ଆପଣ କେଉଁ ଦିଗରେ କାମ କରୁଛନ୍ତି ଏଠାରେ ଦେଖନ୍ତୁ:",
   "trophiesEarnedPersonalRecords": "ବ୍ୟକ୍ତିଗତ ରେକର୍ଡ",
-  "trophiesEarnedRemainingToUnlock": "ଅନଲକ୍ କରିବାକୁ ବାକି {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "ଅନଲକ୍ କରିବାକୁ ଆଉ {arg0} {arg1}",
   "trophiesEarnedSessionHighlights": "ସେସନ୍ ହାଇଲାଇଟ୍",
   "trophiesEarnedSheetPts": "+{points} pts",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} ଟାଇପ୍ କରୁଛନ୍ତି",
   "typingIndicatorIsTyping3": "{agentName} ଟାଇପ୍ କରୁଛନ୍ତି...",
   "unifiedHomeWidgetsActivity": "ଆକ୍ଟିଭିଟି",
-  "unifiedHomeWidgetsBreakfastLogged": "ସକାଳର ଜଳଖିଆ ଲଗ୍ ହୋଇଛି {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "ଗତ 7 ସକାଳ ମଧ୍ୟରୁ {arg0} ଥର ସକାଳ ଖାଦ୍ୟ ଲଗ୍ ହୋଇଛି",
   "unifiedHomeWidgetsBreakfastSuggestion": "ସକାଳ ଜଳଖିଆ ପରାମର୍ଶ",
   "unifiedHomeWidgetsCarbs": "କାର୍ବସ୍",
   "unifiedHomeWidgetsConnect": "କନେକ୍ଟ",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "ଫ୍ୟାଟ୍",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} କିଲୋକାଲୋରୀ ଆଜି ସମୁଦାୟ",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal ଜଳିଛି",
   "unifiedHomeWidgetsKcalLeft": " kcal ବାକି ଅଛି",
   "unifiedHomeWidgetsLastNight": "ଗତ ରାତି",
   "unifiedHomeWidgetsLog16oz": "16oz ଲଗ୍ କରନ୍ତୁ",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}w",
   "weekDurationSelectorWeeks": "{selectedWeeks} ସପ୍ତାହ",
   "weekDurationSelectorWk": "{spw}/ସପ୍ତାହ",
-  "weekProgressStripCompletedCount": "ସମ୍ପୂର୍ଣ୍ଣ ସଂଖ୍ୟା {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg1} ମଧ୍ୟରୁ {arg0} ୱର୍କଆଉଟ୍ ସମ୍ପୂର୍ଣ୍ଣ",
   "weekProgressStripCouldNotLoadProgress": "ପ୍ରଗତି ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ",
   "weekProgressStripLoading": "ଲୋଡ୍ ହେଉଛି...",
   "weekProgressStripNoWorkoutsScheduled": "କୌଣସି ୱାର୍କଆଉଟ୍ ସିଡ୍ୟୁଲ୍ ହୋଇନାହିଁ",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "ସବୁ ଦେଖନ୍ତୁ",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "ଓଜନ ଟ୍ରାକିଂ",
-  "weightTrendCardDownThisWeek": "ଏହି ସପ୍ତାହରେ କମିଛି {arg0}",
-  "weightTrendCardDownVsLastCycle": "ଗତ ସାଇକେଲ ତୁଳନାରେ କମିଛି {arg0}",
+  "weightTrendCardDownThisWeek": "ଏହି ସପ୍ତାହ {arg0} କମ୍!",
+  "weightTrendCardDownVsLastCycle": "ଗତ ମାସର ସମାନ ସାଇକେଲ୍ ଦିନ ତୁଳନାରେ {arg0} lbs କମ୍",
   "weightTrendCardLoadingWeight": "ଓଜନ ଲୋଡ୍ ହେଉଛି...",
   "weightTrendCardLogYourWeightTo": "ଟ୍ରେଣ୍ଡ ଦେଖିବା ପାଇଁ ଆପଣଙ୍କ ଓଜନ ଲଗ୍ କରନ୍ତୁ",
   "weightTrendCardMaintaining": "ବଜାୟ ରଖିଛନ୍ତି",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "ଗତ ସାଇକେଲ ସହିତ ସମାନ",
   "weightTrendCardTapToLogWeight": "ଓଜନ ଲଗ୍ କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
   "weightTrendCardTargetHeld": "ଲକ୍ଷ୍ୟ ସ୍ଥିର ଅଛି",
-  "weightTrendCardTargetHeldWindow": "ଲକ୍ଷ୍ୟ ସ୍ଥିର ୱିଣ୍ଡୋ {arg0}",
-  "weightTrendCardUpThisWeek": "ଏହି ସପ୍ତାହରେ ବଢ଼ିଛି {arg0}",
-  "weightTrendCardUpVsLastCycle": "ଗତ ସାଇକେଲ ତୁଳନାରେ ବଢ଼ିଛି {arg0}",
+  "weightTrendCardTargetHeldWindow": "ଲକ୍ଷ୍ୟ {arg0} ବଜାୟ ରହିଲା — ଲୁଟିଆଲ୍ ଜଳ ସନ୍ତୁଳନ",
+  "weightTrendCardUpThisWeek": "ଏହି ସପ୍ତାହ {arg0} ଅଧିକ",
+  "weightTrendCardUpVsLastCycle": "ଗତ ମାସର ସମାନ ସାଇକେଲ୍ ଦିନ ତୁଳନାରେ {arg0} lbs ଅଧିକ",
   "weightTrendCardWeightStableThisWeek": "ଏହି ସପ୍ତାହରେ ଓଜନ ସ୍ଥିର ଅଛି",
   "weightTrendCardWeightTrends": "ଓଜନ ଟ୍ରେଣ୍ଡ",
   "welcomeAffirmationGreatChoice": "ଉତ୍ତମ ପସନ୍ଦ।",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "ଏହି ଭର୍ସନକୁ ଫେରାଇ ଆଣିବେ କି?",
   "workoutActionsShareWorkout": "ୱର୍କଆଉଟ୍ ଶେୟାର କରନ୍ତୁ",
   "workoutActionsSheetGetALinkFor": "ବନ୍ଧୁମାନଙ୍କ ପାଇଁ ଏକ {marketingDomain} ଲିଙ୍କ୍ ପାଆନ୍ତୁ",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "\"{name}\" ରିଷ୍ଟୋର୍ କରିବେ କି?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} ଥର",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} ସେଟ୍, {currentReps} ଥର",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "ଏହି ସମୟରେ ବନ୍ଧୁମାନଙ୍କୁ ଚ୍ୟାଲେଞ୍ଜ କରିବାକୁ ଅସମର୍ଥ",
   "workoutCompleteScreenUnableToExtendWorkout": "ୱାର୍କଆଉଟ୍ ବଢ଼ାଇବାକୁ ଅସମର୍ଥ",
   "workoutCompleteScreenViewAllMetrics": "ସମସ୍ତ ମେଟ୍ରିକ୍ସ ଦେଖନ୍ତୁ",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "ଉପକରଣ",
   "workoutDetailExercises": "ବ୍ୟାୟାମ",
   "workoutDetailFailedToLoadWorkout": "Workout ଲୋଡ୍ କରିବାରେ ବିଫଳ",
-  "workoutDetailHelpersForAvailableEquipment": ") ଉପଲବ୍ଧ ଉପକରଣ ପାଇଁ...",
   "workoutDetailHelpersHell": "ନର୍କ",
   "workoutDetailHelpersUpdatingExercises": "ବ୍ୟାୟାମ ଅପଡେଟ୍ କରୁଛି",
   "workoutDetailMoreInfo": "ଅଧିକ ସୂଚନା",
   "workoutDetailProgram": "ପ୍ରୋଗ୍ରାମ୍",
-  "workoutDetailReplacingExercises": "ବ୍ୟାୟାମ ବଦଳାଉଛି {arg0}",
+  "workoutDetailReplacingExercises": "ଉପଲବ୍ଧ ଉପକରଣ ପାଇଁ {arg0} ବ୍ୟାୟାମ ବଦଳାଯାଉଛି…",
   "workoutDetailRevert": "ପୂର୍ବ ଅବସ୍ଥାକୁ ଫେରନ୍ତୁ",
   "workoutDetailScreenBreakSuperset": "Superset ଭାଙ୍ଗିବେ କି?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} କ୍ୟାଲୋରୀ ଜଳିଛି",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "ଓଜନ କଲମରେ କେଉଁ ୟୁନିଟ୍ ଅଛି? ଏବଂ ଯଦି ଆପଣ ସୋର୍ସ ଆପ୍ ଜାଣନ୍ତି, ତେବେ ଏହାକୁ ଚୟନ କରନ୍ତୁ — ଏହା ସମାନ ଫର୍ମାଟଗୁଡିକୁ (Hevy ବନାମ Strong CSVs) ଚିହ୍ନିବାରେ ସାହାଯ୍ୟ କରେ।",
   "workoutHistoryImportYourStrengthData": "ଆପଣଙ୍କର ଶକ୍ତି ତଥ୍ୟ",
-  "workoutImportAsDone": ")\" ସମ୍ପନ୍ନ ଭାବେ",
   "workoutImportCalories": "କ୍ୟାଲୋରୀ",
   "workoutImportCardio": "କାର୍ଡିଓ",
   "workoutImportCycling": "ସାଇକ୍ଲିଂ",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "ଅବଧି",
   "workoutImportEasy": "ସହଜ",
   "workoutImportFlexibility": "ନମନୀୟତା",
-  "workoutImportFromSource": "ଉତ୍ସରୁ {arg0}",
+  "workoutImportFromSource": "{arg0} ରୁ",
   "workoutImportHard": "କଷ୍ଟକର",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "ଏହି ୱାର୍କଆଉଟ୍ କେତେ କଷ୍ଟକର ଥିଲା?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "ୱାର୍କଆଉଟ୍ ସମୟରେ ଆପଣ ଏହି ସିଷ୍ଟମ୍ ପ୍ରମ୍ପ୍ଟ ଦେଖିପାରନ୍ତି। ଉଭୟ ଇଚ୍ଛାଧୀନ ଅଟେ — ଯେକୌଣସି ଗୋଟିଏକୁ ସ୍କିପ୍ କଲେ ମଧ୍ୟ ୱାର୍କଆଉଟ୍ କାମ କରିବ।",
   "workoutPlanDrawerAddExercise": "ବ୍ୟାୟାମ ଯୋଗ କରନ୍ତୁ",
   "workoutPlanDrawerCurrent": "ବର୍ତ୍ତମାନର",
-  "workoutPlanDrawerExerciseCount": "ବ୍ୟାୟାମ ସଂଖ୍ୟା {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") ଲଗ୍ ହୋଇଛି। ସେଗୁଡ଼ିକ ଡିଲିଟ୍ ହୋଇଯିବ।",
+  "workoutPlanDrawerExerciseCount": "{arg0} ବ୍ୟାୟାମ",
   "workoutPlanDrawerNow": "ଏବେ",
   "workoutPlanDrawerRemove": "ହଟାନ୍ତୁ",
-  "workoutPlanDrawerRemoveExercise": "ବ୍ୟାୟାମ {arg0} ହଟାନ୍ତୁ",
+  "workoutPlanDrawerRemoveExercise": "{arg0} ହଟାଇବେ କି?",
   "workoutPlanDrawerRemoveExerciseTooltip": "ବ୍ୟାୟାମ ହଟାଇବା ଟୁଲଟିପ୍",
-  "workoutPlanDrawerSetsLogged": "ସେଟ୍ ଲଗ୍ ହୋଇଛି {arg0}",
+  "workoutPlanDrawerSetsLogged": "ଆପଣଙ୍କର {arg0} ସେଟ୍ ଲଗ୍ ହୋଇଛି। ସେଗୁଡ଼ିକ ବିଲୋପ ହେବ।",
   "workoutPlanDrawerSwapExercise": "ବ୍ୟାୟାମ ବଦଳାନ୍ତୁ",
   "workoutPlanDrawerTitle": "ଶୀର୍ଷକ",
   "workoutPlanDrawerWorkoutPlan": "ୱାର୍କଆଉଟ୍ ପ୍ଲାନ୍",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "ଆପଣ ଲଗ୍ କରୁଥିବା ପ୍ରତ୍ୟେକ ସେଟ୍",
   "workoutShowcaseEveryWorkoutFlows": "ପ୍ରତ୍ୟେକ ୱାର୍କଆଉଟ୍ ପ୍ରବାହିତ ହୁଏ",
   "workoutShowcaseFinishWorkout": "ୱାର୍କଆଉଟ୍ ଶେଷ କରନ୍ତୁ",
-  "workoutShowcaseFormat1Rm": "ୱର୍କଆଉଟ୍ ଶୋକେସ୍ ଫର୍ମାଟ୍ 1RM",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "ବୋର୍ଡିଂ",
   "workoutShowcaseFormatCard": "କାର୍ଡ",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "ଲିନିୟର୍ ଲେବଲ୍",
   "workoutShowcaseLogAllSets": "ସମସ୍ତ ସେଟ୍",
   "workoutShowcaseLogDrink": "ପାନୀୟ ଲଗ୍ କରନ୍ତୁ",
-  "workoutShowcaseLogSet": "ସେଟ୍ {arg0}",
+  "workoutShowcaseLogSet": "✓ ସେଟ୍ {arg0} ଲଗ୍ କରନ୍ତୁ",
   "workoutShowcaseLogWater": "ପାଣି ଲଗ୍ କରନ୍ତୁ",
   "workoutShowcaseMovedThisSession": "ଏହି ସେସନରେ ମୁଭ୍ ହୋଇଛି",
   "workoutShowcaseNewPr": "ନୂଆ PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "ଥର",
   "workoutShowcaseScreenDay": "ଦିନ {day}",
   "workoutShowcaseScreenDuration": "ଅବଧି: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · ଏଣ୍ଟର ହୋଇଛି",
   "workoutShowcaseScreenSession": "ସେସନ୍: {title}",
   "workoutShowcaseScreenTotalPrs": "ମୋଟ {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "୪ ରୁ ସେଟ୍ ୧",
   "workoutShowcaseSet2": "ସେଟ୍ ୨",
   "workoutShowcaseSet3": "ସେଟ୍ ୩",
-  "workoutShowcaseSetNOf3": "ୱର୍କଆଉଟ୍ ଶୋକେସ୍ ସେଟ୍ {arg0} ରୁ n",
+  "workoutShowcaseSetNOf3": "3 ମଧ୍ୟରୁ ସେଟ୍ {arg0}",
   "workoutShowcaseShareYourWorkout": "ଆପଣଙ୍କ ୱାର୍କଆଉଟ୍ ସେୟାର କରନ୍ତୁ",
   "workoutShowcaseSideA": "ପାର୍ଶ୍ୱ A",
   "workoutShowcaseSuperset": "ସୁପରସେଟ୍",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "ଦୈନିକ",
   "xpGoalsDialog250LevelsAcross11Tiers": "XP ଲକ୍ଷ୍ୟ ଡାଏଲଗ୍ 11 ଟିୟରରେ 250 ଲେଭେଲ୍",
   "xpGoalsDialogBeginnerToTranscendent": "ଆରମ୍ଭକାରୀରୁ ଉତ୍କୃଷ୍ଟ",
-  "xpGoalsDialogCompleteWorkoutXp": "XP ଲକ୍ଷ୍ୟ ଡାଏଲଗ୍ ୱର୍କଆଉଟ୍ ସମ୍ପୂର୍ଣ୍ଣ XP",
+  "xpGoalsDialogCompleteWorkoutXp": "ୱର୍କଆଉଟ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ: +100 XP",
   "xpGoalsDialogDailyGoals": "ଦୈନିକ ଲକ୍ଷ୍ୟ",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "Ai coach ସହିତ ଚାଟ୍ XP",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "ଖାଦ୍ୟ ଓଜନ ମାପ XP",
-  "xpGoalsDialogFirstPrXp": "Pr XP",
-  "xpGoalsDialogFirstProgressPhotoXp": "ପ୍ରଗତି ଫଟୋ XP",
-  "xpGoalsDialogFirstProteinGoalXp": "ପ୍ରୋଟିନ୍ ଲକ୍ଷ୍ୟ XP",
-  "xpGoalsDialogFirstWorkoutXp": "ୱାର୍କଆଉଟ୍ XP",
-  "xpGoalsDialogHitProteinGoalXp": "ପ୍ରୋଟିନ୍ ଲକ୍ଷ୍ୟ ପୂରଣ XP",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "AI କୋଚ୍ ସହ ପ୍ରଥମ ଚାଟ୍: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "ପ୍ରଥମ ଖାଦ୍ୟ/ଓଜନ/ମାପ: ପ୍ରତ୍ୟେକ +50 XP",
+  "xpGoalsDialogFirstPrXp": "ପ୍ରଥମ PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "ପ୍ରଥମ ପ୍ରଗତି ଫଟୋ: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "ପ୍ରଥମ ପ୍ରୋଟିନ୍ ଲକ୍ଷ୍ୟ: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "ପ୍ରଥମ ୱର୍କଆଉଟ୍: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "ପ୍ରୋଟିନ୍ ଲକ୍ଷ୍ୟ ହାସଲ କରନ୍ତୁ: +50 XP",
   "xpGoalsDialogLevels": "ସ୍ତର",
-  "xpGoalsDialogLogBodyMeasurementsXp": "ଶରୀର ମାପ XP",
-  "xpGoalsDialogLogMealXp": "ଖାଦ୍ୟ XP",
-  "xpGoalsDialogLogWeightXp": "ଓଜନ XP",
-  "xpGoalsDialogLoginXp": "ଲଗଇନ୍ XP",
+  "xpGoalsDialogLogBodyMeasurementsXp": "ଶରୀର ମାପ ଲଗ୍ କରନ୍ତୁ: +20 XP",
+  "xpGoalsDialogLogMealXp": "ଖାଦ୍ୟ ଲଗ୍ କରନ୍ତୁ: +25 XP",
+  "xpGoalsDialogLogWeightXp": "ଓଜନ ଲଗ୍ କରନ୍ତୁ: +15 XP",
+  "xpGoalsDialogLoginXp": "ଲଗଇନ୍: +5 XP",
   "xpGoalsDialogMilestoneRewards": "ମାଇଲଷ୍ଟୋନ୍ ପୁରସ୍କାର",
   "xpGoalsFirstTimeBonuses": "ପ୍ରଥମ ଥର ପାଇଁ ବୋନସ୍",
   "xpGoalsGotIt": "ବୁଝିଲି!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "ପ୍ରୋଟିନ୍ ଲକ୍ଷ୍ୟ ପୂରଣ କରନ୍ତୁ",
   "xpGoalsScreenInventory": "ଇନଭେଣ୍ଟୋରୀ",
   "xpGoalsScreenLegendary": "ଲିଜେଣ୍ଡାରୀ",
-  "xpGoalsScreenLevelCurrentTotal": "ବର୍ତ୍ତମାନର ମୋଟ ସ୍ତର {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "ଲେଭେଲ୍ {arg0} • ମୋଟ 249 ଲେଭେଲ୍",
   "xpGoalsScreenLevelProgress": "ଲେଭଲ୍ ପ୍ରଗତି",
   "xpGoalsScreenLogBodyMeasurements": "ଶରୀରର ମାପ ଲଗ୍ କରନ୍ତୁ",
   "xpGoalsScreenLogFirstMeal": "ପ୍ରଥମ ଖାଦ୍ୟ ଲଗ୍ କରନ୍ତୁ",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "ଟ୍ରଫି ରୁମ୍",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "ସାପ୍ତାହିକ",
-  "xpGoalsXpAvailable": "ଉପଲବ୍ଧ {arg0}",
-  "xpGoalsXpEarnedToday": "ଆଜି ଅର୍ଜନ କରିଛନ୍ତି {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP ଉପଲବ୍ଧ",
+  "xpGoalsXpEarnedToday": "ଆଜି +{arg0} XP ଅର୍ଜନ କରାଗଲା",
   "xpGoalsXpGoals": "XP ଲକ୍ଷ୍ୟ",
-  "xpGoalsXpMultiplierActive": "Multiplier ସକ୍ରିୟ {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP ସକ୍ରିୟ!",
   "xpHeroTileDayStreak": "{streak}-ଦିନର ଧାରା",
   "xpHeroTileLv": "ଲେଭଲ {level}",
   "xpHeroTileLv2": "ଲେଭଲ {nextLevel} → {label}",

@@ -105,13 +105,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1379,13 +1372,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2045,26 +2031,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2120,16 +2086,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3327,13 +3283,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4017,13 +3966,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4375,13 +4317,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5039,20 +4974,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6501,26 +6422,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7228,13 +7135,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7457,13 +7357,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7856,13 +7749,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8506,13 +8392,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8719,13 +8598,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8839,20 +8711,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8983,13 +8841,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9383,13 +9234,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9407,13 +9251,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9754,13 +9591,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10532,13 +10362,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10755,7 +10578,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11023,16 +10846,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11064,16 +10877,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11950,13 +11753,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12132,13 +11928,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13605,7 +13394,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14527,16 +14316,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14715,13 +14494,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15168,13 +14940,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15871,7 +15636,6 @@
   "activeWorkoutHelperWhenToUse": "Wann anwenden",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Übung erfolgreich getauscht",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} Übung(en) hinzugefügt",
-  "activeWorkoutScreenRefactoredFor": ") für (name)",
   "activeWorkoutScreenUndo": "Rückgängig",
   "activeWorkoutScreenWorkoutAdapted": "Workout angepasst.",
   "activityCardAdditionalDetailsOptional": "Zusätzliche Details (optional)",
@@ -16078,7 +15842,6 @@
   "aiCoachMealPreWorkoutFuel": "Treibstoff vor dem Training?",
   "aiCoachMealQuickSnackIdeas": "Schnelle Snack-Ideen?",
   "aiCoachMealRecoveryDayEating": "Essen am Erholungstag?",
-  "aiCoachMealSearchQuestionsTryAngry": "Suchfragen (versuchen Sie es mit „angry“, „fibe mexican“)",
   "aiCoachMealSomethingWentWrong": "Etwas ist schief gelaufen.",
   "aiCoachMealStressedWhatHelps": "Gestresst – was hilft?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "Asiatisch inspirierte {meal} – eine Wahl (Reis-Bowl, Nudeln, Sushi, Pfannengericht), Makros und Zubereitung.{budgetTail}",
@@ -16558,7 +16321,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · {phase} Phase",
   "caloriesSummaryCardCalories": "Kalorien",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "übrig",
   "cancelConfirmationAnythingElseYouD": "Möchtest du uns noch etwas mitteilen? (optional)",
   "cancelConfirmationCancelAnyway": "Trotzdem kündigen",
   "cancelConfirmationHelpUsImprove": "Hilf uns, besser zu werden",
@@ -16747,7 +16509,6 @@
   "chatGotIt": "Verstanden",
   "chatLanguageChangedSystem": "🌐 AI Coach antwortet jetzt auf {nativeName}",
   "chatLanguageResetSystem": "🌐 Sprache des AI Coach zurückgesetzt — App-Sprache wird verwendet",
-  "chatLeftToday": ") heute übrig",
   "chatMediaWidgetsCalTotal": "{totalCal} kcal insgesamt",
   "chatMediaWidgetsGProtein": "{totalProtein}g Protein",
   "chatMediaWidgetsGoTo": "Gehe zu {workoutName}",
@@ -16782,7 +16543,6 @@
   "chatScreenCoachIsThinkingLonger": "Dein Coach denkt länger nach als üblich.",
   "chatScreenCouldntReachCoach": "Der Coach konnte nicht erreicht werden.",
   "chatScreenExtAboutAiCoach": "Über den AI Coach",
-  "chatScreenExtAs": ") als (mealType)",
   "chatScreenExtChangeCoach": "Coach wechseln",
   "chatScreenExtChatTips": "Chat-Tipps",
   "chatScreenExtChooseMultiplePhotos": "Mehrere Fotos auswählen",
@@ -17120,11 +16880,11 @@
   "completeViewGoals": "Ziele ansehen",
   "complianceRingCardAllWorkoutsCompleted": "Alle Workouts abgeschlossen",
   "complianceRingCardGetStartedToday": "Starte heute",
-  "complianceRingCardGreatPace": "Tolles Tempo {arg0}",
+  "complianceRingCardGreatPace": "Tolles Tempo! Noch {arg0} übrig",
   "complianceRingCardNoWorkoutsScheduledThis": "Diese Woche sind keine Workouts geplant",
-  "complianceRingCardOnTrack": "Auf Kurs {arg0}",
+  "complianceRingCardOnTrack": "Auf Kurs — noch {arg0}",
   "complianceRingCardWorkoutCompliance": "Workout-Compliance",
-  "complianceRingCardWorkoutsRemaining": "Verbleibende Workouts {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} Workouts übrig",
   "comprehensiveStatsStatsScores": "Statistiken & Punktzahlen",
   "connectedAppsAutoImportEvery15": "Automatischer Import alle 15 Min.",
   "connectedAppsConnect": "Verbinden",
@@ -17206,7 +16966,6 @@
   "cookingConverterSelectFood": "Lebensmittel auswählen",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Diesen Wert verwenden",
-  "cookingConverterWeight": "Gewicht",
   "cosmeticsGalleryCosmetics": "Kosmetik",
   "cosmeticsGalleryEquip": "Ausrüsten",
   "cosmeticsGalleryEquipped": "Ausrüstung aktiv",
@@ -17358,8 +17117,6 @@
   "customExercisesNoExercisesMatchYour": "Keine Übungen entsprechen deiner Suche",
   "customExercisesScreenAreYouSureYou": "Bist du sicher, dass du \"{name}\" löschen möchtest? Dies kann nicht rückgängig gemacht werden.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} Übungen, {totalUses} Verwendungen",
-  "customExercisesScreenUsedTimes": "Verwendet (usageCount) Mal(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Übungen suchen...",
   "customExercisesSimple": "Einfach",
   "customFoodBuilderAiFillFromName": "KI-Ausfüllen aus Name",
@@ -17401,7 +17158,6 @@
   "customTrendScreenLastCycle": "{displayName} · letzter Zyklus",
   "customTrendScreenMaxOverlaysRemoveOne": "Max. {_kMaxOverlays} Overlays — entferne eines, um ein weiteres hinzuzufügen",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} gemeinsame Tage",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "Übung hinzufügen",
   "customWorkoutBuilderBuildCustomWorkout": "Eigenes Workout erstellen",
   "customWorkoutBuilderCustomWorkoutCreated": "Eigenes Workout erstellt!",
@@ -17472,7 +17228,6 @@
   "cycleScreenUiLogAPeriod": "Periode protokollieren",
   "cycleScreenUiLogPeriod": "Periode protokollieren",
   "cycleScreenUiLogYourFirstPeriod": "Protokolliere deine erste Periode, um Vorhersagen zu starten.",
-  "cycleScreenUiPhase": "-Phase",
   "cycleScreenUiPhaseLabel": "{displayName}-Phase",
   "cycleScreenUiPredictionsAreEstimates": "Vorhersagen sind Schätzungen basierend auf deinen protokollierten Daten, keine Verhütungsmethode und keine medizinische Beratung. Suche bei gesundheitlichen Bedenken einen Arzt auf.",
   "cycleScreenUiPregnancyModeIsOn": "Schwangerschaftsmodus ist aktiv",
@@ -18045,7 +17800,7 @@
   "editProgramSheetContinue": "Weiter",
   "editProgramSheetCurrent": "AKTUELL",
   "editProgramSheetCustomProgram": "Benutzerdefiniertes Programm",
-  "editProgramSheetCustomValue": "Benutzerdefinierter Wert {arg0}",
+  "editProgramSheetCustomValue": "Benutzerdefiniert: {arg0}",
   "editProgramSheetCustomizeProgram": "Programm anpassen",
   "editProgramSheetDays": "Tage",
   "editProgramSheetDaysAgo": "Vor {days} Tagen",
@@ -18057,8 +17812,8 @@
   "editProgramSheetEquipment": "Equipment",
   "editProgramSheetEquipmentLabel": "Equipment-Label",
   "editProgramSheetExamples": "Beispiele",
-  "editProgramSheetFailedToLoadHistory": "Verlauf laden {arg0}",
-  "editProgramSheetFailedToRestore": "Wiederherstellen {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Verlauf konnte nicht geladen werden: {arg0}",
+  "editProgramSheetFailedToRestore": "Wiederherstellung fehlgeschlagen: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Programm aktualisieren",
   "editProgramSheetFocus": "Fokus",
   "editProgramSheetHealth": "Gesundheit",
@@ -18504,7 +18259,6 @@
   "exerciseDetailSheetDownloading": "Wird heruntergeladen {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Video wird heruntergeladen...",
   "exerciseDetailSheetFavorite": "Favorit",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Laden...",
   "exerciseDetailSheetLog1rm": "Protokoll 1RM",
   "exerciseDetailSheetMS": "{restMins}m {restSecs}s",
@@ -18846,7 +18600,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Notizen hier hinzufügen...",
   "exerciseSetTrackerAddSet": "Satz hinzufügen",
-  "exerciseSetTrackerBarbell": ") Langhantel",
   "exerciseSetTrackerReps": "Wdh.",
   "exerciseSetTrackerRestTarget": "Pausenziel",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18890,7 +18643,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "KI-Vorschläge nicht verfügbar",
   "exerciseSwapSheetAnyEquipment": "Beliebiges Equipment",
   "exerciseSwapSheetAskAiForSuggestions": "KI um Vorschläge bitten",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Beschreibe dein Equipment oder deine Vorlieben\nz. B. „Ich habe Schulterprobleme, nur Körpergewicht“",
   "exerciseSwapSheetEGIOnly": "z. B. „Ich habe nur Kurzhanteln“",
   "exerciseSwapSheetFailedToSwapExercise": "Übungstausch fehlgeschlagen",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Suche nach muskelbasierten Alternativen...",
@@ -18941,7 +18693,6 @@
   "expandableSummaryExerciseWeight": "Gewicht",
   "expandedExerciseCardAddToFavorites": "Zu Favoriten hinzufügen",
   "expandedExerciseCardAlternatingHands": "Abwechselnde Hände",
-  "expandedExerciseCardBarbell": ") Langhantel",
   "expandedExerciseCardBreathing": "Atmung",
   "expandedExerciseCardBreathingGuide": "Atemhilfe",
   "expandedExerciseCardCollapse": "Einklappen",
@@ -19154,7 +18905,6 @@
   "fastingScoreCardProtocolLevel": "Protokoll-Level",
   "fastingScoreCardScore": "Punktzahl",
   "fastingScoreCardStreakBonus": "Streak-Bonus",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "vs. letzte Woche",
@@ -19423,7 +19173,6 @@
   "flexibilityProgressChartFirst": "Erste",
   "flexibilityProgressChartLatest": "Neueste",
   "flexibilityProgressChartNoDataAvailable": "Keine Daten verfügbar",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Nach Bereich",
   "flexibilityScoreCardFocusAreas": "Fokusbereiche",
   "flexibilityScoreCardOverallFlexibility": "Gesamte Flexibilität",
@@ -19595,7 +19344,6 @@
   "foodHistorySearchMealsFoodsHigh": "Suche Mahlzeiten, Lebensmittel, \"proteinreich\"...",
   "foodHistoryUndo": "Rückgängig",
   "foodItemRankingAddFood": "Lebensmittel hinzufügen",
-  "foodItemRankingDetails": ") Details",
   "foodItemRankingNFoodItems": "{count} Lebensmittel",
   "foodItemRankingScore": "Wertung",
   "foodItemRankingTapToHideDetails": "Tippen zum Ausblenden der Details",
@@ -19738,7 +19486,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Also habe ich die Person erstellt, nicht das Hauptbuch. Schnappen Sie sich ein beliebiges Menü – zu Hause oder im Ausland – und der Coach liest es Ihnen in Makros vor. Wenn Sie einen Dienstag auslassen, werden Sie am Mittwochmorgen ohne Schuldgefühle zurückgeholt. Es lernt Ihre Ernährung, Ihr Fitnessstudio, Ihre Slipmuster – für weniger als eine PT-Sitzung pro Monat.",
   "founderNoteTheFriendsWhoActually": "Die Freunde, die tatsächlich fit wurden, hatten jemanden, der ihnen schrieb. Echte Verantwortlichkeit kostet etwa zweihundert Dollar im Monat, was genau der Grund ist, warum die meisten von uns sie nie haben, und genau der Grund, warum die Lücke zwischen „Tracken“ und „Verändern“ jahrelang offen bleibt.",
-  "freshnessDecayCardAgo": ") her",
   "freshnessDecayCardControlsHowQuicklyExercise": "Steuert, wie schnell die Trainingsfrische abnimmt: e^(-k * Einheiten)",
   "freshnessDecayCardFreshnessDecayTuner": "Frische-Abnahme-Tuner",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19810,8 +19557,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "SATZ {currentSetNumber} VON {totalSets}",
   "futuristicSetCardSkipExercise": "Übung überspringen",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(Wiederholungen)",
   "generatePlanCreateAHolisticPlan": "Erstelle einen ganzheitlichen Plan, der deine Workouts, Ernährung und Fastenzeiten koordiniert.",
   "generatePlanFastingProtocol": "Fastenprotokoll",
   "generatePlanGeneratePlan": "Plan erstellen",
@@ -20070,8 +19815,8 @@
   "habitsCardAddYourFirstHabit": "Erste Gewohnheit hinzufügen",
   "habitsCardAllHabitsCompleted": "Alle Gewohnheiten erledigt!",
   "habitsCardBuildDailyHabits": "Tägliche Gewohnheiten aufbauen",
-  "habitsCardCompletedCount": "Abgeschlossen {arg0} {arg1}",
-  "habitsCardDayStreak": "{arg0} Tage in Folge",
+  "habitsCardCompletedCount": "{arg0}/{arg1} abgeschlossen",
+  "habitsCardDayStreak": "{arg0} Tage Serie",
   "habitsCardFailedToLoadHabits": "Gewohnheiten konnten nicht geladen werden",
   "habitsCardGreatJobKeepingUp": "Tolle Arbeit, deine Serien beizubehalten",
   "habitsCardQuickStart": "Schnellstart:",
@@ -20079,7 +19824,7 @@
   "habitsCardTodaySHabits": "Heutige Gewohnheiten",
   "habitsCardTryAgain": "Erneut versuchen",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Alle Gewohnheiten anzeigen {arg0}",
+  "habitsCardViewAllHabits": "Alle {arg0} Gewohnheiten ansehen",
   "habitsCompleted": "Erledigt",
   "habitsDeleteHabit": "Gewohnheit löschen?",
   "habitsHoldToReorderSwipe": "Halten zum Sortieren • Wischen zum Löschen",
@@ -20507,7 +20252,6 @@
   "homeEmptyWorkout_v2": "Ruhetag? Oder bereit für Bewegung? Deine Entscheidung.",
   "homeEmptyWorkout_v3": "Zwischen Programmen — starte ein neues, um wieder reinzukommen.",
   "homeEmptyWorkout_v4": "Noch kein Plan. Lass die KI einen passend zu deinen Zielen erstellen.",
-  "homeFromHealthConnect": ") von Health Connect",
   "homeGreetingAfternoon_v1": "Energie am Nachmittag, {name}!",
   "homeGreetingAfternoon_v2": "Hi {name}, Zeit für Bewegung?",
   "homeGreetingAfternoon_v3": "Dehnpause, {name}?",
@@ -21087,13 +20831,11 @@
   "insightsSummaryTemplateCalories": "KALORIEN",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "ZUSAMMENFASSUNG",
-  "insightsSummaryTemplateValue": "{pct}%",
   "insightsSummaryTemplateWorkouts": "TRAININGSEINHEITEN",
   "intensityPrompt1Left": "1 übrig",
   "intensityPrompt2Left": "2 übrig",
   "intensityPrompt3Left": "3+ übrig",
   "intensityPromptHard": "Hart",
-  "intensityPromptHideRpeSlideDial": "RPE-Schieberegler ausblenden      Einstellen (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Wie hart war dieser Satz?",
   "intensityPromptMax": "Max",
   "intensityPromptModerate": "Moderat",
@@ -21101,7 +20843,6 @@
   "intensityPromptSheetSet": "Satz {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "Ein KI-Coach, der den Plan erstellt, deinen Körper kennenlernt und jede Woche Anpassungen vornimmt.",
   "introBuildMyPlan": "Meinen Plan erstellen",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) Sätze",
   "introCardMonth": "Monat.",
   "introIAlreadyHaveAnAccount": "Ich habe bereits ein Konto",
   "introScreenV": "v{_appVersion}",
@@ -21391,7 +21132,6 @@
   "logMealSheetBarcode": "Barcode",
   "logMealSheetBarcodeScan": "Barcode-Scan",
   "logMealSheetCached": "(im Cache)",
-  "logMealSheetCaptured": ") erfasst",
   "logMealSheetChooseFoodPhotos": "Wählen Sie Food-Fotos",
   "logMealSheetChooseFromGallery": "Aus Galerie wählen",
   "logMealSheetChooseFromLibrary": "Aus Bibliothek wählen",
@@ -21552,7 +21292,6 @@
   "logWeightSheetDAvg": "7-Tage-Durchschnitt · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} von deinem vorherigen Tiefstwert",
   "logWeightSheetValidRange": "Gültiger Bereich: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": "{changeInUnit}",
   "logWeightSyncedFromAppleHealth": "Synchronisiert von Apple Gesundheit",
   "logWeightSyncedToAppleHealth": "Synchronisiert mit Apple Gesundheit",
   "logWeightTapToEdit": "Zum Bearbeiten tippen",
@@ -21677,7 +21416,7 @@
   "logoutSignOut2": "Abmelden?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Makros",
-  "mainShellPartChatsLeftToday": "Chats heute übrig: {arg0}",
+  "mainShellPartChatsLeftToday": "Noch {arg0} Chats heute",
   "mainShellPartGuestMode": "Gastmodus",
   "mainShellPartQuickActions": "Schnellaktionen",
   "mainShellPartSignUp": "Registrieren",
@@ -21690,7 +21429,6 @@
   "manageDuplicateImportsPrimary": "Primär",
   "manageDuplicateImportsScreenSources": "{length} Quellen",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(Zeile)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Von Gruppe trennen",
   "manageDuplicateImportsUnlinkedFromGroup": "Von Gruppe getrennt",
   "manageGymProfilesActive": "Aktiv",
@@ -21949,7 +21687,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} weitere",
   "menuAnalysisSheetSelected": "{length} ausgewählt",
   "menuAnalysisSheetSort": "Sortieren: {label}",
-  "menuAnalysisSheetValue": ")(verstrichen)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Du hast bereits ein Menü für \"{restaurantName}\" gespeichert",
   "menuAnalysisSort": "Sortieren:",
@@ -22075,7 +21812,7 @@
   "metricsDashboardMetricType": "METRIKTYP",
   "metricsDashboardMuscleMass": "Muskelmasse",
   "metricsDashboardNoDataAvailable": "Keine Daten verfügbar",
-  "metricsDashboardNoMetricDataYet": "Noch keine Messdaten {arg0}",
+  "metricsDashboardNoMetricDataYet": "Noch keine {arg0}-Daten",
   "metricsDashboardQuickStats": "SCHNELLSTATISTIKEN",
   "metricsDashboardRestingHeartRate": "Ruheherzfrequenz",
   "metricsDashboardRestingHr": "Ruhepuls",
@@ -22266,7 +22003,7 @@
   "muscleHeatmapOther": "Sonstige",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Absolviere Workouts, um Muskeldaten zu sehen",
   "muscleHeatmapTileCouldnTLoad": "Laden fehlgeschlagen",
-  "muscleHeatmapTileMostTrained": "Meist trainiert {arg0}",
+  "muscleHeatmapTileMostTrained": "Am meisten trainiert: {arg0}",
   "muscleHeatmapTileMuscles": "Muskeln",
   "muscleHeatmapTileRetry": "Wiederholen",
   "muscleHeatmapUpperBody": "Oberkörper",
@@ -22383,7 +22120,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Favoriten ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Grundlagen ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Bestwert: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Letzte Aktivität",
   "myLibraryTabViewAll": "Alle anzeigen",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22463,14 +22199,14 @@
   "neatGamificationWidgetsCasualMover": "Gelegentlicher Beweger",
   "neatGamificationWidgetsClaimReward": "Belohnung einfordern",
   "neatGamificationWidgetsCouchPotato": "Couch-Potato",
-  "neatGamificationWidgetsCurrentXp": "Aktuelle XP {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Tägliche Herausforderung",
   "neatGamificationWidgetsExpired": "Abgelaufen",
-  "neatGamificationWidgetsHoursMinutesLeft": "{arg0} Std. {arg1} Min. übrig",
+  "neatGamificationWidgetsHoursMinutesLeft": "Noch {arg0}h {arg1}m",
   "neatGamificationWidgetsLevel": "Level {level}",
   "neatGamificationWidgetsLevelUp": "LEVEL UP!",
   "neatGamificationWidgetsMaxLevel": "Maximales Level!",
-  "neatGamificationWidgetsMinutesLeft": "{arg0} Min. übrig",
+  "neatGamificationWidgetsMinutesLeft": "Noch {arg0}m",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Champion",
   "neatGamificationWidgetsNeatEnthusiast": "Enthusiast",
@@ -22478,9 +22214,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Noch keine Ranglisten diese Woche",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Punktzahl",
-  "neatGamificationWidgetsStepGoal": "Schrittziel {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Schritte",
-  "neatGamificationWidgetsTargetActiveHours": "Ziel aktive Stunden {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} Std.",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22494,7 +22230,6 @@
   "neatScoreDisplayScoreBreakdown": "SCORE-AUFSCHLÜSSELUNG",
   "neatScoreDisplayTapForBreakdown": "Tippen für Aufschlüsselung",
   "neatScoreDisplayTrend": "Trend: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Wird geladen...",
   "netflixExerciseCarouselSeeAll": "Alle anzeigen",
   "netflixExercisesAddYourOwnExercises": "Füge deine eigenen Übungen mit benutzerdefinierten Wiederholungen, Sätzen und Anleitungen hinzu.",
@@ -22561,8 +22296,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Optimaler nächster Satz wird berechnet...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% Intensität",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Letzter Satz",
   "nextSetPreviewKg": " kg",
@@ -22725,7 +22458,6 @@
   "nutrientExplorerTopContributors": "TOP-BEITRÄGE",
   "nutrientExplorerUnknown": "Unbekannt",
   "nutrientExplorerUnpinNutrient": "Nährstoff lösen",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VITAMINE",
   "nutrientRushGameCatchTheGoldenZealova": "Fange das goldene Zealova-Symbol für ein Power-up!",
   "nutrientRushGameNewBest": "🎉 NEUER BESTWERT!",
@@ -22993,11 +22725,9 @@
   "nutritionTabPartWeeklyOverview": "Wöchentliche Übersicht",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "Ø {averageDailyCalories} Kal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Ø Zufuhr: {avgIntake} Kal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) Kal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "Kal/Tag {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Gewicht: {formattedWeeklyRate}",
@@ -23044,30 +22774,29 @@
   "openAllCrates24HoursOf2xXp": "24 Stunden 2x XP",
   "openAllCratesActivityCrate": "Aktivitäts-Kiste",
   "openAllCratesBonusCrateToOpen": "Bonus-Kiste zum Öffnen",
-  "openAllCratesCollect": "Sammeln {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Kisten geöffnet {arg0}",
+  "openAllCratesCollect": "Einsammeln ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} Kisten geöffnet!",
   "openAllCratesDailyCrate": "Tägliche Kiste",
   "openAllCratesDone": "Fertig",
   "openAllCratesDoubleXpToken": "Doppel-XP-Token",
   "openAllCratesFailedToOpenCrates": "Öffnen der Kisten fehlgeschlagen. Bitte versuche es erneut.",
   "openAllCratesFitnessCrate": "Fitness-Kiste",
-  "openAllCratesGainedXp": "XP erhalten {arg0}",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Maximales Level",
-  "openAllCratesOpenYourCrates": "Öffne deine Kisten",
-  "openAllCratesOpened": ") geöffnet!",
-  "openAllCratesOpeningYourCrates": "Öffne deine Kisten",
-  "openAllCratesPickRewardPerDay": "Wähle Belohnung pro Tag {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Wähle deine Belohnung {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Öffne deine Kisten",
+  "openAllCratesOpeningYourCrates": "🎁 Deine Kisten werden geöffnet…",
+  "openAllCratesPickRewardPerDay": "Wähle 1 Belohnung pro Tag • {arg0}/{arg1} gewählt",
+  "openAllCratesPickYourReward": "Wähle deine Belohnung • {arg0}/{arg1} gewählt",
   "openAllCratesProtectYourStreak": "Schütze deine Serie",
   "openAllCratesSelectAll": "Alle auswählen",
-  "openAllCratesStreakCrate": "Streak-Kiste",
-  "openAllCratesStreakShield": "Streak-Schild",
+  "openAllCratesStreakCrate": "Serien-Kiste",
+  "openAllCratesStreakShield": "Serien-Schild",
   "openAllCratesToday": "Heute",
-  "openAllCratesTotalXpFormatted": "Gesamt-XP {arg0}",
-  "openAllCratesTotalXpLevel": "Gesamt-XP Level {arg0} {arg1}",
-  "openAllCratesUd83cUdf89Rewards": "\\uD83C\\uDF89 Belohnungen!",
-  "openAllCratesXpInLevel": "XP in Level {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP bis zum nächsten Level {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} insgesamt",
+  "openAllCratesTotalXpLevel": "Gesamt: {arg0} XP • Level {arg1}",
+  "openAllCratesUd83cUdf89Rewards": "🎉 Belohnungen!",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP bis Level {arg1}",
   "openAllCratesYesterday": "Gestern",
   "overallScoreHeroOverall": "GESAMT",
   "overviewActiveSkill": "AKTIVE FÄHIGKEIT",
@@ -23308,7 +23037,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Deine Gym-Persönlichkeit ist...",
   "phaseRecommendationBannerBasedOn": "Basierend auf: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-Konfidenzschätzung\" : \"\")",
   "phaseRecommendationBannerCycleDay": "Zyklustag {cycleDay}",
   "phaseRecommendationBannerEvidence": "Beleg: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Verstanden",
@@ -23421,9 +23149,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Kraftfundament aufbauen",
   "planPreviewScreenBuildingYour4Week": "Dein 4-Wochen-Plan wird erstellt...",
   "planPreviewScreenContinueFree": "Kostenlos fortfahren",
-  "planPreviewScreenDaysPerWeek": "Tage pro Woche {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} Tage/Woche",
   "planPreviewScreenDesignedBasedOnYour": "Basierend auf deinen Quiz-Antworten entwickelt",
-  "planPreviewScreenEquipmentCount": "Anzahl der Geräte {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} Geräte",
   "planPreviewScreenExercisesMin": "Übungen min {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Intensität und Volumen steigern",
   "planPreviewScreenMasterTheMovement": "Die Bewegung meistern",
@@ -23517,7 +23245,6 @@
   "prInlineCelebrationPersonalRecords": "{length} persönliche Rekorde!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") VOM LETZTEN",
   "prShareCardCopiedToClipboard": "In die Zwischenablage kopiert!",
   "prShareCardCopyText": "Text kopieren",
   "prShareCardFailedToCaptureImage": "Bildaufnahme fehlgeschlagen",
@@ -23950,7 +23677,6 @@
   "prsTemplateKeepPushing": "Bleib dran!",
   "prsTemplateNewPersonalRecords": "NEUE PERSÖNLICHE REKORDE",
   "prsTemplateNewPrsAreJust": "Neue PRs sind gleich um die Ecke",
-  "prsTemplateValue": ") (Einheit)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Zutaten",
   "publicRecipeInstructions": "Anleitung",
@@ -24070,7 +23796,7 @@
   "quickLogMeasurementsTapToViewFull": "Tippen, um den vollständigen Verlauf und Trends anzuzeigen",
   "quickLogMeasurementsTrackYourBodyChanges": "Verfolge deine körperlichen Veränderungen im Laufe der Zeit",
   "quickLogMeasurementsUpdate": "Aktualisieren",
-  "quickLogMeasurementsUpdatedDaysAgo": "Vor {arg0} Tagen",
+  "quickLogMeasurementsUpdatedDaysAgo": "Vor {arg0} Tagen aktualisiert",
   "quickLogMeasurementsUpdatedToday": "Heute",
   "quickLogMeasurementsUpdatedYesterday": "Gestern",
   "quickLogMeasurementsWaist": "Taille",
@@ -24196,16 +23922,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "KI erstellt Workouts innerhalb deines gewählten Bereichs",
   "quizDaysSelectorBest": "Am besten",
   "quizDaysSelectorConsistencyBeatsIntensity": "Beständigkeit schlägt Intensität – wähle, was du durchhalten kannst",
-  "quizDaysSelectorDays": "Tage {arg0}",
-  "quizDaysSelectorDaysSelected": "Ausgewählte Tage {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") für deine Workouts",
+  "quizDaysSelectorDays": "{arg0, plural, one {Tag} other {Tage}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} Tage ausgewählt",
   "quizDaysSelectorFri": "Fr",
   "quizDaysSelectorHowLongAreYour": "Wie lange dauern deine Workouts?",
   "quizDaysSelectorHowManyDaysPer": "Wie viele Tage pro Woche kannst du trainieren?",
   "quizDaysSelectorMin": "Min",
   "quizDaysSelectorMon": "Mo",
   "quizDaysSelectorSat": "Sa",
-  "quizDaysSelectorSelectNDays": "Wähle {arg0} Tage",
+  "quizDaysSelectorSelectNDays": "Wähle {arg0} Tage, die dir passen",
   "quizDaysSelectorSun": "So",
   "quizDaysSelectorThu": "Do",
   "quizDaysSelectorTue": "Di",
@@ -24235,13 +23960,13 @@
   "quizEquipmentHomeGym": "Heim-Fitnessstudio",
   "quizEquipmentHomeKettlebell": "Zuhause + Kettlebell",
   "quizEquipmentHotel": "Hotel",
-  "quizEquipmentIdentifiedCount": "Identifizierte Anzahl {arg0}",
+  "quizEquipmentIdentifiedCount": "{arg0} Elemente erkannt. Tippe auf eines, um die Auswahl aufzuheben.",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "Medizinball",
   "quizEquipmentMinimalEquipmentBodyweight": "Minimale Ausrüstung - Eigengewicht, Matte",
   "quizEquipmentNeededForBarbell": "Benötigt für Langhantel",
   "quizEquipmentNoEquipmentIdentifiedPick": "Keine Ausrüstung identifiziert. Wähle aus der Liste unten.",
-  "quizEquipmentOtherCount": "Andere Anzahl {arg0}",
+  "quizEquipmentOtherCount": "{arg0} ausgewählt",
   "quizEquipmentOtherEquipment": "Sonstige Ausrüstung",
   "quizEquipmentPullUpBar": "Klimmzugstange",
   "quizEquipmentQuickPresets": "Schnelle Voreinstellungen",
@@ -24507,7 +24232,6 @@
   "recipeCreateRecipeNameRequired": "Rezeptname erforderlich",
   "recipeCreateRemovePhoto": "Foto entfernen",
   "recipeCreateSaving": "Wird gespeichert...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Foto aufnehmen",
   "recipeCreateTapToEdit": "Zum Bearbeiten tippen",
@@ -24533,7 +24257,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Pro Portion (×{servings} Portionen)",
   "recipeDetailScreenUForkedFrom": "✨ Abgeleitet von {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" wird dauerhaft entfernt.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Kuratiertes Rezept",
   "recipeDetailView": "Ansehen",
@@ -24749,11 +24472,11 @@
   "regenerateSheetBuildingYourWorkout": "Erstelle dein Training…",
   "regenerateSheetCheckingEquipment": "Überprüfe Ausrüstung",
   "regenerateSheetCheckingPreferences": "Einstellungen werden geprüft",
-  "regenerateSheetConnectingToTheAi": "Verbindung zur KI wird hergestellt",
+  "regenerateSheetConnectingToTheAi": "Verbindung zur KI",
   "regenerateSheetConsideringFocusAreas": "Fokusbereiche werden berücksichtigt",
   "regenerateSheetCustomize": "Anpassen",
   "regenerateSheetCustomizeOrLetAi": "Anpassen oder KI-Vorschläge nutzen",
-  "regenerateSheetCustomizeOrLetAiSuggest": "Anpassen oder KI-Vorschlag nutzen",
+  "regenerateSheetCustomizeOrLetAiSuggest": "Anpassen oder die KI vorschlagen lassen",
   "regenerateSheetDescribeYourIdealWorkout": "Beschreibe dein ideales Training",
   "regenerateSheetDesigningYourWorkout": "Dein Workout wird entworfen",
   "regenerateSheetDialingInSetsAndReps": "Sätze und Wiederholungen werden festgelegt",
@@ -24765,7 +24488,7 @@
   "regenerateSheetFinalizingDetails": "Finalisiere Details…",
   "regenerateSheetFinalizingYourWorkout": "Dein Workout wird fertiggestellt",
   "regenerateSheetFineTuningTheDetails": "Details werden verfeinert",
-  "regenerateSheetGeneratingElapsed": "Generierung läuft seit {arg0}",
+  "regenerateSheetGeneratingElapsed": "Wird generiert… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Vorschläge werden generiert…",
   "regenerateSheetGetSuggestions": "Vorschläge erhalten",
   "regenerateSheetGettingCreative": "Werde kreativ",
@@ -24991,21 +24714,20 @@
   "restSuggestionCardUseSuggested": "Vorschlag verwenden",
   "restSuggestionQuick": "Kurz",
   "restSuggestionQuickRest": "Kurze Pause",
-  "restSuggestionSaveTime": "Zeit sparen {arg0}",
+  "restSuggestionSaveTime": "Spare {arg0}",
   "restSuggestionSuggested": "Vorgeschlagen",
   "restSuggestionUseSuggested": "Vorschlag verwenden",
   "restTimerCardBaseRest": "Basis-Pause",
   "restTimerCardControlRestPeriodsBetween": "Pausenzeiten zwischen Sätzen steuern",
   "restTimerCardCustomRestTimer": "Benutzerdefinierter Pausentimer",
   "restTimerCardFormula": "Formel",
-  "restTimerCardFormulaBaserestRpe7": "Formel: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Live-Vorschau",
   "restTimerCardMultiplier": "Multiplikator",
   "restTimerCardRestBaserestRpe7": "Pause = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "Variablen: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Variablen: Basis, RPE, Multiplikator, Stufe",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "KI-GEWICHTS-COACH",
   "restTimerOverlayAnalyzingYourPerformance": "Analysiere deine Leistung...",
@@ -25098,7 +24820,7 @@
   "rtpGraduated": "Abgeschlossen",
   "rtpTitle": "Rückkehr ins Training",
   "safetyDisclaimerBannerDismissDisclaimer": "Hinweis schließen",
-  "safetyDisclaimerBannerInjuriesFlagged": "Verletzungen markiert {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} Verletzungen markiert",
   "safetyDisclaimerBannerInjuryBody": "Verletzungsbereich",
   "safetyDisclaimerBannerLearnMore": "Mehr erfahren",
   "safetyDisclaimerBannerMore": "+{overflow} weitere",
@@ -25291,7 +25013,6 @@
   "sessionDetailSet": "Satz",
   "sessionDetailSetCount": "{count, plural, other{{count} Sätze}} · Top-Satz hervorgehoben",
   "sessionDetailTime": "Zeit",
-  "sessionDetailTopSetHighlighted": ") • Top-Satz hervorgehoben",
   "sessionDetailWeight": "Gewicht",
   "setAdjustmentAdditionalNotesOptional": "Zusätzliche Notizen (optional)",
   "setAdjustmentConfirm": "Bestätigen",
@@ -25307,7 +25028,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} erledigt",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} verbleibend",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} entfernt",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") von (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "von {totalSets} geplant",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} Sätze abgeschlossen",
   "setAdjustmentSheetReps": "Wiederholungen",
@@ -25372,7 +25092,6 @@
   "setTrackingSectionSetTapToExpand": "Satz {currentSetNumber}/{totalSets} • Tippen zum Erweitern",
   "setTrackingSectionSets": "{widget} Sätze",
   "setTrackingSectionSetsCompleted": "{length} Sätze abgeschlossen",
-  "setTrackingSectionValue": ")×(Wdh)",
   "setTrackingSheetsAmountToAdjustWeight": "Betrag zur Gewichtsanpassung",
   "setTrackingSheetsDropSet": "Drop-Set",
   "setTrackingSheetsExerciseHistory": "Übungshistorie",
@@ -25555,7 +25274,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} Support-Anfrage",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} Tage",
   "settingsScreenUiNoSettingsFound": "Keine Einstellungen gefunden",
-  "settingsScreenUiTryDifferentKeywordsLike": "Versuche es mit anderen Suchbegriffen wie \"Thema\", \"Benachrichtigungen\" oder \"KI-Stimme\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Versuche andere Stichwörter wie „Design“, „Benachrichtigungen“ oder „KI-Stimme“",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Einstellungen suchen",
   "settingsSetProgressionResearch": "Progression & Forschung einstellen",
@@ -25600,7 +25319,7 @@
   "shareInsightsSheetMyReport": "Mein {appName} {periodName}-Bericht",
   "shareInsightsSheetMyReport2": "Mein {appName}-Bericht",
   "shareMotivationalCompleted": "ABGESCHLOSSEN",
-  "sharePrNewPr": "Neuer PR",
+  "sharePrNewPr": "NEUER PR",
   "shareStatsCalories": "Kalorien",
   "shareStatsDuration": "Dauer",
   "shareStatsEliteTemplate": "ELITE-VORLAGE",
@@ -26029,7 +25748,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "BELOHNUNGEN",
   "streakMilestoneStreakMilestone": "SERIEN-MEILENSTEIN!",
-  "streakMilestoneToGo": ") noch!",
   "streakMilestoneYouVeReachedThe": "Du hast den ultimativen Serien-Meilenstein erreicht!",
   "streakSavedDialogWeUsedStreakShield": "Wir haben 1 Streak Shield verwendet, um deine {savedStreakCount}-Tage-Serie zu erhalten.",
   "streakSavedKeepItGoing": "Weiter so",
@@ -26551,16 +26269,16 @@
   "todayScoreCardConnect": "Verbinden",
   "todayScoreCardCustomize": "ANPASSEN",
   "todayScoreCardToday": "Heute",
-  "todayScoreDetailDown": "Runter {arg0}",
-  "todayScoreDetailEarnedPts": "Verdiente Punkte {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ {arg0} weniger als heute Morgen",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} Pkt.",
   "todayScoreDetailHowItWorks": "So funktioniert es",
-  "todayScoreDetailInactiveExplanation": "Inaktivitäts-Erklärung {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Momentum mit Durchschnitt {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {wird} other {werden}} heute nicht gezählt, daher teilt sich der Rest die vollen 100 Punkte. Deine Punktzahl spiegelt immer nur das wider, was heute tatsächlich zutrifft.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  7-Tage-Durchschnitt {arg1}",
   "todayScoreDetailNotCounted": "Nicht gezählt",
   "todayScoreDetailSetupText": "Setup-Text",
   "todayScoreDetailSteady": "Stetig",
   "todayScoreDetailTodayScore": "Heute-Score",
-  "todayScoreDetailUp": "Rauf {arg0}",
+  "todayScoreDetailUp": "▲ {arg0} mehr als heute Morgen",
   "todayScoreSetupAddAWorkoutPlan": "Trainingsplan hinzufügen",
   "todayScoreSetupCardContinue": "Weiter: {label}",
   "todayScoreSetupCardGetStarted": "LOS GEHT'S · {completedCount}/{length}",
@@ -26689,20 +26407,19 @@
   "trophiesEarnedCardioAchievements": "Cardio-Erfolge",
   "trophiesEarnedDayStreak": "Tages-Serie",
   "trophiesEarnedFirstTime": "ERSTES MAL!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Meilenstein erreicht",
   "trophiesEarnedMilestoneReachedNice": "Meilenstein erreicht — gut gemacht!",
   "trophiesEarnedMilestones": "Meilensteine",
-  "trophiesEarnedNewBadges": "Abzeichen {arg0}",
-  "trophiesEarnedNewCardioPRs": "Cardio-PRs {arg0}",
-  "trophiesEarnedNewPR": "Neuer PR",
-  "trophiesEarnedNewPRs": "PRs {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} neue Abzeichen",
+  "trophiesEarnedNewCardioPRs": "{arg0} neue Cardio-PRs",
+  "trophiesEarnedNewPR": "NEUER PR",
+  "trophiesEarnedNewPRs": "{arg0} neue PRs!",
   "trophiesEarnedNewPr": "NEUER PR",
   "trophiesEarnedNextMilestones": "Nächste Meilensteine",
   "trophiesEarnedNoNewRecords": "Keine neuen Rekorde",
   "trophiesEarnedNoNewRecordsThis": "Keine neuen Rekorde in dieser Einheit — hier ist, worauf du hinarbeitest:",
   "trophiesEarnedPersonalRecords": "Persönliche Rekorde",
-  "trophiesEarnedRemainingToUnlock": "Verbleibend bis zum Freischalten {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "Noch {arg0} {arg1} zum Freischalten",
   "trophiesEarnedSessionHighlights": "Session-Highlights",
   "trophiesEarnedSheetPts": "+{points} Pkt.",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26755,7 +26472,7 @@
   "typingIndicatorIsTyping2": "{userName} schreibt",
   "typingIndicatorIsTyping3": "{agentName} schreibt...",
   "unifiedHomeWidgetsActivity": "AKTIVITÄT",
-  "unifiedHomeWidgetsBreakfastLogged": "Frühstück protokolliert: {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Frühstück an {arg0} der letzten 7 Morgen erfasst",
   "unifiedHomeWidgetsBreakfastSuggestion": "Frühstücksvorschlag",
   "unifiedHomeWidgetsCarbs": "Kohlenhydrate",
   "unifiedHomeWidgetsConnect": "Verbinden",
@@ -26768,7 +26485,7 @@
   "unifiedHomeWidgetsFat": "Fett",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal gesamt heute",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal verbrannt",
   "unifiedHomeWidgetsKcalLeft": " kcal übrig",
   "unifiedHomeWidgetsLastNight": "letzte Nacht",
   "unifiedHomeWidgetsLog16oz": "16oz protokollieren",
@@ -26970,7 +26687,7 @@
   "weekDurationSelectorW": "{first}W",
   "weekDurationSelectorWeeks": "{selectedWeeks} Wochen",
   "weekDurationSelectorWk": "{spw}/Woche",
-  "weekProgressStripCompletedCount": "Abgeschlossen {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg0} von {arg1} Workouts abgeschlossen",
   "weekProgressStripCouldNotLoadProgress": "Fortschritt konnte nicht geladen werden",
   "weekProgressStripLoading": "Wird geladen...",
   "weekProgressStripNoWorkoutsScheduled": "Keine Workouts geplant",
@@ -27160,8 +26877,8 @@
   "weightTrackingCardSeeAll": "Alle anzeigen",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Gewichtstracking",
-  "weightTrendCardDownThisWeek": "Diese Woche runter {arg0}",
-  "weightTrendCardDownVsLastCycle": "Runter vs. letzter Zyklus {arg0}",
+  "weightTrendCardDownThisWeek": "{arg0} weniger diese Woche!",
+  "weightTrendCardDownVsLastCycle": "{arg0} lbs weniger als am selben Zyklustag im letzten Monat",
   "weightTrendCardLoadingWeight": "Gewicht wird geladen...",
   "weightTrendCardLogYourWeightTo": "Trage dein Gewicht ein, um Trends zu sehen",
   "weightTrendCardMaintaining": "Gewicht halten",
@@ -27172,9 +26889,9 @@
   "weightTrendCardSameAsLastCycle": "Gleich wie letzter Zyklus",
   "weightTrendCardTapToLogWeight": "Tippen, um Gewicht zu protokollieren",
   "weightTrendCardTargetHeld": "Ziel gehalten",
-  "weightTrendCardTargetHeldWindow": "Ziel gehalten Fenster {arg0}",
-  "weightTrendCardUpThisWeek": "Diese Woche rauf {arg0}",
-  "weightTrendCardUpVsLastCycle": "Rauf vs. letzter Zyklus {arg0}",
+  "weightTrendCardTargetHeldWindow": "Ziel gehalten {arg0} — luteale Wassereinlagerung geglättet",
+  "weightTrendCardUpThisWeek": "{arg0} mehr diese Woche",
+  "weightTrendCardUpVsLastCycle": "{arg0} lbs mehr als am selben Zyklustag im letzten Monat",
   "weightTrendCardWeightStableThisWeek": "Gewicht diese Woche stabil",
   "weightTrendCardWeightTrends": "Gewichtstrends",
   "welcomeAffirmationGreatChoice": "Gute Wahl.",
@@ -27221,7 +26938,6 @@
   "workoutActionsRevertToThisVersion": "Zu dieser Version zurückkehren?",
   "workoutActionsShareWorkout": "Training teilen",
   "workoutActionsSheetGetALinkFor": "Hole dir einen {marketingDomain}-Link für Freunde",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "\"{name}\" wiederherstellen?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27310,7 +27026,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} Wdh.",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} Sätze, {currentReps} Wdh.",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Freunde können derzeit nicht herausgefordert werden",
   "workoutCompleteScreenUnableToExtendWorkout": "Training kann nicht verlängert werden",
   "workoutCompleteScreenViewAllMetrics": "Alle Metriken anzeigen",
@@ -27374,12 +27089,11 @@
   "workoutDetailEquipment": "AUSRÜSTUNG",
   "workoutDetailExercises": "ÜBUNGEN",
   "workoutDetailFailedToLoadWorkout": "Training konnte nicht geladen werden",
-  "workoutDetailHelpersForAvailableEquipment": ") für verfügbare Ausrüstung...",
   "workoutDetailHelpersHell": "Hölle",
   "workoutDetailHelpersUpdatingExercises": "Übungen aktualisieren",
   "workoutDetailMoreInfo": "WEITERE INFORMATIONEN",
   "workoutDetailProgram": "Programm",
-  "workoutDetailReplacingExercises": "Ersetze Übungen {arg0}",
+  "workoutDetailReplacingExercises": "{arg0} Übungen werden an die verfügbaren Geräte angepasst…",
   "workoutDetailRevert": "Zurücksetzen",
   "workoutDetailScreenBreakSuperset": "Supersatz brechen?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} kcal verbrannt",
@@ -27508,7 +27222,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "In welcher Einheit steht die Gewichtsspalte? Und wenn Sie die Quell-App kennen, wählen Sie sie aus – hilft bei der Unterscheidung von Geschwisterformaten (Hevy vs. starke CSVs).",
   "workoutHistoryImportYourStrengthData": "Ihre Kraftdaten",
-  "workoutImportAsDone": ")\" als erledigt",
   "workoutImportCalories": "Kalorien",
   "workoutImportCardio": "Cardio",
   "workoutImportCycling": "Radfahren",
@@ -27516,7 +27229,7 @@
   "workoutImportDuration": "Dauer",
   "workoutImportEasy": "Leicht",
   "workoutImportFlexibility": "Flexibilität",
-  "workoutImportFromSource": "Von Quelle {arg0}",
+  "workoutImportFromSource": "aus {arg0}",
   "workoutImportHard": "Schwer",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Wie schwer war dieses Training?",
@@ -27601,13 +27314,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Möglicherweise werden Ihnen diese Systemaufforderungen während Ihres Trainings angezeigt. Beides ist optional – überspringen Sie eines davon und das Training funktioniert weiterhin.",
   "workoutPlanDrawerAddExercise": "Übung hinzufügen",
   "workoutPlanDrawerCurrent": "Aktuell",
-  "workoutPlanDrawerExerciseCount": "Übungsanzahl {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") protokolliert. Sie werden gelöscht.",
+  "workoutPlanDrawerExerciseCount": "{arg0} Übungen",
   "workoutPlanDrawerNow": "Jetzt",
   "workoutPlanDrawerRemove": "Entfernen",
-  "workoutPlanDrawerRemoveExercise": "Übung {arg0} entfernen",
+  "workoutPlanDrawerRemoveExercise": "{arg0} entfernen?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Übung entfernen",
-  "workoutPlanDrawerSetsLogged": "Sätze protokolliert {arg0}",
+  "workoutPlanDrawerSetsLogged": "Du hast {arg0} Sätze erfasst. Sie werden gelöscht.",
   "workoutPlanDrawerSwapExercise": "Übung austauschen",
   "workoutPlanDrawerTitle": "Titel",
   "workoutPlanDrawerWorkoutPlan": "Trainingsplan",
@@ -27753,7 +27465,7 @@
   "workoutShowcaseLinearLabel": "Lineares Label",
   "workoutShowcaseLogAllSets": "Alle Sätze",
   "workoutShowcaseLogDrink": "Log-Drink",
-  "workoutShowcaseLogSet": "Satz {arg0}",
+  "workoutShowcaseLogSet": "✓ Satz {arg0} erfassen",
   "workoutShowcaseLogWater": "Wasser protokollieren",
   "workoutShowcaseMovedThisSession": "in dieser Einheit bewegt",
   "workoutShowcaseNewPr": "NEU PR",
@@ -27768,7 +27480,6 @@
   "workoutShowcaseReps": "Vertreter",
   "workoutShowcaseScreenDay": "Tag {day}",
   "workoutShowcaseScreenDuration": "DAUER: {duration}",
-  "workoutShowcaseScreenPrs": "PRS:      {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · EINGETRAGEN",
   "workoutShowcaseScreenSession": "SESSION: {title}",
   "workoutShowcaseScreenTotalPrs": "GESAMT  {duration} · {volume} · {prs} PRS",
@@ -28028,20 +27739,20 @@
   "xpGoalsDaily": "Täglich",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 Level über 11 Stufen",
   "xpGoalsDialogBeginnerToTranscendent": "Vom Anfänger zum Transzendenten",
-  "xpGoalsDialogCompleteWorkoutXp": "XP für abgeschlossenes Workout",
+  "xpGoalsDialogCompleteWorkoutXp": "Workout abschließen: +100 XP",
   "xpGoalsDialogDailyGoals": "Tägliche Ziele",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "XP für ersten Chat mit AI Coach",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "XP für erste Mahlzeiten- und Gewichtsmessung",
-  "xpGoalsDialogFirstPrXp": "XP für ersten PR",
-  "xpGoalsDialogFirstProgressPhotoXp": "XP für erstes Fortschrittsfoto",
-  "xpGoalsDialogFirstProteinGoalXp": "XP für erstes Proteinziel",
-  "xpGoalsDialogFirstWorkoutXp": "XP für erstes Workout",
-  "xpGoalsDialogHitProteinGoalXp": "XP für erreichtes Proteinziel",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Erster Chat mit dem KI-Coach: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Erste Mahlzeit/Gewicht/Maße: je +50 XP",
+  "xpGoalsDialogFirstPrXp": "Erster PR: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Erstes Fortschrittsfoto: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Erstes Proteinziel: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Erstes Workout: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Proteinziel erreichen: +50 XP",
   "xpGoalsDialogLevels": "Level",
-  "xpGoalsDialogLogBodyMeasurementsXp": "XP für Körpermaße",
-  "xpGoalsDialogLogMealXp": "XP für Mahlzeit",
-  "xpGoalsDialogLogWeightXp": "XP für Gewicht",
-  "xpGoalsDialogLoginXp": "XP für Login",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Körpermaße erfassen: +20 XP",
+  "xpGoalsDialogLogMealXp": "Mahlzeit erfassen: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Gewicht erfassen: +15 XP",
+  "xpGoalsDialogLoginXp": "Anmeldung: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Meilenstein-Belohnungen",
   "xpGoalsFirstTimeBonuses": "Erstmalige Boni",
   "xpGoalsGotIt": "Verstanden!",
@@ -28065,7 +27776,7 @@
   "xpGoalsScreenHitProteinGoal": "Erreiche Proteinziel",
   "xpGoalsScreenInventory": "Inventar",
   "xpGoalsScreenLegendary": "LEGENDÄR",
-  "xpGoalsScreenLevelCurrentTotal": "Aktueller Level-Gesamtstand {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Level {arg0} • 249 Level insgesamt",
   "xpGoalsScreenLevelProgress": "Level-Fortschritt",
   "xpGoalsScreenLogBodyMeasurements": "Körpermaße protokollieren",
   "xpGoalsScreenLogFirstMeal": "Erste Mahlzeit protokollieren",
@@ -28094,10 +27805,10 @@
   "xpGoalsTrophyRoom": "Trophäenraum",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Wöchentlich",
-  "xpGoalsXpAvailable": "Verfügbar {arg0}",
-  "xpGoalsXpEarnedToday": "Heute verdient {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP verfügbar",
+  "xpGoalsXpEarnedToday": "+{arg0} XP heute verdient",
   "xpGoalsXpGoals": "XP-Ziele",
-  "xpGoalsXpMultiplierActive": "Multiplikator aktiv {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP aktiv!",
   "xpHeroTileDayStreak": "{streak}-Tage-Serie",
   "xpHeroTileLv": "Lv {level}",
   "xpHeroTileLv2": "Lv {nextLevel} → {label}",

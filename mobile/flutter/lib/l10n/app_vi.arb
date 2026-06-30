@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "Khi nào nên sử dụng",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Đã thay thế bài tập thành công",
   "activeWorkoutScreenRefactoredExerciseSAdded": "Đã thêm {_exercises} bài tập",
-  "activeWorkoutScreenRefactoredFor": ") cho (name)",
   "activeWorkoutScreenUndo": "Hoàn tác",
   "activeWorkoutScreenWorkoutAdapted": "Bài tập đã được điều chỉnh.",
   "activityCardAdditionalDetailsOptional": "Chi tiết bổ sung (tùy chọn)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Năng lượng trước tập luyện?",
   "aiCoachMealQuickSnackIdeas": "Ý tưởng ăn nhẹ nhanh?",
   "aiCoachMealRecoveryDayEating": "Ăn uống ngày phục hồi?",
-  "aiCoachMealSearchQuestionsTryAngry": "Tìm kiếm câu hỏi (thử \"giận dữ\", \"chất xơ\", \"Mexico\")",
   "aiCoachMealSomethingWentWrong": "Đã có lỗi xảy ra.",
   "aiCoachMealStressedWhatHelps": "Căng thẳng — điều gì giúp ích?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "{meal} lấy cảm hứng từ châu Á — một lựa chọn (cơm tô, mì, sushi, món xào), macros và cách chế biến.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · giai đoạn {phase}",
   "caloriesSummaryCardCalories": "Calo",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "còn lại",
   "cancelConfirmationAnythingElseYouD": "Bạn có muốn chia sẻ thêm điều gì không? (tùy chọn)",
   "cancelConfirmationCancelAnyway": "Vẫn hủy",
   "cancelConfirmationHelpUsImprove": "Giúp chúng tôi cải thiện",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Đã hiểu",
   "chatLanguageChangedSystem": "🌐 AI Coach hiện đã phản hồi bằng {nativeName}",
   "chatLanguageResetSystem": "🌐 Đã đặt lại ngôn ngữ AI Coach — sử dụng ngôn ngữ của ứng dụng",
-  "chatLeftToday": ") còn lại hôm nay",
   "chatMediaWidgetsCalTotal": "Tổng {totalCal} cal",
   "chatMediaWidgetsGProtein": "{totalProtein}g protein",
   "chatMediaWidgetsGoTo": "Đi tới {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "Huấn luyện viên đang suy nghĩ lâu hơn bình thường.",
   "chatScreenCouldntReachCoach": "Không thể kết nối với huấn luyện viên.",
   "chatScreenExtAboutAiCoach": "Về Huấn luyện viên AI",
-  "chatScreenExtAs": ") dưới dạng (mealType)",
   "chatScreenExtChangeCoach": "Đổi huấn luyện viên",
   "chatScreenExtChatTips": "Mẹo trò chuyện",
   "chatScreenExtChooseMultiplePhotos": "Chọn nhiều ảnh",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "Xem mục tiêu",
   "complianceRingCardAllWorkoutsCompleted": "Đã hoàn thành tất cả bài tập",
   "complianceRingCardGetStartedToday": "Bắt đầu ngay hôm nay",
-  "complianceRingCardGreatPace": "Nhịp độ tuyệt vời {arg0}",
+  "complianceRingCardGreatPace": "Nhịp độ tốt! Còn {arg0}",
   "complianceRingCardNoWorkoutsScheduledThis": "Không có bài tập nào được lên lịch trong tuần này",
-  "complianceRingCardOnTrack": "Đúng tiến độ {arg0}",
+  "complianceRingCardOnTrack": "Đúng tiến độ — còn {arg0}",
   "complianceRingCardWorkoutCompliance": "Tuân thủ tập luyện",
-  "complianceRingCardWorkoutsRemaining": "Số bài tập còn lại {arg0}",
+  "complianceRingCardWorkoutsRemaining": "Còn {arg0} buổi tập",
   "comprehensiveStatsStatsScores": "Số liệu & Điểm số",
   "connectedAppsAutoImportEvery15": "Tự động nhập mỗi 15 phút",
   "connectedAppsConnect": "Kết nối",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Chọn thực phẩm",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Sử dụng giá trị này",
-  "cookingConverterWeight": ") Khối lượng",
   "cosmeticsGalleryCosmetics": "Mỹ phẩm",
   "cosmeticsGalleryEquip": "Trang bị",
   "cosmeticsGalleryEquipped": "Đã trang bị",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Không có bài tập nào khớp với tìm kiếm của bạn",
   "customExercisesScreenAreYouSureYou": "Bạn có chắc chắn muốn xóa \"{name}\"? Hành động này không thể hoàn tác.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} bài tập, {totalUses} lượt dùng",
-  "customExercisesScreenUsedTimes": "Đã dùng (usageCount) lần(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Tìm kiếm bài tập...",
   "customExercisesSimple": "Đơn giản",
   "customFoodBuilderAiFillFromName": "AI điền từ tên",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · chu kỳ cuối",
   "customTrendScreenMaxOverlaysRemoveOne": "Tối đa {_kMaxOverlays} lớp phủ — hãy xóa một lớp để thêm lớp khác",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} ngày chia sẻ",
-  "customTrendScreenValue": ")(giá trị) · (nhãn độ mạnh)",
   "customWorkoutBuilderAddExercise": "Thêm bài tập",
   "customWorkoutBuilderBuildCustomWorkout": "Xây dựng bài tập tùy chỉnh",
   "customWorkoutBuilderCustomWorkoutCreated": "Đã tạo bài tập tùy chỉnh!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Ghi lại kỳ kinh",
   "cycleScreenUiLogPeriod": "Ghi lại kỳ kinh",
   "cycleScreenUiLogYourFirstPeriod": "Ghi lại kỳ kinh nguyệt đầu tiên của bạn để bắt đầu dự đoán.",
-  "cycleScreenUiPhase": ") giai đoạn",
   "cycleScreenUiPhaseLabel": "Giai đoạn {displayName}",
   "cycleScreenUiPredictionsAreEstimates": "Dự đoán là ước tính dựa trên dữ liệu bạn đã ghi lại, không phải phương pháp tránh thai và không phải lời khuyên y tế. Hãy gặp bác sĩ nếu bạn có bất kỳ lo ngại nào về sức khỏe.",
   "cycleScreenUiPregnancyModeIsOn": "Chế độ mang thai đang bật",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Tiếp tục",
   "editProgramSheetCurrent": "HIỆN TẠI",
   "editProgramSheetCustomProgram": "Chương trình tùy chỉnh",
-  "editProgramSheetCustomValue": "Giá trị tùy chỉnh {arg0}",
+  "editProgramSheetCustomValue": "Tùy chỉnh: {arg0}",
   "editProgramSheetCustomizeProgram": "Tùy chỉnh chương trình",
   "editProgramSheetDays": "Ngày",
   "editProgramSheetDaysAgo": "{days} ngày trước",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Thiết bị",
   "editProgramSheetEquipmentLabel": "Nhãn thiết bị",
   "editProgramSheetExamples": "Ví dụ",
-  "editProgramSheetFailedToLoadHistory": "Tải lịch sử {arg0}",
-  "editProgramSheetFailedToRestore": "Khôi phục {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Không tải được lịch sử: {arg0}",
+  "editProgramSheetFailedToRestore": "Không khôi phục được: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Cập nhật chương trình",
   "editProgramSheetFocus": "Trọng tâm",
   "editProgramSheetHealth": "Sức khỏe",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "Đang tải xuống {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Đang tải video...",
   "exerciseDetailSheetFavorite": "Yêu thích",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Đang tải...",
   "exerciseDetailSheetLog1rm": "Ghi lại 1RM",
   "exerciseDetailSheetMS": "{restMins}p {restSecs}g",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Thêm ghi chú tại đây...",
   "exerciseSetTrackerAddSet": "Thêm hiệp",
-  "exerciseSetTrackerBarbell": ") đòn tạ",
   "exerciseSetTrackerReps": "Số lần",
   "exerciseSetTrackerRestTarget": "Mục tiêu nghỉ",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "AI gợi ý không khả dụng",
   "exerciseSwapSheetAnyEquipment": "Mọi thiết bị",
   "exerciseSwapSheetAskAiForSuggestions": "Hỏi AI để nhận gợi ý",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Mô tả thiết bị hoặc sở thích của bạn\nví dụ: \"Tôi bị đau vai, chỉ tập bodyweight\"",
   "exerciseSwapSheetEGIOnly": "ví dụ: \"Tôi chỉ có tạ đơn\"",
   "exerciseSwapSheetFailedToSwapExercise": "Không thể thay đổi bài tập",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Đang tìm các bài tập thay thế phù hợp với nhóm cơ...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Trọng lượng",
   "expandedExerciseCardAddToFavorites": "Thêm vào mục yêu thích",
   "expandedExerciseCardAlternatingHands": "Đổi tay",
-  "expandedExerciseCardBarbell": ") đòn tạ",
   "expandedExerciseCardBreathing": "Hít thở",
   "expandedExerciseCardBreathingGuide": "Hướng dẫn hít thở",
   "expandedExerciseCardCollapse": "Thu gọn",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Cấp độ giao thức",
   "fastingScoreCardScore": "Điểm số",
   "fastingScoreCardStreakBonus": "Thưởng chuỗi",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "so với tuần trước",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "Đầu tiên",
   "flexibilityProgressChartLatest": "Mới nhất",
   "flexibilityProgressChartNoDataAvailable": "Không có dữ liệu",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Theo vùng",
   "flexibilityScoreCardFocusAreas": "Vùng trọng tâm",
   "flexibilityScoreCardOverallFlexibility": "Độ linh hoạt tổng thể",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Tìm kiếm bữa ăn, thực phẩm, \"high protein\"...",
   "foodHistoryUndo": "Hoàn tác",
   "foodItemRankingAddFood": "Thêm thực phẩm",
-  "foodItemRankingDetails": ") chi tiết",
   "foodItemRankingNFoodItems": "{count} loại thực phẩm",
   "foodItemRankingScore": "Điểm số",
   "foodItemRankingTapToHideDetails": "Chạm để ẩn chi tiết",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Vì vậy, tôi đã xây dựng con người chứ không phải sổ cái. Chụp bất kỳ menu nào — trong hoặc ngoài nước — và huấn luyện viên sẽ đọc lại cho bạn dưới dạng macro. Bỏ qua ngày thứ Ba và nó sẽ kéo bạn trở lại vào sáng thứ Tư mà không cảm thấy tội lỗi. Nó tìm hiểu các loại thức ăn, bài tập thể dục, kiểu trượt ngã của bạn — chỉ trong chưa đầy một buổi PT mỗi tháng.",
   "founderNoteTheFriendsWhoActually": "Những người bạn thực sự đạt được vóc dáng cân đối đều có một người nhắn tin cho họ. Sự trách nhiệm thực sự tốn khoảng hai trăm đô la một tháng, đó chính là lý do tại sao hầu hết chúng ta không bao giờ có được nó, và cũng là lý do tại sao khoảng cách giữa \"theo dõi\" và \"thay đổi\" vẫn tồn tại trong nhiều năm.",
-  "freshnessDecayCardAgo": ") trước",
   "freshnessDecayCardControlsHowQuicklyExercise": "Kiểm soát tốc độ suy giảm độ tươi mới của bài tập: e^(-k * số buổi tập)",
   "freshnessDecayCardFreshnessDecayTuner": "Bộ điều chỉnh độ tươi mới",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "HIỆP {currentSetNumber} TRÊN {totalSets}",
   "futuristicSetCardSkipExercise": "Bỏ qua bài tập",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "Tạo một kế hoạch toàn diện kết hợp giữa tập luyện, dinh dưỡng và nhịn ăn.",
   "generatePlanFastingProtocol": "Chế độ nhịn ăn",
   "generatePlanGeneratePlan": "Tạo kế hoạch",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "Thêm thói quen đầu tiên của bạn",
   "habitsCardAllHabitsCompleted": "Tất cả thói quen đã hoàn thành!",
   "habitsCardBuildDailyHabits": "Xây dựng thói quen hàng ngày",
-  "habitsCardCompletedCount": "Số lần hoàn thành {arg0} {arg1}",
-  "habitsCardDayStreak": "Chuỗi ngày {arg0}",
+  "habitsCardCompletedCount": "Đã hoàn thành {arg0}/{arg1}",
+  "habitsCardDayStreak": "Chuỗi {arg0} ngày",
   "habitsCardFailedToLoadHabits": "Không thể tải thói quen",
   "habitsCardGreatJobKeepingUp": "Làm tốt lắm, hãy duy trì chuỗi của bạn",
   "habitsCardQuickStart": "Bắt đầu nhanh:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Thói quen hôm nay",
   "habitsCardTryAgain": "Thử lại",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Xem tất cả thói quen {arg0}",
+  "habitsCardViewAllHabits": "Xem tất cả {arg0} thói quen",
   "habitsCompleted": "Đã hoàn thành",
   "habitsDeleteHabit": "Xóa thói quen?",
   "habitsHoldToReorderSwipe": "Giữ để sắp xếp lại • Vuốt để xóa",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "Ngày nghỉ? Hay sẵn sàng vận động? Tùy bạn chọn.",
   "homeEmptyWorkout_v3": "Đang giữa các chương trình — hãy bắt đầu một chương trình mới để quay lại đúng lộ trình.",
   "homeEmptyWorkout_v4": "Chưa có kế hoạch. Hãy để AI xây dựng một kế hoạch phù hợp với mục tiêu của bạn.",
-  "homeFromHealthConnect": ") từ Health Connect",
   "homeGreetingAfternoon_v1": "Năng lượng buổi chiều, {name}!",
   "homeGreetingAfternoon_v2": "Chào {name}, đến lúc vận động chưa?",
   "homeGreetingAfternoon_v3": "Giãn cơ một chút không, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "CALORIES",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "TỔNG QUAN",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "BÀI TẬP",
   "intensityPrompt1Left": "Còn 1",
   "intensityPrompt2Left": "Còn 2",
   "intensityPrompt3Left": "Còn 3+",
   "intensityPromptHard": "Nặng",
-  "intensityPromptHideRpeSlideDial": "Ẩn thanh RPE      Điều chỉnh (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Hiệp này nặng thế nào?",
   "intensityPromptMax": "Tối đa",
   "intensityPromptModerate": "Trung bình",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "Hiệp {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "Huấn luyện viên AI xây dựng kế hoạch, tìm hiểu cơ thể bạn và điều chỉnh mỗi tuần.",
   "introBuildMyPlan": "Xây dựng kế hoạch của tôi",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) hiệp",
   "introCardMonth": "tháng.",
   "introIAlreadyHaveAnAccount": "Tôi đã có tài khoản",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "Mã vạch",
   "logMealSheetBarcodeScan": "Quét mã vạch",
   "logMealSheetCached": "(Đã lưu bộ nhớ đệm)",
-  "logMealSheetCaptured": ") đã chụp",
   "logMealSheetChooseFoodPhotos": "Chọn ảnh món ăn",
   "logMealSheetChooseFromGallery": "Chọn từ thư viện ảnh",
   "logMealSheetChooseFromLibrary": "Chọn từ thư viện",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "TB 7 ngày · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} so với mức thấp trước đó",
   "logWeightSheetValidRange": "Phạm vi hợp lệ: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(thay đổi theo đơn vị)",
   "logWeightSyncedFromAppleHealth": "Đã đồng bộ từ Apple Health",
   "logWeightSyncedToAppleHealth": "Đã đồng bộ tới Apple Health",
   "logWeightTapToEdit": "Chạm để chỉnh sửa",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Đăng xuất?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Macros",
-  "mainShellPartChatsLeftToday": "Số lượt chat còn lại hôm nay {arg0}",
+  "mainShellPartChatsLeftToday": "Còn {arg0} lượt trò chuyện hôm nay",
   "mainShellPartGuestMode": "Chế độ khách",
   "mainShellPartQuickActions": "Thao tác nhanh",
   "mainShellPartSignUp": "Đăng ký",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Chính",
   "manageDuplicateImportsScreenSources": "{length} nguồn",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(hàng)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Hủy liên kết khỏi nhóm",
   "manageDuplicateImportsUnlinkedFromGroup": "Đã hủy liên kết khỏi nhóm",
   "manageGymProfilesActive": "Đang hoạt động",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "Thêm {extraCount} mục nữa",
   "menuAnalysisSheetSelected": "Đã chọn {length}",
   "menuAnalysisSheetSort": "Sắp xếp: {label}",
-  "menuAnalysisSheetValue": ")(đã trôi qua)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Bạn đã lưu thực đơn cho \"{restaurantName}\"",
   "menuAnalysisSort": "Sắp xếp:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "LOẠI CHỈ SỐ",
   "metricsDashboardMuscleMass": "Khối lượng cơ",
   "metricsDashboardNoDataAvailable": "Không có dữ liệu",
-  "metricsDashboardNoMetricDataYet": "Chưa có dữ liệu chỉ số {arg0}",
+  "metricsDashboardNoMetricDataYet": "Chưa có dữ liệu {arg0}",
   "metricsDashboardQuickStats": "THỐNG KÊ NHANH",
   "metricsDashboardRestingHeartRate": "Nhịp tim nghỉ ngơi",
   "metricsDashboardRestingHr": "Nhịp tim nghỉ ngơi",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Khác",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Hoàn thành bài tập để xem dữ liệu cơ bắp",
   "muscleHeatmapTileCouldnTLoad": "Không thể tải",
-  "muscleHeatmapTileMostTrained": "Tập luyện nhiều nhất {arg0}",
+  "muscleHeatmapTileMostTrained": "Tập nhiều nhất: {arg0}",
   "muscleHeatmapTileMuscles": "Nhóm cơ",
   "muscleHeatmapTileRetry": "Thử lại",
   "muscleHeatmapUpperBody": "Thân trên",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Yêu thích ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Cơ bản ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Tốt nhất: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(mục)%",
   "myLibraryTabRecentActivity": "Hoạt động gần đây",
   "myLibraryTabViewAll": "Xem tất cả",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Người vận động nhẹ nhàng",
   "neatGamificationWidgetsClaimReward": "Nhận phần thưởng",
   "neatGamificationWidgetsCouchPotato": "Người lười vận động",
-  "neatGamificationWidgetsCurrentXp": "XP hiện tại {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Thử thách hàng ngày",
   "neatGamificationWidgetsExpired": "Đã hết hạn",
-  "neatGamificationWidgetsHoursMinutesLeft": "Còn lại {arg0} giờ {arg1} phút",
+  "neatGamificationWidgetsHoursMinutesLeft": "Còn {arg0} giờ {arg1} phút",
   "neatGamificationWidgetsLevel": "Cấp độ {level}",
   "neatGamificationWidgetsLevelUp": "LÊN CẤP!",
   "neatGamificationWidgetsMaxLevel": "Cấp tối đa!",
-  "neatGamificationWidgetsMinutesLeft": "Còn lại {arg0} phút",
+  "neatGamificationWidgetsMinutesLeft": "Còn {arg0} phút",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Nhà vô địch",
   "neatGamificationWidgetsNeatEnthusiast": "Người đam mê",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Chưa có bảng xếp hạng trong tuần này",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Điểm số",
-  "neatGamificationWidgetsStepGoal": "Mục tiêu bước chân {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Số bước",
-  "neatGamificationWidgetsTargetActiveHours": "Mục tiêu giờ hoạt động {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} giờ",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "CHI TIẾT ĐIỂM",
   "neatScoreDisplayTapForBreakdown": "Chạm để xem chi tiết",
   "neatScoreDisplayTrend": "Xu hướng: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Đang tải...",
   "netflixExerciseCarouselSeeAll": "Xem tất cả",
   "netflixExercisesAddYourOwnExercises": "Thêm bài tập của riêng bạn với số lần lặp, hiệp và hướng dẫn tùy chỉnh.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Đang tính toán hiệp tiếp theo tối ưu...",
   "nextSetPreviewCardIntensity": "Cường độ {intensityPercentage}%",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Hiệp cuối",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "NGUỒN CUNG CẤP HÀNG ĐẦU",
   "nutrientExplorerUnknown": "Không xác định",
   "nutrientExplorerUnpinNutrient": "Bỏ ghim chất dinh dưỡng",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VITAMIN",
   "nutrientRushGameCatchTheGoldenZealova": "Bắt biểu tượng Zealova vàng để nhận tăng sức mạnh!",
   "nutrientRushGameNewBest": "🎉 KỶ LỤC MỚI!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Tổng quan hàng tuần",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "trung bình {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Nạp trung bình: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/ngày {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Cân nặng: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, tất cả trong một",
   "onboardingWhyFirstTheWhy": "ĐẦU TIÊN, LÝ DO",
   "onboardingWhyWhatSDrivingThis": "Điều gì thúc đẩy điều này?",
-  "openAllCrates24HoursOf2xXp": "24 giờ nhân đôi XP",
-  "openAllCratesActivityCrate": "Hộp hoạt động",
+  "openAllCrates24HoursOf2xXp": "24 giờ 2x XP",
+  "openAllCratesActivityCrate": "Rương Hoạt động",
   "openAllCratesBonusCrateToOpen": "Hộp thưởng cần mở",
-  "openAllCratesCollect": "Thu thập {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Số hộp đã mở {arg0}",
-  "openAllCratesDailyCrate": "Hộp hàng ngày",
+  "openAllCratesCollect": "Nhận ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "Đã mở {arg0} rương!",
+  "openAllCratesDailyCrate": "Rương Hằng ngày",
   "openAllCratesDone": "Xong",
-  "openAllCratesDoubleXpToken": "Thẻ nhân đôi XP",
+  "openAllCratesDoubleXpToken": "Mã thông báo XP gấp đôi",
   "openAllCratesFailedToOpenCrates": "Không thể mở thùng. Vui lòng thử lại.",
-  "openAllCratesFitnessCrate": "Hộp thể hình",
-  "openAllCratesGainedXp": "Đã nhận {arg0} XP",
+  "openAllCratesFitnessCrate": "Rương Thể hình",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Cấp tối đa",
-  "openAllCratesOpenYourCrates": "Mở hộp của bạn",
-  "openAllCratesOpened": ") đã mở!",
-  "openAllCratesOpeningYourCrates": "Đang mở hộp của bạn",
-  "openAllCratesPickRewardPerDay": "Chọn phần thưởng mỗi ngày {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Chọn phần thưởng của bạn {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Mở rương của bạn",
+  "openAllCratesOpeningYourCrates": "🎁 Đang mở rương…",
+  "openAllCratesPickRewardPerDay": "Chọn 1 phần thưởng mỗi ngày • đã chọn {arg0}/{arg1}",
+  "openAllCratesPickYourReward": "Chọn phần thưởng • đã chọn {arg0}/{arg1}",
   "openAllCratesProtectYourStreak": "Bảo vệ chuỗi ngày của bạn",
   "openAllCratesSelectAll": "Chọn tất cả",
-  "openAllCratesStreakCrate": "Thùng Streak",
-  "openAllCratesStreakShield": "Khiên Streak",
+  "openAllCratesStreakCrate": "Rương Chuỗi",
+  "openAllCratesStreakShield": "Khiên Chuỗi",
   "openAllCratesToday": "Hôm nay",
-  "openAllCratesTotalXpFormatted": "Tổng XP {arg0}",
-  "openAllCratesTotalXpLevel": "Tổng XP cấp {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "Tổng {arg0}",
+  "openAllCratesTotalXpLevel": "Tổng: {arg0} XP • Cấp {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 Phần thưởng!",
-  "openAllCratesXpInLevel": "XP trong cấp {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP đến cấp tiếp theo {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP để lên Cấp {arg1}",
   "openAllCratesYesterday": "Hôm qua",
   "overallScoreHeroOverall": "TỔNG THỂ",
   "overviewActiveSkill": "KỸ NĂNG ĐANG HOẠT ĐỘNG",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Tính cách phòng gym của bạn là...",
   "phaseRecommendationBannerBasedOn": "Dựa trên: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-confidence estimate\" : \"\")",
   "phaseRecommendationBannerCycleDay": "Ngày chu kỳ {cycleDay}",
   "phaseRecommendationBannerEvidence": "Bằng chứng: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Đã hiểu",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Xây dựng nền tảng sức mạnh",
   "planPreviewScreenBuildingYour4Week": "Đang xây dựng kế hoạch 4 tuần của bạn...",
   "planPreviewScreenContinueFree": "Tiếp tục miễn phí",
-  "planPreviewScreenDaysPerWeek": "Số ngày mỗi tuần {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} ngày/tuần",
   "planPreviewScreenDesignedBasedOnYour": "Được thiết kế dựa trên câu trả lời bài kiểm tra của bạn",
-  "planPreviewScreenEquipmentCount": "Số lượng thiết bị {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} thiết bị",
   "planPreviewScreenExercisesMin": "Bài tập tối thiểu {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Tăng cường độ và khối lượng",
   "planPreviewScreenMasterTheMovement": "Làm chủ chuyển động",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} Kỷ lục cá nhân!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") TỪ LẦN TRƯỚC",
   "prShareCardCopiedToClipboard": "Đã sao chép vào bộ nhớ tạm!",
   "prShareCardCopyText": "Sao chép văn bản",
   "prShareCardFailedToCaptureImage": "Không thể chụp ảnh",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Tiếp tục cố gắng!",
   "prsTemplateNewPersonalRecords": "KỶ LỤC CÁ NHÂN MỚI",
   "prsTemplateNewPrsAreJust": "Những kỷ lục mới đang chờ đón bạn",
-  "prsTemplateValue": ") (đơn vị)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Nguyên liệu",
   "publicRecipeInstructions": "Hướng dẫn",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "Chạm để xem lịch sử và xu hướng đầy đủ",
   "quickLogMeasurementsTrackYourBodyChanges": "Theo dõi những thay đổi cơ thể của bạn theo thời gian",
   "quickLogMeasurementsUpdate": "Cập nhật",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} ngày trước",
+  "quickLogMeasurementsUpdatedDaysAgo": "Cập nhật {arg0} ngày trước",
   "quickLogMeasurementsUpdatedToday": "Hôm nay",
   "quickLogMeasurementsUpdatedYesterday": "Hôm qua",
   "quickLogMeasurementsWaist": "Vòng eo",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI tạo các bài tập trong phạm vi bạn đã chọn",
   "quizDaysSelectorBest": "Tốt nhất",
   "quizDaysSelectorConsistencyBeatsIntensity": "Sự kiên trì quan trọng hơn cường độ - hãy chọn mức bạn có thể duy trì",
-  "quizDaysSelectorDays": "{arg0} ngày",
-  "quizDaysSelectorDaysSelected": "Đã chọn {arg0} ngày {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") cho các buổi tập của bạn",
+  "quizDaysSelectorDays": "{arg0, plural, one {ngày} other {ngày}}",
+  "quizDaysSelectorDaysSelected": "Đã chọn {arg0} / {arg1} ngày",
   "quizDaysSelectorFri": "Thứ 6",
   "quizDaysSelectorHowLongAreYour": "Các buổi tập của bạn kéo dài bao lâu?",
   "quizDaysSelectorHowManyDaysPer": "Bạn có thể tập bao nhiêu ngày mỗi tuần?",
   "quizDaysSelectorMin": "Tối thiểu",
   "quizDaysSelectorMon": "Thứ 2",
   "quizDaysSelectorSat": "Thứ 7",
-  "quizDaysSelectorSelectNDays": "Chọn {arg0} ngày",
+  "quizDaysSelectorSelectNDays": "Chọn {arg0} ngày phù hợp với bạn",
   "quizDaysSelectorSun": "Chủ nhật",
   "quizDaysSelectorThu": "Thứ 5",
   "quizDaysSelectorTue": "Thứ 3",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Phòng gym tại nhà",
   "quizEquipmentHomeKettlebell": "Tại nhà + Tạ ấm",
   "quizEquipmentHotel": "Khách sạn",
-  "quizEquipmentIdentifiedCount": "Số lượng đã xác định {arg0}",
+  "quizEquipmentIdentifiedCount": "Đã nhận diện {arg0} mục. Chạm để bỏ chọn.",
   "quizEquipmentKettlebell": "Tạ ấm",
   "quizEquipmentMedicineBall": "Bóng tạ",
   "quizEquipmentMinimalEquipmentBodyweight": "Thiết bị tối giản - trọng lượng cơ thể, thảm tập",
   "quizEquipmentNeededForBarbell": "Cần thiết cho đòn tạ",
   "quizEquipmentNoEquipmentIdentifiedPick": "Không xác định được thiết bị. Hãy chọn từ danh sách bên dưới.",
-  "quizEquipmentOtherCount": "Số lượng khác {arg0}",
+  "quizEquipmentOtherCount": "Đã chọn {arg0}",
   "quizEquipmentOtherEquipment": "Thiết bị khác",
   "quizEquipmentPullUpBar": "Xà đơn",
   "quizEquipmentQuickPresets": "Cài đặt nhanh",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Yêu cầu tên công thức",
   "recipeCreateRemovePhoto": "Xóa ảnh",
   "recipeCreateSaving": "Đang lưu...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Chụp ảnh",
   "recipeCreateTapToEdit": "Chạm để chỉnh sửa",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Mỗi khẩu phần (×{servings} khẩu phần)",
   "recipeDetailScreenUForkedFrom": "✨ Được tạo từ {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" sẽ bị xóa vĩnh viễn.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Công thức được tuyển chọn",
   "recipeDetailView": "Xem",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Đang hoàn thiện chi tiết…",
   "regenerateSheetFinalizingYourWorkout": "Đang hoàn thiện bài tập của bạn",
   "regenerateSheetFineTuningTheDetails": "Đang tinh chỉnh các chi tiết",
-  "regenerateSheetGeneratingElapsed": "Đang tạo {arg0}",
+  "regenerateSheetGeneratingElapsed": "Đang tạo… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Đang tạo gợi ý…",
   "regenerateSheetGetSuggestions": "Nhận gợi ý",
   "regenerateSheetGettingCreative": "Đang tạo ý tưởng mới",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Sử dụng đề xuất",
   "restSuggestionQuick": "Nhanh",
   "restSuggestionQuickRest": "Nghỉ nhanh",
-  "restSuggestionSaveTime": "Tiết kiệm thời gian {arg0}",
+  "restSuggestionSaveTime": "Tiết kiệm {arg0}",
   "restSuggestionSuggested": "Đã gợi ý",
   "restSuggestionUseSuggested": "Sử dụng gợi ý",
   "restTimerCardBaseRest": "Thời gian nghỉ cơ bản",
   "restTimerCardControlRestPeriodsBetween": "Kiểm soát thời gian nghỉ giữa các hiệp",
   "restTimerCardCustomRestTimer": "Bộ hẹn giờ nghỉ tùy chỉnh",
   "restTimerCardFormula": "Công thức",
-  "restTimerCardFormulaBaserestRpe7": "Công thức: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Xem trước trực tiếp",
   "restTimerCardMultiplier": "Hệ số nhân",
   "restTimerCardRestBaserestRpe7": "Nghỉ = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value} giây",
   "restTimerCardS2": "{restTimerBaseRest} giây",
   "restTimerCardS3": "{s} giây",
-  "restTimerCardVariablesBaseRpeMultipli": "Biến số: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Biến số: cơ bản, RPE, hệ số, bậc",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "Đang phân tích hiệu suất của bạn...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "Đã hoàn thành",
   "rtpTitle": "Quay lại tập luyện",
   "safetyDisclaimerBannerDismissDisclaimer": "Bỏ qua cảnh báo",
-  "safetyDisclaimerBannerInjuriesFlagged": "Đã gắn cờ chấn thương {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "Đã ghi nhận {arg0} chấn thương",
   "safetyDisclaimerBannerInjuryBody": "Vùng chấn thương",
   "safetyDisclaimerBannerLearnMore": "Tìm hiểu thêm",
   "safetyDisclaimerBannerMore": "+{overflow} thêm",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Hiệp",
   "sessionDetailSetCount": "{count, plural, other{{count} hiệp}} · hiệp cao nhất được làm nổi bật",
   "sessionDetailTime": "Thời gian",
-  "sessionDetailTopSetHighlighted": ") • hiệp chính được làm nổi bật",
   "sessionDetailWeight": "Trọng lượng",
   "setAdjustmentAdditionalNotesOptional": "Ghi chú bổ sung (tùy chọn)",
   "setAdjustmentConfirm": "Xác nhận",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "đã xong {completedCount}",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "còn lại {remainingCount}",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "đã xóa {length}",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") của (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "trong tổng số {totalSets} hiệp",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "đã hoàn thành {completedSets} hiệp",
   "setAdjustmentSheetReps": "Số lần lặp",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Hiệp {currentSetNumber}/{totalSets} • Chạm để mở rộng",
   "setTrackingSectionSets": "{widget} hiệp",
   "setTrackingSectionSetsCompleted": "Đã hoàn thành {length} hiệp",
-  "setTrackingSectionValue": ")×(số lần)",
   "setTrackingSheetsAmountToAdjustWeight": "Lượng điều chỉnh mức tạ",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "Lịch sử bài tập",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject=Yêu cầu hỗ trợ {appName}",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} ngày",
   "settingsScreenUiNoSettingsFound": "Không tìm thấy cài đặt",
-  "settingsScreenUiTryDifferentKeywordsLike": "Thử các từ khóa khác như \"chủ đề\", \"thông báo\" hoặc \"giọng nói ai\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Thử các từ khóa khác như \"giao diện\", \"thông báo\" hoặc \"giọng nói AI\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Tìm kiếm cài đặt",
   "settingsSetProgressionResearch": "Thiết lập tiến trình & nghiên cứu",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "Báo cáo {periodName} {appName} của tôi",
   "shareInsightsSheetMyReport2": "Báo cáo {appName} của tôi",
   "shareMotivationalCompleted": "ĐÃ HOÀN THÀNH",
-  "sharePrNewPr": "PR mới",
+  "sharePrNewPr": "PR MỚI",
   "shareStatsCalories": "Calo",
   "shareStatsDuration": "Thời lượng",
   "shareStatsEliteTemplate": "MẪU ELITE",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "PHẦN THƯỞNG",
   "streakMilestoneStreakMilestone": "CỘT MỐC CHUỖI!",
-  "streakMilestoneToGo": ") nữa!",
   "streakMilestoneYouVeReachedThe": "Bạn đã đạt đến cột mốc chuỗi tối thượng!",
   "streakSavedDialogWeUsedStreakShield": "Chúng tôi đã sử dụng 1 Khiên duy trì chuỗi để giữ chuỗi {savedStreakCount} ngày của bạn.",
   "streakSavedKeepItGoing": "Tiếp tục duy trì",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Kết nối",
   "todayScoreCardCustomize": "TÙY CHỈNH",
   "todayScoreCardToday": "Hôm nay",
-  "todayScoreDetailDown": "Giảm {arg0}",
-  "todayScoreDetailEarnedPts": "Điểm đã đạt {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Giảm {arg0} so với sáng nay",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} điểm",
   "todayScoreDetailHowItWorks": "Cách thức hoạt động",
-  "todayScoreDetailInactiveExplanation": "Giải thích trạng thái không hoạt động {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Đà phát triển với trung bình {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {không được tính} other {không được tính}} hôm nay, nên phần còn lại chia nhau trọn 100 điểm. Điểm của bạn luôn chỉ phản ánh những gì thực sự áp dụng hôm nay.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  trung bình 7 ngày {arg1}",
   "todayScoreDetailNotCounted": "Không được tính",
   "todayScoreDetailSetupText": "Thiết lập văn bản",
   "todayScoreDetailSteady": "Ổn định",
   "todayScoreDetailTodayScore": "Điểm hôm nay",
-  "todayScoreDetailUp": "Tăng {arg0}",
+  "todayScoreDetailUp": "▲ Tăng {arg0} so với sáng nay",
   "todayScoreSetupAddAWorkoutPlan": "Thêm kế hoạch tập luyện",
   "todayScoreSetupCardContinue": "Tiếp tục: {label}",
   "todayScoreSetupCardGetStarted": "BẮT ĐẦU · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Thành tựu Cardio",
   "trophiesEarnedDayStreak": "Chuỗi ngày",
   "trophiesEarnedFirstTime": "LẦN ĐẦU TIÊN!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Đã đạt cột mốc",
   "trophiesEarnedMilestoneReachedNice": "Đã đạt cột mốc — tuyệt vời!",
   "trophiesEarnedMilestones": "Cột mốc",
-  "trophiesEarnedNewBadges": "Huy hiệu {arg0}",
-  "trophiesEarnedNewCardioPRs": "PR Cardio {arg0}",
-  "trophiesEarnedNewPR": "Đã đạt PR mới",
-  "trophiesEarnedNewPRs": "PR {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} huy hiệu mới",
+  "trophiesEarnedNewCardioPRs": "{arg0} PR cardio mới",
+  "trophiesEarnedNewPR": "PR MỚI",
+  "trophiesEarnedNewPRs": "{arg0} PR mới!",
   "trophiesEarnedNewPr": "PR MỚI",
   "trophiesEarnedNextMilestones": "Cột mốc tiếp theo",
   "trophiesEarnedNoNewRecords": "Không có kỷ lục mới",
   "trophiesEarnedNoNewRecordsThis": "Không có kỷ lục mới trong phiên này — đây là những gì bạn đang hướng tới:",
   "trophiesEarnedPersonalRecords": "Kỷ lục cá nhân",
-  "trophiesEarnedRemainingToUnlock": "Còn lại để mở khóa {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "Cần thêm {arg0} {arg1} để mở khóa",
   "trophiesEarnedSessionHighlights": "Điểm nổi bật của phiên tập",
   "trophiesEarnedSheetPts": "+{points} điểm",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} đang nhập",
   "typingIndicatorIsTyping3": "{agentName} đang nhập...",
   "unifiedHomeWidgetsActivity": "HOẠT ĐỘNG",
-  "unifiedHomeWidgetsBreakfastLogged": "Đã ghi lại bữa sáng {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Đã ghi bữa sáng {arg0} trong 7 buổi sáng gần nhất",
   "unifiedHomeWidgetsBreakfastSuggestion": "Gợi ý bữa sáng",
   "unifiedHomeWidgetsCarbs": "Carb",
   "unifiedHomeWidgetsConnect": "Kết nối",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Chất béo",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal tổng cộng hôm nay",
+  "unifiedHomeWidgetsKcalBurned": "Đã đốt {arg0} kcal",
   "unifiedHomeWidgetsKcalLeft": " kcal còn lại",
   "unifiedHomeWidgetsLastNight": "đêm qua",
   "unifiedHomeWidgetsLog16oz": "Ghi lại 16oz",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}t",
   "weekDurationSelectorWeeks": "{selectedWeeks} tuần",
   "weekDurationSelectorWk": "{spw}/tuần",
-  "weekProgressStripCompletedCount": "Số lượng đã hoàn thành {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "Đã hoàn thành {arg0} trong {arg1} buổi tập",
   "weekProgressStripCouldNotLoadProgress": "Không thể tải tiến trình",
   "weekProgressStripLoading": "Đang tải...",
   "weekProgressStripNoWorkoutsScheduled": "Không có buổi tập nào được lên lịch",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Xem tất cả",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Theo dõi cân nặng",
-  "weightTrendCardDownThisWeek": "Giảm trong tuần này {arg0}",
-  "weightTrendCardDownVsLastCycle": "Giảm so với chu kỳ trước {arg0}",
+  "weightTrendCardDownThisWeek": "Giảm {arg0} tuần này!",
+  "weightTrendCardDownVsLastCycle": "Giảm {arg0} lbs so với cùng ngày chu kỳ tháng trước",
   "weightTrendCardLoadingWeight": "Đang tải cân nặng...",
   "weightTrendCardLogYourWeightTo": "Ghi lại cân nặng để xem xu hướng",
   "weightTrendCardMaintaining": "Đang duy trì",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Giống như chu kỳ trước",
   "weightTrendCardTapToLogWeight": "Chạm để ghi cân nặng",
   "weightTrendCardTargetHeld": "Đã đạt mục tiêu",
-  "weightTrendCardTargetHeldWindow": "Đã đạt mục tiêu trong khoảng {arg0}",
-  "weightTrendCardUpThisWeek": "Tăng trong tuần này {arg0}",
-  "weightTrendCardUpVsLastCycle": "Tăng so với chu kỳ trước {arg0}",
+  "weightTrendCardTargetHeldWindow": "Giữ mục tiêu {arg0} — làm mượt nước giai đoạn hoàng thể",
+  "weightTrendCardUpThisWeek": "Tăng {arg0} tuần này",
+  "weightTrendCardUpVsLastCycle": "Tăng {arg0} lbs so với cùng ngày chu kỳ tháng trước",
   "weightTrendCardWeightStableThisWeek": "Cân nặng ổn định trong tuần này",
   "weightTrendCardWeightTrends": "Xu hướng cân nặng",
   "welcomeAffirmationGreatChoice": "Lựa chọn tuyệt vời.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "Khôi phục về phiên bản này?",
   "workoutActionsShareWorkout": "Chia sẻ bài tập",
   "workoutActionsSheetGetALinkFor": "Lấy liên kết {marketingDomain} cho bạn bè",
-  "workoutActionsSheetN": ") — Zealova\n(url)",
   "workoutActionsSheetRestore": "Khôi phục \"{name}\"?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} lần",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} hiệp, {currentReps} lần",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Không thể thách đấu bạn bè vào lúc này",
   "workoutCompleteScreenUnableToExtendWorkout": "Không thể kéo dài buổi tập",
   "workoutCompleteScreenViewAllMetrics": "Xem tất cả chỉ số",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "THIẾT BỊ",
   "workoutDetailExercises": "BÀI TẬP",
   "workoutDetailFailedToLoadWorkout": "Không tải được bài tập",
-  "workoutDetailHelpersForAvailableEquipment": ") cho thiết bị khả dụng...",
   "workoutDetailHelpersHell": "Cực khó",
   "workoutDetailHelpersUpdatingExercises": "Đang cập nhật bài tập",
   "workoutDetailMoreInfo": "THÊM THÔNG TIN",
   "workoutDetailProgram": "Chương trình",
-  "workoutDetailReplacingExercises": "Đang thay thế bài tập {arg0}",
+  "workoutDetailReplacingExercises": "Đang thay {arg0} bài tập cho thiết bị hiện có…",
   "workoutDetailRevert": "Hoàn tác",
   "workoutDetailScreenBreakSuperset": "Hủy Superset?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} cal đã đốt cháy",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "Cột khối lượng sử dụng đơn vị nào? Và nếu bạn biết ứng dụng nguồn, hãy chọn nó — điều này giúp phân biệt các định dạng tương tự (ví dụ: CSV của Hevy so với Strong).",
   "workoutHistoryImportYourStrengthData": "Dữ liệu sức mạnh của bạn",
-  "workoutImportAsDone": ")\" là đã hoàn thành",
   "workoutImportCalories": "Calo",
   "workoutImportCardio": "Cardio",
   "workoutImportCycling": "Đạp xe",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Thời lượng",
   "workoutImportEasy": "Dễ",
   "workoutImportFlexibility": "Độ dẻo dai",
-  "workoutImportFromSource": "Từ nguồn {arg0}",
+  "workoutImportFromSource": "từ {arg0}",
   "workoutImportHard": "Khó",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Buổi tập này khó đến mức nào?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Bạn có thể thấy các thông báo hệ thống này trong khi tập. Cả hai đều là tùy chọn — bạn có thể bỏ qua và bài tập vẫn hoạt động bình thường.",
   "workoutPlanDrawerAddExercise": "Thêm bài tập",
   "workoutPlanDrawerCurrent": "Hiện tại",
-  "workoutPlanDrawerExerciseCount": "Số lượng bài tập {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") đã ghi. Chúng sẽ bị xóa.",
+  "workoutPlanDrawerExerciseCount": "{arg0} bài tập",
   "workoutPlanDrawerNow": "Bây giờ",
   "workoutPlanDrawerRemove": "Xóa",
-  "workoutPlanDrawerRemoveExercise": "Xóa bài tập {arg0}",
+  "workoutPlanDrawerRemoveExercise": "Xóa {arg0}?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Gỡ bỏ bài tập",
-  "workoutPlanDrawerSetsLogged": "Số hiệp đã ghi {arg0}",
+  "workoutPlanDrawerSetsLogged": "Bạn có {arg0} hiệp đã ghi. Chúng sẽ bị xóa.",
   "workoutPlanDrawerSwapExercise": "Đổi bài tập",
   "workoutPlanDrawerTitle": "Tiêu đề",
   "workoutPlanDrawerWorkoutPlan": "Kế hoạch tập luyện",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "Mỗi hiệp bạn ghi lại",
   "workoutShowcaseEveryWorkoutFlows": "Mỗi buổi tập đều trôi chảy",
   "workoutShowcaseFinishWorkout": "Kết thúc buổi tập",
-  "workoutShowcaseFormat1Rm": "Định dạng 1RM",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "Boarding",
   "workoutShowcaseFormatCard": "Thẻ",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Nhãn tuyến tính",
   "workoutShowcaseLogAllSets": "Tất cả các hiệp",
   "workoutShowcaseLogDrink": "Ghi lại đồ uống",
-  "workoutShowcaseLogSet": "Hiệp {arg0}",
+  "workoutShowcaseLogSet": "✓ Ghi hiệp {arg0}",
   "workoutShowcaseLogWater": "Ghi lại nước",
   "workoutShowcaseMovedThisSession": "đã di chuyển trong phiên này",
   "workoutShowcaseNewPr": "PR MỚI",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Số lần lặp",
   "workoutShowcaseScreenDay": "Ngày {day}",
   "workoutShowcaseScreenDuration": "THỜI GIAN: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · ĐÃ NHẬP",
   "workoutShowcaseScreenSession": "BUỔI TẬP: {title}",
   "workoutShowcaseScreenTotalPrs": "TỔNG {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "Hiệp 1 trên 4",
   "workoutShowcaseSet2": "Hiệp 2",
   "workoutShowcaseSet3": "Hiệp 3",
-  "workoutShowcaseSetNOf3": "Bộ tập {arg0} của Zealova",
+  "workoutShowcaseSetNOf3": "Hiệp {arg0} trên 3",
   "workoutShowcaseShareYourWorkout": "Chia sẻ buổi tập của bạn",
   "workoutShowcaseSideA": "MẶT A",
   "workoutShowcaseSuperset": "Superset",
@@ -27893,7 +27604,7 @@
   "workoutSummaryAdvancedWeight": "Trọng lượng",
   "workoutSummaryAdvancedWeightSuggestions": "Gợi ý trọng lượng",
   "workoutSummaryAdvancedWorkoutEndedEarly": "Buổi tập kết thúc sớm",
-  "workoutSummaryAdvancedYesU2705": "Có \\u2705",
+  "workoutSummaryAdvancedYesU2705": "Có ✅",
   "workoutSummaryBodyweightSession": "Buổi tập thể trọng",
   "workoutSummaryCollapseAll": "Thu gọn tất cả",
   "workoutSummaryExpandAll": "Mở rộng tất cả",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Hàng ngày",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 cấp độ qua 11 bậc",
   "xpGoalsDialogBeginnerToTranscendent": "Từ người mới đến bậc thầy",
-  "xpGoalsDialogCompleteWorkoutXp": "XP hoàn thành buổi tập",
+  "xpGoalsDialogCompleteWorkoutXp": "Hoàn thành buổi tập: +100 XP",
   "xpGoalsDialogDailyGoals": "Mục tiêu hàng ngày",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "XP trò chuyện với huấn luyện viên AI",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "XP đo lường cân nặng bữa ăn",
-  "xpGoalsDialogFirstPrXp": "XP PR đầu tiên",
-  "xpGoalsDialogFirstProgressPhotoXp": "XP ảnh tiến trình đầu tiên",
-  "xpGoalsDialogFirstProteinGoalXp": "XP mục tiêu protein đầu tiên",
-  "xpGoalsDialogFirstWorkoutXp": "XP buổi tập đầu tiên",
-  "xpGoalsDialogHitProteinGoalXp": "XP đạt mục tiêu protein",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Trò chuyện đầu tiên với HLV AI: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Bữa ăn/Cân nặng/Số đo đầu tiên: +50 XP mỗi loại",
+  "xpGoalsDialogFirstPrXp": "PR đầu tiên: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Ảnh tiến độ đầu tiên: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Mục tiêu protein đầu tiên: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Buổi tập đầu tiên: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Đạt mục tiêu protein: +50 XP",
   "xpGoalsDialogLevels": "Cấp độ",
-  "xpGoalsDialogLogBodyMeasurementsXp": "XP đo lường cơ thể",
-  "xpGoalsDialogLogMealXp": "XP ghi bữa ăn",
-  "xpGoalsDialogLogWeightXp": "XP ghi cân nặng",
-  "xpGoalsDialogLoginXp": "XP đăng nhập",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Ghi số đo cơ thể: +20 XP",
+  "xpGoalsDialogLogMealXp": "Ghi bữa ăn: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Ghi cân nặng: +15 XP",
+  "xpGoalsDialogLoginXp": "Đăng nhập: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Phần thưởng cột mốc",
   "xpGoalsFirstTimeBonuses": "Tiền thưởng lần đầu",
   "xpGoalsGotIt": "Đã hiểu!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Đạt mục tiêu protein",
   "xpGoalsScreenInventory": "Kho đồ",
   "xpGoalsScreenLegendary": "HUYỀN THOẠI",
-  "xpGoalsScreenLevelCurrentTotal": "Tổng cấp độ hiện tại {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Cấp {arg0} • tổng 249 cấp",
   "xpGoalsScreenLevelProgress": "Tiến độ cấp độ",
   "xpGoalsScreenLogBodyMeasurements": "Ghi lại số đo cơ thể",
   "xpGoalsScreenLogFirstMeal": "Ghi lại bữa ăn đầu tiên",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Phòng cúp",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Hàng tuần",
-  "xpGoalsXpAvailable": "Khả dụng {arg0}",
-  "xpGoalsXpEarnedToday": "Đã nhận hôm nay {arg0}",
+  "xpGoalsXpAvailable": "Có sẵn +{arg0} XP",
+  "xpGoalsXpEarnedToday": "Đã kiếm +{arg0} XP hôm nay",
   "xpGoalsXpGoals": "Mục tiêu XP",
-  "xpGoalsXpMultiplierActive": "Hệ số nhân đang hoạt động {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP đang hoạt động!",
   "xpHeroTileDayStreak": "Chuỗi {streak} ngày",
   "xpHeroTileLv": "Cấp {level}",
   "xpHeroTileLv2": "Cấp {nextLevel} → {label}",

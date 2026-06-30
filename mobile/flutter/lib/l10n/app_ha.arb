@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "Yaushe za a yi amfani",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "An canja motsa jiki cikin nasara",
   "activeWorkoutScreenRefactoredExerciseSAdded": "An ƙara motsa jiki {_exercises}",
-  "activeWorkoutScreenRefactoredFor": ") don (name)",
   "activeWorkoutScreenUndo": "Soke",
   "activeWorkoutScreenWorkoutAdapted": "An daidaita motsa jiki.",
   "activityCardAdditionalDetailsOptional": "Ƙarin bayani (na zaɓi)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Man fetur kafin motsa jiki?",
   "aiCoachMealQuickSnackIdeas": "Ra'ayoyin abun ciye-ciye masu sauri?",
   "aiCoachMealRecoveryDayEating": "Cin abinci ranar dawowa?",
-  "aiCoachMealSearchQuestionsTryAngry": "Bincika tambayoyin (gwada \"fushi\", \"fibe mexican\")",
   "aiCoachMealSomethingWentWrong": "Wani abu ya faru.",
   "aiCoachMealStressedWhatHelps": "Damuwa - menene taimako?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "Abincin Asiya {meal} — zaɓi ɗaya (rice bowl, noodles, sushi, stir fry), macros da shiri.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} cal · matakin {phase}",
   "caloriesSummaryCardCalories": "Adadin kuzari (Calories)",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kcal",
-  "caloriesSummaryCardOveLeft": "sun rage",
   "cancelConfirmationAnythingElseYouD": "Akwai wani abu da kake son rabawa? (na zaɓi)",
   "cancelConfirmationCancelAnyway": "Soke duk da haka",
   "cancelConfirmationHelpUsImprove": "Taimaka mana mu inganta",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Na gane",
   "chatLanguageChangedSystem": "🌐 Kocin AI yanzu yana amsa tambayoyi da {nativeName}",
   "chatLanguageResetSystem": "🌐 An mayar da harshen Kocin AI zuwa yadda yake — ana amfani da harshen manhajar",
-  "chatLeftToday": ") saura a yau",
   "chatMediaWidgetsCalTotal": "Jimlar {totalCal} cal",
   "chatMediaWidgetsGProtein": "{totalProtein}g na furotin",
   "chatMediaWidgetsGoTo": "Je zuwa {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "Kocin yana tunani fiye da yadda aka saba.",
   "chatScreenCouldntReachCoach": "An kasa samun kocin.",
   "chatScreenExtAboutAiCoach": "Game da AI Coach",
-  "chatScreenExtAs": ") a matsayin (mealType)",
   "chatScreenExtChangeCoach": "Canza mai horarwa",
   "chatScreenExtChatTips": "Nasihun hira",
   "chatScreenExtChooseMultiplePhotos": "Zaɓi hotuna da yawa",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "Duba Manufa",
   "complianceRingCardAllWorkoutsCompleted": "An kammala dukkan motsa jiki",
   "complianceRingCardGetStartedToday": "Fara yau",
-  "complianceRingCardGreatPace": "Kwarewa mai kyau {arg0}",
+  "complianceRingCardGreatPace": "Kyakkyawan tafiya! {arg0} ya rage",
   "complianceRingCardNoWorkoutsScheduledThis": "Babu atisayen da aka tsara a wannan mako",
-  "complianceRingCardOnTrack": "A kan hanya {arg0}",
+  "complianceRingCardOnTrack": "Kana kan hanya — {arg0} ya rage",
   "complianceRingCardWorkoutCompliance": "Biyayya ga Atisaye",
-  "complianceRingCardWorkoutsRemaining": "Motsa jiki da suka rage {arg0}",
+  "complianceRingCardWorkoutsRemaining": "Motsa jiki {arg0} sun rage",
   "comprehensiveStatsStatsScores": "Kididdiga & Maki",
   "connectedAppsAutoImportEvery15": "Shigo da bayanai ta atomatik kowane minti 15",
   "connectedAppsConnect": "Haɗa",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Zabi Abinci",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Yi amfani da wannan darajar",
-  "cookingConverterWeight": ") Nauyi",
   "cosmeticsGalleryCosmetics": "Kayan kwalliya",
   "cosmeticsGalleryEquip": "Sanya",
   "cosmeticsGalleryEquipped": "An sanya",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Babu motsa jikin da ya dace da bincikenka",
   "customExercisesScreenAreYouSureYou": "Kuna da tabbacin kuna son goge \"{name}\"? Ba za a iya juyar da wannan ba.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} motsa jiki, {totalUses} amfani",
-  "customExercisesScreenUsedTimes": "An yi amfani da shi (usageCount) lokuta(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Bincika motsa jiki...",
   "customExercisesSimple": "Mai sauki",
   "customFoodBuilderAiFillFromName": "Cika ta AI daga suna",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · zagaye na ƙarshe",
   "customTrendScreenMaxOverlaysRemoveOne": "Matsakaicin {_kMaxOverlays} overlays — cire ɗaya don ƙara wani",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} kwanakin da aka raba",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "Ƙara motsa jiki",
   "customWorkoutBuilderBuildCustomWorkout": "Gina motsa jiki na musamman",
   "customWorkoutBuilderCustomWorkoutCreated": "An ƙirƙiri motsa jiki na musamman!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Yi rijistar lokacin al'ada",
   "cycleScreenUiLogPeriod": "Yi rijistar lokacin al'ada",
   "cycleScreenUiLogYourFirstPeriod": "Yi rijistar lokacin al'adarka na farko don fara hasashen.",
-  "cycleScreenUiPhase": ") mataki",
   "cycleScreenUiPhaseLabel": "Matakin {displayName}",
   "cycleScreenUiPredictionsAreEstimates": "Hasashen kiyasin bayananka ne, ba hanyar hana daukar ciki ba kuma ba shawarar likita ba. Duba likita don kowace matsalar lafiya.",
   "cycleScreenUiPregnancyModeIsOn": "Yanayin ciki yana kunne",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Ci gaba",
   "editProgramSheetCurrent": "NA YANZU",
   "editProgramSheetCustomProgram": "Shirin da aka keɓance",
-  "editProgramSheetCustomValue": "Darajar da aka keɓance {arg0}",
+  "editProgramSheetCustomValue": "Na musamman: {arg0}",
   "editProgramSheetCustomizeProgram": "Keɓance shiri",
   "editProgramSheetDays": "Kwanaki",
   "editProgramSheetDaysAgo": "Kwanaki {days} da suka wuce",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Kayan aiki",
   "editProgramSheetEquipmentLabel": "Alamar kayan aiki",
   "editProgramSheetExamples": "Misalai",
-  "editProgramSheetFailedToLoadHistory": "Loda tarihi {arg0}",
-  "editProgramSheetFailedToRestore": "Maido {arg0}",
+  "editProgramSheetFailedToLoadHistory": "An kasa loda tarihi: {arg0}",
+  "editProgramSheetFailedToRestore": "An kasa dawowa: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Sabunta shiri",
   "editProgramSheetFocus": "Mayar da hankali",
   "editProgramSheetHealth": "Lafiya",
@@ -18100,16 +17855,16 @@
   "editTargetsReset": "Sake saita",
   "editTargetsSaveTargets": "Ajiye Manufa",
   "editTargetsSheetCalculatedKcal": "An ƙididdige: {numberFormat} kcal",
-  "editTargetsSheetCappedAtSafeMinimum": "An iyakance a mafi ƙanƙanta ({cappedMinimum} kcal) \\u2014 ",
+  "editTargetsSheetCappedAtSafeMinimum": "An iyakance a mafi ƙanƙanta ({cappedMinimum} kcal) — ",
   "editTargetsSheetFailedToRecalculate": "An kasa sake ƙididdigewa: {e}",
   "editTargetsSheetFailedToSave": "An kasa adanawa: {e}",
   "editTargetsSheetGKg": "{currentRatio} g/kg · ",
   "editTargetsSheetGKg2": "{ratio} g/kg",
   "editTargetsSheetKg": "{fmt}kg",
   "editTargetsSheetProteinTarget": "Manufar Protein {anchorLabel}",
-  "editTargetsSheetSafeMinimumCaloriesMeet": "Adadin calories mafi ƙanƙanta ({cappedMinimum}) sun cika TDEE ɗinka \\u2014 ",
-  "editTargetsSheetTotalUBMust": "Jimla: {sum}% \\u00b7 Dole ta zama 100%",
-  "editTargetsSheetUWks": "{goalLabel} \\u2192 ~{weeks} mako ({dateStr}){deficitInfo}",
+  "editTargetsSheetSafeMinimumCaloriesMeet": "Adadin calories mafi ƙanƙanta ({cappedMinimum}) sun cika TDEE ɗinka — ",
+  "editTargetsSheetTotalUBMust": "Jimla: {sum}% · Dole ta zama 100%",
+  "editTargetsSheetUWks": "{goalLabel} → ~{weeks} mako ({dateStr}){deficitInfo}",
   "editTargetsSheetValue": "{label} {pct}%",
   "editTargetsTargetsRecalculatedFromProf": "An sake lissafin manufa daga bayanan martaba",
   "editTargetsTargetsUpdated": "An sabunta manufa",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "Ana zazzagewa {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Ana sauke bidiyo...",
   "exerciseDetailSheetFavorite": "Fi so",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Ana lodawa...",
   "exerciseDetailSheetLog1rm": "Shiga 1RM",
   "exerciseDetailSheetMS": "{restMins}m {restSecs}s",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15s",
   "exerciseSetTrackerAddNotesHere": "Ƙara bayanin kula a nan...",
   "exerciseSetTrackerAddSet": "Ƙara Set",
-  "exerciseSetTrackerBarbell": ") barbell",
   "exerciseSetTrackerReps": "Maimaitawa",
   "exerciseSetTrackerRestTarget": "Target na hutawa",
   "exerciseSetTrackerS": "{seconds}s",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "Zaɓin AI ba ya aiki",
   "exerciseSwapSheetAnyEquipment": "Kowane kayan aiki",
   "exerciseSwapSheetAskAiForSuggestions": "Tambayi AI don shawarwari",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Bayyana kayan aikin ka ko abin da kake so\nalal misali, \"Ina da ciwon kafa, nauyin jiki kawai\"",
   "exerciseSwapSheetEGIOnly": "alal misali, \"Dumbbells kawai nake da su\"",
   "exerciseSwapSheetFailedToSwapExercise": "An kasa canza motsa jiki",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Ana neman madadin da suka dace da tsoka...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Nauyi",
   "expandedExerciseCardAddToFavorites": "Ƙara zuwa waɗanda aka fi so",
   "expandedExerciseCardAlternatingHands": "Hannaye masu canzawa",
-  "expandedExerciseCardBarbell": ") barbell",
   "expandedExerciseCardBreathing": "Numfashi",
   "expandedExerciseCardBreathingGuide": "Jagoran numfashi",
   "expandedExerciseCardCollapse": "Rufe",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Matakin Yarjejeniya",
   "fastingScoreCardScore": "Maki",
   "fastingScoreCardStreakBonus": "Kyautar Ci gaba",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "idan an kwatanta da makon da ya gabata",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "Na farko",
   "flexibilityProgressChartLatest": "Na baya-bayan nan",
   "flexibilityProgressChartNoDataAvailable": "Babu bayanan da aka samu",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Ta yanki",
   "flexibilityScoreCardFocusAreas": "Wuraren da aka fi mayar da hankali",
   "flexibilityScoreCardOverallFlexibility": "Sassaucin jiki gaba daya",
@@ -19544,7 +19293,7 @@
   "foodBrowserPanelPartNLItemSectionStateValue": "{label} ({opt}{calDelta})",
   "foodBrowserPanelPureFat": "Kitse tsantsa",
   "foodBrowserPanelRecent": "NA KWANANAN",
-  "foodBrowserPanelResultsUBMs": "{totalCount} sakamako \\u00b7 {searchTimeMs}ms",
+  "foodBrowserPanelResultsUBMs": "{totalCount} sakamako · {searchTimeMs}ms",
   "foodBrowserPanelSearch528000Foods": "Bincika abinci sama da 528,000 daga USDA, Kanada, Indiya da sauran bayanan sirri",
   "foodBrowserPanelSearchAlternatives": "Bincika wasu hanyoyin...",
   "foodBrowserPanelSearchCountries": "Bincika ƙasashe...",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Bincika abinci, \"high protein\"...",
   "foodHistoryUndo": "Soke",
   "foodItemRankingAddFood": "Ƙara abinci",
-  "foodItemRankingDetails": ") cikakkun bayanai",
   "foodItemRankingNFoodItems": "{count} Abinci",
   "foodItemRankingScore": "Maki",
   "foodItemRankingTapToHideDetails": "Danna don ɓoye cikakken bayani",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Don haka ni na gina mutum, ba littatafai ba. Ɗauki kowane menu - a gida ko waje - kuma kocin ya karanta muku shi a cikin macro. Tsallake ranar Talata kuma zai dawo da ku da safiyar Laraba ba tare da balaguron laifi ba. Yana koyon abincin ku, dakin motsa jiki, tsarin zamewar ku - kasa da zaman PT ɗaya a wata.",
   "founderNoteTheFriendsWhoActually": "Abokan da suka yi nasarar rage kiba suna da mutumin da yake tura musu saƙo. Kulawa ta gaske tana kashe kusan dalar Amurka ɗari biyu a wata, wanda shi ne dalilin da ya sa yawancinmu ba mu taɓa samun hakan ba, kuma shi ne dalilin da ya sa tazara tsakanin \"bin diddigi\" da \"canjawa\" take ci gaba da kasancewa na shekaru.",
-  "freshnessDecayCardAgo": ") da suka wuce",
   "freshnessDecayCardControlsHowQuicklyExercise": "Yana sarrafa yadda saurin motsa jiki yake raguwa: e^(-k * sessions)",
   "freshnessDecayCardFreshnessDecayTuner": "Mai daidaita raguwar sabo",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "SET {currentSetNumber} NA {totalSets}",
   "futuristicSetCardSkipExercise": "Tsallake motsa jiki",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "Kirkiri tsari mai inganci wanda zai daidaita motsa jikinka, abinci, da azumi.",
   "generatePlanFastingProtocol": "Tsarin Azumi",
   "generatePlanGeneratePlan": "Kirkiri Tsari",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "Ƙara halayyarka ta farko",
   "habitsCardAllHabitsCompleted": "An kammala dukkan halaye!",
   "habitsCardBuildDailyHabits": "Gina halaye na yau da kullum",
-  "habitsCardCompletedCount": "Adadin da aka kammala {arg0} {arg1}",
-  "habitsCardDayStreak": "Kwanakin a jere {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} an kammala",
+  "habitsCardDayStreak": "Jerin kwanaki {arg0}",
   "habitsCardFailedToLoadHabits": "An kasa ɗora halaye",
   "habitsCardGreatJobKeepingUp": "Kyakkyawan aiki wajen ci gaba da jerin nasararka",
   "habitsCardQuickStart": "Fara da sauri:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Halayen yau",
   "habitsCardTryAgain": "Gwada sake",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Duba dukkan halaye {arg0}",
+  "habitsCardViewAllHabits": "Duba Dukkan Dabi'u {arg0}",
   "habitsCompleted": "An kammala",
   "habitsDeleteHabit": "Goge halayya?",
   "habitsHoldToReorderSwipe": "Danna don sake tsari • Zamewa don gogewa",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "Ranar hutu? Ko a shirye kake don motsawa? Kai ne da zaɓi.",
   "homeEmptyWorkout_v3": "Tsakanin shirye-shirye — fara sabo don komawa kan hanya.",
   "homeEmptyWorkout_v4": "Babu shiri tukuna. Bari AI ya gina maka ɗaya bisa ga burinka.",
-  "homeFromHealthConnect": ") daga Health Connect",
   "homeGreetingAfternoon_v1": "Ƙarfin yamma, {name}!",
   "homeGreetingAfternoon_v2": "Sannu {name}, lokacin motsa jiki?",
   "homeGreetingAfternoon_v3": "Lokacin miƙa jiki, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "ADADIN CALORIES",
   "insightsSummaryTemplatePrs": "PRs",
   "insightsSummaryTemplateSummary": "TAKAITACCEN BAYANI",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "MOTSA JIKI",
   "intensityPrompt1Left": "1 ya rage",
   "intensityPrompt2Left": "2 sun rage",
   "intensityPrompt3Left": "3+ sun rage",
   "intensityPromptHard": "Mai wuya",
-  "intensityPromptHideRpeSlideDial": "Boye RPE slide      Daidaita shi (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Yaya wuyar wannan atisayen yake?",
   "intensityPromptMax": "Max",
   "intensityPromptModerate": "Matsakaici",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "Saiti {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "Kocin AI wanda ke gina shiri, koyon jikinka, da daidaitawa kowane mako.",
   "introBuildMyPlan": "Gina Shirina",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) sets",
   "introCardMonth": "wata.",
   "introIAlreadyHaveAnAccount": "Na riga na sami asusu",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "Barcode",
   "logMealSheetBarcodeScan": "Duba barcode",
   "logMealSheetCached": "(Cache)",
-  "logMealSheetCaptured": ") an ɗauka",
   "logMealSheetChooseFoodPhotos": "Zaɓi Hotunan Abinci",
   "logMealSheetChooseFromGallery": "Zaɓa daga gallery",
   "logMealSheetChooseFromLibrary": "Zaɓa daga laburare",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "Matsakaicin kwana 7 · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} daga ƙarancinka na baya",
   "logWeightSheetValidRange": "Iyaka mai inganci: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Daidaitawa daga Apple Lafiya",
   "logWeightSyncedToAppleHealth": "Daidaita zuwa Apple Lafiya",
   "logWeightTapToEdit": "Danna don gyarawa",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Fita?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Macros",
-  "mainShellPartChatsLeftToday": "Hirarrakin da suka rage yau {arg0}",
+  "mainShellPartChatsLeftToday": "Hirarraki {arg0} sun rage yau",
   "mainShellPartGuestMode": "Yanayin Baƙo",
   "mainShellPartQuickActions": "Ayyukan gaggawa",
   "mainShellPartSignUp": "Yi rajista",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Babban",
   "manageDuplicateImportsScreenSources": "{length} tushe",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(row)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Cire haɗin daga rukuni",
   "manageDuplicateImportsUnlinkedFromGroup": "An cire haɗin daga rukuni",
   "manageGymProfilesActive": "Mai aiki",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} ƙari",
   "menuAnalysisSheetSelected": "An zaɓi {length}",
   "menuAnalysisSheetSort": "Rarraba: {label}",
-  "menuAnalysisSheetValue": ")(elapsed)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Ka riga ka adana menu don \"{restaurantName}\"",
   "menuAnalysisSort": "Jerawa:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "NA'IN MA'AUNI",
   "metricsDashboardMuscleMass": "Yawan tsoka",
   "metricsDashboardNoDataAvailable": "Babu bayanai",
-  "metricsDashboardNoMetricDataYet": "Babu bayanan awo tukuna {arg0}",
+  "metricsDashboardNoMetricDataYet": "Babu bayanan {arg0} tukuna",
   "metricsDashboardQuickStats": "TAKAITACCEN BAYANI",
   "metricsDashboardRestingHeartRate": "Bugun zuciya lokacin hutu",
   "metricsDashboardRestingHr": "Bugun Zuciya a Hutu",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Sauran",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Kammala motsa jiki don ganin bayanan tsoka",
   "muscleHeatmapTileCouldnTLoad": "Ba a iya lodawa ba",
-  "muscleHeatmapTileMostTrained": "Wanda aka fi horarwa {arg0}",
+  "muscleHeatmapTileMostTrained": "Mafi horarwa: {arg0}",
   "muscleHeatmapTileMuscles": "Tsokoki",
   "muscleHeatmapTileRetry": "Sake gwadawa",
   "muscleHeatmapUpperBody": "Jiki na Sama",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Abubuwan da na fi so ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Abubuwan yau da kullum ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Mafi kyau: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Ayyukan Kwanan Nan",
   "myLibraryTabViewAll": "Duba Duk",
   "myProgramSummaryCardValue": "{workoutDays} • {experience} • {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Mai motsi kadan",
   "neatGamificationWidgetsClaimReward": "Karɓi lada",
   "neatGamificationWidgetsCouchPotato": "Mai kasala",
-  "neatGamificationWidgetsCurrentXp": "Xp na yanzu {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Kalubalen Yau",
   "neatGamificationWidgetsExpired": "Ya kare",
-  "neatGamificationWidgetsHoursMinutesLeft": "Sa'o'i da mintuna da suka rage {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "{arg0}h {arg1}m suka rage",
   "neatGamificationWidgetsLevel": "Mataki {level}",
   "neatGamificationWidgetsLevelUp": "MATAKI NA GABA!",
   "neatGamificationWidgetsMaxLevel": "Matsayin Karshe!",
-  "neatGamificationWidgetsMinutesLeft": "Mintuna da suka rage {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "{arg0}m ya rage",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Zakara",
   "neatGamificationWidgetsNeatEnthusiast": "Mai kishi",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Babu matsayi tukuna a wannan mako",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Maki",
-  "neatGamificationWidgetsStepGoal": "Manufar matakai {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Matakai",
-  "neatGamificationWidgetsTargetActiveHours": "Manufar sa'o'in aiki {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} hrs",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "TAƘAITACCEN MAKI",
   "neatScoreDisplayTapForBreakdown": "Danna don ganin cikakken bayani",
   "neatScoreDisplayTrend": "Yanayin tafiya: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Ana ɗorawa...",
   "netflixExerciseCarouselSeeAll": "Duba Duk",
   "netflixExercisesAddYourOwnExercises": "Ƙara naka motsa jiki tare da reps, sets, da umarni na musamman.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Ana lissafin atisaye na gaba da ya dace...",
   "nextSetPreviewCardIntensity": "{intensityPercentage}% ƙarfi",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Saiti na karshe",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "MAFI GIRMAN TUSHE",
   "nutrientExplorerUnknown": "Ba a sani ba",
   "nutrientExplorerUnpinNutrient": "Cire sinadari daga danna",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VITAMINAI",
   "nutrientRushGameCatchTheGoldenZealova": "Kamo alamar Zealova ta zinare don samun ƙarin ƙarfi!",
   "nutrientRushGameNewBest": "🎉 SABON MAFI KYAU!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Bayanin mako-mako",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "avg {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Matsakaicin abinci: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) cal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/rana {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Nauyi: {formattedWeeklyRate}",
@@ -23043,32 +22773,31 @@
   "onboardingWhyFirstTheWhy": "DA FARKO, DALILIN",
   "onboardingWhyWhatSDrivingThis": "Me ke motsa wannan?",
   "openAllCrates24HoursOf2xXp": "Sa'o'i 24 na 2x XP",
-  "openAllCratesActivityCrate": "Akwatin aiki",
+  "openAllCratesActivityCrate": "Akwatin Ayyuka",
   "openAllCratesBonusCrateToOpen": "Akwatin kyauta don budewa",
-  "openAllCratesCollect": "Tara {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Akwatin da aka bude {arg0}",
-  "openAllCratesDailyCrate": "Akwatin yau da kullum",
+  "openAllCratesCollect": "Tara ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "An buɗe akwatuna {arg0}!",
+  "openAllCratesDailyCrate": "Akwatin Yau da Kullum",
   "openAllCratesDone": "An gama",
-  "openAllCratesDoubleXpToken": "Alamar ninka Xp",
+  "openAllCratesDoubleXpToken": "Alamar XP Ninki Biyu",
   "openAllCratesFailedToOpenCrates": "Budewa ta gaza. Da fatan za a sake gwadawa.",
-  "openAllCratesFitnessCrate": "Akwatin motsa jiki",
-  "openAllCratesGainedXp": "Xp da aka samu {arg0}",
+  "openAllCratesFitnessCrate": "Akwatin Lafiya",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Matsayin koli",
-  "openAllCratesOpenYourCrates": "Bude akwatunanka",
-  "openAllCratesOpened": ") an bude!",
-  "openAllCratesOpeningYourCrates": "Ana bude akwatunanka",
-  "openAllCratesPickRewardPerDay": "Zabi lada kowace rana {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Zabi ladarka {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Buɗe Akwatunanka",
+  "openAllCratesOpeningYourCrates": "🎁 Ana buɗe akwatunanka…",
+  "openAllCratesPickRewardPerDay": "Zaɓi lada 1 a kowace rana • an zaɓi {arg0}/{arg1}",
+  "openAllCratesPickYourReward": "Zaɓi ladanka • an zaɓi {arg0}/{arg1}",
   "openAllCratesProtectYourStreak": "Kare kwanakinka a jere",
   "openAllCratesSelectAll": "Zabi duka",
-  "openAllCratesStreakCrate": "Akwatin kiyaye zango",
-  "openAllCratesStreakShield": "Garkuwar kiyaye zango",
+  "openAllCratesStreakCrate": "Akwatin Jeri",
+  "openAllCratesStreakShield": "Garkuwar Jeri",
   "openAllCratesToday": "Yau",
-  "openAllCratesTotalXpFormatted": "Jimlar XP {arg0}",
-  "openAllCratesTotalXpLevel": "Jimlar matakin XP {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "{arg0} jimla",
+  "openAllCratesTotalXpLevel": "Jimla: {arg0} XP • Mataki {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 Kyaututtuka!",
-  "openAllCratesXpInLevel": "XP a matakin {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP zuwa mataki na gaba {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP zuwa Mataki {arg1}",
   "openAllCratesYesterday": "Jiya",
   "overallScoreHeroOverall": "GABA DAYA",
   "overviewActiveSkill": "KWAREWA MAI AIKI",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Halinka na motsa jiki shi ne...",
   "phaseRecommendationBannerBasedOn": "Dangane da: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(kima)-kima na amincewa",
   "phaseRecommendationBannerCycleDay": "Ranar zagayowar {cycleDay}",
   "phaseRecommendationBannerEvidence": "Shaida: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Na gane",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Gina tushen ƙarfi",
   "planPreviewScreenBuildingYour4Week": "Ana gina tsarinka na mako 4...",
   "planPreviewScreenContinueFree": "Ci gaba kyauta",
-  "planPreviewScreenDaysPerWeek": "Kwanaki a kowane mako {arg0}",
+  "planPreviewScreenDaysPerWeek": "Kwanaki {arg0}/mako",
   "planPreviewScreenDesignedBasedOnYour": "An tsara shi bisa amsoshin tambayoyinka",
-  "planPreviewScreenEquipmentCount": "Adadin kayan aiki {arg0}",
+  "planPreviewScreenEquipmentCount": "Kayan aiki {arg0}",
   "planPreviewScreenExercisesMin": "Motsa jiki mafi ƙanƙanta {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Ƙara ƙarfi da yawa",
   "planPreviewScreenMasterTheMovement": "Kware a motsin",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} Nasarorin Kai!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") DAGA NA KARSHE",
   "prShareCardCopiedToClipboard": "An kwafa zuwa allo!",
   "prShareCardCopyText": "Kwafa rubutu",
   "prShareCardFailedToCaptureImage": "An gaza daukar hoto",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Ci gaba da dagewa!",
   "prsTemplateNewPersonalRecords": "SABON RIKOD NA KASHIN KAI",
   "prsTemplateNewPrsAreJust": "Sabon rikodi na kusa",
-  "prsTemplateValue": ") (naúrar)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Sinadaran hadawa",
   "publicRecipeInstructions": "Umarni",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "Danna don ganin cikakken tarihin da yanayin canji",
   "quickLogMeasurementsTrackYourBodyChanges": "Bibiyar canjin jikinka akan lokaci",
   "quickLogMeasurementsUpdate": "Sabunta",
-  "quickLogMeasurementsUpdatedDaysAgo": "Kwanaki da suka wuce {arg0}",
+  "quickLogMeasurementsUpdatedDaysAgo": "An sabunta kwanaki {arg0} da suka wuce",
   "quickLogMeasurementsUpdatedToday": "Yau",
   "quickLogMeasurementsUpdatedYesterday": "Jiya",
   "quickLogMeasurementsWaist": "Kugu",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI yana samar da motsa jiki a cikin adadin da ka zaɓa",
   "quizDaysSelectorBest": "Mafi kyau",
   "quizDaysSelectorConsistencyBeatsIntensity": "Dorewa ya fi ƙarfi - zaɓi abin da za ka iya ci gaba da yi",
-  "quizDaysSelectorDays": "Kwanaki {arg0}",
-  "quizDaysSelectorDaysSelected": "An zaɓi kwanaki {arg0} {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") don motsa jikinka",
+  "quizDaysSelectorDays": "{arg0, plural, one {rana} other {kwanaki}}",
+  "quizDaysSelectorDaysSelected": "Kwanaki {arg0} / {arg1} an zaɓa",
   "quizDaysSelectorFri": "Jum",
   "quizDaysSelectorHowLongAreYour": "Tsawon nawa ne motsa jikinka?",
   "quizDaysSelectorHowManyDaysPer": "Kwanaki nawa a mako za ka iya motsa jiki?",
   "quizDaysSelectorMin": "Minti",
   "quizDaysSelectorMon": "Lit",
   "quizDaysSelectorSat": "Asa",
-  "quizDaysSelectorSelectNDays": "Zaɓi kwanaki {arg0}",
+  "quizDaysSelectorSelectNDays": "Zaɓi kwanaki {arg0} da suka dace da kai",
   "quizDaysSelectorSun": "Lah",
   "quizDaysSelectorThu": "Alh",
   "quizDaysSelectorTue": "Tal",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Dakin motsa jiki na gida",
   "quizEquipmentHomeKettlebell": "Gida + Kettlebell",
   "quizEquipmentHotel": "Otal",
-  "quizEquipmentIdentifiedCount": "Adadin da aka gano {arg0}",
+  "quizEquipmentIdentifiedCount": "An gano abubuwa {arg0}. Danna kowanne don cire zaɓi.",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "Medicine ball",
   "quizEquipmentMinimalEquipmentBodyweight": "Kayan aiki kaɗan - nauyin jiki, tabarma",
   "quizEquipmentNeededForBarbell": "Ana bukata don barbell",
   "quizEquipmentNoEquipmentIdentifiedPick": "Ba a gano kayan aiki ba. Zaɓi daga jerin da ke ƙasa.",
-  "quizEquipmentOtherCount": "Sauran adadin {arg0}",
+  "quizEquipmentOtherCount": "An zaɓi {arg0}",
   "quizEquipmentOtherEquipment": "Sauran kayan aiki",
   "quizEquipmentPullUpBar": "Pull up bar",
   "quizEquipmentQuickPresets": "Zaɓin sauri",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Ana buƙatar sunan girke-girke",
   "recipeCreateRemovePhoto": "Cire hoto",
   "recipeCreateSaving": "Ana adanawa...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Ɗauki hoto",
   "recipeCreateTapToEdit": "Danna don gyarawa",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kcal",
   "recipeDetailScreenPerServingUD": "Kowane rabo (×{servings} rabo)",
   "recipeDetailScreenUForkedFrom": "✨ An samo daga {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" za a goge shi har abada.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Girke-girke na musamman",
   "recipeDetailView": "Duba",
@@ -24684,7 +24407,7 @@
   "recordAssessmentRecordAssessment": "Rubuta Ƙima",
   "recordAssessmentSheetTop": "Manyan {assessment}%",
   "recordAssessmentTips": "Nasihu",
-  "recordAssessmentU2022": "\\u2022 ",
+  "recordAssessmentU2022": "• ",
   "recordAssessmentYourMeasurement": "Ma'auninka",
   "recordAttemptCurrentBest": "Mafi kyau a yanzu",
   "recordAttemptDialogAdd": "Ƙara {unit}",
@@ -24754,7 +24477,7 @@
   "regenerateSheetConsideringFocusAreas": "Ana la'akari da wuraren da kake son mai da hankali",
   "regenerateSheetCustomize": "Keɓance",
   "regenerateSheetCustomizeOrLetAi": "Keɓance ko barin AI ya ba da shawara",
-  "regenerateSheetCustomizeOrLetAiSuggest": "Keɓance ko barin AI ya ba da shawara",
+  "regenerateSheetCustomizeOrLetAiSuggest": "Daidaita ko bari AI ya ba da shawara",
   "regenerateSheetDescribeYourIdealWorkout": "Bayyana motsa jikinka na mafarki",
   "regenerateSheetDesigningYourWorkout": "Ana tsara motsa jikinka",
   "regenerateSheetDialingInSetsAndReps": "Ana saita adadin sets da reps",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Ana kammala cikakkun bayanai…",
   "regenerateSheetFinalizingYourWorkout": "Ana kammala motsa jikinka",
   "regenerateSheetFineTuningTheDetails": "Ana daidaita cikakkun bayanai",
-  "regenerateSheetGeneratingElapsed": "Ana samarwa {arg0}",
+  "regenerateSheetGeneratingElapsed": "Ana ƙirƙira… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Ana samar da shawarwari…",
   "regenerateSheetGetSuggestions": "Nemi shawarwari",
   "regenerateSheetGettingCreative": "Ana ƙirƙira",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Yi amfani da wanda aka shawarta",
   "restSuggestionQuick": "Hutu mai sauri",
   "restSuggestionQuickRest": "Hutu mai sauri",
-  "restSuggestionSaveTime": "Adana lokaci {arg0}",
+  "restSuggestionSaveTime": "Adana {arg0}",
   "restSuggestionSuggested": "An ba da shawara",
   "restSuggestionUseSuggested": "Yi amfani da wanda aka ba da shawara",
   "restTimerCardBaseRest": "Hutu na asali",
   "restTimerCardControlRestPeriodsBetween": "Sarrafa lokutan hutawa tsakanin jerin motsa jiki",
   "restTimerCardCustomRestTimer": "Agogon hutawa na musamman",
   "restTimerCardFormula": "Dabarar ƙididdigewa",
-  "restTimerCardFormulaBaserestRpe7": "Dabara: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Dubawa kai tsaye",
   "restTimerCardMultiplier": "Multiplier",
   "restTimerCardRestBaserestRpe7": "Hutu = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value}s",
   "restTimerCardS2": "{restTimerBaseRest}s",
   "restTimerCardS3": "{s}s",
-  "restTimerCardVariablesBaseRpeMultipli": "Canje-canje: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Masu canji: tushe, RPE, ninkawa, matsayi",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "AI WEIGHT COACH",
   "restTimerOverlayAnalyzingYourPerformance": "Ana nazarin aikinka...",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Saiti",
   "sessionDetailSetCount": "{count, plural, other{{count} saiti}} · an haskaka saiti na sama",
   "sessionDetailTime": "Lokaci",
-  "sessionDetailTopSetHighlighted": ") • an haskaka babban saiti",
   "sessionDetailWeight": "Nauyi",
   "setAdjustmentAdditionalNotesOptional": "Bayanan kula (na zabi)",
   "setAdjustmentConfirm": "Tabbatar",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} an gama",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} saura",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} an cire",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") na (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "daga cikin {totalSets} da aka tsara",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "Saiti {completedSets} an kammala",
   "setAdjustmentSheetReps": "Maimaitawa",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Saiti {currentSetNumber}/{totalSets} • Danna don faɗaɗawa",
   "setTrackingSectionSets": "Saiti {widget}",
   "setTrackingSectionSetsCompleted": "An kammala saiti {length}",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "Adadin da za a daidaita nauyi",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "Tarihin motsa jiki",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} Bukatar Tallafi",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} kwanaki",
   "settingsScreenUiNoSettingsFound": "Ba a sami saituna ba",
-  "settingsScreenUiTryDifferentKeywordsLike": "Gwada wasu kalmomi kamar \"theme\", \"notifications\", ko \"ai voice\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Gwada wasu kalmomi kamar \"jigo\", \"sanarwa\" ko \"muryar AI\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Nemi saituna",
   "settingsSetProgressionResearch": "Saita ci gaba & bincike",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "Rahoto na na {appName} {periodName}",
   "shareInsightsSheetMyReport2": "Rahoto na na {appName}",
   "shareMotivationalCompleted": "AN KAMMALA",
-  "sharePrNewPr": "Sabuwar PR",
+  "sharePrNewPr": "SABON PR",
   "shareStatsCalories": "Adadin kuzari (Calories)",
   "shareStatsDuration": "Tsawon lokaci",
   "shareStatsEliteTemplate": "SAMFURIN ELITE",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "LADAN",
   "streakMilestoneStreakMilestone": "MATAKIN JERI!",
-  "streakMilestoneToGo": ") saura!",
   "streakMilestoneYouVeReachedThe": "Ka kai matakin jeri na karshe!",
   "streakSavedDialogWeUsedStreakShield": "Mun yi amfani da garkuwar Streak Shield 1 don ci gaba da kwanakinka {savedStreakCount} na jere.",
   "streakSavedKeepItGoing": "Ci gaba da shi",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Haɗa",
   "todayScoreCardCustomize": "KEBANCE",
   "todayScoreCardToday": "Yau",
-  "todayScoreDetailDown": "Kasa {arg0}",
-  "todayScoreDetailEarnedPts": "Maki da aka samu {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Ya sauka da {arg0} tun safiyar yau",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} pts",
   "todayScoreDetailHowItWorks": "Yadda yake aiki",
-  "todayScoreDetailInactiveExplanation": "Bayanin rashin aiki {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Kwarin gwiwa tare da matsakaici {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {ba a ƙidaya} other {ba a ƙidaya}} yau, don haka sauran suna raba cikakkun maki 100. Makinka koyaushe yana nuna kawai abin da ya dace a yau.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  matsakaicin 7-day {arg1}",
   "todayScoreDetailNotCounted": "Ba a ƙidaya ba",
   "todayScoreDetailSetupText": "Rubutun saiti",
   "todayScoreDetailSteady": "Tsayayye",
   "todayScoreDetailTodayScore": "Makin Yau",
-  "todayScoreDetailUp": "Sama {arg0}",
+  "todayScoreDetailUp": "▲ Ya hau da {arg0} tun safiyar yau",
   "todayScoreSetupAddAWorkoutPlan": "Ƙara shirin motsa jiki",
   "todayScoreSetupCardContinue": "Ci gaba: {label}",
   "todayScoreSetupCardGetStarted": "FARA · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Nasarorin Cardio",
   "trophiesEarnedDayStreak": "Jerin Kwanaki",
   "trophiesEarnedFirstTime": "KARON FARKO!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "An kai mataki",
   "trophiesEarnedMilestoneReachedNice": "An kai mataki — yayi kyau!",
   "trophiesEarnedMilestones": "Matakai",
-  "trophiesEarnedNewBadges": "Lambobin yabo {arg0}",
-  "trophiesEarnedNewCardioPRs": "Sabuwar Cardio PR {arg0}",
-  "trophiesEarnedNewPR": "Sabon PR",
-  "trophiesEarnedNewPRs": "PR {arg0}",
+  "trophiesEarnedNewBadges": "Sababbin lambobi {arg0}",
+  "trophiesEarnedNewCardioPRs": "Sababbin PRs {arg0} na cardio",
+  "trophiesEarnedNewPR": "SABON PR",
+  "trophiesEarnedNewPRs": "Sababbin PRs {arg0}!",
   "trophiesEarnedNewPr": "SABON PR",
   "trophiesEarnedNextMilestones": "Matakai na Gaba",
   "trophiesEarnedNoNewRecords": "Babu sabbin bayanan nasara",
   "trophiesEarnedNoNewRecordsThis": "Babu sabbin bayanan nasara a wannan zama — ga abin da kake aiki a kai:",
   "trophiesEarnedPersonalRecords": "Bayanan Nasarar Kai",
-  "trophiesEarnedRemainingToUnlock": "Sauran don budewa {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "{arg0} {arg1} sauran don buɗewa",
   "trophiesEarnedSessionHighlights": "Muhimman abubuwan zaman",
   "trophiesEarnedSheetPts": "+{points} pts",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} yana rubutu",
   "typingIndicatorIsTyping3": "{agentName} yana rubutu...",
   "unifiedHomeWidgetsActivity": "AIKI",
-  "unifiedHomeWidgetsBreakfastLogged": "An yi rajistar karin kumallo {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "An rubuta karin kumallo {arg0} cikin safiya 7 da suka wuce",
   "unifiedHomeWidgetsBreakfastSuggestion": "Shawarar karin kumallo",
   "unifiedHomeWidgetsCarbs": "Carbs",
   "unifiedHomeWidgetsConnect": "Haɗa",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Kitse",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal jimillar yau",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal an ƙona",
   "unifiedHomeWidgetsKcalLeft": " kcal saura",
   "unifiedHomeWidgetsLastNight": "daren jiya",
   "unifiedHomeWidgetsLog16oz": "Yi rijistar 16oz",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}m",
   "weekDurationSelectorWeeks": "makonni {selectedWeeks}",
   "weekDurationSelectorWk": "{spw}/mako",
-  "weekProgressStripCompletedCount": "Adadin da aka kammala {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "An kammala motsa jiki {arg0} cikin {arg1}",
   "weekProgressStripCouldNotLoadProgress": "Ba a iya ɗaukar ci gaba ba",
   "weekProgressStripLoading": "Ana ɗauka...",
   "weekProgressStripNoWorkoutsScheduled": "Babu motsa jiki da aka tsara",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Duba duka",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Bibiyar Nauyi",
-  "weightTrendCardDownThisWeek": "Kasa wannan mako {arg0}",
-  "weightTrendCardDownVsLastCycle": "Kasa idan aka kwatanta da zagayowar karshe {arg0}",
+  "weightTrendCardDownThisWeek": "Ya sauka da {arg0} wannan mako!",
+  "weightTrendCardDownVsLastCycle": "Ya sauka da {arg0} lbs idan aka kwatanta da ranar zagayowar guda watan da ya gabata",
   "weightTrendCardLoadingWeight": "Ana ɗauko nauyi...",
   "weightTrendCardLogYourWeightTo": "Yi rijistar nauyinka don ganin yanayin canji",
   "weightTrendCardMaintaining": "Kiyayewa",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Kamar zagayowar karshe",
   "weightTrendCardTapToLogWeight": "Danna don yin rijistar nauyi",
   "weightTrendCardTargetHeld": "An rike manufa",
-  "weightTrendCardTargetHeldWindow": "An rike taga manufa {arg0}",
-  "weightTrendCardUpThisWeek": "Sama wannan mako {arg0}",
-  "weightTrendCardUpVsLastCycle": "Sama idan aka kwatanta da zagayowar karshe {arg0}",
+  "weightTrendCardTargetHeldWindow": "An riƙe manufa {arg0} — laushin ruwa na luteal",
+  "weightTrendCardUpThisWeek": "Ya hau da {arg0} wannan mako",
+  "weightTrendCardUpVsLastCycle": "Ya hau da {arg0} lbs idan aka kwatanta da ranar zagayowar guda watan da ya gabata",
   "weightTrendCardWeightStableThisWeek": "Nauyi ya tsaya daidai wannan mako",
   "weightTrendCardWeightTrends": "Yanayin Canjin Nauyi",
   "welcomeAffirmationGreatChoice": "Zabi mai kyau.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "Komawa ga wannan sigar?",
   "workoutActionsShareWorkout": "Raba Ayyuka",
   "workoutActionsSheetGetALinkFor": "Samun hanyar {marketingDomain} don abokai",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "Maido da \"{name}\"?",
   "workoutActionsSheetS": "{duration}s",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} reps",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} sets, {currentReps} reps",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Ba a iya ƙalubalantar abokai a yanzu ba",
   "workoutCompleteScreenUnableToExtendWorkout": "Ba a iya tsawaita motsa jiki ba",
   "workoutCompleteScreenViewAllMetrics": "Duba Duk Ma'auni",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "KAYANA",
   "workoutDetailExercises": "ARZIKI",
   "workoutDetailFailedToLoadWorkout": "An kasa loda motsa jiki",
-  "workoutDetailHelpersForAvailableEquipment": ") don kayan aikin da ake da su...",
   "workoutDetailHelpersHell": "Jahannama",
   "workoutDetailHelpersUpdatingExercises": "Ana ɗaukaka darasi",
   "workoutDetailMoreInfo": "KARIN BAYANI",
   "workoutDetailProgram": "Shirin",
-  "workoutDetailReplacingExercises": "Ana maye gurbin motsa jiki {arg0}",
+  "workoutDetailReplacingExercises": "Ana maye gurbin motsa jiki {arg0} don kayan aikin da ake da su…",
   "workoutDetailRevert": "Komawa",
   "workoutDetailScreenBreakSuperset": "Fasa Superset?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} cal an ƙone",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "Wanne raka'a ne ginshiƙin nauyi a ciki? Kuma idan kun san tushen app, zaɓi shi - yana taimakawa ɓata tsarin sibling (Hevy vs. Strong CSVs).",
   "workoutHistoryImportYourStrengthData": "Bayanan Ƙarfin ku",
-  "workoutImportAsDone": ")\" a matsayin an gama",
   "workoutImportCalories": "Adadin kuzari",
   "workoutImportCardio": "Cardio",
   "workoutImportCycling": "Keke",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Tsawon lokaci",
   "workoutImportEasy": "Mai sauki",
   "workoutImportFlexibility": "Sassauci",
-  "workoutImportFromSource": "Daga tushe {arg0}",
+  "workoutImportFromSource": "daga {arg0}",
   "workoutImportHard": "Mai wuya",
   "workoutImportHiit": "Hiit",
   "workoutImportHowHardWasThis": "Yaya wuya wannan motsa jiki ya kasance?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Kuna iya ganin waɗannan tsarin faɗakarwa yayin aikin motsa jiki. Dukansu na zaɓi ne - tsallake ko dai kuma aikin har yanzu yana aiki.",
   "workoutPlanDrawerAddExercise": "Ƙara Motsa jiki",
   "workoutPlanDrawerCurrent": "A halin yanzu",
-  "workoutPlanDrawerExerciseCount": "Adadin motsa jiki {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") an yi log. Za a goge su.",
+  "workoutPlanDrawerExerciseCount": "Motsa jiki {arg0}",
   "workoutPlanDrawerNow": "Yanzu",
   "workoutPlanDrawerRemove": "Cire",
-  "workoutPlanDrawerRemoveExercise": "Cire motsa jiki {arg0}",
+  "workoutPlanDrawerRemoveExercise": "A cire {arg0}?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Cire bayanin motsa jiki",
-  "workoutPlanDrawerSetsLogged": "An yi saiti {arg0}",
+  "workoutPlanDrawerSetsLogged": "Kana da saiti {arg0} da aka rubuta. Za a goge su.",
   "workoutPlanDrawerSwapExercise": "Sauya motsa jiki",
   "workoutPlanDrawerTitle": "Take",
   "workoutPlanDrawerWorkoutPlan": "Shirin motsa jiki",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "Kowane saiti da ka yi",
   "workoutShowcaseEveryWorkoutFlows": "Kowane motsa jiki yana gudana",
   "workoutShowcaseFinishWorkout": "Gama motsa jiki",
-  "workoutShowcaseFormat1Rm": "Tsarin 1RM",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "Boarding",
   "workoutShowcaseFormatCard": "Katin",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Alamar layi",
   "workoutShowcaseLogAllSets": "Duk saiti",
   "workoutShowcaseLogDrink": "Log Abin sha",
-  "workoutShowcaseLogSet": "Saiti {arg0}",
+  "workoutShowcaseLogSet": "✓ Rubuta saiti {arg0}",
   "workoutShowcaseLogWater": "Rubuta ruwa",
   "workoutShowcaseMovedThisSession": "an motsa a wannan zaman",
   "workoutShowcaseNewPr": "SABON PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "Wakilai",
   "workoutShowcaseScreenDay": "Rana {day}",
   "workoutShowcaseScreenDuration": "TSAWON LOKACI: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · AN SHIGA",
   "workoutShowcaseScreenSession": "ZAMA: {title}",
   "workoutShowcaseScreenTotalPrs": "JIMLA {duration} · {volume} · {prs} PRS",
@@ -27781,7 +27492,7 @@
   "workoutShowcaseSet1Of4": "Saita 1 cikin 4",
   "workoutShowcaseSet2": "Saita 2",
   "workoutShowcaseSet3": "Saita 3",
-  "workoutShowcaseSetNOf3": "Saitin nuna motsa jiki {arg0} cikin 3",
+  "workoutShowcaseSetNOf3": "Saiti {arg0} cikin 3",
   "workoutShowcaseShareYourWorkout": "Raba atisayenka",
   "workoutShowcaseSideA": "GEFE A",
   "workoutShowcaseSuperset": "Superset",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Kullum",
   "xpGoalsDialog250LevelsAcross11Tiers": "Matakan XP 250 a cikin matakai 11",
   "xpGoalsDialogBeginnerToTranscendent": "Daga mafari zuwa kwararre",
-  "xpGoalsDialogCompleteWorkoutXp": "Kammala motsa jiki xp",
+  "xpGoalsDialogCompleteWorkoutXp": "Kammala Motsa Jiki: +100 XP",
   "xpGoalsDialogDailyGoals": "Burin yau da kullum",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "Tattaunawa da kocin AI xp",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Ma'aunin nauyin abinci xp",
-  "xpGoalsDialogFirstPrXp": "PR xp",
-  "xpGoalsDialogFirstProgressPhotoXp": "Hoton ci gaba xp",
-  "xpGoalsDialogFirstProteinGoalXp": "Burin furotin xp",
-  "xpGoalsDialogFirstWorkoutXp": "Motsa jiki xp",
-  "xpGoalsDialogHitProteinGoalXp": "Cika burin furotin xp",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Hira ta Farko da Kocin AI: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Abinci/Nauyi/Ma'auni na Farko: +50 XP kowanne",
+  "xpGoalsDialogFirstPrXp": "PR na Farko: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Hoton Ci Gaba na Farko: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Manufar Protein ta Farko: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Motsa Jiki na Farko: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Cimma Manufar Protein: +50 XP",
   "xpGoalsDialogLevels": "Matakai",
-  "xpGoalsDialogLogBodyMeasurementsXp": "Ma'aunin jiki xp",
-  "xpGoalsDialogLogMealXp": "Abinci xp",
-  "xpGoalsDialogLogWeightXp": "Nauyi xp",
-  "xpGoalsDialogLoginXp": "Shiga xp",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Rubuta Ma'aunin Jiki: +20 XP",
+  "xpGoalsDialogLogMealXp": "Rubuta Abinci: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Rubuta Nauyi: +15 XP",
+  "xpGoalsDialogLoginXp": "Shiga: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Ladan nasara",
   "xpGoalsFirstTimeBonuses": "Kyautar farko",
   "xpGoalsGotIt": "Na gane!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Kai burin furotin",
   "xpGoalsScreenInventory": "Kayan aiki",
   "xpGoalsScreenLegendary": "ALMARA",
-  "xpGoalsScreenLevelCurrentTotal": "Jimlar matakin yanzu {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Mataki {arg0} • 249 levels total",
   "xpGoalsScreenLevelProgress": "Ci gaban mataki",
   "xpGoalsScreenLogBodyMeasurements": "Rubuta ma'aunin jiki",
   "xpGoalsScreenLogFirstMeal": "Rubuta abinci na farko",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Dakin Kofuna",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Mako-mako",
-  "xpGoalsXpAvailable": "Akwai {arg0}",
-  "xpGoalsXpEarnedToday": "An samu yau {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP akwai",
+  "xpGoalsXpEarnedToday": "+{arg0} XP an samu yau",
   "xpGoalsXpGoals": "Burin XP",
-  "xpGoalsXpMultiplierActive": "Mai ninka Xp yana aiki {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP Yana Aiki!",
   "xpHeroTileDayStreak": "Kwanaki {streak} a jere",
   "xpHeroTileLv": "Mataki {level}",
   "xpHeroTileLv2": "Mataki {nextLevel} → {label}",

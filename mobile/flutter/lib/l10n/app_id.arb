@@ -106,13 +106,6 @@
       }
     }
   },
-  "@activeWorkoutScreenRefactoredFor": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      }
-    }
-  },
   "@activityCardPartChallengeLeaderboardM": {
     "placeholders": {
       "duration": {
@@ -1380,13 +1373,6 @@
       }
     }
   },
-  "@chatScreenExtAs": {
-    "placeholders": {
-      "mealType": {
-        "type": "Object"
-      }
-    }
-  },
   "@chatScreenExtFailedToSendMedia": {
     "placeholders": {
       "e": {
@@ -2046,26 +2032,6 @@
       }
     }
   },
-  "@customExercisesScreenUsedTimes": {
-    "placeholders": {
-      "lastUsedFormatted": {
-        "type": "Object"
-      },
-      "usageCount": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customExercisesScreenValue": {
-    "placeholders": {
-      "name": {
-        "type": "Object"
-      },
-      "targetDisplay": {
-        "type": "Object"
-      }
-    }
-  },
   "@customFoodBuilderSheetAlreadyExistsAsA": {
     "placeholders": {
       "name": {
@@ -2121,16 +2087,6 @@
         "type": "Object"
       },
       "pairedPoints": {
-        "type": "Object"
-      }
-    }
-  },
-  "@customTrendScreenValue": {
-    "placeholders": {
-      "strengthLabel": {
-        "type": "Object"
-      },
-      "value": {
         "type": "Object"
       }
     }
@@ -3328,13 +3284,6 @@
       }
     }
   },
-  "@exerciseDetailSheetLbs": {
-    "placeholders": {
-      "repRange": {
-        "type": "Object"
-      }
-    }
-  },
   "@exerciseDetailSheetMS": {
     "placeholders": {
       "restMins": {
@@ -4018,13 +3967,6 @@
       }
     }
   },
-  "@fastingScoreCardValue": {
-    "placeholders": {
-      "scoreChange": {
-        "type": "Object"
-      }
-    }
-  },
   "@fastingScoreCardValue2": {
     "placeholders": {
       "value": {
@@ -4376,13 +4318,6 @@
   "@flexibilityProgressChartAssessments": {
     "placeholders": {
       "totalAssessments": {
-        "type": "Object"
-      }
-    }
-  },
-  "@flexibilityProgressChartValue": {
-    "placeholders": {
-      "improvementAbsolute": {
         "type": "Object"
       }
     }
@@ -5040,20 +4975,6 @@
         "type": "Object"
       },
       "totalSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue": {
-    "placeholders": {
-      "targetReps": {
-        "type": "Object"
-      }
-    }
-  },
-  "@futuristicSetCardValue2": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -6502,26 +6423,12 @@
       }
     }
   },
-  "@insightsSummaryTemplateValue": {
-    "placeholders": {
-      "pct": {
-        "type": "Object"
-      }
-    }
-  },
   "@intensityPromptSheetSet": {
     "placeholders": {
       "exerciseName": {
         "type": "Object"
       },
       "setNumber": {
-        "type": "Object"
-      }
-    }
-  },
-  "@introCardFormatDataTotalvolumelbsRound": {
-    "placeholders": {
-      "totalSets": {
         "type": "Object"
       }
     }
@@ -7229,13 +7136,6 @@
       }
     }
   },
-  "@logWeightSheetValue": {
-    "placeholders": {
-      "changeInUnit": {
-        "type": "Object"
-      }
-    }
-  },
   "@loggedMealsSectionCal": {
     "placeholders": {
       "target": {
@@ -7458,13 +7358,6 @@
   "@manageDuplicateImportsScreenValue": {
     "placeholders": {
       "primary": {
-        "type": "Object"
-      }
-    }
-  },
-  "@manageDuplicateImportsScreenValue2": {
-    "placeholders": {
-      "row": {
         "type": "Object"
       }
     }
@@ -7857,13 +7750,6 @@
   "@menuAnalysisSheetSort": {
     "placeholders": {
       "label": {
-        "type": "Object"
-      }
-    }
-  },
-  "@menuAnalysisSheetValue": {
-    "placeholders": {
-      "elapsed": {
         "type": "Object"
       }
     }
@@ -8507,13 +8393,6 @@
       }
     }
   },
-  "@myLibraryTabPartHistoryTimelineCardValue": {
-    "placeholders": {
-      "item": {
-        "type": "Object"
-      }
-    }
-  },
   "@myProgramSummaryCardValue": {
     "placeholders": {
       "experience": {
@@ -8720,13 +8599,6 @@
       }
     }
   },
-  "@neatScoreDisplayValue": {
-    "placeholders": {
-      "widget": {
-        "type": "Object"
-      }
-    }
-  },
   "@netflixExercisesTabPartExerciseListCardDaysWeek": {
     "placeholders": {
       "daysPerWeek": {
@@ -8840,20 +8712,6 @@
   "@nextSetPreviewCardKg": {
     "placeholders": {
       "recommendedWeight": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardKg2": {
-    "placeholders": {
-      "weightDelta": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nextSetPreviewCardValue": {
-    "placeholders": {
-      "weightDelta": {
         "type": "Object"
       }
     }
@@ -8984,13 +8842,6 @@
     }
   },
   "@nutrientExplorerTarget": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutrientExplorerValue": {
     "placeholders": {
       "unit": {
         "type": "Object"
@@ -9384,13 +9235,6 @@
       }
     }
   },
-  "@nutritionTabPartWeeklyOverviewCardCal": {
-    "placeholders": {
-      "tdee": {
-        "type": "Object"
-      }
-    }
-  },
   "@nutritionTabPartWeeklyOverviewCardCalDay": {
     "placeholders": {
       "uncertaintyDisplay": {
@@ -9408,13 +9252,6 @@
   "@nutritionTabPartWeeklyOverviewCardG2": {
     "placeholders": {
       "grams": {
-        "type": "Object"
-      }
-    }
-  },
-  "@nutritionTabPartWeeklyOverviewCardKg": {
-    "placeholders": {
-      "data": {
         "type": "Object"
       }
     }
@@ -9755,13 +9592,6 @@
   "@phaseRecommendationBannerBasedOn": {
     "placeholders": {
       "evidenceCitation": {
-        "type": "Object"
-      }
-    }
-  },
-  "@phaseRecommendationBannerConfidenceEstimate": {
-    "placeholders": {
-      "confidence": {
         "type": "Object"
       }
     }
@@ -10533,13 +10363,6 @@
       }
     }
   },
-  "@prsTemplateValue": {
-    "placeholders": {
-      "unit": {
-        "type": "Object"
-      }
-    }
-  },
   "@prsTemplateValue2": {
     "placeholders": {
       "improvement": {
@@ -10756,7 +10579,7 @@
   "@quizDaysSelectorDays": {
     "placeholders": {
       "arg0": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -11024,16 +10847,6 @@
       }
     }
   },
-  "@recipeCreateScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
-        "type": "Object"
-      }
-    }
-  },
   "@recipeCreateScreenValue2": {
     "placeholders": {
       "selected": {
@@ -11065,16 +10878,6 @@
   "@recipeDetailScreenUForkedFrom": {
     "placeholders": {
       "sourceName": {
-        "type": "Object"
-      }
-    }
-  },
-  "@recipeDetailScreenValue": {
-    "placeholders": {
-      "brand": {
-        "type": "Object"
-      },
-      "foodName": {
         "type": "Object"
       }
     }
@@ -11951,13 +11754,6 @@
       }
     }
   },
-  "@setAdjustmentSheetPartSetAdjustmentReasonOf": {
-    "placeholders": {
-      "exerciseName": {
-        "type": "Object"
-      }
-    }
-  },
   "@setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": {
     "placeholders": {
       "totalSets": {
@@ -12133,13 +11929,6 @@
   "@setTrackingSectionSetsCompleted": {
     "placeholders": {
       "length": {
-        "type": "Object"
-      }
-    }
-  },
-  "@setTrackingSectionValue": {
-    "placeholders": {
-      "reps": {
         "type": "Object"
       }
     }
@@ -13606,7 +13395,7 @@
         "type": "Object"
       },
       "arg1": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -14528,16 +14317,6 @@
       }
     }
   },
-  "@workoutActionsSheetN": {
-    "placeholders": {
-      "appName": {
-        "type": "Object"
-      },
-      "url": {
-        "type": "Object"
-      }
-    }
-  },
   "@workoutActionsSheetRestore": {
     "placeholders": {
       "name": {
@@ -14716,13 +14495,6 @@
         "type": "Object"
       },
       "currentSets": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutCompleteScreenUi2Value": {
-    "placeholders": {
-      "workoutComp": {
         "type": "Object"
       }
     }
@@ -15169,13 +14941,6 @@
   "@workoutShowcaseScreenDuration": {
     "placeholders": {
       "duration": {
-        "type": "Object"
-      }
-    }
-  },
-  "@workoutShowcaseScreenPrs": {
-    "placeholders": {
-      "prs": {
         "type": "Object"
       }
     }
@@ -15872,7 +15637,6 @@
   "activeWorkoutHelperWhenToUse": "Kapan digunakan",
   "activeWorkoutScreenExerciseSwappedSuccessfully": "Latihan berhasil ditukar",
   "activeWorkoutScreenRefactoredExerciseSAdded": "{_exercises} latihan ditambahkan",
-  "activeWorkoutScreenRefactoredFor": ") untuk (name)",
   "activeWorkoutScreenUndo": "Urungkan",
   "activeWorkoutScreenWorkoutAdapted": "Latihan diadaptasi.",
   "activityCardAdditionalDetailsOptional": "Detail tambahan (opsional)",
@@ -16079,7 +15843,6 @@
   "aiCoachMealPreWorkoutFuel": "Bahan bakar sebelum latihan?",
   "aiCoachMealQuickSnackIdeas": "Ide camilan cepat?",
   "aiCoachMealRecoveryDayEating": "Makan di hari pemulihan?",
-  "aiCoachMealSearchQuestionsTryAngry": "Cari pertanyaan (coba \"marah\", \"fibe mexican\")",
   "aiCoachMealSomethingWentWrong": "Ada yang tidak beres.",
   "aiCoachMealStressedWhatHelps": "Tertekan — apa yang membantu?",
   "aiCoachMealSuggestionSheetAsianInspiredOnePick": "{meal} ala Asia — satu pilihan (rice bowl, mi, sushi, tumisan), makro dan persiapan.{budgetTail}",
@@ -16559,7 +16322,6 @@
   "caloriesSummaryCardCalPhase": "+{delta} kal · fase {phase}",
   "caloriesSummaryCardCalories": "Kalori",
   "caloriesSummaryCardKcal": "{consumed} / {calorieTarget} kkal",
-  "caloriesSummaryCardOveLeft": "tersisa",
   "cancelConfirmationAnythingElseYouD": "Ada hal lain yang ingin Anda sampaikan? (opsional)",
   "cancelConfirmationCancelAnyway": "Tetap batalkan",
   "cancelConfirmationHelpUsImprove": "Bantu kami berkembang",
@@ -16748,7 +16510,6 @@
   "chatGotIt": "Mengerti",
   "chatLanguageChangedSystem": "🌐 AI Coach sekarang merespons dalam {nativeName}",
   "chatLanguageResetSystem": "🌐 Bahasa AI Coach diatur ulang — menggunakan bahasa aplikasi",
-  "chatLeftToday": ") tersisa hari ini",
   "chatMediaWidgetsCalTotal": "Total {totalCal} kal",
   "chatMediaWidgetsGProtein": "{totalProtein}g protein",
   "chatMediaWidgetsGoTo": "Pergi ke {workoutName}",
@@ -16783,7 +16544,6 @@
   "chatScreenCoachIsThinkingLonger": "Pelatih berpikir lebih lama dari biasanya.",
   "chatScreenCouldntReachCoach": "Tidak dapat menghubungi pelatih.",
   "chatScreenExtAboutAiCoach": "Tentang Pelatih AI",
-  "chatScreenExtAs": ") sebagai (mealType)",
   "chatScreenExtChangeCoach": "Ganti Pelatih",
   "chatScreenExtChatTips": "Tips Obrolan",
   "chatScreenExtChooseMultiplePhotos": "Pilih Beberapa Foto",
@@ -17121,11 +16881,11 @@
   "completeViewGoals": "Lihat Tujuan",
   "complianceRingCardAllWorkoutsCompleted": "Semua latihan selesai",
   "complianceRingCardGetStartedToday": "Mulai hari ini",
-  "complianceRingCardGreatPace": "Laju yang bagus {arg0}",
+  "complianceRingCardGreatPace": "Tempo bagus! Sisa {arg0}",
   "complianceRingCardNoWorkoutsScheduledThis": "Tidak ada latihan dijadwalkan minggu ini",
-  "complianceRingCardOnTrack": "Sesuai jalur {arg0}",
+  "complianceRingCardOnTrack": "Sesuai jalur — kurang {arg0}",
   "complianceRingCardWorkoutCompliance": "Kepatuhan Latihan",
-  "complianceRingCardWorkoutsRemaining": "Sisa latihan {arg0}",
+  "complianceRingCardWorkoutsRemaining": "{arg0} latihan tersisa",
   "comprehensiveStatsStatsScores": "Statistik & Skor",
   "connectedAppsAutoImportEvery15": "Impor otomatis setiap 15 menit",
   "connectedAppsConnect": "Hubungkan",
@@ -17207,7 +16967,6 @@
   "cookingConverterSelectFood": "Pilih Makanan",
   "cookingConverterSheetG": "{inputAmount}g",
   "cookingConverterUseThisValue": "Gunakan Nilai Ini",
-  "cookingConverterWeight": ") Berat",
   "cosmeticsGalleryCosmetics": "Kosmetik",
   "cosmeticsGalleryEquip": "Pasang",
   "cosmeticsGalleryEquipped": "Terpasang",
@@ -17359,8 +17118,6 @@
   "customExercisesNoExercisesMatchYour": "Tidak ada latihan yang cocok dengan pencarian Anda",
   "customExercisesScreenAreYouSureYou": "Apakah Anda yakin ingin menghapus \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
   "customExercisesScreenExercisesUses": "{totalCustomExercises} latihan, {totalUses} penggunaan",
-  "customExercisesScreenUsedTimes": "Digunakan (usageCount) kali(lastUsedFormatted)\" : \"\")",
-  "customExercisesScreenValue": "(name) (targetDisplay))\" : \"\")",
   "customExercisesSearchExercises": "Cari latihan...",
   "customExercisesSimple": "Sederhana",
   "customFoodBuilderAiFillFromName": "Isi otomatis AI dari nama",
@@ -17402,7 +17159,6 @@
   "customTrendScreenLastCycle": "{displayName} · siklus terakhir",
   "customTrendScreenMaxOverlaysRemoveOne": "Maksimal {_kMaxOverlays} overlay — hapus satu untuk menambahkan yang lain",
   "customTrendScreenSharedDays": "{pairedPoints}/{kMinCorrelationPairs} hari bersama",
-  "customTrendScreenValue": ")(value) · (strengthLabel)",
   "customWorkoutBuilderAddExercise": "Tambah Latihan",
   "customWorkoutBuilderBuildCustomWorkout": "Buat Latihan Kustom",
   "customWorkoutBuilderCustomWorkoutCreated": "Latihan kustom dibuat!",
@@ -17473,7 +17229,6 @@
   "cycleScreenUiLogAPeriod": "Catat haid",
   "cycleScreenUiLogPeriod": "Catat haid",
   "cycleScreenUiLogYourFirstPeriod": "Catat periode pertamamu untuk memulai prediksi.",
-  "cycleScreenUiPhase": ") fase",
   "cycleScreenUiPhaseLabel": "Fase {displayName}",
   "cycleScreenUiPredictionsAreEstimates": "Prediksi adalah perkiraan berdasarkan data yang kamu catat, bukan metode kontrasepsi dan bukan saran medis. Temui dokter untuk masalah kesehatan apa pun.",
   "cycleScreenUiPregnancyModeIsOn": "Mode kehamilan aktif",
@@ -18046,7 +17801,7 @@
   "editProgramSheetContinue": "Lanjutkan",
   "editProgramSheetCurrent": "SAAT INI",
   "editProgramSheetCustomProgram": "Program Kustom",
-  "editProgramSheetCustomValue": "Nilai kustom {arg0}",
+  "editProgramSheetCustomValue": "Kustom: {arg0}",
   "editProgramSheetCustomizeProgram": "Sesuaikan Program",
   "editProgramSheetDays": "Hari",
   "editProgramSheetDaysAgo": "{days} hari yang lalu",
@@ -18058,8 +17813,8 @@
   "editProgramSheetEquipment": "Peralatan",
   "editProgramSheetEquipmentLabel": "Label peralatan",
   "editProgramSheetExamples": "Contoh",
-  "editProgramSheetFailedToLoadHistory": "Muat riwayat {arg0}",
-  "editProgramSheetFailedToRestore": "Pulihkan {arg0}",
+  "editProgramSheetFailedToLoadHistory": "Gagal memuat riwayat: {arg0}",
+  "editProgramSheetFailedToRestore": "Gagal memulihkan: {arg0}",
   "editProgramSheetFailedToUpdateProgram": "Perbarui program",
   "editProgramSheetFocus": "Fokus",
   "editProgramSheetHealth": "Kesehatan",
@@ -18505,7 +18260,6 @@
   "exerciseDetailSheetDownloading": "Mengunduh {pct}%",
   "exerciseDetailSheetDownloadingVideo": "Mengunduh video...",
   "exerciseDetailSheetFavorite": "Favorit",
-  "exerciseDetailSheetLbs": ") lbs × (repRange)",
   "exerciseDetailSheetLoading": "Memuat...",
   "exerciseDetailSheetLog1rm": "Catatan 1RM",
   "exerciseDetailSheetMS": "{restMins}m {restSecs}d",
@@ -18847,7 +18601,6 @@
   "exerciseSetTracker15s2": "+15 dtk",
   "exerciseSetTrackerAddNotesHere": "Tambahkan catatan di sini...",
   "exerciseSetTrackerAddSet": "Tambah Set",
-  "exerciseSetTrackerBarbell": ") barbell",
   "exerciseSetTrackerReps": "Repetisi",
   "exerciseSetTrackerRestTarget": "Target istirahat",
   "exerciseSetTrackerS": "{seconds}d",
@@ -18891,7 +18644,6 @@
   "exerciseSwapSheetAiPicksUnavailable": "Pilihan AI tidak tersedia",
   "exerciseSwapSheetAnyEquipment": "Peralatan Apa Saja",
   "exerciseSwapSheetAskAiForSuggestions": "Minta saran AI",
-  "exerciseSwapSheetDescribeYourEquipmentOr": "Jelaskan peralatan atau preferensi Anda\ncontoh: \"Saya punya cedera bahu, hanya berat badan\"",
   "exerciseSwapSheetEGIOnly": "contoh: \"Saya hanya punya dumbbell\"",
   "exerciseSwapSheetFailedToSwapExercise": "Gagal menukar latihan",
   "exerciseSwapSheetFindingMuscleMatchedAlterna": "Mencari alternatif yang sesuai otot...",
@@ -18942,7 +18694,6 @@
   "expandableSummaryExerciseWeight": "Beban",
   "expandedExerciseCardAddToFavorites": "Tambahkan ke Favorit",
   "expandedExerciseCardAlternatingHands": "Tangan Bergantian",
-  "expandedExerciseCardBarbell": ") barbell",
   "expandedExerciseCardBreathing": "Pernapasan",
   "expandedExerciseCardBreathingGuide": "Panduan Pernapasan",
   "expandedExerciseCardCollapse": "Tutup",
@@ -19155,7 +18906,6 @@
   "fastingScoreCardProtocolLevel": "Level Protokol",
   "fastingScoreCardScore": "Skor",
   "fastingScoreCardStreakBonus": "Bonus Streak",
-  "fastingScoreCardValue": ")(scoreChange)",
   "fastingScoreCardValue2": "{value}%",
   "fastingScoreCardValue3": "+{weightedValue}",
   "fastingScoreCardVsLastWeek": "vs minggu lalu",
@@ -19424,7 +19174,6 @@
   "flexibilityProgressChartFirst": "Pertama",
   "flexibilityProgressChartLatest": "Terbaru",
   "flexibilityProgressChartNoDataAvailable": "Tidak ada data tersedia",
-  "flexibilityProgressChartValue": ")(improvementAbsolute)",
   "flexibilityScoreCardByArea": "Berdasarkan Area",
   "flexibilityScoreCardFocusAreas": "Area Fokus",
   "flexibilityScoreCardOverallFlexibility": "Fleksibilitas Keseluruhan",
@@ -19596,7 +19345,6 @@
   "foodHistorySearchMealsFoodsHigh": "Cari makanan, \"protein tinggi\"...",
   "foodHistoryUndo": "Urungkan",
   "foodItemRankingAddFood": "Tambah makanan",
-  "foodItemRankingDetails": ") detail",
   "foodItemRankingNFoodItems": "{count} Item Makanan",
   "foodItemRankingScore": "Skor",
   "foodItemRankingTapToHideDetails": "Ketuk untuk menyembunyikan detail",
@@ -19739,7 +19487,6 @@
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Jadi saya membuat orangnya, bukan buku besarnya. Jepret menu apa pun — di dalam atau di luar negeri — dan pelatih akan membacakannya kembali untuk Anda dalam makro. Lewati hari Selasa dan itu akan membawa Anda kembali pada Rabu pagi tanpa rasa bersalah. Ia mempelajari makanan Anda, gym Anda, pola slip Anda — kurang dari satu sesi PT dalam sebulan.",
   "founderNoteTheFriendsWhoActually": "Teman-teman yang benar-benar menjadi bugar memiliki seseorang yang mengirim pesan kepada mereka. Akuntabilitas nyata memakan biaya sekitar dua ratus dolar sebulan, itulah sebabnya kebanyakan dari kita tidak pernah memilikinya, dan itulah mengapa kesenjangan antara \"melacak\" dan \"berubah\" tetap terbuka selama bertahun-tahun.",
-  "freshnessDecayCardAgo": ") yang lalu",
   "freshnessDecayCardControlsHowQuicklyExercise": "Mengontrol seberapa cepat kesegaran latihan berkurang: e^(-k * sesi)",
   "freshnessDecayCardFreshnessDecayTuner": "Pengatur Penurunan Kesegaran",
   "freshnessDecayCardK": "k = {_freshnessDecay}",
@@ -19811,8 +19558,6 @@
   "futuristicSetCardRmKg": "1RM: {suggestion}kg",
   "futuristicSetCardSetOf": "SET {currentSetNumber} DARI {totalSets}",
   "futuristicSetCardSkipExercise": "Lewati Latihan",
-  "futuristicSetCardValue": ") × (targetReps)",
-  "futuristicSetCardValue2": ")×(reps)",
   "generatePlanCreateAHolisticPlan": "Buat rencana holistik yang mengoordinasikan latihan, nutrisi, dan puasa Anda.",
   "generatePlanFastingProtocol": "Protokol Puasa",
   "generatePlanGeneratePlan": "Buat Rencana",
@@ -20071,8 +19816,8 @@
   "habitsCardAddYourFirstHabit": "Tambah Kebiasaan Pertama Anda",
   "habitsCardAllHabitsCompleted": "Semua kebiasaan selesai!",
   "habitsCardBuildDailyHabits": "Bangun Kebiasaan Harian",
-  "habitsCardCompletedCount": "Jumlah selesai {arg0} {arg1}",
-  "habitsCardDayStreak": "Rentetan hari {arg0}",
+  "habitsCardCompletedCount": "{arg0}/{arg1} selesai",
+  "habitsCardDayStreak": "Beruntun {arg0} hari",
   "habitsCardFailedToLoadHabits": "Gagal memuat kebiasaan",
   "habitsCardGreatJobKeepingUp": "Kerja bagus menjaga streak Anda",
   "habitsCardQuickStart": "Mulai Cepat:",
@@ -20080,7 +19825,7 @@
   "habitsCardTodaySHabits": "Kebiasaan Hari Ini",
   "habitsCardTryAgain": "Coba Lagi",
   "habitsCardU1f525": "🔥",
-  "habitsCardViewAllHabits": "Lihat semua kebiasaan {arg0}",
+  "habitsCardViewAllHabits": "Lihat Semua {arg0} Kebiasaan",
   "habitsCompleted": "Selesai",
   "habitsDeleteHabit": "Hapus Kebiasaan?",
   "habitsHoldToReorderSwipe": "Tahan untuk mengurutkan ulang • Geser untuk menghapus",
@@ -20508,7 +20253,6 @@
   "homeEmptyWorkout_v2": "Hari istirahat? Atau siap bergerak? Pilihanmu.",
   "homeEmptyWorkout_v3": "Di antara program — mulai yang baru untuk kembali ke jalur.",
   "homeEmptyWorkout_v4": "Belum ada rencana. Biarkan AI menyusunnya sesuai tujuanmu.",
-  "homeFromHealthConnect": ") dari Health Connect",
   "homeGreetingAfternoon_v1": "Energi sore, {name}!",
   "homeGreetingAfternoon_v2": "Hai {name}, waktunya bergerak?",
   "homeGreetingAfternoon_v3": "Waktunya peregangan, {name}?",
@@ -21088,13 +20832,11 @@
   "insightsSummaryTemplateCalories": "KALORI",
   "insightsSummaryTemplatePrs": "PR",
   "insightsSummaryTemplateSummary": "RINGKASAN",
-  "insightsSummaryTemplateValue": ")(pct)%",
   "insightsSummaryTemplateWorkouts": "LATIHAN",
   "intensityPrompt1Left": "1 tersisa",
   "intensityPrompt2Left": "2 tersisa",
   "intensityPrompt3Left": "3+ tersisa",
   "intensityPromptHard": "Sulit",
-  "intensityPromptHideRpeSlideDial": "Sembunyikan slide RPE      Tentukan (RPE 1-10)",
   "intensityPromptHowHardWasThat": "Seberapa sulit set tersebut?",
   "intensityPromptMax": "Maks",
   "intensityPromptModerate": "Sedang",
@@ -21102,7 +20844,6 @@
   "intensityPromptSheetSet": "Set {setNumber} · {exerciseName}",
   "introAnAiCoachThat": "Pelatih AI yang menyusun rencana, mempelajari tubuh Anda, dan menyesuaikan setiap minggu.",
   "introBuildMyPlan": "Buat Rencana Saya",
-  "introCardFormatDataTotalvolumelbsRound": ").format(data.totalVolumeLbs.round())) lbs · (totalSets) set",
   "introCardMonth": "bulan.",
   "introIAlreadyHaveAnAccount": "Saya sudah memiliki akun",
   "introScreenV": "v{_appVersion}",
@@ -21392,7 +21133,6 @@
   "logMealSheetBarcode": "kode batang",
   "logMealSheetBarcodeScan": "Pindai kode batang",
   "logMealSheetCached": "(dalam cache)",
-  "logMealSheetCaptured": ") diambil",
   "logMealSheetChooseFoodPhotos": "Pilih Foto Makanan",
   "logMealSheetChooseFromGallery": "Pilih dari galeri",
   "logMealSheetChooseFromLibrary": "Pilih dari pustaka",
@@ -21488,7 +21228,7 @@
   "logMealSheetThatCorrectionProducedAn": "Koreksi tersebut menghasilkan makanan kosong – mempertahankan perkiraan sebelumnya.",
   "logMealSheetThatLooksLikeA": "Itu terlihat seperti sebuah resep — tempelkan ke pengimpor resep.",
   "logMealSheetThisPhotoWasHard": "Foto ini sulit dibaca",
-  "logMealSheetTipAddBrandPortion": "Tips: Tambahkan merek & porsi untuk akurasi yang lebih baik (misalnya, 'Chipotle chicken bowl' atau '2 iris Domino\\u2019s')",
+  "logMealSheetTipAddBrandPortion": "Tips: Tambahkan merek & porsi untuk akurasi yang lebih baik (misalnya, 'Chipotle chicken bowl' atau '2 iris Domino’s')",
   "logMealSheetTryAgain": "Coba lagi",
   "logMealSheetTypeItInstead": "Ketik saja",
   "logMealSheetUi1AddAnother": "Tambah {noun} lain",
@@ -21553,7 +21293,6 @@
   "logWeightSheetDAvg": "Rata-rata 7h · {avgDisplay} {label}",
   "logWeightSheetFromYourPreviousLow": "-{_selectedUnit} {label} dari titik terendah Anda sebelumnya",
   "logWeightSheetValidRange": "Rentang valid: {minValue}-{maxValue} {label}",
-  "logWeightSheetValue": ")(changeInUnit)",
   "logWeightSyncedFromAppleHealth": "Disinkronkan dari Apple Kesehatan",
   "logWeightSyncedToAppleHealth": "Disinkronkan ke Apple Kesehatan",
   "logWeightTapToEdit": "Ketuk untuk mengedit",
@@ -21678,7 +21417,7 @@
   "logoutSignOut2": "Keluar?",
   "macroRingsCardGG": "{consumed}g / {target}g",
   "macroRingsCardMacros": "Makro",
-  "mainShellPartChatsLeftToday": "Sisa chat hari ini {arg0}",
+  "mainShellPartChatsLeftToday": "Sisa {arg0} obrolan hari ini",
   "mainShellPartGuestMode": "Mode Tamu",
   "mainShellPartQuickActions": "Tindakan Cepat",
   "mainShellPartSignUp": "Daftar",
@@ -21691,7 +21430,6 @@
   "manageDuplicateImportsPrimary": "Utama",
   "manageDuplicateImportsScreenSources": "{length} sumber",
   "manageDuplicateImportsScreenValue": "{primary} · ",
-  "manageDuplicateImportsScreenValue2": "(baris)\" : \"\")",
   "manageDuplicateImportsUnlinkFromGroup": "Lepaskan tautan dari grup",
   "manageDuplicateImportsUnlinkedFromGroup": "Tautan dilepaskan dari grup",
   "manageGymProfilesActive": "Aktif",
@@ -21950,7 +21688,6 @@
   "menuAnalysisSheetMore2": "+{extraCount} lainnya",
   "menuAnalysisSheetSelected": "{length} dipilih",
   "menuAnalysisSheetSort": "Urutkan: {label}",
-  "menuAnalysisSheetValue": ")(berlalu)",
   "menuAnalysisSheetValue2": "#{rank}",
   "menuAnalysisSheetYouAlreadySavedA": "Anda sudah menyimpan menu untuk \"{restaurantName}\"",
   "menuAnalysisSort": "Urutkan:",
@@ -22076,7 +21813,7 @@
   "metricsDashboardMetricType": "JENIS METRIK",
   "metricsDashboardMuscleMass": "Massa otot",
   "metricsDashboardNoDataAvailable": "Data tidak tersedia",
-  "metricsDashboardNoMetricDataYet": "Belum ada data metrik {arg0}",
+  "metricsDashboardNoMetricDataYet": "Belum ada data {arg0}",
   "metricsDashboardQuickStats": "STATISTIK CEPAT",
   "metricsDashboardRestingHeartRate": "Detak jantung istirahat",
   "metricsDashboardRestingHr": "HR Istirahat",
@@ -22267,7 +22004,7 @@
   "muscleHeatmapOther": "Lainnya",
   "muscleHeatmapTileCompleteWorkoutsToSee": "Selesaikan latihan untuk melihat data otot",
   "muscleHeatmapTileCouldnTLoad": "Gagal memuat",
-  "muscleHeatmapTileMostTrained": "Paling sering dilatih {arg0}",
+  "muscleHeatmapTileMostTrained": "Paling sering dilatih: {arg0}",
   "muscleHeatmapTileMuscles": "Otot",
   "muscleHeatmapTileRetry": "Coba lagi",
   "muscleHeatmapUpperBody": "Tubuh Bagian Atas",
@@ -22384,7 +22121,6 @@
   "myLibraryTabPartCustomExercisesSectionFavorites": "Favorit ({length})",
   "myLibraryTabPartCustomExercisesSectionStaples": "Utama ({length})",
   "myLibraryTabPartHistoryTimelineCardBestKgX": "Terbaik: {item}kg x {maxReps}",
-  "myLibraryTabPartHistoryTimelineCardValue": ")(item)%",
   "myLibraryTabRecentActivity": "Aktivitas Terkini",
   "myLibraryTabViewAll": "Lihat Semua",
   "myProgramSummaryCardValue": "{workoutDays}  •  {experience}  •  {goal}",
@@ -22464,14 +22200,14 @@
   "neatGamificationWidgetsCasualMover": "Penggerak santai",
   "neatGamificationWidgetsClaimReward": "Klaim Hadiah",
   "neatGamificationWidgetsCouchPotato": "Pemalas",
-  "neatGamificationWidgetsCurrentXp": "Xp saat ini {arg0}",
+  "neatGamificationWidgetsCurrentXp": "{arg0} XP",
   "neatGamificationWidgetsDailyChallenge": "Tantangan Harian",
   "neatGamificationWidgetsExpired": "Kedaluwarsa",
-  "neatGamificationWidgetsHoursMinutesLeft": "Sisa jam menit {arg0} {arg1}",
+  "neatGamificationWidgetsHoursMinutesLeft": "Sisa {arg0}j {arg1}m",
   "neatGamificationWidgetsLevel": "Level {level}",
   "neatGamificationWidgetsLevelUp": "NAIK LEVEL!",
   "neatGamificationWidgetsMaxLevel": "Level Maksimal!",
-  "neatGamificationWidgetsMinutesLeft": "Sisa menit {arg0}",
+  "neatGamificationWidgetsMinutesLeft": "Sisa {arg0}m",
   "neatGamificationWidgetsNeat": "NEAT",
   "neatGamificationWidgetsNeatChampion": "Juara",
   "neatGamificationWidgetsNeatEnthusiast": "Penggemar",
@@ -22479,9 +22215,9 @@
   "neatGamificationWidgetsNoRankingsYetThis": "Belum ada peringkat minggu ini",
   "neatGamificationWidgetsPartNeatMilestonePopupStateXp": "+{xpEarned} XP",
   "neatGamificationWidgetsScore": "Skor",
-  "neatGamificationWidgetsStepGoal": "Target langkah {arg0}",
+  "neatGamificationWidgetsStepGoal": "/ {arg0}",
   "neatGamificationWidgetsSteps": "Langkah",
-  "neatGamificationWidgetsTargetActiveHours": "Target jam aktif {arg0}",
+  "neatGamificationWidgetsTargetActiveHours": "/ {arg0} jam",
   "neatGamificationWidgetsU1f3c6": "🏆",
   "neatGamificationWidgetsU26a1": "⚡",
   "neatGamificationWidgetsU2705": "✅",
@@ -22495,7 +22231,6 @@
   "neatScoreDisplayScoreBreakdown": "RINCIAN SKOR",
   "neatScoreDisplayTapForBreakdown": "Ketuk untuk rincian",
   "neatScoreDisplayTrend": "Tren: {name}",
-  "neatScoreDisplayValue": "))(widget)",
   "netflixExerciseCarouselLoading": "Memuat...",
   "netflixExerciseCarouselSeeAll": "Lihat Semua",
   "netflixExercisesAddYourOwnExercises": "Tambahkan latihan Anda sendiri dengan repetisi, set, dan instruksi khusus.",
@@ -22562,8 +22297,6 @@
   "nextSetPreviewCalculatingOptimalNextSet": "Menghitung set berikutnya yang optimal...",
   "nextSetPreviewCardIntensity": "Intensitas {intensityPercentage}%",
   "nextSetPreviewCardKg": "{recommendedWeight} kg",
-  "nextSetPreviewCardKg2": ")(weightDelta) kg",
-  "nextSetPreviewCardValue": ")(weightDelta)",
   "nextSetPreviewCardX": "x {recommendedReps}",
   "nextSetPreviewFinal": "Set Terakhir",
   "nextSetPreviewKg": " kg",
@@ -22726,7 +22459,6 @@
   "nutrientExplorerTopContributors": "KONTRIBUTOR TERATAS",
   "nutrientExplorerUnknown": "Tidak diketahui",
   "nutrientExplorerUnpinNutrient": "Lepas sematan nutrisi",
-  "nutrientExplorerValue": ") (unit)",
   "nutrientExplorerVitamins": "VITAMIN",
   "nutrientRushGameCatchTheGoldenZealova": "Tangkap tanda emas Zealova untuk power-up!",
   "nutrientRushGameNewBest": "🎉 REKOR TERBAIK BARU!",
@@ -22994,11 +22726,9 @@
   "nutritionTabPartWeeklyOverview": "Ikhtisar Mingguan",
   "nutritionTabPartWeeklyOverviewCardAvgCal": "rata-rata {averageDailyCalories} cal",
   "nutritionTabPartWeeklyOverviewCardAvgIntakeCal": "Asupan rata-rata: {avgIntake} cal",
-  "nutritionTabPartWeeklyOverviewCardCal": ")(tdee) kal",
   "nutritionTabPartWeeklyOverviewCardCalDay": "cal/hari {uncertaintyDisplay}",
   "nutritionTabPartWeeklyOverviewCardG": "{avgProtein}g",
   "nutritionTabPartWeeklyOverviewCardG2": "{grams}g",
-  "nutritionTabPartWeeklyOverviewCardKg": ")(data) kg",
   "nutritionTabPartWeeklyOverviewCardValue": "{daysLogged}/7",
   "nutritionTabPartWeeklyOverviewCardValue2": "{pct}%",
   "nutritionTabPartWeeklyOverviewCardWeight": "Berat: {formattedWeeklyRate}",
@@ -23042,33 +22772,32 @@
   "onboardingValueZealovaAllOfIt": "Zealova, semuanya",
   "onboardingWhyFirstTheWhy": "PERTAMA, ALASANNYA",
   "onboardingWhyWhatSDrivingThis": "Apa yang mendorong ini?",
-  "openAllCrates24HoursOf2xXp": "24 jam XP 2x",
-  "openAllCratesActivityCrate": "Peti aktivitas",
+  "openAllCrates24HoursOf2xXp": "24 jam 2x XP",
+  "openAllCratesActivityCrate": "Peti Aktivitas",
   "openAllCratesBonusCrateToOpen": "Peti bonus untuk dibuka",
-  "openAllCratesCollect": "Kumpulkan {arg0} {arg1}",
-  "openAllCratesCratesOpened": "Peti dibuka {arg0}",
-  "openAllCratesDailyCrate": "Peti harian",
+  "openAllCratesCollect": "Ambil ({arg0}/{arg1})",
+  "openAllCratesCratesOpened": "{arg0} peti dibuka!",
+  "openAllCratesDailyCrate": "Peti Harian",
   "openAllCratesDone": "Selesai",
-  "openAllCratesDoubleXpToken": "Token xp ganda",
+  "openAllCratesDoubleXpToken": "Token XP Ganda",
   "openAllCratesFailedToOpenCrates": "Gagal membuka peti. Silakan coba lagi.",
-  "openAllCratesFitnessCrate": "Peti kebugaran",
-  "openAllCratesGainedXp": "Xp didapat {arg0}",
+  "openAllCratesFitnessCrate": "Peti Kebugaran",
+  "openAllCratesGainedXp": "+{arg0} XP",
   "openAllCratesMaxLevel": "Level maksimal",
-  "openAllCratesOpenYourCrates": "Buka peti Anda",
-  "openAllCratesOpened": ") dibuka!",
-  "openAllCratesOpeningYourCrates": "Membuka peti Anda",
-  "openAllCratesPickRewardPerDay": "Pilih hadiah per hari {arg0} {arg1}",
-  "openAllCratesPickYourReward": "Pilih hadiah Anda {arg0} {arg1}",
+  "openAllCratesOpenYourCrates": "🎁 Buka Peti Anda",
+  "openAllCratesOpeningYourCrates": "🎁 Membuka peti Anda…",
+  "openAllCratesPickRewardPerDay": "Pilih 1 hadiah per hari • {arg0}/{arg1} dipilih",
+  "openAllCratesPickYourReward": "Pilih hadiah Anda • {arg0}/{arg1} dipilih",
   "openAllCratesProtectYourStreak": "Lindungi rentetan Anda",
   "openAllCratesSelectAll": "Pilih Semua",
-  "openAllCratesStreakCrate": "Peti streak",
-  "openAllCratesStreakShield": "Perisai streak",
+  "openAllCratesStreakCrate": "Peti Beruntun",
+  "openAllCratesStreakShield": "Perisai Beruntun",
   "openAllCratesToday": "Hari ini",
-  "openAllCratesTotalXpFormatted": "Total XP {arg0}",
-  "openAllCratesTotalXpLevel": "Total XP level {arg0} {arg1}",
+  "openAllCratesTotalXpFormatted": "Total {arg0}",
+  "openAllCratesTotalXpLevel": "Total: {arg0} XP • Level {arg1}",
   "openAllCratesUd83cUdf89Rewards": "🎉 Hadiah!",
-  "openAllCratesXpInLevel": "XP di level {arg0} {arg1}",
-  "openAllCratesXpToNextLevel": "XP ke level berikutnya {arg0} {arg1}",
+  "openAllCratesXpInLevel": "{arg0} / {arg1} XP",
+  "openAllCratesXpToNextLevel": "{arg0} XP menuju Lvl {arg1}",
   "openAllCratesYesterday": "Kemarin",
   "overallScoreHeroOverall": "KESELURUHAN",
   "overviewActiveSkill": "KEAHLIAN AKTIF",
@@ -23309,7 +23038,6 @@
   "personalityCardValue": "\"{motivationQuote}\"",
   "personalityCardYourGymPersonalityIs": "Kepribadian gym-mu adalah...",
   "phaseRecommendationBannerBasedOn": "Berdasarkan: {evidenceCitation}",
-  "phaseRecommendationBannerConfidenceEstimate": "(confidence)-confidence estimate\" : \"\")",
   "phaseRecommendationBannerCycleDay": "Hari siklus {cycleDay}",
   "phaseRecommendationBannerEvidence": "Bukti: {evidenceCitation}",
   "phaseRecommendationBannerGotIt": "Mengerti",
@@ -23422,9 +23150,9 @@
   "planPreviewScreenBuildStrengthFoundation": "Bangun fondasi kekuatan",
   "planPreviewScreenBuildingYour4Week": "Membangun Rencana 4 Minggu Anda...",
   "planPreviewScreenContinueFree": "Lanjutkan Gratis",
-  "planPreviewScreenDaysPerWeek": "Hari per minggu {arg0}",
+  "planPreviewScreenDaysPerWeek": "{arg0} hari/minggu",
   "planPreviewScreenDesignedBasedOnYour": "Dirancang berdasarkan jawaban kuis Anda",
-  "planPreviewScreenEquipmentCount": "Jumlah peralatan {arg0}",
+  "planPreviewScreenEquipmentCount": "{arg0} peralatan",
   "planPreviewScreenExercisesMin": "Latihan minimal {arg0} {arg1}",
   "planPreviewScreenIncreaseIntensityVolume": "Tingkatkan intensitas volume",
   "planPreviewScreenMasterTheMovement": "Kuasai gerakan",
@@ -23518,7 +23246,6 @@
   "prInlineCelebrationPersonalRecords": "{length} Rekor Pribadi!",
   "prInlineCelebrationValue": "+{improvementPercent}%",
   "prInlineCelebrationValue2": "{exerciseName} • {formattedValue}",
-  "prPosterTemplateFromLast": ") DARI TERAKHIR",
   "prShareCardCopiedToClipboard": "Disalin ke papan klip!",
   "prShareCardCopyText": "Salin Teks",
   "prShareCardFailedToCaptureImage": "Gagal menangkap gambar",
@@ -23951,7 +23678,6 @@
   "prsTemplateKeepPushing": "Terus berjuang!",
   "prsTemplateNewPersonalRecords": "REKOR PRIBADI BARU",
   "prsTemplateNewPrsAreJust": "PR baru sudah di depan mata",
-  "prsTemplateValue": ") (unit)",
   "prsTemplateValue2": "+{improvement} {unit}",
   "publicRecipeIngredients": "Bahan-bahan",
   "publicRecipeInstructions": "Instruksi",
@@ -24071,7 +23797,7 @@
   "quickLogMeasurementsTapToViewFull": "Ketuk untuk melihat riwayat dan tren lengkap",
   "quickLogMeasurementsTrackYourBodyChanges": "Lacak perubahan tubuh Anda dari waktu ke waktu",
   "quickLogMeasurementsUpdate": "Perbarui",
-  "quickLogMeasurementsUpdatedDaysAgo": "{arg0} hari yang lalu",
+  "quickLogMeasurementsUpdatedDaysAgo": "Diperbarui {arg0} hari lalu",
   "quickLogMeasurementsUpdatedToday": "Hari ini",
   "quickLogMeasurementsUpdatedYesterday": "Kemarin",
   "quickLogMeasurementsWaist": "Pinggang",
@@ -24197,16 +23923,15 @@
   "quizDaysSelectorAiGeneratesWorkoutsWithin": "AI menghasilkan latihan dalam rentang yang Anda pilih",
   "quizDaysSelectorBest": "Terbaik",
   "quizDaysSelectorConsistencyBeatsIntensity": "Konsistensi mengalahkan intensitas - pilih yang bisa Anda pertahankan",
-  "quizDaysSelectorDays": "{arg0} hari",
-  "quizDaysSelectorDaysSelected": "{arg0} hari dipilih {arg1}",
-  "quizDaysSelectorForYourWorkouts": ") untuk latihan Anda",
+  "quizDaysSelectorDays": "{arg0, plural, one {hari} other {hari}}",
+  "quizDaysSelectorDaysSelected": "{arg0} / {arg1} hari dipilih",
   "quizDaysSelectorFri": "Jum",
   "quizDaysSelectorHowLongAreYour": "Berapa lama durasi latihan Anda?",
   "quizDaysSelectorHowManyDaysPer": "Berapa hari per minggu Anda bisa berlatih?",
   "quizDaysSelectorMin": "Min",
   "quizDaysSelectorMon": "Sen",
   "quizDaysSelectorSat": "Sab",
-  "quizDaysSelectorSelectNDays": "Pilih {arg0} hari",
+  "quizDaysSelectorSelectNDays": "Pilih {arg0} hari yang cocok untuk Anda",
   "quizDaysSelectorSun": "Min",
   "quizDaysSelectorThu": "Kam",
   "quizDaysSelectorTue": "Sel",
@@ -24236,13 +23961,13 @@
   "quizEquipmentHomeGym": "Home Gym",
   "quizEquipmentHomeKettlebell": "Rumah + Kettlebell",
   "quizEquipmentHotel": "Hotel",
-  "quizEquipmentIdentifiedCount": "Jumlah teridentifikasi {arg0}",
+  "quizEquipmentIdentifiedCount": "{arg0} item teridentifikasi. Ketuk untuk membatalkan pilihan.",
   "quizEquipmentKettlebell": "Kettlebell",
   "quizEquipmentMedicineBall": "Medicine ball",
   "quizEquipmentMinimalEquipmentBodyweight": "Peralatan minimal - berat badan, matras",
   "quizEquipmentNeededForBarbell": "Diperlukan untuk barbell",
   "quizEquipmentNoEquipmentIdentifiedPick": "Tidak ada peralatan yang teridentifikasi. Pilih dari daftar di bawah.",
-  "quizEquipmentOtherCount": "Jumlah lainnya {arg0}",
+  "quizEquipmentOtherCount": "{arg0} dipilih",
   "quizEquipmentOtherEquipment": "Peralatan lainnya",
   "quizEquipmentPullUpBar": "Pull up bar",
   "quizEquipmentQuickPresets": "Preset cepat",
@@ -24508,7 +24233,6 @@
   "recipeCreateRecipeNameRequired": "Nama resep wajib diisi",
   "recipeCreateRemovePhoto": "Hapus foto",
   "recipeCreateSaving": "Menyimpan...",
-  "recipeCreateScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeCreateScreenValue2": "✨ {selected}",
   "recipeCreateTakePhoto": "Ambil foto",
   "recipeCreateTapToEdit": "Ketuk untuk mengedit",
@@ -24534,7 +24258,6 @@
   "recipeDetailScreenKcal": "{i} kkal",
   "recipeDetailScreenPerServingUD": "Per porsi (×{servings} porsi)",
   "recipeDetailScreenUForkedFrom": "✨ Di-fork dari {sourceName}",
-  "recipeDetailScreenValue": "(brand) \" : \"\")(foodName)",
   "recipeDetailScreenWillBePermanentlyRemoved": "\"{name}\" akan dihapus secara permanen.",
   "recipeDetailUd83cUdf1fCuratedRecipe": "🌟 Resep pilihan",
   "recipeDetailView": "Lihat",
@@ -24745,7 +24468,7 @@
   "regenerateSheetApply": "Terapkan",
   "regenerateSheetApplyThisWorkout": "Terapkan latihan ini",
   "regenerateSheetBalancingMuscleGroups": "Menyeimbangkan kelompok otot",
-  "regenerateSheetBootingUpTheAi": "Memulai AI",
+  "regenerateSheetBootingUpTheAi": "Menyalakan AI",
   "regenerateSheetBuildingYourPlan": "Menyusun rencana Anda",
   "regenerateSheetBuildingYourWorkout": "Menyusun latihan Anda…",
   "regenerateSheetCheckingEquipment": "Memeriksa peralatan",
@@ -24766,7 +24489,7 @@
   "regenerateSheetFinalizingDetails": "Menyelesaikan detail…",
   "regenerateSheetFinalizingYourWorkout": "Menyelesaikan latihan Anda",
   "regenerateSheetFineTuningTheDetails": "Menyempurnakan detail",
-  "regenerateSheetGeneratingElapsed": "Waktu pembuatan {arg0}",
+  "regenerateSheetGeneratingElapsed": "Membuat… {arg0}",
   "regenerateSheetGeneratingSuggestions": "Menghasilkan saran…",
   "regenerateSheetGetSuggestions": "Dapatkan Saran",
   "regenerateSheetGettingCreative": "Mencari ide kreatif",
@@ -24992,21 +24715,20 @@
   "restSuggestionCardUseSuggested": "Gunakan yang Disarankan",
   "restSuggestionQuick": "Cepat",
   "restSuggestionQuickRest": "Istirahat cepat",
-  "restSuggestionSaveTime": "Hemat waktu {arg0}",
+  "restSuggestionSaveTime": "Hemat {arg0}",
   "restSuggestionSuggested": "Disarankan",
   "restSuggestionUseSuggested": "Gunakan yang disarankan",
   "restTimerCardBaseRest": "Istirahat Dasar",
   "restTimerCardControlRestPeriodsBetween": "Kontrol periode istirahat antar set",
   "restTimerCardCustomRestTimer": "Pengatur Waktu Istirahat Kustom",
   "restTimerCardFormula": "Rumus",
-  "restTimerCardFormulaBaserestRpe7": "Rumus: BaseRest * (RPE / 7) * Multiplier",
   "restTimerCardLivePreview": "Pratinjau Langsung",
   "restTimerCardMultiplier": "Pengali",
   "restTimerCardRestBaserestRpe7": "Istirahat = BaseRest * (RPE / 7)",
   "restTimerCardS": "{value} d",
   "restTimerCardS2": "{restTimerBaseRest} d",
   "restTimerCardS3": "{s} d",
-  "restTimerCardVariablesBaseRpeMultipli": "Variabel: base, rpe, multiplier, tier",
+  "restTimerCardVariablesBaseRpeMultipli": "Variabel: dasar, RPE, pengali, tingkat",
   "restTimerCardX": "{restTimerMultiplier}x",
   "restTimerOverlayAiWeightCoach": "PELATIH BEBAN AI",
   "restTimerOverlayAnalyzingYourPerformance": "Menganalisis performa Anda...",
@@ -25099,7 +24821,7 @@
   "rtpGraduated": "Selesai",
   "rtpTitle": "Kembali berlatih",
   "safetyDisclaimerBannerDismissDisclaimer": "Tutup peringatan",
-  "safetyDisclaimerBannerInjuriesFlagged": "Cedera ditandai {arg0}",
+  "safetyDisclaimerBannerInjuriesFlagged": "{arg0} cedera ditandai",
   "safetyDisclaimerBannerInjuryBody": "Bagian tubuh cedera",
   "safetyDisclaimerBannerLearnMore": "Pelajari lebih lanjut",
   "safetyDisclaimerBannerMore": "+{overflow} lagi",
@@ -25292,7 +25014,6 @@
   "sessionDetailSet": "Set",
   "sessionDetailSetCount": "{count, plural, other{{count} set}} · set utama disorot",
   "sessionDetailTime": "Waktu",
-  "sessionDetailTopSetHighlighted": ") • set teratas disorot",
   "sessionDetailWeight": "Beban",
   "setAdjustmentAdditionalNotesOptional": "Catatan tambahan (opsional)",
   "setAdjustmentConfirm": "Konfirmasi",
@@ -25308,7 +25029,6 @@
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone": "{completedCount} selesai",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining": "{remainingCount} tersisa",
   "setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved": "{length} dihapus",
-  "setAdjustmentSheetPartSetAdjustmentReasonOf": ") dari (exerciseName)",
   "setAdjustmentSheetPartSetAdjustmentReasonOfPlanned": "dari {totalSets} direncanakan",
   "setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted": "{completedSets} set selesai",
   "setAdjustmentSheetReps": "Repetisi",
@@ -25373,7 +25093,6 @@
   "setTrackingSectionSetTapToExpand": "Set {currentSetNumber}/{totalSets} • Ketuk untuk memperluas",
   "setTrackingSectionSets": "{widget} set",
   "setTrackingSectionSetsCompleted": "{length} set selesai",
-  "setTrackingSectionValue": ")×(reps)",
   "setTrackingSheetsAmountToAdjustWeight": "Jumlah penyesuaian beban",
   "setTrackingSheetsDropSet": "Drop Set",
   "setTrackingSheetsExerciseHistory": "Riwayat Latihan",
@@ -25556,7 +25275,7 @@
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject=Permintaan Dukungan {appName}",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} hari",
   "settingsScreenUiNoSettingsFound": "Pengaturan tidak ditemukan",
-  "settingsScreenUiTryDifferentKeywordsLike": "Coba kata kunci lain seperti \"tema\", \"notifikasi\", atau \"suara ai\"",
+  "settingsScreenUiTryDifferentKeywordsLike": "Coba kata kunci lain seperti \"tema\", \"notifikasi\", atau \"suara AI\"",
   "settingsScreenV": "{appName} v{version}",
   "settingsSearchSettings": "Cari pengaturan",
   "settingsSetProgressionResearch": "Atur progresi & riset",
@@ -25601,7 +25320,7 @@
   "shareInsightsSheetMyReport": "Laporan {periodName} {appName} saya",
   "shareInsightsSheetMyReport2": "Laporan {appName} saya",
   "shareMotivationalCompleted": "SELESAI",
-  "sharePrNewPr": "PR baru",
+  "sharePrNewPr": "PR BARU",
   "shareStatsCalories": "Kalori",
   "shareStatsDuration": "Durasi",
   "shareStatsEliteTemplate": "TEMPLAT ELITE",
@@ -26030,7 +25749,6 @@
   "streakMilestoneRare": "RARE",
   "streakMilestoneRewards": "HADIAH",
   "streakMilestoneStreakMilestone": "MILESTONE STREAK!",
-  "streakMilestoneToGo": ") lagi!",
   "streakMilestoneYouVeReachedThe": "Anda telah mencapai milestone streak tertinggi!",
   "streakSavedDialogWeUsedStreakShield": "Kami menggunakan 1 Streak Shield untuk menjaga streak {savedStreakCount} hari Anda tetap aktif.",
   "streakSavedKeepItGoing": "Terus pertahankan",
@@ -26552,16 +26270,16 @@
   "todayScoreCardConnect": "Hubungkan",
   "todayScoreCardCustomize": "SESUAIKAN",
   "todayScoreCardToday": "Hari Ini",
-  "todayScoreDetailDown": "Turun {arg0}",
-  "todayScoreDetailEarnedPts": "Poin didapat {arg0} {arg1}",
+  "todayScoreDetailDown": "▼ Turun {arg0} sejak pagi ini",
+  "todayScoreDetailEarnedPts": "{arg0} / {arg1} poin",
   "todayScoreDetailHowItWorks": "Cara kerja",
-  "todayScoreDetailInactiveExplanation": "Penjelasan tidak aktif {arg0} {arg1}",
-  "todayScoreDetailMomentumWithAvg": "Momentum dengan rata-rata {arg0} {arg1}",
+  "todayScoreDetailInactiveExplanation": "{arg0} {arg1, plural, one {tidak dihitung} other {tidak dihitung}} hari ini, jadi sisanya berbagi 100 poin penuh. Skor Anda selalu hanya mencerminkan yang benar-benar berlaku hari ini.",
+  "todayScoreDetailMomentumWithAvg": "{arg0}  ·  rata-rata 7 hari {arg1}",
   "todayScoreDetailNotCounted": "Tidak dihitung",
   "todayScoreDetailSetupText": "Teks pengaturan",
   "todayScoreDetailSteady": "Stabil",
   "todayScoreDetailTodayScore": "Skor Hari Ini",
-  "todayScoreDetailUp": "Naik {arg0}",
+  "todayScoreDetailUp": "▲ Naik {arg0} sejak pagi ini",
   "todayScoreSetupAddAWorkoutPlan": "Tambahkan rencana latihan",
   "todayScoreSetupCardContinue": "Lanjutkan: {label}",
   "todayScoreSetupCardGetStarted": "MULAI · {completedCount}/{length}",
@@ -26690,20 +26408,19 @@
   "trophiesEarnedCardioAchievements": "Pencapaian Cardio",
   "trophiesEarnedDayStreak": "Streak Hari",
   "trophiesEarnedFirstTime": "PERTAMA KALI!",
-  "trophiesEarnedKg": ") kg",
   "trophiesEarnedMilestoneReached": "Pencapaian tercapai",
   "trophiesEarnedMilestoneReachedNice": "Tonggak sejarah tercapai — bagus!",
   "trophiesEarnedMilestones": "Tonggak Sejarah",
-  "trophiesEarnedNewBadges": "Lencana {arg0}",
-  "trophiesEarnedNewCardioPRs": "PR kardio {arg0}",
-  "trophiesEarnedNewPR": "PR baru",
-  "trophiesEarnedNewPRs": "PR {arg0}",
+  "trophiesEarnedNewBadges": "{arg0} lencana baru",
+  "trophiesEarnedNewCardioPRs": "{arg0} PR kardio baru",
+  "trophiesEarnedNewPR": "PR BARU",
+  "trophiesEarnedNewPRs": "{arg0} PR baru!",
   "trophiesEarnedNewPr": "PR BARU",
   "trophiesEarnedNextMilestones": "Tonggak Sejarah Berikutnya",
   "trophiesEarnedNoNewRecords": "Tidak ada rekor baru",
   "trophiesEarnedNoNewRecordsThis": "Tidak ada rekor baru di sesi ini — inilah yang sedang Anda upayakan:",
   "trophiesEarnedPersonalRecords": "Rekor Pribadi",
-  "trophiesEarnedRemainingToUnlock": "Sisa untuk dibuka {arg0} {arg1}",
+  "trophiesEarnedRemainingToUnlock": "{arg0} {arg1} lagi untuk membuka",
   "trophiesEarnedSessionHighlights": "Sorotan sesi",
   "trophiesEarnedSheetPts": "+{points} poin",
   "trophiesEarnedSheetX": " x {reps}",
@@ -26756,7 +26473,7 @@
   "typingIndicatorIsTyping2": "{userName} sedang mengetik",
   "typingIndicatorIsTyping3": "{agentName} sedang mengetik...",
   "unifiedHomeWidgetsActivity": "AKTIVITAS",
-  "unifiedHomeWidgetsBreakfastLogged": "Sarapan dicatat {arg0}",
+  "unifiedHomeWidgetsBreakfastLogged": "Sarapan dicatat {arg0} dari 7 pagi terakhir",
   "unifiedHomeWidgetsBreakfastSuggestion": "Saran sarapan",
   "unifiedHomeWidgetsCarbs": "Karbohidrat",
   "unifiedHomeWidgetsConnect": "Hubungkan",
@@ -26769,7 +26486,7 @@
   "unifiedHomeWidgetsFat": "Lemak",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kkal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kkal total hari ini",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal terbakar",
   "unifiedHomeWidgetsKcalLeft": " kkal tersisa",
   "unifiedHomeWidgetsLastNight": "tadi malam",
   "unifiedHomeWidgetsLog16oz": "Catat 16oz",
@@ -26971,7 +26688,7 @@
   "weekDurationSelectorW": "{first}m",
   "weekDurationSelectorWeeks": "{selectedWeeks} minggu",
   "weekDurationSelectorWk": "{spw}/minggu",
-  "weekProgressStripCompletedCount": "Jumlah selesai {arg0} {arg1}",
+  "weekProgressStripCompletedCount": "{arg0} dari {arg1} latihan selesai",
   "weekProgressStripCouldNotLoadProgress": "Gagal memuat progres",
   "weekProgressStripLoading": "Memuat...",
   "weekProgressStripNoWorkoutsScheduled": "Tidak ada latihan terjadwal",
@@ -27161,8 +26878,8 @@
   "weightTrackingCardSeeAll": "Lihat Semua",
   "weightTrackingCardValue": "{value} · {label}",
   "weightTrackingCardWeightTracking": "Pelacakan Berat Badan",
-  "weightTrendCardDownThisWeek": "Turun minggu ini {arg0}",
-  "weightTrendCardDownVsLastCycle": "Turun vs siklus terakhir {arg0}",
+  "weightTrendCardDownThisWeek": "Turun {arg0} minggu ini!",
+  "weightTrendCardDownVsLastCycle": "Turun {arg0} lbs vs hari siklus yang sama bulan lalu",
   "weightTrendCardLoadingWeight": "Memuat berat badan...",
   "weightTrendCardLogYourWeightTo": "Catat berat badanmu untuk melihat tren",
   "weightTrendCardMaintaining": "Mempertahankan",
@@ -27173,9 +26890,9 @@
   "weightTrendCardSameAsLastCycle": "Sama dengan siklus terakhir",
   "weightTrendCardTapToLogWeight": "Ketuk untuk mencatat berat badan",
   "weightTrendCardTargetHeld": "Target tercapai",
-  "weightTrendCardTargetHeldWindow": "Jendela target tercapai {arg0}",
-  "weightTrendCardUpThisWeek": "Naik minggu ini {arg0}",
-  "weightTrendCardUpVsLastCycle": "Naik vs siklus terakhir {arg0}",
+  "weightTrendCardTargetHeldWindow": "Target dipertahankan {arg0} — penghalusan air luteal",
+  "weightTrendCardUpThisWeek": "Naik {arg0} minggu ini",
+  "weightTrendCardUpVsLastCycle": "Naik {arg0} lbs vs hari siklus yang sama bulan lalu",
   "weightTrendCardWeightStableThisWeek": "Berat badan stabil minggu ini",
   "weightTrendCardWeightTrends": "Tren Berat Badan",
   "welcomeAffirmationGreatChoice": "Pilihan yang bagus.",
@@ -27222,7 +26939,6 @@
   "workoutActionsRevertToThisVersion": "Kembali ke versi ini?",
   "workoutActionsShareWorkout": "Bagikan Latihan",
   "workoutActionsSheetGetALinkFor": "Dapatkan tautan {marketingDomain} untuk teman",
-  "workoutActionsSheetN": ") — (appName)\n(url)",
   "workoutActionsSheetRestore": "Pulihkan \"{name}\"?",
   "workoutActionsSheetS": "{duration}d",
   "workoutActionsSheetV": "v{versionNum}",
@@ -27311,7 +27027,6 @@
   "workoutCompleteScreenUi2Kg": "{currentTotalVolumeKg} kg",
   "workoutCompleteScreenUi2KgXReps": "{exComp} kg x {currentReps} repetisi",
   "workoutCompleteScreenUi2SetsReps": "{currentSets} set, {currentReps} repetisi",
-  "workoutCompleteScreenUi2Value": ")(workoutComp)",
   "workoutCompleteScreenUnableToChallengeFriends": "Tidak dapat menantang teman saat ini",
   "workoutCompleteScreenUnableToExtendWorkout": "Tidak dapat memperpanjang latihan",
   "workoutCompleteScreenViewAllMetrics": "Lihat Semua Metrik",
@@ -27375,12 +27090,11 @@
   "workoutDetailEquipment": "PERALATAN",
   "workoutDetailExercises": "LATIHAN",
   "workoutDetailFailedToLoadWorkout": "Gagal memuat latihan",
-  "workoutDetailHelpersForAvailableEquipment": ") untuk peralatan yang tersedia...",
   "workoutDetailHelpersHell": "Neraka",
   "workoutDetailHelpersUpdatingExercises": "Memperbarui Latihan",
   "workoutDetailMoreInfo": "INFORMASI LEBIH LANJUT",
   "workoutDetailProgram": "Program",
-  "workoutDetailReplacingExercises": "Mengganti latihan {arg0}",
+  "workoutDetailReplacingExercises": "Mengganti {arg0} latihan untuk peralatan yang tersedia…",
   "workoutDetailRevert": "Kembali",
   "workoutDetailScreenBreakSuperset": "Hancurkan Superset?",
   "workoutDetailScreenCalBurned": "~{estimatedCalories} kal terbakar",
@@ -27509,7 +27223,6 @@
   "workoutHistoryImportWendler531": "Wendler 5/3/1",
   "workoutHistoryImportWhichUnitIsThe": "Kolom beratnya berada dalam satuan yang mana? Dan jika Anda mengetahui aplikasi sumbernya, pilih aplikasi tersebut — membantu membedakan format saudaranya (Hevy vs. CSV Kuat).",
   "workoutHistoryImportYourStrengthData": "Data Kekuatan Anda",
-  "workoutImportAsDone": ")\" sebagai selesai",
   "workoutImportCalories": "Kalori",
   "workoutImportCardio": "Kardio",
   "workoutImportCycling": "Bersepeda",
@@ -27517,7 +27230,7 @@
   "workoutImportDuration": "Lamanya",
   "workoutImportEasy": "Mudah",
   "workoutImportFlexibility": "Fleksibilitas",
-  "workoutImportFromSource": "Dari sumber {arg0}",
+  "workoutImportFromSource": "dari {arg0}",
   "workoutImportHard": "Sulit",
   "workoutImportHiit": "HIIT",
   "workoutImportHowHardWasThis": "Seberapa sulitkah latihan ini?",
@@ -27602,13 +27315,12 @@
   "workoutPermissionsPrimeYouMaySeeThese": "Anda mungkin melihat perintah sistem ini selama berolahraga. Keduanya opsional — lewati salah satunya dan latihan tetap berhasil.",
   "workoutPlanDrawerAddExercise": "Tambahkan Latihan",
   "workoutPlanDrawerCurrent": "Saat ini",
-  "workoutPlanDrawerExerciseCount": "Jumlah latihan {arg0}",
-  "workoutPlanDrawerLoggedTheyWillBe": ") dicatat. Data ini akan dihapus.",
+  "workoutPlanDrawerExerciseCount": "{arg0} latihan",
   "workoutPlanDrawerNow": "Sekarang",
   "workoutPlanDrawerRemove": "Menghapus",
-  "workoutPlanDrawerRemoveExercise": "Hapus latihan {arg0}",
+  "workoutPlanDrawerRemoveExercise": "Hapus {arg0}?",
   "workoutPlanDrawerRemoveExerciseTooltip": "Hapus tooltip latihan",
-  "workoutPlanDrawerSetsLogged": "Set dicatat {arg0}",
+  "workoutPlanDrawerSetsLogged": "Anda memiliki {arg0} set tercatat. Set tersebut akan dihapus.",
   "workoutPlanDrawerSwapExercise": "Tukar latihan",
   "workoutPlanDrawerTitle": "Judul",
   "workoutPlanDrawerWorkoutPlan": "Rencana Latihan",
@@ -27730,7 +27442,7 @@
   "workoutShowcaseEverySetYouLog": "Setiap set yang Anda catat",
   "workoutShowcaseEveryWorkoutFlows": "Setiap alur latihan",
   "workoutShowcaseFinishWorkout": "Selesaikan latihan",
-  "workoutShowcaseFormat1Rm": "Format 1RM",
+  "workoutShowcaseFormat1Rm": "1RM",
   "workoutShowcaseFormatBoarding": "Boarding",
   "workoutShowcaseFormatCard": "Kartu",
   "workoutShowcaseFormatDiscord": "Discord",
@@ -27754,7 +27466,7 @@
   "workoutShowcaseLinearLabel": "Label linear",
   "workoutShowcaseLogAllSets": "Semua set",
   "workoutShowcaseLogDrink": "Log Minuman",
-  "workoutShowcaseLogSet": "Set {arg0}",
+  "workoutShowcaseLogSet": "✓ Catat set {arg0}",
   "workoutShowcaseLogWater": "Catat air",
   "workoutShowcaseMovedThisSession": "dipindahkan sesi ini",
   "workoutShowcaseNewPr": "BARU PR",
@@ -27769,7 +27481,6 @@
   "workoutShowcaseReps": "perwakilan",
   "workoutShowcaseScreenDay": "Hari {day}",
   "workoutShowcaseScreenDuration": "DURASI: {duration}",
-  "workoutShowcaseScreenPrs": "PRS: {prs}",
   "workoutShowcaseScreenPrsEntered": "{prs} PRS · DIMASUKKAN",
   "workoutShowcaseScreenSession": "SESI: {title}",
   "workoutShowcaseScreenTotalPrs": "TOTAL {duration} · {volume} · {prs} PRS",
@@ -28029,20 +27740,20 @@
   "xpGoalsDaily": "Harian",
   "xpGoalsDialog250LevelsAcross11Tiers": "250 level di 11 tingkatan",
   "xpGoalsDialogBeginnerToTranscendent": "Pemula hingga transenden",
-  "xpGoalsDialogCompleteWorkoutXp": "XP menyelesaikan latihan",
+  "xpGoalsDialogCompleteWorkoutXp": "Selesaikan Latihan: +100 XP",
   "xpGoalsDialogDailyGoals": "Tujuan harian",
-  "xpGoalsDialogFirstChatWithAiCoachXp": "XP chat pertama dengan pelatih AI",
-  "xpGoalsDialogFirstMealWeightMeasurementsXp": "XP pengukuran berat makanan pertama",
-  "xpGoalsDialogFirstPrXp": "XP PR pertama",
-  "xpGoalsDialogFirstProgressPhotoXp": "XP foto progres pertama",
-  "xpGoalsDialogFirstProteinGoalXp": "XP tujuan protein pertama",
-  "xpGoalsDialogFirstWorkoutXp": "XP latihan pertama",
-  "xpGoalsDialogHitProteinGoalXp": "XP mencapai tujuan protein",
+  "xpGoalsDialogFirstChatWithAiCoachXp": "Obrolan Pertama dengan Pelatih AI: +15 XP",
+  "xpGoalsDialogFirstMealWeightMeasurementsXp": "Makan/Berat/Pengukuran Pertama: +50 XP masing-masing",
+  "xpGoalsDialogFirstPrXp": "PR Pertama: +100 XP",
+  "xpGoalsDialogFirstProgressPhotoXp": "Foto Progres Pertama: +75 XP",
+  "xpGoalsDialogFirstProteinGoalXp": "Target Protein Pertama: +100 XP",
+  "xpGoalsDialogFirstWorkoutXp": "Latihan Pertama: +150 XP",
+  "xpGoalsDialogHitProteinGoalXp": "Capai Target Protein: +50 XP",
   "xpGoalsDialogLevels": "Level",
-  "xpGoalsDialogLogBodyMeasurementsXp": "XP mencatat pengukuran tubuh",
-  "xpGoalsDialogLogMealXp": "XP mencatat makanan",
-  "xpGoalsDialogLogWeightXp": "XP mencatat berat badan",
-  "xpGoalsDialogLoginXp": "XP login",
+  "xpGoalsDialogLogBodyMeasurementsXp": "Catat Ukuran Tubuh: +20 XP",
+  "xpGoalsDialogLogMealXp": "Catat Makanan: +25 XP",
+  "xpGoalsDialogLogWeightXp": "Catat Berat: +15 XP",
+  "xpGoalsDialogLoginXp": "Masuk: +5 XP",
   "xpGoalsDialogMilestoneRewards": "Hadiah pencapaian",
   "xpGoalsFirstTimeBonuses": "Bonus pertama kali",
   "xpGoalsGotIt": "Mengerti!",
@@ -28066,7 +27777,7 @@
   "xpGoalsScreenHitProteinGoal": "Capai target protein",
   "xpGoalsScreenInventory": "Inventaris",
   "xpGoalsScreenLegendary": "LEGENDARIS",
-  "xpGoalsScreenLevelCurrentTotal": "Total level saat ini {arg0}",
+  "xpGoalsScreenLevelCurrentTotal": "Level {arg0} • total 249 level",
   "xpGoalsScreenLevelProgress": "Progres Level",
   "xpGoalsScreenLogBodyMeasurements": "Catat pengukuran tubuh",
   "xpGoalsScreenLogFirstMeal": "Catat Makan Pertama",
@@ -28095,10 +27806,10 @@
   "xpGoalsTrophyRoom": "Ruang Trofi",
   "xpGoalsU2022": "• ",
   "xpGoalsWeekly": "Mingguan",
-  "xpGoalsXpAvailable": "Tersedia {arg0}",
-  "xpGoalsXpEarnedToday": "Diperoleh hari ini {arg0}",
+  "xpGoalsXpAvailable": "+{arg0} XP tersedia",
+  "xpGoalsXpEarnedToday": "+{arg0} XP diperoleh hari ini",
   "xpGoalsXpGoals": "Target XP",
-  "xpGoalsXpMultiplierActive": "Pengali aktif {arg0}",
+  "xpGoalsXpMultiplierActive": "{arg0}x XP Aktif!",
   "xpHeroTileDayStreak": "{streak} hari beruntun",
   "xpHeroTileLv": "Lv {level}",
   "xpHeroTileLv2": "Lv {nextLevel} → {label}",
