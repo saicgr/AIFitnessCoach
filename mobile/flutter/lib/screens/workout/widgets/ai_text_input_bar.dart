@@ -59,6 +59,13 @@ class AiTextInputBar extends ConsumerStatefulWidget {
   /// expanded bar (discoverability).
   final bool compact;
 
+  /// When true, the bar mounts already expanded (skips the collapsed header /
+  /// pill). Used by Advanced mode where the ✦ now lives as a chip in the
+  /// action row: tapping the chip mounts this bar pre-opened, so it never
+  /// reserves a dedicated row of its own. Pair with [onDismiss] so the parent
+  /// can unmount it again when the user collapses or finishes logging.
+  final bool autoExpand;
+
   const AiTextInputBar({
     super.key,
     required this.workoutId,
@@ -71,6 +78,7 @@ class AiTextInputBar extends ConsumerStatefulWidget {
     required this.onExercisesParsed,
     this.onDismiss,
     this.compact = false,
+    this.autoExpand = false,
   });
 
   @override
@@ -117,6 +125,14 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
     // Speech init is deferred until the user taps the mic. Calling
     // _speechToText.initialize() is what triggers the OS microphone prompt,
     // and we don't want that dialog popping up on workout start.
+
+    // Chip-mode (Advanced): the parent mounts us only after the user taps the
+    // ✦ action chip, so open straight into the input + keyboard.
+    if (widget.autoExpand) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _expand();
+      });
+    }
   }
 
   @override
@@ -358,6 +374,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
   void _collapse() {
     _focusNode.unfocus();
     _animationController.reverse().then((_) {
+      if (!mounted) return;
       setState(() {
         _isExpanded = false;
         _errorMessage = null;
@@ -366,6 +383,9 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
         // is intentional — re-expanding restores the draft.
         if (widget.compact) _userOverrodeCompact = false;
       });
+      // Chip-mode parents unmount us on dismiss so the bar never leaves a
+      // collapsed husk behind in the column — the ✦ chip is the resting state.
+      widget.onDismiss?.call();
     });
   }
 

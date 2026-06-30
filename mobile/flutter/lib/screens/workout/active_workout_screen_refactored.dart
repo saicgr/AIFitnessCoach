@@ -321,6 +321,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   /// Whether to hide the AI Coach FAB for this session (user long-pressed to hide)
   bool _hideAICoachForSession = false;
 
+  /// Whether the ✦ AI quick-log input is open (Advanced mode). The input is
+  /// only mounted while open; otherwise just its ✦ chip shows in the action row.
+  bool _aiQuickLogOpen = false;
+
   /// Coach tip bubble state
   bool _showCoachTip = false;
   String? _coachTipMessage;
@@ -728,6 +732,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   bool get hideAICoachForSession => _hideAICoachForSession;
   @override
   set hideAICoachForSession(bool value) => _hideAICoachForSession = value;
+  @override
+  bool get aiQuickLogOpen => _aiQuickLogOpen;
+  @override
+  set aiQuickLogOpen(bool value) => _aiQuickLogOpen = value;
   @override
   bool get showInstructions => _showInstructions;
   @override
@@ -2118,9 +2126,14 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
             if (defaultDisplay <= 0) return aiWt;
             return _useKg ? defaultDisplay : defaultDisplay * 0.453592;
           })(),
+          // Distance/time moves are NOT rep-based — don't synthesize a phantom
+          // rep range (it made SkiErg/Plank render a misleading "× 1-3" target).
+          // Only fabricate a rep-range fallback for rep-based exercises.
           targetReps: setTarget?.targetReps != null
               ? setTarget!.targetReps.toString()
-              : '${exercise.reps ?? 8}-${(exercise.reps ?? 8) + 2}',
+              : ((isDistanceEx || isTimedEx)
+                  ? null
+                  : '${exercise.reps ?? 8}-${(exercise.reps ?? 8) + 2}'),
           targetRir: calculatedRir,
           actualWeight: actualWeight,
           actualReps: actualReps,

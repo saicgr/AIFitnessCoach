@@ -23,12 +23,27 @@ class HydrationQuickActions extends StatelessWidget {
   /// Callback when the instructions (info) button is tapped (optional)
   final VoidCallback? onInstructionsTap;
 
+  /// Callback when the ✦ AI quick-log chip is tapped (optional). When non-null,
+  /// a leading "AI" chip is rendered as the first action — this is the
+  /// natural-language set logger / add-exercise input folded into the row so it
+  /// no longer reserves a dedicated band above the table (Advanced mode).
+  final VoidCallback? onAiTap;
+
+  /// Whether the AI input is currently open (highlights the chip).
+  final bool aiActive;
+
+  /// Accent color for the AI chip (defaults to a violet if not supplied).
+  final Color? aiColor;
+
   const HydrationQuickActions({
     super.key,
     required this.onTap,
     this.onNoteTap,
     this.onVideoTap,
     this.onInstructionsTap,
+    this.onAiTap,
+    this.aiActive = false,
+    this.aiColor,
   });
 
   @override
@@ -53,6 +68,20 @@ class HydrationQuickActions extends StatelessWidget {
         padding: const EdgeInsetsDirectional.only(end: 80),
         child: Row(
           children: [
+            // ✦ AI quick-log chip (leading) — folds the natural-language set
+            // logger / add-exercise input into this row instead of its own band.
+            if (onAiTap != null) ...[
+              _buildActionButton(
+                // TODO(i18n): in-workout chip label, matches action_chips_row.dart
+                icon: Icons.auto_awesome,
+                label: 'AI',
+                color: aiColor ?? const Color(0xFF8B5CF6),
+                onTap: onAiTap!,
+                filled: aiActive,
+              ),
+              const SizedBox(width: 10),
+            ],
+
             // Instructions button (info) - vibrant green
             if (onInstructionsTap != null) ...[
               _buildActionButton(
@@ -104,7 +133,9 @@ class HydrationQuickActions extends StatelessWidget {
     required String label,
     required Color color,
     required VoidCallback onTap,
+    bool filled = false,
   }) {
+    final foreground = filled ? Colors.white : color;
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -113,10 +144,10 @@ class HydrationQuickActions extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: filled ? color : color.withOpacity(0.12),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: color.withOpacity(0.3),
+            color: filled ? color : color.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -126,7 +157,7 @@ class HydrationQuickActions extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: color,
+              color: foreground,
             ),
             const SizedBox(width: 6),
             Text(
@@ -134,7 +165,7 @@ class HydrationQuickActions extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: color,
+                color: foreground,
               ),
             ),
           ],

@@ -520,27 +520,34 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                             },
                           ),
 
-                        // AI Text Input Bar — always on screen (below the
-                        // table), never pushed off by a long set list.
+                        // AI quick-log input.
                         //
-                        // Compact-pill behavior: in Advanced mode portrait the
-                        // bar collapses to a 36px ✦ pill to give the table
-                        // ~50px more room. Easy mode and tablet/landscape stay
-                        // expanded for discoverability. The widget itself
-                        // honors a per-session manual expand/collapse choice.
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Consumer(
-                            builder: (context, ref, _) {
-                              final mode = ref.watch(workoutUiModeProvider).mode;
-                              final mq = MediaQuery.of(context);
-                              final isLandscape = mq.orientation == Orientation.landscape;
-                              final isTablet = mq.size.shortestSide >= 600;
-                              final compact = mode == WorkoutUiMode.advanced
-                                  && !isLandscape
-                                  && !isTablet;
-                              return AiTextInputBar(
+                        // Advanced portrait folds the ✦ into the action-chip
+                        // row below (HydrationQuickActions): the full input only
+                        // mounts when that chip toggles `aiQuickLogOpen`, so it
+                        // never reserves a band above the set table (the "whole
+                        // row" the table used to lose). Easy mode and
+                        // tablet/landscape keep the always-on bar for
+                        // discoverability.
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final mode = ref.watch(workoutUiModeProvider).mode;
+                            final mq = MediaQuery.of(context);
+                            final isLandscape = mq.orientation == Orientation.landscape;
+                            final isTablet = mq.size.shortestSide >= 600;
+                            final foldsToChip = mode == WorkoutUiMode.advanced
+                                && !isLandscape
+                                && !isTablet;
+
+                            // Folded + closed → the ✦ chip is the resting state;
+                            // render nothing here so the table reclaims the band.
+                            if (foldsToChip && !aiQuickLogOpen) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                              child: AiTextInputBar(
                                 workoutId: (workoutWidget as dynamic).workout.id ?? '',
                                 useKg: useKg,
                                 currentExerciseName: exercises.isNotEmpty
@@ -555,24 +562,48 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                     : null,
                                 onExercisesParsed: (exercises) => handleParsedExercises(exercises),
                                 onV2Parsed: (response) => handleV2Parsed(response),
-                                compact: compact,
-                              );
-                            },
-                          ),
+                                // Folded mode: mount pre-expanded (the chip is
+                                // the resting state) and unmount on dismiss so no
+                                // collapsed husk is left behind.
+                                autoExpand: foldsToChip,
+                                onDismiss: foldsToChip
+                                    ? () => _setState(() => aiQuickLogOpen = false)
+                                    : null,
+                              ),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
                 ),
 
-                // Instructions, Video, Hydration, and Note quick actions row
-                HydrationQuickActions(
-                  onTap: () => showHydrationDialogImpl(),
-                  onNoteTap: () => showNotesSheet(exercises[viewingExerciseIndex]),
-                  onVideoTap: () => handleChipTapped('video'),
-                  onInstructionsTap: () =>
-                      showExerciseDetailsSheet(exercises[viewingExerciseIndex]),
+                // ✦ AI · Instructions · Video · Log Drink · Note quick actions.
+                // The ✦ chip (Advanced portrait only) toggles the AI quick-log
+                // input that used to sit in its own band above the table.
+                Consumer(
+                  builder: (context, ref, _) {
+                    final mode = ref.watch(workoutUiModeProvider).mode;
+                    final mq = MediaQuery.of(context);
+                    final isLandscape = mq.orientation == Orientation.landscape;
+                    final isTablet = mq.size.shortestSide >= 600;
+                    final foldsToChip = mode == WorkoutUiMode.advanced
+                        && !isLandscape
+                        && !isTablet;
+                    final isDark = Theme.of(context).brightness == Brightness.dark;
+                    return HydrationQuickActions(
+                      onTap: () => showHydrationDialogImpl(),
+                      onNoteTap: () => showNotesSheet(exercises[viewingExerciseIndex]),
+                      onVideoTap: () => handleChipTapped('video'),
+                      onInstructionsTap: () =>
+                          showExerciseDetailsSheet(exercises[viewingExerciseIndex]),
+                      onAiTap: foldsToChip
+                          ? () => _setState(() => aiQuickLogOpen = !aiQuickLogOpen)
+                          : null,
+                      aiActive: aiQuickLogOpen,
+                      aiColor: ref.watch(accentColorProvider).getColor(isDark),
+                    );
+                  },
                 ),
 
                 // Exercise thumbnail strip (bottom navigation)

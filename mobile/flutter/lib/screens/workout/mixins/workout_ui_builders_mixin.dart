@@ -159,6 +159,12 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
   int? get draggedExerciseIndex;
   set draggedExerciseIndex(int? value);
 
+  /// Whether the ✦ AI quick-log input is open (Advanced mode). When false the
+  /// input is unmounted and only its ✦ chip shows in the action row, so it
+  /// never reserves a band above the set table.
+  bool get aiQuickLogOpen;
+  set aiQuickLogOpen(bool value);
+
   dynamic get workoutWidget;
 
   // Cross-mixin method access
