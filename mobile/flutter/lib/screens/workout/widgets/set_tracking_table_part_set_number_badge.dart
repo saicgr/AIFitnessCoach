@@ -471,6 +471,11 @@ class _AutoTargetCell extends StatelessWidget {
     else if (isWarmup) {
       targetString = targetReps != null ? 'Warmup × $targetReps' : 'Warmup';
     }
+    // ── Distance/time moves are never rep-based — never show "× reps" for them
+    // (defense; the row builder already avoids synthesizing reps for these).
+    else if (isDistance || isTimedExercise) {
+      targetString = '—';
+    }
     // ── Priority 6: Reps-only target (AMRAP or first-time weighted exercise)
     else if (targetReps != null) {
       targetString = '× $targetReps';
