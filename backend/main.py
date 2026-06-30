@@ -231,9 +231,12 @@ class LoggingMiddleware:
     _SCANNER_PROBE_RE = re.compile(
         r"(?:"
         r"\.env\b|\.env[.~]|/\.env|"          # .env and all its variants
-        r"/\.git|/\.aws|/\.ssh|/\.svn|/\.hg|"  # VCS / cloud cred dirs
+        r"/\.git|/\.aws|/\.ssh|/\.svn|/\.hg|/\.docker|"  # VCS / cloud cred dirs
         r"\.php\b|\.asp\b|\.aspx\b|\.jsp\b|"   # server-script probes
-        r"\.bak\b|\.old\b|\.swp\b|"            # editor/backup leftovers
+        r"\.py\b|\.rb\b|\.pl\b|\.cgi\b|\.sh\b|"  # other server-script probes
+        r"\.bak\b|\.old\b|\.swp\b|\.orig\b|\.save\b|"  # editor/backup leftovers
+        r"\.ya?ml\b|\.ini\b|\.conf\b|\.config\b|\.json\b|\.js\b|\.sql\b|"  # config/source probes
+        r"/config/|/app/config/|composer|appsettings|docker-compose|parameters|"  # framework configs
         r"phpinfo|wp-config|wp-admin|wp-login|xmlrpc|"  # WordPress/PHP
         r"/server-status|/server-info"        # Apache mod_status
         r")",
@@ -243,10 +246,18 @@ class LoggingMiddleware:
     def __init__(self, app: ASGIApp):
         self.app = app
 
+    # Real non-/api endpoints that would otherwise match a probe token
+    # (/openapi.json ends in .json but is the live OpenAPI schema).
+    _PROBE_ALLOWLIST = frozenset({
+        "/openapi.json", "/docs", "/redoc", "/docs/oauth2-redirect",
+    })
+
     @classmethod
     def _is_scanner_probe(cls, path: str) -> bool:
-        # Never short-circuit our own surfaces.
+        # Never short-circuit our own surfaces or the API docs.
         if path.startswith(("/api/", "/dev/", "/static/", "/.well-known/")):
+            return False
+        if path in cls._PROBE_ALLOWLIST:
             return False
         return bool(cls._SCANNER_PROBE_RE.search(path))
 
