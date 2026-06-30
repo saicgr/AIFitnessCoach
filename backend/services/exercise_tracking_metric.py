@@ -344,7 +344,32 @@ def _derive_core(
     # --- 2) TIME (isometric holds / duration-based) --------------------------
     name_is_time = _name_matches(name, _TIME_NAME_HINTS)
     has_hold = bool(hold_seconds) or bool(is_timed)
-    if parsed_duration is not None or name_is_time or has_hold:
+    # An EXPLICIT authored duration (e.g. a 30s timed-circuit interval: High Knees,
+    # Skater Hops in a conditioning program) must win over the name lexicon, which
+    # would otherwise reclassify these to bodyweight reps and drop the timer.
+    # BUT only when the author did NOT also give a real REP count — if the exercise
+    # says reps=30 (Mountain Climber) or reps=100 (The Hundred), respect the reps;
+    # the duration there is an incidental per-rep tempo, not the primary metric.
+    # This keeps the timer scoped to genuinely time-only moves and can never turn a
+    # normal "Push-Up 3x15" into a timer.
+    _rep_count = None
+    if reps_spec_str and parsed_duration is None and parsed_distance is None:
+        _m = re.match(r"\s*(\d+)", str(reps_spec_str))
+        if _m:
+            _rep_count = int(_m.group(1))
+    has_real_reps = _rep_count is not None and _rep_count >= 2
+    # The PROGRAM's explicit timer switch: a program/circuit can force a timer for
+    # ANY move (even one the name lexicon would call reps) by authoring on the
+    # exercise any of `tracking_type:"time"`, `is_timed:true`, or a positive
+    # `duration_seconds`. Honored UNLESS the author also gave a real rep count
+    # (then reps win). This is the authoritative "use timing from the program"
+    # signal that flows to the active-workout screen — see module note.
+    program_forces_time = (not has_real_reps) and (
+        str(exercise.get("tracking_type") or "").lower() == "time"
+        or exercise.get("is_timed") is True
+        or (isinstance(duration_seconds, (int, float)) and duration_seconds > 0)
+    )
+    if parsed_duration is not None or name_is_time or has_hold or program_forces_time:
         result["tracking_type"] = TRACK_TIME
         secs = (
             parsed_duration

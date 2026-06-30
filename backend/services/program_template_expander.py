@@ -383,6 +383,24 @@ def _day_to_exercises_json(
                     obj["equipment"] = _lib["equipment"]
                 if _lib.get("is_timed") is not None:
                     obj["is_timed"] = _lib["is_timed"]
+            # Honor an EXPLICIT authored timer: timed-circuit programs (e.g. the
+            # World Cup conditioning intervals) set tracking_type="time" +
+            # duration_seconds on the source exercise. The name/library derive
+            # above would otherwise reclassify plyo/cardio moves (High Knees,
+            # Box Jump, Mountain Climber) to bodyweight reps and drop the interval.
+            # An explicit authored time signal wins, and we carry the seconds.
+            _src_dur = ex.get("duration_seconds") or ex.get("hold_seconds")
+            _src_timed = (
+                str(ex.get("tracking_type") or "").lower() == "time"
+                or ex.get("is_timed") is True
+                or (isinstance(_src_dur, (int, float)) and _src_dur > 0)
+            )
+            if _src_timed:
+                obj["tracking_type"] = "time"
+                obj["metric_keys"] = ["time"]
+                if isinstance(_src_dur, (int, float)) and _src_dur > 0:
+                    obj["duration_seconds"] = int(_src_dur)
+                obj.pop("distance_meters", None)
         except Exception:
             pass  # never block program expansion on metadata derivation
         out.append(obj)
