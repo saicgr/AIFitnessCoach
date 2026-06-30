@@ -17,6 +17,7 @@ import '../../core/theme/app_typography.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/providers/equipment_coverage_provider.dart';
 import '../../data/providers/gym_profile_provider.dart' show activeGymProfileProvider;
+import '../../data/providers/root_messenger.dart' show rootScaffoldMessengerKey;
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/signature/signature.dart';
 import '../../data/models/assign_preview.dart';
@@ -2217,106 +2218,166 @@ class _StartProgramFlowSheetState
       );
       return;
     }
-    setState(() => _submitting = true);
+    // Capture everything we need from ref/context BEFORE popping the sheet —
+    // once it's gone this State is disposed and ref/context are invalid. The
+    // assign + refresh + success/error toast all run AFTER the pop via these
+    // captured handles (repo/notifier live in the root container, not the
+    // widget; toasts go through the root ScaffoldMessenger).
     final repo = ref.read(programTemplateRepositoryProvider);
-    final messenger = ScaffoldMessenger.of(context);
+    final uid = ref.read(currentUserProvider).valueOrNull?.id;
+    // The Workout-tab "MY PROGRAM" label reads the legacy currentProgramProvider
+    // (GET /branded-programs/current) — capture its notifier so we can flip it
+    // off the AI default once the assign lands.
+    final currentProgramNotifier = ref.read(currentProgramProvider.notifier);
     final navigator = Navigator.of(context);
     // Navigator's own context stays mounted after the sheet pops — use it for
     // the post-assign "VIEW" deep-link into /schedule.
     final rootContext = navigator.context;
     final card = widget.card;
+    // Snapshot the assign args while the form fields are still readable.
+    final programId = card.isBranded ? card.bareBrandedId : card.id;
+    final assignedDays = _days.toList()..sort();
+    final startDate = _isoDate(_startDate);
+    final durationWeeks = _durationWeeks ?? card.durationWeeks;
+    final variantId = _selectedVariantId;
+    final adaptToLevel = _aiTailor && _adaptToLevel;
+    final swapForInjuries = _aiTailor && _swapForInjuries;
+    final fitEquipment = _shouldFitEquipment();
+    final dayResolutions = _dayResolutions.isEmpty
+        ? null
+        : Map<String, String>.from(_dayResolutions);
+
+    _submitting = true;
+    // Optimistic UX: close the sheet immediately so "Start" feels instant, then
+    // show a persistent "Setting up…" toast while the server expands the full
+    // multi-week plan in the background. The refresh + success/error toast land
+    // when assignProgram returns. Toasts use the ROOT messenger so they survive
+    // the sheet pop and any subsequent navigation.
+    navigator.pop();
+    _showAssigningToast(card.displayName);
+
     try {
       final result = await repo.assignProgram(
-        programId: card.isBranded ? card.bareBrandedId : card.id,
-        assignedDays: _days.toList()..sort(),
+        programId: programId,
+        assignedDays: assignedDays,
         slot: ProgramSlot.primary,
-        startDate: _isoDate(_startDate),
+        startDate: startDate,
         replace: false,
-        durationWeeks: _durationWeeks ?? card.durationWeeks,
-        variantId: _selectedVariantId,
-        adaptToLevel: _aiTailor && _adaptToLevel,
-        swapForInjuries: _aiTailor && _swapForInjuries,
-        fitEquipment: _shouldFitEquipment(),
-        dayResolutions: _dayResolutions.isEmpty
-            ? null
-            : Map<String, String>.from(_dayResolutions),
+        durationWeeks: durationWeeks,
+        variantId: variantId,
+        adaptToLevel: adaptToLevel,
+        swapForInjuries: swapForInjuries,
+        fitEquipment: fitEquipment,
+        dayResolutions: dayResolutions,
       );
-      if (!mounted) return;
-      navigator.pop();
       // Refresh EVERY surface that reflects the active program: Home today +
       // hero carousel, Workout-tab lists, the date-strip dots, program-progress,
       // and the schedule. Without this the assign succeeds server-side but the UI
-      // keeps painting the pre-assign (stale) program — the "nothing happened"
-      // report after Confirm & Start.
-      final uid = ref.read(currentUserProvider).valueOrNull?.id;
+      // keeps painting the pre-assign (stale) program.
       unawaited(refreshAfterWorkoutMutation(
         source: 'program_assign',
         userId: uid,
       ));
-      // The Workout-tab "MY PROGRAM" label reads the legacy currentProgramProvider
-      // (GET /branded-programs/current) — refresh it so it flips to the started
-      // program instead of the AI default.
-      unawaited(ref.read(currentProgramProvider.notifier).refresh(userId: uid));
-      // Drop any snackbar still on screen/queued from a prior start. Two
-      // SnackBars with identical text share a Hero tag (Flutter derives the tag
-      // from the content), and overlapping them during the sheet-pop route
-      // transition throws "multiple heroes share the same tag".
-      messenger.clearSnackBars();
-      // Honest confirmation of what AI tailoring actually did (caveat: the card
-      // promised tailoring but never confirmed it). Auto-dismisses with the
-      // toast; on failure we say so rather than implying it applied.
-      final cs = result.customizeSummary;
-      final base = result.workoutsCreated > 0
-          ? '${card.displayName} started · ${result.workoutsCreated} '
-              'workouts added'
-          : '${card.displayName} started';
-      String message = base;
-      if (cs.isApplied) {
-        message = '$base\nTailored: ${cs.humanPhrase}';
-      } else if (cs.isFailed) {
-        message =
-            "$base\nTailoring couldn't run — started with the standard plan.";
-      }
-      messenger.showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.elevated,
-          duration: Duration(seconds: cs.isApplied || cs.isFailed ? 6 : 4),
-          content: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.check_circle_rounded,
-                  color: AppColors.green, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          action: SnackBarAction(
-            label: 'VIEW',
-            textColor: AppColors.orange,
-            onPressed: () => rootContext.push('/schedule'),
-          ),
-        ),
-      );
+      unawaited(currentProgramNotifier.refresh(userId: uid));
+      // rootContext is the root Navigator's context (captured pre-pop) — it
+      // outlives this sheet and is valid for the toast's VIEW deep-link.
+      // ignore: use_build_context_synchronously
+      _showStartedToast(result, card.displayName, rootContext);
     } on ProgramParseException catch (e) {
-      if (!mounted) return;
-      setState(() => _submitting = false);
-      messenger.clearSnackBars();
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      _showAssignErrorToast(e.message);
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _submitting = false);
-      messenger.clearSnackBars();
-      messenger.showSnackBar(
-        const SnackBar(
-            content: Text('Could not start this program. Please try again.')),
-      );
+      _showAssignErrorToast('Could not start this program. Please try again.');
     }
+  }
+
+  /// Persistent "Setting up…" toast shown the instant Start is tapped. Uses the
+  /// ROOT messenger so it survives the sheet pop; replaced by [_showStartedToast]
+  /// or [_showAssignErrorToast] when assignProgram resolves.
+  void _showAssigningToast(String programName) {
+    final m = rootScaffoldMessengerKey.currentState;
+    if (m == null) return;
+    m.clearSnackBars();
+    m.showSnackBar(SnackBar(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.elevated,
+      duration: const Duration(minutes: 1), // safety cap; replaced on completion
+      content: Row(
+        // Unique key → unique SnackBar Hero tag (see _showStartedToast for why).
+        key: UniqueKey(),
+        children: [
+          const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppColors.green),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text('Setting up $programName…',
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    ));
+  }
+
+  /// Success toast: honest confirmation of what AI tailoring actually did, with a
+  /// VIEW deep-link into /schedule. Replaces the "Setting up…" toast.
+  void _showStartedToast(
+      AssignResult result, String programName, BuildContext rootContext) {
+    final m = rootScaffoldMessengerKey.currentState;
+    if (m == null) return;
+    final cs = result.customizeSummary;
+    final base = result.workoutsCreated > 0
+        ? '$programName started · ${result.workoutsCreated} workouts added'
+        : '$programName started';
+    String message = base;
+    if (cs.isApplied) {
+      message = '$base\nTailored: ${cs.humanPhrase}';
+    } else if (cs.isFailed) {
+      message =
+          "$base\nTailoring couldn't run — started with the standard plan.";
+    }
+    m.clearSnackBars();
+    m.showSnackBar(SnackBar(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.elevated,
+      duration: Duration(seconds: cs.isApplied || cs.isFailed ? 6 : 4),
+      content: Row(
+        // Flutter derives the SnackBar Hero tag from content.toString(); a
+        // keyless start-aligned Row stringifies identically for every toast, so
+        // overlapping toasts collide during a route transition ("multiple heroes
+        // share the same tag") and freeze the UI. A unique key makes it unique.
+        key: UniqueKey(),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle_rounded,
+              color: AppColors.green, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+      action: SnackBarAction(
+        label: 'VIEW',
+        textColor: AppColors.orange,
+        onPressed: () => rootContext.push('/schedule'),
+      ),
+    ));
+  }
+
+  void _showAssignErrorToast(String message) {
+    final m = rootScaffoldMessengerKey.currentState;
+    if (m == null) return;
+    m.clearSnackBars();
+    m.showSnackBar(SnackBar(
+      content: Row(
+        key: UniqueKey(),
+        children: [Expanded(child: Text(message))],
+      ),
+    ));
   }
 
   @override
@@ -3669,7 +3730,7 @@ class _StartProgramFlowSheetState
     if (l.isEmpty) return 'Level not set';
     final cap = '${level[0].toUpperCase()}${level.substring(1)}';
     if (l == 'intermediate') return 'Your level: $cap — already fits';
-    return "Your level: $cap — we'll adjust your volume";
+    return "Your level: $cap — we'll right-size your volume & intensity";
   }
 
   /// Compact equipment list for the toggle subtitle (first few + overflow).
@@ -3793,11 +3854,12 @@ class _StartProgramFlowSheetState
             : null,
       );
     }
-    // noop
+    // noop — the tailoring ran but the plan already matched this profile. Frame
+    // it as the good outcome it is, not an implied failure ("nothing happened").
     return _tailorImpactRow(
-      Icons.info_outline_rounded,
-      AppColors.textMuted,
-      'Nothing to change for your profile.',
+      Icons.verified_outlined,
+      AppColors.green,
+      'Your plan already fits your level and gear — no changes needed.',
     );
   }
 
