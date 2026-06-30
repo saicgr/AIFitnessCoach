@@ -36,7 +36,7 @@ import uuid
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from core.auth import get_current_user
@@ -2594,6 +2594,144 @@ async def _clear_today_cache(user_id: str) -> None:
         logger.warning("today cache invalidation failed: %s", e)
 
 
+def _purge_superseded_ghost_workouts(
+    db, user_id: str, assignment_id: str,
+    superseded_assignment_ids: List[str],
+) -> None:
+    """Delete an abandoned primary's future INCOMPLETE workouts on dates the new
+    primary does NOT cover (orphan cleanup on program switch). Keeps the old rows
+    on dates the new program scheduled (intentional 'add alongside' days) and
+    never touches completed/past history. Fail-soft. Shared by the synchronous
+    assign path and the deferred background continuation."""
+    if not superseded_assignment_ids:
+        return
+    try:
+        b_dates = set()
+        b_rows = (
+            db.client.table("workouts")
+            .select("scheduled_date")
+            .eq("assignment_id", assignment_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        for r in (b_rows.data or []):
+            sd = str(r.get("scheduled_date") or "")[:10]
+            if sd:
+                b_dates.add(sd)
+        old_rows = (
+            db.client.table("workouts")
+            .select("id, scheduled_date")
+            .in_("assignment_id", superseded_assignment_ids)
+            .eq("user_id", user_id)
+            .eq("is_completed", False)
+            .execute()
+        )
+        ghost_ids = [
+            r["id"]
+            for r in (old_rows.data or [])
+            if str(r.get("scheduled_date") or "")[:10] not in b_dates
+        ]
+        if ghost_ids:
+            db.client.table("workouts").delete().in_(
+                "id", [str(x) for x in ghost_ids]
+            ).execute()
+            logger.info(
+                "supersede: purged %d ghost workouts from %d abandoned "
+                "primary assignment(s)",
+                len(ghost_ids), len(superseded_assignment_ids),
+            )
+    except Exception as e:  # noqa: BLE001
+        logger.warning("supersede ghost purge failed: %s", e)
+
+
+async def _finish_program_expansion(
+    *,
+    user_id: str,
+    weeks_rows_remaining: List[Dict[str, Any]],
+    template: Dict[str, Any],
+    schedule_id: str,
+    start_date: date,
+    assigned_days: List[int],
+    gym_profile_id: Optional[str],
+    assignment_id: str,
+    slot: str,
+    replace: bool,
+    day_resolutions: Dict[str, str],
+    customize: Optional[CustomizeOptions],
+    customize_context: Any,
+    superseded_assignment_ids: List[str],
+    week1_created: int,
+) -> None:
+    """Background continuation of assign_program_core: AI-tailor + expand the
+    program's weeks 2..N, then purge superseded ghosts, correct total_workouts
+    and re-clear the /today cache. Fully isolated (its own db handle) and
+    best-effort — a failure leaves the user with a usable, already-live week 1
+    and is logged loudly (weeks 2..N would then be missing until a re-assign)."""
+    try:
+        db = get_supabase()
+        # Tailor weeks 2..N with the same resolved context as week 1 (best-effort;
+        # a tailoring failure just ships the standard plan for those weeks).
+        if customize is not None and weeks_rows_remaining:
+            from services.program_customizer import customize_template_days
+            try:
+                flat = [
+                    s
+                    for w in weeks_rows_remaining
+                    for s in (w.get("workouts") or [])
+                    if isinstance(s, dict)
+                ]
+                if flat:
+                    await customize_template_days(
+                        flat,
+                        user_id=user_id,
+                        adapt_to_level=customize.adapt_to_level,
+                        swap_for_injuries=customize.swap_for_injuries,
+                        fit_equipment=customize.fit_equipment,
+                        context=customize_context,
+                    )
+            except Exception as ce:  # noqa: BLE001
+                logger.warning(
+                    "deferred tailoring failed (standard plan for weeks 2..N): %s",
+                    ce,
+                )
+        result = expand_variant_weeks(
+            weeks_rows=weeks_rows_remaining,
+            template=template,
+            schedule_id=schedule_id,
+            user_id=user_id,
+            start_date=start_date,
+            assigned_days=assigned_days,
+            gym_profile_id=gym_profile_id,
+            assignment_id=assignment_id,
+            program_slot=slot,
+            apply_staples=True,
+            replace=replace,
+            day_resolutions=day_resolutions,
+            resolve_collisions=True,
+        )
+        _purge_superseded_ghost_workouts(
+            db, user_id, assignment_id, superseded_assignment_ids
+        )
+        try:
+            db.client.table("user_program_assignments").update(
+                {"total_workouts": week1_created + result["workouts_created"]}
+            ).eq("id", assignment_id).execute()
+        except Exception as e:  # noqa: BLE001
+            logger.debug("deferred total_workouts update skipped: %s", e)
+        # Re-clear /today so the freshly-created weeks 2..N surface immediately.
+        await _clear_today_cache(user_id)
+        logger.info(
+            "deferred expansion done for assignment %s: +%d workouts (weeks 2..N)",
+            assignment_id, result["workouts_created"],
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.error(
+            "deferred program expansion FAILED for assignment %s "
+            "(week 1 is live; weeks 2..N missing until re-assign): %s",
+            assignment_id, e, exc_info=True,
+        )
+
+
 async def assign_program_core(
     db,
     *,
@@ -2607,9 +2745,18 @@ async def assign_program_core(
     customize: Optional[CustomizeOptions],
     variant_id: Optional[str] = None,
     day_resolutions: Optional[Dict[str, str]] = None,
+    background_tasks: Optional[BackgroundTasks] = None,
 ) -> Dict[str, Any]:
     """Shared Start-a-program logic used by the HTTP endpoint AND the coach
     `assign_program` tool. Returns the response dict.
+
+    When [background_tasks] is supplied AND the program is a multi-week VARIANT
+    program, only WEEK 1 is expanded (and AI-tailored) synchronously so Start
+    returns in ~1s with this week's workouts ready; weeks 2..N (+ their tailoring,
+    ghost-purge and final count) finish in a background task a beat later. The
+    coach tool passes no background_tasks → the full synchronous path runs
+    unchanged. The base-blob path is never deferred (its deload-by-week-index
+    scheduling can't be safely split across two expander calls).
 
     `day_resolutions` ({ISO date → 'replace' | 'add'}) is an optional per-day
     conflict override threaded into the expander so a colliding date is either
@@ -2717,7 +2864,17 @@ async def assign_program_core(
     if _weeks_rows:
         weeks = max(1, min(len(_weeks_rows), MAX_WEEKS))
 
+    # Defer weeks 2..N to a background task when we can (variant program, >1
+    # week, and a BackgroundTasks to run it on). This controls how much we tailor
+    # synchronously — only week 1 when deferring.
+    defer_expansion = (
+        background_tasks is not None
+        and bool(_weeks_rows)
+        and len(_weeks_rows) > 1
+    )
+
     customize_summary: Optional[Dict[str, Any]] = None
+    _customize_ctx = None  # reused by the deferred weeks-2..N tailoring
     if customize is not None:
         from services.program_customizer import (
             customize_status,
@@ -2727,13 +2884,15 @@ async def assign_program_core(
         try:
             if _weeks_rows:
                 # Variant program: tailor the REAL per-week sessions (injuries /
-                # equipment / level) across ALL weeks, in one pass with a single
-                # resolved context. Sessions are mutated in place inside
-                # _weeks_rows, so expand_variant_weeks schedules the tailored set.
-                ctx = resolve_user_context(user_id)
+                # equipment / level) with a single resolved context. Sessions are
+                # mutated in place inside _weeks_rows, so expand_variant_weeks
+                # schedules the tailored set. When deferring, tailor only week 1
+                # now (fast); the bg task tailors weeks 2..N with the same ctx.
+                _customize_ctx = resolve_user_context(user_id)
+                _tailor_rows = _weeks_rows[:1] if defer_expansion else _weeks_rows
                 flat_sessions = [
                     s
-                    for wrow in _weeks_rows
+                    for wrow in _tailor_rows
                     for s in (wrow.get("workouts") or [])
                     if isinstance(s, dict)
                 ]
@@ -2743,7 +2902,7 @@ async def assign_program_core(
                     adapt_to_level=customize.adapt_to_level,
                     swap_for_injuries=customize.swap_for_injuries,
                     fit_equipment=customize.fit_equipment,
-                    context=ctx,
+                    context=_customize_ctx,
                 )
             else:
                 customize_summary = await customize_template_days(
@@ -2885,9 +3044,14 @@ async def assign_program_core(
     # own sessions (and flattened-blob programs like HYROX don't blow the cap).
     # Normal programs with no variant library fall back to the base-blob expand.
     # _weeks_rows was resolved + AI-tailored above.
-    if _weeks_rows:
+    if defer_expansion:
+        # Synchronously expand WEEK 1 only so this week's workouts are ready
+        # immediately; weeks 2..N (+ tailoring, ghost purge, final count) finish
+        # in the background. plan_variant_schedule dates weeks by POSITION, and
+        # +7d preserves the weekday, so the week-2 row scheduled from start+7
+        # lands exactly where week 2 would under a full single-call expansion.
         result = expand_variant_weeks(
-            weeks_rows=_weeks_rows,
+            weeks_rows=_weeks_rows[:1],
             template=template,
             schedule_id=schedule_id,
             user_id=user_id,
@@ -2901,78 +3065,90 @@ async def assign_program_core(
             day_resolutions=day_resolutions or {},
             resolve_collisions=True,
         )
-    else:
-        result = expand_template(
+        expected_total = sum(
+            len([s for s in (w.get("workouts") or []) if isinstance(s, dict)])
+            for w in _weeks_rows
+        )
+        # Pre-set total_workouts to the full expected count so the assignment
+        # reads complete before the bg fill lands (the bg task corrects it).
+        try:
+            db.client.table("user_program_assignments").update(
+                {"total_workouts": expected_total}
+            ).eq("id", assignment_id).execute()
+        except Exception as e:  # noqa: BLE001
+            logger.debug("total_workouts (deferred pre-set) skipped: %s", e)
+        background_tasks.add_task(
+            _finish_program_expansion,
+            user_id=user_id,
+            weeks_rows_remaining=_weeks_rows[1:],
             template=template,
             schedule_id=schedule_id,
-            user_id=user_id,
-            start_date=start,
-            weeks=weeks,
-            day_alignment=day_alignment,
-            day_times={},
+            start_date=start + timedelta(weeks=1),
+            assigned_days=list(assigned_days or []),
             gym_profile_id=gym_profile_id,
             assignment_id=assignment_id,
-            program_slot=slot,
-            assigned_days=list(assigned_days or []),
+            slot=slot,
             replace=replace,
             day_resolutions=day_resolutions or {},
-            resolve_collisions=True,
+            customize=customize,
+            customize_context=_customize_ctx,
+            superseded_assignment_ids=superseded_assignment_ids,
+            week1_created=result["workouts_created"],
+        )
+        # Report the FULL program count so the client's "N workouts added" toast
+        # is honest about what the user is getting.
+        result["workouts_created"] = expected_total
+    else:
+        # Full synchronous expansion: variant all-weeks, or the base-blob path.
+        # _weeks_rows was resolved + AI-tailored above.
+        if _weeks_rows:
+            result = expand_variant_weeks(
+                weeks_rows=_weeks_rows,
+                template=template,
+                schedule_id=schedule_id,
+                user_id=user_id,
+                start_date=start,
+                assigned_days=list(assigned_days or []),
+                gym_profile_id=gym_profile_id,
+                assignment_id=assignment_id,
+                program_slot=slot,
+                apply_staples=True,
+                replace=replace,
+                day_resolutions=day_resolutions or {},
+                resolve_collisions=True,
+            )
+        else:
+            result = expand_template(
+                template=template,
+                schedule_id=schedule_id,
+                user_id=user_id,
+                start_date=start,
+                weeks=weeks,
+                day_alignment=day_alignment,
+                day_times={},
+                gym_profile_id=gym_profile_id,
+                assignment_id=assignment_id,
+                program_slot=slot,
+                assigned_days=list(assigned_days or []),
+                replace=replace,
+                day_resolutions=day_resolutions or {},
+                resolve_collisions=True,
+            )
+
+        # Purge ghost workouts from any superseded primary (the old program's
+        # future incomplete workouts on dates the new program does NOT cover).
+        # The deferred path runs this in the bg task once all weeks exist.
+        _purge_superseded_ghost_workouts(
+            db, user_id, assignment_id, superseded_assignment_ids
         )
 
-    # Purge ghost workouts from any superseded primary (step 3). When you switch
-    # primary program A -> B, A's future incomplete workouts on days B does NOT
-    # cover would otherwise linger on the schedule as orphans of an abandoned
-    # assignment (they used to be invisible — is_current=false template rows were
-    # filtered out of list_workouts — but are now surfaced). Keep A's workouts on
-    # dates B DID schedule (those are the per-day "Add alongside" choices the user
-    # made — B created an addon there and the old workout is intentionally kept).
-    # Completed/past A rows are untouched (history).
-    if superseded_assignment_ids:
+        # Record total_workouts now that we know the count.
         try:
-            b_dates = set()
-            b_rows = (
-                db.client.table("workouts")
-                .select("scheduled_date")
-                .eq("assignment_id", assignment_id)
-                .eq("user_id", user_id)
-                .execute()
-            )
-            for r in (b_rows.data or []):
-                sd = str(r.get("scheduled_date") or "")[:10]
-                if sd:
-                    b_dates.add(sd)
-            old_rows = (
-                db.client.table("workouts")
-                .select("id, scheduled_date")
-                .in_("assignment_id", superseded_assignment_ids)
-                .eq("user_id", user_id)
-                .eq("is_completed", False)
-                .execute()
-            )
-            ghost_ids = [
-                r["id"]
-                for r in (old_rows.data or [])
-                if str(r.get("scheduled_date") or "")[:10] not in b_dates
-            ]
-            if ghost_ids:
-                db.client.table("workouts").delete().in_(
-                    "id", [str(x) for x in ghost_ids]
-                ).execute()
-                logger.info(
-                    "supersede: purged %d ghost workouts from %d abandoned "
-                    "primary assignment(s)",
-                    len(ghost_ids), len(superseded_assignment_ids),
-                )
+            db.client.table("user_program_assignments").update(
+                {"total_workouts": result["workouts_created"]}
+            ).eq("id", assignment_id).execute()
         except Exception as e:  # noqa: BLE001
-            logger.warning("supersede ghost purge failed: %s", e)
-
-    # Record total_workouts on the assignment now that we know the count.
-    try:
-        db.client.table("user_program_assignments").update(
-            {"total_workouts": result["workouts_created"]}
-        ).eq("id", assignment_id).execute()
-    except Exception as e:  # noqa: BLE001
-        logger.debug("total_workouts update skipped: %s", e)
+            logger.debug("total_workouts update skipped: %s", e)
 
     # --- 6. Clear /today cache (chokepoint) --------------------------------
     await _clear_today_cache(user_id)
@@ -3021,15 +3197,19 @@ async def assign_program_core(
 @router.post("/assign")
 async def assign_program(
     request: AssignProgramRequest,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Start a published library program for the authenticated user.
 
     Clones -> (optionally) customizes -> creates an assignment -> expands dated
-    workouts tagged with the assignment + slot -> clears /today cache. Safe to
-    retry: a re-fired expansion dedupes on the template-slot unique index, but a
-    retry creates a NEW template/assignment (idempotency is per-call, not
-    cross-call — the client should not auto-retry a 2xx).
+    workouts tagged with the assignment + slot -> clears /today cache. For
+    multi-week variant programs only WEEK 1 is expanded synchronously (so this
+    returns in ~1s with the current week ready); weeks 2..N finish in a
+    background task. Safe to retry: a re-fired expansion dedupes on the
+    template-slot unique index, but a retry creates a NEW template/assignment
+    (idempotency is per-call, not cross-call — the client should not auto-retry
+    a 2xx).
     """
     try:
         db = get_supabase()
@@ -3045,6 +3225,7 @@ async def assign_program(
             customize=request.customize,
             variant_id=request.variant_id,
             day_resolutions=request.day_resolutions,
+            background_tasks=background_tasks,
         )
     except HTTPException:
         raise
