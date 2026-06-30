@@ -332,6 +332,16 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
   // activeSetExtraMetricsProvider so completeSet can read them.
   final Map<String, TextEditingController> _extraCtrls = {};
 
+  // Synced horizontal scroll for the metric columns: the header strip and every
+  // set row's strip share this group so they scroll together. SET + the
+  // checkbox stay frozen outside it.
+  final _LinkedHScrollGroup _hGroup = _LinkedHScrollGroup();
+
+  // Fixed column widths shared by the header AND the rows so the scrollable
+  // columns line up. Tune freely (TARGET widened so it no longer truncates).
+  static const double _kPrevW = 88;
+  static const double _kTargetW = 104;
+
   TextEditingController _extraCtrl(String bagKey) =>
       _extraCtrls.putIfAbsent(bagKey, () => TextEditingController());
 
@@ -407,6 +417,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     for (final c in _extraCtrls.values) {
       c.dispose();
     }
+    _hGroup.dispose();
     _editWeightController?.dispose();
     _editRepsController?.dispose();
     super.dispose();
@@ -907,27 +918,36 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             ),
           ),
 
-          // Previous column (last session data)
+          // ── Scrollable metric strip — synced with every row via _hGroup.
+          // SET (above) + the checkbox (below) stay frozen; everything between
+          // scrolls horizontally so columns never cramp/truncate and the extra
+          // metrics + "+ Add" are reachable by scrolling right.
           Expanded(
-            flex: 3,
-            child: Text(
-              AppLocalizations.of(
-                context,
-              ).summaryExerciseTablePrevious.toUpperCase(),
-              style: headerStyle,
-            ),
-          ),
+            child: _LinkedHScroll(
+              group: _hGroup,
+              child: Row(
+                children: [
+                  // Previous column (last session data)
+                  SizedBox(
+                    width: _kPrevW,
+                    child: Text(
+                      AppLocalizations.of(
+                        context,
+                      ).summaryExerciseTablePrevious.toUpperCase(),
+                      style: headerStyle,
+                    ),
+                  ),
 
-          // TARGET column - AI recommended targets
-          Expanded(
-            flex: 3,
-            child: Text(
-              AppLocalizations.of(
-                context,
-              ).summaryExerciseTableTarget.toUpperCase(),
-              style: ZType.lbl(9.5, color: colors.accent, letterSpacing: 1.5),
-            ),
-          ),
+                  // TARGET column - AI recommended targets
+                  SizedBox(
+                    width: _kTargetW,
+                    child: Text(
+                      AppLocalizations.of(
+                        context,
+                      ).summaryExerciseTableTarget.toUpperCase(),
+                      style: ZType.lbl(9.5, color: colors.accent, letterSpacing: 1.5),
+                    ),
+                  ),
 
           // Weight column with toggle
           SizedBox(
@@ -1059,10 +1079,14 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               textAlign: TextAlign.center,
             ),
           ),
+                ],
+              ),
+            ),
+          ),
 
           const SizedBox(width: 4),
 
-          // Checkbox column
+          // Checkbox column (frozen right)
           SizedBox(
             width: 32,
             child: GestureDetector(
@@ -1304,10 +1328,17 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               ),
             ),
 
-            // Previous session column
+            // ── Scrollable metric strip — synced with the header via _hGroup.
+            // SET (above) + the checkbox (below) stay frozen.
             Expanded(
-              flex: 3,
-              child: _PreviousCellWithRir(
+              child: _LinkedHScroll(
+                group: _hGroup,
+                child: Row(
+                  children: [
+                    // Previous session column
+                    SizedBox(
+                      width: _kPrevW,
+                      child: _PreviousCellWithRir(
                 previousWeight: set.previousWeight,
                 previousReps: set.previousReps,
                 previousRir: set.previousRir,
@@ -1328,10 +1359,10 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               ),
             ),
 
-            // TARGET column - AI recommended targets with RIR badge
-            Expanded(
-              flex: 3,
-              child: _AutoTargetCell(
+                    // TARGET column - AI recommended targets with RIR badge
+                    SizedBox(
+                      width: _kTargetW,
+                      child: _AutoTargetCell(
                 targetWeight: set.targetWeight,
                 targetReps: set.targetReps,
                 targetRir: set.targetRir,
@@ -1557,10 +1588,14 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               )
             else
               const SizedBox(width: 26),
+                  ],
+                ),
+              ),
+            ),
 
             const SizedBox(width: 4),
 
-            // Completion checkbox
+            // Completion checkbox (frozen right)
             SizedBox(
               width: 32,
               child: isEditing
@@ -1622,6 +1657,86 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Keeps the set-table header and every set row's metric strip scrolling
+/// horizontally TOGETHER. A single ScrollController can't drive multiple
+/// Scrollables, so this broadcasts one canonical offset to all attached
+/// controllers (re-entrancy-guarded). Survives the table's frequent rebuilds:
+/// new controllers init at the saved [offset].
+class _LinkedHScrollGroup {
+  double offset = 0;
+  final List<ScrollController> _controllers = [];
+  bool _syncing = false;
+
+  ScrollController _attach() {
+    final c = ScrollController(initialScrollOffset: offset);
+    c.addListener(() => _onScroll(c));
+    _controllers.add(c);
+    return c;
+  }
+
+  void _release(ScrollController c) {
+    _controllers.remove(c);
+    c.dispose();
+  }
+
+  void _onScroll(ScrollController source) {
+    if (_syncing || !source.hasClients) return;
+    _syncing = true;
+    offset = source.offset;
+    for (final c in _controllers) {
+      if (identical(c, source) || !c.hasClients) continue;
+      final clamped = offset.clamp(
+          c.position.minScrollExtent, c.position.maxScrollExtent);
+      if ((c.offset - clamped).abs() > 0.5) c.jumpTo(clamped);
+    }
+    _syncing = false;
+  }
+
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    _controllers.clear();
+  }
+}
+
+/// A horizontal scroll viewport whose controller is linked to a shared
+/// [_LinkedHScrollGroup] so the header + all rows move as one unit.
+class _LinkedHScroll extends StatefulWidget {
+  const _LinkedHScroll({super.key, required this.group, required this.child});
+  final _LinkedHScrollGroup group;
+  final Widget child;
+
+  @override
+  State<_LinkedHScroll> createState() => _LinkedHScrollState();
+}
+
+class _LinkedHScrollState extends State<_LinkedHScroll> {
+  late final ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.group._attach();
+  }
+
+  @override
+  void dispose() {
+    widget.group._release(_controller);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      controller: _controller,
+      physics: const ClampingScrollPhysics(),
+      child: widget.child,
     );
   }
 }
