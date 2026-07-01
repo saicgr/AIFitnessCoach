@@ -143,22 +143,6 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
             shouldLoop: false,
             colors: [tierHeroColor, accent, AppColors.cyan, Colors.white],
           ),
-          // Skip control — a deliberate compact pill rather than bare debug
-          // text. Translucent fill + soft border read as an intentional
-          // dismiss affordance while staying quieter than the primary CTA.
-          // Positioned top-right respecting the status-bar safe area.
-          Positioned(
-            top: 12 + MediaQuery.of(context).padding.top,
-            right: 12,
-            child: _SkipPill(
-              textMuted: textMuted,
-              border: border,
-              onTap: () {
-                HapticService.light();
-                Navigator.of(context).pop();
-              },
-            ),
-          ),
           // Main card
           Center(
             child: SingleChildScrollView(
@@ -277,6 +261,25 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
                   ),
                 ),
               ),
+            ),
+          ),
+          // Skip control — a deliberate compact pill rather than bare debug
+          // text. Translucent fill + soft border read as an intentional
+          // dismiss affordance while staying quieter than the primary CTA.
+          // Positioned top-right respecting the status-bar safe area.
+          // MUST be the LAST Stack child: the full-screen SingleChildScrollView
+          // above absorbs taps across its whole viewport, so a pill painted
+          // beneath it would never receive the tap (Skip appeared "dead").
+          Positioned(
+            top: 12 + MediaQuery.of(context).padding.top,
+            right: 12,
+            child: _SkipPill(
+              textMuted: textMuted,
+              border: border,
+              onTap: () {
+                HapticService.light();
+                Navigator.of(context).pop();
+              },
             ),
           ),
         ],
@@ -489,7 +492,7 @@ class _TierStreakStripe extends StatelessWidget {
   }
 }
 
-class _AwardsList extends StatelessWidget {
+class _AwardsList extends StatefulWidget {
   final List<RecapReward> awards;
   final Color accent, textColor, textMuted, border;
   const _AwardsList({
@@ -501,7 +504,25 @@ class _AwardsList extends StatelessWidget {
   });
 
   @override
+  State<_AwardsList> createState() => _AwardsListState();
+}
+
+class _AwardsListState extends State<_AwardsList> {
+  // Show a few rewards, collapse the rest behind a Show-more toggle.
+  static const int _collapsedCount = 3;
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final awards = widget.awards;
+    final accent = widget.accent;
+    final textColor = widget.textColor;
+    final textMuted = widget.textMuted;
+    final border = widget.border;
+    final showToggle = awards.length > _collapsedCount;
+    final visible = (_expanded || !showToggle)
+        ? awards
+        : awards.take(_collapsedCount).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -515,7 +536,7 @@ class _AwardsList extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        for (final a in awards) ...[
+        for (final a in visible) ...[
           Container(
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -568,6 +589,41 @@ class _AwardsList extends StatelessWidget {
             ),
           ),
         ],
+        if (showToggle)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticService.light();
+              setState(() => _expanded = !_expanded);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _expanded
+                        ? 'Show less'
+                        : 'Show ${awards.length - _collapsedCount} more',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: accent,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: accent,
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }

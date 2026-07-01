@@ -58,7 +58,10 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
 
     _shakeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      // Snappy: the old 600ms × 3 iterations (forward+reverse) = 3.6s of
+      // shaking before the reward reveal read as "the crate is stuck". One
+      // quick 180ms shake keeps the tactile pop but reveals near-instantly.
+      duration: const Duration(milliseconds: 180),
     );
     _shakeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut),
@@ -91,12 +94,10 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
     setState(() => _isOpening = true);
     HapticService.medium();
 
-    // Shake animation
-    for (int i = 0; i < 3; i++) {
-      await _shakeController.forward();
-      await _shakeController.reverse();
-      HapticService.light();
-    }
+    // One quick shake, then reveal (was 3 iterations ≈ 3.6s → felt frozen).
+    await _shakeController.forward();
+    await _shakeController.reverse();
+    HapticService.light();
 
     // Generate random rewards
     _rewards = _generateRewards();
