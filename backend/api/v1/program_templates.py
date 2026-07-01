@@ -84,13 +84,24 @@ def _get_s3_media_service():
 
 
 def _presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
-    """Presign an S3 key → a temporary GET URL (1-hour TTL).
-    Returns None when s3_path is absent or S3 is not configured."""
+    """Resolve an S3 path → the best available GET URL.
+
+    Delegates to `resolve_image_url` (api/v1/library/utils) which:
+      • rewrites the legacy `ILLUSTRATIONS/` prefix → real `ILLUSTRATIONS ALL/`,
+      • returns a permanent public/CDN URL for static prefixes (illustrations),
+      • otherwise presigns, correctly STRIPPING the `s3://bucket/` prefix so the
+        S3 object Key is right.
+
+    Historically this presigned via `CustomExerciseMediaService.get_signed_url`,
+    which used the full `s3://bucket/key` string as the object Key (prefix not
+    stripped) → every program-schedule `image_url` 404'd and tiles showed gray
+    placeholders. `resolve_image_url` is the shared, correct choke point.
+    Returns None when s3_path is absent or resolution fails."""
     if not s3_path:
         return None
     try:
-        svc = _get_s3_media_service()
-        return svc.get_signed_url(s3_path, expires_in=3600)
+        from api.v1.library.utils import resolve_image_url
+        return resolve_image_url(s3_path)
     except Exception as e:  # noqa: BLE001
         logger.debug("presign failed for %s: %s", s3_path, e)
         return None
@@ -969,8 +980,24 @@ _FITNESS_LEVELS = ("beginner", "intermediate", "advanced")
 _library_featured_cache = ResponseCache(
     prefix="program_library_featured_v5", ttl_seconds=6 * 3600, max_size=8
 )
+# Editorial chip order for GET /library/categories. Categories are shown as
+# horizontally-scrolling chips; without an explicit order, count-desc + A-Z
+# buries low-count marquee categories past the ~4 visible chips. Any category
+# NOT listed here falls back to count-desc/alphabetical AFTER these. Prefix
+# bumped to _v6 to retire the pre-ordering cached payloads.
+_CATEGORY_DISPLAY_ORDER = (
+    "Quick Hits",
+    "Strength & Muscle",
+    "Sports Performance",  # featured early so the (low-count) new category is visible without scrolling past it
+    "HYROX & Race Prep",
+    "Fat Loss",
+    "Aesthetic",
+    "Men's Health",
+    "Women's Health",
+    "Yoga & Mobility",
+)
 _library_categories_cache = ResponseCache(
-    prefix="program_library_categories_v5", ttl_seconds=6 * 3600, max_size=8
+    prefix="program_library_categories_v6", ttl_seconds=6 * 3600, max_size=8
 )
 _library_recommended_cache = ResponseCache(
     prefix="program_library_recommended_v5", ttl_seconds=6 * 3600, max_size=256
@@ -1155,10 +1182,24 @@ async def library_categories(
                     "Branded category merge skipped (fetch failed): %s", be
                 )
 
+        # Order chips by an explicit editorial priority first, then by count
+        # desc, then A-Z. Pure count-desc/alphabetical buried marquee but
+        # low-count categories (e.g. "Sports Performance", count 2) past the
+        # ~4 chips visible in the horizontally-scrolling chip row, making them
+        # look absent. An explicit order guarantees curated categories surface;
+        # any category NOT in the list falls back to the count/name ordering
+        # after the prioritized ones.
+        _priority = {cat: i for i, cat in enumerate(_CATEGORY_DISPLAY_ORDER)}
+        _fallback_rank = len(_CATEGORY_DISPLAY_ORDER)
         categories = [
             {"category": cat, "count": n}
             for cat, n in sorted(
-                counts.items(), key=lambda kv: (-kv[1], kv[0])
+                counts.items(),
+                key=lambda kv: (
+                    _priority.get(kv[0], _fallback_rank),
+                    -kv[1],
+                    kv[0],
+                ),
             )
         ]
         result = {"categories": categories}
@@ -1765,6 +1806,49 @@ async def library_program_schedule(
                         "schedule: exercise_id resolution failed: %s", le
                     )
 
+            # ── 2b2. By-id media fallback ─────────────────────────────────────
+            # program_exercises_with_media maps media by NAME; some blob names
+            # don't resolve (alias gaps, e.g. "Glute Bridge With Abduction
+            # Bodyweight"). Blob exercises that carry a verified exercise_id can
+            # still resolve media by UUID against the library — batch-fetch those
+            # so the flatten loop can fill view misses. Benefits every variant
+            # program, not just the timer circuits.
+            _json_ex_ids: set = set()
+            for _wr in weeks_resp.data:
+                for _w in (_wr.get("workouts") or []):
+                    if not isinstance(_w, dict):
+                        continue
+                    for _ex in (_w.get("exercises") or []):
+                        if isinstance(_ex, dict) and _ex.get("exercise_id"):
+                            _json_ex_ids.add(str(_ex["exercise_id"]))
+            _img_by_id: Dict[str, str] = {}
+            if _json_ex_ids:
+                try:
+                    _r = (
+                        db.client.table("exercise_library")
+                        .select("id, image_s3_path")
+                        .in_("id", list(_json_ex_ids))
+                        .execute()
+                    )
+                    for _row in (_r.data or []):
+                        if _row.get("image_s3_path"):
+                            _img_by_id[str(_row["id"])] = _row["image_s3_path"]
+                    _missing = [i for i in _json_ex_ids if i not in _img_by_id]
+                    if _missing:
+                        _r2 = (
+                            db.client.table("exercise_library_cleaned")
+                            .select("id, image_url")
+                            .in_("id", _missing)
+                            .execute()
+                        )
+                        for _row in (_r2.data or []):
+                            if _row.get("image_url"):
+                                _img_by_id[str(_row["id"])] = _row["image_url"]
+                except Exception as _bid_err:  # noqa: BLE001
+                    logger.warning(
+                        "schedule: by-id media fallback failed: %s", _bid_err
+                    )
+
             # ── 2c. Flatten weeks → days → exercises ──────────────────────────
             out_weeks: List[Dict[str, Any]] = []
             for wrow in weeks_resp.data:
@@ -1800,9 +1884,18 @@ async def library_program_schedule(
                             or {}
                         )
                         canon_name = (media.get("canonical_name") or "").strip()
-                        exercise_id = exercise_id_by_name.get(canon_name) if canon_name else None
+                        json_ex_id = str(ex.get("exercise_id") or "") or None
+                        exercise_id = (
+                            (exercise_id_by_name.get(canon_name) if canon_name else None)
+                            or json_ex_id
+                        )
 
-                        image_url = _presign_s3_path(media.get("image_s3_path"))
+                        # View media first; when the view can't map the name,
+                        # fall back to the verified exercise_id in the blob.
+                        img_s3 = media.get("image_s3_path") or (
+                            _img_by_id.get(json_ex_id) if json_ex_id else None
+                        )
+                        image_url = _presign_s3_path(img_s3)
                         video_url = _presign_s3_path(media.get("video_s3_path"))
                         gif_url = media.get("gif_url") or None
 

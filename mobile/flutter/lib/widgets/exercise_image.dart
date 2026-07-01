@@ -110,6 +110,12 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
   // per exercise (reset in didUpdateWidget), so a genuinely-missing image can't
   // loop while a stale URL (wrong prefix / moved file / expired presign) heals.
   bool _healedAfterError = false;
+  // When a pre-resolved (server-supplied) URL fails to load, ignore it on the
+  // heal pass and re-resolve via /exercise-images instead of re-using the same
+  // broken URL. Guards against a bad server-signed URL (e.g. an S3 key that
+  // 404s) that would otherwise never recover because _loadImageUrl short-
+  // circuits to widget.imageUrl. Reset per-exercise in didUpdateWidget.
+  bool _ignorePreResolved = false;
 
   @override
   void initState() {
@@ -129,6 +135,7 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
     if (oldWidget.exerciseName != widget.exerciseName ||
         oldWidget.imageUrl != widget.imageUrl) {
       _healedAfterError = false; // new exercise → allow one fresh heal
+      _ignorePreResolved = false; // new exercise → trust the server URL again
       _loadImageUrl();
     }
   }
@@ -144,7 +151,9 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
     // If a pre-resolved HTTP URL is provided (e.g., presigned URL from library API),
     // use it directly without an API call.
     final preResolved = widget.imageUrl;
-    if (preResolved != null && preResolved.startsWith('http')) {
+    if (!_ignorePreResolved &&
+        preResolved != null &&
+        preResolved.startsWith('http')) {
       if (mounted) {
         setState(() {
           _imageUrl = preResolved;
@@ -333,8 +342,11 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
       errorWidget: (_, __, ___) {
         // Self-heal once: evict the (possibly stale) cached URL and re-resolve a
         // fresh one. If it fails again, the placeholder/brand mark stands.
-        if (!_healedAfterError && widget.imageUrl == null) {
+        // Also heal a broken pre-resolved server URL — ignore it on the retry
+        // and go through /exercise-images (which resolves by id/name) instead.
+        if (!_healedAfterError) {
           _healedAfterError = true;
+          if (widget.imageUrl != null) _ignorePreResolved = true;
           final cacheKey = widget.exerciseId ?? widget.exerciseName;
           () async {
             await ImageUrlCache.evict(cacheKey);
