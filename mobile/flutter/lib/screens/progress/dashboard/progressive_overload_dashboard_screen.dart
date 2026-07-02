@@ -1223,19 +1223,20 @@ class _DashboardSkeleton extends StatelessWidget {
     return Column(
       children: [
         _RangeBar(range: range, onChanged: onRangeChanged),
-        const Expanded(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, 4, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SkeletonBox(height: 168, radius: 14),
-                SizedBox(height: 26),
-                SkeletonBox(height: 320, radius: 14),
-                SizedBox(height: 26),
-                SkeletonBox(height: 220, radius: 14),
-              ],
-            ),
+        // The fixed-height placeholder boxes total ~760px — taller than most
+        // viewports. A non-scrollable ListView clips the excess instead of
+        // overflowing the Column (RenderFlex overflow) on shorter screens.
+        Expanded(
+          child: ListView(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            children: const [
+              SkeletonBox(height: 168, radius: 14),
+              SizedBox(height: 26),
+              SkeletonBox(height: 320, radius: 14),
+              SizedBox(height: 26),
+              SkeletonBox(height: 220, radius: 14),
+            ],
           ),
         ),
       ],

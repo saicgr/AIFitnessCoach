@@ -1083,12 +1083,16 @@ class _GamificationGrid extends ConsumerWidget {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      // A scrollable with null padding absorbs MediaQuery.padding (status
+      // bar + home indicator) as its own — inside the Overview ListView that
+      // rendered as ~60px of dead space above the grid and ~34px below it.
+      padding: EdgeInsets.zero,
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      // 1.35 ratio gives a stable tile height across the four cards (no
-      // IntrinsicHeight required). Tested on iPhone SE (smallest target)
-      // through iPad — labels never truncate.
-      childAspectRatio: 1.35,
+      // Stable tile height across the four cards (no IntrinsicHeight
+      // required). 1.25 leaves room for a full 2-line sub-label — at 1.35
+      // "Recently earned · tap to view" clipped mid-line on 390pt phones.
+      childAspectRatio: 1.25,
       children: [
         _RecentTrophyCard(
           summary: trophySummary,
