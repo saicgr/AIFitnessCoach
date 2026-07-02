@@ -342,6 +342,48 @@ def _recovery_focus_flagged(snapshot: Dict[str, Any]) -> bool:
     return False
 
 
+def _collect_cache_hit_signals(sb, user_id: str) -> Dict[str, Any]:
+    """Minimal live snapshot for the CACHE-HIT path — only the fields
+    `_build_coach_noticed` / `_recovery_focus_flagged` read (injury, acute
+    recovery signal, chronic load state). The full `_collect_snapshot` is
+    ~12 sequential queries and belongs on the generation path only.
+    Best-effort: any lookup failure just omits its block."""
+    out: Dict[str, Any] = {}
+    try:
+        from services.coach.injury_directives import resolve_injury_directives
+        u = sb.client.table("users").select("active_injuries").eq(
+            "id", user_id
+        ).maybe_single().execute()
+        raw_inj = (u.data or {}).get("active_injuries") if u and u.data else None
+        if raw_inj:
+            active = resolve_injury_directives(raw_inj).get("active") or []
+            if active:
+                a0 = active[0]
+                out["injury"] = {
+                    "body_part": a0.get("body_part"),
+                    "phase": a0.get("phase"),
+                    "severity": a0.get("severity"),
+                    "allowed_intensity": a0.get("allowed_intensity"),
+                }
+    except Exception as e:
+        logger.debug(f"[daily_insight] cache-hit injury lookup skipped: {e}")
+    try:
+        from services.recovery_signal_service import compute_recovery_signal
+        sig = compute_recovery_signal(sb, user_id)
+        if sig is not None and sig.recommendation in ("go_lighter", "active_recovery"):
+            out["recovery_signal"] = sig.to_snapshot_dict()
+    except Exception as e:
+        logger.debug(f"[daily_insight] cache-hit recovery signal skipped: {e}")
+    try:
+        from services.training_load_service import current_state
+        st = current_state(sb, user_id)
+        if st and st.state and st.state != "calibration":
+            out["training_load_state"] = st.state
+    except Exception as e:
+        logger.debug(f"[daily_insight] cache-hit load state skipped: {e}")
+    return out
+
+
 def _recovery_fuel_chip() -> Dict[str, Any]:
     """The dedicated recovery-fuel chip. Label-only schema + a `prompt` so the
     tap deep-links into the coach chat with the fuller recovery-meal request."""
@@ -1760,6 +1802,18 @@ async def daily_insight(
                                 f"[daily_insight] phase-staleness check skipped: {e}"
                             )
                     if not _phase_stale:
+                        # The full `snapshot` is only assembled on the
+                        # generation path below — referencing it here raised
+                        # UnboundLocalError on EVERY cache hit, the except
+                        # swallowed it, and the endpoint silently regenerated
+                        # (full snapshot + Gemini) each call. Fetch just the
+                        # live signals this response embeds instead.
+                        _live_signals: Dict[str, Any] = {}
+                        if source in ("home", "morning_brief"):
+                            _live_signals = await asyncio.get_event_loop(
+                            ).run_in_executor(
+                                None, _collect_cache_hit_signals, sb, user_id
+                            )
                         return DailyInsightResponse(
                             insight_id=row.get("id"),
                             local_date=row["local_date"],
@@ -1779,11 +1833,11 @@ async def daily_insight(
                             # Recompute the proactive card from the live injury
                             # snapshot even on a cache hit (Dr-Yaad audit #2).
                             coach_noticed=(
-                                _build_coach_noticed(snapshot)
+                                _build_coach_noticed(_live_signals)
                                 if source in ("home", "morning_brief") else None
                             ),
                             recovery_focus=(
-                                _recovery_focus_flagged(snapshot)
+                                _recovery_focus_flagged(_live_signals)
                                 if source == "home" else False
                             ),
                         )
