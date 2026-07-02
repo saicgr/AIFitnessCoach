@@ -96,27 +96,41 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       setState(() => _error = 'Max $_kMaxFridgePhotos photos — remove one to add another');
       return;
     }
-    if (source == ImageSource.gallery) {
-      final remaining = _kMaxFridgePhotos - _imagesB64.length;
-      final files = await ImagePicker().pickMultiImage(imageQuality: 75);
-      if (files.isEmpty) return;
-      final accepted = files.take(remaining).toList();
-      for (final f in accepted) {
+    // maxWidth caps a 12-48MP camera photo to a vision-sized payload —
+    // without it the base64 body is 3-7MB and the upload dies on the Dio
+    // sendTimeout before ever reaching the server.
+    try {
+      if (source == ImageSource.gallery) {
+        final remaining = _kMaxFridgePhotos - _imagesB64.length;
+        final files = await ImagePicker()
+            .pickMultiImage(imageQuality: 75, maxWidth: 1280);
+        if (files.isEmpty) return;
+        final accepted = files.take(remaining).toList();
+        for (final f in accepted) {
+          final bytes = await File(f.path).readAsBytes();
+          if (!mounted) return;
+          await _appendPhoto(base64Encode(bytes), f.path);
+        }
+        if (files.length > accepted.length) {
+          if (!mounted) return;
+          setState(() => _error =
+              'Added $remaining of ${files.length} — max $_kMaxFridgePhotos photos');
+        }
+      } else {
+        final f = await ImagePicker()
+            .pickImage(source: source, imageQuality: 75, maxWidth: 1280);
+        if (f == null) return;
         final bytes = await File(f.path).readAsBytes();
         if (!mounted) return;
         await _appendPhoto(base64Encode(bytes), f.path);
       }
-      if (files.length > accepted.length) {
-        if (!mounted) return;
-        setState(() => _error =
-            'Added $remaining of ${files.length} — max $_kMaxFridgePhotos photos');
-      }
-    } else {
-      final f = await ImagePicker().pickImage(source: source, imageQuality: 75);
-      if (f == null) return;
-      final bytes = await File(f.path).readAsBytes();
+    } catch (e) {
+      // Never fail silently — a picker/permission error previously ended the
+      // flow with no UI change and no request.
+      debugPrint('🍳 [Fridge] photo pick failed: $e');
       if (!mounted) return;
-      await _appendPhoto(base64Encode(bytes), f.path);
+      setState(() => _error =
+          'Could not load photo: ${e.toString().replaceFirst('Exception: ', '')}');
     }
   }
 

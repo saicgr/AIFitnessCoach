@@ -1474,6 +1474,109 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     );
   }
 
+  /// "+" tile on the open MenuAnalysisSheet's photo strip — photograph/pick
+  /// MORE menu pages and stream their dishes into the already-open sheet via
+  /// [controller]. Returns the local paths of the newly picked pages
+  /// immediately (so the strip shows them at once); the analysis runs in the
+  /// background and appends items as pages complete.
+  Future<List<String>> _addMoreMenuPages({
+    required MenuAnalysisStreamingController controller,
+    required String analysisMode,
+  }) async {
+    // Guest scans are metered — the add-more request is a full extra scan.
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canScan =
+          await ref.read(guestUsageLimitsProvider.notifier).usePhotoScan();
+      if (!canScan) {
+        if (mounted) {
+          GuestUpgradeSheet.show(context,
+              feature: GuestFeatureLimit.photoScan);
+        }
+        return const [];
+      }
+    }
+    if (!mounted) return const [];
+
+    final amber = const Color(0xFFF59E0B);
+    final source = await _pickScanImageSource('Add menu pages', amber);
+    if (source == null || !mounted) return const [];
+
+    List<XFile> files;
+    String snapPrompt = '';
+    if (source == ImageSource.camera) {
+      final result =
+          await _captureMultipleFromCamera(maxCount: 5, noun: 'page');
+      files = result.files;
+      snapPrompt = result.prompt;
+    } else {
+      files = await ImagePicker().pickMultiImage(imageQuality: 90);
+      if (files.length > 5) files = files.take(5).toList();
+    }
+    if (files.isEmpty) return const [];
+
+    // Fire-and-forget: dishes stream into the open sheet as pages complete.
+    unawaited(_streamAdditionalMenuPages(
+      files: files,
+      controller: controller,
+      analysisMode: analysisMode,
+      userMessage: snapPrompt.isEmpty ? null : snapPrompt,
+    ));
+    return [for (final f in files) f.path];
+  }
+
+  /// Background half of [_addMoreMenuPages] — runs the same streaming
+  /// multi-image analysis as the original scan and appends every page's
+  /// dishes + S3 URL to the sheet's existing [controller]. Page counters are
+  /// left untouched (a follow-up request restarts numbering at 1, which
+  /// would corrupt the original scan's progress display).
+  Future<void> _streamAdditionalMenuPages({
+    required List<XFile> files,
+    required MenuAnalysisStreamingController controller,
+    required String analysisMode,
+    String? userMessage,
+  }) async {
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      await for (final progress in repository.analyzeFoodFromImagesStreaming(
+        userId: widget.userId,
+        mealType: _selectedMealType.value,
+        imageFiles: files.map((x) => File(x.path)).toList(),
+        analysisMode: analysisMode,
+        userMessage: userMessage,
+        inputType: 'menu_scan',
+        confirmBeforeLog: false,
+      )) {
+        if (!mounted) return;
+        if (progress.hasError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                    Text('Couldn\'t analyze the added pages: ${progress.message}')),
+          );
+          return;
+        }
+        if (progress.isPageEvent) {
+          controller.appendItems(progress.pageItems);
+          if (progress.pageImageUrl != null &&
+              progress.pageImageUrl!.isNotEmpty) {
+            controller.addPhotoUrl(progress.pageImageUrl!);
+          }
+          continue;
+        }
+        if (progress.isCompleted) break;
+      }
+    } catch (e) {
+      debugPrint('❌ [LogMeal] Add-more menu pages failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Couldn't analyze the added pages — try again.")),
+        );
+      }
+    }
+  }
+
   // ─── Import Scan — Nutrition Label / App Screenshot (Parity A2) ──────
 
   /// Opens the chooser sheet that surfaces the two OCR-import flows that
@@ -2131,6 +2234,16 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             streamingController: controller,
             userId: widget.userId,
             mealType: _selectedMealType.value,
+            // Local capture paths — instant thumbnails in the sheet's photo
+            // strip (the durable S3 URLs stream into `controller` per page
+            // and are what a bookmark-save persists).
+            menuPhotoUrls: [for (final f in files) f.path],
+            // "+" tile on the photo strip: photograph/pick more menu pages
+            // and stream their dishes into this same open sheet.
+            onAddMorePhotos: () => _addMoreMenuPages(
+              controller: controller,
+              analysisMode: analysisMode,
+            ),
             onLogItems: (selected) async {
               // (WR1+WR4+WR6) Optimistic splice + background write + rollback.
               final ok = await _logMenuSelectedItems(
@@ -2207,6 +2320,12 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
               page: progress.pageNumber,
               totalPages: progress.totalPages,
             );
+          }
+          // Collect the durable per-page S3 URL — the sheet's bookmark-save
+          // persists these (its display list holds local capture paths).
+          if (progress.pageImageUrl != null &&
+              progress.pageImageUrl!.isNotEmpty) {
+            streamingController?.addPhotoUrl(progress.pageImageUrl!);
           }
           continue;
         }

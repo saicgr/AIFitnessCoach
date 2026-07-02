@@ -7,6 +7,7 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -53,6 +54,11 @@ class MenuAnalysisStreamingController extends ChangeNotifier {
   bool _done = false;
   final List<int> _failedPages = [];
   final List<Map<String, dynamic>> _pendingItems = [];
+  // S3 URLs of the pages the backend actually stored — streamed alongside
+  // each `page` event. The sheet reads these at bookmark-save time so a
+  // fresh scan persists real URLs (the local capture paths it displays are
+  // meaningless server-side).
+  final List<String> _photoUrls = [];
 
   MenuAnalysisStreamingController({required int totalPages, int currentPage = 1})
       : _totalPages = totalPages,
@@ -62,6 +68,13 @@ class MenuAnalysisStreamingController extends ChangeNotifier {
   int get totalPages => _totalPages;
   bool get isDone => _done;
   List<int> get failedPages => List.unmodifiable(_failedPages);
+  List<String> get photoUrls => List.unmodifiable(_photoUrls);
+
+  void addPhotoUrl(String url) {
+    if (url.isEmpty || _photoUrls.contains(url)) return;
+    _photoUrls.add(url);
+    notifyListeners();
+  }
 
   List<Map<String, dynamic>> consumePending() {
     final copy = List<Map<String, dynamic>>.from(_pendingItems);
@@ -128,6 +141,13 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
   final String? savedMenuId;
   final String? savedTitle;
 
+  /// When non-null, the photo strip renders a trailing "+" tile that lets the
+  /// user photograph/pick MORE menu pages without leaving the sheet. The
+  /// callback owns picking + kicking off the follow-up analysis (streaming
+  /// new dishes into [streamingController]) and returns the local paths of
+  /// the newly added pages so the strip can show them immediately.
+  final Future<List<String>> Function()? onAddMorePhotos;
+
   const MenuAnalysisSheet({
     super.key,
     required this.foodItems,
@@ -143,6 +163,7 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     this.mealType,
     this.savedMenuId,
     this.savedTitle,
+    this.onAddMorePhotos,
   });
 
   /// Imports feature — open the menu sheet directly from a single shared
@@ -202,6 +223,7 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     String? mealType,
     String? savedMenuId,
     String? savedTitle,
+    Future<List<String>> Function()? onAddMorePhotos,
   }) {
     return showGlassSheet<void>(
       context: context,
@@ -219,6 +241,7 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
         mealType: mealType,
         savedMenuId: savedMenuId,
         savedTitle: savedTitle,
+        onAddMorePhotos: onAddMorePhotos,
       ),
     );
   }
@@ -241,6 +264,22 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   bool _bookmarking = false;
   // Re-entrancy guard for the "Add food" button.
   bool _addingFood = false;
+  // Re-entrancy guard for the photo-strip "+" (add more menu pages) tile.
+  bool _addingPhotos = false;
+
+  // Photos shown in the strip. Seeded from the constructor (local capture
+  // paths on a fresh scan, S3 URLs when reopened from history) and appended
+  // to when the user adds more pages via the "+" tile.
+  late List<String> _photoUrls;
+
+  // Raw item maps mirroring `_items` — the bookmark save posts these, so a
+  // menu saved after streaming/add-more/manual-add persists EVERY dish, not
+  // just the page-1 snapshot in `widget.foodItems`.
+  late List<Map<String, dynamic>> _rawItems;
+
+  /// Cap on total menu pages shown/added. The backend scans up to 5 pages
+  /// per request; add-more requests are separate, so this only bounds the UI.
+  static const int _maxMenuPhotos = 8;
 
   // A1 — mutable saved-state tracking. Initialized from the constructor
   // params (non-null when opened from history) and flipped after a fresh
@@ -280,6 +319,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     // history). A fresh scan leaves both null until the user saves.
     _savedMenuId = widget.savedMenuId;
     _savedTitle = widget.savedTitle;
+    _photoUrls = List.of(widget.menuPhotoUrls);
+    _rawItems = List.of(widget.foodItems);
     _items = _itemsFromMaps(widget.foodItems);
     // Default: hide dishes matching the user's allergens if any are set.
     // Resolved after first build via addPostFrameCallback because we need
@@ -363,9 +404,19 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     }
   }
 
+  /// Remote (http) fallback image for dish thumbnails. A fresh scan passes
+  /// LOCAL capture paths in `menuPhotoUrls` — those are display-only for the
+  /// photo strip and must never leak into MenuItem.imageUrl, which downstream
+  /// consumers treat as a network URL.
+  String? get _remoteFallbackPhoto {
+    for (final url in widget.menuPhotoUrls) {
+      if (url.startsWith('http')) return url;
+    }
+    return null;
+  }
+
   List<MenuItem> _itemsFromMaps(List<Map<String, dynamic>> raw) {
-    final photoFallback =
-        widget.menuPhotoUrls.isNotEmpty ? widget.menuPhotoUrls.first : null;
+    final photoFallback = _remoteFallbackPhoto;
     return [
       for (int i = 0; i < raw.length; i++)
         MenuItem.fromJson(raw[i], id: 'item_$i', fallbackImageUrl: photoFallback),
@@ -382,10 +433,13 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           MenuItem.fromJson(
             pending[i],
             id: 'item_${_items.length + i}',
-            fallbackImageUrl: widget.menuPhotoUrls.isNotEmpty ? widget.menuPhotoUrls.first : null,
+            fallbackImageUrl: _remoteFallbackPhoto,
           ),
       ];
-      setState(() => _items = [..._items, ...more]);
+      setState(() {
+        _rawItems = [..._rawItems, ...pending];
+        _items = [..._items, ...more];
+      });
       _refreshRecommendation();
     } else {
       setState(() {});
@@ -441,16 +495,19 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
 
       final newItems = <MenuItem>[];
       final newIds = <String>[];
-      final fallback =
-          widget.menuPhotoUrls.isNotEmpty ? widget.menuPhotoUrls.first : null;
+      final newRaw = <Map<String, dynamic>>[];
+      final fallback = _remoteFallbackPhoto;
       for (final ranking in streamed.foodItems) {
         final id = 'manual_${DateTime.now().microsecondsSinceEpoch}_${newIds.length}';
         newIds.add(id);
+        final json = ranking.toJson();
+        newRaw.add(json);
         newItems.add(
-          MenuItem.fromJson(ranking.toJson(), id: id, fallbackImageUrl: fallback),
+          MenuItem.fromJson(json, id: id, fallbackImageUrl: fallback),
         );
       }
       setState(() {
+        _rawItems = [..._rawItems, ...newRaw];
         _items = [..._items, ...newItems];
         _selected.addAll(newIds);
       });
@@ -973,14 +1030,22 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
         }
       }
 
+      // Persist ONLY server-side URLs: a fresh scan displays local capture
+      // paths, but the durable S3 URLs stream in per page via the controller.
+      final remotePhotoUrls = <String>{
+        ...widget.menuPhotoUrls.where((u) => u.startsWith('http')),
+        ...?widget.streamingController?.photoUrls,
+      }.toList();
       final createResp = await api.post('/nutrition/menu-analyses', data: {
         'title': title.isEmpty ? null : title,
         'restaurant_name': restaurantName,
         'address': address.isEmpty ? null : address,
         'analysis_type': widget.analysisType,
         'sections': <Map<String, dynamic>>[],
-        'food_items': widget.foodItems,
-        'menu_photo_urls': widget.menuPhotoUrls,
+        // Live list — includes streamed pages, add-more pages, and manual
+        // "Add food" entries, not just the page-1 constructor snapshot.
+        'food_items': _rawItems,
+        'menu_photo_urls': remotePhotoUrls,
         'elapsed_seconds': widget.elapsedSeconds,
       });
       if (!mounted) return;
@@ -1373,10 +1438,9 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       // Island / notch on top while keeping a tall working surface. The
       // drag handle and glass blur are preserved at this height.
       maxHeightFraction: 0.92,
-      // The bottom action bar paints its own tint into the home-indicator
-      // inset (see _bottomBar), so suppress GlassSheet's transparent spacer —
-      // otherwise the footer's grey stops ~34pt above the bezel and reads as a
-      // detached floating box.
+      // The action pills float over the list (see _bottomBar) and pad
+      // themselves above the home-indicator inset, so suppress GlassSheet's
+      // transparent spacer — content should scroll all the way to the bezel.
       reserveBottomInset: false,
       child: Stack(
         children: [
@@ -1389,7 +1453,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   children: [
                     _goalBanner(colors),
                     _budgetRings(colors),
-                    if (widget.menuPhotoUrls.isNotEmpty) _photoStrip(),
+                    if (_photoUrls.isNotEmpty) _photoStrip(colors),
                     _countsLine(colors),
                     _searchAndControls(colors),
                     if (_filter.hasAnyFilter) _activeFilterChips(),
@@ -1403,12 +1467,21 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     else
                       ..._itemsBySection.entries.map(
                           (e) => _sectionBlock(e.key, e.value, colors)),
-                    const SizedBox(height: 80),
+                    // Clearance for the floating action pills so the last
+                    // card's controls are never stuck underneath them.
+                    const SizedBox(height: 150),
                   ],
                 ),
               ),
-              _bottomBar(colors),
             ],
+          ),
+          // Floating action pills — no full-width footer band; content
+          // scrolls underneath (each pill blurs its own backdrop).
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _bottomBar(colors),
           ),
           // First-run spotlight tour. Anchors + copy live in
           // `widgets/tooltips/tours/menu_analysis_tour.dart`.
@@ -1643,44 +1716,177 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     );
   }
 
-  Widget _photoStrip() {
-    return SizedBox(
-      height: 64,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: widget.menuPhotoUrls.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        itemBuilder: (_, i) {
-          return GestureDetector(
-            onTap: () => _openPhotoViewer(widget.menuPhotoUrls[i]),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: widget.menuPhotoUrls[i],
-                width: 52, height: 52, fit: BoxFit.cover,
-                placeholder: (_, __) => Container(width: 52, height: 52, color: Colors.black26),
-                errorWidget: (_, __, ___) => Container(
-                  width: 52, height: 52, color: Colors.black26,
-                  child: const Icon(Icons.broken_image_outlined, size: 18, color: Colors.white54),
-                ),
-              ),
-            ),
-          );
-        },
+  /// Renders a menu photo from either a remote URL (saved menus / history)
+  /// or a local capture path (fresh scan, add-more pages).
+  Widget _photoImage(String src, {BoxFit fit = BoxFit.cover}) {
+    if (src.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: src,
+        fit: fit,
+        placeholder: (_, __) => Container(color: Colors.black26),
+        errorWidget: (_, __, ___) => Container(
+          color: Colors.black26,
+          child: const Icon(Icons.broken_image_outlined,
+              size: 18, color: Colors.white54),
+        ),
+      );
+    }
+    return Image.file(
+      File(src),
+      fit: fit,
+      errorBuilder: (_, __, ___) => Container(
+        color: Colors.black26,
+        child: const Icon(Icons.broken_image_outlined,
+            size: 18, color: Colors.white54),
       ),
     );
   }
 
-  void _openPhotoViewer(String url) {
+  /// Menu photo strip — the pages Gemini parsed as centered IMDb-style
+  /// posters (2:3 portrait, since menus are portrait documents), each with a
+  /// maximize affordance, plus a trailing "+" tile to scan more pages
+  /// without leaving the sheet. Centered while the posters fit; scrolls
+  /// horizontally once they don't.
+  static const double _posterW = 108;
+  static const double _posterH = 156;
+
+  Widget _photoStrip(ThemeColors colors) {
+    final canAddMore = widget.onAddMorePhotos != null &&
+        !_logged &&
+        _photoUrls.length < _maxMenuPhotos;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: SizedBox(
+        height: _posterH,
+        // Center keeps a short row of posters in the middle of the sheet;
+        // once the row outgrows the viewport the scroll view takes over.
+        child: Center(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Counterweight for the trailing "+" button (40px + 10px
+                // gap) so the poster itself sits at the true center of the
+                // sheet rather than being nudged left by the button.
+                if (canAddMore && _photoUrls.isNotEmpty)
+                  const SizedBox(width: 50),
+                for (int i = 0; i < _photoUrls.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 10),
+                  _posterTile(i),
+                ],
+                if (canAddMore) ...[
+                  if (_photoUrls.isNotEmpty) const SizedBox(width: 10),
+                  _addPhotoTile(colors),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _posterTile(int i) {
+    return GestureDetector(
+      onTap: () => _openPhotoViewer(i),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: _posterW,
+          height: _posterH,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _photoImage(_photoUrls[i]),
+              // Hairline stroke so light menu photos don't melt into
+              // the sheet.
+              IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _glassBorder(context, 0.14),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+              // Maximize affordance — tells the user the poster expands.
+              Positioned(
+                right: 6,
+                bottom: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.open_in_full,
+                      size: 13, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Trailing "+" affordance on the photo strip — deliberately quiet: a
+  /// small circular glass button vertically centered next to the poster(s),
+  /// not a poster-sized tile competing with the menu photo.
+  Widget _addPhotoTile(ThemeColors colors) {
+    return Material(
+      color: _glassTint(context, 0.06),
+      shape: CircleBorder(
+        side: BorderSide(color: _glassBorder(context, 0.14), width: 0.8),
+      ),
+      child: InkWell(
+        onTap: _addingPhotos ? null : _handleAddPhotos,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: _addingPhotos
+              ? const Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : Icon(Icons.add, size: 20, color: colors.textMuted),
+        ),
+      ),
+    );
+  }
+
+  /// "+" tile tap — delegate picking + follow-up analysis to the caller
+  /// (which owns the scan pipeline), then show the new pages immediately.
+  /// New dishes stream into the open sheet via the streaming controller.
+  Future<void> _handleAddPhotos() async {
+    final addMore = widget.onAddMorePhotos;
+    if (addMore == null || _addingPhotos) return;
+    HapticFeedback.lightImpact();
+    setState(() => _addingPhotos = true);
+    try {
+      final added = await addMore();
+      if (!mounted || added.isEmpty) return;
+      setState(() => _photoUrls = [..._photoUrls, ...added]);
+    } finally {
+      if (mounted) setState(() => _addingPhotos = false);
+    }
+  }
+
+  void _openPhotoViewer(int initialIndex) {
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        insetPadding: const EdgeInsets.all(16),
-        backgroundColor: Colors.black,
-        child: InteractiveViewer(
-          child: CachedNetworkImage(imageUrl: url, fit: BoxFit.contain),
-        ),
+      barrierColor: Colors.black.withValues(alpha: 0.9),
+      builder: (_) => _MenuPhotoViewer(
+        photos: _photoUrls,
+        initialIndex: initialIndex,
+        imageBuilder: (src) => _photoImage(src, fit: BoxFit.contain),
       ),
     );
   }
@@ -2134,33 +2340,37 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _themeOrange(context),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '#$rank',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
+              // Rank badge doubles as the "why was this recommended?"
+              // affordance — the whole chip opens the explain sheet. The ⓘ
+              // replaces the old detached bare-"?" circle, which read as a
+              // broken glyph rather than a tappable explainer.
               Material(
-                color: _glassTint(context, 0.08),
-                shape: const CircleBorder(),
+                color: _themeOrange(context),
+                borderRadius: BorderRadius.circular(6),
                 child: InkWell(
-                  customBorder: const CircleBorder(),
+                  borderRadius: BorderRadius.circular(6),
                   onTap: () => RecommendationExplainSheet.show(
                     context, pick: pick, rank: rank, totalAccepted: total,
                   ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(4),
-                    child: Icon(Icons.question_mark, size: 10),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '#$rank',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        const Icon(Icons.info_outline,
+                            size: 11, color: Colors.white),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -2358,89 +2568,149 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     );
   }
 
+  /// Floating action pills — two compact side-by-side buttons with NO
+  /// footer band behind them; list content scrolls underneath and each pill
+  /// blurs its own backdrop for legibility. Replaces the old stacked
+  /// full-width footer that ate ~140pt of the sheet.
   Widget _bottomBar(ThemeColors colors) {
     final totals = _selectedTotals;
     final hasSelection = _selected.isNotEmpty;
-    // The parent GlassSheet is opted out of its bottom spacer
-    // (reserveBottomInset: false), so the bar itself extends its tinted
-    // background through the home-indicator inset — the grey reaches the bezel
-    // instead of floating ~34pt above it. viewPadding (not padding) is used so
-    // the inset stays stable while the keyboard is up.
+    // viewPadding (not padding) so the inset stays stable while the
+    // keyboard is up.
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 6, 16, 2 + bottomInset),
-      decoration: BoxDecoration(
-        color: _glassTint(context, 0.35),
-        border: Border(top: BorderSide(color: _glassBorder(context, 0.10))),
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final showAddFood = widget.userId != null && widget.mealType != null;
+    // Per-pill surface matching the GlassSheet (black-based lift in dark
+    // mode, white in light) so the pills read as part of the sheet.
+    final pillTint = isDark
+        ? Colors.black.withValues(alpha: 0.38)
+        : Colors.white.withValues(alpha: 0.72);
+
+    Widget blurPill(Widget child, {double radius = 26}) => ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            child: child,
+          ),
+        );
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 10 + bottomInset),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Compact selection-totals chip floating above the pills.
           if (hasSelection) ...[
-            Row(
-              children: [
-                Text(
-                  '${_selected.length} selected',
-                  style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700,
-                    color: colors.textPrimary,
+            Center(
+              child: blurPill(
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: pillTint,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _glassBorder(context, 0.14),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Text(
+                    '${_selected.length} selected · ${totals.cal.round()} cal · '
+                    '${totals.protein.toStringAsFixed(0)}P ${totals.carbs.toStringAsFixed(0)}C ${totals.fat.toStringAsFixed(0)}F'
+                    '${totals.price != null ? ' · \$${totals.price!.toStringAsFixed(2)}' : ''}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
+                    ),
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  '${totals.cal.round()} cal  ${totals.protein.toStringAsFixed(0)}g P  '
-                  '${totals.carbs.toStringAsFixed(0)}g C  ${totals.fat.toStringAsFixed(0)}g F'
-                  '${totals.price != null ? '  ·  \$${totals.price!.toStringAsFixed(2)}' : ''}',
-                  style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w600,
-                    color: colors.textSecondary,
+                radius: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            children: [
+              // Manual "Add food" — only shown when caller passed
+              // userId+mealType. Pre-selects newly added items so the
+              // "Log N" count immediately reflects the additions.
+              if (showAddFood) ...[
+                Expanded(
+                  child: blurPill(
+                    OutlinedButton.icon(
+                      onPressed:
+                          (_logged || _addingFood) ? null : _handleAddFood,
+                      icon: _addingFood
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.add, size: 18),
+                      label: Text(
+                        _addingFood
+                            ? AppLocalizations.of(context).menuAnalysisAdding
+                            : AppLocalizations.of(context).menuAnalysisAddFood,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      // Explicit colors — the theme's primary (green) made
+                      // this button clash with the accent-orange controls.
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 12),
+                        backgroundColor: pillTint,
+                        foregroundColor: colors.textPrimary,
+                        textStyle: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700),
+                        side: BorderSide(
+                          color: _glassBorder(context, 0.25),
+                          width: 1,
+                        ),
+                        shape: const StadiumBorder(),
+                      ),
+                    ),
                   ),
                 ),
+                const SizedBox(width: 10),
               ],
-            ),
-            const SizedBox(height: 6),
-          ],
-          // Manual "Add food" — only shown when caller passed userId+mealType.
-          // Pre-selects newly added items so the "Log N" count immediately
-          // reflects the additions.
-          if (widget.userId != null && widget.mealType != null) ...[
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: (_logged || _addingFood) ? null : _handleAddFood,
-                icon: _addingFood
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add),
-                label: Text(_addingFood ? AppLocalizations.of(context).menuAnalysisAdding : AppLocalizations.of(context).menuAnalysisAddFood),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+              Expanded(
+                child: KeyedSubtree(
+                  key: _selectFooterKey,
+                  child: blurPill(
+                    FilledButton.icon(
+                      icon: Icon(
+                          _logged ? Icons.check : Icons.add_circle_outline,
+                          size: 18),
+                      label: Text(
+                        _logged
+                            ? AppLocalizations.of(context).menuAnalysisLogged
+                            : hasSelection
+                                ? 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'
+                                : 'Select dishes to log',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onPressed:
+                          (_selected.isEmpty || _logged) ? null : _handleLog,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _themeOrange(context),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 12),
+                        textStyle: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700),
+                        // Deliberate disabled state — Material's default grey
+                        // read as a second random tone against the glass.
+                        disabledBackgroundColor: pillTint,
+                        disabledForegroundColor: colors.textMuted,
+                        shape: const StadiumBorder(),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-          ],
-          KeyedSubtree(
-            key: _selectFooterKey,
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                icon: Icon(_logged ? Icons.check : Icons.add_circle_outline),
-                label: Text(_logged
-                    ? AppLocalizations.of(context).menuAnalysisLogged
-                    : hasSelection
-                        ? 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'
-                        : 'Select dishes to log'),
-                onPressed: (_selected.isEmpty || _logged) ? null : _handleLog,
-                style: FilledButton.styleFrom(
-                  backgroundColor: _themeOrange(context),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
+            ],
           ),
         ],
       ),
@@ -2467,4 +2737,98 @@ class _ActiveChip {
   final String label;
   final VoidCallback onRemove;
   _ActiveChip(this.label, this.onRemove);
+}
+
+/// Full-screen swipeable viewer for the menu page photos. Pinch-to-zoom per
+/// page, page indicator when there are multiple pages, tap-outside or the
+/// close button to dismiss.
+class _MenuPhotoViewer extends StatefulWidget {
+  final List<String> photos;
+  final int initialIndex;
+  final Widget Function(String src) imageBuilder;
+
+  const _MenuPhotoViewer({
+    required this.photos,
+    required this.initialIndex,
+    required this.imageBuilder,
+  });
+
+  @override
+  State<_MenuPhotoViewer> createState() => _MenuPhotoViewerState();
+}
+
+class _MenuPhotoViewerState extends State<_MenuPhotoViewer> {
+  late final PageController _pageController;
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex.clamp(0, widget.photos.length - 1);
+    _pageController = PageController(initialPage: _index);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog.fullscreen(
+      backgroundColor: Colors.transparent,
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.photos.length,
+            onPageChanged: (i) => setState(() => _index = i),
+            itemBuilder: (_, i) => InteractiveViewer(
+              maxScale: 5,
+              child: Center(child: widget.imageBuilder(widget.photos[i])),
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.4),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+          ),
+          if (widget.photos.length > 1)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_index + 1} of ${widget.photos.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

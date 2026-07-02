@@ -172,7 +172,13 @@ class RecipeRepository {
         'count': count,
         if (additionalRequirements != null) 'additional_requirements': additionalRequirements,
       },
-      options: Options(receiveTimeout: ApiConstants.aiReceiveTimeout),
+      // A base64 photo body can be MBs — the default 15s sendTimeout aborts
+      // the upload mid-flight on cell connections (the request never reaches
+      // the server), so the send leg needs the AI window too.
+      options: Options(
+        sendTimeout: ApiConstants.aiReceiveTimeout,
+        receiveTimeout: ApiConstants.aiReceiveTimeout,
+      ),
     );
     return PantryAnalyzeResponse.fromJson(res.data as Map<String, dynamic>);
   }
@@ -187,7 +193,11 @@ class RecipeRepository {
       '/nutrition/recipes/detect-pantry-items',
       queryParameters: {'user_id': userId},
       data: {'image_b64': imageB64},
-      options: Options(receiveTimeout: ApiConstants.aiReceiveTimeout),
+      // See fromPantry — MB-scale base64 body needs a long send leg too.
+      options: Options(
+        sendTimeout: ApiConstants.aiReceiveTimeout,
+        receiveTimeout: ApiConstants.aiReceiveTimeout,
+      ),
     );
     final items = (res.data['items'] as List?) ?? const [];
     return items

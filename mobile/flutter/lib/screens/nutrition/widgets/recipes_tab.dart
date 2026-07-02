@@ -529,9 +529,12 @@ class _QuickActions extends ConsumerWidget {
     final pickedPaths = <String>[];
     final pickedB64 = <String>[];
     try {
+      // maxWidth keeps the base64 payload vision-sized (~200-400KB) — a
+      // full-res camera photo is 3-7MB encoded and dies on Dio's sendTimeout
+      // before reaching the server.
       if (source == ImageSource.gallery) {
         final files = await ImagePicker()
-            .pickMultiImage(imageQuality: 75);
+            .pickMultiImage(imageQuality: 75, maxWidth: 1280);
         if (files.isEmpty) return;
         final accepted = files.take(5).toList();
         for (final f in accepted) {
@@ -541,7 +544,7 @@ class _QuickActions extends ConsumerWidget {
         }
       } else {
         final f = await ImagePicker()
-            .pickImage(source: ImageSource.camera, imageQuality: 75);
+            .pickImage(source: ImageSource.camera, imageQuality: 75, maxWidth: 1280);
         if (f == null) return;
         final bytes = await File(f.path).readAsBytes();
         pickedPaths.add(f.path);
