@@ -27,6 +27,21 @@ def _get_gemini_service():
     return GeminiService()
 
 
+async def _bust_daily_summary_cache(user_id: str) -> None:
+    """Invalidate the 60s GET /summary/daily cache after a chat-tool food write.
+
+    Without this, the client's immediate `food_logged` refresh can be served
+    the pre-log cached summary, which it then treats as fresh for 5 minutes —
+    the "coach logged my meal but the Nutrition tab shows 0" bug. Best-effort:
+    a cache failure must never fail the log itself.
+    """
+    try:
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(user_id)
+    except Exception as e:
+        logger.warning(f"daily-summary cache invalidation failed for {user_id}: {e}")
+
+
 @tool
 async def analyze_food_image(
     user_id: str,
@@ -453,6 +468,7 @@ async def parse_app_screenshot(
         )
 
         food_log_id = food_log.get("id") if food_log else None
+        await _bust_daily_summary_cache(user_id)
 
         # Get daily summary
         today = get_user_today(timezone_str)
@@ -619,6 +635,7 @@ async def parse_nutrition_label(
         )
 
         food_log_id = food_log.get("id") if food_log else None
+        await _bust_daily_summary_cache(user_id)
 
         # Get daily summary
         today = get_user_today(timezone_str)
@@ -1019,6 +1036,7 @@ async def log_food_from_text(
         )
 
         food_log_id = food_log.get("id") if food_log else None
+        await _bust_daily_summary_cache(user_id)
 
         # Get today's nutrition summary
         today = get_user_today(timezone_str)

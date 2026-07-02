@@ -106,7 +106,9 @@ final chatMessagesProvider =
   final themeNotifier = ref.watch(themeModeProvider.notifier);
   final router = ref.watch(routerProvider);
   final hydrationNotifier = ref.watch(hydrationProvider.notifier);
-  final nutritionNotifier = ref.watch(dailyNutritionProvider(todayNutritionKey()).notifier);
+  // NOTE: today's nutrition notifier is deliberately NOT captured here — the
+  // ChatMessagesNotifier resolves it at call time (see its _nutritionNotifier
+  // getter) so a process that lives past midnight refreshes the right date.
   // Pass a callback to get fresh AI settings on each message instead of caching stale settings
   AISettings getAISettings() => ref.read(aiSettingsProvider);
   // Pass a callback to set AI generating state (triggers home screen rebuild)
@@ -142,7 +144,7 @@ final chatMessagesProvider =
     ref.invalidate(hormonalProfileProvider);
     ref.invalidate(todayHormoneLogProvider);
   }
-  final notifier = ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout, refreshCycleData, ref);
+  final notifier = ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout, refreshCycleData, ref);
   // Session wiring — let the notifier publish an adopted/switched session id
   // to currentChatSessionProvider and refresh the sessions list when a new
   // session is created on first send.

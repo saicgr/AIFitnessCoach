@@ -64,7 +64,6 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final ThemeModeNotifier _themeNotifier;
   final GoRouter _router;
   final HydrationNotifier _hydrationNotifier;
-  final DailyNutritionNotifier _nutritionNotifier;
   final AISettings Function() _getAISettings; // Callback to get fresh settings
   final void Function(bool) _setAIGenerating; // Callback to set AI generating state
   final String Function() _getUnifiedContext; // Callback to get unified fasting/nutrition/workout context
@@ -86,6 +85,14 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final Ref _ref;
   bool _isLoading = false;
   Future<void>? _loadHistoryFuture;
+
+  /// Today's nutrition notifier, resolved at CALL time — never captured.
+  /// This notifier is a login-scoped singleton that survives midnight, so a
+  /// constructor-captured `dailyNutritionProvider(todayNutritionKey())` would
+  /// go stale after rollover and every post-log `food_logged` refresh would
+  /// silently target YESTERDAY's date instance.
+  DailyNutritionNotifier get _nutritionNotifier =>
+      _ref.read(dailyNutritionProvider(todayNutritionKey()).notifier);
 
   // Pagination state (#16)
   int _currentOffset = 0;
@@ -340,7 +347,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     return _quickWorkoutKeywords.any((kw) => lower.contains(kw));
   }
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout, this._refreshCycleData, this._ref)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout, this._refreshCycleData, this._ref)
       : super(const AsyncValue.data([])) {
     _instances.add(this);
     _restoreFromCache();
