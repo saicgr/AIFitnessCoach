@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 import '../models/scores.dart';
 import '../repositories/scores_repository.dart';
 import '../repositories/auth_repository.dart';
@@ -175,9 +174,11 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
   /// shows real prior numbers rather than a wall of skeletons. No-op when the
   /// in-memory cache already holds richer data for this session.
   Future<void> seedFromDisk({String? userId}) async {
-    final uid = userId ??
-        Supabase.instance.client.auth.currentUser?.id ??
-        _currentUserId;
+    // APP user id only (public.users.id) — never Supabase's auth uid. The two
+    // differ (users.auth_id links them), `_currentUserId` flows into API
+    // `user_id` params where the backend 403s on the auth uid, and the disk
+    // cache is written under the app id so an auth-uid read always misses.
+    final uid = userId ?? _currentUserId;
     if (uid == null) return;
     _currentUserId = uid;
 

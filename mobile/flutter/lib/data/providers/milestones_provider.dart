@@ -130,9 +130,11 @@ class MilestonesNotifier extends StateNotifier<MilestonesState> {
   /// and milestones list show real prior numbers rather than skeletons. No-op
   /// for slices already held in memory this session.
   Future<void> seedFromDisk({String? userId}) async {
-    final uid = userId ??
-        Supabase.instance.client.auth.currentUser?.id ??
-        _currentUserId;
+    // APP user id only (public.users.id) — never Supabase's auth uid. The two
+    // differ (users.auth_id links them), `_currentUserId` flows into API
+    // `user_id` params where the backend 403s on the auth uid, and the disk
+    // cache is written under the app id so an auth-uid read always misses.
+    final uid = userId ?? _currentUserId;
     if (uid == null) return;
     _currentUserId = uid;
 

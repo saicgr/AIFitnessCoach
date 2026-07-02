@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../models/exercise_history.dart' show ExerciseHistoryTimeRange;
 import '../models/overload_dashboard.dart';
@@ -99,9 +98,11 @@ class OverloadDashboardNotifier extends StateNotifier<OverloadDashboardState> {
     String? gymProfileId,
     String? userId,
   }) async {
-    final uid = userId ??
-        Supabase.instance.client.auth.currentUser?.id ??
-        _currentUserId;
+    // Resolve the APP user id (public.users.id) via the ApiClient — NOT
+    // Supabase's auth uid. They are different values (auth.users.id links via
+    // users.auth_id), and this id is reused by load() as the `user_id` query
+    // param, where the backend 403s on anything that isn't the app id.
+    final uid = userId ?? _currentUserId ?? await _client.getUserId();
     if (uid == null) return;
     _currentUserId = uid;
 
