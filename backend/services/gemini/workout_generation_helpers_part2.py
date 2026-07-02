@@ -304,7 +304,7 @@ class WorkoutGenerationMixinPart2:
         # Difficulty-aware naming hints
         difficulty_naming = ""
         if difficulty in ("hell", "extreme"):
-            difficulty_naming = "\nThis is HELL MODE. Name MUST reflect EXTREME intensity (Inferno, Destroyer, Savage, Beast, Annihilation)."
+            difficulty_naming = "\nThis is a maximum-intensity workout. The name should convey serious effort in plain training language (e.g. \"Max Effort Upper\", \"High-Intensity Conditioning\"). NEVER use fantasy or violent words (Savage, Beast, Inferno, Annihilation, Destroyer, Apocalypse, Carnage)."
         elif difficulty == "hard":
             difficulty_naming = "\nThis is a hard workout. Name should reflect high intensity and challenge."
         elif difficulty == "easy":
@@ -328,13 +328,15 @@ User profile:
 Available Exercises (pre-filtered for safety — use EXACTLY these, no substitutions):
 {exercise_list}
 
-Create a CREATIVE and MOTIVATING workout name (3-4 words) that reflects the user's training focus.
+Create a clear, credible workout name (2-4 words) in plain training language that reflects the focus and intent. It should sound like a coach wrote it, not a video game.
 
 Examples of good names:
-- "Thunder Strike Legs"
-- "Phoenix Power Chest"
-- "Savage Wolf Back"
-- "Iron Storm Arms"
+- "Upper Body Power"
+- "Leg Strength Builder"
+- "Push Day Volume"
+- "Full-Body Conditioning"
+
+Never use fantasy, animal, or violent words (Savage, Beast, Wolf, Inferno, Annihilation, Storm, Thunder, Destroyer).
 {holiday_instruction}{avoid_instruction}{comeback_instruction}{recovery_instruction}
 
 Return a JSON object with:

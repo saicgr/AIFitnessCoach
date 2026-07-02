@@ -365,7 +365,7 @@ ARMS (choose from these):
 - Machine exercises when free weights are available
 - Any exercise without added resistance/weight
 
-HELL MODE NAMING: Use intense, aggressive names like "Inferno", "Apocalypse", "Devastation", "Annihilation", "Carnage", "Rampage"."""
+HELL MODE NAMING: Keep the name credible and professional — convey maximum effort in plain training terms (e.g. "Max Effort Upper", "High-Intensity Full Body"). NEVER use fantasy or violent words (Inferno, Apocalypse, Devastation, Annihilation, Carnage, Rampage, Savage, Beast)."""
             if fitness_level == "beginner":
                 safety_instruction += "\n\n⚠️ BEGINNER IN HELL MODE: Scale weights appropriately but maintain high intensity. Focus on form while pushing limits. Include extra rest if needed for safety."
             elif fitness_level == "intermediate":

@@ -38,18 +38,22 @@ INTENSITY_ADJ_BY_DIFFICULTY: Dict[str, List[str]] = {
         "Measured", "Honest", "Plain", "Working", "Workman", "Routine",
         "Consistent", "Daily", "Reliable",
     ],
+    # NOTE (2026-07-02): hard/hell pools rewritten from fantasy-violent tokens
+    # ("Savage", "Apocalyptic", "Demonic"…) to credible coach-speak after the
+    # "Savage Beast Annihilation" incident — a generated name that reads like a
+    # video game reached the founder's App Store screenshots. Names must sound
+    # like a coach wrote them.
     "hard": [
-        "Savage", "Relentless", "Brutal", "Fierce", "Crushing",
-        "Punishing", "Iron", "Forged", "Heavy", "Razor", "Granite",
-        "Tidal", "Hammered", "Burning", "Searing", "Vicious", "Grim",
-        "Stark", "Hard", "Wicked", "Blistering", "Scorching",
+        "Heavy", "Iron", "Forged", "Relentless", "Gritty", "Grinding",
+        "Loaded", "Demanding", "Serious", "Big", "Strong", "Uphill",
+        "High-Effort", "Working", "Stacked", "Charged", "Focused",
+        "Driven", "Tough", "Hard-Charging",
     ],
     "hell": [
-        "Apocalyptic", "Cataclysmic", "Devastating", "Annihilating",
-        "Pulverizing", "Unholy", "Merciless", "Ruinous", "Infernal",
-        "Hellish", "Doomed", "Wrathful", "Atomic", "Nuclear",
-        "Volcanic", "Seismic", "Thermonuclear", "Catastrophic",
-        "Demonic", "Berserker",
+        "Max-Effort", "All-Out", "Redline", "Peak", "Limit-Test",
+        "Top-End", "Heavy-Duty", "High-Octane", "Overdrive", "Unbroken",
+        "Gut-Check", "Grinder", "Full-Throttle", "No-Rest", "Final-Set",
+        "Last-Rep",
     ],
 }
 
@@ -105,12 +109,11 @@ GOAL_NOUN_BY_GOAL: Dict[str, List[str]] = {
         "Inferno", "Smoke", "Combust", "Ignite",
     ],
     "power": [
-        "Detonate", "Surge", "Velocity", "Blast", "Strike", "Bolt",
-        "Thrust", "Launch", "Impulse", "Detonator", "Explode",
-        "Eruption", "Boom", "Crack", "Snap", "Whip", "Flash", "Spark",
-        "Charge", "Jolt", "Punch", "Kick", "Slam", "Drop", "Lift-off",
-        "Shock", "Wave", "Pulse", "Ignition", "Catapult", "Rocket",
-        "Missile", "Thunderclap",
+        "Surge", "Velocity", "Bolt", "Thrust", "Launch", "Impulse",
+        "Crack", "Snap", "Whip", "Flash", "Spark", "Charge", "Jolt",
+        "Punch", "Drive", "Drop", "Lift-off", "Wave", "Pulse", "Sprint",
+        "Speed", "Spring", "Rebound", "Fast-Twitch", "Dynamic",
+        "Contrast", "Triple-Extension",
     ],
     "recovery": [
         "Restore", "Renew", "Revival", "Soothe", "Soothing", "Reset",
