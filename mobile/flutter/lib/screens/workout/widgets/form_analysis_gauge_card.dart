@@ -103,7 +103,7 @@ class FormAnalysisGaugeCard extends StatelessWidget {
     Color scoreColor,
   ) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 18, 14, 6),
+      padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
       child: Column(
         children: [
           if (norm.exerciseName.isNotEmpty)
@@ -116,7 +116,7 @@ class FormAnalysisGaugeCard extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           SizedBox(
             height: 132,
             width: 220,
@@ -168,7 +168,7 @@ class FormAnalysisGaugeCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 14),
           Text(
             _subtitle(norm),
             style: TextStyle(
@@ -186,7 +186,7 @@ class FormAnalysisGaugeCard extends StatelessWidget {
   String _subtitle(_FormResult norm) {
     final parts = <String>['FORM ANALYSIS'];
     if (norm.repCount != null && norm.repCount! > 0) {
-      parts.add('${norm.repCount} REPS');
+      parts.add('${norm.repCount} ${norm.repCount == 1 ? 'REP' : 'REPS'}');
     }
     return parts.join('  ·  ');
   }
@@ -195,7 +195,7 @@ class FormAnalysisGaugeCard extends StatelessWidget {
 
   Widget _buildSubscores(ThemeColors colors, _FormResult norm, Color accent) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       child: Row(
         children: [
           for (final entry in norm.subscores.entries) ...[

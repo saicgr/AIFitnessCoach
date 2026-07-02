@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,7 +7,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/providers/workout_studio_providers.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../screens/nutrition/menu_analysis_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -22,31 +26,73 @@ class MediaUploadOverlay extends StatefulWidget {
   State<MediaUploadOverlay> createState() => _MediaUploadOverlayState();
 }
 
-class _MediaUploadOverlayState extends State<MediaUploadOverlay>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _shimmer;
+class _MediaUploadOverlayState extends State<MediaUploadOverlay> {
+  // Elapsed-time ticker for the analyzing phase. We can't get true server
+  // progress mid-inference, so we surface honest *staged* progress: which part
+  // of the pipeline is plausibly running given how long we've waited. We never
+  // claim "done" — the last stage holds until the job actually completes and
+  // this overlay is replaced by the result card.
+  Timer? _ticker;
+  int _elapsed = 0; // seconds since the analyzing phase started
+
+  // Rotating stage labels + the elapsed-seconds threshold each one starts at.
+  // Server-side analysis is ~30-90s; the final stage intentionally holds.
+  static const List<({int at, String label})> _stages = [
+    (at: 0, label: 'Uploading to the analyzer…'),
+    (at: 8, label: 'Watching your reps…'),
+    (at: 22, label: 'Measuring tempo & range…'),
+    (at: 45, label: 'Scoring your form…'),
+  ];
+
+  bool get _isAnalyzing => widget.phase == 'analyzing';
 
   @override
   void initState() {
     super.initState();
-    _shimmer = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
-      ..repeat();
+    if (_isAnalyzing) _startTicker();
+  }
+
+  @override
+  void didUpdateWidget(covariant MediaUploadOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Upload → analyzing transition: reset and start the staged ticker.
+    if (_isAnalyzing && oldWidget.phase != 'analyzing') {
+      _elapsed = 0;
+      _startTicker();
+    } else if (!_isAnalyzing) {
+      _stopTicker();
+    }
+  }
+
+  void _startTicker() {
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsed++);
+    });
+  }
+
+  void _stopTicker() {
+    _ticker?.cancel();
+    _ticker = null;
   }
 
   @override
   void dispose() {
-    _shimmer.dispose();
+    _stopTicker();
     super.dispose();
+  }
+
+  String get _stageLabel {
+    var label = _stages.first.label;
+    for (final s in _stages) {
+      if (_elapsed >= s.at) label = s.label;
+    }
+    return label;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isUploading = widget.phase == 'uploading';
-    final label = isUploading
-        ? 'Uploading ${widget.progress != null ? '${(widget.progress! * 100).toInt()}%' : ''}'
-        : 'Analyzing...';
-    final icon = isUploading ? Icons.cloud_upload_outlined : Icons.auto_awesome;
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.65),
@@ -55,40 +101,113 @@ class _MediaUploadOverlayState extends State<MediaUploadOverlay>
       child: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: Colors.white, size: 22),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: 100,
-                child: isUploading
-                    ? LinearProgressIndicator(
-                        value: widget.progress,
-                        backgroundColor: Colors.white24,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                        borderRadius: BorderRadius.circular(4),
-                        minHeight: 3,
-                      )
-                    : AnimatedBuilder(
-                        animation: _shimmer,
-                        builder: (_, __) => LinearProgressIndicator(
-                          value: null,
-                          backgroundColor: Colors.white24,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                          borderRadius: BorderRadius.circular(4),
-                          minHeight: 3,
-                        ),
-                      ),
-              ),
-            ],
+          child: _isAnalyzing ? _buildAnalyzing() : _buildUploading(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUploading() {
+    final label =
+        'Uploading ${widget.progress != null ? '${(widget.progress! * 100).toInt()}%' : ''}';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 22),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(
+              color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 100,
+          child: LinearProgressIndicator(
+            value: widget.progress,
+            backgroundColor: Colors.white24,
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            borderRadius: BorderRadius.circular(4),
+            minHeight: 3,
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildAnalyzing() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
+        const SizedBox(height: 10),
+        // Rotating stage label — cross-fades as the pipeline progresses.
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 350),
+          child: Text(
+            _stageLabel,
+            key: ValueKey<String>(_stageLabel),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Stepped dots: one per stage, filled up to the current stage so the
+        // wait reads as forward motion rather than a frozen shimmer.
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < _stages.length; i++) ...[
+              if (i > 0) const SizedBox(width: 6),
+              _StageDot(active: _elapsed >= _stages[i].at),
+            ],
+          ],
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: 100,
+          child: LinearProgressIndicator(
+            value: null,
+            backgroundColor: Colors.white24,
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            borderRadius: BorderRadius.circular(4),
+            minHeight: 3,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Usually takes about a minute',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 10.5,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A single stepped-progress dot for the analyzing overlay: bright when its
+/// stage has been reached, dim otherwise.
+class _StageDot extends StatelessWidget {
+  final bool active;
+  const _StageDot({required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: active ? 7 : 6,
+      height: active ? 7 : 6,
+      decoration: BoxDecoration(
+        color: active ? Colors.white : Colors.white.withValues(alpha: 0.3),
+        shape: BoxShape.circle,
       ),
     );
   }
@@ -227,7 +346,7 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
 /// Nutrition agent persisted a food_log row. Tapping navigates to the
 /// Nutrition tab's Daily view so the user can see the logged meal in
 /// context (and edit/delete it from there).
-class ViewLoggedMealButton extends StatelessWidget {
+class ViewLoggedMealButton extends ConsumerWidget {
   final String? mealType;
   final int? calories;
 
@@ -250,12 +369,22 @@ class ViewLoggedMealButton extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: InkWell(
         onTap: () {
           HapticService.selection();
+          // Belt-and-suspenders: force today's nutrition state to refetch so
+          // the Daily tab can't land on a summary cached from before this
+          // meal was logged (the post-log refresh can race the backend's
+          // 60s summary cache). Fire-and-forget — navigation isn't gated.
+          final userId = ref.read(authStateProvider).user?.id;
+          if (userId != null && userId.isNotEmpty) {
+            ref
+                .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+                .refreshAll(userId);
+          }
           // tab=0 = Daily tab in MainShell's nutrition route.
           context.go('/nutrition?tab=0');
         },

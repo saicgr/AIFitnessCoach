@@ -91,14 +91,39 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
   Timer? _pollTimer;
   bool _disposed = false;
 
-  // 2s poll, ~60s cap (mirrors gym-profile media-job polling).
+  // Elapsed-seconds ticker for the analyzing stage — drives the honest staged
+  // labels ("Watching your reps…" → "Scoring your form…") so the wait reads
+  // as forward motion instead of a frozen spinner.
+  Timer? _stageTicker;
+  int _analyzeElapsed = 0;
+
+  static const List<({int at, String label})> _analyzeStages = [
+    (at: 0, label: 'Queued for analysis…'),
+    (at: 8, label: 'Watching your reps…'),
+    (at: 22, label: 'Measuring tempo & range…'),
+    (at: 45, label: 'Scoring your form…'),
+  ];
+
+  String get _analyzeStageLabel {
+    var label = _analyzeStages.first.label;
+    for (final s in _analyzeStages) {
+      if (_analyzeElapsed >= s.at) label = s.label;
+    }
+    return label;
+  }
+
+  // 2s poll. Cap must exceed the real server ceiling: when the Vertex/GCS
+  // path is unavailable the backend falls back to the Gemini Files API
+  // (download + re-upload + inference), which regularly runs past 60s for a
+  // ~20MB clip — a 60s cap made those successful jobs look like failures.
   static const _pollInterval = Duration(seconds: 2);
-  static const _pollCap = Duration(seconds: 60);
+  static const _pollCap = Duration(seconds: 180);
 
   @override
   void dispose() {
     _disposed = true;
     _pollTimer?.cancel();
+    _stageTicker?.cancel();
     _videoController?.dispose();
     _exerciseController.dispose();
     super.dispose();
@@ -169,7 +194,18 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
 
       if (_disposed) return;
       // Optimistic "uploaded — analyzing" state; the user can keep working out.
-      setState(() => _stage = _FormFlowStage.analyzing);
+      setState(() {
+        _stage = _FormFlowStage.analyzing;
+        _analyzeElapsed = 0;
+      });
+      _stageTicker?.cancel();
+      _stageTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (_disposed || _stage != _FormFlowStage.analyzing) {
+          _stageTicker?.cancel();
+          return;
+        }
+        if (mounted) setState(() => _analyzeElapsed++);
+      });
       HapticService.medium();
       _startPolling(jobId);
     } catch (e) {
@@ -515,9 +551,22 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
                         color: colors.textPrimary,
                       ),
                     ),
+                    const SizedBox(height: 3),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 350),
+                      child: Text(
+                        _analyzeStageLabel,
+                        key: ValueKey<String>(_analyzeStageLabel),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: accent,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
-                      "We'll notify you when your analysis is ready — feel free to keep training.",
+                      "Usually takes about a minute. We'll notify you when it's ready — feel free to keep training.",
                       style: TextStyle(
                         fontSize: 12.5,
                         height: 1.4,
