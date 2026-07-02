@@ -16,3 +16,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// (they skip warmup by design); Advanced sets it when the user completes
 /// or skips warmup; all tiers reset it to false when the workout wraps.
 final activeWorkoutWarmupDoneProvider = StateProvider<bool>((ref) => false);
+
+/// Depth of pre-workout modal flows currently on screen — the reshape
+/// check-in sheet ("Quick check-in" / "Anything to flag?") + its diff dialog,
+/// and the equipment-match swap/add sheet consumed at workout mount. The tier
+/// tour (`WorkoutTourService.maybeShowForTier`) defers while this is > 0 and
+/// re-fires when it returns to 0, so the spotlight tour never renders on top
+/// of (and anchored underneath) a modal sheet. A refcount rather than a bool
+/// because both flows are kicked off post-frame at mount and can overlap —
+/// the first one to finish must not unlatch the gate while the other is up.
+final preWorkoutModalDepthProvider = StateProvider<int>((ref) => 0);

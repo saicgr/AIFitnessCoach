@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/auth_repository.dart' show authStateProvider;
 
+import '../first_run/first_run_gate.dart' show FirstRunModalQueue;
 import '../tooltips/tooltip_anchors.dart';
 
 enum TooltipPosition { above, below, center }
@@ -161,6 +162,13 @@ class AppTourController extends StateNotifier<AppTourState> {
   Future<void> checkAndShow(String tourId, List<AppTourStep> steps) async {
     // Don't start a new tour if one is already visible
     if (state.isVisible) return;
+    // Don't spotlight underneath a first-run modal (level-up celebration,
+    // What's New, Health Connect popup…). No seen flag is written here, so
+    // the tour simply re-attempts on the host screen's next visit.
+    if (FirstRunModalQueue.isBusy) {
+      debugPrint('🔍 [AppTour] $tourId deferred — first-run modal is showing');
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     final seenLocally = prefs.getBool('has_seen_$tourId') ?? false;
     if (seenLocally) return;

@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/active_workout_phase_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -59,48 +60,59 @@ Future<void> maybeRunPreWorkoutReshape(
   // Mark done up-front so a rebuild/re-entry can't double-prompt.
   ref.read(preWorkoutReshapeDoneProvider.notifier).state = {...done, key};
 
-  final input = await showGlassSheet<_CheckInInput>(
-    context: context,
-    builder: (_) => const _ReshapeCheckInSheet(),
-  );
-  if (input == null || !context.mounted) return; // dismissed → no change
-
-  final _ReshapeResult result;
+  // Gate the tier tour for the whole modal flow (sheet → reshape call → diff
+  // dialog) so its spotlight never fires on top of this sheet, anchored to
+  // widgets underneath it. Capture the controller up-front: it outlives the
+  // calling widget, so the `finally` reset is safe even if the screen is
+  // popped mid-sheet (a stale true would block tours on the NEXT workout).
+  final tourGate = ref.read(preWorkoutModalDepthProvider.notifier);
+  tourGate.state++;
   try {
-    final client = ref.read(apiClientProvider);
-    final resp = await client.post(
-      '/workouts/$id/reshape-for-readiness',
-      data: input.toJson(apply: false),
+    final input = await showGlassSheet<_CheckInInput>(
+      context: context,
+      builder: (_) => const _ReshapeCheckInSheet(),
     );
-    result =
-        _ReshapeResult.fromJson(Map<String, dynamic>.from(resp.data as Map));
-  } catch (_) {
-    return; // never block the start on a reshape error
-  }
+    if (input == null || !context.mounted) return; // dismissed → no change
 
-  if (!result.reshaped || result.reasons.isEmpty) return;
-  if (!context.mounted) return;
+    final _ReshapeResult result;
+    try {
+      final client = ref.read(apiClientProvider);
+      final resp = await client.post(
+        '/workouts/$id/reshape-for-readiness',
+        data: input.toJson(apply: false),
+      );
+      result =
+          _ReshapeResult.fromJson(Map<String, dynamic>.from(resp.data as Map));
+    } catch (_) {
+      return; // never block the start on a reshape error
+    }
 
-  final accepted = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => _ReshapeDiffDialog(
-      reasons: result.reasons,
-      provenance: result.provenance,
-    ),
-  );
-  if (accepted != true || !context.mounted) return;
+    if (!result.reshaped || result.reasons.isEmpty) return;
+    if (!context.mounted) return;
 
-  try {
-    final client = ref.read(apiClientProvider);
-    await client.post(
-      '/workouts/$id/reshape-for-readiness',
-      data: input.toJson(apply: true),
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => _ReshapeDiffDialog(
+        reasons: result.reasons,
+        provenance: result.provenance,
+      ),
     );
-  } catch (_) {
-    // Persist failure is non-fatal — still apply locally for this session.
+    if (accepted != true || !context.mounted) return;
+
+    try {
+      final client = ref.read(apiClientProvider);
+      await client.post(
+        '/workouts/$id/reshape-for-readiness',
+        data: input.toJson(apply: true),
+      );
+    } catch (_) {
+      // Persist failure is non-fatal — still apply locally for this session.
+    }
+    final reshaped = workout.copyWith(exercisesJson: result.reshapedExercises);
+    ref.read(activeWorkoutLiveProvider.notifier).state = reshaped;
+  } finally {
+    tourGate.state--;
   }
-  final reshaped = workout.copyWith(exercisesJson: result.reshapedExercises);
-  ref.read(activeWorkoutLiveProvider.notifier).state = reshaped;
 }
 
 class _CheckInInput {

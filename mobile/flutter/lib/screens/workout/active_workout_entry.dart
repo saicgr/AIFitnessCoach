@@ -118,6 +118,23 @@ class _ActiveWorkoutEntryState extends ConsumerState<ActiveWorkoutEntry> {
     final workoutId = widget.workout.id;
     if (workoutId == null) return;
 
+    // Gate the tier tour while the swap/add sheet is up — same collision as
+    // the reshape check-in sheet: the tour would spotlight workout controls
+    // buried under this modal. Controller captured up-front so the `finally`
+    // decrement is safe even if this screen is popped mid-sheet.
+    final tourGate = ref.read(preWorkoutModalDepthProvider.notifier);
+    tourGate.state++;
+    try {
+      await _consumeEquipmentMatchPendingAction(pending, workoutId);
+    } finally {
+      tourGate.state--;
+    }
+  }
+
+  Future<void> _consumeEquipmentMatchPendingAction(
+    EquipmentMatchPendingAction pending,
+    String workoutId,
+  ) async {
     if (pending.mode == EquipmentMatchPendingMode.swap) {
       // Pick the first existing exercise as the swap target. The user can
       // change which exercise to swap from the sheet's reason chips, but

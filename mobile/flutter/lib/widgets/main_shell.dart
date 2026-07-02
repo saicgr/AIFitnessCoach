@@ -423,6 +423,14 @@ class MainShell extends ConsumerWidget {
             final showProg = ref
                 .read(accessibilityProvider)
                 .showLevelUpProgression;
+            // A spotlight tour can be mid-flight when the level-up lands
+            // (nav tour on a brand-new account + first-time XP bonus is the
+            // common case). Abort it silently — no seen flag is written, so
+            // the tour re-fires on the next visit to its host screen —
+            // instead of popping the dialog on top of the spotlight.
+            if (ref.read(appTourControllerProvider).isVisible) {
+              ref.read(appTourControllerProvider.notifier).abort();
+            }
             // Through the first-run queue so a level-up celebration never stacks
             // on top of (or under) a What's New / health-connect modal on the
             // first home load after onboarding.

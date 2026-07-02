@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../providers/active_workout_phase_provider.dart';
 import '../providers/workout_ui_mode_provider.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 
@@ -305,6 +306,40 @@ class WorkoutTourService {
     if (current.isVisible) {
       debugPrint(
         '🔍 [WorkoutTour] Another tour is visible (${current.tourId}), deferring',
+      );
+      return;
+    }
+
+    // A pre-workout modal (reshape check-in sheet / equipment-match sheet) is
+    // ON TOP of the active-workout screen — a tour fired now would spotlight
+    // widgets buried under the sheet. Defer, and re-fire once when every such
+    // flow ends (depth back to 0). The listenManual subscription is owned by
+    // the calling screen's element, so it auto-closes if the user leaves the
+    // workout before the sheet does.
+    if (ref.read(preWorkoutModalDepthProvider) > 0) {
+      debugPrint(
+        '🔍 [WorkoutTour] Pre-workout sheet is up — '
+        'deferring ${tier.asString} tour until it closes',
+      );
+      ProviderSubscription<int>? sub;
+      sub = ref.listenManual<int>(
+        preWorkoutModalDepthProvider,
+        (previous, next) {
+          if (next > 0) return;
+          sub?.close();
+          // Post-frame so the sheet's exit route has fully popped before the
+          // spotlight measures its target's position.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            try {
+              maybeShowForTier(ref, tier);
+            } catch (e) {
+              // Screen was popped between the sheet closing and this frame —
+              // ref is dead; the tour stays unseen and fires next session.
+              debugPrint('⚠️ [WorkoutTour] Deferred re-fire skipped: $e');
+            }
+          });
+        },
+        fireImmediately: false,
       );
       return;
     }
