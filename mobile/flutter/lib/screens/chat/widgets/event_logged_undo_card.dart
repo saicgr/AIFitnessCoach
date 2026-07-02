@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
@@ -133,11 +134,40 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
     );
   }
 
+  /// Where a logged event can be VIEWED, by domain. Null = no destination
+  /// (the row stays non-navigable). Workout/sleep events are `workouts` rows,
+  /// so they deep-link straight to that entry's summary.
+  String? _routeFor(Map<String, dynamic> e) {
+    final domain = (e['domain'] as String?) ?? '';
+    final eventId = (e['event_id'] as String?) ?? '';
+    final rawId = eventId.contains(':') ? eventId.split(':').last : eventId;
+    switch (domain) {
+      case 'workout':
+      case 'sleep':
+        return rawId.isNotEmpty ? '/workout-summary/$rawId' : null;
+      case 'water':
+        return '/hydration';
+      case 'weight':
+      case 'measurement':
+        return '/measurements';
+      case 'habit':
+        return '/habits';
+      case 'fasting':
+        return '/fasting';
+      default:
+        return null;
+    }
+  }
+
   Widget _buildRow(BuildContext context, int index, Map<String, dynamic> e) {
     final theme = Theme.of(context);
     final state = _state[index] ?? _UndoUiState.idle;
     final name = (e['name'] as String?) ?? 'Logged';
     final hasToken = (e['undo_token'] as String?)?.isNotEmpty ?? false;
+    // Tap-to-view: only while the row still represents a live entry.
+    final route = (state == _UndoUiState.idle || state == _UndoUiState.expired)
+        ? _routeFor(e)
+        : null;
 
     Widget trailing;
     switch (state) {
@@ -191,7 +221,7 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
     }
 
     final bool struck = state == _UndoUiState.undone;
-    return Padding(
+    final row = Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
@@ -218,8 +248,27 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
             ),
           ),
           trailing,
+          if (route != null) ...[
+            const SizedBox(width: 2),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
         ],
       ),
+    );
+    if (route == null) return row;
+    // Whole row opens the surface where the entry now lives (the Undo
+    // TextButton keeps its own hit target).
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticService.selection();
+        context.push(route);
+      },
+      child: row,
     );
   }
 }

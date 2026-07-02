@@ -6,6 +6,7 @@ The nutrition agent can:
 2. Respond autonomously with dietary advice without tools
 """
 import json
+import re
 from typing import Dict, Any, Literal
 from datetime import datetime
 
@@ -405,6 +406,25 @@ def should_use_tools(state: NutritionAgentState) -> Literal["agent", "respond"]:
     for pattern in food_logging_patterns:
         if pattern in message:
             logger.info(f"[Nutrition Router] Food logging intent detected: '{pattern}' -> agent")
+            return "agent"
+
+    # Bare food-report statements often carry none of the verb patterns above
+    # ("Two chicken tacos and a Corona at dinner", "just grabbed a burrito").
+    # Any non-question message that names a meal slot or uses a consumption
+    # verb goes to the tool-bound agent — the LLM there decides whether it's
+    # a report to log (log_food_from_text) or just conversation.
+    _question_starters = (
+        "what", "how", "should", "can ", "could", "why", "is ", "are ",
+        "do ", "does", "am i", "will ", "when", "which", "where", "who ",
+    )
+    is_question = "?" in message or message.strip().startswith(_question_starters)
+    if not is_question:
+        meal_slot_words = ("breakfast", "lunch", "dinner", "brunch", "snack", "supper")
+        consumption_verbs = re.compile(
+            r"\b(ate|had|drank|grabbed|ordered|finished|devoured|snacked)\b"
+        )
+        if any(slot in message for slot in meal_slot_words) or consumption_verbs.search(message):
+            logger.info("[Nutrition Router] Non-question food statement -> agent (possible food log)")
             return "agent"
 
     # Check for data queries that need tools
