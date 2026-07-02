@@ -978,10 +978,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   /// Signature masthead for the embedded Coach tab (2026-06 redesign — maps to
   /// the signature-v2 "nav-coach" frame). Composition, top → bottom:
-  ///   • Anton "COACH" display + the ⌛ History / + New session chip pair
-  ///   • Fraunces serif subtitle — "Your corner, always open." with the
-  ///     login-streak "Day N" inlined on its right (no separate eyebrow line)
+  ///   • Anton "COACH" display (with the live status dot) + the ⌛ History /
+  ///     + New chips and the ⋯ overflow, all on one row
   ///   • a hairline rule that separates the masthead from the thread
+  ///
+  /// 2026-07: the "Your corner, always open." tagline + "Day N" counter line
+  /// was cut (user request — static filler / unlabeled number). The status
+  /// dot moved next to the title; the coach switcher stays reachable via the
+  /// ⋯ menu ("change coach").
   ///
   /// Every affordance is wired to the SAME logic the old floating pill used:
   /// History → `/chat/sessions`, New → `startNewChat()`. No streaming / session
@@ -994,7 +998,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   ) {
     final l10n = AppLocalizations.of(context)!;
     final tc = ThemeColors.of(context);
-    final dayCount = ref.watch(xpCurrentStreakProvider);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -1006,14 +1009,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // No eyebrow line — the "Zealova" wordmark is gone (user request) and
-          // the program day-count is inlined into the subtitle row below, so it
-          // never occupies its own full-width line.
-          // Anton display masthead + the History / New chip pair.
+          // Anton display masthead + status dot + History / New chips + ⋯.
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Expanded(
+              Flexible(
                 child: Text(
                   l10n.chatScreenMastheadTitle.toUpperCase(),
                   style: ZType.disp(38, color: tc.textPrimary, letterSpacing: 0.5),
@@ -1021,6 +1021,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              // Live status dot (online / offline / typing) — kept from the
+              // old subtitle row, now anchored beside the title.
+              Padding(
+                padding: const EdgeInsets.only(left: 8, bottom: 14),
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              const Spacer(),
               const SizedBox(width: 8),
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
@@ -1046,95 +1060,55 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                             .startNewChat();
                       },
                     ),
+                    const SizedBox(width: 10),
+                    // 3-dot overflow (usage info, change coach, clear, about)
+                    // + the "messages running low" warning dot.
+                    GestureDetector(
+                      onTap: () {
+                        HapticService.light();
+                        _showOptionsMenuWithUsageInfo(context);
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(Icons.more_horiz_rounded,
+                                color: tc.textMuted, size: 20),
+                            Builder(builder: (context) {
+                              final remaining = ref
+                                  .watch(usageTrackingProvider)
+                                  .limits[_kAiChatMessages];
+                              final left =
+                                  remaining?.remaining ?? remaining?.limit;
+                              if (left != null && left <= 5 && left > 0) {
+                                return Positioned(
+                                  top: -2,
+                                  right: -2,
+                                  child: Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.warning,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          // Fraunces serif subtitle — the "human line". Tapping the row still
-          // opens the coach switcher (preserves the old header-pill shortcut),
-          // with a live status dot so online/offline/typing stays visible.
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              HapticService.selection();
-              context.push('/coach-selection?fromSettings=true');
-            },
-            child: Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  margin: const EdgeInsets.only(right: 7, bottom: 1),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                Flexible(
-                  child: Text(
-                    l10n.chatScreenMastheadSubtitle,
-                    style: ZType.ser(12.5, color: tc.textSecondary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                // Program day-count — inlined on the subtitle row (right side),
-                // so it never takes its own full-width line. The expanding
-                // subtitle above pushes it to the right edge, beside the ⋯.
-                if (dayCount > 0) ...[
-                  const SizedBox(width: 10),
-                  Text(
-                    l10n.chatScreenMastheadDay(dayCount),
-                    style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.4),
-                  ),
-                ],
-                const SizedBox(width: 8),
-                // 3-dot overflow (usage info, change coach, clear, about) +
-                // the "messages running low" warning dot — relocated here from
-                // the old floating pill so nothing is lost in embedded mode.
-                GestureDetector(
-                  onTap: () {
-                    HapticService.light();
-                    _showOptionsMenuWithUsageInfo(context);
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    clipBehavior: Clip.none,
-                    children: [
-                      Icon(Icons.more_horiz_rounded,
-                          color: tc.textMuted, size: 20),
-                      Builder(builder: (context) {
-                        final remaining = ref
-                            .watch(usageTrackingProvider)
-                            .limits[_kAiChatMessages];
-                        final left =
-                            remaining?.remaining ?? remaining?.limit;
-                        if (left != null && left <= 5 && left > 0) {
-                          return Positioned(
-                            top: -2,
-                            right: -2,
-                            child: Container(
-                              width: 7,
-                              height: 7,
-                              decoration: const BoxDecoration(
-                                color: AppColors.warning,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      }),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 13),
+          const SizedBox(height: 10),
           const ZealovaRule(),
           const SizedBox(height: 6),
         ],
