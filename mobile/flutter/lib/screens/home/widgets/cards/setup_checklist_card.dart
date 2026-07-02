@@ -102,12 +102,19 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
     // Poll the authoritative claimed-state while the challenge is live so
     // meal/chat completions (awarded by their own flows) are detected without
     // the user re-entering Home. Stops on completion / dismiss / unmount.
+    // 60s + offstage skip: the Home branch stays mounted in the shell's
+    // IndexedStack, so a naive periodic timer polls even while the user sits
+    // on another tab — this endpoint was the single noisiest request in the
+    // backend logs (a hit every 20s for the whole session).
     if (!_done && !_dismissed) {
-      _poll = Timer.periodic(const Duration(seconds: 20), (_) async {
+      _poll = Timer.periodic(const Duration(seconds: 60), (_) async {
         if (!mounted || _done) {
           _poll?.cancel();
           return;
         }
+        // Offstage IndexedStack branches have tickers disabled — skip the
+        // network hit until the user is actually looking at Home.
+        if (!TickerMode.of(context)) return;
         await _refreshAwarded();
         if (mounted) setState(() {});
       });
