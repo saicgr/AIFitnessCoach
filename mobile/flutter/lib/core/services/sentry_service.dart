@@ -338,6 +338,9 @@ class SentryService {
     // screen has half a dozen providers in flight.
     // Excluded:
     //  - 401/403 → handled by auth interceptor (token refresh / forced sign-out).
+    //  - 402 → the premium paywall gate (check_premium_gate). Every free user
+    //    tapping a premium feature is expected product behavior, not an error;
+    //    capturing it spammed Sentry with one event per gated tap.
     //  - 404 → expected "not found" lookups (e.g. /exercise-images/{id} when an
     //    illustration hasn't been uploaded yet); not a server bug.
     //  - 422 → Pydantic validation errors are user-input issues, not server
@@ -346,7 +349,6 @@ class SentryService {
       captureFailedRequests: true,
       failedRequestStatusCodes: [
         SentryStatusCode.range(400, 400),
-        SentryStatusCode.range(402, 402),
         SentryStatusCode.range(405, 421),
         SentryStatusCode.range(423, 499),
         SentryStatusCode.range(500, 599),

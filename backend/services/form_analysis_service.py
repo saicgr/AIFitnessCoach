@@ -513,7 +513,6 @@ class FormAnalysisService:
     ) -> Dict[str, Any]:
         """Use an already-uploaded Gemini file for analysis. Skips S3 download entirely."""
         files_client = get_genai_files_client()
-        client = get_genai_client()
         settings = get_settings()
 
         logger.info(f"Using pre-uploaded Gemini file: {gemini_file_name}")
@@ -538,12 +537,11 @@ class FormAnalysisService:
 
         logger.info(f"Gemini file ready: {gemini_file_name}")
 
-        cache_name = _get_form_cache()
-        prompt = (
-            _build_form_analysis_prompt(exercise_name, user_context)
-            if cache_name
-            else _build_form_analysis_prompt_full(exercise_name, user_context)
-        )
+        # This file lives on the Developer API (Files API); Vertex cannot read
+        # generativelanguage file URIs and the Vertex-created form cache cannot
+        # be attached to a Developer-API call — so generation runs on the
+        # files client with the FULL (uncached) prompt.
+        prompt = _build_form_analysis_prompt_full(exercise_name, user_context)
 
         parts = [
             genai_types.Part.from_uri(file_uri=gemini_file.uri, mime_type=mime_type),
@@ -555,11 +553,9 @@ class FormAnalysisService:
             response_mime_type="application/json",
             response_schema=FORM_ANALYSIS_SCHEMA,
         )
-        if cache_name:
-            gen_config.cached_content = cache_name
 
         response = await asyncio.to_thread(
-            client.models.generate_content,
+            files_client.models.generate_content,
             model=settings.gemini_model,
             contents=[genai_types.Content(parts=parts)],
             config=gen_config,
@@ -611,10 +607,7 @@ class FormAnalysisService:
             tmp_path = await self._download_s3_to_temp(s3_key, mime_type)
 
             files_client = get_genai_files_client()
-            client = get_genai_client()
             settings = get_settings()
-
-            cache_name = _get_form_cache()
 
             # Files API path: upload to Gemini, wait for ACTIVE, then analyze
             gemini_file = await asyncio.to_thread(
@@ -642,11 +635,11 @@ class FormAnalysisService:
                     raise RuntimeError(f"Gemini file processing failed: {gemini_file.state}")
 
             logger.info(f"Gemini file ready: state={gemini_file.state.name}")
-            prompt = (
-                _build_form_analysis_prompt(exercise_name, user_context)
-                if cache_name
-                else _build_form_analysis_prompt_full(exercise_name, user_context)
-            )
+            # The uploaded file lives on the Developer API (Files API); Vertex
+            # cannot read generativelanguage file URIs and the Vertex-created
+            # form cache cannot be attached to a Developer-API call — so
+            # generation runs on the files client with the FULL prompt.
+            prompt = _build_form_analysis_prompt_full(exercise_name, user_context)
             parts = [
                 genai_types.Part.from_uri(file_uri=gemini_file.uri, mime_type=mime_type),
                 genai_types.Part.from_text(text=prompt),
@@ -658,11 +651,9 @@ class FormAnalysisService:
                 response_mime_type="application/json",
                 response_schema=FORM_ANALYSIS_SCHEMA,
             )
-            if cache_name:
-                gen_config.cached_content = cache_name
 
             response = await asyncio.to_thread(
-                client.models.generate_content,
+                files_client.models.generate_content,
                 model=settings.gemini_model,
                 contents=[genai_types.Content(parts=parts)],
                 config=gen_config,
@@ -855,8 +846,12 @@ class FormAnalysisService:
                         mime_type=mime_type,
                     ))
 
-            # Build prompt and config
-            cache_name = _get_form_cache()
+            # Build prompt and config. The keyframe branch sends inline JPEG
+            # bytes, so it runs on the main (Vertex) client and can use the
+            # form cache. The Files-API fallback's file URIs only exist on the
+            # Developer API — generation must run on the files client there,
+            # and the Vertex-created cache cannot be attached to that call.
+            cache_name = _get_form_cache() if use_keyframes else None
             prompt = _build_form_comparison_prompt(labels, exercise_name, user_context, using_keyframes=use_keyframes)
             parts.append(genai_types.Part.from_text(text=prompt))
 
@@ -868,8 +863,9 @@ class FormAnalysisService:
             if cache_name:
                 gen_config.cached_content = cache_name
 
+            gen_client = client if use_keyframes else files_client
             response = await asyncio.to_thread(
-                client.models.generate_content,
+                gen_client.models.generate_content,
                 model=settings.gemini_model,
                 contents=[genai_types.Content(parts=parts)],
                 config=gen_config,

@@ -16,8 +16,10 @@ library;
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart' show DioException;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
@@ -76,6 +78,10 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
   _FormFlowStage _stage = _FormFlowStage.entry;
   double _uploadProgress = 0; // 0..1 during the S3 PUT
   String? _errorMessage;
+  // True when the failure was the backend's premium gate (HTTP 402) — the
+  // error view then renders an Upgrade CTA instead of a pointless "Try
+  // again" (which would just 402 again).
+  bool _premiumGated = false;
   Map<String, dynamic>? _result;
   DateTime? _analyzedAt;
 
@@ -167,9 +173,14 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
       HapticService.medium();
       _startPolling(jobId);
     } catch (e) {
-      _fail(_friendlyError(e));
+      _fail(_friendlyError(e), premiumGated: _isPremiumGate(e));
     }
   }
+
+  /// True when the backend rejected the request with its premium paywall
+  /// (HTTP 402 from `check_premium_gate`).
+  bool _isPremiumGate(Object e) =>
+      e is DioException && e.response?.statusCode == 402;
 
   void _startPolling(String jobId) {
     final repo = ref.read(formAnalysisRepositoryProvider);
@@ -222,7 +233,7 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
     });
   }
 
-  void _fail(String message) {
+  void _fail(String message, {bool premiumGated = false}) {
     if (_disposed) return;
     _pollTimer?.cancel();
     HapticService.error();
@@ -230,6 +241,7 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
       setState(() {
         _stage = _FormFlowStage.error;
         _errorMessage = message;
+        _premiumGated = premiumGated;
       });
     }
   }
@@ -243,6 +255,7 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
         _stage = _FormFlowStage.entry;
         _result = null;
         _errorMessage = null;
+        _premiumGated = false;
         _uploadProgress = 0;
       });
     }
@@ -561,6 +574,9 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
   // --- Error -------------------------------------------------------------
 
   Widget _errorView(ThemeColors colors, Color accent) {
+    // Premium gate (402) — not an error: render an upgrade prompt with a
+    // paywall CTA. "Try again" would just hit the same 402.
+    if (_premiumGated) return _premiumGateView(colors, accent);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -609,6 +625,89 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
                 ),
               ),
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _premiumGateView(ThemeColors colors, Color accent) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: colors.isDark ? 0.12 : 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: accent.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.workspace_premium_rounded, color: accent, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Form Check is a Premium feature',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Upgrade to get expert scoring of your form, tempo, and '
+                      'range of motion on any exercise.',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        height: 1.45,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Material(
+          color: accent,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            onTap: () {
+              HapticService.light();
+              // Close the sheet first so the paywall isn't stacked under it.
+              Navigator.of(context).pop();
+              context.push('/paywall-pricing');
+            },
+            borderRadius: BorderRadius.circular(14),
+            child: const SizedBox(
+              height: 50,
+              child: Center(
+                child: Text(
+                  'Upgrade to Premium',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextButton(
+          onPressed: () => Navigator.of(context).maybePop(),
+          child: Text(
+            'Maybe later',
+            style: TextStyle(color: colors.textMuted),
           ),
         ),
       ],

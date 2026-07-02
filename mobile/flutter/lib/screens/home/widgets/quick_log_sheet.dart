@@ -16,42 +16,40 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/quick_actions_sheet.dart';
 import '../../nutrition/log_meal_sheet.dart';
+import '../../workout/widgets/form_analysis_sheet.dart';
 import '../../workout/widgets/hydration_dialog.dart';
 import '../../workout/widgets/quick_workout_sheet.dart';
 
-/// One quick-log action. [isMore] flags the trailing "More" tile, which is
-/// styled as system chrome (muted) and opens the full quick-actions sheet.
+/// One quick-log action tile. The "More" entry point is NOT a grid tile — it
+/// renders as a muted full-width button below the grid (see
+/// [_QuickLogContent]) and opens the full quick-actions sheet.
 ///
 /// Icon + color are derived from [quickActionRegistry] via [registryId] so the
 /// LOG sheet, the home shortcut row, and the customize grid render an identical
 /// glyph/color per shared action (no per-surface divergence). [iconOverride]
-/// keeps a distinct glyph where intended (e.g. "Quick add" keeps its +1 mark)
-/// while still inheriting the registry color. "More" passes a null
-/// [registryId] → muted system chrome.
+/// keeps a distinct glyph where intended (e.g. "Log cardio" swaps the
+/// dumbbell for a runner) while still inheriting the registry color.
 class _QuickAction {
-  /// Registry id this action mirrors (icon + color). Null only for "More".
+  /// Registry id this action mirrors (icon + color).
   final String? registryId;
 
   /// Optional glyph that overrides the registry icon (color still inherited).
   final IconData? iconOverride;
 
-  /// Fallback glyph used when the registry has no matching entry.
-  final IconData fallbackIcon;
   final String label;
   final void Function(BuildContext, WidgetRef) onTap;
-  final bool isMore;
   const _QuickAction({
     required this.label,
     required this.onTap,
     this.registryId,
     this.iconOverride,
-    this.fallbackIcon = Icons.bolt_outlined,
-    this.isMore = false,
   });
 
   /// Resolved icon — override → registry → fallback.
   IconData get icon =>
-      iconOverride ?? quickActionRegistry[registryId]?.icon ?? fallbackIcon;
+      iconOverride ??
+      quickActionRegistry[registryId]?.icon ??
+      Icons.bolt_outlined;
 
   /// Resolved color — registry tint, or null for the muted "More" chrome.
   Color? get color => quickActionRegistry[registryId]?.color;
@@ -127,28 +125,40 @@ final List<_QuickAction> _actions = [
     onTap: (c, ref) => _closeThen(c, () => _logWater(c, ref)),
   ),
   // Generate a fresh workout (AI generator), then launch it. Distinct from
-  // "Log workout" below, which logs a finished session.
+  // "Log cardio" below, which records a finished session.
   _QuickAction(
     registryId: 'quick_workout',
     label: 'Generate workout',
     onTap: (c, ref) => _closeThen(c, () => _generateWorkout(c, ref)),
   ),
+  // Manual entry for a finished cardio session (LogCardioScreen). This used
+  // to be "Log workout" → a bare hop to the Workouts tab, which logged
+  // nothing — strength sessions are logged through the workout flow itself,
+  // so the real quick-log here is the cardio/activity form.
   _QuickAction(
     registryId: 'workout',
-    label: 'Log workout',
-    onTap: (c, ref) => _closeThen(c, () => c.go('/workouts')),
+    iconOverride: Icons.directions_run_rounded,
+    label: 'Log cardio',
+    onTap: (c, ref) => _closeThen(c, () => c.push('/log-cardio')),
+  ),
+  // AI Form Analysis — record/upload any clip, exercise auto-detected. Same
+  // one-tap path as the home shortcut row.
+  _QuickAction(
+    registryId: 'form_check',
+    label: 'Form check',
+    onTap: (c, ref) => _closeThen(c, () => showFormAnalysisSheet(c)),
   ),
   _QuickAction(
     registryId: 'weight',
     label: 'Weigh in',
     onTap: (c, ref) => _closeThen(c, () => c.go('/profile?tab=body')),
   ),
+  // Row 3 — wellness + coach
   _QuickAction(
     registryId: 'mood',
     label: 'Log mood',
     onTap: (c, ref) => _closeThen(c, () => c.push('/recovery')),
   ),
-  // Row 3 — wellness + coach
   _QuickAction(
     registryId: 'meditate',
     label: 'Mindful',
@@ -166,12 +176,6 @@ final List<_QuickAction> _actions = [
     registryId: 'chat',
     label: 'Ask coach',
     onTap: (c, ref) => _closeThen(c, () => c.push('/chat?source=quick_log')),
-  ),
-  _QuickAction(
-    label: 'More',
-    fallbackIcon: Icons.more_horiz_rounded,
-    onTap: (c, ref) => _closeThen(c, () => showQuickActionsSheet(c, ref)),
-    isMore: true,
   ),
 ];
 
@@ -201,17 +205,63 @@ class _QuickLogContent extends StatelessWidget {
             style: ZType.lbl(13, color: c.textMuted, letterSpacing: 2),
           ),
           const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 4,
+          GridView(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 14,
-            crossAxisSpacing: 6,
-            childAspectRatio: 0.80,
+            // Fixed cell height (icon 54 + gap 7 + up-to-2-line label) —
+            // childAspectRatio derived height from cell WIDTH, which on wide
+            // screens left a band of dead space under every row.
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 6,
+              mainAxisExtent: 88,
+            ),
             children: [
               for (final a in _actions)
                 _QuickTile(action: a, colors: c, parentRef: parentRef),
             ],
+          ),
+          const SizedBox(height: 14),
+          // "More" as a muted full-width row below the grid — system chrome,
+          // not competing with the 12 action tiles above.
+          Material(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () {
+                HapticService.light();
+                _closeThen(
+                  context,
+                  () => showQuickActionsSheet(context, parentRef),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: c.cardBorder),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.more_horiz_rounded,
+                        size: 18, color: c.textSecondary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'More',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: c.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -232,8 +282,8 @@ class _QuickTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = colors;
-    // "More" reads as muted system chrome; every other action gets its own tint
-    // on a faintly color-washed chip so the grid scans as distinct surfaces.
+    // Every action gets its own tint on a faintly color-washed chip so the
+    // grid scans as distinct surfaces.
     final tint = action.color ?? c.textSecondary;
     return GestureDetector(
       onTap: () {
@@ -248,15 +298,10 @@ class _QuickTile extends StatelessWidget {
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: action.isMore
-                  ? c.surface
-                  : Color.alphaBlend(tint.withValues(alpha: 0.12), c.surface),
+              color:
+                  Color.alphaBlend(tint.withValues(alpha: 0.12), c.surface),
               borderRadius: BorderRadius.circular(17),
-              border: Border.all(
-                color: action.isMore
-                    ? c.cardBorder
-                    : tint.withValues(alpha: 0.32),
-              ),
+              border: Border.all(color: tint.withValues(alpha: 0.32)),
             ),
             child: Icon(action.icon, size: 23, color: tint),
           ),

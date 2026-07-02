@@ -126,12 +126,19 @@ def get_genai_files_client() -> genai.Client:
 
     Vertex AI does not support the Files API (files.upload/get/delete).
     This always returns a Developer API-key client for those operations.
+
+    vertexai=False is REQUIRED: `_setup_credentials()` exports
+    GOOGLE_GENAI_USE_VERTEXAI=true process-wide, and without the explicit
+    override the SDK builds a Vertex client even when given an api_key
+    ("Vertex AI API key will take precedence…") — whose `files.upload` then
+    raises "This method is only supported in the Gemini Developer client."
     """
     settings = get_settings()
     if not settings.gemini_api_key:
         raise ValueError("GEMINI_API_KEY is required for Gemini Files API uploads")
     return genai.Client(
         api_key=settings.gemini_api_key,
+        vertexai=False,
         http_options=_GEMINI_HTTP_OPTIONS,
     )
 
