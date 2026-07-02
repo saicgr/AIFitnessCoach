@@ -632,6 +632,10 @@ class SupabaseDB:
         """Get nutrition totals for a specific day."""
         return self._nutrition_db.get_daily_nutrition_summary(user_id, date, timezone_str=timezone_str)
 
+    def get_nutrition_preferences(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get the user's nutrition_preferences row (dietary prefs, trackers)."""
+        return self._nutrition_db.get_nutrition_preferences(user_id)
+
     def get_weekly_nutrition_summary(
         self, user_id: str, start_date: str, timezone_str: Optional[str] = None
     ) -> List[Dict[str, Any]]:
