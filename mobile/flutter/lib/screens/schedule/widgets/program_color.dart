@@ -33,15 +33,37 @@ class ProgramColors {
   /// Custom user events (non-program schedule items).
   static const Color custom = Color(0xFF8FCF45);
 
+  /// Session-scoped slot registry so two DIFFERENT programs can never land on
+  /// the same palette color (hash collisions made a 2-program week read as one
+  /// program). A key keeps its hash slot when free; on collision it probes to
+  /// the next open slot. Reuse only kicks in past [palette.length] programs.
+  static final Map<String, int> _slots = <String, int>{};
+
   /// Stable color for a program key (the assignment id, falling back to its
-  /// name). Empty / null keys get the first palette slot.
+  /// name). Empty / null keys get the first palette slot. Distinct keys get
+  /// distinct colors (up to the palette size).
   static Color forKey(String? key) {
     if (key == null || key.trim().isEmpty) return palette.first;
+    final k = key.trim();
+    final existing = _slots[k];
+    if (existing != null) return palette[existing];
+    var slot = _hash(k) % palette.length;
+    if (_slots.length < palette.length) {
+      final used = _slots.values.toSet();
+      while (used.contains(slot)) {
+        slot = (slot + 1) % palette.length;
+      }
+    }
+    _slots[k] = slot;
+    return palette[slot];
+  }
+
+  static int _hash(String key) {
     var h = 0;
     for (final c in key.codeUnits) {
       h = (h * 31 + c) & 0x7fffffff;
     }
-    return palette[h % palette.length];
+    return h;
   }
 
   /// Dark, photo-forward gradient base derived from [accent]. Used when there's

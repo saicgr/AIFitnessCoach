@@ -12,6 +12,9 @@ class _WeekSelector extends StatelessWidget {
   final int weekStartDay; // 1=Mon, 7=Sun
   final VoidCallback onToggleWeekStart;
 
+  /// Tapping the title while away from the current week jumps back to it.
+  final VoidCallback? onJumpToCurrentWeek;
+
   const _WeekSelector({
     required this.selectedWeek,
     required this.onPreviousWeek,
@@ -19,15 +22,60 @@ class _WeekSelector extends StatelessWidget {
     required this.colors,
     required this.weekStartDay,
     required this.onToggleWeekStart,
+    this.onJumpToCurrentWeek,
   });
+
+  /// Whole weeks between the current week and [selectedWeek] (0 = this week).
+  /// Rounded from hours so a DST-shortened week (6d23h) still counts as 7 days.
+  int get _weekDelta {
+    final currentStart = _weekStartFor(DateTime.now(), weekStartDay);
+    final days = (selectedWeek.difference(currentStart).inHours / 24).round();
+    return (days / 7).round();
+  }
+
+  /// "This Week" / "Next Week" / "Last Week" — null for anything further out,
+  /// where the date range itself becomes the title.
+  String? _relativeTitle(BuildContext context) {
+    switch (_weekDelta) {
+      case 0:
+        return AppLocalizations.of(context).workoutCompleteThisWeek;
+      case 1:
+        return 'Next Week';
+      case -1:
+        return 'Last Week';
+      default:
+        return null;
+    }
+  }
+
+  /// Full, never-truncated range: "Jun 29 – Jul 5" (same-month weeks collapse
+  /// to "Jul 6 – 12"; a non-current year is appended once at the end).
+  String _rangeLabel(DateTime start, DateTime end) {
+    final sameMonth = start.month == end.month && start.year == end.year;
+    final startStr = DateFormat('MMM d').format(start);
+    final endStr = sameMonth ? '${end.day}' : DateFormat('MMM d').format(end);
+    final yearSuffix =
+        end.year != DateTime.now().year ? ', ${end.year}' : '';
+    return '$startStr – $endStr$yearSuffix';
+  }
+
+  /// How far the viewed week sits from now, for far-away weeks.
+  String _distanceLabel() {
+    final d = _weekDelta;
+    return d > 0
+        ? '$d weeks ahead'
+        : '${-d} week${d == -1 ? '' : 's'} ago';
+  }
 
   @override
   Widget build(BuildContext context) {
     final weekEnd = selectedWeek.add(const Duration(days: 6));
-    final formatter = DateFormat('MMM d');
+    final relative = _relativeTitle(context);
+    final range = _rangeLabel(selectedWeek, weekEnd);
+    final isCurrent = _weekDelta == 0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: colors.elevated,
         border: Border(
@@ -43,88 +91,86 @@ class _WeekSelector extends StatelessWidget {
             color: colors.textSecondary,
           ),
           Expanded(
-            child: GestureDetector(
-              onTap: () {},
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      '${formatter.format(selectedWeek)} - ${formatter.format(weekEnd)}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  if (_isCurrentWeek(selectedWeek))
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.cyan.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        AppLocalizations.of(context).workoutCompleteThisWeek,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: colors.cyan,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(width: 6),
-                  // Week-start toggle — a two-segment "Mon | Sun" pill so it
-                  // reads as an interactive control, not a static label. The
-                  // active side is highlighted; tapping flips weekStartDay.
-                  Tooltip(
-                    message: 'Week starts on',
-                    child: GestureDetector(
-                      onTap: onToggleWeekStart,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 5,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.textMuted.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: colors.textMuted.withValues(alpha: 0.2),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Two-line header: a relative title ("This Week") over the
+                // full range — the range always fits, so the week's end date
+                // is never ellipsized away.
+                Flexible(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: isCurrent ? null : onJumpToCurrentWeek,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          relative ?? range,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: isCurrent
+                                ? colors.accent
+                                : colors.textPrimary,
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.swap_horiz,
-                              size: 12,
-                              color: colors.textMuted,
-                            ),
-                            const SizedBox(width: 4),
-                            _weekStartSegment(
-                              AppLocalizations.of(context).workoutPlannerMon,
-                              active: weekStartDay == 1,
-                            ),
-                            const SizedBox(width: 2),
-                            _weekStartSegment(
-                              AppLocalizations.of(context).workoutPlannerSun,
-                              active: weekStartDay != 1,
-                            ),
-                          ],
+                        const SizedBox(height: 1),
+                        Text(
+                          relative != null ? range : _distanceLabel(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: colors.textMuted,
+                          ),
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Week-start toggle — a two-segment "Mon | Sun" pill so it
+                // reads as an interactive control, not a static label. The
+                // active side is highlighted; tapping flips weekStartDay.
+                Tooltip(
+                  message: 'Week starts on',
+                  child: GestureDetector(
+                    onTap: onToggleWeekStart,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.textMuted.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: colors.textMuted.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _weekStartSegment(
+                            AppLocalizations.of(context).workoutPlannerMon,
+                            active: weekStartDay == 1,
+                          ),
+                          const SizedBox(width: 2),
+                          _weekStartSegment(
+                            AppLocalizations.of(context).workoutPlannerSun,
+                            active: weekStartDay != 1,
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           IconButton(
@@ -159,13 +205,6 @@ class _WeekSelector extends StatelessWidget {
     );
   }
 
-  bool _isCurrentWeek(DateTime weekStart) {
-    final now = DateTime.now();
-    final currentWeekStart = _weekStartFor(now, weekStartDay);
-    return weekStart.year == currentWeekStart.year &&
-        weekStart.month == currentWeekStart.month &&
-        weekStart.day == currentWeekStart.day;
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────

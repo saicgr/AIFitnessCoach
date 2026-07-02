@@ -116,6 +116,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             onNextWeek: () => _changeWeek(ref, 1),
             colors: colors,
             weekStartDay: ref.watch(weekStartDayProvider),
+            onJumpToCurrentWeek: () => _goToToday(ref),
             onToggleWeekStart: () {
               ref.read(weekStartDayProvider.notifier).toggle();
               // Re-compute selected week with new start day
@@ -193,8 +194,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             ),
           ),
 
-          // Instructions - dismissible
-          if (_showDragHint)
+          // Instructions - dismissible. Agenda has no hint (tap-to-open is
+          // self-evident); only the drag/timeline gestures need teaching.
+          if (_showDragHint && _hintText.isNotEmpty)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               color: colors.elevated,
@@ -270,7 +272,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   String get _hintText {
     switch (_viewMode) {
       case 'agenda':
-        return 'Tap an item to view details';
+        return ''; // no hint bar — tapping a card is self-evident
       case 'week':
         return 'Long press and drag to reschedule';
       case 'timeline':
@@ -764,9 +766,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       }
     }
 
+    // Program sessions get their program's distinct accent; everything else
+    // (AI / synced / ad-hoc) uses the reserved AI cyan — the old per-type
+    // fallback made a "strength" AI card the same blue as a blue program.
     final Color accent = (assignmentId != null && assignmentId.isNotEmpty)
         ? ProgramColors.forKey(assignmentId)
-        : AppColors.getWorkoutTypeColor(w.type ?? 'strength');
+        : ProgramColors.ai;
 
     final isAddon = ctx?.isAddon ?? false;
     String? slotBadge;
