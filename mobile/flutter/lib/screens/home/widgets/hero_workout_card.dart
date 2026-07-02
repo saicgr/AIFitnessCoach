@@ -10,7 +10,6 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/workout.dart';
-import '../../../data/models/exercise.dart';
 import '../../../data/models/workout_program_context.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
@@ -76,9 +75,6 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   bool _isMarkingDone = false;
   String? _backgroundImageUrl;
   bool _isLoadingImage = true;
-  // windDown mode: whether the inline "tomorrow's plan" exercise list is
-  // expanded on the card (vs. requiring a tap-through to the detail screen).
-  bool _tomorrowPlanExpanded = false;
 
   /// Per-type illustration map. Asset directory is fail-soft — when an
   /// asset is missing the CachedNetworkImage / Image widget falls through
@@ -242,12 +238,6 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   }
 
   /// Check if a workout is "missed" — scheduled for a past date and not completed
-  /// Toggle the inline windDown plan. Lives on the State (not the smart-mode
-  /// extension) because `setState` is protected to State subclasses.
-  void toggleTomorrowPlan() {
-    setState(() => _tomorrowPlanExpanded = !_tomorrowPlanExpanded);
-  }
-
   bool _isMissedWorkout(Workout w) {
     if (w.scheduledDate == null) return false;
     try {
