@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../data/providers/demo_tasks_seen_provider.dart';
 import 'demo_tasks_screen.dart';
 import 'pre_auth_quiz_data.dart';
 import '../../widgets/glass_sheet.dart';
@@ -116,6 +117,20 @@ extension _DemoProgressionDetails on _DemoProgression {
 class _WorkoutShowcaseScreenState
     extends ConsumerState<WorkoutShowcaseScreen> {
   int _frame = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // v7 auto-route: this screen is now the funnel's demo entry point
+    // (weight-projection routes here directly, and the post-auth router
+    // backstop lands shortcut sign-ups here). Mark the demo stage seen on
+    // landing — mirrors the /demo-tasks hub — so the post-auth router
+    // never re-routes the user back through the demo after sign-in.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // ignore: discarded_futures
+      ref.read(demoTasksSeenProvider.notifier).markSeen();
+    });
+  }
   // Lifted state — preserved across frames so a toggled mode/progression
   // doesn't reset between frame 1 and frame 2.
   // Default to Easy mode — beginners outnumber power users in pre-auth,
@@ -184,10 +199,14 @@ class _WorkoutShowcaseScreenState
           eventName: 'onboarding_workout_showcase_completed',
         );
     if (!mounted) return;
+    // Legacy hub entry (pushed from /demo-tasks) → pop back so the hub
+    // shows the DONE badge. Funnel auto-route entry (context.go → no
+    // stack) → chain straight into the nutrition demo, keeping one
+    // forward rail: workout → nutrition → sign-in.
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/home');
+      context.go('/demo-nutrition-showcase');
     }
   }
 
@@ -198,10 +217,13 @@ class _WorkoutShowcaseScreenState
           properties: {'frame': _frame},
         );
     if (!mounted) return;
+    // Legacy hub entry → pop back to the chooser. Funnel auto-route
+    // entry → skip means "no demos", so continue forward to sign-in
+    // (push preserves this screen underneath so Back returns here).
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/home');
+      context.push('/sign-in');
     }
   }
 

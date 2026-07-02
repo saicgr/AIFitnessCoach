@@ -32,6 +32,21 @@ class OnboardingExperiments {
   static const String flagPaywallFounderPageV7 =
       'onboarding_v7_paywall_founder_page';
 
+  /// Demo auto-route (2026-07, Duolingo pattern): weight-projection routes
+  /// STRAIGHT into `/demo-workout-showcase` (which chains → nutrition demo
+  /// → sign-in) instead of the `/demo-tasks` chooser hub. The hub was an
+  /// extra decision point whose hero CTA was the *skip* action; deferred
+  /// signup after sampling the product lifts activation 10-30% (Duolingo
+  /// +20% DAU). Default-ON kill-switch: flip off to restore the chooser.
+  /// The router's post-auth backstop reads the sync cache [demoAutoRoute]
+  /// (redirect callbacks cannot await), primed by [primeFlowFlags].
+  static const String flagDemoAutoRoute = 'onboarding_demo_autoroute';
+
+  /// Sync-readable cache of [flagDemoAutoRoute] for the router redirect.
+  /// Defaults TRUE (auto-route is the shipped design; the flag is a
+  /// kill-switch, not an opt-in).
+  static bool demoAutoRoute = true;
+
   /// Gravl-gap UX upgrades (2026-06). All default-ON kill-switches resolved
   /// via [isEnabled] at screen build, EXCEPT:
   ///  - [flagStepCounter] — default OFF (`isEnabledDefaultOff`). The quiz
@@ -153,6 +168,10 @@ class OnboardingExperiments {
     // Science-grounding screen: default-OFF, only an explicit truthy value
     // inserts it into the funnel. Absent / unreadable → stays FALSE.
     scienceScreen = await isEnabledDefaultOff(posthog, flagScienceScreen);
+
+    // Demo auto-route: default-ON kill-switch — absent keeps auto-route,
+    // only an explicit disabling value restores the /demo-tasks chooser.
+    demoAutoRoute = await isEnabled(posthog, flagDemoAutoRoute);
   }
 
   /// True unless [flagKey] is explicitly configured to a disabling value.

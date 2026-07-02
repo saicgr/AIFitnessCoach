@@ -211,11 +211,12 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
 
                 // CTA Button
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     HapticFeedback.mediumImpact();
 
                     // Track weight goal set (maintain)
-                    ref.read(posthogServiceProvider).capture(
+                    final posthog = ref.read(posthogServiceProvider);
+                    posthog.capture(
                       eventName: 'onboarding_weight_goal_set',
                       properties: {
                         'goal_weight_kg': currentWeight,
@@ -224,10 +225,16 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                       },
                     );
 
-                    // Onboarding v5: weight-projection now flows to apptaste
-                    // demo tasks (workout + nutrition showcases), then sign-in.
-                    // Setup screens (training-split etc.) come AFTER sign-in.
-                    context.go('/demo-tasks');
+                    // v7: auto-route straight into the workout demo (chains
+                    // → nutrition demo → sign-in). Kill-switch
+                    // `onboarding_demo_autoroute` off restores the legacy
+                    // /demo-tasks chooser hub.
+                    final autoRoute = await OnboardingExperiments.isEnabled(
+                        posthog, OnboardingExperiments.flagDemoAutoRoute);
+                    if (!context.mounted) return;
+                    context.go(autoRoute
+                        ? '/demo-workout-showcase'
+                        : '/demo-tasks');
                   },
                   child: Container(
                     width: double.infinity,

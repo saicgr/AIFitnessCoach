@@ -67,10 +67,23 @@ class _NutritionShowcaseScreenState
           eventName: 'onboarding_nutrition_showcase_completed',
         );
     if (!mounted) return;
+    // Legacy hub entry (pushed from /demo-tasks) → pop back so the hub
+    // shows the DONE badge. Funnel auto-route entry (chained via
+    // context.go from the workout demo → no stack) → this is the end of
+    // the demo rail: emit the stage-exit event the old hub fired, then
+    // continue to sign-in (push preserves this screen for Back).
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/home');
+      ref.read(posthogServiceProvider).capture(
+            eventName: 'onboarding_demo_tasks_completed',
+            properties: {
+              'workout_done':
+                  prefs.getBool(DemoTasksScreen.workoutDoneKey) ?? false,
+              'nutrition_done': true,
+            },
+          );
+      context.push('/sign-in');
     }
   }
 
@@ -81,10 +94,12 @@ class _NutritionShowcaseScreenState
           properties: {'frame': _frame},
         );
     if (!mounted) return;
+    // Legacy hub entry → pop back to the chooser. Funnel auto-route
+    // entry → continue forward to sign-in.
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/home');
+      context.push('/sign-in');
     }
   }
 

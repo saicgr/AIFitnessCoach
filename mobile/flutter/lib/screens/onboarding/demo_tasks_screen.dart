@@ -9,11 +9,19 @@ import '../../core/services/posthog_service.dart';
 import '../../data/providers/demo_tasks_seen_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
-/// Demo Tasks Screen — Onboarding v5
+/// Demo Tasks Screen — Onboarding v5 (LEGACY chooser hub as of v7)
 ///
 /// Two optional pre-signup demos. Users self-select through action: those
 /// who complete both are highest-intent. Skipping is always allowed via
 /// the persistent "Build My Plan" CTA.
+///
+/// v7 auto-route (2026-07): the default funnel now BYPASSES this hub —
+/// weight-projection routes straight into /demo-workout-showcase, which
+/// chains → /demo-nutrition-showcase → /sign-in (Duolingo pattern: the
+/// demo is the default path, not an opt-in behind a chooser whose hero
+/// CTA was the skip). This screen remains reachable only when the
+/// `onboarding_demo_autoroute` kill-switch is flipped off (see
+/// [OnboardingExperiments.flagDemoAutoRoute]) or via a stale deep link.
 ///
 /// Completion is tracked via SharedPrefs so users returning to this screen
 /// see their progress (e.g., after sign-up, after backgrounding).

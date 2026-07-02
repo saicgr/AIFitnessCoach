@@ -14,6 +14,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/citation_link.dart';
 import '../../widgets/glass_back_button.dart';
 import 'goal_speed_calculator.dart';
+import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/calorie_macro_estimator.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
@@ -319,9 +320,10 @@ class _WeightProjectionScreenState
     // Pinned CTA — lives in the scaffold's `button` slot (rendered OUTSIDE the
     // scrollable body) so it is always reachable regardless of content height.
     final continueButton = GestureDetector(
-      onTap: () {
+      onTap: () async {
         HapticFeedback.mediumImpact();
-        ref.read(posthogServiceProvider).capture(
+        final posthog = ref.read(posthogServiceProvider);
+        posthog.capture(
           eventName: 'onboarding_weight_goal_set',
           properties: {
             'goal_weight_kg': goalWeight,
@@ -329,9 +331,15 @@ class _WeightProjectionScreenState
             'direction': isLosingWeight ? 'lose' : 'gain',
           },
         );
-        // v5 flow: weight-projection → demo-tasks (workout
-        // + nutrition apptaste) → sign-in.
-        context.go('/demo-tasks');
+        // v7 flow: weight-projection auto-routes STRAIGHT into the workout
+        // demo (Duolingo pattern — the demo is the default path, not an
+        // opt-in behind a chooser). The showcase chains → nutrition demo
+        // → sign-in. Kill-switch `onboarding_demo_autoroute` off restores
+        // the legacy /demo-tasks chooser hub.
+        final autoRoute = await OnboardingExperiments.isEnabled(
+            posthog, OnboardingExperiments.flagDemoAutoRoute);
+        if (!context.mounted) return;
+        context.go(autoRoute ? '/demo-workout-showcase' : '/demo-tasks');
       },
       child: Container(
         width: double.infinity,

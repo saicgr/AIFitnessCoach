@@ -370,16 +370,22 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
   // route to coach-selection.
   // AI consent is captured as an inline checkbox on the sign-in screen.
 
-  // Step 0.5: Demo tasks (workout + nutrition app-taste) for users who
+  // Step 0.5: Demo showcases (workout + nutrition app-taste) for users who
   // signed up via the "Sign In" shortcut on /intro and never passed through
   // the Build-My-Plan funnel. Funnel users have already had `markSeen()`
-  // fire when they landed on /demo-tasks pre-auth, so they skip this branch.
+  // fire when they landed on the workout showcase (or the legacy
+  // /demo-tasks hub) pre-auth, so they skip this branch.
+  // v7 auto-route: land straight in the workout demo (Duolingo pattern);
+  // the `onboarding_demo_autoroute` kill-switch restores the chooser hub.
   // Gate only fires before personal info is collected — once a user has
   // started filling in their profile we never re-route them back here.
   if (!user.isPersonalInfoComplete && !ref.read(demoTasksSeenProvider)) {
-    debugPrint('🧭 [Router] _getNextOnboardingStep → /demo-tasks '
+    final demoRoute = OnboardingExperiments.demoAutoRoute
+        ? '/demo-workout-showcase'
+        : '/demo-tasks';
+    debugPrint('🧭 [Router] _getNextOnboardingStep → $demoRoute '
         '(new user, demo not yet seen)');
-    return '/demo-tasks';
+    return demoRoute;
   }
 
   // Step 1: Personal info (name, DOB) — gate exists at user.dart:194 and

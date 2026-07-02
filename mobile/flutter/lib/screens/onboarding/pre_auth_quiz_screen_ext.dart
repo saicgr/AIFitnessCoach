@@ -297,9 +297,11 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         },
       );
 
-      // Onboarding conversion v6 flow: Pre-Auth Quiz → Reflect (echo) →
+      // Onboarding conversion v7 flow: Pre-Auth Quiz → Reflect (echo) →
       //   Blocker (obstacle + acknowledgment) → Trust & Expectations →
-      //   Plan Analyzing → Weight Projection → Demo Tasks → Sign In → ...
+      //   Plan Analyzing → Weight Projection → Workout Demo → Nutrition
+      //   Demo → Sign In → ... (demos auto-chain; the /demo-tasks chooser
+      //   hub is legacy, kill-switch `onboarding_demo_autoroute`).
       // The quiz now flows into the v6 acknowledgment interstitial first;
       // each new screen self-skips via its PostHog kill-switch if disabled.
       if (mounted) {
