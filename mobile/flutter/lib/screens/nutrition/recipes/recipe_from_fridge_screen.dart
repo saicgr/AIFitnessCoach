@@ -44,6 +44,10 @@ const int _kMaxFridgePhotos = 5;
 class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     with NavBarHiderMixin {
   final List<String> _items = [];
+  // Ingredients the user tapped to exclude (lowercased names). Everything in
+  // `_items` is included by default; excluded chips render dimmed + struck
+  // through and are dropped from the recipe search.
+  final Set<String> _excludedItems = {};
   final _addCtrl = TextEditingController();
   // Parallel lists: index i refers to the same photo across all three.
   final List<String> _imagesB64 = [];
@@ -57,8 +61,27 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   String? _error;
 
   bool get _anyDetecting => _photoDetecting.any((b) => b);
-  int get _totalDetected =>
-      _photoDetections.fold<int>(0, (acc, l) => acc + l.length);
+
+  /// Ingredients that will actually be sent to the recipe search — every
+  /// chip except the ones the user tapped to exclude.
+  List<String> get _includedItems => _items
+      .where((i) => !_excludedItems.contains(i.toLowerCase()))
+      .toList();
+
+  bool _isExcluded(String name) => _excludedItems.contains(name.toLowerCase());
+
+  void _toggleItem(String name) {
+    final key = name.toLowerCase();
+    setState(() {
+      if (_excludedItems.contains(key)) {
+        _excludedItems.remove(key);
+      } else {
+        _excludedItems.add(key);
+      }
+      // Re-including / excluding invalidates the previous result set.
+      _result = null;
+    });
+  }
 
   @override
   void initState() {
@@ -182,15 +205,18 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   }
 
   Future<void> _findRecipes() async {
-    if (_items.isEmpty && _imagesB64.isEmpty) {
-      setState(() => _error = 'Add items or a fridge photo');
+    final included = _includedItems;
+    if (included.isEmpty && _imagesB64.isEmpty) {
+      setState(() => _error = _items.isEmpty
+          ? 'Add items or a fridge photo'
+          : 'Include at least one ingredient');
       return;
     }
     setState(() { _searching = true; _error = null; _result = null; });
     try {
       final res = await ref.read(recipeRepositoryProvider).fromPantry(
             widget.userId,
-            itemsText: _items.isEmpty ? null : List<String>.from(_items),
+            itemsText: included.isEmpty ? null : included,
             // Items already detected on this screen; no need to re-send
             // images (would re-bill Vision for the same data).
             imageB64: null,
@@ -226,6 +252,9 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       _imagePaths.removeAt(index);
       _photoDetecting.removeAt(index);
       _photoDetections.removeAt(index);
+      // Drop exclusions whose chip no longer exists.
+      final remaining = _items.map((s) => s.toLowerCase()).toSet();
+      _excludedItems.removeWhere((k) => !remaining.contains(k));
       _result = null;
     });
   }
@@ -241,11 +270,34 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     final surface = tc.surface;
     final isLoading = _anyDetecting || _searching;
 
+    final includedCount = _includedItems.length;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).recipeFromFridgeFromYourFridge,
         onBack: () => Navigator.of(context).pop(),
+      ),
+      // Pinned CTA so FIND RECIPES is always reachable no matter how many
+      // ingredients scroll above it.
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: bg,
+          border: Border(top: BorderSide(color: AppColors.cardBorder)),
+        ),
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: ZealovaButton(
+            label: _searching
+                ? AppLocalizations.of(context).recipeFromFridgeFindingRecipesU2026
+                : includedCount > 0
+                    ? '${AppLocalizations.of(context).recipeFromFridgeFindRecipes}  ·  $includedCount'
+                    : AppLocalizations.of(context).recipeFromFridgeFindRecipes,
+            onTap: isLoading ? null : _findRecipes,
+            trailingIcon: _searching ? null : Icons.auto_awesome,
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
@@ -311,38 +363,34 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
             ),
           ],
 
-          // Aggregated detected items across all photos.
-          if (_totalDetected > 0) ...[
-            const SizedBox(height: 12),
-            _DetectedItemsSection(
-              items: _photoDetections.expand((l) => l).toList(),
-              isDark: isDark,
-              accent: accent,
-            ),
-          ],
-
-          // Ingredient chips
+          // Single ingredient list — every detected + typed item is one
+          // toggleable chip (included by default; tap to exclude, tap again
+          // to re-include). Replaces the old duplicate "found" + "remove"
+          // sections.
           if (_items.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            Row(children: [
+              Icon(Icons.checklist_rounded, size: 16, color: accent),
+              const SizedBox(width: 6),
+              Text(AppLocalizations.of(context).recipeFromFridgeFoundInYourPhoto.toUpperCase(),
+                style: ZType.lbl(11, color: text, letterSpacing: 1.5)),
+            ]),
+            const SizedBox(height: 4),
+            Text(AppLocalizations.of(context).recipeFromFridgeTapFindRecipesTo,
+              style: TextStyle(color: muted, fontSize: 11)),
+            const SizedBox(height: 10),
             Wrap(spacing: 8, runSpacing: 8, children: [
               for (var i = 0; i < _items.length; i++)
                 _IngredientChip(
                   label: _items[i],
-                  onDeleted: () => setState(() => _items.removeAt(i)),
+                  included: !_isExcluded(_items[i]),
+                  accent: accent,
+                  onTap: () => _toggleItem(_items[i]),
                 ),
             ]),
           ],
 
           const SizedBox(height: 16),
-
-          // Find recipes button
-          ZealovaButton(
-            label: _searching
-                ? AppLocalizations.of(context).recipeFromFridgeFindingRecipesU2026
-                : AppLocalizations.of(context).recipeFromFridgeFindRecipes,
-            onTap: isLoading ? null : _findRecipes,
-            trailingIcon: _searching ? null : Icons.auto_awesome,
-          ),
 
           // Error display
           if (_error != null)
@@ -651,65 +699,6 @@ class _AddMoreTile extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Detected items from photo — shown prominently
-// ---------------------------------------------------------------------------
-
-class _DetectedItemsSection extends StatelessWidget {
-  final List<PantryDetectedItem> items;
-  final bool isDark;
-  final Color accent;
-
-  const _DetectedItemsSection({
-    required this.items,
-    required this.isDark,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tc = ThemeColors.of(context);
-    final text = tc.textPrimary;
-    final muted = tc.textMuted;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(children: [
-          Icon(Icons.visibility, size: 16, color: accent),
-          const SizedBox(width: 6),
-          Text(AppLocalizations.of(context).recipeFromFridgeFoundInYourPhoto.toUpperCase(),
-            style: ZType.lbl(11, color: text, letterSpacing: 1.5)),
-        ]),
-        const SizedBox(height: 10),
-        Wrap(spacing: 6, runSpacing: 6, children: [
-          for (final item in items)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: tc.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: item.confidence >= 80 ? accent : AppColors.cardBorder),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(item.name,
-                  style: TextStyle(color: text, fontSize: 12, fontWeight: FontWeight.w600)),
-                if (item.confidence >= 80) ...[
-                  const SizedBox(width: 4),
-                  Icon(Icons.check_circle, size: 12, color: accent),
-                ],
-              ]),
-            ),
-        ]),
-        const SizedBox(height: 6),
-        Text(AppLocalizations.of(context).recipeFromFridgeTapFindRecipesTo,
-          style: TextStyle(color: muted, fontSize: 11)),
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Shared widgets
 // ---------------------------------------------------------------------------
 
@@ -758,6 +747,17 @@ class _SuggestionCard extends StatelessWidget {
   final bool isDark;
   final Color accent;
   const _SuggestionCard({required this.suggestion, required this.isDark, required this.accent});
+
+  /// Total = prep + cook (either may be null). Null when neither is known so
+  /// the card hides the "MIN" stat instead of rendering "0 MIN".
+  int? get _totalTimeMinutes {
+    final prep = suggestion.prepTimeMinutes;
+    final cook = suggestion.cookTimeMinutes;
+    if (prep == null && cook == null) return null;
+    final total = (prep ?? 0) + (cook ?? 0);
+    return total > 0 ? total : null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
@@ -789,19 +789,17 @@ class _SuggestionCard extends StatelessWidget {
             ],
             const SizedBox(height: 10),
             Wrap(spacing: 14, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.end, children: [
-              if (suggestion.caloriesPerServing != null)
-                Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Text('${suggestion.caloriesPerServing}', style: ZType.data(15, color: text)),
-                  const SizedBox(width: 3),
-                  Text('KCAL/SERV', style: ZType.lbl(9, color: muted, letterSpacing: 1)),
-                ]),
+              if (_totalTimeMinutes != null)
+                _Stat(value: '$_totalTimeMinutes', label: 'MIN', color: text, muted: muted),
+              // A 0-kcal value is never real — hide it rather than render "0".
+              if (suggestion.caloriesPerServing != null && suggestion.caloriesPerServing! > 0)
+                _Stat(value: '${suggestion.caloriesPerServing}', label: 'KCAL/SERV', color: text, muted: muted),
               if (suggestion.proteinPerServingG != null)
-                Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Text(suggestion.proteinPerServingG!.toStringAsFixed(0),
-                      style: ZType.data(15, color: AppColors.macroProtein)),
-                  const SizedBox(width: 3),
-                  Text('G PROTEIN', style: ZType.lbl(9, color: muted, letterSpacing: 1)),
-                ]),
+                _Stat(value: suggestion.proteinPerServingG!.toStringAsFixed(0), label: 'G PROTEIN', color: AppColors.macroProtein, muted: muted),
+              if (suggestion.carbsPerServingG != null)
+                _Stat(value: suggestion.carbsPerServingG!.toStringAsFixed(0), label: 'G CARBS', color: AppColors.macroCarbs, muted: muted),
+              if (suggestion.fatPerServingG != null)
+                _Stat(value: suggestion.fatPerServingG!.toStringAsFixed(0), label: 'G FAT', color: AppColors.macroFat, muted: muted),
             ]),
             if (suggestion.matchedPantryItems.isNotEmpty) ...[
               const SizedBox(height: 10),
@@ -824,35 +822,74 @@ class _SuggestionCard extends StatelessWidget {
   }
 }
 
-/// Hairline ingredient chip with an inline delete affordance \u2014 replaces the
-/// Material `InputChip` with the Signature outlined look.
+/// One value/label pair in the suggestion card's macro row (e.g. "35 G PROTEIN").
+class _Stat extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color color;
+  final Color muted;
+  const _Stat({required this.value, required this.label, required this.color, required this.muted});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(value, style: ZType.data(15, color: color)),
+        const SizedBox(width: 3),
+        Text(label, style: ZType.lbl(9, color: muted, letterSpacing: 1)),
+      ],
+    );
+  }
+}
+
+/// Toggleable ingredient chip. Included chips read as a filled accent pill with
+/// a check; excluded chips dim to an outline with a struck-through label and an
+/// add icon inviting re-inclusion. Tapping anywhere toggles the state.
 class _IngredientChip extends StatelessWidget {
   final String label;
-  final VoidCallback onDeleted;
-  const _IngredientChip({required this.label, required this.onDeleted});
+  final bool included;
+  final Color accent;
+  final VoidCallback onTap;
+  const _IngredientChip({
+    required this.label,
+    required this.included,
+    required this.accent,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
-    return Container(
-      height: 30,
-      padding: const EdgeInsets.only(left: 12, right: 6),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.cardBorder),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label,
-              style: TextStyle(
-                  color: tc.textPrimary, fontSize: 12.5, fontWeight: FontWeight.w500)),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: onDeleted,
-            child: Icon(Icons.close_rounded, size: 15, color: tc.textMuted),
-          ),
-        ],
+    final labelColor = included ? tc.textPrimary : tc.textMuted;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: included ? accent.withValues(alpha: 0.12) : Colors.transparent,
+          border: Border.all(color: included ? accent : AppColors.cardBorder),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(included ? Icons.check_rounded : Icons.add_rounded,
+                size: 15, color: included ? accent : tc.textMuted),
+            const SizedBox(width: 5),
+            Text(label,
+                style: TextStyle(
+                  color: labelColor,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  decoration:
+                      included ? null : TextDecoration.lineThrough,
+                  decorationColor: tc.textMuted,
+                )),
+          ],
+        ),
       ),
     );
   }

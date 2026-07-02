@@ -382,6 +382,17 @@ IMPORTANT:
                     for ing in recipe.get("ingredients", [])
                 ]
 
+                protein_pps = safe_float(recipe.get("protein_per_serving_g"))
+                carbs_pps = safe_float(recipe.get("carbs_per_serving_g"))
+                fat_pps = safe_float(recipe.get("fat_per_serving_g"))
+                calories_pps = safe_int(recipe.get("calories_per_serving"))
+                # Gemini intermittently returns the per-serving macros but omits
+                # or zeroes calories_per_serving (cards then render "0 kcal").
+                # Derive it from the Atwater factors (4/4/9) so a card never
+                # shows 0 kcal when we have macros to compute from.
+                if calories_pps <= 0 and (protein_pps > 0 or carbs_pps > 0 or fat_pps > 0):
+                    calories_pps = round(4 * protein_pps + 4 * carbs_pps + 9 * fat_pps)
+
                 suggestion = RecipeSuggestion(
                     recipe_name=recipe.get("recipe_name", "Unnamed Recipe"),
                     recipe_description=recipe.get("recipe_description", ""),
@@ -390,10 +401,10 @@ IMPORTANT:
                     ingredients=ingredients,
                     instructions=recipe.get("instructions", []),
                     servings=safe_int(recipe.get("servings"), default=1),
-                    calories_per_serving=safe_int(recipe.get("calories_per_serving")),
-                    protein_per_serving_g=safe_float(recipe.get("protein_per_serving_g")),
-                    carbs_per_serving_g=safe_float(recipe.get("carbs_per_serving_g")),
-                    fat_per_serving_g=safe_float(recipe.get("fat_per_serving_g")),
+                    calories_per_serving=calories_pps,
+                    protein_per_serving_g=protein_pps,
+                    carbs_per_serving_g=carbs_pps,
+                    fat_per_serving_g=fat_pps,
                     fiber_per_serving_g=safe_float(recipe.get("fiber_per_serving_g")),
                     prep_time_minutes=safe_int(recipe.get("prep_time_minutes")),
                     cook_time_minutes=safe_int(recipe.get("cook_time_minutes")),
