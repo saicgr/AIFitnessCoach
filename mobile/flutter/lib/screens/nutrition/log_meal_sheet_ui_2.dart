@@ -699,7 +699,8 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
         if (!_isListening)
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+              // Clear air between the search field above and the filter pills.
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
               child: FoodBrowserPanel(
                 userId: widget.userId,
                 mealType: _selectedMealType,

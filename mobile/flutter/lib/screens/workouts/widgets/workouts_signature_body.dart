@@ -290,7 +290,10 @@ class _ProgramBlock extends ConsumerWidget {
                     Flexible(
                       child: Text(
                         programLabel,
-                        maxLines: 1,
+                        // Long curated names ("NO-EQUIPMENT HOME WORKOUT")
+                        // share this row with WEEK X OF Y + EDIT PROGRAM —
+                        // wrap to a second line rather than ellipsizing.
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: ZType.disp(20, color: tc.textPrimary),
                       ),
