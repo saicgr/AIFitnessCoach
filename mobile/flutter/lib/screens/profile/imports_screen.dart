@@ -1,18 +1,79 @@
-/// Profile → Imports — the universal history of everything the user has
-/// shared into Zealova through the system share sheet.
+/// Profile → Imports — the universal import hub.
 ///
-/// Each row carries explicit tags (category × format × origin) rendered as
-/// colored chips. The header exposes search, filter rail, bulk-select, and
-/// a "Supported formats & limits" info sheet. Failed/interrupted rows
-/// surface a retry CTA.
+/// Three jobs on one screen:
+///   1. **Import with AI** — pick a photo / PDF / voice memo, or paste text
+///      or a link, right here (no share sheet needed). Reuses the full
+///      /share/* AI pipeline via [ShareDispatcher].
+///   2. **Bring your data** — always-visible source cards for MyFitnessPal,
+///      MacroFactor, Cronometer, Apple Health (nutrition history) and
+///      workout history CSVs. A live activity banner shows mid-import
+///      progress and the post-import result.
+///   3. **History** — everything ever shared into Zealova, with search,
+///      category × format filters, bulk-select, retry and detail sheets.
 library imports_screen;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
+import '../../data/providers/source_import_activity_provider.dart';
+import '../../data/services/haptic_service.dart';
 import '../../data/services/imports_api_service.dart';
+import '../../data/services/incoming_share_service.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../widgets/pill_app_bar.dart';
+import '../settings/nutrition_import_screen.dart';
+import '../settings/workout_history_import_screen.dart';
+import '../share/share_dispatch.dart';
 import '../share/share_routing_table.dart';
+
+// ===========================================================================
+// Source specs — the "bring your data" rail
+// ===========================================================================
+
+class _SourceSpec {
+  const _SourceSpec({
+    required this.id,
+    required this.label,
+    required this.sub,
+    required this.icon,
+  });
+  final String id; // NutritionImportScreen source id
+  final String label;
+  final String sub;
+  final IconData icon;
+}
+
+const _kNutritionSources = <_SourceSpec>[
+  _SourceSpec(
+    id: 'myfitnesspal',
+    label: 'MyFitnessPal',
+    sub: 'Food log CSV',
+    icon: Icons.local_dining_outlined,
+  ),
+  _SourceSpec(
+    id: 'macrofactor',
+    label: 'MacroFactor',
+    sub: 'Nutrition CSV',
+    icon: Icons.insights_outlined,
+  ),
+  _SourceSpec(
+    id: 'cronometer',
+    label: 'Cronometer',
+    sub: 'Daily nutrition CSV',
+    icon: Icons.pie_chart_outline,
+  ),
+  _SourceSpec(
+    id: 'apple_health',
+    label: 'Apple Health',
+    sub: 'Straight from Health',
+    icon: Icons.favorite_outline,
+  ),
+];
 
 class ImportsScreen extends ConsumerStatefulWidget {
   const ImportsScreen({super.key});
@@ -69,9 +130,6 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
   }
 
   Future<void> _loadMore() async {
-    if (_loading && _rows.isNotEmpty == false) {
-      // Already in-flight on initial load; allow subsequent pagination calls.
-    }
     setState(() => _loading = true);
     try {
       final api = ref.read(importsApiServiceProvider);
@@ -95,6 +153,13 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
       if (mounted) setState(() => _loading = false);
     }
   }
+
+  bool get _hasActiveFilter =>
+      _categoryFilter != null ||
+      _formatFilter != null ||
+      _originFilter != null ||
+      _statusFilter != null ||
+      _searchQuery.isNotEmpty;
 
   // ---------------------------------------------------------------------------
   // Filter helpers
@@ -127,6 +192,115 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
       case ImportFormat.text:     return 'text';
       case ImportFormat.carousel: return 'carousel';
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // AI import launchers — build a SharedPayload and run the share pipeline
+  // ---------------------------------------------------------------------------
+
+  Future<void> _runAiImport(SharedPayload payload) async {
+    if (payload.isEmpty) return;
+    await ShareDispatcher.run(ref, payload);
+    // The pipeline records a history row server-side — pick it up.
+    if (mounted) _refresh();
+  }
+
+  Future<void> _aiPickPhotos() async {
+    HapticService.light();
+    try {
+      final files = await ImagePicker().pickMultiImage(limit: 10);
+      if (files.isEmpty) return;
+      await _runAiImport(SharedPayload(
+        kind: SharedPayloadKind.images,
+        localFilePaths: files.map((f) => f.path).toList(),
+      ));
+    } catch (e) {
+      debugPrint('❌ [Imports] photo pick failed: $e');
+      _snack('Could not open your photos. Please try again.');
+    }
+  }
+
+  Future<void> _aiPickPdf() async {
+    HapticService.light();
+    try {
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+      );
+      final path = res?.files.firstOrNull?.path;
+      if (path == null) return;
+      await _runAiImport(SharedPayload(
+        kind: SharedPayloadKind.pdf,
+        localFilePaths: [path],
+      ));
+    } catch (e) {
+      debugPrint('❌ [Imports] pdf pick failed: $e');
+      _snack('Could not read that PDF. Please try again.');
+    }
+  }
+
+  Future<void> _aiPickAudio() async {
+    HapticService.light();
+    try {
+      final res = await FilePicker.platform.pickFiles(type: FileType.audio);
+      final path = res?.files.firstOrNull?.path;
+      if (path == null) return;
+      await _runAiImport(SharedPayload(
+        kind: SharedPayloadKind.audio,
+        localFilePaths: [path],
+      ));
+    } catch (e) {
+      debugPrint('❌ [Imports] audio pick failed: $e');
+      _snack('Could not read that audio file. Please try again.');
+    }
+  }
+
+  static final RegExp _urlRe = RegExp(r'https?://\S+', caseSensitive: false);
+
+  Future<void> _aiPaste() async {
+    HapticService.light();
+    final clip = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+    final text = await _PasteSheet.show(context, initialText: clip?.text ?? '');
+    final trimmed = text?.trim() ?? '';
+    if (trimmed.isEmpty) return;
+
+    final urls = _urlRe
+        .allMatches(trimmed)
+        .map((m) => m.group(0)!.replaceAll(RegExp(r'[)\.,;]+$'), ''))
+        .toList();
+    // A payload that is essentially just one link goes down the richer
+    // URL pipeline; anything else is treated as text.
+    final isBareUrl = urls.length == 1 &&
+        trimmed.replaceAll(urls.first, '').trim().length < 6;
+    if (isBareUrl) {
+      await _runAiImport(SharedPayload(kind: SharedPayloadKind.url, urls: urls));
+    } else {
+      await _runAiImport(SharedPayload(
+        kind: SharedPayloadKind.text,
+        text: trimmed,
+        urls: urls,
+      ));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Source import launchers
+  // ---------------------------------------------------------------------------
+
+  Future<void> _openNutritionSource(String sourceId) async {
+    HapticService.light();
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => NutritionImportScreen(initialSourceId: sourceId),
+    ));
+    // Banner state updates via sourceImportActivityProvider on its own.
+  }
+
+  Future<void> _openWorkoutHistoryImport() async {
+    HapticService.light();
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => const WorkoutHistoryImportScreen(),
+    ));
   }
 
   // ---------------------------------------------------------------------------
@@ -182,15 +356,11 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
         }
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocalizations.of(context).importsSnackRetrying),
-        ));
+        _snack(AppLocalizations.of(context).importsSnackRetrying);
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocalizations.of(context).importsSnackRetryFailed),
-        ));
+        _snack(AppLocalizations.of(context).importsSnackRetryFailed);
       }
     }
   }
@@ -202,153 +372,275 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
     setState(() => _rows.removeWhere((r) => r.id == row.id));
   }
 
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Build
   // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final t = _Tokens(isDark: isDark, accent: accent);
+    final activity = ref.watch(sourceImportActivityProvider);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.importsAppBarTitle),
+      backgroundColor: isDark ? AppColors.background : AppColorsLight.background,
+      appBar: PillAppBar(
+        title: l10n.importsAppBarTitle,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: l10n.importsTooltipFormatsLimits,
-            onPressed: _showLimitsSheet,
+          PillAppBarAction(
+            icon: Icons.info_outline,
+            onTap: _showLimitsSheet,
           ),
-          IconButton(
-            icon: Icon(_selectMode ? Icons.check : Icons.edit_outlined),
-            tooltip: _selectMode ? l10n.importsTooltipDone : l10n.importsTooltipSelect,
-            onPressed: () => setState(() {
+          PillAppBarAction(
+            icon: _selectMode ? Icons.check : Icons.checklist_rounded,
+            iconColor: _selectMode ? accent : null,
+            onTap: () => setState(() {
               _selectMode = !_selectMode;
               if (!_selectMode) _selectedIds.clear();
             }),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildSearchField(theme),
-          _buildFilterRail(theme),
-          if (_selectMode && _selectedIds.isNotEmpty) _buildBulkActionBar(theme),
-          Expanded(child: _buildList(theme)),
-        ],
-      ),
-    );
-  }
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        color: accent,
+        child: CustomScrollView(
+          controller: _scrollCtrl,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // -- Live source-import banner (mid-import / post-success) ------
+            if (activity != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _ActivityBanner(
+                    activity: activity,
+                    tokens: t,
+                    onDismiss: () =>
+                        ref.read(sourceImportActivityProvider.notifier).dismiss(),
+                    onRetry: activity.phase == SourceImportPhase.error &&
+                            activity.sourceId != 'workout_history'
+                        ? () => _openNutritionSource(activity.sourceId)
+                        : null,
+                  ),
+                ),
+              ),
 
-  Widget _buildSearchField(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: TextField(
-        controller: _searchCtrl,
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: AppLocalizations.of(context).importsSearchHint,
-          prefixIcon: const Icon(Icons.search, size: 20),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            // -- Import with AI ---------------------------------------------
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: _AiImportCard(
+                  tokens: t,
+                  onPhotos: _aiPickPhotos,
+                  onPdf: _aiPickPdf,
+                  onAudio: _aiPickAudio,
+                  onPaste: _aiPaste,
+                ),
+              ),
+            ),
+
+            // -- Bring your data --------------------------------------------
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SectionHeader(
+                      title: 'Bring your data',
+                      subtitle: 'Move your history over from another app — free.',
+                      tokens: t,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSourceGrid(t),
+                    const SizedBox(height: 10),
+                    _WorkoutHistoryTile(tokens: t, onTap: _openWorkoutHistoryImport),
+                  ],
+                ),
+              ),
+            ),
+
+            // -- History header + search + filters ---------------------------
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+                child: _SectionHeader(
+                  title: 'History',
+                  subtitle:
+                      'Everything shared or imported into Zealova lands here.',
+                  tokens: t,
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(child: _buildSearchField(t)),
+            SliverToBoxAdapter(child: _buildFilterRail(t)),
+            if (_selectMode && _selectedIds.isNotEmpty)
+              SliverToBoxAdapter(child: _buildBulkActionBar(t)),
+
+            // -- History rows -------------------------------------------------
+            ..._buildHistorySlivers(t),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 48)),
+          ],
         ),
-        onSubmitted: (v) {
-          setState(() => _searchQuery = v.trim());
-          _refresh();
-        },
       ),
     );
   }
 
-  Widget _buildFilterRail(ThemeData theme) {
-    return SizedBox(
-      height: 96,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Row 1 — category
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                _filterChip<ImportCategory?>(
-                  label: AppLocalizations.of(context).importsFilterAll,
-                  selected: _categoryFilter == null,
-                  onSelected: () => setState(() {
-                    _categoryFilter = null;
-                    _refresh();
-                  }),
-                ),
-                for (final c in ImportCategory.values)
-                  _filterChip<ImportCategory>(
-                    label: categoryLabel(c),
-                    selected: _categoryFilter == c,
-                    onSelected: () => setState(() {
-                      _categoryFilter = c;
-                      _refresh();
-                    }),
-                  ),
-              ],
-            ),
-          ),
-          // Row 2 — format
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                _filterChip(
-                  label: AppLocalizations.of(context).importsFilterAllFormats,
-                  selected: _formatFilter == null,
-                  onSelected: () => setState(() {
-                    _formatFilter = null;
-                    _refresh();
-                  }),
-                ),
-                for (final f in ImportFormat.values)
-                  _filterChip(
-                    label: formatLabel(f),
-                    selected: _formatFilter == f,
-                    onSelected: () => setState(() {
-                      _formatFilter = f;
-                      _refresh();
-                    }),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  Widget _buildSourceGrid(_Tokens t) {
+    Widget tile(_SourceSpec s) => _SourceTile(
+          spec: s,
+          tokens: t,
+          onTap: () => _openNutritionSource(s.id),
+        );
+    return Column(
+      children: [
+        Row(children: [
+          Expanded(child: tile(_kNutritionSources[0])),
+          const SizedBox(width: 10),
+          Expanded(child: tile(_kNutritionSources[1])),
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: tile(_kNutritionSources[2])),
+          const SizedBox(width: 10),
+          Expanded(child: tile(_kNutritionSources[3])),
+        ]),
+      ],
     );
   }
 
-  Widget _filterChip<T>({
-    required String label,
-    required bool selected,
-    required VoidCallback onSelected,
-  }) {
+  Widget _buildSearchField(_Tokens t) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: (_) => onSelected(),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: t.elevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: t.cardBorder),
+        ),
+        child: TextField(
+          controller: _searchCtrl,
+          style: TextStyle(fontSize: 14, color: t.textPrimary),
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: AppLocalizations.of(context).importsSearchHint,
+            hintStyle: TextStyle(fontSize: 14, color: t.textMuted),
+            prefixIcon: Icon(Icons.search, size: 20, color: t.textMuted),
+            border: InputBorder.none,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+          onSubmitted: (v) {
+            setState(() => _searchQuery = v.trim());
+            _refresh();
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildBulkActionBar(ThemeData theme) {
-    return Material(
-      color: theme.colorScheme.secondaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  Widget _buildFilterRail(_Tokens t) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Row 1 — category
+        SizedBox(
+          height: 38,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              _FilterPill(
+                label: AppLocalizations.of(context).importsFilterAll,
+                selected: _categoryFilter == null,
+                tokens: t,
+                onTap: () => setState(() {
+                  _categoryFilter = null;
+                  _refresh();
+                }),
+              ),
+              for (final c in ImportCategory.values)
+                _FilterPill(
+                  label: categoryLabel(c),
+                  selected: _categoryFilter == c,
+                  tokens: t,
+                  onTap: () => setState(() {
+                    _categoryFilter = c;
+                    _refresh();
+                  }),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Row 2 — format
+        SizedBox(
+          height: 38,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              _FilterPill(
+                label: AppLocalizations.of(context).importsFilterAllFormats,
+                selected: _formatFilter == null,
+                tokens: t,
+                onTap: () => setState(() {
+                  _formatFilter = null;
+                  _refresh();
+                }),
+              ),
+              for (final f in ImportFormat.values)
+                _FilterPill(
+                  label: formatLabel(f),
+                  selected: _formatFilter == f,
+                  tokens: t,
+                  onTap: () => setState(() {
+                    _formatFilter = f;
+                    _refresh();
+                  }),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBulkActionBar(_Tokens t) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: t.accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: t.accent.withValues(alpha: 0.35)),
+        ),
         child: Row(
           children: [
-            Text(AppLocalizations.of(context).importsSelectedCount(_selectedIds.length), style: theme.textTheme.labelLarge),
+            Text(
+              AppLocalizations.of(context).importsSelectedCount(_selectedIds.length),
+              style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w600, color: t.textPrimary),
+            ),
             const Spacer(),
             TextButton.icon(
-              icon: const Icon(Icons.delete_outline),
-              label: Text(AppLocalizations.of(context).importsActionDelete),
+              icon: Icon(Icons.delete_outline, size: 18, color: t.accent),
+              label: Text(
+                AppLocalizations.of(context).importsActionDelete,
+                style: TextStyle(color: t.accent, fontWeight: FontWeight.w600),
+              ),
               onPressed: _bulkDelete,
             ),
           ],
@@ -357,72 +649,107 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
     );
   }
 
-  Widget _buildList(ThemeData theme) {
+  List<Widget> _buildHistorySlivers(_Tokens t) {
     if (_rows.isEmpty && _loading) {
-      return const Center(child: CircularProgressIndicator());
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              children: [
+                for (var i = 0; i < 3; i++) ...[
+                  Container(
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: t.elevated.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ];
     }
     if (_rows.isEmpty) {
-      return _buildEmpty(theme);
+      return [SliverToBoxAdapter(child: _buildEmpty(t))];
     }
-    return RefreshIndicator(
-      onRefresh: _refresh,
-      child: ListView.separated(
-        controller: _scrollCtrl,
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 32),
-        itemCount: _rows.length + (_cursor != null ? 1 : 0),
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (ctx, i) {
-          if (i >= _rows.length) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Center(child: CircularProgressIndicator()),
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        sliver: SliverList.separated(
+          itemCount: _rows.length + (_cursor != null ? 1 : 0),
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (ctx, i) {
+            if (i >= _rows.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: SizedBox(
+                    width: 22, height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: t.accent),
+                  ),
+                ),
+              );
+            }
+            final row = _rows[i];
+            return _ImportsRowCard(
+              row: row,
+              tokens: t,
+              selectable: _selectMode,
+              selected: _selectedIds.contains(row.id),
+              onTap: () {
+                if (_selectMode) {
+                  setState(() {
+                    if (_selectedIds.contains(row.id)) {
+                      _selectedIds.remove(row.id);
+                    } else {
+                      _selectedIds.add(row.id);
+                    }
+                  });
+                } else {
+                  _openRow(row);
+                }
+              },
+              onLongPress: () => _rowActionSheet(row),
+              onRetry: () => _retry(row),
             );
-          }
-          return _ImportsRowCard(
-            row: _rows[i],
-            selectable: _selectMode,
-            selected: _selectedIds.contains(_rows[i].id),
-            onTap: () {
-              if (_selectMode) {
-                setState(() {
-                  if (_selectedIds.contains(_rows[i].id)) {
-                    _selectedIds.remove(_rows[i].id);
-                  } else {
-                    _selectedIds.add(_rows[i].id);
-                  }
-                });
-              } else {
-                _openRow(_rows[i]);
-              }
-            },
-            onLongPress: () => _rowActionSheet(_rows[i]),
-            onRetry: () => _retry(_rows[i]),
-          );
-        },
+          },
+        ),
       ),
-    );
+    ];
   }
 
-  Widget _buildEmpty(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+  Widget _buildEmpty(_Tokens t) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+        decoration: BoxDecoration(
+          color: t.elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: t.cardBorder),
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.ios_share, size: 48),
-            const SizedBox(height: 12),
+            Icon(Icons.ios_share, size: 32, color: t.textMuted),
+            const SizedBox(height: 10),
             Text(
-              AppLocalizations.of(context).importsEmptyTitle,
-              style: theme.textTheme.titleMedium,
+              _hasActiveFilter ? 'No imports match' : l10n.importsEmptyTitle,
+              style: TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.w600, color: t.textPrimary),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
-              AppLocalizations.of(context).importsEmptyBody,
+              _hasActiveFilter
+                  ? 'Try clearing the search or filters above.'
+                  : l10n.importsEmptyBody,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
+              style: TextStyle(fontSize: 13, height: 1.4, color: t.textSecondary),
             ),
           ],
         ),
@@ -484,9 +811,7 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
         // ask the user to reshare. Wire actual reroute in a follow-up.
         await ref.read(importsApiServiceProvider).bulkReclassify([row.id]);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(AppLocalizations.of(context).importsSnackReclassifyQueued),
-          ));
+          _snack(AppLocalizations.of(context).importsSnackReclassifyQueued);
         }
         break;
       case 'delete':
@@ -513,12 +838,654 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
 }
 
 // ===========================================================================
+// Design tokens — resolved once per build, passed down
+// ===========================================================================
+
+class _Tokens {
+  _Tokens({required this.isDark, required this.accent});
+  final bool isDark;
+  final Color accent;
+
+  Color get elevated => isDark ? AppColors.elevated : AppColorsLight.elevated;
+  Color get cardBorder => isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+  Color get textPrimary => isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+  Color get textSecondary => isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+  Color get textMuted => isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.subtitle,
+    required this.tokens,
+  });
+  final String title;
+  final String subtitle;
+  final _Tokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: tokens.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: TextStyle(fontSize: 12.5, height: 1.35, color: tokens.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// Import with AI card
+// ===========================================================================
+
+class _AiImportCard extends StatelessWidget {
+  const _AiImportCard({
+    required this.tokens,
+    required this.onPhotos,
+    required this.onPdf,
+    required this.onAudio,
+    required this.onPaste,
+  });
+  final _Tokens tokens;
+  final VoidCallback onPhotos;
+  final VoidCallback onPdf;
+  final VoidCallback onAudio;
+  final VoidCallback onPaste;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = tokens.accent;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: tokens.isDark ? 0.22 : 0.14),
+            accent.withValues(alpha: tokens.isDark ? 0.08 : 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.auto_awesome, color: accent, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Import anything with AI',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'A photo, PDF, voice memo, link or text — AI reads it and files it in the right place.',
+                      style: TextStyle(
+                          fontSize: 12.5, height: 1.35, color: tokens.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _AiActionChip(
+                  icon: Icons.photo_outlined,
+                  label: 'Photo',
+                  tokens: tokens,
+                  onTap: onPhotos,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _AiActionChip(
+                  icon: Icons.picture_as_pdf_outlined,
+                  label: 'PDF',
+                  tokens: tokens,
+                  onTap: onPdf,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _AiActionChip(
+                  icon: Icons.graphic_eq,
+                  label: 'Audio',
+                  tokens: tokens,
+                  onTap: onAudio,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _AiActionChip(
+                  icon: Icons.content_paste_rounded,
+                  label: 'Paste',
+                  tokens: tokens,
+                  onTap: onPaste,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiActionChip extends StatelessWidget {
+  const _AiActionChip({
+    required this.icon,
+    required this.label,
+    required this.tokens,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final _Tokens tokens;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: tokens.isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.white.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: tokens.cardBorder),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: tokens.accent),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Source tiles (MFP / MacroFactor / Cronometer / Apple Health / workouts)
+// ===========================================================================
+
+class _SourceTile extends StatelessWidget {
+  const _SourceTile({
+    required this.spec,
+    required this.tokens,
+    required this.onTap,
+  });
+  final _SourceSpec spec;
+  final _Tokens tokens;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: tokens.elevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: tokens.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: tokens.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(spec.icon, color: tokens.accent, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      spec.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      spec.sub,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: tokens.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WorkoutHistoryTile extends StatelessWidget {
+  const _WorkoutHistoryTile({required this.tokens, required this.onTap});
+  final _Tokens tokens;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: tokens.elevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: tokens.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: tokens.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.fitness_center, color: tokens.accent, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Workout history',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'Past lifts from a CSV — seeds your strength profile',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: tokens.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: tokens.textMuted, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Activity banner — mid-import progress / post-import result
+// ===========================================================================
+
+class _ActivityBanner extends StatelessWidget {
+  const _ActivityBanner({
+    required this.activity,
+    required this.tokens,
+    required this.onDismiss,
+    this.onRetry,
+  });
+  final SourceImportActivity activity;
+  final _Tokens tokens;
+  final VoidCallback onDismiss;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (activity.phase) {
+      case SourceImportPhase.working:
+        return _shell(
+          border: tokens.accent.withValues(alpha: 0.4),
+          fill: tokens.accent.withValues(alpha: 0.1),
+          leading: SizedBox(
+            width: 20, height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2.2, color: tokens.accent),
+          ),
+          title: 'Importing from ${activity.sourceLabel}…',
+          body: activity.message,
+          trailing: null,
+        );
+      case SourceImportPhase.success:
+        return _shell(
+          border: AppColors.success.withValues(alpha: 0.4),
+          fill: AppColors.success.withValues(alpha: 0.1),
+          leading: const Icon(Icons.check_circle_rounded,
+              color: AppColors.success, size: 22),
+          title: '${activity.sourceLabel} import complete',
+          body: activity.resultLines.isEmpty
+              ? 'Nothing new to import.'
+              : activity.resultLines.join('  ·  '),
+          trailing: IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: Icon(Icons.close_rounded, size: 18, color: tokens.textMuted),
+            onPressed: onDismiss,
+          ),
+        );
+      case SourceImportPhase.error:
+        return _shell(
+          border: AppColors.error.withValues(alpha: 0.4),
+          fill: AppColors.error.withValues(alpha: 0.1),
+          leading: const Icon(Icons.error_outline_rounded,
+              color: AppColors.error, size: 22),
+          title: '${activity.sourceLabel} import failed',
+          body: activity.message,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (onRetry != null)
+                TextButton(
+                  onPressed: onRetry,
+                  child: Text(
+                    'Retry',
+                    style: TextStyle(
+                        color: tokens.accent, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                icon: Icon(Icons.close_rounded, size: 18, color: tokens.textMuted),
+                onPressed: onDismiss,
+              ),
+            ],
+          ),
+        );
+    }
+  }
+
+  Widget _shell({
+    required Color border,
+    required Color fill,
+    required Widget leading,
+    required String title,
+    required String body,
+    required Widget? trailing,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          leading,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.textPrimary,
+                  ),
+                ),
+                if (body.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 12, height: 1.35, color: tokens.textSecondary),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (trailing != null) trailing,
+        ],
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Filter pill
+// ===========================================================================
+
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
+    required this.label,
+    required this.selected,
+    required this.tokens,
+    required this.onTap,
+  });
+  final String label;
+  final bool selected;
+  final _Tokens tokens;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected ? tokens.accent : tokens.elevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected ? tokens.accent : tokens.cardBorder,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (selected) ...[
+                  const Icon(Icons.check_rounded, size: 15, color: Colors.white),
+                  const SizedBox(width: 5),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : tokens.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Paste sheet — text or link entry for the AI import
+// ===========================================================================
+
+class _PasteSheet extends StatefulWidget {
+  const _PasteSheet({required this.initialText});
+  final String initialText;
+
+  static Future<String?> show(BuildContext context, {required String initialText}) {
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _PasteSheet(initialText: initialText),
+    );
+  }
+
+  @override
+  State<_PasteSheet> createState() => _PasteSheetState();
+}
+
+class _PasteSheetState extends State<_PasteSheet> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.initialText);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Paste text or a link',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'A workout plan from ChatGPT, a recipe, a YouTube link — anything.',
+                style: TextStyle(fontSize: 12.5, color: textMuted),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _ctrl,
+                autofocus: true,
+                minLines: 3,
+                maxLines: 8,
+                decoration: InputDecoration(
+                  hintText: 'Paste here…',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(backgroundColor: accent),
+                    icon: const Icon(Icons.auto_awesome, size: 16),
+                    label: const Text('Import'),
+                    onPressed: () => Navigator.pop(context, _ctrl.text),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
 // Row card
 // ===========================================================================
 
 class _ImportsRowCard extends StatelessWidget {
   const _ImportsRowCard({
     required this.row,
+    required this.tokens,
     required this.onTap,
     required this.onLongPress,
     required this.onRetry,
@@ -526,6 +1493,7 @@ class _ImportsRowCard extends StatelessWidget {
     required this.selected,
   });
   final ImportHistoryRow row;
+  final _Tokens tokens;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final VoidCallback onRetry;
@@ -536,6 +1504,7 @@ class _ImportsRowCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isFailed = row.status == 'failed' || row.status == 'interrupted';
+    final isPending = row.status == 'received' || row.status == 'processing';
     final category = categoryFromString(row.tags['category'] as String?) ?? ImportCategory.other;
     final format = formatFromString(row.tags['format'] as String? ?? row.sourceKind) ?? ImportFormat.image;
     final origin = originLabel(row.sourceOrigin);
@@ -543,12 +1512,18 @@ class _ImportsRowCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.dividerColor),
-          color: selected ? theme.colorScheme.primaryContainer : theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected
+                ? tokens.accent.withValues(alpha: 0.6)
+                : tokens.cardBorder,
+          ),
+          color: selected
+              ? tokens.accent.withValues(alpha: 0.12)
+              : tokens.elevated,
         ),
         padding: const EdgeInsets.all(12),
         child: Row(
@@ -560,9 +1535,10 @@ class _ImportsRowCard extends StatelessWidget {
                 child: Icon(
                   selected ? Icons.check_circle : Icons.radio_button_unchecked,
                   size: 22,
+                  color: selected ? tokens.accent : tokens.textMuted,
                 ),
               ),
-            _iconForFormat(format, theme),
+            _iconForFormat(format, isPending),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -572,9 +1548,13 @@ class _ImportsRowCard extends StatelessWidget {
                     _title(context, row),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
@@ -582,25 +1562,34 @@ class _ImportsRowCard extends StatelessWidget {
                       _TagPill(label: categoryLabel(category), color: theme.colorScheme.primaryContainer),
                       _TagPill(label: formatLabel(format), color: theme.colorScheme.secondaryContainer),
                       _TagPill(label: origin, color: theme.colorScheme.tertiaryContainer),
+                      if (isPending)
+                        _TagPill(
+                          label: 'Processing…',
+                          color: tokens.accent.withValues(alpha: 0.35),
+                        ),
                     ],
                   ),
                   if (isFailed) ...[
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.error_outline, size: 14, color: theme.colorScheme.error),
+                        const Icon(Icons.error_outline, size: 14, color: AppColors.error),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             row.errorMessage ?? AppLocalizations.of(context).importsRowImportFailed,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+                            style: const TextStyle(fontSize: 12, color: AppColors.error),
                           ),
                         ),
                         TextButton(
                           onPressed: onRetry,
-                          child: Text(AppLocalizations.of(context).importsActionRetry),
+                          child: Text(
+                            AppLocalizations.of(context).importsActionRetry,
+                            style: TextStyle(
+                                color: tokens.accent, fontWeight: FontWeight.w600),
+                          ),
                         ),
                       ],
                     ),
@@ -643,7 +1632,7 @@ class _ImportsRowCard extends StatelessWidget {
     return 'Imported ${row.sourceKind}';
   }
 
-  Widget _iconForFormat(ImportFormat f, ThemeData theme) {
+  Widget _iconForFormat(ImportFormat f, bool isPending) {
     IconData ic;
     switch (f) {
       case ImportFormat.image:    ic = Icons.image_outlined;          break;
@@ -657,10 +1646,16 @@ class _ImportsRowCard extends StatelessWidget {
     return Container(
       width: 44, height: 44,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        color: tokens.accent.withValues(alpha: 0.12),
       ),
-      child: Icon(ic, size: 22),
+      child: isPending
+          ? Padding(
+              padding: const EdgeInsets.all(12),
+              child: CircularProgressIndicator(
+                strokeWidth: 2, color: tokens.accent),
+            )
+          : Icon(ic, size: 22, color: tokens.accent),
     );
   }
 }
@@ -674,7 +1669,7 @@ class _TagPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.6),
+        color: color.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(label, style: Theme.of(context).textTheme.labelSmall),
@@ -743,6 +1738,7 @@ class _LimitsSheet extends StatelessWidget {
     _FormatRow('🔗 URL (anywhere on the web)', 'Recipe sites · YouTube · Reddit · X — each parsed for what it actually contains. Instagram and TikTok work best when you share directly from inside the app, not by pasting a link.'),
     _FormatRow('📝 Text (ChatGPT, Claude, Perplexity, Notes, iMessage)', 'Workout plans · Recipes · Macros · Meal plans · Tips.'),
     _FormatRow('📄 PDF', 'Recipe cookbooks · Workout programs · Lab results · Nutrition guides.'),
+    _FormatRow('📊 App exports', 'MyFitnessPal · MacroFactor · Cronometer · Apple Health nutrition history, plus workout-history CSVs — via the "Bring your data" cards.'),
   ];
 
   static const _limits = <_LimitRow>[
@@ -794,7 +1790,7 @@ class _LimitsSheet extends StatelessWidget {
           Text(
             AppLocalizations.of(context).importsLimitsFooter,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 24),

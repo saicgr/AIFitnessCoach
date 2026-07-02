@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../data/providers/source_import_activity_provider.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
@@ -248,21 +249,7 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
       );
     }
 
-    final result = _result ?? const {};
-    final imported = _asInt(result['imported']);
-    final skipped = _asInt(result['skipped']);
-    final replaced = _asInt(result['replaced']);
-    final failed = _asInt(result['failed']);
-    final weightImported = _asInt(result['weight_imported']);
-
-    final lines = <String>[
-      if (imported > 0) '$imported ${imported == 1 ? 'day' : 'days'} imported',
-      if (replaced > 0) '$replaced replaced',
-      if (skipped > 0) '$skipped skipped',
-      if (weightImported > 0)
-        '$weightImported weight ${weightImported == 1 ? 'entry' : 'entries'}',
-      if (failed > 0) '$failed failed',
-    ];
+    final lines = _summaryLines(_result ?? const {});
 
     return Center(
       child: Padding(
@@ -315,6 +302,11 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
   Future<void> _startImport(_ImportSource source) async {
     HapticService.light();
     final apiClient = ref.read(apiClientProvider);
+    // Captured up-front so the tail of the flow (commit + poll to done) can
+    // finish headlessly after this screen is popped — the Imports screen's
+    // activity banner keeps showing live progress and flips to the result.
+    final activity = ref.read(sourceImportActivityProvider.notifier);
+    final container = ProviderScope.containerOf(context, listen: false);
     final userId = await apiClient.getUserId();
     if (userId == null) {
       _showSnack('Please sign in to import data.');
@@ -351,6 +343,11 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
       _result = null;
       _error = null;
     });
+    activity.start(
+      sourceId: source.id,
+      sourceLabel: source.label,
+      message: 'Reading your ${source.label} data…',
+    );
 
     try {
       // 1. Kick off the async parse job.
@@ -376,9 +373,14 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
       }
       final parsed = NutritionImportPreview.fromJson(previewJson);
 
-      if (!mounted) return;
+      if (!mounted) {
+        // User left before the preview — nothing was committed.
+        activity.cancel();
+        return;
+      }
       // Drop back to idle behind the modal so a cancel returns to the picker.
       setState(() => _phase = _Phase.idle);
+      activity.progress('Waiting for your review…');
 
       // 3. Show the preview sheet and collect the user's choices.
       final choice = await showNutritionImportPreviewSheet(
@@ -386,15 +388,21 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
         preview: parsed,
         sourceLabel: source.label,
       );
-      if (choice == null) return; // cancelled
+      if (choice == null) {
+        activity.cancel();
+        return; // cancelled
+      }
 
-      if (!mounted) return;
-      setState(() {
-        _phase = _Phase.working;
-        _statusMessage = 'Importing your meals…';
-      });
+      if (mounted) {
+        setState(() {
+          _phase = _Phase.working;
+          _statusMessage = 'Importing your meals…';
+        });
+      }
+      activity.progress('Importing your meals…');
 
-      // 4. Commit, then poll to done.
+      // 4. Commit, then poll to done. Runs to completion even if this
+      // screen is popped — the activity banner carries the outcome.
       await apiClient.post<Map<String, dynamic>>(
         '/nutrition/import/$jobId/commit',
         data: {
@@ -415,10 +423,12 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
 
       // 5. Refresh anything that renders the imported dates.
       _invalidateForRange(
+        container,
         parsed.dateRangeLo,
         parsed.dateRangeHi,
         weightImported: _asInt(result['weight_imported']) > 0,
       );
+      activity.succeed(_summaryLines(result));
 
       if (!mounted) return;
       setState(() {
@@ -426,6 +436,7 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
         _result = result;
       });
     } on _ImportFailure catch (e) {
+      activity.fail(e.message);
       if (!mounted) return;
       setState(() {
         _phase = _Phase.done;
@@ -433,10 +444,12 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
       });
     } catch (e) {
       debugPrint('❌ [NutritionImport] $e');
+      final friendly = _friendlyError(e);
+      activity.fail(friendly);
       if (!mounted) return;
       setState(() {
         _phase = _Phase.done;
-        _error = _friendlyError(e);
+        _error = friendly;
       });
     }
   }
@@ -502,12 +515,16 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
   /// Invalidate every per-date nutrition provider in the imported range plus
   /// the singleton meta provider so freshly imported dates render. Weight
   /// imports additionally refresh the measurements/trends caches.
+  ///
+  /// Takes the [ProviderContainer] (captured at flow start) instead of `ref`
+  /// because the commit tail may finish after this screen is disposed.
   void _invalidateForRange(
+    ProviderContainer container,
     String? lo,
     String? hi, {
     required bool weightImported,
   }) {
-    ref.invalidate(nutritionMetaProvider);
+    container.invalidate(nutritionMetaProvider);
 
     final start = _parseDate(lo);
     final end = _parseDate(hi) ?? start;
@@ -518,17 +535,17 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
       var cursor = from;
       var guard = 0;
       while (!cursor.isAfter(to) && guard < 1000) {
-        ref.invalidate(dailyNutritionProvider(_dateKey(cursor)));
+        container.invalidate(dailyNutritionProvider(_dateKey(cursor)));
         cursor = cursor.add(const Duration(days: 1));
         guard++;
       }
     } else {
       // No range — refresh today at least.
-      ref.invalidate(dailyNutritionProvider(todayNutritionKey()));
+      container.invalidate(dailyNutritionProvider(todayNutritionKey()));
     }
 
     if (weightImported) {
-      ref.invalidate(measurementsProvider);
+      container.invalidate(measurementsProvider);
     }
   }
 
@@ -556,6 +573,24 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
     if (v is int) return v;
     if (v is num) return v.toInt();
     return int.tryParse('${v ?? ''}') ?? 0;
+  }
+
+  /// Human-readable summary lines for a commit `result` block. Shared by
+  /// the in-screen done state and the Imports screen's activity banner.
+  static List<String> _summaryLines(Map<String, dynamic> result) {
+    final imported = _asInt(result['imported']);
+    final skipped = _asInt(result['skipped']);
+    final replaced = _asInt(result['replaced']);
+    final failed = _asInt(result['failed']);
+    final weightImported = _asInt(result['weight_imported']);
+    return <String>[
+      if (imported > 0) '$imported ${imported == 1 ? 'day' : 'days'} imported',
+      if (replaced > 0) '$replaced replaced',
+      if (skipped > 0) '$skipped skipped',
+      if (weightImported > 0)
+        '$weightImported weight ${weightImported == 1 ? 'entry' : 'entries'}',
+      if (failed > 0) '$failed failed',
+    ];
   }
 
   static DateTime? _parseDate(String? s) {

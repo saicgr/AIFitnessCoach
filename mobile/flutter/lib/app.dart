@@ -33,11 +33,7 @@ import 'data/services/workout_notification_service.dart';
 import 'navigation/app_router.dart';
 import 'screens/ai_settings/ai_settings_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
-import 'screens/share/share_router_screen.dart';
-import 'screens/share/share_routing_table.dart';
-import 'screens/share/workout_import_review_screen.dart';
-import 'screens/share/meal_plan_import_review_screen.dart';
-import 'screens/share/url_processing_screen.dart';
+import 'screens/share/share_dispatch.dart';
 import 'screens/workout/widgets/workout_mini_player.dart';
 import 'widgets/floating_chat/floating_chat_overlay.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -225,132 +221,14 @@ class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
     try {
       // Defer until the router context exists (cold-start safety).
       await WidgetsBinding.instance.endOfFrame;
-      final router = ref.read(routerProvider);
-      final ctx = router.routerDelegate.navigatorKey.currentContext;
-      if (ctx == null) return;
-      // URL payloads get the dedicated UrlProcessingScreen for richer
-      // SSE progress (chapters, exercise-found feed, etc.). Everything
-      // else uses the generic ShareRouterScreen.
-      final ShareRouteResult? result;
-      if (payload.kind == SharedPayloadKind.url && payload.urls.isNotEmpty) {
-        result = await Navigator.of(ctx, rootNavigator: true)
-            .push<ShareRouteResult>(MaterialPageRoute(
-          builder: (_) => UrlProcessingScreen(
-            url: payload.urls.first,
-            payload: payload,
-          ),
-          fullscreenDialog: true,
-        ));
-      } else {
-        result = await Navigator.of(ctx, rootNavigator: true)
-            .push<ShareRouteResult>(MaterialPageRoute(
-          builder: (_) => ShareRouterScreen(payload: payload),
-          fullscreenDialog: true,
-        ));
-      }
-      if (result != null) {
-        _dispatchShareRoute(result);
-      }
+      // Push the processing screen, await the decision, route. The same
+      // dispatcher backs the Imports screen's in-app "Import with AI".
+      await ShareDispatcher.run(ref, payload);
       // Tell the plugin we've handled the initial intent so a re-open
       // doesn't replay the share.
       ref.read(incomingShareServiceProvider).resetInitial();
     } finally {
       _incomingShareDispatching = false;
-    }
-  }
-
-  void _pushWorkoutReview(ShareRouteResult result) {
-    final router = ref.read(routerProvider);
-    final ctx = router.routerDelegate.navigatorKey.currentContext;
-    if (ctx == null) return;
-    Navigator.of(ctx, rootNavigator: true).push(MaterialPageRoute(
-      builder: (_) => WorkoutImportReviewScreen(
-        sharedItemId: result.decision?.sharedItemId ?? '',
-        initialPayload: _resultPayload(result),
-      ),
-    ));
-  }
-
-  void _pushMealPlanReview(ShareRouteResult result) {
-    final router = ref.read(routerProvider);
-    final ctx = router.routerDelegate.navigatorKey.currentContext;
-    if (ctx == null) return;
-    Navigator.of(ctx, rootNavigator: true).push(MaterialPageRoute(
-      builder: (_) => MealPlanImportReviewScreen(
-        sharedItemId: result.decision?.sharedItemId ?? '',
-        initialPayload: _resultPayload(result),
-      ),
-    ));
-  }
-
-  Map<String, dynamic> _resultPayload(ShareRouteResult result) {
-    // ShareRouteResult only carries the decision + original payload. The
-    // server-side SSE `done` event's `payload` is captured by the router
-    // screen inside `ShareDecision` — store/retrieve it via a small map.
-    // For v1 we surface the source URL + raw text + a best-effort
-    // exercises stub so the review screens have something to render.
-    final p = <String, dynamic>{};
-    if (result.payload.text != null) p['body'] = result.payload.text;
-    if (result.payload.urls.isNotEmpty) p['source_url'] = result.payload.urls.first;
-    return p;
-  }
-
-  void _dispatchShareRoute(ShareRouteResult result) {
-    final router = ref.read(routerProvider);
-    final payload = result.payload;
-    switch (result.destination) {
-      case ShareDestination.logFood:
-        router.go('/nutrition?tab=log');
-        break;
-      case ShareDestination.scanMenu:
-        // Menu scan reuses the in-chat menu flow; route to chat with the
-        // shared photo attached. Photo upload flow lives in chat.
-        router.go('/nutrition?tab=menu-scan');
-        break;
-      case ShareDestination.parseAppScreenshot:
-        router.go('/nutrition?tab=log');
-        break;
-      case ShareDestination.scanNutritionLabel:
-        router.go('/nutrition?tab=log');
-        break;
-      case ShareDestination.importRecipeUrl:
-      case ShareDestination.importRecipePaste:
-      case ShareDestination.importRecipePhoto:
-        // Recipe importer — pre-fills via Riverpod-scoped state. For v1 we
-        // navigate to the importer route and pass payload bits through the
-        // query string. The recipe import screen's constructor already
-        // supports initialUrl / initialText / initialTab.
-        if (payload.urls.isNotEmpty) {
-          router.go('/nutrition/recipes/import?tab=0&url=${Uri.encodeComponent(payload.urls.first)}');
-        } else if (payload.text != null && payload.text!.isNotEmpty) {
-          router.go('/nutrition/recipes/import?tab=2&text=${Uri.encodeComponent(payload.text!)}');
-        } else {
-          router.go('/nutrition/recipes/import?tab=1');
-        }
-        break;
-      case ShareDestination.importMealPlan:
-        _pushMealPlanReview(result);
-        break;
-      case ShareDestination.importWorkoutReview:
-        _pushWorkoutReview(result);
-        break;
-      case ShareDestination.formCheck:
-      case ShareDestination.importEquipment:
-        router.go('/exercises/import');
-        break;
-      case ShareDestination.progressUpload:
-        router.go('/progress?tab=photos');
-        break;
-      case ShareDestination.pantryLog:
-        router.go('/nutrition?tab=pantry');
-        break;
-      case ShareDestination.savedTip:
-        router.go('/chat');
-        break;
-      case ShareDestination.chat:
-      case ShareDestination.chooser:
-        router.go('/chat');
-        break;
     }
   }
 
