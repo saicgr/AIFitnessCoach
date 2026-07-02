@@ -31,6 +31,30 @@ router = APIRouter(prefix="/progress", tags=["Progress"])
 # weekly totals from `muscle_group_weekly_volume_by_gym` instead.
 _MUSCLE_WEEKLY_BY_GYM = "muscle_group_weekly_volume_by_gym"
 
+# The volume views key muscles by exercise_library `display_body_part`
+# ("quadriceps", "lower back", "hips"...), while strength_scores uses the
+# 16-token CHECK vocabulary ("quads", "lower_back"...). Normalize volume keys
+# to the score vocabulary before merging so the overload dashboard's muscle
+# list doesn't carry duplicate/zero-score entries for the same muscle
+# ("quadriceps 0" next to "quads 48").
+_VOLUME_MG_ALIASES = {
+    "quadriceps": "quads",
+    "lower back": "lower_back",
+    "hips": "glutes",
+    "rotator cuff": "shoulders",
+    "abdominals": "core",
+    "abs": "core",
+}
+# Non-muscle buckets that would render as meaningless radar entries.
+_VOLUME_MG_SKIP = {"full body", "other", "cardio", "neck", ""}
+
+
+def _normalize_volume_muscle(mg) -> Optional[str]:
+    key = str(mg or "").strip().lower()
+    if key in _VOLUME_MG_SKIP:
+        return None
+    return _VOLUME_MG_ALIASES.get(key, key)
+
 # Thread pool for running synchronous Supabase calls concurrently
 _db_executor = ThreadPoolExecutor(max_workers=10)
 logger = get_logger(__name__)
@@ -939,14 +963,21 @@ async def get_overload_dashboard(
         delta_365d = _delta_since(sparkline, overall_score, now_utc, 365)
 
         # ── Per-muscle volume series ─────────────────────────────────────────
-        vol_by_muscle: Dict[str, List[OverloadSeriesPoint]] = {}
+        # Normalize view keys to the strength-score vocabulary and sum any
+        # collisions (e.g. "hips" + "glutes" both → glutes for one week).
+        vol_acc: Dict[str, Dict[str, float]] = {}
         for r in vol_res.data or []:
-            vol_by_muscle.setdefault(r["muscle_group"], []).append(
-                OverloadSeriesPoint(
-                    date=str(r.get("week_start") or "")[:10],
-                    value=float(r.get("total_volume_kg") or 0),
-                )
-            )
+            mg = _normalize_volume_muscle(r.get("muscle_group"))
+            if mg is None:
+                continue
+            day = str(r.get("week_start") or "")[:10]
+            by_day = vol_acc.setdefault(mg, {})
+            by_day[day] = by_day.get(day, 0.0) + float(r.get("total_volume_kg") or 0)
+        vol_by_muscle: Dict[str, List[OverloadSeriesPoint]] = {
+            mg: [OverloadSeriesPoint(date=d, value=round(v, 2))
+                 for d, v in sorted(days.items())]
+            for mg, days in vol_acc.items()
+        }
 
         muscles: List[OverloadMuscle] = []
         all_mgs = set(by_muscle) | set(score_series_by_muscle) | set(vol_by_muscle)
