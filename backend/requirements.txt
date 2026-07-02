@@ -60,6 +60,11 @@ firebase-admin==6.5.0
 mangum==0.17.0
 boto3==1.34.0
 
+# GCS transient media bucket for Vertex video analysis (core/gcs_media.py).
+# Already a transitive dep of firebase-admin; pinned explicitly because
+# form analysis imports it directly.
+google-cloud-storage>=2.16.0
+
 # Excel processing
 pandas==2.1.4
 openpyxl==3.1.2

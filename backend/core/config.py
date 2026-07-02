@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     gcp_location: str = "global"
     # Base64-encoded service account JSON
     gcp_credentials_json_b64: Optional[str] = None
+    # Transient GCS bucket for Vertex video analysis (form check). Defaults to
+    # "{gcp_project_id}-zealova-media" and is auto-created on first use with a
+    # 1-day auto-delete lifecycle — override only to use a pre-provisioned
+    # bucket. See core/gcs_media.py.
+    gcs_media_bucket: Optional[str] = None
     # Emergency escape hatch. Never leave this true. Only flip for a short
     # window under auditor supervision (e.g. Vertex outage).
     allow_gemini_dev_api_in_prod: bool = False

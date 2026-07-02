@@ -1,12 +1,17 @@
 """
 Form analysis service using Gemini Vision.
 
-Supports two video analysis paths:
-  1. Key frame extraction (default for long videos / multi-video comparison)
-     - Extracts JPEG frames via FFmpeg, sends as image parts
-     - Eliminates Gemini Files API upload/polling latency
-     - ~50% token savings vs full video
-  2. Gemini Files API (fallback for short videos / when keyframes disabled)
+Video analysis paths, in preference order:
+  1. GCS → Vertex (ZDR): the S3 object is STREAMED into a transient GCS bucket
+     (single pass, no temp file) and Vertex reads the gs:// URI directly.
+     Zero-data-retention, no Files-API PROCESSING wait, Vertex form cache
+     applies. Multi-video comparisons transfer all videos in parallel.
+  2. Key frame extraction (multi-video comparison default)
+     - Extracts JPEG frames via FFmpeg, sends as inline image parts
+  3. Gemini Files API (Developer API) — only when Vertex/GCS is not configured
+     or a GCS transfer fails. Generation then runs on the SAME Developer
+     client (Vertex cannot read generativelanguage file URIs) without the
+     Vertex-created cache.
 
 Also integrates Gemini context caching for form analysis prompts.
 
@@ -28,6 +33,7 @@ import boto3
 from google.genai import types as genai_types
 
 from core.config import get_settings
+from core.gcs_media import delete_gcs_object, gcs_media_available, stream_s3_to_gcs
 from core.gemini_client import get_genai_client, get_genai_files_client
 from core.logger import get_logger
 
@@ -364,6 +370,24 @@ def _get_form_cache() -> Optional[str]:
         return None
 
 
+def _blocked_form_result(reason: str) -> Dict[str, Any]:
+    """Standard honest-empty payload for a safety-blocked / unusable response."""
+    return {
+        "content_type": "not_exercise",
+        "not_exercise_reason": reason,
+        "exercise_identified": "N/A",
+        "rep_count": 0,
+        "form_score": 0,
+        "overall_assessment": "",
+        "issues": [],
+        "positives": [],
+        "breathing_analysis": {"pattern_observed": "N/A", "is_correct": True, "recommendation": ""},
+        "tempo_analysis": {"observed_tempo": "N/A", "is_appropriate": True, "recommendation": ""},
+        "recommendations": [],
+        "video_quality": {"is_analyzable": False, "confidence": "low", "issues": [], "rerecord_suggestion": ""},
+    }
+
+
 class FormAnalysisService:
     """Service for analyzing exercise form from video/image media."""
 
@@ -590,6 +614,69 @@ class FormAnalysisService:
             result["rep_count"] = 0
         return result
 
+    async def _analyze_via_gcs(
+        self,
+        s3_key: str,
+        mime_type: str,
+        exercise_name: Optional[str],
+        user_context: Optional[str],
+    ) -> Dict[str, Any]:
+        """ZDR path: stream the S3 object into GCS (single pass, no temp file)
+        and analyze on Vertex, which reads the gs:// URI directly — no
+        Files-API upload or PROCESSING poll, and the Vertex form cache applies.
+        """
+        gs_uri = await stream_s3_to_gcs(self._s3_client, self._bucket, s3_key, mime_type)
+        try:
+            client = get_genai_client()
+            settings = get_settings()
+
+            cache_name = _get_form_cache()
+            prompt = (
+                _build_form_analysis_prompt(exercise_name, user_context)
+                if cache_name
+                else _build_form_analysis_prompt_full(exercise_name, user_context)
+            )
+            parts = [
+                genai_types.Part.from_uri(file_uri=gs_uri, mime_type=mime_type),
+                genai_types.Part.from_text(text=prompt),
+            ]
+
+            gen_config = genai_types.GenerateContentConfig(
+                temperature=0.1,
+                response_mime_type="application/json",
+                response_schema=FORM_ANALYSIS_SCHEMA,
+            )
+            if cache_name:
+                gen_config.cached_content = cache_name
+
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=settings.gemini_model,
+                contents=[genai_types.Content(parts=parts)],
+                config=gen_config,
+            )
+
+            response_text = None
+            try:
+                response_text = response.text
+            except (ValueError, AttributeError) as e:
+                logger.debug(f"Failed to get response text: {e}")
+
+            if not response_text:
+                logger.warning(f"Gemini blocked form analysis response for {gs_uri}")
+                return _blocked_form_result(
+                    "I wasn't able to analyze this video. It may not contain "
+                    "exercise content, or the content couldn't be processed."
+                )
+
+            logger.info(f"Vertex/GCS form analysis complete ({len(response_text)} chars)")
+            result = json.loads(response_text)
+            if "rep_count" not in result:
+                result["rep_count"] = 0
+            return result
+        finally:
+            await delete_gcs_object(gs_uri)
+
     async def _do_analyze(
         self,
         s3_key: str,
@@ -598,7 +685,22 @@ class FormAnalysisService:
         exercise_name: Optional[str],
         user_context: Optional[str],
     ) -> Dict[str, Any]:
-        """Download from S3 then send to Gemini via the Files API."""
+        """Analyze a single S3 video/image — GCS→Vertex first, Files API second."""
+        # Preferred ZDR path — see _analyze_via_gcs. Any failure there (bucket
+        # permissions, transfer error) falls back to the Files API path below
+        # so form check never hard-fails on GCS provisioning issues.
+        if gcs_media_available():
+            try:
+                return await self._analyze_via_gcs(s3_key, mime_type, exercise_name, user_context)
+            except json.JSONDecodeError:
+                raise
+            except Exception as e:
+                logger.error(
+                    f"[GCS] Vertex/GCS form analysis failed ({e}); falling back "
+                    "to the Gemini Files API (Developer) path",
+                    exc_info=True,
+                )
+
         tmp_path = None
         gemini_file = None
 
@@ -761,6 +863,8 @@ class FormAnalysisService:
         """Internal comparison implementation with keyframe + cache support."""
         tmp_paths = []
         gemini_files = []
+        gcs_uris: list[str] = []
+        use_gcs = False
         files_client = get_genai_files_client()
         client = get_genai_client()
         settings = get_settings()
@@ -775,11 +879,17 @@ class FormAnalysisService:
         except ImportError:
             use_keyframes = False
 
-        try:
-            # Step 1: Download all videos
+        async def _download_all_to_temp() -> None:
             for i, (s3_key, mime_type) in enumerate(zip(s3_keys, mime_types)):
                 tmp_path = await self._download_s3_to_temp(s3_key, mime_type, prefix=f"compare_{i}_")
                 tmp_paths.append(tmp_path)
+
+        try:
+            # Step 1: Download videos locally only when a local file is needed
+            # (keyframe extraction, or the Files-API fallback when GCS is off).
+            # The GCS path streams S3 → GCS directly without touching disk.
+            if use_keyframes or not gcs_media_available():
+                await _download_all_to_temp()
 
             if use_keyframes:
                 # Keyframe path: extract frames from each video
@@ -802,7 +912,34 @@ class FormAnalysisService:
                         parts = []  # Reset parts
                         break
 
-            if not use_keyframes:
+            if not use_keyframes and gcs_media_available():
+                # ZDR path — stream every video S3 → GCS IN PARALLEL and let
+                # Vertex read the gs:// URIs directly (form cache applies).
+                try:
+                    logger.info(f"Streaming {len(s3_keys)} videos to GCS in parallel")
+                    gcs_uris = list(await asyncio.gather(*[
+                        stream_s3_to_gcs(self._s3_client, self._bucket, s3_key, mime_type)
+                        for s3_key, mime_type in zip(s3_keys, mime_types)
+                    ]))
+                    parts = []
+                    for i, (gs_uri, mime_type, label) in enumerate(zip(gcs_uris, mime_types, labels)):
+                        parts.append(genai_types.Part.from_text(
+                            text=f"\n--- Video {i+1} (labeled: '{label}') ---\n"
+                        ))
+                        parts.append(genai_types.Part.from_uri(file_uri=gs_uri, mime_type=mime_type))
+                    use_gcs = True
+                except Exception as e:
+                    logger.error(
+                        f"[GCS] Comparison transfer failed ({e}); falling back to Files API",
+                        exc_info=True,
+                    )
+                    use_gcs = False
+                    # The Files-API fallback uploads from local paths — fetch
+                    # them now if the GCS path skipped the local download.
+                    if not tmp_paths:
+                        await _download_all_to_temp()
+
+            if not use_keyframes and not use_gcs:
                 # Gemini Files API fallback
                 logger.info(f"Using Gemini Files API for {len(s3_keys)}-video comparison")
                 for i, (tmp_path, mime_type, label) in enumerate(zip(tmp_paths, mime_types, labels)):
@@ -846,12 +983,13 @@ class FormAnalysisService:
                         mime_type=mime_type,
                     ))
 
-            # Build prompt and config. The keyframe branch sends inline JPEG
-            # bytes, so it runs on the main (Vertex) client and can use the
+            # Build prompt and config. Keyframes (inline bytes) and GCS
+            # (gs:// URIs) both run on the main Vertex client and can use the
             # form cache. The Files-API fallback's file URIs only exist on the
             # Developer API — generation must run on the files client there,
             # and the Vertex-created cache cannot be attached to that call.
-            cache_name = _get_form_cache() if use_keyframes else None
+            on_vertex = use_keyframes or use_gcs
+            cache_name = _get_form_cache() if on_vertex else None
             prompt = _build_form_comparison_prompt(labels, exercise_name, user_context, using_keyframes=use_keyframes)
             parts.append(genai_types.Part.from_text(text=prompt))
 
@@ -863,7 +1001,7 @@ class FormAnalysisService:
             if cache_name:
                 gen_config.cached_content = cache_name
 
-            gen_client = client if use_keyframes else files_client
+            gen_client = client if on_vertex else files_client
             response = await asyncio.to_thread(
                 gen_client.models.generate_content,
                 model=settings.gemini_model,
@@ -922,3 +1060,8 @@ class FormAnalysisService:
                         logger.debug(f"Cleaned up Gemini file: {gf.name}")
                     except Exception as e:
                         logger.warning(f"Failed to clean up Gemini file: {e}", exc_info=True)
+
+            # Clean up transferred GCS objects (best effort — the bucket's
+            # 1-day lifecycle rule is the backstop)
+            for gs_uri in gcs_uris:
+                await delete_gcs_object(gs_uri)

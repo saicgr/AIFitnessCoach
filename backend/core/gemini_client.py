@@ -74,6 +74,15 @@ def _setup_credentials() -> None:
         logger.error(f"Failed to write service account credentials: {e}", exc_info=True)
 
 
+def ensure_gcp_credentials() -> None:
+    """Public accessor for [_setup_credentials] — call before constructing any
+    non-genai GCP client (e.g. google-cloud-storage) so it picks up the
+    service-account file + project env vars the same way the Gemini SDK does.
+    No-op when Vertex isn't configured."""
+    if get_settings().gcp_project_id:
+        _setup_credentials()
+
+
 def get_genai_client() -> genai.Client:
     """Return a google.genai Client.
 
