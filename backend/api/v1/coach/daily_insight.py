@@ -56,6 +56,34 @@ logger = logging.getLogger("coach_daily_insight")
 router = APIRouter()
 
 
+async def invalidate_daily_insight_cache(user_id: str) -> None:
+    """Drop the user's cached daily-insight rows for (roughly) today so the
+    next Coach open regenerates with fresh stats.
+
+    Called after food-log mutations: the insight body bakes in stat prose
+    ("Today: You logged 489 calories…"), so a cached row must not outlive
+    the meal it cites — deleting a meal and still being told you ate it
+    reads as the coach lying. Timezone-blind on purpose: deleting every row
+    with local_date >= UTC-yesterday covers all client timezones without a
+    per-call tz lookup (rows for other days are already dead weight).
+    Best-effort — a failure here must never fail the food write, and the
+    regeneration cost is bounded by the surface's daily USD cap.
+    """
+    try:
+        sb = get_supabase_db()
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=1)).date().isoformat()
+
+        def _delete():
+            sb.client.table("coach_daily_insights").delete().eq(
+                "user_id", user_id
+            ).gte("local_date", cutoff).execute()
+
+        # Supabase client is sync — keep the blocking round-trip off the loop.
+        await asyncio.get_event_loop().run_in_executor(None, _delete)
+    except Exception as e:
+        logger.debug(f"[daily_insight] cache invalidation skipped for {user_id}: {e}")
+
+
 # ---------------------------------------------------------------------------
 # Hard cost cap per user per day for this surface.
 # Sized for ~25 calls/day at p99 (typical call ≈ $0.0004 — Flash-lite,

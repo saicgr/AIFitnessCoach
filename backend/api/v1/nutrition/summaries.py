@@ -53,6 +53,17 @@ async def invalidate_daily_summary_cache(user_id: str, date: str = None):
     else:
         await _daily_summary_cache.delete_prefix(f"{user_id}:")
 
+    # Cascade: the coach daily insight / evening recap bakes today's nutrition
+    # numbers into its cached prose ("Today: You logged 489 calories…"), so any
+    # mutation that stales the summary also stales the insight. Without this,
+    # a deleted meal keeps being cited by the coach until the next time-phase
+    # rollover. Best-effort — never fail the caller over it.
+    try:
+        from api.v1.coach.daily_insight import invalidate_daily_insight_cache
+        await invalidate_daily_insight_cache(user_id)
+    except Exception as e:
+        logger.debug(f"daily-insight cascade invalidation skipped for {user_id}: {e}")
+
 async def _apply_burn_fields(
     db, user_id: str, local_date: str, user_tz: str, response: "DailyNutritionResponse"
 ) -> None:
