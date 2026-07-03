@@ -1230,7 +1230,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     final messenger = ScaffoldMessenger.of(context);
     bool undone = false;
     messenger.clearSnackBars();
-    messenger.showSnackBar(
+    final snackBarController = messenger.showSnackBar(
       SnackBar(
         content: Text(AppLocalizations.of(context).nutritionMealDeleted),
         action: SnackBarAction(
@@ -1247,6 +1247,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
     // After the undo window, commit the network delete (or skip if undone).
     Future<void>.delayed(const Duration(seconds: 4), () {
+      // Force-dismiss the undo toast. The SnackBar's own 4s duration only
+      // counts down after its entrance animation completes — if this tab goes
+      // offstage in the shell's IndexedStack (user hops to Coach right after
+      // deleting), TickerMode freezes that animation and the toast lingers
+      // until manually swiped. close() is safe if it already dismissed.
+      if (!undone) snackBarController.close();
       if (undone || !mounted) return;
       ref.read(posthogServiceProvider).capture(
         eventName: 'food_log_deleted',

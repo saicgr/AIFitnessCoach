@@ -220,6 +220,14 @@ class MainShell extends ConsumerWidget {
     if (tourState.isVisible) {
       ref.read(appTourControllerProvider.notifier).abort();
     }
+    // Dismiss any toast from the outgoing tab. A SnackBar's auto-dismiss
+    // timer only starts once its entrance animation completes; when the
+    // owning branch goes offstage in the IndexedStack, TickerMode freezes
+    // that animation and the toast lingers indefinitely (e.g. the "Meal
+    // deleted · Undo" bar surviving into the Coach tab). Undo-window logic
+    // is unaffected — those flows commit on their own timers, not on the
+    // snackbar's visibility.
+    ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
     if (navigationShell != null) {
       navigationShell!.goBranch(
         index,
