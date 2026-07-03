@@ -25578,6 +25578,15 @@ class AppLocalizationsUr extends AppLocalizations {
   String get nutritionShowcaseDinner => 'رات کا کھانا';
 
   @override
+  String get nutritionShowcaseFieldCarbs => 'carbs';
+
+  @override
+  String get nutritionShowcaseFieldFat => 'fat';
+
+  @override
+  String get nutritionShowcaseFieldProtein => 'protein';
+
+  @override
   String get nutritionShowcaseFilter => 'فلٹر';
 
   @override
@@ -25585,6 +25594,13 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get nutritionShowcaseGrilledSalmonBowl => 'گرلڈ سالمن باؤل';
+
+  @override
+  String get nutritionShowcaseIntroSubtitle =>
+      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+
+  @override
+  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
 
   @override
   String get nutritionShowcaseLunchDinner => '— دوپہر اور رات کا کھانا —';
@@ -25636,6 +25652,32 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get nutritionShowcaseSort => 'ترتیب:';
+
+  @override
+  String get nutritionShowcaseSortCleared =>
+      'Sort cleared — original menu order';
+
+  @override
+  String get nutritionShowcaseSortHint =>
+      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+
+  @override
+  String nutritionShowcaseSortedHighest(Object field) {
+    return 'Sorted ✓ — highest $field first';
+  }
+
+  @override
+  String get nutritionShowcaseSortedLeastInflammatory =>
+      'Sorted ✓ — least inflammatory first';
+
+  @override
+  String nutritionShowcaseSortedLowest(Object field) {
+    return 'Sorted ✓ — lowest $field first';
+  }
+
+  @override
+  String get nutritionShowcaseSortedMostInflammatory =>
+      'Sorted ✓ — most inflammatory first';
 
   @override
   String get nutritionShowcaseStarters => 'اسٹارٹرز';
@@ -30196,7 +30238,19 @@ class AppLocalizationsUr extends AppLocalizations {
   String get quizEquipmentQuickPresets => 'فوری پری سیٹس';
 
   @override
+  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+
+  @override
+  String get quizEquipmentImportTitle => 'Import from Photos';
+
+  @override
   String get quizEquipmentRecommended => 'تجویز کردہ';
+
+  @override
+  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+
+  @override
+  String get quizEquipmentSnapTitle => 'Snap your gym';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
@@ -42537,8 +42591,8 @@ class AppLocalizationsUr extends AppLocalizations {
   String get workoutShowcase12450Lbs => '12,450 پاؤنڈ';
 
   @override
-  String get workoutShowcase15ViralFormatsTap =>
-      '15 وائرل فارمیٹس — پیش نظارہ کے لیے کسی پر بھی ٹیپ کریں';
+  String get workoutShowcaseViralFormatsTap =>
+      '200+ viral formats for workouts & meals — tap any to preview';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM کا تخمینہ';
@@ -42576,6 +42630,11 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get workoutShowcaseAutoLabel => 'آٹو لیبل';
+
+  @override
+  String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
+    return 'Weight auto-increased +$delta $unit — progressive overload';
+  }
 
   @override
   String get workoutShowcaseBarbellSquat => 'باربل اسکواٹ';
@@ -42675,6 +42734,13 @@ class AppLocalizationsUr extends AppLocalizations {
   String get workoutShowcaseInstructions => 'ہدایات';
 
   @override
+  String get workoutShowcaseIntroSubtitle =>
+      'Zealova coaches every set — and levels your weights up automatically 💪';
+
+  @override
+  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+
+  @override
   String get workoutShowcaseLR => 'بائیں/دائیں';
 
   @override
@@ -42702,6 +42768,15 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get workoutShowcaseNewPr => 'نیا PR';
+
+  @override
+  String workoutShowcaseNextTargetRaised(
+    Object delta,
+    Object set,
+    Object weight,
+  ) {
+    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+  }
 
   @override
   String get workoutShowcaseNote => 'نوٹ';

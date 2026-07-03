@@ -42903,6 +42903,24 @@ abstract class AppLocalizations {
   /// **'Dinner'**
   String get nutritionShowcaseDinner;
 
+  /// No description provided for @nutritionShowcaseFieldCarbs.
+  ///
+  /// In en, this message translates to:
+  /// **'carbs'**
+  String get nutritionShowcaseFieldCarbs;
+
+  /// No description provided for @nutritionShowcaseFieldFat.
+  ///
+  /// In en, this message translates to:
+  /// **'fat'**
+  String get nutritionShowcaseFieldFat;
+
+  /// No description provided for @nutritionShowcaseFieldProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'protein'**
+  String get nutritionShowcaseFieldProtein;
+
   /// No description provided for @nutritionShowcaseFilter.
   ///
   /// In en, this message translates to:
@@ -42920,6 +42938,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Grilled Salmon Bowl'**
   String get nutritionShowcaseGrilledSalmonBowl;
+
+  /// No description provided for @nutritionShowcaseIntroSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️'**
+  String get nutritionShowcaseIntroSubtitle;
+
+  /// No description provided for @nutritionShowcaseIntroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Never guess at a menu again'**
+  String get nutritionShowcaseIntroTitle;
 
   /// No description provided for @nutritionShowcaseLunchDinner.
   ///
@@ -42998,6 +43028,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sort:'**
   String get nutritionShowcaseSort;
+
+  /// No description provided for @nutritionShowcaseSortCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort cleared — original menu order'**
+  String get nutritionShowcaseSortCleared;
+
+  /// No description provided for @nutritionShowcaseSortHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.'**
+  String get nutritionShowcaseSortHint;
+
+  /// No description provided for @nutritionShowcaseSortedHighest.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorted ✓ — highest {field} first'**
+  String nutritionShowcaseSortedHighest(Object field);
+
+  /// No description provided for @nutritionShowcaseSortedLeastInflammatory.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorted ✓ — least inflammatory first'**
+  String get nutritionShowcaseSortedLeastInflammatory;
+
+  /// No description provided for @nutritionShowcaseSortedLowest.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorted ✓ — lowest {field} first'**
+  String nutritionShowcaseSortedLowest(Object field);
+
+  /// No description provided for @nutritionShowcaseSortedMostInflammatory.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorted ✓ — most inflammatory first'**
+  String get nutritionShowcaseSortedMostInflammatory;
 
   /// No description provided for @nutritionShowcaseStarters.
   ///
@@ -50807,11 +50873,35 @@ abstract class AppLocalizations {
   /// **'Quick presets'**
   String get quizEquipmentQuickPresets;
 
+  /// No description provided for @quizEquipmentImportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gym photos you already have'**
+  String get quizEquipmentImportSubtitle;
+
+  /// No description provided for @quizEquipmentImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from Photos'**
+  String get quizEquipmentImportTitle;
+
   /// No description provided for @quizEquipmentRecommended.
   ///
   /// In en, this message translates to:
   /// **'Recommended'**
   String get quizEquipmentRecommended;
+
+  /// No description provided for @quizEquipmentSnapSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Point your camera at it'**
+  String get quizEquipmentSnapSubtitle;
+
+  /// No description provided for @quizEquipmentSnapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Snap your gym'**
+  String get quizEquipmentSnapTitle;
 
   /// No description provided for @quizEquipmentRequiredForBarbellSquat.
   ///
@@ -71540,11 +71630,11 @@ abstract class AppLocalizations {
   /// **'12,450 lbs'**
   String get workoutShowcase12450Lbs;
 
-  /// No description provided for @workoutShowcase15ViralFormatsTap.
+  /// No description provided for @workoutShowcaseViralFormatsTap.
   ///
   /// In en, this message translates to:
-  /// **'15 viral formats — tap any to preview'**
-  String get workoutShowcase15ViralFormatsTap;
+  /// **'200+ viral formats for workouts & meals — tap any to preview'**
+  String get workoutShowcaseViralFormatsTap;
 
   /// No description provided for @workoutShowcase1rmEstimate.
   ///
@@ -71617,6 +71707,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Auto-regulated'**
   String get workoutShowcaseAutoLabel;
+
+  /// No description provided for @workoutShowcaseAutoProgressFlash.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight auto-increased +{delta} {unit} — progressive overload'**
+  String workoutShowcaseAutoProgressFlash(Object delta, Object unit);
 
   /// No description provided for @workoutShowcaseBarbellSquat.
   ///
@@ -71810,6 +71906,18 @@ abstract class AppLocalizations {
   /// **'Instructions'**
   String get workoutShowcaseInstructions;
 
+  /// No description provided for @workoutShowcaseIntroSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Zealova coaches every set — and levels your weights up automatically 💪'**
+  String get workoutShowcaseIntroSubtitle;
+
+  /// No description provided for @workoutShowcaseIntroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s start your first workout'**
+  String get workoutShowcaseIntroTitle;
+
   /// No description provided for @workoutShowcaseLR.
   ///
   /// In en, this message translates to:
@@ -71863,6 +71971,16 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'NEW PR'**
   String get workoutShowcaseNewPr;
+
+  /// No description provided for @workoutShowcaseNextTargetRaised.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {set} logged — next target auto-raised to {weight} lb (+{delta} lb)'**
+  String workoutShowcaseNextTargetRaised(
+    Object delta,
+    Object set,
+    Object weight,
+  );
 
   /// No description provided for @workoutShowcaseNote.
   ///

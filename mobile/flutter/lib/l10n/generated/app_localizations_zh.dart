@@ -24232,6 +24232,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionShowcaseDinner => '晚餐';
 
   @override
+  String get nutritionShowcaseFieldCarbs => 'carbs';
+
+  @override
+  String get nutritionShowcaseFieldFat => 'fat';
+
+  @override
+  String get nutritionShowcaseFieldProtein => 'protein';
+
+  @override
   String get nutritionShowcaseFilter => '筛选';
 
   @override
@@ -24239,6 +24248,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nutritionShowcaseGrilledSalmonBowl => '香煎三文鱼碗';
+
+  @override
+  String get nutritionShowcaseIntroSubtitle =>
+      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+
+  @override
+  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
 
   @override
   String get nutritionShowcaseLunchDinner => '— 午餐与晚餐 —';
@@ -24288,6 +24304,32 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nutritionShowcaseSort => '排序：';
+
+  @override
+  String get nutritionShowcaseSortCleared =>
+      'Sort cleared — original menu order';
+
+  @override
+  String get nutritionShowcaseSortHint =>
+      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+
+  @override
+  String nutritionShowcaseSortedHighest(Object field) {
+    return 'Sorted ✓ — highest $field first';
+  }
+
+  @override
+  String get nutritionShowcaseSortedLeastInflammatory =>
+      'Sorted ✓ — least inflammatory first';
+
+  @override
+  String nutritionShowcaseSortedLowest(Object field) {
+    return 'Sorted ✓ — lowest $field first';
+  }
+
+  @override
+  String get nutritionShowcaseSortedMostInflammatory =>
+      'Sorted ✓ — most inflammatory first';
 
   @override
   String get nutritionShowcaseStarters => '前菜';
@@ -28631,7 +28673,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizEquipmentQuickPresets => '快速预设';
 
   @override
+  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+
+  @override
+  String get quizEquipmentImportTitle => 'Import from Photos';
+
+  @override
   String get quizEquipmentRecommended => '推荐';
+
+  @override
+  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+
+  @override
+  String get quizEquipmentSnapTitle => 'Snap your gym';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat => '适用于：杠铃深蹲、推举、杠铃卧推';
@@ -40345,7 +40399,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutShowcase12450Lbs => '12,450 lbs';
 
   @override
-  String get workoutShowcase15ViralFormatsTap => '15 种热门格式 — 点击任意预览';
+  String get workoutShowcaseViralFormatsTap =>
+      '200+ viral formats for workouts & meals — tap any to preview';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM 估算';
@@ -40382,6 +40437,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workoutShowcaseAutoLabel => '自动标签';
+
+  @override
+  String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
+    return 'Weight auto-increased +$delta $unit — progressive overload';
+  }
 
   @override
   String get workoutShowcaseBarbellSquat => '杠铃深蹲';
@@ -40480,6 +40540,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutShowcaseInstructions => '说明';
 
   @override
+  String get workoutShowcaseIntroSubtitle =>
+      'Zealova coaches every set — and levels your weights up automatically 💪';
+
+  @override
+  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+
+  @override
   String get workoutShowcaseLR => '左/右';
 
   @override
@@ -40507,6 +40574,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workoutShowcaseNewPr => '新 PR';
+
+  @override
+  String workoutShowcaseNextTargetRaised(
+    Object delta,
+    Object set,
+    Object weight,
+  ) {
+    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+  }
 
   @override
   String get workoutShowcaseNote => '备注';

@@ -25778,6 +25778,15 @@ class AppLocalizationsKn extends AppLocalizations {
   String get nutritionShowcaseDinner => 'ಭೋಜನ';
 
   @override
+  String get nutritionShowcaseFieldCarbs => 'carbs';
+
+  @override
+  String get nutritionShowcaseFieldFat => 'fat';
+
+  @override
+  String get nutritionShowcaseFieldProtein => 'protein';
+
+  @override
   String get nutritionShowcaseFilter => 'ಫಿಲ್ಟರ್';
 
   @override
@@ -25785,6 +25794,13 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get nutritionShowcaseGrilledSalmonBowl => 'ಸುಟ್ಟ ಸಾಲ್ಮನ್ ಬೌಲ್';
+
+  @override
+  String get nutritionShowcaseIntroSubtitle =>
+      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+
+  @override
+  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
 
   @override
   String get nutritionShowcaseLunchDinner => '- ಊಟ ಮತ್ತು ಭೋಜನ -';
@@ -25837,6 +25853,32 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get nutritionShowcaseSort => 'ವಿಂಗಡಿಸಿ:';
+
+  @override
+  String get nutritionShowcaseSortCleared =>
+      'Sort cleared — original menu order';
+
+  @override
+  String get nutritionShowcaseSortHint =>
+      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+
+  @override
+  String nutritionShowcaseSortedHighest(Object field) {
+    return 'Sorted ✓ — highest $field first';
+  }
+
+  @override
+  String get nutritionShowcaseSortedLeastInflammatory =>
+      'Sorted ✓ — least inflammatory first';
+
+  @override
+  String nutritionShowcaseSortedLowest(Object field) {
+    return 'Sorted ✓ — lowest $field first';
+  }
+
+  @override
+  String get nutritionShowcaseSortedMostInflammatory =>
+      'Sorted ✓ — most inflammatory first';
 
   @override
   String get nutritionShowcaseStarters => 'ಆರಂಭಿಕರು';
@@ -30437,7 +30479,19 @@ class AppLocalizationsKn extends AppLocalizations {
   String get quizEquipmentQuickPresets => 'ತ್ವರಿತ ಪ್ರಿಸೆಟ್‌ಗಳು';
 
   @override
+  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+
+  @override
+  String get quizEquipmentImportTitle => 'Import from Photos';
+
+  @override
   String get quizEquipmentRecommended => 'ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ';
+
+  @override
+  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+
+  @override
+  String get quizEquipmentSnapTitle => 'Snap your gym';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
@@ -42890,8 +42944,8 @@ class AppLocalizationsKn extends AppLocalizations {
   String get workoutShowcase12450Lbs => '12,450 lbs';
 
   @override
-  String get workoutShowcase15ViralFormatsTap =>
-      '15 ವೈರಲ್ ಫಾರ್ಮ್ಯಾಟ್‌ಗಳು — ಪೂರ್ವವೀಕ್ಷಣೆ ಮಾಡಲು ಯಾವುದನ್ನಾದರೂ ಟ್ಯಾಪ್ ಮಾಡಿ';
+  String get workoutShowcaseViralFormatsTap =>
+      '200+ viral formats for workouts & meals — tap any to preview';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM ಅಂದಾಜು';
@@ -42930,6 +42984,11 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get workoutShowcaseAutoLabel => 'ಸ್ವಯಂ ಲೇಬಲ್';
+
+  @override
+  String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
+    return 'Weight auto-increased +$delta $unit — progressive overload';
+  }
 
   @override
   String get workoutShowcaseBarbellSquat => 'ಬಾರ್ಬೆಲ್ ಸ್ಕ್ವಾಟ್';
@@ -43030,6 +43089,13 @@ class AppLocalizationsKn extends AppLocalizations {
   String get workoutShowcaseInstructions => 'ಸೂಚನೆಗಳು';
 
   @override
+  String get workoutShowcaseIntroSubtitle =>
+      'Zealova coaches every set — and levels your weights up automatically 💪';
+
+  @override
+  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+
+  @override
   String get workoutShowcaseLR => 'ಎಲ್/ಆರ್';
 
   @override
@@ -43057,6 +43123,15 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get workoutShowcaseNewPr => 'ಹೊಸ PR';
+
+  @override
+  String workoutShowcaseNextTargetRaised(
+    Object delta,
+    Object set,
+    Object weight,
+  ) {
+    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+  }
 
   @override
   String get workoutShowcaseNote => 'ಟಿಪ್ಪಣಿ';
