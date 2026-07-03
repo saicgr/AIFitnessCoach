@@ -490,6 +490,12 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
   // --- Uploading ---------------------------------------------------------
 
   Widget _uploadingView(ThemeColors colors, Color accent) {
+    // Once the bytes are fully sent there's still a 1-3s finalize window
+    // (S3 completes the PUT + the job-submit POST round-trips). A full solid
+    // bar under "Uploading…" reads as done-but-stuck — flip to an
+    // indeterminate bar + "Starting analysis…" so the motion never stops.
+    final finalizing = _uploadProgress >= 0.995;
+    final pct = (_uploadProgress * 100).clamp(0, 100).toInt();
     return Column(
       children: [
         if (_videoController != null && _videoController!.value.isInitialized)
@@ -498,16 +504,24 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: LinearProgressIndicator(
-            value: _uploadProgress > 0 ? _uploadProgress : null,
+            value: finalizing
+                ? null
+                : (_uploadProgress > 0 ? _uploadProgress : null),
             minHeight: 6,
             backgroundColor: colors.cardBorder,
             valueColor: AlwaysStoppedAnimation(accent),
           ),
         ),
         const SizedBox(height: 12),
-        Text(
-          'Uploading your video…',
-          style: TextStyle(fontSize: 13.5, color: colors.textSecondary),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          child: Text(
+            finalizing
+                ? 'Starting analysis…'
+                : 'Uploading your video…  $pct%',
+            key: ValueKey<bool>(finalizing),
+            style: TextStyle(fontSize: 13.5, color: colors.textSecondary),
+          ),
         ),
       ],
     );
