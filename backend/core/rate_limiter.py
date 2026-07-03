@@ -97,6 +97,21 @@ def _resolve_rate_limit_storage_uri() -> str:
 # or "memory://" (per-worker fallback). Both limiters share this backend.
 _RATE_LIMIT_STORAGE_URI = _resolve_rate_limit_storage_uri()
 
+# Redis-only connection hardening, passed through limits.RedisStorage to
+# redis.from_url(). The limits library keeps its OWN connection pool —
+# main.py's Redis keepalive ping never touches it — so after a long idle
+# stretch the provider reaps the TCP connection and the next rate-limit
+# hit dies with SSLEOFError/ConnectionError (slowapi swallows it, one
+# request goes unlimited). health_check_interval makes redis-py PING and
+# transparently reconnect any pooled connection idle longer than 30s
+# before reuse; socket_keepalive keeps the OS probing in between.
+# MemoryStorage doesn't take these kwargs, so gate on the URI scheme.
+_RATE_LIMIT_STORAGE_OPTIONS = (
+    {"health_check_interval": 30, "socket_keepalive": True}
+    if _RATE_LIMIT_STORAGE_URI.startswith(("redis://", "rediss://", "redis+unix://"))
+    else {}
+)
+
 
 def get_real_client_ip(request: Request) -> str:
     """
@@ -135,6 +150,7 @@ limiter = Limiter(
     key_func=get_real_client_ip,
     default_limits=[] if _BENCH_BYPASS else ["1000/minute"],
     storage_uri=_RATE_LIMIT_STORAGE_URI,
+    storage_options=_RATE_LIMIT_STORAGE_OPTIONS,
     swallow_errors=True,
     enabled=not _BENCH_BYPASS,
 )
@@ -170,6 +186,18 @@ from starlette.responses import Response  # noqa: E402
 
 class SafeSlowAPIMiddleware(SlowAPIMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
+        # Pre-seed for slowapi's DECORATOR path. Endpoints wrapped by
+        # @limiter.limit(...) run extension.py's async_wrapper, which reads
+        # `request.state.view_rate_limit` unconditionally AFTER the endpoint
+        # returns (extension.py:739). On a swallowed storage error (Redis
+        # blip) the attribute is never set, so the endpoint succeeds and
+        # THEN 500s on header injection. request.state is backed by
+        # scope["state"], so this seed is visible downstream; and
+        # _inject_headers(resp, None) is an explicit no-op (extension.py:380
+        # guards `current_limit is not None`), so the worst case is a
+        # response without X-RateLimit-* headers instead of a 500.
+        request.state.view_rate_limit = None
+
         app = request.app
         limiter_ = app.state.limiter
 
@@ -235,6 +263,7 @@ user_limiter = Limiter(
     key_func=get_user_id_from_request,
     default_limits=[] if _BENCH_BYPASS else ["600/minute"],
     storage_uri=_RATE_LIMIT_STORAGE_URI,
+    storage_options=_RATE_LIMIT_STORAGE_OPTIONS,
     swallow_errors=True,
     enabled=not _BENCH_BYPASS,
 )
