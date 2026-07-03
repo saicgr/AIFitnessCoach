@@ -190,10 +190,10 @@ class NotificationPreferences {
     this.weeklyCheckinTime = '09:00',
     this.streakCelebration = true,
     this.milestoneCelebration = true,
-    this.dailyNudgeLimit = 4,
-    this.accountabilityIntensity = 'balanced',
+    this.dailyNudgeLimit = 3,
+    this.accountabilityIntensity = 'auto',
     this.aiPersonalizedNudges = true,
-    this.guiltNotifications = true,
+    this.guiltNotifications = false,
     // Daily crate reminder
     this.dailyCrateReminders = true,
     this.dailyCrateReminderTime = '10:00',

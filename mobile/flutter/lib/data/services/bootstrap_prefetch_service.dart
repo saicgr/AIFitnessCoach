@@ -10,6 +10,8 @@ import '../repositories/workout_repository.dart';
 import '../repositories/nutrition_repository.dart';
 import '../repositories/hydration_repository.dart';
 import '../providers/nutrition_preferences_provider.dart';
+import '../providers/coach_unread_provider.dart';
+import 'notification_service.dart';
 import '../../core/providers/timezone_provider.dart';
 import '../../utils/tz.dart';
 import 'api_client.dart';
@@ -261,6 +263,10 @@ class BootstrapPrefetchService {
       // Pre-seed hydration data
       _preSeedHydration(ref, data['hydration']);
 
+      // Coach unread badge + server-nudge liveness flag (computed fresh by the
+      // backend on every bootstrap — never served from its Redis cache).
+      _applyEngagementSignals(ref, data);
+
       // Warm the coach hero (J). The /home/bootstrap payload does NOT carry the
       // Gemini coach insight, so a fresh install used to wait on a cold
       // /coach/daily-insight round-trip behind the hero skeleton. If the
@@ -369,6 +375,41 @@ class BootstrapPrefetchService {
       }
     } catch (e) {
       debugPrint('⚠️ [Bootstrap] Nutrition pre-seed failed: $e');
+    }
+  }
+
+  /// Seed the coach-unread badge and persist the server-nudge liveness flag.
+  ///
+  /// Static + best-effort: safe to call from any bootstrap consumer. The flag
+  /// write is fire-and-forget disk I/O; the badge is a plain StateProvider.
+  static void _applyEngagementSignals(Ref ref, Map<String, dynamic> data) {
+    try {
+      final unread = (data['coach_unread_count'] as num?)?.toInt();
+      if (unread != null) {
+        ref.read(coachUnreadCountProvider.notifier).state = unread;
+      }
+      final active = data['server_nudges_active'];
+      if (active is bool) {
+        // ignore: unawaited_futures
+        SharedPreferences.getInstance().then((p) async {
+          final prev = p.getBool(kServerNudgesActivePrefsKey);
+          await p.setBool(kServerNudgesActivePrefsKey, active);
+          // Flag flipped → re-run local scheduling so the template barrage
+          // stands down (or resumes as the fallback) without waiting for the
+          // next preference change.
+          if (prev != active) {
+            try {
+              await ref
+                  .read(notificationPreferencesProvider.notifier)
+                  .rescheduleNotifications();
+            } catch (e) {
+              debugPrint('⚠️ [Bootstrap] reschedule after flag flip failed: $e');
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Bootstrap] engagement signals seed failed: $e');
     }
   }
 

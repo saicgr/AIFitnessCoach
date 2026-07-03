@@ -16,6 +16,7 @@ import 'data/providers/root_messenger.dart';
 import 'widgets/recipe_save_jobs_listener.dart';
 import 'widgets/app_tour/app_tour_overlay.dart';
 import 'data/providers/admin_provider.dart';
+import 'data/providers/coach_unread_provider.dart';
 import 'data/providers/gym_profile_provider.dart';
 import 'core/accessibility/accessibility_provider.dart';
 import 'core/services/posthog_service.dart';
@@ -528,6 +529,16 @@ class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
         type: type,
         data: data,
       );
+      // Proactive coach message arrived while the app is open → bump the
+      // Coach-tab unread badge live (bootstrap only re-syncs it on app open).
+      // ChatScreen clears it (and stamps /chat/seen) when the chat opens.
+      final isProactiveCoach = data?['proactive'] == 'true' ||
+          type == 'ai_coach' ||
+          type == 'ai_coach_accountability';
+      if (isProactiveCoach) {
+        final unread = ref.read(coachUnreadCountProvider.notifier);
+        unread.state = unread.state + 1;
+      }
       debugPrint('🔔 [App] Notification stored in inbox: $title');
     };
 

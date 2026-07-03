@@ -25,6 +25,8 @@ import '../../data/models/live_chat_session.dart';
 import '../../data/providers/live_chat_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/providers/offline_coach_provider.dart';
+import '../../data/providers/coach_unread_provider.dart';
+import '../../data/services/api_client.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/coach_avatar.dart';
@@ -292,6 +294,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // C3 — observe app lifecycle so a chat backgrounded mid-send re-syncs
     // its history on resume (handled in didChangeAppLifecycleState).
     WidgetsBinding.instance.addObserver(this);
+    // Unread coach-message badge: opening the chat marks proactive messages
+    // seen — optimistic local clear + fire-and-forget server stamp (the next
+    // /home/bootstrap then agrees). Post-frame so provider writes are safe.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(coachUnreadCountProvider.notifier).state = 0;
+      unawaited(ref.read(apiClientProvider).markCoachChatSeen());
+    });
     _scrollController.addListener(() {
       final show = _scrollController.offset > 200;
       if (show != _showScrollFAB) setState(() => _showScrollFAB = show);

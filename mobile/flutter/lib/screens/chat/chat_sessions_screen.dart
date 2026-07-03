@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/chat_session.dart';
+import '../../data/providers/coach_unread_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 
@@ -211,6 +212,11 @@ class _ChatSessionsScreenState extends ConsumerState<ChatSessionsScreen> {
           onRename: () => _showRenameDialog(colors, session),
           onArchive: () => _archive(session),
           onDelete: () => _confirmDelete(colors, session),
+          // Proactive mirrors touch_session → the unseen coach message is in
+          // the newest session; searching hides the dot (order ≠ recency).
+          showUnreadDot: index == 0 &&
+              _searchController.text.isEmpty &&
+              ref.watch(coachUnreadCountProvider) > 0,
         );
       },
     );
@@ -424,6 +430,7 @@ class _SessionRow extends StatelessWidget {
     required this.onRename,
     required this.onArchive,
     required this.onDelete,
+    this.showUnreadDot = false,
   });
 
   final ChatSession session;
@@ -432,6 +439,11 @@ class _SessionRow extends StatelessWidget {
   final VoidCallback onRename;
   final VoidCallback onArchive;
   final VoidCallback onDelete;
+
+  /// Accent dot marking unseen proactive coach messages. Proactive mirrors
+  /// always touch their session (bumping it to the top of this list), so the
+  /// dot renders on the most-recent session while the unread count is > 0.
+  final bool showUnreadDot;
 
   @override
   Widget build(BuildContext context) {
@@ -449,6 +461,17 @@ class _SessionRow extends StatelessWidget {
                 children: [
                   Row(
                     children: [
+                      if (showUnreadDot) ...[
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: colors.accent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       Expanded(
                         child: Text(
                           session.displayTitle,

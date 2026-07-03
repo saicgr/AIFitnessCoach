@@ -280,28 +280,46 @@ extension NotificationServiceScheduled on NotificationService {
     // Branch scheduling based on frequency preset
     final preset = prefs.frequencyPreset;
 
+    // ── Server stand-down (fewer, better) ──
+    // While the backend nudge engine is verifiably alive (flag delivered by
+    // /home/bootstrap, self-heals within 48h if the cron dies), the local
+    // fixed-time template notifications stand down for minimal/balanced: the
+    // server equivalents are context-aware (skip logged meals, know the
+    // workout's name, respect the 3/day cap) where these pre-scheduled ones
+    // cannot be. Direct user feedback: the local barrage felt "many and very
+    // dismissable". Locals that stay regardless: coach schedule_reminder,
+    // fasting timers, cycle reminders, trial-end promise, full_coach mode.
+    final serverNudgesActive =
+        sharedPrefs.getBool(kServerNudgesActivePrefsKey) ?? false;
+
     if (preset == 'minimal' || preset == 'balanced') {
-      // ── Bundle Mode: Smart bundled notifications ──
-      debugPrint('🔔 [Schedule] Using $preset preset (bundled mode)');
+      if (serverNudgesActive) {
+        debugPrint('🔔 [Schedule] $preset preset: server nudges active — '
+            'local bundles/streak/weekly stand down');
+      } else {
+        // ── Bundle Mode: Smart bundled notifications (server engine not
+        // verified live — keep the local fallback so there's no dead air) ──
+        debugPrint('🔔 [Schedule] Using $preset preset (bundled mode)');
 
-      // Morning bundle (workout + breakfast)
-      if (prefs.morningIncludeWorkout || prefs.morningIncludeBreakfast || prefs.morningIncludeMotivation) {
-        await _scheduleMorningBundle(prefs);
-      }
+        // Morning bundle (workout + breakfast)
+        if (prefs.morningIncludeWorkout || prefs.morningIncludeBreakfast || prefs.morningIncludeMotivation) {
+          await _scheduleMorningBundle(prefs);
+        }
 
-      // Midday bundle (lunch + hydration)
-      if (prefs.middayIncludeLunch || prefs.middayIncludeHydration) {
-        await _scheduleMiddayBundle(prefs);
-      }
+        // Midday bundle (lunch + hydration)
+        if (prefs.middayIncludeLunch || prefs.middayIncludeHydration) {
+          await _scheduleMiddayBundle(prefs);
+        }
 
-      // Afternoon nudge (movement + hydration) — Balanced only
-      if (preset == 'balanced') {
-        await _scheduleAfternoonNudge(prefs);
-      }
+        // Afternoon nudge (movement + hydration) — Balanced only
+        if (preset == 'balanced') {
+          await _scheduleAfternoonNudge(prefs);
+        }
 
-      // Evening bundle (dinner + streak)
-      if (prefs.eveningIncludeDinner || prefs.eveningIncludeStreak || prefs.eveningIncludeProgress) {
-        await _scheduleEveningBundle(prefs);
+        // Evening bundle (dinner + streak)
+        if (prefs.eveningIncludeDinner || prefs.eveningIncludeStreak || prefs.eveningIncludeProgress) {
+          await _scheduleEveningBundle(prefs);
+        }
       }
     } else {
       // ── Full Coach Mode: Individual notifications (legacy behavior) ──
@@ -341,22 +359,28 @@ extension NotificationServiceScheduled on NotificationService {
       }
     }
 
-    // Always schedule these regardless of preset
-    if (prefs.streakAlerts) {
-      await scheduleStreakAlert(
-        prefs.streakAlertTime,
-        vibrate: prefs.notificationVibration,
-        emoji: prefs.notificationEmoji,
-      );
-    }
+    // Streak + weekly summary: the server engine has context-aware equivalents
+    // for BOTH (streak_at_risk fires only when the streak is actually at risk;
+    // Sunday Wrapped replaces the template weekly summary), so these locals
+    // stand down whenever the server is live — regardless of preset — to
+    // never double-send.
+    if (!serverNudgesActive) {
+      if (prefs.streakAlerts) {
+        await scheduleStreakAlert(
+          prefs.streakAlertTime,
+          vibrate: prefs.notificationVibration,
+          emoji: prefs.notificationEmoji,
+        );
+      }
 
-    if (prefs.weeklySummary) {
-      await scheduleWeeklySummary(
-        prefs.weeklySummaryDay,
-        prefs.weeklySummaryTime,
-        vibrate: prefs.notificationVibration,
-        emoji: prefs.notificationEmoji,
-      );
+      if (prefs.weeklySummary) {
+        await scheduleWeeklySummary(
+          prefs.weeklySummaryDay,
+          prefs.weeklySummaryTime,
+          vibrate: prefs.notificationVibration,
+          emoji: prefs.notificationEmoji,
+        );
+      }
     }
 
     // Cycle tracking reminders (Phase E). Independent of the frequency preset

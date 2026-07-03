@@ -17,6 +17,7 @@ import '../data/services/recipe_notification_router.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
 import '../data/providers/coach_refresh_coordinator.dart';
+import '../data/providers/coach_unread_provider.dart';
 import '../data/providers/discover_provider.dart';
 import '../data/providers/fasting_provider.dart';
 import '../data/providers/guest_mode_provider.dart';

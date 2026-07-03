@@ -17,6 +17,7 @@ import 'crate_notification_router.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/coach_notification_templates.dart';
+import '../providers/coach_unread_provider.dart' show kServerNudgesActivePrefsKey;
 import '../../utils/tz.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
@@ -573,10 +574,10 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       weeklyCheckinTime: _prefs.getString(NotificationPrefsKeys.weeklyCheckinTime) ?? '09:00',
       streakCelebration: _prefs.getBool(NotificationPrefsKeys.streakCelebration) ?? true,
       milestoneCelebration: _prefs.getBool(NotificationPrefsKeys.milestoneCelebration) ?? true,
-      dailyNudgeLimit: _prefs.getInt(NotificationPrefsKeys.dailyNudgeLimit) ?? 4,
-      accountabilityIntensity: _prefs.getString(NotificationPrefsKeys.accountabilityIntensity) ?? 'balanced',
+      dailyNudgeLimit: _prefs.getInt(NotificationPrefsKeys.dailyNudgeLimit) ?? 3,
+      accountabilityIntensity: _prefs.getString(NotificationPrefsKeys.accountabilityIntensity) ?? 'auto',
       aiPersonalizedNudges: _prefs.getBool(NotificationPrefsKeys.aiPersonalizedNudges) ?? true,
-      guiltNotifications: _prefs.getBool(NotificationPrefsKeys.guiltNotifications) ?? true,
+      guiltNotifications: _prefs.getBool(NotificationPrefsKeys.guiltNotifications) ?? false,
       // Daily crate reminder
       dailyCrateReminders: _prefs.getBool(NotificationPrefsKeys.dailyCrateReminders) ?? true,
       dailyCrateReminderTime: _prefs.getString(NotificationPrefsKeys.dailyCrateReminderTime) ?? '10:00',

@@ -1357,6 +1357,16 @@ class ApiClient with WidgetsBindingObserver {
     );
   }
 
+  /// Fire-and-forget: stamp coach_chat_last_seen_at server-side so proactive
+  /// coach messages stop counting as unread (Coach-tab badge). Best-effort.
+  Future<void> markCoachChatSeen() async {
+    try {
+      await _dio.post<dynamic>('/chat/seen');
+    } catch (_) {
+      // Best-effort — the badge re-syncs from the next /home/bootstrap.
+    }
+  }
+
   /// Fire-and-forget: record that the user opened/tapped a notification.
   ///
   /// Feeds two systems: the optimal-send-time model (notification_events) and

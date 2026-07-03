@@ -276,6 +276,10 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                       accentColor: accentColor,
                       mutedColor: iconMuted,
                       isDark: isDark,
+                      // Proactive coach messages the user hasn't seen yet
+                      // (server-computed in /home/bootstrap, bumped live by
+                      // foreground coach pushes, cleared when the tab opens).
+                      badgeCount: ref.watch(coachUnreadCountProvider),
                     ),
                   ),
                   Expanded(
@@ -339,6 +343,11 @@ class _ExpandableNavItem extends StatelessWidget {
   final Color mutedColor;
   final bool isDark;
 
+  /// Unread indicator (e.g. proactive coach messages). 0 = no badge. Shown
+  /// as a small accent dot with the count so "the coach messaged you" is
+  /// visible on an organic app open, not just from the push itself.
+  final int badgeCount;
+
   const _ExpandableNavItem({
     super.key,
     required this.icon,
@@ -349,6 +358,7 @@ class _ExpandableNavItem extends StatelessWidget {
     required this.accentColor,
     required this.mutedColor,
     required this.isDark,
+    this.badgeCount = 0,
   });
 
   @override
@@ -378,10 +388,40 @@ class _ExpandableNavItem extends StatelessWidget {
           children: [
             _IconSpinPop(
               isSelected: isSelected,
-              child: Icon(
-                isSelected ? selectedIcon : icon,
-                color: color,
-                size: 21,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    isSelected ? selectedIcon : icon,
+                    color: color,
+                    size: 21,
+                  ),
+                  if (badgeCount > 0 && !isSelected)
+                    Positioned(
+                      top: -3,
+                      right: -6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 1),
+                        constraints:
+                            const BoxConstraints(minWidth: 14, minHeight: 14),
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          badgeCount > 9 ? '9+' : '$badgeCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            height: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 3),
