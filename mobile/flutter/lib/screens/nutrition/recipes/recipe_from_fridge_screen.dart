@@ -13,7 +13,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -77,12 +79,39 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   bool _dirty = false;
   bool _hasGenerated = false;
 
+  /// Bumped by [_startNewScan] — an in-flight detection/generation from a
+  /// session the user backed out of must not resurrect its results.
+  int _sessionEpoch = 0;
+
   late final AnimationController _sweep;
   Timer? _scanTimer;
   int _scanCount = 0;
   int _scanMsgIndex = 0;
 
-  _FridgeLastScan? _lastScan;
+  /// Scan history, most-recent first (capped at [_kMaxScanHistory]). Every
+  /// entry carries its items, cached recipes, and a PERSISTENT photo copy —
+  /// picker tmp paths get purged by iOS, so photos are copied into the app
+  /// documents dir at persist time.
+  List<_FridgeLastScan> _scanHistory = [];
+
+  _FridgeLastScan? get _lastScan =>
+      _scanHistory.isEmpty ? null : _scanHistory.first;
+
+  static const int _kMaxScanHistory = 10;
+
+  /// Photo path restored from the persisted last scan — display-only (the
+  /// snap card + viewer). Kept OUT of the live `_imagePaths`/`_imagesB64`
+  /// pair so the parallel-array bookkeeping for detection never sees it.
+  String? _restoredThumbPath;
+
+  /// The photo shown on the snap card / viewer: live capture wins, then the
+  /// restored last-scan thumb.
+  String? get _displayPhotoPath {
+    if (_imagePaths.isNotEmpty && _imagePaths.first.isNotEmpty) {
+      return _imagePaths.first;
+    }
+    return _restoredThumbPath;
+  }
 
   static const List<String> _scanMessages = [
     'Looking at the shelves…',
@@ -169,55 +198,98 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     super.dispose();
   }
 
-  // ── Persistence: last scan resume card ────────────────────────────────
-  String get _lastScanKey => 'fridge_last_scan_v1::${widget.userId}';
+  // ── Persistence: scan history (resume cards on START) ─────────────────
+  String get _legacyLastScanKey => 'fridge_last_scan_v1::${widget.userId}';
+  String get _scanHistoryKey => 'fridge_scan_history_v1::${widget.userId}';
 
   Future<void> _loadLastScan() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_lastScanKey);
-      if (raw == null) return;
-      final decoded = _FridgeLastScan.fromJson(
-          jsonDecode(raw) as Map<String, dynamic>);
-      if (!mounted) return;
-      debugPrint('🍳 [Fridge] last scan loaded: ${decoded.count} items, '
-          'fresh=${decoded.isFresh}, cachedRecipes=${decoded.resultJson != null}');
-      setState(() => _lastScan = decoded);
-      // AUTO-RESTORE: a fresh scan (<6h) with cached recipes rehydrates the
-      // whole RESULTS state on entry — leaving the screen must never dump the
-      // user back on START after they waited out a generation. Only when the
-      // screen is still pristine (no new photo/typing in flight).
-      if (decoded.isFresh &&
-          decoded.resultJson != null &&
-          decoded.items.isNotEmpty &&
-          _items.isEmpty &&
-          _imagesB64.isEmpty &&
-          !_searching) {
-        setState(() {
-          _items.addAll(decoded.items);
-          _scanCount = decoded.items.length;
-          _result = PantryAnalyzeResponse.fromJson(decoded.resultJson!);
-          _hasGenerated = true;
-          _dirty = false;
-        });
+      final raw = prefs.getString(_scanHistoryKey);
+      var history = <_FridgeLastScan>[];
+      if (raw != null) {
+        history = (jsonDecode(raw) as List)
+            .whereType<Map>()
+            .map((e) =>
+                _FridgeLastScan.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      } else {
+        // One-shot migration from the single-slot v1 blob.
+        final legacy = prefs.getString(_legacyLastScanKey);
+        if (legacy != null) {
+          history = [
+            _FridgeLastScan.fromJson(
+                jsonDecode(legacy) as Map<String, dynamic>)
+          ];
+          await prefs.setString(_scanHistoryKey,
+              jsonEncode(history.map((e) => e.toJson()).toList()));
+          await prefs.remove(_legacyLastScanKey);
+        }
       }
+      if (!mounted) return;
+      debugPrint('🍳 [Fridge] scan history loaded: ${history.length} entries');
+      // NO auto-restore — opening the screen ALWAYS starts a new scan (user
+      // decision after two rounds of tuning). Previous sessions (recipes +
+      // photo included) are reachable ONLY via the resume cards on START.
+      setState(() => _scanHistory = history);
     } catch (_) {/* ignore corrupt cache */}
+  }
+
+  /// Copy a photo into the app documents dir so the history thumbnail
+  /// survives iOS purging the image-picker tmp files. Returns the persistent
+  /// path, or null when the source is already gone / copy fails.
+  Future<String?> _persistPhotoCopy(String srcPath) async {
+    try {
+      final src = File(srcPath);
+      if (!src.existsSync()) return null;
+      final docs = await getApplicationDocumentsDirectory();
+      final dir = Directory('${docs.path}/fridge_scans');
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      final dest =
+          '${dir.path}/scan_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await src.copy(dest);
+      return dest;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _persistLastScan() async {
     try {
+      // Prefer the live capture; a regenerated restored session falls back
+      // to its (already persistent) restored thumb.
+      final srcThumb = _imagePaths.isNotEmpty && _imagePaths.first.isNotEmpty
+          ? _imagePaths.first
+          : _restoredThumbPath;
+      final persistedThumb =
+          srcThumb != null ? await _persistPhotoCopy(srcThumb) : null;
+
       final scan = _FridgeLastScan(
         items: List<String>.from(_items),
         count: _items.length,
         timestamp: DateTime.now(),
-        thumbPath: _imagePaths.isNotEmpty && _imagePaths.first.isNotEmpty
-            ? _imagePaths.first
-            : null,
+        thumbPath: persistedThumb,
         resultJson: _result?.rawJson,
       );
+
+      final history = [scan, ..._scanHistory];
+      // Cap the history; delete evicted entries' photo copies (only files we
+      // own, under fridge_scans/) so disk usage stays bounded.
+      while (history.length > _kMaxScanHistory) {
+        final evicted = history.removeLast();
+        final p = evicted.thumbPath;
+        if (p != null && p.contains('/fridge_scans/')) {
+          try {
+            final f = File(p);
+            if (f.existsSync()) f.deleteSync();
+          } catch (_) {/* best-effort */}
+        }
+      }
+
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_lastScanKey, jsonEncode(scan.toJson()));
-      if (mounted) setState(() => _lastScan = scan);
+      await prefs.setString(_scanHistoryKey,
+          jsonEncode(history.map((e) => e.toJson()).toList()));
+      if (mounted) setState(() => _scanHistory = history);
     } catch (_) {/* best-effort */}
   }
 
@@ -363,6 +435,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     });
     debugPrint('🍳 [Fridge] findRecipes → POST from-pantry: '
         '${included.length} items, filters=${_activeFilters.length}, mood=$_mood');
+    final epoch = _sessionEpoch;
     try {
       final res = await ref.read(recipeRepositoryProvider).fromPantry(
             widget.userId,
@@ -372,7 +445,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
             filters: _activeFilters.toList(),
             mood: _mood,
           );
-      if (!mounted) return;
+      if (!mounted || epoch != _sessionEpoch) return;
       debugPrint('🍳 [Fridge] findRecipes ✓ ${res.suggestions.length} recipes');
       setState(() {
         _result = res;
@@ -391,7 +464,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     } catch (e, st) {
       debugPrint('🍳 [Fridge] findRecipes ✗ $e');
       debugPrint('🍳 [Fridge] $st');
-      if (!mounted) return;
+      if (!mounted || epoch != _sessionEpoch) return;
       setState(() {
         _error = e.toString().replaceFirst('Exception: ', '');
         _searching = false;
@@ -428,6 +501,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       _activeFilters
         ..clear()
         ..addAll(_defaultFilters);
+      _mood = null;
     });
     _markDirty();
   }
@@ -609,8 +683,8 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   }
 
   void _openViewer() {
-    if (_imagePaths.isEmpty || _imagePaths.first.isEmpty) return;
-    final path = _imagePaths.first;
+    final path = _displayPhotoPath;
+    if (path == null) return;
     final count = _items.length;
     showGeneralDialog(
       context: context,
@@ -647,20 +721,24 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     );
   }
 
-  void _resumeLastScan() {
-    final scan = _lastScan;
-    debugPrint('🍳 [Fridge] resume tapped: scan=${scan?.count} items, '
-        'cachedRecipes=${scan?.resultJson != null}');
-    if (scan == null) return;
+  void _resumeScan(_FridgeLastScan scan) {
+    debugPrint('🍳 [Fridge] resume tapped: scan=${scan.count} items, '
+        'cachedRecipes=${scan.resultJson != null}');
     // Cached recipes restore instantly — no regeneration, no Gemini call.
     // Only a legacy blob (persisted before results were cached) regenerates.
     final cached = scan.resultJson;
+    final thumb = scan.thumbPath;
     setState(() {
       _items
         ..clear()
         ..addAll(scan.items);
       _excludedItems.clear();
       _scanCount = scan.items.length;
+      // Restore the fridge photo too (display-only) — picker files live in
+      // tmp and usually survive a few hours; existsSync guards it.
+      if (thumb != null && File(thumb).existsSync()) {
+        _restoredThumbPath = thumb;
+      }
       if (cached != null) {
         _result = PantryAnalyzeResponse.fromJson(cached);
         _hasGenerated = true;
@@ -693,7 +771,14 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     final tc = ThemeColors.of(context);
     final stage = _stage;
 
-    return Scaffold(
+    // System back (swipe / Android button) mirrors the header arrow:
+    // RESULTS/SCANNING step back to START; only START pops the route.
+    return PopScope(
+      canPop: stage == _FridgeStage.start,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _startNewScan();
+      },
+      child: Scaffold(
       backgroundColor: tc.background,
       bottomNavigationBar:
           stage == _FridgeStage.results ? _buildCta(tc) : null,
@@ -711,6 +796,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -720,15 +806,77 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.of(context).maybePop(),
+            onTap: () async {
+              // Stage-aware back: the screen is ONE route with internal
+              // states, so from RESULTS/SCANNING back steps to START (the
+              // scan list) — popping the route from a restored scan dumped
+              // users on whatever screen opened this one (e.g. Home). A
+              // second back from START pops the route for real.
+              if (_stage != _FridgeStage.start) {
+                _startNewScan();
+                return;
+              }
+              // Pop back to wherever the user came from (Recipes tab, home
+              // quick-log, …). If there's nothing to pop — deep link / odd
+              // stack — land on the Nutrition Recipes tab, never Home.
+              final popped = await Navigator.of(context).maybePop();
+              if (!popped && mounted) context.go('/nutrition?tab=1');
+            },
             child: Icon(Icons.arrow_back, color: tc.textPrimary, size: 22),
           ),
           const SizedBox(width: 12),
           Text('FROM YOUR FRIDGE',
               style: ZType.lbl(12, color: tc.accent, letterSpacing: 2.5)),
+          const Spacer(),
+          // Escape hatch from a restored session: auto-restore brings back
+          // the last scan on every open (results must survive re-entry), so
+          // starting OVER needs its own affordance — Add-photo only appends.
+          if (_stage == _FridgeStage.results)
+            GestureDetector(
+              onTap: _startNewScan,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.restart_alt_rounded,
+                      size: 15, color: tc.textMuted),
+                  const SizedBox(width: 4),
+                  Text('New scan',
+                      style: TextStyle(
+                          color: tc.textMuted,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  /// Wipe the working session back to START. The persisted last-scan blob is
+  /// kept, so the resume card still offers the old session — "new scan" must
+  /// be reversible, not destructive.
+  void _startNewScan() {
+    _sessionEpoch++;
+    setState(() {
+      _items.clear();
+      _excludedItems.clear();
+      _imagesB64.clear();
+      _imagePaths.clear();
+      _photoDetecting.clear();
+      _photoDetections.clear();
+      _result = null;
+      _restoredThumbPath = null;
+      _hasGenerated = false;
+      _dirty = false;
+      _mood = null;
+      _error = null;
+      _searching = false;
+      _activeFilters
+        ..clear()
+        ..addAll(_defaultFilters);
+    });
   }
 
   Widget _heroLine(ThemeColors tc, _FridgeStage stage) {
@@ -873,7 +1021,14 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           ],
         ),
       ),
-      if (_lastScan != null) _lastScanCard(tc),
+      if (_scanHistory.isNotEmpty) ...[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+          child: Text('PREVIOUS SCANS',
+              style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 2)),
+        ),
+        for (final scan in _scanHistory.take(5)) _scanHistoryCard(tc, scan),
+      ],
     ];
   }
 
@@ -932,12 +1087,12 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     );
   }
 
-  Widget _lastScanCard(ThemeColors tc) {
-    final scan = _lastScan!;
+  Widget _scanHistoryCard(ThemeColors tc, _FridgeLastScan scan) {
+    final isLatest = identical(scan, _lastScan);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: GestureDetector(
-        onTap: _resumeLastScan,
+        onTap: () => _resumeScan(scan),
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -966,7 +1121,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Your last scan',
+                    Text(isLatest ? 'Your last scan' : 'Fridge scan',
                         style: TextStyle(
                             color: tc.textPrimary,
                             fontSize: 13,
@@ -1070,13 +1225,14 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
 
   // ── STATE 3: RESULTS ──────────────────────────────────────────────────────
   List<Widget> _resultsBody(ThemeColors tc) {
-    final hasPhoto = _imagePaths.isNotEmpty && _imagePaths.first.isNotEmpty;
+    final hasPhoto = _displayPhotoPath != null;
     final suggestions = _result?.suggestions ?? const <PantrySuggestion>[];
     return [
       if (hasPhoto) _snapCard(tc),
       _snapActions(tc),
       _scannedIngredients(tc),
-      _moodRow(tc),
+      // Mood lives INSIDE the collapsed MOOD & FILTERS card now — the old
+      // standalone emoji-token rail cost ~90px and overflowed its 62px lane.
       _buildFiltersCard(tc),
       Padding(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
@@ -1166,7 +1322,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.file(File(_imagePaths.first), fit: BoxFit.cover,
+                Image.file(File(_displayPhotoPath!), fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(color: tc.surface)),
                 const DecoratedBox(
                   decoration: BoxDecoration(
@@ -1370,80 +1526,21 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     );
   }
 
-  Widget _moodRow(ThemeColors tc) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 0, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: Row(
-              children: [
-                Text('WHAT ARE YOU IN THE MOOD FOR?',
-                    style:
-                        ZType.lbl(13, color: tc.textPrimary, letterSpacing: 2)),
-                const SizedBox(width: 8),
-                Text('optional',
-                    style: TextStyle(color: tc.textMuted, fontSize: 11)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 9),
-          SizedBox(
-            height: 62,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(right: 20),
-              itemCount: _moods.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, i) {
-                final m = _moods[i];
-                final on = _mood == m.key;
-                return GestureDetector(
-                  onTap: () => _pickMood(m.key),
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 72),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: on
-                          ? tc.accent.withValues(alpha: 0.14)
-                          : tc.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                          color: on
-                              ? tc.accent.withValues(alpha: 0.4)
-                              : AppColors.cardBorder),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(m.emoji, style: const TextStyle(fontSize: 20)),
-                        const SizedBox(height: 4),
-                        Text(m.label,
-                            style: TextStyle(
-                                color: on ? tc.accent : tc.textSecondary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFiltersCard(ThemeColors tc) {
-    final active = _activeFilters.toList();
+    // Mood counts as an "active" selection in the collapsed summary so the
+    // one-line card always tells the whole story ("🌶️ Spicy · High protein").
+    final moodEntry = _mood == null
+        ? null
+        : _moods.where((m) => m.key == _mood).toList();
+    final moodLabel = (moodEntry?.isEmpty ?? true)
+        ? null
+        : '${moodEntry!.first.emoji} ${moodEntry.first.label}';
+    final active = [if (moodLabel != null) moodLabel, ..._activeFilters];
     final summary = active.isEmpty
         ? 'none — showing everything'
         : '${active.length} active · ${active.take(3).join(', ')}${active.length > 3 ? '…' : ''}';
-    final showReset = !_setEquals(_activeFilters, _defaultFilters);
+    final showReset =
+        !_setEquals(_activeFilters, _defaultFilters) || _mood != null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
@@ -1463,7 +1560,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                   setState(() => _filtersExpanded = !_filtersExpanded),
               child: Row(
                 children: [
-                  Text('FILTERS',
+                  Text('MOOD & FILTERS',
                       style:
                           ZType.lbl(13, color: tc.textPrimary, letterSpacing: 2)),
                   const SizedBox(width: 10),
@@ -1511,6 +1608,32 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
             ),
             if (_filtersExpanded) ...[
               const SizedBox(height: 10),
+              // MOOD — single-select tone dial as compact inline pills (the
+              // old standalone emoji-token rail overflowed and ate ~90px).
+              Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('MOOD · OPTIONAL',
+                        style: ZType.lbl(9.5,
+                            color: tc.textMuted, letterSpacing: 1.4)),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final m in _moods)
+                          FridgePref(
+                            label: '${m.emoji} ${m.label}',
+                            selected: _mood == m.key,
+                            onTap: () => _pickMood(m.key),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               for (final g in kFridgeInlineFilterGroups) _filterGroup(tc, g),
               const SizedBox(height: 4),
               GestureDetector(
