@@ -1,3 +1,4 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -9,6 +10,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/providers/demo_tasks_seen_provider.dart';
 import 'demo_tasks_screen.dart';
 import 'pre_auth_quiz_data.dart';
+import 'widgets/demo_intro_splash.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../l10n/generated/app_localizations.dart';
 
@@ -118,6 +120,10 @@ class _WorkoutShowcaseScreenState
     extends ConsumerState<WorkoutShowcaseScreen> {
   int _frame = 0;
 
+  /// Feel-good intro beat ("Let's start your first workout") shown for
+  /// ~2.5s before Frame 0. Auto-dismisses; tap skips it early.
+  bool _introSeen = false;
+
   @override
   void initState() {
     super.initState();
@@ -142,6 +148,13 @@ class _WorkoutShowcaseScreenState
   // are checked, the demo auto-advances to Frame 2 (progression).
   final Set<int> _completedRows = {};
   _DemoProgression _progression = _DemoProgression.custom;
+
+  /// Advanced-mode auto-progression flash — the row whose target just
+  /// ramped up after the previous set was checked off. Mirrors Easy
+  /// mode's green "weight auto-increased" beat. Token guards stale
+  /// clears when rows are checked rapidly.
+  int? _advFlashRow;
+  int _advFlashToken = 0;
 
   /// CTA label — verbs change so each tap feels like the natural next
   /// action, not a generic "continue".
@@ -177,13 +190,50 @@ class _WorkoutShowcaseScreenState
   /// Warmup (row 0) is pre-checked visually but not required.
   void _toggleSetRow(int rowIndex) {
     HapticFeedback.selectionClick();
+    final wasChecked = _completedRows.contains(rowIndex);
     setState(() {
-      if (_completedRows.contains(rowIndex)) {
+      if (wasChecked) {
         _completedRows.remove(rowIndex);
       } else {
         _completedRows.add(rowIndex);
       }
     });
+    // Checking a working set whose successor ramps up → flash the next
+    // row's target green so the auto-progression is visible (Easy-mode
+    // parity for the "Zealova progresses you automatically" moment).
+    if (!wasChecked && rowIndex >= 1 && rowIndex < 3) {
+      final next = rowIndex + 1;
+      final w = _progression.targetWeights;
+      if (!_completedRows.contains(next) && w[next] > w[rowIndex]) {
+        setState(() => _advFlashRow = next);
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).workoutShowcaseNextTargetRaised(
+                  '${w[next] - w[rowIndex]}', '$rowIndex', '${w[next]}'),
+            ),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          ),
+        );
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'demo_autoprogress_shown',
+          properties: {
+            'mode': 'advanced',
+            'set': rowIndex,
+            'delta_lb': w[next] - w[rowIndex],
+          },
+        );
+        final token = ++_advFlashToken;
+        Future.delayed(const Duration(milliseconds: 2600), () {
+          if (mounted && token == _advFlashToken) {
+            setState(() => _advFlashRow = null);
+          }
+        });
+      }
+    }
     // All 3 working sets logged → reveal the progression frame.
     if (_completedRows.containsAll({1, 2, 3})) {
       Future.delayed(const Duration(milliseconds: 350), () {
@@ -288,7 +338,20 @@ class _WorkoutShowcaseScreenState
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 280),
-                child: _buildFrame(_frame, isDark),
+                child: !_introSeen
+                    ? DemoIntroSplash(
+                        key: const ValueKey('w-intro'),
+                        icon: Icons.fitness_center_rounded,
+                        accent: AppColors.onboardingAccent,
+                        title: AppLocalizations.of(context)
+                            .workoutShowcaseIntroTitle,
+                        subtitle: AppLocalizations.of(context)
+                            .workoutShowcaseIntroSubtitle,
+                        onDone: () {
+                          if (mounted) setState(() => _introSeen = true);
+                        },
+                      )
+                    : _buildFrame(_frame, isDark),
               ),
             ),
 
@@ -346,6 +409,7 @@ class _WorkoutShowcaseScreenState
           onProgressionPicked: (p) => setState(() => _progression = p),
           completedRows: _completedRows,
           onToggleRow: _toggleSetRow,
+          advFlashRow: _advFlashRow,
           onAdvance: _next,
         );
       case 1:
@@ -528,6 +592,7 @@ class _Frame1ActiveWorkout extends StatelessWidget {
   final ValueChanged<_DemoProgression> onProgressionPicked;
   final Set<int> completedRows;
   final ValueChanged<int> onToggleRow;
+  final int? advFlashRow;
   final VoidCallback onAdvance;
 
   const _Frame1ActiveWorkout({
@@ -539,6 +604,7 @@ class _Frame1ActiveWorkout extends StatelessWidget {
     required this.onProgressionPicked,
     required this.completedRows,
     required this.onToggleRow,
+    this.advFlashRow,
     required this.onAdvance,
   });
 
@@ -551,6 +617,7 @@ class _Frame1ActiveWorkout extends StatelessWidget {
             progression: progression,
             completedRows: completedRows,
             onToggleRow: onToggleRow,
+            advFlashRow: advFlashRow,
             onProgressionTap: () =>
                 _findShowcaseState(context)?._openProgressionSheet(context),
           )
@@ -736,6 +803,7 @@ class _AdvancedActiveLayout extends StatelessWidget {
   final VoidCallback onProgressionTap;
   final Set<int> completedRows;
   final ValueChanged<int> onToggleRow;
+  final int? advFlashRow;
 
   const _AdvancedActiveLayout({
     required this.isDark,
@@ -744,6 +812,7 @@ class _AdvancedActiveLayout extends StatelessWidget {
     required this.onProgressionTap,
     required this.completedRows,
     required this.onToggleRow,
+    this.advFlashRow,
   });
 
   @override
@@ -934,6 +1003,7 @@ class _AdvancedActiveLayout extends StatelessWidget {
               completedRows.contains(3),
             ],
             onToggleRow: onToggleRow,
+            flashRow: advFlashRow,
           ).animate(delay: 360.ms).fadeIn().slideY(begin: 0.04),
           const SizedBox(height: 6),
           // Exercise thumbnail strip — real Zealova illustrations from
@@ -1208,7 +1278,7 @@ class _AdvancedActiveLayout extends StatelessWidget {
 /// Steppers actually update weight/reps. Unit toggle works. Action
 /// chips (Video / Instructions / Plan / Note) toast on tap. Log set
 /// confirms via toast.
-class _EasyActiveLayout extends StatefulWidget {
+class _EasyActiveLayout extends ConsumerStatefulWidget {
   final bool isDark;
   final ValueChanged<bool> onToggleMode;
   final VoidCallback onAdvance;
@@ -1221,10 +1291,11 @@ class _EasyActiveLayout extends StatefulWidget {
   });
 
   @override
-  State<_EasyActiveLayout> createState() => _EasyActiveLayoutState();
+  ConsumerState<_EasyActiveLayout> createState() =>
+      _EasyActiveLayoutState();
 }
 
-class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
+class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
   // Default to LB — `_DemoProgression.targetWeights` stores raw pound
   // values (70 / 80 / 90 lb etc., matching the Advanced table). If we
   // showed those as kg by default we'd be lying about the load
@@ -1276,6 +1347,14 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
   }
 
   static const _accent = Color(0xFF38BDF8);
+  static const _progressGreen = Color(0xFF22C55E);
+
+  /// "Weight auto-increased" flash — set when logging a set auto-raises
+  /// the next target load, so the user SEES progressive overload happen
+  /// instead of the steppers changing silently. Cleared after a short
+  /// beat (token guards stale timers when sets are logged rapidly).
+  String? _autoProgressMsg;
+  int _autoProgressToken = 0;
 
   void _toast(String msg) {
     HapticFeedback.lightImpact();
@@ -1420,6 +1499,7 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
             value: _weight.toStringAsFixed(_weight == _weight.roundToDouble() ? 0 : 1),
             unit: _useKg ? 'kg' : 'lb',
             showUnitToggle: true,
+            highlightValue: _autoProgressMsg != null,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
             onMinus: () => setState(() {
@@ -1453,8 +1533,63 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
           const SizedBox(height: 10),
           // Tooltip + arrow pointing at the Log set button. Mirrors the
           // nutrition demo's menu-scan indicator so the user knows where
-          // to tap. Hidden once all 3 sets are logged.
-          if (_setsLogged < 3)
+          // to tap. Hidden once all 3 sets are logged. While the
+          // auto-progression flash is live it takes over this slot (same
+          // height, so the fixed column never overflows).
+          if (_setsLogged < 3 && _autoProgressMsg != null)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Arrow points UP at the weight stepper that just moved.
+                  const Icon(
+                    Icons.arrow_upward_rounded,
+                    size: 18,
+                    color: _progressGreen,
+                  )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .moveY(begin: 0, end: -4, duration: 700.ms),
+                  const SizedBox(height: 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _progressGreen,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _progressGreen.withValues(alpha: 0.45),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.trending_up_rounded,
+                            size: 13, color: Colors.white),
+                        const SizedBox(width: 5),
+                        Text(
+                          _autoProgressMsg!,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ).animate().fadeIn(duration: 200.ms).scale(
+                    begin: const Offset(0.9, 0.9),
+                    end: const Offset(1, 1),
+                    duration: 300.ms,
+                    curve: Curves.easeOutBack,
+                  ),
+            )
+          else if (_setsLogged < 3)
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1513,7 +1648,34 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
                 // Advance the steppers to the NEXT set's progression
                 // target so the user sees the weight/reps actually
                 // change (Linear: same; Step: stair; Undulating: wave).
+                final prevWeight = _weight;
                 _advanceToNextSetTargets();
+                // Make the auto-bump explicit — this is the "Zealova
+                // progresses you automatically" teaching moment.
+                final delta = _weight - prevWeight;
+                if (delta > 0) {
+                  final d = delta == delta.roundToDouble()
+                      ? delta.toStringAsFixed(0)
+                      : delta.toStringAsFixed(1);
+                  setState(() => _autoProgressMsg =
+                      AppLocalizations.of(context)
+                          .workoutShowcaseAutoProgressFlash(d, unit));
+                  ref.read(posthogServiceProvider).capture(
+                    eventName: 'demo_autoprogress_shown',
+                    properties: {
+                      'mode': 'easy',
+                      'set': _setsLogged,
+                      'delta': d,
+                      'unit': unit,
+                    },
+                  );
+                  final token = ++_autoProgressToken;
+                  Future.delayed(const Duration(milliseconds: 3000), () {
+                    if (mounted && token == _autoProgressToken) {
+                      setState(() => _autoProgressMsg = null);
+                    }
+                  });
+                }
               }
             },
             child: Container(
@@ -1621,6 +1783,7 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
     required Color textSecondary,
     required VoidCallback onMinus,
     required VoidCallback onPlus,
+    bool highlightValue = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1644,16 +1807,26 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
             _stepperBtn(Icons.remove_rounded, onMinus),
             Column(
               children: [
+                // Keyed by value so every change replays the pop-in —
+                // manual stepper taps get a subtle pop, and the
+                // auto-progression bump gets pop + green flash.
                 Text(
                   value,
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w800,
-                    color: textPrimary,
+                    color: highlightValue ? _progressGreen : textPrimary,
                     letterSpacing: -1,
                     height: 1,
                   ),
-                ),
+                )
+                    .animate(key: ValueKey('$label-$value'))
+                    .scale(
+                      begin: const Offset(1.22, 1.22),
+                      end: const Offset(1, 1),
+                      duration: 320.ms,
+                      curve: Curves.easeOutBack,
+                    ),
                 const SizedBox(height: 1),
                 Text(unit,
                     style: TextStyle(fontSize: 11, color: textSecondary)),
@@ -1793,6 +1966,10 @@ class _AdvancedSetTable extends StatelessWidget {
   /// the after-state).
   final ValueChanged<int>? onToggleRow;
 
+  /// Row whose target just auto-ramped after the previous set was
+  /// checked — flashed green so progressive overload is visible.
+  final int? flashRow;
+
   const _AdvancedSetTable({
     required this.isDark,
     required this.targetWeights,
@@ -1800,7 +1977,10 @@ class _AdvancedSetTable extends StatelessWidget {
     this.activeRowIndex = 0,
     this.completedRows = const [false, false, false, false],
     this.onToggleRow,
+    this.flashRow,
   });
+
+  static const _progressGreen = Color(0xFF22C55E);
 
   @override
   Widget build(BuildContext context) {
@@ -1934,12 +2114,15 @@ class _AdvancedSetTable extends StatelessWidget {
     required Color textSecondary,
   }) {
     final rirColor = _rirColor(rir);
+    final flashing = flashRow == rowIndex && !isCompleted;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isActive
-            ? AppColors.onboardingAccent.withValues(alpha: 0.12)
-            : null,
+        color: flashing
+            ? _progressGreen.withValues(alpha: 0.12)
+            : isActive
+                ? AppColors.onboardingAccent.withValues(alpha: 0.12)
+                : null,
         border: Border(
           top: BorderSide(
               color: textSecondary.withValues(alpha: 0.1), width: 0.5),
@@ -1989,14 +2172,24 @@ class _AdvancedSetTable extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Pops green while flashing — the target that Zealova
+                // just auto-raised.
                 Text(
                   target,
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
+                    fontWeight:
+                        flashing ? FontWeight.w800 : FontWeight.w600,
+                    color: flashing ? _progressGreen : textPrimary,
                   ),
-                ),
+                ).animate(key: ValueKey('target-$rowIndex-$flashing')).scale(
+                      begin: flashing
+                          ? const Offset(1.15, 1.15)
+                          : const Offset(1, 1),
+                      end: const Offset(1, 1),
+                      duration: 320.ms,
+                      curve: Curves.easeOutBack,
+                    ),
                 if (rir != null) ...[
                   const SizedBox(height: 4),
                   Container(
@@ -2034,21 +2227,34 @@ class _AdvancedSetTable extends StatelessWidget {
           // 10 column on every device.
           Expanded(
             flex: 10,
-            child: !isCompleted &&
-                    !isWarmup &&
-                    onToggleRow != null &&
-                    _isFirstUncompletedRow(rowIndex)
+            child: flashing
+                // Auto-progression flash — green ramp icon on the row
+                // whose target Zealova just raised.
                 ? Align(
                     alignment: Alignment.centerRight,
                     child: const Icon(
-                      Icons.arrow_forward_rounded,
+                      Icons.trending_up_rounded,
                       size: 18,
-                      color: AppColors.orange,
+                      color: _progressGreen,
                     )
                         .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .moveX(begin: 0, end: 4, duration: 700.ms),
+                        .moveY(begin: 2, end: -2, duration: 500.ms),
                   )
-                : const SizedBox.shrink(),
+                : !isCompleted &&
+                        !isWarmup &&
+                        onToggleRow != null &&
+                        _isFirstUncompletedRow(rowIndex)
+                    ? Align(
+                        alignment: Alignment.centerRight,
+                        child: const Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
+                          color: AppColors.orange,
+                        )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .moveX(begin: 0, end: 4, duration: 700.ms),
+                      )
+                    : const SizedBox.shrink(),
           ),
           // Checkbox — tappable when `onToggleRow` is wired (Frame 1
           // interactive demo). Frame 2 reuses this widget read-only.
@@ -2440,22 +2646,46 @@ class _Frame2SetLogged extends StatelessWidget {
 }
 
 // ── Frame 3: workout complete
-class _Frame3Complete extends StatelessWidget {
+class _Frame3Complete extends StatefulWidget {
   final bool isDark;
   const _Frame3Complete({super.key, required this.isDark});
 
   @override
+  State<_Frame3Complete> createState() => _Frame3CompleteState();
+}
+
+class _Frame3CompleteState extends State<_Frame3Complete> {
+  late final ConfettiController _confetti =
+      ConfettiController(duration: const Duration(milliseconds: 1200));
+
+  @override
+  void initState() {
+    super.initState();
+    // One celebratory burst as the frame lands — feel-good spike right
+    // before the shareable card.
+    HapticFeedback.mediumImpact();
+    _confetti.play();
+  }
+
+  @override
+  void dispose() {
+    _confetti.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = widget.isDark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
           const SizedBox(height: 12),
           Container(
             width: 80,
@@ -2541,8 +2771,31 @@ class _Frame3Complete extends StatelessWidget {
                   text: AppLocalizations.of(ctx)!.workoutShowcaseEveryWorkoutFlows))
               .animate(delay: 800.ms)
               .fadeIn(),
-        ],
-      ),
+            ],
+          ),
+        ),
+        // Confetti burst — explodes from the top center over the stats.
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confetti,
+            blastDirectionality: BlastDirectionality.explosive,
+            shouldLoop: false,
+            colors: const [
+              AppColors.onboardingAccent,
+              Color(0xFF2ECC71),
+              Colors.amber,
+              Color(0xFF38BDF8),
+              Colors.deepOrange,
+            ],
+            numberOfParticles: 35,
+            maxBlastForce: 22,
+            minBlastForce: 6,
+            emissionFrequency: 0.05,
+            gravity: 0.22,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -2624,7 +2877,13 @@ class _Frame4Shareable extends StatefulWidget {
 }
 
 class _Frame4ShareableState extends State<_Frame4Shareable> {
-  _ShareFormat _selected = _ShareFormat.card;
+  // Default to Wrapped — the demo runs pre-signup (no name available),
+  // and without personalization the Spotify-Wrapped-style gradient is
+  // the strongest opener: instantly recognizable meme format, vibrant
+  // color that pops against the black screen, and "TOP 5% · 3 PRs" is
+  // an aspirational flex that needs no name. The generic orange stat
+  // Card it replaces was the weakest of the fifteen.
+  _ShareFormat _selected = _ShareFormat.wrapped;
 
   @override
   Widget build(BuildContext context) {
@@ -2651,7 +2910,7 @@ class _Frame4ShareableState extends State<_Frame4Shareable> {
           ).animate().fadeIn(),
           const SizedBox(height: 4),
           Text(
-            AppLocalizations.of(context)!.workoutShowcase15ViralFormatsTap,
+            AppLocalizations.of(context)!.workoutShowcaseViralFormatsTap,
             style: TextStyle(fontSize: 13, color: textSecondary),
           ).animate(delay: 100.ms).fadeIn(),
           const SizedBox(height: 14),
@@ -2939,8 +3198,13 @@ class _ShareRenderer extends StatelessWidget {
                         color: Colors.black))),
             Container(
                 height: _s(2), color: Colors.black, margin: EdgeInsets.symmetric(vertical: _s(6))),
+            // Pre-signup there's no name yet — "YOU LIFT" keeps the
+            // headline second-person personal instead of a generic
+            // "ATHLETE LIFTS".
             Text(
-                '${userFirstName ?? "ATHLETE"} LIFTS\n${_data.volume}',
+                userFirstName != null
+                    ? '$userFirstName LIFTS\n${_data.volume}'
+                    : 'YOU LIFT\n${_data.volume}',
                 style: TextStyle(
                     fontFamily: 'Times',
                     fontSize: _s(20),
@@ -2949,7 +3213,9 @@ class _ShareRenderer extends StatelessWidget {
                     color: Colors.black)),
             SizedBox(height: _s(6)),
             Text(
-                '"Just another Tuesday," says ${userFirstName != null ? userFirstName!.toLowerCase().replaceFirstMapped(RegExp(r'^.'), (m) => m.group(0)!.toUpperCase()) : "the athlete"} after destroying a ${_data.duration} session with ${_data.prs} new personal records.',
+                userFirstName != null
+                    ? '"Just another Tuesday," says ${userFirstName!.toLowerCase().replaceFirstMapped(RegExp(r'^.'), (m) => m.group(0)!.toUpperCase())} after destroying a ${_data.duration} session with ${_data.prs} new personal records.'
+                    : '"Just another Tuesday," you say, after destroying a ${_data.duration} session with ${_data.prs} new personal records.',
                 style: TextStyle(
                     fontFamily: 'Times',
                     fontSize: _s(9),

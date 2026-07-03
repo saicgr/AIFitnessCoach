@@ -8,6 +8,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../nutrition/widgets/log_meal_helpers.dart';
 import 'demo_tasks_screen.dart';
+import 'widgets/demo_intro_splash.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Nutrition Showcase — Onboarding v5
@@ -26,6 +27,10 @@ class NutritionShowcaseScreen extends ConsumerStatefulWidget {
 class _NutritionShowcaseScreenState
     extends ConsumerState<NutritionShowcaseScreen> {
   int _frame = 0;
+
+  /// Feel-good intro beat ("Never guess at a menu again") shown for
+  /// ~2.5s before Frame 0. Auto-dismisses; tap skips it early.
+  bool _introSeen = false;
 
   /// Lifted from Frame 3 so Frame 4 can read which dishes the user
   /// actually selected and render the matching cal/macro totals + dish
@@ -160,19 +165,39 @@ class _NutritionShowcaseScreenState
             // demo feels like a real interaction. Frames 1-3 keep the
             // tap-anywhere behavior since they're passive reveals.
             Expanded(
-              child: _frame == 0
-                  ? AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 280),
-                      child: _buildFrame(_frame, isDark),
-                    )
-                  : GestureDetector(
-                      onTap: _next,
-                      behavior: HitTestBehavior.opaque,
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 280),
-                        child: _buildFrame(_frame, isDark),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 280),
+                child: !_introSeen
+                    ? DemoIntroSplash(
+                        key: const ValueKey('n-intro'),
+                        icon: Icons.restaurant_menu_rounded,
+                        accent: const Color(0xFF2ECC71),
+                        title: AppLocalizations.of(context)
+                            .nutritionShowcaseIntroTitle,
+                        subtitle: AppLocalizations.of(context)
+                            .nutritionShowcaseIntroSubtitle,
+                        onDone: () {
+                          if (mounted) setState(() => _introSeen = true);
+                        },
+                      )
+                    : KeyedSubtree(
+                        key: const ValueKey('n-frames'),
+                        child: _frame == 0
+                            ? AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 280),
+                                child: _buildFrame(_frame, isDark),
+                              )
+                            : GestureDetector(
+                                onTap: _next,
+                                behavior: HitTestBehavior.opaque,
+                                child: AnimatedSwitcher(
+                                  duration:
+                                      const Duration(milliseconds: 280),
+                                  child: _buildFrame(_frame, isDark),
+                                ),
+                              ),
                       ),
-                    ),
+              ),
             ),
             // Bottom CTA — hidden on Frame 0 because the user is
             // expected to actually tap the pulsating menu icon (real
@@ -862,7 +887,7 @@ class _Frame2Scanning extends StatelessWidget {
 // ── Frame 3: parsed menu — production menu_analysis_sheet replica with
 // section grouping, sort pills, filter button, and a live totals footer
 // that updates as the user toggles dishes.
-class _Frame3Result extends StatefulWidget {
+class _Frame3Result extends ConsumerStatefulWidget {
   final bool isDark;
   final Set<String> initialSelection;
   final ValueChanged<Set<String>> onSelectionChanged;
@@ -874,7 +899,7 @@ class _Frame3Result extends StatefulWidget {
   });
 
   @override
-  State<_Frame3Result> createState() => _Frame3ResultState();
+  ConsumerState<_Frame3Result> createState() => _Frame3ResultState();
 }
 
 /// Inflammation level — what every dish row surfaces instead of an
@@ -1093,7 +1118,7 @@ extension _SortLabel on _SortField {
   }
 }
 
-class _Frame3ResultState extends State<_Frame3Result> {
+class _Frame3ResultState extends ConsumerState<_Frame3Result> {
   // 11 dishes across 4 sections — matches the scanned menu in Frame 2.
 
   // Selected dish names — seeded from the parent's lifted set so the
@@ -1102,6 +1127,16 @@ class _Frame3ResultState extends State<_Frame3Result> {
   late final Set<String> _selected = {...widget.initialSelection};
   _SortField? _activeSort;
   bool _ascending = false;
+
+  /// "Tap Protein to sort" nudge shown when the analyzed menu first
+  /// appears. Cleared the moment the user tries any sort pill — the
+  /// disappearance doubles as "you did it" feedback.
+  bool _sortHintDismissed = false;
+
+  /// One-beat payoff after a sort tap ("Sorted ✓ — highest protein
+  /// first"). Token guards stale clears when pills are tapped rapidly.
+  String? _sortConfirmMsg;
+  int _sortConfirmToken = 0;
 
   void _toggle(String name) {
     HapticFeedback.selectionClick();
@@ -1117,7 +1152,9 @@ class _Frame3ResultState extends State<_Frame3Result> {
 
   void _tapSort(_SortField f) {
     HapticFeedback.selectionClick();
+    final wasFirstInteraction = !_sortHintDismissed;
     setState(() {
+      _sortHintDismissed = true;
       if (_activeSort == f) {
         // Cycle: descending → ascending → off (matches production
         // SortSpecList.tap behavior).
@@ -1131,7 +1168,45 @@ class _Frame3ResultState extends State<_Frame3Result> {
         _activeSort = f;
         _ascending = false;
       }
+      _sortConfirmMsg = _confirmMsgForCurrentSort();
     });
+    // Teaching-moment telemetry — did the sort hint convert into a tap?
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'demo_sort_tried',
+      properties: {
+        'field': f.name,
+        'direction': _activeSort == null
+            ? 'off'
+            : (_ascending ? 'asc' : 'desc'),
+        'first_interaction': wasFirstInteraction,
+      },
+    );
+    final token = ++_sortConfirmToken;
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      if (mounted && token == _sortConfirmToken) {
+        setState(() => _sortConfirmMsg = null);
+      }
+    });
+  }
+
+  /// Human-readable payoff line for the sort state just applied.
+  String _confirmMsgForCurrentSort() {
+    final l10n = AppLocalizations.of(context);
+    if (_activeSort == null) return l10n.nutritionShowcaseSortCleared;
+    if (_activeSort == _SortField.inflammation) {
+      return _ascending
+          ? l10n.nutritionShowcaseSortedLeastInflammatory
+          : l10n.nutritionShowcaseSortedMostInflammatory;
+    }
+    final field = switch (_activeSort!) {
+      _SortField.protein => l10n.nutritionShowcaseFieldProtein,
+      _SortField.carbs => l10n.nutritionShowcaseFieldCarbs,
+      _SortField.fat => l10n.nutritionShowcaseFieldFat,
+      _SortField.inflammation => '',
+    };
+    return _ascending
+        ? l10n.nutritionShowcaseSortedLowest(field)
+        : l10n.nutritionShowcaseSortedHighest(field);
   }
 
   /// Returns the dishes grouped by section, with each group's items
@@ -1260,6 +1335,9 @@ class _Frame3ResultState extends State<_Frame3Result> {
                     field: f,
                     activeSort: _activeSort,
                     ascending: _ascending,
+                    // Pulse the Protein pill until the user tries a sort —
+                    // paired with the arrow in _SortHintCallout below.
+                    highlight: f == _SortField.protein && !_sortHintDismissed,
                     onTap: () => _tapSort(f),
                   ),
                   const SizedBox(width: 6),
@@ -1269,6 +1347,28 @@ class _Frame3ResultState extends State<_Frame3Result> {
             ),
           ),
           const SizedBox(height: 10),
+          // ── "Try the sort" nudge → payoff chip → collapsed. The nudge
+          // shows until the first sort tap; each tap then flashes a
+          // "Sorted ✓ — highest protein first" beat before collapsing.
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: _sortConfirmMsg != null
+                ? Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _SortConfirmChip(
+                      key: ValueKey(_sortConfirmMsg),
+                      text: _sortConfirmMsg!,
+                    ),
+                  )
+                : _sortHintDismissed
+                    ? const SizedBox(width: double.infinity)
+                    : const Padding(
+                        padding: EdgeInsets.only(bottom: 10),
+                        child: _SortHintCallout(),
+                      ),
+          ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
@@ -1575,12 +1675,20 @@ class _SortPill extends StatelessWidget {
   final _SortField? activeSort;
   final bool ascending;
   final VoidCallback onTap;
+
+  /// Onboarding nudge — amber glow + pulse so the user can't miss that
+  /// the pill is tappable (paired with _SortHintCallout's arrow).
+  final bool highlight;
+
   const _SortPill({
     required this.field,
     required this.activeSort,
     required this.ascending,
     required this.onTap,
+    this.highlight = false,
   });
+
+  static const _amber = Color(0xFFF59E0B);
 
   @override
   Widget build(BuildContext context) {
@@ -1591,46 +1699,69 @@ class _SortPill extends StatelessWidget {
         : (ascending
             ? Icons.arrow_upward_rounded
             : Icons.arrow_downward_rounded);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
+    Widget pill = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: active
+            ? AppColors.orange.withValues(alpha: 0.15)
+            : highlight
+                ? _amber.withValues(alpha: 0.18)
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.04)),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
           color: active
-              ? AppColors.orange.withValues(alpha: 0.15)
-              : (isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.04)),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: active
-                ? AppColors.orange.withValues(alpha: 0.55)
-                : Colors.transparent,
-          ),
+              ? AppColors.orange.withValues(alpha: 0.55)
+              : highlight
+                  ? _amber
+                  : Colors.transparent,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              field.label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: active
-                    ? AppColors.orange
-                    : (isDark
-                        ? AppColors.textPrimary
-                        : AppColorsLight.textPrimary),
-              ),
+        boxShadow: highlight
+            ? [
+                BoxShadow(
+                  color: _amber.withValues(alpha: 0.4),
+                  blurRadius: 10,
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            field.label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: active
+                  ? AppColors.orange
+                  : highlight
+                      ? _amber
+                      : (isDark
+                          ? AppColors.textPrimary
+                          : AppColorsLight.textPrimary),
             ),
-            if (arrow != null) ...[
-              const SizedBox(width: 3),
-              Icon(arrow, size: 12, color: AppColors.orange),
-            ],
+          ),
+          if (arrow != null) ...[
+            const SizedBox(width: 3),
+            Icon(arrow, size: 12, color: AppColors.orange),
           ],
-        ),
+        ],
       ),
     );
+    if (highlight) {
+      // Same pulse language as Frame 1's menu-scan tile.
+      pill = pill
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .scale(
+            begin: const Offset(1, 1),
+            end: const Offset(1.1, 1.1),
+            duration: 700.ms,
+            curve: Curves.easeInOut,
+          );
+    }
+    return GestureDetector(onTap: onTap, child: pill);
   }
 }
 
@@ -1670,6 +1801,125 @@ class _FilterButton extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Attention nudge under Frame 3's sort row — tells the user the pills
+/// are live ("tap Protein to sort by protein") in the same amber
+/// tap-hint language as Frame 1's pulsing menu tile. Absorbs taps so
+/// touching the hint doesn't trigger the frame's tap-anywhere-advance.
+class _SortHintCallout extends StatelessWidget {
+  const _SortHintCallout();
+
+  static const _amber = Color(0xFFF59E0B);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      // Swallow taps — otherwise the enclosing tap-anywhere GestureDetector
+      // would advance the demo when the user taps the hint itself.
+      onTap: () {},
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Bouncing arrow indented to sit directly beneath the pulsing
+          // Protein pill (≈72px in: swap icon + "Sort" label + gaps),
+          // pointing up at it.
+          Padding(
+            padding: const EdgeInsets.only(left: 72),
+            child: Icon(Icons.arrow_upward_rounded, size: 22, color: _amber)
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .moveY(begin: 0, end: -5, duration: 800.ms),
+          ),
+          const SizedBox(height: 2),
+          Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _amber,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: _amber.withValues(alpha: 0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Text(
+              AppLocalizations.of(context).nutritionShowcaseSortHint,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 350.ms, delay: 250.ms).moveY(
+          begin: 6,
+          end: 0,
+          duration: 350.ms,
+          delay: 250.ms,
+          curve: Curves.easeOut,
+        );
+  }
+}
+
+/// Green one-beat payoff shown in the sort-hint slot right after the
+/// user applies a sort ("Sorted ✓ — highest protein first").
+class _SortConfirmChip extends StatelessWidget {
+  final String text;
+  const _SortConfirmChip({super.key, required this.text});
+
+  static const _green = Color(0xFF22C55E);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: _green,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: _green.withValues(alpha: 0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle_rounded,
+              size: 15, color: Colors.white),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 180.ms).scale(
+          begin: const Offset(0.94, 0.94),
+          end: const Offset(1, 1),
+          duration: 250.ms,
+          curve: Curves.easeOutBack,
+        );
   }
 }
 
