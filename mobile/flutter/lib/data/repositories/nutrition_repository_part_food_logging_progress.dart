@@ -861,9 +861,30 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
         (l) => l.id.startsWith('optimistic_') || l.createdAt.isAfter(cutoff));
   }
 
+  /// Bust the coach-insight disk caches after a food mutation. The daily
+  /// briefing / evening recap bakes nutrition numbers into cached prose with
+  /// a 12h TTL + stale-while-revalidate — without this, the first Coach open
+  /// after logging/deleting a meal paints the pre-mutation recap once more
+  /// (the backend row is already invalidated server-side; this clears the
+  /// client's copy so the very next open fetches fresh). Best-effort.
+  Future<void> _bustCoachInsightCaches(String userId) async {
+    try {
+      final cache = DataCacheService.instance;
+      await Future.wait([
+        cache.invalidate(DataCacheService.coachInsightKey, userId: userId),
+        cache.invalidate(DataCacheService.chatMorningBriefKey, userId: userId),
+        cache.invalidate(DataCacheService.chatEveningRecapKey, userId: userId),
+        cache.invalidate(DataCacheService.chatGreetingKey, userId: userId),
+      ]);
+    } catch (e) {
+      debugPrint('🥗 [Nutrition] coach-insight cache bust skipped: $e');
+    }
+  }
+
   /// Force refresh this date's summary + logs (and the user-level targets).
   Future<void> refreshAll(String userId) async {
     _lastLoadTime = null; // clear cache
+    unawaited(_bustCoachInsightCaches(userId));
     await Future.wait([
       load(userId, forceRefresh: true),
       loadLogs(userId, forceRefresh: true),
@@ -877,6 +898,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   Future<void> deleteLog(String userId, String logId) async {
     try {
       await _repository.deleteFoodLog(logId);
+      unawaited(_bustCoachInsightCaches(userId));
       // The two reloads are independent (refreshAll runs them in a
       // Future.wait too) — parallelize instead of paying two serial
       // round-trips after the delete.
@@ -1365,6 +1387,9 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
       // so the tombstone is no longer needed (and keeping it would hide a
       // genuine re-log of a recycled id).
       _deletedTombstones.remove(logId);
+      // The coach recap cites nutrition numbers — clear its client cache so
+      // the next Coach open can't re-paint prose about the deleted meal.
+      unawaited(_bustCoachInsightCaches(userId));
       // Refresh in the background — UI is already correct, this just keeps
       // server-derived metadata (recent logs, weekly aggregates) in sync.
       unawaited(loadLogs(userId, forceRefresh: true));

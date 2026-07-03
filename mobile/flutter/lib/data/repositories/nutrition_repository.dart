@@ -16,6 +16,7 @@ import '../models/companion_suggestion.dart';
 import '../models/recipe.dart';
 import '../models/ai_suggested_food.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 import '../services/widget_service.dart';
 import '../../utils/tz.dart';
 import '../services/health_service.dart';

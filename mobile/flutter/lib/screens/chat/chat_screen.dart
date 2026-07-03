@@ -176,6 +176,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   // via appendSeededCoachTurn (so the conversation reads "coach spoke");
   // when it's a light greeting we render the living empty state from it.
   DailyCoachInsight? _openStateInsight;
+
+  /// True while the ✨-regenerate call on the briefing card is in flight.
+  bool _regeneratingOpenInsight = false;
   // The insight_id we seeded into chat on this open (briefing path), used so
   // the briefing card + its chips render below the seeded turn and dedupe.
   String? _seededOpenInsightId;
@@ -394,11 +397,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }
 
   Future<void> _runOpenStateLadderBody() async {
-    // Only the empty open state gets decorated. A real session OR any existing
+    // Only the empty open state gets decorated. A real session OR any REAL
     // message means this is a continuing conversation — never inject there.
+    // Seeded/system turns don't count as "real": a cached seeded recap from a
+    // previous open must not block the refetch, or a stale briefing (e.g. one
+    // citing a since-deleted meal) pins itself to the thread forever.
     final activeSession = ref.read(currentChatSessionProvider);
     final existing = ref.read(chatMessagesProvider).valueOrNull ?? const [];
-    if (activeSession != null || existing.isNotEmpty) return;
+    final hasRealMessageEarly = existing.any((m) =>
+        (m.source == null || !m.source!.startsWith('seeded_')) &&
+        m.role != 'system');
+    if (activeSession != null || hasRealMessageEarly) return;
 
     final DailyCoachInsight insight;
     try {
@@ -427,6 +436,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       // Dedupe: if this insight was already seeded today, just render the
       // card over the existing seeded turn (don't append twice).
       final marker = id != null ? 'insight:$id' : null;
+      // A REGENERATED insight (different id — e.g. the cached row was
+      // invalidated after a food-log change) must REPLACE the stale seeded
+      // recap, not stack a second one under it.
+      ref.read(chatMessagesProvider.notifier).pruneSeededInsightTurns(
+            keepInsightId: id,
+            keepIntent: marker,
+          );
       final alreadySeeded = existingNow.any((m) =>
           (id != null && m.insightId == id) ||
           (marker != null && m.intent == marker));
@@ -454,6 +470,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       // conversation — bubbles + chips + composer — never the card landing.
       final id = insight.insightId;
       final marker = id != null ? 'insight:$id' : 'insight:open_greeting';
+      // Same replacement rule as the rich briefing: a stale seeded insight
+      // turn from a previous open is pruned rather than stacked under.
+      ref.read(chatMessagesProvider.notifier).pruneSeededInsightTurns(
+            keepInsightId: id,
+            keepIntent: marker,
+          );
       final alreadySeeded = existingNow.any((m) =>
           (id != null && m.insightId == id) || m.intent == marker);
       if (!alreadySeeded) {
@@ -476,6 +498,46 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
   }
 
+  /// ✨-regenerate on the briefing card: force the server to rebuild the AI
+  /// text (`refresh=true&fresh=true`), then swap the seeded turn for the
+  /// fresh one. This is the user-facing fix for a stale recap (e.g. numbers
+  /// citing a meal deleted after the insight was cached).
+  Future<void> _regenerateOpenInsight() async {
+    if (_regeneratingOpenInsight) return;
+    setState(() => _regeneratingOpenInsight = true);
+    try {
+      final fresh =
+          await ref.read(chatOpenInsightRefreshProvider(DateTime.now()).future);
+      if (!mounted) return;
+      final id = fresh.insightId;
+      final marker = id != null ? 'insight:$id' : 'insight:open_brief';
+      final notifier = ref.read(chatMessagesProvider.notifier);
+      notifier.pruneSeededInsightTurns(keepInsightId: id, keepIntent: marker);
+      final content = [fresh.headline.trim(), fresh.body.trim()]
+          .where((s) => s.isNotEmpty)
+          .join('\n\n');
+      final existing = ref.read(chatMessagesProvider).valueOrNull ?? const [];
+      final alreadySeeded = existing.any((m) =>
+          (id != null && m.insightId == id) || m.intent == marker);
+      if (!alreadySeeded && content.isNotEmpty) {
+        notifier.appendSeededCoachTurn(
+          content: content,
+          intent: marker,
+          sourceSurface: 'chat_open',
+          insightId: id,
+        );
+      }
+      setState(() {
+        _openStateInsight = fresh;
+        _seededOpenInsightId = id ?? 'open_brief';
+      });
+    } catch (e) {
+      debugPrint('🤖 [Chat] insight regenerate failed: $e');
+    } finally {
+      if (mounted) setState(() => _regeneratingOpenInsight = false);
+    }
+  }
+
   /// Build the chip strip for a briefing seeded on organic open. Renders the
   /// briefing card's own chips (route / action / label-only) below the seeded
   /// coach turn, dispatched through the same paths as the deep-link strip.
@@ -483,6 +545,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     return CoachBriefingCard(
       insight: insight,
       coach: _resolvedCoachForChips(),
+      onRegenerate: _regenerateOpenInsight,
+      regenerating: _regeneratingOpenInsight,
       onMessageTap: (label) {
         _textController.text = label;
         _sendMessage();
@@ -1013,28 +1077,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Flexible(
-                child: Text(
-                  l10n.chatScreenMastheadTitle.toUpperCase(),
-                  style: ZType.disp(38, color: tc.textPrimary, letterSpacing: 0.5),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              // Title + status dot as ONE expanding group: the Text keeps its
+              // intrinsic width (only ellipsizing if the row genuinely can't
+              // fit), the dot hugs its right edge, and the leftover space
+              // pushes the chips to the trailing side. (A sibling Flexible +
+              // Spacer pair would SPLIT the free space and squeeze the title
+              // down to "CO…".)
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        l10n.chatScreenMastheadTitle.toUpperCase(),
+                        style: ZType.disp(38, color: tc.textPrimary, letterSpacing: 0.5),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    // Live status dot (online / offline / typing) — kept from
+                    // the old subtitle row, now anchored beside the title.
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8, bottom: 14),
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              // Live status dot (online / offline / typing) — kept from the
-              // old subtitle row, now anchored beside the title.
-              Padding(
-                padding: const EdgeInsets.only(left: 8, bottom: 14),
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-              const Spacer(),
               const SizedBox(width: 8),
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
@@ -1348,7 +1424,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   final awaitingReplyToUser =
                       _isLoading && newest != null && newest.role == 'user';
                   final hasNewestSlot = _streamingSlotVisible || awaitingReplyToUser;
-                  final extraItems = (hasNewestSlot ? 1 : 0) + (hasMore ? 1 : 0);
+                  // Starter prompts fill the dead zone above a briefing-only
+                  // thread: when every message is seeded/system (no real
+                  // conversation yet), the reversed list bottom-anchors a
+                  // single card and leaves a black void on top — 2-3 tappable
+                  // daypart prompts make that space useful instead of empty.
+                  final allSeeded = messages.every((m) =>
+                      (m.source?.startsWith('seeded_') ?? false) ||
+                      m.role == 'system');
+                  final showStarterPrompts =
+                      allSeeded && !hasNewestSlot && !_isLoading;
+                  final extraItems = (hasNewestSlot ? 1 : 0) +
+                      (hasMore ? 1 : 0) +
+                      (showStarterPrompts ? 1 : 0);
                   // Optimistic "building your workout" skeleton — the coach set
                   // this flag the instant a quick-workout request was detected
                   // (and clears it in a finally), so the wait feels instant and
@@ -1433,11 +1521,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       // Loading-more indicator at the END (visually at top in reversed list)
                       final lastIndex = messages.length + extraItems - 1;
                       if (hasMore && index == lastIndex) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                          ),
+                        return const _LoadOlderMessagesSlot();
+                      }
+                      // Starter prompts occupy the visual-top slot (below the
+                      // load-more spinner if both are present).
+                      final starterIndex = lastIndex - (hasMore ? 1 : 0);
+                      if (showStarterPrompts && index == starterIndex) {
+                        return _StarterPrompts(
+                          onPrompt: (prompt) {
+                            HapticService.selection();
+                            _textController.text = prompt;
+                            _sendMessage();
+                          },
                         );
                       }
 
@@ -2321,6 +2416,135 @@ class _SlowThinkingCue extends StatelessWidget {
           ).animate().fadeIn(duration: 300.ms),
         );
       },
+    );
+  }
+}
+
+/// Auto-triggering "load older messages" slot for the chat thread.
+///
+/// The scroll listener only paginates when the user scrolls near the top —
+/// but a thread too short to fill the viewport can never scroll, so a
+/// visible slot would render an eternal spinner that no event ever clears
+/// ("everything feels like it's loading"). This slot kicks the load itself
+/// on first build; loadOlderMessages() dedupes concurrent calls and flips
+/// hasMoreMessages false when the history is exhausted, which rebuilds the
+/// list without this slot.
+class _LoadOlderMessagesSlot extends ConsumerStatefulWidget {
+  const _LoadOlderMessagesSlot();
+
+  @override
+  ConsumerState<_LoadOlderMessagesSlot> createState() =>
+      _LoadOlderMessagesSlotState();
+}
+
+class _LoadOlderMessagesSlotState
+    extends ConsumerState<_LoadOlderMessagesSlot> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(chatMessagesProvider.notifier).loadOlderMessages();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+}
+
+/// Daypart-aware conversation starters rendered in the otherwise-empty space
+/// above a briefing-only thread. Each tap sends the prompt as a real user
+/// message — the void becomes an on-ramp instead of dead pixels.
+class _StarterPrompts extends StatelessWidget {
+  final void Function(String prompt) onPrompt;
+
+  const _StarterPrompts({required this.onPrompt});
+
+  static List<String> promptsForHour(int hour) {
+    if (hour >= 5 && hour <= 10) {
+      return const [
+        'What should I focus on today?',
+        "What's a good breakfast for my targets?",
+        'How did I sleep this week?',
+      ];
+    }
+    if (hour >= 17 && hour <= 23) {
+      return const [
+        'How was my protein this week?',
+        'What should I eat for dinner?',
+        "Plan tomorrow's training",
+      ];
+    }
+    return const [
+      'How am I tracking today?',
+      'Give me a quick lunch idea',
+      'How is my training week going?',
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final prompts = promptsForHour(DateTime.now().hour);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 24, 8, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'ASK YOUR COACH',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.6,
+              color: tc.textMuted,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final prompt in prompts)
+                InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () => onPrompt(prompt),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                          color: tc.textMuted.withValues(alpha: 0.25)),
+                    ),
+                    child: Text(
+                      prompt,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: tc.textPrimary.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

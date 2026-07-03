@@ -162,28 +162,41 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
       child: Container(
-        height: 48,
+        height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              ...pills.map((action) => Padding(
-                padding: const EdgeInsetsDirectional.only(end: 8),
-                child: _ChatPill(
-                  action: action,
+        // Right-edge fade so a clipped trailing pill ("Analyze…") reads as
+        // "there's more, scroll" instead of a layout accident.
+        child: ShaderMask(
+          shaderCallback: (rect) => const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Colors.white, Colors.white, Colors.transparent],
+            stops: [0.0, 0.93, 1.0],
+          ).createShader(rect),
+          blendMode: BlendMode.dstIn,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ...pills.map((action) => Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 8),
+                  child: _ChatPill(
+                    action: action,
+                    isDark: isDark,
+                    colors: colors,
+                    onTap: () => _handlePillTap(action),
+                    onLongPress: _showMoreSheet,
+                  ),
+                )),
+                _MorePill(
                   isDark: isDark,
                   colors: colors,
-                  onTap: () => _handlePillTap(action),
-                  onLongPress: _showMoreSheet,
+                  onTap: _showMoreSheet,
                 ),
-              )),
-              _MorePill(
-                isDark: isDark,
-                colors: colors,
-                onTap: _showMoreSheet,
-              ),
-            ],
+                // Breathing room so the last pill can scroll clear of the fade.
+                const SizedBox(width: 12),
+              ],
+            ),
           ),
         ),
       ),
@@ -216,7 +229,8 @@ class _ChatPill extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            // Compact: was vertical 8 inside a 48px strip — pills read tall.
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withOpacity(0.06)
@@ -231,7 +245,7 @@ class _ChatPill extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(action.icon, size: 16, color: action.color),
+                Icon(action.icon, size: 15, color: action.color),
                 const SizedBox(width: 6),
                 Text(
                   action.label,
@@ -270,7 +284,7 @@ class _MorePill extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withOpacity(0.06)

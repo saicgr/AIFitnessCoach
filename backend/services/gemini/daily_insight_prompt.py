@@ -50,6 +50,9 @@ _SHARED_RULES = """STYLE RULES (HARD, violations are rejected):
 - headline: at most 8 words. No trailing punctuation other than "!" or ".".
 - body: at most 3 sentences. Plain prose. No bullet lists, no markdown.
 - Use the user's first_name naturally (never "Hi there", never "User").
+- Direct address MUST be set off with a comma: "Wrapping up your day, Gigi."
+  / "Morning, Sai." Never omit the comma before the name ("your day Gigi"
+  is a grammar error and is rejected).
 - When referencing today's workout, use its exact name verbatim.
 - Numbers (calories, protein g, steps, sleep hours, score) must match the
   snapshot EXACTLY. Do not round, do not invent, do not extrapolate.

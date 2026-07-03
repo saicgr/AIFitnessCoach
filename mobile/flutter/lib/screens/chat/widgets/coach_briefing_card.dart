@@ -35,6 +35,14 @@ class CoachBriefingCard extends StatelessWidget {
   /// Route chip tapped → deep-link to [route].
   final void Function(String route) onRouteTap;
 
+  /// ✨ tapped → force-regenerate the insight (`?refresh=true`). Null hides
+  /// the affordance (e.g. render sites that can't reseed the thread).
+  final VoidCallback? onRegenerate;
+
+  /// True while a forced regeneration is in flight — the ✨ swaps for a
+  /// small spinner so the tap visibly did something.
+  final bool regenerating;
+
   const CoachBriefingCard({
     super.key,
     required this.insight,
@@ -42,9 +50,22 @@ class CoachBriefingCard extends StatelessWidget {
     required this.onMessageTap,
     required this.onActionTap,
     required this.onRouteTap,
+    this.onRegenerate,
+    this.regenerating = false,
   });
 
   bool get _isEvening => insight.source == 'evening_recap';
+
+  /// "as of 6:36 PM" freshness caption — local time the AI text was generated.
+  String? get _asOfLabel {
+    final ts = insight.generatedAt;
+    if (ts == null) return null;
+    final local = ts.toLocal();
+    final hour12 = local.hour % 12 == 0 ? 12 : local.hour % 12;
+    final minute = local.minute.toString().padLeft(2, '0');
+    final ampm = local.hour >= 12 ? 'PM' : 'AM';
+    return 'as of $hour12:$minute $ampm';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +116,44 @@ class CoachBriefingCard extends StatelessWidget {
                     letterSpacing: 1.1),
               ),
               const Spacer(),
-              Icon(Icons.auto_awesome, size: 14, color: accent.withValues(alpha: 0.7)),
+              // Freshness caption — makes staleness visible instead of the
+              // numbers silently claiming to be "now".
+              if (_asOfLabel != null) ...[
+                Text(
+                  _asOfLabel!,
+                  style: ZType.lbl(10, color: c.textMuted, letterSpacing: 0.4),
+                ),
+                const SizedBox(width: 8),
+              ],
+              // ✨ = regenerate. The endpoint supports refresh=true, so a
+              // user staring at stale numbers can fix it in one tap.
+              if (onRegenerate != null)
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: regenerating
+                      ? null
+                      : () {
+                          HapticService.selection();
+                          onRegenerate!();
+                        },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: regenerating
+                        ? SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.8,
+                              valueColor: AlwaysStoppedAnimation(accent),
+                            ),
+                          )
+                        : Icon(Icons.auto_awesome,
+                            size: 14, color: accent.withValues(alpha: 0.7)),
+                  ),
+                )
+              else
+                Icon(Icons.auto_awesome,
+                    size: 14, color: accent.withValues(alpha: 0.7)),
             ],
           ),
           const SizedBox(height: 12),
@@ -112,7 +170,12 @@ class CoachBriefingCard extends StatelessWidget {
 
           // ── Body: recap line, bullets, watch line, check-in question ─────
           for (int i = 0; i < lines.length; i++) ...[
-            _BodyLine(line: lines[i], colors: c, accent: accent),
+            _BodyLine(
+              line: lines[i],
+              colors: c,
+              accent: accent,
+              onRouteTap: onRouteTap,
+            ),
             if (i != lines.length - 1) const SizedBox(height: 6),
           ],
 
@@ -182,11 +245,87 @@ class _BodyLine extends StatelessWidget {
   final ThemeColors colors;
   final Color accent;
 
+  /// Deep-link handler for tappable stat phrases in the recap prose.
+  final void Function(String route)? onRouteTap;
+
   const _BodyLine({
     required this.line,
     required this.colors,
     required this.accent,
+    this.onRouteTap,
   });
+
+  /// Stat phrases the recap regularly cites, mapped to their home surface —
+  /// "489 calories" → Nutrition, "6 workouts" → Workouts, "8.0 hours of
+  /// sleep" → Sleep. The card states facts; tapping one should GO there.
+  static final List<(RegExp, String)> _statRoutes = [
+    (
+      RegExp(
+        r'\d+(?:[.,]\d+)?\s*(?:calories|kcal|cal\b|grams? of protein|g of protein|g protein|grams? of carbs|grams? of fat)',
+        caseSensitive: false,
+      ),
+      '/nutrition',
+    ),
+    (
+      RegExp(r'\d+\s*(?:workouts?|sessions?)\b', caseSensitive: false),
+      '/workouts',
+    ),
+    (
+      RegExp(r'\d+(?:[.,]\d+)?\s*(?:hours?|hrs?)\s+of\s+sleep', caseSensitive: false),
+      '/health/sleep',
+    ),
+  ];
+
+  /// Split [text] into plain + tappable spans. Returns null when nothing
+  /// matched (caller renders the cheap plain Text instead).
+  List<InlineSpan>? _linkifiedSpans(TextStyle base) {
+    if (onRouteTap == null) return null;
+    // Collect all matches across patterns, earliest-first, non-overlapping.
+    final hits = <(int, int, String)>[];
+    for (final (re, route) in _statRoutes) {
+      for (final m in re.allMatches(line)) {
+        final overlaps =
+            hits.any((h) => m.start < h.$2 && m.end > h.$1);
+        if (!overlaps) hits.add((m.start, m.end, route));
+      }
+    }
+    if (hits.isEmpty) return null;
+    hits.sort((a, b) => a.$1.compareTo(b.$1));
+
+    final spans = <InlineSpan>[];
+    var cursor = 0;
+    for (final (start, end, route) in hits) {
+      if (start > cursor) {
+        spans.add(TextSpan(text: line.substring(cursor, start), style: base));
+      }
+      final phrase = line.substring(start, end);
+      spans.add(WidgetSpan(
+        alignment: PlaceholderAlignment.baseline,
+        baseline: TextBaseline.alphabetic,
+        child: GestureDetector(
+          onTap: () {
+            HapticService.selection();
+            onRouteTap!(route);
+          },
+          child: Text(
+            phrase,
+            style: base.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w600,
+              decoration: TextDecoration.underline,
+              decorationStyle: TextDecorationStyle.dotted,
+              decorationColor: accent.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+      ));
+      cursor = end;
+    }
+    if (cursor < line.length) {
+      spans.add(TextSpan(text: line.substring(cursor), style: base));
+    }
+    return spans;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -251,11 +390,14 @@ class _BodyLine extends StatelessWidget {
       );
     }
 
-    // Plain recap line (first line, with real numbers).
-    return Text(
-      line,
-      style: ZType.ser(14, color: colors.textSecondary, height: 1.4),
-    );
+    // Plain recap line (first line, with real numbers). Stat phrases become
+    // tappable deep-links into their home surface.
+    final base = ZType.ser(14, color: colors.textSecondary, height: 1.4);
+    final spans = _linkifiedSpans(base);
+    if (spans != null) {
+      return Text.rich(TextSpan(children: spans));
+    }
+    return Text(line, style: base);
   }
 }
 
@@ -304,7 +446,8 @@ class _BriefingChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        // Compact pill — was vertical: 8, which read tall next to 13sp text.
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
         decoration: BoxDecoration(
           color: accent.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(999),

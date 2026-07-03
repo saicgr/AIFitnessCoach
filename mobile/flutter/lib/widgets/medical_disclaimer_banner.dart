@@ -16,13 +16,17 @@ class MedicalDisclaimerBanner extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/settings/medical-disclaimer'),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        // Caption-weight footnote: the line must exist for compliance, but it
+        // shouldn't cost a full text row of the composer's height (was 12sp
+        // + 4px vertical, which read as its own UI band under the input).
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
         child: Text(
           AppLocalizations.of(context).medicalDisclaimerBannerAiGeneratedContentNot,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 12,
-            color: mutedColor,
+            fontSize: 10,
+            letterSpacing: 0.2,
+            color: mutedColor.withValues(alpha: 0.75),
           ),
         ),
       ),

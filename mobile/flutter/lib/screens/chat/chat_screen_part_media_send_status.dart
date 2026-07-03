@@ -388,10 +388,13 @@ class _InputBarState extends State<_InputBar> {
           // this lets it fill the space above the floating nav (and stay
           // readable) instead of being stranded below the padding, behind the
           // nav bar — which left the composer floating with a big empty gap.
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
-            child: MedicalDisclaimerBanner(),
-          ),
+          // Hidden while the keyboard is up: that's exactly when vertical
+          // space is scarcest, and the idle state still shows it persistently.
+          if (MediaQuery.of(context).viewInsets.bottom == 0)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: MedicalDisclaimerBanner(),
+            ),
         ],
       ),
     );

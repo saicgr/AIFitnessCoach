@@ -412,7 +412,14 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   /// the initial load has settled kills that phantom spinner; the internal
   /// pagination path still reads the `_hasMoreMessages` field directly, so
   /// loading older messages is unaffected.
-  bool get hasMoreMessages => _hasMoreMessages && _initialHistoryLoaded;
+  ///
+  /// Also gated on NOT being session-scoped: an active session loads its
+  /// whole thread up-front and `loadOlderMessages()` is a deliberate no-op
+  /// (paginating the global history would bleed other sessions' messages in),
+  /// so reporting `true` rendered a permanent mid-thread spinner that could
+  /// never resolve — the "everything feels like it's loading" bug.
+  bool get hasMoreMessages =>
+      _currentSessionId == null && _hasMoreMessages && _initialHistoryLoaded;
 
   /// Update the status of a specific message in the current state (#14)
   void _updateMessageStatus(ChatMessage target, MessageStatus newStatus) {
@@ -1003,6 +1010,34 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     debugPrint('🤖 [Chat] Seeded coach turn ($intent / $sourceSurface)');
   }
 
+  /// Drop seeded insight turns that don't match the CURRENT insight.
+  ///
+  /// The open ladder seeds the daily briefing/greeting as a synthetic coach
+  /// bubble (see [appendSeededCoachTurn]) and the thread cache persists it.
+  /// When the backend regenerates the insight (new id — e.g. its cached row
+  /// was invalidated after a food-log change), the fresh seed must REPLACE
+  /// the stale one: without pruning, the old recap either blocks the ladder
+  /// (thread "not empty") or stacks under the new one. Only seeded turns are
+  /// touched — organic conversation is never pruned. Callers only invoke
+  /// this on threads with no real (non-seeded, non-system) messages.
+  void pruneSeededInsightTurns({String? keepInsightId, String? keepIntent}) {
+    final current = state.valueOrNull ?? [];
+    final pruned = current.where((m) {
+      final isSeededInsight = (m.source?.startsWith('seeded_') ?? false) &&
+          (m.intent?.startsWith('insight:') ?? false);
+      if (!isSeededInsight) return true;
+      if (keepInsightId != null && m.insightId == keepInsightId) return true;
+      if (keepIntent != null && m.intent == keepIntent) return true;
+      return false;
+    }).toList();
+    if (pruned.length != current.length) {
+      state = AsyncValue.data(pruned);
+      debugPrint(
+        '🧹 [Chat] Pruned ${current.length - pruned.length} stale seeded insight turn(s)',
+      );
+    }
+  }
+
   /// Plan §1c.2 — entry point for chip-driven workout-card actions
   /// dispatched from the chat screen. Wraps [_processActionData] so the
   /// chip strip in `chat_screen.dart` doesn't need a private accessor.
@@ -1386,6 +1421,12 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
       if (newOlder.isNotEmpty) {
         state = AsyncValue.data([...newOlder, ...current]);
+      } else if (!_hasMoreMessages) {
+        // Nothing new AND the page came back short: pagination is exhausted.
+        // Touch state so the list rebuilds and drops its "loading older"
+        // slot — otherwise an underfilled thread keeps a spinner that no
+        // scroll event will ever clear.
+        state = AsyncValue.data(List.of(current));
       }
     } catch (e) {
       debugPrint('❌ [Chat] Error loading older messages: $e');

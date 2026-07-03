@@ -172,6 +172,11 @@ class DailyCoachInsight {
   /// of leaving it behind the collapsed TRENDS header.
   final bool recoveryFocus;
 
+  /// When the AI text was generated server-side (`generated_at`). Drives the
+  /// "as of h:mm" freshness caption on the briefing card. Null on fallback /
+  /// legacy cached payloads.
+  final DateTime? generatedAt;
+
   const DailyCoachInsight({
     this.insightId,
     required this.headline,
@@ -185,6 +190,7 @@ class DailyCoachInsight {
     this.blocks = const [],
     this.coachNoticed,
     this.recoveryFocus = false,
+    this.generatedAt,
   });
 
   /// True when this is a RICH morning/evening briefing (vs a light greeting
@@ -236,6 +242,9 @@ class DailyCoachInsight {
           ? CoachNoticed.fromJson(json['coach_noticed'] as Map<String, dynamic>)
           : null,
       recoveryFocus: json['recovery_focus'] == true,
+      generatedAt: json['generated_at'] is String
+          ? DateTime.tryParse(json['generated_at'] as String)
+          : null,
     );
   }
 }
@@ -504,6 +513,40 @@ final dailyCoachInsightRefreshProvider =
       fresh: true,
     ),
     cacheKey: DataCacheService.coachInsightKey,
+    pin: false,
+  );
+});
+
+/// CHAT-OPEN text refresh — same `?refresh=true&fresh=true` contract as
+/// [dailyCoachInsightRefreshProvider] but for the Ask-Coach open-state source
+/// (morning_brief / evening_recap / greeting, chosen by local hour). Used by
+/// the briefing card's ✨ regenerate affordance so a user staring at stale
+/// numbers can force a fresh recap on the spot. Write-throughs the matching
+/// chat disk cache key so the NEXT open also paints fresh.
+final chatOpenInsightRefreshProvider =
+    FutureProvider.autoDispose
+        .family<DailyCoachInsight, DateTime>((ref, date) async {
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  final tzState = ref.watch(timezoneProvider);
+  if (tzState.isLoading || userId == null || userId.isEmpty) {
+    return _buildClientFallback(ref);
+  }
+  final source = chatOpenSourceForHour(DateTime.now().hour);
+  final cacheKey = source == 'morning_brief'
+      ? DataCacheService.chatMorningBriefKey
+      : source == 'evening_recap'
+          ? DataCacheService.chatEveningRecapKey
+          : DataCacheService.chatGreetingKey;
+  return _fetchInsight(
+    ref,
+    _InsightArgs(
+      localDate: DateTime(date.year, date.month, date.day),
+      tz: tzState.timezone,
+      source: source,
+      refresh: true,
+      fresh: true,
+    ),
+    cacheKey: cacheKey,
     pin: false,
   );
 });
