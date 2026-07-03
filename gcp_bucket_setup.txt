@@ -1,0 +1,27 @@
+# GCP setup for Zealova form-analysis video bucket — v2
+# The "Regional Access Boundary ... Account not found" error you saw is a
+# side-check gcloud runs AFTER starting the create; the bucket may already
+# exist. Start with STEP 0 to check.
+
+# ---- 0. Did the bucket get created? ----
+gcloud storage buckets describe gs://gen-lang-client-0702777617-zealova-media --format="value(name,location)"
+
+# If STEP 0 prints the bucket name + US  ->  skip to STEP 2.
+# If STEP 0 says NOT FOUND / 404        ->  run STEP 1 (gsutil skips the RAB check).
+
+# ---- 1. Create the bucket (gsutil path, no RAB check) ----
+gsutil mb -p gen-lang-client-0702777617 -l US gs://gen-lang-client-0702777617-zealova-media
+
+# ---- 2. Add 1-day auto-delete lifecycle rule ----
+echo '{"rule":[{"action":{"type":"Delete"},"condition":{"age":1}}]}' > /tmp/lc.json
+gsutil lifecycle set /tmp/lc.json gs://gen-lang-client-0702777617-zealova-media
+
+# ---- 3. Grant the backend service account access to the bucket ----
+gsutil iam ch serviceAccount:fitwiz-backend@gen-lang-client-0702777617.iam.gserviceaccount.com:roles/storage.admin gs://gen-lang-client-0702777617-zealova-media
+
+# ---- 4. Final verify: list bucket + show IAM ----
+gsutil ls -L -b gs://gen-lang-client-0702777617-zealova-media | head -20
+gsutil iam get gs://gen-lang-client-0702777617-zealova-media
+
+# Done. Now redeploy/restart the Render backend so it picks up the bucket
+# (the backend caches "GCS unavailable" per process after a 403).
