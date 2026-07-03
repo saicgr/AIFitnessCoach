@@ -17,9 +17,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_links.dart';
+import '../../core/constants/branding.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../data/providers/source_import_activity_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/imports_api_service.dart';
@@ -72,6 +76,26 @@ const _kNutritionSources = <_SourceSpec>[
     label: 'Apple Health',
     sub: 'Straight from Health',
     icon: Icons.favorite_outline,
+  ),
+];
+
+/// Workout-app tiles — route into the workout-history import flow with the
+/// source pre-selected in the options sheet. `id` here is the source-hint
+/// slug the backend's format detector / adapters understand; Gravl has no
+/// dedicated adapter yet, so its tile leaves the hint on auto-detect (the
+/// generic-CSV + AI fallback pipeline handles its export).
+const _kWorkoutSources = <_SourceSpec>[
+  _SourceSpec(
+    id: 'fitbod',
+    label: 'Fitbod',
+    sub: 'Workout log CSV',
+    icon: Icons.auto_graph_rounded,
+  ),
+  _SourceSpec(
+    id: 'auto', // Gravl: no adapter slug — auto-detect + AI fallback.
+    label: 'Gravl',
+    sub: 'Workout export',
+    icon: Icons.timeline_outlined,
   ),
 ];
 
@@ -296,11 +320,36 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
     // Banner state updates via sourceImportActivityProvider on its own.
   }
 
-  Future<void> _openWorkoutHistoryImport() async {
+  Future<void> _openWorkoutHistoryImport({String? sourceHint}) async {
     HapticService.light();
     await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => const WorkoutHistoryImportScreen(),
+      builder: (_) => WorkoutHistoryImportScreen(initialSourceHint: sourceHint),
     ));
+  }
+
+  /// "Email us your export" — for anything the in-app importers don't cover
+  /// (or a user who just doesn't want to fight CSVs): opens a prefilled mail
+  /// to support with the account email so we can run the import server-side.
+  Future<void> _emailUsExport() async {
+    HapticService.light();
+    final accountEmail = ref.read(authStateProvider).user?.email ?? '';
+    final subject = Uri.encodeComponent('Import my data — ${Branding.appName}');
+    final body = Uri.encodeComponent(
+      'Hi ${Branding.appName} team,\n\n'
+      'Please import the attached data export into my account'
+      '${accountEmail.isEmpty ? '' : ' ($accountEmail)'}.\n\n'
+      'App it came from: \n'
+      'Anything else we should know: \n',
+    );
+    final uri = Uri.parse(
+        'mailto:${AppLinks.supportEmail}?subject=$subject&body=$body');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // No mail client configured — surface the address instead.
+      await Clipboard.setData(ClipboardData(text: AppLinks.supportEmail));
+      _snack('Email ${AppLinks.supportEmail} — address copied.');
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -464,7 +513,10 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
                     const SizedBox(height: 12),
                     _buildSourceGrid(t),
                     const SizedBox(height: 10),
-                    _WorkoutHistoryTile(tokens: t, onTap: _openWorkoutHistoryImport),
+                    _WorkoutHistoryTile(
+                        tokens: t, onTap: () => _openWorkoutHistoryImport()),
+                    const SizedBox(height: 10),
+                    _EmailImportTile(tokens: t, onTap: _emailUsExport),
                   ],
                 ),
               ),
@@ -503,6 +555,13 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
           tokens: t,
           onTap: () => _openNutritionSource(s.id),
         );
+    Widget workoutTile(_SourceSpec s) => _SourceTile(
+          spec: s,
+          tokens: t,
+          onTap: () => _openWorkoutHistoryImport(
+            sourceHint: s.id == 'auto' ? null : s.id,
+          ),
+        );
     return Column(
       children: [
         Row(children: [
@@ -515,6 +574,12 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
           Expanded(child: tile(_kNutritionSources[2])),
           const SizedBox(width: 10),
           Expanded(child: tile(_kNutritionSources[3])),
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: workoutTile(_kWorkoutSources[0])),
+          const SizedBox(width: 10),
+          Expanded(child: workoutTile(_kWorkoutSources[1])),
         ]),
       ],
     );
@@ -1180,6 +1245,73 @@ class _WorkoutHistoryTile extends StatelessWidget {
                 ),
               ),
               Icon(Icons.chevron_right_rounded, color: tokens.textMuted, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Email us your export" — the catch-all for sources without a dedicated
+/// importer (or users who don't want to wrangle CSVs): opens a prefilled
+/// support email; the team runs the import server-side.
+class _EmailImportTile extends StatelessWidget {
+  const _EmailImportTile({required this.tokens, required this.onTap});
+  final _Tokens tokens;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: tokens.elevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: tokens.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: tokens.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.mail_outline_rounded,
+                    color: tokens.accent, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Email us your export',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'Any app, any format — we import it for you, free',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: tokens.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: tokens.textMuted, size: 20),
             ],
           ),
         ),

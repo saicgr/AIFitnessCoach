@@ -23,7 +23,12 @@ import 'widgets/workout_import_summary_sheet.dart';
 /// Addresses the "weird weights" issue by allowing users to input
 /// their strength levels before completing workouts in the app.
 class WorkoutHistoryImportScreen extends ConsumerStatefulWidget {
-  const WorkoutHistoryImportScreen({super.key});
+  const WorkoutHistoryImportScreen({super.key, this.initialSourceHint});
+
+  /// Pre-selects a source in the import options sheet (a slug from
+  /// `_ImportOptionsSheetState._sources`, e.g. 'fitbod'). Used by the Imports
+  /// hub's per-app tiles; null keeps the default 'auto'.
+  final String? initialSourceHint;
 
   @override
   ConsumerState<WorkoutHistoryImportScreen> createState() =>
@@ -277,7 +282,10 @@ class _WorkoutHistoryImportScreenState
       context: context,
       builder: (ctx) => GlassSheet(
         maxHeightFraction: 0.68,
-        child: _ImportOptionsSheet(defaultUnit: defaultUnit),
+        child: _ImportOptionsSheet(
+          defaultUnit: defaultUnit,
+          initialHint: widget.initialSourceHint,
+        ),
       ),
     );
   }
@@ -651,8 +659,12 @@ class _ImportOptions {
 }
 
 class _ImportOptionsSheet extends StatefulWidget {
-  const _ImportOptionsSheet({required this.defaultUnit});
+  const _ImportOptionsSheet({required this.defaultUnit, this.initialHint});
   final String defaultUnit;
+
+  /// Pre-selected source slug; must exist in `_sources` (else falls back to
+  /// 'auto' so an unknown hint can never render a phantom selection).
+  final String? initialHint;
 
   @override
   State<_ImportOptionsSheet> createState() => _ImportOptionsSheetState();
@@ -689,6 +701,10 @@ class _ImportOptionsSheetState extends State<_ImportOptionsSheet> {
     super.initState();
     // Normalize 'lbs' → 'lb' to match backend contract.
     _unit = widget.defaultUnit.startsWith('lb') ? 'lb' : 'kg';
+    final hint = widget.initialHint;
+    if (hint != null && _sources.any((s) => s.slug == hint)) {
+      _hint = hint;
+    }
   }
 
   @override
