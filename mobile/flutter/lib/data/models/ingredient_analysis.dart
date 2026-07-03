@@ -196,7 +196,17 @@ class PantryAnalyzeResponse {
   final List<PantryDetectedItem> detectedItems;
   final List<PantrySuggestion> suggestions;
 
-  const PantryAnalyzeResponse({required this.detectedItems, required this.suggestions});
+  /// The raw server payload this response was parsed from. Kept so the fridge
+  /// screen can persist the WHOLE result (recipes included) to disk and
+  /// rehydrate it via [PantryAnalyzeResponse.fromJson] on re-entry — leaving
+  /// the screen must not throw away a generation the user paid the wait for.
+  final Map<String, dynamic>? rawJson;
+
+  const PantryAnalyzeResponse({
+    required this.detectedItems,
+    required this.suggestions,
+    this.rawJson,
+  });
 
   factory PantryAnalyzeResponse.fromJson(Map<String, dynamic> j) => PantryAnalyzeResponse(
         detectedItems: (j['detected_items'] as List? ?? [])
@@ -205,6 +215,7 @@ class PantryAnalyzeResponse {
         suggestions: (j['suggestions'] as List? ?? [])
             .map((e) => PantrySuggestion.fromJson(e as Map<String, dynamic>))
             .toList(),
+        rawJson: j,
       );
 }
 

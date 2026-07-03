@@ -181,6 +181,24 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           jsonDecode(raw) as Map<String, dynamic>);
       if (!mounted) return;
       setState(() => _lastScan = decoded);
+      // AUTO-RESTORE: a fresh scan (<6h) with cached recipes rehydrates the
+      // whole RESULTS state on entry — leaving the screen must never dump the
+      // user back on START after they waited out a generation. Only when the
+      // screen is still pristine (no new photo/typing in flight).
+      if (decoded.isFresh &&
+          decoded.resultJson != null &&
+          decoded.items.isNotEmpty &&
+          _items.isEmpty &&
+          _imagesB64.isEmpty &&
+          !_searching) {
+        setState(() {
+          _items.addAll(decoded.items);
+          _scanCount = decoded.items.length;
+          _result = PantryAnalyzeResponse.fromJson(decoded.resultJson!);
+          _hasGenerated = true;
+          _dirty = false;
+        });
+      }
     } catch (_) {/* ignore corrupt cache */}
   }
 
@@ -193,6 +211,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         thumbPath: _imagePaths.isNotEmpty && _imagePaths.first.isNotEmpty
             ? _imagePaths.first
             : null,
+        resultJson: _result?.rawJson,
       );
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_lastScanKey, jsonEncode(scan.toJson()));
@@ -620,14 +639,24 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   void _resumeLastScan() {
     final scan = _lastScan;
     if (scan == null) return;
+    // Cached recipes restore instantly — no regeneration, no Gemini call.
+    // Only a legacy blob (persisted before results were cached) regenerates.
+    final cached = scan.resultJson;
     setState(() {
       _items
         ..clear()
         ..addAll(scan.items);
       _excludedItems.clear();
-      _result = null;
+      _scanCount = scan.items.length;
+      if (cached != null) {
+        _result = PantryAnalyzeResponse.fromJson(cached);
+        _hasGenerated = true;
+        _dirty = false;
+      } else {
+        _result = null;
+      }
     });
-    _findRecipes();
+    if (cached == null) _findRecipes();
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -1594,25 +1623,35 @@ class _Mood {
   const _Mood(this.key, this.emoji, this.label);
 }
 
-/// Persisted "last scan" snapshot for the resume card.
+/// Persisted "last scan" snapshot for the resume card AND full-session
+/// restore — carries the generated recipes so leaving the screen never
+/// throws away a result the user waited ~30s for.
 class _FridgeLastScan {
   final List<String> items;
   final int count;
   final DateTime timestamp;
   final String? thumbPath;
 
+  /// Raw PantryAnalyzeResponse payload (recipes included). Null on legacy
+  /// blobs persisted before results were cached.
+  final Map<String, dynamic>? resultJson;
+
   const _FridgeLastScan({
     required this.items,
     required this.count,
     required this.timestamp,
     this.thumbPath,
+    this.resultJson,
   });
+
+  bool get isFresh => DateTime.now().difference(timestamp).inHours < 6;
 
   Map<String, dynamic> toJson() => {
         'items': items,
         'count': count,
         'timestamp': timestamp.toIso8601String(),
         if (thumbPath != null) 'thumb_path': thumbPath,
+        if (resultJson != null) 'result_json': resultJson,
       };
 
   factory _FridgeLastScan.fromJson(Map<String, dynamic> j) => _FridgeLastScan(
@@ -1622,6 +1661,9 @@ class _FridgeLastScan {
         timestamp:
             DateTime.tryParse(j['timestamp'] as String? ?? '') ?? DateTime.now(),
         thumbPath: j['thumb_path'] as String?,
+        resultJson: j['result_json'] is Map
+            ? Map<String, dynamic>.from(j['result_json'] as Map)
+            : null,
       );
 
   String get relativeTime {
