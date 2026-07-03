@@ -180,6 +180,8 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       final decoded = _FridgeLastScan.fromJson(
           jsonDecode(raw) as Map<String, dynamic>);
       if (!mounted) return;
+      debugPrint('🍳 [Fridge] last scan loaded: ${decoded.count} items, '
+          'fresh=${decoded.isFresh}, cachedRecipes=${decoded.resultJson != null}');
       setState(() => _lastScan = decoded);
       // AUTO-RESTORE: a fresh scan (<6h) with cached recipes rehydrates the
       // whole RESULTS state on entry — leaving the screen must never dump the
@@ -301,11 +303,14 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   Future<void> _detectForPhoto(int index) async {
     if (index < 0 || index >= _imagesB64.length) return;
     final b64 = _imagesB64[index];
+    debugPrint('🍳 [Fridge] detect photo ${index + 1} → POST '
+        'detect-pantry-items (${(b64.length / 1024).round()}KB b64, user=${widget.userId.isEmpty ? "EMPTY!" : "ok"})');
     try {
       final items = await ref
           .read(recipeRepositoryProvider)
           .detectPantryItems(widget.userId, imageB64: b64);
       if (!mounted) return;
+      debugPrint('🍳 [Fridge] detect photo ${index + 1} ✓ ${items.length} items');
       setState(() {
         if (index < _photoDetecting.length) {
           _photoDetecting[index] = false;
@@ -321,6 +326,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       });
       _maybeAutoGenerate();
     } catch (e) {
+      debugPrint('🍳 [Fridge] detect photo ${index + 1} ✗ $e');
       if (!mounted) return;
       setState(() {
         if (index < _photoDetecting.length) _photoDetecting[index] = false;
@@ -355,6 +361,8 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       // real ingredient count under the scanning hero instead of a stale 0.
       if (!_anyDetecting) _scanCount = _items.length;
     });
+    debugPrint('🍳 [Fridge] findRecipes → POST from-pantry: '
+        '${included.length} items, filters=${_activeFilters.length}, mood=$_mood');
     try {
       final res = await ref.read(recipeRepositoryProvider).fromPantry(
             widget.userId,
@@ -365,6 +373,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
             mood: _mood,
           );
       if (!mounted) return;
+      debugPrint('🍳 [Fridge] findRecipes ✓ ${res.suggestions.length} recipes');
       setState(() {
         _result = res;
         _searching = false;
@@ -379,7 +388,9 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         }
       });
       _persistLastScan();
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('🍳 [Fridge] findRecipes ✗ $e');
+      debugPrint('🍳 [Fridge] $st');
       if (!mounted) return;
       setState(() {
         _error = e.toString().replaceFirst('Exception: ', '');
@@ -638,6 +649,8 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
 
   void _resumeLastScan() {
     final scan = _lastScan;
+    debugPrint('🍳 [Fridge] resume tapped: scan=${scan?.count} items, '
+        'cachedRecipes=${scan?.resultJson != null}');
     if (scan == null) return;
     // Cached recipes restore instantly — no regeneration, no Gemini call.
     // Only a legacy blob (persisted before results were cached) regenerates.
