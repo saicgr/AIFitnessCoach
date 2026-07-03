@@ -57,7 +57,9 @@ const quickActionRegistry = <String, QuickAction>{
   'weight': QuickAction(
     id: 'weight',
     label: 'Weight',
-    icon: Icons.monitor_weight_outlined,
+    // scale (not monitor_weight): the boxy monitor_weight glyph read as an
+    // unrecognizable square at small tile sizes in the quick-log sheet.
+    icon: Icons.scale_outlined,
     color: Color(0xFFF59E0B),
     behavior: QuickActionBehavior.weightLog,
   ),
@@ -351,7 +353,9 @@ const quickActionRegistry = <String, QuickAction>{
   'form_check': QuickAction(
     id: 'form_check',
     label: 'Form Check',
-    icon: Icons.sports_gymnastics_outlined,
+    // videocam (not sports_gymnastics): form check = record/upload a video
+    // of your lift; the gymnast glyph read as martial arts, not video review.
+    icon: Icons.videocam_outlined,
     color: Color(0xFF06B6D4),
     behavior: QuickActionBehavior.formCheck,
   ),

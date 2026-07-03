@@ -1,15 +1,28 @@
+/// Log Cardio — manual entry for a finished cardio session.
+///
+/// 2026-07 revamp: restyled into the Signature design language (ThemeColors +
+/// ZType, hairline borders, single accent) replacing the legacy electric-blue
+/// look. Structure: Describe-it AI autofill hero → activity chips → location
+/// chips → duration card with quick-pick minutes → optional details →
+/// weather (outdoor only) → notes → save. All logging/parse logic is
+/// unchanged — only the visual layer moved.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/cardio_session.dart';
 import '../../data/providers/cardio_session_provider.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/haptic_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
 class LogCardioScreen extends ConsumerStatefulWidget {
   final String? workoutId;
 
@@ -43,6 +56,9 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
   final _maxHrFocus = FocusNode();
   final _caloriesFocus = FocusNode();
   final _notesFocus = FocusNode();
+
+  /// Quick-pick minute presets shown under the duration field.
+  static const _durationPresets = [15, 30, 45, 60, 90];
 
   @override
   void initState() {
@@ -80,243 +96,418 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final electricBlue =
-        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+    final c = ThemeColors.of(context);
+    final loc = AppLocalizations.of(context);
     final isSaving = ref.watch(isCardioSavingProvider);
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: PillAppBar(
-        title: AppLocalizations.of(context).logCardioLogCardio,
-      ),
+      backgroundColor: c.background,
+      appBar: PillAppBar(title: loc.logCardioLogCardio),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Natural-language quick entry (Calorii-audit P4.3) — type it once
+              // Natural-language quick entry — the fastest path. Type it once
               // ("30 min brisk walk", "ran 5k") and auto-fill the form below.
-              _SectionHeader(title: 'Describe it', isDark: isDark)
-                  .animate()
-                  .fadeIn(),
-              const SizedBox(height: 12),
-              Row(
+              _sectionLabel(c, 'DESCRIBE IT'),
+              const SizedBox(height: 10),
+              _buildDescribeCard(c),
+
+              const SizedBox(height: 26),
+
+              _sectionLabel(c, loc.logCardioActivityType),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _describeController,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _parseDescription(),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. 30 min brisk walk, ran 5k…',
-                        prefixIcon: const Icon(Icons.bolt_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        isDense: true,
-                      ),
+                  for (final type in CardioType.values)
+                    _SelectChip(
+                      colors: c,
+                      icon: _typeIcon(type),
+                      label: type.label,
+                      selected: type == _selectedType,
+                      onTap: () => setState(() => _selectedType = type),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  _parsing
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : FilledButton(
-                          onPressed: _parseDescription,
-                          child: const Text('Auto-fill'),
-                        ),
                 ],
-              ).animate().fadeIn(delay: 30.ms),
+              ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 26),
 
-              // Cardio Type Section
-              _SectionHeader(title: AppLocalizations.of(context).logCardioActivityType, isDark: isDark)
-                  .animate()
-                  .fadeIn(),
-              const SizedBox(height: 12),
-              _CardioTypeSelector(
-                selectedType: _selectedType,
-                onSelect: (type) => setState(() => _selectedType = type),
-                isDark: isDark,
-              ).animate().fadeIn(delay: 50.ms),
+              _sectionLabel(c, loc.logCardioLocation),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final location in CardioLocation.values)
+                    _SelectChip(
+                      colors: c,
+                      icon: _locationIcon(location),
+                      label: location.label,
+                      selected: location == _selectedLocation,
+                      onTap: () => setState(() {
+                        _selectedLocation = location;
+                        // Weather only applies outdoors.
+                        if (!location.isOutdoor) _selectedWeather = null;
+                      }),
+                    ),
+                ],
+              ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 26),
 
-              // Location Section (Prominent)
-              _SectionHeader(title: AppLocalizations.of(context).logCardioLocation, isDark: isDark)
-                  .animate()
-                  .fadeIn(delay: 100.ms),
-              const SizedBox(height: 12),
-              _LocationSelector(
-                selectedLocation: _selectedLocation,
-                onSelect: (location) {
-                  setState(() {
-                    _selectedLocation = location;
-                    // Clear weather if switching to indoor
-                    if (!location.isOutdoor) {
-                      _selectedWeather = null;
-                    }
-                  });
-                },
-                isDark: isDark,
-              ).animate().fadeIn(delay: 150.ms),
+              _sectionLabel(c, loc.logCardioDuration),
+              const SizedBox(height: 10),
+              _buildDurationCard(c),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 26),
 
-              // Duration Input (Required)
-              _SectionHeader(title: AppLocalizations.of(context).logCardioDuration, isDark: isDark)
-                  .animate()
-                  .fadeIn(delay: 200.ms),
-              const SizedBox(height: 12),
-              _DurationInput(
-                controller: _durationController,
-                focusNode: _durationFocus,
-                isDark: isDark,
-              ).animate().fadeIn(delay: 250.ms),
-
-              const SizedBox(height: 24),
-
-              // Optional Fields Section
-              _SectionHeader(title: AppLocalizations.of(context).logCardioOptionalDetails, isDark: isDark)
-                  .animate()
-                  .fadeIn(delay: 300.ms),
-              const SizedBox(height: 12),
-
-              // Distance
+              _sectionLabel(c, loc.logCardioOptionalDetails),
+              const SizedBox(height: 10),
               _InputField(
                 controller: _distanceController,
                 focusNode: _distanceFocus,
-                label: AppLocalizations.of(context).workoutImportDistance,
+                label: loc.workoutImportDistance,
                 suffix: 'km',
-                icon: Icons.straighten,
+                icon: Icons.straighten_outlined,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                isDark: isDark,
-              ).animate().fadeIn(delay: 350.ms),
-              const SizedBox(height: 12),
-
-              // Heart Rate Row
+                colors: c,
+              ),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: _InputField(
                       controller: _avgHeartRateController,
                       focusNode: _avgHrFocus,
-                      label: AppLocalizations.of(context).workoutDayDetailAvgHr,
+                      label: loc.workoutDayDetailAvgHr,
                       suffix: 'bpm',
                       icon: Icons.favorite_outline,
                       keyboardType: TextInputType.number,
-                      isDark: isDark,
+                      colors: c,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: _InputField(
                       controller: _maxHeartRateController,
                       focusNode: _maxHrFocus,
-                      label: AppLocalizations.of(context).workoutDayDetailMaxHr,
+                      label: loc.workoutDayDetailMaxHr,
                       suffix: 'bpm',
-                      icon: Icons.favorite,
+                      icon: Icons.monitor_heart_outlined,
                       keyboardType: TextInputType.number,
-                      isDark: isDark,
+                      colors: c,
                     ),
                   ),
                 ],
-              ).animate().fadeIn(delay: 400.ms),
-              const SizedBox(height: 12),
-
-              // Calories
+              ),
+              const SizedBox(height: 10),
               _InputField(
                 controller: _caloriesController,
                 focusNode: _caloriesFocus,
-                label: AppLocalizations.of(context).metricsDashboardCaloriesBurned,
+                label: loc.metricsDashboardCaloriesBurned,
                 suffix: 'kcal',
-                icon: Icons.local_fire_department,
+                icon: Icons.local_fire_department_outlined,
                 keyboardType: TextInputType.number,
-                isDark: isDark,
-              ).animate().fadeIn(delay: 450.ms),
+                colors: c,
+              ),
 
-              // Weather Selector (only for outdoor)
+              // Weather (outdoor sessions only).
               if (_selectedLocation.isOutdoor) ...[
-                const SizedBox(height: 24),
-                _SectionHeader(title: AppLocalizations.of(context).logCardioWeatherConditions, isDark: isDark)
-                    .animate()
-                    .fadeIn(delay: 500.ms),
-                const SizedBox(height: 12),
-                _WeatherSelector(
-                  selectedWeather: _selectedWeather,
-                  onSelect: (weather) =>
-                      setState(() => _selectedWeather = weather),
-                  isDark: isDark,
-                ).animate().fadeIn(delay: 550.ms),
+                const SizedBox(height: 26),
+                _sectionLabel(c, loc.logCardioWeatherConditions),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final weather in WeatherCondition.values)
+                      _SelectChip(
+                        colors: c,
+                        icon: _weatherIcon(weather),
+                        label: weather.label,
+                        selected: weather == _selectedWeather,
+                        compact: true,
+                        onTap: () => setState(
+                          () => _selectedWeather =
+                              weather == _selectedWeather ? null : weather,
+                        ),
+                      ),
+                  ],
+                ),
               ],
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 26),
 
-              // Notes
-              _SectionHeader(title: 'NOTES', isDark: isDark)
-                  .animate()
-                  .fadeIn(delay: 600.ms),
-              const SizedBox(height: 12),
-              _NotesInput(
+              _sectionLabel(c, 'NOTES'),
+              const SizedBox(height: 10),
+              TextField(
                 controller: _notesController,
                 focusNode: _notesFocus,
-                isDark: isDark,
-              ).animate().fadeIn(delay: 650.ms),
+                maxLines: 3,
+                style: TextStyle(color: c.textPrimary, fontSize: 14),
+                decoration: _fieldDecoration(c).copyWith(
+                  hintText: loc.logCardioHowDidTheSession,
+                  contentPadding: const EdgeInsets.all(14),
+                ),
+              ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
 
-              // Save Button
+              // Save
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                height: 52,
+                child: FilledButton(
                   onPressed: isSaving ? null : _saveSession,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: electricBlue,
-                    disabledBackgroundColor: electricBlue.withOpacity(0.5),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: c.accent,
+                    disabledBackgroundColor: c.accent.withValues(alpha: 0.5),
+                    foregroundColor: c.accentContrast,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: isSaving
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
+                      ? SizedBox(
+                          width: 22,
+                          height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: c.accentContrast,
                           ),
                         )
                       : Text(
-                          AppLocalizations.of(context).logCardioSaveCardioSession,
+                          loc.logCardioSaveCardioSession,
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                            color: c.accentContrast,
                           ),
                         ),
                 ),
-              ).animate().fadeIn(delay: 700.ms).scale(delay: 700.ms),
+              ),
 
-              const SizedBox(height: 100),
+              const SizedBox(height: 80),
             ],
           ),
         ),
       ),
     );
   }
+
+  // ── Section pieces ─────────────────────────────────────────────────
+
+  Widget _sectionLabel(ThemeColors c, String text) => Text(
+        text.toUpperCase(),
+        style: ZType.lbl(10, color: c.textMuted, letterSpacing: 1.6),
+      );
+
+  /// Describe-it hero: free text + accent Auto-fill action in one bordered
+  /// card, so the AI path reads as the primary way in.
+  Widget _buildDescribeCard(ThemeColors c) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 4, 6, 4),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.bolt_rounded, size: 18, color: c.accent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _describeController,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _parseDescription(),
+              style: TextStyle(color: c.textPrimary, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'e.g. 30 min brisk walk, ran 5k…',
+                hintStyle: TextStyle(color: c.textMuted, fontSize: 14),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _parsing
+              ? const Padding(
+                  padding: EdgeInsets.all(10),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : TextButton(
+                  onPressed: _parseDescription,
+                  style: TextButton.styleFrom(
+                    backgroundColor: c.accent,
+                    foregroundColor: c.accentContrast,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'Auto-fill',
+                    style:
+                        TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
+                ),
+        ],
+      ),
+    );
+  }
+
+  /// Duration: big centred minutes field + one-tap presets.
+  Widget _buildDurationCard(ThemeColors c) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(c.accent.withValues(alpha: 0.06), c.surface),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.accent.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.timer_outlined, color: c.accent, size: 24),
+              Expanded(
+                child: TextField(
+                  controller: _durationController,
+                  focusNode: _durationFocus,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: ZType.disp(34, color: c.textPrimary),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: '30',
+                    hintStyle: ZType.disp(34, color: c.textMuted),
+                    contentPadding: EdgeInsets.zero,
+                    isDense: true,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Text('min', style: ZType.lbl(12, color: c.textMuted)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (final (i, preset) in _durationPresets.indexed) ...[
+                if (i > 0) const SizedBox(width: 6),
+                Expanded(
+                  child: _PresetPill(
+                    colors: c,
+                    label: '$preset',
+                    selected: _durationController.text == '$preset',
+                    onTap: () {
+                      HapticService.light();
+                      setState(() => _durationController.text = '$preset');
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(ThemeColors c) => InputDecoration(
+        filled: true,
+        fillColor: c.surface,
+        hintStyle: TextStyle(color: c.textMuted),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: c.cardBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: c.accent),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: c.cardBorder),
+        ),
+      );
+
+  // ── Glyphs ─────────────────────────────────────────────────────────
+
+  IconData _typeIcon(CardioType type) {
+    switch (type) {
+      case CardioType.running:
+        return Icons.directions_run_rounded;
+      case CardioType.cycling:
+        return Icons.pedal_bike_rounded;
+      case CardioType.rowing:
+        return Icons.rowing_rounded;
+      case CardioType.elliptical:
+        // Closest material glyph to a cross-trainer's arm+leg stride; the old
+        // dumbbell (fitness_center) read as strength, not cardio.
+        return Icons.nordic_walking_rounded;
+      case CardioType.swimming:
+        return Icons.waves_rounded;
+      case CardioType.walking:
+        return Icons.directions_walk_rounded;
+    }
+  }
+
+  IconData _locationIcon(CardioLocation location) {
+    switch (location) {
+      case CardioLocation.indoor:
+        return Icons.home_rounded;
+      case CardioLocation.outdoor:
+        // A tree — the old nature_people glyph read as "person with balloon".
+        return Icons.park_rounded;
+      case CardioLocation.treadmill:
+        // A belt — the old fitness_center dumbbell said "weights", not
+        // treadmill.
+        return Icons.conveyor_belt;
+      case CardioLocation.track:
+        return Icons.stadium_rounded;
+      case CardioLocation.trail:
+        return Icons.forest_rounded;
+      case CardioLocation.pool:
+        return Icons.pool_rounded;
+    }
+  }
+
+  IconData _weatherIcon(WeatherCondition weather) {
+    switch (weather) {
+      case WeatherCondition.sunny:
+        return Icons.wb_sunny_outlined;
+      case WeatherCondition.cloudy:
+        return Icons.cloud_outlined;
+      case WeatherCondition.partlyCloudy:
+        return Icons.cloud_queue_outlined;
+      case WeatherCondition.rainy:
+        return Icons.water_drop_outlined;
+      case WeatherCondition.windy:
+        return Icons.air_rounded;
+      case WeatherCondition.hot:
+        return Icons.thermostat_outlined;
+      case WeatherCondition.cold:
+        return Icons.ac_unit_outlined;
+      case WeatherCondition.humid:
+        return Icons.water_outlined;
+    }
+  }
+
+  // ── Actions (unchanged logic) ──────────────────────────────────────
 
   Future<void> _saveSession() async {
     if (_userId == null) {
@@ -363,7 +554,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              AppLocalizations.of(context)!.logCardioScreenSessionLogged(_selectedType.label, session.formattedDuration)),
+              AppLocalizations.of(context).logCardioScreenSessionLogged(_selectedType.label, session.formattedDuration)),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
@@ -418,297 +609,118 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Section Header
+// Select chip — shared by activity / location / weather rows
 // ─────────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final bool isDark;
+class _SelectChip extends StatelessWidget {
+  final ThemeColors colors;
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final bool compact;
+  final VoidCallback onTap;
 
-  const _SectionHeader({required this.title, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-        letterSpacing: 1.5,
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Cardio Type Selector
-// ─────────────────────────────────────────────────────────────────
-
-class _CardioTypeSelector extends StatelessWidget {
-  final CardioType selectedType;
-  final ValueChanged<CardioType> onSelect;
-  final bool isDark;
-
-  const _CardioTypeSelector({
-    required this.selectedType,
-    required this.onSelect,
-    required this.isDark,
-  });
-
-  IconData _getIcon(CardioType type) {
-    switch (type) {
-      case CardioType.running:
-        return Icons.directions_run;
-      case CardioType.cycling:
-        return Icons.directions_bike;
-      case CardioType.rowing:
-        return Icons.rowing;
-      case CardioType.elliptical:
-        return Icons.fitness_center;
-      case CardioType.swimming:
-        return Icons.pool;
-      case CardioType.walking:
-        return Icons.directions_walk;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final electricBlue =
-        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
-    final cardio = isDark ? AppColors.cardio : AppColorsLight.cardio;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: CardioType.values.map((type) {
-        final isSelected = type == selectedType;
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            onSelect(type);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isSelected ? cardio.withOpacity(0.15) : elevated,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? cardio : elevated,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _getIcon(type),
-                  size: 20,
-                  color: isSelected ? cardio : textMuted,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  type.label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? textPrimary : textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Location Selector (Prominent)
-// ─────────────────────────────────────────────────────────────────
-
-class _LocationSelector extends StatelessWidget {
-  final CardioLocation selectedLocation;
-  final ValueChanged<CardioLocation> onSelect;
-  final bool isDark;
-
-  const _LocationSelector({
-    required this.selectedLocation,
-    required this.onSelect,
-    required this.isDark,
-  });
-
-  IconData _getIcon(CardioLocation location) {
-    switch (location) {
-      case CardioLocation.indoor:
-        return Icons.home;
-      case CardioLocation.outdoor:
-        return Icons.nature_people;
-      case CardioLocation.treadmill:
-        return Icons.fitness_center;
-      case CardioLocation.track:
-        return Icons.stadium;
-      case CardioLocation.trail:
-        return Icons.terrain;
-      case CardioLocation.pool:
-        return Icons.pool;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final electricBlue =
-        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: GridView.count(
-        crossAxisCount: 3,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        childAspectRatio: 1.1,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        children: CardioLocation.values.map((location) {
-          final isSelected = location == selectedLocation;
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onSelect(location);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                color: isSelected ? cyan.withOpacity(0.15) : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected ? cyan : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _getIcon(location),
-                    size: 28,
-                    color: isSelected ? cyan : textMuted,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    location.label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isSelected ? textPrimary : textMuted,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Duration Input
-// ─────────────────────────────────────────────────────────────────
-
-class _DurationInput extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final bool isDark;
-
-  const _DurationInput({
-    required this.controller,
-    required this.focusNode,
-    required this.isDark,
+  const _SelectChip({
+    required this.colors,
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final electricBlue =
-        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            electricBlue.withOpacity(0.15),
-            electricBlue.withOpacity(0.05),
-          ],
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
+    final c = colors;
+    final tint = selected ? c.accent : c.textMuted;
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 12 : 14,
+          vertical: compact ? 8 : 11,
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: electricBlue.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.timer, color: electricBlue, size: 28),
-          const SizedBox(width: 16),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: BoxDecoration(
+          color: selected
+              ? Color.alphaBlend(c.accent.withValues(alpha: 0.13), c.surface)
+              : c.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? c.accent : c.cardBorder,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: compact ? 15 : 18, color: tint),
+            const SizedBox(width: 7),
+            Text(
+              label,
               style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
+                fontSize: compact ? 12 : 13.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? c.textPrimary : c.textSecondary,
               ),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: '30',
-                hintStyle: TextStyle(color: textMuted),
-                contentPadding: EdgeInsets.zero,
-                isDense: true,
-              ),
-              textAlign: TextAlign.center,
             ),
-          ),
-          Text(
-            'minutes',
-            style: TextStyle(
-              fontSize: 18,
-              color: textMuted,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Input Field
+// Duration preset pill
+// ─────────────────────────────────────────────────────────────────
+
+class _PresetPill extends StatelessWidget {
+  final ThemeColors colors;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PresetPill({
+    required this.colors,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = colors;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? c.accent : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(
+            color: selected ? c.accent : c.cardBorder,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: selected ? c.accentContrast : c.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Input field — hairline-bordered optional details
 // ─────────────────────────────────────────────────────────────────
 
 class _InputField extends StatelessWidget {
@@ -718,7 +730,7 @@ class _InputField extends StatelessWidget {
   final String? suffix;
   final IconData icon;
   final TextInputType keyboardType;
-  final bool isDark;
+  final ThemeColors colors;
 
   const _InputField({
     required this.controller,
@@ -727,15 +739,12 @@ class _InputField extends StatelessWidget {
     this.suffix,
     required this.icon,
     this.keyboardType = TextInputType.text,
-    required this.isDark,
+    required this.colors,
   });
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final c = colors;
 
     return TextField(
       controller: controller,
@@ -746,154 +755,29 @@ class _InputField extends StatelessWidget {
           : keyboardType == const TextInputType.numberWithOptions(decimal: true)
               ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
               : null,
-      style: TextStyle(color: textPrimary),
+      style: TextStyle(color: c.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: textMuted),
+        labelStyle: TextStyle(color: c.textMuted, fontSize: 13),
         suffixText: suffix,
-        suffixStyle: TextStyle(color: textMuted),
-        prefixIcon: Icon(icon, color: textMuted, size: 20),
+        suffixStyle: TextStyle(color: c.textMuted, fontSize: 13),
+        prefixIcon: Icon(icon, color: c.textMuted, size: 19),
         filled: true,
-        fillColor: elevated,
+        fillColor: c.surface,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: c.cardBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: c.accent),
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: c.cardBorder),
         ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Weather Selector
-// ─────────────────────────────────────────────────────────────────
-
-class _WeatherSelector extends StatelessWidget {
-  final WeatherCondition? selectedWeather;
-  final ValueChanged<WeatherCondition?> onSelect;
-  final bool isDark;
-
-  const _WeatherSelector({
-    required this.selectedWeather,
-    required this.onSelect,
-    required this.isDark,
-  });
-
-  IconData _getIcon(WeatherCondition weather) {
-    switch (weather) {
-      case WeatherCondition.sunny:
-        return Icons.wb_sunny;
-      case WeatherCondition.cloudy:
-        return Icons.cloud;
-      case WeatherCondition.partlyCloudy:
-        return Icons.cloud_queue;
-      case WeatherCondition.rainy:
-        return Icons.water_drop;
-      case WeatherCondition.windy:
-        return Icons.air;
-      case WeatherCondition.hot:
-        return Icons.thermostat;
-      case WeatherCondition.cold:
-        return Icons.ac_unit;
-      case WeatherCondition.humid:
-        return Icons.water;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: WeatherCondition.values.map((weather) {
-        final isSelected = weather == selectedWeather;
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            onSelect(isSelected ? null : weather);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? orange.withOpacity(0.15) : elevated,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? orange : Colors.transparent,
-                width: 1.5,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _getIcon(weather),
-                  size: 16,
-                  color: isSelected ? orange : textMuted,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  weather.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? textPrimary : textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Notes Input
-// ─────────────────────────────────────────────────────────────────
-
-class _NotesInput extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final bool isDark;
-
-  const _NotesInput({
-    required this.controller,
-    required this.focusNode,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      maxLines: 3,
-      style: TextStyle(color: textPrimary),
-      decoration: InputDecoration(
-        hintText: AppLocalizations.of(context).logCardioHowDidTheSession,
-        hintStyle: TextStyle(color: textMuted),
-        filled: true,
-        fillColor: elevated,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.all(16),
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       ),
     );
   }

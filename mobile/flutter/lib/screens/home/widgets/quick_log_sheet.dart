@@ -27,8 +27,8 @@ import '../../workout/widgets/quick_workout_sheet.dart';
 /// Icon + color are derived from [quickActionRegistry] via [registryId] so the
 /// LOG sheet, the home shortcut row, and the customize grid render an identical
 /// glyph/color per shared action (no per-surface divergence). [iconOverride]
-/// keeps a distinct glyph where intended (e.g. "Log cardio" swaps the
-/// dumbbell for a runner) while still inheriting the registry color.
+/// keeps a distinct glyph where intended (e.g. "Search food" swaps the
+/// cutlery for a magnifier) while still inheriting the registry color.
 class _QuickAction {
   /// Registry id this action mirrors (icon + color).
   final String? registryId;
@@ -124,22 +124,19 @@ final List<_QuickAction> _actions = [
     label: 'Log water',
     onTap: (c, ref) => _closeThen(c, () => _logWater(c, ref)),
   ),
-  // Generate a fresh workout (AI generator), then launch it. Distinct from
-  // "Log cardio" below, which records a finished session.
+  // Generate a fresh workout (AI generator), then launch it.
   _QuickAction(
     registryId: 'quick_workout',
     label: 'Generate workout',
     onTap: (c, ref) => _closeThen(c, () => _generateWorkout(c, ref)),
   ),
-  // Manual entry for a finished cardio session (LogCardioScreen). This used
-  // to be "Log workout" → a bare hop to the Workouts tab, which logged
-  // nothing — strength sessions are logged through the workout flow itself,
-  // so the real quick-log here is the cardio/activity form.
+  // Fridge scan — snap your fridge/pantry, AI suggests recipes. Replaced
+  // "Log cardio" here (cardio stays reachable via the Workouts surfaces and
+  // the More sheet); fridge-to-recipe is the higher-frequency quick action.
   _QuickAction(
-    registryId: 'workout',
-    iconOverride: Icons.directions_run_rounded,
-    label: 'Log cardio',
-    onTap: (c, ref) => _closeThen(c, () => c.push('/log-cardio')),
+    registryId: 'from_fridge',
+    label: 'From fridge',
+    onTap: (c, ref) => _closeThen(c, () => c.push('/nutrition/from-fridge')),
   ),
   // AI Form Analysis — record/upload any clip, exercise auto-detected. Same
   // one-tap path as the home shortcut row.
@@ -201,13 +198,17 @@ class _QuickLogContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'LOG',
+            'QUICK LOG',
             style: ZType.lbl(13, color: c.textMuted, letterSpacing: 2),
           ),
           const SizedBox(height: 12),
           GridView(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            // Explicit zero padding: a shrinkWrap GridView otherwise inherits
+            // the ambient MediaQuery (safe-area) padding, which rendered as a
+            // dead band between the last tile row and the More button.
+            padding: EdgeInsets.zero,
             // Fixed cell height (icon 54 + gap 7 + up-to-2-line label) —
             // childAspectRatio derived height from cell WIDTH, which on wide
             // screens left a band of dead space under every row.
