@@ -594,6 +594,10 @@ enum ShareableTemplate {
 /// without horizontal scrolling. To preserve that:
 ///   - `cards` (was `classic` + `rich` merged) — single text pill for all
 ///     non-photo, non-chart, non-editorial templates.
+///   - `viral` — the formats promised by the onboarding share gallery
+///     ("15 viral formats"), grouped so users can find the exact set they
+///     saw pre-signup. A template lives EITHER here or in another family,
+///     never both.
 ///   - `editorial`, `playful`, `graph` — text pills.
 ///   - `spark` — pure-icon pill (sparkle glyph).
 ///   - `studio` — pure-icon pill (camera glyph) for photo-driven uploads.
@@ -602,7 +606,7 @@ enum ShareableTemplate {
 /// entries still reference it) — it's treated as an alias of `cards` in
 /// the UI so it renders into the same pill, never showing "Rich" as a
 /// separate option.
-enum ShareableCategory { classic, rich, editorial, playful, graph, spark, studio }
+enum ShareableCategory { classic, rich, viral, editorial, playful, graph, spark, studio }
 
 extension ShareableCategoryMeta on ShareableCategory {
   /// The pill we surface this category under in the UI. `rich` aliases to
@@ -616,6 +620,8 @@ extension ShareableCategoryMeta on ShareableCategory {
       case ShareableCategory.classic:
       case ShareableCategory.rich:
         return 'Cards';
+      case ShareableCategory.viral:
+        return 'Viral';
       case ShareableCategory.editorial:
         return 'Editorial';
       case ShareableCategory.playful:
@@ -829,7 +835,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.wrapped,
         name: 'Wrapped',
-        category: ShareableCategory.editorial,
+        category: ShareableCategory.viral,
         kinds: _allKinds,
         minHighlights: 3,
         builder: (d, w) => WrappedTemplate(data: d, showWatermark: w),
@@ -838,7 +844,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.news,
         name: 'News',
-        category: ShareableCategory.editorial,
+        category: ShareableCategory.viral,
         kinds: _allKinds,
         minHighlights: 2,
         builder: (d, w) => NewsTemplate(data: d, showWatermark: w),
@@ -847,7 +853,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.receipt,
         name: 'Receipt',
-        category: ShareableCategory.rich,
+        category: ShareableCategory.viral,
         kinds: _allKinds,
         minHighlights: 3,
         builder: (d, w) => ReceiptTemplate(data: d, showWatermark: w),
@@ -856,7 +862,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.tradingCard,
         name: 'Card',
-        category: ShareableCategory.rich,
+        category: ShareableCategory.viral,
         kinds: const {
           ShareableKind.personalRecords,
           ShareableKind.milestones,
@@ -893,7 +899,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.prs,
         name: 'PRs',
-        category: ShareableCategory.playful,
+        category: ShareableCategory.viral,
         kinds: const {
           ShareableKind.personalRecords,
           ShareableKind.workoutComplete,
@@ -939,7 +945,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.workoutDetails,
         name: 'Workout',
-        category: ShareableCategory.rich,
+        category: ShareableCategory.viral,
         kinds: const {ShareableKind.workoutComplete},
         aspects: const {ShareableAspect.story, ShareableAspect.portrait},
         requiresExercises: true,
@@ -1056,7 +1062,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.achievementHero,
         name: 'Trophy',
-        category: ShareableCategory.playful,
+        category: ShareableCategory.viral,
         kinds: const {
           ShareableKind.achievements,
           ShareableKind.milestones,
@@ -1104,7 +1110,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.polaroid,
         name: 'Polaroid',
-        category: ShareableCategory.playful,
+        category: ShareableCategory.viral,
         kinds: _allKinds,
         builder: (d, w) => PolaroidTemplate(data: d, showWatermark: w),
         docBuilder: polaroidDoc,
@@ -1112,7 +1118,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.quote,
         name: 'Quote',
-        category: ShareableCategory.editorial,
+        category: ShareableCategory.viral,
         kinds: _allKinds,
         builder: (d, w) => QuoteTemplate(data: d, showWatermark: w),
         docBuilder: quoteDoc,
@@ -1150,7 +1156,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.boardingPass,
         name: 'Boarding',
-        category: ShareableCategory.editorial,
+        category: ShareableCategory.viral,
         kinds: const {
           ShareableKind.workoutComplete,
           ShareableKind.milestones,
@@ -1381,7 +1387,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.discord,
         name: 'Discord',
-        category: ShareableCategory.editorial,
+        category: ShareableCategory.viral,
         kinds: _allKinds,
         minHighlights: 2,
         builder: (d, w) => DiscordTemplate(data: d, showWatermark: w),
@@ -1390,7 +1396,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.instagramStory,
         name: 'IG Story',
-        category: ShareableCategory.playful,
+        category: ShareableCategory.viral,
         kinds: _allKinds,
         builder: (d, w) =>
             InstagramStoryTemplate(data: d, showWatermark: w),
@@ -1399,7 +1405,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.vinyl,
         name: 'Vinyl',
-        category: ShareableCategory.playful,
+        category: ShareableCategory.viral,
         kinds: _allKinds,
         builder: (d, w) => VinylTemplate(data: d, showWatermark: w),
         docBuilder: vinylDoc,
@@ -1407,7 +1413,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.passport,
         name: 'Passport',
-        category: ShareableCategory.editorial,
+        category: ShareableCategory.viral,
         kinds: _allKinds,
         minHighlights: 1,
         builder: (d, w) => PassportTemplate(data: d, showWatermark: w),
@@ -1416,7 +1422,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.oneRm,
         name: '1RM',
-        category: ShareableCategory.graph,
+        category: ShareableCategory.viral,
         kinds: const {
           ShareableKind.personalRecords,
           ShareableKind.statsOverview,
@@ -1429,7 +1435,7 @@ class ShareableCatalog {
       ShareableTemplateSpec(
         template: ShareableTemplate.tradingCardGold,
         name: 'Gold Card',
-        category: ShareableCategory.playful,
+        category: ShareableCategory.viral,
         kinds: const {
           ShareableKind.personalRecords,
           ShareableKind.milestones,

@@ -4652,6 +4652,18 @@ class _VariationsSheetState extends State<_VariationsSheet> {
           .toList(growable: false);
 
   @override
+  void initState() {
+    super.initState();
+    // Workout shares open on the Viral pill — the same format set the
+    // onboarding share gallery promises, so both surfaces stay consistent.
+    if (widget.data.kind == ShareableKind.workoutComplete &&
+        _allSpecs()
+            .any((s) => s.category.effective == ShareableCategory.viral)) {
+      _cat = ShareableCategory.viral;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final all = _allSpecs();
     final aspect = widget.controller.doc.aspect;
