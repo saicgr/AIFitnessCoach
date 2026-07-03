@@ -17,7 +17,6 @@ import '../../core/theme/app_typography.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/providers/equipment_coverage_provider.dart';
 import '../../data/providers/gym_profile_provider.dart' show activeGymProfileProvider;
-import '../../data/providers/root_messenger.dart' show rootScaffoldMessengerKey;
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/signature/signature.dart';
 import '../../data/models/assign_preview.dart';
@@ -29,6 +28,7 @@ import '../../data/services/haptic_service.dart';
 import 'program_detail_screen.dart';
 import 'program_template_builder_screen.dart';
 import 'widgets/program_library_card.dart';
+import 'widgets/program_setup_dialog.dart';
 import 'widgets/variant_picker.dart';
 import 'your_programs_screen.dart';
 
@@ -2248,134 +2248,54 @@ class _StartProgramFlowSheetState
         : Map<String, String>.from(_dayResolutions);
 
     _submitting = true;
-    // Optimistic UX: close the sheet immediately so "Start" feels instant, then
-    // show a persistent "Setting up…" toast while the server expands the full
-    // multi-week plan in the background. The refresh + success/error toast land
-    // when assignProgram returns. Toasts use the ROOT messenger so they survive
-    // the sheet pop and any subsequent navigation.
+    // Close the sheet immediately so "Start" feels instant, then hand the
+    // whole working → success/error lifecycle to ProgramSetupDialog on the
+    // ROOT navigator. This replaces the old root-messenger snackbars, which
+    // rendered one copy per live tab Scaffold (IndexedStack keeps all five
+    // alive) → duplicate SnackBar Hero tags during route transitions → the
+    // "multiple heroes share the same tag" crash that also left the toast
+    // permanently stuck. A dialog has exactly one instance, and gives the
+    // multi-second server expansion the visual weight it deserves.
     navigator.pop();
-    _showAssigningToast(card.displayName);
 
-    try {
-      final result = await repo.assignProgram(
-        programId: programId,
-        assignedDays: assignedDays,
-        slot: ProgramSlot.primary,
-        startDate: startDate,
-        replace: false,
-        durationWeeks: durationWeeks,
-        variantId: variantId,
-        adaptToLevel: adaptToLevel,
-        swapForInjuries: swapForInjuries,
-        fitEquipment: fitEquipment,
-        dayResolutions: dayResolutions,
-      );
-      // Refresh EVERY surface that reflects the active program: Home today +
-      // hero carousel, Workout-tab lists, the date-strip dots, program-progress,
-      // and the schedule. Without this the assign succeeds server-side but the UI
-      // keeps painting the pre-assign (stale) program.
+    final assignFuture = repo.assignProgram(
+      programId: programId,
+      assignedDays: assignedDays,
+      slot: ProgramSlot.primary,
+      startDate: startDate,
+      replace: false,
+      durationWeeks: durationWeeks,
+      variantId: variantId,
+      adaptToLevel: adaptToLevel,
+      swapForInjuries: swapForInjuries,
+      fitEquipment: fitEquipment,
+      dayResolutions: dayResolutions,
+    );
+    // Refresh EVERY surface that reflects the active program: Home today +
+    // hero carousel, Workout-tab lists, the date-strip dots, program-progress,
+    // and the schedule. Without this the assign succeeds server-side but the
+    // UI keeps painting the pre-assign (stale) program. Errors are surfaced
+    // by the dialog, not here.
+    unawaited(assignFuture.then((_) {
       unawaited(refreshAfterWorkoutMutation(
         source: 'program_assign',
         userId: uid,
       ));
       unawaited(currentProgramNotifier.refresh(userId: uid));
-      // rootContext is the root Navigator's context (captured pre-pop) — it
-      // outlives this sheet and is valid for the toast's VIEW deep-link.
-      // ignore: use_build_context_synchronously
-      _showStartedToast(result, card.displayName, rootContext);
-    } on ProgramParseException catch (e) {
-      _showAssignErrorToast(e.message);
-    } catch (_) {
-      _showAssignErrorToast('Could not start this program. Please try again.');
-    }
-  }
+    }, onError: (_) {}));
 
-  /// Persistent "Setting up…" toast shown the instant Start is tapped. Uses the
-  /// ROOT messenger so it survives the sheet pop; replaced by [_showStartedToast]
-  /// or [_showAssignErrorToast] when assignProgram resolves.
-  void _showAssigningToast(String programName) {
-    final m = rootScaffoldMessengerKey.currentState;
-    if (m == null) return;
-    m.clearSnackBars();
-    m.showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.elevated,
-      duration: const Duration(minutes: 1), // safety cap; replaced on completion
-      content: Row(
-        // Unique key → unique SnackBar Hero tag (see _showStartedToast for why).
-        key: UniqueKey(),
-        children: [
-          const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: AppColors.green),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text('Setting up $programName…',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
-    ));
-  }
-
-  /// Success toast: honest confirmation of what AI tailoring actually did, with a
-  /// VIEW deep-link into /schedule. Replaces the "Setting up…" toast.
-  void _showStartedToast(
-      AssignResult result, String programName, BuildContext rootContext) {
-    final m = rootScaffoldMessengerKey.currentState;
-    if (m == null) return;
-    final cs = result.customizeSummary;
-    final base = result.workoutsCreated > 0
-        ? '$programName started · ${result.workoutsCreated} workouts added'
-        : '$programName started';
-    String message = base;
-    if (cs.isApplied) {
-      message = '$base\nTailored: ${cs.humanPhrase}';
-    } else if (cs.isFailed) {
-      message =
-          "$base\nTailoring couldn't run — started with the standard plan.";
-    }
-    m.clearSnackBars();
-    m.showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.elevated,
-      duration: Duration(seconds: cs.isApplied || cs.isFailed ? 6 : 4),
-      content: Row(
-        // Flutter derives the SnackBar Hero tag from content.toString(); a
-        // keyless start-aligned Row stringifies identically for every toast, so
-        // overlapping toasts collide during a route transition ("multiple heroes
-        // share the same tag") and freeze the UI. A unique key makes it unique.
-        key: UniqueKey(),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.check_circle_rounded,
-              color: AppColors.green, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(message,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
-      action: SnackBarAction(
-        label: 'VIEW',
-        textColor: AppColors.orange,
-        onPressed: () => rootContext.push('/schedule'),
-      ),
-    ));
-  }
-
-  void _showAssignErrorToast(String message) {
-    final m = rootScaffoldMessengerKey.currentState;
-    if (m == null) return;
-    m.clearSnackBars();
-    m.showSnackBar(SnackBar(
-      content: Row(
-        key: UniqueKey(),
-        children: [Expanded(child: Text(message))],
+    // rootContext is the root Navigator's context (captured pre-pop) — it
+    // outlives this sheet, so the dialog survives the pop and any tab moves.
+    unawaited(showDialog<void>(
+      context: rootContext,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (_) => ProgramSetupDialog(
+        programName: card.displayName,
+        durationWeeks: durationWeeks,
+        timesPerWeek: assignedDays.length,
+        fitEquipment: fitEquipment,
+        future: assignFuture,
       ),
     ));
   }
