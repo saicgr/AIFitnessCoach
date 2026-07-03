@@ -33,6 +33,11 @@ import '../../../l10n/generated/app_localizations.dart';
 /// Mode the snap flow is invoked in. Drives copy + post-confirm action.
 enum SnapMode { swap, add, identify }
 
+/// Which capture source the flow opens with. [camera] auto-launches the
+/// camera (the at-the-gym path); [gallery] opens the photo picker directly
+/// (the importing-photos-taken-earlier path — multi-select in identify mode).
+enum SnapSource { camera, gallery }
+
 /// Shows the snap-equipment flow as a full-screen route.
 ///
 /// Returns the updated [Workout] when a swap/add succeeded, or null when the
@@ -46,6 +51,7 @@ Future<Workout?> showEquipmentSnapFlow(
   String? replacingExerciseName,
   String? previewId,
   Duration? activeSetTimer,
+  SnapSource initialSource = SnapSource.camera,
 }) async {
   return await Navigator.of(context).push<Workout>(
     MaterialPageRoute(
@@ -57,6 +63,7 @@ Future<Workout?> showEquipmentSnapFlow(
         replacingExerciseName: replacingExerciseName,
         previewId: previewId,
         activeSetTimer: activeSetTimer,
+        initialSource: initialSource,
       ),
     ),
   );
@@ -69,6 +76,7 @@ class EquipmentSnapFlow extends ConsumerStatefulWidget {
   final String? replacingExerciseName;
   final String? previewId;
   final Duration? activeSetTimer;
+  final SnapSource initialSource;
 
   const EquipmentSnapFlow({
     super.key,
@@ -78,13 +86,36 @@ class EquipmentSnapFlow extends ConsumerStatefulWidget {
     this.replacingExerciseName,
     this.previewId,
     this.activeSetTimer,
+    this.initialSource = SnapSource.camera,
   });
 
   @override
   ConsumerState<EquipmentSnapFlow> createState() => _EquipmentSnapFlowState();
 }
 
-enum _Step { capturing, uploading, classifying, result, error, blurWarning }
+enum _Step {
+  capturing,
+  // Source chooser — shown when the user cancels the auto-launched camera
+  // (e.g. they're not at the gym and want to import an existing photo).
+  chooser,
+  uploading,
+  classifying,
+  result,
+  error,
+  blurWarning,
+  // Multi-photo import (identify mode only): sequential per-photo
+  // classification with progress, then an aggregate summary.
+  batchProcessing,
+  batchSummary,
+}
+
+/// Per-photo outcome of a multi-photo identify batch.
+class _BatchItem {
+  final Uint8List bytes;
+  final String? canonical; // human-readable when identified
+  final String status; // identified | unidentified | limit | queued
+  const _BatchItem({required this.bytes, this.canonical, required this.status});
+}
 
 /// Laplacian-variance threshold below which we warn the user the photo is
 /// likely too blurry to classify. Empirically tuned: phone-camera "sharp"
@@ -184,11 +215,22 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
   // Backend response
   Map<String, dynamic>? _result;
 
+  // Multi-photo identify batch (gallery import).
+  static const int _kMaxBatchPhotos = 6;
+  final List<_BatchItem> _batchResults = [];
+  int _batchTotal = 0;
+  int _batchProgress = 0;
+  // Set when a daily-cap (402/429) or offline break stopped the batch early.
+  String? _batchNote;
+
   // ---------------------------------------------------------------------------
   // Capture
   // ---------------------------------------------------------------------------
 
   Future<void> _pickFromCamera() async {
+    if (mounted && _step != _Step.capturing) {
+      setState(() => _step = _Step.capturing);
+    }
     try {
       final picked = await _picker.pickImage(
         source: ImageSource.camera,
@@ -198,8 +240,10 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
         imageQuality: 85,
       );
       if (picked == null) {
-        // User cancelled the camera — pop back.
-        if (mounted) Navigator.of(context).pop();
+        // User cancelled the camera — offer the gallery instead of
+        // closing the whole flow (they may be importing photos taken
+        // at the gym earlier). Cancel on the chooser exits.
+        if (mounted) setState(() => _step = _Step.chooser);
         return;
       }
       final bytes = await picked.readAsBytes();
@@ -217,6 +261,9 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
   }
 
   Future<void> _pickFromGallery() async {
+    if (mounted && _step != _Step.capturing) {
+      setState(() => _step = _Step.capturing);
+    }
     try {
       final picked = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -224,7 +271,12 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
         maxHeight: 1280,
         imageQuality: 85,
       );
-      if (picked == null) return;
+      if (picked == null) {
+        // Cancelled the picker — back to the chooser rather than
+        // stranding the screen on the capturing spinner.
+        if (mounted) setState(() => _step = _Step.chooser);
+        return;
+      }
       final bytes = await picked.readAsBytes();
       if (!mounted) return;
       setState(() => _capturedBytes = bytes);
@@ -233,6 +285,144 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
       debugPrint('❌ [SnapFlow] Gallery error: $e\n$st');
       _setError('Could not load that photo. Please try another.');
     }
+  }
+
+  /// Multi-photo gallery import — identify mode only. Each photo is a
+  /// separate `/equipment/snap` call (the server records identified
+  /// equipment per call), so a batch is just a sequential loop with
+  /// progress and an aggregate summary at the end.
+  Future<void> _pickFromGalleryMulti() async {
+    assert(widget.mode == SnapMode.identify);
+    if (mounted && _step != _Step.capturing) {
+      setState(() => _step = _Step.capturing);
+    }
+    try {
+      final picked = await _picker.pickMultiImage(
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 85,
+      );
+      if (picked.isEmpty) {
+        if (mounted) setState(() => _step = _Step.chooser);
+        return;
+      }
+      if (picked.length == 1) {
+        // Single selection → identical to the existing single-photo path
+        // (keeps the blur gate + disambiguation UI).
+        final bytes = await picked.first.readAsBytes();
+        if (!mounted) return;
+        setState(() => _capturedBytes = bytes);
+        await _gateBlurThenUpload(bytes);
+        return;
+      }
+      final batch = <Uint8List>[];
+      for (final x in picked.take(_kMaxBatchPhotos)) {
+        batch.add(await x.readAsBytes());
+      }
+      if (!mounted) return;
+      if (picked.length > _kMaxBatchPhotos) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Processing the first $_kMaxBatchPhotos photos — import the rest after.'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      await _runBatch(batch);
+    } catch (e, st) {
+      debugPrint('❌ [SnapFlow] Multi-gallery error: $e\n$st');
+      _setError('Could not load those photos. Please try again.');
+    }
+  }
+
+  Future<void> _runBatch(List<Uint8List> photos) async {
+    _batchResults.clear();
+    _batchNote = null;
+    _batchTotal = photos.length;
+    final api = ref.read(apiClientProvider);
+
+    for (var i = 0; i < photos.length; i++) {
+      final bytes = photos[i];
+      if (!mounted) return;
+      setState(() {
+        _batchProgress = i + 1;
+        _step = _Step.batchProcessing;
+      });
+      try {
+        final formData = FormData.fromMap({
+          'image': MultipartFile.fromBytes(
+            bytes,
+            filename: 'import_$i.jpg',
+            contentType: DioMediaType('image', 'jpeg'),
+          ),
+          'mode': widget.mode.name,
+        });
+        final resp = await api.post(
+          '${ApiConstants.apiBaseUrl}/equipment/snap',
+          data: formData,
+          options: Options(
+            contentType: 'multipart/form-data',
+            receiveTimeout: const Duration(seconds: 30),
+            sendTimeout: const Duration(seconds: 30),
+          ),
+        );
+        final data = resp.data;
+        final matched = data is Map && data['matched'] == true;
+        final canonical =
+            data is Map ? data['equipment_canonical_name'] as String? : null;
+        _batchResults.add(_BatchItem(
+          bytes: bytes,
+          canonical: matched && canonical != null
+              ? _humanCanonical(canonical)
+              : null,
+          status: matched ? 'identified' : 'unidentified',
+        ));
+        invalidateSnappedEquipmentCache();
+      } on DioException catch (e) {
+        final status = e.response?.statusCode;
+        if (status == 402 || status == 429) {
+          // Daily snap cap — stop burning the remaining photos.
+          for (final rest in photos.skip(i)) {
+            _batchResults
+                .add(_BatchItem(bytes: rest, status: 'limit'));
+          }
+          _batchNote = status == 402
+              ? "You've used your free snaps for today — the remaining photos weren't processed. Upgrade to keep going."
+              : "You've hit today's snap limit — the remaining photos weren't processed.";
+          break;
+        }
+        if (e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout) {
+          // Offline mid-batch: enqueue this + remaining photos for the
+          // existing auto-retry-on-reconnect queue.
+          final queue = ref.read(equipmentSnapOfflineQueueProvider);
+          for (final rest in photos.skip(i)) {
+            queue.enqueue(QueuedSnap(
+              id: '${DateTime.now().microsecondsSinceEpoch}_${_batchResults.length}',
+              imageBytes: rest,
+              contentType: 'image/jpeg',
+              mode: widget.mode.name,
+              workoutId: widget.workoutId,
+              replacingExerciseId: widget.replacingExerciseId,
+              queuedAt: DateTime.now(),
+            ));
+            _batchResults.add(_BatchItem(bytes: rest, status: 'queued'));
+          }
+          _batchNote =
+              "You went offline — the remaining photos are saved and will be identified when you're back online.";
+          break;
+        }
+        debugPrint('❌ [SnapFlow] batch photo ${i + 1} failed: $status');
+        _batchResults.add(_BatchItem(bytes: bytes, status: 'unidentified'));
+      } catch (e) {
+        debugPrint('❌ [SnapFlow] batch photo ${i + 1} error: $e');
+        _batchResults.add(_BatchItem(bytes: bytes, status: 'unidentified'));
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _step = _Step.batchSummary);
   }
 
   // ---------------------------------------------------------------------------
@@ -459,9 +649,17 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
   @override
   void initState() {
     super.initState();
-    // Auto-launch the camera as soon as the route mounts.
+    // Auto-launch the requested source as soon as the route mounts:
+    // camera for the at-the-gym path, photo picker for imports.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _pickFromCamera();
+      if (!mounted) return;
+      if (widget.initialSource == SnapSource.gallery) {
+        widget.mode == SnapMode.identify
+            ? _pickFromGalleryMulti()
+            : _pickFromGallery();
+      } else {
+        _pickFromCamera();
+      }
     });
   }
 
@@ -514,6 +712,8 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
     switch (_step) {
       case _Step.capturing:
         return const Center(child: CircularProgressIndicator());
+      case _Step.chooser:
+        return _buildChooser();
       case _Step.uploading:
         return const _LoadingView(message: 'Uploading photo…');
       case _Step.classifying:
@@ -524,7 +724,156 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
         return _buildError();
       case _Step.blurWarning:
         return _buildBlurWarning();
+      case _Step.batchProcessing:
+        return _LoadingView(
+            message:
+                'Identifying photo $_batchProgress of $_batchTotal…');
+      case _Step.batchSummary:
+        return _buildBatchSummary();
     }
+  }
+
+  /// Aggregate result of a multi-photo import — per-photo thumbnail +
+  /// outcome, plus any early-stop note (daily cap / offline).
+  Widget _buildBatchSummary() {
+    final identified =
+        _batchResults.where((b) => b.status == 'identified').length;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      children: [
+        Text(
+          identified > 0
+              ? 'Identified $identified of $_batchTotal photos'
+              : 'No equipment identified',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          identified > 0
+              ? 'Your equipment list has been updated.'
+              : 'Try clearer photos, or pick your equipment manually.',
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+        const SizedBox(height: 16),
+        for (final item in _batchResults)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(
+                    item.bytes,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    switch (item.status) {
+                      'identified' => item.canonical ?? 'Identified',
+                      'limit' => 'Not processed — snap limit',
+                      'queued' => 'Saved — will identify when online',
+                      _ => 'Not identified',
+                    },
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: item.status == 'identified'
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: item.status == 'identified'
+                          ? null
+                          : Colors.grey,
+                    ),
+                  ),
+                ),
+                Icon(
+                  switch (item.status) {
+                    'identified' => Icons.check_circle,
+                    'queued' => Icons.schedule,
+                    _ => Icons.help_outline,
+                  },
+                  size: 20,
+                  color: item.status == 'identified'
+                      ? const Color(0xFF22C55E)
+                      : Colors.grey,
+                ),
+              ],
+            ),
+          ),
+        if (_batchNote != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            _batchNote!,
+            style: const TextStyle(
+                fontSize: 13, color: Colors.grey, height: 1.4),
+          ),
+        ],
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Done'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.photo_library_rounded),
+          onPressed: _pickFromGalleryMulti,
+          label: const Text('Import more photos'),
+        ),
+      ],
+    );
+  }
+
+  /// Source chooser — reached by cancelling the camera. Lets the user
+  /// import an existing photo (e.g. gym pics taken earlier) instead of
+  /// forcing a live capture.
+  Widget _buildChooser() {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Icon(Icons.photo_camera_back_rounded, size: 48),
+          const SizedBox(height: 14),
+          const Text(
+            'Add a photo of your equipment',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            widget.mode == SnapMode.identify
+                ? 'Snap it now, or import photos you already have.'
+                : 'Snap it now, or import a photo you already have.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                fontSize: 13, color: Colors.grey, height: 1.4),
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            icon: const Icon(Icons.camera_alt),
+            onPressed: _pickFromCamera,
+            label: const Text('Take photo'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.photo_library_rounded),
+            onPressed: widget.mode == SnapMode.identify
+                ? _pickFromGalleryMulti
+                : _pickFromGallery,
+            label: const Text('Choose from Photos'),
+          ),
+          const SizedBox(height: 10),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppLocalizations.of(context).buttonCancel),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBlurWarning() {
@@ -572,6 +921,13 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
                 onPressed: _pickFromCamera,
                 label: Text(AppLocalizations.of(context).equipmentSnapFlowRetake),
               ),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.photo_library_rounded),
+                onPressed: widget.mode == SnapMode.identify
+                    ? _pickFromGalleryMulti
+                    : _pickFromGallery,
+                label: const Text('Photos'),
+              ),
               FilledButton.icon(
                 icon: const Icon(Icons.cloud_upload),
                 onPressed: () {
@@ -607,6 +963,13 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
               OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(AppLocalizations.of(context).buttonCancel),
+              ),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.photo_library_rounded),
+                onPressed: widget.mode == SnapMode.identify
+                    ? _pickFromGalleryMulti
+                    : _pickFromGallery,
+                label: const Text('Photos'),
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.camera_alt),
@@ -703,6 +1066,13 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
                 icon: const Icon(Icons.camera_alt),
                 onPressed: _pickFromCamera,
                 label: Text(AppLocalizations.of(context).equipmentSnapFlowRetake),
+              ),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.photo_library_rounded),
+                onPressed: widget.mode == SnapMode.identify
+                    ? _pickFromGalleryMulti
+                    : _pickFromGallery,
+                label: const Text('Photos'),
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.edit),

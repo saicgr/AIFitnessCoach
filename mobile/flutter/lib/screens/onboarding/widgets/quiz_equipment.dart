@@ -1057,7 +1057,11 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     'preacher_curl_bench': 'full_gym',
   };
 
-  Future<void> _launchSnapFlow(BuildContext context, WidgetRef ref) async {
+  Future<void> _launchSnapFlow(
+    BuildContext context,
+    WidgetRef ref, {
+    SnapSource source = SnapSource.camera,
+  }) async {
     HapticFeedback.selectionClick();
     try {
       // identify mode pops with null and writes the snapped equipment
@@ -1066,6 +1070,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         context,
         ref,
         mode: SnapMode.identify,
+        initialSource: source,
       );
     } catch (e) {
       // Most commonly: camera permission denied — the snap flow handles
@@ -1146,110 +1151,118 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     }
   }
 
+  /// Two explicit AI entry points — "Snap your gym" (camera) and
+  /// "Import from Photos" (gallery, multi-select). Split from a single
+  /// camera-only card because many users onboard away from the gym; no
+  /// "Recommended" badge for the same reason.
   Widget _buildSnapGymTile(BuildContext context, OnboardingTheme t) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
     return Consumer(
       builder: (context, ref, _) {
-        return GestureDetector(
-          onTap: () => _launchSnapFlow(context, ref),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      accent.withValues(alpha: 0.18),
-                      accent.withValues(alpha: 0.06),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: accent.withValues(alpha: 0.45),
-                    width: 1.5,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.20),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.camera_alt_rounded,
-                        color: accent,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                AppLocalizations.of(context)!.quizEquipmentU1f4f8SnapYour,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: accent.withValues(alpha: 0.20),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  AppLocalizations.of(context)!.quizEquipmentRecommended,
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
-                                    color: accent,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            AppLocalizations.of(context)!.quizEquipmentTakeAFewPhotos,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: t.textSecondary,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.chevron_right,
-                      color: t.textSecondary,
-                      size: 20,
-                    ),
-                  ],
-                ),
+        final l10n = AppLocalizations.of(context)!;
+        return Row(
+          children: [
+            Expanded(
+              child: _snapSourceBox(
+                context: context,
+                t: t,
+                accent: accent,
+                icon: Icons.camera_alt_rounded,
+                title: l10n.quizEquipmentSnapTitle,
+                subtitle: l10n.quizEquipmentSnapSubtitle,
+                onTap: () =>
+                    _launchSnapFlow(context, ref, source: SnapSource.camera),
               ),
             ),
-          ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _snapSourceBox(
+                context: context,
+                t: t,
+                accent: accent,
+                icon: Icons.photo_library_rounded,
+                title: l10n.quizEquipmentImportTitle,
+                subtitle: l10n.quizEquipmentImportSubtitle,
+                onTap: () =>
+                    _launchSnapFlow(context, ref, source: SnapSource.gallery),
+              ),
+            ),
+          ],
         ).animate().fadeIn(delay: 120.ms).slideY(begin: 0.05);
       },
+    );
+  }
+
+  Widget _snapSourceBox({
+    required BuildContext context,
+    required OnboardingTheme t,
+    required Color accent,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  accent.withValues(alpha: 0.18),
+                  accent.withValues(alpha: 0.06),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: accent.withValues(alpha: 0.45),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.20),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: accent, size: 18),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: t.textSecondary,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
