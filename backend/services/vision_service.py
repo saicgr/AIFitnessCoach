@@ -937,7 +937,8 @@ Guidelines:
             "List every distinct food/drink item visible in this fridge or pantry image. "
             "Return JSON ONLY with this shape: "
             '{"items":[{"name":"chicken breast","confidence":85,"qty_estimate":"approx 2 packs"}]}\n'
-            "Be specific: 'whole milk' not 'dairy'. Skip non-food items."
+            "Be specific: 'whole milk' not 'dairy'. Skip non-food items. "
+            "List EVERYTHING you can identify — a full fridge can easily hold 40+ items."
         )
         try:
             raw_bytes = base64.b64decode(image_b64)
@@ -946,7 +947,10 @@ Guidelines:
                 model=self.model,
                 contents=[prompt, image_part],
                 config=types.GenerateContentConfig(
-                    temperature=0.2, max_output_tokens=800,
+                    # 800 tokens silently capped detection at ~25 items (~30
+                    # tokens per item JSON) — a full fridge photo always
+                    # "found 25". Sized for 60+ items now.
+                    temperature=0.2, max_output_tokens=2500,
                     thinking_config=types.ThinkingConfig(thinking_budget=0),  # see L306
                 ),
                 method_name="vision_pantry",

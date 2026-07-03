@@ -110,12 +110,16 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   bool _isExcluded(String name) => _excludedItems.contains(name.toLowerCase());
 
   _FridgeStage get _stage {
-    if (_result != null) return _FridgeStage.results;
-    if (_anyDetecting || _searching) return _FridgeStage.scanning;
-    if (_items.isEmpty && _imagesB64.isEmpty) return _FridgeStage.start;
-    // Ingredients detected but generation not yet running — treated as
-    // scanning; _maybeAutoGenerate() flips _searching on the next tick.
-    return _FridgeStage.scanning;
+    // SCANNING = a photo is actively being read, nothing else. As soon as
+    // ingredients exist the user lands on RESULTS: chips stay reviewable,
+    // recipe generation renders inline progress there, and a FAILED
+    // generation shows the error banner + a retry CTA. (The old fallback
+    // kept the user on a dead "Building your recipes…" screen whenever
+    // generation errored or ran long — no error, no retry, no ingredients.)
+    if (_anyDetecting) return _FridgeStage.scanning;
+    if (_items.isNotEmpty || _result != null) return _FridgeStage.results;
+    if (_searching) return _FridgeStage.scanning;
+    return _FridgeStage.start;
   }
 
   @override
@@ -1041,7 +1045,10 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
             Text('YOUR RECIPES',
                 style: ZType.lbl(13, color: tc.textPrimary, letterSpacing: 2)),
             const SizedBox(width: 8),
-            Text('· ${suggestions.length} found · sorted by match',
+            Text(
+                _searching
+                    ? '· building…'
+                    : '· ${suggestions.length} found · sorted by match',
                 style: TextStyle(color: tc.textMuted, fontSize: 11)),
           ],
         ),
@@ -1051,11 +1058,44 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           children: [
-            if (suggestions.isEmpty)
+            if (_searching)
+              // Generation in flight — honest inline progress where the
+              // cards will land, so the wait never reads as a dead screen.
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        valueColor: AlwaysStoppedAnimation(tc.accent),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text('Building your recipes…',
+                        style:
+                            TextStyle(color: tc.textSecondary, fontSize: 13)),
+                    const SizedBox(height: 3),
+                    Text('The chef is reading your ${_includedItems.length} ingredients',
+                        style: TextStyle(color: tc.textMuted, fontSize: 11)),
+                  ],
+                ),
+              )
+            else if (suggestions.isEmpty && _hasGenerated)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                     'No recipes matched — try including more ingredients or clearing a filter.',
+                    style: TextStyle(color: tc.textMuted, fontSize: 13)),
+              )
+            else if (suggestions.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                    'Review your ingredients above, then hit FIND RECIPES.',
                     style: TextStyle(color: tc.textMuted, fontSize: 13)),
               )
             else
@@ -1506,16 +1546,29 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Column(
+                // min, or the pill expands to fill whatever height the
+                // bottom bar is given (the full-screen green blob bug).
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    dirty ? 'APPLY & REGENERATE ✦' : 'GET $_kRecipeCount NEW RECIPES ✦',
+                    _searching
+                        ? 'BUILDING YOUR RECIPES…'
+                        : !_hasGenerated
+                            ? 'FIND RECIPES ✦'
+                            : dirty
+                                ? 'APPLY & REGENERATE ✦'
+                                : 'GET $_kRecipeCount NEW RECIPES ✦',
                     style: ZType.lbl(17, color: fg, letterSpacing: 2.5),
                   ),
                   const SizedBox(height: 1),
                   Text(
-                    dirty
-                        ? 'your changes will rebuild the recipes'
-                        : 'same fridge, different ideas',
+                    _searching
+                        ? 'usually takes ~20 seconds'
+                        : !_hasGenerated
+                            ? 'using ${_includedItems.length} ingredients'
+                            : dirty
+                                ? 'your changes will rebuild the recipes'
+                                : 'same fridge, different ideas',
                     style: TextStyle(
                         color: fg.withValues(alpha: 0.78),
                         fontSize: 10.5,
