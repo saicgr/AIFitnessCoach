@@ -2038,17 +2038,20 @@ async def daily_insight(
             )
 
         # ---- Night sleep focus when there's no sleep data -----------------
-        # In the evening/late buckets, an active user with NO tracked sleep
+        # From 20:00 local onward, an active user with NO tracked sleep
         # (health disconnected / nothing synced) gets deterministic sleep-hygiene
         # guidance instead of a daytime leverage tip. (With sleep data, the
         # updated LEADING_PILLAR rule lets Gemini lead with a personalized sleep
         # insight below.)
+        # 20:00, not the full evening bucket (18:00+): "set up a good night"
+        # at 6-7pm read as premature bedtime nagging — dinner/gym hours for
+        # most users. Quiet hours (00-05) stay excluded, as before.
         # Gate on ACTUAL sleep minutes (not snapshot.sleep.applicable, which
         # defaults True when there's no daily_activity row at all). No minutes =
         # no data to ground a personalized sleep tip → deterministic hygiene.
         if (
             source == "home"
-            and _time_of_day_bucket(now_local) in ("evening", "late")
+            and now_local.hour >= 20
             and not (snapshot.get("sleep") or {}).get("total_minutes")
         ):
             ns = _night_sleep_payload(first_name, local_date_iso)

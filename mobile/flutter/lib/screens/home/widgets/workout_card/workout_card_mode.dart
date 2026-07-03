@@ -366,11 +366,14 @@ WorkoutCardMode chooseWorkoutCardMode(WorkoutCardState s) {
   // Modes below all require a scheduled-but-not-started workout — bail
   // early to the rest-day / future / empty branches if not the case.
   if (s.workoutState == WorkoutState.scheduledNotStarted) {
-    // 8. windDown — late time OR explicit evening+sleep-coach combo.
-    //    `evening` alone is not enough; the coach has to agree.
-    final isWindDownTime = s.time == TimeOfDay.late ||
-        s.time == TimeOfDay.quiet ||
-        (s.time == TimeOfDay.evening && s.coachPillar == 'sleep');
+    // 8. windDown — strictly clock-driven: late (21+) or quiet (23-5) local.
+    //    The old evening+sleep-pillar combo is gone: the backend leads with
+    //    the sleep pillar any evening the user has NO sleep data logged
+    //    (daily_insight.py `_night_sleep_payload`), so "coach pillar ==
+    //    sleep" is a missing-data signal, not a bedtime signal — it showed
+    //    "Sleep first" over an unstarted workout as early as 5pm.
+    final isWindDownTime =
+        s.time == TimeOfDay.late || s.time == TimeOfDay.quiet;
     if (isWindDownTime) return WorkoutCardMode.windDown;
 
     // 9. fastingActive — visible state (active fast) beats recovery so
