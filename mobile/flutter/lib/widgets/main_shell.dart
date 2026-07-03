@@ -544,10 +544,10 @@ class MainShell extends ConsumerWidget {
           // on scroll. Contextual chat deep links (coach hero card, active
           // workout, food tips) still push the /chat overlay unchanged.
           // Signature "+" quick-log FAB — outlined rounded-rect that docks on
-          // Home / Workouts / You only (spec .rh-plus). Surface fill, hairline
-          // border, white glyph; opens the existing quick-log overlay.
-          if (isNavBarVisible &&
-              (selectedIndex == 0 || selectedIndex == 1 || selectedIndex == 4))
+          // every tab except Coach (a floating button over the chat composer
+          // is clutter; spec .rh-plus). Surface fill, hairline border, white
+          // glyph; opens the existing quick-log overlay.
+          if (isNavBarVisible && selectedIndex != 2)
             Positioned(
               right: 24,
               bottom:

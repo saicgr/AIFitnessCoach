@@ -27,7 +27,8 @@ import '../../../../data/providers/sleep_score_provider.dart';
 import '../../../../data/providers/today_score_provider.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/services/haptic_service.dart';
-import '../../../../data/services/health_service.dart' show dailyActivityProvider;
+import '../../../../data/services/health_service.dart'
+    show dailyActivityProvider, healthSyncProvider;
 import '../ring_catalog.dart';
 import 'unified_home_widgets.dart' show kHomeHPad;
 
@@ -64,6 +65,60 @@ class HomeMetricsStrip extends ConsumerWidget {
     // the workout plan — shimmer the cell until that first resolves so a fresh
     // sign-in doesn't flash a transient "0" before the real score lands.
     final scoreLoading = workoutAsync.isLoading && !workoutAsync.hasValue;
+
+    // Health never connected AND every health cell resolved to "no data":
+    // four dead "—" cells at the top of Home read as "the app is broken".
+    // Repurpose the strip as a single Connect Health CTA instead (mirrors
+    // todays_health_card's not-connected treatment). The `!loading` guards
+    // keep the CTA from flashing during the brief pre-resolve window on a
+    // connected account's cold start; any single populated cell (e.g. a
+    // manually-logged sleep) restores the normal 4-cell strip.
+    final sync = ref.watch(healthSyncProvider);
+    final showConnectCta = !sync.isConnected &&
+        steps.isEmpty &&
+        sleep.isEmpty &&
+        ready.isEmpty &&
+        !stepsLoading &&
+        !sleepLoading &&
+        !readyLoading;
+    if (showConnectCta) {
+      return Padding(
+        padding: kHomeHPad,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () {
+            HapticService.light();
+            ref.read(healthSyncProvider.notifier).connect();
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: c.cardBorder),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            child: Row(
+              children: [
+                Icon(Icons.favorite_rounded, size: 14, color: c.accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Connect Health to see steps, sleep & readiness',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ZType.lbl(10, color: c.textMuted, letterSpacing: 0.4),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'CONNECT',
+                  style: ZType.lbl(9, color: c.accent, letterSpacing: 1.3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: kHomeHPad,
