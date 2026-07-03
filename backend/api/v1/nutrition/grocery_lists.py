@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core.auth import get_current_user
 from core.db import get_supabase_db
@@ -21,6 +21,30 @@ from services.grocery_list_service import get_grocery_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+class QuickAddRequest(BaseModel):
+    item_name: str = Field(..., min_length=1, max_length=255)
+    quantity: Optional[str] = Field(default=None, max_length=100)
+
+
+# Registered BEFORE the /grocery-lists/{list_id}* routes so the static
+# "active" segment is never captured as a list_id.
+@router.post("/grocery-lists/active/quick-add", response_model=GroceryListItem)
+async def quick_add_active_item(
+    request: QuickAddRequest,
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Append one named item to the user's active (most-recent) grocery list,
+    creating "My Shopping List" if they have none. Powers the fridge flow's
+    missing-ingredient chip."""
+    try:
+        return await get_grocery_service().quick_add_active(
+            user_id, request.item_name, request.quantity
+        )
+    except Exception as exc:
+        raise safe_internal_error(exc, "nutrition")
 
 
 @router.post("/grocery-lists", response_model=GroceryList)

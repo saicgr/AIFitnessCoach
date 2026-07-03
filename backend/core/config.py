@@ -169,6 +169,12 @@ class Settings(BaseSettings):
     usda_api_key: Optional[str] = None
     usda_cache_ttl_seconds: int = 3600  # Cache USDA results for 1 hour
 
+    # Pexels — stock photos of finished dishes for recipe cards (the
+    # "From Your Fridge" flow). Set via PEXELS_API_KEY (already on Render).
+    # When unset, recipe cards simply render with image_url: null — Pexels
+    # never drives ingredient detection or generation (that's Gemini).
+    pexels_api_key: Optional[str] = None
+
     # Webhook Configuration (for admin notifications)
     # Slack webhook URL for support chat notifications
     slack_support_webhook: Optional[str] = None

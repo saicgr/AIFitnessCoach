@@ -115,6 +115,18 @@ class PantrySuggestion {
   final int overallMatchScore;
   final String? suggestionReason;
 
+  /// Dish hero photo (Pexels/stock) for the recipe card. Nullable — falls back
+  /// to a branded gradient when absent (old backend never sets this).
+  final String? imageUrl;
+
+  /// Attribution for [imageUrl] (e.g. "PEXELS"). Shown as a tiny credit on the
+  /// card. Defaults to "PEXELS" when a photo is present but no source is given.
+  final String? imageSource;
+
+  /// Ordered cooking steps for Cook Mode. Empty when the backend doesn't
+  /// return steps (older payloads) — Cook Mode is hidden in that case.
+  final List<String> instructions;
+
   const PantrySuggestion({
     required this.name,
     required this.servings,
@@ -132,7 +144,22 @@ class PantrySuggestion {
     this.missingIngredients = const [],
     this.overallMatchScore = 0,
     this.suggestionReason,
+    this.imageUrl,
+    this.imageSource,
+    this.instructions = const [],
   });
+
+  /// Total prep + cook minutes, or null when neither is known (so the card
+  /// hides the "MIN" stat instead of rendering "0").
+  int? get totalTimeMinutes {
+    if (prepTimeMinutes == null && cookTimeMinutes == null) return null;
+    final total = (prepTimeMinutes ?? 0) + (cookTimeMinutes ?? 0);
+    return total > 0 ? total : null;
+  }
+
+  /// Attribution label shown on the card when a photo is present.
+  String get photoCredit =>
+      'PHOTO · ${(imageSource == null || imageSource!.trim().isEmpty) ? 'PEXELS' : imageSource!.toUpperCase()}';
 
   factory PantrySuggestion.fromJson(Map<String, dynamic> j) => PantrySuggestion(
         name: j['name'] as String,
@@ -153,6 +180,15 @@ class PantrySuggestion {
             (j['missing_ingredients'] as List?)?.map((e) => e as String).toList() ?? const [],
         overallMatchScore: j['overall_match_score'] as int? ?? 0,
         suggestionReason: j['suggestion_reason'] as String?,
+        imageUrl: (j['image_url'] as String?)?.trim().isEmpty ?? true
+            ? null
+            : (j['image_url'] as String).trim(),
+        imageSource: j['image_source'] as String?,
+        instructions: (j['instructions'] as List?)
+                ?.map((e) => e.toString())
+                .where((s) => s.trim().isNotEmpty)
+                .toList() ??
+            const [],
       );
 }
 

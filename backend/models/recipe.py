@@ -502,6 +502,13 @@ class PantryAnalyzeRequest(BaseModel):
     meal_type: Optional[str] = None
     count: int = Field(default=3, ge=1, le=8)
     additional_requirements: Optional[str] = None
+    # v3 "From Your Fridge" — flat list of human filter labels (e.g.
+    # "High protein", "≤ 30 min", "Mexican"). Become HARD constraints every
+    # recipe must satisfy. Optional; empty/None = generate freely.
+    filters: Optional[List[str]] = Field(default=None, max_length=40)
+    # Single-select mood dial (comfort/fresh/spicy/lazy/fancy/sweet — any
+    # string accepted; mapped to tone guidance in code). Optional.
+    mood: Optional[str] = Field(default=None, max_length=40)
 
 
 class PantryDetectedItem(BaseModel):
@@ -528,6 +535,11 @@ class PantrySuggestion(BaseModel):
     overall_match_score: int = Field(default=0, ge=0, le=100)
     suggestion_reason: Optional[str] = None
     ingredients: List[RecipeIngredientCreate] = Field(default_factory=list)
+    # Numbered cook-mode steps (rendered by the v3 Cook Mode). Sourced from the
+    # generator's `instructions` array.
+    instructions: List[str] = Field(default_factory=list)
+    # Finished-dish photo from Pexels; None when no key / no match / any error.
+    image_url: Optional[str] = None
 
 
 class PantryAnalyzeResponse(BaseModel):

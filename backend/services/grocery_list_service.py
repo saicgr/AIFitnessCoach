@@ -71,6 +71,24 @@ def _guess_unit(food_item: dict) -> Optional[str]:
     return None
 
 
+def _parse_quantity_str(q: Optional[str]):
+    """Split a free-text quantity ("2 cups") into (number, unit, note).
+
+    Returns (float, unit|None, None) when a leading number is present, else
+    (None, None, whole_string) so an unparseable value ("a bunch") is preserved
+    in the item's notes rather than dropped.
+    """
+    q = (q or "").strip()
+    if not q:
+        return (None, None, None)
+    m = re.match(r"^\s*(\d+(?:\.\d+)?)\s*(.*)$", q)
+    if m:
+        num = float(m.group(1))
+        rest = m.group(2).strip()
+        return (num, rest[:30] if rest else None, None)
+    return (None, None, q[:500])
+
+
 def _units_compatible(a: Optional[str], b: Optional[str]) -> bool:
     """Loose unit check — same string or both NULL is mergeable. Conservative
     by design: incompatible units get a fresh row + note rather than
@@ -376,6 +394,53 @@ class GroceryListService:
             "items_added": added,
             "items_merged": merged,
         }
+
+    # ------------------------------------------------------------------
+    # Quick-add a single named item to the active list (fridge "add missing
+    # ingredient" chip)
+    # ------------------------------------------------------------------
+
+    async def _resolve_active_list_id(self, user_id: str) -> str:
+        """Return the user's most-recent list id, creating "My Shopping List"
+        if they have none. Same active-list resolution as add_from_food_log."""
+        existing = (
+            self.db.client.table("grocery_lists")
+            .select("id")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if existing.data:
+            return existing.data[0]["id"]
+        list_id = str(uuid.uuid4())
+        now_iso = datetime.utcnow().isoformat()
+        self.db.client.table("grocery_lists").insert({
+            "id": list_id,
+            "user_id": user_id,
+            "name": "My Shopping List",
+            "created_at": now_iso,
+            "updated_at": now_iso,
+        }).execute()
+        return list_id
+
+    async def quick_add_active(
+        self, user_id: str, item_name: str, quantity: Optional[str] = None
+    ) -> GroceryListItem:
+        """Append one named item to the user's active list, find-or-create.
+
+        `quantity` is a free-text string ("2", "2 cups", "a bunch"): a leading
+        number lands in the numeric `quantity` column with any trailing text as
+        the `unit`; an unparseable string is stored in `notes` instead."""
+        list_id = await self._resolve_active_list_id(user_id)
+        qty_num, qty_unit, qty_note = _parse_quantity_str(quantity)
+        base = GroceryListItemBase(
+            ingredient_name=item_name.strip(),
+            quantity=qty_num,
+            unit=qty_unit,
+            notes=qty_note,
+        )
+        return await self.add_item(list_id, base)
 
     # ------------------------------------------------------------------
     # Export

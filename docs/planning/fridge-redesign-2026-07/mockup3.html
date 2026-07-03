@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Your Fridge — V3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0A0A0A; --surface:#161616; --surface2:#1F1F1F; --border:#2A2A2A;
+    --accent:#5CBF6A; --accent-dim:rgba(92,191,106,0.14); --accent-border:rgba(92,191,106,0.4);
+    --text:#F2F2F2; --text2:#A8A8A8; --muted:#6E6E6E; --amber:#E8A33D;
+    --protein:#B07CF7; --carbs:#3ECCE0; --fat:#F99044;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{background:#1C1C1E;color:var(--text);font-family:'Barlow',sans-serif;display:flex;gap:40px;justify-content:center;align-items:flex-start;padding:40px 20px;min-height:100vh;}
+  .col{display:flex;flex-direction:column;align-items:center;gap:14px;flex-shrink:0;}
+  .statebar{display:flex;gap:8px;}
+  .statebar .sb{font-size:12px;font-weight:700;letter-spacing:1px;padding:7px 16px;border-radius:999px;border:1px solid #3A3A3C;color:#999;cursor:pointer;font-family:'Barlow Condensed';}
+  .statebar .sb.on{color:#0A0A0A;background:var(--accent);border-color:var(--accent);}
+  .statebar .lbl{font-size:11px;color:#777;align-self:center;letter-spacing:1px;}
+  .phone{width:393px;background:var(--bg);border-radius:44px;border:6px solid #2E2E30;overflow:hidden;position:relative;height:852px;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.6);}
+  .screen{flex:1;overflow-y:auto;scrollbar-width:none;position:relative;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  .hdr{padding:54px 20px 0;display:flex;align-items:center;gap:12px;}
+  .hdr .back{font-size:22px;color:var(--text);text-decoration:none;}
+  .kicker{font-family:'Barlow Condensed';font-weight:700;font-size:12px;letter-spacing:2.5px;color:var(--accent);}
+  .hero-line{padding:10px 20px 0;}
+  .hero-line h1{font-family:'Anton';font-weight:400;font-size:32px;line-height:1.08;letter-spacing:.5px;}
+  .hero-line h1 em{font-style:normal;color:var(--accent);}
+
+  .state{display:none;}
+  .state.on{display:block;}
+
+  /* ═══ STATE 1: START ═══ */
+  .snapzone{margin:18px 20px 0;border:2px dashed var(--accent-border);background:var(--accent-dim);border-radius:22px;padding:38px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;}
+  .snapzone .cam{width:64px;height:64px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:28px;}
+  .snapzone b{font-family:'Barlow Condensed';font-weight:700;font-size:18px;letter-spacing:2px;}
+  .snapzone span{font-size:12px;color:var(--text2);text-align:center;line-height:1.5;}
+  .alt-row{display:flex;gap:8px;margin:10px 20px 0;}
+  .alt-row .alt{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--border);border-radius:12px;padding:11px 0;font-size:12.5px;font-weight:600;color:var(--text2);cursor:pointer;}
+  .howit{margin:26px 20px 0;}
+  .howit .k{font-family:'Barlow Condensed';font-weight:700;font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:12px;}
+  .steps3{display:flex;gap:8px;}
+  .s3{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 10px;text-align:center;}
+  .s3 .ico{font-size:22px;}
+  .s3 b{display:block;font-size:12px;margin-top:6px;}
+  .s3 span{font-size:10.5px;color:var(--muted);line-height:1.35;display:block;margin-top:2px;}
+  .lasttime{margin:22px 20px 0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;}
+  .lasttime img{width:44px;height:44px;border-radius:10px;object-fit:cover;}
+  .lasttime .m b{font-size:13px;display:block;}
+  .lasttime .m span{font-size:11px;color:var(--muted);}
+  .lasttime .go{margin-left:auto;color:var(--muted);}
+
+  /* ═══ STATE 2: SCANNING ═══ */
+  .scanwrap{margin:18px 20px 0;position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--border);height:300px;}
+  .scanwrap img{width:100%;height:100%;object-fit:cover;display:block;}
+  .scanline{position:absolute;left:0;right:0;height:3px;background:var(--accent);box-shadow:0 0 22px 4px rgba(92,191,106,.75);animation:sweep 1.8s ease-in-out infinite;}
+  @keyframes sweep{0%,100%{top:6%;}50%{top:92%;}}
+  .scanveil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.5));}
+  .foundfeed{margin:16px 20px 0;text-align:center;}
+  .foundfeed .big{font-family:'Barlow Condensed';font-weight:700;font-size:17px;letter-spacing:1px;}
+  .foundfeed .big b{color:var(--accent);}
+  .foundfeed .tick{font-size:12.5px;color:var(--text2);margin-top:8px;min-height:18px;}
+  .foundfeed .tick b{color:var(--accent);font-weight:600;}
+
+  /* ═══ STATE 3: RESULTS ═══ */
+  .snap{margin:14px 20px 0;position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);height:150px;cursor:pointer;}
+  .snap img{width:100%;height:100%;object-fit:cover;display:block;}
+  .snap .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.66));}
+  .snap .badge{position:absolute;left:12px;bottom:10px;font-size:12.5px;font-weight:600;}
+  .snap .badge b{color:var(--accent);}
+  .snap .expand{position:absolute;right:12px;bottom:10px;font-size:11px;color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.3);padding:3px 9px;border-radius:999px;background:rgba(0,0,0,.35);}
+  .snap-actions{display:flex;gap:8px;margin:8px 20px 0;}
+  .snap-actions .sa{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--border);border-radius:12px;padding:9px 0;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;}
+  .snap-actions .sa.acc{border:1.5px dashed var(--accent-border);color:var(--accent);background:var(--accent-dim);}
+
+  .section{padding:18px 20px 0;}
+  .sec-hdr{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;}
+  .sec-hdr .label{font-family:'Barlow Condensed';font-weight:700;font-size:13px;letter-spacing:2px;}
+  .sec-hdr .count{font-size:11.5px;color:var(--muted);}
+  .sec-hdr .spacer{flex:1;}
+  .sec-hdr .action{font-size:12px;color:var(--accent);font-weight:600;cursor:pointer;}
+  .sec-sub{font-size:11px;color:var(--muted);margin:-6px 0 10px;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;overflow:hidden;max-height:72px;transition:max-height .25s ease;}
+  .chips.expanded{max-height:900px;}
+  .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--accent-border);background:var(--accent-dim);color:var(--text);padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:500;cursor:pointer;user-select:none;line-height:1;}
+  .chip .tick{color:var(--accent);font-size:11px;}
+  .chip.off{border-color:var(--border);background:transparent;color:var(--muted);text-decoration:line-through;}
+  .chip.off .tick{color:var(--muted);}
+
+  /* Mood selector — always visible, the fun dial */
+  .mood{margin:18px 20px 0;}
+  .mood .k{font-family:'Barlow Condensed';font-weight:700;font-size:13px;letter-spacing:2px;margin-bottom:9px;}
+  .mood .k span{font-size:11px;color:var(--muted);letter-spacing:0;font-family:'Barlow';font-weight:500;margin-left:8px;}
+  .moodrow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;-webkit-mask-image:linear-gradient(90deg,#000 93%,transparent);}
+  .moodrow::-webkit-scrollbar{display:none;}
+  .moodchip{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:9px 13px 7px;cursor:pointer;min-width:72px;}
+  .moodchip .e{font-size:20px;line-height:1;}
+  .moodchip span{font-size:10px;color:var(--text2);font-weight:600;white-space:nowrap;}
+  .moodchip.on{border-color:var(--accent-border);background:var(--accent-dim);}
+  .moodchip.on span{color:var(--accent);}
+
+  .filters{margin:14px 20px 0;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:13px 14px;}
+  .filters .sec-hdr{margin-bottom:0;cursor:pointer;}
+  .filters.open .sec-hdr{margin-bottom:9px;}
+  .filters .chev{font-size:12px;color:var(--muted);transition:transform .2s;}
+  .filters.open .chev{transform:rotate(180deg);}
+  .fbody{display:none;}
+  .filters.open .fbody{display:block;}
+  .fsummary{font-size:11.5px;color:var(--muted);}
+  .fsummary b{color:var(--accent);font-weight:600;}
+  .freset{font-size:12px;color:var(--amber);font-weight:600;cursor:pointer;margin-left:12px;}
+  .fgroup{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px;}
+  .fgroup:last-child{margin-bottom:0;}
+  .fk{width:100%;font-size:9.5px;letter-spacing:1.4px;color:var(--muted);font-weight:700;margin-bottom:-1px;}
+  .pref{font-size:11.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--border);color:var(--text2);background:var(--surface2);cursor:pointer;}
+  .pref.on{color:var(--accent);border-color:var(--accent-border);background:var(--accent-dim);font-weight:600;}
+  .viewall{margin-top:11px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--accent);font-weight:600;cursor:pointer;}
+
+  /* All-filters sheet */
+  .fsheet{position:absolute;left:0;right:0;bottom:-105%;height:92%;background:#121212;border-radius:26px 26px 0 0;border-top:1px solid var(--border);transition:bottom .28s cubic-bezier(.3,.9,.3,1);z-index:14;display:flex;flex-direction:column;}
+  .phone.fsheet-open .fsheet{bottom:0;}
+  .phone.fsheet-open .scrim{opacity:1;pointer-events:auto;}
+  .fsheet .fs-body{flex:1;overflow-y:auto;padding:0 20px 16px;scrollbar-width:none;}
+  .fsheet .fs-body::-webkit-scrollbar{display:none;}
+  .fsheet .fs-hdr{padding:14px 20px 8px;}
+  .fsheet h2{font-family:'Anton';font-weight:400;font-size:20px;letter-spacing:.5px;}
+  .fsearch{margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 13px;font-size:13px;color:var(--text);width:100%;font-family:'Barlow';outline:none;}
+  .fsearch::placeholder{color:var(--muted);}
+  .fsheet .fgroup{margin-top:14px;}
+  .fsheet .fs-foot{display:flex;gap:9px;padding:12px 20px 26px;border-top:1px solid var(--border);background:#121212;}
+
+  .menu{padding:20px 20px 120px;}
+  .menu-hdr{display:flex;align-items:baseline;margin-bottom:12px;}
+  .menu-hdr .label{font-family:'Barlow Condensed';font-weight:700;font-size:13px;letter-spacing:2px;}
+  .menu-hdr .sub{margin-left:8px;font-size:11px;color:var(--muted);}
+  .dish{border-radius:20px;overflow:hidden;position:relative;margin-bottom:14px;cursor:pointer;border:1px solid var(--border);height:216px;display:flex;flex-direction:column;justify-content:flex-end;transition:transform .12s,border-color .15s;}
+  .dish:hover{border-color:var(--accent-border);transform:translateY(-1px);}
+  .dish img.art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .dish .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 25%,rgba(4,6,4,.9) 82%);}
+  .photo-credit{position:absolute;top:10px;right:12px;font-size:8.5px;letter-spacing:1px;color:rgba(255,255,255,.55);z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.8);}
+  .ring{position:absolute;top:12px;left:12px;width:46px;height:46px;z-index:2;}
+  .ring svg{transform:rotate(-90deg);}
+  .ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Barlow Condensed';font-weight:700;font-size:13px;line-height:1;}
+  .ring .pct small{font-size:6.5px;letter-spacing:.8px;color:#ccc;}
+  .dish .body{position:relative;z-index:2;padding:0 14px 12px;}
+  .dish h3{font-family:'Anton';font-weight:400;font-size:20px;letter-spacing:.4px;line-height:1.12;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.7);}
+  .strip{display:flex;gap:12px;margin-top:7px;align-items:baseline;flex-wrap:wrap;}
+  .stat{display:flex;align-items:baseline;gap:3px;}
+  .stat b{font-family:'Barlow Condensed';font-size:15px;font-weight:700;}
+  .stat span{font-size:8px;letter-spacing:.8px;color:rgba(255,255,255,.6);font-weight:600;}
+  .havebar{display:flex;align-items:center;gap:6px;margin-top:8px;}
+  .dots{display:flex;gap:3px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+  .dot.miss{background:transparent;border:1.5px solid var(--amber);}
+  .havebar span{font-size:10.5px;color:rgba(255,255,255,.8);}
+  .needpill{margin-left:auto;font-size:10px;font-weight:700;color:var(--amber);border:1px solid rgba(232,163,61,.55);border-radius:999px;padding:3px 8px;cursor:pointer;background:rgba(0,0,0,.35);}
+
+  .cta-wrap{position:absolute;left:0;right:0;bottom:0;padding:10px 20px 26px;background:linear-gradient(180deg,transparent,var(--bg) 40%);z-index:5;display:none;}
+  .phone[data-state="results"] .cta-wrap{display:block;}
+  .cta{width:100%;border:none;border-radius:999px;background:var(--accent);color:#07200B;padding:13px 0 11px;cursor:pointer;text-align:center;transition:background .2s;}
+  .cta.dirty{background:var(--amber);animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,163,61,.35);}50%{box-shadow:0 0 0 9px rgba(232,163,61,0);}}
+  .cta .main{font-family:'Barlow Condensed';font-weight:700;font-size:17px;letter-spacing:2.5px;}
+  .cta .sub{display:block;font-size:10.5px;font-weight:600;opacity:.78;margin-top:1px;}
+
+  .viewer{position:absolute;inset:0;background:rgba(0,0,0,.92);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px 16px;}
+  .phone.viewing .viewer{display:flex;}
+  .viewer img{max-width:100%;max-height:78%;border-radius:14px;}
+  .viewer .cap{margin-top:14px;font-size:13px;color:var(--text2);}
+  .viewer .close{position:absolute;top:56px;right:22px;font-size:20px;color:#ddd;cursor:pointer;}
+
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .2s;z-index:10;}
+  .sheet{position:absolute;left:0;right:0;bottom:-105%;height:90%;background:#121212;border-radius:26px 26px 0 0;border-top:1px solid var(--border);transition:bottom .28s cubic-bezier(.3,.9,.3,1);z-index:11;overflow-y:auto;padding:14px 20px 30px;scrollbar-width:none;}
+  .phone.sheet-open .sheet{bottom:0;} .phone.sheet-open .scrim{opacity:1;pointer-events:auto;}
+  .grabber{width:44px;height:4px;border-radius:2px;background:#3A3A3A;margin:0 auto 14px;}
+  .sheet h2{font-family:'Anton';font-weight:400;font-size:24px;text-transform:uppercase;line-height:1.15;padding-right:56px;}
+  .sheet .match{position:absolute;top:36px;right:20px;font-size:10.5px;font-weight:700;color:var(--accent);border:1px solid var(--accent-border);padding:3px 8px;border-radius:999px;}
+  .block{margin-top:18px;}
+  .block .k{font-family:'Barlow Condensed';font-weight:700;font-size:12px;letter-spacing:2px;color:var(--text2);margin-bottom:8px;display:block;}
+  .ing{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid #1E1E1E;font-size:13.5px;}
+  .ing .have{color:var(--accent);font-size:12px;width:14px;}
+  .ing.missing{color:var(--amber);} .ing.missing .have{color:var(--amber);}
+  .ing .amt{margin-left:auto;color:var(--muted);font-size:12px;}
+  .sheet-ctas{display:flex;gap:9px;margin-top:20px;}
+  .btn{flex:1;text-align:center;padding:12px 0;border-radius:999px;font-family:'Barlow Condensed';font-weight:700;font-size:14px;letter-spacing:2px;cursor:pointer;}
+  .btn.primary{background:var(--accent);color:#07200B;} .btn.ghost{border:1px solid var(--border);color:var(--text);}
+
+  .cook{position:absolute;inset:0;background:var(--bg);z-index:20;display:none;flex-direction:column;padding:56px 24px 30px;}
+  .phone.cooking .cook{display:flex;}
+  .cook .top{display:flex;align-items:center;}
+  .cook .top .x{font-size:20px;color:var(--text2);cursor:pointer;}
+  .cook .prog{flex:1;margin:0 14px;height:4px;border-radius:2px;background:#242424;overflow:hidden;}
+  .cook .prog i{display:block;height:100%;background:var(--accent);width:25%;transition:width .25s;}
+  .cook .dishimg{margin-top:22px;border-radius:16px;overflow:hidden;height:110px;position:relative;}
+  .cook .dishimg img{width:100%;height:100%;object-fit:cover;}
+  .cook .dishimg .nm{position:absolute;left:12px;bottom:8px;font-family:'Barlow Condensed';font-weight:700;font-size:13px;letter-spacing:1.5px;text-shadow:0 1px 6px rgba(0,0,0,.9);}
+  .cook .stepno{margin-top:22px;font-family:'Barlow Condensed';font-weight:700;letter-spacing:2px;font-size:13px;color:var(--accent);}
+  .cook .steptext{margin-top:10px;font-size:24px;font-weight:600;line-height:1.35;}
+  .cook .hintline{margin-top:14px;font-size:13px;color:var(--muted);}
+  .cook .nav{margin-top:auto;display:flex;gap:10px;}
+  .cook .nav .btn{padding:15px 0;}
+
+  .notes{max-width:430px;color:#C9C9C9;font-size:14px;line-height:1.65;}
+  .notes h2{font-family:'Anton';font-weight:400;font-size:22px;color:#fff;margin-bottom:14px;}
+  .notes h3{font-size:13px;letter-spacing:1.5px;color:var(--accent);margin:20px 0 6px;font-family:'Barlow Condensed';font-weight:700;}
+  .notes p{margin-bottom:8px;} .notes b{color:#fff;}
+  @media (max-width:900px){body{flex-direction:column;align-items:center;}}
+</style>
+</head>
+<body>
+
+<div class="col">
+  <div class="statebar">
+    <span class="lbl">STATE:</span>
+    <span class="sb on" id="sb-start" onclick="setState('start')">1 · START</span>
+    <span class="sb" id="sb-scanning" onclick="setState('scanning')">2 · SCANNING</span>
+    <span class="sb" id="sb-results" onclick="setState('results')">3 · RESULTS</span>
+  </div>
+
+<div class="phone" id="phone" data-state="start">
+  <div class="screen">
+    <div class="hdr"><a class="back" href="#">←</a><span class="kicker">FROM YOUR FRIDGE</span></div>
+
+    <!-- ═══ STATE 1: START (how the screen opens) ═══ -->
+    <div class="state on" id="state-start">
+      <div class="hero-line"><h1>WHAT'S IN<br>YOUR <em>FRIDGE?</em></h1></div>
+
+      <div class="snapzone" onclick="setState('scanning')">
+        <div class="cam">📷</div>
+        <b>SNAP YOUR FRIDGE</b>
+        <span>Open the door, take one photo.<br>We'll find every ingredient and build you recipes.</span>
+      </div>
+      <div class="alt-row">
+        <div class="alt" onclick="setState('scanning')">🖼 &nbsp;From gallery</div>
+        <div class="alt" onclick="alert('Skips the photo — straight to typing ingredients, then the same results screen')">⌨ &nbsp;Type ingredients</div>
+      </div>
+
+      <div class="howit">
+        <div class="k">HOW IT WORKS</div>
+        <div class="steps3">
+          <div class="s3"><div class="ico">📷</div><b>Snap</b><span>one photo of the open fridge</span></div>
+          <div class="s3"><div class="ico">🧠</div><b>We scan</b><span>AI finds every ingredient</span></div>
+          <div class="s3"><div class="ico">🍽️</div><b>You cook</b><span>recipes from what you own</span></div>
+        </div>
+      </div>
+
+      <!-- Returning user: last scan resumes -->
+      <div class="lasttime" onclick="setState('results')">
+        <img src="https://images.pexels.com/photos/9031968/pexels-photo-9031968.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="">
+        <div class="m"><b>Your last scan</b><span>25 ingredients · today 7:46 PM</span></div>
+        <div class="go">→</div>
+      </div>
+      <div style="height:60px;"></div>
+    </div>
+
+    <!-- ═══ STATE 2: SCANNING ═══ -->
+    <div class="state" id="state-scanning">
+      <div class="hero-line"><h1>READING YOUR<br><em>SHELVES…</em></h1></div>
+      <div class="scanwrap">
+        <img src="https://images.pexels.com/photos/9031968/pexels-photo-9031968.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="">
+        <div class="scanveil"></div>
+        <div class="scanline"></div>
+      </div>
+      <div class="foundfeed">
+        <div class="big"><b id="foundN">0</b> INGREDIENTS FOUND</div>
+        <div class="tick" id="foundTick">Looking at the top shelf…</div>
+      </div>
+      <div style="height:60px;"></div>
+    </div>
+
+    <!-- ═══ STATE 3: RESULTS ═══ -->
+    <div class="state" id="state-results">
+      <div class="hero-line"><h1>YOUR FRIDGE CAN MAKE<br><em>5 MEALS</em> TODAY.</h1></div>
+
+      <div class="snap" onclick="document.getElementById('phone').classList.add('viewing')">
+        <img src="https://images.pexels.com/photos/9031968/pexels-photo-9031968.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="your fridge">
+        <div class="shade"></div>
+        <div class="badge"><b>25 ingredients</b> found in your photo</div>
+        <div class="expand">⤢ View</div>
+      </div>
+      <div class="snap-actions">
+        <div class="sa acc" onclick="alert('Camera / gallery for another shelf or the freezer')">＋ &nbsp;Add another photo</div>
+        <div class="sa" onclick="alert('Inline text field appears to type an ingredient')">⌨ &nbsp;Type an ingredient</div>
+      </div>
+
+      <div class="section">
+        <div class="sec-hdr">
+          <span class="label">SCANNED INGREDIENTS</span>
+          <span class="count" id="selCount">25 of 25 in use</span>
+          <span class="spacer"></span>
+          <span class="action" id="expandBtn" onclick="toggleExpand()">Show all ▾</span>
+        </div>
+        <div class="sec-sub">Tap an item to leave it out of the recipes.</div>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <!-- MOOD: always visible, feeds the AI prompt directly -->
+      <div class="mood">
+        <div class="k">WHAT ARE YOU IN THE MOOD FOR? <span>optional</span></div>
+        <div class="moodrow" id="moodRow">
+          <div class="moodchip" onclick="pickMood(this,'comfort')"><div class="e">🍲</div><span>Comfort</span></div>
+          <div class="moodchip" onclick="pickMood(this,'fresh')"><div class="e">🥗</div><span>Fresh &amp; light</span></div>
+          <div class="moodchip" onclick="pickMood(this,'spicy')"><div class="e">🌶️</div><span>Spicy</span></div>
+          <div class="moodchip" onclick="pickMood(this,'lazy')"><div class="e">😴</div><span>Lazy &amp; quick</span></div>
+          <div class="moodchip" onclick="pickMood(this,'fancy')"><div class="e">🎉</div><span>Impress someone</span></div>
+          <div class="moodchip" onclick="pickMood(this,'sweet')"><div class="e">🍫</div><span>Sweet tooth</span></div>
+        </div>
+      </div>
+
+      <!-- FILTERS: collapsed by default; none active = all recipes -->
+      <div class="filters" id="filters">
+        <div class="sec-hdr" onclick="toggleFilters()">
+          <span class="label">FILTERS</span>
+          <span class="fsummary" id="fsummary" style="margin-left:10px;"></span>
+          <span class="spacer"></span>
+          <span class="freset" id="freset" onclick="event.stopPropagation();resetFilters()">Reset</span>
+          <span class="chev">▾</span>
+        </div>
+        <div class="fbody">
+          <div class="fgroup" data-group="MEAL">
+            <span class="fk">MEAL</span>
+            <span class="pref" onclick="togglePref(this)">Breakfast</span>
+            <span class="pref" onclick="togglePref(this)">Lunch</span>
+            <span class="pref" onclick="togglePref(this)">Dinner</span>
+            <span class="pref" onclick="togglePref(this)">Snack</span>
+          </div>
+          <div class="fgroup" data-group="GOAL">
+            <span class="fk">GOAL</span>
+            <span class="pref" onclick="togglePref(this)">High protein</span>
+            <span class="pref" onclick="togglePref(this)">Low carb</span>
+            <span class="pref" onclick="togglePref(this)">Low calorie</span>
+            <span class="pref" onclick="togglePref(this)">High fiber</span>
+          </div>
+          <div class="fgroup" data-group="TIME">
+            <span class="fk">TIME &amp; EFFORT</span>
+            <span class="pref" onclick="togglePref(this)">≤ 15 min</span>
+            <span class="pref" onclick="togglePref(this)">≤ 30 min</span>
+            <span class="pref" onclick="togglePref(this)">One-pan</span>
+            <span class="pref" onclick="togglePref(this)">No-cook</span>
+          </div>
+          <div class="fgroup" data-group="CUISINE">
+            <span class="fk">CUISINE</span>
+            <span class="pref" onclick="togglePref(this)">Mediterranean</span>
+            <span class="pref" onclick="togglePref(this)">Mexican</span>
+            <span class="pref" onclick="togglePref(this)">Asian</span>
+            <span class="pref" onclick="togglePref(this)">Indian</span>
+          </div>
+          <div class="fgroup" data-group="DIET">
+            <span class="fk">DIET · from your preferences · always applied</span>
+            <span class="pref on" data-pref="1" onclick="togglePref(this)">No shellfish</span>
+            <span class="pref" onclick="togglePref(this)">Vegetarian</span>
+            <span class="pref" onclick="togglePref(this)">Dairy-free</span>
+            <span class="pref" onclick="togglePref(this)">Gluten-free</span>
+          </div>
+          <div class="viewall" onclick="openFilterSheet()">View all filters — diets, allergies, cuisines &amp; more →</div>
+        </div>
+      </div>
+
+      <div class="menu">
+        <div class="menu-hdr">
+          <span class="label">YOUR RECIPES</span>
+          <span class="sub">· 5 found · sorted by match</span>
+        </div>
+
+        <div class="dish" onclick="openSheet()">
+          <img class="art" src="https://images.pexels.com/photos/9779959/pexels-photo-9779959.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="">
+          <div class="shade"></div>
+          <div class="photo-credit">PHOTO · PEXELS</div>
+          <div class="ring"><svg width="46" height="46"><circle cx="23" cy="23" r="19" fill="rgba(0,0,0,.55)" stroke="#333" stroke-width="3.5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#5CBF6A" stroke-width="3.5" stroke-dasharray="119.4" stroke-dashoffset="6" stroke-linecap="round"/></svg><div class="pct">95<small>MATCH</small></div></div>
+          <div class="body">
+            <h3>Mediterranean Chicken Skillet</h3>
+            <div class="strip">
+              <div class="stat"><b>30</b><span>MIN</span></div><div class="stat"><b>375</b><span>KCAL</span></div>
+              <div class="stat"><b style="color:var(--protein)">49</b><span>PROTEIN</span></div>
+              <div class="stat"><b style="color:var(--carbs)">9</b><span>CARBS</span></div>
+              <div class="stat"><b style="color:var(--fat)">15</b><span>FAT</span></div>
+            </div>
+            <div class="havebar">
+              <div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot miss"></i></div>
+              <span>you have 4 of 5</span>
+              <span class="needpill" onclick="event.stopPropagation();alert('Olive oil added to your grocery list ✓')">+ olive oil → list</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dish" onclick="openSheet()">
+          <img class="art" src="https://images.pexels.com/photos/5639282/pexels-photo-5639282.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="">
+          <div class="shade"></div>
+          <div class="photo-credit">PHOTO · PEXELS</div>
+          <div class="ring"><svg width="46" height="46"><circle cx="23" cy="23" r="19" fill="rgba(0,0,0,.55)" stroke="#333" stroke-width="3.5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#5CBF6A" stroke-width="3.5" stroke-dasharray="119.4" stroke-dashoffset="10" stroke-linecap="round"/></svg><div class="pct">92<small>MATCH</small></div></div>
+          <div class="body">
+            <h3>Garden Protein Scramble</h3>
+            <div class="strip">
+              <div class="stat"><b>15</b><span>MIN</span></div><div class="stat"><b>380</b><span>KCAL</span></div>
+              <div class="stat"><b style="color:var(--protein)">26</b><span>PROTEIN</span></div>
+              <div class="stat"><b style="color:var(--carbs)">7</b><span>CARBS</span></div>
+              <div class="stat"><b style="color:var(--fat)">29</b><span>FAT</span></div>
+            </div>
+            <div class="havebar">
+              <div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot miss"></i></div>
+              <span>you have 4 of 5</span>
+              <span class="needpill" onclick="event.stopPropagation();alert('Olive oil added to your grocery list ✓')">+ olive oil → list</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dish" onclick="openSheet()">
+          <img class="art" src="https://images.pexels.com/photos/566564/pexels-photo-566564.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="">
+          <div class="shade"></div>
+          <div class="photo-credit">PHOTO · PEXELS</div>
+          <div class="ring"><svg width="46" height="46"><circle cx="23" cy="23" r="19" fill="rgba(0,0,0,.55)" stroke="#333" stroke-width="3.5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#5CBF6A" stroke-width="3.5" stroke-dasharray="119.4" stroke-dashoffset="12" stroke-linecap="round"/></svg><div class="pct">90<small>MATCH</small></div></div>
+          <div class="body">
+            <h3>Yogurt Raspberry Power Bowl</h3>
+            <div class="strip">
+              <div class="stat"><b>5</b><span>MIN</span></div><div class="stat"><b>310</b><span>KCAL</span></div>
+              <div class="stat"><b style="color:var(--protein)">36</b><span>PROTEIN</span></div>
+              <div class="stat"><b style="color:var(--carbs)">22</b><span>CARBS</span></div>
+              <div class="stat"><b style="color:var(--fat)">8</b><span>FAT</span></div>
+            </div>
+            <div class="havebar">
+              <div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+              <span>you have all 3 · nothing missing</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dish" onclick="openSheet()">
+          <img class="art" src="https://images.pexels.com/photos/19130208/pexels-photo-19130208.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="">
+          <div class="shade"></div>
+          <div class="photo-credit">PHOTO · PEXELS</div>
+          <div class="ring"><svg width="46" height="46"><circle cx="23" cy="23" r="19" fill="rgba(0,0,0,.55)" stroke="#333" stroke-width="3.5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#5CBF6A" stroke-width="3.5" stroke-dasharray="119.4" stroke-dashoffset="17" stroke-linecap="round"/></svg><div class="pct">86<small>MATCH</small></div></div>
+          <div class="body">
+            <h3>Cheesy Cauliflower Chicken Bake</h3>
+            <div class="strip">
+              <div class="stat"><b>35</b><span>MIN</span></div><div class="stat"><b>410</b><span>KCAL</span></div>
+              <div class="stat"><b style="color:var(--protein)">43</b><span>PROTEIN</span></div>
+              <div class="stat"><b style="color:var(--carbs)">12</b><span>CARBS</span></div>
+              <div class="stat"><b style="color:var(--fat)">19</b><span>FAT</span></div>
+            </div>
+            <div class="havebar">
+              <div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+              <span>you have all 4 · nothing missing</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dish" onclick="openSheet()">
+          <img class="art" src="https://images.pexels.com/photos/5639284/pexels-photo-5639284.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="">
+          <div class="shade"></div>
+          <div class="photo-credit">PHOTO · PEXELS</div>
+          <div class="ring"><svg width="46" height="46"><circle cx="23" cy="23" r="19" fill="rgba(0,0,0,.55)" stroke="#333" stroke-width="3.5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#5CBF6A" stroke-width="3.5" stroke-dasharray="119.4" stroke-dashoffset="21" stroke-linecap="round"/></svg><div class="pct">82<small>MATCH</small></div></div>
+          <div class="body">
+            <h3>Spinach &amp; Three-Cheese Omelette</h3>
+            <div class="strip">
+              <div class="stat"><b>12</b><span>MIN</span></div><div class="stat"><b>340</b><span>KCAL</span></div>
+              <div class="stat"><b style="color:var(--protein)">28</b><span>PROTEIN</span></div>
+              <div class="stat"><b style="color:var(--carbs)">4</b><span>CARBS</span></div>
+              <div class="stat"><b style="color:var(--fat)">24</b><span>FAT</span></div>
+            </div>
+            <div class="havebar">
+              <div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+              <span>you have all 4 · nothing missing</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA (results only) -->
+  <div class="cta-wrap">
+    <button class="cta" id="cta" onclick="applyChanges()">
+      <span class="main" id="ctaMain">GET 5 NEW RECIPES ✦</span>
+      <span class="sub" id="ctaSub">same fridge, different ideas</span>
+    </button>
+  </div>
+
+  <div class="viewer">
+    <span class="close" onclick="event.stopPropagation();document.getElementById('phone').classList.remove('viewing')">✕</span>
+    <img src="https://images.pexels.com/photos/9031968/pexels-photo-9031968.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="">
+    <div class="cap">Your snap · 25 ingredients detected · July 2, 7:46 PM</div>
+  </div>
+
+  <!-- ALL FILTERS sheet -->
+  <div class="fsheet">
+    <div class="fs-hdr">
+      <div class="grabber"></div>
+      <h2>ALL FILTERS</h2>
+      <input class="fsearch" placeholder="Search filters (e.g. FODMAP, keto, thai…)" oninput="filterSearch(this.value)">
+    </div>
+    <div class="fs-body" id="fsBody">
+      <div class="fgroup">
+        <span class="fk">MEAL</span>
+        <span class="pref" onclick="togglePref(this)">Breakfast</span><span class="pref" onclick="togglePref(this)">Lunch</span><span class="pref" onclick="togglePref(this)">Dinner</span><span class="pref" onclick="togglePref(this)">Snack</span><span class="pref" onclick="togglePref(this)">Dessert</span><span class="pref" onclick="togglePref(this)">Meal prep</span><span class="pref" onclick="togglePref(this)">Post-workout</span>
+      </div>
+      <div class="fgroup">
+        <span class="fk">GOAL</span>
+        <span class="pref" onclick="togglePref(this)">High protein</span><span class="pref" onclick="togglePref(this)">Low carb</span><span class="pref" onclick="togglePref(this)">Low calorie</span><span class="pref" onclick="togglePref(this)">High fiber</span><span class="pref" onclick="togglePref(this)">Muscle gain</span><span class="pref" onclick="togglePref(this)">Cutting</span><span class="pref" onclick="togglePref(this)">Heart-healthy</span><span class="pref" onclick="togglePref(this)">Low sugar</span>
+      </div>
+      <div class="fgroup">
+        <span class="fk">TIME &amp; EFFORT</span>
+        <span class="pref" onclick="togglePref(this)">≤ 15 min</span><span class="pref" onclick="togglePref(this)">≤ 30 min</span><span class="pref" onclick="togglePref(this)">≤ 45 min</span><span class="pref" onclick="togglePref(this)">One-pan</span><span class="pref" onclick="togglePref(this)">No-cook</span><span class="pref" onclick="togglePref(this)">5 ingredients or less</span><span class="pref" onclick="togglePref(this)">Air fryer</span><span class="pref" onclick="togglePref(this)">Slow cooker</span>
+      </div>
+      <div class="fgroup">
+        <span class="fk">DIET &amp; MEDICAL</span>
+        <span class="pref" onclick="togglePref(this)">Vegetarian</span><span class="pref" onclick="togglePref(this)">Vegan</span><span class="pref" onclick="togglePref(this)">Pescatarian</span><span class="pref" onclick="togglePref(this)">Keto</span><span class="pref" onclick="togglePref(this)">Paleo</span><span class="pref" onclick="togglePref(this)">Low-FODMAP</span><span class="pref" onclick="togglePref(this)">GLP-1 friendly</span><span class="pref" onclick="togglePref(this)">Diabetic-friendly</span><span class="pref" onclick="togglePref(this)">Low-sodium</span><span class="pref" onclick="togglePref(this)">Halal</span><span class="pref" onclick="togglePref(this)">Kosher</span><span class="pref" onclick="togglePref(this)">Mediterranean diet</span>
+      </div>
+      <div class="fgroup">
+        <span class="fk">ALLERGIES · always applied</span>
+        <span class="pref on" data-pref="1" onclick="togglePref(this)">No shellfish</span><span class="pref" onclick="togglePref(this)">Dairy-free</span><span class="pref" onclick="togglePref(this)">Gluten-free</span><span class="pref" onclick="togglePref(this)">Nut-free</span><span class="pref" onclick="togglePref(this)">Egg-free</span><span class="pref" onclick="togglePref(this)">Soy-free</span><span class="pref" onclick="togglePref(this)">Sesame-free</span>
+      </div>
+      <div class="fgroup">
+        <span class="fk">CUISINE</span>
+        <span class="pref" onclick="togglePref(this)">Mediterranean</span><span class="pref" onclick="togglePref(this)">Mexican</span><span class="pref" onclick="togglePref(this)">Italian</span><span class="pref" onclick="togglePref(this)">Indian</span><span class="pref" onclick="togglePref(this)">Thai</span><span class="pref" onclick="togglePref(this)">Japanese</span><span class="pref" onclick="togglePref(this)">Korean</span><span class="pref" onclick="togglePref(this)">Chinese</span><span class="pref" onclick="togglePref(this)">Middle Eastern</span><span class="pref" onclick="togglePref(this)">Greek</span><span class="pref" onclick="togglePref(this)">American</span><span class="pref" onclick="togglePref(this)">Southern</span>
+      </div>
+      <div style="height:8px;"></div>
+    </div>
+    <div class="fs-foot">
+      <div class="btn ghost" onclick="resetFilters()">RESET</div>
+      <div class="btn primary" onclick="closeFilterSheet()">DONE</div>
+    </div>
+  </div>
+
+  <div class="scrim" onclick="closeSheet();closeFilterSheet()"></div>
+  <div class="sheet">
+    <div class="grabber"></div>
+    <h2>Mediterranean Chicken Skillet</h2>
+    <span class="match">95% MATCH</span>
+    <div class="strip" style="margin-top:12px;">
+      <div class="stat"><b>30</b><span>MIN</span></div><div class="stat"><b>375</b><span>KCAL</span></div>
+      <div class="stat"><b style="color:var(--protein)">49</b><span>PROTEIN</span></div>
+      <div class="stat"><b style="color:var(--carbs)">9</b><span>CARBS</span></div>
+      <div class="stat"><b style="color:var(--fat)">15</b><span>FAT</span></div>
+    </div>
+    <div class="block">
+      <span class="k">INGREDIENTS · ✓ IN YOUR FRIDGE</span>
+      <div class="ing"><span class="have">✓</span> Chicken breast <span class="amt">2 × 6 oz</span></div>
+      <div class="ing"><span class="have">✓</span> Chopped bell peppers <span class="amt">1 cup</span></div>
+      <div class="ing"><span class="have">✓</span> Zucchini, sliced <span class="amt">1 medium</span></div>
+      <div class="ing"><span class="have">✓</span> Rao's roasted garlic sauce <span class="amt">½ cup</span></div>
+      <div class="ing missing"><span class="have">＋</span> Olive oil <span class="amt">1 tbsp</span></div>
+    </div>
+    <div class="sheet-ctas">
+      <div class="btn ghost" onclick="alert('Saves to Recipes tab')">SAVE</div>
+      <div class="btn ghost" onclick="alert('Logs macros as a meal')">LOG MEAL</div>
+      <div class="btn primary" onclick="startCook()">▶ COOK MODE</div>
+    </div>
+  </div>
+
+  <div class="cook">
+    <div class="top">
+      <span class="x" onclick="stopCook()">✕</span>
+      <div class="prog"><i id="cookBar"></i></div>
+      <span style="font-size:12px;color:var(--muted);" id="cookCount">1 / 4</span>
+    </div>
+    <div class="dishimg">
+      <img src="https://images.pexels.com/photos/9779959/pexels-photo-9779959.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="">
+      <div class="nm">MEDITERRANEAN CHICKEN SKILLET</div>
+    </div>
+    <div class="stepno" id="cookNo">STEP 1</div>
+    <div class="steptext" id="cookText"></div>
+    <div class="hintline" id="cookHint"></div>
+    <div class="nav">
+      <div class="btn ghost" onclick="cookPrev()">← BACK</div>
+      <div class="btn primary" onclick="cookNext()" id="cookNextBtn">NEXT STEP →</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="notes">
+  <h2>V3.1 — YOUR QUESTIONS</h2>
+
+  <h3>"HOW DOES THE SCREEN START?"</h3>
+  <p>Use the STATE buttons above the phone. <b>1 · START</b> is the cold open: a big "SNAP YOUR FRIDGE" zone, gallery / type-instead alternatives, a 3-step "how it works" strip, and — for returning users — a "Your last scan" resume card. Tapping snap plays <b>2 · SCANNING</b> (sweep line over your photo + a live "ingredients found" counter ticking up) and lands on <b>3 · RESULTS</b> automatically.</p>
+
+  <h3>"WHAT IS REMIX THE MENU?"</h3>
+  <p>Renamed to what it does: <b>GET 5 NEW RECIPES ✦ — "same fridge, different ideas."</b> When you've changed filters or benched ingredients it flips to the amber <b>APPLY &amp; REGENERATE ✦</b>.</p>
+
+  <h3>"ONLY 3? WHY 'TONIGHT'S MENU'?"</h3>
+  <p>All <b>5 recipes</b> render now, and the section is time-neutral: <b>YOUR RECIPES · 5 found · sorted by match</b>. (The MEAL filter — Breakfast/Lunch/Dinner/Snack — covers the time-of-day intent properly instead of the header guessing.)</p>
+
+  <h3>"MORE FILTERS?"</h3>
+  <p>Five groups now: <b>MEAL</b> (breakfast→snack), <b>GOAL</b> (+high fiber), <b>TIME &amp; EFFORT</b> (≤15 / ≤30 / one-pan / no-cook), <b>CUISINE</b> (Mediterranean / Mexican / Asian / Indian / any), <b>DIET</b> (+gluten-free, pre-filled from your saved preferences).</p>
+
+  <h3>"IMAGES FOR COOK-MODE STEPS?"</h3>
+  <p>Honest answer: <b>stock photos can't match specific steps</b> ("add the garlic sauce to YOUR skillet") — they'd look wrong more often than right. So Cook Mode keeps the dish's hero photo pinned at the top (now in the mock) with big readable text per step. If you ever want true per-step images, Gemini image gen can do it at ~$0.04 × 4 steps = <b>~16¢/recipe</b>, cacheable — viable later as a premium touch, wrong place to start.</p>
+
+  <h3>"FILTERS MINIMIZED + RESET + ALL RECIPES?"</h3>
+  <p><b>Collapsed by default</b> — one row: "FILTERS · none — showing everything ▾". The default state has NO constraints (only your saved diet restrictions stay on, labeled "always applied"), so out of the box the AI generates freely = "all recipes". Open it, toggle anything, and an amber <b>Reset</b> appears that restores defaults. The collapsed summary always tells you what's active ("2 active · High protein, ≤30 min").</p>
+
+  <h3>MOOD SELECTOR</h3>
+  <p>New always-visible row above filters: <b>🍲 Comfort · 🥗 Fresh &amp; light · 🌶️ Spicy · 😴 Lazy &amp; quick · 🎉 Impress someone · 🍫 Sweet tooth</b>. Single-select, optional, goes straight into the Gemini prompt ("the user is in a comfort-food mood — lean warm, hearty, one-pot"). It's the fun dial that filters can't express.</p>
+
+  <h3>WHICH KEY DOES WHAT</h3>
+  <p><b>Gemini</b> does both AI jobs: Vision reads the fridge photo (ingredient detection) and the text model generates the recipes (now also fed mood + filters). <b>Pexels</b> only fetches photos of the finished dishes for the cards. Both keys live in Render env.</p>
+</div>
+
+<script>
+function setState(s){
+  document.getElementById('phone').dataset.state=s;
+  for(const st of ['start','scanning','results']){
+    document.getElementById('state-'+st).classList.toggle('on',st===s);
+    document.getElementById('sb-'+st).classList.toggle('on',st===s);
+  }
+  if(s==='scanning') runScan();
+}
+let scanTimer=null;
+const TICKS=[[3,'Looking at the top shelf…'],[8,'Found <b>Greek yogurt</b>, <b>eggs</b>, <b>kefir</b>…'],[15,'Middle shelf: <b>salsa</b>, <b>Rao\'s sauce</b>, <b>cheese</b>…'],[21,'Crisper drawer: <b>zucchini</b>, <b>spinach</b>, <b>peppers</b>…'],[25,'Done — building your recipes ✓']];
+function runScan(){
+  clearInterval(scanTimer);
+  let i=0;
+  const n=document.getElementById('foundN'), t=document.getElementById('foundTick');
+  n.textContent='0'; t.innerHTML=TICKS[0][1];
+  scanTimer=setInterval(()=>{
+    i++;
+    if(i>=TICKS.length){clearInterval(scanTimer);setState('results');return;}
+    n.textContent=TICKS[i][0]; t.innerHTML=TICKS[i][1];
+  },900);
+}
+const ITEMS=["Lifeway Kefir starter","Greek nonfat yogurt","Perfect Bar","Raspberry kefir","TJ's almond butter","Almond milk creamer","Skinny Vanilla Latte","TJ's almond milk","Fire roasted salsa","Hard boiled eggs","Energy shots","LaCroix","Rao's garlic sauce","Applesauce cups","Chicken breast","Zucchini","Spinach","Chopped red onion","Bell peppers","Eggland's eggs","String cheese","Shredded cheese","Kraft cheese slices","Cauliflower","Carrots"];
+const excluded=new Set();
+let dirty=false;
+function render(){
+  document.getElementById('chips').innerHTML=ITEMS.map((it,i)=>
+    `<div class="chip ${excluded.has(i)?'off':''}" onclick="toggleChip(${i})"><span class="tick">${excluded.has(i)?'+':'✓'}</span>${it}</div>`).join('');
+  const n=ITEMS.length-excluded.size;
+  document.getElementById('selCount').textContent=`${n} of ${ITEMS.length} in use`;
+}
+function markDirty(){
+  if(dirty)return;dirty=true;
+  document.getElementById('cta').classList.add('dirty');
+  document.getElementById('ctaMain').textContent='APPLY & REGENERATE ✦';
+  document.getElementById('ctaSub').textContent='your changes will rebuild the recipes';
+}
+function applyChanges(){
+  const cta=document.getElementById('cta');
+  if(dirty){
+    dirty=false;cta.classList.remove('dirty');
+    document.getElementById('ctaMain').textContent='GET 5 NEW RECIPES ✦';
+    document.getElementById('ctaSub').textContent='same fridge, different ideas';
+    alert('Re-runs generation with the new ingredients + filters');
+  } else {
+    alert('Re-rolls: same ingredients & filters, 5 fresh ideas');
+  }
+}
+function toggleChip(i){excluded.has(i)?excluded.delete(i):excluded.add(i);render();markDirty();}
+function togglePref(el){el.classList.toggle('on');markDirty();updateFilterSummary();}
+
+/* Filters: collapsed by default. No active filters = ALL recipes. */
+function toggleFilters(){document.getElementById('filters').classList.toggle('open');}
+function activeFilterLabels(){
+  // Union of inline card + all-filters sheet, deduped by label (the inline
+  // card mirrors the popular subset of the sheet's catalog).
+  const seen=new Set();
+  [...document.querySelectorAll('#filters .fbody .pref.on, #fsBody .pref.on')]
+    .forEach(e=>seen.add(e.textContent.trim()));
+  return [...seen];
+}
+function openFilterSheet(){document.getElementById('phone').classList.add('fsheet-open');}
+function closeFilterSheet(){document.getElementById('phone').classList.remove('fsheet-open');updateFilterSummary();}
+function filterSearch(q){
+  q=q.trim().toLowerCase();
+  document.querySelectorAll('#fsBody .pref').forEach(e=>{
+    e.style.display=!q||e.textContent.toLowerCase().includes(q)?'':'none';
+  });
+  document.querySelectorAll('#fsBody .fgroup').forEach(g=>{
+    const any=[...g.querySelectorAll('.pref')].some(e=>e.style.display!=='none');
+    g.style.display=any?'':'none';
+  });
+}
+function updateFilterSummary(){
+  const labels=activeFilterLabels();
+  const s=document.getElementById('fsummary');
+  s.innerHTML=labels.length===0
+    ? 'none — showing everything'
+    : `<b>${labels.length} active</b> · ${labels.slice(0,3).join(', ')}${labels.length>3?'…':''}`;
+  document.getElementById('freset').style.visibility=labels.length?'visible':'hidden';
+}
+function resetFilters(){
+  document.querySelectorAll('#filters .fbody .pref, #fsBody .pref').forEach(e=>{
+    // Reset restores DEFAULTS: everything off except diet chips that came
+    // from the user's saved preferences (data-pref="1").
+    e.classList.toggle('on', e.dataset.pref==='1');
+  });
+  updateFilterSummary();markDirty();
+}
+
+/* Mood: single-select, feeds the generation prompt directly. */
+let mood=null;
+const MOOD_SUBS={comfort:'comfort-food mood',fresh:'fresh & light mood',spicy:'spicy mood',lazy:'lazy & quick mood',fancy:'impress-someone mood',sweet:'sweet-tooth mood'};
+function pickMood(el,key){
+  const was=el.classList.contains('on');
+  document.querySelectorAll('.moodchip').forEach(m=>m.classList.remove('on'));
+  mood=was?null:key;
+  if(!was)el.classList.add('on');
+  markDirty();
+}
+function toggleExpand(){
+  const c=document.getElementById('chips'),b=document.getElementById('expandBtn');
+  c.classList.toggle('expanded');
+  b.textContent=c.classList.contains('expanded')?'Collapse ▴':'Show all ▾';
+}
+function openSheet(){document.getElementById('phone').classList.add('sheet-open');}
+function closeSheet(){document.getElementById('phone').classList.remove('sheet-open');}
+const STEPS=[
+ ["Pat the chicken dry, season with salt and pepper, and cube into 1-inch pieces.","🔥 Get the skillet heating while you cube — saves 3 minutes."],
+ ["Heat 1 tbsp olive oil over medium-high. Sear the chicken 5–6 minutes until golden.","👃 It's ready to flip when it releases from the pan without tugging."],
+ ["Add the peppers and zucchini. Sauté 4 minutes until just tender.","🥄 Keep them moving — you want color, not mush."],
+ ["Pour in the garlic sauce and simmer 3–4 minutes until the chicken hits 165°F.","✅ Sauce should coat the back of a spoon. Plate it up."]];
+let cookIdx=0;
+function startCook(){cookIdx=0;renderCook();document.getElementById('phone').classList.add('cooking');closeSheet();}
+function stopCook(){document.getElementById('phone').classList.remove('cooking');}
+function renderCook(){
+  document.getElementById('cookNo').textContent=`STEP ${cookIdx+1}`;
+  document.getElementById('cookText').textContent=STEPS[cookIdx][0];
+  document.getElementById('cookHint').textContent=STEPS[cookIdx][1];
+  document.getElementById('cookCount').textContent=`${cookIdx+1} / ${STEPS.length}`;
+  document.getElementById('cookBar').style.width=`${((cookIdx+1)/STEPS.length)*100}%`;
+  document.getElementById('cookNextBtn').textContent=cookIdx===STEPS.length-1?'DONE — LOG IT ✓':'NEXT STEP →';
+}
+function cookNext(){if(cookIdx<STEPS.length-1){cookIdx++;renderCook();}else{stopCook();alert('Logs the meal with its macros');}}
+function cookPrev(){if(cookIdx>0){cookIdx--;renderCook();}}
+render();
+updateFilterSummary();
+</script>
+</body>
+</html>

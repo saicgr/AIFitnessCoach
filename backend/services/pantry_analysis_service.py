@@ -11,19 +11,104 @@ Reuses:
     additional_requirements.
 """
 
+import asyncio
 import logging
 from typing import List, Optional
 
+from core.db import get_supabase_db
 from models.recipe import (
     PantryAnalyzeRequest,
     PantryAnalyzeResponse,
     PantryDetectedItem,
     PantrySuggestion,
 )
+from services.pexels_service import get_dish_photo_url
 from services.recipe_suggestion_service import MealType, RecipeSuggestionService
 from services.vision_service import VisionService
 
 logger = logging.getLogger(__name__)
+
+
+# Mood → tone guidance for the generation prompt. Mapped in CODE (never the raw
+# client string) so the mood field can't inject arbitrary prompt text.
+_MOOD_DIRECTIVES = {
+    "comfort": "The user is in a comfort-food mood — lean warm, hearty, one-pot / one-pan leanings.",
+    "fresh": "The user wants fresh & light — crisp, bright, minimal cooking, plenty of vegetables.",
+    "spicy": "The user wants bold heat — build in chili / spice-forward flavor.",
+    "lazy": "The user wants lazy & quick — minimal steps, few dishes, easy cleanup.",
+    "fancy": "The user wants to impress — presentation-worthy, restaurant-style plating.",
+    "sweet": "The user has a sweet tooth — lean toward a healthy, dessert-leaning option.",
+}
+
+
+def build_filter_mood_directives(
+    filters: Optional[List[str]] = None,
+    mood: Optional[str] = None,
+    dietary_restrictions: Optional[List[str]] = None,
+) -> str:
+    """Assemble the extra generation directives from the user's chosen filters,
+    mood, and their ALWAYS-APPLIED dietary restrictions.
+
+    - `dietary_restrictions` (from the user's nutrition_preferences row) and
+      `filters` (human labels like "High protein", "≤ 30 min", "Mexican")
+      become HARD constraints every recipe must satisfy. Restrictions are
+      applied even when the client sends no filters — allergies/diet must never
+      depend on the client remembering to send them.
+    - `mood` is mapped in code to tone guidance.
+
+    Returns a directive block to append to the generation constraint, or "".
+    """
+    hard: List[str] = []
+    for r in (dietary_restrictions or []):
+        r = (r or "").strip()
+        if r:
+            hard.append(r)
+    for f in (filters or []):
+        f = (f or "").strip()
+        if f:
+            hard.append(f)
+
+    # De-dupe case-insensitively, preserving order.
+    seen = set()
+    deduped: List[str] = []
+    for h in hard:
+        k = h.lower()
+        if k not in seen:
+            seen.add(k)
+            deduped.append(h)
+
+    lines: List[str] = []
+    if deduped:
+        lines.append(
+            "Every recipe MUST satisfy ALL of these constraints: "
+            + "; ".join(deduped)
+            + "."
+        )
+    if mood:
+        directive = _MOOD_DIRECTIVES.get(mood.strip().lower())
+        if directive:
+            lines.append(directive)
+
+    return "\n".join(lines)
+
+
+def _always_applied_restrictions(prefs: Optional[dict]) -> List[str]:
+    """Pull the user's allergies + dietary restrictions + non-trivial diet type
+    out of their nutrition_preferences row, as human labels for the prompt."""
+    prefs = prefs or {}
+    out: List[str] = []
+    for a in (prefs.get("allergies") or []):
+        a = str(a).strip()
+        if a:
+            out.append(f"no {a} (allergy)")
+    for r in (prefs.get("dietary_restrictions") or []):
+        r = str(r).strip()
+        if r:
+            out.append(r)
+    diet = str(prefs.get("diet_type") or "").strip()
+    if diet and diet.lower() not in ("balanced", "none", ""):
+        out.append(diet)
+    return out
 
 
 class PantryAnalysisService:
@@ -78,6 +163,26 @@ class PantryAnalysisService:
         if req.additional_requirements:
             constraint = f"{constraint}\nAlso: {req.additional_requirements}"
 
+        # v3 — thread filters + mood + the user's ALWAYS-APPLIED dietary
+        # restrictions into the generation constraint. Restrictions are merged
+        # even when the client sends no filters (allergies/diet must never
+        # depend on the client remembering to send them). Note: the underlying
+        # RecipeSuggestionService ALSO injects allergies/restrictions via its
+        # own user-context prompt block — this is deliberate reinforcement of
+        # the safety-critical constraints.
+        try:
+            prefs = get_supabase_db().get_nutrition_preferences(user_id)
+        except Exception:
+            logger.warning("[Pantry] could not load nutrition_preferences", exc_info=True)
+            prefs = None
+        directives = build_filter_mood_directives(
+            filters=req.filters,
+            mood=req.mood,
+            dietary_restrictions=_always_applied_restrictions(prefs),
+        )
+        if directives:
+            constraint = f"{constraint}\n{directives}"
+
         try:
             meal_type = MealType(req.meal_type) if req.meal_type else MealType.ANY
         except ValueError:
@@ -119,8 +224,19 @@ class PantryAnalysisService:
                     overall_match_score=int(data.get("overall_match_score") or 0),
                     suggestion_reason=data.get("suggestion_reason"),
                     ingredients=[],  # full RecipeIngredientCreate built lazily on save
+                    instructions=[str(x) for x in (data.get("instructions") or [])],
                 )
             )
+
+        # Fetch finished-dish photos for all suggestions CONCURRENTLY so N
+        # lookups cost ~1 round-trip, not N. get_dish_photo_url never raises
+        # (returns None on any failure), so gather stays clean.
+        if suggestions:
+            photo_urls = await asyncio.gather(
+                *[get_dish_photo_url(s.name) for s in suggestions]
+            )
+            for s, url in zip(suggestions, photo_urls):
+                s.image_url = url
 
         return PantryAnalyzeResponse(detected_items=detected, suggestions=suggestions)
 

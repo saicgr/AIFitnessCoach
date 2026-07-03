@@ -161,6 +161,13 @@ class RecipeRepository {
     String? mealType,
     int count = 3,
     String? additionalRequirements,
+    /// Flat human-readable filter labels exactly as shown on the chips
+    /// (e.g. "High protein", "≤ 30 min", "Vegetarian"). Optional — omitted
+    /// entirely when empty so the old backend keeps working.
+    List<String>? filters,
+    /// Single mood key: comfort|fresh|spicy|lazy|fancy|sweet. Feeds the
+    /// generation prompt directly. Null when the user hasn't picked one.
+    String? mood,
   }) async {
     final res = await _client.post(
       '/nutrition/recipes/from-pantry',
@@ -171,6 +178,8 @@ class RecipeRepository {
         if (mealType != null) 'meal_type': mealType,
         'count': count,
         if (additionalRequirements != null) 'additional_requirements': additionalRequirements,
+        if (filters != null && filters.isNotEmpty) 'filters': filters,
+        if (mood != null && mood.isNotEmpty) 'mood': mood,
       },
       // A base64 photo body can be MBs — the default 15s sendTimeout aborts
       // the upload mid-flight on cell connections (the request never reaches
@@ -407,6 +416,17 @@ class RecipeRepository {
   Future<GroceryListItem> addGroceryItem(String listId, Map<String, dynamic> item) async {
     final res = await _client.post('/nutrition/grocery-lists/$listId/items', data: item);
     return GroceryListItem.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  /// One-shot "add this ingredient to my active list" — creates/reuses the
+  /// user's active grocery list server-side. Used by the fridge recipe cards'
+  /// `+ missing → list` pill so the user never has to pick a list first.
+  Future<void> quickAddGroceryItem(String userId, String itemName) async {
+    await _client.post(
+      '/nutrition/grocery-lists/active/quick-add',
+      queryParameters: {'user_id': userId},
+      data: {'item_name': itemName, 'quantity': null},
+    );
   }
 
   Future<void> deleteGroceryItem(String listId, String itemId) async {
