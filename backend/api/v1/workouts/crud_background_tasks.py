@@ -679,7 +679,15 @@ async def _send_post_workout_nutrition_nudge(user_id: str, workout_name: str):
 
         notif_svc = get_notification_service()
         coach_name = ai_settings.get("coach_name") or "Your Coach"
-        intensity = prefs.get("accountability_intensity", "balanced")
+        intensity = prefs.get("accountability_intensity", "auto")
+        if intensity == "auto":
+            # Event-driven path: resolve auto via the same per-user bandit the
+            # cron uses, so tone stays consistent across surfaces.
+            try:
+                from api.v1.push_nudge_cron import _select_tone_for_user
+                intensity = _select_tone_for_user(supabase, user_id)
+            except Exception:
+                intensity = "gentle"
 
         # Generate message
         message = await notif_svc.generate_accountability_message(
@@ -694,21 +702,25 @@ async def _send_post_workout_nutrition_nudge(user_id: str, workout_name: str):
             use_ai=prefs.get("ai_personalized_nudges", True),
         )
 
-        # Save to chat_history (proactive AI message)
+        # Save to chat_history (proactive AI message, session-attached so it
+        # actually renders in the app's coach thread)
         try:
-            supabase.client.table("chat_history").insert({
-                "user_id": user_id,
-                "user_message": "",
-                "ai_response": message,
-                "context_json": {
+            from api.v1.push_nudge_cron import _mirror_proactive_to_chat
+            _mirror_proactive_to_chat(
+                supabase,
+                user_id,
+                "post_workout_meal",
+                message,
+                {
                     "nudge_type": "post_workout_meal",
                     "proactive": True,
                     "coach_name": coach_name,
                     "workout_name": workout_name,
-                }
-            }).execute()
+                },
+                log_tag="PostWorkoutMeal",
+            )
         except Exception as e:
-            logger.warning(f"[Nudge] chat_history insert failed: {e}", exc_info=True)
+            logger.warning(f"[Nudge] chat_history mirror failed: {e}", exc_info=True)
 
         # Send push notification
         fcm_token = user.get("fcm_token")
@@ -790,3 +802,118 @@ async def _send_streak_celebration_if_milestone(user_id: str):
 
     except Exception as e:
         logger.error(f"[Nudge] Streak celebration failed for {user_id}: {e}", exc_info=True)
+
+
+# Praise copy pools — variant pools + exact data substitution so the coach
+# never sounds templated (feedback: copy must read human-written). Every
+# variant leads with what the user DID (celebrate-first).
+_PRAISE_VARIANTS = [
+    "{workout_name} — done. That's what showing up looks like. 💪",
+    "Nice work finishing {workout_name}! Logged and counted.",
+    "{workout_name} in the books. Consistency is quietly compounding.",
+    "That's {workout_name} handled — future you says thanks.",
+]
+_PRAISE_PR_VARIANTS = [
+    "{workout_name} done — and {pr_count} new PR{pr_plural}! That's real progress.",
+    "Huge: {pr_count} PR{pr_plural} in {workout_name}. Strength is moving.",
+    "{workout_name} finished with {pr_count} personal record{pr_plural} 🔥",
+]
+_PRAISE_STREAK_SUFFIX = " Day {streak} of your streak."
+
+
+async def _send_post_workout_praise(
+    user_id: str, workout_name: str, pr_count: int = 0
+):
+    """Immediate coach praise the moment a workout is completed.
+
+    The hourly cron is too slow for "your coach saw you finish" — this fires
+    event-driven from complete_workout. Reuses the full nudge gate stack
+    (suppression, 3/day cap, once/day dedup, session-attached chat mirror) via
+    _send_health_coaching_nudge. The push is SUPPRESSED (mirror-only) when the
+    user was active in the last 5 minutes — they're still in the app looking
+    at the summary screen — or during their quiet hours; the chat message is
+    there either way for the next open.
+    """
+    try:
+        import random
+        from core.supabase_client import get_supabase
+        from services.notification_service import get_notification_service
+        from api.v1.push_nudge_cron import (
+            _send_health_coaching_nudge,
+            _fetch_ai_settings_batch,
+            _get_user_local_hour,
+            _is_in_quiet_hours,
+        )
+
+        supabase = get_supabase()
+        user_result = supabase.client.table("users") \
+            .select(
+                "id, name, fcm_token, timezone, notification_preferences, "
+                "created_at, in_vacation_mode, vacation_start_date, "
+                "vacation_end_date, in_comeback_mode, comeback_week, "
+                "last_active_at, weekly_nudge_limit"
+            ) \
+            .eq("id", user_id) \
+            .limit(1) \
+            .execute()
+        if not user_result.data:
+            return
+        user = user_result.data[0]
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("milestone_celebration", True):
+            return
+        user["_ai_settings"] = _fetch_ai_settings_batch(supabase, [user_id]).get(user_id, {})
+
+        # Streak garnish (best-effort).
+        streak = 0
+        try:
+            streak_row = supabase.client.table("user_login_streaks") \
+                .select("current_streak").eq("user_id", user_id).limit(1).execute()
+            if streak_row.data:
+                streak = int(streak_row.data[0].get("current_streak") or 0)
+        except Exception:
+            pass
+
+        pool = _PRAISE_PR_VARIANTS if pr_count > 0 else _PRAISE_VARIANTS
+        message = random.choice(pool).format(
+            workout_name=workout_name or "your workout",
+            pr_count=pr_count,
+            pr_plural="s" if pr_count != 1 else "",
+        )
+        if streak >= 3:
+            message += _PRAISE_STREAK_SUFFIX.format(streak=streak)
+
+        # Mirror-only when the user is clearly still in the app (they just
+        # tapped Complete — last_active_at is stamped by /home/bootstrap and
+        # chat, so ALSO treat a <5min completion as in-app), or in quiet hours.
+        send_push = True
+        last_active = user.get("last_active_at")
+        if last_active:
+            try:
+                from datetime import timezone as _tz
+                la = datetime.fromisoformat(str(last_active).replace("Z", "+00:00"))
+                if (datetime.now(_tz.utc) - la).total_seconds() < 300:
+                    send_push = False
+            except (ValueError, TypeError):
+                pass
+        tz_str = user.get("timezone") or "UTC"
+        if _is_in_quiet_hours(prefs, _get_user_local_hour(tz_str)):
+            send_push = False
+
+        coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
+        notif_svc = get_notification_service()
+        ok = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "post_workout_praise",
+            title=coach_name,
+            message=message,
+            route="/chat",
+            facts={"workout_name": workout_name or "", "pr_count": pr_count, "streak": streak},
+            send_push=send_push,
+        )
+        if ok:
+            logger.info(
+                f"[Praise] post_workout_praise for {user_id} "
+                f"(push={'yes' if send_push else 'mirror-only'})"
+            )
+    except Exception as e:
+        logger.error(f"[Praise] post_workout_praise failed for {user_id}: {e}", exc_info=True)

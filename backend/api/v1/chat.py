@@ -928,6 +928,29 @@ async def clear_chat_history(
         raise safe_internal_error(e, "clear_chat_history")
 
 
+@router.post("/seen")
+async def mark_coach_chat_seen(
+    current_user: dict = Depends(get_current_user),
+):
+    """Stamp coach_chat_last_seen_at = now for the current user.
+
+    Called by the app when the coach chat opens; proactive chat_history rows
+    newer than this stamp count as unread (Coach-tab badge in /home/bootstrap).
+    """
+    user_id = str(current_user["id"])
+    try:
+        from datetime import datetime as _dt, timezone as _tz
+        db = get_supabase_db()
+        now_iso = _dt.now(_tz.utc).isoformat()
+        db.client.table("users").update(
+            {"coach_chat_last_seen_at": now_iso}
+        ).eq("id", user_id).execute()
+        return {"status": "ok", "seen_at": now_iso}
+    except Exception as e:
+        logger.error(f"Failed to stamp coach_chat_last_seen_at for {user_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "mark_coach_chat_seen")
+
+
 class ChatSearchRequest(BaseModel):
     """Request body for chat history search."""
     query: str = Field(..., min_length=1, max_length=200)

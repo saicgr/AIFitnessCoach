@@ -57,6 +57,9 @@ from core.i18n import get_template as _get_i18n_template
 from services.notification_service import get_notification_service
 from services.notification_suppression import should_suppress_notification
 from services.posthog_client import capture_lifecycle
+from api.v1.nudge_jobs.open_loop_followup import (
+    job_open_loop_followup as _job_open_loop_followup,
+)
 
 # Map internal nudge_type → i18n template key base (title/body pairs).
 # Nudge types not listed here fall through to the existing template pool.
@@ -361,7 +364,9 @@ def _select_tone_for_user(supabase, user_id: str) -> str:
     """Pick the tone with the best per-user open rate (epsilon-greedy bandit).
 
     Reads tone + opened_at from push_nudge_log. Cold-start / any error →
-    'balanced' (the safe progress-affirming prior). Pure read; never raises.
+    'gentle' (encouragement-first prior — direct user feedback was that
+    nudges felt dismissable, so warmth is the default until the bandit
+    learns otherwise). Pure read; never raises.
     """
     try:
         import random
@@ -380,17 +385,18 @@ def _select_tone_for_user(supabase, user_id: str) -> str:
                 stats[t][0] += 1
                 if r.get("opened_at"):
                     stats[t][1] += 1
-        # Try each arm a few times first.
+        # Try each arm a few times first — gentle leads so a brand-new user's
+        # first impressions are warm, not neutral.
         untried = [a for a in _TONE_ARMS if stats[a][0] < _TONE_MIN_TRIALS]
         if untried:
-            return random.choice(untried)
+            return "gentle" if "gentle" in untried else untried[0]
         # Explore.
         if random.random() < _TONE_EPSILON:
             return random.choice(_TONE_ARMS)
         # Exploit the highest open rate.
         return max(_TONE_ARMS, key=lambda a: stats[a][1] / stats[a][0] if stats[a][0] else 0.0)
     except Exception:
-        return "balanced"
+        return "gentle"
 
 
 def _nudge_ever_sent(supabase, user_id: str, nudge_type: str) -> bool:
@@ -556,6 +562,183 @@ def _fetch_optimal_times_batch(supabase, user_ids: List[str]) -> Dict[str, dict]
         return {}
 
 
+# ─── Adaptive per-user daily cap ─────────────────────────────────────────────
+# "She keeps dismissing them → the app quietly backs off." Self-tunes each
+# user's daily cap from their own 14-day open rate; activates automatically
+# once a user has ≥10 tracked sends (below that, the preset default holds).
+
+_ADAPTIVE_CAP_WINDOW_DAYS = 14
+_ADAPTIVE_CAP_MIN_SENDS = 10
+_ADAPTIVE_CAP_LOW_OPEN = 0.10   # <10% opens → back off by 1 (floor 1)
+_ADAPTIVE_CAP_HIGH_OPEN = 0.50  # >50% opens → allow 1 more (ceiling base+1)
+
+
+def _fetch_adaptive_cap_adjustments(supabase, user_ids: List[str]) -> Dict[str, int]:
+    """Batched 14-day open-rate scan → {user_id: -1 | 0 | +1}.
+
+    One windowed query per 500 users in the cron preamble (same batching
+    pattern as _fetch_optimal_times_batch). Fail-open: any error → {} (all
+    users keep their preset cap).
+    """
+    out: Dict[str, int] = {}
+    if not user_ids:
+        return out
+    cutoff = (datetime.utcnow().date() - timedelta(days=_ADAPTIVE_CAP_WINDOW_DAYS)).isoformat()
+    try:
+        stats: Dict[str, List[int]] = {}
+        for i in range(0, len(user_ids), 500):
+            chunk = user_ids[i:i + 500]
+            rows = (
+                supabase.client.table("push_nudge_log")
+                .select("user_id, opened_at")
+                .in_("user_id", chunk)
+                .gte("nudge_date", cutoff)
+                .execute()
+            ).data or []
+            for r in rows:
+                uid = r.get("user_id")
+                if not uid:
+                    continue
+                s = stats.setdefault(uid, [0, 0])
+                s[0] += 1
+                if r.get("opened_at"):
+                    s[1] += 1
+        for uid, (sent, opened) in stats.items():
+            if sent < _ADAPTIVE_CAP_MIN_SENDS:
+                continue
+            rate = opened / sent
+            if rate < _ADAPTIVE_CAP_LOW_OPEN:
+                out[uid] = -1
+            elif rate > _ADAPTIVE_CAP_HIGH_OPEN:
+                out[uid] = 1
+    except Exception as e:
+        logger.error(f"❌ [Nudge] adaptive-cap fetch failed: {e}", exc_info=True)
+        return {}
+    return out
+
+
+def _effective_daily_cap(user: dict) -> int:
+    """The user's daily nudge cap with the adaptive adjustment applied.
+
+    base (preset/user setting, default 3) + adjustment ∈ {-1, 0, +1},
+    clamped to [1, base+1]. Callers that build `user` outside the cron
+    preamble (test endpoint, event-driven praise) simply have no
+    `_daily_cap_adjust` → base applies unchanged.
+    """
+    prefs = user.get("notification_preferences") or {}
+    base = prefs.get("daily_nudge_limit", 3)
+    try:
+        base = int(base)
+    except (TypeError, ValueError):
+        base = 3
+    adjust = user.get("_daily_cap_adjust")
+    if not isinstance(adjust, int):
+        adjust = 0
+    return max(1, min(base + adjust, base + 1))
+
+
+# ─── Proactive chat mirror (session-attached) ───────────────────────────────
+
+# Reuse a recent session only while it still feels like "the current
+# conversation" — after this window the coach starts a fresh, titled thread.
+_MIRROR_SESSION_REUSE_DAYS = 7
+
+# Friendly session titles for coach-initiated threads (fallback: generic).
+_NUDGE_SESSION_TITLES = {
+    "morning_workout": "Morning check-in",
+    "missed_workout": "Workout check-in",
+    "meal_breakfast": "Nutrition check-in",
+    "meal_lunch": "Nutrition check-in",
+    "meal_dinner": "Nutrition check-in",
+    "streak_at_risk": "Streak check-in",
+    "weekly_checkin": "Weekly check-in",
+    "daily_readiness": "Morning briefing",
+    "sleep_score": "Morning briefing",
+    "evening_recap": "Evening recap",
+    "weekly_recap": "Weekly recap",
+    "injury_recovery": "Recovery check-in",
+    "open_loop_followup": "Checking in",
+    "post_workout_praise": "Workout done 🎉",
+}
+
+
+def _resolve_mirror_session(supabase, user_id: str, nudge_type: str) -> Optional[str]:
+    """Return a chat_sessions id for a proactive mirror (reuse-or-create).
+
+    Reuses the user's most recent non-archived session when it was touched
+    within _MIRROR_SESSION_REUSE_DAYS; otherwise creates a new session titled
+    from the nudge type. Returns None on any failure (the mirror then inserts
+    session-less, which is invisible in-app but preserves the old behavior
+    rather than dropping the message entirely).
+    """
+    try:
+        from core.db import get_supabase_db
+        sessions = get_supabase_db().sessions
+        latest = sessions.latest_session(user_id)
+        if latest:
+            last_at = latest.get("last_message_at") or latest.get("updated_at")
+            if last_at:
+                try:
+                    last_dt = datetime.fromisoformat(str(last_at).replace("Z", "+00:00"))
+                    age_days = (datetime.now(last_dt.tzinfo) - last_dt).days
+                    if age_days < _MIRROR_SESSION_REUSE_DAYS:
+                        return latest.get("id")
+                except (ValueError, TypeError):
+                    pass
+        title = _NUDGE_SESSION_TITLES.get(nudge_type, "Coach check-in")
+        created = sessions.create_session(user_id, title=title)
+        return created.get("id") if created else None
+    except Exception as e:
+        logger.warning(f"⚠️ [Nudge] mirror session resolve failed for {user_id}: {e}")
+        return None
+
+
+def _mirror_proactive_to_chat(
+    supabase,
+    user_id: str,
+    nudge_type: str,
+    message: str,
+    context_json: dict,
+    log_tag: str = "Nudge",
+) -> Optional[str]:
+    """Insert an AI-initiated coach message into chat_history, ATTACHED to a
+    chat session so it is actually visible in the app.
+
+    The Flutter chat loads exclusively session-scoped messages, so a mirror
+    without session_id never renders — the historical bug that made every
+    proactive message invisible. Always touches the session so the coach's
+    message bumps to the top of the sessions list, like a real text.
+
+    Best-effort: returns the chat_history row id, or None on failure (a failed
+    mirror must never block the push itself).
+    """
+    session_id = _resolve_mirror_session(supabase, user_id, nudge_type)
+    try:
+        row = {
+            "user_id": user_id,
+            "user_message": "",
+            "ai_response": message,
+            "context_json": context_json,
+        }
+        if session_id:
+            row["session_id"] = session_id
+        chat_msg = supabase.client.table("chat_history").insert(row).execute()
+        chat_message_id = chat_msg.data[0].get("id") if chat_msg.data else None
+    except Exception as e:
+        logger.warning(
+            f"⚠️ [{log_tag}] chat_history insert failed for {user_id}: {e}",
+            exc_info=True,
+        )
+        return None
+    if session_id:
+        try:
+            from core.db import get_supabase_db
+            get_supabase_db().sessions.touch_session(session_id, user_id)
+        except Exception:
+            pass  # Non-critical — the message is saved; only the sort bump failed.
+    return chat_message_id
+
+
 # ─── Core Nudge Sender ──────────────────────────────────────────────────────
 
 async def _send_nudge(
@@ -609,8 +792,9 @@ async def _send_nudge(
         logger.debug(f"🔕 [Nudge] Suppressed {nudge_type} for {user_id}: {suppression}")
         return False
 
-    # 1. Daily cap check (BEFORE dedup insert)
-    daily_limit = prefs.get("daily_nudge_limit", 2)
+    # 1. Daily cap check (BEFORE dedup insert) — preset cap ± the adaptive
+    #    open-rate adjustment (see _effective_daily_cap).
+    daily_limit = _effective_daily_cap(user)
     if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
         return False
 
@@ -628,8 +812,9 @@ async def _send_nudge(
 
     # 2. Resolve tone (intensity) BEFORE dedup so the chosen tone is recorded on
     #    the push_nudge_log row — the adaptive-tone bandit learns from per-tone
-    #    open rates.
-    intensity = prefs.get("accountability_intensity", "balanced")
+    #    open rates. Default is "auto" since mig 2305 (fewer, better): the
+    #    bandit leads with gentle and learns from there.
+    intensity = prefs.get("accountability_intensity", "auto")
     # Adaptive tone ("auto") — Duolingo's real lever is per-user LEARNING, not
     # shame. When the user leaves tone on Auto, pick the tone that has earned the
     # most opens for them (epsilon-greedy over historical open rate); cold-start
@@ -697,26 +882,22 @@ async def _send_nudge(
             _localized_title = _get_i18n_template(user_locale, f"{i18n_key_base}_title", **_fmt_vars)
             _localized_body = _get_i18n_template(user_locale, f"{i18n_key_base}_body", **_fmt_vars)
 
-    # 5. Save to chat_history (AI-initiated, proactive)
-    chat_message_id = None
-    try:
-        chat_msg = supabase.client.table("chat_history").insert({
-            "user_id": user_id,
-            "user_message": "",
-            "ai_response": message,
-            "context_json": {
-                "nudge_type": nudge_type,
-                "proactive": True,
-                "coach_name": coach_name,
-                "coaching_style": coaching_style,
-                **{k: v for k, v in context_dict.items() if isinstance(v, (str, int, float, bool))},
-            }
-        }).execute()
-        if chat_msg.data:
-            chat_message_id = chat_msg.data[0].get("id")
-    except Exception as e:
-        # EDGE CASE: Chat save failed — still send push, just no chat history
-        logger.warning(f"⚠️ [Nudge] chat_history insert failed for {user_id}: {e}", exc_info=True)
+    # 5. Save to chat_history (AI-initiated, proactive, session-attached so it
+    #    renders in the app's coach thread — see _mirror_proactive_to_chat)
+    chat_message_id = _mirror_proactive_to_chat(
+        supabase,
+        user_id,
+        nudge_type,
+        message,
+        {
+            "nudge_type": nudge_type,
+            "proactive": True,
+            "coach_name": coach_name,
+            "coaching_style": coaching_style,
+            **{k: v for k, v in context_dict.items() if isinstance(v, (str, int, float, bool))},
+        },
+        log_tag="Nudge",
+    )
 
     # Update dedup record with chat_message_id if available
     if chat_message_id:
@@ -803,10 +984,12 @@ async def _job_morning_workout_reminder(supabase, notif_svc, users: List[dict]) 
         if not prefs.get("workout_reminders", True):
             continue
 
-        # PRESET GATE: minimal/balanced presets use frontend bundles for morning workout
-        preset = prefs.get("frequency_preset", "balanced")
-        if preset in ("minimal", "balanced"):
-            continue
+        # NOTE ("fewer, better" 2026-07): this job used to SKIP minimal/balanced
+        # because the frontend's fixed-time bundles covered the morning slot.
+        # Those local bundles now stand down whenever the server engine is live
+        # (see scheduleAllNotifications), so the server owns this moment for
+        # every preset — volume is governed by the daily 3/day + preset weekly
+        # caps, not by skipping context-aware nudges in favor of template ones.
 
         tz_str = user.get("timezone") or "UTC"
         local_hour = _get_user_local_hour(tz_str)
@@ -916,10 +1099,9 @@ async def _job_meal_reminders(supabase, notif_svc, users: List[dict]) -> int:
         if not prefs.get("nutrition_reminders", True):
             continue
 
-        # PRESET GATE: minimal preset uses frontend bundles for meal reminders
-        preset = prefs.get("frequency_preset", "balanced")
-        if preset == "minimal":
-            continue
+        # NOTE ("fewer, better" 2026-07): minimal is no longer skipped — the
+        # local bundles it used to rely on stand down when the server engine is
+        # live; the minimal preset's tight weekly cap governs volume instead.
 
         # EDGE CASE: Gradual onboarding — no meal nudges for first 4 days
         if _user_account_age_days(user) < 4:
@@ -1050,10 +1232,8 @@ async def _job_weekly_checkin(supabase, notif_svc, users: List[dict]) -> int:
         if not prefs.get("weekly_checkin_reminder", True):
             continue
 
-        # PRESET GATE: minimal preset skips weekly check-in (frontend bundles cover this)
-        preset = prefs.get("frequency_preset", "balanced")
-        if preset == "minimal":
-            continue
+        # NOTE ("fewer, better" 2026-07): minimal no longer skipped — once a
+        # week, and the preset weekly cap governs total volume anyway.
 
         tz_str = user.get("timezone") or "UTC"
         local_now = datetime.now(_safe_zone(tz_str))
@@ -1094,10 +1274,9 @@ async def _job_habit_reminder(supabase, notif_svc, users: List[dict]) -> int:
         if not prefs.get("habit_reminders", True):
             continue
 
-        # PRESET GATE: minimal preset skips habit reminders
-        preset = prefs.get("frequency_preset", "balanced")
-        if preset == "minimal":
-            continue
+        # NOTE ("fewer, better" 2026-07): minimal no longer skipped — the job
+        # already self-gates on active-but-incomplete habits, and the minimal
+        # preset's weekly cap governs total volume.
 
         # EDGE CASE: Gradual onboarding — no habit nudges for first 7 days
         if _user_account_age_days(user) < 7:
@@ -1177,11 +1356,13 @@ async def _job_winback_taper(supabase, notif_svc, users: List[dict]) -> int:
     for user in users:
         prefs = user.get("notification_preferences") or {}
 
-        # Preference gates — guilt_notifications is the win-back opt-out toggle.
-        intensity = prefs.get("accountability_intensity", "balanced")
+        # Preference gates — guilt_notifications is the win-back OPT-IN toggle
+        # (default false since mig 2304: "fewer, better" — re-engagement
+        # pressure only for users who chose accountability in Settings).
+        intensity = prefs.get("accountability_intensity", "auto")
         if intensity == "off":
             continue
-        if not prefs.get("guilt_notifications", True):
+        if not prefs.get("guilt_notifications", False):
             continue
 
         # No re-engagement pressure for brand new accounts.
@@ -2322,7 +2503,7 @@ async def _job_daily_crate_available(supabase, notif_svc, users: List[dict]) -> 
             continue
 
         # Daily cap + dedup (shared with other nudges)
-        daily_limit = prefs.get("daily_nudge_limit", 4)
+        daily_limit = _effective_daily_cap(user)
         if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
             continue
         if not _try_dedup_insert(supabase, user_id, "daily_crate", local_date):
@@ -2439,6 +2620,7 @@ async def _send_health_coaching_nudge(
     message: str,
     route: str,
     facts: dict,
+    send_push: bool = True,
 ) -> bool:
     """Send a proactive health-coaching nudge with PRE-BUILT deterministic copy.
 
@@ -2483,8 +2665,9 @@ async def _send_health_coaching_nudge(
         )
         return False
 
-    # 2. Daily cap (shared across ALL nudge types via push_nudge_log).
-    daily_limit = prefs.get("daily_nudge_limit", 2)
+    # 2. Daily cap (shared across ALL nudge types via push_nudge_log) —
+    #    preset cap ± the adaptive open-rate adjustment.
+    daily_limit = _effective_daily_cap(user)
     if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
         return False
 
@@ -2493,29 +2676,22 @@ async def _send_health_coaching_nudge(
         return False
 
     # 4. Mirror into chat_history so the coach chat shows the proactive message
-    #    (same pattern as _send_nudge — best-effort, never blocks the push).
+    #    (session-attached — best-effort, never blocks the push).
     coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
-    chat_message_id = None
-    try:
-        chat_msg = supabase.client.table("chat_history").insert({
-            "user_id": user_id,
-            "user_message": "",
-            "ai_response": message,
-            "context_json": {
-                "nudge_type": nudge_type,
-                "proactive": True,
-                "coach_name": coach_name,
-                **{k: v for k, v in facts.items()
-                   if isinstance(v, (str, int, float, bool))},
-            },
-        }).execute()
-        if chat_msg.data:
-            chat_message_id = chat_msg.data[0].get("id")
-    except Exception as e:
-        logger.warning(
-            f"⚠️ [HealthNudge] chat_history insert failed for {user_id}: {e}",
-            exc_info=True,
-        )
+    chat_message_id = _mirror_proactive_to_chat(
+        supabase,
+        user_id,
+        nudge_type,
+        message,
+        {
+            "nudge_type": nudge_type,
+            "proactive": True,
+            "coach_name": coach_name,
+            **{k: v for k, v in facts.items()
+               if isinstance(v, (str, int, float, bool))},
+        },
+        log_tag="HealthNudge",
+    )
 
     if chat_message_id:
         try:
@@ -2531,6 +2707,13 @@ async def _send_health_coaching_nudge(
     # 5. FCM push. A shared deterministic notif_id (<type>_<localdate>) lets
     #    Phase C3 dedupe a push + its in-app banner into ONE notification-bell
     #    entry (plan edge case E29).
+    #
+    #    send_push=False = "mirror only": the message lands in the coach chat
+    #    (and burns its dedup slot) but no push fires — used when the user is
+    #    demonstrably IN the app right now, or it's their quiet hours.
+    if not send_push:
+        return bool(chat_message_id)
+
     fcm_token = user.get("fcm_token")
     if not fcm_token:
         logger.debug(f"⏭️ [HealthNudge] {user_id} — no FCM token")
@@ -3069,7 +3252,10 @@ async def _job_evening_recap(supabase, notif_svc, users: List[dict]) -> int:
 
         tz_str = user.get("timezone") or "UTC"
         local_hour = _get_user_local_hour(tz_str)
-        recap_hour = _parse_time_hour(prefs.get("evening_recap_time", "20:00"))
+        # Learned optimal hour when confident, clamped to the evening band
+        # (18–22) so "optimal" can never move the RECAP to breakfast time.
+        pref_hour = _parse_time_hour(prefs.get("evening_recap_time", "20:00"))
+        recap_hour = min(max(_get_optimal_hour(user, "evening_recap", pref_hour), 18), 22)
         if local_hour != recap_hour:
             continue
         if _is_in_quiet_hours(prefs, local_hour):
@@ -3343,7 +3529,10 @@ async def _job_weekly_recap(supabase, notif_svc, users: List[dict]) -> int:
         if local_weekday != python_weekday:
             continue
 
-        recap_hour = _parse_time_hour(prefs.get("evening_recap_time", "20:00"))
+        # Learned optimal hour when confident, clamped to the evening band
+        # (18–22) — a weekly recap at 7am would read as noise.
+        _pref_hour = _parse_time_hour(prefs.get("evening_recap_time", "20:00"))
+        recap_hour = min(max(_get_optimal_hour(user, "weekly_recap", _pref_hour), 18), 22)
         if local_hour != recap_hour:
             continue
         if _is_in_quiet_hours(prefs, local_hour):
@@ -3824,8 +4013,8 @@ async def _send_injury_checkin_nudge(
         logger.debug(f"🔕 [InjuryNudge] Suppressed for {user_id}: {suppression}")
         return False
 
-    # Daily cap (shared across all nudge types).
-    daily_limit = prefs.get("daily_nudge_limit", 2)
+    # Daily cap (shared across all nudge types) — adaptive.
+    daily_limit = _effective_daily_cap(user)
     if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
         return False
 
@@ -3835,30 +4024,23 @@ async def _send_injury_checkin_nudge(
         return False
 
     # Mirror into chat_history so the coach chat shows the check-in with its
-    # chips (best-effort — a failed mirror still pushes).
+    # chips (session-attached, best-effort — a failed mirror still pushes).
     coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
-    chat_message_id = None
-    try:
-        chat_msg = supabase.client.table("chat_history").insert({
-            "user_id": user_id,
-            "user_message": "",
-            "ai_response": message,
-            "context_json": {
-                "nudge_type": nudge_type,
-                "proactive": True,
-                "coach_name": coach_name,
-                "chips": chips,
-                **{k: v for k, v in facts.items()
-                   if isinstance(v, (str, int, float, bool))},
-            },
-        }).execute()
-        if chat_msg.data:
-            chat_message_id = chat_msg.data[0].get("id")
-    except Exception as e:
-        logger.warning(
-            f"⚠️ [InjuryNudge] chat_history insert failed for {user_id}: {e}",
-            exc_info=True,
-        )
+    chat_message_id = _mirror_proactive_to_chat(
+        supabase,
+        user_id,
+        nudge_type,
+        message,
+        {
+            "nudge_type": nudge_type,
+            "proactive": True,
+            "coach_name": coach_name,
+            "chips": chips,
+            **{k: v for k, v in facts.items()
+               if isinstance(v, (str, int, float, bool))},
+        },
+        log_tag="InjuryNudge",
+    )
 
     if chat_message_id:
         try:
@@ -4147,15 +4329,18 @@ async def run_push_nudge_cron(
     if not users:
         return {"jobs_run": [], "results": {}, "nudges_sent": 0, "users_checked": 0}
 
-    # Batch-fetch ai_settings and optimal send times for all users (parallel queries)
+    # Batch-fetch ai_settings, optimal send times, and adaptive-cap adjustments
     user_ids = [str(u["id"]) for u in users]
     ai_map = _fetch_ai_settings_batch(supabase, user_ids)
     optimal_map = _fetch_optimal_times_batch(supabase, user_ids)
+    cap_adjust_map = _fetch_adaptive_cap_adjustments(supabase, user_ids)
 
-    # Attach ai_settings and optimal times to user dicts
+    # Attach per-user context to user dicts
     for user in users:
-        user["_ai_settings"] = ai_map.get(str(user["id"]), {})
-        user["_optimal_times"] = optimal_map.get(str(user["id"]), {})
+        uid = str(user["id"])
+        user["_ai_settings"] = ai_map.get(uid, {})
+        user["_optimal_times"] = optimal_map.get(uid, {})
+        user["_daily_cap_adjust"] = cap_adjust_map.get(uid, 0)
 
     # Run all nudge jobs concurrently
     jobs = [
@@ -4210,6 +4395,8 @@ async def run_push_nudge_cron(
         ("volume_balance", _job_volume_balance(supabase, notif_svc, users)),
         # ── Injury recovery lifecycle check-in + auto-expire (WS-B) ──
         ("injury_recovery", _job_injury_recovery(supabase, notif_svc, users)),
+        # ── Coach-memory open-loop follow-up ("How's the knee?") ──
+        ("open_loop_followup", _job_open_loop_followup(supabase, notif_svc, users)),
     ]
 
     job_names = [j[0] for j in jobs]
@@ -4290,9 +4477,55 @@ async def test_nudge(
         "sleep_score",
         # Flagship evening recap (data-grounded, LLM)
         "evening_recap",
+        # Coach-memory open-loop follow-up
+        "open_loop_followup",
     }
     if nudge_type not in allowed_nudge_types:
         raise HTTPException(status_code=400, detail=f"Invalid nudge_type. Allowed: {sorted(allowed_nudge_types)}")
+
+    # ── Open-loop follow-up: exercised against the user's REAL coach_memory
+    #    open loops (no mock data). Bypasses the local-hour gate only; every
+    #    other gate (caps, dedup, quiet hours via sender, suppression) applies.
+    if nudge_type == "open_loop_followup":
+        supabase = get_supabase()
+        notif_svc = get_notification_service()
+        result = supabase.client.table("users") \
+            .select(
+                "id, name, email, fcm_token, timezone, notification_preferences, "
+                "created_at, in_vacation_mode, vacation_start_date, "
+                "vacation_end_date, in_comeback_mode, comeback_week, "
+                "last_active_at, weekly_nudge_limit, coach_memory_enabled"
+            ) \
+            .eq("id", user_id) \
+            .limit(1) \
+            .execute()
+        if not result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user = result.data[0]
+        user["_ai_settings"] = _fetch_ai_settings_batch(supabase, [user_id]).get(user_id, {})
+
+        from api.v1.nudge_jobs.open_loop_followup import (
+            _pick_due_loop, _loop_message, _coach_memory_enabled, NUDGE_TYPE,
+        )
+        from core.db import get_supabase_db as _get_db
+        if not _coach_memory_enabled(supabase, user_id):
+            return {"success": False, "reason": "coach_memory_disabled"}
+        loop = _pick_due_loop(_get_db().memory, user_id)
+        if not loop:
+            return {"success": False, "reason": "no_due_open_loop"}
+        message = _loop_message(loop, user.get("name"))
+        coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
+        ok = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, NUDGE_TYPE,
+            title=coach_name, message=message, route="/chat",
+            facts={"memory_id": str(loop.get("id") or "")},
+        )
+        return {
+            "success": bool(ok),
+            "nudge_type": nudge_type,
+            "message": message,
+            "memory_id": str(loop.get("id") or ""),
+        }
 
     # ── Proactive health-coaching nudges have PRE-BUILT deterministic content
     #    from the Phase-C1 engine, so they bypass _send_nudge's template path.

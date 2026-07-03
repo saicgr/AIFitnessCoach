@@ -108,3 +108,90 @@ async def admin_metrics(
         "db_pool": db_pool,
         "caches": cache_summary,
     }
+
+
+@router.get("/metrics/nudges", tags=["Admin"])
+async def admin_nudge_metrics(
+    request: Request,
+    days: int = Query(
+        14, ge=1, le=90,
+        description="Lookback window in days for the nudge send/open report.",
+    ),
+) -> dict:
+    """Proactive-coach engagement report from push_nudge_log.
+
+    Per day × nudge_type: sent / opened / open rate, plus proactive-message
+    reply counts from chat_history. Guarded by X-Cron-Secret like /metrics.
+
+        curl -H "X-Cron-Secret: $CRON_SECRET" \\
+             https://<host>/api/v1/admin/metrics/nudges?days=14
+    """
+    _verify_metrics_secret(request)
+
+    from datetime import date, timedelta
+
+    supabase = get_supabase()
+    cutoff = (date.today() - timedelta(days=days)).isoformat()
+
+    # push_nudge_log is small (per-user daily caps); a windowed scan is cheap.
+    rows = (
+        supabase.client.table("push_nudge_log")
+        .select("nudge_type, nudge_date, opened_at, tone")
+        .gte("nudge_date", cutoff)
+        .limit(50000)
+        .execute()
+    ).data or []
+
+    by_day: dict = {}
+    by_type: dict = {}
+    by_tone: dict = {}
+    for r in rows:
+        day = r.get("nudge_date")
+        ntype = r.get("nudge_type") or "unknown"
+        opened = 1 if r.get("opened_at") else 0
+        day_bucket = by_day.setdefault(day, {})
+        cell = day_bucket.setdefault(ntype, {"sent": 0, "opened": 0})
+        cell["sent"] += 1
+        cell["opened"] += opened
+        tcell = by_type.setdefault(ntype, {"sent": 0, "opened": 0})
+        tcell["sent"] += 1
+        tcell["opened"] += opened
+        tone = r.get("tone")
+        if tone:
+            ncell = by_tone.setdefault(tone, {"sent": 0, "opened": 0})
+            ncell["sent"] += 1
+            ncell["opened"] += opened
+
+    def _with_rate(d: dict) -> dict:
+        return {
+            k: {**v, "open_rate": round(v["opened"] / v["sent"], 4) if v["sent"] else 0.0}
+            for k, v in sorted(d.items(), key=lambda kv: kv[1]["sent"], reverse=True)
+        }
+
+    # Replies to proactive coach messages: user turns that landed after a
+    # proactive mirror in the same window (coarse but cron-cheap).
+    try:
+        proactive = (
+            supabase.client.table("chat_history")
+            .select("id", count="exact")
+            .eq("context_json->>proactive", "true")
+            .gte("timestamp", cutoff)
+            .execute()
+        )
+        proactive_count = proactive.count or 0
+    except Exception as e:
+        logger.warning(f"admin_nudge_metrics: proactive count failed: {e}")
+        proactive_count = None
+
+    total_sent = sum(v["sent"] for v in by_type.values())
+    total_opened = sum(v["opened"] for v in by_type.values())
+    return {
+        "window_days": days,
+        "total_sent": total_sent,
+        "total_opened": total_opened,
+        "overall_open_rate": round(total_opened / total_sent, 4) if total_sent else 0.0,
+        "proactive_chat_messages": proactive_count,
+        "by_type": _with_rate(by_type),
+        "by_tone": _with_rate(by_tone),
+        "by_day": {d: _with_rate(t) for d, t in sorted(by_day.items(), reverse=True)},
+    }

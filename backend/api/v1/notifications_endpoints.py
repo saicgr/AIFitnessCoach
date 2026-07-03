@@ -12,7 +12,7 @@ ENDPOINTS:
 - POST /api/v1/notifications/scheduler/recalculate-optimal-times - Recalculate optimal send times
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel
 import logging
 logger = logging.getLogger(__name__)
@@ -625,15 +625,18 @@ async def track_notification_interaction(
 
 @router.post("/scheduler/recalculate-optimal-times")
 async def recalculate_optimal_times(
-    current_user: dict = Depends(get_current_user),
+    request: Request,
+    x_cron_secret: Optional[str] = Header(default=None, alias="X-Cron-Secret"),
 ):
     """
     Recalculate optimal notification send times for all active users.
 
-    This endpoint should be called daily by a cron job (recommended: 3am UTC).
-    Uses notification open events and app activity data to determine the best
-    hour to send each type of notification per user.
+    Called daily by the engagement-cron GitHub Actions workflow. Auth is the
+    same X-Cron-Secret gate as /nudges/cron (a user JWT can't drive a cron).
     """
+    from api.v1.push_nudge_cron import _verify_cron_secret
+
+    _verify_cron_secret(request, x_cron_secret)
     logger.info("Running scheduler: recalculating optimal notification times")
 
     try:

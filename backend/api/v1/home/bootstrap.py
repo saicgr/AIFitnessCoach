@@ -150,6 +150,13 @@ class BootstrapResponse(BaseModel):
     hydration: HydrationSummary = HydrationSummary()
     xp: XPSummary = XPSummary()
     gym_profile: GymProfileSummary = GymProfileSummary()
+    # Computed OUTSIDE the Redis cache (fresh every request — a proactive coach
+    # message must surface as unread even while the cached payload is warm):
+    coach_unread_count: int = 0
+    # True while the server-side nudge engine is verifiably alive (a push was
+    # logged in the last 48h). The client uses this to stand down its local
+    # template-notification scheduling — never double-send, never dead-air.
+    server_nudges_active: bool = False
 
 
 # `invalidate_bootstrap_cache` now lives in `bootstrap_cache.py` (imported and
@@ -330,6 +337,105 @@ def _fetch_gym_profile(db, user_id: str) -> dict:
     return {"id": None, "name": None}
 
 
+# =============================================================================
+# Per-request (uncached) signals: coach unread + engine liveness + app_opened
+# =============================================================================
+
+# server_nudges_active: one cheap global count per worker per 10 min. If the
+# engagement cron dies, this flips false within 48h and clients resume local
+# scheduling on their next bootstrap (self-healing, no env flag to forget).
+_NUDGE_ENGINE_CHECK_TTL = 600  # seconds
+_nudge_engine_state = {"checked_at": 0.0, "active": False}
+
+# app_opened throttle: per-worker in-process map user_id -> monotonic seconds.
+# Cross-worker duplicates are harmless (optimal-time learning just needs
+# hour-of-day samples), so no shared store is warranted.
+_APP_OPENED_THROTTLE_SECONDS = 1800
+_app_opened_last: Dict[str, float] = {}
+
+
+def _fetch_server_nudges_active(db) -> bool:
+    """True if the push nudge engine sent anything in the last 48h (TTL-cached)."""
+    import time
+    now = time.monotonic()
+    if now - _nudge_engine_state["checked_at"] < _NUDGE_ENGINE_CHECK_TTL:
+        return _nudge_engine_state["active"]
+    try:
+        cutoff = (date.today() - timedelta(days=2)).isoformat()
+        res = (
+            db.client.table("push_nudge_log")
+            .select("id", count="exact")
+            .gte("nudge_date", cutoff)
+            .limit(1)
+            .execute()
+        )
+        active = bool(res.count)
+    except Exception as e:
+        logger.warning(f"[BOOTSTRAP] nudge-engine liveness check failed: {e}")
+        # Fail toward the previous known state so a transient DB blip doesn't
+        # flap clients between local and server scheduling.
+        active = _nudge_engine_state["active"]
+    _nudge_engine_state["checked_at"] = now
+    _nudge_engine_state["active"] = active
+    return active
+
+
+def _fetch_coach_unread(db, user_id: str) -> int:
+    """Count proactive coach messages newer than the user's last chat open."""
+    try:
+        user_row = (
+            db.client.table("users")
+            .select("coach_chat_last_seen_at")
+            .eq("id", user_id)
+            .single()
+            .execute()
+        ).data or {}
+        last_seen = user_row.get("coach_chat_last_seen_at")
+        q = (
+            db.client.table("chat_history")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .eq("context_json->>proactive", "true")
+        )
+        if last_seen:
+            q = q.gt("timestamp", last_seen)
+        res = q.execute()
+        return res.count or 0
+    except Exception as e:
+        logger.warning(f"[BOOTSTRAP] coach unread count failed for {user_id}: {e}")
+        return 0
+
+
+async def _stamp_app_opened(user_id: str) -> None:
+    """Record an app_opened activity row (feeds optimal-send-time learning).
+
+    Throttled per worker to one row / 30 min / user. Runs as a BackgroundTask
+    (post-response), so the blocking insert inside log_user_activity never
+    delays the bootstrap reply.
+    """
+    import time
+    now = time.monotonic()
+    last = _app_opened_last.get(user_id)
+    if last is not None and now - last < _APP_OPENED_THROTTLE_SECONDS:
+        return
+    _app_opened_last[user_id] = now
+    # Opportunistic cleanup so the map can't grow unbounded across weeks.
+    if len(_app_opened_last) > 50000:
+        stale = now - _APP_OPENED_THROTTLE_SECONDS
+        for k in [k for k, v in _app_opened_last.items() if v < stale]:
+            _app_opened_last.pop(k, None)
+    try:
+        from core.activity_logger import log_user_activity
+        await log_user_activity(
+            user_id=user_id,
+            action="app_opened",
+            endpoint="/home/bootstrap",
+            message="app opened (bootstrap)",
+        )
+    except Exception as e:
+        logger.debug(f"[BOOTSTRAP] app_opened stamp failed for {user_id}: {e}")
+
+
 def _workout_row_to_summary(row: dict, today_str: str) -> WorkoutSummary:
     """Convert a DB workout row to a lightweight WorkoutSummary."""
     raw_exercises = row.get("exercises") or row.get("exercises_json") or []
@@ -448,12 +554,20 @@ async def home_bootstrap(
         except Exception:
             pass
 
+        # Stamp app_opened (optimal-send-time learning signal; 30-min throttle).
+        background_tasks.add_task(_stamp_app_opened, user_id)
+
         # resolve_timezone and _get_active_gym_profile_id are blocking and may
         # each issue a Supabase .execute(). Offload them to the DB executor so
         # they never run on the event loop (critical under ~10k concurrency).
-        user_tz, active_profile_id = await asyncio.gather(
+        # The coach-unread count and nudge-engine liveness ride the same gather:
+        # they are computed OUTSIDE the Redis cache (must be fresh every open)
+        # but add no wall-clock — they overlap the tz/profile lookups.
+        user_tz, active_profile_id, coach_unread, nudges_active = await asyncio.gather(
             loop.run_in_executor(_db_executor, lambda: resolve_timezone(request, db, user_id)),
             loop.run_in_executor(_db_executor, lambda: _get_active_gym_profile_id(db, user_id)),
+            loop.run_in_executor(_db_executor, lambda: _fetch_coach_unread(db, user_id)),
+            loop.run_in_executor(_db_executor, lambda: _fetch_server_nudges_active(db)),
         )
         today_str = get_user_today(user_tz)
         profile_part = active_profile_id or "none"
@@ -463,7 +577,10 @@ async def home_bootstrap(
         cached = await _bootstrap_cache.get(cache_key)
         if cached:
             logger.info(f"[BOOTSTRAP] CACHE HIT for user {user_id}")
-            return BootstrapResponse(**cached)
+            hit = BootstrapResponse(**cached)
+            hit.coach_unread_count = coach_unread
+            hit.server_nudges_active = nudges_active
+            return hit
 
         # ---- Single-flight on cache miss --------------------------------
         # Concurrent misses for the same cache_key collapse onto ONE shared
@@ -491,11 +608,15 @@ async def home_bootstrap(
             )
 
             # Cache the response with a jittered TTL to avoid lockstep expiry.
+            # NOTE: cached BEFORE the fresh per-request fields are attached so
+            # a stale unread-count/liveness flag is never served from Redis.
             await _bootstrap_cache.set(
                 cache_key, response.dict(), ttl_override=_jittered_ttl()
             )
             logger.info(f"[BOOTSTRAP] CACHE SET for user {user_id} ({cache_key})")
 
+            response.coach_unread_count = coach_unread
+            response.server_nudges_active = nudges_active
             if not leader_future.done():
                 leader_future.set_result(response)
             return response

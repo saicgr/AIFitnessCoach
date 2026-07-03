@@ -1,0 +1,135 @@
+name: Engagement Cron
+
+# Drives the proactive-coach engines that need a wall-clock trigger.
+# All endpoints are X-Cron-Secret gated and internally timezone-aware
+# (each job fires per-user only when the user's LOCAL hour matches),
+# so GitHub's schedule jitter (5-30 min) is harmless.
+
+on:
+  schedule:
+    - cron: '5 * * * *'    # hourly: push nudges + trial coach + wrapped (tz-aware)
+    - cron: '35 4 * * *'   # daily: retention sweep + fitness snapshot + optimal-times recalc
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 'Which tier to run (hourly | daily | all)'
+        required: false
+        default: 'all'
+
+env:
+  BASE_URL: https://aifitnesscoach-zqi3.onrender.com/api/v1
+
+jobs:
+  hourly:
+    # Run on the hourly schedule tick, or on manual dispatch (hourly/all)
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '5 * * * *') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.tier == 'hourly' || inputs.tier == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Push nudge engine (accountability coach)
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "$BASE_URL/nudges/cron" \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 600 \
+            -d "{}")
+          body=$(echo "$response" | head -n -1)
+          status=$(echo "$response" | tail -n 1)
+          echo "Status: $status"
+          echo "Response: $body"
+          if [ "$status" != "200" ]; then
+            echo "Push nudge cron failed with status $status"
+            exit 1
+          fi
+
+      - name: Trial coach proactive DMs
+        if: always()
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "$BASE_URL/cron/trial-coach" \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 300 \
+            -d "{}")
+          status=$(echo "$response" | tail -n 1)
+          echo "Status: $status"
+          echo "Response: $(echo "$response" | head -n -1)"
+          if [ "$status" != "200" ]; then
+            echo "Trial coach cron failed with status $status"
+            exit 1
+          fi
+
+      - name: Sunday Wrapped (tz-aware hourly fire)
+        if: always()
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "$BASE_URL/weekly/weekly-wrapped-cron" \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 300 \
+            -d "{}")
+          status=$(echo "$response" | tail -n 1)
+          echo "Status: $status"
+          echo "Response: $(echo "$response" | head -n -1)"
+          if [ "$status" != "200" ]; then
+            echo "Weekly wrapped cron failed with status $status"
+            exit 1
+          fi
+
+  daily:
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '35 4 * * *') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.tier == 'daily' || inputs.tier == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Data retention sweep
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "$BASE_URL/retention/cron" \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 600 \
+            -d "{}")
+          status=$(echo "$response" | tail -n 1)
+          echo "Status: $status"
+          echo "Response: $(echo "$response" | head -n -1)"
+          if [ "$status" != "200" ]; then
+            echo "Retention cron failed with status $status"
+            exit 1
+          fi
+
+      - name: Fitness profile radar snapshot
+        if: always()
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "$BASE_URL/cron/snapshot-fitness-profiles" \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 600 \
+            -d "{}")
+          status=$(echo "$response" | tail -n 1)
+          echo "Status: $status"
+          echo "Response: $(echo "$response" | head -n -1)"
+          if [ "$status" != "200" ]; then
+            echo "Fitness snapshot cron failed with status $status"
+            exit 1
+          fi
+
+      - name: Recalculate optimal notification send times
+        if: always()
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "$BASE_URL/notifications/scheduler/recalculate-optimal-times" \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 600 \
+            -d "{}")
+          status=$(echo "$response" | tail -n 1)
+          echo "Status: $status"
+          echo "Response: $(echo "$response" | head -n -1)"
+          if [ "$status" != "200" ]; then
+            echo "Optimal-times recalc failed with status $status"
+            exit 1
+          fi

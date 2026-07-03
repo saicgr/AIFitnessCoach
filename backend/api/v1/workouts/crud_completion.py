@@ -50,6 +50,7 @@ from .crud_background_tasks import (
     populate_performance_logs,
     _send_post_workout_nutrition_nudge,
     _send_streak_celebration_if_milestone,
+    _send_post_workout_praise,
 )
 from .today import invalidate_today_workout_cache
 from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
@@ -734,6 +735,37 @@ async def complete_workout(
         from services.mastery_writes import fire_trophy_check_detached
         fire_trophy_check_detached(user_id)
 
+        # 🏁 Program-completion progress. If this workout belongs to a started
+        # program (migration 2285 stamps workouts.assignment_id), advance the
+        # assignment's workouts_completed / progress_percentage and, when the
+        # program is finished, flip status='completed' + award the
+        # program-finisher trophy. Fired fully detached (asyncio.create_task,
+        # NOT BackgroundTasks) so a slow/failed program query can never inflate
+        # the completion response — same reasoning as fire_trophy_check_detached.
+        #
+        # IDEMPOTENCY: only advance when THIS request is the true False→True
+        # transition of is_completed. `existing` is the pre-update row (fetched
+        # before the flip at the top of this handler), so a re-`complete` of an
+        # already-completed workout has existing["is_completed"] == True and is
+        # skipped — no double-increment.
+        _assignment_id = existing.get("assignment_id")
+        if _assignment_id and not bool(existing.get("is_completed")):
+            fire_program_progress_detached(user_id, str(_assignment_id), delta=1)
+
+        # Immediate coach praise — the highest-emotion moment. Event-driven
+        # (the hourly cron is too slow for "your coach saw you finish").
+        # Mirror-only when the user is still in the app / in quiet hours;
+        # shares dedup + caps with every other nudge via push_nudge_log.
+        # Only on the true False→True completion transition (no praise for
+        # re-saving an already-completed workout).
+        if not bool(existing.get("is_completed")):
+            background_tasks.add_task(
+                _send_post_workout_praise,
+                user_id=user_id,
+                workout_name=workout_name,
+                pr_count=len(detected_prs or []),
+            )
+
         if detected_prs:
             pr_count = len(detected_prs)
             message = f"Workout completed! You set {pr_count} new personal record{'s' if pr_count > 1 else ''}!"
@@ -806,6 +838,161 @@ async def complete_workout(
     except Exception as e:
         logger.error(f"Failed to complete workout: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
+
+
+# ============================================================================
+# Program-completion progress + finisher trophy (fully detached)
+# ============================================================================
+# Track spawned tasks so the interpreter doesn't GC them mid-flight (asyncio
+# only holds a weak reference to tasks returned by create_task). Same pattern
+# as services.mastery_writes.fire_trophy_check_detached.
+_PROGRAM_PROGRESS_TASKS: "set[asyncio.Task[None]]" = set()
+
+# Finisher trophy tiers: (completed-assignment count, achievement_id).
+# Only the tier whose count EXACTLY matches the user's new completed-program
+# total is awarded (seeded by migration 2302).
+_PROGRAM_FINISHER_TIERS = {
+    1: "program_finisher_1",
+    3: "program_finisher_3",
+    5: "program_finisher_5",
+}
+
+
+async def _apply_program_progress(user_id: str, assignment_id: str, delta: int) -> None:
+    """Advance (delta=+1) or roll back (delta=-1) a program assignment's
+    completion counters, flip status='completed' when finished, and award the
+    program-finisher trophy. Swallows every error so it can never affect the
+    workout-completion response. Never un-flips status or revokes trophies on a
+    decrement.
+    """
+    try:
+        db = get_supabase_db()
+        supabase = db.client
+
+        resp = (
+            supabase.table("user_program_assignments")
+            .select("id, status, workouts_completed, total_workouts, "
+                    "progress_percentage, completed_at")
+            .eq("id", assignment_id)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+        if not resp.data:
+            logger.warning(f"🏁 Program progress: assignment {assignment_id} not found for {user_id}")
+            return
+        asg = resp.data[0]
+
+        prev_completed = int(asg.get("workouts_completed") or 0)
+        total = asg.get("total_workouts")
+        total = int(total) if total else 0
+        status = asg.get("status")
+
+        new_completed = max(0, prev_completed + delta)
+
+        update: Dict[str, Any] = {"workouts_completed": new_completed}
+        if total > 0:
+            update["progress_percentage"] = round(min(new_completed / total * 100.0, 100.0), 1)
+
+        # NOTE: current_week is intentionally NOT recomputed here — the
+        # assignment row carries neither duration_weeks nor sessions_per_week,
+        # so deriving the week would require an extra program/template lookup
+        # that would defeat the "cheap detached hook" contract. The scheduler
+        # owns current_week; we leave its value untouched.
+
+        newly_finished = (
+            delta > 0
+            and total > 0
+            and new_completed >= total
+            and status != "completed"
+        )
+        if newly_finished:
+            from datetime import timezone
+            update["status"] = "completed"
+            update["completed_at"] = datetime.now(timezone.utc).isoformat()
+
+        supabase.table("user_program_assignments").update(update).eq(
+            "id", assignment_id
+        ).execute()
+        logger.info(
+            f"🏁 Program progress for {user_id}: assignment={assignment_id} "
+            f"{prev_completed}->{new_completed}/{total or '?'} "
+            f"{'FINISHED' if newly_finished else ''}".strip()
+        )
+
+        # Award the finisher trophy only on the transition that finished the
+        # program. Decrements (delta<0) never touch trophies.
+        if newly_finished:
+            await _award_program_finisher(db, user_id)
+
+    except Exception as e:
+        logger.error(
+            f"❌ Program progress hook failed for user={user_id} "
+            f"assignment={assignment_id}: {e}",
+            exc_info=True,
+        )
+
+
+async def _award_program_finisher(db, user_id: str) -> None:
+    """Count the user's completed program assignments and award the matching
+    finisher tier (1st / 3rd / 5th). Only the tier that EXACTLY equals the new
+    count is granted; the _has_achievement guard makes a re-fire a no-op."""
+    try:
+        from api.v1.trophy_triggers import _award_achievement, _has_achievement
+
+        count_resp = (
+            db.client.table("user_program_assignments")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .eq("status", "completed")
+            .execute()
+        )
+        completed_count = count_resp.count or 0
+
+        achievement_id = _PROGRAM_FINISHER_TIERS.get(completed_count)
+        if not achievement_id:
+            return
+        if await _has_achievement(db, user_id, achievement_id):
+            return
+        await _award_achievement(
+            db, user_id, achievement_id, float(completed_count),
+            {"unit": "programs"},
+        )
+    except Exception as e:
+        logger.error(
+            f"❌ Program-finisher award failed for user={user_id}: {e}",
+            exc_info=True,
+        )
+
+
+def fire_program_progress_detached(user_id: str, assignment_id: str, delta: int = 1) -> None:
+    """Spawn program-progress work detached from the HTTP response lifecycle.
+
+    Uses asyncio.create_task (NOT FastAPI BackgroundTasks) so the response
+    returns immediately — Starlette's BaseHTTPMiddleware serializes
+    BackgroundTasks into the response timer, and a slow program query must
+    never inflate a completion log or delay the client.
+    """
+    async def _run() -> None:
+        try:
+            await asyncio.wait_for(
+                _apply_program_progress(user_id, assignment_id, delta),
+                timeout=30.0,
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                f"🏁 Program progress timed out for user={user_id} "
+                f"assignment={assignment_id}"
+            )
+        except Exception as e:
+            logger.error(
+                f"❌ Detached program progress failed for user={user_id}: {e}",
+                exc_info=True,
+            )
+
+    task = asyncio.create_task(_run(), name=f"prog_progress_{assignment_id[:8]}")
+    _PROGRAM_PROGRESS_TASKS.add(task)
+    task.add_done_callback(_PROGRAM_PROGRESS_TASKS.discard)
 
 
 def _award_workout_complete_xp(
@@ -1061,6 +1248,19 @@ async def uncomplete_workout(workout_id: str,
         )
 
         logger.info(f"Workout uncompleted: id={workout_id}")
+
+        # 🏁 Program-completion rollback. If this workout belonged to a started
+        # program, decrement the assignment's workouts_completed (floored at 0)
+        # + recompute progress. NEVER un-flips a 'completed' status and NEVER
+        # revokes an earned finisher trophy — a reverted "marked_done" shouldn't
+        # tear down a celebration the user already saw. Guarded by the
+        # pre-update is_completed check at the top of this handler, so it only
+        # fires on a real True→False transition.
+        _uc_assignment_id = existing.get("assignment_id")
+        if _uc_assignment_id:
+            fire_program_progress_detached(
+                existing.get("user_id"), str(_uc_assignment_id), delta=-1
+            )
 
         # Invalidate /today cache so next poll reflects the uncompleted state
         scheduled_date = str(existing.get("scheduled_date", ""))[:10] or None
