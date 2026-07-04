@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, HTMLResponse, PlainTextResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -1171,6 +1171,21 @@ async def root():
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
     return PlainTextResponse("User-agent: *\nDisallow: /\n")
+
+
+# Browsers and scanners request these on the bare API origin; without routes
+# they 404 at WARN on every hit. Serve the logo (PNG content on the .ico path
+# is fine — browsers sniff content type).
+@app.get("/favicon.ico", include_in_schema=False)
+@app.get("/apple-touch-icon.png", include_in_schema=False)
+@app.get("/apple-touch-icon-precomposed.png", include_in_schema=False)
+@limiter.exempt
+async def favicon():
+    return FileResponse(
+        "static/logo.png",
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @app.get("/health", tags=["health"])
