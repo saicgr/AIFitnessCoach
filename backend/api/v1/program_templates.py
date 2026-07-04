@@ -3529,8 +3529,10 @@ async def _build_assign_preview(
         weeks = plan["weeks_used"]
         sessions_per_week = plan["sessions_per_week"]
         # Variant scheduling places session si on the chosen weekday → the
-        # training-day picker applies.
-        respects_training_days = True
+        # training-day picker applies UNLESS the variant trains all 7 days a
+        # week (a daily challenge), in which case there are no rest weekdays to
+        # pick and the picker must be hidden.
+        respects_training_days = (sessions_per_week or 0) < 7
     else:
         resolved = _resolve_program_days_for_preview(
             db, program_id=req.program_id, variant_id=req.variant_id,
