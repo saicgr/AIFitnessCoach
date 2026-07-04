@@ -1191,7 +1191,7 @@ async def _maybe_send_first_workout_email(
             logger.debug(f"N2 weight lookup skipped for {user_id}: {_e}")
 
         email_svc = get_email_service()
-        await email_svc.send_first_workout_done(
+        result = await email_svc.send_first_workout_done(
             to_email=user["email"],
             first_name_value=first_name(user),
             stats=stats,
@@ -1202,11 +1202,15 @@ async def _maybe_send_first_workout_email(
             user_weight_kg=user_weight_kg,
         )
         # Record one-shot fire
-        supabase.table("email_send_log").insert({
+        row = {
             "user_id": user_id,
             "email_type": "first_workout_done",
             "metadata": {"workout_name": workout_name},
-        }).execute()
+        }
+        # Persist the Resend id so the webhook can correlate delivery events.
+        if isinstance(result, dict) and result.get("success") and result.get("id"):
+            row["resend_email_id"] = result["id"]
+        supabase.table("email_send_log").insert(row).execute()
     except Exception as e:
         logger.warning(f"N2 first-workout email skipped for user {user_id}: {e}")
 

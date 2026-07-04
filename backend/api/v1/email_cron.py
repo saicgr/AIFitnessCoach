@@ -225,6 +225,7 @@ def _log_email_sent(
     email_type: str,
     metadata: Dict = None,
     local_date: Optional[str] = None,
+    resend_email_id: Optional[str] = None,
 ):
     """Record a successfully sent email for deduplication.
 
@@ -232,6 +233,10 @@ def _log_email_sent(
     `email_send_log.sent_local_date` so a subsequent `_was_recently_sent`
     call with the same local_date recognizes the send and skips a re-email.
     Left NULL for jobs that don't bucket by user-local date.
+
+    `resend_email_id` is the id Resend returns for the send; persisting it on
+    `email_send_log.resend_email_id` lets the Resend webhook correlate
+    delivered/bounced/complained events back to this row.
     """
     try:
         row: Dict[str, Any] = {
@@ -241,6 +246,8 @@ def _log_email_sent(
         }
         if local_date:
             row["sent_local_date"] = local_date
+        if resend_email_id:
+            row["resend_email_id"] = resend_email_id
         supabase.client.table("email_send_log").insert(row).execute()
     except Exception as e:
         logger.error(f"❌ Failed to log email send: {e}", exc_info=True)
@@ -422,7 +429,7 @@ async def _job_streak_at_risk(supabase, email_svc) -> int:
                 if result.get("success"):
                     _log_email_sent(supabase, uid, email_type, {
                         "streak": stats.current_streak_days,
-                    })
+                    }, resend_email_id=result.get("id"))
                     sent += 1
 
     except Exception as e:
@@ -519,7 +526,7 @@ async def _job_day3_activation(supabase, email_svc) -> int:
                 _log_email_sent(supabase, uid, email_type, {
                     "schedule_state": stats.schedule_state.value,
                     "days_overdue": stats.days_overdue,
-                })
+                }, resend_email_id=result.get("id"))
                 sent += 1
 
     except Exception as e:
@@ -636,6 +643,7 @@ async def _job_trial_ending(supabase, email_svc) -> int:
                 _log_email_sent(
                     supabase, uid, email_type, {"days_remaining": days_rem},
                     local_date=user_today.isoformat(),
+                    resend_email_id=result.get("id"),
                 )
                 sent += 1
 
@@ -711,7 +719,7 @@ async def _job_win_back_30(supabase, email_svc) -> int:
                 discount_percent=25,
             )
             if result.get("success"):
-                _log_email_sent(supabase, uid, email_type)
+                _log_email_sent(supabase, uid, email_type, resend_email_id=result.get("id"))
                 sent += 1
 
     except Exception as e:
@@ -830,6 +838,7 @@ async def _job_7day_upsell(supabase, email_svc) -> int:
                 _log_email_sent(
                     supabase, uid, email_type,
                     local_date=user_today.isoformat(),
+                    resend_email_id=result.get("id"),
                 )
                 sent += 1
 
@@ -896,7 +905,7 @@ async def _job_onboarding_incomplete(supabase, email_svc) -> int:
                 stats=stats,
             )
             if result.get("success"):
-                _log_email_sent(supabase, uid, email_type)
+                _log_email_sent(supabase, uid, email_type, resend_email_id=result.get("id"))
                 sent += 1
 
     except Exception as e:
@@ -1029,7 +1038,7 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
                             variant_salt=f"{uid}:{user_today.isoformat()}",
                         )
                         try:
-                            _resend.Emails.send({
+                            cardio_resp = _resend.Emails.send({
                                 "from": email_svc.from_email,
                                 "to": [user["email"]],
                                 "subject": copy["email_subject"],
@@ -1040,7 +1049,7 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
                                 "delta_pct": cardio_summary.delta_pct,
                                 "session_count": cardio_summary.session_count,
                                 "is_first_week": cardio_summary.is_first_week,
-                            })
+                            }, resend_email_id=(cardio_resp or {}).get("id"))
                             cardio_sent += 1
                         except Exception as e:
                             logger.error(
@@ -1081,7 +1090,7 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
                     "workouts_this_week": stats.workouts_this_week,
                     "meals_this_week": stats.nutrition_days_logged_this_week,
                     "total_steps": getattr(progress, "total_steps", None),
-                })
+                }, resend_email_id=result.get("id"))
                 sent += 1
 
     except Exception as e:
@@ -1173,7 +1182,7 @@ async def _job_comeback(supabase, email_svc) -> int:
                 days_gone=gap_days,
             )
             if result.get("success"):
-                _log_email_sent(supabase, uid, email_type, {"gap_days": gap_days})
+                _log_email_sent(supabase, uid, email_type, {"gap_days": gap_days}, resend_email_id=result.get("id"))
                 sent += 1
     except Exception as e:
         logger.error(f"❌ comeback job failed: {e}", exc_info=True)
@@ -1265,7 +1274,7 @@ async def _job_idle_nudge(supabase, email_svc) -> int:
                 days_idle=days_idle,
             )
             if result.get("success"):
-                _log_email_sent(supabase, uid, email_type, {"days_idle": days_idle})
+                _log_email_sent(supabase, uid, email_type, {"days_idle": days_idle}, resend_email_id=result.get("id"))
                 sent += 1
     except Exception as e:
         logger.error(f"❌ idle_nudge job failed: {e}", exc_info=True)
@@ -1343,7 +1352,7 @@ async def _job_one_workout_wonder(supabase, email_svc) -> int:
                 stats=stats,
             )
             if result.get("success"):
-                _log_email_sent(supabase, uid, email_type)
+                _log_email_sent(supabase, uid, email_type, resend_email_id=result.get("id"))
                 sent += 1
     except Exception as e:
         logger.error(f"❌ one_workout_wonder job failed: {e}", exc_info=True)
@@ -1414,7 +1423,7 @@ async def _job_premium_idle(supabase, email_svc) -> int:
                 stats=stats,
             )
             if result.get("success"):
-                _log_email_sent(supabase, uid, email_type)
+                _log_email_sent(supabase, uid, email_type, resend_email_id=result.get("id"))
                 sent += 1
     except Exception as e:
         logger.error(f"❌ premium_idle job failed: {e}", exc_info=True)
@@ -1528,7 +1537,7 @@ async def _run_cancel_job(
                 **extra_kwargs,
             )
             if result.get("success"):
-                _log_email_sent(supabase, uid, email_type)
+                _log_email_sent(supabase, uid, email_type, resend_email_id=result.get("id"))
                 sent += 1
     except Exception as e:
         logger.error(f"❌ {email_type} job failed: {e}", exc_info=True)
@@ -1595,7 +1604,7 @@ def _get_first_workout(supabase, user_id: str, user_tz: str = "UTC"):
     try:
         today = get_user_today(user_tz)
         result = supabase.client.table("workouts") \
-            .select("name, workout_type") \
+            .select("name, workout_type:type") \
             .eq("user_id", user_id) \
             .gte("scheduled_date", today) \
             .order("scheduled_date", desc=False) \
@@ -1745,7 +1754,7 @@ def _get_user_stats(supabase, user: Dict[str, Any]) -> UserStats:
     try:
         today_str = get_user_today(user_tz)
         r = supabase.client.table("workouts") \
-            .select("name, workout_type") \
+            .select("name, workout_type:type") \
             .eq("user_id", user_id) \
             .gte("scheduled_date", today_str) \
             .order("scheduled_date", desc=False) \
@@ -1869,13 +1878,15 @@ def _get_user_stats(supabase, user: Dict[str, Any]) -> UserStats:
     latest_ach: Optional[str] = None
     try:
         ar = supabase.client.table("user_achievements") \
-            .select("achievement_name, earned_at") \
+            .select("earned_at, achievement_types(name)") \
             .eq("user_id", user_id) \
             .order("earned_at", desc=True) \
             .limit(1) \
             .execute()
         if ar.data:
-            latest_ach = ar.data[0].get("achievement_name")
+            # achievement name lives on the joined achievement_types row, not user_achievements
+            at = ar.data[0].get("achievement_types")
+            latest_ach = at.get("name") if isinstance(at, dict) else None
     except Exception:
         # Achievements table may not exist in all environments — silent skip.
         pass
@@ -1885,28 +1896,29 @@ def _get_user_stats(supabase, user: Dict[str, Any]) -> UserStats:
     w_curr: Optional[float] = None
     w_delta: Optional[float] = None
     try:
+        # weight_logs stores kg only; email copy renders lbs.
+        _KG_TO_LBS = 2.20462
         # Latest
         wr = supabase.client.table("weight_logs") \
-            .select("weight_lbs, logged_at") \
+            .select("weight_kg, logged_at") \
             .eq("user_id", user_id) \
             .order("logged_at", desc=True) \
             .limit(1) \
             .execute()
-        if wr.data and wr.data[0].get("weight_lbs") is not None:
-            w_curr = float(wr.data[0]["weight_lbs"])
+        if wr.data and wr.data[0].get("weight_kg") is not None:
+            w_curr = round(float(wr.data[0]["weight_kg"]) * _KG_TO_LBS, 1)
         # Earliest
         wr0 = supabase.client.table("weight_logs") \
-            .select("weight_lbs, logged_at") \
+            .select("weight_kg, logged_at") \
             .eq("user_id", user_id) \
             .order("logged_at", desc=False) \
             .limit(1) \
             .execute()
-        if wr0.data and wr0.data[0].get("weight_lbs") is not None:
-            w_start = float(wr0.data[0]["weight_lbs"])
+        if wr0.data and wr0.data[0].get("weight_kg") is not None:
+            w_start = round(float(wr0.data[0]["weight_kg"]) * _KG_TO_LBS, 1)
         if w_start is not None and w_curr is not None:
             w_delta = round(w_curr - w_start, 1)
     except Exception:
-        # weight_logs may use weight_kg in some envs — skip silently if schema differs.
         pass
 
     # Time band (user-local, quiet hours default 22→06 until unified prefs ship)
@@ -2064,7 +2076,7 @@ async def _job_week1_email(
                 continue
 
             if result.get("success"):
-                _log_email_sent(supabase, uid, email_type, {"count": count, "day": day_target})
+                _log_email_sent(supabase, uid, email_type, {"count": count, "day": day_target}, resend_email_id=result.get("id"))
                 sent += 1
     except Exception as e:
         logger.error(f"❌ week1 day{day_target} email job failed: {e}", exc_info=True)
@@ -2172,7 +2184,7 @@ async def _job_merch_proximity_email(supabase, email_svc) -> int:
                     _log_email_sent(supabase, uid, email_type, {
                         "current_level": level,
                         "merch_type": merch_type,
-                    })
+                    }, resend_email_id=result.get("id"))
                     sent += 1
 
     except Exception as e:
@@ -2238,7 +2250,7 @@ async def _job_merch_unlocked_email(supabase, email_svc) -> int:
                     _log_email_sent(supabase, uid, email_type, {
                         "claim_id": claim["id"],
                         "merch_type": claim["merch_type"],
-                    })
+                    }, resend_email_id=result.get("id"))
                     sent += 1
 
     except Exception as e:
@@ -2337,7 +2349,7 @@ async def _job_level_milestone_celebration_email(supabase, email_svc) -> int:
                     _log_email_sent(supabase, uid, email_type, {
                         "level": row["level_reached"],
                         "has_merch": has_merch,
-                    })
+                    }, resend_email_id=result.get("id"))
                     sent += 1
 
     except Exception as e:
@@ -2421,7 +2433,7 @@ async def _job_merch_claim_reminder_email(supabase, email_svc) -> int:
                     _log_email_sent(supabase, uid, email_type, {
                         "claim_id": claim["id"],
                         "days_waiting": claim["days_waiting"],
-                    })
+                    }, resend_email_id=result.get("id"))
                     sent += 1
 
     except Exception as e:

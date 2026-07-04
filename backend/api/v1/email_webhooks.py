@@ -167,8 +167,19 @@ def _handle_hard_bounce(supabase, user_id: str) -> None:
             .eq("status", "bounced") \
             .execute()
         if bounces.data and len(bounces.data) >= 3:
+            # deliverable is the canonical suppression state, but the cron
+            # jobs gate per-category — zero those too so sends actually stop.
             supabase.client.table("email_preferences") \
-                .update({"deliverable": False}) \
+                .update({
+                    "deliverable": False,
+                    "weekly_summary": False,
+                    "promotional": False,
+                    "product_updates": False,
+                    "coach_tips": False,
+                    "achievement_emails": False,
+                    "merch_emails": False,
+                    "workout_reminders": False,
+                }) \
                 .eq("user_id", user_id) \
                 .execute()
             logger.warning(f"[email-webhook] user {user_id} marked non-deliverable after 3 bounces")
@@ -180,15 +191,15 @@ def _handle_complaint(supabase, user_id: str) -> None:
     """User hit 'spam' — turn off all marketing categories immediately.
     Leave billing / account categories alone (legally required)."""
     try:
+        # Disable every marketing category; workout_reminders (transactional) left on.
+        # motivational_nudges / streak_alerts have no email_preferences column yet.
         supabase.client.table("email_preferences").update({
             "weekly_summary": False,
             "promotional": False,
-            "motivational_nudges": False,
-            "achievement_alerts": False,
-            "streak_alerts": False,
             "product_updates": False,
             "coach_tips": False,
-            # Intentionally not touched: billing_account, deliverable, workout_reminders
+            "achievement_emails": False,
+            "merch_emails": False,
         }).eq("user_id", user_id).execute()
         logger.warning(f"[email-webhook] user {user_id} marketing disabled after complaint")
     except Exception as e:

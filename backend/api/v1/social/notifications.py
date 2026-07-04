@@ -294,7 +294,7 @@ async def update_social_settings(
     supabase = get_supabase_client()
 
     # Check if settings exist
-    existing = supabase.table("user_privacy_settings").select("id").eq(
+    existing = supabase.table("user_privacy_settings").select("user_id").eq(
         "user_id", user_id
     ).execute()
 

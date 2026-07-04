@@ -497,16 +497,15 @@ async def get_live_chat_detail(
 
         messages = [_parse_live_chat_message(m) for m in messages_result.data or []]
 
-        # Get typing status from queue
-        typing_result = db.client.table("live_chat_queue").select(
-            "user_typing, agent_typing"
-        ).eq("ticket_id", ticket_id).execute()
-
+        # Typing indicators (live_chat_queue typing columns added in mig 2306)
         user_typing = False
         agent_typing = False
+        typing_result = db.client.table("live_chat_queue").select(
+            "user_typing, agent_typing"
+        ).eq("ticket_id", ticket_id).limit(1).execute()
         if typing_result.data:
-            user_typing = typing_result.data[0].get("user_typing", False)
-            agent_typing = typing_result.data[0].get("agent_typing", False)
+            user_typing = bool(typing_result.data[0].get("user_typing"))
+            agent_typing = bool(typing_result.data[0].get("agent_typing"))
 
         # Get agent name if assigned
         agent_name = None

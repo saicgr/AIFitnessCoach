@@ -744,7 +744,7 @@ async def get_quick_suggestions(
                 carbs_g=template.get("total_carbs_g") or 0.0,
                 fat_g=template.get("total_fat_g") or 0.0,
                 fiber_g=template.get("total_fiber_g"),
-                times_logged=template.get("times_used") or 0,
+                times_logged=template.get("use_count") or 0,
                 last_logged_at=template.get("last_used_at"),
                 suggested_meal_type=suggested_meal_type,
                 suggestion_reason="time_appropriate",

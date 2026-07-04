@@ -148,7 +148,7 @@ class CoachReviewService:
         now_iso = datetime.utcnow().isoformat()
         # Honor user-profile allergens by elevating any matched flags
         profile = await self._fetch_profile(user_id)
-        user_allergens = {a.lower() for a in (profile.get("allergens") or [])}
+        user_allergens = {a.lower() for a in (profile.get("allergies") or [])}
         flagged = list({
             f.lower() for f in (ai.get("allergen_flags") or [])
         } | user_allergens & {(f or "").lower() for f in (ai.get("allergen_flags") or [])})
@@ -202,7 +202,7 @@ class CoachReviewService:
                 self.db.client.table("nutrition_preferences")
                 .select(
                     "target_calories,target_protein_g,target_carbs_g,target_fat_g,"
-                    "diet_type,nutrition_goal,allergens,dietary_restrictions"
+                    "diet_type,nutrition_goal,allergies,dietary_restrictions"
                 )
                 .eq("user_id", user_id).limit(1).execute()
             )

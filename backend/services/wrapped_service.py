@@ -234,7 +234,7 @@ async def _aggregate_stats(db, user_id: str, period_key: str) -> Dict[str, Any]:
 
     def _query_xp_events():
         return (
-            db.client.table("xp_events")
+            db.client.table("xp_transactions")
             .select("xp_amount")
             .eq("user_id", user_id)
             .gte("created_at", start_str)

@@ -345,26 +345,6 @@ async def get_fasting_status_for_date(user_id: str, target_date: date) -> Dict[s
         "completion_percent": record.get("completion_percentage"),
     }
 
-async def link_weight_to_fasting(user_id: str, weight_date: date, weight_log_id: str) -> Optional[str]:
-    """
-    Associate weight log with any fasting record from that date.
-    Returns the fasting_record_id if linked.
-    """
-    fasting_status = await get_fasting_status_for_date(user_id, weight_date)
-
-    if fasting_status["is_fasting_day"] and fasting_status["fasting_record_id"]:
-        db = get_supabase_db()
-
-        # Update the weight log with the fasting record link
-        db.client.table("weight_logs").update({
-            "fasting_record_id": fasting_status["fasting_record_id"],
-            "updated_at": datetime.utcnow().isoformat(),
-        }).eq("id", weight_log_id).execute()
-
-        return fasting_status["fasting_record_id"]
-
-    return None
-
 def interpret_correlation(score: Optional[float]) -> str:
     """Interpret the correlation score for users."""
     if score is None:

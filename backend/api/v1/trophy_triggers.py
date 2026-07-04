@@ -90,7 +90,7 @@ async def _send_achievement_email(db, user_id: str, achievement: Dict) -> None:
         def __init__(self, client): self.client = client
     stats = _get_user_stats(_DbWrap(db.client), user)
     email_svc = get_email_service()
-    await email_svc.send_achievement_unlocked(
+    result = await email_svc.send_achievement_unlocked(
         to_email=user["email"],
         first_name_value=first_name(user),
         stats=stats,
@@ -99,11 +99,15 @@ async def _send_achievement_email(db, user_id: str, achievement: Dict) -> None:
     )
 
     # Log send for dedup
-    db.client.table("email_send_log").insert({
+    row = {
         "user_id": user_id,
         "email_type": "achievement_unlocked",
         "metadata": {"achievement_id": achievement.get("id")},
-    }).execute()
+    }
+    # Persist the Resend id so the webhook can correlate delivery events.
+    if isinstance(result, dict) and result.get("success") and result.get("id"):
+        row["resend_email_id"] = result["id"]
+    db.client.table("email_send_log").insert(row).execute()
 
 
 async def _has_achievement(db, user_id: str, achievement_id: str) -> bool:

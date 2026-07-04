@@ -610,7 +610,7 @@ def _find_prior_import_job(*, user_id: str, file_sha256: str) -> Optional[dict]:
         # user will have <100 prior jobs so this is fine.
         result = (
             db.client.table("media_analysis_jobs")
-            .select("id, status, result, result_json, params, created_at")
+            .select("id, status, result, params, created_at")
             .eq("user_id", user_id)
             .eq("job_type", "workout_history_import")
             .eq("status", "completed")

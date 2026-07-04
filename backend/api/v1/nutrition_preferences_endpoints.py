@@ -121,7 +121,7 @@ async def list_meal_templates(
                 total_carbs_g=row.get("total_carbs_g") or 0.0,
                 total_fat_g=row.get("total_fat_g") or 0.0,
                 total_fiber_g=row.get("total_fiber_g"),
-                times_used=row.get("times_used") or 0,
+                times_used=row.get("use_count") or 0,
                 last_used_at=row.get("last_used_at"),
                 created_at=row.get("created_at"),
                 updated_at=row.get("updated_at"),
@@ -174,7 +174,7 @@ async def create_meal_template(
             "tags": request.tags,
             "is_system_template": False,  # User templates are never system templates
             **totals,
-            "times_used": 0,
+            "use_count": 0,
             "created_at": now,
             "updated_at": now,
         }).execute()
@@ -221,7 +221,7 @@ async def create_meal_template(
             total_carbs_g=row.get("total_carbs_g") or 0.0,
             total_fat_g=row.get("total_fat_g") or 0.0,
             total_fiber_g=row.get("total_fiber_g"),
-            times_used=row.get("times_used") or 0,
+            times_used=row.get("use_count") or 0,
             last_used_at=row.get("last_used_at"),
             created_at=row.get("created_at"),
             updated_at=row.get("updated_at"),
@@ -323,7 +323,7 @@ async def update_meal_template(
             total_carbs_g=row.get("total_carbs_g") or 0.0,
             total_fat_g=row.get("total_fat_g") or 0.0,
             total_fiber_g=row.get("total_fiber_g"),
-            times_used=row.get("times_used") or 0,
+            times_used=row.get("use_count") or 0,
             last_used_at=row.get("last_used_at"),
             created_at=row.get("created_at"),
             updated_at=row.get("updated_at"),
@@ -472,7 +472,7 @@ async def log_meal_template(
 
         # Update template usage stats
         db.client.table("meal_templates").update({
-            "times_used": (template.get("times_used") or 0) + 1,
+            "use_count": (template.get("use_count") or 0) + 1,
             "last_used_at": logged_at.isoformat(),
         }).eq("id", template_id).execute()
 

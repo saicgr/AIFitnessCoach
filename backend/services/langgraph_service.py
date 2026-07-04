@@ -778,13 +778,11 @@ class LangGraphCoachService:
             # Check user tier for cap (default to free tier)
             cap = DAILY_MEDIA_CAP_FREE
             try:
-                tier_result = supabase.table("user_settings").select(
-                    "subscription_tier"
-                ).eq("user_id", user_id).maybe_single().execute()
-                if tier_result and tier_result.data:
-                    tier = tier_result.data.get("subscription_tier", "free")
-                    if tier in ("pro", "premium"):
-                        cap = DAILY_MEDIA_CAP_PRO
+                sub_result = supabase.table("user_subscriptions").select(
+                    "status"
+                ).eq("user_id", user_id).in_("status", ["active", "trial"]).limit(1).execute()
+                if sub_result and sub_result.data:
+                    cap = DAILY_MEDIA_CAP_PRO
             except Exception as e:
                 logger.warning(f"Failed to fetch subscription tier: {e}", exc_info=True)
 
