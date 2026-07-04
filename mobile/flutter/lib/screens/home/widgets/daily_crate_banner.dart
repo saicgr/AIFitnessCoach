@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/xp_provider.dart';
-import '../../../data/repositories/xp_repository.dart' show DailyCratesState, CrateReward;
+import '../../../data/repositories/xp_repository.dart'
+    show DailyCratesState, CrateReward, CrateRewardResult;
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/crate_opening_play.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -288,6 +290,11 @@ class _DailyCrateSelectionSheetState
     extends ConsumerState<DailyCrateSelectionSheet> {
   bool _isLoading = false;
   String? _selectedCrate;
+  // Claim succeeded — flips the opening ceremony into its burst. The sheet
+  // pops (and the reward toast fires) from the burst-complete callback.
+  bool _claimDone = false;
+  CrateRewardResult? _pendingResult;
+  OverlayState? _pendingOverlay;
 
   void _showRewardToast(OverlayState overlay, CrateReward? reward) {
     if (reward == null) return;
@@ -321,24 +328,30 @@ class _DailyCrateSelectionSheetState
     final rootOverlay = Overlay.of(context, rootOverlay: true);
 
     try {
-      final result = await ref.read(xpProvider.notifier).claimDailyCrate(crateType);
+      // Keep the crate rattling for at least a beat even on a fast network
+      // so the ceremony doesn't burst on the same frame it appears.
+      final resultFuture =
+          ref.read(xpProvider.notifier).claimDailyCrate(crateType);
+      final settled = await Future.wait<dynamic>([
+        resultFuture,
+        Future.delayed(const Duration(milliseconds: 1000)),
+      ]);
+      final result = settled[0] as CrateRewardResult;
 
       if (result.success) {
-        HapticService.success();
-
         // Refresh the unclaimed-list FutureProvider so the home banner
         // re-evaluates count immediately. Without this the banner can
         // re-appear on the next watch with a stale count.
         ref.invalidate(unclaimedCratesProvider);
 
-        // Close bottom sheet immediately
+        // Flip the ceremony into its burst; _onBurstComplete pops the sheet
+        // and shows the reward toast once the pop lands.
         if (mounted) {
-          Navigator.of(context).pop();
-          widget.onCrateClaimed?.call();
-
-          // Show animated reward toast on the captured root overlay so it
-          // survives the bottom-sheet unmount.
-          _showRewardToast(rootOverlay, result.reward);
+          setState(() {
+            _pendingResult = result;
+            _pendingOverlay = rootOverlay;
+            _claimDone = true;
+          });
         }
       } else {
         // result.success == false: repo + notifier already debugPrinted +
@@ -380,6 +393,42 @@ class _DailyCrateSelectionSheetState
     }
   }
 
+  void _onBurstComplete() {
+    if (!mounted) return;
+    HapticService.success();
+    final overlay = _pendingOverlay;
+    final result = _pendingResult;
+    Navigator.of(context).pop();
+    widget.onCrateClaimed?.call();
+    // Show animated reward toast on the captured root overlay so it
+    // survives the bottom-sheet unmount.
+    if (overlay != null && result != null) {
+      _showRewardToast(overlay, result.reward);
+    }
+  }
+
+  Color _crateColor(String? type) {
+    switch (type) {
+      case 'activity':
+        return const Color(0xFFFFB300);
+      case 'streak':
+        return const Color(0xFFFF7043);
+      default:
+        return const Color(0xFF78909C);
+    }
+  }
+
+  String _crateIcon(String? type) {
+    switch (type) {
+      case 'activity':
+        return '⭐';
+      case 'streak':
+        return '🔥';
+      default:
+        return '📦';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -398,25 +447,42 @@ class _DailyCrateSelectionSheetState
               child: Column(
                 children: [
                   Text(
-                    AppLocalizations.of(context).dailyCrateBannerPickYourDailyCrate,
+                    _isLoading
+                        ? AppLocalizations.of(context).openAllCratesOpeningYourCrates
+                        : AppLocalizations.of(context).dailyCrateBannerPickYourDailyCrate,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(context).dailyCrateBannerChoose1CrateTo,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textSecondary,
+                  if (!_isLoading) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      AppLocalizations.of(context).dailyCrateBannerChoose1CrateTo,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: textSecondary,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
 
+            // Opening ceremony replaces the option list while the claim is
+            // in flight — the crate rattles, then bursts into the reward.
+            if (_isLoading)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: CrateOpeningPlay(
+                  color: _crateColor(_selectedCrate),
+                  icon: _crateIcon(_selectedCrate),
+                  opened: _claimDone,
+                  onOpened: _onBurstComplete,
+                ),
+              )
+            else
             // Crate options
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

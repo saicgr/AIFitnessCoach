@@ -9,6 +9,7 @@ import '../../../data/repositories/xp_repository.dart'
     show UnclaimedCrate, CrateRewardResult;
 import '../../../data/services/haptic_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../widgets/crate_opening_play.dart';
 
 /// A crate option card in the 3x3 grid.
 class _CrateOption {
@@ -91,6 +92,10 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
   final Map<String, _CrateOption> _selectedByDate = {}; // dateKey -> option
   bool _isCollecting = false;
   bool _showRewards = false;
+  // Claims settled successfully — flips the crate ceremony into its burst;
+  // the rewards summary is revealed by the burst-complete callback.
+  bool _claimsDone = false;
+  List<CrateRewardResult> _pendingResults = [];
   List<CrateRewardResult> _results = [];
   // Nullable so dispose() never throws LateInitializationError if an
   // exception is raised between super.initState() and assignment, and so
@@ -261,8 +266,14 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
           );
     }).toList();
 
-    final settled = await Future.wait<CrateRewardResult>(futures);
-    results.addAll(settled);
+    // Let the crate-shake ceremony breathe even on a fast network — the
+    // burst reads as cheap if the crate only rattles for a frame or two.
+    final settledFuture = Future.wait<CrateRewardResult>(futures);
+    await Future.wait<void>([
+      settledFuture,
+      Future.delayed(const Duration(milliseconds: 1200)),
+    ]);
+    results.addAll(await settledFuture);
 
     if (!mounted) return;
 
@@ -305,12 +316,22 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
     // ignore: discarded_futures — intentional fire-and-forget
     ref.read(xpProvider.notifier).reloadAfterClaims();
 
+    // Flip the ceremony crate into its burst; the rewards reveal fires from
+    // _onCrateBurstComplete once the pop lands.
     setState(() {
-      _results = results;
+      _pendingResults = results;
+      _claimsDone = true;
+    });
+  }
+
+  void _onCrateBurstComplete() {
+    if (!mounted) return;
+    setState(() {
+      _results = _pendingResults;
       _showRewards = true;
       _isCollecting = false;
+      _claimsDone = false;
     });
-
     _confettiController?.play();
     _rewardRevealController?.forward();
     HapticService.success();
@@ -349,7 +370,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                     Text(
                       _showRewards
                           ? AppLocalizations.of(context)!.openAllCratesUd83cUdf89Rewards
-                          : (autoFlow
+                          : (autoFlow || _isCollecting || _claimsDone
                               ? AppLocalizations.of(context)!.openAllCratesOpeningYourCrates
                               : AppLocalizations.of(context)!.openAllCratesOpenYourCrates),
                       style: TextStyle(
@@ -359,7 +380,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                       ),
                     ),
                     const SizedBox(height: 6),
-                    if (!_showRewards && !autoFlow)
+                    if (!_showRewards && !autoFlow && !_isCollecting && !_claimsDone)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -391,35 +412,26 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
 
               if (_showRewards)
                 _buildRewardsSummary(textPrimary, textSecondary)
-              else if (autoFlow)
+              else if (autoFlow || _isCollecting || _claimsDone)
+                // The crate-opening ceremony IS the loading state: the crate
+                // rattles while claims are in flight, bursts when they land.
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 56),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(
-                        width: 36,
-                        height: 36,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 3,
-                          color: Color(0xFFFFB300),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: CrateOpeningPlay(
+                    color: const Color(0xFFFFB300),
+                    opened: _claimsDone,
+                    onOpened: _onCrateBurstComplete,
+                    caption:
                         '$_requiredSelections ${_requiredSelections == 1 ? 'crate' : 'crates'}',
-                        style: TextStyle(fontSize: 14, color: textSecondary),
-                      ),
-                    ],
                   ),
                 )
               else
                 _buildCrateGrid(isDark, textPrimary, textSecondary),
 
-              // Action button — hidden during the autoFlow loader since the
-              // user has nothing to confirm; Done shows up automatically
-              // once `_showRewards` flips on.
-              if (!autoFlow)
+              // Action button — hidden during the autoFlow loader and the
+              // opening ceremony since the user has nothing to confirm; Done
+              // shows up automatically once `_showRewards` flips on.
+              if (!autoFlow && !_isCollecting && !_claimsDone)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                 child: SizedBox(
