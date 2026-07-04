@@ -53,7 +53,11 @@ SELECT_RE = re.compile(
     re.DOTALL,
 )
 
-SKIP_DIRS = {".venv", "venv", "node_modules", "__pycache__", "migrations", "scripts"}
+SKIP_DIRS = {"venv", "node_modules", "__pycache__", "migrations", "scripts"}
+
+
+def _skip(parts) -> bool:
+    return any(d in SKIP_DIRS or d.startswith(".venv") for d in parts)
 
 
 def _strip_embedded(sel: str) -> str:
@@ -94,8 +98,13 @@ def _columns_from_select(sel_blob: str):
         yield tok
 
 
-def _table_of_call(node):
-    """Walk a builder chain (ast.Call/Attribute) back to .table("name")."""
+def _table_of_call(node, env=None):
+    """Walk a builder chain (ast.Call/Attribute) back to .table("name").
+
+    `env` maps variable names to table names (from `q = db.table("x")...`
+    assignments) so chains built incrementally through a variable —
+    `query = query.order(...)` — still resolve.
+    """
     import ast
     cur = node
     for _ in range(40):  # chains are finite; guard against cycles
@@ -112,9 +121,105 @@ def _table_of_call(node):
             cur = f
         elif isinstance(cur, ast.Attribute):
             cur = cur.value
+        elif isinstance(cur, ast.Name) and env is not None:
+            return env.get(cur.id)
         else:
             return None
     return None
+
+
+_AMBIGUOUS = object()
+
+
+def _var_table_env(tree):
+    """Map variable names to the table their query chain was built from.
+
+    Module-wide, conservative: a name assigned from chains of two DIFFERENT
+    tables anywhere in the file becomes ambiguous and is dropped (no false
+    positives from reused builder variable names).
+    """
+    import ast
+    env: dict = {}
+    for _ in range(3):  # fixpoint: `q = q.order(...)` needs env from pass 1
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+                continue
+            tgt = node.targets[0]
+            if not isinstance(tgt, ast.Name):
+                continue
+            table = _table_of_call(node.value, {
+                k: v for k, v in env.items() if v is not _AMBIGUOUS
+            })
+            if not table:
+                continue
+            prev = env.get(tgt.id)
+            if prev is not None and prev is not _AMBIGUOUS and prev != table:
+                env[tgt.id] = _AMBIGUOUS
+            elif prev is not _AMBIGUOUS:
+                env[tgt.id] = table
+    return {k: v for k, v in env.items() if v is not _AMBIGUOUS}
+
+
+# PostgREST filter/modifier methods whose FIRST arg is a column name.
+_FILTER_METHODS = {
+    "eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike",
+    "is_", "in_", "contains", "contained_by", "order",
+}
+
+_IDENT_RE = None  # compiled lazily in _filter_violations
+
+
+def _filter_violations(src: str, path, schema: dict):
+    """AST pass: column args of .eq/.lt/.order/… on chains with a known table.
+
+    Catches drift with NO select string at all — e.g. the retention cron's
+    `.table("push_nudge_log").delete().lt("created_at", …)` (42703) and
+    plain literal `.table("media_jobs")` where the table itself never
+    existed (PGRST205). Dotted/expression args (embedded-resource filters,
+    JSON operators) are skipped.
+    """
+    import ast
+    global _IDENT_RE
+    if _IDENT_RE is None:
+        _IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*$")
+    out = []
+    seen_unknown_tables = set()
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return out
+    env = _var_table_env(tree)
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)):
+            continue
+        # Unknown literal table name → the table itself is drift.
+        if (
+            node.func.attr == "table"
+            and node.args
+            and isinstance(node.args[0], ast.Constant)
+            and isinstance(node.args[0].value, str)
+        ):
+            tname = node.args[0].value
+            if tname not in schema and tname not in seen_unknown_tables:
+                seen_unknown_tables.add(tname)
+                out.append((str(path), node.lineno, tname, "<table does not exist>"))
+            continue
+        if node.func.attr not in _FILTER_METHODS or not node.args:
+            continue
+        arg = node.args[0]
+        if not (isinstance(arg, ast.Constant) and isinstance(arg.value, str)):
+            continue
+        col = arg.value
+        if not _IDENT_RE.fullmatch(col):
+            continue  # dotted embedded-resource / JSON-operator paths
+        table = _table_of_call(node.func.value, env)
+        if not table:
+            continue
+        real = schema.get(table)
+        if real is None or col in real:
+            continue
+        out.append((str(path), node.lineno, table, f"{col} [filter]"))
+    return out
 
 
 def _write_violations(src: str, path, schema: dict):
@@ -163,7 +268,7 @@ def _write_violations(src: str, path, schema: dict):
 def audit(schema: dict):
     violations = []
     for py in sorted(BACKEND.rglob("*.py")):
-        if any(d in py.parts for d in SKIP_DIRS):
+        if _skip(py.parts):
             continue
         try:
             src = py.read_text()
@@ -181,6 +286,7 @@ def audit(schema: dict):
                 if col not in real_set:
                     violations.append((str(rel), line, table, col))
         violations.extend(_write_violations(src, rel, schema))
+        violations.extend(_filter_violations(src, rel, schema))
     return violations
 
 
@@ -193,10 +299,20 @@ def refresh():
     import psycopg2  # noqa: deferred import — only needed for --refresh
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
+    # Tables + views come from information_schema; MATERIALIZED views do not
+    # appear there (exercise_library_cleaned, leaderboard_*) — union pg_class.
     cur.execute(
         "SELECT table_name, json_agg(column_name ORDER BY column_name) "
         "FROM information_schema.columns WHERE table_schema='public' "
-        "GROUP BY table_name"
+        "GROUP BY table_name "
+        "UNION ALL "
+        "SELECT c.relname, json_agg(a.attname ORDER BY a.attname) "
+        "FROM pg_class c "
+        "JOIN pg_namespace n ON n.oid = c.relnamespace "
+        "JOIN pg_attribute a ON a.attrelid = c.oid "
+        "WHERE n.nspname='public' AND c.relkind='m' "
+        "AND a.attnum > 0 AND NOT a.attisdropped "
+        "GROUP BY c.relname"
     )
     snap = {t: cols for t, cols in cur.fetchall()}
     SNAPSHOT.write_text(json.dumps(snap, indent=1, sort_keys=True))
