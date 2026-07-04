@@ -8,6 +8,18 @@ logger = logging.getLogger(__name__)
 # Constant mirrored from NotificationService to avoid circular import
 TYPE_AI_COACH = "ai_coach"
 
+# Tokens FCM rejected as unregistered, remembered for the process lifetime.
+# The users.fcm_token row is cleared on first rejection, but callers (e.g. a
+# cron sweep) often hold user rows fetched BEFORE the clear — without this
+# memo the same dead token gets re-personalized (Gemini spend) and re-sent
+# (FCM 404) once per job type in the same run.
+_DEAD_FCM_TOKENS: set = set()
+
+
+def is_dead_fcm_token(token: Optional[str]) -> bool:
+    """True if FCM already rejected this token as unregistered this process."""
+    return bool(token) and token in _DEAD_FCM_TOKENS
+
 
 class NotificationServicePart2:
     """Second half of NotificationService methods. Use as mixin."""
@@ -118,6 +130,9 @@ class NotificationServicePart2:
         Returns:
             True if sent successfully, False otherwise
         """
+        if fcm_token in _DEAD_FCM_TOKENS:
+            logger.debug(f"Skipping send to known-dead FCM token {fcm_token[:20]}...")
+            return False
         try:
             from firebase_admin import messaging
 
@@ -188,7 +203,8 @@ class NotificationServicePart2:
             return True
 
         except messaging.UnregisteredError:
-            logger.warning(f"⚠️ FCM token is no longer valid: {fcm_token[:20]}...", exc_info=True)
+            logger.warning(f"⚠️ FCM token is no longer valid: {fcm_token[:20]}...")
+            _DEAD_FCM_TOKENS.add(fcm_token)
             # Clear the dead token from users.fcm_token so we stop retrying it.
             try:
                 from core.supabase_db import get_supabase_db

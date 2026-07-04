@@ -779,6 +779,13 @@ async def _send_nudge(
     if not prefs.get("push_notifications_enabled", True):
         return False
 
+    # Token already rejected by FCM earlier in this run (the user row was
+    # fetched before the DB clear) — skip before spending Gemini on a message
+    # that can't be delivered.
+    from services.notification_service_helpers_part2 import is_dead_fcm_token
+    if is_dead_fcm_token(user.get("fcm_token")):
+        return False
+
     # 0. Global suppression gate (vacation + comeback + dormancy band). Checked
     # BEFORE dedup so suppressed nudges don't burn dedup slots or daily quota.
     # dormancy_band tapers volume for quiet users (routine reminders die past
