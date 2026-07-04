@@ -111,19 +111,26 @@ class PreAuthQuizBackupService {
       if (quizData.pastBlockers != null && quizData.pastBlockers!.isNotEmpty) {
         payload['past_blockers'] = quizData.pastBlockers;
       }
-      // Fitbod-style available weights: expand the per-equipment
-      // {min,max,increment} specs into the {id: [sorted weights]} shape the
-      // backend generator snaps prescribed set weights to.
+      // Fitbod-style available weights → the {id: [sorted weights]} shape the
+      // backend generator snaps prescribed set weights to. Exact-inventory
+      // specs carry an explicit `weights` list (dumbbells/kettlebells); the
+      // legacy/barbell {min,max,increment} range specs are expanded.
       final ew = quizData.equipmentWeights;
       if (ew != null && ew.isNotEmpty) {
         final expanded = <String, List<double>>{};
         ew.forEach((id, spec) {
           if (spec is Map) {
-            final list = EquipmentItem.expandRange(
-              (spec['min'] as num?)?.toDouble(),
-              (spec['max'] as num?)?.toDouble(),
-              (spec['increment'] as num?)?.toDouble(),
-            );
+            final explicit = (spec['weights'] as List?)
+                ?.whereType<num>()
+                .map((e) => e.toDouble())
+                .toList();
+            final list = (explicit != null && explicit.isNotEmpty)
+                ? (explicit..sort())
+                : EquipmentItem.expandRange(
+                    (spec['min'] as num?)?.toDouble(),
+                    (spec['max'] as num?)?.toDouble(),
+                    (spec['increment'] as num?)?.toDouble(),
+                  );
             if (list.isNotEmpty) expanded[id] = list;
           }
         });

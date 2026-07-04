@@ -11,6 +11,7 @@ import '../../core/providers/user_provider.dart';
 import '../../models/equipment_item.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/equipment_weight_sheet.dart';
+import '../workout/widgets/edit_weights_sheet.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/posthog_service.dart';
 import 'onboarding_experiments.dart';
@@ -983,20 +984,32 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     );
   }
 
-  /// Per-equipment "5–50 lb" summary for the row subtitle.
+  /// Per-equipment "5–50 lb" summary for the row subtitle. Exact-inventory
+  /// specs get a count ("6 weights · 10–50 lb", or just "35 lb" for one);
+  /// legacy range specs keep the plain min–max form.
   Map<String, String> _buildEquipmentWeightSummaries() {
     final out = <String, String>{};
     _equipmentWeights.forEach((id, spec) {
-      if (spec is Map) {
-        final min = (spec['min'] as num?)?.toDouble();
-        final max = (spec['max'] as num?)?.toDouble();
-        final unit = spec['unit'] as String? ?? 'lb';
-        if (min != null && max != null) {
-          String f(double v) => v.truncateToDouble() == v
-              ? v.toStringAsFixed(0)
-              : v.toStringAsFixed(1);
-          out[id] = '${f(min)}–${f(max)} $unit';
-        }
+      if (spec is! Map) return;
+      final unit = spec['unit'] as String? ?? 'lb';
+      String f(double v) => v.truncateToDouble() == v
+          ? v.toStringAsFixed(0)
+          : v.toStringAsFixed(1);
+      final weights = (spec['weights'] as List?)
+          ?.whereType<num>()
+          .map((e) => e.toDouble())
+          .toList();
+      if (weights != null && weights.isNotEmpty) {
+        weights.sort();
+        out[id] = weights.length == 1
+            ? '${f(weights.first)} $unit'
+            : '${weights.length} weights · ${f(weights.first)}–${f(weights.last)} $unit';
+        return;
+      }
+      final min = (spec['min'] as num?)?.toDouble();
+      final max = (spec['max'] as num?)?.toDouble();
+      if (min != null && max != null) {
+        out[id] = '${f(min)}–${f(max)} $unit';
       }
     });
     return out;
@@ -1014,29 +1027,110 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       'barbell': 'eq_barbell',
     };
     final workoutUnit = ref.read(workoutWeightUnitProvider);
-    final spec = await showEquipmentWeightSheet(
-      context,
-      equipmentId: id,
-      label: labels[id] ?? id,
-      lineIcon: icons[id] ?? 'eq_dumbbell',
-      initial: _equipmentWeights[id] as Map<String, dynamic>?,
-      defaultMetric: workoutUnit == 'kg',
-    );
-    if (spec == null || !mounted) return;
-    setState(() {
-      _equipmentWeights[id] = spec;
-      // Derive single/multiple count from the set (>1 distinct weight ⇒ pair).
-      final weights = EquipmentItem.expandRange(
-        (spec['min'] as num).toDouble(),
-        (spec['max'] as num).toDouble(),
-        (spec['increment'] as num).toDouble(),
+
+    // Barbell = total loadable weight (bar + plates), a genuine continuous
+    // range — the min/max/jump sheet is the right model and matches how the
+    // backend snaps barbell lifts. Discrete owned collections (dumbbells /
+    // kettlebells) instead get the exact rack-tile inventory editor below —
+    // the same one used by home + workout equipment editing — so odd sets
+    // (a lone 35 lb bell, a 10 + a 12) round-trip faithfully.
+    if (id == 'barbell') {
+      final spec = await showEquipmentWeightSheet(
+        context,
+        equipmentId: id,
+        label: labels[id] ?? id,
+        lineIcon: icons[id] ?? 'eq_dumbbell',
+        initial: _equipmentWeights[id] as Map<String, dynamic>?,
+        defaultMetric: workoutUnit == 'kg',
       );
-      if (id == 'dumbbells') _dumbbellCount = weights.length > 1 ? 2 : 1;
-      if (id == 'kettlebell') _kettlebellCount = weights.length > 1 ? 2 : 1;
-    });
-    await ref
-        .read(preAuthQuizProvider.notifier)
-        .setEquipmentWeights(id, spec);
+      if (spec == null || !mounted) return;
+      setState(() => _equipmentWeights[id] = spec);
+      await ref
+          .read(preAuthQuizProvider.notifier)
+          .setEquipmentWeights(id, spec);
+      return;
+    }
+
+    final stored = _equipmentWeights[id];
+    final storedUnit = stored is Map ? stored['unit'] as String? : null;
+    final metric = storedUnit != null ? storedUnit == 'kg' : workoutUnit == 'kg';
+    // Plural catalog name so the sheet resolves the kettlebell weight table
+    // and inventory mode (the quiz id is singular).
+    final item = EquipmentItem(
+      name: id == 'kettlebell' ? 'kettlebells' : id,
+      displayName: labels[id] ?? id,
+      weightUnit: metric ? 'kg' : 'lbs',
+      weightInventory: _weightInventoryFromSpec(stored),
+    );
+    await showGlassSheet(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: EditWeightsSheet(
+          equipment: item,
+          seedEnvironment: _selectedEnvironment ?? 'home',
+          // Onboarding speaks orange, not the in-app cyan.
+          accentColor: AppColors.orange,
+          onSave: (updated) {
+            final weights = updated.weightInventory.keys.toList()..sort();
+            // Keep min/max alongside the exact list so legacy readers of the
+            // old {min,max,increment} spec still work.
+            final newSpec = <String, dynamic>{
+              'weights': weights,
+              'inventory': {
+                for (final e in updated.weightInventory.entries)
+                  e.key.toString(): e.value,
+              },
+              'unit': updated.weightUnit == 'kg' ? 'kg' : 'lb',
+              if (weights.isNotEmpty) 'min': weights.first,
+              if (weights.isNotEmpty) 'max': weights.last,
+            };
+            // Count = total units owned (sum of per-weight quantities), NOT
+            // distinct weights: 2×12 lb is a pair (double-KB work is fair
+            // game), while a lone 35 lb bell must stay single-friendly-only.
+            // kettlebell_count/dumbbell_count feed the RAG's
+            // single_*_friendly exercise gate (exercise_rag/service.py).
+            final units =
+                updated.weightInventory.values.fold<int>(0, (s, q) => s + q);
+            setState(() {
+              _equipmentWeights[id] = newSpec;
+              if (id == 'dumbbells') {
+                _dumbbellCount = units > 1 ? 2 : 1;
+              }
+              if (id == 'kettlebell') {
+                _kettlebellCount = units > 1 ? 2 : 1;
+              }
+            });
+            ref
+                .read(preAuthQuizProvider.notifier)
+                .setEquipmentWeights(id, weights.isEmpty ? null : newSpec);
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Rebuild an exact weight→qty inventory from a stored spec. Understands
+  /// both the current shape ({weights, inventory, unit}) and the legacy
+  /// {min,max,increment} range spec (expanded, qty 1 — the sheet normalizes
+  /// to its mode default).
+  Map<double, int> _weightInventoryFromSpec(dynamic spec) {
+    if (spec is! Map) return {};
+    final inv = spec['inventory'];
+    if (inv is Map) {
+      final out = <double, int>{};
+      inv.forEach((k, v) {
+        final w = double.tryParse(k.toString());
+        final q = v is num ? v.toInt() : 0;
+        if (w != null && q > 0) out[w] = q;
+      });
+      if (out.isNotEmpty) return out;
+    }
+    final list = EquipmentItem.expandRange(
+      (spec['min'] as num?)?.toDouble(),
+      (spec['max'] as num?)?.toDouble(),
+      (spec['increment'] as num?)?.toDouble(),
+    );
+    return {for (final w in list) w: 1};
   }
 
   Widget _buildTrainingPreferences() {

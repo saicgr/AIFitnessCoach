@@ -108,10 +108,22 @@ class EditWeightsSheet extends ConsumerStatefulWidget {
   final EquipmentItem equipment;
   final void Function(EquipmentItem updated) onSave;
 
+  /// Overrides the active-gym-profile environment used for the
+  /// empty-inventory seed. Pre-auth onboarding passes the quiz's selected
+  /// environment here since no gym profile exists yet (the provider would
+  /// otherwise default to commercial_gym and over-seed home/hotel users).
+  final String? seedEnvironment;
+
+  /// Overrides the default cyan accent so the sheet blends into surfaces
+  /// with a different accent language (onboarding passes its orange).
+  final Color? accentColor;
+
   const EditWeightsSheet({
     super.key,
     required this.equipment,
     required this.onSave,
+    this.seedEnvironment,
+    this.accentColor,
   });
 
   @override
@@ -194,7 +206,8 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
     if (_weightInventory.isEmpty &&
         widget.equipment.weights.isEmpty &&
         !_isStackMachine) {
-      final env = ref.read(activeProfileEnvironmentProvider);
+      final String env = widget.seedEnvironment ??
+          ref.read(activeProfileEnvironmentProvider);
       _weightInventory = _seedForEnvironment(env);
     }
 
@@ -206,10 +219,8 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
   void _normalizeInventoryForMode() {
     switch (_mode) {
       case _InventoryMode.singles:
-        // Any qty > 0 collapses to 1.
-        for (final w in _weightInventory.keys.toList()) {
-          if ((_weightInventory[w] ?? 0) > 0) _weightInventory[w] = 1;
-        }
+        // Quantities are legitimate for singles (two 10 lb kettlebells for
+        // double-KB work) — preserve whatever the user set via long-press.
         break;
       case _InventoryMode.pairs:
         // Treat any qty in [1..3] as the "you own this size" signal and
@@ -458,9 +469,11 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
     setState(() {
       // Custom weight defaults to the mode's canonical qty. Adding an
       // already-present weight bumps via the cycle (so plates can stack
-      // up across multiple +Add presses).
+      // up across multiple +Add presses; singles gain one duplicate,
+      // e.g. a second 10 lb kettlebell).
       final existing = _weightInventory[value] ?? 0;
-      _weightInventory[value] = existing == 0 ? _modeDefaultQty : existing + 2;
+      final bump = _mode == _InventoryMode.singles ? 1 : 2;
+      _weightInventory[value] = existing == 0 ? _modeDefaultQty : existing + bump;
     });
     _customWeightController.clear();
   }
@@ -582,32 +595,20 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.surface;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor =
+        widget.accentColor ?? (isDark ? AppColors.cyan : AppColorsLight.cyan);
 
-    return Container(
+    // No own surface, radius, or drag handle — every call site wraps this
+    // sheet in a GlassSheet, which supplies the glass background AND the
+    // handle. Painting an opaque Container here covered the glass and
+    // produced a second handle bar.
+    return ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -872,9 +873,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                     equipmentName: widget.equipment.name,
                     mode: _mode,
                     onTap: () => _cycleQuantity(weight),
-                    onLongPress: _mode == _InventoryMode.singles
-                        ? null
-                        : () => _setQuantity(weight),
+                    onLongPress: () => _setQuantity(weight),
                     formatWeight: _formatWeight,
                   );
                 }).toList(),
@@ -924,14 +923,11 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
           ),
           ], // end of !_isStackMachine branch
 
-          // Save button
+          // Save button. Keyboard + home-indicator insets are handled by the
+          // wrapping GlassSheet — adding them here too double-padded and left
+          // a dead gap under the button.
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              0,
-              16,
-              MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 16,
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -987,7 +983,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
       case _InventoryMode.pairs:
         return 'Tap a weight to add a pair; tap again to remove. Long-press to set extras.';
       case _InventoryMode.singles:
-        return 'Tap a weight to add or remove it from your set.';
+        return 'Tap a weight to add or remove it. Long-press to set how many you own.';
       case _InventoryMode.count:
         return 'Tap to cycle how many you own per side (0→2→4→6). Long-press for custom count.';
     }
@@ -998,7 +994,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
       case _InventoryMode.pairs:
         return 'Tap to add a pair • Long-press for extras';
       case _InventoryMode.singles:
-        return 'Tap to add • Tap again to remove';
+        return 'Tap to add • Long-press for quantity';
       case _InventoryMode.count:
         return 'Tap to cycle • Long-press to set';
       case _InventoryMode.stack:
@@ -1269,7 +1265,8 @@ class _DumbbellRackTile extends StatelessWidget {
   });
 
   /// Per-mode badge: pairs show "×N pairs" only if N > 2 (extras),
-  /// count shows "+N" per side, singles shows nothing.
+  /// count shows "+N" per side, singles show "×N" only for duplicates
+  /// (two 10 lb kettlebells).
   String? _badgeText() {
     switch (mode) {
       case _InventoryMode.pairs:
@@ -1278,6 +1275,7 @@ class _DumbbellRackTile extends StatelessWidget {
       case _InventoryMode.count:
         return quantity > 0 ? '+$quantity' : null;
       case _InventoryMode.singles:
+        return quantity >= 2 ? '×$quantity' : null;
       case _InventoryMode.stack:
         return null;
     }
