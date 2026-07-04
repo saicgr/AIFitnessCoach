@@ -320,13 +320,13 @@ class WorkoutHistoryImporter:
         try:
             result = (
                 db.client.table("users")
-                .select("first_name")
+                .select("name")
                 .eq("id", str(user_id))
                 .limit(1)
                 .execute()
             )
             if result.data:
-                fn = result.data[0].get("first_name")
+                fn = ((result.data[0].get("name") or "").split() or [None])[0]
                 if fn:
                     return fn
         except Exception:

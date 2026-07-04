@@ -589,17 +589,15 @@ def load_user_first_name(user_id: UUID, *, db=None) -> str:
     try:
         result = (
             db.client.table("users")
-            .select("first_name, name")
+            .select("name")
             .eq("id", str(user_id))
             .limit(1)
             .execute()
         )
         if result.data:
-            row = result.data[0]
-            for key in ("first_name", "name"):
-                v = row.get(key)
-                if v:
-                    return str(v)
+            v = result.data[0].get("name")
+            if v:
+                return str(v)
     except Exception:
         pass
     return "Athlete"

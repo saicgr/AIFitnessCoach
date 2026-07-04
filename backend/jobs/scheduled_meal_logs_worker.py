@@ -222,12 +222,12 @@ def _user_first_name(db, user_id: str) -> str:
     try:
         res = (
             db.client.table("users")
-            .select("first_name,display_name,email")
+            .select("name,email")
             .eq("id", user_id).limit(1).execute()
         )
         if res.data:
             row = res.data[0]
-            name = row.get("first_name") or row.get("display_name")
+            name = ((row.get("name") or "").split() or [None])[0]
             if name:
                 return name
             email = row.get("email") or ""

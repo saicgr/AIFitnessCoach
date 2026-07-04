@@ -58,16 +58,14 @@ def _resolve_first_name(db, user_id: str) -> Optional[str]:
     try:
         row = (
             db.client.table("users")
-            .select("first_name,full_name,email")
+            .select("name,email")
             .eq("id", user_id)
             .single()
             .execute()
         )
         d = row.data or {}
-        if d.get("first_name"):
-            return d["first_name"]
-        if d.get("full_name"):
-            return d["full_name"].split(" ")[0]
+        if d.get("name"):
+            return d["name"].split(" ")[0]
         if d.get("email"):
             return d["email"].split("@")[0]
     except Exception:

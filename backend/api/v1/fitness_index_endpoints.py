@@ -30,12 +30,11 @@ router = APIRouter(prefix="/fitness-index", tags=["Fitness Index"])
 def _first_name(db, user_id: str) -> str:
     try:
         u = db.client.table("users").select(
-            "first_name, name, email"
+            "name, email"
         ).eq("id", user_id).maybe_single().execute()
         if u and u.data:
             return (
-                u.data.get("first_name")
-                or (u.data.get("name") or "").split(" ")[0]
+                (u.data.get("name") or "").split(" ")[0]
                 or (u.data.get("email") or "").split("@")[0]
                 or "there"
             ).strip() or "there"

@@ -151,9 +151,10 @@ async def get_weekly_dashboard(
         user_data = user_resp
         target_per_week = 3  # default
         if user_data:
+            prefs = user_data.get("preferences") or {}
             target_per_week = (
-                user_data.get("workout_days_per_week")
-                or user_data.get("preferences", {}).get("workout_days_per_week")
+                prefs.get("workout_days_per_week")
+                or len(prefs.get("workout_days") or [])
                 or 3
             )
 
@@ -229,8 +230,10 @@ async def _query_async(
 async def _query_user(db, user_id: str):
     """Get user profile data."""
     try:
+        # workout_days_per_week is not a users column — it lives in the
+        # preferences JSONB (alongside workout_days).
         response = db.client.table("users").select(
-            "workout_days_per_week, preferences"
+            "preferences"
         ).eq("id", user_id).limit(1).execute()
         return response.data[0] if response.data else {}
     except Exception as e:

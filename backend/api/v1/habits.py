@@ -112,6 +112,9 @@ async def get_habits(
         if category:
             query = query.eq("category", category)
 
+        # User-set order first (reorder endpoint writes sort_order, mig 2309);
+        # un-ordered habits fall back to creation order.
+        query = query.order("sort_order", desc=False, nullsfirst=False)
         query = query.order("created_at", desc=False)
 
         result = (await run_db(lambda: query.execute()))

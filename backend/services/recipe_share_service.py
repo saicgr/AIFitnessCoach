@@ -320,17 +320,20 @@ class RecipeShareService:
         if not user_id:
             return None
         try:
+            # sharing_anonymous is not a users column — it lives (if set) in
+            # the preferences JSONB. display_name/first_name never existed;
+            # the real column is `name`.
             res = (
                 self.db.client.table("users")
-                .select("display_name,first_name,sharing_anonymous")
+                .select("name,preferences")
                 .eq("id", user_id).limit(1).execute()
             )
             if not res.data:
                 return None
             row = res.data[0]
-            if row.get("sharing_anonymous"):
+            if (row.get("preferences") or {}).get("sharing_anonymous"):
                 return "Anonymous chef"
-            return row.get("display_name") or row.get("first_name")
+            return ((row.get("name") or "").split() or [None])[0]
         except Exception:
             return None
 

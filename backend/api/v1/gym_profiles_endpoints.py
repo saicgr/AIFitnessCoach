@@ -928,13 +928,15 @@ async def activate_travel_mode(
         if active_result.data and (active_result.data[0].get("workout_days") or []):
             travel_days = list(active_result.data[0]["workout_days"])
         else:
+            # workout_days is not a users column — it lives in preferences JSONB
             user_result = supabase.client.table("users") \
-                .select("workout_days") \
+                .select("preferences") \
                 .eq("id", user_id) \
                 .single() \
                 .execute()
-            if user_result.data and (user_result.data.get("workout_days") or []):
-                travel_days = list(user_result.data["workout_days"])
+            user_days = ((user_result.data or {}).get("preferences") or {}).get("workout_days") or []
+            if user_days:
+                travel_days = list(user_days)
         if not travel_days:
             travel_days = list(_TRAVEL_DEFAULT_DAYS)
 

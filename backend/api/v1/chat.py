@@ -386,7 +386,7 @@ async def send_coach_reply_push(
             try:
                 return (
                     db.client.table("users")
-                    .select("name, display_name, email")
+                    .select("name, email")
                     .eq("id", user_id)
                     .limit(1)
                     .execute()

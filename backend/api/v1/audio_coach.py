@@ -46,7 +46,7 @@ class MarkListenedRequest(BaseModel):
 def _collect_user_context(sb, user_id: str) -> Dict[str, Any]:
     """Pack the last-24 h user signals the Gemini script prompt needs."""
     user = sb.client.table("users").select(
-        "first_name, name, email, last_workout_date, days_since_last_workout, "
+        "name, email, last_workout_date, days_since_last_workout, "
         "in_comeback_mode"
     ).eq("id", user_id).maybe_single().execute()
     user_row = (user.data if user else {}) or {}
@@ -65,7 +65,7 @@ def _collect_user_context(sb, user_id: str) -> Dict[str, Any]:
     today_workout = None
     try:
         tw = sb.client.table("workouts").select(
-            "name, workout_type, duration_minutes"
+            "name, workout_type:type, duration_minutes"
         ).eq("user_id", user_id).eq(
             "scheduled_date", date.today().isoformat()
         ).limit(1).execute()
@@ -74,8 +74,7 @@ def _collect_user_context(sb, user_id: str) -> Dict[str, Any]:
     except Exception:
         pass
 
-    first_name = (user_row.get("first_name")
-                  or (user_row.get("name") or "").split(" ")[0]
+    first_name = ((user_row.get("name") or "").split(" ")[0]
                   or (user_row.get("email") or "").split("@")[0])
     return {
         "first_name": first_name,

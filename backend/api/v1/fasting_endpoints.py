@@ -224,9 +224,10 @@ async def check_safety_eligibility(user_id: str, current_user: dict = Depends(ge
     try:
         db = get_supabase_db()
 
-        # Get user profile
+        # Get user profile. health_conditions is NOT a users column — the
+        # onboarding pipeline stores it (when captured) in preferences JSONB.
         result = db.client.table("users").select(
-            "age, gender, weight_kg, height_cm, health_conditions, goals"
+            "age, gender, weight_kg, height_cm, goals, preferences"
         ).eq("id", user_id).execute()
 
         if not result.data:
@@ -258,8 +259,8 @@ async def check_safety_eligibility(user_id: str, current_user: dict = Depends(ge
             if bmi < 18.5:
                 blocked_reasons.append("Fasting is not recommended for those who are underweight (BMI < 18.5).")
 
-        # Check health conditions (if stored)
-        conditions = user.get("health_conditions") or []
+        # Check health conditions (if stored — lives in preferences JSONB)
+        conditions = (user.get("preferences") or {}).get("health_conditions") or []
         if isinstance(conditions, str):
             conditions = [conditions]
 

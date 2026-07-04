@@ -290,9 +290,10 @@ def assemble_user_state(user_id: str, supabase, force: bool = False) -> UserStat
 
     # ---- Goal (from users table) ------------------------------------------
     try:
-        res = supabase.table("users").select("goal,goal_type").eq("id", user_id).limit(1).execute()
+        res = supabase.table("users").select("primary_goal,goals").eq("id", user_id).limit(1).execute()
         if res.data:
-            state.goal = res.data[0].get("goal") or res.data[0].get("goal_type")
+            goals = res.data[0].get("goals") or []
+            state.goal = res.data[0].get("primary_goal") or (goals[0] if goals else None)
     except Exception as e:  # pragma: no cover
         logger.debug(f"[user_state] users.goal skipped: {e}")
 

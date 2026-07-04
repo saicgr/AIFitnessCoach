@@ -284,7 +284,8 @@ async def calculate_nutrition_score(
 
     # Get user's nutrition targets
     user_response = (await run_db(lambda: db.client.table("users").select(
-        "id, daily_calories, protein_g, carbs_g, fat_g, fiber_g"
+        "id, daily_calorie_target, daily_protein_target_g, daily_carbs_target_g, "
+        "daily_fat_target_g, target_fiber_g"
     ).eq("id", request.user_id).maybe_single().execute()))
 
     if not user_response or not user_response.data:
@@ -292,11 +293,11 @@ async def calculate_nutrition_score(
 
     user = user_response.data
     targets = NutritionTargets(
-        calories=int(user.get("daily_calories", 2000)),
-        protein_g=int(user.get("protein_g", 150)),
-        carbs_g=int(user.get("carbs_g", 200)),
-        fat_g=int(user.get("fat_g", 65)),
-        fiber_g=int(user.get("fiber_g", 30)),
+        calories=int(user.get("daily_calorie_target") or 2000),
+        protein_g=int(user.get("daily_protein_target_g") or 150),
+        carbs_g=int(user.get("daily_carbs_target_g") or 200),
+        fat_g=int(user.get("daily_fat_target_g") or 65),
+        fiber_g=int(user.get("target_fiber_g") or 30),
     )
 
     # Get food logs for the week
@@ -940,7 +941,7 @@ async def generate_ai_readiness_insight(
 
         # Get user profile
         user_response = (await run_db(lambda: db.client.table("users").select(
-            "display_name, fitness_level, goals"
+            "name, fitness_level, goals"
         ).eq("id", user_id).maybe_single().execute()))
 
         user_profile = {}
@@ -948,7 +949,7 @@ async def generate_ai_readiness_insight(
             u = user_response.data
             user_profile = {
                 "id": user_id,
-                "name": u.get("display_name"),
+                "name": u.get("name"),
                 "fitness_level": u.get("fitness_level", "intermediate"),
                 "goals": u.get("goals", ["general fitness"]),
             }
