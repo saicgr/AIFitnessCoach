@@ -1550,18 +1550,29 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 4),
+          // Kicker carries the trial mechanics; the masthead leads with the
+          // real hook (nothing due today) instead of restating "free trial".
           Text(
-            AppLocalizations.of(
-              context,
-            ).paywallPricingStartYour7Day.toUpperCase(),
+            '7 DAYS · \$0.00 TODAY',
+            style: TextStyle(
+              fontFamily: 'Barlow Condensed',
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 2.5,
+              color: _paywallAccent,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'PAY NOTHING\nTODAY',
             style: TextStyle(
               fontFamily: 'Anton',
-              fontSize: 30,
-              height: 1.05,
+              fontSize: 34,
+              height: 1.02,
               color: colors.textPrimary,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // ⚡ N× FASTER comparison hero — VALUE-FIRST placement: the derived
           // per-user multiplier hits immediately after the headline, before
@@ -1588,88 +1599,94 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             const SizedBox(height: 14),
           ],
 
-          const SizedBox(height: 2),
-          _TimelineNode(
-            icon: Icons.lock_open_rounded,
-            iconBg: _paywallAccent.withValues(alpha: 0.15),
-            iconColor: _paywallAccent,
-            title: AppLocalizations.of(context).todayScoreCardToday,
-            subtitle: AppLocalizations.of(
-              context,
-            ).paywallPricingUnlockUnlimitedAiWorkouts,
-            isFirst: true,
-            isLast: false,
-            colors: colors,
+          // Trial mechanics as a compressed rail card — same three moments
+          // as the old roomy node list at half the height, dates in mono.
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: colors.cardBorder),
+            ),
+            child: Column(
+              children: [
+                _RailStep(
+                  filled: true,
+                  title: 'Today — everything unlocks',
+                  detail: 'Workouts, food scan, form check, coach.',
+                  colors: colors,
+                  accent: _paywallAccent,
+                ),
+                _RailStep(
+                  filled: false,
+                  title: 'Day 5 — we remind you',
+                  monoTag: _reminderDateString().toUpperCase(),
+                  colors: colors,
+                  accent: _paywallAccent,
+                ),
+                _RailStep(
+                  filled: false,
+                  isLast: true,
+                  title: 'Day 7 — first charge',
+                  monoTag:
+                      '${_trialEndDateString().toUpperCase()} · CANCEL ANYTIME BEFORE',
+                  colors: colors,
+                  accent: _paywallAccent,
+                ),
+              ],
+            ),
           ),
-          _TimelineNode(
-            icon: Icons.notifications_rounded,
-            iconBg: _paywallAccent.withValues(alpha: 0.15),
-            iconColor: _paywallAccent,
-            title: AppLocalizations.of(context).paywallPricingIn5DaysReminder,
-            subtitle:
-                "We'll send you a reminder on ${_reminderDateString()} that your trial is ending soon.",
-            isFirst: false,
-            isLast: false,
-            colors: colors,
-          ),
-          _TimelineNode(
-            icon: Icons.workspace_premium_rounded,
-            iconBg: _paywallAccent.withValues(alpha: 0.15),
-            iconColor: _paywallAccent,
-            title: AppLocalizations.of(context).paywallPricingIn7DaysBilling,
-            subtitle:
-                "You'll be charged on ${_trialEndDateString()} unless you cancel anytime before.",
-            isFirst: false,
-            isLast: true,
-            colors: colors,
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // Plan selection is driven entirely by the two cards below — no
           // trial TOGGLE. Apple's Jan 2026 Guideline 3.1.2c enforcement
           // rejects a switch that enables/disables a free trial (this is
           // what Cal AI was pulled for in Apr 2026), independent of the copy
           // around it. The yearly card carries the trial terms compliantly.
+          // Yearly is the HERO tile (highest LTV, research-default); monthly
+          // demotes to a quiet selectable row below.
+          // COMPLIANCE (Apple pulled Cal AI for the inverse, Apr 2026): the
+          // hero's Anton headline is the REAL billed amount ($59.99 /yr);
+          // the per-month equivalence is the small subtitle — never the
+          // other way around.
+          _YearlyHeroTile(
+            price: yearlyTotal,
+            perMonth: yearlyMonthly,
+            ribbon: '7 DAYS FREE · SAVE $savings%',
+            isSelected: _selectedBillingCycle == 'yearly',
+            onTap: () => _selectBillingCycle('yearly'),
+            colors: colors,
+            accent: _paywallAccent,
+          ),
+          const SizedBox(height: 8),
+          // COMPLIANCE: the row's price stays the REAL renewal price
+          // ($7.99/mo); the "$1 first month" intro is the small ribbon,
+          // never the other way around. ⚠️ Ribbon defaults ON for pre-launch
+          // VISUAL PREVIEW (flag `paywall_monthly_intro`, default TRUE —
+          // see paywall_experiments.dart). The `onboarding_intro_monthly`
+          // SKU does NOT exist yet, so checkout still charges $7.99 —
+          // build + wire the SKU before selling to real users.
+          _MonthlyRowTile(
+            title: AppLocalizations.of(context).xpGoalsMonthly,
+            price: monthlyPrice,
+            ribbon: _experiments.monthlyIntro ? 'FIRST MONTH \$1' : null,
+            isSelected: _selectedBillingCycle == 'monthly',
+            onTap: () => _selectBillingCycle('monthly'),
+            colors: colors,
+            accent: _paywallAccent,
+          ),
+          const SizedBox(height: 12),
+          // Trust strip — answers the three objections at a glance; the full
+          // legally-required disclosure follows below (Play policy requires
+          // the complete cancel/renewal terms adjacent to the CTA, so the
+          // chips supplement it, never replace it).
           Row(
             children: [
-              Expanded(
-                child: _PlanTile(
-                  title: AppLocalizations.of(context).xpGoalsMonthly,
-                  // COMPLIANCE: the headline stays the REAL renewal price
-                  // ($7.99/mo); the "$1 first month" intro is the small
-                  // ribbon, never the other way around (Cal AI was pulled for
-                  // the inverse). ⚠️ Ribbon now defaults ON for pre-launch
-                  // VISUAL PREVIEW (flag `paywall_monthly_intro`, default TRUE
-                  // — see paywall_experiments.dart). The `onboarding_intro_monthly`
-                  // SKU does NOT exist yet, so checkout still charges $7.99 —
-                  // build + wire the SKU before selling to real users.
-                  price: monthlyPrice,
-                  unit: '/mo',
-                  isSelected: _selectedBillingCycle == 'monthly',
-                  onTap: () => _selectBillingCycle('monthly'),
-                  colors: colors,
-                  ribbon: _experiments.monthlyIntro ? 'FIRST MONTH \$1' : null,
-                  anchorPrice: null,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _PlanTile(
-                  title: AppLocalizations.of(context).paywallPricingYearly,
-                  // COMPLIANCE (Apple pulled Cal AI for the inverse, Apr
-                  // 2026): the headline price on the plan card is the REAL
-                  // billed amount per year; the per-month math is the
-                  // small subtitle, never the other way around.
-                  price: yearlyTotal,
-                  unit: '/yr',
-                  anchorPrice: null,
-                  isSelected: _selectedBillingCycle == 'yearly',
-                  onTap: () => _selectBillingCycle('yearly'),
-                  ribbon: '7 DAYS FREE · SAVE $savings%',
-                  subtitle: '= $yearlyMonthly/mo',
-                  colors: colors,
-                ),
-              ),
+              _TrustChip(label: 'CANCEL ANYTIME', colors: colors),
+              const SizedBox(width: 6),
+              _TrustChip(label: 'DAY-5 REMINDER', colors: colors),
+              const SizedBox(width: 6),
+              _TrustChip(label: '\$0 TODAY', colors: colors),
             ],
           ),
           const SizedBox(height: 8),
@@ -2653,83 +2670,210 @@ class _WorkoutMockCard extends StatelessWidget {
 /// Vertical timeline row (icon · connector · title + subtitle).
 /// Renders one node. The connector to the next node is drawn inline so
 /// users perceive the three steps as a continuous progression.
-class _TimelineNode extends StatelessWidget {
-  final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final bool isFirst;
+/// One row of the compressed trial-mechanics rail card: node dot + title,
+/// optional detail line, optional Space Mono date tag. [filled] marks the
+/// "you are here" node (accent, plus glyph); later steps are hollow.
+class _RailStep extends StatelessWidget {
+  final bool filled;
   final bool isLast;
+  final String title;
+  final String? detail;
+  final String? monoTag;
   final ThemeColors colors;
+  final Color accent;
 
-  const _TimelineNode({
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
+  const _RailStep({
+    required this.filled,
+    this.isLast = false,
     required this.title,
-    required this.subtitle,
-    required this.isFirst,
-    required this.isLast,
+    this.detail,
+    this.monoTag,
     required this.colors,
+    required this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
-    return IntrinsicHeight(
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Rail: icon disc + connector line.
-          Column(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 20, color: iconColor),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 2),
-                    color: colors.cardBorder,
-                  ),
-                ),
-            ],
+          Container(
+            width: 20,
+            height: 20,
+            margin: const EdgeInsetsDirectional.only(end: 12, top: 1),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: filled ? accent : colors.surface,
+              border: filled
+                  ? null
+                  : Border.all(color: colors.cardBorder, width: 2),
+            ),
+            child: filled
+                ? Icon(Icons.add_rounded, size: 13, color: colors.background)
+                : null,
           ),
-          const SizedBox(width: 14),
           Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: colors.textPrimary,
-                      letterSpacing: -0.2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: filled
+                              ? colors.textPrimary
+                              : colors.textSecondary,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
+                    if (monoTag != null) ...[
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          monoTag!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Space Mono',
+                            fontSize: 9.5,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (detail != null)
                   Text(
-                    subtitle,
+                    detail!,
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
                       height: 1.35,
-                      color: colors.textSecondary,
+                      color: colors.textMuted,
                     ),
                   ),
-                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The yearly HERO plan tile: accent-bordered card with a floating savings
+/// ribbon and the REAL billed amount as an Anton headline (compliance: the
+/// per-month equivalence is the small subtitle, never the headline).
+class _YearlyHeroTile extends StatelessWidget {
+  final String price;
+  final String perMonth;
+  final String ribbon;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final ThemeColors colors;
+  final Color accent;
+
+  const _YearlyHeroTile({
+    required this.price,
+    required this.perMonth,
+    required this.ribbon,
+    required this.isSelected,
+    required this.onTap,
+    required this.colors,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? accent.withValues(alpha: 0.07)
+                  : colors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected ? accent : colors.cardBorder,
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      price,
+                      style: TextStyle(
+                        fontFamily: 'Anton',
+                        fontSize: 34,
+                        height: 1,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '/ year',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '= $perMonth/MO',
+                      style: TextStyle(
+                        fontFamily: 'Space Mono',
+                        fontSize: 11,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Yearly — 7 days free, then billed once a year.',
+                  style: TextStyle(fontSize: 12.5, color: colors.textMuted),
+                ),
+              ],
+            ),
+          ),
+          PositionedDirectional(
+            top: 0,
+            start: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                ribbon,
+                style: const TextStyle(
+                  fontFamily: 'Barlow Condensed',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                  color: Color(0xFF160B03),
+                ),
               ),
             ),
           ),
@@ -2739,167 +2883,118 @@ class _TimelineNode extends StatelessWidget {
   }
 }
 
-/// Selectable plan tile used on page 3 (Monthly · Yearly). Selected
-/// state shows a filled radio + accent border; ribbon promotes the
-/// trial-bundled yearly offer.
-class _PlanTile extends StatelessWidget {
+/// The demoted monthly plan: a quiet single-row selectable tile. The price
+/// shown is the REAL renewal price (compliance).
+class _MonthlyRowTile extends StatelessWidget {
   final String title;
   final String price;
-  final String unit;
-  final String? anchorPrice;
-  final String? subtitle;
   final String? ribbon;
   final bool isSelected;
   final VoidCallback onTap;
   final ThemeColors colors;
+  final Color accent;
 
-  const _PlanTile({
+  const _MonthlyRowTile({
     required this.title,
     required this.price,
-    required this.unit,
+    this.ribbon,
     required this.isSelected,
     required this.onTap,
     required this.colors,
-    this.anchorPrice,
-    this.subtitle,
-    this.ribbon,
+    required this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected ? accent.withValues(alpha: 0.07) : null,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? _paywallAccent : colors.cardBorder,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? accent : colors.cardBorder,
+            width: isSelected ? 1.5 : 1,
           ),
         ),
-        child: Stack(
-          clipBehavior: Clip.none,
+        child: Row(
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isSelected ? _paywallAccent : Colors.transparent,
-                        border: Border.all(
-                          color: isSelected
-                              ? _paywallAccent
-                              : colors.textMuted.withValues(alpha: 0.5),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: isSelected
-                          ? const Icon(
-                              Icons.check_rounded,
-                              size: 14,
-                              color: Colors.white,
-                            )
-                          : null,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                if (anchorPrice != null) ...[
-                  Text(
-                    anchorPrice!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textMuted,
-                      decoration: TextDecoration.lineThrough,
-                      decorationThickness: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                ],
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      price,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: colors.textPrimary,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 3),
-                      child: Text(
-                        unit,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textMuted,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle!,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: colors.textMuted,
-                    ),
-                  ),
-                ],
-              ],
+            Text(
+              title,
+              style: TextStyle(fontSize: 14, color: colors.textSecondary),
             ),
-            if (ribbon != null && ribbon!.isNotEmpty)
-              Positioned(
-                top: -22,
-                left: -2,
-                right: -2,
-                child: Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _paywallAccent,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(10),
-                      topRight: Radius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    ribbon!,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
+            if (ribbon != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: accent.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  ribbon!,
+                  style: TextStyle(
+                    fontFamily: 'Barlow Condensed',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                    color: accent,
                   ),
                 ),
               ),
+            ],
+            const Spacer(),
+            Text(
+              price,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: colors.textPrimary,
+              ),
+            ),
+            Text(
+              ' /mo',
+              style: TextStyle(fontSize: 12, color: colors.textMuted),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One chip of the trust strip (CANCEL ANYTIME · DAY-5 REMINDER · $0 TODAY).
+class _TrustChip extends StatelessWidget {
+  final String label;
+  final ThemeColors colors;
+
+  const _TrustChip({required this.label, required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: colors.cardBorder),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          style: TextStyle(
+            fontFamily: 'Barlow Condensed',
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: colors.textMuted,
+          ),
         ),
       ),
     );

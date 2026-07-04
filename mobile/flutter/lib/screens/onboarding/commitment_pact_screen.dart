@@ -304,12 +304,23 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     // body scrolls. The previous Flexible-around-the-day-list approach
     // crushed the list into a tiny scroll strip whenever the rest of the
     // content ran tall — a full-height scroll beats a squeezed window.
+    // Session map: per-day short labels (UPPER/LOWER/…) under the selected
+    // dots, so the week reads as a plan rather than anonymous dots.
+    final sessionShortByDay = <int, String>{
+      for (var i = 0; i < selected.length; i++)
+        selected[i]: _sessionShort(labels[i % labels.length]),
+    };
+
     return SingleChildScrollView(
       physics: const ClampingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        _WeekDotStrip(selectedDays: selected).animate().fadeIn(delay: 380.ms),
+        _WeekDotStrip(
+          selectedDays: selected,
+          sessionShortByDay: sessionShortByDay,
+          firstSessionDay: firstDay,
+        ).animate().fadeIn(delay: 380.ms),
         const SizedBox(height: 14),
         _FirstSessionCard(
           dayLabel: dayShort[firstDay].toUpperCase(),
@@ -319,8 +330,8 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
           equipmentLine: equipmentLine,
           exerciseNames: _exercisesFor(firstLabel),
         ).animate().fadeIn(delay: 480.ms).slideY(begin: 0.05),
-        if (restWorkoutDays.isNotEmpty) ...[
-          const SizedBox(height: 14),
+        if (restWorkoutDays.isNotEmpty || unselectedDays.isNotEmpty) ...[
+          const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsetsDirectional.only(start: 4, bottom: 6),
             child: Text(
@@ -333,76 +344,126 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
               ),
             ),
           ),
-          // Plain rows — the page-level scroll handles 6–7-day plans, so no
-          // inner list viewport is needed (a nested one just fragments the
-          // scroll into a tiny window).
-          for (var i = 0; i < restWorkoutDays.length; i++) ...[
-            if (i > 0) const SizedBox(height: 6),
-            _OtherDayRow(
-                  day: dayShort[restWorkoutDays[i]], // 0-indexed (Mon=0..Sun=6)
-                  label: labels[(i + 1) % labels.length],
-                  duration: durationLabel(),
-                )
-                .animate(delay: (650 + i * 80).ms)
-                .fadeIn()
-                .slideX(begin: 0.04, duration: 300.ms),
-          ],
-        ],
-        if (unselectedDays.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          _RestPill(
-            days: unselectedDays.map((d) => dayShort[d]).toList(),
-          ).animate(delay: 1050.ms).fadeIn().slideY(begin: 0.05),
-        ],
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.onboardingAccent.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.onboardingAccent.withValues(alpha: 0.18),
+          // One hairline-divided card instead of a stack of separate cards —
+          // the rest of the week reads as a single schedule. The page-level
+          // scroll handles 6–7-day plans; no inner viewport.
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.cardBorder
+                    : AppColorsLight.cardBorder,
+              ),
+            ),
+            child: Column(
+              children: [
+                for (var i = 0; i < restWorkoutDays.length; i++)
+                  _ScheduleRow(
+                        dayLabel: dayShort[restWorkoutDays[i]].toUpperCase(),
+                        title: labels[(i + 1) % labels.length],
+                        trailing: durationLabel(),
+                        showDivider: i < restWorkoutDays.length - 1 ||
+                            unselectedDays.isNotEmpty,
+                      )
+                      .animate(delay: (650 + i * 80).ms)
+                      .fadeIn()
+                      .slideX(begin: 0.04, duration: 300.ms),
+                if (unselectedDays.isNotEmpty)
+                  _ScheduleRow(
+                    icon: Icons.self_improvement_rounded,
+                    title: 'Recovery',
+                    trailing: unselectedDays
+                        .map((d) => dayShort[d].toUpperCase())
+                        .join(' · '),
+                    muted: true,
+                    showDivider: false,
+                  ).animate(delay: 1050.ms).fadeIn(),
+              ],
             ),
           ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.trending_up_rounded,
-                size: 18,
-                color: AppColors.onboardingAccent,
+        ],
+        const SizedBox(height: 12),
+        // Outcome banner — the emotional peak. When we have a real weight
+        // goal, the delta leads as an Anton stat ("–25 KG") with "this is
+        // week 1 of that number"; otherwise it degrades to the plain
+        // goal-anchored line.
+        Builder(builder: (context) {
+          final stat = _bigOutcomeStat(quiz);
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.onboardingAccent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.onboardingAccent.withValues(alpha: 0.18),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _outcomeLine(quiz),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        height: 1.3,
-                        color: textSecondary,
-                      ),
+            ),
+            child: Row(
+              children: [
+                if (stat != null) ...[
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: stat.$1),
+                        TextSpan(
+                          text: ' ${stat.$2}',
+                          style: const TextStyle(fontSize: 17),
+                        ),
+                      ],
                     ),
-                    if (feasibility != null) ...[
-                      const SizedBox(height: 2),
+                    style: const TextStyle(
+                      fontFamily: 'Anton',
+                      fontSize: 32,
+                      height: 1,
+                      color: AppColors.onboardingAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                ] else ...[
+                  Icon(
+                    Icons.trending_up_rounded,
+                    size: 18,
+                    color: AppColors.onboardingAccent,
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        feasibility,
+                        stat != null
+                            ? 'This is week 1 of that number.'
+                            : _outcomeLine(quiz),
                         style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          height: 1.25,
-                          color: textMuted,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          height: 1.3,
+                          color: textSecondary,
                         ),
                       ),
+                      if (feasibility != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          feasibility,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            height: 1.25,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.04),
+              ],
+            ),
+          );
+        }).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.04),
         ],
       ),
     );
@@ -534,6 +595,38 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
   /// quiz, surface the delta ("Week 1 of your 12-lb plan"); otherwise
   /// fall back to a still-personalized goal-keyword phrase. Never
   /// references Gemini-generated content.
+  /// Short per-day session tag for the week session map (UPPER / LOWER /
+  /// PUSH / …). Derived from the same split labels the rows use.
+  static String _sessionShort(String label) {
+    final l = label.toLowerCase();
+    if (l.contains('upper')) return 'UPPER';
+    if (l.contains('lower')) return 'LOWER';
+    if (l.contains('push')) return 'PUSH';
+    if (l.contains('pull')) return 'PULL';
+    if (l.contains('leg')) return 'LEGS';
+    if (l.contains('full')) return 'FULL';
+    if (l.contains('cardio') || l.contains('condition')) return 'CARDIO';
+    if (l.contains('core')) return 'CORE';
+    final w = label.split(' ').first.toUpperCase();
+    return w.length > 6 ? w.substring(0, 6) : w;
+  }
+
+  /// The big Anton outcome stat ("–25", "KG") when a real weight goal
+  /// exists — mirrors [_outcomeLine]'s math (incl. the lb conversion).
+  /// Null for maintenance / missing data so the banner degrades to text.
+  (String, String)? _bigOutcomeStat(PreAuthQuizData quiz) {
+    final cur = quiz.weightKg;
+    final goal = quiz.goalWeightKg;
+    if (cur == null || goal == null || cur <= 0 || goal <= 0) return null;
+    final delta = (goal - cur).abs();
+    if (delta < 0.5) return null;
+    final useMetric = quiz.useMetricUnits;
+    final amt = useMetric ? delta.round() : (delta * 2.20462).round();
+    if (amt <= 0) return null;
+    final sign = goal < cur ? '–' : '+';
+    return ('$sign$amt', useMetric ? 'KG' : 'LB');
+  }
+
   String _outcomeLine(PreAuthQuizData quiz) {
     final cur = quiz.weightKg;
     final goal = quiz.goalWeightKg;
@@ -768,9 +861,18 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
 /// rest. Today's day gets a thin ring so the user can locate themselves
 /// in the week without the rest-day rows from the original layout
 /// dominating the page.
+/// The week as a SESSION MAP: a connecting rail through the dots, tiny
+/// session tags (UPPER / LOWER / …) under the selected days, and a glow ring
+/// on the first-session day — the week reads as a plan, not anonymous dots.
 class _WeekDotStrip extends StatelessWidget {
   final List<int> selectedDays;
-  const _WeekDotStrip({required this.selectedDays});
+  final Map<int, String> sessionShortByDay;
+  final int? firstSessionDay;
+  const _WeekDotStrip({
+    required this.selectedDays,
+    this.sessionShortByDay = const {},
+    this.firstSessionDay,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -778,13 +880,15 @@ class _WeekDotStrip extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final dotEmpty = (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
         .withValues(alpha: 0.25);
+    final railColor = (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
+        .withValues(alpha: 0.8);
     // DateTime.weekday is 1..7 (Mon=1..Sun=7). Convert to our 0-indexed
     // convention (Mon=0..Sun=6) to match selectedDays from the quiz.
     final today = DateTime.now().weekday - 1; // 0..6
     const initials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
       decoration: BoxDecoration(
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
         borderRadius: BorderRadius.circular(14),
@@ -792,53 +896,175 @@ class _WeekDotStrip extends StatelessWidget {
           color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
         ),
       ),
+      child: Stack(
+        children: [
+          // Connecting rail behind the dot row (label row is 11px text +
+          // 8px gap, so the dots' vertical center sits at ~26px).
+          Positioned(
+            left: 14,
+            right: 14,
+            top: 26,
+            child: Container(height: 1, color: railColor),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(7, (i) {
+              final dayIdx = i; // 0=Mon, 6=Sun (matches selectedDays)
+              final isWorkout = selectedDays.contains(dayIdx);
+              final isToday = dayIdx == today;
+              final isFirst = dayIdx == firstSessionDay;
+              final tag = sessionShortByDay[dayIdx];
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    initials[i],
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                      color: isToday ? AppColors.onboardingAccent : textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isWorkout
+                          ? AppColors.onboardingAccent
+                          : (isDark
+                                ? AppColors.elevated
+                                : AppColorsLight.elevated),
+                      border: Border.all(
+                        color: isWorkout
+                            ? AppColors.onboardingAccent
+                            : dotEmpty,
+                        width: 1.5,
+                      ),
+                      boxShadow: isFirst
+                          ? [
+                              BoxShadow(
+                                color: AppColors.onboardingAccent.withValues(
+                                  alpha: 0.35,
+                                ),
+                                blurRadius: 0,
+                                spreadRadius: 4,
+                              ),
+                            ]
+                          : null,
+                    ),
+                  ),
+                  SizedBox(height: tag != null ? 5 : 3),
+                  // Session tag under selected days; a dot for today keeps
+                  // the row height stable without a tag.
+                  if (tag != null)
+                    Text(
+                      tag,
+                      style: const TextStyle(
+                        fontFamily: 'Space Mono',
+                        fontSize: 7.5,
+                        color: AppColors.onboardingAccent,
+                      ),
+                    )
+                  else if (isToday)
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.onboardingAccent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 10),
+                ],
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One row of the merged "rest of the week" schedule card — day tag (or
+/// icon) + session title + right-aligned mono trailing, hairline-divided.
+class _ScheduleRow extends StatelessWidget {
+  final String? dayLabel;
+  final IconData? icon;
+  final String title;
+  final String trailing;
+  final bool muted;
+  final bool showDivider;
+
+  const _ScheduleRow({
+    this.dayLabel,
+    this.icon,
+    required this.title,
+    required this.trailing,
+    this.muted = false,
+    required this.showDivider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final divider = (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
+        .withValues(alpha: 0.7);
+
+    return Container(
+      decoration: BoxDecoration(
+        border: showDivider
+            ? Border(bottom: BorderSide(color: divider))
+            : null,
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 11),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(7, (i) {
-          final dayIdx = i; // 0=Mon, 6=Sun (matches selectedDays)
-          final isWorkout = selectedDays.contains(dayIdx);
-          final isToday = dayIdx == today;
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                initials[i],
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.0,
-                  color: isToday ? AppColors.onboardingAccent : textMuted,
+        children: [
+          if (dayLabel != null)
+            SizedBox(
+              width: 38,
+              child: Text(
+                dayLabel!,
+                style: const TextStyle(
+                  fontFamily: 'Barlow Condensed',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                  color: AppColors.onboardingAccent,
                 ),
               ),
-              const SizedBox(height: 8),
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isWorkout
-                      ? AppColors.onboardingAccent
-                      : Colors.transparent,
-                  border: Border.all(
-                    color: isWorkout ? AppColors.onboardingAccent : dotEmpty,
-                    width: 1.5,
-                  ),
-                ),
+            )
+          else if (icon != null)
+            SizedBox(
+              width: 38,
+              child: Icon(icon, size: 15, color: textMuted),
+            ),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: muted ? FontWeight.w500 : FontWeight.w600,
+                color: muted ? textMuted : textPrimary,
               ),
-              if (isToday) ...[
-                const SizedBox(height: 6),
-                Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.onboardingAccent,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ],
-            ],
-          );
-        }),
+            ),
+          ),
+          Text(
+            trailing.toUpperCase(),
+            style: TextStyle(
+              fontFamily: 'Space Mono',
+              fontSize: 10,
+              color: textMuted,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -880,7 +1106,7 @@ class _FirstSessionCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.onboardingAccent.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
@@ -896,86 +1122,136 @@ class _FirstSessionCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.onboardingAccent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  AppLocalizations.of(
-                    context,
-                  )!.commitmentPactScreenFirstSession(dayLabel),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // Workout name + a tasteful horizontal row of exercise thumbnails.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  workoutName,
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                    color: textPrimary,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-              ),
-              if (thumbs.isNotEmpty) ...[
-                const SizedBox(width: 10),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+      // Accent side-rail marks the hero of the schedule.
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 4, color: AppColors.onboardingAccent),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 16, 13),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (var i = 0; i < thumbs.length; i++)
-                      Padding(
-                        padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
-                        child: ExerciseImage(
-                          exerciseName: thumbs[i],
-                          width: 44,
-                          height: 44,
-                          borderRadius: 10,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.onboardingAccent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.commitmentPactScreenFirstSession(dayLabel),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
-                      ),
+                        const Spacer(),
+                        // Duration as telemetry, not another icon row.
+                        Text(
+                          duration.toUpperCase(),
+                          style: TextStyle(
+                            fontFamily: 'Space Mono',
+                            fontSize: 10.5,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    // Workout name + a row of exercise thumbnails.
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            workoutName,
+                            style: TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                              color: textPrimary,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                        ),
+                        if (thumbs.isNotEmpty) ...[
+                          const SizedBox(width: 10),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (var i = 0; i < thumbs.length; i++)
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    left: i == 0 ? 0 : 6,
+                                  ),
+                                  child: ExerciseImage(
+                                    exerciseName: thumbs[i],
+                                    width: 44,
+                                    height: 44,
+                                    borderRadius: 10,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 9),
+                    // Muscles as chips — scannable, not a text run.
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final m in muscles)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: AppColors.onboardingAccent.withValues(
+                                  alpha: 0.35,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              m.toUpperCase(),
+                              style: TextStyle(
+                                fontFamily: 'Barlow Condensed',
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                                color: textSecondary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 9),
+                    _CardMetaRow(
+                      icon: Icons.inventory_2_outlined,
+                      text: equipmentLine,
+                      color: textSecondary,
+                    ),
                   ],
                 ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          _CardMetaRow(
-            icon: Icons.schedule_rounded,
-            text: duration,
-            color: textSecondary,
-          ),
-          const SizedBox(height: 4),
-          _CardMetaRow(
-            icon: Icons.fitness_center_rounded,
-            text: muscles.join(' · '),
-            color: textSecondary,
-          ),
-          const SizedBox(height: 4),
-          _CardMetaRow(
-            icon: Icons.inventory_2_outlined,
-            text: equipmentLine,
-            color: textSecondary,
-          ),
-        ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1008,115 +1284,6 @@ class _CardMetaRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Compact row for the user's other workout days. Quieter than the
-/// expanded "first session" card so the visual hierarchy makes the
-/// upcoming day the obvious focal point.
-class _OtherDayRow extends StatelessWidget {
-  final String day;
-  final String label;
-  final String duration;
-  const _OtherDayRow({
-    required this.day,
-    required this.label,
-    required this.duration,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-        ),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 40,
-            child: Text(
-              day,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: AppColors.onboardingAccent,
-                letterSpacing: 1.0,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-              ),
-            ),
-          ),
-          Text(
-            duration,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: textMuted,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Single muted pill listing every rest day. Replaces the old N-row
-/// repetition where each rest day got its own card and consumed the
-/// same vertical space as a real workout — visual noise that made the
-/// page read as 50% recovery.
-class _RestPill extends StatelessWidget {
-  final List<String> days; // ['Tue','Thu','Sun']
-  const _RestPill({required this.days});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: (isDark ? AppColors.elevated : AppColorsLight.elevated)
-            .withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.spa_outlined, size: 16, color: textMuted),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Recovery: ${days.join(' · ')}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
