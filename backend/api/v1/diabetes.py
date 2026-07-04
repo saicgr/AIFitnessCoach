@@ -448,6 +448,56 @@ def calculate_cv(readings: List[float]) -> Optional[float]:
     return (std / mean) * 100
 
 
+# Row→response mappers: DB columns were renamed (value_mg_dl/recorded_at/
+# source_device/value) but the API response field names are unchanged, so map
+# explicitly rather than splatting the raw row into the model.
+def _glucose_row_to_response(r: dict) -> "GlucoseReadingResponse":
+    return GlucoseReadingResponse(
+        id=r["id"],
+        user_id=r["user_id"],
+        glucose_mg_dl=r["value_mg_dl"],
+        reading_type=r.get("reading_type", "manual"),
+        meal_context=r.get("meal_context"),
+        notes=r.get("notes"),
+        timestamp=r["recorded_at"],
+        source=r.get("source_device") or "manual",
+        created_at=r["created_at"],
+    )
+
+
+_INSULIN_ENUM_TO_TYPE = {
+    "rapid_acting": "rapid",
+    "short_acting": "short",
+    "long_acting": "long",
+}
+
+
+def _insulin_row_to_response(r: dict) -> "InsulinDoseResponse":
+    return InsulinDoseResponse(
+        id=r["id"],
+        user_id=r["user_id"],
+        insulin_type=_INSULIN_ENUM_TO_TYPE.get(r["insulin_type"], r["insulin_type"]),
+        insulin_name=r.get("insulin_name"),
+        units=r["units"],
+        dose_type=r.get("dose_type", "meal"),
+        correction_included=r.get("correction_included", False),
+        timestamp=r["recorded_at"],
+        created_at=r["created_at"],
+    )
+
+
+def _a1c_row_to_response(r: dict) -> "A1cResultResponse":
+    return A1cResultResponse(
+        id=r["id"],
+        user_id=r["user_id"],
+        a1c_value=r["value"],
+        test_date=r["test_date"],
+        estimated_avg_glucose=r.get("estimated_avg_glucose"),
+        source=r.get("source", "lab"),
+        created_at=r["created_at"],
+    )
+
+
 # ============================================================
 # Profile Endpoints
 # ============================================================
@@ -555,12 +605,12 @@ async def log_glucose_reading(request: LogGlucoseReadingRequest, current_user: d
     reading_data = {
         "id": str(uuid.uuid4()),
         "user_id": request.user_id,
-        "glucose_mg_dl": request.glucose_mg_dl,
+        "value_mg_dl": request.glucose_mg_dl,
         "reading_type": request.reading_type,
         "meal_context": request.meal_context,
         "notes": request.notes,
-        "timestamp": request.timestamp or datetime.utcnow().isoformat(),
-        "source": request.source,
+        "recorded_at": request.timestamp or datetime.utcnow().isoformat(),
+        "source_device": request.source,
         "device_id": request.device_id,
     }
 
@@ -580,7 +630,7 @@ async def log_glucose_reading(request: LogGlucoseReadingRequest, current_user: d
         }
     )
 
-    return GlucoseReadingResponse(**result.data[0])
+    return _glucose_row_to_response(result.data[0])
 
 
 @router.get("/glucose/{user_id}/history", response_model=GlucoseHistoryResponse)
@@ -607,14 +657,14 @@ async def get_glucose_history(
     )
 
     if from_date:
-        query = query.gte("timestamp", from_date)
+        query = query.gte("recorded_at", from_date)
     if to_date:
-        query = query.lte("timestamp", to_date + "T23:59:59")
+        query = query.lte("recorded_at", to_date + "T23:59:59")
 
-    query = query.order("timestamp", desc=True).range(offset, offset + limit - 1)
+    query = query.order("recorded_at", desc=True).range(offset, offset + limit - 1)
     result = query.execute()
 
-    readings = [GlucoseReadingResponse(**r) for r in (result.data or [])]
+    readings = [_glucose_row_to_response(r) for r in (result.data or [])]
     total_count = result.count or len(readings)
 
     return GlucoseHistoryResponse(
@@ -634,12 +684,12 @@ async def get_latest_reading(user_id: str, current_user: dict = Depends(get_curr
 
     result = db.client.table("glucose_readings").select("*").eq(
         "user_id", user_id
-    ).order("timestamp", desc=True).limit(1).execute()
+    ).order("recorded_at", desc=True).limit(1).execute()
 
     if not result.data:
         return None
 
-    return GlucoseReadingResponse(**result.data[0])
+    return _glucose_row_to_response(result.data[0])
 
 
 @router.get("/glucose/{user_id}/summary", response_model=GlucoseSummaryResponse)
@@ -676,11 +726,11 @@ async def get_glucose_summary(
         else:
             end_date = target_date.replace(month=target_date.month + 1, day=1)
 
-    result = db.client.table("glucose_readings").select("glucose_mg_dl").eq(
+    result = db.client.table("glucose_readings").select("value_mg_dl").eq(
         "user_id", user_id
-    ).gte("timestamp", start_date.isoformat()).lt("timestamp", end_date.isoformat()).execute()
+    ).gte("recorded_at", start_date.isoformat()).lt("recorded_at", end_date.isoformat()).execute()
 
-    readings = [r["glucose_mg_dl"] for r in (result.data or [])]
+    readings = [r["value_mg_dl"] for r in (result.data or [])]
 
     if not readings:
         return GlucoseSummaryResponse(
@@ -763,10 +813,11 @@ async def sync_from_health_connect(request: HealthConnectSyncRequest, current_us
         reading_data = {
             "id": str(uuid.uuid4()),
             "user_id": request.user_id,
-            "glucose_mg_dl": reading.get("glucose_mg_dl"),
+            "value_mg_dl": reading.get("glucose_mg_dl"),
             "reading_type": "cgm",
-            "timestamp": reading.get("timestamp"),
-            "source": "health_connect",
+            "recorded_at": reading.get("timestamp"),
+            "source_device": "health_connect",
+            "synced_from_health_connect": True,
         }
 
         try:
@@ -788,6 +839,15 @@ async def sync_from_health_connect(request: HealthConnectSyncRequest, current_us
 # Insulin Tracking Endpoints
 # ============================================================
 
+# DB enum insulin_type wants rapid_acting/short_acting/long_acting/…; the API
+# contract (and app) sends the short names documented on the request model.
+_INSULIN_TYPE_TO_ENUM = {
+    "rapid": "rapid_acting",
+    "short": "short_acting",
+    "long": "long_acting",
+}
+
+
 @router.post("/insulin", response_model=InsulinDoseResponse)
 async def log_insulin_dose(request: LogInsulinDoseRequest, current_user: dict = Depends(get_current_user)):
     """Log an insulin dose."""
@@ -798,7 +858,7 @@ async def log_insulin_dose(request: LogInsulinDoseRequest, current_user: dict = 
     dose_data = {
         "id": str(uuid.uuid4()),
         "user_id": request.user_id,
-        "insulin_type": request.insulin_type,
+        "insulin_type": _INSULIN_TYPE_TO_ENUM.get(request.insulin_type, request.insulin_type),
         "insulin_name": request.insulin_name,
         "units": request.units,
         "dose_type": request.dose_type,
@@ -806,7 +866,7 @@ async def log_insulin_dose(request: LogInsulinDoseRequest, current_user: dict = 
         "carbs_covered": request.carbs_covered,
         "glucose_before": request.glucose_before,
         "correction_included": request.correction_included,
-        "timestamp": request.timestamp or datetime.utcnow().isoformat(),
+        "recorded_at": request.timestamp or datetime.utcnow().isoformat(),
         "notes": request.notes,
     }
 
@@ -821,7 +881,7 @@ async def log_insulin_dose(request: LogInsulinDoseRequest, current_user: dict = 
         {"units": request.units, "insulin_type": request.insulin_type}
     )
 
-    return InsulinDoseResponse(**result.data[0])
+    return _insulin_row_to_response(result.data[0])
 
 
 @router.get("/insulin/{user_id}/daily", response_model=DailyInsulinTotalResponse)
@@ -841,7 +901,7 @@ async def get_daily_insulin_total(user_id: str, date: Optional[str] = None, curr
 
     result = db.client.table("insulin_doses").select("units,insulin_type").eq(
         "user_id", user_id
-    ).gte("timestamp", start.isoformat()).lt("timestamp", end.isoformat()).execute()
+    ).gte("recorded_at", start.isoformat()).lt("recorded_at", end.isoformat()).execute()
 
     doses = result.data or []
     total = sum(d["units"] for d in doses)
@@ -868,9 +928,9 @@ async def get_insulin_history(user_id: str, days: int = 7, current_user: dict = 
 
     result = db.client.table("insulin_doses").select("*").eq(
         "user_id", user_id
-    ).gte("timestamp", start_date.isoformat()).order("timestamp", desc=True).execute()
+    ).gte("recorded_at", start_date.isoformat()).order("recorded_at", desc=True).execute()
 
-    doses = [InsulinDoseResponse(**d) for d in (result.data or [])]
+    doses = [_insulin_row_to_response(d) for d in (result.data or [])]
 
     return InsulinHistoryResponse(
         doses=doses,
@@ -895,7 +955,7 @@ async def log_a1c_result(request: LogA1cRequest, current_user: dict = Depends(ge
     a1c_data = {
         "id": str(uuid.uuid4()),
         "user_id": request.user_id,
-        "a1c_value": request.a1c_value,
+        "value": request.a1c_value,
         "test_date": request.test_date,
         "lab_name": request.lab_name,
         "notes": request.notes,
@@ -914,7 +974,7 @@ async def log_a1c_result(request: LogA1cRequest, current_user: dict = Depends(ge
         {"value": request.a1c_value}
     )
 
-    return A1cResultResponse(**result.data[0])
+    return _a1c_row_to_response(result.data[0])
 
 
 @router.get("/a1c/{user_id}/history", response_model=A1cHistoryResponse)
@@ -928,7 +988,7 @@ async def get_a1c_history(user_id: str, current_user: dict = Depends(get_current
         "user_id", user_id
     ).order("test_date", desc=True).execute()
 
-    results = [A1cResultResponse(**r) for r in (result.data or [])]
+    results = [_a1c_row_to_response(r) for r in (result.data or [])]
     latest = results[0].a1c_value if results else None
 
     return A1cHistoryResponse(results=results, latest_a1c=latest)
@@ -941,15 +1001,15 @@ async def get_a1c_trend(user_id: str, current_user: dict = Depends(get_current_u
         raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
-    result = db.client.table("a1c_records").select("a1c_value,test_date").eq(
+    result = db.client.table("a1c_records").select("value,test_date").eq(
         "user_id", user_id
     ).order("test_date", desc=True).limit(3).execute()
 
     if not result.data or len(result.data) < 2:
         return A1cTrendResponse(trend="stable", change=0, period_months=0)
 
-    latest = result.data[0]["a1c_value"]
-    oldest = result.data[-1]["a1c_value"]
+    latest = result.data[0]["value"]
+    oldest = result.data[-1]["value"]
     change = round(latest - oldest, 1)
 
     if change < -0.2:
@@ -1039,18 +1099,18 @@ async def get_diabetes_trends(
             return dt.astimezone(tz).strftime("%Y-%m-%d")
 
         glu_resp = db.client.table("glucose_readings")\
-            .select("timestamp,glucose_mg_dl")\
+            .select("recorded_at,value_mg_dl")\
             .eq("user_id", user_id)\
-            .gte("timestamp", start_utc)\
-            .lte("timestamp", end_utc)\
-            .order("timestamp")\
+            .gte("recorded_at", start_utc)\
+            .lte("recorded_at", end_utc)\
+            .order("recorded_at")\
             .execute()
         ins_resp = db.client.table("insulin_doses")\
-            .select("timestamp,units")\
+            .select("recorded_at,units")\
             .eq("user_id", user_id)\
-            .gte("timestamp", start_utc)\
-            .lte("timestamp", end_utc)\
-            .order("timestamp")\
+            .gte("recorded_at", start_utc)\
+            .lte("recorded_at", end_utc)\
+            .order("recorded_at")\
             .execute()
 
         # date -> aggregates
@@ -1064,16 +1124,16 @@ async def get_diabetes_trends(
             return b
 
         for row in (glu_resp.data or []):
-            val = row.get("glucose_mg_dl")
-            if val is None or not row.get("timestamp"):
+            val = row.get("value_mg_dl")
+            if val is None or not row.get("recorded_at"):
                 continue
-            _bucket(_to_local_date(row["timestamp"]))["glucose"].append(int(val))
+            _bucket(_to_local_date(row["recorded_at"]))["glucose"].append(int(val))
 
         for row in (ins_resp.data or []):
             units = row.get("units")
-            if units is None or not row.get("timestamp"):
+            if units is None or not row.get("recorded_at"):
                 continue
-            b = _bucket(_to_local_date(row["timestamp"]))
+            b = _bucket(_to_local_date(row["recorded_at"]))
             b["insulin"] += float(units)
             b["insulin_count"] += 1
 
@@ -1093,7 +1153,7 @@ async def get_diabetes_trends(
 
         # HbA1c sparse series — keyed by test_date.
         a1c_resp = db.client.table("a1c_records")\
-            .select("test_date,a1c_value")\
+            .select("test_date,value")\
             .eq("user_id", user_id)\
             .gte("test_date", start_user)\
             .lte("test_date", end_user)\
@@ -1101,7 +1161,7 @@ async def get_diabetes_trends(
             .execute()
         a1c_map: dict[str, float] = {}
         for row in (a1c_resp.data or []):
-            v = row.get("a1c_value")
+            v = row.get("value")
             td = row.get("test_date")
             if v is None or not td:
                 continue

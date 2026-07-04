@@ -564,8 +564,8 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest, cur
         # --- Include Fasting ---
         if request.include_fasting:
             fasting_records = db.client.table("fasting_records").select(
-                "id, fast_type, target_hours, start_time"
-            ).eq("user_id", user_id).eq("is_active", True).execute()
+                "id, protocol_type, goal_duration_minutes, start_time"
+            ).eq("user_id", user_id).eq("status", "active").execute()
 
             for f in fasting_records.data or []:
                 start_time_raw = f.get("start_time", "")
@@ -573,15 +573,15 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest, cur
                 if start_time_raw and isinstance(start_time_raw, str):
                     fasting_start = start_time_raw[:5] if len(start_time_raw) >= 5 else start_time_raw
 
-                target_hours = f.get("target_hours", 16)
+                goal_minutes = f.get("goal_duration_minutes", 960)
 
                 item_data = {
                     "user_id": user_id,
-                    "title": f"Fasting ({f.get('fast_type', 'Intermittent')})",
+                    "title": f"Fasting ({f.get('protocol_type', 'Intermittent')})",
                     "item_type": "fasting",
                     "scheduled_date": target_date,
                     "start_time": fasting_start,
-                    "duration_minutes": target_hours * 60,
+                    "duration_minutes": goal_minutes,
                     "status": "scheduled",
                     "fasting_record_id": f["id"],
                 }

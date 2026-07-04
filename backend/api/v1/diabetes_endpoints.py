@@ -79,11 +79,11 @@ async def calculate_estimated_a1c(user_id: str, http_request: Request, days: int
     tz = _safe_zone(resolve_timezone(http_request, db, user_id))
     start_date = datetime.now(tz) - timedelta(days=days)
 
-    result = db.client.table("glucose_readings").select("glucose_mg_dl").eq(
+    result = db.client.table("glucose_readings").select("value_mg_dl").eq(
         "user_id", user_id
-    ).gte("timestamp", start_date.isoformat()).execute()
+    ).gte("recorded_at", start_date.isoformat()).execute()
 
-    readings = [r["glucose_mg_dl"] for r in (result.data or [])]
+    readings = [r["value_mg_dl"] for r in (result.data or [])]
 
     if len(readings) < 10:
         return EstimatedA1cResponse(
@@ -108,6 +108,19 @@ async def calculate_estimated_a1c(user_id: str, http_request: Request, days: int
 # Medication Endpoints
 # ============================================================
 
+def _med_row_to_response(m: dict) -> MedicationResponse:
+    # DB columns are `active`/`dosage`; response keeps is_active/dosage_mg.
+    return MedicationResponse(
+        id=m["id"],
+        medication_name=m["medication_name"],
+        dosage_mg=m.get("dosage"),
+        frequency=m["frequency"],
+        is_active=m.get("active", False),
+        start_date=m.get("start_date"),
+        end_date=m.get("end_date"),
+        created_at=m["created_at"],
+    )
+
 @router.post("/medications", response_model=MedicationResponse)
 async def add_medication(request: AddMedicationRequest, http_request: Request, current_user: dict = Depends(get_current_user)):
     """Add a diabetes medication."""
@@ -119,12 +132,12 @@ async def add_medication(request: AddMedicationRequest, http_request: Request, c
         "id": str(uuid.uuid4()),
         "user_id": request.user_id,
         "medication_name": request.medication_name,
-        "dosage_mg": request.dosage_mg,
+        "dosage": request.dosage_mg,
         "frequency": request.frequency,
         "times_of_day": request.times_of_day,
         "with_food": request.with_food,
         "start_date": request.start_date or user_today_date(http_request).isoformat(),
-        "is_active": True,
+        "active": True,
         "medication_type": request.medication_type,
         "notes": request.notes,
     }
@@ -134,7 +147,7 @@ async def add_medication(request: AddMedicationRequest, http_request: Request, c
     if not result.data:
         raise safe_internal_error(Exception("Failed to add medication"), "diabetes")
 
-    return MedicationResponse(**result.data[0])
+    return _med_row_to_response(result.data[0])
 
 
 @router.get("/medications/{user_id}", response_model=MedicationsListResponse)
@@ -146,9 +159,9 @@ async def get_active_medications(user_id: str, current_user: dict = Depends(get_
 
     result = db.client.table("diabetes_medications").select("*").eq(
         "user_id", user_id
-    ).eq("is_active", True).execute()
+    ).eq("active", True).execute()
 
-    medications = [MedicationResponse(**m) for m in (result.data or [])]
+    medications = [_med_row_to_response(m) for m in (result.data or [])]
 
     return MedicationsListResponse(medications=medications)
 
@@ -161,7 +174,7 @@ async def deactivate_medication(user_id: str, medication_id: str, http_request: 
     db = get_supabase_db()
 
     result = db.client.table("diabetes_medications").update({
-        "is_active": False,
+        "active": False,
         "end_date": user_today_date(http_request).isoformat(),
         "updated_at": datetime.utcnow().isoformat()
     }).eq("id", medication_id).eq("user_id", user_id).execute()
@@ -169,7 +182,7 @@ async def deactivate_medication(user_id: str, medication_id: str, http_request: 
     if not result.data:
         raise HTTPException(status_code=404, detail="Medication not found")
 
-    return MedicationResponse(**result.data[0])
+    return _med_row_to_response(result.data[0])
 
 
 @router.patch("/medications/{user_id}/{medication_id}", response_model=MedicationResponse)
@@ -180,6 +193,8 @@ async def update_medication(user_id: str, medication_id: str, request: UpdateMed
     db = get_supabase_db()
 
     update_data = {k: v for k, v in request.dict().items() if v is not None}
+    if "dosage_mg" in update_data:  # request field → DB column
+        update_data["dosage"] = update_data.pop("dosage_mg")
     update_data["updated_at"] = datetime.utcnow().isoformat()
 
     result = db.client.table("diabetes_medications").update(update_data).eq(
@@ -189,7 +204,7 @@ async def update_medication(user_id: str, medication_id: str, request: UpdateMed
     if not result.data:
         raise HTTPException(status_code=404, detail="Medication not found")
 
-    return MedicationResponse(**result.data[0])
+    return _med_row_to_response(result.data[0])
 
 
 # ============================================================
@@ -212,7 +227,7 @@ async def log_carb_entry(request: LogCarbEntryRequest, current_user: dict = Depe
         "glucose_before": request.glucose_before,
         "glucose_after": request.glucose_after,
         "insulin_dose": request.insulin_dose,
-        "timestamp": request.timestamp or datetime.utcnow().isoformat(),
+        "recorded_at": request.timestamp or datetime.utcnow().isoformat(),
         "notes": request.notes,
     }
 
@@ -221,7 +236,16 @@ async def log_carb_entry(request: LogCarbEntryRequest, current_user: dict = Depe
     if not result.data:
         raise safe_internal_error(Exception("Failed to log carb entry"), "diabetes")
 
-    return CarbEntryResponse(**result.data[0])
+    row = result.data[0]
+    return CarbEntryResponse(
+        id=row["id"],
+        carbs_grams=row["carbs_grams"],
+        meal_type=row.get("meal_type"),
+        glucose_before=row.get("glucose_before"),
+        glucose_after=row.get("glucose_after"),
+        timestamp=row["recorded_at"],
+        created_at=row["created_at"],
+    )
 
 
 @router.get("/carbs/{user_id}/daily", response_model=DailyCarbTotalResponse)
@@ -245,7 +269,7 @@ async def get_daily_carb_total(user_id: str, http_request: Request, date: Option
 
     result = db.client.table("carb_entries").select("carbs_grams,meal_type").eq(
         "user_id", user_id
-    ).gte("timestamp", start.isoformat()).lt("timestamp", end.isoformat()).execute()
+    ).gte("recorded_at", start.isoformat()).lt("recorded_at", end.isoformat()).execute()
 
     entries = result.data or []
     total = sum(e["carbs_grams"] for e in entries)
@@ -278,7 +302,7 @@ async def get_carb_glucose_correlation(user_id: str, http_request: Request, days
     result = db.client.table("carb_entries").select(
         "carbs_grams,glucose_before,glucose_after"
     ).eq("user_id", user_id).gte(
-        "timestamp", start_date.isoformat()
+        "recorded_at", start_date.isoformat()
     ).not_.is_("glucose_before", "null").not_.is_("glucose_after", "null").execute()
 
     entries = result.data or []
@@ -318,6 +342,17 @@ async def get_carb_glucose_correlation(user_id: str, http_request: Request, days
 # Alert Endpoints
 # ============================================================
 
+def _alert_row_to_response(a: dict) -> GlucoseAlertResponse:
+    # DB column is `threshold_value`; response keeps threshold_mg_dl.
+    return GlucoseAlertResponse(
+        id=a["id"],
+        alert_type=a["alert_type"],
+        threshold_mg_dl=a["threshold_value"],
+        enabled=a["enabled"],
+        created_at=a["created_at"],
+    )
+
+
 @router.post("/alerts", response_model=GlucoseAlertResponse)
 async def create_glucose_alert(request: CreateGlucoseAlertRequest, current_user: dict = Depends(get_current_user)):
     """Create a glucose alert configuration."""
@@ -329,7 +364,7 @@ async def create_glucose_alert(request: CreateGlucoseAlertRequest, current_user:
         "id": str(uuid.uuid4()),
         "user_id": request.user_id,
         "alert_type": request.alert_type,
-        "threshold_mg_dl": request.threshold_mg_dl,
+        "threshold_value": request.threshold_mg_dl,
         "enabled": request.enabled,
         "notification_method": request.notification_method,
         "repeat_interval_minutes": request.repeat_interval_minutes,
@@ -340,7 +375,7 @@ async def create_glucose_alert(request: CreateGlucoseAlertRequest, current_user:
     if not result.data:
         raise safe_internal_error(Exception("Failed to create alert"), "diabetes")
 
-    return GlucoseAlertResponse(**result.data[0])
+    return _alert_row_to_response(result.data[0])
 
 
 @router.get("/alerts/{user_id}/check", response_model=AlertTriggeredResponse)
@@ -357,14 +392,14 @@ async def check_alert_triggered(user_id: str, glucose_value: float, current_user
     alerts = result.data or []
 
     for alert in alerts:
-        if alert["alert_type"] == "low_glucose" and glucose_value < alert["threshold_mg_dl"]:
+        if alert["alert_type"] == "low_glucose" and glucose_value < alert["threshold_value"]:
             return AlertTriggeredResponse(
                 triggered=True,
                 alert_type="low_glucose",
                 action_required=True,
                 recommendations=["Have fast-acting carbs (15g)", "Recheck in 15 minutes"]
             )
-        elif alert["alert_type"] == "high_glucose" and glucose_value > alert["threshold_mg_dl"]:
+        elif alert["alert_type"] == "high_glucose" and glucose_value > alert["threshold_value"]:
             return AlertTriggeredResponse(
                 triggered=True,
                 alert_type="high_glucose",
@@ -383,6 +418,8 @@ async def update_glucose_alert(user_id: str, alert_id: str, request: UpdateGluco
     db = get_supabase_db()
 
     update_data = {k: v for k, v in request.dict().items() if v is not None}
+    if "threshold_mg_dl" in update_data:  # request field → DB column
+        update_data["threshold_value"] = update_data.pop("threshold_mg_dl")
     update_data["updated_at"] = datetime.utcnow().isoformat()
 
     result = db.client.table("glucose_alerts").update(update_data).eq(
@@ -392,7 +429,7 @@ async def update_glucose_alert(user_id: str, alert_id: str, request: UpdateGluco
     if not result.data:
         raise HTTPException(status_code=404, detail="Alert not found")
 
-    return GlucoseAlertResponse(**result.data[0])
+    return _alert_row_to_response(result.data[0])
 
 
 # ============================================================
@@ -414,11 +451,11 @@ async def calculate_time_in_range(
 
     start_date = datetime.now() - timedelta(days=days)
 
-    result = db.client.table("glucose_readings").select("glucose_mg_dl").eq(
+    result = db.client.table("glucose_readings").select("value_mg_dl").eq(
         "user_id", user_id
-    ).gte("timestamp", start_date.isoformat()).execute()
+    ).gte("recorded_at", start_date.isoformat()).execute()
 
-    readings = [r["glucose_mg_dl"] for r in (result.data or [])]
+    readings = [r["value_mg_dl"] for r in (result.data or [])]
 
     if not readings:
         return TimeInRangeResponse(
@@ -454,11 +491,11 @@ async def calculate_glucose_variability(user_id: str, days: int = 7, current_use
 
     start_date = datetime.now() - timedelta(days=days)
 
-    result = db.client.table("glucose_readings").select("glucose_mg_dl").eq(
+    result = db.client.table("glucose_readings").select("value_mg_dl").eq(
         "user_id", user_id
-    ).gte("timestamp", start_date.isoformat()).execute()
+    ).gte("recorded_at", start_date.isoformat()).execute()
 
-    readings = [r["glucose_mg_dl"] for r in (result.data or [])]
+    readings = [r["value_mg_dl"] for r in (result.data or [])]
 
     if len(readings) < 2:
         return VariabilityResponse(
@@ -493,15 +530,15 @@ async def detect_glucose_patterns(user_id: str, days: int = 14, current_user: di
     start_date = datetime.now() - timedelta(days=days)
 
     result = db.client.table("glucose_readings").select(
-        "glucose_mg_dl,meal_context,timestamp"
-    ).eq("user_id", user_id).gte("timestamp", start_date.isoformat()).execute()
+        "value_mg_dl,meal_context,recorded_at"
+    ).eq("user_id", user_id).gte("recorded_at", start_date.isoformat()).execute()
 
     readings = result.data or []
     patterns = []
 
     # Check for dawn phenomenon (high morning readings)
-    fasting_readings = [r["glucose_mg_dl"] for r in readings if r.get("meal_context") == "fasting"]
-    non_fasting = [r["glucose_mg_dl"] for r in readings if r.get("meal_context") != "fasting"]
+    fasting_readings = [r["value_mg_dl"] for r in readings if r.get("meal_context") == "fasting"]
+    non_fasting = [r["value_mg_dl"] for r in readings if r.get("meal_context") != "fasting"]
 
     if len(fasting_readings) >= 5 and len(non_fasting) >= 5:
         fasting_avg = statistics.mean(fasting_readings)
@@ -532,12 +569,12 @@ async def get_dashboard_data(user_id: str, current_user: dict = Depends(get_curr
     ).maybe_single().execute()
 
     # Get latest glucose
-    latest_glucose = db.client.table("glucose_readings").select("glucose_mg_dl").eq(
+    latest_glucose = db.client.table("glucose_readings").select("value_mg_dl").eq(
         "user_id", user_id
-    ).order("timestamp", desc=True).limit(1).maybe_single().execute()
+    ).order("recorded_at", desc=True).limit(1).maybe_single().execute()
 
     # Get latest A1C
-    latest_a1c = db.client.table("a1c_records").select("a1c_value").eq(
+    latest_a1c = db.client.table("a1c_records").select("value").eq(
         "user_id", user_id
     ).order("test_date", desc=True).limit(1).maybe_single().execute()
 
@@ -545,22 +582,22 @@ async def get_dashboard_data(user_id: str, current_user: dict = Depends(get_curr
     today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     today_insulin = db.client.table("insulin_doses").select("units").eq(
         "user_id", user_id
-    ).gte("timestamp", today_start.isoformat()).execute()
+    ).gte("recorded_at", today_start.isoformat()).execute()
 
     insulin_total = sum(d["units"] for d in (today_insulin.data or []))
 
     # Get today's readings count
     today_readings = db.client.table("glucose_readings").select("id", count="exact").eq(
         "user_id", user_id
-    ).gte("timestamp", today_start.isoformat()).execute()
+    ).gte("recorded_at", today_start.isoformat()).execute()
 
-    current_glucose = latest_glucose.data.get("glucose_mg_dl") if latest_glucose.data else None
+    current_glucose = latest_glucose.data.get("value_mg_dl") if latest_glucose.data else None
     current_status = classify_glucose_status(current_glucose) if current_glucose else None
 
     return DashboardDataResponse(
         current_glucose=current_glucose,
         current_glucose_status=current_status,
-        a1c_latest=latest_a1c.data.get("a1c_value") if latest_a1c.data else None,
+        a1c_latest=latest_a1c.data.get("value") if latest_a1c.data else None,
         today_insulin_total=insulin_total,
         readings_today=today_readings.count or 0
     )
@@ -578,9 +615,9 @@ async def assess_pre_workout_risk(user_id: str, current_user: dict = Depends(get
     db = get_supabase_db()
 
     # Get latest reading
-    result = db.client.table("glucose_readings").select("glucose_mg_dl,timestamp").eq(
+    result = db.client.table("glucose_readings").select("value_mg_dl,recorded_at").eq(
         "user_id", user_id
-    ).order("timestamp", desc=True).limit(1).execute()
+    ).order("recorded_at", desc=True).limit(1).execute()
 
     if not result.data:
         return PreWorkoutRiskResponse(
@@ -590,8 +627,8 @@ async def assess_pre_workout_risk(user_id: str, current_user: dict = Depends(get
         )
 
     reading = result.data[0]
-    glucose = reading["glucose_mg_dl"]
-    timestamp = datetime.fromisoformat(reading["timestamp"].replace("Z", "+00:00"))
+    glucose = reading["value_mg_dl"]
+    timestamp = datetime.fromisoformat(reading["recorded_at"].replace("Z", "+00:00"))
     age_minutes = (datetime.now(timestamp.tzinfo) - timestamp).total_seconds() / 60
 
     recommendations = []
