@@ -34,8 +34,8 @@ class WatchLoggingMixin:
             sync_events = sync_response.data or []
 
             workout_logs_response = db.client.table("workout_logs").select(
-                "id, logged_at"
-            ).eq("user_id", user_id).eq("device_source", "watch").gte("logged_at", cutoff).execute()
+                "id, completed_at"
+            ).eq("user_id", user_id).eq("device_source", "watch").gte("completed_at", cutoff).execute()
 
             watch_workout_logs = workout_logs_response.data or []
 

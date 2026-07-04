@@ -256,7 +256,7 @@ async def get_cardio_context_for_ai(
     try:
         resp = (
             sb.client.table("cardio_metric_snapshots")
-            .select("metric_value, snapshot_date")
+            .select("value_numeric, snapshot_date")
             .eq("user_id", uid)
             .eq("metric_key", "training_load_acwr")
             .order("snapshot_date", desc=True)
@@ -264,7 +264,7 @@ async def get_cardio_context_for_ai(
             .execute()
         )
         if resp.data:
-            acwr_value = _round1(resp.data[0].get("metric_value"))
+            acwr_value = _round1(resp.data[0].get("value_numeric"))
     except Exception as e:
         logger.debug(f"[cardio_context] ACWR lookup failed: {e}")
 

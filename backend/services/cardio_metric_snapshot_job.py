@@ -139,16 +139,20 @@ def _fetch_recent_cardio(
     try:
         r = (
             db.client.table("cardio_sessions")
-            .select("cardio_type,distance_m,duration_seconds,started_at,weather_json")
+            .select("cardio_type,distance_km,duration_minutes,started_at,weather_json")
             .eq("user_id", user_id)
             .gte("started_at", since_iso)
             .execute()
         )
         for row in (r.data or []):
+            # cardio_sessions stores km/minutes; convert to the meters/seconds
+            # units the snapshot computers expect.
+            dist_km = row.get("distance_km")
+            dur_min = row.get("duration_minutes")
             out.append({
                 "activity_type": (row.get("cardio_type") or "").lower(),
-                "distance_m": row.get("distance_m"),
-                "duration_seconds": row.get("duration_seconds"),
+                "distance_m": dist_km * 1000 if dist_km is not None else None,
+                "duration_seconds": dur_min * 60 if dur_min is not None else None,
                 "performed_at": row.get("started_at"),
                 "weather_json": row.get("weather_json"),
             })

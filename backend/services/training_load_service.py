@@ -409,7 +409,7 @@ def _load_user_profile(db, user_id: str) -> dict:
     try:
         res = (
             db.client.table("cardio_metrics")
-            .select("resting_hr, custom_max_hr")
+            .select("resting_hr, max_hr")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
             .limit(1)
@@ -418,7 +418,7 @@ def _load_user_profile(db, user_id: str) -> dict:
         if res.data:
             row = res.data[0]
             resting_hr = row.get("resting_hr")
-            max_hr = row.get("custom_max_hr")
+            max_hr = row.get("max_hr")
     except Exception:
         pass
 

@@ -616,7 +616,7 @@ async def should_send_reminder(user_id: str,
 
             try:
                 hourly_response = db.client.table("neat_hourly_activity").select(
-                    "active_minutes, created_at"
+                    "is_sedentary, created_at"
                 ).eq("user_id", user_id).eq("activity_date", today).eq(
                     "hour", current_hour
                 ).maybe_single().execute()
@@ -624,8 +624,9 @@ async def should_send_reminder(user_id: str,
                 hourly_response = None
 
             if hourly_response and hourly_response.data:
-                active_minutes = hourly_response.data.get("active_minutes", 0)
-                if active_minutes >= prefs.active_threshold_minutes:
+                # neat_hourly_activity has no active_minutes column; is_sedentary
+                # is the real per-hour activity signal.
+                if hourly_response.data.get("is_sedentary") is False:
                     return ShouldRemindResponse(
                         should_remind=False,
                         reason="User was recently active",
@@ -938,10 +939,12 @@ async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest,
     try:
         logger.info(f"Running weekly goal adjustment (dry_run={request.dry_run})")
 
-        # Get users with progressive goals enabled
+        # Get users with goals. neat_goals has no is_progressive / adjustment_strategy
+        # columns (model-only fields; all goals auto-adjust by default), so we scan
+        # every goal row and use the default MODERATE strategy.
         goals_response = db.client.table("neat_goals").select(
-            "user_id, daily_step_goal, adjustment_strategy"
-        ).eq("is_progressive", True).execute()
+            "user_id, current_step_goal"
+        ).execute()
 
         users_checked = 0
         goals_adjusted = 0
@@ -951,8 +954,8 @@ async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest,
 
         for goal in (goals_response.data or [])[:request.max_users]:
             user_id = goal.get("user_id")
-            current_goal = goal.get("daily_step_goal")
-            strategy = goal.get("adjustment_strategy", GoalAdjustmentStrategy.MODERATE.value)
+            current_goal = goal.get("current_step_goal")
+            strategy = GoalAdjustmentStrategy.MODERATE.value
             users_checked += 1
 
             try:
@@ -972,7 +975,7 @@ async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest,
 
                         # Update last adjustment date
                         db.client.table("neat_goals").update({
-                            "last_adjustment_date": user_today_date(http_request, db, user_id).isoformat()
+                            "last_goal_update": user_today_date(http_request, db, user_id).isoformat()
                         }).eq("user_id", user_id).execute()
 
                     goals_adjusted += 1

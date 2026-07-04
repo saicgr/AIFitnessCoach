@@ -587,9 +587,9 @@ async def get_planned_vs_actual(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        # Planned side — workouts.exercises is a JSON array; sum its set counts.
+        # Planned side — workouts.exercises_json is a JSON array; sum its set counts.
         w_res = db.client.table("workouts") \
-            .select("id,user_id,exercises,duration_minutes") \
+            .select("id,user_id,exercises:exercises_json,duration_minutes") \
             .eq("id", workout_id).limit(1).execute()
         if not w_res.data:
             raise HTTPException(status_code=404, detail="Workout not found")
@@ -621,7 +621,7 @@ async def get_planned_vs_actual(
 
         # Actual side — most-recent workout_log for this workout.
         log_res = db.client.table("workout_logs") \
-            .select("id,duration_seconds,completed_at") \
+            .select("id,total_time_seconds,completed_at") \
             .eq("workout_id", workout_id) \
             .eq("user_id", user_id) \
             .order("completed_at", desc=True).limit(1).execute()
@@ -630,7 +630,7 @@ async def get_planned_vs_actual(
         actual_duration_min: Optional[int] = None
         if log_res.data:
             log = log_res.data[0]
-            ds = log.get("duration_seconds")
+            ds = log.get("total_time_seconds")
             if ds:
                 actual_duration_min = max(0, int(ds) // 60)
             log_id = log.get("id")

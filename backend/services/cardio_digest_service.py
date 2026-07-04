@@ -191,19 +191,23 @@ def _fetch_cardio_window(
 
     try:
         resp2 = db.client.table("cardio_sessions").select(
-            "created_at, activity_type, duration_seconds, distance_m, "
-            "avg_pace_seconds_per_km"
+            "created_at, activity_type, duration_minutes, distance_km, "
+            "avg_pace_min_per_km"
         ).eq("user_id", user_id).gte(
             "created_at", start_utc.isoformat()
         ).lte("created_at", end_utc.isoformat()).execute()
         for r in (resp2.data or []):
-            # Normalize to cardio_logs shape.
+            # Normalize to cardio_logs shape. cardio_sessions stores minutes/km;
+            # convert to the seconds/meters units the digest expects.
+            dur_min = r.get("duration_minutes")
+            dist_km = r.get("distance_km")
+            pace_min = r.get("avg_pace_min_per_km")
             rows.append({
                 "performed_at": r.get("created_at"),
                 "activity_type": r.get("activity_type"),
-                "duration_seconds": r.get("duration_seconds"),
-                "distance_m": r.get("distance_m"),
-                "avg_pace_seconds_per_km": r.get("avg_pace_seconds_per_km"),
+                "duration_seconds": dur_min * 60 if dur_min is not None else None,
+                "distance_m": dist_km * 1000 if dist_km is not None else None,
+                "avg_pace_seconds_per_km": pace_min * 60 if pace_min is not None else None,
             })
     except Exception as e:
         # cardio_sessions may not exist in all envs — debug-level only.

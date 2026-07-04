@@ -330,6 +330,28 @@ def _neat_goal_row_to_model(row: dict) -> dict:
     return mapped
 
 
+def _hourly_row_to_model(r: dict) -> "HourlyActivityRecord":
+    """Map a raw `neat_hourly_activity` DB row onto HourlyActivityRecord kwargs.
+
+    The live table columns differ from the model. Real columns: is_sedentary,
+    calories_burned, distance_meters (NO active_minutes / met_hourly_goal /
+    was_sedentary / calories). Map the DB row onto the model fields so
+    construction doesn't fail. active_minutes has no source column, so it
+    defaults to 0; met_hourly_goal is derived from steps.
+    """
+    row = dict(r)
+    if "calories" not in row and "calories_burned" in row:
+        row["calories"] = row.get("calories_burned") or 0
+    if "was_sedentary" not in row and "is_sedentary" in row:
+        row["was_sedentary"] = bool(row.get("is_sedentary"))
+    row.setdefault("active_minutes", 0)
+    # No per-hour goal stored on this table — a non-sedentary hour that logged
+    # steps counts as having met the hourly movement goal.
+    if "met_hourly_goal" not in row:
+        row["met_hourly_goal"] = (not bool(row.get("is_sedentary", True))) and (row.get("steps", 0) > 0)
+    return HourlyActivityRecord(**row)
+
+
 @router.get("/goals/{user_id}", response_model=NEATGoalProgress, tags=["NEAT Goals"])
 async def get_neat_goals(
     user_id: str,
@@ -497,19 +519,13 @@ async def update_neat_goals(
     try:
         logger.info(f"Updating NEAT goals for user {user_id}")
 
+        # Only daily_step_goal maps to a real neat_goals column (current_step_goal).
+        # active_hours_goal / movement_breaks_goal / min_steps_per_hour /
+        # is_progressive / adjustment_strategy are model-only fields with no DB
+        # column, so they cannot be persisted here (writing them raises 42703).
         update_data = {}
         if request.daily_step_goal is not None:
-            update_data["daily_step_goal"] = request.daily_step_goal
-        if request.active_hours_goal is not None:
-            update_data["active_hours_goal"] = request.active_hours_goal
-        if request.movement_breaks_goal is not None:
-            update_data["movement_breaks_goal"] = request.movement_breaks_goal
-        if request.min_steps_per_hour is not None:
-            update_data["min_steps_per_hour"] = request.min_steps_per_hour
-        if request.is_progressive is not None:
-            update_data["is_progressive"] = request.is_progressive
-        if request.adjustment_strategy is not None:
-            update_data["adjustment_strategy"] = request.adjustment_strategy
+            update_data["current_step_goal"] = request.daily_step_goal
 
         update_data["updated_at"] = datetime.now().isoformat()
 
@@ -533,7 +549,7 @@ async def update_neat_goals(
         except Exception as e:
             logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "neat_goals_updated"})
 
-        return NEATGoal(**response.data[0])
+        return NEATGoal(**_neat_goal_row_to_model(response.data[0]))
 
     except HTTPException:
         raise
@@ -563,13 +579,13 @@ async def calculate_progressive_goal(
         # Get current goal — user may not have a goal yet.
         try:
             goal_response = (await run_db(lambda: db.client.table("neat_goals").select(
-                "daily_step_goal"
+                "current_step_goal"
             ).eq("user_id", user_id).maybe_single().execute()))
         except Exception:
             goal_response = None
 
         current_goal = (
-            goal_response.data.get("daily_step_goal", 8000)
+            goal_response.data.get("current_step_goal", 8000)
             if goal_response and goal_response.data
             else 8000
         )
@@ -674,34 +690,21 @@ async def record_hourly_activity(
     try:
         logger.info(f"Recording hourly activity for user {user_id}, hour {activity.hour}")
 
-        # Get user's min steps per hour setting — may not have a goal row yet.
-        try:
-            goal_response = (await run_db(lambda: db.client.table("neat_goals").select(
-                "min_steps_per_hour"
-            ).eq("user_id", user_id).maybe_single().execute()))
-        except Exception:
-            goal_response = None
-
-        min_steps = (
-            goal_response.data.get("min_steps_per_hour", 250)
-            if goal_response and goal_response.data
-            else 250
-        )
-
-        # Determine if sedentary and if hourly goal was met
+        # Determine if the hour was sedentary (the only movement flag this table
+        # stores). met_hourly_goal is derived on read, not persisted.
         was_sedentary = activity.was_sedentary if activity.was_sedentary is not None else (activity.active_minutes < 5)
-        met_hourly_goal = activity.steps >= min_steps
 
+        # Write only real neat_hourly_activity columns. active_minutes and
+        # met_hourly_goal have no column (derived on read); calories/was_sedentary
+        # map to calories_burned/is_sedentary.
         data = {
             "user_id": user_id,
             "activity_date": activity.activity_date.isoformat(),
             "hour": activity.hour,
             "steps": activity.steps,
-            "active_minutes": activity.active_minutes,
             "distance_meters": activity.distance_meters,
-            "calories": activity.calories,
-            "was_sedentary": was_sedentary,
-            "met_hourly_goal": met_hourly_goal,
+            "calories_burned": activity.calories,
+            "is_sedentary": was_sedentary,
             "source": activity.source,
             "created_at": datetime.now().isoformat(),
         }
@@ -715,7 +718,7 @@ async def record_hourly_activity(
         if not response.data:
             raise safe_internal_error(ValueError("Failed to record hourly activity"), "neat")
 
-        return HourlyActivityRecord(**response.data[0])
+        return _hourly_row_to_model(response.data[0])
 
     except HTTPException:
         raise
@@ -745,26 +748,7 @@ async def get_hourly_breakdown(
             "user_id", user_id
         ).eq("activity_date", activity_date.isoformat()).order("hour").execute()))
 
-        # NOTE: the live neat_hourly_activity table columns differ from the
-        # HourlyActivityRecord model. Real columns: is_sedentary, calories_burned,
-        # distance_meters (NO active_minutes / met_hourly_goal / was_sedentary /
-        # calories). Map the DB row onto the model fields so construction doesn't
-        # fail and the downstream attribute reads (.active_minutes/.calories/
-        # .met_hourly_goal/.was_sedentary) resolve. active_minutes has no source
-        # column, so it defaults to 0; met_hourly_goal is derived from steps.
-        def _hourly_row_to_model(r: dict) -> HourlyActivityRecord:
-            row = dict(r)
-            if "calories" not in row and "calories_burned" in row:
-                row["calories"] = row.get("calories_burned") or 0
-            if "was_sedentary" not in row and "is_sedentary" in row:
-                row["was_sedentary"] = bool(row.get("is_sedentary"))
-            row.setdefault("active_minutes", 0)
-            # No per-hour goal stored on this table — a non-sedentary hour that
-            # logged steps counts as having met the hourly movement goal.
-            if "met_hourly_goal" not in row:
-                row["met_hourly_goal"] = (not bool(row.get("is_sedentary", True))) and (row.get("steps", 0) > 0)
-            return HourlyActivityRecord(**row)
-
+        # Map DB rows onto model fields (see module-level _hourly_row_to_model).
         hours = [_hourly_row_to_model(r) for r in (response.data or [])]
 
         # Calculate summary statistics
@@ -825,20 +809,6 @@ async def batch_sync_hourly_activity(
     try:
         logger.info(f"Batch syncing {len(batch.activities)} hourly records for user {user_id}")
 
-        # Get user's min steps per hour setting — may not have a goal row yet.
-        try:
-            goal_response = (await run_db(lambda: db.client.table("neat_goals").select(
-                "min_steps_per_hour"
-            ).eq("user_id", user_id).maybe_single().execute()))
-        except Exception:
-            goal_response = None
-
-        min_steps = (
-            goal_response.data.get("min_steps_per_hour", 250)
-            if goal_response and goal_response.data
-            else 250
-        )
-
         results = []
         synced = 0
         failed = 0
@@ -846,18 +816,16 @@ async def batch_sync_hourly_activity(
         for activity in batch.activities:
             try:
                 was_sedentary = activity.was_sedentary if activity.was_sedentary is not None else (activity.active_minutes < 5)
-                met_hourly_goal = activity.steps >= min_steps
 
+                # Write only real neat_hourly_activity columns (see record endpoint).
                 data = {
                     "user_id": user_id,
                     "activity_date": activity.activity_date.isoformat(),
                     "hour": activity.hour,
                     "steps": activity.steps,
-                    "active_minutes": activity.active_minutes,
                     "distance_meters": activity.distance_meters,
-                    "calories": activity.calories,
-                    "was_sedentary": was_sedentary,
-                    "met_hourly_goal": met_hourly_goal,
+                    "calories_burned": activity.calories,
+                    "is_sedentary": was_sedentary,
                     "source": activity.source,
                     "created_at": datetime.now().isoformat(),
                 }
@@ -1099,7 +1067,7 @@ async def calculate_neat_score(
             goal_response = None
 
         if goal_response and goal_response.data:
-            step_goal = goal_response.data.get("daily_step_goal", 8000)
+            step_goal = goal_response.data.get("current_step_goal", 8000)
             active_hours_goal = goal_response.data.get("active_hours_goal", 8)
             movement_breaks_goal = goal_response.data.get("movement_breaks_goal", 6)
             min_steps_per_hour = goal_response.data.get("min_steps_per_hour", 250)
@@ -1119,7 +1087,12 @@ async def calculate_neat_score(
         # Calculate metrics
         total_steps = sum(h.get("steps", 0) for h in hourly_data)
         active_hours = sum(1 for h in hourly_data if h.get("steps", 0) >= min_steps_per_hour)
-        movement_breaks = sum(1 for h in hourly_data if h.get("active_minutes", 0) >= 5)
+        # neat_hourly_activity has no active_minutes column; a movement break is a
+        # non-sedentary hour that logged steps.
+        movement_breaks = sum(
+            1 for h in hourly_data
+            if not bool(h.get("is_sedentary", True)) and h.get("steps", 0) > 0
+        )
 
         # Calculate consistency
         hourly_steps = [h.get("steps", 0) for h in hourly_data]
