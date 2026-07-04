@@ -171,16 +171,24 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     });
   }
 
+  /// True while the reel→offer page animation is in flight. The intro
+  /// top bar + bottom CTA are suppressed during the handoff — otherwise
+  /// onPageChanged fires at page 1 mid-animation and both the reel's
+  /// chrome AND the intro chrome render at once for a broken-looking frame.
+  bool _reelHandoff = false;
+
   /// Reel finished (or the user tapped Skip) → jump straight to the
   /// timeline-offer page (the last page). The reel sits before the
   /// founder/reminder beats, so a skip is an explicit "show me the offer".
-  void _skipReelToOffer() {
+  Future<void> _skipReelToOffer() async {
     if (!mounted) return;
-    _pageController.animateToPage(
+    setState(() => _reelHandoff = true);
+    await _pageController.animateToPage(
       _totalPages - 1,
       duration: const Duration(milliseconds: 360),
       curve: Curves.easeOutCubic,
     );
+    if (mounted) setState(() => _reelHandoff = false);
   }
 
   void _goToNextPage() {
@@ -907,8 +915,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           child: Column(
             children: [
               // The reel is full-bleed with its own Skip + progress bars, so the
-              // standard top bar (back/restore) is suppressed while it shows.
-              if (_currentPage != _reelPage)
+              // standard top bar (back/restore) is suppressed while it shows
+              // and while the reel→offer handoff animation is in flight.
+              if (_currentPage != _reelPage && !_reelHandoff)
                 _buildIntroTopBar(colors, context, ref),
               Expanded(
                 child: PageView(
@@ -947,8 +956,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 ),
               ),
               // The reel owns the bottom region (its own controls); the
-              // standard CTA + dots bottom bar shows only on pages 1-3.
-              if (_currentPage != _reelPage)
+              // standard CTA + dots bottom bar shows only on pages 1-3, and
+              // never mid reel→offer handoff.
+              if (_currentPage != _reelPage && !_reelHandoff)
                 _buildIntroBottomBar(colors, subscriptionState, currentTier),
             ],
           ),

@@ -213,7 +213,11 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () => context.push('/paywall-timeline'),
+                // Straight to pricing: the standalone /paywall-timeline screen
+                // duplicated the trial timeline the pricing offer page already
+                // shows (Today / In 5 days / In 7 days) — users saw the same
+                // content twice in a row.
+                onPressed: () => context.push('/paywall-pricing'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kSigAccent,
                   foregroundColor: Colors.white,

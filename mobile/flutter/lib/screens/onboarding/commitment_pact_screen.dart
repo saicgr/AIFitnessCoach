@@ -298,13 +298,17 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     // screen without scrolling on common phone heights.
     final feasibility = _feasibilityLine(quiz);
 
-    // Fixed, non-scrolling column. The only elastic region is the
-    // "other workout days" list, which gets a Flexible + an internal
-    // scroll guard for the rare 6–7-day-a-week user; everything else is
-    // intrinsically sized so the typical 3–4-day plan sits comfortably.
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    // Scroll-when-needed: when everything fits (typical 3–4-day plan on a
+    // normal phone) this renders exactly like a fixed column and never
+    // scrolls; when it doesn't (6–7-day plans, short screens), the WHOLE
+    // body scrolls. The previous Flexible-around-the-day-list approach
+    // crushed the list into a tiny scroll strip whenever the rest of the
+    // content ran tall — a full-height scroll beats a squeezed window.
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         _WeekDotStrip(selectedDays: selected).animate().fadeIn(delay: 380.ms),
         const SizedBox(height: 14),
         _FirstSessionCard(
@@ -329,29 +333,20 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
               ),
             ),
           ),
-          // Flexible so a 6–7-day plan scrolls *within* this region instead
-          // of pushing the CTA off-screen; a 3–4-day plan never scrolls.
-          Flexible(
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              physics: const ClampingScrollPhysics(),
-              itemCount: restWorkoutDays.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 6),
-              itemBuilder: (context, i) {
-                final dayIdx = restWorkoutDays[i]; // 0-indexed (Mon=0..Sun=6)
-                final label = labels[(i + 1) % labels.length];
-                return _OtherDayRow(
-                      day: dayShort[dayIdx],
-                      label: label,
-                      duration: durationLabel(),
-                    )
-                    .animate(delay: (650 + i * 80).ms)
-                    .fadeIn()
-                    .slideX(begin: 0.04, duration: 300.ms);
-              },
-            ),
-          ),
+          // Plain rows — the page-level scroll handles 6–7-day plans, so no
+          // inner list viewport is needed (a nested one just fragments the
+          // scroll into a tiny window).
+          for (var i = 0; i < restWorkoutDays.length; i++) ...[
+            if (i > 0) const SizedBox(height: 6),
+            _OtherDayRow(
+                  day: dayShort[restWorkoutDays[i]], // 0-indexed (Mon=0..Sun=6)
+                  label: labels[(i + 1) % labels.length],
+                  duration: durationLabel(),
+                )
+                .animate(delay: (650 + i * 80).ms)
+                .fadeIn()
+                .slideX(begin: 0.04, duration: 300.ms),
+          ],
         ],
         if (unselectedDays.isNotEmpty) ...[
           const SizedBox(height: 10),
@@ -408,7 +403,8 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
             ],
           ),
         ).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.04),
-      ],
+        ],
+      ),
     );
   }
 
