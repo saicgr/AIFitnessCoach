@@ -53,6 +53,7 @@ import '../services/notification_service.dart';
 import 'ai_settings_provider.dart';
 import 'breakfast_suggestion_provider.dart';
 import 'nudge_snooze_provider.dart';
+import 'program_assignments_provider.dart';
 import 'today_workout_provider.dart';
 import 'user_cohort_provider.dart';
 import 'training_load_provider.dart';
@@ -437,6 +438,12 @@ final contextualNudgeProvider =
   out.addAll(phaseKlmnoNudges(ref, now));
   out.addAll(phasePqrstNudges(ref, now));
   out.addAll(phaseUvwNudges(ref, now));
+
+  // Gentle program encouragement — start-day welcome, halfway cheer, and a
+  // lapsed comeback for an active program assignment. Celebrate-first, never
+  // guilt (see the wife-feedback design constraint); self-guarded so a
+  // provider miss can't poison the stack.
+  out.addAll(_programNudges(ref, now));
 
   // ------------------------------------------------------------------
   // F3.21 — Sweat-day electrolyte chip (post-workout intensity proxy:
@@ -1023,4 +1030,154 @@ List<ContextualNudge> _gamificationNudges(
     }
   } catch (_) {/* defensive */}
   return list;
+}
+
+/// Gentle, celebrate-first program nudges tied to an active program
+/// assignment. Reads the same `programAssignmentsProvider` the home surfaces
+/// use; a loading/error state (valueOrNull == null) yields nothing so a
+/// transient fetch failure never fabricates a nudge. Tone follows the user's
+/// `accountabilityIntensity` preference: gentle/balanced copy as written,
+/// tough_love slightly firmer (still zero guilt), off suppresses the comeback.
+List<ContextualNudge> _programNudges(Ref ref, DateTime now) {
+  final list = <ContextualNudge>[];
+  try {
+    final assignments = ref.watch(programAssignmentsProvider).valueOrNull;
+    if (assignments == null || assignments.isEmpty) return list;
+    final active = assignments
+        .where((a) =>
+            a.isActive && a.status != 'completed' && a.status != 'abandoned')
+        .toList();
+    if (active.isEmpty) return list;
+
+    final intensity = _accountabilityIntensity(ref);
+    final tough = intensity == 'tough_love';
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59);
+    final today = DateTime(now.year, now.month, now.day);
+
+    for (final a in active) {
+      final start = _parseTimestamp(a.startedAt);
+
+      // ── programFirstDay — assignment started today, nothing done yet. ──
+      final startedToday = start != null &&
+          DateTime(start.year, start.month, start.day) == today;
+      if (startedToday && a.workoutsCompleted == 0) {
+        list.add(ContextualNudge(
+          id: NudgeId.programFirstDay,
+          icon: '🚀',
+          title: 'Day 1 of ${a.title}',
+          body: tough
+              ? 'Day 1 of ${a.title}. Lock in the first session — showing up is '
+                  'the whole job today.'
+              : 'Day 1 of ${a.title}. Start easy — showing up is the whole job '
+                  'today.',
+          ctaLabel: "See today's session",
+          action: ContextualNudgeAction.startWorkout,
+          priorityTier: NudgePriorityTier.habit,
+          category: NudgeCategory.habit,
+          perishesAt: endOfDay,
+          dedupKey: 'program_firstday_${a.id}',
+        ));
+      }
+
+      // ── programMidpoint — 40-60% through. ──
+      final pct = a.progressPercentage;
+      if (pct >= 40 && pct <= 60) {
+        list.add(ContextualNudge(
+          id: NudgeId.programMidpoint,
+          icon: '🎉',
+          title: 'Halfway through ${a.title}',
+          body: 'Halfway through ${a.title} 🎉 Consistency beats perfection — '
+              "you're proving it.",
+          ctaLabel: 'Nice',
+          action: const ContextualNudgeAction(
+            kind: ContextualNudgeActionKind.acknowledge,
+          ),
+          priorityTier: NudgePriorityTier.habit,
+          category: NudgeCategory.habit,
+          perishesAt: endOfDay,
+          // Week suffix so it fires once per week, not every day at midpoint.
+          dedupKey: 'program_midpoint_${a.id}_${a.currentWeek}',
+        ));
+      }
+    }
+
+    // ── programComeback — an active program left untouched for ≥3 days. ──
+    // Suppressed entirely when accountability is off (per the tone contract).
+    // Never states how many days were missed — only invites a re-entry. Uses
+    // the app's own last-workout recency signal (the assignment model doesn't
+    // carry a per-program last-completed timestamp); limited to the primary
+    // program so multiple add-ons can't stack comeback nudges.
+    if (intensity != 'off') {
+      final primary =
+          active.where((a) => a.isPrimary).toList();
+      final target = primary.isNotEmpty ? primary.first : active.first;
+      final start = _parseTimestamp(target.startedAt);
+      final programAgeDays = start == null
+          ? null
+          : today
+              .difference(DateTime(start.year, start.month, start.day))
+              .inDays;
+      final daysSince = _daysSinceLastWorkout(ref, now);
+      if (programAgeDays != null &&
+          programAgeDays >= 3 &&
+          daysSince != null &&
+          daysSince >= 3) {
+        list.add(ContextualNudge(
+          id: NudgeId.programComeback,
+          icon: '👟',
+          title: '${target.title} is waiting',
+          body: tough
+              ? '${target.title} is right where you left it. Pick it back up '
+                  'today — repeat this week rather than restarting.'
+              : '${target.title} is right where you left it. Jump back in — '
+                  'repeat this week rather than restarting.',
+          ctaLabel: 'Jump back in',
+          action: ContextualNudgeAction.startWorkout,
+          priorityTier: NudgePriorityTier.habit,
+          category: NudgeCategory.habit,
+          perishesAt: endOfDay,
+          dedupKey: 'program_comeback_${target.id}',
+        ));
+      }
+    }
+  } catch (_) {/* provider not ready — skip program nudges */}
+  return list;
+}
+
+/// The user's accountability-intensity preference
+/// (gentle | balanced | tough_love | off). Defaults to `balanced` when the
+/// preference provider isn't ready.
+String _accountabilityIntensity(Ref ref) {
+  try {
+    return ref.watch(notificationPreferencesProvider).accountabilityIntensity;
+  } catch (_) {
+    return 'balanced';
+  }
+}
+
+/// Whole calendar days since the user's most recent workout, from the auth
+/// user's `lastWorkoutDate` (falling back to the server-computed
+/// `daysSinceLastWorkout`). Null when neither signal is available.
+int? _daysSinceLastWorkout(Ref ref, DateTime now) {
+  try {
+    final user = ref.watch(authStateProvider).user;
+    if (user == null) return null;
+    final parsed = _parseTimestamp(user.lastWorkoutDate);
+    if (parsed != null) {
+      final last = DateTime(parsed.year, parsed.month, parsed.day);
+      final todayDay = DateTime(now.year, now.month, now.day);
+      return todayDay.difference(last).inDays;
+    }
+    return user.daysSinceLastWorkout;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Parse an ISO timestamp to local time. Null on empty/unparseable input.
+DateTime? _parseTimestamp(String? iso) {
+  if (iso == null || iso.isEmpty) return null;
+  final dt = DateTime.tryParse(iso);
+  if (dt == null) return null;
+  return dt.isUtc ? dt.toLocal() : dt;
 }

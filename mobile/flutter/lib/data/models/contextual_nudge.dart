@@ -146,6 +146,11 @@ enum NudgeId {
   // Gap 10 — ACWR spike: training load is overreaching (acute >> chronic).
   // Escalated when an active injury overlaps the loaded area.
   loadSpike,
+  // Program encouragement — gentle, celebrate-first nudges tied to an active
+  // program assignment (start-day welcome, halfway cheer, lapsed comeback).
+  programFirstDay,
+  programMidpoint,
+  programComeback,
 }
 
 /// Priority tier for the SubCardRanker pyramid (F4).

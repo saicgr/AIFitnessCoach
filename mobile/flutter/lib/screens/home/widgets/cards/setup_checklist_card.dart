@@ -26,6 +26,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/providers/user_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
+import '../../../../data/providers/program_assignments_provider.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
@@ -49,6 +50,12 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
   bool _collapsed = false;
   bool _done = false; // challenge fully completed (persisted)
   bool _justCompleted = false; // show the celebration this session
+
+  /// Local engagement claim for the "pick a program" discovery step — set the
+  /// first time the user opens the library from this card. Persisted so the
+  /// step stays complete (and never strands the finish bonus for users who
+  /// stay on the default AI-decides plan rather than assigning a program).
+  bool _programSeen = false;
 
   /// Authoritative server claimed-state, fetched from
   /// `getAvailableFirstTimeBonuses()` and refreshed while visible.
@@ -74,6 +81,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
   String _dismissKey(String uid) => 'get_started_challenge_dismissed_$uid';
   String _collapseKey(String uid) => 'get_started_challenge_collapsed_$uid';
   String _doneKey(String uid) => 'get_started_challenge_done_$uid';
+  String _programSeenKey(String uid) => 'get_started_program_seen_$uid';
 
   Future<void> _init() async {
     final user = ref.read(currentUserProvider).valueOrNull;
@@ -93,6 +101,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
       }
       _collapsed = prefs.getBool(_collapseKey(user.id)) ?? false;
       _done = prefs.getBool(_doneKey(user.id)) ?? false;
+      _programSeen = prefs.getBool(_programSeenKey(user.id)) ?? false;
     } catch (_) {/* ignore */}
 
     await _refreshAwarded();
@@ -175,6 +184,20 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_collapseKey(user.id), _collapsed);
+    } catch (_) {/* ignore */}
+  }
+
+  /// Mark the "pick a program" discovery step complete the first time the user
+  /// opens the library from this card. Persisted per-user so exploring the
+  /// choice (or letting AI decide) is enough to finish the step.
+  Future<void> _markProgramSeen() async {
+    if (_programSeen) return;
+    setState(() => _programSeen = true);
+    final user = ref.read(currentUserProvider).valueOrNull;
+    if (user == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_programSeenKey(user.id), true);
     } catch (_) {/* ignore */}
   }
 
@@ -283,6 +306,19 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
 
     final chatDone = _has('first_chat');
 
+    // Program pick — done once the user has any (non-abandoned) program
+    // assignment OR has opened the library from this card (local claim). The
+    // engagement claim keeps this from stranding the finish bonus for users who
+    // stay on the default AI-decides plan.
+    bool programDone = _programSeen;
+    try {
+      final progs = ref.watch(programAssignmentsProvider).valueOrNull;
+      if (progs != null) {
+        programDone = programDone ||
+            progs.any((a) => a.isActive || a.status == 'completed');
+      }
+    } catch (_) {/* provider not ready */}
+
     final items = <_Item>[
       _Item(
         icon: Icons.flag_rounded,
@@ -299,6 +335,18 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
         done: planDone,
         route: '/workouts',
         claimKey: 'first_plan_generated',
+      ),
+      _Item(
+        icon: Icons.menu_book_rounded,
+        label: 'Pick a program (or let AI decide)',
+        // Discovery step — no XP (it doesn't map to a first-time bonus), so the
+        // row hides its pill (see _buildRow). Kept honest: no XP shown that we
+        // never grant.
+        xp: 0,
+        done: programDone,
+        route: '/workout/program-library',
+        claimKey: null,
+        onTap: _markProgramSeen,
       ),
       _Item(
         icon: Icons.fitness_center,
@@ -412,7 +460,12 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
 
   Widget _buildRow(ThemeColors c, _Item item) {
     return InkWell(
-      onTap: item.done ? null : () => context.push(item.route),
+      onTap: item.done
+          ? null
+          : () {
+              item.onTap?.call();
+              context.push(item.route);
+            },
       borderRadius: BorderRadius.circular(10),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 2),
@@ -439,8 +492,9 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
                 ),
               ),
             ),
-            _XpPill(xp: item.xp, done: item.done, accent: c.accent,
-                muted: c.textMuted, track: c.cardBorder),
+            if (item.xp > 0)
+              _XpPill(xp: item.xp, done: item.done, accent: c.accent,
+                  muted: c.textMuted, track: c.cardBorder),
             if (!item.done) ...[
               const SizedBox(width: 4),
               Icon(Icons.chevron_right, size: 16, color: c.textMuted),
@@ -518,6 +572,10 @@ class _Item {
   /// items whose XP is awarded by their own flow (meal/chat).
   final String? claimKey;
 
+  /// Optional side-effect run when the row is tapped, before navigation
+  /// (e.g. record a local engagement claim). Null for most items.
+  final VoidCallback? onTap;
+
   const _Item({
     required this.icon,
     required this.label,
@@ -525,6 +583,7 @@ class _Item {
     required this.done,
     required this.route,
     required this.claimKey,
+    this.onTap,
   });
 }
 

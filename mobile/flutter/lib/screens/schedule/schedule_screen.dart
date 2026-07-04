@@ -847,11 +847,17 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     final name = _programNameFor(ctx, assignment);
     if (name != null && name.isNotEmpty) {
       final sb = StringBuffer(name);
-      final wk = ctx?.programWeek ?? assignment?.currentWeek;
-      if (wk != null && wk > 0) {
-        sb.write(' · W$wk');
-        final dn = _dayNumberInProgram(assignment, day);
-        if (dn != null) sb.write('D$dn');
+      // Daily challenges (7-day cadence) read as "Day N" rather than "WxDy".
+      if (assignment != null && assignment.isDailyChallenge) {
+        final dn = assignment.dailyChallengeDayNumber(day);
+        if (dn != null) sb.write(' · Day $dn');
+      } else {
+        final wk = ctx?.programWeek ?? assignment?.currentWeek;
+        if (wk != null && wk > 0) {
+          sb.write(' · W$wk');
+          final dn = _dayNumberInProgram(assignment, day);
+          if (dn != null) sb.write('D$dn');
+        }
       }
       return sb.toString();
     }

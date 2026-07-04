@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/user_program_assignment.dart';
@@ -66,6 +67,31 @@ class MyProgramsCard extends ConsumerWidget {
                   // program is enrolled.
                   if (!hasActivePrimary) ...[
                     const AiAdaptivePlanCard(),
+                    const SizedBox(height: 4),
+                    // Gentle invitation into the library — the adaptive plan is a
+                    // real active plan, so this is an offer to explore, not an
+                    // empty-state takeover.
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () {
+                          HapticService.selection();
+                          context.push('/workout/program-library');
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: ThemeColors.of(context).accent,
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Browse programs →',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 10),
                   ],
                   for (final a in active) ...[
@@ -183,7 +209,7 @@ class _ProgramRow extends ConsumerWidget {
               Row(
                 children: [
                   Text(
-                    paused ? 'Paused · ${a.weekLabel}' : a.weekLabel,
+                    paused ? 'Paused · ${a.progressLabel}' : a.progressLabel,
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,

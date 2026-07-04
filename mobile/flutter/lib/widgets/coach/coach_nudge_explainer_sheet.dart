@@ -719,6 +719,28 @@ const Map<NudgeId, _NudgeExplainerCopy> _kNudgeExplainers = {
         'renewed.',
     trigger: 'It is the first of the month.',
   ),
+  // ── Program encouragement ─────────────────────────────────────────────
+  NudgeId.programFirstDay: _NudgeExplainerCopy(
+    body:
+        'The first day of a new program is the one that matters most. You do '
+        'not need a perfect session — just starting sets the pattern the rest '
+        'of the plan builds on.',
+    trigger: 'You started a program today and have not trained yet.',
+  ),
+  NudgeId.programMidpoint: _NudgeExplainerCopy(
+    body:
+        'You are halfway through your program, which is exactly where '
+        'motivation tends to dip. Getting here is proof the consistency is '
+        'working — the back half is just more of the same.',
+    trigger: 'You crossed the halfway mark of your program.',
+  ),
+  NudgeId.programComeback: _NudgeExplainerCopy(
+    body:
+        'Your program is right where you left it. The best move after a break '
+        'is to repeat the week you were on rather than restart from zero — a '
+        'gap changes nothing about the plan waiting for you.',
+    trigger: 'You have an active program you have not touched in a few days.',
+  ),
 };
 
 /// Show the explainer modal. Returns once the modal is closed.

@@ -182,6 +182,60 @@ class UserProgramAssignment {
     return 'Week $currentWeek';
   }
 
+  /// A daily challenge occupies every weekday (7-day cadence) rather than a
+  /// handful of training days — so it reads better as "Day N of M" than
+  /// "Week X of Y". Detected from the assigned-day count.
+  bool get isDailyChallenge => assignedDays.length >= 7;
+
+  /// Total days a daily challenge runs: `durationWeeks × 7`, falling back to
+  /// [totalWorkouts] when the week count is missing. Null when neither is known.
+  int? get _totalDays {
+    final w = durationWeeks;
+    if (w != null && w > 0) return w * 7;
+    final t = totalWorkouts;
+    if (t != null && t > 0) return t;
+    return null;
+  }
+
+  /// Calendar days from [startedAt] to [asOf] (defaults to now), 0 on the start
+  /// day. Null when the start date can't be resolved.
+  int? _daysSinceStart([DateTime? asOf]) {
+    final raw = startedAt;
+    if (raw == null || raw.isEmpty) return null;
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return null;
+    final start = parsed.isUtc ? parsed.toLocal() : parsed;
+    final ref = asOf ?? DateTime.now();
+    final s = DateTime(start.year, start.month, start.day);
+    final r = DateTime(ref.year, ref.month, ref.day);
+    return r.difference(s).inDays;
+  }
+
+  /// Progress label for the card. Daily challenges read "Day N of M" (N clamped
+  /// into range); everything else keeps the "Week X of Y" label unchanged. Falls
+  /// back to [weekLabel] when a daily challenge's totals can't be resolved.
+  String get progressLabel {
+    if (!isDailyChallenge) return weekLabel;
+    final total = _totalDays;
+    final since = _daysSinceStart();
+    if (total == null || total <= 0 || since == null) return weekLabel;
+    final dayNum = (since + 1).clamp(1, total);
+    return 'Day $dayNum of $total';
+  }
+
+  /// The 1-based day number within a daily challenge for the calendar day
+  /// [day] (used by the schedule tag). Null when this isn't a daily challenge
+  /// or the start date can't be resolved.
+  int? dailyChallengeDayNumber(DateTime day) {
+    if (!isDailyChallenge) return null;
+    final since = _daysSinceStart(day);
+    if (since == null) return null;
+    final n = since + 1;
+    final total = _totalDays;
+    if (total != null && total > 0) return n.clamp(1, total);
+    return n < 1 ? 1 : n;
+  }
+
   /// True when this assignment runs on the given weekday (0=Mon..6=Sun).
   bool coversWeekday(int weekday) => assignedDays.contains(weekday);
 

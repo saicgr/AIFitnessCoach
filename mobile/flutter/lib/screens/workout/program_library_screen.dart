@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../core/constants/app_colors.dart';
@@ -25,6 +26,7 @@ import '../../data/models/user_program_assignment.dart';
 import '../../data/providers/schedule_provider.dart' show weekStartDayProvider;
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../library/components/programs_intro_sheet.dart';
 import 'program_detail_screen.dart';
 import 'program_template_builder_screen.dart';
 import 'widgets/program_library_card.dart';
@@ -94,6 +96,10 @@ const List<String?> _kCategories = [
   'Health',
   'Stretching',
   'Pain Management',
+  'Kettlebell',
+  'Engine & Endurance',
+  'Running',
+  'Getting Started',
 ];
 
 const List<String?> _kDifficulties = [
@@ -164,7 +170,32 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         _deepLinkOpened = true;
         _openDetailById(id);
       });
+    } else {
+      // First-visit welcome sheet (once ever) — skipped when we're deep-linking
+      // straight into a program preview so it never stacks on the detail sheet.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _maybeShowIntroSheet();
+      });
     }
+  }
+
+  /// Show the [ProgramsIntroSheet] once, ever, gated by a SharedPreferences
+  /// flag. The sheet's CTA just dismisses (the user is already in the library),
+  /// which matches its existing `Navigator.pop` button.
+  Future<void> _maybeShowIntroSheet() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool('programs_intro_seen') ?? false) return;
+      await prefs.setBool('programs_intro_seen', true);
+      if (!mounted) return;
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const ProgramsIntroSheet(),
+      );
+    } catch (_) {/* best-effort — never block the library on the intro */}
   }
 
   // -------------------------------------------------------------------------
