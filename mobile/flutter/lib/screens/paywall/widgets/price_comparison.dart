@@ -164,8 +164,9 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
           ),
           const SizedBox(height: 8),
           // Collapsed by default (top AI-coach rivals) → non-scrolling. The
-          // marquee above sits in an Expanded that shrinks to absorb growth, so
-          // expanding the full lineup doesn't overflow the page.
+          // page wraps this card in a scroll-when-needed layout, so expanding
+          // the full lineup scrolls the page on short phones instead of
+          // overflowing.
           AnimatedSize(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,

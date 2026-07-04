@@ -74,14 +74,24 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
         child: FoldableQuizScaffold(
           headerTitle: '',
           headerExtra: _buildPremiumSummary(colors),
-          // Single non-scrolling screen: headline + auto-scrolling feature
-          // MARQUEE + price anchor, sized to fit a standard phone (~874pt). The
-          // marquee occupies the Expanded middle region; only the chips animate
-          // horizontally — the page itself never scrolls.
+          // Headline + auto-scrolling feature MARQUEE + price anchor. The
+          // marquee occupies the Expanded middle region. Flex-when-room,
+          // scroll-when-needed: ConstrainedBox(minHeight) + IntrinsicHeight
+          // keeps this pixel-identical on phones where everything fits (the
+          // page doesn't scroll; the marquee absorbs the slack), while short
+          // phones — or expanding the full price lineup — scroll the content
+          // instead of overflowing the bottom. The CTA lives in the scaffold's
+          // pinned button slot either way.
           content: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
+            child: LayoutBuilder(
+              builder: (context, viewport) => SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
                 // Show title inline only on phone
                 if (!isFoldable) ...[
                   const SizedBox(height: 12),
@@ -146,48 +156,55 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
                 // tight. The SizedBox pins the marquees' width (otherwise
                 // unbounded inside FittedBox's intrinsic-size measure) to the
                 // available content width.
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) => Center(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: SizedBox(
-                          width: constraints.maxWidth,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _Marquee(
-                                chips: _marqueeRowTop,
-                                // ~13 px/s — slow, calm, premium glide.
-                                pixelsPerSecond: 13,
-                                reverse: false,
-                                colors: colors,
+                        // NOTE: width is pinned from the OUTER LayoutBuilder
+                        // (viewport) — a LayoutBuilder here would crash under
+                        // IntrinsicHeight (no intrinsic-dimension support).
+                        Expanded(
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: SizedBox(
+                                width: viewport.maxWidth,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _Marquee(
+                                      chips: _marqueeRowTop,
+                                      // ~13 px/s — slow, calm, premium glide.
+                                      pixelsPerSecond: 13,
+                                      reverse: false,
+                                      colors: colors,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _Marquee(
+                                      chips: _marqueeRowBottom,
+                                      // Slightly different speed so the two
+                                      // rows never sync into a visible "block"
+                                      // moving together.
+                                      pixelsPerSecond: 16,
+                                      reverse: true,
+                                      colors: colors,
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 12),
-                              _Marquee(
-                                chips: _marqueeRowBottom,
-                                // Slightly different speed so the two rows never
-                                // sync into a visible "block" moving together.
-                                pixelsPerSecond: 16,
-                                reverse: true,
-                                colors: colors,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+
+                        const SizedBox(height: 16),
+
+                        // ── Signature v2: PRICE anchor vs the single-purpose
+                        // apps a user would otherwise stack (MyFitnessPal /
+                        // Fitbod / Gravl…) ──
+                        PaywallPriceComparison(colors: colors),
+
+                        const SizedBox(height: 12),
+                      ],
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 16),
-
-                // ── Signature v2: PRICE anchor vs the single-purpose apps a
-                // user would otherwise stack (MyFitnessPal / Fitbod / Gravl…) ──
-                PaywallPriceComparison(colors: colors),
-
-                const SizedBox(height: 12),
-              ],
+              ),
             ),
           ),
           button: Padding(
