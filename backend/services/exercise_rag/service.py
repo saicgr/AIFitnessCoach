@@ -10,6 +10,7 @@ This service:
 
 from typing import List, Dict, Any, Optional, Tuple
 import json
+import time
 
 from sqlalchemy import text
 
@@ -535,6 +536,8 @@ class ExerciseRAGService:
         self.gemini_service = gemini_service
         self.supabase = get_supabase()
         self.client = self.supabase.client
+        # See _implement_counts_from_gym_profile.
+        self._implement_counts_cache: Dict[str, Tuple[float, Dict[str, int]]] = {}
 
         # Get Chroma Cloud client
         self.chroma_client = get_chroma_cloud_client()
@@ -986,6 +989,79 @@ class ExerciseRAGService:
             )
             return {}, []
 
+    # user_id -> (fetched_at, {"dumbbells": units, "kettlebell": units}).
+    # 60s TTL: batch generation calls select_exercises once per workout in the
+    # plan — one profile read should serve the whole batch, but edits made
+    # in-app must show up on the next generation, so don't cache for long.
+    _IMPLEMENT_COUNTS_TTL_S = 60.0
+
+    def _implement_counts_from_gym_profile(
+        self, user_id: Optional[str]
+    ) -> Dict[str, int]:
+        """Total dumbbell/kettlebell UNITS owned per the active gym profile's
+        equipment `weight_inventory` ({weight: qty}).
+
+        This is the only stored signal that distinguishes a true pair
+        (2×12 lb kettlebells → double-bell work is fair game) from one bell
+        at one weight — the flat `equipment_weights` list collapses both to
+        one distinct weight. In-app equipment edits update the gym profile
+        but never the preference counts, so without this read those users
+        stay pinned to their onboarding-era counts.
+
+        Sync Supabase read by design (same rationale as
+        `_fetch_score_freshness_context`). Fail-open: {} on any error or
+        absence — counts then fall through to the distinct-weight heuristic.
+        """
+        if not user_id:
+            return {}
+        cached = self._implement_counts_cache.get(user_id)
+        if cached and (time.monotonic() - cached[0]) < self._IMPLEMENT_COUNTS_TTL_S:
+            return cached[1]
+        try:
+            res = (
+                self.client.table("gym_profiles")
+                .select("equipment")
+                .eq("user_id", user_id)
+                .eq("is_active", True)
+                .limit(1)
+                .execute()
+            )
+            counts: Dict[str, int] = {}
+            equipment = (res.data[0].get("equipment") or []) if res.data else []
+            for item in equipment:
+                if not isinstance(item, dict):
+                    continue
+                name = str(item.get("name") or "").strip().lower()
+                if name in ("dumbbell", "dumbbells"):
+                    key = "dumbbells"
+                elif name in ("kettlebell", "kettlebells"):
+                    key = "kettlebell"
+                else:
+                    continue
+                units = 0
+                inv = item.get("weight_inventory")
+                if isinstance(inv, dict):
+                    for qty in inv.values():
+                        try:
+                            units += max(0, int(qty))
+                        except (TypeError, ValueError):
+                            continue
+                if units == 0:
+                    # Legacy items carry a plain `quantity` instead.
+                    try:
+                        units = max(0, int(item.get("quantity") or 0))
+                    except (TypeError, ValueError):
+                        units = 0
+                if units > 0:
+                    counts[key] = max(counts.get(key, 0), units)
+            self._implement_counts_cache[user_id] = (time.monotonic(), counts)
+            return counts
+        except Exception as exc:  # noqa: BLE001 - a refinement, never a blocker
+            logger.warning(
+                "⚠️  could not derive implement counts from gym profile: %s", exc
+            )
+            return {}
+
     async def select_exercises_for_workout(
         self,
         focus_area: str,
@@ -1072,10 +1148,18 @@ class ExerciseRAGService:
         self._equipment_weights = equipment_weights
         self._weight_unit = weight_unit or "lbs"
 
-        # Derive single/double counts from the owned-weights map when the
-        # explicit count wasn't provided. A single distinct weight implies a
-        # single implement (single_*_friendly filter); >1 implies a pair. This
-        # NEVER overrides an explicit count and is a no-op without the map.
+        # Derive single/double counts when no explicit count was provided.
+        # Precedence: explicit arg > gym-profile weight_inventory units (the
+        # only stored signal that a user owns a true pair, e.g. 2×12 lb
+        # kettlebells at ONE distinct weight) > distinct-weight heuristic on
+        # the flat owned-weights map > historical defaults. Each layer NEVER
+        # overrides the one above it and fails open to the next.
+        if dumbbell_count is None or kettlebell_count is None:
+            inv_counts = self._implement_counts_from_gym_profile(user_id)
+            if dumbbell_count is None and "dumbbells" in inv_counts:
+                dumbbell_count = 2 if inv_counts["dumbbells"] > 1 else 1
+            if kettlebell_count is None and "kettlebell" in inv_counts:
+                kettlebell_count = 2 if inv_counts["kettlebell"] > 1 else 1
         if equipment_weights:
             db_weights = equipment_weights.get("dumbbells") or equipment_weights.get("dumbbell")
             if dumbbell_count is None and db_weights:
