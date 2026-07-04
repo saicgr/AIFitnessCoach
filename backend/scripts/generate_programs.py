@@ -45,6 +45,11 @@ CHECKLIST_PATH = Path(__file__).parent.parent.parent / "docs" / "PROGRAMS_CHECKL
 REQUESTS_PER_MINUTE = 15
 REQUEST_DELAY = 60 / REQUESTS_PER_MINUTE
 
+# Gemini pricing ($ per 1M tokens). Defaults = gemini-3.1-flash-lite GA pricing
+# (May 2026: $0.25 in / $1.50 out). Env-overridable for other models.
+PRICE_IN_PER_M = float(os.getenv("GEMINI_PRICE_IN_PER_M", "0.25"))
+PRICE_OUT_PER_M = float(os.getenv("GEMINI_PRICE_OUT_PER_M", "1.50"))
+
 # Priority order
 PRIORITY_ORDER = {'High': 0, 'Med': 1, 'Low': 2, 'Done': 99}
 
@@ -1090,7 +1095,7 @@ def generate_single_week(program: dict, week_num: int, total_weeks: int,
         usage = response.usage_metadata
         input_tokens = usage.prompt_token_count if usage else 0
         output_tokens = usage.candidates_token_count if usage else 0
-        cost = (input_tokens * 0.15 + output_tokens * 0.60) / 1_000_000
+        cost = (input_tokens * PRICE_IN_PER_M + output_tokens * PRICE_OUT_PER_M) / 1_000_000
 
         validation = validate_week(data, sessions)
 
@@ -1276,7 +1281,7 @@ def generate_variant_single(program: dict, duration: int, sessions: int,
         usage = response.usage_metadata
         input_tokens = usage.prompt_token_count if usage else 0
         output_tokens = usage.candidates_token_count if usage else 0
-        cost = (input_tokens * 0.15 + output_tokens * 0.60) / 1_000_000
+        cost = (input_tokens * PRICE_IN_PER_M + output_tokens * PRICE_OUT_PER_M) / 1_000_000
 
         validation = validate_program(data, duration, sessions)
 
