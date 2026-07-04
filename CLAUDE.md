@@ -377,6 +377,31 @@ If it fails, a new import reused a template or shipped empty instructions — ru
 release. 6 templated instructions remain (niche sandbag/tire/ladder/composite
 moves awaiting a human/advisor pass) — that is the gate's baseline.
 
+## Supabase column drift (phantom columns 500 whole queries)
+
+Explicit `.select("col, col")` strings rot as the schema evolves, and ONE
+phantom column makes PostgREST reject the ENTIRE query (42703) — including
+its valid columns — usually silently behind try/except. A 2026-07 audit found
+80+ phantom-column selects (users.coach_id 500'd the trial-coach cron;
+users.first_name/display_name poisoned every name-personalization helper;
+glucose/cardio/neat stats read columns that never existed).
+
+**Gate — run after adding any backend Supabase query or applying a migration:**
+
+```bash
+python backend/scripts/audit_supabase_column_drift.py --check
+```
+
+It validates every `.table("X").select("...")` in `backend/` against
+`backend/scripts/schema_columns_snapshot.json` (checked-in dump of production
+`information_schema`). After a migration that ADDS columns the code selects,
+refresh the snapshot: `--refresh` (needs `DATABASE_URL` + psycopg2).
+
+Also: there is NO `chat_messages` table — coach chat is `chat_history`, and
+rows must be session-attached to render in-app. Insert proactive coach
+messages via `_mirror_proactive_to_chat` (`backend/api/v1/push_nudge_cron.py`),
+never a hand-rolled insert.
+
 ## Curated program session volume (don't ship thin sessions)
 
 The 18 launch programs (`programs.is_published`) schedule their content from
