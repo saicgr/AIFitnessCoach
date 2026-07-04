@@ -1161,34 +1161,39 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     return Consumer(
       builder: (context, ref, _) {
         final l10n = AppLocalizations.of(context)!;
-        return Row(
-          children: [
-            Expanded(
-              child: _snapSourceBox(
-                context: context,
-                t: t,
-                accent: accent,
-                icon: Icons.camera_alt_rounded,
-                title: l10n.quizEquipmentSnapTitle,
-                subtitle: l10n.quizEquipmentSnapSubtitle,
-                onTap: () =>
-                    _launchSnapFlow(context, ref, source: SnapSource.camera),
+        // IntrinsicHeight + stretch keeps both cards the same height even
+        // when one subtitle wraps to two lines and the other doesn't.
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _snapSourceBox(
+                  context: context,
+                  t: t,
+                  accent: accent,
+                  icon: Icons.camera_alt_rounded,
+                  title: l10n.quizEquipmentSnapTitle,
+                  subtitle: l10n.quizEquipmentSnapSubtitle,
+                  onTap: () =>
+                      _launchSnapFlow(context, ref, source: SnapSource.camera),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _snapSourceBox(
-                context: context,
-                t: t,
-                accent: accent,
-                icon: Icons.photo_library_rounded,
-                title: l10n.quizEquipmentImportTitle,
-                subtitle: l10n.quizEquipmentImportSubtitle,
-                onTap: () =>
-                    _launchSnapFlow(context, ref, source: SnapSource.gallery),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _snapSourceBox(
+                  context: context,
+                  t: t,
+                  accent: accent,
+                  icon: Icons.photo_library_rounded,
+                  title: l10n.quizEquipmentImportTitle,
+                  subtitle: l10n.quizEquipmentImportSubtitle,
+                  onTap: () =>
+                      _launchSnapFlow(context, ref, source: SnapSource.gallery),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ).animate().fadeIn(delay: 120.ms).slideY(begin: 0.05);
       },
     );
