@@ -186,29 +186,18 @@ async def import_sync_data(
     """
     Import exported sync data for manual processing / admin review.
 
-    Stores the exported items in the sync_imports table for later processing.
+    Degraded: there is no generic staging table for this admin-review dump
+    (the existing import tables — workout_history_imports, nutrition_import_jobs
+    — are entity-specific and don't fit a raw {exported_at, items[]} blob). The
+    receipt is acknowledged and logged; durable storage awaits a `sync_imports`
+    table (user_id, exported_at, item_count, items jsonb) — NEEDS-MIGRATION.
     """
     user_id = user["id"]
     logger.info(
         f"Sync import received from user {user_id}: "
-        f"{len(body.items)} items, exported at {body.exported_at}"
+        f"{len(body.items)} items, exported at {body.exported_at} "
+        f"(not persisted — no sync_imports store)"
     )
-
-    # Store for manual processing
-    supabase = get_supabase()
-    try:
-        supabase.client.table("sync_imports").insert(
-            {
-                "user_id": user_id,
-                "exported_at": body.exported_at,
-                "item_count": len(body.items),
-                "items": [item.model_dump() for item in body.items],
-            }
-        ).execute()
-    except Exception as e:
-        logger.error(f"Failed to store sync import: {e}", exc_info=True)
-        # Don't fail the request -- just log and return success
-        # The data was received; storage is best-effort
 
     return {
         "message": f"Imported {len(body.items)} items for processing",

@@ -317,10 +317,10 @@ async def get_cardio_metrics_endpoint(
         custom_max_hr = cardio_response.data.get("max_hr")
         source = cardio_response.data.get("source", "calculated")
 
-    # Fall back to health metrics for resting HR
+    # Fall back to user metrics for resting HR
     if resting_hr is None:
         try:
-            health_response = db.client.table("health_metrics").select(
+            health_response = db.client.table("user_metrics").select(
                 "resting_heart_rate"
             ).eq("user_id", user_id).order(
                 "recorded_at", desc=True

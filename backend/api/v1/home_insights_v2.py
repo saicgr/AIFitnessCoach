@@ -377,34 +377,14 @@ async def get_kudos_unread(
 ) -> KudosUnreadResponse:
     """Count unread kudos for the user.
 
-    TODO: requires kudos table — schema not present. Returns 0 until the
-    table ships. We try the query and gracefully treat "table doesn't exist"
-    as a 0 count (rather than 500-ing the home screen).
+    Degraded: there is no unread-kudos store. `activity_reactions` records
+    who reacted to which activity but carries neither a recipient column nor
+    any read/unread state, so "unread kudos received" cannot be derived. This
+    returns 0 until a dedicated kudos table (recipient_user_id + read_at)
+    ships; the home screen treats 0 as "no badge".
     """
-    user_id = current_user["id"]
-    try:
-        db = get_supabase_db()
-        try:
-            res = (
-                db.client.table("kudos")
-                .select("id", count="exact")
-                .eq("recipient_user_id", user_id)
-                .is_("read_at", "null")
-                .execute()
-            )
-            count = int(res.count or 0)
-        except Exception as inner:
-            msg = str(inner).lower()
-            if "kudos" in msg and ("does not exist" in msg or "not found" in msg
-                                    or "schema cache" in msg or "relation" in msg):
-                return KudosUnreadResponse(count=0)
-            raise
-        return KudosUnreadResponse(count=count)
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("kudos unread failed: %s", e)
-        raise HTTPException(status_code=500, detail=f"kudos failed: {e}")
+    # No backing store — see docstring. Return 0 rather than 500-ing home.
+    return KudosUnreadResponse(count=0)
 
 
 # ─── 6. Weigh-in day preference ──────────────────────────────────────────────

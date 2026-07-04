@@ -494,29 +494,20 @@ def _collect_nutrition(user_id: str, start: date, end: date) -> Dict[str, Any]:
         for m, cals in sorted(meal_calories.items(), key=lambda kv: kv[1], reverse=True)
     ]
 
-    # Micronutrient flags — optional table
-    micros = _safe_query(
-        lambda: client.table("micronutrients")
-        .select("*")
-        .eq("user_id", user_id)
-        .gte("log_date", _iso(start))
-        .lte("log_date", _iso(end))
-        .execute(),
-        default=[],
-    )
+    # Micronutrient flags — derived from the same food_logs rows. Micronutrients
+    # live per-log as *_mg / *_ug columns on food_logs; there is no separate
+    # micronutrients table. Aggregate the mean of each mineral/vitamin field.
     micro_flags: List[Dict[str, Any]] = []
-    if micros:
-        # Aggregate mean for each numeric field, flag anything < 50% of `target_*` if present
-        numeric_sums: Dict[str, float] = defaultdict(float)
-        numeric_counts: Dict[str, int] = defaultdict(int)
-        for row in micros:
-            for k, v in row.items():
-                if isinstance(v, (int, float)) and k not in ("id", "user_id"):
-                    numeric_sums[k] += float(v)
-                    numeric_counts[k] += 1
-        for k, total in numeric_sums.items():
-            if numeric_counts[k]:
-                micro_flags.append({"nutrient": k, "avg": round(total / numeric_counts[k], 2)})
+    numeric_sums: Dict[str, float] = defaultdict(float)
+    numeric_counts: Dict[str, int] = defaultdict(int)
+    for row in logs or []:
+        for k, v in row.items():
+            if (k.endswith("_mg") or k.endswith("_ug")) and isinstance(v, (int, float)) and not isinstance(v, bool):
+                numeric_sums[k] += float(v)
+                numeric_counts[k] += 1
+    for k, total in numeric_sums.items():
+        if numeric_counts[k]:
+            micro_flags.append({"nutrient": k, "avg": round(total / numeric_counts[k], 2)})
 
     # Water
     water_rows = _safe_query(

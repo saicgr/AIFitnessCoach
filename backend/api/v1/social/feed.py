@@ -362,11 +362,10 @@ async def _bg_link_mentions(activity_id: str, author_user_id: str, usernames: li
             if mentioned_user_id == author_user_id:
                 continue
 
-            # Link mention to activity
-            supabase.table("activity_mentions").upsert(
-                {"activity_id": activity_id, "mentioned_user_id": mentioned_user_id},
-                on_conflict="activity_id,mentioned_user_id",
-            ).execute()
+            # NOTE: mention-link persistence has no backing store — there is no
+            # `activity_mentions` table (would need activity_id + mentioned_user_id
+            # for a future "mentions" tab). We still notify the mentioned user
+            # below, which is the user-facing behavior that matters today.
 
             # Send notification
             try:

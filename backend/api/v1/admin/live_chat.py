@@ -198,14 +198,12 @@ async def _send_push_notification_to_user(
     try:
         db = get_supabase_db()
 
-        # Get user's FCM token
-        token_result = db.client.table("user_devices").select(
+        # Get user's FCM token (single-token column on `users`)
+        token_result = db.client.table("users").select(
             "fcm_token"
-        ).eq("user_id", user_id).eq("notifications_enabled", True).order(
-            "updated_at", desc=True
-        ).limit(1).execute()
+        ).eq("id", user_id).limit(1).execute()
 
-        if not token_result.data:
+        if not token_result.data or not token_result.data[0].get("fcm_token"):
             logger.info(f"No FCM token found for user {user_id}")
             return False
 

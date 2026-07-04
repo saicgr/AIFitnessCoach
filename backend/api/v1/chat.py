@@ -207,16 +207,14 @@ async def send_coach_reply_push(
     """Background task: notify the user via FCM when the AI coach has replied.
 
     Mirrors `_send_push_notification_to_user` in `api/v1/admin/live_chat.py`
-    but for AI chat replies (not human-agent live chat). Looks up FCM tokens
-    across all of the user's devices, resolves the persona name from
+    but for AI chat replies (not human-agent live chat). Looks up the FCM
+    token from `users.fcm_token`, resolves the persona name from
     `user_ai_settings.coach_name` (per `feedback_coach_voice_naming.md`),
     personalizes the body with the user's first name, and sends one
     notification per token.
 
     Edge cases this handles:
-      - Multi-device users: walk every row in `user_devices` (newest first)
-        and send to each FCM token; falls back to `users.fcm_token` if no
-        device row exists (legacy single-device setup).
+      - No token on file: `users.fcm_token` is null → skip silently.
       - Dead tokens: `notification_service.send_notification` already clears
         unregistered/invalid tokens from `users.fcm_token` on FCM
         `UnregisteredError`, so we don't re-clear here.
@@ -239,39 +237,21 @@ async def send_coach_reply_push(
 
         db = get_supabase_db()
 
-        # ── Resolve FCM tokens ────────────────────────────────────────────
+        # ── Resolve FCM token ─────────────────────────────────────────────
+        # Push tokens live on the single-token column `users.fcm_token`.
         fcm_tokens: List[str] = []
         try:
             token_result = (
-                db.client.table("user_devices")
+                db.client.table("users")
                 .select("fcm_token")
-                .eq("user_id", user_id)
-                .eq("notifications_enabled", True)
-                .order("updated_at", desc=True)
+                .eq("id", user_id)
+                .limit(1)
                 .execute()
             )
-            for row in token_result.data or []:
-                tok = (row or {}).get("fcm_token")
-                if tok and tok not in fcm_tokens:
-                    fcm_tokens.append(tok)
-        except Exception as device_err:
-            # `user_devices` may not exist in some environments — fall back
-            # to legacy single-token column on `users`.
-            logger.debug(f"[CoachReplyPush] user_devices lookup failed: {device_err}")
-
-        if not fcm_tokens:
-            try:
-                legacy = (
-                    db.client.table("users")
-                    .select("fcm_token")
-                    .eq("id", user_id)
-                    .limit(1)
-                    .execute()
-                )
-                if legacy.data and legacy.data[0].get("fcm_token"):
-                    fcm_tokens.append(legacy.data[0]["fcm_token"])
-            except Exception as users_err:
-                logger.debug(f"[CoachReplyPush] users.fcm_token fallback failed: {users_err}")
+            if token_result.data and token_result.data[0].get("fcm_token"):
+                fcm_tokens.append(token_result.data[0]["fcm_token"])
+        except Exception as users_err:
+            logger.debug(f"[CoachReplyPush] users.fcm_token lookup failed: {users_err}")
 
         if not fcm_tokens:
             logger.info(f"[CoachReplyPush] no FCM tokens for user {user_id} — skipping")

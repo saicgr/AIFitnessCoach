@@ -239,22 +239,29 @@ def _user_first_name(db, user_id: str) -> str:
 
 
 def _user_is_in_quiet_or_vacation(db, user_id: str) -> bool:
-    """Best-effort: check ai_settings or notification preferences for quiet hours / vacation mode.
+    """Best-effort: skip firing while the user is in vacation mode
+    (`users.in_vacation_mode`) or inside their quiet-hours window
+    (`notification_preferences.quiet_hours_start/end` in their local tz).
 
-    If the table/columns don't exist, returns False (don't skip). The settings UI
-    in Phase 9 introduces these flags; the worker remains forward-compatible.
+    Returns False (don't skip) on any lookup failure — fail-open.
     """
     try:
-        res = (
-            db.client.table("ai_settings")
-            .select("vacation_mode,quiet_hours_start,quiet_hours_end,timezone")
+        vac = (
+            db.client.table("users")
+            .select("in_vacation_mode")
+            .eq("id", user_id).limit(1).execute()
+        )
+        if vac.data and vac.data[0].get("in_vacation_mode"):
+            return True
+
+        prefs = (
+            db.client.table("notification_preferences")
+            .select("quiet_hours_start,quiet_hours_end,timezone")
             .eq("user_id", user_id).limit(1).execute()
         )
-        if not res.data:
+        if not prefs.data:
             return False
-        row = res.data[0]
-        if row.get("vacation_mode"):
-            return True
+        row = prefs.data[0]
         # Quiet hours check
         qs = row.get("quiet_hours_start")
         qe = row.get("quiet_hours_end")
@@ -380,17 +387,7 @@ async def _silent_log(user_id: str, schedule: dict, db, recipe_id, recipe_name) 
 
 
 def _fetch_fcm_token(db, user_id: str) -> Optional[str]:
-    try:
-        # Common location: user_devices table; falls back to users.fcm_token if present
-        res = (
-            db.client.table("user_devices")
-            .select("fcm_token").eq("user_id", user_id).order("updated_at", desc=True)
-            .limit(1).execute()
-        )
-        if res.data and res.data[0].get("fcm_token"):
-            return res.data[0]["fcm_token"]
-    except Exception:
-        pass
+    # Push tokens live on the single-token column `users.fcm_token`.
     try:
         res = db.client.table("users").select("fcm_token").eq("id", user_id).limit(1).execute()
         if res.data and res.data[0].get("fcm_token"):

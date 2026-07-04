@@ -557,30 +557,37 @@ async def search_foods(
     try:
         db = get_supabase_db()
 
-        # Check cache first
-        cache_key = f"{user_id}:{search_query}"
-        cache_result = db.client.table("food_search_cache").select("*").eq("cache_key", cache_key).maybeSingle().execute()
+        # Check cache first. food_search_cache is a global table keyed by
+        # `query_hash`; per-user scoping is folded into the key. Rows are valid
+        # while `expires_at` is in the future (TTL enforced in the query).
+        query_hash = f"search:{user_id}:{search_query}"
+        now_iso = datetime.utcnow().isoformat()
+        cache_result = (
+            db.client.table("food_search_cache")
+            .select("*")
+            .eq("query_hash", query_hash)
+            .gt("expires_at", now_iso)
+            .limit(1)
+            .execute()
+        )
 
         if cache_result.data:
-            cache_entry = cache_result.data
-            # Check if cache is still valid (1 hour)
-            cached_at = datetime.fromisoformat(cache_entry.get("cached_at").replace("Z", "+00:00"))
-            if datetime.now(cached_at.tzinfo) - cached_at < timedelta(hours=1):
-                logger.info(f"Returning cached search results for query '{q}'")
-                # Log user context for analytics (cache hit)
-                await user_context_service.log_food_search_performed(
-                    user_id=user_id,
-                    query=q,
-                    result_count=len(cache_entry.get("results") or []),
-                    cache_hit=True,
-                    source="cache",
-                )
-                return FoodSearchResponse(
-                    results=cache_entry.get("results") or [],
-                    query=q,
-                    total_count=len(cache_entry.get("results") or []),
-                    cached=True,
-                )
+            cache_entry = cache_result.data[0]
+            logger.info(f"Returning cached search results for query '{q}'")
+            # Log user context for analytics (cache hit)
+            await user_context_service.log_food_search_performed(
+                user_id=user_id,
+                query=q,
+                result_count=len(cache_entry.get("results") or []),
+                cache_hit=True,
+                source="cache",
+            )
+            return FoodSearchResponse(
+                results=cache_entry.get("results") or [],
+                query=q,
+                total_count=len(cache_entry.get("results") or []),
+                cached=True,
+            )
 
         results = []
 
@@ -641,21 +648,23 @@ async def search_foods(
         # Limit results
         results = results[:limit]
 
-        # Cache results
+        # Cache results (1-hour TTL) in the global food_search_cache.
         try:
+            expires_at = datetime.utcnow() + timedelta(hours=1)
             cache_data = {
-                "cache_key": cache_key,
-                "user_id": user_id,
-                "query": search_query,
+                "query_hash": query_hash,
+                "query_text": search_query,
+                "source": "user_search",
                 "results": [r.model_dump() for r in results],
-                "cached_at": datetime.utcnow().isoformat(),
+                "result_count": len(results),
+                "expires_at": expires_at.isoformat(),
             }
             db.client.table("food_search_cache").upsert(
                 cache_data,
-                on_conflict="cache_key"
+                on_conflict="query_hash"
             ).execute()
         except Exception as e:
-            # Cache table might not exist
+            # Cache write is best-effort
             logger.debug(f"Failed to cache search results: {e}")
 
         # Log user context for analytics (fresh search)

@@ -426,19 +426,10 @@ async def validate_referral(request: Request, body: ValidateReferralRequest):
     if not code or len(code) > 50:
         return ValidateReferralResponse(valid=False, message="Invalid code format")
 
-    db = get_supabase_db()
-    try:
-        result = db.client.table("referral_codes").select("*").eq("code", code).eq("active", True).execute()
-        if not result.data:
-            return ValidateReferralResponse(valid=False, message="Code not found")
-
-        row = result.data[0]
-        return ValidateReferralResponse(
-            valid=True,
-            discount_amount_usd=row.get("discount_amount_usd"),
-            discount_label=row.get("label", f"${row.get('discount_amount_usd', 0)} off"),
-        )
-    except Exception as e:
-        # Table may not exist yet — graceful degradation
-        logger.warning(f"Referral lookup failed (table may not exist): {e}")
-        return ValidateReferralResponse(valid=False, message="Validation service unavailable")
+    # Degraded: there is no discount-code catalog. Zealova's referral system is
+    # two-sided attribution (`referral_tracking` + `share_links`) — a code maps
+    # to a referrer for reward tracking, not to a fixed dollar discount surfaced
+    # at onboarding. No table stores discount_amount_usd/label/active keyed by
+    # code, so no code can be validated for a discount here. Return not-valid
+    # until a promo-code catalog ships (NEEDS-MIGRATION).
+    return ValidateReferralResponse(valid=False, message="Code not found")

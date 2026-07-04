@@ -146,7 +146,7 @@ async def _get_streak_and_habits_impl(user: dict) -> Dict[str, Any]:
     # Habits: surface any `habits` table rows if present.
     habits: List[Dict[str, Any]] = []
     try:
-        resp = db.client.table("user_habits") \
+        resp = db.client.table("habits") \
             .select("*") \
             .eq("user_id", user["id"]) \
             .limit(20) \
