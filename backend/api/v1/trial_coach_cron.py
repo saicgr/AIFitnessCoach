@@ -8,8 +8,8 @@ Fires 5 proactive coach DMs during the 7-day trial:
   - Day 6 morning: "Tomorrow's the last day. Here's what week 2 looks like..."
   - Day 7: trial summary message
 
-Tone matches the user's selected coach personality (coach_id) and uses
-their custom coach_name if set.
+Messages address the user by their custom coach_name if set (coach
+personality id lives in users.preferences JSONB, not a users column).
 
 This cron runs hourly. It computes which users are in which trial day
 *in their local timezone* and sends only the messages whose target
@@ -92,8 +92,11 @@ async def trial_coach_cron(
         # Fetch all users currently in their trial window (Day 1..7 inclusive)
         # We don't filter by exact day here — we let the inner loop compute
         # day-of-trial per user using their trial_start_date and timezone.
+        # NOTE: coach_id lives inside users.preferences (JSONB), NOT as a
+        # column — selecting it as a column 500s the whole cron (42703).
+        # The messages only need coach_name, which IS a real column (mig 2041).
         users_result = supabase.client.table("users")\
-            .select("id, name, timezone, coach_id, coach_name, trial_start_date, "
+            .select("id, name, timezone, coach_name, trial_start_date, "
                     "goal_target_date, weight_kg, target_weight_kg, paused_at")\
             .not_.is_("trial_start_date", "null")\
             .execute()
@@ -199,10 +202,12 @@ def _record_sent(supabase, user_id: str, slot_id: str):
 
 async def _send_trial_coach_message(supabase, user: dict, slot_id: str) -> bool:
     """
-    Compose and send a coach DM. Inserts into chat_messages so it appears
-    in the user's coach inbox on next app open.
+    Compose and send a coach DM into the user's coach chat.
 
-    Uses coach_name (custom) or coach_id-default-name fallback.
+    There is no `chat_messages` table — coach chat lives in `chat_history`,
+    and the Flutter chat only renders session-scoped rows. Reuse the nudge
+    engine's mirror chokepoint so the message lands session-attached and
+    actually shows up in-app.
     """
     user_id = user["id"]
     coach_name = user.get("coach_name") or "Coach"
@@ -213,24 +218,20 @@ async def _send_trial_coach_message(supabase, user: dict, slot_id: str) -> bool:
     if not message_body:
         return False
 
-    try:
-        # Insert as a coach-side message into the existing chat_messages table.
-        # Schema may vary — wrap in try/except so missing columns don't crash.
-        supabase.client.table("chat_messages").insert({
-            "user_id": user_id,
-            "role": "assistant",
-            "content": message_body,
-            "metadata": {
-                "trial_touchpoint": slot_id,
-                "proactive": True,
-                "coach_name": coach_name,
-            },
-            "created_at": datetime.utcnow().isoformat(),
-        }).execute()
-        return True
-    except Exception as e:
-        logger.warning(f"Could not insert proactive coach message for {user_id}: {e}")
-        return False
+    from api.v1.push_nudge_cron import _mirror_proactive_to_chat
+    chat_message_id = _mirror_proactive_to_chat(
+        supabase,
+        user_id,
+        "trial_coach",
+        message_body,
+        context_json={
+            "trial_touchpoint": slot_id,
+            "proactive": True,
+            "coach_name": coach_name,
+        },
+        log_tag="TrialCoach",
+    )
+    return chat_message_id is not None
 
 
 def _compose_message(slot_id: str, coach_name: str, user_name: str, goal_date: Optional[str]) -> str:
