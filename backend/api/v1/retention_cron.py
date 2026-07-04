@@ -11,9 +11,9 @@ Current jobs:
     * push_nudge_log — delete rows older than 90 days (already capped in
                        practice by the 14-day dedup window, but we expire
                        the analytics tail so nothing ages indefinitely)
-    * media_jobs    — prune completed media classification jobs older than
-                       30 days (metadata only; S3 lifecycle policies handle
-                       the blobs themselves)
+    * media_analysis_jobs — prune media classification job metadata older
+                       than 30 days (S3 lifecycle policies handle the
+                       blobs themselves)
 
 Invocation: external scheduler POSTs daily to `/api/v1/retention/cron`
     with `X-Cron-Secret`, same pattern as `push_nudge_cron` (`/nudges/cron`)
@@ -91,10 +91,13 @@ async def run_retention_cron(
     results: Dict[str, int] = {}
     failures: Dict[str, str] = {}
 
+    # (table, timestamp column, window) — push_nudge_log has no created_at
+    # (rows are stamped sent_at); media job metadata lives in
+    # media_analysis_jobs (media_jobs never existed).
     sweeps = (
         ("chat_history", "timestamp", CHAT_HISTORY_RETENTION_DAYS),
-        ("push_nudge_log", "created_at", PUSH_NUDGE_LOG_RETENTION_DAYS),
-        ("media_jobs", "created_at", MEDIA_JOB_RETENTION_DAYS),
+        ("push_nudge_log", "sent_at", PUSH_NUDGE_LOG_RETENTION_DAYS),
+        ("media_analysis_jobs", "created_at", MEDIA_JOB_RETENTION_DAYS),
     )
     for table, column, days in sweeps:
         try:
