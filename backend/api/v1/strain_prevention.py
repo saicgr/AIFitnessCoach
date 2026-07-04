@@ -611,14 +611,15 @@ async def get_volume_caps(user_id: str,
 
         # Get user-specific caps if they exist
         caps_result = supabase.client.table("muscle_volume_caps").select(
-            "muscle_group, max_weekly_sets, source"
+            "muscle_group, max_weekly_sets, auto_adjusted"
         ).eq("user_id", user_id).execute()
 
         user_caps = {}
         for row in caps_result.data or []:
+            # No source column; auto_adjusted flags whether the cap was system- or user-set.
             user_caps[row["muscle_group"]] = {
                 "max": row["max_weekly_sets"],
-                "source": row["source"],
+                "source": "auto" if row.get("auto_adjusted") else "custom",
             }
 
         # Build response

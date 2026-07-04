@@ -155,7 +155,7 @@ def _collect_workouts(
     client = _get_client()
     rows = _safe_query(
         lambda: client.table("workouts")
-        .select("id, scheduled_date, is_completed, completed_at, duration_minutes, exercises, name")
+        .select("id, scheduled_date, is_completed, completed_at, duration_minutes, exercises:exercises_json, name")
         .eq("user_id", user_id)
         .gte("scheduled_date", _iso(start))
         .lte("scheduled_date", _iso(end))

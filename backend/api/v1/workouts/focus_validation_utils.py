@@ -266,7 +266,7 @@ async def get_all_muscles_for_exercise(exercise_name: str) -> List[Dict[str, Any
 
         try:
             mapping_result = db.client.table("exercise_muscle_mappings").select(
-                "muscle_name, involvement_percentage, is_primary"
+                "muscle_name:muscle_group, involvement_percentage, is_primary"
             ).ilike("exercise_name", f"%{exercise_name_lower}%").execute()
 
             if mapping_result.data:

@@ -726,11 +726,11 @@ class FatigueDetectionService:
             thirty_days_ago = (datetime.now() - timedelta(days=30)).isoformat()
 
             result = db.client.table("performance_logs").select(
-                "weight_kg, reps_completed, rpe, logged_at"
+                "weight_kg, reps_completed, rpe, recorded_at"
             ).eq("user_id", user_id).ilike(
                 "exercise_name", f"%{exercise_name}%"
-            ).gte("logged_at", thirty_days_ago).order(
-                "logged_at", desc=True
+            ).gte("recorded_at", thirty_days_ago).order(
+                "recorded_at", desc=True
             ).limit(50).execute()
 
             if not result.data or len(result.data) < 5:

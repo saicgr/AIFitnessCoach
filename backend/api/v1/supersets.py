@@ -533,7 +533,7 @@ async def create_superset_pair(request: CreateSupersetPairRequest,
         # Save the updated exercises
         update_result = db.client.table("workouts").update({
             "exercises_json": exercises,
-            "updated_at": datetime.utcnow().isoformat()
+            "last_modified_at": datetime.utcnow().isoformat()
         }).eq("id", request.workout_id).execute()
 
         if not update_result.data:
@@ -608,7 +608,7 @@ async def remove_superset_pair(workout_id: str, superset_group: int,
         # Save the updated exercises
         update_result = db.client.table("workouts").update({
             "exercises_json": exercises,
-            "updated_at": datetime.utcnow().isoformat()
+            "last_modified_at": datetime.utcnow().isoformat()
         }).eq("id", workout_id).execute()
 
         if not update_result.data:
@@ -760,8 +760,9 @@ async def get_superset_suggestions(
                 suggestions = _find_antagonist_pairs(exercises)
 
         # Get user's favorite pairs for reference
+        # favorite_superset_pairs has no muscle_1/muscle_2 columns.
         favorites_result = db.client.table("favorite_superset_pairs").select(
-            "exercise_1_name", "exercise_2_name", "muscle_1", "muscle_2", "times_used"
+            "exercise_1_name", "exercise_2_name", "times_used"
         ).eq("user_id", user_id).order("times_used", desc=True).limit(5).execute()
 
         favorite_pairs = []
@@ -769,8 +770,6 @@ async def get_superset_suggestions(
             favorite_pairs.append({
                 "exercise_1": row.get("exercise_1_name"),
                 "exercise_2": row.get("exercise_2_name"),
-                "muscle_1": row.get("muscle_1"),
-                "muscle_2": row.get("muscle_2"),
                 "times_used": row.get("times_used", 0),
             })
 

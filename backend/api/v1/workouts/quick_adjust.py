@@ -269,7 +269,6 @@ async def quick_adjust_workout(
             "energy_level": request_body.energy,
             "mood": None,
             "submitted_at": datetime.utcnow().isoformat(),
-            "source": "mid_workout",
         }).execute()
     except Exception as e:
         # Don't block adjustment on analytics insert. Logs are enough for debug.

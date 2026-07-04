@@ -170,7 +170,7 @@ async def _schedule_welcome_email(
         future_iso = (date.today() + timedelta(days=8)).isoformat()
         result = (
             db.client.table("workouts")
-            .select("name,duration_minutes,exercises,scheduled_date,type")
+            .select("name,duration_minutes,exercises:exercises_json,scheduled_date,type")
             .eq("user_id", user_id)
             .gte("scheduled_date", tomorrow_iso)
             .lt("scheduled_date", future_iso)

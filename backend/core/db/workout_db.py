@@ -809,7 +809,7 @@ class WorkoutDB(BaseDB):
             List of workout change records
         """
         query = self.client.table("workout_changes").select(
-            "id, workout_id, user_id, change_type, change_details, created_at"
+            "id, workout_id, user_id, change_type, change_details:details, created_at"
         )
 
         if workout_id:

@@ -546,11 +546,19 @@ async def get_ai_suggestions(
 
         # Get user context
         db = get_supabase_db()
+        # workout_frequency is not a users column — derive it from the
+        # preferences JSONB (workout_days_per_week / workout_days).
         user_data = (await run_db(lambda: db.client.table("users").select(
-            "fitness_level, workout_frequency, goals"
+            "fitness_level, goals, preferences"
         ).eq("id", user_id).execute()))
 
         user_context = user_data.data[0] if user_data.data else {}
+        prefs = user_context.pop("preferences", None) or {}
+        user_context["workout_frequency"] = (
+            prefs.get("workout_days_per_week")
+            or len(prefs.get("workout_days") or [])
+            or 3
+        )
 
         # Get existing habits
         existing = (await run_db(lambda: db.client.table("habits").select("name").eq(

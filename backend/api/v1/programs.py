@@ -589,14 +589,13 @@ async def rename_current_program(user_id: str, request: ProgramRenameRequest,
             raise HTTPException(status_code=404, detail="No active program found")
 
         assignment_id = current_result.data["id"]
-        old_name = current_result.data["program_name"]
+        old_name = current_result.data.get("custom_program_name")
 
-        # Update program name
+        # Update program name (no program_name column — custom_program_name is the store)
         now = datetime.utcnow().isoformat()
         update_result = supabase.client.table("user_program_assignments")\
             .update({
                 "custom_program_name": request.custom_program_name.strip(),
-                "program_name": request.custom_program_name.strip(),
                 "updated_at": now,
             })\
             .eq("id", assignment_id)\
@@ -630,11 +629,11 @@ async def rename_current_program(user_id: str, request: ProgramRenameRequest,
             user_id=assignment["user_id"],
             branded_program_id=assignment.get("branded_program_id"),
             custom_program_name=assignment.get("custom_program_name"),
-            program_name=assignment["program_name"],
+            program_name=request.custom_program_name.strip(),
             started_at=assignment["started_at"],
             completed_at=assignment.get("completed_at"),
             is_active=assignment["is_active"],
-            week_number=assignment.get("week_number", 1),
+            week_number=assignment.get("current_week", 1),
             created_at=assignment["created_at"],
             updated_at=assignment["updated_at"],
         )
@@ -795,11 +794,11 @@ async def update_program_week(user_id: str, week_number: int = Query(..., ge=1, 
 
         assignment_id = current_result.data["id"]
 
-        # Update week number
+        # Update week number (stored as current_week; no week_number column)
         now = datetime.utcnow().isoformat()
         update_result = supabase.client.table("user_program_assignments")\
             .update({
-                "week_number": week_number,
+                "current_week": week_number,
                 "updated_at": now,
             })\
             .eq("id", assignment_id)\
@@ -817,11 +816,11 @@ async def update_program_week(user_id: str, week_number: int = Query(..., ge=1, 
             user_id=assignment["user_id"],
             branded_program_id=assignment.get("branded_program_id"),
             custom_program_name=assignment.get("custom_program_name"),
-            program_name=assignment["program_name"],
+            program_name=assignment.get("custom_program_name") or "",
             started_at=assignment["started_at"],
             completed_at=assignment.get("completed_at"),
             is_active=assignment["is_active"],
-            week_number=assignment.get("week_number", 1),
+            week_number=assignment.get("current_week", 1),
             created_at=assignment["created_at"],
             updated_at=assignment["updated_at"],
         )

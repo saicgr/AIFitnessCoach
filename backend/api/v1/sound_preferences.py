@@ -115,7 +115,9 @@ async def update_sound_preferences(
         try:
             supabase.table("user_activity_log").insert({
                 "user_id": user_id,
-                "activity_type": "sound_preferences_updated",
+                "level": "INFO",
+                "action": "sound_preferences_updated",
+                "message": "Sound preferences updated",
                 "metadata": update_data
             }).execute()
         except Exception as e:

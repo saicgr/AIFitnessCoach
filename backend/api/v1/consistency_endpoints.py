@@ -54,7 +54,7 @@ async def search_exercise_history(
         # Search performance logs for this exercise
         # Use ILIKE for case-insensitive partial matching
         perf_response = (await run_db(lambda: db.client.table("performance_logs").select(
-            "workout_log_id, exercise_name, exercise_id, set_number, reps_completed, weight_kg, rpe, rir, is_pr, recorded_at"
+            "workout_log_id, exercise_name, exercise_id, set_number, reps_completed, weight_kg, rpe, rir, recorded_at"
         ).eq("user_id", user_id).ilike(
             "exercise_name", f"%{exercise_name}%"
         ).gte(
@@ -133,9 +133,7 @@ async def search_exercise_history(
                     best_weight = weight
                     best_reps = reps
 
-                if s.get("is_pr"):
-                    has_pr = True
-                    pr_type = "weight"  # Default
+                # performance_logs has no is_pr column; PR status is not derived here.
 
                 if s.get("rpe"):
                     all_rpes.append(s["rpe"])

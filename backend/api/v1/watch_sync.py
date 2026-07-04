@@ -294,22 +294,82 @@ async def get_activity_goals(user_id: str, current_user: dict = Depends(get_curr
 
 # ==================== Helper Functions ====================
 
+async def _resolve_watch_workout_log(db, user_id: str, session_id: str, device_source: str) -> Optional[str]:
+    """Find-or-create the workout_logs parent row for a watch session.
+
+    performance_logs.workout_log_id is NOT NULL — every set needs a parent
+    session row (that's how the phone path works too). Watch sets stream in
+    per-set carrying only the watch session_id, so the parent is keyed by
+    idempotency_key = "watch-{session_id}"; retried syncs reuse the same row.
+    """
+    key = f"watch-{session_id}"
+    existing = db.table("workout_logs").select("id") \
+        .eq("idempotency_key", key).limit(1).execute()
+    if existing.data:
+        return existing.data[0]["id"]
+    try:
+        # workout_logs.workout_id is NOT NULL, and a watch session may be
+        # freestyle (no scheduled workout) — back it with a real workouts
+        # row, mirroring the manual-activity-log pattern. is_current=False
+        # keeps it out of the one-current-per-user-day unique index.
+        workout = db.table("workouts").insert({
+            "user_id": user_id,
+            "name": "Watch Workout",
+            "type": "strength",
+            "difficulty": "medium",
+            "exercises_json": [],
+            "scheduled_date": datetime.utcnow().date().isoformat(),
+            # workouts_status_check has no in-progress state — the placeholder
+            # sits at "scheduled" until completion flips it to "completed".
+            "status": "scheduled",
+            "is_current": False,
+            "generation_method": "manual_log",
+            "generation_source": "watch",
+            "device_source": device_source,
+        }).execute()
+        workout_id = workout.data[0]["id"]
+        created = db.table("workout_logs").insert({
+            "user_id": user_id,
+            "workout_id": workout_id,
+            "status": "in_progress",
+            "sets_json": [],
+            "total_time_seconds": 0,
+            "device_source": device_source,
+            "idempotency_key": key,
+        }).execute()
+        if created.data:
+            return created.data[0]["id"]
+    except Exception:
+        # Concurrent set logged the same session first — re-read.
+        retry = db.table("workout_logs").select("id") \
+            .eq("idempotency_key", key).limit(1).execute()
+        if retry.data:
+            return retry.data[0]["id"]
+        raise
+    return None
+
+
 async def _log_workout_set(db, user_id: str, set_log: SetLogRequest, device_source: str):
     """Log a single workout set from watch."""
     logged_at = datetime.fromtimestamp(set_log.logged_at / 1000)
 
-    db.table("workout_logs").insert({
+    # Per-set training data lives in performance_logs (workout_logs is the
+    # per-workout summary), attached to the session's parent row.
+    workout_log_id = await _resolve_watch_workout_log(
+        db, user_id, set_log.session_id, device_source
+    )
+    db.table("performance_logs").insert({
+        "workout_log_id": workout_log_id,
         "user_id": user_id,
-        "session_id": set_log.session_id,
         "exercise_id": set_log.exercise_id,
         "exercise_name": set_log.exercise_name,
         "set_number": set_log.set_number,
-        "actual_reps": set_log.actual_reps,
+        "reps_completed": set_log.actual_reps,
         "weight_kg": set_log.weight_kg,
         "rpe": set_log.rpe,
         "rir": set_log.rir,
         "device_source": device_source,
-        "logged_at": logged_at.isoformat()
+        "recorded_at": logged_at.isoformat()
     }).execute()
 
     logger.debug(f"Logged set {set_log.set_number} for exercise {set_log.exercise_name}")
@@ -323,12 +383,37 @@ async def _complete_workout(db, user_id: str, completion: WorkoutCompletionReque
 
     # Update workout status
     if completion.workout_id:
+        # workouts has no actual-duration column; the realized duration is stored
+        # on workout_completions.duration_minutes (inserted just below).
         db.table("workouts").update({
             "is_completed": True,
             "completed_at": ended_at.isoformat(),
-            "actual_duration_minutes": duration_minutes,
             "device_source": device_source
         }).eq("id", completion.workout_id).execute()
+
+    # Close the session's workout_logs parent row (created by the first set),
+    # and complete its backing freestyle workout when the session wasn't tied
+    # to a scheduled workout.
+    try:
+        parent = db.table("workout_logs").select("id, workout_id") \
+            .eq("idempotency_key", f"watch-{completion.session_id}") \
+            .limit(1).execute()
+        if parent.data:
+            db.table("workout_logs").update({
+                "status": "completed",
+                "completed_at": ended_at.isoformat(),
+                "duration_minutes": duration_minutes,
+                "total_time_seconds": int((ended_at - started_at).total_seconds()),
+            }).eq("id", parent.data[0]["id"]).execute()
+            if not completion.workout_id and parent.data[0].get("workout_id"):
+                db.table("workouts").update({
+                    "is_completed": True,
+                    "status": "completed",
+                    "completed_at": ended_at.isoformat(),
+                    "duration_minutes": duration_minutes,
+                }).eq("id", parent.data[0]["workout_id"]).execute()
+    except Exception as e:
+        logger.warning(f"Watch workout_logs close failed for {completion.session_id}: {e}")
 
     # Log completion event
     db.table("workout_completions").insert({
@@ -426,13 +511,13 @@ async def _log_fasting_event(db, user_id: str, event: FastingEventRequest, devic
         # Schema-drift fix: the real table is `fasting_records` (active_fasts is
         # the view); column names there are start_time/goal_duration_minutes —
         # NOT started_at/target_duration_minutes.
+        # fasting_records has no device_source column — provenance is not tracked here.
         db.table("fasting_records").insert({
             "user_id": user_id,
             "protocol": event.protocol,
             "goal_duration_minutes": event.target_duration_minutes,
             "start_time": event_at.isoformat(),
-            "status": "active",
-            "device_source": device_source
+            "status": "active"
         }).execute()
     elif event.event_type == "END" and event.session_id:
         # End existing session — fasting_records uses end_time (not ended_at).

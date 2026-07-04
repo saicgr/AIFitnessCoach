@@ -96,7 +96,7 @@ def _resolve_linked_injury(db, injury_id: str) -> None:
     closed. Direct table update (no facade helper for injury_history updates)."""
     try:
         db.client.table("injury_history").update(
-            {"is_active": False, "resolved_at": _utcnow().isoformat()}
+            {"is_active": False, "actual_recovery_date": _utcnow().isoformat()}
         ).eq("id", injury_id).execute()
     except Exception as e:
         logger.warning(f"[memory.resolver] resolve linked injury failed: {e}")

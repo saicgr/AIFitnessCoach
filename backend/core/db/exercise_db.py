@@ -82,7 +82,7 @@ class ExerciseDB(BaseDB):
         """
         query = self.client.table("exercises").select(
             "id, external_id, name, category, body_part, equipment, "
-            "difficulty_level, description, instructions, primary_muscles, "
+            "difficulty_level, instructions, primary_muscle, "
             "secondary_muscles"
         )
 

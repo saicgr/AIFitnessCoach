@@ -990,14 +990,15 @@ async def get_day_detail(
             exercise_names = list(exercise_sets.keys())
             if exercise_names:
                 ex_details_response = (await run_db(lambda: db.client.table("exercises").select(
-                    "name, primary_muscles, secondary_muscles"
+                    "name, primary_muscle, secondary_muscles"
                 ).in_("name", exercise_names).execute()))
 
                 exercise_muscles = {}
                 for ex in (ex_details_response.data or []):
-                    primary = ex.get("primary_muscles", []) or []
-                    exercise_muscles[ex["name"]] = primary[0] if primary else "Other"
-                    muscles_set.update(primary)
+                    primary = ex.get("primary_muscle")  # scalar column, not a list
+                    exercise_muscles[ex["name"]] = primary or "Other"
+                    if primary:
+                        muscles_set.add(primary)
 
             # Get PRs for this workout. strength_records has NO workout_log_id or
             # pr_type column — match PRs to this workout by user + exercise + the
@@ -1078,13 +1079,8 @@ async def get_day_detail(
         # Average RPE
         avg_rpe = round(sum(all_rpes) / len(all_rpes), 1) if all_rpes else None
 
-        # Get shared images if any
+        # Shared images: workout_shares carries no image column, so none are surfaced here.
         shared_images = []
-        if workout_log_id:
-            share_response = (await run_db(lambda: db.client.table("workout_shares").select(
-                "image_url"
-            ).eq("workout_log_id", workout_log_id).execute()))
-            shared_images = [s["image_url"] for s in (share_response.data or []) if s.get("image_url")]
 
         logger.info("coach_feedback not yet implemented for day detail (user=%s, date=%s)", user_id, date_str)
 

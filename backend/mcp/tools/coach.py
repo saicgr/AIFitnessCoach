@@ -105,7 +105,7 @@ async def _get_strength_scores_impl(user: dict) -> Dict[str, Any]:
     db = get_supabase_db()
     try:
         result = db.client.table("latest_strength_scores") \
-            .select("muscle_group, strength_score, strength_level, updated_at") \
+            .select("muscle_group, strength_score, strength_level, updated_at:calculated_at") \
             .eq("user_id", user["id"]) \
             .execute()
     except Exception as e:

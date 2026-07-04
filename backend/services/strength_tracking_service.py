@@ -73,7 +73,7 @@ class StrengthTrackingService:
                 "estimated_1rm": estimated_1rm,
                 "rpe": rpe,
                 "is_pr": is_pr,
-                "recorded_at": datetime.now().isoformat(),
+                "achieved_at": datetime.now().isoformat(),
             }).execute()
         except Exception as e:
             logger.warning(f"Failed to persist strength record to Supabase: {e}", exc_info=True)

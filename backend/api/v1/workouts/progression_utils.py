@@ -153,23 +153,22 @@ async def get_user_progression_context(user_id: str, days: int = 30) -> dict:
         # 1. Get exercises from feedback where user said "too_easy"
         try:
             feedback_result = db.client.table("exercise_feedback").select(
-                "exercise_name, difficulty_felt, reps_completed"
+                "exercise_name, difficulty_felt"
             ).eq("user_id", user_id).gte("created_at", cutoff_date).eq(
                 "difficulty_felt", "too_easy"
             ).execute()
 
             if feedback_result.data:
+                # exercise_feedback has no reps column; a "too_easy" rating alone marks mastery.
                 for fb in feedback_result.data:
                     ex_name = fb.get("exercise_name", "")
                     if ex_name and ex_name not in exercises_marked_easy:
                         exercises_marked_easy.append(ex_name)
-                        reps = fb.get("reps_completed", 0)
-                        if reps >= 12:
-                            mastered_exercises.append({
-                                "name": ex_name,
-                                "reason": f"User marked as too easy ({reps} reps)",
-                                "source": "feedback"
-                            })
+                        mastered_exercises.append({
+                            "name": ex_name,
+                            "reason": "User marked as too easy",
+                            "source": "feedback"
+                        })
         except Exception as e:
             logger.debug(f"Could not fetch exercise feedback: {e}")
 
@@ -448,13 +447,14 @@ async def get_user_workout_patterns(user_id: str, days: int = 30) -> dict:
         # 2. Analyze set adjustments
         try:
             adjustments_result = db.client.table("set_adjustments").select(
-                "adjustment_type, adjustment_value"
+                "adjustment_type, original_sets, adjusted_sets"
             ).eq("user_id", user_id).gte("created_at", cutoff_date).execute()
 
             if adjustments_result.data:
                 for adj in adjustments_result.data:
                     adj_type = adj.get("adjustment_type", "")
-                    adj_value = adj.get("adjustment_value", 0)
+                    # No adjustment_value column; the signed set delta is the only stored magnitude.
+                    adj_value = (adj.get("adjusted_sets") or 0) - (adj.get("original_sets") or 0)
 
                     if adj_type == "sets" and adj_value > 0:
                         typical_adjustments["sets_increased"] += 1

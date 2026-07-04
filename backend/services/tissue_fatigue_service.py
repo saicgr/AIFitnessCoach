@@ -65,8 +65,8 @@ def _tissue_stress_for_names(db, names: List[str]) -> Dict[str, Dict[str, int]]:
     try:
         rows = (
             db.client.table("exercise_library")
-            .select("name, tissue_stress")
-            .in_("name", [n for n in names if n])
+            .select("exercise_name, tissue_stress")
+            .in_("exercise_name", [n for n in names if n])
             .execute()
         ).data or []
     except Exception as e:
@@ -74,7 +74,7 @@ def _tissue_stress_for_names(db, names: List[str]) -> Dict[str, Dict[str, int]]:
         return {}
     out: Dict[str, Dict[str, int]] = {}
     for r in rows:
-        nm = (r.get("name") or "").strip().lower()
+        nm = (r.get("exercise_name") or "").strip().lower()
         ts = r.get("tissue_stress")
         if nm in lowered and isinstance(ts, dict):
             out[nm] = {k: int(v) for k, v in ts.items()

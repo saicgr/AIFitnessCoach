@@ -303,8 +303,8 @@ async def exclude_body_parts_from_workout(
             supabase = get_supabase_db().client
             supabase.table("user_context_logs").insert({
                 "user_id": request.user_id,
-                "context_type": "body_part_exclusion",
-                "context_data": {
+                "event_type": "body_part_exclusion",
+                "event_data": {
                     "workout_id": workout_id,
                     "excluded_body_parts": request.body_parts,
                     "removed_exercises": removed_exercises,

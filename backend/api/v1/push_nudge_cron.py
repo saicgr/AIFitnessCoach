@@ -1967,15 +1967,23 @@ async def _job_recovery_complete(supabase, notif_svc, users: List[dict]) -> int:
         # Get today's workout and its muscle groups
         try:
             workout = supabase.client.table("workouts") \
-                .select("id, name, muscle_groups") \
+                .select("id, name, exercises_json") \
                 .eq("user_id", user_id).eq("scheduled_date", user_today) \
                 .eq("is_completed", False).limit(1).execute()
             if not workout.data:
                 continue
-            muscle_groups = workout.data[0].get("muscle_groups") or []
+            # workouts has no muscle_groups column — derive from the exercise list.
+            from api.v1.workouts.today import _extract_primary_muscles
+            raw_ex = workout.data[0].get("exercises_json") or []
+            if isinstance(raw_ex, str):
+                try:
+                    raw_ex = json.loads(raw_ex)
+                except (json.JSONDecodeError, TypeError):
+                    raw_ex = []
+            muscle_groups = _extract_primary_muscles(raw_ex) if isinstance(raw_ex, list) else []
             if not muscle_groups:
                 continue
-            primary_group = muscle_groups[0] if isinstance(muscle_groups, list) else str(muscle_groups)
+            primary_group = muscle_groups[0]
         except Exception:
             continue
 
