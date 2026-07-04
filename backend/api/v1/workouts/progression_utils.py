@@ -174,9 +174,15 @@ async def get_user_progression_context(user_id: str, days: int = 30) -> dict:
 
         # 2. Get exercises where user consistently completes 12+ reps
         try:
-            workout_result = db.client.table("completed_exercise_sets").select(
-                "exercise_name, reps_completed, sets_completed"
-            ).eq("user_id", user_id).gte("completed_at", cutoff_date).execute()
+            # Per-set history lives in performance_logs (one row per logged set,
+            # timestamped by recorded_at). Each completed row counts as one set,
+            # so total_sets is derived by counting rows below (there is no
+            # sets_completed column).
+            workout_result = db.client.table("performance_logs").select(
+                "exercise_name, reps_completed"
+            ).eq("user_id", user_id).eq("is_completed", True).gte(
+                "recorded_at", cutoff_date
+            ).execute()
 
             exercise_performance = {}
             if workout_result.data:

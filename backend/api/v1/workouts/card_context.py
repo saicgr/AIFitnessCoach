@@ -164,19 +164,18 @@ def _recovery_bucket(sb, user_id: str, yesterday_iso: str) -> Tuple[str, Optiona
 
 
 # ---------------------------------------------------------------------------
-# Cycle phase — read latest cycle_logs row for the user, derive phase.
-# Best-effort. Returns None when the user has no cycle data (men, or
-# users who haven't opted in).
+# Cycle phase — read the user's current cycle phase. user_current_cycle_phase
+# holds one already-derived row per user (current_phase), so no per-log
+# ordering is needed. Best-effort. Returns None when the user has no cycle data
+# (men, or users who haven't opted in).
 # ---------------------------------------------------------------------------
 def _cycle_phase(sb, user_id: str) -> Optional[str]:
     try:
-        cl = sb.client.table("cycle_logs").select(
-            "phase, logged_for_date"
-        ).eq("user_id", user_id).order(
-            "logged_for_date", desc=True
-        ).limit(1).execute()
+        cl = sb.client.table("user_current_cycle_phase").select(
+            "current_phase"
+        ).eq("user_id", user_id).maybe_single().execute()
         if cl and cl.data:
-            return cl.data[0].get("phase")
+            return cl.data.get("current_phase")
     except Exception:
         # Cycle tracking opt-in — silent skip is correct here.
         pass

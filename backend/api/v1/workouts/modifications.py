@@ -529,10 +529,12 @@ async def find_safe_alternative(
             logger.debug(f"No candidates found for target muscle: {target_muscle}")
             return None
 
-        # Get user's avoided exercises
+        # Get user's avoided exercises. avoided_exercises has no is_active
+        # column; the codebase's convention (preference_engine, exercise
+        # preferences) is to read all of a user's avoidances by user_id.
         avoided_response = supabase.table("avoided_exercises").select(
             "exercise_name"
-        ).eq("user_id", user_id).eq("is_active", True).execute()
+        ).eq("user_id", user_id).execute()
 
         avoided_names = set(
             ex['exercise_name'].lower()
@@ -616,7 +618,7 @@ async def get_modification_history(
         ).eq(
             "workout_id", workout_id
         ).order(
-            "changed_at", desc=True
+            "created_at", desc=True
         ).limit(limit).execute()
 
         return {

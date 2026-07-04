@@ -119,7 +119,7 @@ class StrengthTrackingService:
             ).eq(
                 "exercise_id", exercise_id
             ).order(
-                "recorded_at", desc=True
+                "achieved_at", desc=True
             ).limit(limit).execute()
 
             records = []
@@ -128,7 +128,7 @@ class StrengthTrackingService:
                     exercise_id=row["exercise_id"],
                     exercise_name=row.get("exercise_name", ""),
                     user_id=int(row["user_id"]),
-                    date=datetime.fromisoformat(row["recorded_at"]),
+                    date=datetime.fromisoformat(row["achieved_at"]),
                     weight_kg=float(row["weight_kg"]),
                     reps=int(row["reps"]),
                     estimated_1rm=float(row["estimated_1rm"]),
@@ -168,7 +168,7 @@ class StrengthTrackingService:
             ).eq(
                 "is_pr", True
             ).order(
-                "recorded_at", desc=True
+                "achieved_at", desc=True
             ).limit(limit).execute()
 
             records = []
@@ -177,7 +177,7 @@ class StrengthTrackingService:
                     exercise_id=row["exercise_id"],
                     exercise_name=row.get("exercise_name", ""),
                     user_id=int(row["user_id"]),
-                    date=datetime.fromisoformat(row["recorded_at"]),
+                    date=datetime.fromisoformat(row["achieved_at"]),
                     weight_kg=float(row["weight_kg"]),
                     reps=int(row["reps"]),
                     estimated_1rm=float(row["estimated_1rm"]),

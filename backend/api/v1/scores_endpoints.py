@@ -300,13 +300,15 @@ async def calculate_nutrition_score(
         fiber_g=int(user.get("target_fiber_g") or 30),
     )
 
-    # Get food logs for the week
+    # Get food logs for the week. food_logs timestamps rows via logged_at
+    # (there is no log_date column); bound the range to the full week_start..
+    # week_end days inclusive.
     food_logs_response = (await run_db(lambda: db.client.table("food_logs").select("*").eq(
         "user_id", request.user_id
     ).gte(
-        "log_date", week_start.isoformat()
+        "logged_at", f"{week_start.isoformat()}T00:00:00"
     ).lte(
-        "log_date", week_end.isoformat()
+        "logged_at", f"{week_end.isoformat()}T23:59:59"
     ).execute()))
 
     food_logs = food_logs_response.data or []
@@ -314,7 +316,8 @@ async def calculate_nutrition_score(
     # Aggregate daily nutrition from food logs
     daily_data = {}
     for log in food_logs:
-        log_date = date.fromisoformat(log["log_date"])
+        # logged_at is a timestamp; take its date component for daily bucketing.
+        log_date = date.fromisoformat(log["logged_at"][:10])
         if log_date not in daily_data:
             daily_data[log_date] = DailyNutrition(
                 date=log_date,
@@ -328,7 +331,9 @@ async def calculate_nutrition_score(
             )
 
         daily = daily_data[log_date]
-        daily.calories += float(log.get("calories", 0))
+        # food_logs stores calories as total_calories (there is no `calories`
+        # column — the old read silently summed 0 every week).
+        daily.calories += float(log.get("total_calories") or 0)
         daily.protein_g += float(log.get("protein_g", 0))
         daily.carbs_g += float(log.get("carbs_g", 0))
         daily.fat_g += float(log.get("fat_g", 0))
@@ -556,7 +561,7 @@ async def calculate_fitness_score(
     ).eq(
         "user_id", user_id
     ).eq(
-        "completed", True
+        "is_completed", True
     ).gte(
         "scheduled_date", thirty_days_ago
     ).execute()))

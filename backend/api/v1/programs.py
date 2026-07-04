@@ -150,14 +150,16 @@ async def list_branded_programs(
         if category:
             query = query.eq("category", category)
         if difficulty:
-            query = query.eq("difficulty", difficulty)
+            # branded_programs stores difficulty in difficulty_level.
+            query = query.eq("difficulty_level", difficulty)
         if is_featured is not None:
             query = query.eq("is_featured", is_featured)
         if is_premium is not None:
             query = query.eq("is_premium", is_premium)
 
-        # Order by popularity and apply pagination
-        query = query.order("popularity_score", desc=True).range(offset, offset + limit - 1)
+        # No popularity_score column exists on branded_programs; degrade to
+        # recency (created_at) as a documented proxy, then paginate.
+        query = query.order("created_at", desc=True).range(offset, offset + limit - 1)
 
         result = query.execute()
 
@@ -268,18 +270,23 @@ async def get_featured_programs(
     try:
         supabase = get_supabase()
 
-        # Featured programs
+        # Featured programs. branded_programs has no popularity_score column
+        # (no stored popularity/enrollment metric exists), so featured programs
+        # are ordered by recency (created_at) as a stable proxy. A real
+        # popularity ranking would need an enrollment-count aggregation over
+        # user_program_assignments or a dedicated popularity column.
         featured_result = supabase.client.table("branded_programs")\
             .select("*")\
             .eq("is_featured", True)\
-            .order("popularity_score", desc=True)\
+            .order("created_at", desc=True)\
             .limit(6)\
             .execute()
 
-        # Popular programs (by popularity score)
+        # Popular programs. No popularity_score column exists — degrade to
+        # recency ordering (created_at) as a documented proxy (see above).
         popular_result = supabase.client.table("branded_programs")\
             .select("*")\
-            .order("popularity_score", desc=True)\
+            .order("created_at", desc=True)\
             .limit(10)\
             .execute()
 

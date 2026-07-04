@@ -84,7 +84,7 @@ async def get_user_set_adjustment_patterns(
         # Get all adjustments for this user in the time period
         result = supabase.table("set_adjustments").select("*").eq(
             "user_id", user_id
-        ).gte("recorded_at", cutoff_date).execute()
+        ).gte("created_at", cutoff_date).execute()
 
         adjustments = result.data or []
 
@@ -130,8 +130,8 @@ async def get_user_set_adjustment_patterns(
                 ea["reasons"][adj["reason"]] += 1
             ea["types"][adj["adjustment_type"]] += 1
 
-            # Track last adjustment
-            recorded_at = adj["recorded_at"]
+            # Track last adjustment (set_adjustments timestamps via created_at)
+            recorded_at = adj.get("created_at")
             if ea["last_adjustment"] is None or recorded_at > ea["last_adjustment"]:
                 ea["last_adjustment"] = recorded_at
 

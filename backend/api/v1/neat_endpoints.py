@@ -453,25 +453,38 @@ async def get_reminder_preferences(user_id: str,
 
         if response and response.data:
             data = response.data
-            # Parse time fields
-            start_time = time.fromisoformat(data.get("start_time", "08:00:00"))
-            end_time = time.fromisoformat(data.get("end_time", "20:00:00"))
+            # The table's real columns predate the API model — map them back:
+            # reminders_enabled→enabled, reminder_interval_minutes→frequency,
+            # work_hours_*→start/end_time, weekend_reminders→active_days,
+            # smart_reminders→skip_if_active. The engine (should_send_reminder)
+            # reads the real columns, so this remap is what makes saved
+            # settings actually take effect.
+            start_time = time.fromisoformat(data.get("work_hours_start") or "08:00:00")
+            end_time = time.fromisoformat(data.get("work_hours_end") or "20:00:00")
+            interval = int(data.get("reminder_interval_minutes") or 60)
+            frequency = f"every_{interval}_min"
+            if frequency not in [f.value for f in ReminderFrequency]:
+                frequency = ReminderFrequency.EVERY_60_MIN.value
+            weekdays = [
+                DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                DayOfWeek.THURSDAY, DayOfWeek.FRIDAY,
+            ]
+            active_days = [d.value for d in weekdays]
+            if data.get("weekend_reminders"):
+                active_days += [DayOfWeek.SATURDAY.value, DayOfWeek.SUNDAY.value]
 
             return ReminderPreferences(
                 id=data.get("id"),
                 user_id=data.get("user_id"),
-                enabled=data.get("enabled", True),
-                frequency=data.get("frequency", ReminderFrequency.EVERY_60_MIN.value),
+                enabled=data.get("reminders_enabled", True),
+                frequency=frequency,
                 start_time=start_time,
                 end_time=end_time,
-                active_days=data.get("active_days", [d.value for d in [
-                    DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
-                    DayOfWeek.THURSDAY, DayOfWeek.FRIDAY
-                ]]),
-                skip_if_active=data.get("skip_if_active", True),
-                active_threshold_minutes=data.get("active_threshold_minutes", 5),
+                active_days=active_days,
+                skip_if_active=data.get("smart_reminders", True),
+                active_threshold_minutes=data.get("active_threshold_minutes") or 5,
                 quiet_during_workout=data.get("quiet_during_workout", True),
-                reminder_message_style=data.get("reminder_message_style", "encouraging"),
+                reminder_message_style=data.get("reminder_message_style") or "encouraging",
                 created_at=datetime.fromisoformat(data.get("created_at")) if data.get("created_at") else None,
                 updated_at=datetime.fromisoformat(data.get("updated_at")) if data.get("updated_at") else None,
             )
@@ -498,20 +511,34 @@ async def update_reminder_preferences(
     db = get_supabase_db()
 
     try:
+        # Map the API model onto the table's real columns (see the read-side
+        # remap in get_reminder_preferences) so the reminder engine honors
+        # what the user saves.
         update_data: Dict[str, Any] = {"user_id": user_id}
 
         if request.enabled is not None:
-            update_data["enabled"] = request.enabled
+            update_data["reminders_enabled"] = request.enabled
         if request.frequency is not None:
-            update_data["frequency"] = request.frequency
+            # "every_60_min" → 60
+            try:
+                update_data["reminder_interval_minutes"] = int(
+                    str(request.frequency).split("_")[1]
+                )
+            except (IndexError, ValueError):
+                update_data["reminder_interval_minutes"] = 60
         if request.start_time is not None:
-            update_data["start_time"] = request.start_time.isoformat()
+            update_data["work_hours_start"] = request.start_time.isoformat()
+            update_data["work_hours_only"] = True
         if request.end_time is not None:
-            update_data["end_time"] = request.end_time.isoformat()
+            update_data["work_hours_end"] = request.end_time.isoformat()
+            update_data["work_hours_only"] = True
         if request.active_days is not None:
-            update_data["active_days"] = request.active_days
+            update_data["weekend_reminders"] = any(
+                str(d) in (DayOfWeek.SATURDAY.value, DayOfWeek.SUNDAY.value)
+                for d in request.active_days
+            )
         if request.skip_if_active is not None:
-            update_data["skip_if_active"] = request.skip_if_active
+            update_data["smart_reminders"] = request.skip_if_active
         if request.active_threshold_minutes is not None:
             update_data["active_threshold_minutes"] = request.active_threshold_minutes
         if request.quiet_during_workout is not None:
@@ -596,11 +623,16 @@ async def should_send_reminder(user_id: str,
 
         # Check if user has an active workout (if quiet_during_workout is enabled)
         if prefs.quiet_during_workout:
-            # Check for active workout in last hour
+            # Check for an in-progress workout touched in the last hour. The
+            # workouts table has no started_at column; an active workout is one
+            # that is not yet completed (is_completed = False) and was recently
+            # modified (last_modified_at bumps as the user logs sets), so
+            # last_modified_at within the last hour is the "currently working
+            # out" recency signal.
             one_hour_ago = (now - timedelta(hours=1)).isoformat()
             workout_response = db.client.table("workouts").select("id").eq(
                 "user_id", user_id
-            ).eq("completed", False).gte("started_at", one_hour_ago).maybe_single().execute()
+            ).eq("is_completed", False).gte("last_modified_at", one_hour_ago).maybe_single().execute()
 
             if workout_response.data:
                 return ShouldRemindResponse(
@@ -805,10 +837,13 @@ async def send_movement_reminders(request: SendRemindersRequest,
         current_hour = now.hour
         current_day = now.strftime("%A").lower()
 
-        # Get users with reminders enabled for current time/day
+        # Get users with reminders enabled. neat_reminder_preferences has no
+        # active_days column (real column: reminders_enabled), so this coarse
+        # pre-filter narrows to reminders_enabled users only; the authoritative
+        # per-user day/hour gating happens inside should_send_reminder() below.
         prefs_response = db.client.table("neat_reminder_preferences").select(
             "user_id"
-        ).eq("enabled", True).contains("active_days", [current_day]).execute()
+        ).eq("reminders_enabled", True).execute()
 
         users_checked = 0
         reminders_sent = 0

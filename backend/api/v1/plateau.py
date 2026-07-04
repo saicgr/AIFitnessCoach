@@ -57,8 +57,9 @@ def _detect_exercise_plateaus(logs: List[Dict[str, Any]]) -> List[Dict[str, Any]
     for log in logs:
         name = log.get("exercise_name") or log.get("name", "Unknown")
         weight = log.get("weight") or log.get("weight_kg") or 0
-        reps = log.get("reps") or 0
-        created_at = log.get("created_at", "")
+        reps = log.get("reps") or log.get("reps_completed") or 0
+        # performance_logs timestamps rows via recorded_at (no created_at).
+        created_at = log.get("recorded_at") or log.get("created_at", "")
 
         if weight > 0 and reps > 0:
             exercise_sessions[name].append({
@@ -130,7 +131,7 @@ def _detect_weight_plateau(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
     # Parse and sort entries by date
     parsed = []
     for entry in entries:
-        value = entry.get("value") or entry.get("weight")
+        value = entry.get("weight_kg") or entry.get("value") or entry.get("weight")
         created_at = entry.get("created_at", "")
         if value is not None:
             try:
@@ -273,24 +274,25 @@ async def get_plateau_dashboard(user_id: str, current_user: dict = Depends(get_c
     try:
         supabase = get_supabase_client()
 
-        # 1. Exercise plateaus - query performance_logs
+        # 1. Exercise plateaus - query performance_logs (timestamped by recorded_at)
         logs_response = (
             supabase.table("performance_logs")
             .select("*")
             .eq("user_id", user_id)
-            .order("created_at", desc=True)
+            .order("recorded_at", desc=True)
             .limit(500)
             .execute()
         )
 
         exercise_plateaus = _detect_exercise_plateaus(logs_response.data or [])
 
-        # 2. Weight plateau - query weight entries from metrics
+        # 2. Weight plateau - query bodyweight entries from weight_logs (the
+        # dedicated weight-entry table: weight_kg + created_at, one row per
+        # logged weight; there is no generic `metrics` table).
         weight_response = (
-            supabase.table("metrics")
+            supabase.table("weight_logs")
             .select("*")
             .eq("user_id", user_id)
-            .eq("type", "weight")
             .order("created_at", desc=True)
             .limit(30)
             .execute()

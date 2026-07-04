@@ -6,7 +6,7 @@ Pipeline (server-side):
      If not, short-circuit with `matched=false, unmatched_reason=not_equipment`.
   2. Gym-equipment extractor: Gemini single-image extraction + EquipmentResolver
      canonicalization → (canonical_name, confidence, raw_name).
-  3. exercise_library_cleaned lookup: ILIKE on equipment / primary_equipment.
+  3. exercise_library_cleaned lookup: ILIKE on equipment.
   4. Re-rank by user's last-30-days workout_set_logs usage (boost recently used).
   5. Persist to `snapped_equipment` for the "Snapped" tab + reuse.
   6. Return ranked matches (≤8) with metadata.
@@ -249,15 +249,16 @@ async def _query_matches(
 
     # The Supabase Python client doesn't support OR clauses with ILIKE in a
     # single .or_(), but it does support `.or_("col1.ilike.X,col2.ilike.X")`.
-    or_clause = (
-        f"equipment.ilike.%{canonical_term}%,"
-        f"primary_equipment.ilike.%{canonical_term}%"
-    )
+    # exercise_library_cleaned carries a single `equipment` column and its
+    # muscle column is `target_muscle` (no primary_muscle/primary_equipment).
+    # Alias target_muscle → primary_muscle in the projection so the API response
+    # shape ("primary_muscle") is unchanged.
+    or_clause = f"equipment.ilike.%{canonical_term}%"
     try:
         result = (
             db.client.table("exercise_library_cleaned")
             .select(
-                "id,name,image_url,primary_muscle,secondary_muscles,equipment,primary_equipment"
+                "id,name,image_url,primary_muscle:target_muscle,secondary_muscles,equipment"
             )
             .or_(or_clause)
             .limit(_MAX_MATCHES * 2)
@@ -273,15 +274,16 @@ async def _query_matches(
     candidates = list(result.data or [])
 
     # Pull last-30-day exercise IDs the user has logged sets against, to
-    # rerank results by personal usage.
+    # rerank results by personal usage. Per-set history lives in
+    # performance_logs (one row per logged set), timestamped by recorded_at.
     since = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
     usage: dict[str, int] = {}
     try:
         usage_rows = (
-            db.client.table("workout_set_logs")
+            db.client.table("performance_logs")
             .select("exercise_id")
             .eq("user_id", user_id)
-            .gte("created_at", since)
+            .gte("recorded_at", since)
             .limit(2000)
             .execute()
         )

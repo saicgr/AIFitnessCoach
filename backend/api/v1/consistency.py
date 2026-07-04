@@ -228,16 +228,13 @@ async def get_consistency_insights(
         oldest_week_start = current_week_start - timedelta(days=3 * 7)  # 4 weeks back
         range_start = min(month_start, oldest_week_start)
 
-        recent_completed, longest_raw, patterns_raw, all_workouts_resp = await gather_db(
+        recent_completed, longest_raw, all_workouts_resp = await gather_db(
             lambda: db.client.table("workouts").select(
                 "scheduled_date"
             ).eq("user_id", user_id).eq("is_completed", True).gte(
                 "scheduled_date", (today - timedelta(days=90)).isoformat()
             ).order("scheduled_date", desc=True).limit(120).execute(),
             lambda: db.client.rpc("get_longest_streak", {"p_user_id": user_id}).execute(),
-            lambda: db.client.table("workout_time_patterns").select(
-                "day_of_week, hour_of_day, completion_count, skip_count"
-            ).eq("user_id", user_id).execute(),
             lambda: db.client.table("workouts").select(
                 "scheduled_date, is_completed"
             ).eq("user_id", user_id).gte(
@@ -277,44 +274,28 @@ async def get_consistency_insights(
 
         # Get longest streak from history. Three sources, each guarded:
         #   1. get_longest_streak RPC (preferred — likely doesn't exist yet)
-        #   2. streak_history table (Sentry PYTHON-FASTAPI-35: "Could not find
-        #      the table 'public.streak_history' in the schema cache")
+        #   2. no streak_history table exists in the schema (Sentry
+        #      PYTHON-FASTAPI-35: "Could not find the table
+        #      'public.streak_history' in the schema cache") — there is no store
+        #      of historical streak lengths to fall back to.
         #   3. fall back to current_streak as the floor
         # Any combination of missing infra defaults to current_streak rather
         # than 500-ing the whole endpoint.
         longest_streak = current_streak
         if not isinstance(longest_raw, Exception):
             longest_streak = longest_raw.data or current_streak
-        else:
-            try:
-                history_response = await run_db(
-                    lambda: db.client.table("streak_history").select(
-                        "streak_length"
-                    ).eq("user_id", user_id).order("streak_length", desc=True).limit(1).execute(),
-                )
-                historical_max = (
-                    history_response.data[0]["streak_length"]
-                    if history_response.data else 0
-                )
-                longest_streak = max(historical_max, current_streak)
-            except Exception as _e:
-                # streak_history may not exist; current_streak is the best we have.
-                logger.debug(f"streak_history fallback failed: {_e}")
-                longest_streak = current_streak
 
         # Calculate days since last workout
         days_since_last = 0
         if last_workout_date:
             days_since_last = (today - last_workout_date).days
 
-        # Get workout time patterns. Defensively guarded — workout_time_patterns
-        # is an analytics aggregation table that may not exist on all
-        # environments; missing table degrades to empty patterns rather than 500.
-        if isinstance(patterns_raw, Exception):
-            logger.debug(f"workout_time_patterns missing or failed: {patterns_raw}")
-            patterns_response = type("R", (), {"data": []})()
-        else:
-            patterns_response = patterns_raw
+        # Get workout time patterns. No table in the current schema carries
+        # per-day/hour completion+skip counts (the old workout_time_patterns
+        # aggregation table does not exist), so time-of-day patterns degrade to
+        # empty rather than 500-ing. Reintroduce a real query here if/when that
+        # aggregation is built.
+        patterns_response = type("R", (), {"data": []})()
 
         # Aggregate by day of week
         day_totals = defaultdict(lambda: {"completions": 0, "skips": 0})
@@ -511,14 +492,11 @@ async def get_consistency_patterns(
     try:
         logger.info(f"Fetching consistency patterns for user {user_id}")
 
-        # Get workout time patterns. Defensively guarded — table may not exist.
-        try:
-            patterns_response = (await run_db(lambda: db.client.table("workout_time_patterns").select(
-                "day_of_week, hour_of_day, completion_count, skip_count, updated_at"
-            ).eq("user_id", user_id).execute()))
-        except Exception as _e:
-            logger.debug(f"workout_time_patterns missing or failed: {_e}")
-            patterns_response = type("R", (), {"data": []})()
+        # Get workout time patterns. No table in the current schema carries
+        # per-day/hour completion+skip counts (the old workout_time_patterns
+        # aggregation table does not exist), so time-of-day patterns degrade to
+        # empty. Reintroduce a real query here if/when that aggregation is built.
+        patterns_response = type("R", (), {"data": []})()
 
         # Aggregate patterns
         day_totals = defaultdict(lambda: {"completions": 0, "skips": 0})
@@ -598,16 +576,12 @@ async def get_consistency_patterns(
                     p.is_preferred = True
                     break
 
-        # Get streak history. Defensively guarded — table may not exist
-        # (Sentry PYTHON-FASTAPI-35); empty history just means no past streaks
-        # to display, not a 500-worthy error.
+        # Get streak history. No streak_history table exists in the schema
+        # (Sentry PYTHON-FASTAPI-35: "Could not find the table
+        # 'public.streak_history' in the schema cache") — there is no store of
+        # individual past streak records, so history degrades to empty (avg 0)
+        # rather than 500-ing. Reintroduce a real query here if that table lands.
         history_response = type("R", (), {"data": []})()
-        try:
-            history_response = (await run_db(lambda: db.client.table("streak_history").select("*").eq(
-                "user_id", user_id
-            ).order("ended_at", desc=True).limit(20).execute()))
-        except Exception as _e:
-            logger.debug(f"streak_history missing or failed: {_e}")
 
         streak_history = []
         total_streak_length = 0

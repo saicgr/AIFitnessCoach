@@ -270,34 +270,13 @@ def _refuel_carbs_recommended_g(
 ) -> Optional[float]:
     """Sum of refuel-card recommended carbs over the rolling window.
 
-    The refuel prescription is computed on-demand (no persistence table at
-    time of writing). We therefore return None unless a future migration adds
-    a `cardio_refuel_prescriptions` table — at which point the lookup below
-    will start returning data and the metric becomes populated.
+    The refuel prescription is computed on-demand and is NOT persisted — there
+    is no cardio_refuel_prescriptions table (nor any other store of issued
+    refuel carbs) in the schema. The metric is therefore genuinely unavailable
+    and this returns None. Reintroduce a real windowed lookup here if a
+    persistence table is ever added.
     """
-    try:
-        r = (
-            db.client.table("cardio_refuel_prescriptions")
-            .select("carbs_g,issued_at")
-            .eq("user_id", user_id)
-            .gte("issued_at", since.isoformat())
-            .execute()
-        )
-        rows = r.data or []
-    except Exception:
-        # Table doesn't exist → metric is genuinely unavailable today.
-        return None
-    if not rows:
-        return None
-    total = 0.0
-    seen = False
-    for row in rows:
-        try:
-            total += float(row.get("carbs_g") or 0)
-            seen = True
-        except (TypeError, ValueError):
-            continue
-    return total if seen else None
+    return None
 
 
 # ---------------------------------------------------------------------------

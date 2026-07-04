@@ -449,21 +449,25 @@ async def quick_regenerate_workouts(http_request: Request, request: QuickRegener
 
         logger.info(f"Deleted {deleted_count} future incomplete workouts for user {request.user_id}")
 
-        # Log to user_activity for analytics if the table exists
+        # Log to user_activity_log for analytics (best-effort). That table's
+        # real shape is {user_id, level, action, message, metadata} — the event
+        # payload goes in metadata (there is no activity_type/activity_data).
         try:
             activity_data = {
                 "user_id": request.user_id,
-                "activity_type": "program_quick_reset",
-                "activity_data": {
+                "level": "INFO",
+                "action": "program_quick_reset",
+                "message": "Program quick reset",
+                "metadata": {
                     "workouts_deleted": deleted_count,
                     "reason": request.reason or "quick_reset_button",
                     "timestamp": datetime.now().isoformat(),
                 },
             }
-            db.client.table("user_activity").insert(activity_data).execute()
+            db.client.table("user_activity_log").insert(activity_data).execute()
             logger.info(f"Logged quick reset activity for user {request.user_id}")
         except Exception as e:
-            # Table might not exist or other error - don't fail the operation
+            # Don't fail the operation on a logging error.
             logger.warning(f"Could not log activity: {e}", exc_info=True)
 
         # Note: Actual workout generation is done by the frontend using streaming endpoint

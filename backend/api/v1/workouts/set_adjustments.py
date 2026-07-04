@@ -149,7 +149,7 @@ async def adjust_sets(workout_id: str, request: SetAdjustmentRequest,
             "reason_details": request.reason_details,
             "set_number": request.set_number,
             "metadata": json.dumps(request.metadata) if request.metadata else None,
-            "recorded_at": now.isoformat(),
+            "created_at": now.isoformat(),
         }
 
         # Insert into set_adjustments table
@@ -286,7 +286,7 @@ async def edit_set(workout_id: str, set_number: int, request: EditSetRequest,
                 "new_reps": request.new_reps,
                 "new_weight": request.new_weight,
             }),
-            "recorded_at": now.isoformat(),
+            "created_at": now.isoformat(),
         }
 
         supabase.table("set_adjustments").insert(adjustment_data).execute()
@@ -454,7 +454,7 @@ async def delete_set(
             "metadata": json.dumps({
                 "deleted_set": deleted_set,
             }) if deleted_set else None,
-            "recorded_at": now.isoformat(),
+            "created_at": now.isoformat(),
         }
 
         supabase.table("set_adjustments").insert(adjustment_data).execute()
@@ -537,7 +537,7 @@ async def get_workout_adjustments(workout_id: str,
         # Get all adjustments for this workout
         result = supabase.table("set_adjustments").select("*").eq(
             "workout_id", workout_id
-        ).order("recorded_at", desc=False).execute()
+        ).order("created_at", desc=False).execute()
 
         adjustments = []
         adjustment_types = Counter()
@@ -568,7 +568,9 @@ async def get_workout_adjustments(workout_id: str,
                 reason_details=row.get("reason_details"),
                 set_number=row.get("set_number"),
                 metadata=metadata,
-                recorded_at=row["recorded_at"],
+                # set_adjustments timestamps rows via created_at; the API model
+                # field stays recorded_at for response-shape compatibility.
+                recorded_at=row.get("created_at"),
             )
             adjustments.append(adjustment)
 
