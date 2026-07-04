@@ -57,11 +57,12 @@ def _verify_cron_auth(authorization: Optional[str]):
     email_cron routes. Reads from settings rather than env directly so
     deploys honor the same Render-configured secret.
     """
-    try:
-        from core.config import settings
-        expected = getattr(settings, "x_cron_secret", None) or getattr(settings, "cron_secret", None)
-    except Exception:
-        expected = None
+    # NOTE: core.config exposes get_settings(), NOT a `settings` name — the
+    # old `from core.config import settings` ImportError'd and fell into
+    # "no secret configured" open mode, leaving this endpoint UNAUTHENTICATED.
+    from core.config import get_settings
+    settings = get_settings()
+    expected = getattr(settings, "x_cron_secret", None) or getattr(settings, "cron_secret", None)
     if not expected:
         # No secret configured — open mode (dev / not yet wired)
         return

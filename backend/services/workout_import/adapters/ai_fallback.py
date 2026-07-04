@@ -107,7 +107,11 @@ async def parse(
     try:
         from google.genai import types  # type: ignore
         from services.gemini.constants import gemini_generate_with_retry
-        from core.config import settings
+        # core.config exposes get_settings(), not `settings` — the old
+        # `from core.config import settings` ImportError'd here and silently
+        # disabled the entire AI fallback parser.
+        from core.config import get_settings
+        settings = get_settings()
     except ImportError as e:
         warnings.append(f"Gemini SDK unavailable: {e}")
         return ParseResult(
