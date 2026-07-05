@@ -7,17 +7,30 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/coach_avatar.dart';
 
 /// Enhanced coach profile card for the swipeable PageView selection.
-/// Shows coach personality preview with sample message bubble.
+///
+/// With [chat] provided (coach selection), the card is a full-height
+/// interactive preview conversation: header + live chat. Without it, the
+/// legacy static layout (traits + scripted sample conversation) renders.
 class CoachProfileCard extends StatelessWidget {
   final CoachPersona coach;
   final bool isSelected;
   final VoidCallback? onTap;
+
+  /// Interactive preview chat body (chips + live turn). Replaces the static
+  /// sample conversation and makes the card fill its parent height.
+  final Widget? chat;
+
+  /// Opens the coach detail sheet (specialty / style / tone / push level +
+  /// the switch-anytime / 24-7 / create-your-own facts).
+  final VoidCallback? onInfo;
 
   const CoachProfileCard({
     super.key,
     required this.coach,
     required this.isSelected,
     this.onTap,
+    this.chat,
+    this.onInfo,
   });
 
   @override
@@ -64,34 +77,48 @@ class CoachProfileCard extends StatelessWidget {
                 ]
               : null,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Compact header with gradient and icon
-            _buildHeader(isDark, textPrimary, textSecondary),
-
-            // Content section - traits, specialization, and sample message
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              child: Column(
+        child: chat != null
+            // Interactive mode: header + full-height preview conversation.
+            // The header collapses when the card is squeezed (keyboard open
+            // on short screens) so the fixed rows can never stripe-overflow
+            // — the input is what matters while typing, not the header.
+            ? LayoutBuilder(
+                builder: (context, constraints) => Column(
+                  children: [
+                    if (constraints.maxHeight >= 300)
+                      _buildHeader(isDark, textPrimary, textSecondary),
+                    Expanded(child: chat!),
+                  ],
+                ),
+              )
+            : Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Specialization
-                  _buildSpecialization(isDark, textSecondary),
-                  const SizedBox(height: 8),
+                  // Compact header with gradient and icon
+                  _buildHeader(isDark, textPrimary, textSecondary),
 
-                  // Personality traits
-                  _buildPersonalityTraits(isDark, textSecondary),
-                  const SizedBox(height: 10),
+                  // Content section - traits, specialization, and sample message
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Specialization
+                        _buildSpecialization(isDark, textSecondary),
+                        const SizedBox(height: 8),
 
-                  // Sample message
-                  _buildSampleMessage(context, isDark, textPrimary, textSecondary),
+                        // Personality traits
+                        _buildPersonalityTraits(isDark, textSecondary),
+                        const SizedBox(height: 10),
+
+                        // Sample message
+                        _buildSampleMessage(context, isDark, textPrimary, textSecondary),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -116,14 +143,14 @@ class CoachProfileCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Coach avatar
+          // Coach avatar — tap opens the full photo viewer.
           CoachAvatar(
             coach: coach,
             size: 48,
             showBorder: true,
             borderWidth: 2,
             showShadow: false,
-            enableTapToView: false,
+            enableTapToView: true,
           ),
           const SizedBox(width: 12),
 
@@ -166,6 +193,31 @@ class CoachProfileCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.check_circle, color: Colors.white, size: 16),
+            ),
+          ],
+          // Coach detail sheet trigger
+          if (onInfo != null) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onInfo!();
+              },
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.18),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: const Icon(Icons.info_outline,
+                    color: Colors.white, size: 16),
+              ),
             ),
           ],
         ],

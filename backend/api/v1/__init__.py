@@ -4,6 +4,7 @@ from api.v1 import chat, health
 from api.v1 import chat_meal_context
 from api.v1 import users, exercises, performance_db
 from api.v1 import metrics, videos, onboarding, reminders, nutrition
+from api.v1 import coach_preview
 from api.v1 import exercise_suggestions
 from api.v1 import library  # Modular library package
 from api.v1 import hydration
@@ -184,6 +185,8 @@ router.include_router(videos.router, tags=["Videos"])
 
 # Conversational AI onboarding endpoints
 router.include_router(onboarding.router, prefix="/onboarding", tags=["Onboarding"])
+# Coach-preview live turn ("try your coach" during coach selection)
+router.include_router(coach_preview.router, prefix="/onboarding", tags=["Onboarding"])
 
 # Email reminder endpoints
 router.include_router(reminders.router, prefix="/reminders", tags=["Reminders"])

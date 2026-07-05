@@ -597,6 +597,14 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
     final isEnabled = canContinue && !_isLoading;
     final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
 
+    // After the preview chat's final live turn (the coach's close pointed
+    // here), a gentle pulse carries the momentum onto the CTA.
+    Widget pulsed(Widget child) => _ctaPulse
+        ? child
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .scaleXY(begin: 1.0, end: 1.02, duration: 800.ms)
+        : child;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       decoration: BoxDecoration(
@@ -611,7 +619,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
       ),
       child: SafeArea(
         top: false,
-        child: GestureDetector(
+        child: pulsed(GestureDetector(
           onTap: isEnabled ? _continue : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
@@ -674,7 +682,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
                     ),
             ),
           ),
-        ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
+        ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1)),
       ),
     );
   }

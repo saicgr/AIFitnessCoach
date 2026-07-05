@@ -22,7 +22,10 @@ import '../settings/sections/nutrition_fasting_section.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import '../../core/services/posthog_service.dart';
 import 'pre_auth_quiz_screen.dart';
+import 'onboarding_experiments.dart';
 import 'widgets/coach_profile_card.dart';
+import 'widgets/coach_preview_chat.dart';
+import '../../widgets/coach_avatar.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import '../../data/models/ai_profile_payload.dart';
 import '../../widgets/glass_sheet.dart';
@@ -57,6 +60,15 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   late final PageController _pageController;
   int _currentPageIndex = 0;
 
+  // Interactive preview chat — one session per coach so transcripts survive
+  // swipes and page disposal. The live input is gated by the
+  // onboarding_coach_live_chat kill switch (emergency brake, default ON);
+  // chips + curated answers ship unconditionally.
+  final Map<String, CoachPreviewSession> _previewSessions = {};
+  bool _liveChatEnabled = true;
+  // Second live turn used → the coach's close pointed at the CTA; pulse it.
+  bool _ctaPulse = false;
+
   // Custom coach settings — user-editable in the Build Your Own sheet.
   // Persisted via setCustomCoach() + PATCH /users/me on continue.
   String _customName = '';
@@ -76,6 +88,13 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     // Default to first predefined coach
     _selectedCoach = CoachPersona.predefinedCoaches.first;
     _pageController = PageController(viewportFraction: 0.85, initialPage: 0);
+    // Resolve the live-chat kill switch (absent flag = enabled).
+    OnboardingExperiments.isEnabled(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagCoachLiveChat,
+    ).then((enabled) {
+      if (mounted && !enabled) setState(() => _liveChatEnabled = false);
+    });
   }
 
   @override
@@ -97,6 +116,170 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     });
     // Update app accent color to match the selected coach
     ref.read(accentColorProvider.notifier).setAccent(coach.appAccentColor);
+  }
+
+  Widget _assureItem(IconData icon, String label, Color color) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 3),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
+        ],
+      );
+
+  Widget _assureDot(Color color) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        child: Container(
+          width: 3,
+          height: 3,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.5),
+            shape: BoxShape.circle,
+          ),
+        ),
+      );
+
+  String _prettyId(String raw) => raw
+      .split(RegExp(r'[-_]'))
+      .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+      .join(' ');
+
+  /// ⓘ sheet: persona details + the three reassurances (switch anytime,
+  /// 24/7 availability, create-your-own).
+  void _showCoachInfoSheet(CoachPersona coach) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    Widget detailRow(String label, String value) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textSecondary)),
+              Text(value,
+                  style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary)),
+            ],
+          ),
+        );
+
+    Widget factRow(IconData icon, String bold, String rest) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 16, color: coach.primaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(
+                        text: '$bold — ',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, color: textPrimary)),
+                    TextSpan(
+                        text: rest,
+                        style: TextStyle(color: textSecondary)),
+                  ]),
+                  style: const TextStyle(fontSize: 12.5, height: 1.35),
+                ),
+              ),
+            ],
+          ),
+        );
+
+    showGlassSheet<void>(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CoachAvatar(
+                    coach: coach,
+                    size: 52,
+                    showBorder: true,
+                    borderWidth: 2,
+                    enableTapToView: true,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(coach.name,
+                            style: TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w800,
+                                color: textPrimary)),
+                        Text(coach.tagline,
+                            style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: coach.primaryColor)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              detailRow('Specialty', coach.specialization),
+              detailRow('Style', _prettyId(coach.coachingStyle)),
+              detailRow('Tone', _prettyId(coach.communicationTone)),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                child: Row(
+                  children: [
+                    Text('Push level',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: textSecondary)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: coach.encouragementLevel,
+                          minHeight: 7,
+                          backgroundColor: isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.black.withValues(alpha: 0.06),
+                          valueColor:
+                              AlwaysStoppedAnimation(coach.primaryColor),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              factRow(Icons.schedule_rounded, 'Available 24/7',
+                  'answers in seconds, any hour.'),
+              factRow(Icons.swap_horiz_rounded, 'Switch anytime',
+                  'your plan and data follow you.'),
+              factRow(Icons.auto_awesome, 'Or create your own',
+                  'name, style and tone, fully custom.'),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showCustomCoachPreview() {
@@ -1091,6 +1274,25 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                   );
                 }),
 
+                // Reassurance strip — answers the three silent objections
+                // before the user commits to a coach.
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _assureItem(Icons.swap_horiz_rounded, 'Switch anytime',
+                          textSecondary),
+                      _assureDot(textSecondary),
+                      _assureItem(
+                          Icons.schedule_rounded, '24/7', textSecondary),
+                      _assureDot(textSecondary),
+                      _assureItem(Icons.auto_awesome, 'Create your own',
+                          textSecondary),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 250.ms),
+
                 // PageView for swipeable coach cards
                 Expanded(
                   child: PageView.builder(
@@ -1108,6 +1310,8 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                     itemCount: CoachPersona.predefinedCoaches.length,
                     itemBuilder: (context, index) {
                       final coach = CoachPersona.predefinedCoaches[index];
+                      final session = _previewSessions.putIfAbsent(
+                          coach.id, () => CoachPreviewSession());
                       return AnimatedScale(
                         duration: const Duration(milliseconds: 200),
                         scale: index == _currentPageIndex ? 1.0 : 0.9,
@@ -1115,6 +1319,15 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                           coach: coach,
                           isSelected: _selectedCoach?.id == coach.id,
                           onTap: () => _selectCoach(coach),
+                          onInfo: () => _showCoachInfoSheet(coach),
+                          chat: CoachPreviewChat(
+                            coach: coach,
+                            session: session,
+                            liveEnabled: _liveChatEnabled,
+                            onCapped: () {
+                              if (mounted) setState(() => _ctaPulse = true);
+                            },
+                          ),
                         ),
                       ).animate(delay: (100 + index * 50).ms).fadeIn();
                     },
