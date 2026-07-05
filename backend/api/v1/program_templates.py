@@ -1908,7 +1908,18 @@ async def library_program_schedule(
                             "image_url": image_url,
                             "video_url": video_url,
                             "gif_url": gif_url,
+                            "instructions": None,
                         })
+
+                    try:
+                        from services.exercise_instructions_resolver import (
+                            attach_instructions,
+                        )
+                        attach_instructions(exercises_out)
+                    except Exception as ie:  # noqa: BLE001
+                        logger.warning(
+                            "schedule: instructions attach failed: %s", ie
+                        )
 
                     days.append({
                         "day_name": (
@@ -1971,7 +1982,17 @@ async def library_program_schedule(
                     "image_url": None,
                     "video_url": None,
                     "gif_url": None,
+                    "instructions": None,
                 })
+
+            try:
+                from services.exercise_instructions_resolver import (
+                    attach_instructions,
+                )
+                attach_instructions(exercises_out)
+            except Exception as ie:  # noqa: BLE001
+                logger.warning("schedule: instructions attach failed: %s", ie)
+
             days.append({
                 "day_name": w.get("workout_name") or w.get("name") or f"Day {wi + 1}",
                 "workout_type": w.get("type"),

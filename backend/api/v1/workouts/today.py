@@ -430,6 +430,12 @@ def _row_to_summary(
     from services.exercise_tracking_metric import attach_tracking_metadata
     attach_tracking_metadata(exercises if isinstance(exercises, list) else [])
 
+    # Attach real DB instructions (name-resolved, process-cached) so the
+    # exercise detail screen shows technique-correct text instead of the
+    # generic local fallback — serve-time, same rationale as tracking metadata.
+    from services.exercise_instructions_resolver import attach_instructions
+    attach_instructions(exercises if isinstance(exercises, list) else [])
+
     # Get scheduled date
     scheduled_date = row.get("scheduled_date", "")
     if scheduled_date:

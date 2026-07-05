@@ -211,9 +211,11 @@ def row_to_workout(row: dict) -> Workout:
     # the list rather than /today. Defensive: any failure keeps the original.
     try:
         from services.exercise_tracking_metric import attach_tracking_metadata
+        from services.exercise_instructions_resolver import attach_instructions
         _ex_list = json.loads(exercises_json)
         if isinstance(_ex_list, list):
             attach_tracking_metadata(_ex_list)
+            attach_instructions(_ex_list)
             exercises_json = json.dumps(_ex_list)
     except Exception:
         pass
