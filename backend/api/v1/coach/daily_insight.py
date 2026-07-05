@@ -412,6 +412,104 @@ def _collect_cache_hit_signals(sb, user_id: str) -> Dict[str, Any]:
     return out
 
 
+# Days-of-data each signal needs before its baseline is trustworthy. These
+# mirror the REAL gates in the services that consume the data — not marketing
+# numbers: readiness_service._RHR_MIN_HISTORY_DAYS, vitals_service
+# MIN_BASELINE_NIGHTS, training_load_service.classify_state's 14-day floor.
+_CALIBRATION_GATES = {
+    "resting_hr": 14,
+    "hrv": 4,
+    "sleep": 7,
+    "training_intensity": 14,
+}
+
+
+def _build_calibration_status(sb, user_id: str) -> Optional[Dict[str, Any]]:
+    """Per-signal calibration progress for the home "Coach is learning you"
+    banner — data-volume gated (what the readiness/vitals/load services
+    actually require), NOT account age. Each signal is computed fail-open
+    (errors report zero progress); `state` is "ready" | "calibrating" |
+    "no_data" (nothing synced yet → the client hints at connecting Health
+    instead of showing a countdown that can never finish)."""
+    today = date.today()
+    cutoff_28 = (today - timedelta(days=28)).isoformat()
+
+    def _entry(key: str, collected: int) -> Dict[str, Any]:
+        needed = _CALIBRATION_GATES[key]
+        collected = max(0, min(int(collected), needed))
+        state = (
+            "ready" if collected >= needed
+            else ("no_data" if collected == 0 else "calibrating")
+        )
+        return {
+            "key": key,
+            "days_collected": collected,
+            "days_needed": needed,
+            "state": state,
+        }
+
+    # Resting HR — distinct days with a reading in the trailing 28d, across
+    # BOTH stores: cardio_metrics (manual/fitness-test) and daily_activity
+    # (wearable-synced daily RHR).
+    rhr_days: set = set()
+    try:
+        res = sb.client.table("cardio_metrics").select("measured_at").eq(
+            "user_id", user_id
+        ).not_.is_("resting_hr", "null").gte("measured_at", cutoff_28).execute()
+        rhr_days.update(str(r["measured_at"])[:10] for r in (res.data or []) if r.get("measured_at"))
+        res = sb.client.table("daily_activity").select("activity_date").eq(
+            "user_id", user_id
+        ).not_.is_("resting_heart_rate", "null").gte("activity_date", cutoff_28).execute()
+        rhr_days.update(str(r["activity_date"])[:10] for r in (res.data or []) if r.get("activity_date"))
+    except Exception as e:
+        logger.debug(f"[daily_insight] calibration rhr count skipped: {e}")
+
+    hrv_nights = 0
+    try:
+        res = sb.client.table("daily_activity").select("activity_date").eq(
+            "user_id", user_id
+        ).not_.is_("hrv", "null").gte("activity_date", cutoff_28).execute()
+        hrv_nights = len({str(r["activity_date"])[:10] for r in (res.data or []) if r.get("activity_date")})
+    except Exception as e:
+        logger.debug(f"[daily_insight] calibration hrv count skipped: {e}")
+
+    sleep_nights = 0
+    try:
+        cutoff_14 = (today - timedelta(days=14)).isoformat()
+        res = sb.client.table("daily_activity").select(
+            "activity_date, sleep_minutes"
+        ).eq("user_id", user_id).gte("activity_date", cutoff_14).execute()
+        sleep_nights = len({
+            str(r["activity_date"])[:10]
+            for r in (res.data or [])
+            if (r.get("sleep_minutes") or 0) > 0
+        })
+    except Exception as e:
+        logger.debug(f"[daily_insight] calibration sleep count skipped: {e}")
+
+    load_days = 0
+    try:
+        from services.training_load_service import current_state
+        st = current_state(sb, user_id)
+        load_days = int(getattr(st, "days_of_history", 0) or 0)
+    except Exception as e:
+        logger.debug(f"[daily_insight] calibration load history skipped: {e}")
+
+    signals = [
+        _entry("resting_hr", len(rhr_days)),
+        _entry("hrv", hrv_nights),
+        _entry("sleep", sleep_nights),
+        _entry("training_intensity", load_days),
+    ]
+    ready_count = sum(1 for s in signals if s["state"] == "ready")
+    return {
+        "signals": signals,
+        "ready_count": ready_count,
+        "total_count": len(signals),
+        "all_ready": ready_count == len(signals),
+    }
+
+
 def _recovery_fuel_chip() -> Dict[str, Any]:
     """The dedicated recovery-fuel chip. Label-only schema + a `prompt` so the
     tap deep-links into the coach chat with the fuller recovery-meal request."""
@@ -511,6 +609,10 @@ class DailyInsightResponse(BaseModel):
     # recovery-fuel chip + pull the protein/calorie context inline instead of
     # leaving it collapsed. Default False keeps every normal card unchanged.
     recovery_focus: bool = False
+    # Per-signal baseline-calibration progress for the home "Coach is learning
+    # you" banner (see _build_calibration_status). None for non-home sources
+    # or when the computation fails — the client banner self-hides on None.
+    calibration_status: Optional[Dict[str, Any]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -1837,10 +1939,16 @@ async def daily_insight(
                         # (full snapshot + Gemini) each call. Fetch just the
                         # live signals this response embeds instead.
                         _live_signals: Dict[str, Any] = {}
+                        _calibration: Optional[Dict[str, Any]] = None
                         if source in ("home", "morning_brief"):
                             _live_signals = await asyncio.get_event_loop(
                             ).run_in_executor(
                                 None, _collect_cache_hit_signals, sb, user_id
+                            )
+                        if source == "home":
+                            _calibration = await asyncio.get_event_loop(
+                            ).run_in_executor(
+                                None, _build_calibration_status, sb, user_id
                             )
                         return DailyInsightResponse(
                             insight_id=row.get("id"),
@@ -1868,6 +1976,7 @@ async def daily_insight(
                                 _recovery_focus_flagged(_live_signals)
                                 if source == "home" else False
                             ),
+                            calibration_status=_calibration,
                         )
             except HTTPException:
                 raise
@@ -2231,6 +2340,12 @@ async def daily_insight(
                 if source in ("home", "morning_brief") else None
             ),
             recovery_focus=recovery_focus,
+            calibration_status=(
+                await loop.run_in_executor(
+                    None, _build_calibration_status, sb, user_id
+                )
+                if source == "home" else None
+            ),
         )
     except HTTPException:
         raise

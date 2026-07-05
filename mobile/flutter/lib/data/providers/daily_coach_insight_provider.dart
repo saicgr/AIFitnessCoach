@@ -31,9 +31,9 @@ class CoachCta {
   const CoachCta({required this.label, required this.route});
 
   factory CoachCta.fromJson(Map<String, dynamic> json) => CoachCta(
-        label: (json['label'] as String?) ?? '',
-        route: (json['route'] as String?) ?? '/',
-      );
+    label: (json['label'] as String?) ?? '',
+    route: (json['route'] as String?) ?? '/',
+  );
 }
 
 /// One quick-reply chip on a daily insight (`chips[]` in the backend
@@ -80,7 +80,12 @@ class InsightChip {
     // backend attached alongside label/route/action. `prompt` is reserved
     // (handled below) so it never leaks into the action context.
     const reserved = {
-      'label', 'route', 'action', 'kind', 'route_or_action', 'prompt',
+      'label',
+      'route',
+      'action',
+      'kind',
+      'route_or_action',
+      'prompt',
     };
     final ctx = <String, dynamic>{};
     json.forEach((k, v) {
@@ -127,15 +132,86 @@ class CoachNoticed {
   });
 
   factory CoachNoticed.fromJson(Map<String, dynamic> json) => CoachNoticed(
-        title: (json['title'] as String?) ?? 'Coach noticed',
-        body: (json['body'] as String?) ?? '',
-        bodyPart: json['body_part'] as String?,
-        phase: json['phase'] as String?,
-        action: json['action'] as String?,
-        acceptLabel: (json['accept_label'] as String?) ?? 'Adjust',
-        dismissLabel: (json['dismiss_label'] as String?) ?? 'Talk more',
-        chatSeed: json['chat_seed'] as String?,
-      );
+    title: (json['title'] as String?) ?? 'Coach noticed',
+    body: (json['body'] as String?) ?? '',
+    bodyPart: json['body_part'] as String?,
+    phase: json['phase'] as String?,
+    action: json['action'] as String?,
+    acceptLabel: (json['accept_label'] as String?) ?? 'Adjust',
+    dismissLabel: (json['dismiss_label'] as String?) ?? 'Talk more',
+    chatSeed: json['chat_seed'] as String?,
+  );
+}
+
+/// One baseline signal in the server's `calibration_status` payload —
+/// real data-volume progress (days synced vs days the readiness/vitals/load
+/// services actually need), not an account-age countdown.
+class CalibrationSignal {
+  final String key; // resting_hr | hrv | sleep | training_intensity
+  final int daysCollected;
+  final int daysNeeded;
+  final String state; // ready | calibrating | no_data
+
+  const CalibrationSignal({
+    required this.key,
+    required this.daysCollected,
+    required this.daysNeeded,
+    required this.state,
+  });
+
+  bool get isReady => state == 'ready';
+  bool get hasNoData => state == 'no_data';
+
+  static CalibrationSignal? fromJson(Map<String, dynamic> json) {
+    final key = json['key'] as String?;
+    if (key == null || key.isEmpty) return null;
+    return CalibrationSignal(
+      key: key,
+      daysCollected: (json['days_collected'] as num?)?.toInt() ?? 0,
+      daysNeeded: (json['days_needed'] as num?)?.toInt() ?? 0,
+      state: (json['state'] as String?) ?? 'no_data',
+    );
+  }
+}
+
+/// Server `calibration_status` — per-signal baseline progress for the home
+/// "Coach is learning you" banner. Null when the backend omitted it.
+class CalibrationStatus {
+  final List<CalibrationSignal> signals;
+  final int readyCount;
+  final int totalCount;
+  final bool allReady;
+
+  const CalibrationStatus({
+    required this.signals,
+    required this.readyCount,
+    required this.totalCount,
+    required this.allReady,
+  });
+
+  static CalibrationStatus? fromJson(dynamic raw) {
+    if (raw is! Map) return null;
+    final json = Map<String, dynamic>.from(raw);
+    final signals = <CalibrationSignal>[];
+    final rawSignals = json['signals'];
+    if (rawSignals is List) {
+      for (final s in rawSignals) {
+        if (s is Map) {
+          final sig = CalibrationSignal.fromJson(Map<String, dynamic>.from(s));
+          if (sig != null) signals.add(sig);
+        }
+      }
+    }
+    if (signals.isEmpty) return null;
+    return CalibrationStatus(
+      signals: signals,
+      readyCount:
+          (json['ready_count'] as num?)?.toInt() ??
+          signals.where((s) => s.isReady).length,
+      totalCount: (json['total_count'] as num?)?.toInt() ?? signals.length,
+      allReady: json['all_ready'] == true,
+    );
+  }
 }
 
 class DailyCoachInsight {
@@ -177,6 +253,10 @@ class DailyCoachInsight {
   /// legacy cached payloads.
   final DateTime? generatedAt;
 
+  /// Real per-signal baseline calibration progress (home source only).
+  /// Null when the backend omitted it — the calibration banner self-hides.
+  final CalibrationStatus? calibrationStatus;
+
   const DailyCoachInsight({
     this.insightId,
     required this.headline,
@@ -191,6 +271,7 @@ class DailyCoachInsight {
     this.coachNoticed,
     this.recoveryFocus = false,
     this.generatedAt,
+    this.calibrationStatus,
   });
 
   /// True when this is a RICH morning/evening briefing (vs a light greeting
@@ -233,7 +314,8 @@ class DailyCoachInsight {
           ? CoachCta.fromJson(json['cta_secondary'] as Map<String, dynamic>)
           : null,
       leadingPillar: (json['leading_pillar'] as String?) ?? 'train',
-      isFallback: (json['delivery'] as String?) == 'deterministic_fallback' ||
+      isFallback:
+          (json['delivery'] as String?) == 'deterministic_fallback' ||
           (json['source'] as String?) == 'deterministic_fallback',
       source: (json['source'] as String?) ?? 'home',
       chips: chips,
@@ -245,6 +327,7 @@ class DailyCoachInsight {
       generatedAt: json['generated_at'] is String
           ? DateTime.tryParse(json['generated_at'] as String)
           : null,
+      calibrationStatus: CalibrationStatus.fromJson(json['calibration_status']),
     );
   }
 }
@@ -301,8 +384,9 @@ class _InsightArgs {
 /// When either gate is closed we return the deterministic client fallback so
 /// the hero card always renders something. Riverpod re-fires the provider
 /// when `timezoneProvider` settles, so the real fetch happens then.
-final dailyCoachInsightProvider =
-    FutureProvider.autoDispose<DailyCoachInsight>((ref) async {
+final dailyCoachInsightProvider = FutureProvider.autoDispose<DailyCoachInsight>((
+  ref,
+) async {
   // Gate REACTIVELY on auth + timezone. Watching `authStateProvider` (instead
   // of a one-shot `Supabase…currentSession` read) is the fix for the
   // freeze-on-fallback bug: if this first evaluates during the cold-start
@@ -365,41 +449,41 @@ final dailyCoachInsightProvider =
 /// a lie. `.family` by day, kept alive so scrolling the timeline doesn't refetch.
 final coachInsightForDateProvider = FutureProvider.autoDispose
     .family<DailyCoachInsight?, DateTime>((ref, day) async {
-  ref.keepAlive();
-  if (Supabase.instance.client.auth.currentSession == null) return null;
-  final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading) return null;
-  final d = DateTime(day.year, day.month, day.day);
-  final dateStr =
-      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-  try {
-    final api = ref.read(apiClientProvider);
-    final res = await api.get<Map<String, dynamic>>(
-      '/coach/daily-insight',
-      queryParameters: {
-        'date': dateStr,
-        'tz': tzState.timezone,
-        'source': 'home',
-      },
-    );
-    final data = res.data;
-    if (data is Map<String, dynamic>) {
-      // Past days with no recorded tip return a 200 with delivery="none" and a
-      // blank headline/body (the backend stopped 404ing these — see the
-      // historical-date guard in daily_insight.py). Treat that as "no tip".
-      if ((data['delivery'] as String?) == 'none') return null;
-      final insight = DailyCoachInsight.fromJson(data);
-      if (insight.headline.trim().isEmpty && insight.body.trim().isEmpty) {
+      ref.keepAlive();
+      if (Supabase.instance.client.auth.currentSession == null) return null;
+      final tzState = ref.watch(timezoneProvider);
+      if (tzState.isLoading) return null;
+      final d = DateTime(day.year, day.month, day.day);
+      final dateStr =
+          '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      try {
+        final api = ref.read(apiClientProvider);
+        final res = await api.get<Map<String, dynamic>>(
+          '/coach/daily-insight',
+          queryParameters: {
+            'date': dateStr,
+            'tz': tzState.timezone,
+            'source': 'home',
+          },
+        );
+        final data = res.data;
+        if (data is Map<String, dynamic>) {
+          // Past days with no recorded tip return a 200 with delivery="none" and a
+          // blank headline/body (the backend stopped 404ing these — see the
+          // historical-date guard in daily_insight.py). Treat that as "no tip".
+          if ((data['delivery'] as String?) == 'none') return null;
+          final insight = DailyCoachInsight.fromJson(data);
+          if (insight.headline.trim().isEmpty && insight.body.trim().isEmpty) {
+            return null;
+          }
+          return insight;
+        }
+        return null;
+      } catch (_) {
+        // 404 (legacy clients / transient error) → no historical tip.
         return null;
       }
-      return insight;
-    }
-    return null;
-  } catch (_) {
-    // 404 (legacy clients / transient error) → no historical tip.
-    return null;
-  }
-});
+    });
 
 /// Picks the open-state source for Ask Coach based on the user's LOCAL hour:
 ///   * 05:00–10:59 → `morning_brief` (RICH briefing)
@@ -424,8 +508,9 @@ String chatOpenSourceForHour(int hour) {
 /// paints instantly AND a background refresh rotates the value for the next
 /// open, so it's instant without going stale. `.autoDispose` so each open
 /// re-runs and picks up the freshly-revalidated cache.
-final chatOpenInsightProvider =
-    FutureProvider.autoDispose<DailyCoachInsight>((ref) async {
+final chatOpenInsightProvider = FutureProvider.autoDispose<DailyCoachInsight>((
+  ref,
+) async {
   // NOTE: autoDispose (not keepAlive) so each open re-runs and reads the
   // freshly-revalidated disk cache. All three sources are served cache-first
   // below (see cacheKey) with stale-while-revalidate — a warm re-open paints
@@ -454,8 +539,8 @@ final chatOpenInsightProvider =
   final cacheKey = source == 'morning_brief'
       ? DataCacheService.chatMorningBriefKey
       : source == 'evening_recap'
-          ? DataCacheService.chatEveningRecapKey
-          : DataCacheService.chatGreetingKey;
+      ? DataCacheService.chatEveningRecapKey
+      : DataCacheService.chatGreetingKey;
   final uid = Supabase.instance.client.auth.currentUser?.id;
   final cached = await DataCacheService.instance.getCached(
     cacheKey,
@@ -476,7 +561,9 @@ final chatOpenInsightProvider =
     unawaited(() async {
       try {
         await _fetchInsight(ref, args, cacheKey: cacheKey, pin: false);
-      } catch (_) {/* transient/offline — keep the cached greeting */}
+      } catch (_) {
+        /* transient/offline — keep the cached greeting */
+      }
     }());
     return DailyCoachInsight.fromJson(cached);
   }
@@ -495,27 +582,26 @@ final chatOpenInsightProvider =
 /// re-read the UNCHANGED 12h disk cache and the regenerated text never showed.
 /// Writing through means the follow-up invalidate surfaces the fresh payload.
 /// `pin:false` keeps the main provider the single pinned listener.
-final dailyCoachInsightRefreshProvider =
-    FutureProvider.autoDispose
-        .family<DailyCoachInsight, DateTime>((ref, date) async {
-  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
-  final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading || userId == null || userId.isEmpty) {
-    return _buildClientFallback(ref);
-  }
-  return _fetchInsight(
-    ref,
-    _InsightArgs(
-      localDate: DateTime(date.year, date.month, date.day),
-      tz: tzState.timezone,
-      source: 'home',
-      refresh: true,
-      fresh: true,
-    ),
-    cacheKey: DataCacheService.coachInsightKey,
-    pin: false,
-  );
-});
+final dailyCoachInsightRefreshProvider = FutureProvider.autoDispose
+    .family<DailyCoachInsight, DateTime>((ref, date) async {
+      final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+      final tzState = ref.watch(timezoneProvider);
+      if (tzState.isLoading || userId == null || userId.isEmpty) {
+        return _buildClientFallback(ref);
+      }
+      return _fetchInsight(
+        ref,
+        _InsightArgs(
+          localDate: DateTime(date.year, date.month, date.day),
+          tz: tzState.timezone,
+          source: 'home',
+          refresh: true,
+          fresh: true,
+        ),
+        cacheKey: DataCacheService.coachInsightKey,
+        pin: false,
+      );
+    });
 
 /// CHAT-OPEN text refresh — same `?refresh=true&fresh=true` contract as
 /// [dailyCoachInsightRefreshProvider] but for the Ask-Coach open-state source
@@ -523,62 +609,64 @@ final dailyCoachInsightRefreshProvider =
 /// the briefing card's ✨ regenerate affordance so a user staring at stale
 /// numbers can force a fresh recap on the spot. Write-throughs the matching
 /// chat disk cache key so the NEXT open also paints fresh.
-final chatOpenInsightRefreshProvider =
-    FutureProvider.autoDispose
-        .family<DailyCoachInsight, DateTime>((ref, date) async {
-  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
-  final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading || userId == null || userId.isEmpty) {
-    return _buildClientFallback(ref);
-  }
-  final source = chatOpenSourceForHour(DateTime.now().hour);
-  final cacheKey = source == 'morning_brief'
-      ? DataCacheService.chatMorningBriefKey
-      : source == 'evening_recap'
+final chatOpenInsightRefreshProvider = FutureProvider.autoDispose
+    .family<DailyCoachInsight, DateTime>((ref, date) async {
+      final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+      final tzState = ref.watch(timezoneProvider);
+      if (tzState.isLoading || userId == null || userId.isEmpty) {
+        return _buildClientFallback(ref);
+      }
+      final source = chatOpenSourceForHour(DateTime.now().hour);
+      final cacheKey = source == 'morning_brief'
+          ? DataCacheService.chatMorningBriefKey
+          : source == 'evening_recap'
           ? DataCacheService.chatEveningRecapKey
           : DataCacheService.chatGreetingKey;
-  return _fetchInsight(
-    ref,
-    _InsightArgs(
-      localDate: DateTime(date.year, date.month, date.day),
-      tz: tzState.timezone,
-      source: source,
-      refresh: true,
-      fresh: true,
-    ),
-    cacheKey: cacheKey,
-    pin: false,
-  );
-});
+      return _fetchInsight(
+        ref,
+        _InsightArgs(
+          localDate: DateTime(date.year, date.month, date.day),
+          tz: tzState.timezone,
+          source: source,
+          refresh: true,
+          fresh: true,
+        ),
+        cacheKey: cacheKey,
+        pin: false,
+      );
+    });
 
 /// NUMBERS refresh — `?fresh=true` only: server recomputes the grounded graph
 /// blocks fresh from the DB but returns the CACHED AI text (no Gemini call, no
 /// cost). Use after every log so the graphs reflect the new data instantly.
 /// Like the text refresh it write-throughs the home disk cache (pin:false) so a
 /// follow-up `ref.invalidate(dailyCoachInsightProvider)` surfaces fresh blocks.
-final dailyCoachInsightNumbersRefreshProvider =
-    FutureProvider.autoDispose
-        .family<DailyCoachInsight, DateTime>((ref, date) async {
-  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
-  final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading || userId == null || userId.isEmpty) {
-    return _buildClientFallback(ref);
-  }
-  return _fetchInsight(
-    ref,
-    _InsightArgs(
-      localDate: DateTime(date.year, date.month, date.day),
-      tz: tzState.timezone,
-      source: 'home',
-      fresh: true,
-    ),
-    cacheKey: DataCacheService.coachInsightKey,
-    pin: false,
-  );
-});
+final dailyCoachInsightNumbersRefreshProvider = FutureProvider.autoDispose
+    .family<DailyCoachInsight, DateTime>((ref, date) async {
+      final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+      final tzState = ref.watch(timezoneProvider);
+      if (tzState.isLoading || userId == null || userId.isEmpty) {
+        return _buildClientFallback(ref);
+      }
+      return _fetchInsight(
+        ref,
+        _InsightArgs(
+          localDate: DateTime(date.year, date.month, date.day),
+          tz: tzState.timezone,
+          source: 'home',
+          fresh: true,
+        ),
+        cacheKey: DataCacheService.coachInsightKey,
+        pin: false,
+      );
+    });
 
-Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args,
-    {String? cacheKey, bool pin = true}) async {
+Future<DailyCoachInsight> _fetchInsight(
+  Ref ref,
+  _InsightArgs args, {
+  String? cacheKey,
+  bool pin = true,
+}) async {
   final api = ref.read(apiClientProvider);
   // Up to 2 attempts. The retry exists because the most likely on-device
   // failure is a TRANSIENT one — a stale access token mid-refresh at cold
@@ -626,22 +714,29 @@ Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args,
       }
       // 200 but the body wasn't a JSON map — a retry won't fix the shape.
       if (kDebugMode) {
-        debugPrint('⚠️ [coach-insight] HTTP ${res.statusCode} but body is '
-            '${data.runtimeType}, not a JSON map — using fallback');
+        debugPrint(
+          '⚠️ [coach-insight] HTTP ${res.statusCode} but body is '
+          '${data.runtimeType}, not a JSON map — using fallback',
+        );
       }
-      unawaited(SentryService.captureMessage(
-        'coach daily-insight: non-map 200 body',
-        tags: {'surface': 'daily_insight'},
-      ));
+      unawaited(
+        SentryService.captureMessage(
+          'coach daily-insight: non-map 200 body',
+          tags: {'surface': 'daily_insight'},
+        ),
+      );
       break;
     } on DioException catch (e) {
       lastErr = e;
       final status = e.response?.statusCode;
       if (kDebugMode) {
-        debugPrint('❌ [coach-insight] attempt ${attempt + 1}/2 failed: '
-            'status=$status type=${e.type.name} msg=${e.message}');
+        debugPrint(
+          '❌ [coach-insight] attempt ${attempt + 1}/2 failed: '
+          'status=$status type=${e.type.name} msg=${e.message}',
+        );
       }
-      final retryable = e.type != DioExceptionType.receiveTimeout &&
+      final retryable =
+          e.type != DioExceptionType.receiveTimeout &&
           e.type != DioExceptionType.sendTimeout;
       if (attempt == 0 && retryable) {
         await Future<void>.delayed(const Duration(milliseconds: 1500));
@@ -658,16 +753,18 @@ Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args,
   // Surface the real cause (the catch used to swallow it, and 401s are excluded
   // from Sentry's Dio auto-capture) so we can see WHY the device falls back.
   if (lastErr != null) {
-    unawaited(SentryService.captureError(
-      lastErr,
-      lastErr.stackTrace,
-      hint: 'coach daily-insight fetch failed (after retry)',
-      tags: {
-        'surface': 'daily_insight',
-        'http_status': '${lastErr.response?.statusCode ?? 'none'}',
-        'dio_type': lastErr.type.name,
-      },
-    ));
+    unawaited(
+      SentryService.captureError(
+        lastErr,
+        lastErr.stackTrace,
+        hint: 'coach daily-insight fetch failed (after retry)',
+        tags: {
+          'surface': 'daily_insight',
+          'http_status': '${lastErr.response?.statusCode ?? 'none'}',
+          'dio_type': lastErr.type.name,
+        },
+      ),
+    );
   }
   return _buildClientFallback(ref);
 }
@@ -684,9 +781,11 @@ DailyCoachInsight _buildClientFallback(Ref ref) {
   final fullName = ref.watch(authStateProvider.select((s) => s.user?.name));
   final firstName = (fullName ?? '').trim().split(RegExp(r'\s+')).first;
   final fn = firstName.isEmpty ? null : firstName;
-  final headline = coachHeadline(score, firstName: fn) ??
+  final headline =
+      coachHeadline(score, firstName: fn) ??
       'Your coach is gathering thoughts.';
-  final body = coachBody(score, firstName: fn) ??
+  final body =
+      coachBody(score, firstName: fn) ??
       'Open a few items on the score card to get a fresh take.';
 
   // Best-leverage pillar drives the default CTAs.
@@ -721,29 +820,17 @@ DailyCoachInsight _buildClientFallback(Ref ref) {
   const chat = CoachCta(label: 'Chat with coach', route: '/chat');
   switch (kind) {
     case ContributorKind.train:
-      return (
-        chat,
-        const CoachCta(label: 'Open workouts', route: '/workouts'),
-      );
+      return (chat, const CoachCta(label: 'Open workouts', route: '/workouts'));
     case ContributorKind.fuel:
-      return (
-        chat,
-        const CoachCta(label: 'Log meal', route: '/nutrition'),
-      );
+      return (chat, const CoachCta(label: 'Log meal', route: '/nutrition'));
     case ContributorKind.move:
-      return (
-        chat,
-        const CoachCta(label: 'Add walk', route: '/neat'),
-      );
+      return (chat, const CoachCta(label: 'Add walk', route: '/neat'));
     case ContributorKind.sleep:
       return (
         chat,
         const CoachCta(label: 'Sleep details', route: '/health/sleep'),
       );
     case null:
-      return (
-        chat,
-        const CoachCta(label: 'Open home', route: '/home'),
-      );
+      return (chat, const CoachCta(label: 'Open home', route: '/home'));
   }
 }
