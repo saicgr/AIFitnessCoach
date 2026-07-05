@@ -377,6 +377,48 @@ If it fails, a new import reused a template or shipped empty instructions — ru
 release. 6 templated instructions remain (niche sandbag/tire/ladder/composite
 moves awaiting a human/advisor pass) — that is the gate's baseline.
 
+## Exercise media must EXIST on S3, not just be non-null
+
+"Media coverage" checks that only assert `image_s3_path`/`video_s3_path` are
+non-null can pass while every URL 403s. 2026-07-04: an S3 folder rename
+(`Calisthenics-Cardio-Functional` → `Calisthenics-Cardio-Plyo-Functional`, video
+root `VERTICAL VIDEOS/` → `VERTICAL VIDEOS ALL/`) was applied to
+`exercise_library` but not `exercise_demos` — 256 images + 2,120 videos silently
+dead; every cardio exercise in every program schedule showed the fallback icon.
+
+**Gate — run after any S3 media upload/rename, exercise import, or demo-table write:**
+
+```bash
+cd backend && set -a && source ./.env && set +a && \
+  .venv/bin/python scripts/audit_exercise_media_urls.py --check
+```
+
+HEAD-checks every media path in `exercise_demos` + `exercise_library` against S3
+(authenticated via boto3 — anonymous checks can't tell missing from private).
+`--fix-folder OLD NEW --apply` repairs a folder rename with per-file verification.
+Never claim media coverage without this gate passing.
+
+## Program copy must be plain-language (no exercise-science jargon)
+
+Schedule-tab week labels (`program_variant_weeks.focus`/`phase`) are read by
+ordinary users. 2026-07-04 a user couldn't parse "1 × 4×4 VO2max day + zone-2
+volume"; a sweep found 1,627+ jargon strings ("supercompensation", "CNS
+restoration", "RPE 7-8", "Hypertrophy Intensification", "Wave 1 — Volume 8s")
+across the whole catalog — all rewritten to plain language.
+
+**Gate — run after ANY program generation/ingest (Gemini authors free-text focus lines):**
+
+```bash
+cd backend && set -a && source ./.env && set +a && \
+  .venv/bin/python scripts/audit_program_copy_clarity.py --check --since <run-date>
+```
+
+(omit `--since` for the whole catalog). It lints focus + phase for a jargon
+word-list and cryptic numeric shorthand. If it fails, rewrite the flagged
+strings in plain language (translate, don't delete: "RPE 7" → "effort 7 out of
+10", "hypertrophy" → "muscle growth", "eccentric" → "slow lowering") and update
+the generation prompt so the next run doesn't reintroduce them.
+
 ## Supabase column drift (phantom columns 500 whole queries)
 
 Explicit `.select("col, col")` strings rot as the schema evolves, and ONE

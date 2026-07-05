@@ -109,7 +109,7 @@ def w_12_3_30(week: int, total: int, spw: int) -> dict:
         notes="Same workout every session — consistency is the program.",
     )
     return {"week": week, "phase": phase,
-            "focus": f"Incline walking {minutes} min @ {incline}%",
+            "focus": f"Walk {minutes} min at {incline}% incline, 3.0 mph",
             "workouts": _clone_sessions([base], spw)}
 
 
@@ -150,7 +150,8 @@ def w_vo2max(week: int, total: int, spw: int) -> dict:
             notes="Rowing or Elliptical are fine swaps — same duration, same easy effort.")],
     )
     return {"week": week, "phase": phase,
-            "focus": "1 × 4×4 VO2max day + zone-2 volume",
+            "focus": "One interval day (4 rounds: run 4 min hard, recover 3 min) "
+                     "+ easy conversational-pace cardio days",
             "workouts": _clone_sessions([s1, s2, s3], spw)}
 
 
@@ -158,25 +159,25 @@ def w_vo2max(week: int, total: int, spw: int) -> dict:
 # Zero to 5K — 9w × 3, canonical run/walk ladder.
 # ---------------------------------------------------------------------------
 _Z25K = {
-    1: ("Run/Walk 1:1.5", [("Running", 8, 60, 90, "1 minute easy jog")],
+    1: ("Repeats: run 1 min, walk 90 sec", [("Running", 8, 60, 90, "1 minute easy jog")],
         "8 rounds: jog 1 minute, brisk-walk 90 seconds between."),
-    2: ("Run/Walk 1.5:2", [("Running", 6, 90, 120, "90 seconds easy jog")],
+    2: ("Repeats: run 90 sec, walk 2 min", [("Running", 6, 90, 120, "90 seconds easy jog")],
         "6 rounds: jog 90 seconds, walk 2 minutes between."),
-    3: ("Run/Walk pyramids", [("Running", 2, 90, 90, "90 seconds easy jog"),
+    3: ("Pyramid repeats — runs get longer each round", [("Running", 2, 90, 90, "90 seconds easy jog"),
                               ("Running", 2, 180, 180, "3 minutes steady jog")],
         "Two pyramids: 90s jog / 90s walk, then 3min jog / 3min walk."),
-    4: ("Longer runs arrive", [("Running", 2, 180, 90, "3 minutes steady"),
+    4: ("Runs stretch to 5 minutes", [("Running", 2, 180, 90, "3 minutes steady"),
                                ("Running", 2, 300, 150, "5 minutes steady")],
         "3min run, 90s walk, 5min run, 2.5min walk — twice through."),
-    5: ("5-minute blocks", [("Running", 3, 300, 180, "5 minutes steady")],
+    5: ("Three 5-minute runs with walk breaks", [("Running", 3, 300, 180, "5 minutes steady")],
         "Three 5-minute runs with 3-minute walks. You're becoming a runner."),
-    6: ("8-minute blocks", [("Running", 2, 480, 180, "8 minutes steady")],
+    6: ("Two 8-minute runs with a walk break", [("Running", 2, 480, 180, "8 minutes steady")],
         "Two 8-minute runs with a 3-minute walk between."),
-    7: ("First continuous run", [("Running", 1, 1500, 0, "25 minutes continuous")],
+    7: ("First non-stop run — 25 minutes", [("Running", 1, 1500, 0, "25 minutes continuous")],
         "No walk breaks — settle into the slowest pace that still feels like running."),
-    8: ("Building the hold", [("Running", 1, 1680, 0, "28 minutes continuous")],
+    8: ("28 minutes non-stop", [("Running", 1, 1680, 0, "28 minutes continuous")],
         "28 continuous minutes. Slow is fine; stopping is the only failure."),
-    9: ("5K week", [("Running", 1, 1800, 0, "30 minutes continuous — your 5K")],
+    9: ("Goal week — run 30 minutes non-stop (your 5K)", [("Running", 1, 1800, 0, "30 minutes continuous — your 5K")],
         "The goal run: 30 continuous minutes. That's Zero to 5K, done."),
 }
 
@@ -206,11 +207,11 @@ def w_zero_to_5k(week: int, total: int, spw: int) -> dict:
 # ---------------------------------------------------------------------------
 # Wave Progression — 12w × 4 barbell waves (8s / 5s / 3s / deload, ×3).
 # ---------------------------------------------------------------------------
-_WAVE = [  # (phase, sets, reps, pct, rpe)
-    ("Volume 8s", 3, 8, 70, "RPE 7"),
-    ("Strength 5s", 3, 5, 80, "RPE 8"),
-    ("Intensity 3s", 3, 3, 87, "RPE 9"),
-    ("Deload", 3, 5, 60, "RPE 5 — easy"),
+_WAVE = [  # (phase, focus_desc, sets, reps, pct, rpe)
+    ("Volume", "sets of 8 at a moderate weight", 3, 8, 70, "RPE 7"),
+    ("Strength", "heavier sets of 5", 3, 5, 80, "RPE 8"),
+    ("Heavy", "heaviest sets of 3", 3, 3, 87, "RPE 9"),
+    ("Deload", "easy recovery week, light weights", 3, 5, 60, "RPE 5 — easy"),
 ]
 
 _WAVE_DAYS = {
@@ -251,7 +252,7 @@ _WAVE_DAYS = {
 
 def w_wave(week: int, total: int, spw: int) -> dict:
     wave_num = (week - 1) // 4 + 1          # 1..3
-    phase, m_sets, m_reps, pct, rpe = _WAVE[(week - 1) % 4]
+    phase, focus_desc, m_sets, m_reps, pct, rpe = _WAVE[(week - 1) % 4]
     bump = (wave_num - 1) * 2.5             # +2.5% per wave on top sets
     sessions = []
     for day_name, moves in _WAVE_DAYS.items():
@@ -283,7 +284,7 @@ def w_wave(week: int, total: int, spw: int) -> dict:
     for s in sessions:
         s["coach_notes"] = note
     return {"week": week, "phase": phase,
-            "focus": f"Wave {wave_num} — {phase}",
+            "focus": f"Wave {wave_num} of 3 — {focus_desc}",
             "workouts": _clone_sessions(sessions, spw)}
 
 
@@ -326,7 +327,7 @@ def w_rucking(week: int, total: int, spw: int) -> dict:
             guide="Unloaded, easy pace", cue="This one is for the joints")],
     )
     return {"week": week, "phase": phase,
-            "focus": f"Ruck {ruck_min} min @ ~{load_pct}% BW",
+            "focus": f"Ruck {ruck_min} min carrying ~{load_pct}% of your body weight",
             "workouts": _clone_sessions([s1, s2, s3], spw)}
 
 
@@ -364,7 +365,8 @@ def w_jump_rope(week: int, total: int, spw: int) -> dict:
             f"Jump Rope 10 — Circuit {chr(65 + i % 5)}", "HIIT", 10, exercises,
             notes=f"{rounds} rounds of {work}s rope / 30s active. Ten minutes, done."))
     return {"week": week, "phase": phase,
-            "focus": f"{work}s rope intervals", "workouts": sessions}
+            "focus": f"{work}-second jump rope intervals with active breaks",
+            "workouts": sessions}
 
 
 # ---------------------------------------------------------------------------
@@ -402,7 +404,8 @@ def w_shadow_boxing(week: int, total: int, spw: int) -> dict:
             f"Shadow Boxing — Session {chr(65 + i % 5)}", "HIIT", 20, exercises,
             notes=f"{rounds} × 3-minute rounds with actives between."))
     return {"week": week, "phase": phase,
-            "focus": f"{rounds} rounds on the clock", "workouts": sessions}
+            "focus": f"{rounds} three-minute boxing rounds with active breaks",
+            "workouts": sessions}
 
 
 # ---------------------------------------------------------------------------
