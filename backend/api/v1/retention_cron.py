@@ -26,6 +26,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional
 
 from fastapi import APIRouter, Header, HTTPException, Request
+from pydantic import BaseModel
 
 from core.config import get_settings
 from core.logger import get_logger
@@ -43,8 +44,8 @@ PUSH_NUDGE_LOG_RETENTION_DAYS = 90  # 3 months
 MEDIA_JOB_RETENTION_DAYS = 30       # 1 month of job metadata
 
 
-def _verify_cron_secret(x_cron_secret: Optional[str]) -> None:
-    """Raise 401 / 503 unless the request carries the configured cron secret."""
+def _verify_cron_secret(request: Request, x_cron_secret: Optional[str]) -> None:
+    """Raise 401/403 if the X-Cron-Secret header is missing/wrong or IP is not allowed."""
     settings = get_settings()
     secret = settings.cron_secret
     if not secret:
@@ -52,8 +53,21 @@ def _verify_cron_secret(x_cron_secret: Optional[str]) -> None:
             status_code=503,
             detail="Cron not configured — set CRON_SECRET env var",
         )
+    if len(secret) < 32:
+        logger.warning("⚠️ CRON_SECRET is shorter than 32 characters — consider using a stronger secret")
     if not x_cron_secret or not hmac.compare_digest(x_cron_secret, secret):
+        logger.warning("Retention cron endpoint called with invalid secret")
         raise HTTPException(status_code=401, detail="Invalid cron secret")
+
+    # IP allowlist check
+    allowed_ips_str = settings.cron_allowed_ips
+    if allowed_ips_str:
+        allowed_ips = [ip.strip() for ip in allowed_ips_str.split(",") if ip.strip()]
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        client_ip = forwarded_for.split(",")[0].strip() if forwarded_for else (request.client.host if request.client else None)
+        if not client_ip or client_ip not in allowed_ips:
+            logger.warning(f"Cron endpoint called from disallowed IP: {client_ip}")
+            raise HTTPException(status_code=403, detail="IP not allowed")
 
 
 def _prune_older_than(table: str, column: str, days: int) -> int:
@@ -65,9 +79,16 @@ def _prune_older_than(table: str, column: str, days: int) -> int:
     cutoff_iso = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     supabase = get_supabase().client
     # Supabase/PostgREST requires a filter on delete; gte/lte match semantics.
-    result = supabase.table(table).delete().lt(column, cutoff_iso).execute()
-    rows = result.data or []
-    count = len(rows)
+    # returning="minimal" avoids materializing every deleted row (could be a
+    # large first-run backlog); count="exact" still gives an accurate count
+    # via the Content-Range header.
+    result = (
+        supabase.table(table)
+        .delete(count="exact", returning="minimal")
+        .lt(column, cutoff_iso)
+        .execute()
+    )
+    count = result.count or 0
     logger.info(
         f"retention: pruned {count} rows from {table} "
         f"where {column} < {cutoff_iso} ({days}d)"
@@ -75,18 +96,23 @@ def _prune_older_than(table: str, column: str, days: int) -> int:
     return count
 
 
+class RetentionCronResult(BaseModel):
+    pruned: Dict[str, int]
+    status: str
+
+
 @router.post("/cron")
 async def run_retention_cron(
     request: Request,
     x_cron_secret: Optional[str] = Header(default=None, alias="X-Cron-Secret"),
-) -> Dict[str, int]:
+) -> RetentionCronResult:
     """Run every configured retention sweep and return per-table counts.
 
     Each sweep is wrapped in its own try/except so a failure on one table
     doesn't prevent the others from running. We still return a non-2xx
     response if any sweep fails so the cron runner retries.
     """
-    _verify_cron_secret(x_cron_secret)
+    _verify_cron_secret(request, x_cron_secret)
 
     results: Dict[str, int] = {}
     failures: Dict[str, str] = {}
@@ -114,4 +140,4 @@ async def run_retention_cron(
             detail={"pruned": results, "failed": failures},
         )
 
-    return {"pruned": results, "status": "ok"}
+    return RetentionCronResult(pruned=results, status="ok")

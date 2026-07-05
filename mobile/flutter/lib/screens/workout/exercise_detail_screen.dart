@@ -228,7 +228,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
       schemaVersion: 1,
       fetch: () async {
         final response = await apiClient.get(
-          '/performance-db/exercise-last-performance/'
+          '/performance/exercise-last-performance/'
           '${Uri.encodeComponent(exerciseName)}',
           queryParameters: {'user_id': userId},
         );
