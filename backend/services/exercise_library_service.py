@@ -193,6 +193,10 @@ class ExerciseLibraryService:
                 'equipment': equipment,
                 'muscle_group': ex.get('target_muscle', ex.get('body_part', 'unknown')),
                 'body_part': ex.get('body_part', ''),
+                # Real how-to text belongs in `instructions` (the detail
+                # screen's Instructions section reads it); `notes` keeps the
+                # legacy mirror for older clients that only render notes.
+                'instructions': ex.get('instructions') or None,
                 'notes': ex.get('instructions', '') or 'Focus on proper form',
                 'gif_url': ex.get('gif_url', ''),
                 'image_s3_path': ex.get('image_s3_path', ''),
