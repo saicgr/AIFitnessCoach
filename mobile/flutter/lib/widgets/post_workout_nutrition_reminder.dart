@@ -217,20 +217,20 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
           // Macro targets
           Padding(
             padding: const EdgeInsets.only(top: 12),
-            child: Row(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _MacroChip(
                   label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   value: '${guidance.proteinTarget}g',
                   color: AppColors.cyan,
                 ),
-                const SizedBox(width: 8),
                 _MacroChip(
                   label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   value: '${guidance.carbsTarget}g',
                   color: AppColors.purple,
                 ),
-                const SizedBox(width: 8),
                 _MacroChip(
                   label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                   value: '${guidance.fatTarget}g',

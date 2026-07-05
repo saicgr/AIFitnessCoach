@@ -11,6 +11,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
 /// Bottom sheet showing today's completed workouts and their calorie contributions
 class CaloriesBurnedSheet extends ConsumerStatefulWidget {
   final double totalBurned;
@@ -18,7 +19,8 @@ class CaloriesBurnedSheet extends ConsumerStatefulWidget {
   const CaloriesBurnedSheet({super.key, required this.totalBurned});
 
   @override
-  ConsumerState<CaloriesBurnedSheet> createState() => _CaloriesBurnedSheetState();
+  ConsumerState<CaloriesBurnedSheet> createState() =>
+      _CaloriesBurnedSheetState();
 }
 
 class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
@@ -64,8 +66,11 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
       final today = DateTime.now();
       final todayStart = DateTime(today.year, today.month, today.day);
 
-      final todaySessions = sessions.where((p) =>
-          p.dateFrom.isAfter(todayStart) || p.dateFrom.isAtSameMomentAs(todayStart));
+      final todaySessions = sessions.where(
+        (p) =>
+            p.dateFrom.isAfter(todayStart) ||
+            p.dateFrom.isAtSameMomentAs(todayStart),
+      );
 
       final entries = <_WorkoutEntry>[];
       for (final point in todaySessions) {
@@ -73,14 +78,16 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
         final duration = point.dateTo.difference(point.dateFrom).inMinutes;
         final calories = workout.totalEnergyBurned?.toDouble();
 
-        entries.add(_WorkoutEntry(
-          name: _formatActivityType(workout.workoutActivityType),
-          durationMinutes: duration < 1 ? 1 : duration,
-          caloriesBurned: calories,
-          startTime: point.dateFrom,
-          source: point.sourceName,
-          isFromHealth: true,
-        ));
+        entries.add(
+          _WorkoutEntry(
+            name: _formatActivityType(workout.workoutActivityType),
+            durationMinutes: duration < 1 ? 1 : duration,
+            caloriesBurned: calories,
+            startTime: point.dateFrom,
+            source: point.sourceName,
+            isFromHealth: true,
+          ),
+        );
       }
 
       if (mounted) {
@@ -127,43 +134,52 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final green = isDark ? AppColors.green : AppColorsLight.green;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardBorder = isDark
+        ? AppColors.cardBorder
+        : AppColorsLight.cardBorder;
 
     // Get Zealova completed workouts
     final todayState = ref.watch(todayWorkoutProvider);
     final todayData = todayState.valueOrNull;
     final completedWorkout = todayData?.completedWorkout;
-    final extraWorkouts = todayData?.extraTodayWorkouts
-            .where((w) => w.isCompleted)
-            .toList() ??
+    final extraWorkouts =
+        todayData?.extraTodayWorkouts.where((w) => w.isCompleted).toList() ??
         [];
 
     // Build combined list
     final fitWizWorkouts = <_WorkoutEntry>[];
     if (completedWorkout != null) {
-      fitWizWorkouts.add(_WorkoutEntry(
-        name: completedWorkout.name,
-        durationMinutes: completedWorkout.durationMinutes,
-        // Zealova doesn't store per-workout calories — estimate from duration
-        // using a moderate-intensity MET (~5 kcal/min) so the per-source
-        // breakdown shows a non-zero in-app contribution.
-        caloriesBurned: _estimateCaloriesFromDuration(completedWorkout.durationMinutes),
-        source: '${Branding.appName}',
-        isFromHealth: false,
-      ));
+      fitWizWorkouts.add(
+        _WorkoutEntry(
+          name: completedWorkout.name,
+          durationMinutes: completedWorkout.durationMinutes,
+          // Zealova doesn't store per-workout calories — estimate from duration
+          // using a moderate-intensity MET (~5 kcal/min) so the per-source
+          // breakdown shows a non-zero in-app contribution.
+          caloriesBurned: _estimateCaloriesFromDuration(
+            completedWorkout.durationMinutes,
+          ),
+          source: '${Branding.appName}',
+          isFromHealth: false,
+        ),
+      );
     }
     for (final w in extraWorkouts) {
-      fitWizWorkouts.add(_WorkoutEntry(
-        name: w.name,
-        durationMinutes: w.durationMinutes,
-        caloriesBurned: _estimateCaloriesFromDuration(w.durationMinutes),
-        source: '${Branding.appName}',
-        isFromHealth: false,
-      ));
+      fitWizWorkouts.add(
+        _WorkoutEntry(
+          name: w.name,
+          durationMinutes: w.durationMinutes,
+          caloriesBurned: _estimateCaloriesFromDuration(w.durationMinutes),
+          source: '${Branding.appName}',
+          isFromHealth: false,
+        ),
+      );
     }
 
     final hasSauna = _saunaSummary != null && _saunaSummary!.entries.isNotEmpty;
@@ -172,235 +188,268 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Icon(Icons.local_fire_department, color: green, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).caloriesBurnedTodaySActivity,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: green.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${widget.totalBurned.toInt()} kcal',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: green,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            AppLocalizations.of(context).caloriesBurnedCaloriesBurnedToday,
-            style: TextStyle(fontSize: 13, color: textMuted),
-          ),
-          const SizedBox(height: 12),
-
-          // Per-source breakdown so users can see how much came from in-app
-          // workouts vs HealthKit/wearable sync vs sauna vs ambient active
-          // energy. Without the Passive bucket the pill (260 kcal) didn't
-          // reconcile with the sheet body (0 in-app + 0 synced) — the gap
-          // was background active energy from steps/HR that doesn't show
-          // up as a discrete workout session.
-          Builder(builder: (_) {
-            final inApp = fitWizWorkouts.fold<double>(
-              0.0,
-              (acc, w) => acc + (w.caloriesBurned ?? 0),
-            );
-            final synced = _healthWorkouts.fold<double>(
-              0.0,
-              (acc, w) => acc + (w.caloriesBurned ?? 0),
-            );
-            final saunaTotal = _saunaSummary?.entries.fold<double>(
-                  0.0,
-                  (acc, e) => acc + (e.estimatedCalories ?? 0).toDouble(),
-                ) ??
-                0.0;
-            // Passive = total pill kcal − everything we can attribute to
-            // a discrete source. Floored at 0 so a noisy HealthKit sample
-            // doesn't render a negative bucket.
-            final passive = (widget.totalBurned - inApp - synced - saunaTotal)
-                .clamp(0.0, double.infinity);
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
               children: [
-                _BreakdownChip(
-                  label: AppLocalizations.of(context).caloriesBurnedInApp,
-                  value: inApp.round(),
-                  color: AppColors.cyan,
-                ),
-                _BreakdownChip(
-                  label: AppLocalizations.of(context).caloriesBurnedSynced,
-                  value: synced.round(),
-                  color: AppColors.green,
-                ),
-                if (passive >= 1)
-                  _BreakdownChip(
-                    label: AppLocalizations.of(context).caloriesBurnedPassive,
-                    value: passive.round(),
-                    color: AppColors.purple,
+                Icon(Icons.local_fire_department, color: green, size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  AppLocalizations.of(context).caloriesBurnedTodaySActivity,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
                   ),
-                if (saunaTotal > 0)
-                  _BreakdownChip(
-                    label: AppLocalizations.of(context).workoutCompleteSauna,
-                    value: saunaTotal.round(),
-                    color: const Color(0xFFE65100),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
                   ),
+                  decoration: BoxDecoration(
+                    color: green.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${widget.totalBurned.toInt()} kcal',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: green,
+                    ),
+                  ),
+                ),
               ],
-            );
-          }),
-          const SizedBox(height: 16),
-
-          // Zealova workouts section
-          if (fitWizWorkouts.isNotEmpty) ...[
-            _SectionLabel(label: '${Branding.appName} Workouts', color: AppColors.cyan),
-            const SizedBox(height: 8),
-            for (final w in fitWizWorkouts)
-              _WorkoutTile(
-                entry: w,
-                isDark: isDark,
-                elevated: elevated,
-                cardBorder: cardBorder,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-              ),
-            const SizedBox(height: 12),
-          ],
-
-          // Health platform workouts section
-          if (_loadingHealth)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: green,
-                  ),
-                ),
-              ),
-            )
-          else if (_healthWorkouts.isNotEmpty) ...[
-            _SectionLabel(
-              label: AppLocalizations.of(context).workoutDayDetailSyncedFromHealth,
-              color: AppColors.green,
             ),
-            const SizedBox(height: 8),
-            for (final w in _healthWorkouts)
-              _WorkoutTile(
-                entry: w,
-                isDark: isDark,
-                elevated: elevated,
-                cardBorder: cardBorder,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-                timeLabel: w.startTime != null ? _formatTime(w.startTime!) : null,
-              ),
-          ],
-
-          // Sauna section
-          if (!_loadingSauna && _saunaSummary != null && _saunaSummary!.entries.isNotEmpty) ...[
-            _SectionLabel(
-              label: AppLocalizations.of(context).workoutCompleteSauna,
-              color: const Color(0xFFE65100),
+            const SizedBox(height: 4),
+            Text(
+              AppLocalizations.of(context).caloriesBurnedCaloriesBurnedToday,
+              style: TextStyle(fontSize: 13, color: textMuted),
             ),
-            const SizedBox(height: 8),
-            for (final entry in _saunaSummary!.entries)
-              _WorkoutTile(
-                entry: _WorkoutEntry(
-                  name: 'Sauna Session',
-                  durationMinutes: entry.durationMinutes,
-                  caloriesBurned: entry.estimatedCalories?.toDouble(),
-                  source: '${Branding.appName}',
-                  isFromHealth: false,
-                ),
-                isDark: isDark,
-                elevated: elevated,
-                cardBorder: cardBorder,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-              ),
             const SizedBox(height: 12),
-          ],
 
-          // Empty state — only when no discrete activity at all AND no
-          // ambient active energy. If the pill total is non-zero we have
-          // background steps/HR contributing, so the "no workouts" copy
-          // would contradict the pill the user just tapped.
-          if (!_loadingHealth && !hasAnyWorkouts && widget.totalBurned < 1)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(
-                children: [
-                  Icon(Icons.fitness_center, size: 36, color: textMuted),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(context).caloriesBurnedNoActivityRecordedToday,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: textMuted,
+            // Per-source breakdown so users can see how much came from in-app
+            // workouts vs HealthKit/wearable sync vs sauna vs ambient active
+            // energy. Without the Passive bucket the pill (260 kcal) didn't
+            // reconcile with the sheet body (0 in-app + 0 synced) — the gap
+            // was background active energy from steps/HR that doesn't show
+            // up as a discrete workout session.
+            Builder(
+              builder: (_) {
+                final inApp = fitWizWorkouts.fold<double>(
+                  0.0,
+                  (acc, w) => acc + (w.caloriesBurned ?? 0),
+                );
+                final synced = _healthWorkouts.fold<double>(
+                  0.0,
+                  (acc, w) => acc + (w.caloriesBurned ?? 0),
+                );
+                final saunaTotal =
+                    _saunaSummary?.entries.fold<double>(
+                      0.0,
+                      (acc, e) => acc + (e.estimatedCalories ?? 0).toDouble(),
+                    ) ??
+                    0.0;
+                // Passive = total pill kcal − everything we can attribute to
+                // a discrete source. Floored at 0 so a noisy HealthKit sample
+                // doesn't render a negative bucket.
+                final passive =
+                    (widget.totalBurned - inApp - synced - saunaTotal).clamp(
+                      0.0,
+                      double.infinity,
+                    );
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _BreakdownChip(
+                      label: AppLocalizations.of(context).caloriesBurnedInApp,
+                      value: inApp.round(),
+                      color: AppColors.cyan,
+                    ),
+                    _BreakdownChip(
+                      label: AppLocalizations.of(context).caloriesBurnedSynced,
+                      value: synced.round(),
+                      color: AppColors.green,
+                    ),
+                    if (passive >= 1)
+                      _BreakdownChip(
+                        label: AppLocalizations.of(
+                          context,
+                        ).caloriesBurnedPassive,
+                        value: passive.round(),
+                        color: AppColors.purple,
+                      ),
+                    if (saunaTotal > 0)
+                      _BreakdownChip(
+                        label: AppLocalizations.of(
+                          context,
+                        ).workoutCompleteSauna,
+                        value: saunaTotal.round(),
+                        color: const Color(0xFFE65100),
+                      ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Zealova workouts section
+            if (fitWizWorkouts.isNotEmpty) ...[
+              _SectionLabel(
+                label: '${Branding.appName} Workouts',
+                color: AppColors.cyan,
+              ),
+              const SizedBox(height: 8),
+              for (final w in fitWizWorkouts)
+                _WorkoutTile(
+                  entry: w,
+                  isDark: isDark,
+                  elevated: elevated,
+                  cardBorder: cardBorder,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+              const SizedBox(height: 12),
+            ],
+
+            // Health platform workouts section
+            if (_loadingHealth)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: green,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    AppLocalizations.of(context).caloriesBurnedCompleteAWorkoutOr,
-                    style: TextStyle(fontSize: 12, color: textMuted),
-                  ),
-                ],
+                ),
+              )
+            else if (_healthWorkouts.isNotEmpty) ...[
+              _SectionLabel(
+                label: AppLocalizations.of(
+                  context,
+                ).workoutDayDetailSyncedFromHealth,
+                color: AppColors.green,
               ),
-            )
-          else if (!_loadingHealth && !hasAnyWorkouts && widget.totalBurned >= 1)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Column(
-                children: [
-                  Icon(Icons.directions_walk, size: 32, color: textMuted),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(context).caloriesBurnedAllFromBackgroundActivity,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: textMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    AppLocalizations.of(context).caloriesBurnedStepsHeartRateAnd,
-                    style: TextStyle(fontSize: 12, color: textMuted),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
+              const SizedBox(height: 8),
+              for (final w in _healthWorkouts)
+                _WorkoutTile(
+                  entry: w,
+                  isDark: isDark,
+                  elevated: elevated,
+                  cardBorder: cardBorder,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  timeLabel: w.startTime != null
+                      ? _formatTime(w.startTime!)
+                      : null,
+                ),
+            ],
 
-          const SizedBox(height: 8),
-        ],
+            // Sauna section
+            if (!_loadingSauna &&
+                _saunaSummary != null &&
+                _saunaSummary!.entries.isNotEmpty) ...[
+              _SectionLabel(
+                label: AppLocalizations.of(context).workoutCompleteSauna,
+                color: const Color(0xFFE65100),
+              ),
+              const SizedBox(height: 8),
+              for (final entry in _saunaSummary!.entries)
+                _WorkoutTile(
+                  entry: _WorkoutEntry(
+                    name: 'Sauna Session',
+                    durationMinutes: entry.durationMinutes,
+                    caloriesBurned: entry.estimatedCalories?.toDouble(),
+                    source: '${Branding.appName}',
+                    isFromHealth: false,
+                  ),
+                  isDark: isDark,
+                  elevated: elevated,
+                  cardBorder: cardBorder,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+              const SizedBox(height: 12),
+            ],
+
+            // Empty state — only when no discrete activity at all AND no
+            // ambient active energy. If the pill total is non-zero we have
+            // background steps/HR contributing, so the "no workouts" copy
+            // would contradict the pill the user just tapped.
+            if (!_loadingHealth && !hasAnyWorkouts && widget.totalBurned < 1)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    Icon(Icons.fitness_center, size: 36, color: textMuted),
+                    const SizedBox(height: 8),
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      ).caloriesBurnedNoActivityRecordedToday,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      ).caloriesBurnedCompleteAWorkoutOr,
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                  ],
+                ),
+              )
+            else if (!_loadingHealth &&
+                !hasAnyWorkouts &&
+                widget.totalBurned >= 1)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Column(
+                  children: [
+                    Icon(Icons.directions_walk, size: 32, color: textMuted),
+                    const SizedBox(height: 8),
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      ).caloriesBurnedAllFromBackgroundActivity,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      ).caloriesBurnedStepsHeartRateAnd,
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -537,8 +586,7 @@ class _WorkoutTile extends StatelessWidget {
             ),
             if (entry.caloriesBurned != null)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.orange.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -630,8 +678,7 @@ void showCaloriesBurnedSheet(BuildContext context, double totalBurned) {
   showGlassSheet(
     context: context,
     useRootNavigator: true,
-    builder: (context) => GlassSheet(
-      child: CaloriesBurnedSheet(totalBurned: totalBurned),
-    ),
+    builder: (context) =>
+        GlassSheet(child: CaloriesBurnedSheet(totalBurned: totalBurned)),
   );
 }

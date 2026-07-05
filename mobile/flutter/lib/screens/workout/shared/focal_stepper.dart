@@ -173,50 +173,70 @@ class _FocalStepperState extends State<FocalStepper> {
         // at the edges of the column — the old `Expanded(display)` spread
         // them to the gutters and made the value read like it was
         // disconnected from the controls.
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            FocalStepperButton(
-              icon: Icons.remove_rounded,
-              size: btnSize,
-              glyphSize: glyphSize,
-              enabled: canDec,
-              accent: accent,
-              isDark: isDark,
-              onTap: canDec ? () => _tap(-1) : null,
-              onLongPressStart: canDec ? () => _startRamp(-1) : null,
-              onLongPressEnd: _stopRamp,
-            ),
-            SizedBox(width: innerGap),
-            Flexible(
-              child: GestureDetector(
-                onTap: _editNumerically,
-                behavior: HitTestBehavior.opaque,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: displayMinWidth),
-                  child: FocalStepperDisplay(
-                    value: widget.value,
-                    unit: widget.unit,
-                    digitSize: digitSize,
-                    unitSize: unitSize,
-                    integerOnly: widget.integerOnly,
+        //
+        // Adaptive floor: the display's minWidth + gaps must never force the
+        // row past the slot it was given. A non-dense stepper dropped into a
+        // half-width column (56×2 + 18×2 + 96 = 244 vs ~174 available) was
+        // exactly Sentry's 70px right overflow (FITWIZ-FLUTTER-FB) — when
+        // the slot is narrow, shrink the gaps and let the display floor
+        // yield instead of striping.
+        LayoutBuilder(
+          builder: (context, box) {
+            var gap = innerGap;
+            var minW = displayMinWidth;
+            if (box.hasBoundedWidth) {
+              final spare = box.maxWidth - btnSize * 2;
+              if (spare < minW + 2 * gap) {
+                gap = 8.0;
+                minW = (spare - 2 * gap).clamp(0.0, displayMinWidth);
+              }
+            }
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FocalStepperButton(
+                  icon: Icons.remove_rounded,
+                  size: btnSize,
+                  glyphSize: glyphSize,
+                  enabled: canDec,
+                  accent: accent,
+                  isDark: isDark,
+                  onTap: canDec ? () => _tap(-1) : null,
+                  onLongPressStart: canDec ? () => _startRamp(-1) : null,
+                  onLongPressEnd: _stopRamp,
+                ),
+                SizedBox(width: gap),
+                Flexible(
+                  child: GestureDetector(
+                    onTap: _editNumerically,
+                    behavior: HitTestBehavior.opaque,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minWidth: minW),
+                      child: FocalStepperDisplay(
+                        value: widget.value,
+                        unit: widget.unit,
+                        digitSize: digitSize,
+                        unitSize: unitSize,
+                        integerOnly: widget.integerOnly,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            SizedBox(width: innerGap),
-            FocalStepperButton(
-              icon: Icons.add_rounded,
-              size: btnSize,
-              glyphSize: glyphSize,
-              enabled: canInc,
-              accent: accent,
-              isDark: isDark,
-              onTap: canInc ? () => _tap(1) : null,
-              onLongPressStart: canInc ? () => _startRamp(1) : null,
-              onLongPressEnd: _stopRamp,
-            ),
-          ],
+                SizedBox(width: gap),
+                FocalStepperButton(
+                  icon: Icons.add_rounded,
+                  size: btnSize,
+                  glyphSize: glyphSize,
+                  enabled: canInc,
+                  accent: accent,
+                  isDark: isDark,
+                  onTap: canInc ? () => _tap(1) : null,
+                  onLongPressStart: canInc ? () => _startRamp(1) : null,
+                  onLongPressEnd: _stopRamp,
+                ),
+              ],
+            );
+          },
         ),
       ],
     );

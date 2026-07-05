@@ -27,7 +27,6 @@ import '../../../l10n/generated/app_localizations.dart';
 part 'expanded_exercise_card_ui_1.dart';
 part 'expanded_exercise_card_ui_2.dart';
 
-
 /// Expanded exercise card that shows the SET/LBS/REP table inline
 /// Collapsible by default - shows sets/reps summary when collapsed
 /// Tapping opens the full exercise detail screen with autoplay video
@@ -42,15 +41,20 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
   final VoidCallback? onViewHistory;
   final VoidCallback? onNeverRecommend;
   final bool initiallyExpanded;
+
   /// Index for ReorderableListView - if provided, drag handle enables reordering
   final int? reorderIndex;
+
   /// Whether to show the internal drag handle (default: true)
   /// Set to false when using external drag handle to avoid gesture conflicts
   final bool showDragHandle;
+
   /// Whether this card is a drop target for superset creation (shows highlight)
   final bool isDropTarget;
+
   /// Whether this card is pending superset pairing (shows highlight)
   final bool isPendingPair;
+
   /// Callback when a dragged exercise is dropped on this card to create superset
   final void Function(int draggedIndex)? onSupersetDrop;
 
@@ -74,7 +78,8 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ExpandedExerciseCard> createState() => _ExpandedExerciseCardState();
+  ConsumerState<ExpandedExerciseCard> createState() =>
+      _ExpandedExerciseCardState();
 }
 
 class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
@@ -98,7 +103,8 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   /// Toggle between kg and lbs units locally
   void _toggleUnit() {
     setState(() {
-      final bool currentUseKg = _useKgOverride ?? ref.read(useKgForWorkoutProvider);
+      final bool currentUseKg =
+          _useKgOverride ?? ref.read(useKgForWorkoutProvider);
       _useKgOverride = !currentUseKg;
     });
   }
@@ -170,6 +176,15 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     }
   }
 
+  /// True for time-measured exercises (planks, cardio intervals) — the
+  /// summary chip must render a duration ("10m"), never "600s reps".
+  bool get _isTimedExercise {
+    final ex = widget.exercise;
+    return ex.isTimed == true ||
+        ex.trackingType == 'time' ||
+        (ex.reps == null && ex.durationSeconds != null);
+  }
+
   String _getRepRange() {
     if (widget.exercise.reps != null) {
       final reps = widget.exercise.reps!;
@@ -222,15 +237,15 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     if (type == 'drop') return 1;
 
     // Working sets: progressive RIR decrease (3 → 2 → 1)
-    if (totalWorkingSets <= 1) return 2;  // Single set = moderate intensity
+    if (totalWorkingSets <= 1) return 2; // Single set = moderate intensity
     if (totalWorkingSets == 2) {
-      return setIndex == 0 ? 3 : 1;  // First=3, Last=1
+      return setIndex == 0 ? 3 : 1; // First=3, Last=1
     }
     // 3+ working sets: distribute RIR across thirds (3→2→1)
-    final position = setIndex / (totalWorkingSets - 1);  // 0.0 to 1.0
-    if (position < 0.33) return 3;      // First third: conservative
-    if (position < 0.67) return 2;      // Middle third: moderate
-    return 1;                            // Last third: approaching failure
+    final position = setIndex / (totalWorkingSets - 1); // 0.0 to 1.0
+    if (position < 0.33) return 3; // First third: conservative
+    if (position < 0.67) return 2; // Middle third: moderate
+    return 1; // Last third: approaching failure
   }
 
   @override
@@ -246,11 +261,19 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     // Theme-aware colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final cardBorder = isDark
+        ? AppColors.cardBorder
+        : AppColorsLight.cardBorder;
+    final glassSurface = isDark
+        ? AppColors.glassSurface
+        : AppColorsLight.glassSurface;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     // Use dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
@@ -258,9 +281,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     final cardContent = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: cardBorder.withOpacity(0.3),
-        ),
+        border: Border.all(color: cardBorder.withOpacity(0.3)),
       ),
       child: Material(
         color: elevatedColor,
@@ -270,11 +291,24 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header: Image + Exercise Name + Actions (TAPPABLE)
-            _buildHeader(context, exercise, glassSurface, textMuted, accentColor),
+            _buildHeader(
+              context,
+              exercise,
+              glassSurface,
+              textMuted,
+              accentColor,
+            ),
 
             // Collapsed summary - shows sets/reps when collapsed
             if (!_isExpanded)
-              _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder, accentColor),
+              _buildCollapsedSummary(
+                totalSets,
+                repRange,
+                restSeconds,
+                glassSurface,
+                cardBorder,
+                accentColor,
+              ),
 
             // Expandable section
             AnimatedCrossFade(
@@ -285,19 +319,18 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               firstChild: Column(
                 children: [
                   // Divider
-                  Divider(
-                    color: cardBorder.withOpacity(0.3),
-                    height: 1,
-                  ),
+                  Divider(color: cardBorder.withOpacity(0.3), height: 1),
 
                   // Rest Timer Row
-                  _buildRestTimerRow(restSeconds, textSecondary, textMuted, accentColor),
+                  _buildRestTimerRow(
+                    restSeconds,
+                    textSecondary,
+                    textMuted,
+                    accentColor,
+                  ),
 
                   // Divider
-                  Divider(
-                    color: cardBorder.withOpacity(0.3),
-                    height: 1,
-                  ),
+                  Divider(color: cardBorder.withOpacity(0.3), height: 1),
 
                   // Set Table Header
                   _buildTableHeader(glassSurface, textMuted, accentColor),
@@ -339,11 +372,15 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         child: DragTarget<int>(
           onWillAcceptWithDetails: (details) {
             final willAccept = details.data != widget.index;
-            debugPrint('🎯 [DragTarget] onWillAccept: dragged=${details.data}, target=${widget.index}, willAccept=$willAccept, hasCallback=${widget.onSupersetDrop != null}');
+            debugPrint(
+              '🎯 [DragTarget] onWillAccept: dragged=${details.data}, target=${widget.index}, willAccept=$willAccept, hasCallback=${widget.onSupersetDrop != null}',
+            );
             return willAccept;
           },
           onAcceptWithDetails: (details) {
-            debugPrint('🎯 [DragTarget] onAccept: dragged=${details.data}, target=${widget.index}, exercise=${widget.exercise.name}');
+            debugPrint(
+              '🎯 [DragTarget] onAccept: dragged=${details.data}, target=${widget.index}, exercise=${widget.exercise.name}',
+            );
             widget.onSupersetDrop?.call(details.data);
           },
           builder: (context, candidateData, rejectedData) {
@@ -400,8 +437,10 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                               bottomLeft: Radius.circular(16),
                             ),
                             border: shouldHighlight
-                                ? null  // No inner border when highlighted
-                                : Border.all(color: cardBorder.withOpacity(0.3)),
+                                ? null // No inner border when highlighted
+                                : Border.all(
+                                    color: cardBorder.withOpacity(0.3),
+                                  ),
                           ),
                           child: Center(
                             child: Icon(
@@ -430,7 +469,14 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   /// Collapsed summary showing sets x reps when card is collapsed
-  Widget _buildCollapsedSummary(int totalSets, String repRange, int restSeconds, Color glassSurface, Color cardBorder, Color accentColor) {
+  Widget _buildCollapsedSummary(
+    int totalSets,
+    String repRange,
+    int restSeconds,
+    Color glassSurface,
+    Color cardBorder,
+    Color accentColor,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final displayAccent = isDark ? accentColor : _darkenColor(accentColor);
 
@@ -438,11 +484,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: glassSurface.withOpacity(0.3),
-        border: Border(
-          top: BorderSide(
-            color: cardBorder.withOpacity(0.3),
-          ),
-        ),
+        border: Border(top: BorderSide(color: cardBorder.withOpacity(0.3))),
       ),
       child: Row(
         children: [
@@ -453,10 +495,12 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             accentColor,
           ),
           const SizedBox(width: 12),
-          // Reps info
+          // Volume: rep range for rep-based sets, a duration for timed sets.
           _buildSummaryChip(
-            Icons.fitness_center,
-            '$repRange reps',
+            _isTimedExercise ? Icons.schedule : Icons.fitness_center,
+            _isTimedExercise && widget.exercise.durationSeconds != null
+                ? _formatRestTime(widget.exercise.durationSeconds!)
+                : '$repRange reps',
             accentColor,
           ),
           const SizedBox(width: 12),
@@ -475,7 +519,12 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: isDark ? 0.1 : 0.15),
                 borderRadius: BorderRadius.circular(8),
-                border: isDark ? null : Border.all(color: displayAccent.withOpacity(0.3), width: 0.5),
+                border: isDark
+                    ? null
+                    : Border.all(
+                        color: displayAccent.withOpacity(0.3),
+                        width: 0.5,
+                      ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -503,7 +552,12 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     );
   }
 
-  Widget _buildRestTimerRow(int seconds, Color textSecondary, Color textMuted, Color accentColor) {
+  Widget _buildRestTimerRow(
+    int seconds,
+    Color textSecondary,
+    Color textMuted,
+    Color accentColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
@@ -513,18 +567,11 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.timer_outlined,
-                  size: 16,
-                  color: accentColor,
-                ),
+                Icon(Icons.timer_outlined, size: 16, color: accentColor),
                 const SizedBox(width: 6),
                 Text(
                   AppLocalizations.of(context).expandedExerciseCardRestTimer,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -563,11 +610,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  Icon(
-                    Icons.keyboard_arrow_up,
-                    size: 14,
-                    color: textMuted,
-                  ),
+                  Icon(Icons.keyboard_arrow_up, size: 14, color: textMuted),
                 ],
               ),
             ),
@@ -690,13 +733,22 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     if (lower.contains('stability')) return 'Stability Ball';
     // Convert snake_case identifiers to Title Case (e.g., "leg_press" → "Leg Press")
     if (equipment.contains('_')) {
-      final formatted = equipment.split('_').map((w) =>
-        w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}'
-      ).join(' ');
-      return formatted.length > 14 ? '${formatted.substring(0, 14)}...' : formatted;
+      final formatted = equipment
+          .split('_')
+          .map(
+            (w) => w.isEmpty
+                ? ''
+                : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}',
+          )
+          .join(' ');
+      return formatted.length > 14
+          ? '${formatted.substring(0, 14)}...'
+          : formatted;
     }
     // Limit length
-    return equipment.length > 12 ? '${equipment.substring(0, 12)}...' : equipment;
+    return equipment.length > 12
+        ? '${equipment.substring(0, 12)}...'
+        : equipment;
   }
 
   /// Check if exercise uses a barbell (for weight note display)
@@ -704,9 +756,9 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     final equipment = widget.exercise.equipment?.toLowerCase() ?? '';
     final name = widget.exercise.name.toLowerCase();
     return equipment.contains('barbell') ||
-           name.contains('barbell') ||
-           name.contains(' bb ') ||
-           name.startsWith('bb ');
+        name.contains('barbell') ||
+        name.contains(' bb ') ||
+        name.startsWith('bb ');
   }
 
   void _showBreathingGuidance(BuildContext context) {
@@ -722,96 +774,93 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Title with icon
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.air,
-                    color: AppColors.green,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context).expandedExerciseCardBreathingGuide,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        widget.exercise.name,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Breathing pattern
-            _buildBreathingStep(
-              icon: Icons.arrow_downward_rounded,
-              title: breathingPattern['inhale']!['phase']!,
-              description: breathingPattern['inhale']!['action']!,
-              color: ref.colors(context).accent,
-            ),
-            const SizedBox(height: 16),
-            _buildBreathingStep(
-              icon: Icons.arrow_upward_rounded,
-              title: breathingPattern['exhale']!['phase']!,
-              description: breathingPattern['exhale']!['action']!,
-              color: AppColors.orange,
-            ),
-
-            const SizedBox(height: 24),
-
-            // Pro tip
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.glassSurface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+              Row(
                 children: [
-                  Icon(
-                    Icons.lightbulb_outline,
-                    color: AppColors.yellow,
-                    size: 20,
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.air, color: AppColors.green, size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      breathingPattern['tip']!['text']!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppLocalizations.of(
+                            context,
+                          ).expandedExerciseCardBreathingGuide,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          widget.exercise.name,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 24),
 
-            const SizedBox(height: 16),
-          ],
+              // Breathing pattern
+              _buildBreathingStep(
+                icon: Icons.arrow_downward_rounded,
+                title: breathingPattern['inhale']!['phase']!,
+                description: breathingPattern['inhale']!['action']!,
+                color: ref.colors(context).accent,
+              ),
+              const SizedBox(height: 16),
+              _buildBreathingStep(
+                icon: Icons.arrow_upward_rounded,
+                title: breathingPattern['exhale']!['phase']!,
+                description: breathingPattern['exhale']!['action']!,
+                color: AppColors.orange,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Pro tip
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.glassSurface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline,
+                      color: AppColors.yellow,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        breathingPattern['tip']!['text']!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -825,14 +874,17 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       return {
         'inhale': {
           'phase': 'Inhale (Lowering)',
-          'action': 'Breathe in as you lower the weight or bring it toward your body.',
+          'action':
+              'Breathe in as you lower the weight or bring it toward your body.',
         },
         'exhale': {
           'phase': 'Exhale (Pushing)',
-          'action': 'Breathe out forcefully as you push the weight away from your body.',
+          'action':
+              'Breathe out forcefully as you push the weight away from your body.',
         },
         'tip': {
-          'text': 'Keep your core tight and maintain steady breathing throughout the movement.',
+          'text':
+              'Keep your core tight and maintain steady breathing throughout the movement.',
         },
       };
     }
@@ -849,7 +901,8 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           'action': 'Breathe out as you pull the weight toward your body.',
         },
         'tip': {
-          'text': 'Focus on squeezing your back muscles at peak contraction while exhaling.',
+          'text':
+              'Focus on squeezing your back muscles at peak contraction while exhaling.',
         },
       };
     }
@@ -859,14 +912,16 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       return {
         'inhale': {
           'phase': 'Inhale (Descending)',
-          'action': 'Take a deep breath before descending and hold as you lower.',
+          'action':
+              'Take a deep breath before descending and hold as you lower.',
         },
         'exhale': {
           'phase': 'Exhale (Rising)',
           'action': 'Exhale forcefully as you drive up through your heels.',
         },
         'tip': {
-          'text': 'Use the Valsalva maneuver for heavy lifts: brace your core with a deep breath.',
+          'text':
+              'Use the Valsalva maneuver for heavy lifts: brace your core with a deep breath.',
         },
       };
     }
@@ -876,14 +931,17 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       return {
         'inhale': {
           'phase': 'Inhale (Setup/Lowering)',
-          'action': 'Breathe in deeply at the top, brace your core before descending.',
+          'action':
+              'Breathe in deeply at the top, brace your core before descending.',
         },
         'exhale': {
           'phase': 'Exhale (Lifting)',
-          'action': 'Exhale once you pass the sticking point while driving hips forward.',
+          'action':
+              'Exhale once you pass the sticking point while driving hips forward.',
         },
         'tip': {
-          'text': 'Keep your spine neutral and core braced throughout the entire lift.',
+          'text':
+              'Keep your spine neutral and core braced throughout the entire lift.',
         },
       };
     }
@@ -900,7 +958,8 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           'action': 'Breathe out as you contract your abs and crunch or lift.',
         },
         'tip': {
-          'text': 'Focus on drawing your belly button toward your spine as you exhale.',
+          'text':
+              'Focus on drawing your belly button toward your spine as you exhale.',
         },
       };
     }
@@ -933,7 +992,8 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         'action': 'Breathe out during the lifting or contracting phase.',
       },
       'tip': {
-        'text': 'Never hold your breath. Maintain controlled breathing throughout.',
+        'text':
+            'Never hold your breath. Maintain controlled breathing throughout.',
       },
     };
   }

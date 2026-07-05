@@ -272,14 +272,22 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                ZealovaStatTile(
-                  value: totals['cal']!.toStringAsFixed(0),
-                  label: 'KCAL',
-                  align: CrossAxisAlignment.center,
+                Expanded(
+                  child: ZealovaStatTile(
+                    value: totals['cal']!.toStringAsFixed(0),
+                    label: 'KCAL',
+                    align: CrossAxisAlignment.center,
+                  ),
                 ),
-                _macroStat(totals['p']!, 'PROTEIN', AppColors.macroProtein, muted),
-                _macroStat(totals['c']!, 'CARBS', AppColors.macroCarbs, muted),
-                _macroStat(totals['f']!, 'FAT', AppColors.macroFat, muted),
+                Expanded(
+                  child: _macroStat(totals['p']!, 'PROTEIN', AppColors.macroProtein, muted),
+                ),
+                Expanded(
+                  child: _macroStat(totals['c']!, 'CARBS', AppColors.macroCarbs, muted),
+                ),
+                Expanded(
+                  child: _macroStat(totals['f']!, 'FAT', AppColors.macroFat, muted),
+                ),
               ],
             ),
           ),

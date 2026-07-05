@@ -5,6 +5,7 @@ import '../../../data/models/milestone.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
 /// Full-screen celebration dialog for newly achieved milestones.
 /// Shows confetti animation and allows sharing to social platforms.
 class MilestoneCelebrationDialog extends StatefulWidget {
@@ -55,12 +56,11 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
     );
 
     // Confetti animation
-    _confettiController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..addListener(() {
-        _updateParticles();
-      });
+    _confettiController =
+        AnimationController(duration: const Duration(seconds: 3), vsync: this)
+          ..addListener(() {
+            _updateParticles();
+          });
 
     // Start animations
     _scaleController.forward();
@@ -90,17 +90,19 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
     ];
 
     for (int i = 0; i < 100; i++) {
-      _particles.add(_ConfettiParticle(
-        x: _random.nextDouble(),
-        y: -0.1 - _random.nextDouble() * 0.3,
-        size: 4 + _random.nextDouble() * 8,
-        color: colors[_random.nextInt(colors.length)],
-        velocity: 0.3 + _random.nextDouble() * 0.4,
-        rotation: _random.nextDouble() * 360,
-        rotationSpeed: _random.nextDouble() * 5 - 2.5,
-        swayAmplitude: 0.02 + _random.nextDouble() * 0.04,
-        swayPhase: _random.nextDouble() * 2 * pi,
-      ));
+      _particles.add(
+        _ConfettiParticle(
+          x: _random.nextDouble(),
+          y: -0.1 - _random.nextDouble() * 0.3,
+          size: 4 + _random.nextDouble() * 8,
+          color: colors[_random.nextInt(colors.length)],
+          velocity: 0.3 + _random.nextDouble() * 0.4,
+          rotation: _random.nextDouble() * 360,
+          rotationSpeed: _random.nextDouble() * 5 - 2.5,
+          swayAmplitude: 0.02 + _random.nextDouble() * 0.04,
+          swayPhase: _random.nextDouble() * 2 * pi,
+        ),
+      );
     }
   }
 
@@ -108,7 +110,8 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
     setState(() {
       for (var particle in _particles) {
         particle.y += particle.velocity * 0.02;
-        particle.x += sin(particle.swayPhase + _confettiController.value * 10) *
+        particle.x +=
+            sin(particle.swayPhase + _confettiController.value * 10) *
             particle.swayAmplitude;
         particle.rotation += particle.rotationSpeed;
       }
@@ -129,9 +132,7 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
         fit: StackFit.expand,
         children: [
           // Dark overlay
-          Container(
-            color: Colors.black.withOpacity(0.85),
-          ),
+          Container(color: Colors.black.withOpacity(0.85)),
 
           // Confetti
           CustomPaint(
@@ -143,236 +144,261 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(),
-
-                  // Celebration text
-                  Text(
-                    AppLocalizations.of(context).milestoneCelebrationMilestoneAchieved,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.yellow,
-                      letterSpacing: 4,
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
                     ),
-                  ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Spacer(),
 
-                  const SizedBox(height: 32),
+                          // Celebration text
+                          Text(
+                            AppLocalizations.of(
+                              context,
+                            ).milestoneCelebrationMilestoneAchieved,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.yellow,
+                              letterSpacing: 4,
+                            ),
+                          ),
 
-                  // Badge with glow
-                  ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Glow effect
-                        Container(
-                          width: 180,
-                          height: 180,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: tierColor.withOpacity(0.4),
-                                blurRadius: 60,
-                                spreadRadius: 20,
+                          const SizedBox(height: 32),
+
+                          // Badge with glow
+                          ScaleTransition(
+                            scale: _scaleAnimation,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Glow effect
+                                Container(
+                                  width: 180,
+                                  height: 180,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: tierColor.withOpacity(0.4),
+                                        blurRadius: 60,
+                                        spreadRadius: 20,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Badge
+                                Container(
+                                  width: 140,
+                                  height: 140,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        tierColor.withOpacity(0.3),
+                                        tierColor.withOpacity(0.1),
+                                      ],
+                                    ),
+                                    border: Border.all(
+                                      color: tierColor,
+                                      width: 3,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      _getIconEmoji(milestone.icon ?? 'trophy'),
+                                      style: const TextStyle(fontSize: 64),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          // Milestone name
+                          Text(
+                            milestone.name,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Description
+                          if (milestone.description != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                              ),
+                              child: Text(
+                                milestone.description!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white.withOpacity(0.8),
+                                ),
+                              ),
+                            ),
+
+                          const SizedBox(height: 24),
+
+                          // Tier and points
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: tierColor.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: tierColor),
+                                ),
+                                child: Text(
+                                  tier.displayName.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: tierColor,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.yellow.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: AppColors.yellow),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.stars,
+                                      size: 16,
+                                      color: AppColors.yellow,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '+${milestone.points} PTS',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.yellow,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        // Badge
-                        Container(
-                          width: 140,
-                          height: 140,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                tierColor.withOpacity(0.3),
-                                tierColor.withOpacity(0.1),
+
+                          const Spacer(),
+
+                          // Share buttons
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: Column(
+                              children: [
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).milestoneCelebrationShareYourAchievement,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white.withOpacity(0.6),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _ShareButton(
+                                      icon: Icons.copy,
+                                      label: AppLocalizations.of(
+                                        context,
+                                      ).milestoneCelebrationCopy,
+                                      onTap: () {
+                                        HapticService.light();
+                                        widget.onShare('copy');
+                                      },
+                                    ),
+                                    const SizedBox(width: 16),
+                                    _ShareButton(
+                                      icon: Icons.share,
+                                      label: AppLocalizations.of(
+                                        context,
+                                      ).commonShare,
+                                      onTap: () {
+                                        HapticService.light();
+                                        widget.onShare('share');
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
-                            border: Border.all(
-                              color: tierColor,
-                              width: 3,
-                            ),
                           ),
-                          child: Center(
-                            child: Text(
-                              _getIconEmoji(milestone.icon ?? 'trophy'),
-                              style: const TextStyle(fontSize: 64),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                  // Milestone name
-                  Text(
-                    milestone.name,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Description
-                  if (milestone.description != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Text(
-                        milestone.description!,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                      ),
-                    ),
-
-                  const SizedBox(height: 24),
-
-                  // Tier and points
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: tierColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: tierColor),
-                        ),
-                        child: Text(
-                          tier.displayName.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: tierColor,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.yellow.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.yellow),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.stars,
-                              size: 16,
-                              color: AppColors.yellow,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '+${milestone.points} PTS',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.yellow,
-                                letterSpacing: 1,
+                          // Continue button
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  HapticService.light();
+                                  widget.onCelebrated();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: tierColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).onboardingContinueButton,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const Spacer(),
-
-                  // Share buttons
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Column(
-                      children: [
-                        Text(
-                          AppLocalizations.of(context).milestoneCelebrationShareYourAchievement,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.6),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _ShareButton(
-                              icon: Icons.copy,
-                              label: AppLocalizations.of(context).milestoneCelebrationCopy,
-                              onTap: () {
-                                HapticService.light();
-                                widget.onShare('copy');
-                              },
-                            ),
-                            const SizedBox(width: 16),
-                            _ShareButton(
-                              icon: Icons.share,
-                              label: AppLocalizations.of(context).commonShare,
-                              onTap: () {
-                                HapticService.light();
-                                widget.onShare('share');
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(height: 32),
-
-                  // Continue button
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          HapticService.light();
-                          widget.onCelebrated();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: tierColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context).onboardingContinueButton,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                          const SizedBox(height: 40),
+                        ],
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 40),
-                ],
+                ),
               ),
             ),
           ),
@@ -486,10 +512,7 @@ class _ConfettiPainter extends CustomPainter {
         ..style = PaintingStyle.fill;
 
       canvas.save();
-      canvas.translate(
-        particle.x * size.width,
-        particle.y * size.height,
-      );
+      canvas.translate(particle.x * size.width, particle.y * size.height);
       canvas.rotate(particle.rotation * pi / 180);
 
       // Draw rectangle confetti

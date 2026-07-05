@@ -133,14 +133,18 @@ class _KnowledgeTile extends StatelessWidget {
           children: [
             Text(card.emoji, style: const TextStyle(fontSize: 22)),
             const SizedBox(height: 6),
-            Text(
-              card.title,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: c.textPrimary),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            // Flexible so the title yields at large font scale rather than
+            // forcing the Expanded tagline below into negative height.
+            Flexible(
+              child: Text(
+                card.title,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: c.textPrimary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(height: 2),
             Expanded(

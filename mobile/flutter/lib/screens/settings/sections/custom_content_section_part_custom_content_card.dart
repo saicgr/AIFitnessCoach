@@ -886,13 +886,17 @@ class _CustomExercisesManagerState
                           padding: const EdgeInsets.only(top: 4),
                           child: Row(
                             children: [
-                              _ExerciseTag(
-                                  label: exercise.primaryMuscle,
-                                  color: AppColors.cyan),
+                              Flexible(
+                                child: _ExerciseTag(
+                                    label: exercise.primaryMuscle,
+                                    color: AppColors.cyan),
+                              ),
                               const SizedBox(width: 6),
-                              _ExerciseTag(
-                                  label: exercise.equipment,
-                                  color: AppColors.orange),
+                              Flexible(
+                                child: _ExerciseTag(
+                                    label: exercise.equipment,
+                                    color: AppColors.orange),
+                              ),
                             ],
                           ),
                         ),
@@ -932,6 +936,8 @@ class _ExerciseTag extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w500,

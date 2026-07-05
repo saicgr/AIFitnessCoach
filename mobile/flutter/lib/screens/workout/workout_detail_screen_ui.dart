@@ -353,24 +353,32 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                         children: [
                           Icon(Icons.repeat, size: 14, color: textMuted),
                           const SizedBox(width: 4),
-                          Text(
-                            exercise.setsRepsDisplay,
-                            style: ZType.data(
-                              12,
-                              color: textMuted,
-                              weight: FontWeight.w400,
+                          Flexible(
+                            child: Text(
+                              exercise.setsRepsDisplay,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: ZType.data(
+                                12,
+                                color: textMuted,
+                                weight: FontWeight.w400,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           if (exercise.restSeconds != null) ...[
                             Icon(Icons.timer_outlined, size: 14, color: textMuted),
                             const SizedBox(width: 4),
-                            Text(
-                              '${exercise.restSeconds}s rest',
-                              style: ZType.data(
-                                12,
-                                color: textMuted,
-                                weight: FontWeight.w400,
+                            Flexible(
+                              child: Text(
+                                '${exercise.restSeconds}s rest',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: ZType.data(
+                                  12,
+                                  color: textMuted,
+                                  weight: FontWeight.w400,
+                                ),
                               ),
                             ),
                           ],

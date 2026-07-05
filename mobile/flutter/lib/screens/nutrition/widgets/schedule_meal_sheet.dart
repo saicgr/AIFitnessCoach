@@ -8,6 +8,7 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
 /// One of the 11 cadence presets the meal long-press menu offers. Each
 /// preset materializes into a `ScheduleSpec` when the user taps Confirm —
 /// presets carry just enough info for the spec to be derived, the rest
@@ -28,42 +29,63 @@ enum SchedulePreset {
 extension _PresetLabels on SchedulePreset {
   String get title {
     switch (this) {
-      case SchedulePreset.tomorrowOnly:        return 'Tomorrow only';
-      case SchedulePreset.daily:               return 'Every day';
-      case SchedulePreset.dailyUntil:          return 'Every day until…';
-      case SchedulePreset.weekdays:            return 'Weekdays (Mon–Fri)';
-      case SchedulePreset.weeklyOnDay:         return 'Weekly on…';
-      case SchedulePreset.justThisWeek:        return 'Just this week';
-      case SchedulePreset.alternateThisWeek:   return 'Alternate days, this week only';
-      case SchedulePreset.alternateEveryWeek:  return 'Alternate days, every week';
-      case SchedulePreset.customDays:          return 'Custom days + end date';
-      case SchedulePreset.everyNDays:          return 'Every N days';
+      case SchedulePreset.tomorrowOnly:
+        return 'Tomorrow only';
+      case SchedulePreset.daily:
+        return 'Every day';
+      case SchedulePreset.dailyUntil:
+        return 'Every day until…';
+      case SchedulePreset.weekdays:
+        return 'Weekdays (Mon–Fri)';
+      case SchedulePreset.weeklyOnDay:
+        return 'Weekly on…';
+      case SchedulePreset.justThisWeek:
+        return 'Just this week';
+      case SchedulePreset.alternateThisWeek:
+        return 'Alternate days, this week only';
+      case SchedulePreset.alternateEveryWeek:
+        return 'Alternate days, every week';
+      case SchedulePreset.customDays:
+        return 'Custom days + end date';
+      case SchedulePreset.everyNDays:
+        return 'Every N days';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case SchedulePreset.tomorrowOnly:        return Icons.event_available;
-      case SchedulePreset.daily:               return Icons.repeat;
-      case SchedulePreset.dailyUntil:          return Icons.event_busy;
-      case SchedulePreset.weekdays:            return Icons.work_outline;
-      case SchedulePreset.weeklyOnDay:         return Icons.calendar_today;
-      case SchedulePreset.justThisWeek:        return Icons.date_range;
-      case SchedulePreset.alternateThisWeek:   return Icons.alarm;
-      case SchedulePreset.alternateEveryWeek:  return Icons.event_repeat;
-      case SchedulePreset.customDays:          return Icons.tune;
-      case SchedulePreset.everyNDays:          return Icons.timelapse;
+      case SchedulePreset.tomorrowOnly:
+        return Icons.event_available;
+      case SchedulePreset.daily:
+        return Icons.repeat;
+      case SchedulePreset.dailyUntil:
+        return Icons.event_busy;
+      case SchedulePreset.weekdays:
+        return Icons.work_outline;
+      case SchedulePreset.weeklyOnDay:
+        return Icons.calendar_today;
+      case SchedulePreset.justThisWeek:
+        return Icons.date_range;
+      case SchedulePreset.alternateThisWeek:
+        return Icons.alarm;
+      case SchedulePreset.alternateEveryWeek:
+        return Icons.event_repeat;
+      case SchedulePreset.customDays:
+        return Icons.tune;
+      case SchedulePreset.everyNDays:
+        return Icons.timelapse;
     }
   }
 
-  bool get needsDayPicker => this == SchedulePreset.weeklyOnDay
-      || this == SchedulePreset.justThisWeek
-      || this == SchedulePreset.alternateThisWeek
-      || this == SchedulePreset.alternateEveryWeek
-      || this == SchedulePreset.customDays;
+  bool get needsDayPicker =>
+      this == SchedulePreset.weeklyOnDay ||
+      this == SchedulePreset.justThisWeek ||
+      this == SchedulePreset.alternateThisWeek ||
+      this == SchedulePreset.alternateEveryWeek ||
+      this == SchedulePreset.customDays;
 
-  bool get needsEndDate => this == SchedulePreset.dailyUntil
-      || this == SchedulePreset.customDays;
+  bool get needsEndDate =>
+      this == SchedulePreset.dailyUntil || this == SchedulePreset.customDays;
 
   bool get needsInterval => this == SchedulePreset.everyNDays;
 }
@@ -112,8 +134,8 @@ class _ScheduleMealSheet extends StatefulWidget {
 
 class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
   late SchedulePreset _preset;
-  late TimeOfDay _time;          // local clock time
-  late Set<int> _selectedDays;   // 0=Sun..6=Sat
+  late TimeOfDay _time; // local clock time
+  late Set<int> _selectedDays; // 0=Sun..6=Sat
   DateTime? _endDate;
   int _intervalDays = 3;
 
@@ -131,163 +153,210 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardBorder = isDark
+        ? AppColors.cardBorder
+        : AppColorsLight.cardBorder;
 
     return Padding(
       padding: EdgeInsets.only(
-        left: 16, right: 16, top: 16,
+        left: 16,
+        right: 16,
+        top: 16,
         bottom: MediaQuery.of(context).padding.bottom + 16,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(AppLocalizations.of(context).scheduleMealScheduleThisMeal,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textPrimary)),
-          const SizedBox(height: 4),
-          Text(AppLocalizations.of(context).scheduleMealPickACadenceWe,
-              style: TextStyle(fontSize: 12, color: textMuted)),
-          const SizedBox(height: 14),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppLocalizations.of(context).scheduleMealScheduleThisMeal,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              AppLocalizations.of(context).scheduleMealPickACadenceWe,
+              style: TextStyle(fontSize: 12, color: textMuted),
+            ),
+            const SizedBox(height: 14),
 
-          // Cadence presets — Wrap so it adapts to small screens.
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: SchedulePreset.values.map((p) {
-              final selected = p == _preset;
-              return ChoiceChip(
-                label: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(p.icon, size: 14, color: selected ? Colors.white : accent),
-                  const SizedBox(width: 6),
-                  Text(p.title, style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected ? Colors.white : textPrimary,
-                  )),
-                ]),
-                selected: selected,
-                onSelected: (_) => setState(() => _preset = p),
-                selectedColor: accent,
-                backgroundColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: selected ? accent : cardBorder),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-
-          // Day picker (Sun..Sat) — shown only when the preset needs it.
-          if (_preset.needsDayPicker) ...[
-            Text(AppLocalizations.of(context).scheduleMealDays, style: TextStyle(fontSize: 12, color: textMuted)),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(7, (i) {
-                const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-                final selected = _selectedDays.contains(i);
-                return GestureDetector(
-                  onTap: () => setState(() {
-                    if (selected) {
-                      _selectedDays.remove(i);
-                    } else {
-                      _selectedDays.add(i);
-                    }
-                  }),
-                  child: Container(
-                    width: 36, height: 36,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: selected ? accent : Colors.transparent,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: selected ? accent : cardBorder),
-                    ),
-                    child: Text(labels[i],
-                      style: TextStyle(
-                        color: selected ? Colors.white : textPrimary,
-                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            // Cadence presets — Wrap so it adapts to small screens.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: SchedulePreset.values.map((p) {
+                final selected = p == _preset;
+                return ChoiceChip(
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        p.icon,
+                        size: 14,
+                        color: selected ? Colors.white : accent,
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      Text(
+                        p.title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: selected ? Colors.white : textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  selected: selected,
+                  onSelected: (_) => setState(() => _preset = p),
+                  selectedColor: accent,
+                  backgroundColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: selected ? accent : cardBorder),
                   ),
                 );
-              }),
+              }).toList(),
             ),
             const SizedBox(height: 16),
-          ],
 
-          // End date — Daily until / custom + end date.
-          if (_preset.needsEndDate) ...[
+            // Day picker (Sun..Sat) — shown only when the preset needs it.
+            if (_preset.needsDayPicker) ...[
+              Text(
+                AppLocalizations.of(context).scheduleMealDays,
+                style: TextStyle(fontSize: 12, color: textMuted),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(7, (i) {
+                  const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                  final selected = _selectedDays.contains(i);
+                  return GestureDetector(
+                    onTap: () => setState(() {
+                      if (selected) {
+                        _selectedDays.remove(i);
+                      } else {
+                        _selectedDays.add(i);
+                      }
+                    }),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: selected ? accent : Colors.transparent,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: selected ? accent : cardBorder,
+                        ),
+                      ),
+                      child: Text(
+                        labels[i],
+                        style: TextStyle(
+                          color: selected ? Colors.white : textPrimary,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // End date — Daily until / custom + end date.
+            if (_preset.needsEndDate) ...[
+              _Tile(
+                label: AppLocalizations.of(context).vacationModeEndDate,
+                value: _endDate == null
+                    ? AppLocalizations.of(context).scheduleMealPickADate
+                    : _formatDate(_endDate!),
+                icon: Icons.event_busy,
+                accent: accent,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+                cardBorder: cardBorder,
+                onTap: () async {
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _endDate ?? now.add(const Duration(days: 7)),
+                    firstDate: now,
+                    lastDate: now.add(const Duration(days: 365)),
+                  );
+                  if (picked != null) setState(() => _endDate = picked);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+
+            // Interval stepper — Every N days.
+            if (_preset.needsInterval) ...[
+              _Tile(
+                label: AppLocalizations.of(context).scheduleMealInterval,
+                value: 'Every $_intervalDays days',
+                icon: Icons.timelapse,
+                accent: accent,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+                cardBorder: cardBorder,
+                onTap: () => _showIntervalPicker(context, accent),
+              ),
+              const SizedBox(height: 8),
+            ],
+
+            // Time picker — used by every preset.
             _Tile(
-              label: AppLocalizations.of(context).vacationModeEndDate,
-              value: _endDate == null ? AppLocalizations.of(context).scheduleMealPickADate : _formatDate(_endDate!),
-              icon: Icons.event_busy,
+              label: AppLocalizations.of(context).workoutShowcaseTime,
+              value: _time.format(context),
+              icon: Icons.schedule,
               accent: accent,
               textPrimary: textPrimary,
               textMuted: textMuted,
               cardBorder: cardBorder,
               onTap: () async {
-                final now = DateTime.now();
-                final picked = await showDatePicker(
+                final picked = await showTimePicker(
                   context: context,
-                  initialDate: _endDate ?? now.add(const Duration(days: 7)),
-                  firstDate: now,
-                  lastDate: now.add(const Duration(days: 365)),
+                  initialTime: _time,
                 );
-                if (picked != null) setState(() => _endDate = picked);
+                if (picked != null) setState(() => _time = picked);
               },
             ),
-            const SizedBox(height: 8),
-          ],
 
-          // Interval stepper — Every N days.
-          if (_preset.needsInterval) ...[
-            _Tile(
-              label: AppLocalizations.of(context).scheduleMealInterval,
-              value: 'Every $_intervalDays days',
-              icon: Icons.timelapse,
-              accent: accent,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              cardBorder: cardBorder,
-              onTap: () => _showIntervalPicker(context, accent),
-            ),
-            const SizedBox(height: 8),
-          ],
-
-          // Time picker — used by every preset.
-          _Tile(
-            label: AppLocalizations.of(context).workoutShowcaseTime,
-            value: _time.format(context),
-            icon: Icons.schedule,
-            accent: accent,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
-            cardBorder: cardBorder,
-            onTap: () async {
-              final picked = await showTimePicker(context: context, initialTime: _time);
-              if (picked != null) setState(() => _time = picked);
-            },
-          ),
-
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _confirm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _confirm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context).scheduleWorkoutSchedule,
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
-              child: Text(AppLocalizations.of(context).scheduleWorkoutSchedule, style: TextStyle(fontWeight: FontWeight.w700)),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -297,20 +366,35 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
     await showCupertinoModalPopup(
       context: context,
       builder: (_) => Container(
-        height: 220, color: Theme.of(context).cardColor,
-        child: Column(children: [
-          SizedBox(
-            height: 180,
-            child: CupertinoPicker(
-              itemExtent: 32,
-              scrollController: FixedExtentScrollController(initialItem: _intervalDays - 2),
-              onSelectedItemChanged: (i) => v = i + 2, // 2..30
-              children: [for (int i = 2; i <= 30; i++) Center(child: Text('$i days'))],
+        height: 220,
+        color: Theme.of(context).cardColor,
+        child: Column(
+          children: [
+            SizedBox(
+              height: 180,
+              child: CupertinoPicker(
+                itemExtent: 32,
+                scrollController: FixedExtentScrollController(
+                  initialItem: _intervalDays - 2,
+                ),
+                onSelectedItemChanged: (i) => v = i + 2, // 2..30
+                children: [
+                  for (int i = 2; i <= 30; i++) Center(child: Text('$i days')),
+                ],
+              ),
             ),
-          ),
-          TextButton(onPressed: () { setState(() => _intervalDays = v); Navigator.pop(context); },
-              child: Text(AppLocalizations.of(context).commonDone, style: TextStyle(color: accent))),
-        ]),
+            TextButton(
+              onPressed: () {
+                setState(() => _intervalDays = v);
+                Navigator.pop(context);
+              },
+              child: Text(
+                AppLocalizations.of(context).commonDone,
+                style: TextStyle(color: accent),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -319,24 +403,36 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
     // Validate per-preset before constructing the spec.
     if (_preset.needsDayPicker && _selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).scheduleMealPickAtLeastOne), behavior: SnackBarBehavior.floating),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).scheduleMealPickAtLeastOne,
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
     if (_preset.needsEndDate && _endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).scheduleMealPickAnEndDate), behavior: SnackBarBehavior.floating),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).scheduleMealPickAnEndDate),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
 
     final spec = _buildSpec();
     final label = _buildLabel();
-    Navigator.pop(context, ScheduleSheetResult(spec: spec, cadenceLabel: label));
+    Navigator.pop(
+      context,
+      ScheduleSheetResult(spec: spec, cadenceLabel: label),
+    );
   }
 
   ScheduleSpec _buildSpec() {
-    final timeStr = '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}';
     switch (_preset) {
       case SchedulePreset.tomorrowOnly:
         // Compute tomorrow's weekday (Sun=0..Sat=6)
@@ -484,7 +580,14 @@ class _Tile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label, style: TextStyle(fontSize: 11, color: textMuted)),
-                  Text(value, style: TextStyle(fontSize: 14, color: textPrimary, fontWeight: FontWeight.w600)),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),

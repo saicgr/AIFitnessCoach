@@ -299,16 +299,20 @@ class NutritionGoalsCard extends ConsumerWidget {
             Builder(builder: (_) {
               final chips = <Widget>[
                 if (hasGoal)
-                  _GoalChip(
-                    icon: null,
-                    label: _getGoalDisplayName(nutritionGoal),
-                    color: teal,
+                  Flexible(
+                    child: _GoalChip(
+                      icon: null,
+                      label: _getGoalDisplayName(nutritionGoal),
+                      color: teal,
+                    ),
                   ),
                 if (prefs!.goalWeightKg != null)
-                  _GoalChip(
-                    icon: Icons.my_location_outlined,
-                    label: '${_formatWeight(prefs.goalWeightKg!)}kg',
-                    color: teal,
+                  Flexible(
+                    child: _GoalChip(
+                      icon: Icons.my_location_outlined,
+                      label: '${_formatWeight(prefs.goalWeightKg!)}kg',
+                      color: teal,
+                    ),
                   ),
                 if (prefs.goalDate != null)
                   Flexible(
@@ -321,10 +325,12 @@ class NutritionGoalsCard extends ConsumerWidget {
                 if (prefs.rateOfChange != null &&
                     (prefs.primaryGoalEnum == NutritionGoal.loseFat ||
                      prefs.primaryGoalEnum == NutritionGoal.buildMuscle))
-                  _GoalChip(
-                    icon: Icons.trending_down_outlined,
-                    label: _formatWeeklyRate(prefs.rateOfChange!),
-                    color: teal,
+                  Flexible(
+                    child: _GoalChip(
+                      icon: Icons.trending_down_outlined,
+                      label: _formatWeeklyRate(prefs.rateOfChange!),
+                      color: teal,
+                    ),
                   ),
               ];
               return Row(

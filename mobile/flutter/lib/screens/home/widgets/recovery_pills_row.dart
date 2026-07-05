@@ -86,7 +86,9 @@ class _RecoveryPillsRowState extends ConsumerState<RecoveryPillsRow> {
           ),
           const SizedBox(height: 6),
           SizedBox(
-            height: 28,
+            // Scale the strip height with the user's font scale so the 12px
+            // pill text never overflows a fixed 28px row.
+            height: MediaQuery.textScalerOf(context).scale(28),
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: sorted.length,

@@ -586,11 +586,15 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
             children: [
               Icon(Icons.pie_chart_outline, size: 14, color: colors.textMuted),
               const SizedBox(width: 6),
-              Text(
-                'Leaves you ${remaining.toInt()} cal for $mealLabel',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textSecondary,
+              Expanded(
+                child: Text(
+                  'Leaves you ${remaining.toInt()} cal for $mealLabel',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colors.textSecondary,
+                  ),
                 ),
               ),
             ],

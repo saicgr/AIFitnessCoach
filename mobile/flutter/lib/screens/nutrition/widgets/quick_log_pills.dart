@@ -639,7 +639,10 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: 54,
+            // Grow with the user's font scale so a taller pill row doesn't
+            // clip its inner text at 1.2x+; clamped so it stays compact.
+            height: (54 * MediaQuery.textScalerOf(context).scale(1.0))
+                .clamp(54.0, 72.0),
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: pills.length,

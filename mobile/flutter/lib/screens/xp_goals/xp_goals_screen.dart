@@ -218,6 +218,7 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
                     SliverPersistentHeader(
                       pinned: true,
                       delegate: _StickyTabBarDelegate(
+                        textScale: MediaQuery.textScalerOf(context).scale(1.0),
                         child: Container(
                           color: bgColor,
                           child: tabBar,

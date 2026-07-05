@@ -17,7 +17,8 @@ import '../../core/providers/workout_mutation_coordinator.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/providers/equipment_coverage_provider.dart';
-import '../../data/providers/gym_profile_provider.dart' show activeGymProfileProvider;
+import '../../data/providers/gym_profile_provider.dart'
+    show activeGymProfileProvider;
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/signature/signature.dart';
 import '../../data/models/assign_preview.dart';
@@ -54,9 +55,7 @@ class ProgramLibraryStartFlow {
     HapticService.light();
     showGlassSheet<void>(
       context: context,
-      builder: (_) => GlassSheet(
-        child: _StartProgramFlowSheet(card: card),
-      ),
+      builder: (_) => GlassSheet(child: _StartProgramFlowSheet(card: card)),
     );
   }
 }
@@ -195,7 +194,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         backgroundColor: Colors.transparent,
         builder: (_) => const ProgramsIntroSheet(),
       );
-    } catch (_) {/* best-effort — never block the library on the intro */}
+    } catch (_) {
+      /* best-effort — never block the library on the intro */
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -235,7 +236,8 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Mic permission needed — enable it in Settings.')),
+          content: Text('Mic permission needed — enable it in Settings.'),
+        ),
       );
       return;
     }
@@ -287,14 +289,14 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
 
   /// The active browse filter (drives the result surface + Retry refresh).
   ProgramLibraryFilter get _filter => (
-        category: _category,
-        difficulty: _difficulty,
-        sessionsPerWeek: _sessionsPerWeek,
-        search: _search.isEmpty ? null : _search,
-        goals: _goals.isEmpty ? null : _goals.toList(growable: false),
-        durationMin: _durationMin,
-        durationMax: _durationMax,
-      );
+    category: _category,
+    difficulty: _difficulty,
+    sessionsPerWeek: _sessionsPerWeek,
+    search: _search.isEmpty ? null : _search,
+    goals: _goals.isEmpty ? null : _goals.toList(growable: false),
+    durationMin: _durationMin,
+    durationMax: _durationMax,
+  );
 
   /// Whether the user has narrowed the library at all — when true the screen
   /// shows the filtered browse result surface instead of the discovery rails.
@@ -475,7 +477,8 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         SliverPersistentHeader(
           pinned: true,
           delegate: _StickyControlsDelegate(
-            builder: (context, overlapping) => _buildStickyControls(overlapping),
+            builder: (context, overlapping) =>
+                _buildStickyControls(overlapping),
           ),
         ),
         SliverToBoxAdapter(
@@ -679,8 +682,11 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           Expanded(
             child: Text(
               'BROWSE PROGRAMS',
-              style: ZType.lbl(13,
-                  color: AppColors.textPrimary, letterSpacing: 1.8),
+              style: ZType.lbl(
+                13,
+                color: AppColors.textPrimary,
+                letterSpacing: 1.8,
+              ),
             ),
           ),
           GestureDetector(
@@ -694,12 +700,18 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
               children: [
                 Text(
                   total != null ? 'SEE ALL $total' : 'SEE ALL',
-                  style: ZType.lbl(12,
-                      color: AppColors.orange, letterSpacing: 1.2),
+                  style: ZType.lbl(
+                    12,
+                    color: AppColors.orange,
+                    letterSpacing: 1.2,
+                  ),
                 ),
                 const SizedBox(width: 2),
-                const Icon(Icons.chevron_right_rounded,
-                    size: 16, color: AppColors.orange),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: AppColors.orange,
+                ),
               ],
             ),
           ),
@@ -725,14 +737,20 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(Icons.search_rounded,
-                color: AppColors.textMuted, size: 18),
+            const Icon(
+              Icons.search_rounded,
+              color: AppColors.textMuted,
+              size: 18,
+            ),
             const SizedBox(width: 6),
             Expanded(
               child: TextField(
                 controller: _searchController,
-                style: ZType.sans(13.5,
-                    color: AppColors.textPrimary, weight: FontWeight.w500),
+                style: ZType.sans(
+                  13.5,
+                  color: AppColors.textPrimary,
+                  weight: FontWeight.w500,
+                ),
                 cursorColor: AppColors.orange,
                 textInputAction: TextInputAction.search,
                 onSubmitted: (v) {
@@ -745,10 +763,14 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                   // without the text clipping at the bottom.
                   contentPadding: const EdgeInsets.symmetric(vertical: 11),
                   border: InputBorder.none,
-                  hintText:
-                      AppLocalizations.of(context).programLibrarySearchPrograms,
-                  hintStyle: ZType.sans(13.5,
-                      color: AppColors.textMuted, weight: FontWeight.w500),
+                  hintText: AppLocalizations.of(
+                    context,
+                  ).programLibrarySearchPrograms,
+                  hintStyle: ZType.sans(
+                    13.5,
+                    color: AppColors.textMuted,
+                    weight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
@@ -762,8 +784,11 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 behavior: HitTestBehavior.opaque,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
-                  child: Icon(Icons.close_rounded,
-                      color: AppColors.textMuted, size: 16),
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textMuted,
+                    size: 16,
+                  ),
                 ),
               ),
             // Voice search mic — right-edge inset matches left icon spacing.
@@ -803,16 +828,19 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.tune_rounded,
-                size: 15,
-                color: count > 0 ? AppColors.orange : AppColors.textPrimary),
+            Icon(
+              Icons.tune_rounded,
+              size: 15,
+              color: count > 0 ? AppColors.orange : AppColors.textPrimary,
+            ),
             const SizedBox(width: 7),
             Text(
               'FILTER',
-              style: ZType.lbl(11,
-                  color:
-                      count > 0 ? AppColors.orange : AppColors.textPrimary,
-                  letterSpacing: 1.5),
+              style: ZType.lbl(
+                11,
+                color: count > 0 ? AppColors.orange : AppColors.textPrimary,
+                letterSpacing: 1.5,
+              ),
             ),
             if (count > 0) ...[
               const SizedBox(width: 7),
@@ -883,8 +911,11 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 selected: _category == cat.category,
                 onTap: () {
                   HapticService.selection();
-                  setState(() => _category =
-                      _category == cat.category ? null : cat.category);
+                  setState(
+                    () => _category = _category == cat.category
+                        ? null
+                        : cat.category,
+                  );
                 },
               );
             },
@@ -992,8 +1023,11 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
               child: ZHairlineRow(
                 title: Text(
                   'BROWSE BY CATEGORY',
-                  style: ZType.lbl(13,
-                      color: AppColors.textPrimary, letterSpacing: 1.8),
+                  style: ZType.lbl(
+                    13,
+                    color: AppColors.textPrimary,
+                    letterSpacing: 1.8,
+                  ),
                 ),
                 showDivider: false,
                 verticalPadding: 0,
@@ -1006,8 +1040,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: EdgeInsets.zero,
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
@@ -1052,8 +1085,14 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     );
   }
 
-  /// A row showing active facets + a one-tap "CLEAR" affordance.
+  /// A row showing active facets + a live result count + a one-tap "CLEAR"
+  /// affordance.
   Widget _buildActiveFilterStrip() {
+    // Same family instance the grid watches — no extra fetch, just the count.
+    final total = ref
+        .watch(programLibraryBrowseProvider(_filter))
+        .valueOrNull
+        ?.total;
     final chips = <Widget>[];
     // "All programs" view (no facets) — show a single explanatory chip so the
     // surface isn't a bare grid with only a CLEAR link.
@@ -1062,8 +1101,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     }
     if (_category != null) chips.add(_activeChip(_category!));
     if (_difficulty != null) {
-      chips.add(_activeChip(_difficulty!,
-          dot: programDifficultyColor(_difficulty)));
+      chips.add(
+        _activeChip(_difficulty!, dot: programDifficultyColor(_difficulty)),
+      );
     }
     if (_sessionsPerWeek != null) {
       chips.add(_activeChip('$_sessionsPerWeek×/WK'));
@@ -1085,23 +1125,35 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  for (final c in chips) ...[
-                    c,
-                    const SizedBox(width: 8),
-                  ],
+                  for (final c in chips) ...[c, const SizedBox(width: 8)],
                 ],
               ),
             ),
           ),
+          if (total != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                total == 1 ? '1 PROGRAM' : '$total PROGRAMS',
+                style: ZType.lbl(
+                  11,
+                  color: AppColors.textMuted,
+                  letterSpacing: 1.4,
+                ),
+              ),
+            ),
           GestureDetector(
             onTap: _clearFilters,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.only(left: 12),
               child: Text(
                 AppLocalizations.of(context).programsClearFilters,
-                style: ZType.lbl(11,
-                    color: AppColors.textMuted, letterSpacing: 1.4),
+                style: ZType.lbl(
+                  11,
+                  color: AppColors.orange,
+                  letterSpacing: 1.4,
+                ),
               ),
             ),
           ),
@@ -1135,10 +1187,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       ),
       data: (result) {
         if (result.programs.isEmpty) {
-          return _EmptyState(
-            hasFilters: true,
-            onClear: _clearFilters,
-          );
+          return _EmptyState(hasFilters: true, onClear: _clearFilters);
         }
         return GridView.builder(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
@@ -1195,25 +1244,26 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           goals: _goals,
           durationMin: _durationMin,
           durationMax: _durationMax,
-          onApply: ({
-            required String? category,
-            required String? difficulty,
-            required int? sessionsPerWeek,
-            required Set<String> goals,
-            required int? durationMin,
-            required int? durationMax,
-          }) {
-            setState(() {
-              _category = category;
-              _difficulty = difficulty;
-              _sessionsPerWeek = sessionsPerWeek;
-              _goals
-                ..clear()
-                ..addAll(goals);
-              _durationMin = durationMin;
-              _durationMax = durationMax;
-            });
-          },
+          onApply:
+              ({
+                required String? category,
+                required String? difficulty,
+                required int? sessionsPerWeek,
+                required Set<String> goals,
+                required int? durationMin,
+                required int? durationMax,
+              }) {
+                setState(() {
+                  _category = category;
+                  _difficulty = difficulty;
+                  _sessionsPerWeek = sessionsPerWeek;
+                  _goals
+                    ..clear()
+                    ..addAll(goals);
+                  _durationMin = durationMin;
+                  _durationMax = durationMax;
+                });
+              },
         ),
       ),
     );
@@ -1243,9 +1293,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     HapticService.light();
     showGlassSheet<void>(
       context: context,
-      builder: (_) => GlassSheet(
-        child: _StartProgramFlowSheet(card: card),
-      ),
+      builder: (_) => GlassSheet(child: _StartProgramFlowSheet(card: card)),
     );
   }
 
@@ -1440,10 +1488,12 @@ class _CategoryHubTile extends StatelessWidget {
                   category.toUpperCase(),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: ZType.lbl(12.5,
-                      color: AppColors.textPrimary,
-                      weight: FontWeight.w800,
-                      letterSpacing: 0.6),
+                  style: ZType.lbl(
+                    12.5,
+                    color: AppColors.textPrimary,
+                    weight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
                 ),
               ],
             ),
@@ -1494,14 +1544,20 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded,
-                size: 44, color: AppColors.textSecondary),
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 44,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: ZType.sans(14,
-                  color: AppColors.textSecondary, weight: FontWeight.w500),
+              style: ZType.sans(
+                14,
+                color: AppColors.textSecondary,
+                weight: FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
@@ -1534,17 +1590,24 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.search_off_rounded,
-                size: 44, color: AppColors.textSecondary),
+            const Icon(
+              Icons.search_off_rounded,
+              size: 44,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(height: 12),
             Text(
               hasFilters
-                  ? AppLocalizations.of(context)
-                      .programLibraryNoProgramsMatchThese
+                  ? AppLocalizations.of(
+                      context,
+                    ).programLibraryNoProgramsMatchThese
                   : 'No programs available right now.',
               textAlign: TextAlign.center,
-              style: ZType.sans(14,
-                  color: AppColors.textSecondary, weight: FontWeight.w500),
+              style: ZType.sans(
+                14,
+                color: AppColors.textSecondary,
+                weight: FontWeight.w500,
+              ),
             ),
             if (hasFilters) ...[
               const SizedBox(height: 16),
@@ -1554,8 +1617,7 @@ class _EmptyState extends StatelessWidget {
                   foregroundColor: AppColors.orange,
                   side: const BorderSide(color: AppColors.orange),
                 ),
-                child: Text(
-                    AppLocalizations.of(context).programsClearFilters),
+                child: Text(AppLocalizations.of(context).programsClearFilters),
               ),
             ],
           ],
@@ -1569,14 +1631,15 @@ class _EmptyState extends StatelessWidget {
 // Programs filter bottom sheet — Category / Level / Sessions / Duration / Goal.
 // ===========================================================================
 
-typedef _ApplyFilter = void Function({
-  required String? category,
-  required String? difficulty,
-  required int? sessionsPerWeek,
-  required Set<String> goals,
-  required int? durationMin,
-  required int? durationMax,
-});
+typedef _ApplyFilter =
+    void Function({
+      required String? category,
+      required String? difficulty,
+      required int? sessionsPerWeek,
+      required Set<String> goals,
+      required int? durationMin,
+      required int? durationMax,
+    });
 
 class _ProgramFilterSheet extends StatefulWidget {
   final String? category;
@@ -1647,16 +1710,21 @@ class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('FILTER',
-                        style: ZType.disp(28, color: AppColors.textPrimary)),
+                    Text(
+                      'FILTER',
+                      style: ZType.disp(28, color: AppColors.textPrimary),
+                    ),
                     const Spacer(),
                     GestureDetector(
                       onTap: _reset,
                       behavior: HitTestBehavior.opaque,
                       child: Text(
                         'RESET',
-                        style: ZType.lbl(11,
-                            color: AppColors.textMuted, letterSpacing: 1.5),
+                        style: ZType.lbl(
+                          11,
+                          color: AppColors.textMuted,
+                          letterSpacing: 1.5,
+                        ),
                       ),
                     ),
                   ],
@@ -1667,100 +1735,91 @@ class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
                   controller: scrollController,
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                   children: [
-                    _section(
-                      'CATEGORY',
-                      [
-                        for (final c in _kCategories)
-                          ZChip(
-                            label: c ??
-                                AppLocalizations.of(context)
-                                    .syncedWorkoutsHistoryAll,
-                            selected: _category == c,
-                            onTap: () {
-                              HapticService.selection();
-                              setState(() =>
-                                  _category = _category == c ? null : c);
-                            },
-                          ),
-                      ],
-                    ),
-                    _section(
-                      AppLocalizations.of(context).programSummaryLevel,
-                      [
-                        for (final d in _kDifficulties)
-                          ZChip(
-                            label: d ??
-                                AppLocalizations.of(context).programLibraryAny,
-                            selected: _difficulty == d,
-                            leadingDot: d == null
-                                ? null
-                                : programDifficultyColor(d),
-                            onTap: () {
-                              HapticService.selection();
-                              setState(() =>
-                                  _difficulty = _difficulty == d ? null : d);
-                            },
-                          ),
-                      ],
-                    ),
-                    _section(
-                      'SESSIONS / WEEK',
-                      [
-                        for (final s in _kSessions)
-                          ZChip(
-                            label: s == null
-                                ? AppLocalizations.of(context)
-                                    .programLibraryAny
-                                : '$s',
-                            selected: _sessionsPerWeek == s,
-                            onTap: () {
-                              HapticService.selection();
-                              setState(() => _sessionsPerWeek =
-                                  _sessionsPerWeek == s ? null : s);
-                            },
-                          ),
-                      ],
-                    ),
-                    _section(
-                      'DURATION',
-                      [
-                        for (final b in _kDurationBuckets)
-                          ZChip(
-                            label: b.min == null && b.max == null
-                                ? AppLocalizations.of(context)
-                                    .programLibraryAny
-                                : b.label,
-                            selected: _durationSelected(b),
-                            onTap: () {
-                              HapticService.selection();
-                              setState(() {
-                                _durationMin = b.min;
-                                _durationMax = b.max;
-                              });
-                            },
-                          ),
-                      ],
-                    ),
-                    _section(
-                      'GOAL',
-                      [
-                        for (final g in _kGoals)
-                          ZChip(
-                            label: g,
-                            selected: _goals.contains(g),
-                            onTap: () {
-                              HapticService.selection();
-                              setState(() {
-                                if (_goals.contains(g)) {
-                                  _goals.remove(g);
-                                } else {
-                                  _goals.add(g);
-                                }
-                              });
-                            },
-                          ),
-                      ],
-                    ),
+                    _section('CATEGORY', [
+                      for (final c in _kCategories)
+                        ZChip(
+                          label:
+                              c ??
+                              AppLocalizations.of(
+                                context,
+                              ).syncedWorkoutsHistoryAll,
+                          selected: _category == c,
+                          onTap: () {
+                            HapticService.selection();
+                            setState(
+                              () => _category = _category == c ? null : c,
+                            );
+                          },
+                        ),
+                    ]),
+                    _section(AppLocalizations.of(context).programSummaryLevel, [
+                      for (final d in _kDifficulties)
+                        ZChip(
+                          label:
+                              d ??
+                              AppLocalizations.of(context).programLibraryAny,
+                          selected: _difficulty == d,
+                          leadingDot: d == null
+                              ? null
+                              : programDifficultyColor(d),
+                          onTap: () {
+                            HapticService.selection();
+                            setState(
+                              () => _difficulty = _difficulty == d ? null : d,
+                            );
+                          },
+                        ),
+                    ]),
+                    _section('SESSIONS / WEEK', [
+                      for (final s in _kSessions)
+                        ZChip(
+                          label: s == null
+                              ? AppLocalizations.of(context).programLibraryAny
+                              : '$s',
+                          selected: _sessionsPerWeek == s,
+                          onTap: () {
+                            HapticService.selection();
+                            setState(
+                              () => _sessionsPerWeek = _sessionsPerWeek == s
+                                  ? null
+                                  : s,
+                            );
+                          },
+                        ),
+                    ]),
+                    _section('DURATION', [
+                      for (final b in _kDurationBuckets)
+                        ZChip(
+                          label: b.min == null && b.max == null
+                              ? AppLocalizations.of(context).programLibraryAny
+                              : b.label,
+                          selected: _durationSelected(b),
+                          onTap: () {
+                            HapticService.selection();
+                            setState(() {
+                              _durationMin = b.min;
+                              _durationMax = b.max;
+                            });
+                          },
+                        ),
+                    ]),
+                    _section('GOAL', [
+                      for (final g in _kGoals)
+                        ZChip(
+                          label: g,
+                          selected: _goals.contains(g),
+                          onTap: () {
+                            HapticService.selection();
+                            setState(() {
+                              if (_goals.contains(g)) {
+                                _goals.remove(g);
+                              } else {
+                                _goals.add(g);
+                              }
+                            });
+                          },
+                        ),
+                    ]),
                   ],
                 ),
               ),
@@ -1791,10 +1850,12 @@ class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
                       },
                       child: Text(
                         'APPLY',
-                        style: ZType.lbl(14,
-                            color: Colors.white,
-                            weight: FontWeight.w800,
-                            letterSpacing: 2.5),
+                        style: ZType.lbl(
+                          14,
+                          color: Colors.white,
+                          weight: FontWeight.w800,
+                          letterSpacing: 2.5,
+                        ),
                       ),
                     ),
                   ),
@@ -1817,8 +1878,11 @@ class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
             padding: const EdgeInsets.only(bottom: 11),
             child: Text(
               key.toUpperCase(),
-              style: ZType.lbl(11,
-                  color: AppColors.textMuted, letterSpacing: 2.2),
+              style: ZType.lbl(
+                11,
+                color: AppColors.textMuted,
+                letterSpacing: 2.2,
+              ),
             ),
           ),
           Wrap(spacing: 8, runSpacing: 8, children: chips),
@@ -1936,6 +2000,7 @@ class _StartProgramFlowSheetState
   bool _aiTailor = false;
   bool _adaptToLevel = true;
   bool _swapForInjuries = true;
+
   /// Apply the equipment-fit swap. Defaulted ON. Single source of truth for BOTH
   /// the prominent fit-check banner (shown on a gap) AND the AI-tailor sub-toggle
   /// — so the two surfaces can never disagree about whether to swap.
@@ -1974,8 +2039,10 @@ class _StartProgramFlowSheetState
     // Seed the inline Duration / Per-week pickers from the recommended variant
     // (multi-variant programs); single-plan programs fall back to the card.
     final variants = widget.card.variantOptions;
-    final defaultVariant =
-        defaultProgramVariant(variants, widget.card.defaultVariantId);
+    final defaultVariant = defaultProgramVariant(
+      variants,
+      widget.card.defaultVariantId,
+    );
     _selectedVariantId = defaultVariant?.variantId;
     _durationWeeks = defaultVariant?.weeks ?? widget.card.durationWeeks;
 
@@ -1983,7 +2050,7 @@ class _StartProgramFlowSheetState
     // in the overlap even though they have no materialized collision yet.
     _aiDays =
         ref.read(currentUserProvider).valueOrNull?.workoutDays.toSet() ??
-            <int>{};
+        <int>{};
 
     // Seed sensible default training days from the recommended variant's
     // sessions/week, else the program's sessions/week.
@@ -2035,7 +2102,8 @@ class _StartProgramFlowSheetState
     int? durationWeeks,
     String? variantId,
     Map<String, String>? dayResolutions,
-  }) _previewArgs() {
+  })
+  _previewArgs() {
     final card = widget.card;
     return (
       programId: card.isBranded ? card.bareBrandedId : card.id,
@@ -2072,7 +2140,8 @@ class _StartProgramFlowSheetState
   /// fit must work even with the AI-tailor master toggle off).
   bool _shouldFitEquipment() {
     if (!_fitEquipment) return false;
-    if (_aiTailor) return true; // AI master on → fit applies (it's a sub-option)
+    if (_aiTailor)
+      return true; // AI master on → fit applies (it's a sub-option)
     // AI master off → only fit when the coverage check found a real gap.
     final args = _coverageArgs();
     if (args == null) return false;
@@ -2206,8 +2275,18 @@ class _StartProgramFlowSheetState
 
   String _fmtDate(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
@@ -2307,28 +2386,31 @@ class _StartProgramFlowSheetState
     // and the schedule. Without this the assign succeeds server-side but the
     // UI keeps painting the pre-assign (stale) program. Errors are surfaced
     // by the dialog, not here.
-    unawaited(assignFuture.then((_) {
-      unawaited(refreshAfterWorkoutMutation(
-        source: 'program_assign',
-        userId: uid,
-      ));
-      unawaited(currentProgramNotifier.refresh(userId: uid));
-    }, onError: (_) {}));
+    unawaited(
+      assignFuture.then((_) {
+        unawaited(
+          refreshAfterWorkoutMutation(source: 'program_assign', userId: uid),
+        );
+        unawaited(currentProgramNotifier.refresh(userId: uid));
+      }, onError: (_) {}),
+    );
 
     // rootContext is the root Navigator's context (captured pre-pop) — it
     // outlives this sheet, so the dialog survives the pop and any tab moves.
-    unawaited(showDialog<void>(
-      context: rootContext,
-      barrierDismissible: false,
-      useRootNavigator: true,
-      builder: (_) => ProgramSetupDialog(
-        programName: card.displayName,
-        durationWeeks: durationWeeks,
-        timesPerWeek: assignedDays.length,
-        fitEquipment: fitEquipment,
-        future: assignFuture,
+    unawaited(
+      showDialog<void>(
+        context: rootContext,
+        barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (_) => ProgramSetupDialog(
+          programName: card.displayName,
+          durationWeeks: durationWeeks,
+          timesPerWeek: assignedDays.length,
+          fitEquipment: fitEquipment,
+          future: assignFuture,
+        ),
       ),
-    ));
+    );
   }
 
   @override
@@ -2390,7 +2472,9 @@ class _StartProgramFlowSheetState
                       behavior: HitTestBehavior.opaque,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 13),
+                          horizontal: 14,
+                          vertical: 13,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.surface2,
                           borderRadius: BorderRadius.circular(12),
@@ -2398,18 +2482,26 @@ class _StartProgramFlowSheetState
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.event_rounded,
-                                size: 18, color: AppColors.orange),
+                            const Icon(
+                              Icons.event_rounded,
+                              size: 18,
+                              color: AppColors.orange,
+                            ),
                             const SizedBox(width: 10),
                             Text(
                               _fmtDate(_startDate),
-                              style: ZType.sans(14,
-                                  color: AppColors.textPrimary,
-                                  weight: FontWeight.w600),
+                              style: ZType.sans(
+                                14,
+                                color: AppColors.textPrimary,
+                                weight: FontWeight.w600,
+                              ),
                             ),
                             const Spacer(),
-                            const Icon(Icons.edit_calendar_rounded,
-                                size: 16, color: AppColors.textMuted),
+                            const Icon(
+                              Icons.edit_calendar_rounded,
+                              size: 16,
+                              color: AppColors.textMuted,
+                            ),
                           ],
                         ),
                       ),
@@ -2463,9 +2555,7 @@ class _StartProgramFlowSheetState
               Container(
                 decoration: const BoxDecoration(
                   color: AppColors.surface,
-                  border: Border(
-                    top: BorderSide(color: AppColors.cardBorder),
-                  ),
+                  border: Border(top: BorderSide(color: AppColors.cardBorder)),
                 ),
                 child: SafeArea(
                   top: false,
@@ -2488,15 +2578,19 @@ class _StartProgramFlowSheetState
                                 width: 16,
                                 height: 16,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
                             : const Icon(Icons.check_rounded, size: 20),
                         label: Text(
                           _submitting ? 'STARTING…' : 'CONFIRM & START',
-                          style: ZType.lbl(14,
-                              color: Colors.white,
-                              weight: FontWeight.w800,
-                              letterSpacing: 2.0),
+                          style: ZType.lbl(
+                            14,
+                            color: Colors.white,
+                            weight: FontWeight.w800,
+                            letterSpacing: 2.0,
+                          ),
                         ),
                       ),
                     ),
@@ -2525,15 +2619,21 @@ class _StartProgramFlowSheetState
       ),
       child: Row(
         children: [
-          const Icon(Icons.event_repeat_rounded,
-              size: 18, color: AppColors.orange),
+          const Icon(
+            Icons.event_repeat_rounded,
+            size: 18,
+            color: AppColors.orange,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Runs daily — $days from your start date. '
               'No training-day selection needed.',
-              style: ZType.sans(12.5,
-                  color: AppColors.textSecondary, weight: FontWeight.w500),
+              style: ZType.sans(
+                12.5,
+                color: AppColors.textSecondary,
+                weight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -2574,11 +2674,13 @@ class _StartProgramFlowSheetState
                   ),
                   child: Text(
                     _kWeekdayLabels[i],
-                    style: ZType.lbl(10.5,
-                        color: _days.contains(i)
-                            ? Colors.white
-                            : AppColors.textSecondary,
-                        letterSpacing: 0.5),
+                    style: ZType.lbl(
+                      10.5,
+                      color: _days.contains(i)
+                          ? Colors.white
+                          : AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
@@ -2590,11 +2692,13 @@ class _StartProgramFlowSheetState
             'Pick $target ${target == 1 ? 'day' : 'days'} · '
             '${_days.length} selected'
             '${atCap ? '' : ' — tap to add'}',
-            style: ZType.sans(11.5,
-                color: _days.length == target
-                    ? AppColors.textMuted
-                    : AppColors.orange,
-                weight: FontWeight.w500),
+            style: ZType.sans(
+              11.5,
+              color: _days.length == target
+                  ? AppColors.textMuted
+                  : AppColors.orange,
+              weight: FontWeight.w500,
+            ),
           ),
         ],
       ],
@@ -2618,8 +2722,10 @@ class _StartProgramFlowSheetState
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text('This program runs $target×/week — deselect a day '
-                'to pick a different one.'),
+            content: Text(
+              'This program runs $target×/week — deselect a day '
+              'to pick a different one.',
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -2684,14 +2790,20 @@ class _StartProgramFlowSheetState
     if (parts.isEmpty) return const SizedBox.shrink();
     return Row(
       children: [
-        const Icon(Icons.calendar_view_week_rounded,
-            size: 15, color: AppColors.orange),
+        const Icon(
+          Icons.calendar_view_week_rounded,
+          size: 15,
+          color: AppColors.orange,
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             parts.join(' · '),
-            style: ZType.sans(13,
-                color: AppColors.textPrimary, weight: FontWeight.w700),
+            style: ZType.sans(
+              13,
+              color: AppColors.textPrimary,
+              weight: FontWeight.w700,
+            ),
           ),
         ),
         if (_previewLoading)
@@ -2699,7 +2811,9 @@ class _StartProgramFlowSheetState
             width: 13,
             height: 13,
             child: CircularProgressIndicator(
-                strokeWidth: 1.6, color: AppColors.textMuted),
+              strokeWidth: 1.6,
+              color: AppColors.textMuted,
+            ),
           ),
       ],
     );
@@ -2729,8 +2843,11 @@ class _StartProgramFlowSheetState
   int? _targetSessions() {
     final p = _preview;
     if (p != null && p.sessionsPerWeek > 0) return p.sessionsPerWeek;
-    final selected = selectedProgramVariant(widget.card.variantOptions,
-        _selectedVariantId, widget.card.defaultVariantId);
+    final selected = selectedProgramVariant(
+      widget.card.variantOptions,
+      _selectedVariantId,
+      widget.card.defaultVariantId,
+    );
     return selected?.sessionsPerWeek ?? widget.card.sessionsPerWeek;
   }
 
@@ -2754,7 +2871,9 @@ class _StartProgramFlowSheetState
   /// Revert to the program's recommended variant.
   void _onVariantReset() {
     final def = defaultProgramVariant(
-        widget.card.variantOptions, widget.card.defaultVariantId);
+      widget.card.variantOptions,
+      widget.card.defaultVariantId,
+    );
     if (def == null) return;
     _onVariantSelected(def);
   }
@@ -2784,12 +2903,20 @@ class _StartProgramFlowSheetState
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Open full schedule',
-                      style: ZType.lbl(11,
-                          color: AppColors.orange, letterSpacing: 0.4)),
+                  Text(
+                    'Open full schedule',
+                    style: ZType.lbl(
+                      11,
+                      color: AppColors.orange,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
                   const SizedBox(width: 2),
-                  const Icon(Icons.arrow_forward_rounded,
-                      size: 13, color: AppColors.orange),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 13,
+                    color: AppColors.orange,
+                  ),
                 ],
               ),
             ),
@@ -2807,17 +2934,22 @@ class _StartProgramFlowSheetState
         else
           Text(
             'Pick at least one training day to preview the schedule.',
-            style: ZType.sans(12.5,
-                color: AppColors.textMuted, weight: FontWeight.w500),
+            style: ZType.sans(
+              12.5,
+              color: AppColors.textMuted,
+              weight: FontWeight.w500,
+            ),
           ),
         const SizedBox(height: 8),
         Text(
           'Conflicting days default to Replace. "Add alongside" stacks the new '
           'workout as an Extra.',
-          style: ZType.sans(11.5,
-              color: AppColors.textMuted,
-              weight: FontWeight.w500,
-              height: 1.35),
+          style: ZType.sans(
+            11.5,
+            color: AppColors.textMuted,
+            weight: FontWeight.w500,
+            height: 1.35,
+          ),
         ),
       ],
     );
@@ -2831,8 +2963,11 @@ class _StartProgramFlowSheetState
     // so display order has no effect on what's sent.
     final weekStartDay = ref.watch(weekStartDayProvider);
     final dates = _overlapWindowDates(p)
-      ..sort((a, b) => ((a.weekday - weekStartDay + 7) % 7)
-          .compareTo((b.weekday - weekStartDay + 7) % 7));
+      ..sort(
+        (a, b) => ((a.weekday - weekStartDay + 7) % 7).compareTo(
+          (b.weekday - weekStartDay + 7) % 7,
+        ),
+      );
     final firstWeek = p.weeks.isNotEmpty ? p.weeks.first : null;
     final programByDate = <String, PreviewDay>{
       for (final d in firstWeek?.days ?? const <PreviewDay>[]) d.date: d,
@@ -2905,19 +3040,25 @@ class _StartProgramFlowSheetState
     // Effective existing sessions = materialized collisions + a synthetic AI
     // session for an AI day (unless a materialized AI row is already present, to
     // avoid double-listing).
-    final hasMaterializedAi =
-        materialized.any((c) => c.source.toLowerCase().contains('ai'));
+    final hasMaterializedAi = materialized.any(
+      (c) => c.source.toLowerCase().contains('ai'),
+    );
     final existing = <PreviewCollision>[
       ...materialized,
       if (isAiDay && !hasMaterializedAi) _aiCollision(date),
     ];
 
     Widget chip() => SizedBox(
-          width: 38,
-          child: Text(dayChip,
-              style: ZType.lbl(11,
-                  color: AppColors.textSecondary, letterSpacing: 0.5)),
-        );
+      width: 38,
+      child: Text(
+        dayChip,
+        style: ZType.lbl(
+          11,
+          color: AppColors.textSecondary,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
 
     // CASE 1 — program day, no conflict → FREE.
     if (program != null && existing.isEmpty) {
@@ -2929,21 +3070,34 @@ class _StartProgramFlowSheetState
             chip(),
             Expanded(
               child: Text.rich(
-                TextSpan(children: [
-                  TextSpan(
+                TextSpan(
+                  children: [
+                    TextSpan(
                       text: '✓ free',
-                      style: ZType.sans(12.5,
-                          color: AppColors.green, weight: FontWeight.w700)),
-                  TextSpan(
+                      style: ZType.sans(
+                        12.5,
+                        color: AppColors.green,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                    TextSpan(
                       text: '   →   ',
-                      style: ZType.sans(12.5,
-                          color: AppColors.textMuted, weight: FontWeight.w500)),
-                  TextSpan(
+                      style: ZType.sans(
+                        12.5,
+                        color: AppColors.textMuted,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                    TextSpan(
                       text: _sessionLabel(program),
-                      style: ZType.sans(12.5,
-                          color: AppColors.textPrimary,
-                          weight: FontWeight.w600)),
-                ]),
+                      style: ZType.sans(
+                        12.5,
+                        color: AppColors.textPrimary,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -2975,8 +3129,11 @@ class _StartProgramFlowSheetState
                     existing.length > 1
                         ? '⚠ already has ${existing.length} workouts'
                         : '⚠ already has a workout',
-                    style: ZType.sans(12.5,
-                        color: AppColors.warning, weight: FontWeight.w700),
+                    style: ZType.sans(
+                      12.5,
+                      color: AppColors.warning,
+                      weight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -2992,9 +3149,11 @@ class _StartProgramFlowSheetState
                       padding: const EdgeInsets.only(bottom: 3),
                       child: Text(
                         '• ${_existingLabel(c)}',
-                        style: ZType.sans(11.5,
-                            color: AppColors.textSecondary,
-                            weight: FontWeight.w500),
+                        style: ZType.sans(
+                          11.5,
+                          color: AppColors.textSecondary,
+                          weight: FontWeight.w500,
+                        ),
                       ),
                     ),
                 ],
@@ -3030,10 +3189,12 @@ class _StartProgramFlowSheetState
                 child: Text(
                   '$totalSessions sessions $dayChip — existing stay, '
                   '${_sessionLabel(program)} adds as an Extra.',
-                  style: ZType.sans(11,
-                      color: AppColors.textSecondary,
-                      weight: FontWeight.w500,
-                      height: 1.35),
+                  style: ZType.sans(
+                    11,
+                    color: AppColors.textSecondary,
+                    weight: FontWeight.w500,
+                    height: 1.35,
+                  ),
                 ),
               ),
               if (overExert) ...[
@@ -3058,8 +3219,8 @@ class _StartProgramFlowSheetState
       final keepText = names.isEmpty
           ? 'keeps your existing workout'
           : (names.length == 1
-              ? 'keeps ${names.first}'
-              : 'keeps ${names.first} +${names.length - 1} more');
+                ? 'keeps ${names.first}'
+                : 'keeps ${names.first} +${names.length - 1} more');
       return Opacity(
         opacity: 0.7,
         child: Padding(
@@ -3071,8 +3232,11 @@ class _StartProgramFlowSheetState
               Expanded(
                 child: Text(
                   '↺ $keepText  ($progName doesn\'t use $dayChip)',
-                  style: ZType.sans(12,
-                      color: AppColors.textSecondary, weight: FontWeight.w500),
+                  style: ZType.sans(
+                    12,
+                    color: AppColors.textSecondary,
+                    weight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -3091,8 +3255,10 @@ class _StartProgramFlowSheetState
             chip(),
             Text(
               'Rest day',
-              style: ZType.sans(12, color: AppColors.textMuted)
-                  .copyWith(fontStyle: FontStyle.italic),
+              style: ZType.sans(
+                12,
+                color: AppColors.textMuted,
+              ).copyWith(fontStyle: FontStyle.italic),
             ),
           ],
         ),
@@ -3125,11 +3291,12 @@ class _StartProgramFlowSheetState
     DateTime anchor = DateTime.tryParse(p.startDate) ?? _startDate;
     final firstWeek = p.weeks.isNotEmpty ? p.weeks.first : null;
     if (firstWeek != null && firstWeek.days.isNotEmpty) {
-      final ds = firstWeek.days
-          .map((d) => DateTime.tryParse(d.date))
-          .whereType<DateTime>()
-          .toList()
-        ..sort();
+      final ds =
+          firstWeek.days
+              .map((d) => DateTime.tryParse(d.date))
+              .whereType<DateTime>()
+              .toList()
+            ..sort();
       // Use the earliest of the start date and the first program session so the
       // start day itself is always included.
       if (ds.isNotEmpty && ds.first.isBefore(anchor)) anchor = ds.first;
@@ -3210,11 +3377,13 @@ class _StartProgramFlowSheetState
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: ZType.sans(12,
-                    color: selected
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
-                    weight: FontWeight.w600),
+                style: ZType.sans(
+                  12,
+                  color: selected
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
+                  weight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -3235,17 +3404,22 @@ class _StartProgramFlowSheetState
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber_rounded,
-              size: 15, color: AppColors.warning),
+          const Icon(
+            Icons.warning_amber_rounded,
+            size: 15,
+            color: AppColors.warning,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               "That's $sessions sessions on $day. Big day — make sure you "
               'recover, or spread these across the week.',
-              style: ZType.sans(11,
-                  color: AppColors.warning,
-                  weight: FontWeight.w500,
-                  height: 1.35),
+              style: ZType.sans(
+                11,
+                color: AppColors.warning,
+                weight: FontWeight.w500,
+                height: 1.35,
+              ),
             ),
           ),
         ],
@@ -3288,14 +3462,20 @@ class _StartProgramFlowSheetState
       ),
       child: Row(
         children: [
-          const Icon(Icons.cloud_off_rounded,
-              size: 16, color: AppColors.textMuted),
+          const Icon(
+            Icons.cloud_off_rounded,
+            size: 16,
+            color: AppColors.textMuted,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               "Couldn't preview schedule. You can still start.",
-              style: ZType.sans(12.5,
-                  color: AppColors.textMuted, weight: FontWeight.w500),
+              style: ZType.sans(
+                12.5,
+                color: AppColors.textMuted,
+                weight: FontWeight.w500,
+              ),
             ),
           ),
           GestureDetector(
@@ -3308,8 +3488,11 @@ class _StartProgramFlowSheetState
               padding: const EdgeInsets.only(left: 6),
               child: Text(
                 'RETRY',
-                style: ZType.lbl(11,
-                    color: AppColors.orange, letterSpacing: 1.2),
+                style: ZType.lbl(
+                  11,
+                  color: AppColors.orange,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
           ),
@@ -3343,13 +3526,19 @@ class _StartProgramFlowSheetState
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_awesome_rounded,
-                  size: 16, color: AppColors.orange),
+              const Icon(
+                Icons.auto_awesome_rounded,
+                size: 16,
+                color: AppColors.orange,
+              ),
               const SizedBox(width: 8),
               Text(
                 'COACH REVIEW',
-                style: ZType.lbl(11,
-                    color: AppColors.orange, letterSpacing: 1.6),
+                style: ZType.lbl(
+                  11,
+                  color: AppColors.orange,
+                  letterSpacing: 1.6,
+                ),
               ),
             ],
           ),
@@ -3357,16 +3546,16 @@ class _StartProgramFlowSheetState
             const SizedBox(height: 8),
             Text(
               summary,
-              style: ZType.sans(12.5,
-                  color: AppColors.textPrimary, weight: FontWeight.w600),
+              style: ZType.sans(
+                12.5,
+                color: AppColors.textPrimary,
+                weight: FontWeight.w600,
+              ),
             ),
           ],
           if (showReview) ...[
             const SizedBox(height: 6),
-            Text(
-              review,
-              style: ZType.ser(13, color: AppColors.textSecondary),
-            ),
+            Text(review, style: ZType.ser(13, color: AppColors.textSecondary)),
           ] else if (_reviewLoading && review == null) ...[
             const SizedBox(height: 8),
             const _ShimmerBox(width: 200, height: 11),
@@ -3419,25 +3608,26 @@ class _StartProgramFlowSheetState
         const SizedBox(width: 6),
         Text(
           text,
-          style: ZType.sans(12,
-              color: AppColors.textSecondary, weight: FontWeight.w600),
+          style: ZType.sans(
+            12,
+            color: AppColors.textSecondary,
+            weight: FontWeight.w600,
+          ),
         ),
       ],
     );
   }
 
   Widget _impactDot() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Text('·',
-            style: ZType.sans(12, color: AppColors.textMuted)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 10),
+    child: Text('·', style: ZType.sans(12, color: AppColors.textMuted)),
+  );
 
   /// Pretty equipment-slug list for copy ("barbell" → "Barbell"), capped.
   String _humanizeEquipment(List<String> slugs) {
     String cap(String s) => s
         .split(' ')
-        .map((w) =>
-            w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
         .join(' ');
     final names = slugs.map(cap).toList();
     if (names.length <= 2) return names.join(' + ');
@@ -3465,15 +3655,19 @@ class _StartProgramFlowSheetState
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(
           children: [
-            const Icon(Icons.check_circle_rounded,
-                size: 16, color: AppColors.success),
+            const Icon(
+              Icons.check_circle_rounded,
+              size: 16,
+              color: AppColors.success,
+            ),
             const SizedBox(width: 6),
             Text(
-              profileName == null
-                  ? 'Fits your gym'
-                  : 'Fits your $profileName',
-              style: ZType.sans(12,
-                  color: AppColors.success, weight: FontWeight.w600),
+              profileName == null ? 'Fits your gym' : 'Fits your $profileName',
+              style: ZType.sans(
+                12,
+                color: AppColors.success,
+                weight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -3493,25 +3687,35 @@ class _StartProgramFlowSheetState
           ),
           child: Row(
             children: [
-              const Icon(Icons.fitness_center_rounded,
-                  size: 16, color: AppColors.textMuted),
+              const Icon(
+                Icons.fitness_center_rounded,
+                size: 16,
+                color: AppColors.textMuted,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Add the gear in your gym so we can match this program to '
                   'what you have.',
-                  style: ZType.sans(11.5,
-                      color: AppColors.textSecondary,
-                      weight: FontWeight.w500),
+                  style: ZType.sans(
+                    11.5,
+                    color: AppColors.textSecondary,
+                    weight: FontWeight.w500,
+                  ),
                 ),
               ),
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: () => context.push('/settings/equipment'),
                 behavior: HitTestBehavior.opaque,
-                child: Text('Add →',
-                    style: ZType.sans(11.5,
-                        color: AppColors.orange, weight: FontWeight.w700)),
+                child: Text(
+                  'Add →',
+                  style: ZType.sans(
+                    11.5,
+                    color: AppColors.orange,
+                    weight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           ),
@@ -3538,8 +3742,11 @@ class _StartProgramFlowSheetState
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.handyman_rounded,
-                    size: 17, color: AppColors.warning),
+                const Icon(
+                  Icons.handyman_rounded,
+                  size: 17,
+                  color: AppColors.warning,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
@@ -3547,18 +3754,22 @@ class _StartProgramFlowSheetState
                     children: [
                       Text(
                         'Needs gear not in $whereTxt',
-                        style: ZType.sans(13,
-                            color: AppColors.textPrimary,
-                            weight: FontWeight.w700),
+                        style: ZType.sans(
+                          13,
+                          color: AppColors.textPrimary,
+                          weight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Uses $missing. '
                         "We'll swap $n exercise${n == 1 ? '' : 's'} to fit "
                         'what you have.',
-                        style: ZType.sans(11.5,
-                            color: AppColors.textSecondary,
-                            weight: FontWeight.w500),
+                        style: ZType.sans(
+                          11.5,
+                          color: AppColors.textSecondary,
+                          weight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
@@ -3612,30 +3823,34 @@ class _StartProgramFlowSheetState
               setState(() => _aiTailor = v);
               _schedulePreview(); // refresh the live tailoring estimate
             },
-            secondary: const Icon(Icons.auto_awesome_rounded,
-                size: 18, color: AppColors.orange),
+            secondary: const Icon(
+              Icons.auto_awesome_rounded,
+              size: 18,
+              color: AppColors.orange,
+            ),
             title: Text(
               'Let AI tailor it to me',
-              style: ZType.sans(13.5,
-                  color: AppColors.textPrimary, weight: FontWeight.w700),
+              style: ZType.sans(
+                13.5,
+                color: AppColors.textPrimary,
+                weight: FontWeight.w700,
+              ),
             ),
             subtitle: Text(
               'Adapt sets/reps to your level, swap for injuries, fit your gear.',
-              style: ZType.sans(11.5,
-                  color: AppColors.textMuted, weight: FontWeight.w500),
+              style: ZType.sans(
+                11.5,
+                color: AppColors.textMuted,
+                weight: FontWeight.w500,
+              ),
             ),
           ),
           if (_aiTailor) ...[
             const Divider(height: 16, color: AppColors.cardBorder),
-            _aiSubToggle(
-              'Adapt sets/reps to my level',
-              _adaptToLevel,
-              (v) {
-                setState(() => _adaptToLevel = v);
-                _schedulePreview();
-              },
-              hint: _levelHint(level),
-            ),
+            _aiSubToggle('Adapt sets/reps to my level', _adaptToLevel, (v) {
+              setState(() => _adaptToLevel = v);
+              _schedulePreview();
+            }, hint: _levelHint(level)),
             _aiSubToggle(
               'Swap exercises for my injuries',
               _swapForInjuries,
@@ -3647,8 +3862,9 @@ class _StartProgramFlowSheetState
                   ? 'No injuries on file'
                   : 'Using: ${injuries.join(', ')}',
               actionLabel: injuries.isEmpty ? 'Add' : null,
-              onAction:
-                  injuries.isEmpty ? () => context.push('/injuries/report') : null,
+              onAction: injuries.isEmpty
+                  ? () => context.push('/injuries/report')
+                  : null,
             ),
             // When the fit-check banner is already showing a gap it owns this
             // control (same `_fitEquipment` field) — don't duplicate it here.
@@ -3709,8 +3925,11 @@ class _StartProgramFlowSheetState
               children: [
                 Text(
                   label,
-                  style: ZType.sans(12.5,
-                      color: AppColors.textSecondary, weight: FontWeight.w500),
+                  style: ZType.sans(
+                    12.5,
+                    color: AppColors.textSecondary,
+                    weight: FontWeight.w500,
+                  ),
                 ),
                 if (hint != null && hint.isNotEmpty) ...[
                   const SizedBox(height: 1),
@@ -3723,18 +3942,22 @@ class _StartProgramFlowSheetState
                         Flexible(
                           child: Text(
                             hint,
-                            style: ZType.sans(10.5,
-                                color: AppColors.textMuted,
-                                weight: FontWeight.w500),
+                            style: ZType.sans(
+                              10.5,
+                              color: AppColors.textMuted,
+                              weight: FontWeight.w500,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (actionLabel != null && onAction != null)
                           Text(
                             ' · $actionLabel →',
-                            style: ZType.sans(10.5,
-                                color: AppColors.orange,
-                                weight: FontWeight.w600),
+                            style: ZType.sans(
+                              10.5,
+                              color: AppColors.orange,
+                              weight: FontWeight.w600,
+                            ),
                           ),
                       ],
                     ),
@@ -3814,8 +4037,12 @@ class _StartProgramFlowSheetState
     );
   }
 
-  Widget _tailorImpactRow(IconData icon, Color tint, String text,
-      {String? caption}) {
+  Widget _tailorImpactRow(
+    IconData icon,
+    Color tint,
+    String text, {
+    String? caption,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3827,15 +4054,21 @@ class _StartProgramFlowSheetState
             children: [
               Text(
                 text,
-                style: ZType.sans(12,
-                    color: AppColors.textSecondary, weight: FontWeight.w500),
+                style: ZType.sans(
+                  12,
+                  color: AppColors.textSecondary,
+                  weight: FontWeight.w500,
+                ),
               ),
               if (caption != null) ...[
                 const SizedBox(height: 2),
                 Text(
                   caption,
-                  style: ZType.sans(10.5,
-                      color: AppColors.textMuted, weight: FontWeight.w500),
+                  style: ZType.sans(
+                    10.5,
+                    color: AppColors.textMuted,
+                    weight: FontWeight.w500,
+                  ),
                 ),
               ],
             ],
@@ -3914,10 +4147,12 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
       setState(() => _busy = false);
       messenger.showSnackBar(
         SnackBar(
-          content: Text(e.isNotAProgram
-              ? 'That did not read as a program. Try describing a day-by-day '
-                  'split, sets and reps.'
-              : e.message),
+          content: Text(
+            e.isNotAProgram
+                ? 'That did not read as a program. Try describing a day-by-day '
+                      'split, sets and reps.'
+                : e.message,
+          ),
         ),
       );
     } catch (_) {
@@ -3925,7 +4160,8 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
       setState(() => _busy = false);
       messenger.showSnackBar(
         const SnackBar(
-            content: Text('Could not reach the AI. Check your connection.')),
+          content: Text('Could not reach the AI. Check your connection.'),
+        ),
       );
     }
   }
@@ -3955,9 +4191,11 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
       setState(() => _busy = false);
       messenger.showSnackBar(
         SnackBar(
-          content: Text(e.isNotAProgram
-              ? 'That image did not look like a workout program.'
-              : e.message),
+          content: Text(
+            e.isNotAProgram
+                ? 'That image did not look like a workout program.'
+                : e.message,
+          ),
         ),
       );
     } catch (_) {
@@ -3965,7 +4203,8 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
       setState(() => _busy = false);
       messenger.showSnackBar(
         const SnackBar(
-            content: Text('Could not read that file. Please try again.')),
+          content: Text('Could not read that file. Please try again.'),
+        ),
       );
     }
   }
@@ -3988,9 +4227,14 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('IMPORT FROM',
-                        style: ZType.lbl(12,
-                            color: AppColors.textMuted, letterSpacing: 2.0)),
+                    child: Text(
+                      'IMPORT FROM',
+                      style: ZType.lbl(
+                        12,
+                        color: AppColors.textMuted,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
                   ),
                 ),
                 _SourceTile(
@@ -4054,7 +4298,8 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
       );
       final file = result?.files.firstOrNull;
       if (file == null) return null;
-      final bytes = file.bytes ??
+      final bytes =
+          file.bytes ??
           (file.path != null ? await File(file.path!).readAsBytes() : null);
       if (bytes == null) return null;
       return _PickedSource(
@@ -4080,11 +4325,14 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
   void _askTheCoach() {
     final router = GoRouter.of(context);
     Navigator.of(context).pop();
-    router.push('/chat', extra: {
-      'initialMessage':
-          'Help me build a multi-week workout program. Ask me about my goal, '
-          'experience, available days, and equipment, then draft a plan.',
-    });
+    router.push(
+      '/chat',
+      extra: {
+        'initialMessage':
+            'Help me build a multi-week workout program. Ask me about my goal, '
+            'experience, available days, and equipment, then draft a plan.',
+      },
+    );
   }
 
   @override
@@ -4108,55 +4356,69 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome_rounded,
-                            size: 22, color: AppColors.orange),
+                        const Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 22,
+                          color: AppColors.orange,
+                        ),
                         const SizedBox(width: 8),
-                        Text('CREATE WITH AI',
-                            style:
-                                ZType.disp(24, color: AppColors.textPrimary)),
+                        Text(
+                          'CREATE WITH AI',
+                          style: ZType.disp(24, color: AppColors.textPrimary),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
 
                     // 1) Generate from a prompt.
-                    Text('GENERATE FROM A PROMPT',
-                        style: ZType.lbl(12,
-                            color: AppColors.textMuted, letterSpacing: 1.8)),
+                    Text(
+                      'GENERATE FROM A PROMPT',
+                      style: ZType.lbl(
+                        12,
+                        color: AppColors.textMuted,
+                        letterSpacing: 1.8,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _promptController,
                       maxLines: 4,
                       minLines: 3,
-                      style: ZType.sans(13.5,
-                          color: AppColors.textPrimary,
-                          weight: FontWeight.w500,
-                          height: 1.4),
+                      style: ZType.sans(
+                        13.5,
+                        color: AppColors.textPrimary,
+                        weight: FontWeight.w500,
+                        height: 1.4,
+                      ),
                       cursorColor: AppColors.orange,
                       decoration: InputDecoration(
                         hintText:
                             'e.g. An 8-week upper/lower split, 4 days a week, '
                             'dumbbells only, focused on building my back.',
-                        hintStyle: ZType.sans(12.5,
-                            color: AppColors.textMuted,
-                            weight: FontWeight.w500,
-                            height: 1.4),
+                        hintStyle: ZType.sans(
+                          12.5,
+                          color: AppColors.textMuted,
+                          weight: FontWeight.w500,
+                          height: 1.4,
+                        ),
                         filled: true,
                         fillColor: AppColors.surface2,
                         contentPadding: const EdgeInsets.all(14),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.cardBorder),
+                          borderSide: const BorderSide(
+                            color: AppColors.cardBorder,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.cardBorder),
+                          borderSide: const BorderSide(
+                            color: AppColors.cardBorder,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.orange),
+                          borderSide: const BorderSide(color: AppColors.orange),
                         ),
                       ),
                     ),
@@ -4173,11 +4435,15 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                         ),
                         onPressed: _generateFromPrompt,
                         icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                        label: Text('GENERATE',
-                            style: ZType.lbl(13,
-                                color: Colors.white,
-                                weight: FontWeight.w800,
-                                letterSpacing: 1.8)),
+                        label: Text(
+                          'GENERATE',
+                          style: ZType.lbl(
+                            13,
+                            color: Colors.white,
+                            weight: FontWeight.w800,
+                            letterSpacing: 1.8,
+                          ),
+                        ),
                       ),
                     ),
 
@@ -4225,12 +4491,19 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: AppColors.orange),
+                  strokeWidth: 2,
+                  color: AppColors.orange,
+                ),
               ),
               const SizedBox(width: 10),
-              Text(_busyLabel,
-                  style: ZType.sans(14,
-                      color: AppColors.textPrimary, weight: FontWeight.w700)),
+              Text(
+                _busyLabel,
+                style: ZType.sans(
+                  14,
+                  color: AppColors.textPrimary,
+                  weight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -4273,9 +4546,14 @@ class _SourceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: AppColors.orange, size: 22),
-      title: Text(label,
-          style: ZType.sans(14.5,
-              color: AppColors.textPrimary, weight: FontWeight.w600)),
+      title: Text(
+        label,
+        style: ZType.sans(
+          14.5,
+          color: AppColors.textPrimary,
+          weight: FontWeight.w600,
+        ),
+      ),
       onTap: () => onTap(),
     );
   }
@@ -4321,21 +4599,32 @@ class _AiEntryRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: ZType.sans(14.5,
-                            color: AppColors.textPrimary,
-                            weight: FontWeight.w700)),
+                    Text(
+                      title,
+                      style: ZType.sans(
+                        14.5,
+                        color: AppColors.textPrimary,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 3),
-                    Text(subtitle,
-                        style: ZType.sans(12.5,
-                            color: AppColors.textSecondary,
-                            weight: FontWeight.w500,
-                            height: 1.35)),
+                    Text(
+                      subtitle,
+                      style: ZType.sans(
+                        12.5,
+                        color: AppColors.textSecondary,
+                        weight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textSecondary, size: 20),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
             ],
           ),
         ),
@@ -4401,15 +4690,17 @@ class _BigHeroCard extends StatelessWidget {
                         imageUrl: card.imageUrl!,
                         fit: BoxFit.cover,
                         placeholder: (_, __) => DecoratedBox(
-                          decoration:
-                              BoxDecoration(gradient: theme.headerGradient),
+                          decoration: BoxDecoration(
+                            gradient: theme.headerGradient,
+                          ),
                         ),
                         errorWidget: (_, __, ___) => Stack(
                           fit: StackFit.expand,
                           children: [
                             DecoratedBox(
                               decoration: BoxDecoration(
-                                  gradient: theme.headerGradient),
+                                gradient: theme.headerGradient,
+                              ),
                             ),
                             CustomPaint(
                               painter: _HeroStripePainter(
@@ -4467,14 +4758,14 @@ class _BigHeroCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: ZType.disp(38, color: AppColors.textPrimary)
                               .copyWith(
-                            shadows: const [
-                              Shadow(
-                                color: Color(0xBF000000),
-                                blurRadius: 12,
-                                offset: Offset(0, 2),
+                                shadows: const [
+                                  Shadow(
+                                    color: Color(0xBF000000),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
                         ),
                         if (subtitle.isNotEmpty) ...[
                           const SizedBox(height: 6),
@@ -4484,14 +4775,14 @@ class _BigHeroCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: ZType.ser(14, color: AppColors.textSecondary)
                                 .copyWith(
-                              shadows: const [
-                                Shadow(
-                                  color: Color(0x99000000),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 1),
+                                  shadows: const [
+                                    Shadow(
+                                      color: Color(0x99000000),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 1),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
                           ),
                         ],
                         const SizedBox(height: 12),
@@ -4521,10 +4812,12 @@ class _BigHeroCard extends StatelessWidget {
                 onPressed: onStart,
                 child: Text(
                   'START PROGRAM',
-                  style: ZType.lbl(13,
-                      color: Colors.white,
-                      weight: FontWeight.w800,
-                      letterSpacing: 1.8),
+                  style: ZType.lbl(
+                    13,
+                    color: Colors.white,
+                    weight: FontWeight.w800,
+                    letterSpacing: 1.8,
+                  ),
                 ),
               ),
             ),
@@ -4543,8 +4836,11 @@ class _BigHeroCard extends StatelessWidget {
                 onPressed: onPreview,
                 child: Text(
                   'PREVIEW',
-                  style: ZType.lbl(13,
-                      color: AppColors.textSecondary, letterSpacing: 1.8),
+                  style: ZType.lbl(
+                    13,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 1.8,
+                  ),
                 ),
               ),
             ),
@@ -4614,9 +4910,14 @@ class _HeroDifficultyPill extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 7),
-          Text(level.toUpperCase(),
-              style: ZType.lbl(10.5,
-                  color: AppColors.textPrimary, letterSpacing: 1.4)),
+          Text(
+            level.toUpperCase(),
+            style: ZType.lbl(
+              10.5,
+              color: AppColors.textPrimary,
+              letterSpacing: 1.4,
+            ),
+          ),
         ],
       ),
     );
@@ -4690,7 +4991,11 @@ class _StickyControlsDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _extent;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return SizedBox(
       height: _extent,
       child: builder(context, overlapsContent || shrinkOffset > 0),

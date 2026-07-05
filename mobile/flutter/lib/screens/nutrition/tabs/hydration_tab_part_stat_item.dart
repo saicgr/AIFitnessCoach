@@ -29,28 +29,34 @@ class _StatItem extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.5),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            // Anton display numeral.
-            Text(
-              value,
-              style: ZType.disp(22, color: color, letterSpacing: 0),
-            ),
-            const SizedBox(width: 2),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Text(
-                unit,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textSecondary,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // Anton display numeral.
+              Text(
+                value,
+                style: ZType.disp(22, color: color, letterSpacing: 0),
+              ),
+              const SizedBox(width: 2),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  unit,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );

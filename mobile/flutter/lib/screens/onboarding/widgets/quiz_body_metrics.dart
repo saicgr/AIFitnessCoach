@@ -372,13 +372,18 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                AppLocalizations.of(context)!.quizBodyMetricsHowMuchDoYou(directionLabel),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textSecondary,
+              // Expanded so long translations wrap instead of pushing the
+              // fixed kg/lbs toggle off the row.
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.quizBodyMetricsHowMuchDoYou(directionLabel),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: textSecondary,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               // Unit toggle (kg/lbs)
               _buildAmountUnitToggle(isDark, cardBg, cardBorder),
             ],
@@ -669,9 +674,18 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             children: [
               Text('${minAmount.toStringAsFixed(1)} $unit', style: TextStyle(fontSize: 11, color: textSecondary)),
               if (healthLabel.isNotEmpty)
-                Text(
-                  healthLabel,
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: sliderColor),
+                // Flexible + ellipsis: long localized health labels must
+                // squeeze between the fixed min/max labels, not overflow.
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Text(
+                      healthLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: sliderColor),
+                    ),
+                  ),
                 ),
               Text('${maxAmount.round()} $unit', style: TextStyle(fontSize: 11, color: textSecondary)),
             ],

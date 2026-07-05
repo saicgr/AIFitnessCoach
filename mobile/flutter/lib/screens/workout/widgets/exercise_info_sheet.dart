@@ -22,6 +22,7 @@ import '../../../widgets/exercise_image.dart';
 import '../shared/exercise_instruction_copy.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
 /// Show the exercise instructions as a full screen page.
 ///
 /// When [playlist] + [playlistIndex] are supplied, the sheet shows prev/next
@@ -102,8 +103,8 @@ class _ExerciseInstructionsScreenState
   late int _index;
   List<WorkoutExercise> get _playlist =>
       (widget.playlist != null && widget.playlist!.isNotEmpty)
-          ? widget.playlist!
-          : [widget.exercise];
+      ? widget.playlist!
+      : [widget.exercise];
   WorkoutExercise get _exercise =>
       _playlist[_index.clamp(0, _playlist.length - 1)];
   bool get _hasPrev => _index > 0;
@@ -138,7 +139,8 @@ class _ExerciseInstructionsScreenState
   @override
   void initState() {
     super.initState();
-    _index = (widget.playlist != null &&
+    _index =
+        (widget.playlist != null &&
             widget.playlist!.isNotEmpty &&
             widget.playlistIndex != null)
         ? widget.playlistIndex!.clamp(0, widget.playlist!.length - 1)
@@ -150,9 +152,7 @@ class _ExerciseInstructionsScreenState
   /// resets the load state, and re-runs the loader for the new exercise. The
   /// chosen playback speed persists (re-applied in [_initializeVideo]).
   Future<void> _goToExercise(int newIndex) async {
-    if (newIndex < 0 ||
-        newIndex >= _playlist.length ||
-        newIndex == _index) {
+    if (newIndex < 0 || newIndex >= _playlist.length || newIndex == _index) {
       return;
     }
     HapticFeedback.selectionClick();
@@ -180,8 +180,9 @@ class _ExerciseInstructionsScreenState
   void _showMoreSheet() {
     HapticFeedback.selectionClick();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = ref.read(accentColorProvider).getColor(isDark);
     showModalBottomSheet<void>(
@@ -233,7 +234,12 @@ class _ExerciseInstructionsScreenState
                     ),
                   ),
                   const SizedBox(height: 10),
-                  _buildSetupContent(isDark, textPrimary, textMuted, accentColor),
+                  _buildSetupContent(
+                    isDark,
+                    textPrimary,
+                    textMuted,
+                    accentColor,
+                  ),
                   const SizedBox(height: 20),
                   Text(
                     AppLocalizations.of(context).easySheetHelpersFormTips,
@@ -245,7 +251,12 @@ class _ExerciseInstructionsScreenState
                     ),
                   ),
                   const SizedBox(height: 10),
-                  _buildTipsContent(isDark, textPrimary, textMuted, accentColor),
+                  _buildTipsContent(
+                    isDark,
+                    textPrimary,
+                    textMuted,
+                    accentColor,
+                  ),
                   // Tips/Setup builders for the detail strings are unchanged.
                 ],
               ),
@@ -347,11 +358,10 @@ class _ExerciseInstructionsScreenState
     if (_videoUrl == null) return;
 
     try {
-      _videoController =
-          VideoPlayerController.networkUrl(Uri.parse(_videoUrl!));
-      await _videoController!.initialize().timeout(
-            const Duration(seconds: 10),
-          );
+      _videoController = VideoPlayerController.networkUrl(
+        Uri.parse(_videoUrl!),
+      );
+      await _videoController!.initialize().timeout(const Duration(seconds: 10));
       _videoController!.setLooping(true);
       _videoController!.setVolume(0); // Muted
       _videoController!.play(); // Auto-play
@@ -414,8 +424,9 @@ class _ExerciseInstructionsScreenState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     // Get dynamic accent color
@@ -454,7 +465,12 @@ class _ExerciseInstructionsScreenState
             bottom: 0,
             left: 0,
             right: 0,
-            child: _buildBottomSection(isDark, textPrimary, textMuted, accentColor),
+            child: _buildBottomSection(
+              isDark,
+              textPrimary,
+              textMuted,
+              accentColor,
+            ),
           ),
 
           // Prev/next exercise chevrons — only for multi-exercise playlists.
@@ -492,7 +508,8 @@ class _ExerciseInstructionsScreenState
                       color: Colors.black.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18)),
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -504,7 +521,9 @@ class _ExerciseInstructionsScreenState
                             onTap: () => _setPlaybackSpeed(s),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 8),
+                                horizontal: 18,
+                                vertical: 8,
+                              ),
                               child: Text(
                                 _formatSpeed(s),
                                 textAlign: TextAlign.center,
@@ -528,15 +547,13 @@ class _ExerciseInstructionsScreenState
             behavior: HitTestBehavior.opaque,
             onTap: () => setState(() => _speedMenuOpen = !_speedMenuOpen),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
                 // Near-opaque dark pill + hairline border → crisp white text on
                 // a white video frame (black54 composited to muddy grey there).
                 color: Colors.black.withValues(alpha: 0.82),
                 borderRadius: BorderRadius.circular(20),
-                border:
-                    Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -575,10 +592,7 @@ class _ExerciseInstructionsScreenState
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: amber.withValues(alpha: 0.6),
-          width: 1,
-        ),
+        border: Border.all(color: amber.withValues(alpha: 0.6), width: 1),
       ),
       child: Row(
         children: [
@@ -588,19 +602,26 @@ class _ExerciseInstructionsScreenState
             child: RichText(
               text: TextSpan(
                 style: const TextStyle(
-                    fontSize: 12, color: Color(0xFFFAFAFA), height: 1.3),
+                  fontSize: 12,
+                  color: Color(0xFFFAFAFA),
+                  height: 1.3,
+                ),
                 children: [
                   const TextSpan(text: 'Showing '),
                   TextSpan(
                     text: matched,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, color: amber),
+                      fontWeight: FontWeight.w800,
+                      color: amber,
+                    ),
                   ),
                   const TextSpan(text: ' — closest match for '),
                   TextSpan(
                     text: original,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, color: amber),
+                      fontWeight: FontWeight.w800,
+                      color: amber,
+                    ),
                   ),
                   const TextSpan(text: '.'),
                 ],
@@ -612,7 +633,12 @@ class _ExerciseInstructionsScreenState
     );
   }
 
-  Widget _buildTopBar(bool isDark, Color textPrimary, Color textMuted, Color accentColor) {
+  Widget _buildTopBar(
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color accentColor,
+  ) {
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 8,
@@ -655,10 +681,7 @@ class _ExerciseInstructionsScreenState
                 const SizedBox(height: 2),
                 Text(
                   _getTargetMuscles(),
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: textMuted,
-                  ),
+                  style: TextStyle(fontSize: 13, color: textMuted),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -667,11 +690,7 @@ class _ExerciseInstructionsScreenState
           // "More" — Setup + Tips detail. Balances the back button.
           IconButton(
             onPressed: _showMoreSheet,
-            icon: Icon(
-              Icons.more_horiz_rounded,
-              color: textPrimary,
-              size: 24,
-            ),
+            icon: Icon(Icons.more_horiz_rounded, color: textPrimary, size: 24),
             tooltip: AppLocalizations.of(context).homeMore,
           ),
         ],
@@ -700,13 +719,10 @@ class _ExerciseInstructionsScreenState
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.55),
               shape: BoxShape.circle,
-              border:
-                  Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: Icon(
-              next
-                  ? Icons.chevron_right_rounded
-                  : Icons.chevron_left_rounded,
+              next ? Icons.chevron_right_rounded : Icons.chevron_left_rounded,
               color: Colors.white,
               size: 28,
             ),
@@ -724,10 +740,7 @@ class _ExerciseInstructionsScreenState
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                chevron(next: false),
-                chevron(next: true),
-              ],
+              children: [chevron(next: false), chevron(next: true)],
             ),
           ),
         ),
@@ -735,26 +748,52 @@ class _ExerciseInstructionsScreenState
     );
   }
 
-  Widget _buildFullScreenVideo(bool isDark, Color textMuted, Color accentColor) {
+  Widget _buildFullScreenVideo(
+    bool isDark,
+    Color textMuted,
+    Color accentColor,
+  ) {
     if (_isLoadingVideo) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(
-              color: accentColor,
-              strokeWidth: 2,
+      // Show the still illustration UNDER the spinner — the video fetch +
+      // init can take up to ~20s worst-case (two 10s timeouts), and a bare
+      // spinner on a pure-black scaffold reads as a broken/blank app (the
+      // exact bug report: "opened a blank screen and the app feels stuck").
+      final screenW = MediaQuery.of(context).size.width;
+      final screenH = MediaQuery.of(context).size.height;
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Center(
+            child: ExerciseImage(
+              exerciseName: _exercise.name,
+              width: screenW,
+              height: screenH * 0.5,
+              borderRadius: 0,
+              fit: BoxFit.contain,
+              backgroundColor: isDark
+                  ? AppColors.pureBlack
+                  : AppColorsLight.pureWhite,
+              iconColor: textMuted,
             ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context).exerciseInfoLoadingVideo,
-              style: TextStyle(
-                fontSize: 14,
-                color: textMuted,
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: accentColor, strokeWidth: 2),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context).exerciseInfoLoadingVideo,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textMuted,
+                  shadows: isDark
+                      ? const [Shadow(color: Colors.black, blurRadius: 6)]
+                      : null,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       );
     }
 
@@ -840,8 +879,9 @@ class _ExerciseInstructionsScreenState
               height: screenW / crop.aspectRatio,
               borderRadius: 0,
               fit: BoxFit.cover,
-              backgroundColor:
-                  isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+              backgroundColor: isDark
+                  ? AppColors.pureBlack
+                  : AppColorsLight.pureWhite,
               iconColor: textMuted,
             ),
           )
@@ -851,8 +891,9 @@ class _ExerciseInstructionsScreenState
             height: screenH * 0.5,
             borderRadius: 0,
             fit: BoxFit.contain,
-            backgroundColor:
-                isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+            backgroundColor: isDark
+                ? AppColors.pureBlack
+                : AppColorsLight.pureWhite,
             iconColor: textMuted,
           );
 
@@ -876,11 +917,11 @@ class _ExerciseInstructionsScreenState
           left: 16,
           right: 16,
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: (isDark ? Colors.black : Colors.white)
-                  .withValues(alpha: 0.55),
+              color: (isDark ? Colors.black : Colors.white).withValues(
+                alpha: 0.55,
+              ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: textMuted.withValues(alpha: 0.25),
@@ -915,7 +956,9 @@ class _ExerciseInstructionsScreenState
                     onTap: _isRetrying ? null : _retryVideo,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
@@ -936,11 +979,18 @@ class _ExerciseInstructionsScreenState
                               ),
                             )
                           else
-                            Icon(Icons.refresh_rounded,
-                                size: 14, color: accentColor),
+                            Icon(
+                              Icons.refresh_rounded,
+                              size: 14,
+                              color: accentColor,
+                            ),
                           const SizedBox(width: 4),
                           Text(
-                            _isRetrying ? AppLocalizations.of(context).exerciseInfoRetrying : AppLocalizations.of(context).buttonRetry,
+                            _isRetrying
+                                ? AppLocalizations.of(
+                                    context,
+                                  ).exerciseInfoRetrying
+                                : AppLocalizations.of(context).buttonRetry,
                             style: TextStyle(
                               fontSize: 12,
                               color: accentColor,
@@ -961,7 +1011,11 @@ class _ExerciseInstructionsScreenState
   }
 
   Widget _buildBottomSection(
-      bool isDark, Color textPrimary, Color textMuted, Color accentColor) {
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color accentColor,
+  ) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
@@ -995,8 +1049,8 @@ class _ExerciseInstructionsScreenState
           color: isSelected
               ? accentColor.withValues(alpha: 0.12)
               : (isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03)),
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.03)),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
@@ -1019,11 +1073,7 @@ class _ExerciseInstructionsScreenState
             ),
             if (_isExpanded && isSelected) ...[
               const SizedBox(width: 6),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: color,
-                size: 18,
-              ),
+              Icon(Icons.keyboard_arrow_down_rounded, color: color, size: 18),
             ],
           ],
         ),
@@ -1031,7 +1081,12 @@ class _ExerciseInstructionsScreenState
     );
   }
 
-  Widget _buildSetupContent(bool isDark, Color textPrimary, Color textMuted, Color accentColor) {
+  Widget _buildSetupContent(
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color accentColor,
+  ) {
     final instructions = _getSetupInstructions();
 
     return ListView.builder(
@@ -1084,7 +1139,12 @@ class _ExerciseInstructionsScreenState
     );
   }
 
-  Widget _buildTipsContent(bool isDark, Color textPrimary, Color textMuted, Color accentColor) {
+  Widget _buildTipsContent(
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color accentColor,
+  ) {
     final tips = _getFormTips();
 
     return ListView.builder(
@@ -1105,11 +1165,7 @@ class _ExerciseInstructionsScreenState
                   color: accentColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.check_rounded,
-                  size: 16,
-                  color: accentColor,
-                ),
+                child: Icon(Icons.check_rounded, size: 16, color: accentColor),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1152,8 +1208,22 @@ class _ExerciseInstructionsScreenState
   ///     and, to, for, in) but always capitalize the first word.
   String _titleCase(String raw) {
     if (raw.isEmpty) return raw;
-    const small = {'with', 'on', 'of', 'the', 'and', 'to', 'for', 'in', 'a',
-        'an', 'or', 'at', 'by', 'as'};
+    const small = {
+      'with',
+      'on',
+      'of',
+      'the',
+      'and',
+      'to',
+      'for',
+      'in',
+      'a',
+      'an',
+      'or',
+      'at',
+      'by',
+      'as',
+    };
     final romanRe = RegExp(r'^[IVX]+$');
 
     String capWord(String w, bool isFirst) {
@@ -1167,7 +1237,8 @@ class _ExerciseInstructionsScreenState
         final m = RegExp(r'^([a-zA-Z]+)').firstMatch(w);
         if (m != null) {
           final alpha = m.group(1)!;
-          return alpha[0].toUpperCase() + alpha.substring(1).toLowerCase() +
+          return alpha[0].toUpperCase() +
+              alpha.substring(1).toLowerCase() +
               w.substring(alpha.length);
         }
         return w;
@@ -1226,7 +1297,8 @@ class _ExerciseInstructionsScreenState
   List<String> _getFormTips() {
     // Shared pattern engine is the single source; DB cues take precedence.
     final base = List<String>.from(
-        getFormTips(_exercise.name, equipment: _exercise.equipment));
+      getFormTips(_exercise.name, equipment: _exercise.equipment),
+    );
     final cue = _exercise.formCue;
     if (cue != null && cue.trim().isNotEmpty) {
       base.insert(0, cue.trim());
@@ -1243,10 +1315,7 @@ class _ExerciseInstructionsScreenState
 class ExerciseInfoSheet extends StatelessWidget {
   final WorkoutExercise exercise;
 
-  const ExerciseInfoSheet({
-    super.key,
-    required this.exercise,
-  });
+  const ExerciseInfoSheet({super.key, required this.exercise});
 
   @override
   Widget build(BuildContext context) {

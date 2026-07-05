@@ -8,6 +8,7 @@ import '../../core/services/posthog_service.dart';
 import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_data.dart';
 import 'widgets/onboarding_theme.dart';
+import '../../widgets/glass_back_button.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Onboarding conversion v6 — "What's your why" screen.
@@ -138,16 +139,12 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-                  // Back affordance — pops to /intro.
+                  // Back affordance — pops to /intro. GlassBackButton is the
+                  // onboarding-wide standard (weight projection, science
+                  // grounding, coach selection all use it).
                   Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: IconButton(
-                      onPressed: _back,
-                      visualDensity: VisualDensity.compact,
-                      icon: Icon(Icons.arrow_back_rounded,
-                          color: t.textSecondary, size: 24),
-                      tooltip: AppLocalizations.of(context).commonBack,
-                    ),
+                    child: GlassBackButton(onTap: _back),
                   ),
                   const SizedBox(height: 4),
                   Text(

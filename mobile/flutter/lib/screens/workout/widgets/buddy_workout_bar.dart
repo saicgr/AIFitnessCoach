@@ -127,12 +127,16 @@ class _BuddyWorkoutBarState extends ConsumerState<BuddyWorkoutBar> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      widget.partnerDisplayName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                        fontSize: 13,
+                    Flexible(
+                      child: Text(
+                        widget.partnerDisplayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),

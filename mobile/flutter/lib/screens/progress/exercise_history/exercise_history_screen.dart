@@ -680,15 +680,19 @@ class _ExerciseCard extends StatelessWidget {
                     Row(
                       children: [
                         if (exercise.muscleGroup != null) ...[
-                          _StatChip(
-                            icon: Icons.fitness_center,
-                            label: exercise.formattedMuscleGroup,
+                          Flexible(
+                            child: _StatChip(
+                              icon: Icons.fitness_center,
+                              label: exercise.formattedMuscleGroup,
+                            ),
                           ),
                           const SizedBox(width: 12),
                         ],
-                        _StatChip(
-                          icon: Icons.repeat,
-                          label: exercise.formattedTimesPerformed,
+                        Flexible(
+                          child: _StatChip(
+                            icon: Icons.repeat,
+                            label: exercise.formattedTimesPerformed,
+                          ),
                         ),
                       ],
                     ),
@@ -741,9 +745,13 @@ class _StatChip extends StatelessWidget {
       children: [
         Icon(icon, size: 12, color: tc.textMuted),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: ZType.data(10, color: tc.textMuted),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: ZType.data(10, color: tc.textMuted),
+          ),
         ),
       ],
     );

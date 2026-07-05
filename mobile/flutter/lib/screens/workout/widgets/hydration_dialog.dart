@@ -93,9 +93,8 @@ Future<HydrationDialogResult?> showHydrationDialog({
         final drinkColor = getDrinkColor(selectedDrinkType);
 
         return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

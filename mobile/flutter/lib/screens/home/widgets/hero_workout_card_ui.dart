@@ -82,45 +82,41 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
                 ),
               ),
               const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   // Synced rows: Repeat (no Zealova plan to clone) and
                   // Share (backend share-link rejects non-Zealova workouts)
                   // are hidden — only Summary remains.
-                  if (!synced) ...[
+                  if (!synced)
                     _buildOverlayButton(
                       icon: Icons.replay,
                       label: AppLocalizations.of(context).heroWorkoutCardRepeat,
                       onTap: _repeatWorkout,
                       isDark: isDark,
                     ),
-                    if (workout.completionMethod == 'marked_done') ...[
-                      const SizedBox(width: 12),
-                      _buildOverlayButton(
-                        icon: Icons.undo,
-                        label: AppLocalizations.of(context).workoutUiBuildersUndo,
-                        onTap: _markAsUndone,
-                        isDark: isDark,
-                      ),
-                    ],
-                    const SizedBox(width: 12),
-                  ],
+                  if (!synced && workout.completionMethod == 'marked_done')
+                    _buildOverlayButton(
+                      icon: Icons.undo,
+                      label: AppLocalizations.of(context).workoutUiBuildersUndo,
+                      onTap: _markAsUndone,
+                      isDark: isDark,
+                    ),
                   _buildOverlayButton(
                     icon: Icons.bar_chart,
                     label: AppLocalizations.of(context).workoutCompleteSummary,
                     onTap: _viewSummary,
                     isDark: isDark,
                   ),
-                  if (!synced) ...[
-                    const SizedBox(width: 12),
+                  if (!synced)
                     _buildOverlayButton(
                       icon: Icons.ios_share_rounded,
                       label: AppLocalizations.of(context).commonShare,
                       onTap: _shareCompletedWorkout,
                       isDark: isDark,
                     ),
-                  ],
                 ],
               ),
             ],

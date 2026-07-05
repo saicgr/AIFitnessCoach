@@ -531,12 +531,16 @@ class _GoalChip extends StatelessWidget {
           Icon(icon, size: 11, color: muted),
           const SizedBox(width: 3),
         ],
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w400,
-            color: muted,
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w400,
+              color: muted,
+            ),
           ),
         ),
       ],

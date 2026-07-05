@@ -17032,7 +17032,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeScreenTourNutritionDesc =>
-      'Track your macros and daily nutrition';
+      'Track your macros, water, fasting, and daily nutrition';
 
   @override
   String get homeScreenTourNutritionTitle => 'Nutrition Tab';

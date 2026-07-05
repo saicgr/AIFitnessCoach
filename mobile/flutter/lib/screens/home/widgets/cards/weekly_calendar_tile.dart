@@ -94,12 +94,16 @@ class WeeklyCalendarCard extends ConsumerWidget {
               children: [
                 Icon(Icons.calendar_today, color: accentColor, size: 20),
                 const SizedBox(width: 8),
-                Text(
-                  AppLocalizations.of(context).workoutCompleteThisWeek,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: textMuted,
+                Flexible(
+                  child: Text(
+                    AppLocalizations.of(context).workoutCompleteThisWeek,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
                   ),
                 ),
                 const Spacer(),

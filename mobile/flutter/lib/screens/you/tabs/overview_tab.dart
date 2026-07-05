@@ -1019,11 +1019,13 @@ class _HeadlineTile extends StatelessWidget {
                   color: AppColors.textMuted, letterSpacing: 1.5),
             ),
             const SizedBox(height: 5),
-            Text(
-              headline,
-              style: ZType.disp(17, color: fg, letterSpacing: 0.2),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            Flexible(
+              child: Text(
+                headline,
+                style: ZType.disp(17, color: fg, letterSpacing: 0.2),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(height: 2),
             // Flexible so the 2-line sub-text shrinks to whatever vertical

@@ -74,7 +74,9 @@ class _TemplateEditorSheetState extends State<TemplateEditorSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return Padding(
+    // Scrollable: five TextFields in a fixed column stripe when the keyboard
+    // shrinks the sheet viewport — the body must scroll while focused.
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,

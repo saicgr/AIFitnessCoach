@@ -227,18 +227,20 @@ class _StoriesRingState extends ConsumerState<StoriesRing> {
               ],
             ),
             const SizedBox(height: 4),
-            SizedBox(
-              width: 52,
-              child: Text(
-                AppLocalizations.of(context).storiesRingYourStory,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+            Flexible(
+              child: SizedBox(
+                width: 52,
+                child: Text(
+                  AppLocalizations.of(context).storiesRingYourStory,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -311,24 +313,26 @@ class _StoriesRingState extends ConsumerState<StoriesRing> {
             ),
             const SizedBox(height: 4),
             // User name
-            SizedBox(
-              width: 52,
-              child: Text(
-                userName.length > 8
-                    ? '${userName.substring(0, 8)}...'
-                    : userName,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: hasUnviewed
-                      ? FontWeight.w600
-                      : FontWeight.w400,
-                  color: isDark
-                      ? AppColors.textSecondary
-                      : AppColorsLight.textSecondary,
+            Flexible(
+              child: SizedBox(
+                width: 52,
+                child: Text(
+                  userName.length > 8
+                      ? '${userName.substring(0, 8)}...'
+                      : userName,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: hasUnviewed
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                    color: isDark
+                        ? AppColors.textSecondary
+                        : AppColorsLight.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

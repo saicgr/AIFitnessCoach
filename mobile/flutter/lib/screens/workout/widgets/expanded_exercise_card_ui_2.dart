@@ -2,18 +2,21 @@ part of 'expanded_exercise_card.dart';
 
 /// UI builder methods extracted from _ExpandedExerciseCardState
 extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
-
   Widget _buildAlternatingHandsChip() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgOpacity = isDark ? 0.1 : 0.15;
-    final displayColor = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
+    final displayColor = isDark
+        ? AppColors.orange
+        : _darkenColor(AppColors.orange);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: AppColors.orange.withOpacity(bgOpacity),
         borderRadius: BorderRadius.circular(6),
-        border: isDark ? null : Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
+        border: isDark
+            ? null
+            : Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -33,7 +36,6 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
     );
   }
 
-
   /// Build preference indicator chips (Staple, Favorite, Queued)
   List<Widget> _buildPreferenceChips() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -47,69 +49,101 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
     if (isStaple) {
       final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
       final bgOpacity = isDark ? 0.1 : 0.15;
-      chips.add(Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: AppColors.purple.withOpacity(bgOpacity),
-          borderRadius: BorderRadius.circular(6),
-          border: isDark ? null : Border.all(color: purple.withOpacity(0.3), width: 0.5),
+      chips.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.purple.withOpacity(bgOpacity),
+            borderRadius: BorderRadius.circular(6),
+            border: isDark
+                ? null
+                : Border.all(color: purple.withOpacity(0.3), width: 0.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.push_pin, size: 12, color: purple),
+              const SizedBox(width: 4),
+              Text(
+                AppLocalizations.of(context).expandedExerciseCardStaple,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: purple,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.push_pin, size: 12, color: purple),
-            const SizedBox(width: 4),
-            Text(AppLocalizations.of(context).expandedExerciseCardStaple, style: TextStyle(fontSize: 11, color: purple, fontWeight: FontWeight.w500)),
-          ],
-        ),
-      ));
+      );
     }
 
     if (isFavorite) {
       final red = isDark ? AppColors.error : _darkenColor(AppColors.error);
       final bgOpacity = isDark ? 0.1 : 0.15;
-      chips.add(Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(bgOpacity),
-          borderRadius: BorderRadius.circular(6),
-          border: isDark ? null : Border.all(color: red.withOpacity(0.3), width: 0.5),
+      chips.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.error.withOpacity(bgOpacity),
+            borderRadius: BorderRadius.circular(6),
+            border: isDark
+                ? null
+                : Border.all(color: red.withOpacity(0.3), width: 0.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.favorite, size: 12, color: red),
+              const SizedBox(width: 4),
+              Text(
+                AppLocalizations.of(context).recipeDetailFavorite,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: red,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.favorite, size: 12, color: red),
-            const SizedBox(width: 4),
-            Text(AppLocalizations.of(context).recipeDetailFavorite, style: TextStyle(fontSize: 11, color: red, fontWeight: FontWeight.w500)),
-          ],
-        ),
-      ));
+      );
     }
 
     if (isQueued) {
       final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
       final bgOpacity = isDark ? 0.1 : 0.15;
-      chips.add(Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: AppColors.cyan.withOpacity(bgOpacity),
-          borderRadius: BorderRadius.circular(6),
-          border: isDark ? null : Border.all(color: cyan.withOpacity(0.3), width: 0.5),
+      chips.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.cyan.withOpacity(bgOpacity),
+            borderRadius: BorderRadius.circular(6),
+            border: isDark
+                ? null
+                : Border.all(color: cyan.withOpacity(0.3), width: 0.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.playlist_add_check, size: 12, color: cyan),
+              const SizedBox(width: 4),
+              Text(
+                AppLocalizations.of(context).expandedExerciseCardQueued,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: cyan,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.playlist_add_check, size: 12, color: cyan),
-            const SizedBox(width: 4),
-            Text(AppLocalizations.of(context).expandedExerciseCardQueued, style: TextStyle(fontSize: 11, color: cyan, fontWeight: FontWeight.w500)),
-          ],
-        ),
-      ));
+      );
     }
 
     return chips;
   }
-
 
   Widget _buildBreathingStep({
     required IconData icon,
@@ -155,7 +189,6 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
     );
   }
 
-
   Widget _buildSetRow({
     required String setLabel,
     required bool isWarmup,
@@ -179,41 +212,52 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
     if (weightKg != null && weightKg > 0) {
       displayWeight = useKg
           ? weightKg
-          : kgToDisplayLbs(weightKg, widget.exercise.equipment,
-                exerciseName: widget.exercise.name,);
+          : kgToDisplayLbs(
+              weightKg,
+              widget.exercise.equipment,
+              exerciseName: widget.exercise.name,
+            );
     }
 
     // Build target display string: weight unit × reps (matching active workout screen)
     // Include unit label so user knows if weight is in kg or lbs
     final unit = useKg ? 'kg' : 'lbs';
     String targetDisplay = '—';
-    if (displayWeight != null && displayWeight > 0 && targetReps != null && targetReps > 0) {
+    if (displayWeight != null &&
+        displayWeight > 0 &&
+        targetReps != null &&
+        targetReps > 0) {
       // Check if this is a failure/amrap set
-      if (setType.toLowerCase() == 'failure' || setType.toLowerCase() == 'amrap') {
+      if (setType.toLowerCase() == 'failure' ||
+          setType.toLowerCase() == 'amrap') {
         targetDisplay = '${displayWeight.toStringAsFixed(0)} $unit × AMRAP';
       } else {
-        targetDisplay = '${displayWeight.toStringAsFixed(0)} $unit × $targetReps';
+        targetDisplay =
+            '${displayWeight.toStringAsFixed(0)} $unit × $targetReps';
       }
     } else if (targetReps != null && targetReps > 0) {
       // Bodyweight exercise - just show reps (no weight/unit needed)
-      if (setType.toLowerCase() == 'failure' || setType.toLowerCase() == 'amrap') {
+      if (setType.toLowerCase() == 'failure' ||
+          setType.toLowerCase() == 'amrap') {
         targetDisplay = 'AMRAP';
       } else {
         targetDisplay = '$targetReps reps';
       }
     }
+    // Timed exercises (planks, cardio intervals) target a duration, never
+    // reps — override whatever the descriptor synthesized.
+    if (_isTimedExercise && widget.exercise.durationSeconds != null) {
+      targetDisplay = _formatRestTime(widget.exercise.durationSeconds!);
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: cardBorder.withOpacity(0.2),
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: cardBorder.withOpacity(0.2))),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start, // Align to top so text baselines match
+        crossAxisAlignment:
+            CrossAxisAlignment.start, // Align to top so text baselines match
         children: [
           // SET column - Set number with type color badge
           // Add top padding to align badge center with text baseline
@@ -287,7 +331,10 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: WorkoutDesign.getRirColor(targetRir),
                           borderRadius: BorderRadius.circular(10),
@@ -310,5 +357,4 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
       ),
     );
   }
-
 }

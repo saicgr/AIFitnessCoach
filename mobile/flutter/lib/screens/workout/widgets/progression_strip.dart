@@ -121,29 +121,34 @@ class ProgressionStrip extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          // Session history pills, oldest on the left
-          for (int i = 0; i < pillsOldestFirst.length; i++) ...[
-            _sessionPill(
-              context,
-              data: pillsOldestFirst[i],
-              originalSession: prior[prior.length - 1 - i],
+      // Horizontal scroll so a long history + target row never overflows on
+      // narrow phones / large font scale — preserves the single-row look.
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            // Session history pills, oldest on the left
+            for (int i = 0; i < pillsOldestFirst.length; i++) ...[
+              _sessionPill(
+                context,
+                data: pillsOldestFirst[i],
+                originalSession: prior[prior.length - 1 - i],
+              ),
+              if (i < pillsOldestFirst.length - 1) const _PillGap(),
+            ],
+            // Arrow separator between history and target
+            const SizedBox(width: 8),
+            Icon(
+              Icons.arrow_forward_rounded,
+              size: 16,
+              color: Colors.white.withValues(alpha: 0.4),
             ),
-            if (i < pillsOldestFirst.length - 1) const _PillGap(),
+            const SizedBox(width: 8),
+            // Target pill — bold, accent color, taller
+            _targetPill(context, accentColor),
           ],
-          // Arrow separator between history and target
-          const SizedBox(width: 8),
-          Icon(
-            Icons.arrow_forward_rounded,
-            size: 16,
-            color: Colors.white.withValues(alpha: 0.4),
-          ),
-          const SizedBox(width: 8),
-          // Target pill — bold, accent color, taller
-          _targetPill(context, accentColor),
-        ],
+        ),
       ),
     );
   }

@@ -64,9 +64,13 @@ class InflammationTagsSection extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            AppLocalizations.of(context).loggedMealsInflammationScore.toUpperCase(),
-                            style: ZType.lbl(10.5, color: textPrimary, letterSpacing: 1.5),
+                          Flexible(
+                            child: Text(
+                              AppLocalizations.of(context).loggedMealsInflammationScore.toUpperCase(),
+                              style: ZType.lbl(10.5, color: textPrimary, letterSpacing: 1.5),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           GestureDetector(

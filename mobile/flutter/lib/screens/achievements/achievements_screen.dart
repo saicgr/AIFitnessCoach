@@ -602,17 +602,22 @@ class _BadgeTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 7),
-          Text(
-            type.name,
-            style: TextStyle(
-              fontSize: 11,
-              height: 1.15,
-              fontWeight: FontWeight.w600,
-              color: c.textPrimary,
+          // Flexible: on narrow grids (320-360dp → ~103px cells) the 2-line
+          // name is what must yield — it drops to 1 line instead of striping
+          // the cell bottom.
+          Flexible(
+            child: Text(
+              type.name,
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.15,
+                fontWeight: FontWeight.w600,
+                color: c.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
           Container(

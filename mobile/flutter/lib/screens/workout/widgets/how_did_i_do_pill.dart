@@ -175,7 +175,8 @@ class _HowDidIDoContentState extends ConsumerState<_HowDidIDoContent> {
     final c = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -205,6 +206,7 @@ class _HowDidIDoContentState extends ConsumerState<_HowDidIDoContent> {
           else
             SimpleMarkdownText(_markdown ?? ''),
         ],
+      ),
       ),
     );
   }

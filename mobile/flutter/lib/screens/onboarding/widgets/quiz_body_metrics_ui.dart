@@ -226,12 +226,16 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                     child: Icon(Icons.person_outline, color: AppColors.accent, size: 14),
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    AppLocalizations.of(context).quizBodyMetricsGender,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
+                  Flexible(
+                    child: Text(
+                      AppLocalizations.of(context).quizBodyMetricsGender,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
                     ),
                   ),
                 ],

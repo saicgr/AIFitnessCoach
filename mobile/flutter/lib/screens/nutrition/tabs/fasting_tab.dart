@@ -672,9 +672,12 @@ class _FastingTabState extends ConsumerState<FastingTab>
           Icon(icon, size: 22, color: textMuted),
           const SizedBox(height: 8),
           // Anton display numeral.
-          Text(
-            value,
-            style: ZType.disp(24, color: textPrimary, letterSpacing: 0),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: ZType.disp(24, color: textPrimary, letterSpacing: 0),
+            ),
           ),
           const SizedBox(height: 4),
           // Barlow uppercase label.

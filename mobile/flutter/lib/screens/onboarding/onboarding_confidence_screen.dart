@@ -124,7 +124,17 @@ class _OnboardingConfidenceScreenState
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
+              // Scroll fallback: the Spacer-balanced column is height-exact,
+              // so small phones / large font scale would stripe. minHeight +
+              // IntrinsicHeight keeps the Spacers working when there IS room
+              // and scrolls instead of overflowing when there isn't.
+              child: LayoutBuilder(
+                builder: (context, viewport) => SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 28),
@@ -186,6 +196,14 @@ class _OnboardingConfidenceScreenState
                       trackHeight: 6,
                       thumbShape: const RoundSliderThumbShape(
                           enabledThumbRadius: 13),
+                      // Drag balloon (from `label:`) follows the band color
+                      // instead of the theme's default primary.
+                      valueIndicatorColor: band,
+                      valueIndicatorTextStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
                     child: Slider(
                       value: _value,
@@ -259,6 +277,10 @@ class _OnboardingConfidenceScreenState
                       .slideY(begin: 0.1),
                   const SizedBox(height: 12),
                 ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),

@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/program_template.dart';
+import '../../data/providers/branded_program_provider.dart'
+    show activeUserProgramProvider;
 import '../../data/providers/equipment_coverage_provider.dart';
 import '../../data/providers/program_favorites_provider.dart';
 import '../../data/repositories/program_template_repository.dart';
@@ -50,8 +52,10 @@ class ProgramDetailScreen extends ConsumerStatefulWidget {
   final String? programId;
 
   const ProgramDetailScreen({super.key, this.card, this.programId})
-      : assert(card != null || programId != null,
-            'ProgramDetailScreen needs a card or a programId');
+    : assert(
+        card != null || programId != null,
+        'ProgramDetailScreen needs a card or a programId',
+      );
 
   @override
   ConsumerState<ProgramDetailScreen> createState() =>
@@ -105,6 +109,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// The selected week index (0-based) in the schedule tab. Resets to 0
   /// whenever the variant changes so the user always lands on week 1.
   int _selectedWeekIndex = 0;
+
+  /// One-shot guard: true once [_selectedWeekIndex] has been seeded from the
+  /// enrolled program's current week (or the user has navigated weeks/variants
+  /// themselves), so later schedule rebuilds never override their choice.
+  bool _seededInitialWeek = false;
 
   /// Overscroll distance (px) the user has pulled past the top — drives the
   /// stretchy-zoom of the hero. Done MANUALLY because `SliverAppBar.stretch` /
@@ -253,37 +262,42 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     // await, even before the disk-cache read below returns.
     final fresh = repo.getLibraryDetail(id);
     _detail = fresh;
-    fresh.then((result) {
-      if (!mounted) return;
-      _gotFreshDetail = true;
-      setState(() {
-        _detail = Future.value(result);
-        _card = result.card;
-        _detailLoaded = true;
-        // The full editorial card carries variant_options + default_variant_id.
-        // Re-point to the recommended variant now that we know it — unless the
-        // user already picked one — so the screen opens on the default (e.g.
-        // HYROX → 8 weeks / 4 per week), not the lowest-weeks list-card option.
-        _syncDefaultVariant(result.card);
-      });
-    }).catchError((_) {
-      // Swallow — the FutureBuilder below surfaces the error state.
-    });
+    fresh
+        .then((result) {
+          if (!mounted) return;
+          _gotFreshDetail = true;
+          setState(() {
+            _detail = Future.value(result);
+            _card = result.card;
+            _detailLoaded = true;
+            // The full editorial card carries variant_options + default_variant_id.
+            // Re-point to the recommended variant now that we know it — unless the
+            // user already picked one — so the screen opens on the default (e.g.
+            // HYROX → 8 weeks / 4 per week), not the lowest-weeks list-card option.
+            _syncDefaultVariant(result.card);
+          });
+        })
+        .catchError((_) {
+          // Swallow — the FutureBuilder below surfaces the error state.
+        });
 
     // Cache-first: paint the REAL disk-cached detail (phases / variants /
     // joined) instantly on a repeat open, unless the network already won the
     // race. Kills the placeholder→real swap entirely after the first visit.
-    repo.cachedLibraryDetail(id).then((cached) {
-      if (cached == null || !mounted || _gotFreshDetail) return;
-      setState(() {
-        _detail = Future.value(cached);
-        _card = cached.card;
-        _detailLoaded = true;
-        _syncDefaultVariant(cached.card);
-      });
-    }).catchError((_) {
-      // Cache miss / parse failure is non-fatal — the network path covers it.
-    });
+    repo
+        .cachedLibraryDetail(id)
+        .then((cached) {
+          if (cached == null || !mounted || _gotFreshDetail) return;
+          setState(() {
+            _detail = Future.value(cached);
+            _card = cached.card;
+            _detailLoaded = true;
+            _syncDefaultVariant(cached.card);
+          });
+        })
+        .catchError((_) {
+          // Cache miss / parse failure is non-fatal — the network path covers it.
+        });
   }
 
   void _retry() {
@@ -310,6 +324,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     // the stat selector + Schedule tab rebuild — never the whole tree.
     _selectedVariantId = variantId;
     _userPickedVariant = true;
+    // Deliberate week-1 reset — the new variant has a different week
+    // structure; block the enrolled-week seed from overriding it.
+    _seededInitialWeek = true;
     _selectedWeekIndex = 0;
     _variantRev.value++;
   }
@@ -319,6 +336,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   void _resetVariantToDefault() {
     HapticService.selection();
     _userPickedVariant = false;
+    _seededInitialWeek = true;
     _selectedWeekIndex = 0;
     _syncDefaultVariant(_card);
     _variantRev.value++;
@@ -328,6 +346,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// [weekStart] (1-based). Used by phase card taps.
   void _jumpToScheduleWeek(int weekStart) {
     HapticService.light();
+    _seededInitialWeek = true;
     // weekStart is 1-based; _selectedWeekIndex is 0-based.
     setState(() => _selectedWeekIndex = (weekStart - 1).clamp(0, 999));
     _tabController.animateTo(1);
@@ -341,7 +360,8 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       body: card == null
           // No card yet (pure deep-link, first frame) — load the header lazily.
           ? FutureBuilder<
-                ({ProgramLibraryCard card, ProgramTemplate sampleWeek})>(
+              ({ProgramLibraryCard card, ProgramTemplate sampleWeek})
+            >(
               future: _detail,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -378,41 +398,38 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           child: NotificationListener<ScrollNotification>(
             onNotification: _onScrollForZoom,
             child: NestedScrollView(
-            // BouncingScrollPhysics on BOTH platforms so the body overscrolls
-            // at the top (Android's default ClampingScrollPhysics doesn't) —
-            // that overscroll is what `_onScrollForZoom` reads to drive the
-            // manual hero zoom.
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            headerSliverBuilder: (context, innerBoxIsScrolled) => [
-              // Only the app bar rebuilds as the overscroll grows its height —
-              // not the whole NestedScrollView — so the stretch stays smooth.
-              ValueListenableBuilder<double>(
-                valueListenable: _headerZoom,
-                builder: (_, over, __) => _buildSliverAppBar(
-                  card,
-                  innerBoxIsScrolled,
-                  over.clamp(0.0, _kMaxHeaderStretch),
-                ),
+              // BouncingScrollPhysics on BOTH platforms so the body overscrolls
+              // at the top (Android's default ClampingScrollPhysics doesn't) —
+              // that overscroll is what `_onScrollForZoom` reads to drive the
+              // manual hero zoom.
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
-              SliverToBoxAdapter(child: _buildStatTiles(card)),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _DetailTabBarDelegate(
-                  tabBar: _buildTabBar(),
-                  overlapping: innerBoxIsScrolled,
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                // Only the app bar rebuilds as the overscroll grows its height —
+                // not the whole NestedScrollView — so the stretch stays smooth.
+                ValueListenableBuilder<double>(
+                  valueListenable: _headerZoom,
+                  builder: (_, over, __) => _buildSliverAppBar(
+                    card,
+                    innerBoxIsScrolled,
+                    over.clamp(0.0, _kMaxHeaderStretch),
+                  ),
                 ),
-              ),
-            ],
-            body: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildOverviewTab(card),
-                _buildScheduleTab(card),
+                SliverToBoxAdapter(child: _buildStatTiles(card)),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _DetailTabBarDelegate(
+                    tabBar: _buildTabBar(),
+                    overlapping: innerBoxIsScrolled,
+                  ),
+                ),
               ],
+              body: TabBarView(
+                controller: _tabController,
+                children: [_buildOverviewTab(card), _buildScheduleTab(card)],
+              ),
             ),
-          ),
           ),
         ),
         _buildBottomBar(card),
@@ -427,7 +444,10 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   // -------------------------------------------------------------------------
 
   Widget _buildSliverAppBar(
-      ProgramLibraryCard card, bool innerBoxIsScrolled, double stretch) {
+    ProgramLibraryCard card,
+    bool innerBoxIsScrolled,
+    double stretch,
+  ) {
     final theme = categoryTheme(card.programCategory);
     final hasDifficulty =
         card.difficultyLevel != null && card.difficultyLevel!.trim().isNotEmpty;
@@ -448,8 +468,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       leading: GestureDetector(
         onTap: _back,
         behavior: HitTestBehavior.opaque,
-        child: const Icon(Icons.arrow_back_ios_new_rounded,
-            size: 18, color: AppColors.textPrimary),
+        child: const Icon(
+          Icons.arrow_back_ios_new_rounded,
+          size: 18,
+          color: AppColors.textPrimary,
+        ),
       ),
       title: AnimatedOpacity(
         // Fade in the collapsed title only when actually collapsed (i.e. when
@@ -458,28 +481,33 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         duration: const Duration(milliseconds: 150),
         child: Text(
           card.displayName,
-          style: ZType.sans(15,
-              color: AppColors.textPrimary, weight: FontWeight.w700),
+          style: ZType.sans(
+            15,
+            color: AppColors.textPrimary,
+            weight: FontWeight.w700,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
       ),
       actions: [
-        Builder(builder: (context) {
-          final fav = _isFavoritedWatched();
-          return GestureDetector(
-            onTap: _toggleFavorite,
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Icon(
-                fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                size: 22,
-                color: fav ? AppColors.orange : AppColors.textPrimary,
+        Builder(
+          builder: (context) {
+            final fav = _isFavoritedWatched();
+            return GestureDetector(
+              onTap: _toggleFavorite,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Icon(
+                  fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  size: 22,
+                  color: fav ? AppColors.orange : AppColors.textPrimary,
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          },
+        ),
       ],
       // Expanded area: the full 280px diagonal-striped hero.
       flexibleSpace: FlexibleSpaceBar(
@@ -681,9 +709,14 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       key: const PageStorageKey<String>('program_detail_overview'),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
-        Text('PHASES',
-            style: ZType.lbl(13,
-                color: AppColors.textPrimary, letterSpacing: 1.8)),
+        Text(
+          'PHASES',
+          style: ZType.lbl(
+            13,
+            color: AppColors.textPrimary,
+            letterSpacing: 1.8,
+          ),
+        ),
         const SizedBox(height: 12),
         if (showPhaseSkeleton)
           const _PhaseSkeleton()
@@ -696,8 +729,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           if (phases.isEmpty)
             Text(
               'This program runs as a single continuous block.',
-              style: ZType.sans(13,
-                  color: AppColors.textSecondary, weight: FontWeight.w500),
+              style: ZType.sans(
+                13,
+                color: AppColors.textSecondary,
+                weight: FontWeight.w500,
+              ),
             ),
         ],
 
@@ -746,8 +782,12 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         return Consumer(
           builder: (context, ref, __) {
             final cov = ref
-                .watch(equipmentCoverageProvider(
-                    (programId: _resolveId, variantId: _selectedVariantId)))
+                .watch(
+                  equipmentCoverageProvider((
+                    programId: _resolveId,
+                    variantId: _selectedVariantId,
+                  )),
+                )
                 .valueOrNull;
             if (cov == null || cov.totalExercises == 0) {
               return const SizedBox.shrink();
@@ -770,7 +810,8 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               icon = Icons.handyman_rounded;
               tint = AppColors.warning;
               final n = cov.swappableCount;
-              text = 'Needs ${_humanizeEquipmentSlugs(cov.missingEquipment)}'
+              text =
+                  'Needs ${_humanizeEquipmentSlugs(cov.missingEquipment)}'
                   " — we'll swap $n on Start";
             }
 
@@ -780,8 +821,10 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                 onTap: onTap,
                 behavior: HitTestBehavior.opaque,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 9,
+                  ),
                   decoration: BoxDecoration(
                     color: tint.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
@@ -794,16 +837,22 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                       Expanded(
                         child: Text(
                           text,
-                          style: ZType.sans(12,
-                              color: AppColors.textSecondary,
-                              weight: FontWeight.w600),
+                          style: ZType.sans(
+                            12,
+                            color: AppColors.textSecondary,
+                            weight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       if (onTap != null)
-                        Text('Add →',
-                            style: ZType.sans(12,
-                                color: AppColors.orange,
-                                weight: FontWeight.w700)),
+                        Text(
+                          'Add →',
+                          style: ZType.sans(
+                            12,
+                            color: AppColors.orange,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -845,15 +894,19 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         );
         return Consumer(
           builder: (context, ref, __) {
-            final scheduleAsync =
-                ref.watch(programScheduleProvider(scheduleKey));
+            final scheduleAsync = ref.watch(
+              programScheduleProvider(scheduleKey),
+            );
             return scheduleAsync.when(
               loading: () => const Center(
                 child: CircularProgressIndicator(color: AppColors.orange),
               ),
-              error: (err, _) => _DetailError(onRetry: () {
-                ref.invalidate(programScheduleProvider(scheduleKey));
-              }, onBack: null),
+              error: (err, _) => _DetailError(
+                onRetry: () {
+                  ref.invalidate(programScheduleProvider(scheduleKey));
+                },
+                onBack: null,
+              ),
               data: (schedule) {
                 if (schedule.weeks.isEmpty) {
                   // Fallback: render the legacy sample week from the detail fetch.
@@ -871,8 +924,26 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// Renders the schedule grouped by week with a week chip-row selector.
   Widget _buildMultiWeekSchedule(ProgramScheduleResponse schedule) {
     final weeks = schedule.weeks;
-    final weekIndex =
-        _selectedWeekIndex.clamp(0, weeks.length - 1);
+    // Enrolled users land on the week they're actually IN, not week 1.
+    // Seeded once from the active user program (current_week, falling back
+    // to weeks elapsed since started_at); browsing users keep week 1.
+    if (!_seededInitialWeek) {
+      final active = ref.read(activeUserProgramProvider);
+      if (active != null && active.programId == _resolveId) {
+        var week = active.currentWeek ?? 0;
+        if (week <= 0 && active.startedAt != null) {
+          final started = DateTime.tryParse(active.startedAt!);
+          if (started != null) {
+            week = DateTime.now().difference(started).inDays ~/ 7 + 1;
+          }
+        }
+        if (week > 1) {
+          _selectedWeekIndex = (week - 1).clamp(0, weeks.length - 1);
+        }
+        _seededInitialWeek = true;
+      }
+    }
+    final weekIndex = _selectedWeekIndex.clamp(0, weeks.length - 1);
     final selectedWeek = weeks[weekIndex];
 
     return ListView(
@@ -893,12 +964,15 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                   onTap: () {
                     if (i == weekIndex) return;
                     HapticService.light();
+                    _seededInitialWeek = true;
                     setState(() => _selectedWeekIndex = i);
                   },
                   behavior: HitTestBehavior.opaque,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.orange.withValues(alpha: 0.18)
@@ -912,11 +986,13 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                     ),
                     child: Text(
                       'Wk ${weeks[i].weekNumber}',
-                      style: ZType.lbl(12,
-                          color: isSelected
-                              ? AppColors.orange
-                              : AppColors.textSecondary,
-                          letterSpacing: 1.0),
+                      style: ZType.lbl(
+                        12,
+                        color: isSelected
+                            ? AppColors.orange
+                            : AppColors.textSecondary,
+                        letterSpacing: 1.0,
+                      ),
                     ),
                   ),
                 );
@@ -943,7 +1019,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// Fallback to the legacy sample-week when the new schedule endpoint returns
   /// nothing (e.g., the backend is mid-deploy). Shows the old day tiles.
   Widget _buildLegacyScheduleFallback() {
-    return FutureBuilder<({ProgramLibraryCard card, ProgramTemplate sampleWeek})>(
+    return FutureBuilder<
+      ({ProgramLibraryCard card, ProgramTemplate sampleWeek})
+    >(
       future: _detail,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -962,8 +1040,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               child: Text(
                 'A day-by-day schedule is not available for this program.',
                 textAlign: TextAlign.center,
-                style: ZType.sans(14,
-                    color: AppColors.textSecondary, weight: FontWeight.w500),
+                style: ZType.sans(
+                  14,
+                  color: AppColors.textSecondary,
+                  weight: FontWeight.w500,
+                ),
               ),
             ),
           );
@@ -972,8 +1053,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           key: const PageStorageKey<String>('program_detail_schedule'),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            for (final day in template.days)
-              _LegacyScheduleDayTile(day: day),
+            for (final day in template.days) _LegacyScheduleDayTile(day: day),
           ],
         );
       },
@@ -1015,11 +1095,18 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_formatJoined(joined),
-                        style: ZType.data(17, color: AppColors.textPrimary)),
-                    Text('JOINED',
-                        style: ZType.lbl(10,
-                            color: AppColors.textMuted, letterSpacing: 1.6)),
+                    Text(
+                      _formatJoined(joined),
+                      style: ZType.data(17, color: AppColors.textPrimary),
+                    ),
+                    Text(
+                      'JOINED',
+                      style: ZType.lbl(
+                        10,
+                        color: AppColors.textMuted,
+                        letterSpacing: 1.6,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(width: 16),
@@ -1037,10 +1124,12 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                   icon: const Icon(Icons.play_arrow_rounded, size: 20),
                   label: Text(
                     'START PROGRAM',
-                    style: ZType.lbl(14,
-                        color: Colors.white,
-                        weight: FontWeight.w800,
-                        letterSpacing: 2.0),
+                    style: ZType.lbl(
+                      14,
+                      color: Colors.white,
+                      weight: FontWeight.w800,
+                      letterSpacing: 2.0,
+                    ),
                   ),
                 ),
               ),
@@ -1090,9 +1179,14 @@ class _DifficultyPill extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 7),
-          Text(level.toUpperCase(),
-              style: ZType.lbl(11, color: AppColors.textPrimary,
-                  letterSpacing: 1.4)),
+          Text(
+            level.toUpperCase(),
+            style: ZType.lbl(
+              11,
+              color: AppColors.textPrimary,
+              letterSpacing: 1.4,
+            ),
+          ),
         ],
       ),
     );
@@ -1156,13 +1250,19 @@ class _StatTile extends StatelessWidget {
         children: [
           Text(
             value,
-            style: ZType.disp(28,
-                color: accented ? AppColors.orange : AppColors.textPrimary),
+            style: ZType.disp(
+              28,
+              color: accented ? AppColors.orange : AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: ZType.lbl(10, color: AppColors.textMuted, letterSpacing: 1.4),
+            style: ZType.lbl(
+              10,
+              color: AppColors.textMuted,
+              letterSpacing: 1.4,
+            ),
           ),
         ],
       ),
@@ -1274,8 +1374,11 @@ class _PhaseBlock extends StatelessWidget {
                 children: [
                   Text(
                     phase.title,
-                    style: ZType.sans(15,
-                        color: AppColors.textPrimary, weight: FontWeight.w700),
+                    style: ZType.sans(
+                      15,
+                      color: AppColors.textPrimary,
+                      weight: FontWeight.w700,
+                    ),
                   ),
                   if (weekLabel != null ||
                       (subtitle != null && subtitle.isNotEmpty)) ...[
@@ -1285,9 +1388,11 @@ class _PhaseBlock extends StatelessWidget {
                         if (weekLabel != null) weekLabel,
                         if (subtitle != null && subtitle.isNotEmpty) subtitle,
                       ].join(' · '),
-                      style: ZType.sans(12.5,
-                          color: AppColors.textSecondary,
-                          weight: FontWeight.w500),
+                      style: ZType.sans(
+                        12.5,
+                        color: AppColors.textSecondary,
+                        weight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ],
@@ -1295,8 +1400,11 @@ class _PhaseBlock extends StatelessWidget {
             ),
             // Chevron is now meaningful — tapping navigates to that phase's
             // first week in the Schedule tab.
-            const Icon(Icons.chevron_right_rounded,
-                size: 20, color: AppColors.orange),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: AppColors.orange,
+            ),
           ],
         ),
       ),
@@ -1339,16 +1447,23 @@ class _OverviewNote extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: ZType.lbl(10.5,
-                        color: AppColors.textMuted, letterSpacing: 1.6)),
+                Text(
+                  label,
+                  style: ZType.lbl(
+                    10.5,
+                    color: AppColors.textMuted,
+                    letterSpacing: 1.6,
+                  ),
+                ),
                 const SizedBox(height: 3),
                 Text(
                   body,
-                  style: ZType.sans(13.5,
-                      color: AppColors.textPrimary,
-                      weight: FontWeight.w500,
-                      height: 1.35),
+                  style: ZType.sans(
+                    13.5,
+                    color: AppColors.textPrimary,
+                    weight: FontWeight.w500,
+                    height: 1.35,
+                  ),
                 ),
               ],
             ),
@@ -1376,15 +1491,17 @@ class _WeekPhaseHeader extends StatelessWidget {
         if ((week.phase?.trim().isNotEmpty ?? false))
           Text(
             week.phase!.trim().toUpperCase(),
-            style: ZType.lbl(12,
-                color: AppColors.orange, letterSpacing: 1.5),
+            style: ZType.lbl(12, color: AppColors.orange, letterSpacing: 1.5),
           ),
         if ((week.focus?.trim().isNotEmpty ?? false)) ...[
           const SizedBox(height: 2),
           Text(
             week.focus!.trim(),
-            style: ZType.sans(12.5,
-                color: AppColors.textSecondary, weight: FontWeight.w500),
+            style: ZType.sans(
+              12.5,
+              color: AppColors.textSecondary,
+              weight: FontWeight.w500,
+            ),
           ),
         ],
       ],
@@ -1414,13 +1531,19 @@ class _ScheduleDayCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.bedtime_outlined,
-                size: 16, color: AppColors.textSecondary),
+            const Icon(
+              Icons.bedtime_outlined,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(width: 8),
             Text(
               '${day.dayName} · Rest',
-              style: ZType.sans(13,
-                  color: AppColors.textSecondary, weight: FontWeight.w600),
+              style: ZType.sans(
+                13,
+                color: AppColors.textSecondary,
+                weight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -1444,14 +1567,19 @@ class _ScheduleDayCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   day.dayName.toUpperCase(),
-                  style: ZType.lbl(13,
-                      color: AppColors.textPrimary, letterSpacing: 1.2),
+                  style: ZType.lbl(
+                    13,
+                    color: AppColors.textPrimary,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
               if (day.workoutType != null && day.workoutType!.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(6),
@@ -1459,8 +1587,11 @@ class _ScheduleDayCard extends StatelessWidget {
                   ),
                   child: Text(
                     day.workoutType!.toUpperCase(),
-                    style: ZType.lbl(9,
-                        color: AppColors.textMuted, letterSpacing: 1.2),
+                    style: ZType.lbl(
+                      9,
+                      color: AppColors.textMuted,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
             ],
@@ -1508,8 +1639,11 @@ class _ScheduleExerciseRow extends StatelessWidget {
             Expanded(
               child: Text(
                 ex.name,
-                style: ZType.sans(13,
-                    color: AppColors.textPrimary, weight: FontWeight.w500),
+                style: ZType.sans(
+                  13,
+                  color: AppColors.textPrimary,
+                  weight: FontWeight.w500,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1522,8 +1656,11 @@ class _ScheduleExerciseRow extends StatelessWidget {
               ),
             ],
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded,
-                size: 16, color: AppColors.textMuted),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: AppColors.textMuted,
+            ),
           ],
         ),
       ),
@@ -1553,13 +1690,19 @@ class _LegacyScheduleDayTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.bedtime_outlined,
-                size: 16, color: AppColors.textSecondary),
+            const Icon(
+              Icons.bedtime_outlined,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(width: 8),
             Text(
               '${day.dayName} · Rest',
-              style: ZType.sans(13,
-                  color: AppColors.textSecondary, weight: FontWeight.w600),
+              style: ZType.sans(
+                13,
+                color: AppColors.textSecondary,
+                weight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -1579,8 +1722,11 @@ class _LegacyScheduleDayTile extends StatelessWidget {
         children: [
           Text(
             day.dayName.toUpperCase(),
-            style: ZType.lbl(13,
-                color: AppColors.textPrimary, letterSpacing: 1.2),
+            style: ZType.lbl(
+              13,
+              color: AppColors.textPrimary,
+              letterSpacing: 1.2,
+            ),
           ),
           const SizedBox(height: 8),
           for (final ex in day.exercises)
@@ -1601,9 +1747,11 @@ class _LegacyScheduleDayTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       ex.name,
-                      style: ZType.sans(13,
-                          color: AppColors.textPrimary,
-                          weight: FontWeight.w500),
+                      style: ZType.sans(
+                        13,
+                        color: AppColors.textPrimary,
+                        weight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1638,14 +1786,20 @@ class _DetailError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded,
-                size: 44, color: AppColors.textSecondary),
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 44,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(height: 12),
             Text(
               'We could not load this program.',
               textAlign: TextAlign.center,
-              style: ZType.sans(14,
-                  color: AppColors.textSecondary, weight: FontWeight.w500),
+              style: ZType.sans(
+                14,
+                color: AppColors.textSecondary,
+                weight: FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
@@ -1661,9 +1815,14 @@ class _DetailError extends StatelessWidget {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: onBack,
-                child: Text('Go back',
-                    style: ZType.sans(13,
-                        color: AppColors.textMuted, weight: FontWeight.w600)),
+                child: Text(
+                  'Go back',
+                  style: ZType.sans(
+                    13,
+                    color: AppColors.textMuted,
+                    weight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ],
@@ -1697,14 +1856,17 @@ class _DetailTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _extent;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       height: _extent,
       decoration: BoxDecoration(
         color: AppColors.pureBlack,
         border: overlapping || overlapsContent
-            ? const Border(
-                bottom: BorderSide(color: AppColors.hairlineStrong))
+            ? const Border(bottom: BorderSide(color: AppColors.hairlineStrong))
             : null,
       ),
       alignment: Alignment.centerLeft,

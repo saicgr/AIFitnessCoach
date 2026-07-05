@@ -32,7 +32,15 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
+          // Scroll fallback: Spacer-balanced hero column is height-exact —
+          // small phones / large font scale scroll instead of striping.
+          child: LayoutBuilder(
+            builder: (context, viewport) => SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
             children: [
               const Spacer(flex: 2),
               // ── Hero — actual app logo (consistency with intro screen)
@@ -186,6 +194,10 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
 
               const SizedBox(height: 16),
             ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

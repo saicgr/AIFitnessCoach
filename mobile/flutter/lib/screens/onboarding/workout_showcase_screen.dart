@@ -1379,19 +1379,21 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    return Padding(
+    // Scrollable so the fixed-height column can never stripe-overflow on
+    // short screens — it's height-exact on many devices, and a few px of
+    // copy or padding drift kept tripping the 1px RenderFlex overflow.
+    // No flex children inside, so when content fits this is identical to
+    // the plain Column.
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(Icons.arrow_back_rounded, color: textSecondary),
-              const Spacer(),
-              _ModeToggle(advanced: false, onChanged: widget.onToggleMode),
-              const Spacer(),
-              const SizedBox(width: 24),
-            ],
+          // No mock back arrow: it was dead chrome duplicating the demo's
+          // own X right above it, and read as a broken button.
+          Center(
+            child: _ModeToggle(advanced: false, onChanged: widget.onToggleMode),
           ).animate().fadeIn(),
           const SizedBox(height: 8),
           Builder(builder: (ctx) {
@@ -1541,15 +1543,10 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Arrow points UP at the weight stepper that just moved.
-                  const Icon(
-                    Icons.arrow_upward_rounded,
-                    size: 18,
-                    color: _progressGreen,
-                  )
-                      .animate(onPlay: (c) => c.repeat(reverse: true))
-                      .moveY(begin: 0, end: -4, duration: 700.ms),
-                  const SizedBox(height: 2),
+                  // No arrow here — this slot sits under the REPS stepper,
+                  // so an up-arrow read as "reps increased". The green ↑
+                  // now renders inline next to the weight value itself
+                  // (see _stepper's highlightValue).
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
@@ -1809,24 +1806,39 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
               children: [
                 // Keyed by value so every change replays the pop-in —
                 // manual stepper taps get a subtle pop, and the
-                // auto-progression bump gets pop + green flash.
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
-                    color: highlightValue ? _progressGreen : textPrimary,
-                    letterSpacing: -1,
-                    height: 1,
-                  ),
-                )
-                    .animate(key: ValueKey('$label-$value'))
-                    .scale(
-                      begin: const Offset(1.22, 1.22),
-                      end: const Offset(1, 1),
-                      duration: 320.ms,
-                      curve: Curves.easeOutBack,
-                    ),
+                // auto-progression bump gets pop + green flash with a
+                // bouncing ↑ anchored to the value that actually moved.
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (highlightValue)
+                      const Icon(
+                        Icons.arrow_upward_rounded,
+                        size: 20,
+                        color: _progressGreen,
+                      )
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .moveY(begin: 0, end: -3, duration: 700.ms),
+                    if (highlightValue) const SizedBox(width: 4),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        color: highlightValue ? _progressGreen : textPrimary,
+                        letterSpacing: -1,
+                        height: 1,
+                      ),
+                    )
+                        .animate(key: ValueKey('$label-$value'))
+                        .scale(
+                          begin: const Offset(1.22, 1.22),
+                          end: const Offset(1, 1),
+                          duration: 320.ms,
+                          curve: Curves.easeOutBack,
+                        ),
+                  ],
+                ),
                 const SizedBox(height: 1),
                 Text(unit,
                     style: TextStyle(fontSize: 11, color: textSecondary)),
@@ -1840,10 +1852,13 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
   }
 
   Widget _unitToggle() {
+    final trackColor = widget.isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.05);
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.05),
+        color: trackColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -1857,7 +1872,12 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
   }
 
   Widget _unitOption(String label, bool selected) {
+    final unselectedText = widget.isDark ? Colors.white60 : Colors.black54;
     return GestureDetector(
+      // Opaque: without this the tappable area is only the text glyphs
+      // themselves (padding defers hit-testing to the child), which made
+      // the toggle feel dead.
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         if (label == 'kg' && _useKg) return;
         if (label == 'lb' && !_useKg) return;
@@ -1874,7 +1894,10 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        // Vertical padding stays at 4: the Easy column is height-exact on
+        // small screens (+4px here overflowed it by 1px). The tap target
+        // is widened by HitTestBehavior.opaque above, not by padding.
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           color: selected ? _accent : Colors.transparent,
           borderRadius: BorderRadius.circular(18),
@@ -1884,7 +1907,7 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w800,
-            color: selected ? Colors.white : Colors.black54,
+            color: selected ? Colors.white : unselectedText,
           ),
         ),
       ),
@@ -2406,20 +2429,9 @@ class _Frame2SetLogged extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _progressionRow(
-                  label: 'W',
-                  weight: '${w[0]} lb',
-                  reps: '${r[0]} reps',
-                  delta: null,
-                  textPrimary: textPrimary,
-                  textSecondary: textSecondary,
-                  isCompleted: true,
-                ),
-                _deltaArrow(
-                  weightDelta: '+${w[1] - w[0]} lb',
-                  repsDelta: _formatRepsDelta(r[1] - r[0]),
-                  isUp: w[1] > w[0],
-                ),
+                // No warmup row: the demo only logs the 3 working sets, so
+                // showing a checked-off "W" the user never logged reads as
+                // fake data.
                 _progressionRow(
                   label: AppLocalizations.of(context)!.workoutShowcaseSet1,
                   weight: '${w[1]} lb',

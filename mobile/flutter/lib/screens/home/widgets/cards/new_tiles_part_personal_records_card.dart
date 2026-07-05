@@ -519,22 +519,28 @@ class LeaderboardRankCard extends ConsumerWidget {
                   ),
                 ),
                 const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.personalRecordsCardTopPercentile(percentile),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: accentColor,
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.personalRecordsCardTopPercentile(percentile),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: accentColor,
+                        ),
                       ),
-                    ),
-                    Text(
-                      AppLocalizations.of(context)!.personalRecordsCardOfUsers(totalUsers),
-                      style: TextStyle(fontSize: 10, color: textMuted),
-                    ),
-                  ],
+                      Text(
+                        AppLocalizations.of(context)!.personalRecordsCardOfUsers(totalUsers),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 10, color: textMuted),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -607,16 +613,15 @@ class WaterIntakeCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 2,
+              runSpacing: 2,
               children: List.generate(targetGlasses, (index) {
                 final isFilled = index < glasses;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Icon(
-                    isFilled ? Icons.water_drop : Icons.water_drop_outlined,
-                    color: isFilled ? accentColor : textMuted.withValues(alpha: 0.3),
-                    size: 18,
-                  ),
+                return Icon(
+                  isFilled ? Icons.water_drop : Icons.water_drop_outlined,
+                  color: isFilled ? accentColor : textMuted.withValues(alpha: 0.3),
+                  size: 18,
                 );
               }),
             ),
@@ -699,18 +704,22 @@ class SleepScoreCard extends ConsumerWidget {
                 ),
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: purpleColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  sleepQuality,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: purpleColor,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: purpleColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    sleepQuality,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: purpleColor,
+                    ),
                   ),
                 ),
               ),

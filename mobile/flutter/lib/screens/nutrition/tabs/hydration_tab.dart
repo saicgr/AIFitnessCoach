@@ -323,39 +323,45 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _StatItem(
-            label: AppLocalizations.of(context).workoutPlanDrawerCurrent,
-            value: _selectedUnit.format(currentMl),
-            unit: _selectedUnit.label,
-            color: electricBlue,
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
+          Expanded(
+            child: _StatItem(
+              label: AppLocalizations.of(context).workoutPlanDrawerCurrent,
+              value: _selectedUnit.format(currentMl),
+              unit: _selectedUnit.label,
+              color: electricBlue,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+            ),
           ),
           Container(
             width: 1,
             height: 40,
             color: AppColors.cardBorder,
           ),
-          _StatItem(
-            label: AppLocalizations.of(context).challengeCreateFieldGoal,
-            value: _selectedUnit.format(goalMl),
-            unit: _selectedUnit.label,
-            color: textSecondary,
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
+          Expanded(
+            child: _StatItem(
+              label: AppLocalizations.of(context).challengeCreateFieldGoal,
+              value: _selectedUnit.format(goalMl),
+              unit: _selectedUnit.label,
+              color: textSecondary,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+            ),
           ),
           Container(
             width: 1,
             height: 40,
             color: AppColors.cardBorder,
           ),
-          _StatItem(
-            label: AppLocalizations.of(context).hydrationRemaining,
-            value: _selectedUnit.format(remaining),
-            unit: _selectedUnit.label,
-            color: remaining > 0 ? AppColors.orange : AppColors.success,
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
+          Expanded(
+            child: _StatItem(
+              label: AppLocalizations.of(context).hydrationRemaining,
+              value: _selectedUnit.format(remaining),
+              unit: _selectedUnit.label,
+              color: remaining > 0 ? AppColors.orange : AppColors.success,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+            ),
           ),
         ],
       ),

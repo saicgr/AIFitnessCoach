@@ -87,12 +87,10 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return Padding(
-          padding: EdgeInsets.only(bottom: bottomPadding),
-          child: SafeArea(
-            top: false,
+    return SafeArea(
+          top: false,
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,

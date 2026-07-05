@@ -60,11 +60,18 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
     return Container(
       color: backgroundColor,
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        // Scroll-fallback so the centered column still fits on short screens /
+        // large font scale: centered when it fits, scrollable when it doesn't.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
               // Header
               Text(
                 AppLocalizations.of(context).quickAdjustHowAreYouFeeling,
@@ -171,7 +178,11 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
                   ),
                 ),
               ],
-            ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

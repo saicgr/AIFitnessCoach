@@ -67,7 +67,8 @@ class _ScheduleMismatchDialogState extends State<ScheduleMismatchDialog> {
           ),
         ],
       ),
-      content: Column(
+      content: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -111,6 +112,7 @@ class _ScheduleMismatchDialogState extends State<ScheduleMismatchDialog> {
             accentColor: accentColor,
           ),
         ],
+        ),
       ),
       actions: [
         TextButton(

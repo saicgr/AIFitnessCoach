@@ -184,7 +184,10 @@ class GuestUpgradeSheet extends ConsumerWidget {
     return GlassSheet(
           child: SafeArea(
         top: false,
-        child: Padding(
+        // Scrollable: icon + message + stats + 4 benefits + 2 buttons total
+        // ~700px — taller than the sheet cap on anything below an iPhone 13,
+        // so the body must scroll instead of striping.
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,

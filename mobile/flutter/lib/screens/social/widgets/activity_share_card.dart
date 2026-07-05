@@ -515,7 +515,15 @@ class ActivityShareCard extends StatelessWidget {
         glassBg: glassBg,
         cardBg: cardBg,
       ),
-      child: Column(
+      // scaleDown: this card lives in an Expanded slot that the square
+      // layout can squeeze below the card's natural ~140px — shrink the
+      // whole card slightly rather than striping the share image. Fixed
+      // design width keeps the spaceEvenly stats spread intact.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: SizedBox(
+        width: 256,
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
@@ -549,6 +557,8 @@ class ActivityShareCard extends StatelessWidget {
             ],
           ),
         ],
+        ),
+        ),
       ),
     );
   }

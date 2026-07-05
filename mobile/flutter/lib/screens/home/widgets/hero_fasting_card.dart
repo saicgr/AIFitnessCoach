@@ -263,20 +263,26 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _FastingBenefit(
-                      icon: Icons.local_fire_department,
-                      label: AppLocalizations.of(context)
-                          .heroFastingCardBurnFat),
+                  Flexible(
+                    child: _FastingBenefit(
+                        icon: Icons.local_fire_department,
+                        label: AppLocalizations.of(context)
+                            .heroFastingCardBurnFat),
+                  ),
                   const SizedBox(width: 16),
-                  _FastingBenefit(
-                      icon: Icons.auto_fix_high,
-                      label: AppLocalizations.of(context)
-                          .heroFastingCardAutophagy),
+                  Flexible(
+                    child: _FastingBenefit(
+                        icon: Icons.auto_fix_high,
+                        label: AppLocalizations.of(context)
+                            .heroFastingCardAutophagy),
+                  ),
                   const SizedBox(width: 16),
-                  _FastingBenefit(
-                      icon: Icons.bolt,
-                      label: AppLocalizations.of(context)
-                          .workoutSummaryGeneralEnergy),
+                  Flexible(
+                    child: _FastingBenefit(
+                        icon: Icons.bolt,
+                        label: AppLocalizations.of(context)
+                            .workoutSummaryGeneralEnergy),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -389,9 +395,13 @@ class _FastingBenefit extends StatelessWidget {
       children: [
         Icon(icon, size: 20, color: tc.accent.withValues(alpha: 0.7)),
         const SizedBox(height: 4),
-        Text(
-          label.toUpperCase(),
-          style: ZType.lbl(10, color: tc.textSecondary, letterSpacing: 1.2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label.toUpperCase(),
+            maxLines: 1,
+            style: ZType.lbl(10, color: tc.textSecondary, letterSpacing: 1.2),
+          ),
         ),
       ],
     );

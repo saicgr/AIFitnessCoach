@@ -1133,6 +1133,11 @@ class _Frame3ResultState extends ConsumerState<_Frame3Result> {
   /// disappearance doubles as "you did it" feedback.
   bool _sortHintDismissed = false;
 
+  /// Second coaching beat (after the sort hint): tell the user to tap
+  /// dishes to select them, then hit "Log them" — without it the demo
+  /// never explains how dishes get picked. Cleared on first dish toggle.
+  bool _selectHintDismissed = false;
+
   /// One-beat payoff after a sort tap ("Sorted ✓ — highest protein
   /// first"). Token guards stale clears when pills are tapped rapidly.
   String? _sortConfirmMsg;
@@ -1141,6 +1146,7 @@ class _Frame3ResultState extends ConsumerState<_Frame3Result> {
   void _toggle(String name) {
     HapticFeedback.selectionClick();
     setState(() {
+      _selectHintDismissed = true;
       if (_selected.contains(name)) {
         _selected.remove(name);
       } else {
@@ -1362,12 +1368,19 @@ class _Frame3ResultState extends ConsumerState<_Frame3Result> {
                       text: _sortConfirmMsg!,
                     ),
                   )
-                : _sortHintDismissed
-                    ? const SizedBox(width: double.infinity)
-                    : const Padding(
+                : !_sortHintDismissed
+                    ? const Padding(
                         padding: EdgeInsets.only(bottom: 10),
                         child: _SortHintCallout(),
-                      ),
+                      )
+                    // Sort beat done → teach selection: tap dishes, then
+                    // "Log them". Dismissed on the first dish toggle.
+                    : !_selectHintDismissed
+                        ? const Padding(
+                            padding: EdgeInsets.only(bottom: 10),
+                            child: _SelectHintCallout(),
+                          )
+                        : const SizedBox(width: double.infinity),
           ),
           Expanded(
             child: ListView(
@@ -1866,6 +1879,68 @@ class _SortHintCallout extends StatelessWidget {
           end: 0,
           duration: 350.ms,
           delay: 250.ms,
+          curve: Curves.easeOut,
+        );
+  }
+}
+
+/// Second coaching beat in the same slot: how to actually pick dishes.
+/// Green (nutrition accent) to distinguish it from the amber sort hint;
+/// arrow points down at the dish list where the tap targets live.
+class _SelectHintCallout extends StatelessWidget {
+  const _SelectHintCallout();
+
+  static const _green = Color(0xFF2ECC71);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      // Swallow taps so the hint itself never advances the demo.
+      onTap: () {},
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _green,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: _green.withValues(alpha: 0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: const Text(
+              'Tap a dish to add it to your meal — then hit "Log them" below.',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                height: 1.3,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          // Bouncing arrow pointing down at the dish rows.
+          Padding(
+            padding: const EdgeInsets.only(left: 24),
+            child: Icon(Icons.arrow_downward_rounded, size: 22, color: _green)
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .moveY(begin: 0, end: 5, duration: 800.ms),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 350.ms).moveY(
+          begin: 6,
+          end: 0,
+          duration: 350.ms,
           curve: Curves.easeOut,
         );
   }

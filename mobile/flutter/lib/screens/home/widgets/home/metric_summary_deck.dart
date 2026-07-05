@@ -841,32 +841,41 @@ class MetricTile extends ConsumerWidget {
                       ],
                     )
                   else
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          m.headline,
-                          style: TextStyle(
-                            fontSize: compact ? 17 : 19,
-                            height: 1,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                            color: c.textPrimary,
-                          ),
-                        ),
-                        if (m.unit.isNotEmpty) ...[
-                          const SizedBox(width: 3),
-                          Text(
-                            m.unit,
-                            style: TextStyle(
-                              fontSize: compact ? 9 : 10,
-                              fontWeight: FontWeight.w700,
-                              color: c.textMuted,
+                    // The tile height is clamped by the deck grid; at large
+                    // font scale the value line would overflow it. Let it yield
+                    // and scale down within the remaining vertical space.
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              m.headline,
+                              style: TextStyle(
+                                fontSize: compact ? 17 : 19,
+                                height: 1,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                                color: c.textPrimary,
+                              ),
                             ),
-                          ),
-                        ],
-                      ],
+                            if (m.unit.isNotEmpty) ...[
+                              const SizedBox(width: 3),
+                              Text(
+                                m.unit,
+                                style: TextStyle(
+                                  fontSize: compact ? 9 : 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: c.textMuted,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                   if (!compact && m.deltaLabel != null) ...[
                     const SizedBox(height: 3),

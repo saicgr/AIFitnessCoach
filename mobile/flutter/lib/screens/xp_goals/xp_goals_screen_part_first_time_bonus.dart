@@ -405,14 +405,21 @@ class _AllLevelsSheet extends ConsumerWidget {
 class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
 
-  _StickyTabBarDelegate({required this.child});
+  /// Ambient text-scale factor captured at construction (the extent getters
+  /// have no BuildContext, so the caller passes it in).
+  final double textScale;
+
+  _StickyTabBarDelegate({required this.child, this.textScale = 1.0});
 
   // SegmentedTabBar height: padding(8+8) + containerPadding(4+4) + buttonPadding(12+12) + text(~16) = ~64
-  // Adding a bit extra to prevent clipping
+  // Grow with the user's font scale so the tab bar doesn't clip at 1.2x+;
+  // clamped so it never shrinks below the base 68 or balloons past 88.
+  double get _extent => (68 * textScale).clamp(68.0, 88.0);
+
   @override
-  double get minExtent => 68;
+  double get minExtent => _extent;
   @override
-  double get maxExtent => 68;
+  double get maxExtent => _extent;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
@@ -421,7 +428,7 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _StickyTabBarDelegate oldDelegate) {
-    return child != oldDelegate.child;
+    return child != oldDelegate.child || textScale != oldDelegate.textScale;
   }
 }
 

@@ -204,11 +204,14 @@ class _ResultCard extends StatelessWidget {
                         style: TextStyle(color: AppColors.textMuted),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        AppLocalizations.of(context)!.exerciseSearchResultsBest(result.bestSetDisplay),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                      Flexible(
+                        child: Text(
+                          AppLocalizations.of(context)!.exerciseSearchResultsBest(result.bestSetDisplay),
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                        ),
                       ),
                     ],
                   ),

@@ -220,16 +220,18 @@ class _TrophyCardState extends State<TrophyCard>
 
             const SizedBox(height: 12),
 
-            // Description
-            Text(
-              widget.trophyProgress.displayDescription,
-              style: TextStyle(
-                fontSize: 13,
-                color: isEarned ? AppColors.textSecondary : AppColors.textMuted,
-                height: 1.4,
+            // Description — Flexible so it yields inside the grid's aspect-ratio cell
+            Flexible(
+              child: Text(
+                widget.trophyProgress.displayDescription,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isEarned ? AppColors.textSecondary : AppColors.textMuted,
+                  height: 1.4,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
 
             // Progress bar (if not earned and showProgress)

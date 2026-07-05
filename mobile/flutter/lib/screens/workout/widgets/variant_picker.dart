@@ -192,10 +192,10 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
     final currentSessions = selected?.sessionsPerWeek;
     final weekOptions =
         (currentSessions != null ? _weeksBySessions[currentSessions] : null) ??
-            _distinctWeeks;
+        _distinctWeeks;
     final sessionOptions =
         (currentWeeks != null ? _sessionsByWeeks[currentWeeks] : null) ??
-            const <int>[];
+        const <int>[];
     final durationInteractive = weekOptions.length > 1;
     final perWeekInteractive = sessionOptions.length > 1;
 
@@ -350,14 +350,27 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                for (final opt in options)
-                  _PickerRow(
-                    option: opt,
-                    onTap: () {
-                      opt.onTap();
-                      Navigator.of(sheetContext).pop();
-                    },
+                // Scrollable so long option lists (e.g. six week choices)
+                // never overflow the sheet's capped height on small phones —
+                // the handle/title/reset stay pinned, only the rows scroll.
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final opt in options)
+                          _PickerRow(
+                            option: opt,
+                            onTap: () {
+                              opt.onTap();
+                              Navigator.of(sheetContext).pop();
+                            },
+                          ),
+                      ],
+                    ),
                   ),
+                ),
                 const SizedBox(height: 8),
                 TextButton.icon(
                   onPressed: () {

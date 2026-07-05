@@ -291,7 +291,9 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
           if (!_logged)
             Padding(
               padding: const EdgeInsets.only(left: 28, top: 4),
-              child: Row(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                 children: List.generate(_presets.length, (pi) {
                   final isActive = m == _presets[pi];
                   return Padding(
@@ -323,6 +325,7 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                     ),
                   );
                 }),
+                ),
               ),
             ),
         ],

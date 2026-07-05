@@ -736,26 +736,28 @@ class _AiCoachMealSuggestionSheetState
       maxHeightFraction: 0.7,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(colors, accent),
-            const SizedBox(height: 16),
-            if (_state == _CoachPopupState.thinking)
-              _buildThinking(colors, accent),
-            if (_state == _CoachPopupState.offline)
-              _buildOffline(colors),
-            if (_state == _CoachPopupState.ready ||
-                _state == _CoachPopupState.typing ||
-                _state == _CoachPopupState.replied)
-              ...[
-                if (partial) _buildPartialBanner(colors),
-                _buildPillsOrReply(colors, accent),
-              ],
-            if (_state == _CoachPopupState.error)
-              _buildError(colors, accent),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(colors, accent),
+              const SizedBox(height: 16),
+              if (_state == _CoachPopupState.thinking)
+                _buildThinking(colors, accent),
+              if (_state == _CoachPopupState.offline)
+                _buildOffline(colors),
+              if (_state == _CoachPopupState.ready ||
+                  _state == _CoachPopupState.typing ||
+                  _state == _CoachPopupState.replied)
+                ...[
+                  if (partial) _buildPartialBanner(colors),
+                  _buildPillsOrReply(colors, accent),
+                ],
+              if (_state == _CoachPopupState.error)
+                _buildError(colors, accent),
+            ],
+          ),
         ),
       ),
     );

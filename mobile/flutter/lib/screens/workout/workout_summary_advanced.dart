@@ -1230,19 +1230,28 @@ class _SettingsUsedSection extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  e.key,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                Expanded(
+                  child: Text(
+                    e.key,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                    ),
                   ),
                 ),
-                Text(
-                  e.value,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    e.value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    ),
                   ),
                 ),
               ],

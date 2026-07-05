@@ -21,21 +21,21 @@ import '../../core/providers/avoided_provider.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/exercise_stats_widgets.dart';
 import '../../widgets/fullscreen_image_viewer.dart';
+import '../../widgets/fullscreen_video_viewer.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/exercise_history.dart';
 import '../../data/providers/exercise_history_provider.dart';
 import '../../data/repositories/form_analysis_repository.dart';
 import '../../data/services/api_client.dart';
+import 'shared/exercise_instruction_copy.dart';
 import 'widgets/form_analysis_gauge_card.dart';
 import 'widgets/form_analysis_sheet.dart';
-
 
 import '../../l10n/generated/app_localizations.dart';
 part 'exercise_detail_screen_part_previous_set_data.dart';
 part 'exercise_detail_screen_part_cue_item.dart';
 
 part 'exercise_detail_screen_ui.dart';
-
 
 /// Full-screen exercise detail with autoplay video
 class ExerciseDetailScreen extends ConsumerStatefulWidget {
@@ -68,7 +68,8 @@ class ExerciseDetailScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ExerciseDetailScreen> createState() => _ExerciseDetailScreenState();
+  ConsumerState<ExerciseDetailScreen> createState() =>
+      _ExerciseDetailScreenState();
 }
 
 class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
@@ -122,7 +123,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   void initState() {
     super.initState();
     final startTab = widget.initialTab.clamp(0, 3);
-    _tabController = TabController(length: 4, vsync: this, initialIndex: startTab);
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: startTab,
+    );
     _selectedTab = startTab;
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
@@ -168,13 +173,15 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     ref.read(avoidedProvider.notifier).ensureInitialized();
 
     // Track exercise detail viewed
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'exercise_detail_viewed',
-      properties: {
-        'exercise_name': widget.exercise.name,
-        'muscle_group': widget.exercise.muscleGroup ?? '',
-      },
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'exercise_detail_viewed',
+          properties: {
+            'exercise_name': widget.exercise.name,
+            'muscle_group': widget.exercise.muscleGroup ?? '',
+          },
+        );
   }
 
   /// Slug for the per-exercise disk-cache keys. Uses the library UUID when
@@ -188,14 +195,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   /// Decode a list of [PreviousSetData] from a backend `sets` payload.
   List<PreviousSetData> _parsePreviousSets(List<dynamic> sets) {
     return sets
-        .map((s) => PreviousSetData(
-              setNumber: s['set_number'] ?? 0,
-              weightKg: (s['weight_kg'] as num?)?.toDouble(),
-              reps: s['reps_completed'] as int?,
-              setType: s['set_type'] ?? 'working',
-              rir: s['rir'] as int?,
-              rpe: s['rpe'] as int?,
-            ))
+        .map(
+          (s) => PreviousSetData(
+            setNumber: s['set_number'] ?? 0,
+            weightKg: (s['weight_kg'] as num?)?.toDouble(),
+            reps: s['reps_completed'] as int?,
+            setType: s['set_type'] ?? 'working',
+            rir: s['rir'] as int?,
+            rpe: s['rpe'] as int?,
+          ),
+        )
         .toList();
   }
 
@@ -280,8 +289,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   Future<void> _initVideo(String? url) async {
     if (url == null || url.isEmpty) return;
     try {
-      final controller =
-          VideoPlayerController.networkUrl(Uri.parse(url));
+      final controller = VideoPlayerController.networkUrl(Uri.parse(url));
       await controller.initialize().timeout(const Duration(seconds: 10));
       if (!mounted) {
         await controller.dispose();
@@ -447,6 +455,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     );
   }
 
+  /// Expand the PLAYING hero video into the fullscreen viewer. Reuses the
+  /// same controller, so position/speed carry over and playback never
+  /// restarts.
+  void _openFullscreenVideo() {
+    final c = _videoController;
+    if (c == null || !c.value.isInitialized) return;
+    HapticFeedback.lightImpact();
+    showFullscreenVideo(context, controller: c);
+  }
+
   void _startRestTimer() {
     final restTime = widget.exercise.restSeconds ?? 120;
     setState(() {
@@ -503,16 +521,27 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     // sense for a 30-sec "Arm circle", so we surface a single DURATION/HOLD
     // countdown card instead of the set table.
     final int? timedSecs = exercise.durationSeconds ?? exercise.holdSeconds;
-    final bool isTimedMove = exercise.isTimed == true ||
+    final bool isTimedMove =
+        exercise.isTimed == true ||
         (timedSecs != null && (exercise.sets == null || exercise.sets == 0));
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final backgroundColor = isDark
+        ? AppColors.pureBlack
+        : AppColorsLight.pureWhite;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final glassSurface = isDark
+        ? AppColors.glassSurface
+        : AppColorsLight.glassSurface;
+    final cardBorder = isDark
+        ? AppColors.cardBorder
+        : AppColorsLight.cardBorder;
     // Use dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
@@ -520,189 +549,238 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     // scrim (added in _buildVideoSection) darkens the status-bar strip, so we
     // use LIGHT icons while expanded. Once collapsed, match the solid bar:
     // light icons on the dark-theme black bar, dark icons on a light-theme bar.
-    final overlayStyle = (_headerCollapsed && !isDark
-            ? SystemUiOverlayStyle.dark
-            : SystemUiOverlayStyle.light)
-        .copyWith(statusBarColor: Colors.transparent);
+    final overlayStyle =
+        (_headerCollapsed && !isDark
+                ? SystemUiOverlayStyle.dark
+                : SystemUiOverlayStyle.light)
+            .copyWith(statusBarColor: Colors.transparent);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
       child: Scaffold(
-      backgroundColor: backgroundColor,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            controller: _scrollController,
-            // BouncingScrollPhysics on BOTH platforms so the SliverAppBar
-            // overscroll-stretch (zoomBackground) fires on Android too —
-            // Android's default ClampingScrollPhysics has no top overscroll, so
-            // the drag-down zoom wouldn't trigger without this.
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              // App bar with video
-              SliverAppBar(
-                expandedHeight: 300,
-                pinned: true,
-                // Overscroll-drag-down zooms the hero media (iOS "stretchy
-                // header"). `stretch` lets the bar grow past 300pt on pull;
-                // zoomBackground scales the écorché/video to fill it.
-                stretch: true,
-                onStretchTrigger: () async => HapticFeedback.lightImpact(),
-                backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
-                automaticallyImplyLeading: false, // Remove default back button
-                flexibleSpace: FlexibleSpaceBar(
-                  stretchModes: const [StretchMode.zoomBackground],
-                  background: _buildVideoSection(elevated, textMuted),
-                ),
+        backgroundColor: backgroundColor,
+        body: Stack(
+          children: [
+            CustomScrollView(
+              controller: _scrollController,
+              // BouncingScrollPhysics on BOTH platforms so the SliverAppBar
+              // overscroll-stretch (zoomBackground) fires on Android too —
+              // Android's default ClampingScrollPhysics has no top overscroll, so
+              // the drag-down zoom wouldn't trigger without this.
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
-
-          // Content
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Exercise name (C5: title-cased for display) — Anton masthead.
-                  Text(
-                    exercise.name.titleCaseExercise.toUpperCase(),
-                    style: ZType.disp(30, color: textPrimary),
+              slivers: [
+                // App bar with video
+                SliverAppBar(
+                  expandedHeight: 300,
+                  pinned: true,
+                  // Overscroll-drag-down zooms the hero media (iOS "stretchy
+                  // header"). `stretch` lets the bar grow past 300pt on pull;
+                  // zoomBackground scales the écorché/video to fill it.
+                  stretch: true,
+                  onStretchTrigger: () async => HapticFeedback.lightImpact(),
+                  backgroundColor: isDark
+                      ? AppColors.pureBlack
+                      : AppColorsLight.pureWhite,
+                  automaticallyImplyLeading:
+                      false, // Remove default back button
+                  flexibleSpace: FlexibleSpaceBar(
+                    stretchModes: const [StretchMode.zoomBackground],
+                    background: _buildVideoSection(elevated, textMuted),
                   ),
-                  const SizedBox(height: 10),
+                ),
 
-                  // Target muscle + equipment — Barlow uppercase hairline chips.
-                  if (exercise.primaryMuscle != null || exercise.muscleGroup != null)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                // Content
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ZealovaChip(
-                          label: _cleanMuscleLabel(
-                              exercise.primaryMuscle ?? exercise.muscleGroup ?? ''),
-                          selected: true,
+                        // Exercise name (C5: title-cased for display) — Anton masthead.
+                        Text(
+                          exercise.name.titleCaseExercise.toUpperCase(),
+                          style: ZType.disp(30, color: textPrimary),
                         ),
-                        if (exercise.equipment != null)
-                          ZealovaChip(
-                            label: exercise.equipment!,
+                        const SizedBox(height: 10),
+
+                        // Target muscle + equipment — Barlow uppercase hairline chips.
+                        if (exercise.primaryMuscle != null ||
+                            exercise.muscleGroup != null)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              ZealovaChip(
+                                label: _cleanMuscleLabel(
+                                  exercise.primaryMuscle ??
+                                      exercise.muscleGroup ??
+                                      '',
+                                ),
+                                selected: true,
+                              ),
+                              if (exercise.equipment != null)
+                                ZealovaChip(label: exercise.equipment!),
+                            ],
                           ),
+                        const SizedBox(height: 20),
+
+                        // Quick action buttons
+                        _buildActionRow(
+                          exercise,
+                          elevated,
+                          cardBorder,
+                          textMuted,
+                          accentColor,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Tab content - switches based on floating pill bar selection
+                        if (_selectedTab == 0) ...[
+                          // INFO TAB
+                          // Instructions — substantial server/DB text wins, else the
+                          // shared vetted engine supplies technique-correct steps
+                          // (incl. cardio: Running/Jogging/Walking). Never empty.
+                          _buildInstructionsSection(
+                            _resolveInstructionsText(exercise),
+                            elevated,
+                            textSecondary,
+                          ),
+
+                          // Timer card — a working countdown. For a timed move it
+                          // doubles as the DURATION/HOLD timer (seeded with the hold
+                          // length); otherwise it's the inter-set rest timer.
+                          // Hidden in browse mode (no active workout to rest between).
+                          if (!widget.browse) ...[
+                            _buildRestTimerCard(
+                              isTimedMove
+                                  ? (timedSecs ?? restSeconds)
+                                  : restSeconds,
+                              elevated,
+                              textMuted,
+                              textPrimary,
+                              label: isTimedMove
+                                  ? (exercise.holdSeconds != null &&
+                                            exercise.durationSeconds == null
+                                        ? 'Hold'
+                                        : 'Duration')
+                                  : null,
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // Set table — only for rep-based exercises. A timed
+                          // warmup/stretch has no sets×reps grid (it's a duration).
+                          // Hidden in browse mode — the set targets assume a live
+                          // workout and a browse-constructed exercise has null sets.
+                          if (!isTimedMove && !widget.browse) ...[
+                            // Set table header — Barlow uppercase kicker.
+                            const ZealovaSectionKicker('Sets'),
+                            const SizedBox(height: 12),
+
+                            // Set table
+                            _buildSetTable(
+                              warmupSets,
+                              totalSets,
+                              repRange,
+                              exercise.weight,
+                              elevated,
+                              glassSurface,
+                              cardBorder,
+                              textPrimary,
+                              textMuted,
+                              textSecondary,
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // Coaching cues (form, breathing, setup, tempo)
+                          _buildCoachingCuesSection(
+                            exercise,
+                            elevated,
+                            cardBorder,
+                            textPrimary,
+                            textSecondary,
+                            textMuted,
+                            accentColor,
+                          ),
+
+                          // Exercise info (difficulty, secondary muscles, substitution, notes)
+                          _buildExerciseInfoSection(
+                            exercise,
+                            elevated,
+                            cardBorder,
+                            textPrimary,
+                            textSecondary,
+                            textMuted,
+                            accentColor,
+                          ),
+                        ] else if (_selectedTab == 1) ...[
+                          // STATS TAB
+                          _buildStatsTabContent(textMuted),
+                        ] else if (_selectedTab == 2) ...[
+                          // HISTORY TAB
+                          _buildHistoryTabContent(textMuted),
+                        ] else ...[
+                          // FORM TAB
+                          _buildFormTabContent(textMuted),
+                        ],
+
+                        // Bottom padding for floating pill bar
+                        const SizedBox(height: 100),
                       ],
                     ),
-                  const SizedBox(height: 20),
-
-                  // Quick action buttons
-                  _buildActionRow(exercise, elevated, cardBorder, textMuted, accentColor),
-                  const SizedBox(height: 24),
-
-                  // Tab content - switches based on floating pill bar selection
-                  if (_selectedTab == 0) ...[
-                    // INFO TAB
-                    // Instructions
-                    if (exercise.instructions != null &&
-                        exercise.instructions!.isNotEmpty)
-                      _buildInstructionsSection(exercise.instructions!, elevated, textSecondary),
-
-                    // Timer card — a working countdown. For a timed move it
-                    // doubles as the DURATION/HOLD timer (seeded with the hold
-                    // length); otherwise it's the inter-set rest timer.
-                    // Hidden in browse mode (no active workout to rest between).
-                    if (!widget.browse) ...[
-                      _buildRestTimerCard(
-                        isTimedMove ? (timedSecs ?? restSeconds) : restSeconds,
-                        elevated,
-                        textMuted,
-                        textPrimary,
-                        label: isTimedMove
-                            ? (exercise.holdSeconds != null &&
-                                    exercise.durationSeconds == null
-                                ? 'Hold'
-                                : 'Duration')
-                            : null,
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-
-                    // Set table — only for rep-based exercises. A timed
-                    // warmup/stretch has no sets×reps grid (it's a duration).
-                    // Hidden in browse mode — the set targets assume a live
-                    // workout and a browse-constructed exercise has null sets.
-                    if (!isTimedMove && !widget.browse) ...[
-                      // Set table header — Barlow uppercase kicker.
-                      const ZealovaSectionKicker('Sets'),
-                      const SizedBox(height: 12),
-
-                      // Set table
-                      _buildSetTable(warmupSets, totalSets, repRange, exercise.weight, elevated, glassSurface, cardBorder, textPrimary, textMuted, textSecondary),
-                      const SizedBox(height: 24),
-                    ],
-
-                    // Coaching cues (form, breathing, setup, tempo)
-                    _buildCoachingCuesSection(exercise, elevated, cardBorder, textPrimary, textSecondary, textMuted, accentColor),
-
-                    // Exercise info (difficulty, secondary muscles, substitution, notes)
-                    _buildExerciseInfoSection(exercise, elevated, cardBorder, textPrimary, textSecondary, textMuted, accentColor),
-                  ] else if (_selectedTab == 1) ...[
-                    // STATS TAB
-                    _buildStatsTabContent(textMuted),
-                  ] else if (_selectedTab == 2) ...[
-                    // HISTORY TAB
-                    _buildHistoryTabContent(textMuted),
-                  ] else ...[
-                    // FORM TAB
-                    _buildFormTabContent(textMuted),
-                  ],
-
-                  // Bottom padding for floating pill bar
-                  const SizedBox(height: 100),
-                ],
+                  ),
+                ),
+              ],
+            ),
+            // Floating back button
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 16,
+              child: GlassBackButton(
+                onTap: () => context.pop(),
+                // Hero video can be light or dark — keep dark scrim for contrast.
+                forceDarkScrim: true,
               ),
             ),
-          ),
-        ],
-      ),
-      // Floating back button
-      Positioned(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        child: GlassBackButton(
-          onTap: () => context.pop(),
-          // Hero video can be light or dark — keep dark scrim for contrast.
-          forceDarkScrim: true,
-        ),
-      ),
-      // Expand-to-fullscreen button — mirrors the back button at top-right.
-      // Only while the still image is showing (a playing video doesn't expand),
-      // not while the header is collapsed, and only once media has resolved.
-      if (_showingHeroImage && _imageUrl != null && !_headerCollapsed)
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 8,
-          right: 16,
-          child: GestureDetector(
-            onTap: _openFullscreenImage,
-            child: Container(
-              padding: const EdgeInsets.all(9),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.45),
-                shape: BoxShape.circle,
+            // Expand-to-fullscreen button — mirrors the back button at top-right.
+            // Works for BOTH hero states: the still image opens the pinch-zoom
+            // image viewer; a playing video opens the fullscreen video viewer.
+            // Hidden while the header is collapsed / before media resolves.
+            if ((_showingHeroImage ? _imageUrl != null : true) &&
+                !_headerCollapsed)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 8,
+                right: 16,
+                child: GestureDetector(
+                  onTap: _showingHeroImage
+                      ? _openFullscreenImage
+                      : _openFullscreenVideo,
+                  child: Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.fullscreen,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
               ),
-              child: const Icon(
-                Icons.fullscreen,
-                color: Colors.white,
-                size: 22,
-              ),
+            // Floating pill bar at bottom
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: MediaQuery.of(context).padding.bottom + 12,
+              child: _buildFloatingPillBar(accentColor, isDark),
             ),
-          ),
+          ],
         ),
-      // Floating pill bar at bottom
-      Positioned(
-        left: 0,
-        right: 0,
-        bottom: MediaQuery.of(context).padding.bottom + 12,
-        child: _buildFloatingPillBar(accentColor, isDark),
-      ),
-        ],
-      ),
       ),
     );
   }
@@ -754,17 +832,57 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
         ),
         child: Row(
           children: [
-            _buildPillItem(Icons.info_outline, Icons.info_rounded, 'Info', 0, accentColor, iconMuted, isDark),
-            _buildPillItem(Icons.bar_chart_outlined, Icons.bar_chart_rounded, 'Stats', 1, accentColor, iconMuted, isDark),
-            _buildPillItem(Icons.history_outlined, Icons.history_rounded, 'History', 2, accentColor, iconMuted, isDark),
-            _buildPillItem(Icons.sports_gymnastics_outlined, Icons.sports_gymnastics_rounded, 'Form', 3, accentColor, iconMuted, isDark),
+            _buildPillItem(
+              Icons.info_outline,
+              Icons.info_rounded,
+              'Info',
+              0,
+              accentColor,
+              iconMuted,
+              isDark,
+            ),
+            _buildPillItem(
+              Icons.bar_chart_outlined,
+              Icons.bar_chart_rounded,
+              'Stats',
+              1,
+              accentColor,
+              iconMuted,
+              isDark,
+            ),
+            _buildPillItem(
+              Icons.history_outlined,
+              Icons.history_rounded,
+              'History',
+              2,
+              accentColor,
+              iconMuted,
+              isDark,
+            ),
+            _buildPillItem(
+              Icons.sports_gymnastics_outlined,
+              Icons.sports_gymnastics_rounded,
+              'Form',
+              3,
+              accentColor,
+              iconMuted,
+              isDark,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPillItem(IconData icon, IconData selectedIcon, String label, int index, Color accentColor, Color mutedColor, bool isDark) {
+  Widget _buildPillItem(
+    IconData icon,
+    IconData selectedIcon,
+    String label,
+    int index,
+    Color accentColor,
+    Color mutedColor,
+    bool isDark,
+  ) {
     final isSelected = _selectedTab == index;
     final fg = isSelected ? accentColor : mutedColor;
     return Expanded(
@@ -789,11 +907,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                isSelected ? selectedIcon : icon,
-                color: fg,
-                size: 17,
-              ),
+              Icon(isSelected ? selectedIcon : icon, color: fg, size: 17),
               const SizedBox(width: 5),
               Flexible(
                 child: Text(
@@ -840,8 +954,13 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    AppLocalizations.of(context).exerciseDetailYourSessionsWillAppear,
-                    style: ZType.ser(12, color: textMuted.withValues(alpha: 0.6)),
+                    AppLocalizations.of(
+                      context,
+                    ).exerciseDetailYourSessionsWillAppear,
+                    style: ZType.ser(
+                      12,
+                      color: textMuted.withValues(alpha: 0.6),
+                    ),
                   ),
                 ],
               ),
@@ -863,8 +982,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
             if (weightPoints.length >= 2) ...[
               Text(
                 'WEIGHT OVER TIME',
-                style: ZType.lbl(10,
-                    color: textMuted, letterSpacing: 2.0),
+                style: ZType.lbl(10, color: textMuted, letterSpacing: 2.0),
               ),
               const SizedBox(height: 8),
               SizedBox(
@@ -909,7 +1027,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                 height: double.infinity,
                 radius: 0,
               )
-            else if (_videoInitialized && _showVideo && _videoController != null)
+            else if (_videoInitialized &&
+                _showVideo &&
+                _videoController != null)
               FittedBox(
                 fit: BoxFit.cover,
                 child: SizedBox(
@@ -928,7 +1048,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                   height: double.infinity,
                   radius: 0,
                 ),
-                errorWidget: (_, __, ___) => _buildPlaceholder(elevated, textMuted),
+                errorWidget: (_, __, ___) =>
+                    _buildPlaceholder(elevated, textMuted),
               )
             else
               _buildPlaceholder(elevated, textMuted),
@@ -988,7 +1109,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                         _videoController!.play();
                       } else if (_videoController != null) {
                         _videoController!.pause();
-                        _speedMenuOpen = false; // hide speed menu with the video
+                        _speedMenuOpen =
+                            false; // hide speed menu with the video
                       }
                     });
                   },
@@ -1011,8 +1133,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _showVideo ? AppLocalizations.of(context).exerciseDetailImage : AppLocalizations.of(context).workoutShowcaseVideo,
-                          style: ZType.lbl(12, color: Colors.white, letterSpacing: 0.8),
+                          _showVideo
+                              ? AppLocalizations.of(context).exerciseDetailImage
+                              : AppLocalizations.of(
+                                  context,
+                                ).workoutShowcaseVideo,
+                          style: ZType.lbl(
+                            12,
+                            color: Colors.white,
+                            letterSpacing: 0.8,
+                          ),
                         ),
                       ],
                     ),
@@ -1042,43 +1172,48 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                           // an unbounded width → "forces infinite width" crash.
                           ? IntrinsicWidth(
                               child: Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              decoration: BoxDecoration(
-                                // High opacity + hairline border so it stays
-                                // legible over a WHITE video frame too.
-                                color: Colors.black.withValues(alpha: 0.85),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.18)),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  for (final s in _kPlaybackSpeeds)
-                                    GestureDetector(
-                                      behavior: HitTestBehavior.opaque,
-                                      onTap: () => _setPlaybackSpeed(s),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 18, vertical: 8),
-                                        child: Text(
-                                          _formatSpeed(s),
-                                          textAlign: TextAlign.center,
-                                          style: ZType.lbl(
-                                            13,
-                                            color: s == _playbackSpeed
-                                                ? ref.colors(context).accent
-                                                : Colors.white,
-                                            letterSpacing: 0.8,
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  // High opacity + hairline border so it stays
+                                  // legible over a WHITE video frame too.
+                                  color: Colors.black.withValues(alpha: 0.85),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.18),
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    for (final s in _kPlaybackSpeeds)
+                                      GestureDetector(
+                                        behavior: HitTestBehavior.opaque,
+                                        onTap: () => _setPlaybackSpeed(s),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 18,
+                                            vertical: 8,
+                                          ),
+                                          child: Text(
+                                            _formatSpeed(s),
+                                            textAlign: TextAlign.center,
+                                            style: ZType.lbl(
+                                              13,
+                                              color: s == _playbackSpeed
+                                                  ? ref.colors(context).accent
+                                                  : Colors.white,
+                                              letterSpacing: 0.8,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                ],
-                              ),
+                                  ],
+                                ),
                               ),
                             )
                           : const SizedBox.shrink(),
@@ -1089,24 +1224,34 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                           setState(() => _speedMenuOpen = !_speedMenuOpen),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 7),
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
                           // Near-opaque dark pill + hairline border → crisp on a
                           // white video frame (black54 goes muddy grey there).
                           color: Colors.black.withValues(alpha: 0.82),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2)),
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.speed, size: 16, color: Colors.white),
+                            const Icon(
+                              Icons.speed,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               _formatSpeed(_playbackSpeed),
-                              style: ZType.lbl(12,
-                                  color: Colors.white, letterSpacing: 0.8),
+                              style: ZType.lbl(
+                                12,
+                                color: Colors.white,
+                                letterSpacing: 0.8,
+                              ),
                             ),
                           ],
                         ),
@@ -1125,16 +1270,33 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     return Container(
       color: elevated,
       child: Center(
-        child: Icon(
-          Icons.fitness_center,
-          size: 64,
-          color: textMuted,
-        ),
+        child: Icon(Icons.fitness_center, size: 64, color: textMuted),
       ),
     );
   }
 
-  Widget _buildInstructionsSection(String instructions, Color elevated, Color textSecondary) {
+  /// Single source of truth for the Instructions text: substantial server/DB
+  /// instructions win (split into numbered steps); anything else — null,
+  /// empty, or template filler — falls back to the shared vetted engine
+  /// (`exercise_instruction_copy.dart`), which has correct copy for every
+  /// movement class including cardio. Mirrors exercise_info_sheet.dart.
+  String _resolveInstructionsText(WorkoutExercise exercise) {
+    final serverText = (exercise.instructions ?? '').trim();
+    final steps = serverInstructionsAreSubstantial(serverText)
+        ? splitInstructionsIntoSteps(serverText)
+        : getSetupSteps(exercise.name, equipment: exercise.equipment);
+    return steps
+        .asMap()
+        .entries
+        .map((e) => '${e.key + 1}. ${e.value}')
+        .join('\n');
+  }
+
+  Widget _buildInstructionsSection(
+    String instructions,
+    Color elevated,
+    Color textSecondary,
+  ) {
     // Hairline section (no boxed card): Barlow kicker + Fraunces coaching line.
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
@@ -1156,7 +1318,13 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     );
   }
 
-  Widget _buildRestTimerCard(int defaultSeconds, Color elevated, Color textMuted, Color textPrimary, {String? label}) {
+  Widget _buildRestTimerCard(
+    int defaultSeconds,
+    Color elevated,
+    Color textMuted,
+    Color textPrimary, {
+    String? label,
+  }) {
     final mins = defaultSeconds ~/ 60;
     final secs = defaultSeconds % 60;
     // Use dynamic accent color from provider
@@ -1164,7 +1332,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     // Default label is the localized "Rest Timer"; a timed move overrides it
     // with "Duration" / "Hold".
     final cardLabel =
-        (label ?? AppLocalizations.of(context).exerciseDetailRestTimer).toUpperCase();
+        (label ?? AppLocalizations.of(context).exerciseDetailRestTimer)
+            .toUpperCase();
 
     return GestureDetector(
       onTap: _isResting ? _stopRestTimer : _startRestTimer,
@@ -1260,60 +1429,87 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     return Colors.white;
   }
 
-  Widget _buildSetTable(int warmupSets, int workingSets, String repRange, double? weight, Color elevated, Color glassSurface, Color cardBorder, Color textPrimary, Color textMuted, Color textSecondary) {
+  Widget _buildSetTable(
+    int warmupSets,
+    int workingSets,
+    String repRange,
+    double? weight,
+    Color elevated,
+    Color glassSurface,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted,
+    Color textSecondary,
+  ) {
     final hasPrevious = _previousSets.isNotEmpty;
     final exercise = widget.exercise;
     final setTargets = exercise.setTargets ?? [];
 
     return Column(
-        children: [
-          // Header - matches active workout screen: Set | Previous | Target (weight × reps + RIR)
-          Container(
-            padding: const EdgeInsets.only(bottom: 10),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: AppColors.hairlineStrong),
-              ),
-            ),
-            child: Row(
-              children: [
-                SizedBox(width: 36, child: Text(AppLocalizations.of(context).workoutSummaryAdvancedSet.toUpperCase(), style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2))),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: Text(AppLocalizations.of(context).summaryExerciseTablePrevious.toUpperCase(), style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2)),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(AppLocalizations.of(context).workoutSummaryAdvancedTarget.toUpperCase(), style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2)),
-                ),
-              ],
-            ),
+      children: [
+        // Header - matches active workout screen: Set | Previous | Target (weight × reps + RIR)
+        Container(
+          padding: const EdgeInsets.only(bottom: 10),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.hairlineStrong)),
           ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 36,
+                child: Text(
+                  AppLocalizations.of(
+                    context,
+                  ).workoutSummaryAdvancedSet.toUpperCase(),
+                  style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  AppLocalizations.of(
+                    context,
+                  ).summaryExerciseTablePrevious.toUpperCase(),
+                  style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  AppLocalizations.of(
+                    context,
+                  ).workoutSummaryAdvancedTarget.toUpperCase(),
+                  style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2),
+                ),
+              ),
+            ],
+          ),
+        ),
 
-          // Build rows from setTargets - NO FALLBACK, must fail if setTargets is empty
-          ...setTargets.asMap().entries.map((entry) {
-            final index = entry.key;
-            final target = entry.value;
-            final isWarmup = target.setType == 'warmup';
-            final previous = _getPreviousSet(target.setNumber, isWarmup);
+        // Build rows from setTargets - NO FALLBACK, must fail if setTargets is empty
+        ...setTargets.asMap().entries.map((entry) {
+          final index = entry.key;
+          final target = entry.value;
+          final isWarmup = target.setType == 'warmup';
+          final previous = _getPreviousSet(target.setNumber, isWarmup);
 
-            return _buildTableRow(
-              setLabel: isWarmup ? 'W' : '${target.setNumber}',
-              isWarmup: isWarmup,
-              previousData: previous,
-              hasPrevious: hasPrevious,
-              targetWeight: target.targetWeightKg,
-              targetReps: target.targetReps,
-              targetRir: target.targetRir,
-              isLast: index == setTargets.length - 1,
-              cardBorder: cardBorder,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              textSecondary: textSecondary,
-            );
-          }),
-        ],
+          return _buildTableRow(
+            setLabel: isWarmup ? 'W' : '${target.setNumber}',
+            isWarmup: isWarmup,
+            previousData: previous,
+            hasPrevious: hasPrevious,
+            targetWeight: target.targetWeightKg,
+            targetReps: target.targetReps,
+            targetRir: target.targetRir,
+            isLast: index == setTargets.length - 1,
+            cardBorder: cardBorder,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+            textSecondary: textSecondary,
+          );
+        }),
+      ],
     );
   }
 }

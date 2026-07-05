@@ -2,7 +2,6 @@ part of 'expanded_exercise_card.dart';
 
 /// UI builder methods extracted from _ExpandedExerciseCardState
 extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
-
   /// Build the set list, grouped into a muted, collapsible "Warmup sets"
   /// section above a highlighted "Effective sets" section (Surface 6a).
   ///
@@ -32,39 +31,41 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     final effective = descriptors.where((d) => !d.isWarmup).toList();
 
     Widget rowFor(_SetDescriptor d) => _buildSetRow(
-          setLabel: d.label,
-          isWarmup: d.isWarmup,
-          setType: d.setType,
-          weightKg: d.weightKg,
-          targetReps: d.targetReps,
-          targetRir: d.targetRir,
-          useKg: useKg,
-          cardBorder: cardBorder,
-          glassSurface: glassSurface,
-          textPrimary: textPrimary,
-          textMuted: textMuted,
-          textSecondary: textSecondary,
-          accentColor: accentColor,
-        );
+      setLabel: d.label,
+      isWarmup: d.isWarmup,
+      setType: d.setType,
+      weightKg: d.weightKg,
+      targetReps: d.targetReps,
+      targetRir: d.targetRir,
+      useKg: useKg,
+      cardBorder: cardBorder,
+      glassSurface: glassSurface,
+      textPrimary: textPrimary,
+      textMuted: textMuted,
+      textSecondary: textSecondary,
+      accentColor: accentColor,
+    );
 
     final rows = <Widget>[];
 
     // ── Warmup section (muted, collapsible) — only when warmups exist.
     if (warmups.isNotEmpty) {
-      rows.add(_buildSetGroupHeader(
-        label: warmups.length == 1 ? 'Warmup set' : 'Warmup sets',
-        count: warmups.length,
-        color: AppColors.orange,
-        textMuted: textMuted,
-        glassSurface: glassSurface,
-        cardBorder: cardBorder,
-        collapsible: true,
-        collapsed: _warmupsHidden,
-        onToggle: () {
-          HapticService.light();
-          setState(() => _warmupsHidden = !_warmupsHidden);
-        },
-      ));
+      rows.add(
+        _buildSetGroupHeader(
+          label: warmups.length == 1 ? 'Warmup set' : 'Warmup sets',
+          count: warmups.length,
+          color: AppColors.orange,
+          textMuted: textMuted,
+          glassSurface: glassSurface,
+          cardBorder: cardBorder,
+          collapsible: true,
+          collapsed: _warmupsHidden,
+          onToggle: () {
+            HapticService.light();
+            setState(() => _warmupsHidden = !_warmupsHidden);
+          },
+        ),
+      );
       if (!_warmupsHidden) {
         rows.addAll(warmups.map(rowFor));
       }
@@ -76,16 +77,18 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     // "Effective sets" banner above a single ungrouped list).
     if (effective.isNotEmpty) {
       if (warmups.isNotEmpty) {
-        rows.add(_buildSetGroupHeader(
-          label: effective.length == 1 ? 'Effective set' : 'Effective sets',
-          count: effective.length,
-          color: accentColor,
-          textMuted: textMuted,
-          glassSurface: glassSurface,
-          cardBorder: cardBorder,
-          collapsible: false,
-          highlighted: true,
-        ));
+        rows.add(
+          _buildSetGroupHeader(
+            label: effective.length == 1 ? 'Effective set' : 'Effective sets',
+            count: effective.length,
+            color: accentColor,
+            textMuted: textMuted,
+            glassSurface: glassSurface,
+            cardBorder: cardBorder,
+            collapsible: false,
+            highlighted: true,
+          ),
+        );
       }
       // Tint the effective block with an accent-left-border when grouped, so
       // the user's eye lands on the sets that actually count.
@@ -133,8 +136,13 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           setLabel = target.setTypeLabel; // W, D, F, A
         }
 
-        final calculatedRir = target.targetRir ??
-            _calculateRir(target.setType, currentWorkingIndex, totalWorkingSets);
+        final calculatedRir =
+            target.targetRir ??
+            _calculateRir(
+              target.setType,
+              currentWorkingIndex,
+              totalWorkingSets,
+            );
 
         return _SetDescriptor(
           label: setLabel,
@@ -147,9 +155,11 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
       }).toList();
     }
 
-    // Fallback to legacy format (hardcoded 2 warmups + working sets)
+    // Fallback to legacy format (hardcoded 2 warmups + working sets).
+    // Timed/cardio exercises get NO synthesized warmup sets — "2 warmups"
+    // before a 10-minute jog is fabricated nonsense.
     final totalSets = exercise.sets ?? 3;
-    const warmupSets = 2;
+    final warmupSets = _isTimedExercise ? 0 : 2;
     final defaultReps = exercise.reps ?? 10;
 
     return [
@@ -267,15 +277,15 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     );
   }
 
-
   /// Small glowing hexagon score chip for the header chip-row (Surface 2).
   /// Renders nothing until the score loads AND has data, so the header stays
   /// quiet for brand-new exercises and never shows a "0" placeholder.
   Widget _buildStrengthScoreChip(Color accentColor) {
     return Consumer(
       builder: (context, ref, _) {
-        final scoreAsync =
-            ref.watch(exerciseStrengthScoreProvider(widget.exercise.name));
+        final scoreAsync = ref.watch(
+          exerciseStrengthScoreProvider(widget.exercise.name),
+        );
         final ExerciseStrengthScore? score = scoreAsync.asData?.value;
         if (score == null || !score.hasData) {
           return const SizedBox.shrink();
@@ -328,7 +338,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           bottomRight: Radius.circular(16),
         ),
         border: shouldHighlight
-            ? null  // No inner border when highlighted
+            ? null // No inner border when highlighted
             : Border.all(color: cardBorder.withOpacity(0.3)),
       ),
       child: Material(
@@ -342,17 +352,37 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildHeader(context, exercise, glassSurface, textMuted, accentColor),
+            _buildHeader(
+              context,
+              exercise,
+              glassSurface,
+              textMuted,
+              accentColor,
+            ),
             if (!_isExpanded)
-              _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder, accentColor),
+              _buildCollapsedSummary(
+                totalSets,
+                repRange,
+                restSeconds,
+                glassSurface,
+                cardBorder,
+                accentColor,
+              ),
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 200),
-              crossFadeState: _isExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+              crossFadeState: _isExpanded
+                  ? CrossFadeState.showFirst
+                  : CrossFadeState.showSecond,
               firstChild: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Divider(color: cardBorder.withOpacity(0.3), height: 1),
-                  _buildRestTimerRow(restSeconds, textSecondary, textMuted, accentColor),
+                  _buildRestTimerRow(
+                    restSeconds,
+                    textSecondary,
+                    textMuted,
+                    accentColor,
+                  ),
                   Divider(color: cardBorder.withOpacity(0.3), height: 1),
                   _buildTableHeader(glassSurface, textMuted, accentColor),
                   ..._buildSetRows(
@@ -407,8 +437,21 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildHeader(context, exercise, glassSurface, textMuted, accentColor),
-                    _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder, accentColor),
+                    _buildHeader(
+                      context,
+                      exercise,
+                      glassSurface,
+                      textMuted,
+                      accentColor,
+                    ),
+                    _buildCollapsedSummary(
+                      totalSets,
+                      repRange,
+                      restSeconds,
+                      glassSurface,
+                      cardBorder,
+                      accentColor,
+                    ),
                   ],
                 ),
               ),
@@ -437,9 +480,22 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildHeader(context, exercise, glassSurface, textMuted, accentColor),
+                _buildHeader(
+                  context,
+                  exercise,
+                  glassSurface,
+                  textMuted,
+                  accentColor,
+                ),
                 if (!_isExpanded)
-                  _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder, accentColor),
+                  _buildCollapsedSummary(
+                    totalSets,
+                    repRange,
+                    restSeconds,
+                    glassSurface,
+                    cardBorder,
+                    accentColor,
+                  ),
               ],
             ),
           ),
@@ -449,7 +505,6 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
       child: cardBody,
     );
   }
-
 
   Widget _buildSummaryChip(IconData icon, String text, Color color) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -472,7 +527,6 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     );
   }
 
-
   /// Build kg/lb toggle button
   Widget _buildUnitToggle(Color accentColor) {
     final bool useKg = _useKgOverride ?? ref.read(useKgForWorkoutProvider);
@@ -489,16 +543,14 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         decoration: BoxDecoration(
           color: accentColor.withValues(alpha: isDark ? 0.1 : 0.15),
           borderRadius: BorderRadius.circular(8),
-          border: isDark ? null : Border.all(color: displayAccent.withOpacity(0.3), width: 0.5),
+          border: isDark
+              ? null
+              : Border.all(color: displayAccent.withOpacity(0.3), width: 0.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.swap_horiz,
-              size: 14,
-              color: displayAccent,
-            ),
+            Icon(Icons.swap_horiz, size: 14, color: displayAccent),
             const SizedBox(width: 4),
             Text(
               useKg ? 'kg' : 'lbs',
@@ -514,8 +566,13 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     );
   }
 
-
-  Widget _buildHeader(BuildContext context, WorkoutExercise exercise, Color glassSurface, Color textMuted, Color accentColor) {
+  Widget _buildHeader(
+    BuildContext context,
+    WorkoutExercise exercise,
+    Color glassSurface,
+    Color textMuted,
+    Color accentColor,
+  ) {
     return InkWell(
       onTap: () {
         debugPrint('🎯 [ExerciseCard] Header tapped: ${widget.exercise.name}');
@@ -528,7 +585,12 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
             // Note: Drag handle is now a separate strip on the left side of the card
             // when reorderIndex is provided (see build method)
             // Exercise Image (with muscle-group anatomy badge overlay)
-            _buildExerciseThumbnail(exercise, glassSurface, textMuted, accentColor),
+            _buildExerciseThumbnail(
+              exercise,
+              glassSurface,
+              textMuted,
+              accentColor,
+            ),
             const SizedBox(width: 12),
 
             // Exercise Info
@@ -541,9 +603,8 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       Expanded(
                         child: Text(
                           exercise.name,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -551,14 +612,24 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       // NEW badge for exercises new this week
                       Consumer(
                         builder: (context, ref, _) {
-                          final isNew = ref.watch(isExerciseNewThisWeekProvider(exercise.name));
+                          final isNew = ref.watch(
+                            isExerciseNewThisWeekProvider(exercise.name),
+                          );
                           if (!isNew) return const SizedBox.shrink();
-                          final isDark = Theme.of(context).brightness == Brightness.dark;
-                          final badgeColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-                          final badgeTextColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+                          final isDark =
+                              Theme.of(context).brightness == Brightness.dark;
+                          final badgeColor = isDark
+                              ? AppColors.textSecondary
+                              : AppColorsLight.textSecondary;
+                          final badgeTextColor = isDark
+                              ? AppColors.pureBlack
+                              : AppColorsLight.pureWhite;
                           return Container(
                             margin: const EdgeInsetsDirectional.only(start: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: badgeColor,
                               borderRadius: BorderRadius.circular(6),
@@ -619,14 +690,21 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       // fallback; null → no chip (fail-open).
                       if (exercise.movementCategoryResolved != null)
                         _buildMovementCategoryChip(
-                            exercise.movementCategoryResolved!),
-                      if (exercise.muscleGroup != null || exercise.primaryMuscle != null)
+                          exercise.movementCategoryResolved!,
+                        ),
+                      if (exercise.muscleGroup != null ||
+                          exercise.primaryMuscle != null)
                         _buildInfoChip(
                           Icons.fitness_center,
-                          _shortenMuscle(exercise.primaryMuscle ?? exercise.muscleGroup ?? ''),
+                          _shortenMuscle(
+                            exercise.primaryMuscle ??
+                                exercise.muscleGroup ??
+                                '',
+                          ),
                           accentColor,
                         ),
-                      if (exercise.equipment != null && exercise.equipment!.isNotEmpty)
+                      if (exercise.equipment != null &&
+                          exercise.equipment!.isNotEmpty)
                         _buildInfoChip(
                           Icons.sports_gymnastics,
                           _shortenEquipment(exercise.equipment!),
@@ -651,7 +729,6 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     );
   }
 
-
   /// 60×60 exercise thumbnail with an optional muscle-group anatomy badge
   /// pinned to the bottom-right corner (matches the pattern used in the
   /// exercise library so users get a quick visual cue of the primary muscle).
@@ -671,52 +748,52 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
       behavior: HitTestBehavior.opaque,
       onTap: () => showExerciseInfoSheet(context: context, exercise: exercise),
       child: Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: glassSurface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildImage(glassSurface, textMuted, accentColor),
-          if (muscleAsset != null)
-            PositionedDirectional(end: 3,
-              bottom: 3,
-              child: Container(
-                width: 22,
-                height: 22,
-                      padding: const EdgeInsets.all(1.5),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
-                      blurRadius: 3,
-                      offset: const Offset(0, 1),
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: glassSurface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildImage(glassSurface, textMuted, accentColor),
+            if (muscleAsset != null)
+              PositionedDirectional(
+                end: 3,
+                bottom: 3,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  padding: const EdgeInsets.all(1.5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      muscleAsset,
+                      fit: BoxFit.cover,
+                      cacheWidth: 44,
+                      cacheHeight: 44,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
-                  ],
-                ),
-                child: ClipOval(
-                  child: Image.asset(
-                    muscleAsset,
-                    fit: BoxFit.cover,
-                    cacheWidth: 44,
-                    cacheHeight: 44,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                   ),
                 ),
               ),
-            ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
-
 
   Widget _buildImage(Color glassSurface, Color textMuted, Color accentColor) {
     if (_isLoadingImage) {
@@ -724,10 +801,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         child: SizedBox(
           width: 24,
           height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: accentColor,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: accentColor),
         ),
       );
     }
@@ -746,7 +820,6 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     return _buildPlaceholder(glassSurface, textMuted);
   }
 
-
   Widget _buildPlaceholder(Color glassSurface, Color textMuted) {
     // AI-authored exercises (e.g. "hay bale" moves) have no library
     // illustration — show their representative emoji instead of a generic
@@ -756,22 +829,14 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
       return Container(
         color: glassSurface,
         alignment: Alignment.center,
-        child: Text(
-          emoji.trim(),
-          style: const TextStyle(fontSize: 26),
-        ),
+        child: Text(emoji.trim(), style: const TextStyle(fontSize: 26)),
       );
     }
     return Container(
       color: glassSurface,
-      child: Icon(
-        Icons.fitness_center,
-        color: textMuted,
-        size: 28,
-      ),
+      child: Icon(Icons.fitness_center, color: textMuted, size: 28),
     );
   }
-
 
   /// 3-dot menu trigger — opens a glass bottom sheet.
   /// The button itself does NOT watch any provider, so taps feel instant
@@ -808,16 +873,23 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           builder: (ctx, sheetRef, _) {
             final l = AppLocalizations.of(ctx)!;
             final isDark = Theme.of(ctx).brightness == Brightness.dark;
-            final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-            final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+            final textPrimary = isDark
+                ? AppColors.textPrimary
+                : AppColorsLight.textPrimary;
+            final textMuted = isDark
+                ? AppColors.textMuted
+                : AppColorsLight.textMuted;
 
             // Scoped selectors — rebuild only when THIS exercise's flag flips.
-            final isFavorite = sheetRef.watch(favoritesProvider
-                .select((s) => s.isFavorite(exerciseName)));
-            final isStaple = sheetRef.watch(staplesProvider
-                .select((s) => s.isStaple(exerciseName)));
-            final isQueued = sheetRef.watch(exerciseQueueProvider
-                .select((s) => s.isQueued(exerciseName)));
+            final isFavorite = sheetRef.watch(
+              favoritesProvider.select((s) => s.isFavorite(exerciseName)),
+            );
+            final isStaple = sheetRef.watch(
+              staplesProvider.select((s) => s.isStaple(exerciseName)),
+            );
+            final isQueued = sheetRef.watch(
+              exerciseQueueProvider.select((s) => s.isQueued(exerciseName)),
+            );
 
             return Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 8),
@@ -846,16 +918,22 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     context: ctx,
                     icon: isFavorite ? Icons.favorite : Icons.favorite_border,
                     iconColor: isFavorite ? AppColors.error : textPrimary,
-                    label: isFavorite ? l.exerciseMenuRemoveFromFavorites : l.exerciseMenuAddToFavorites,
+                    label: isFavorite
+                        ? l.exerciseMenuRemoveFromFavorites
+                        : l.exerciseMenuAddToFavorites,
                     trailingCheck: isFavorite ? AppColors.error : null,
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'favorite'),
                   ),
                   _sheetTile(
                     context: ctx,
-                    icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
+                    icon: isQueued
+                        ? Icons.playlist_add_check
+                        : Icons.playlist_add,
                     iconColor: isQueued ? AppColors.cyan : textPrimary,
-                    label: isQueued ? l.exerciseMenuRemoveFromQueue : l.exerciseMenuRepeatNextTime,
+                    label: isQueued
+                        ? l.exerciseMenuRemoveFromQueue
+                        : l.exerciseMenuRepeatNextTime,
                     trailingCheck: isQueued ? AppColors.cyan : null,
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'queue'),
@@ -864,7 +942,9 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     context: ctx,
                     icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
                     iconColor: isStaple ? AppColors.purple : textPrimary,
-                    label: isStaple ? l.exerciseMenuRemoveAsStaple : l.exerciseMenuMarkAsStaple,
+                    label: isStaple
+                        ? l.exerciseMenuRemoveAsStaple
+                        : l.exerciseMenuMarkAsStaple,
                     trailingCheck: isStaple ? AppColors.purple : null,
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'staple'),
@@ -922,7 +1002,8 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       label: l.exerciseMenuNeverRecommend,
                       labelColor: AppColors.error,
                       textPrimary: textPrimary,
-                      onTap: () => _handleSheetAction(sheetCtx, 'never_recommend'),
+                      onTap: () =>
+                          _handleSheetAction(sheetCtx, 'never_recommend'),
                     ),
 
                   Divider(height: 1, color: textMuted.withOpacity(0.15)),
@@ -997,7 +1078,9 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
 
     switch (value) {
       case 'favorite':
-        final success = await ref.read(favoritesProvider.notifier).toggleFavorite(
+        final success = await ref
+            .read(favoritesProvider.notifier)
+            .toggleFavorite(
               exerciseName,
               exerciseId: widget.exercise.exerciseId,
             );
@@ -1005,13 +1088,17 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         final newState = ref.read(favoritesProvider).isFavorite(exerciseName);
         _showActionSnackBar(
           icon: newState ? Icons.favorite : Icons.favorite_border,
-          text: newState ? AppLocalizations.of(context)!.exerciseMenuAddedToFavorites : AppLocalizations.of(context)!.exerciseMenuRemovedFromFavorites,
+          text: newState
+              ? AppLocalizations.of(context)!.exerciseMenuAddedToFavorites
+              : AppLocalizations.of(context)!.exerciseMenuRemovedFromFavorites,
           color: AppColors.success,
         );
         break;
 
       case 'queue':
-        final success = await ref.read(exerciseQueueProvider.notifier).toggleQueue(
+        final success = await ref
+            .read(exerciseQueueProvider.notifier)
+            .toggleQueue(
               exerciseName,
               exerciseId: widget.exercise.exerciseId,
               targetMuscleGroup: widget.exercise.muscleGroup,
@@ -1020,13 +1107,17 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         final newState = ref.read(exerciseQueueProvider).isQueued(exerciseName);
         _showActionSnackBar(
           icon: newState ? Icons.playlist_add_check : Icons.playlist_add,
-          text: newState ? AppLocalizations.of(context)!.exerciseMenuQueuedForNext : AppLocalizations.of(context)!.exerciseMenuRemovedFromQueue,
+          text: newState
+              ? AppLocalizations.of(context)!.exerciseMenuQueuedForNext
+              : AppLocalizations.of(context)!.exerciseMenuRemovedFromQueue,
           color: AppColors.cyan,
         );
         break;
 
       case 'staple':
-        final success = await ref.read(staplesProvider.notifier).toggleStaple(
+        final success = await ref
+            .read(staplesProvider.notifier)
+            .toggleStaple(
               exerciseName,
               libraryId: widget.exercise.libraryId,
               muscleGroup: widget.exercise.muscleGroup,
@@ -1035,7 +1126,9 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         final newState = ref.read(staplesProvider).isStaple(exerciseName);
         _showActionSnackBar(
           icon: newState ? Icons.push_pin : Icons.push_pin_outlined,
-          text: newState ? AppLocalizations.of(context)!.exerciseMenuMarkedAsStaple : AppLocalizations.of(context)!.exerciseMenuRemovedFromStaples,
+          text: newState
+              ? AppLocalizations.of(context)!.exerciseMenuMarkedAsStaple
+              : AppLocalizations.of(context)!.exerciseMenuRemovedFromStaples,
           color: AppColors.purple,
         );
         break;
@@ -1082,8 +1175,11 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     );
   }
 
-
-  Widget _buildTableHeader(Color glassSurface, Color textMuted, Color accentColor) {
+  Widget _buildTableHeader(
+    Color glassSurface,
+    Color textMuted,
+    Color accentColor,
+  ) {
     final l = AppLocalizations.of(context)!;
     final isBarbell = _isBarbellExercise();
     final bool useKg = _useKgOverride ?? ref.read(useKgForWorkoutProvider);
@@ -1093,9 +1189,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: glassSurface.withOpacity(0.5),
-          ),
+          decoration: BoxDecoration(color: glassSurface.withOpacity(0.5)),
           child: Row(
             children: [
               // SET column
@@ -1194,7 +1288,8 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
   Widget _buildPerSideLabels(Color textMuted, Color accentColor) {
     final equipment = widget.exercise.equipment?.toLowerCase() ?? '';
     final isPerDb = equipment.contains('dumbbell');
-    final isPerArm = widget.exercise.isUnilateral == true ||
+    final isPerArm =
+        widget.exercise.isUnilateral == true ||
         widget.exercise.alternatingHands == true;
 
     if (!isPerDb && !isPerArm) return const SizedBox.shrink();
@@ -1234,7 +1329,6 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
       ),
     );
   }
-
 
   /// Amber "Finisher" tag chip — shown when [WorkoutExercise.isFinisher] is
   /// true (an appended cardio/conditioning finisher). Distinct from the
@@ -1330,7 +1424,9 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
       decoration: BoxDecoration(
         color: color.withOpacity(bgOpacity),
         borderRadius: BorderRadius.circular(6),
-        border: isDark ? null : Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
+        border: isDark
+            ? null
+            : Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1350,11 +1446,12 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     );
   }
 
-
   Widget _buildBreathingChip(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgOpacity = isDark ? 0.1 : 0.15;
-    final displayColor = isDark ? AppColors.green : _darkenColor(AppColors.green);
+    final displayColor = isDark
+        ? AppColors.green
+        : _darkenColor(AppColors.green);
 
     return GestureDetector(
       onTap: () => _showBreathingGuidance(context),
@@ -1363,7 +1460,9 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         decoration: BoxDecoration(
           color: AppColors.green.withOpacity(bgOpacity),
           borderRadius: BorderRadius.circular(6),
-          border: isDark ? null : Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
+          border: isDark
+              ? null
+              : Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1383,5 +1482,4 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
       ),
     );
   }
-
 }

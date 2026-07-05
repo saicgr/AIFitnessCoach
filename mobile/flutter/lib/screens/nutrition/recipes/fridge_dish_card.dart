@@ -76,16 +76,22 @@ class FridgeMatchRing extends StatelessWidget {
       child: CustomPaint(
         painter: _RingPainter(pct / 100.0, accent),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$pct',
-                  style: ZType.lbl(size * 0.30,
-                      color: Colors.white, letterSpacing: 0)),
-              Text('MATCH',
-                  style: ZType.lbl(size * 0.14,
-                      color: Colors.white70, letterSpacing: 0.8)),
-            ],
+          // scaleDown: the two stacked labels sit ~3px taller than the fixed
+          // ring at some type metrics (Sentry FITWIZ-FLUTTER-G0, one report
+          // per dish card) — shrink the pair fractionally instead.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('$pct',
+                    style: ZType.lbl(size * 0.30,
+                        color: Colors.white, letterSpacing: 0)),
+                Text('MATCH',
+                    style: ZType.lbl(size * 0.14,
+                        color: Colors.white70, letterSpacing: 0.8)),
+              ],
+            ),
           ),
         ),
       ),

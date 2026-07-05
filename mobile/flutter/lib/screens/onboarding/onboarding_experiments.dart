@@ -21,6 +21,11 @@ class OnboardingExperiments {
 
   static const String flagWhy = 'onboarding_why_screen';
   static const String flagReflect = 'onboarding_reflect_screen';
+
+  /// Live coach-preview chat on coach selection. An emergency brake, not an
+  /// experiment: off → only the free-text input disappears; the chip-based
+  /// preview conversation (curated answers) ships unconditionally.
+  static const String flagCoachLiveChat = 'onboarding_coach_live_chat';
   static const String flagBlocker = 'onboarding_blocker_screen';
   static const String flagConfidence = 'onboarding_confidence_screen';
   static const String flagValue = 'onboarding_value_screen';

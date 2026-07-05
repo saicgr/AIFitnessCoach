@@ -159,6 +159,9 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
 
     return Padding(
           padding: const EdgeInsets.all(24),
+          // Scrollable body — the fixed circle + instruction blocks exceed the
+          // sheet's height cap on short screens (e.g. iPhone SE).
+          child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -323,6 +326,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
 
           SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
         ],
+      ),
       ),
     )
         .animate()

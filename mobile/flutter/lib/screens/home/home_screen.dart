@@ -512,7 +512,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           action: SnackBarAction(
             label: 'Review',
             onPressed: () {
-              if (mounted) context.go('/workouts'); // branch-root: go, not push (dup-GlobalKey)
+              if (mounted)
+                context.go(
+                  '/workouts',
+                ); // branch-root: go, not push (dup-GlobalKey)
             },
           ),
         ),
@@ -1417,13 +1420,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget _widgetForSection(HomeSection section) {
     switch (section) {
       case HomeSection.quickActions:
-        // Anchor for nav-tour step 3 ("Quick Log"). The active home renders
-        // sections via this switch, NOT the legacy tile_factory.dart — so the
-        // tour key must live here or the spotlight resolves a zero rect.
-        return KeyedSubtree(
-          key: AppTourKeys.quickLogKey,
-          child: const QuickActionsRow(),
-        );
+        // NOTE: the nav-tour "Quick Log" anchor (AppTourKeys.quickLogKey) now
+        // lives on the "+" FAB in main_shell.dart — this section is opt-in
+        // (hidden by default), so anchoring here left the tour spotlight with
+        // a zero rect for new users. GlobalKeys must be attached exactly once.
+        return const QuickActionsRow();
       case HomeSection.weekStrip:
         return const HomeWeekStrip();
       case HomeSection.coachHero:

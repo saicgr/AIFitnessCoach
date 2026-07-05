@@ -33,6 +33,7 @@ import '../../../../data/models/menu_item.dart';
 import '../../../../widgets/glass_sheet.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+
 /// Outcome of the per-dish adjustment step.
 class MenuDishAdjustResult {
   /// Portion multiplier to apply to the dish itself (1.0 = as-served).
@@ -112,8 +113,7 @@ const List<_Chip> _kChips = [
 Future<MenuDishAdjustResult?> showMenuDishAdjustSheet(
   BuildContext context, {
   required MenuItem item,
-  required Future<List<Map<String, dynamic>>?> Function(String note)
-      onRefine,
+  required Future<List<Map<String, dynamic>>?> Function(String note) onRefine,
 }) {
   return showGlassSheet<MenuDishAdjustResult>(
     context: context,
@@ -158,11 +158,11 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
   }
 
   List<Map<String, dynamic>> get _extraItems => [
-        for (final id in _sideChipIds)
-          Map<String, dynamic>.from(
-            _kChips.firstWhere((c) => c.id == id).extraItem!,
-          ),
-      ];
+    for (final id in _sideChipIds)
+      Map<String, dynamic>.from(
+        _kChips.firstWhere((c) => c.id == id).extraItem!,
+      ),
+  ];
 
   void _toggleChip(_Chip chip) {
     HapticFeedback.selectionClick();
@@ -202,7 +202,9 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
 
     if (note.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).menuDishAdjustAddABitMore)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).menuDishAdjustAddABitMore),
+        ),
       );
       return;
     }
@@ -213,7 +215,7 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
     final hinted = _scalingChipId == null
         ? note
         : '$note (rough portion hint: '
-            '${_kChips.firstWhere((c) => c.id == _scalingChipId).label})';
+              '${_kChips.firstWhere((c) => c.id == _scalingChipId).label})';
     List<Map<String, dynamic>>? corrected;
     try {
       corrected = await widget.onRefine(hinted);
@@ -225,7 +227,9 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
     if (corrected == null || corrected.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).menuDishAdjustCouldnTRefineThat),
+          content: Text(
+            AppLocalizations.of(context).menuDishAdjustCouldnTRefineThat,
+          ),
         ),
       );
       return;
@@ -272,160 +276,160 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
     final previewP = (widget.item.proteinG * _multiplier).round();
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        12,
-        20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.tune_rounded, size: 20, color: accent),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  AppLocalizations.of(context).menuDishAdjustAdjustThisDish,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: colors.textPrimary,
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.tune_rounded, size: 20, color: accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context).menuDishAdjustAdjustThisDish,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: colors.textPrimary,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            widget.item.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: colors.textSecondary,
+              ],
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            AppLocalizations.of(context).menuDishAdjustMenuMacrosAreAs,
-            style: TextStyle(fontSize: 11, color: colors.textMuted),
-          ),
-          const SizedBox(height: 14),
-          // ── Quick-adjust chips ──
-          Text(
-            AppLocalizations.of(context).menuDishAdjustHowMuchDidYou,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: colors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final chip in _kChips)
-                _chipWidget(chip, colors, accent),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // ── Free-text correction ──
-          Text(
-            AppLocalizations.of(context).menuDishAdjustOrDescribeIt,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: colors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: _noteController,
-            minLines: 2,
-            maxLines: 4,
-            textCapitalization: TextCapitalization.sentences,
-            style: TextStyle(fontSize: 13, color: colors.textPrimary),
-            decoration: InputDecoration(
-              hintText:
-                  "e.g. 'added more bread', 'skipped the rice', "
-                  "'doubled the chicken'",
-              hintStyle: TextStyle(fontSize: 12, color: colors.textMuted),
-              isDense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              filled: true,
-              fillColor: colors.textMuted.withValues(alpha: 0.06),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: accent.withValues(alpha: 0.55)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          // C11: free-text wins over a conflicting chip — make it explicit.
-          if (_scalingChipId != null)
+            const SizedBox(height: 4),
             Text(
-              'Tip: if you also type a note, the note wins — the chip just '
-              'becomes a hint.',
+              widget.item.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10.5,
-                color: colors.textMuted,
-                height: 1.3,
-              ),
-            ),
-          const SizedBox(height: 14),
-          // ── Live preview (chip-only path) ──
-          if (_noteController.text.trim().isEmpty)
-            Text(
-              'This dish: ~$previewCal cal · ${previewP}g protein'
-              '${_sideChipIds.isEmpty ? '' : '  (+${_sideChipIds.length} side)'}',
-              style: TextStyle(
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: colors.textSecondary,
               ),
             ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _refining
-                      ? null
-                      : () => Navigator.pop(context),
-                  child: Text(AppLocalizations.of(context).buttonCancel),
+            const SizedBox(height: 2),
+            Text(
+              AppLocalizations.of(context).menuDishAdjustMenuMacrosAreAs,
+              style: TextStyle(fontSize: 11, color: colors.textMuted),
+            ),
+            const SizedBox(height: 14),
+            // ── Quick-adjust chips ──
+            Text(
+              AppLocalizations.of(context).menuDishAdjustHowMuchDidYou,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: colors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final chip in _kChips) _chipWidget(chip, colors, accent),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // ── Free-text correction ──
+            Text(
+              AppLocalizations.of(context).menuDishAdjustOrDescribeIt,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: colors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _noteController,
+              minLines: 2,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              style: TextStyle(fontSize: 13, color: colors.textPrimary),
+              decoration: InputDecoration(
+                hintText:
+                    "e.g. 'added more bread', 'skipped the rice', "
+                    "'doubled the chicken'",
+                hintStyle: TextStyle(fontSize: 12, color: colors.textMuted),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                filled: true,
+                fillColor: colors.textMuted.withValues(alpha: 0.06),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: accent.withValues(alpha: 0.55)),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: FilledButton.icon(
-                  onPressed: _refining ? null : _apply,
-                  icon: _refining
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child:
-                              CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.check, size: 18),
-                  label: Text(_refining ? AppLocalizations.of(context).menuDishAdjustRefining : AppLocalizations.of(context).setAdjustmentSheetApply),
-                  style: FilledButton.styleFrom(backgroundColor: accent),
+            ),
+            const SizedBox(height: 6),
+            // C11: free-text wins over a conflicting chip — make it explicit.
+            if (_scalingChipId != null)
+              Text(
+                'Tip: if you also type a note, the note wins — the chip just '
+                'becomes a hint.',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  color: colors.textMuted,
+                  height: 1.3,
                 ),
               ),
-            ],
-          ),
-        ],
+            const SizedBox(height: 14),
+            // ── Live preview (chip-only path) ──
+            if (_noteController.text.trim().isEmpty)
+              Text(
+                'This dish: ~$previewCal cal · ${previewP}g protein'
+                '${_sideChipIds.isEmpty ? '' : '  (+${_sideChipIds.length} side)'}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                ),
+              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _refining ? null : () => Navigator.pop(context),
+                    child: Text(AppLocalizations.of(context).buttonCancel),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: _refining ? null : _apply,
+                    icon: _refining
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check, size: 18),
+                    label: Text(
+                      _refining
+                          ? AppLocalizations.of(context).menuDishAdjustRefining
+                          : AppLocalizations.of(
+                              context,
+                            ).setAdjustmentSheetApply,
+                    ),
+                    style: FilledButton.styleFrom(backgroundColor: accent),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -444,13 +448,11 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
         onTap: () => _toggleChip(chip),
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: active
-                ? Border.all(
-                    color: accent.withValues(alpha: 0.55), width: 1)
+                ? Border.all(color: accent.withValues(alpha: 0.55), width: 1)
                 : null,
           ),
           child: Text(

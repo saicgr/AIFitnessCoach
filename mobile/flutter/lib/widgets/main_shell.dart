@@ -564,41 +564,50 @@ class MainShell extends ConsumerWidget {
                   kMainNavBarHeight +
                   kMainNavBottomGap +
                   14,
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  // The "+" opens the Signature quick-actions grid (Scan menu,
-                  // Log workout, Log water, …), not the bare food-log dialog.
-                  showQuickLogSheet(context, ref);
-                },
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.surface : AppColorsLight.surface,
-                    borderRadius: BorderRadius.circular(6),
-                    // Accent (orange) border so the quick-actions "+" stands out.
-                    border: Border.all(
-                      color: ThemeColors.of(context).accent,
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.45 : 0.12,
-                        ),
-                        blurRadius: 24,
-                        offset: const Offset(0, 10),
+              // Anchor for nav-tour step 3 ("Quick Log") — the spotlight must
+              // ring THIS always-visible "+" FAB. The key used to live on the
+              // home QuickActionsRow section, which is opt-in (hidden for new
+              // users), so the tour showed a dim with no cutout.
+              child: KeyedSubtree(
+                key: AppTourKeys.quickLogKey,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    // The "+" opens the Signature quick-actions grid (Scan menu,
+                    // Log workout, Log water, …), not the bare food-log dialog.
+                    showQuickLogSheet(context, ref);
+                  },
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.surface
+                          : AppColorsLight.surface,
+                      borderRadius: BorderRadius.circular(6),
+                      // Accent (orange) border so the quick-actions "+" stands out.
+                      border: Border.all(
+                        color: ThemeColors.of(context).accent,
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.add,
-                    size: 26,
-                    color: isDark
-                        ? AppColors.textPrimary
-                        : AppColorsLight.textPrimary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.45 : 0.12,
+                          ),
+                          blurRadius: 24,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.add,
+                      size: 26,
+                      color: isDark
+                          ? AppColors.textPrimary
+                          : AppColorsLight.textPrimary,
+                    ),
                   ),
                 ),
               ),

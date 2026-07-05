@@ -455,11 +455,12 @@ void showTargetEditSheet({
     builder: (ctx) => GlassSheet(
       child: StatefulBuilder(
         builder: (ctx, setSheetState) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          padding: const EdgeInsets.only(
+            bottom: 16,
             top: 16, left: 20, right: 20,
           ),
-          child: Column(
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(AppLocalizations.of(context).setTrackingSheetsSetTarget,
@@ -574,6 +575,7 @@ void showTargetEditSheet({
               ),
               const SizedBox(height: 8),
             ],
+          ),
           ),
         ),
       ),

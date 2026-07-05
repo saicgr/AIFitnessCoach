@@ -189,7 +189,10 @@ class LeaderboardEntryCard extends StatelessWidget {
     if (stats.isEmpty) return const SizedBox.shrink();
 
     return Row(
-      children: stats.expand((w) => [w, const SizedBox(width: 12)]).take(stats.length * 2 - 1).toList(),
+      children: stats
+          .expand((w) => [Flexible(child: w), const SizedBox(width: 12)])
+          .take(stats.length * 2 - 1)
+          .toList(),
     );
   }
 
@@ -199,11 +202,15 @@ class LeaderboardEntryCard extends StatelessWidget {
       children: [
         Text(emoji, style: const TextStyle(fontSize: 14)),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textMuted,
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
           ),
         ),
       ],

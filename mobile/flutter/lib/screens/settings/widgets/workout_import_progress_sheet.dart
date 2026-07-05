@@ -156,7 +156,10 @@ class _ProgressSheetBodyState extends State<_ProgressSheetBody>
           ));
         }
       },
-      child: Padding(
+      // Scrolls within the sheet's 0.65 height cap so a long failure-branch
+      // error detail can't overflow the fixed-size body.
+      child: SingleChildScrollView(
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -196,6 +199,7 @@ class _ProgressSheetBodyState extends State<_ProgressSheetBody>
               ),
             ),
           ],
+        ),
         ),
       ),
     );

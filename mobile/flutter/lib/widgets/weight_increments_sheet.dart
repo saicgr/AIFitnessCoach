@@ -71,7 +71,11 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
     final isKg = state.unit == 'kg';
 
     return SafeArea(
-      child: Padding(
+      // Wire the DraggableScrollableSheet's controller so the sheet actually
+      // scrolls (and drag-resizes) when the slider cards exceed its height.
+      child: SingleChildScrollView(
+        controller: widget.scrollController,
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -225,6 +229,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
               ],
             ),
           ],
+        ),
         ),
       ),
     );

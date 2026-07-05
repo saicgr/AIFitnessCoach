@@ -2,7 +2,6 @@ part of 'exercise_detail_screen.dart';
 
 /// UI builder methods extracted from _ExerciseDetailScreenState
 extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
-
   Widget _buildStatsTabContent(Color textMuted) {
     final exerciseName = widget.exercise.name;
     final historyAsync = ref.watch(exerciseHistoryProvider(exerciseName));
@@ -29,13 +28,20 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                   Icon(Icons.timeline_outlined, size: 48, color: textMuted),
                   const SizedBox(height: 12),
                   Text(
-                    AppLocalizations.of(context).exerciseDetailScreenNoStatsForThis,
+                    AppLocalizations.of(
+                      context,
+                    ).exerciseDetailScreenNoStatsForThis,
                     style: ZType.ser(14, color: textMuted),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    AppLocalizations.of(context).exerciseDetailScreenCompleteAWorkoutTo,
-                    style: ZType.ser(12, color: textMuted.withValues(alpha: 0.6)),
+                    AppLocalizations.of(
+                      context,
+                    ).exerciseDetailScreenCompleteAWorkoutTo,
+                    style: ZType.ser(
+                      12,
+                      color: textMuted.withValues(alpha: 0.6),
+                    ),
                   ),
                 ],
               ),
@@ -49,7 +55,8 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             ExerciseTimeRangeSelector(
               selected: timeRange,
               onChanged: (value) {
-                ref.read(exerciseHistoryTimeRangeProvider.notifier).state = value;
+                ref.read(exerciseHistoryTimeRangeProvider.notifier).state =
+                    value;
               },
             ),
             const SizedBox(height: 16),
@@ -71,10 +78,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             ),
             const SizedBox(height: 12),
 
-            ExerciseProgressionChart(
-              history: history,
-              chartType: chartType,
-            ),
+            ExerciseProgressionChart(history: history, chartType: chartType),
             const SizedBox(height: 24),
 
             prsAsync.when(
@@ -90,7 +94,6 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       },
     );
   }
-
 
   /// Four headline stat pills (Projected 1RM / Max weight / Max volume / Max
   /// reps) shown prominently atop the Stats tab — the per-exercise analytics
@@ -128,8 +131,14 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             ? rmSes.formatted1rmFor(useLbs: useLbs)
             : '—',
       ],
-      ['Max weight', wSes != null ? wSes.formattedWeightFor(useLbs: useLbs) : '—'],
-      ['Max volume', vSes != null ? vSes.formattedVolumeFor(useLbs: useLbs) : '—'],
+      [
+        'Max weight',
+        wSes != null ? wSes.formattedWeightFor(useLbs: useLbs) : '—',
+      ],
+      [
+        'Max volume',
+        vSes != null ? vSes.formattedVolumeFor(useLbs: useLbs) : '—',
+      ],
       ['Max reps', maxReps > 0 ? '$maxReps' : '—'],
     ];
 
@@ -153,15 +162,23 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.emoji_events_outlined, size: 13, color: accent),
+                      Icon(
+                        Icons.emoji_events_outlined,
+                        size: 13,
+                        color: accent,
+                      ),
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
                           p[0].toUpperCase(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: ZType.lbl(11, color: colors.textMuted,
-                              weight: FontWeight.w600, letterSpacing: 0.8),
+                          style: ZType.lbl(
+                            11,
+                            color: colors.textMuted,
+                            weight: FontWeight.w600,
+                            letterSpacing: 0.8,
+                          ),
                         ),
                       ),
                     ],
@@ -181,7 +198,6 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
     );
   }
 
-
   /// FORM TAB — the per-exercise counterpart to chat form analysis. Shows a
   /// prominent "Analyze my form" CTA that opens the Form Analysis sheet for
   /// THIS exercise, plus every past analysis for it (newest first), each
@@ -189,8 +205,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
   Widget _buildFormTabContent(Color textMuted) {
     final exerciseName = widget.exercise.name;
     final accent = ref.colors(context).accent;
-    final analysesAsync =
-        ref.watch(exerciseFormAnalysesProvider(exerciseName));
+    final analysesAsync = ref.watch(exerciseFormAnalysesProvider(exerciseName));
 
     Future<void> openSheet() async {
       HapticFeedback.lightImpact();
@@ -211,13 +226,20 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.sports_gymnastics_rounded,
-                    color: Colors.white, size: 20),
+                const Icon(
+                  Icons.sports_gymnastics_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   'ANALYZE MY FORM',
-                  style: ZType.lbl(15, color: Colors.white, weight: FontWeight.w800,
-                      letterSpacing: 1.5),
+                  style: ZType.lbl(
+                    15,
+                    color: Colors.white,
+                    weight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -252,8 +274,11 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                 child: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.video_camera_back_outlined,
-                          size: 48, color: textMuted),
+                      Icon(
+                        Icons.video_camera_back_outlined,
+                        size: 48,
+                        color: textMuted,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'No form check yet',
@@ -262,7 +287,10 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                       const SizedBox(height: 4),
                       Text(
                         'Record a set above and track your form over time.',
-                        style: ZType.ser(12, color: textMuted.withValues(alpha: 0.6)),
+                        style: ZType.ser(
+                          12,
+                          color: textMuted.withValues(alpha: 0.6),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -291,8 +319,13 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
     );
   }
 
-
-  Widget _buildActionRow(WorkoutExercise exercise, Color elevated, Color cardBorder, Color textMuted, Color accentColor) {
+  Widget _buildActionRow(
+    WorkoutExercise exercise,
+    Color elevated,
+    Color cardBorder,
+    Color textMuted,
+    Color accentColor,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final favState = ref.watch(favoritesProvider);
     final stapleState = ref.watch(staplesProvider);
@@ -368,7 +401,9 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             activeColor: red,
             onTap: () {
               HapticFeedback.lightImpact();
-              ref.read(favoritesProvider.notifier).toggleFavorite(name, exerciseId: exercise.exerciseId);
+              ref
+                  .read(favoritesProvider.notifier)
+                  .toggleFavorite(name, exerciseId: exercise.exerciseId);
             },
           ),
           actionButton(
@@ -379,11 +414,13 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             activeColor: cyan,
             onTap: () {
               HapticFeedback.lightImpact();
-              ref.read(staplesProvider.notifier).toggleStaple(
-                name,
-                libraryId: exercise.libraryId,
-                muscleGroup: exercise.muscleGroup ?? exercise.primaryMuscle,
-              );
+              ref
+                  .read(staplesProvider.notifier)
+                  .toggleStaple(
+                    name,
+                    libraryId: exercise.libraryId,
+                    muscleGroup: exercise.muscleGroup ?? exercise.primaryMuscle,
+                  );
             },
           ),
           actionButton(
@@ -394,11 +431,14 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             activeColor: queuedColor,
             onTap: () {
               HapticFeedback.lightImpact();
-              ref.read(exerciseQueueProvider.notifier).toggleQueue(
-                name,
-                exerciseId: exercise.exerciseId,
-                targetMuscleGroup: exercise.muscleGroup ?? exercise.primaryMuscle,
-              );
+              ref
+                  .read(exerciseQueueProvider.notifier)
+                  .toggleQueue(
+                    name,
+                    exerciseId: exercise.exerciseId,
+                    targetMuscleGroup:
+                        exercise.muscleGroup ?? exercise.primaryMuscle,
+                  );
             },
           ),
           actionButton(
@@ -409,7 +449,9 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             activeColor: textMuted,
             onTap: () {
               HapticFeedback.lightImpact();
-              ref.read(avoidedProvider.notifier).toggleAvoided(name, exerciseId: exercise.exerciseId);
+              ref
+                  .read(avoidedProvider.notifier)
+                  .toggleAvoided(name, exerciseId: exercise.exerciseId);
             },
           ),
         ],
@@ -417,21 +459,83 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
     );
   }
 
-
-  Widget _buildCoachingCuesSection(WorkoutExercise exercise, Color elevated, Color cardBorder, Color textPrimary, Color textSecondary, Color textMuted, Color accentColor) {
+  Widget _buildCoachingCuesSection(
+    WorkoutExercise exercise,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textSecondary,
+    Color textMuted,
+    Color accentColor,
+  ) {
     final cues = <_CueItem>[];
 
     if (exercise.formCue != null && exercise.formCue!.isNotEmpty) {
-      cues.add(_CueItem(icon: Icons.sports_gymnastics, label: AppLocalizations.of(context).workoutAiCoachForm, text: exercise.formCue!));
+      cues.add(
+        _CueItem(
+          icon: Icons.sports_gymnastics,
+          label: AppLocalizations.of(context).workoutAiCoachForm,
+          text: exercise.formCue!,
+        ),
+      );
     }
     if (exercise.breathingCue != null && exercise.breathingCue!.isNotEmpty) {
-      cues.add(_CueItem(icon: Icons.air, label: AppLocalizations.of(context).workoutUiBuildersBreathing, text: exercise.breathingCue!));
+      cues.add(
+        _CueItem(
+          icon: Icons.air,
+          label: AppLocalizations.of(context).workoutUiBuildersBreathing,
+          text: exercise.breathingCue!,
+        ),
+      );
     }
     if (exercise.setup != null && exercise.setup!.isNotEmpty) {
-      cues.add(_CueItem(icon: Icons.tune, label: AppLocalizations.of(context).inlineExerciseInfoSetup, text: exercise.setup!));
+      cues.add(
+        _CueItem(
+          icon: Icons.tune,
+          label: AppLocalizations.of(context).inlineExerciseInfoSetup,
+          text: exercise.setup!,
+        ),
+      );
     }
     if (exercise.tempo != null && exercise.tempo!.isNotEmpty) {
-      cues.add(_CueItem(icon: Icons.speed, label: AppLocalizations.of(context).stapleChoiceTempo, text: exercise.tempo!));
+      cues.add(
+        _CueItem(
+          icon: Icons.speed,
+          label: AppLocalizations.of(context).stapleChoiceTempo,
+          text: exercise.tempo!,
+        ),
+      );
+    }
+
+    // Engine fallback (server cues win): most library/cardio exercises carry
+    // no per-exercise cue fields, which used to collapse this section to
+    // nothing. The shared vetted engine always has form + breathing copy.
+    if (exercise.formCue == null || exercise.formCue!.isEmpty) {
+      final tips = getFormTips(exercise.name, equipment: exercise.equipment);
+      if (tips.isNotEmpty) {
+        cues.add(
+          _CueItem(
+            icon: Icons.sports_gymnastics,
+            label: AppLocalizations.of(context).workoutAiCoachForm,
+            text: tips.map((t) => '• $t').join('\n'),
+          ),
+        );
+      }
+    }
+    if (exercise.breathingCue == null || exercise.breathingCue!.isEmpty) {
+      final breathing = getBreathingCues(
+        exercise.name,
+        equipment: exercise.equipment,
+      );
+      if (breathing.isNotEmpty) {
+        cues.add(
+          _CueItem(
+            icon: Icons.air,
+            label: AppLocalizations.of(context).workoutUiBuildersBreathing,
+            text: breathing.map((t) => '• $t').join('\n'),
+          ),
+        );
+      }
     }
 
     if (cues.isEmpty) return const SizedBox.shrink();
@@ -440,7 +544,9 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppLocalizations.of(context).exerciseDetailScreenCoachingCues.toUpperCase(),
+          AppLocalizations.of(
+            context,
+          ).exerciseDetailScreenCoachingCues.toUpperCase(),
           style: ZType.lbl(12, color: textMuted, letterSpacing: 1.5),
         ),
         const SizedBox(height: 12),
@@ -454,7 +560,10 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             children: [
               for (int i = 0; i < cues.length; i++) ...[
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -466,13 +575,20 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                           children: [
                             Text(
                               cues[i].label.toUpperCase(),
-                              style: ZType.lbl(12, color: textPrimary,
-                                  letterSpacing: 1.0),
+                              style: ZType.lbl(
+                                12,
+                                color: textPrimary,
+                                letterSpacing: 1.0,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               cues[i].text,
-                              style: ZType.ser(14, color: textSecondary, height: 1.4),
+                              style: ZType.ser(
+                                14,
+                                color: textSecondary,
+                                height: 1.4,
+                              ),
                             ),
                           ],
                         ),
@@ -481,7 +597,12 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                   ),
                 ),
                 if (i < cues.length - 1)
-                  Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+                  Divider(
+                    height: 1,
+                    color: cardBorder,
+                    indent: 48,
+                    endIndent: 16,
+                  ),
               ],
             ],
           ),
@@ -491,12 +612,25 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
     );
   }
 
-
-  Widget _buildExerciseInfoSection(WorkoutExercise exercise, Color elevated, Color cardBorder, Color textPrimary, Color textSecondary, Color textMuted, Color accentColor) {
+  Widget _buildExerciseInfoSection(
+    WorkoutExercise exercise,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textSecondary,
+    Color textMuted,
+    Color accentColor,
+  ) {
     final items = <_CueItem>[];
 
     if (exercise.difficulty != null && exercise.difficulty!.isNotEmpty) {
-      items.add(_CueItem(icon: Icons.signal_cellular_alt, label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty, text: exercise.difficulty!));
+      items.add(
+        _CueItem(
+          icon: Icons.signal_cellular_alt,
+          label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
+          text: exercise.difficulty!,
+        ),
+      );
     }
 
     // Secondary muscles
@@ -508,14 +642,39 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       musclesText = secondaryMuscles;
     }
     if (musclesText != null) {
-      items.add(_CueItem(icon: Icons.accessibility_new, label: AppLocalizations.of(context).exerciseDetailsSheetSecondaryMuscles, text: musclesText));
+      items.add(
+        _CueItem(
+          icon: Icons.accessibility_new,
+          label: AppLocalizations.of(
+            context,
+          ).exerciseDetailsSheetSecondaryMuscles,
+          text: musclesText,
+        ),
+      );
     }
 
     if (exercise.substitution != null && exercise.substitution!.isNotEmpty) {
-      items.add(_CueItem(icon: Icons.swap_horiz, label: AppLocalizations.of(context).exerciseDetailScreenAlternative, text: exercise.substitution!));
+      items.add(
+        _CueItem(
+          icon: Icons.swap_horiz,
+          label: AppLocalizations.of(context).exerciseDetailScreenAlternative,
+          text: exercise.substitution!,
+        ),
+      );
     }
-    if (exercise.notes != null && exercise.notes!.isNotEmpty) {
-      items.add(_CueItem(icon: Icons.sticky_note_2_outlined, label: AppLocalizations.of(context).syncedWorkoutDetailNotes, text: exercise.notes!));
+    // Notes: skip the backend's generic filler and the legacy mirror of the
+    // instructions text (which now renders in its own Instructions section).
+    final notesText = (exercise.notes ?? '').trim();
+    if (notesText.isNotEmpty &&
+        notesText != 'Focus on proper form' &&
+        notesText != (exercise.instructions ?? '').trim()) {
+      items.add(
+        _CueItem(
+          icon: Icons.sticky_note_2_outlined,
+          label: AppLocalizations.of(context).syncedWorkoutDetailNotes,
+          text: notesText,
+        ),
+      );
     }
 
     if (items.isEmpty) return const SizedBox.shrink();
@@ -524,7 +683,9 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppLocalizations.of(context).exerciseDetailScreenExerciseInfo.toUpperCase(),
+          AppLocalizations.of(
+            context,
+          ).exerciseDetailScreenExerciseInfo.toUpperCase(),
           style: ZType.lbl(12, color: textMuted, letterSpacing: 1.5),
         ),
         const SizedBox(height: 12),
@@ -538,7 +699,10 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             children: [
               for (int i = 0; i < items.length; i++) ...[
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -550,13 +714,20 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                           children: [
                             Text(
                               items[i].label.toUpperCase(),
-                              style: ZType.lbl(12, color: textPrimary,
-                                  letterSpacing: 1.0),
+                              style: ZType.lbl(
+                                12,
+                                color: textPrimary,
+                                letterSpacing: 1.0,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               items[i].text,
-                              style: ZType.ser(14, color: textSecondary, height: 1.4),
+                              style: ZType.ser(
+                                14,
+                                color: textSecondary,
+                                height: 1.4,
+                              ),
                             ),
                           ],
                         ),
@@ -565,7 +736,12 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                   ),
                 ),
                 if (i < items.length - 1)
-                  Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
+                  Divider(
+                    height: 1,
+                    color: cardBorder,
+                    indent: 48,
+                    endIndent: 16,
+                  ),
               ],
             ],
           ),
@@ -574,7 +750,6 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       ],
     );
   }
-
 
   Widget _buildTableRow({
     required String setLabel,
@@ -606,9 +781,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
         border: isLast
             ? null
             : Border(
-                bottom: BorderSide(
-                  color: cardBorder.withValues(alpha: 0.2),
-                ),
+                bottom: BorderSide(color: cardBorder.withValues(alpha: 0.2)),
               ),
         borderRadius: isLast
             ? const BorderRadius.vertical(bottom: Radius.circular(12))
@@ -631,7 +804,10 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
               child: Center(
                 child: Text(
                   setLabel,
-                  style: ZType.data(13, color: isWarmup ? textMuted : textPrimary),
+                  style: ZType.data(
+                    13,
+                    color: isWarmup ? textMuted : textPrimary,
+                  ),
                 ),
               ),
             ),
@@ -652,22 +828,32 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                   style: ZType.data(
                     13,
                     color: previousDisplay == '-' ? textMuted : textSecondary,
-                    weight: previousDisplay != '-' ? FontWeight.w500 : FontWeight.w400,
+                    weight: previousDisplay != '-'
+                        ? FontWeight.w500
+                        : FontWeight.w400,
                   ),
                 ),
                 // RIR pill (if available)
                 if (previousData?.rir != null) ...[
                   const SizedBox(height: 3),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getRirColor(previousData!.rir!).withValues(alpha: 0.3),
+                      color: _getRirColor(
+                        previousData!.rir!,
+                      ).withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       'RIR ${previousData.rir}',
-                      style: ZType.lbl(9, color: _getRirColor(previousData.rir!),
-                          letterSpacing: 0.6),
+                      style: ZType.lbl(
+                        9,
+                        color: _getRirColor(previousData.rir!),
+                        letterSpacing: 0.6,
+                      ),
                     ),
                   ),
                 ],
@@ -688,22 +874,30 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                   style: ZType.data(
                     13,
                     color: targetDisplay == '-' ? textMuted : textPrimary,
-                    weight: targetDisplay != '-' ? FontWeight.w600 : FontWeight.w400,
+                    weight: targetDisplay != '-'
+                        ? FontWeight.w600
+                        : FontWeight.w400,
                   ),
                 ),
                 // Target RIR pill
                 if (targetRir != null) ...[
                   const SizedBox(height: 3),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: _getRirColor(targetRir).withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       'RIR $targetRir',
-                      style: ZType.lbl(9, color: _getRirColor(targetRir),
-                          letterSpacing: 0.6),
+                      style: ZType.lbl(
+                        9,
+                        color: _getRirColor(targetRir),
+                        letterSpacing: 0.6,
+                      ),
                     ),
                   ),
                 ],
@@ -714,5 +908,4 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       ),
     );
   }
-
 }

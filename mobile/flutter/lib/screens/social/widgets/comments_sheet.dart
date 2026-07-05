@@ -410,11 +410,15 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      userName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                    Flexible(
+                      child: Text(
+                        userName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),

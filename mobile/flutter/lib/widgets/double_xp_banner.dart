@@ -128,11 +128,15 @@ class _FullBanner extends StatelessWidget {
                               size: 18,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              event.eventName,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                            Flexible(
+                              child: Text(
+                                event.eventName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],

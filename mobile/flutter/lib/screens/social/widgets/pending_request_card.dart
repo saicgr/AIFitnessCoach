@@ -70,19 +70,21 @@ class PendingRequestCard extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
 
-          // Message (if any)
+          // Message (if any) — Flexible so it yields inside the fixed-height card
           if (message != null && message.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              AppLocalizations.of(context)!.pendingRequestCardValue(message),
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.textMuted,
-                fontStyle: FontStyle.italic,
+            Flexible(
+              child: Text(
+                AppLocalizations.of(context)!.pendingRequestCardValue(message),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                  fontStyle: FontStyle.italic,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
             ),
           ],
 

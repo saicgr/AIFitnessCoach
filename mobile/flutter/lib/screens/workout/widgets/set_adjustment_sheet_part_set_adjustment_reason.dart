@@ -133,12 +133,10 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final remainingSets = widget.totalSets - widget.completedSets;
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return Padding(
-          padding: EdgeInsets.only(bottom: bottomPadding),
-          child: SafeArea(
-            top: false,
+    return SafeArea(
+          top: false,
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,

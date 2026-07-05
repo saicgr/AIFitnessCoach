@@ -132,11 +132,13 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
           ),
         ),
 
-        // Dialog content
+        // Dialog content — scrollable so multi-reward milestones fit short
+        // screens (SE-class) instead of striping past the dialog bottom.
         Center(
           child: ScaleTransition(
             scale: _scaleAnimation,
-            child: Container(
+            child: SingleChildScrollView(
+              child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 24),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -399,6 +401,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                   ),
                 ],
               ),
+            ),
             ),
           ),
         ),

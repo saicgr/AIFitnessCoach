@@ -914,27 +914,33 @@ class _ExercisePRCard extends StatelessWidget {
             Row(
               children: [
                 // PR weight x reps
-                _statChip(
-                  Icons.fitness_center,
-                  '${_formatWeight(pr.weightKg)} x ${pr.reps}',
-                  textSecondary,
-                  textMuted,
+                Flexible(
+                  child: _statChip(
+                    Icons.fitness_center,
+                    '${_formatWeight(pr.weightKg)} x ${pr.reps}',
+                    textSecondary,
+                    textMuted,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 // Estimated 1RM
-                _statChip(
-                  Icons.speed,
-                  '1RM: ${_formatWeight(current1rm)}',
-                  accentColor,
-                  textMuted,
+                Flexible(
+                  child: _statChip(
+                    Icons.speed,
+                    '1RM: ${_formatWeight(current1rm)}',
+                    accentColor,
+                    textMuted,
+                  ),
                 ),
                 if (bwRatio != null) ...[
                   const SizedBox(width: 12),
-                  _statChip(
-                    Icons.monitor_weight_outlined,
-                    '${bwRatio.toStringAsFixed(2)}x BW',
-                    textSecondary,
-                    textMuted,
+                  Flexible(
+                    child: _statChip(
+                      Icons.monitor_weight_outlined,
+                      '${bwRatio.toStringAsFixed(2)}x BW',
+                      textSecondary,
+                      textMuted,
+                    ),
                   ),
                 ],
               ],
@@ -1018,10 +1024,14 @@ class _ExercisePRCard extends StatelessWidget {
       children: [
         Icon(icon, size: 13, color: iconColor),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w500, color: textColor),
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w500, color: textColor),
+          ),
         ),
       ],
     );

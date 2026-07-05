@@ -218,65 +218,75 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top bar with timer and skip
-                _buildTopBar(
-                  context,
-                  textPrimary: textPrimary,
-                  elevatedColor: elevatedColor,
-                ),
+                // Scrollable content — keeps the keyboard (speed/incline focus)
+                // from overflowing the fixed column; action buttons stay pinned.
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top bar with timer and skip
+                        _buildTopBar(
+                          context,
+                          textPrimary: textPrimary,
+                          elevatedColor: elevatedColor,
+                        ),
 
-                const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                // Warmup header
-                _buildHeader(textSecondary: textSecondary),
+                        // Warmup header
+                        _buildHeader(textSecondary: textSecondary),
 
-                const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                // Progress bar
-                _buildProgressBar(warmupProgress, elevatedColor),
+                        // Progress bar
+                        _buildProgressBar(warmupProgress, elevatedColor),
 
-                const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                // Current warmup exercise (fixed, not scrollable)
-                _buildCurrentExercise(
-                  currentExercise,
-                  textPrimary: textPrimary,
-                  textSecondary: textSecondary,
-                ),
+                        // Current warmup exercise
+                        _buildCurrentExercise(
+                          currentExercise,
+                          textPrimary: textPrimary,
+                          textSecondary: textSecondary,
+                        ),
 
-                // Cardio speed/incline input fields (fixed)
-                if (currentExercise.isCardioEquipment &&
-                    (currentExercise.speedMph != null || currentExercise.inclinePercent != null))
-                  _buildCardioInputRow(
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    elevatedColor: elevatedColor,
-                  ),
+                        // Cardio speed/incline input fields
+                        if (currentExercise.isCardioEquipment &&
+                            (currentExercise.speedMph != null || currentExercise.inclinePercent != null))
+                          _buildCardioInputRow(
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary,
+                            elevatedColor: elevatedColor,
+                          ),
 
-                // Intervals list (scrollable, takes remaining space)
-                if (currentExercise.isCardioEquipment &&
-                    (currentExercise.speedMph != null || currentExercise.inclinePercent != null) &&
-                    _currentIntervals.length > 1)
-                  Expanded(
-                    child: _buildIntervalsList(
-                      textPrimary: textPrimary,
-                      textSecondary: textSecondary,
-                      elevatedColor: elevatedColor,
+                        // Intervals list (bounded height inside the scroll view)
+                        if (currentExercise.isCardioEquipment &&
+                            (currentExercise.speedMph != null || currentExercise.inclinePercent != null) &&
+                            _currentIntervals.length > 1)
+                          SizedBox(
+                            height: 220,
+                            child: _buildIntervalsList(
+                              textPrimary: textPrimary,
+                              textSecondary: textSecondary,
+                              elevatedColor: elevatedColor,
+                            ),
+                          ),
+
+                        // Upcoming warmup exercises
+                        if (_currentExerciseIndex < widget.exercises.length - 1)
+                          _buildUpcomingExercises(
+                            textSecondary: textSecondary,
+                            elevatedColor: elevatedColor,
+                          ),
+
+                        const SizedBox(height: 8),
+                      ],
                     ),
-                  )
-                else
-                  const Spacer(),
-
-                // Upcoming warmup exercises
-                if (_currentExerciseIndex < widget.exercises.length - 1)
-                  _buildUpcomingExercises(
-                    textSecondary: textSecondary,
-                    elevatedColor: elevatedColor,
                   ),
+                ),
 
-                const SizedBox(height: 8),
-
-                // Action buttons
+                // Action buttons (pinned below the scroll)
                 _buildActionButtons(),
               ],
             ),

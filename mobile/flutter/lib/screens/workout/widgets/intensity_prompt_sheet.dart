@@ -417,10 +417,16 @@ class _EffortTile extends StatelessWidget {
               children: [
                 SizedBox(
                   height: 28,
+                  // Fixed slots keep each tile's rows on the same vertical
+                  // rhythm; FittedBox.scaleDown makes the glyph/label yield at
+                  // large font scale instead of overflowing the slot.
                   child: Center(
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 22, height: 1.0),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        emoji,
+                        style: const TextStyle(fontSize: 22, height: 1.0),
+                      ),
                     ),
                   ),
                 ),
@@ -428,13 +434,17 @@ class _EffortTile extends StatelessWidget {
                 SizedBox(
                   height: 16,
                   child: Center(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: selected ? color : textPrimary,
-                        height: 1.0,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: selected ? color : textPrimary,
+                          height: 1.0,
+                        ),
                       ),
                     ),
                   ),
@@ -443,13 +453,17 @@ class _EffortTile extends StatelessWidget {
                 SizedBox(
                   height: 14,
                   child: Center(
-                    child: Text(
-                      subLabel,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: textMuted,
-                        fontWeight: FontWeight.w500,
-                        height: 1.0,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        subLabel,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: textMuted,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                        ),
                       ),
                     ),
                   ),

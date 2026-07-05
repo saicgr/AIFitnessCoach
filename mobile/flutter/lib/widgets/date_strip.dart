@@ -8,6 +8,7 @@ import '../core/theme/accent_color_provider.dart';
 import '../data/services/haptic_service.dart';
 
 import '../l10n/generated/app_localizations.dart';
+
 /// Horizontal, week-paginated date strip shared by the Nutrition tab and the
 /// Sleep / Combined-Health detail screens.
 ///
@@ -69,10 +70,18 @@ class DateStrip extends ConsumerStatefulWidget {
 class _DateStripState extends ConsumerState<DateStrip> {
   late final PageController _controller;
 
+  /// Extra pages ahead of the current week. Future-scrolling only makes
+  /// sense for hosts that opted into future days (Workouts tab — upcoming
+  /// scheduled sessions live there); nutrition/health strips stay capped at
+  /// the current week exactly as before.
+  int get _weeksForward => widget.allowFuture ? 52 : 0;
+
   @override
   void initState() {
     super.initState();
-    _controller = PageController(initialPage: 0);
+    // The current week sits at page `_weeksForward`; lower pages (shown to
+    // the RIGHT under `reverse: true`) are future weeks, higher are past.
+    _controller = PageController(initialPage: _weeksForward);
   }
 
   @override
@@ -89,9 +98,16 @@ class _DateStripState extends ConsumerState<DateStrip> {
     final today = DateTime(now.year, now.month, now.day);
     final todayWeekStart = weekConfig.weekStart(today);
     final sel = widget.selectedDate;
-    final selWeekStart = weekConfig.weekStart(DateTime(sel.year, sel.month, sel.day));
+    final selWeekStart = weekConfig.weekStart(
+      DateTime(sel.year, sel.month, sel.day),
+    );
     final diffDays = todayWeekStart.difference(selWeekStart).inDays;
-    final page = (diffDays / 7).round().clamp(0, widget.weeksBack - 1);
+    // diffDays is negative for a future selection → a page below
+    // `_weeksForward` (a future week), which now exists when allowFuture.
+    final page = (_weeksForward + (diffDays / 7).round()).clamp(
+      0,
+      widget.weeksBack + _weeksForward - 1,
+    );
     if (!_controller.hasClients) return;
     final currentPage = _controller.page?.round() ?? 0;
     if (currentPage == page) return;
@@ -151,13 +167,14 @@ class _DateStripState extends ConsumerState<DateStrip> {
               child: PageView.builder(
                 controller: _controller,
                 reverse: true,
-                itemCount: widget.weeksBack,
+                itemCount: widget.weeksBack + _weeksForward,
                 physics: const PageScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
                 itemBuilder: (context, pageIndex) {
-                  final weekStart =
-                      todayWeekStart.subtract(Duration(days: 7 * pageIndex));
+                  final weekStart = todayWeekStart.subtract(
+                    Duration(days: 7 * (pageIndex - _weeksForward)),
+                  );
                   return _WeekRow(
                     weekStart: weekStart,
                     today: today,
@@ -343,59 +360,59 @@ class _DayCell extends StatelessWidget {
       child: _wrapSemantics(
         context,
         child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: SizedBox(
-          height: 64,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                dayLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: labelColor,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: cellBg,
-                  border: cellBorder,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '$dateNumber',
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            height: 64,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  dayLabel,
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: dateWeight,
-                    color: dateColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
                   ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              SizedBox(
-                height: 6,
-                child: hasLog
-                    ? Container(
-                        width: 5,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: accentColor,
-                        ),
-                      )
-                    : null,
-              ),
-            ],
+                const SizedBox(height: 4),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: cellBg,
+                    border: cellBorder,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$dateNumber',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: dateWeight,
+                      color: dateColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: 6,
+                  child: hasLog
+                      ? Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accentColor,
+                          ),
+                        )
+                      : null,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -411,59 +428,59 @@ class _DayCell extends StatelessWidget {
       child: _wrapSemantics(
         context,
         child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: SizedBox(
-          height: 64,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                dayLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: accentColor,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                height: 32,
-                constraints: const BoxConstraints(minWidth: 36),
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: accentColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$dateNumber',
-                  style: const TextStyle(
-                    fontSize: 14,
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            height: 64,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  dayLabel,
+                  style: TextStyle(
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: accentColor,
                   ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              SizedBox(
-                height: 6,
-                child: hasLog
-                    ? Container(
-                        width: 5,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: accentColor,
-                        ),
-                      )
-                    : null,
-              ),
-            ],
+                const SizedBox(height: 4),
+                Container(
+                  height: 32,
+                  constraints: const BoxConstraints(minWidth: 36),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$dateNumber',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: 6,
+                  child: hasLog
+                      ? Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accentColor,
+                          ),
+                        )
+                      : null,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
