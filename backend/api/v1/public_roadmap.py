@@ -21,9 +21,11 @@ ENDPOINTS (mounted at /api/v1/roadmap):
 
 RATE LIMITS: /vote 20/hr, /comment 10/hr, /suggest 5/hr (per IP).
 """
+import asyncio
 from collections import Counter
 from typing import Optional
 
+from cachetools import TTLCache
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 
@@ -33,6 +35,13 @@ from core.supabase_client import get_supabase
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+# The board is public and re-fetched on every page view, but vote/comment
+# counts don't need to be real-time — voting/commenting updates the caller's
+# own view optimistically client-side (see Roadmap.tsx handleVoted/
+# handleCommentAdded), so a short-lived cache is invisible to the voter and
+# saves two Supabase round-trips for every other visitor in the window.
+_STATE_CACHE: "TTLCache[str, dict]" = TTLCache(maxsize=1, ttl=20)
 
 
 # ===================================
@@ -84,14 +93,29 @@ async def get_roadmap_state():
     One call drives the whole board's client-side hydration. The board's
     static content is prerendered; only these numbers are dynamic.
     """
+    cached = _STATE_CACHE.get("state")
+    if cached is not None:
+        return cached
+
     db = get_supabase()
-    try:
-        votes = db.client.table("roadmap_votes").select("feature_slug").execute()
-        comments = (
+
+    def _fetch_votes():
+        return db.client.table("roadmap_votes").select("feature_slug").execute()
+
+    def _fetch_comments():
+        return (
             db.client.table("roadmap_comments")
             .select("feature_slug")
             .eq("is_hidden", False)
             .execute()
+        )
+
+    try:
+        # Two independent Supabase REST calls — run them concurrently instead
+        # of back-to-back (was ~1s serial, now bounded by the slower of the two).
+        votes, comments = await asyncio.gather(
+            asyncio.to_thread(_fetch_votes),
+            asyncio.to_thread(_fetch_comments),
         )
     except Exception as e:
         logger.error(f"[roadmap] state fetch failed: {e}", exc_info=True)
@@ -100,13 +124,15 @@ async def get_roadmap_state():
     vote_counts = Counter(r["feature_slug"] for r in (votes.data or []))
     comment_counts = Counter(r["feature_slug"] for r in (comments.data or []))
 
-    return {
+    result = {
         slug: {
             "vote_count": vote_counts.get(slug, 0),
             "comment_count": comment_counts.get(slug, 0),
         }
         for slug in (set(vote_counts) | set(comment_counts))
     }
+    _STATE_CACHE["state"] = result
+    return result
 
 
 @router.post("/vote")
