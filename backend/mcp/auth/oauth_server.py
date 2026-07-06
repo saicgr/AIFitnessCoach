@@ -428,3 +428,34 @@ async def metadata():
         "scopes_supported": list(_cfg.SCOPES.keys()),
         "registration_endpoint_auth_methods_supported": ["none"],
     }
+
+
+# ─── Root-level discovery aliases ────────────────────────────────────────────
+# The `issuer` above is the bare origin (e.g. https://mcp.zealova.com), so per
+# RFC 8414 §3.1 the metadata document belongs at the origin's root
+# `/.well-known/...` path — NOT under our `/mcp/oauth` prefix. Clients that do
+# simple concatenation still find the prefixed route above; clients that do
+# spec-correct discovery from the bare issuer need the routes below. Mounted
+# with no prefix in main.py, separately from `router`.
+#
+# Same story for RFC 9728 protected-resource metadata (new in the MCP
+# Authorization spec, 2025-06+): given resource identifier `{origin}/mcp`,
+# implementations vary between the bare root path and the RFC 9728
+# path-insertion form, so both are served here with identical content.
+root_router = APIRouter(tags=["mcp-oauth-well-known"])
+
+
+@root_router.get("/.well-known/oauth-authorization-server")
+async def root_metadata():
+    return await metadata()
+
+
+@root_router.get("/.well-known/oauth-protected-resource")
+@root_router.get("/.well-known/oauth-protected-resource/mcp")
+async def protected_resource_metadata():
+    base = _cfg.OAUTH_ISSUER.rstrip("/")
+    return {
+        "resource": f"{base}/mcp",
+        "authorization_servers": [base],
+        "bearer_methods_supported": ["header"],
+    }

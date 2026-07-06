@@ -231,6 +231,7 @@ class Settings(BaseSettings):
     # any direct cross-origin call, e.g. free-tools usage, is not CORS-blocked).
     cors_origins: list[str] = [
         "https://aifitnesscoach-zqi3.onrender.com",
+        "https://mcp.zealova.com",
         "https://zealova.com",
         "https://www.zealova.com",
         "https://fitwiz.us",

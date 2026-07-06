@@ -232,7 +232,7 @@ async def create_pat(
     mcp_url = f"{cfg.OAUTH_ISSUER.rstrip('/')}/mcp"
     connection_config = {
         "mcpServers": {
-            "fitwiz": {
+            branding.APP_NAME.lower(): {
                 "url": mcp_url,
                 "transport": "http",
                 "headers": {

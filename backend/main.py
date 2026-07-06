@@ -145,6 +145,73 @@ class _PathPrefixDedupMiddleware:
         await self.app(scope, receive, send)
 
 
+class McpAuthChallengeMiddleware:
+    """Real 401 + WWW-Authenticate challenge for the unauthenticated /mcp case.
+
+    FastMCP itself enforces no auth at the transport level — bearer validity
+    is only checked per-tool-call inside mcp/middleware/auth.py (an invalid
+    or missing token there fails in-band, as a 200 JSON-RPC error, not an
+    HTTP 401). That means a client with NO Authorization header at all could
+    still open a session and list tools/resources, AND — the part that
+    actually breaks setup — it never gets the 401 signal that MCP clients
+    (Claude Desktop, Claude Code CLI) rely on to auto-discover our OAuth
+    server. `claude mcp add --transport http zealova <url>` needs this 401
+    to know to go look for `/.well-known/oauth-protected-resource`.
+
+    Scope of this fix: only requests to the exact /mcp mount root with NO
+    Authorization header get short-circuited here. A header being *present*
+    (PAT or OAuth, valid or not) always passes through unchanged to the
+    existing per-tool checks — this does not change behavior for anyone
+    already using the manual PAT-paste flow.
+    """
+
+    _GATED_PATHS = ("/mcp", "/mcp/")
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if (
+            scope["type"] != "http"
+            or scope.get("path") not in self._GATED_PATHS
+            or scope.get("method") == "OPTIONS"
+        ):
+            await self.app(scope, receive, send)
+            return
+
+        has_auth_header = any(
+            name == b"authorization" for name, _ in scope.get("headers", ())
+        )
+        if has_auth_header:
+            await self.app(scope, receive, send)
+            return
+
+        from mcp.config import get_mcp_config
+
+        base = get_mcp_config().OAUTH_ISSUER.rstrip("/")
+        resource_metadata_url = f"{base}/.well-known/oauth-protected-resource"
+        body = json.dumps({
+            "error": "unauthorized",
+            "error_description": (
+                "Authentication required. See the resource_metadata URL in "
+                "WWW-Authenticate for OAuth discovery."
+            ),
+        }).encode()
+        await send({
+            "type": "http.response.start",
+            "status": 401,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"content-length", str(len(body)).encode()),
+                (
+                    b"www-authenticate",
+                    f'Bearer resource_metadata="{resource_metadata_url}"'.encode(),
+                ),
+            ],
+        })
+        await send({"type": "http.response.body", "body": body})
+
+
 class BodySizeLimitMiddleware:
     """Pure ASGI middleware that rejects requests whose Content-Length exceeds `max_bytes`.
 
@@ -1067,6 +1134,14 @@ class _SSEAwareGZipMiddleware:
 
 app.add_middleware(_SSEAwareGZipMiddleware, minimum_size=500)
 
+# 401 + WWW-Authenticate challenge for unauthenticated /mcp requests — lets
+# MCP clients (Claude Desktop, Claude Code CLI) auto-discover our OAuth
+# server instead of requiring a manually-pasted PAT config. Added FIRST =>
+# innermost layer, closest to the /mcp mount, so every other middleware
+# (logging, security headers, rate limiting, metrics) still wraps and
+# observes these short-circuited responses normally.
+app.add_middleware(McpAuthChallengeMiddleware)
+
 # SECURITY: Reject oversized request bodies to prevent OOM on 512MB Render tier.
 # Implemented as pure ASGI (see BodySizeLimitMiddleware) so streaming endpoints
 # don't surface `RuntimeError: No response returned.` on client disconnects.
@@ -1127,6 +1202,10 @@ from mcp.auth.oauth_server import router as mcp_oauth_router  # noqa: E402
 app.include_router(mcp_oauth_router)
 from mcp.consent.router import router as mcp_consent_router  # noqa: E402
 app.include_router(mcp_consent_router)
+# Root-level RFC 8414 / RFC 9728 discovery aliases — see comment in
+# mcp/auth/oauth_server.py for why these need to live outside /mcp/oauth.
+from mcp.auth.oauth_server import root_router as mcp_root_metadata_router  # noqa: E402
+app.include_router(mcp_root_metadata_router)
 
 # MCP streamable-HTTP server (Phase 2+). Hosts the tool + resource surface
 # that Claude Desktop / ChatGPT / Cursor talk to. Bearer tokens issued by
