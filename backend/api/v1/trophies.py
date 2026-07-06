@@ -874,7 +874,7 @@ async def get_user_xp(user_id: str,
         xp_result = db.client.table("user_xp") \
             .select("*") \
             .eq("user_id", user_id) \
-            .single() \
+            .maybe_single() \
             .execute()
 
         if xp_result.data:

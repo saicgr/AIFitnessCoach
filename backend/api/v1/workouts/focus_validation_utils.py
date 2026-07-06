@@ -58,9 +58,15 @@ def validate_exercise_matches_focus(
     if not focus_lower or focus_lower in ['full_body', 'fullbody', 'full body']:
         return {"matches": True, "reason": "Full body focus allows all exercises", "confidence": 1.0}
 
+    # Strip parenthetical equipment/location notes (e.g. "(inside Squat Cage)")
+    # before exclusion matching. Without this, an equipment descriptor sharing
+    # a word with an excluded movement (a shoulder press done "inside Squat
+    # Cage") falsely excludes a legitimate exercise via substring match.
+    exercise_for_exclusion_check = re.sub(r"\([^)]*\)", " ", exercise_lower)
+
     excluded_exercises = FOCUS_AREA_EXCLUDED_EXERCISES.get(focus_lower, [])
     for excluded in excluded_exercises:
-        if excluded in exercise_lower:
+        if excluded in exercise_for_exclusion_check:
             return {
                 "matches": False,
                 "reason": f"'{exercise_name}' is a {excluded} exercise, not suitable for {focus_area} focus",
@@ -248,6 +254,34 @@ async def validate_and_filter_focus_mismatches(
             f"[Focus Validation] Workout '{workout_name}' has {mismatch_count}/{len(exercises)} "
             f"exercises that don't match the '{focus_area}' focus (caller decides disposition)."
         )
+
+    # ── Active backfill (only when a candidate pool is supplied) ──
+    # Mirrors the full_body top-up above: replace mismatched slots with
+    # focus-matching exercises from the pool instead of leaving the caller
+    # no option but to ship the mismatched exercises when the valid count
+    # falls below its minimum floor. candidate_pool=None (the streaming path's
+    # default) keeps this byte-for-byte identical to before.
+    if candidate_pool and mismatched_exercises:
+        existing_names = {(e.get("name") or "").strip().lower() for e in valid_exercises}
+        target_count = len(exercises)
+        backfilled = 0
+        for cand in candidate_pool:
+            if len(valid_exercises) >= target_count:
+                break
+            cand_name = (cand.get("name") or "").strip().lower()
+            if not cand_name or cand_name in existing_names:
+                continue
+            cand_muscle = cand.get("muscle_group", "")
+            cand_validation = validate_exercise_matches_focus(cand.get("name", ""), cand_muscle, focus_area)
+            if cand_validation["matches"]:
+                valid_exercises.append(cand)
+                existing_names.add(cand_name)
+                backfilled += 1
+        if backfilled:
+            logger.info(
+                f"✅ [Focus Backfill] Replaced {backfilled} mismatched exercise(s) in '{workout_name}' "
+                f"with focus-matching candidates from the pool ({len(valid_exercises)}/{target_count})"
+            )
 
     return {
         "valid_exercises": valid_exercises,
