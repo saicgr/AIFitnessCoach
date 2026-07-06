@@ -75,59 +75,45 @@ class _PreAuthReferralChipState extends State<PreAuthReferralChip> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded) return const SizedBox(height: 24);
+    if (!_loaded) return const SizedBox(height: 20);
     final t = OnboardingTheme.of(context);
     final hasCode = _pendingCode != null && _pendingCode!.isNotEmpty;
 
+    // De-emphasized to a small text link — this is a low-frequency action
+    // (most users don't have a referral code) that was previously a
+    // full-width chip competing with the sign-in buttons above it for
+    // visual weight.
     return GestureDetector(
       onTap: _openSheet,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: t.cardFill,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: hasCode ? t.borderSelected : t.borderDefault,
-                width: hasCode ? 1.5 : 1,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              hasCode ? Icons.check_circle_rounded : Icons.card_giftcard_rounded,
+              size: 14,
+              color: hasCode ? t.selectionAccent : t.textMuted,
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                hasCode
+                    ? 'Code $_pendingCode will apply after signup'
+                    : 'Got a code from a friend?',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: hasCode ? t.textPrimary : t.textMuted,
+                  decoration: TextDecoration.underline,
+                  decorationColor:
+                      (hasCode ? t.textPrimary : t.textMuted).withValues(alpha: 0.4),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  hasCode ? Icons.check_circle_rounded : Icons.card_giftcard_rounded,
-                  size: 16,
-                  color: hasCode ? t.selectionAccent : t.textMuted,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    hasCode
-                        ? 'Code $_pendingCode will apply after signup'
-                        : 'Got a code from a friend?',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: hasCode ? t.textPrimary : t.textMuted,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 16,
-                  color: t.textMuted,
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     ).animate().fadeIn(delay: 900.ms);
