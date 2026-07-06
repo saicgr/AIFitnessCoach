@@ -73,7 +73,7 @@ export default function LiveChatQueue() {
               if (notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
                 new Notification(`New message from ${chat.user.name}`, {
                   body: newMessage.content.slice(0, 100),
-                  icon: '/favicon.ico',
+                  icon: '/favicon.png',
                 });
               }
             }

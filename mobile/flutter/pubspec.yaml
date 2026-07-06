@@ -230,10 +230,14 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon/app_icon.png"
   min_sdk_android: 21
-  # Android Adaptive Icon with shadow background
-  adaptive_icon_background: "#FFFFFF"
+  # Android Adaptive Icon — background matches the new icon's own black
+  # backdrop so the foreground inset doesn't show a mismatched margin.
+  adaptive_icon_background: "#000000"
   adaptive_icon_foreground: "assets/icon/app_icon.png"
   adaptive_icon_foreground_inset: 16
+  # Android 13+ themed-icon layer; also the FCM push-notification small icon
+  # (AndroidManifest.xml default_notification_icon -> ic_launcher_monochrome).
+  adaptive_icon_monochrome: "assets/icon/app_icon.png"
   # iOS settings
   remove_alpha_ios: true
 

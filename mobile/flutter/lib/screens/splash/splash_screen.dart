@@ -24,7 +24,6 @@ class _SplashScreenState extends State<SplashScreen>
   late final AnimationController _lineController;
   late final AnimationController _iconController;
   late final AnimationController _pulseController;
-  late final Animation<double> _iconScale;
   late final Animation<double> _iconFade;
   late final Animation<double> _pulse;
 
@@ -42,10 +41,6 @@ class _SplashScreenState extends State<SplashScreen>
     _iconController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 420),
-    );
-
-    _iconScale = Tween<double>(begin: 0.6, end: 1.0).animate(
-      CurvedAnimation(parent: _iconController, curve: Curves.easeOutBack),
     );
 
     _iconFade = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -93,45 +88,35 @@ class _SplashScreenState extends State<SplashScreen>
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // App icon — ignites when the pulse line arrives.
-                FadeTransition(
-                  opacity: _iconFade,
-                  child: ScaleTransition(
-                    scale: _iconScale,
-                    child: Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(21),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.orange.withValues(
-                              alpha: _pulseController.isAnimating
-                                  ? _pulse.value
-                                  : 0.35,
-                            ),
-                            blurRadius: 44,
-                            spreadRadius: 6,
-                          ),
-                        ],
+                // App mark — traces itself in as the pulse line draws,
+                // then ignites to a solid fill once the line completes.
+                Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(21),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.orange.withValues(
+                          alpha: _pulseController.isAnimating
+                              ? _pulse.value
+                              : 0.35,
+                        ),
+                        blurRadius: 44,
+                        spreadRadius: 6,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(21),
-                        child: Image.asset(
-                          'assets/images/app_icon.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.orange,
-                              borderRadius: BorderRadius.circular(21),
-                            ),
-                            child: const Icon(
-                              Icons.fitness_center,
-                              size: 42,
-                              color: Colors.white,
-                            ),
-                          ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(21),
+                    child: Container(
+                      color: AppColors.pureBlack,
+                      padding: const EdgeInsets.all(18),
+                      child: CustomPaint(
+                        painter: _ZMarkPainter(
+                          outlineProgress: Curves.easeInOutCubic
+                              .transform(_lineController.value),
+                          fillOpacity: _iconFade.value,
                         ),
                       ),
                     ),
@@ -236,4 +221,71 @@ class _PulseLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(_PulseLinePainter oldDelegate) =>
       progress != oldDelegate.progress || glow != oldDelegate.glow;
+}
+
+/// Draws the Zealova "Z" mark tracing itself in as [outlineProgress] (0..1)
+/// advances (synced to the pulse line below), then crossfades to a solid
+/// fill as [fillOpacity] (0..1) ramps once the line completes.
+///
+/// Points are the traced silhouette from `assets/svg/zealova_z_mark.svg`,
+/// normalized to a 0..1 unit square (that SVG's 24×24 viewBox / 24).
+class _ZMarkPainter extends CustomPainter {
+  final double outlineProgress;
+  final double fillOpacity;
+
+  _ZMarkPainter({required this.outlineProgress, required this.fillOpacity});
+
+  static const List<Offset> _uv = [
+    Offset(0.2392, 0.1867),
+    Offset(0.1650, 0.3529),
+    Offset(0.4871, 0.3542),
+    Offset(0.1279, 0.6688),
+    Offset(0.0833, 0.8133),
+    Offset(0.8338, 0.8133),
+    Offset(0.8858, 0.6546),
+    Offset(0.7250, 0.6533),
+    Offset(0.8117, 0.3671),
+    Offset(0.4846, 0.6533),
+    Offset(0.3621, 0.6521),
+    Offset(0.9167, 0.1867),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(_uv.first.dx * size.width, _uv.first.dy * size.height);
+    for (final p in _uv.skip(1)) {
+      path.lineTo(p.dx * size.width, p.dy * size.height);
+    }
+    path.close();
+
+    if (fillOpacity > 0) {
+      final fillPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = Colors.white.withValues(alpha: fillOpacity);
+      canvas.drawPath(path, fillPaint);
+    }
+
+    if (outlineProgress > 0 && fillOpacity < 1) {
+      final revealed = Path();
+      for (final metric in path.computeMetrics()) {
+        revealed.addPath(
+          metric.extractPath(0, metric.length * outlineProgress),
+          Offset.zero,
+        );
+      }
+      final outlinePaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = size.width * 0.035
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..color = Colors.white.withValues(alpha: 1 - fillOpacity);
+      canvas.drawPath(revealed, outlinePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ZMarkPainter oldDelegate) =>
+      outlineProgress != oldDelegate.outlineProgress ||
+      fillOpacity != oldDelegate.fillOpacity;
 }

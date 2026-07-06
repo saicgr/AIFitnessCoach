@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 LOGO_SRC = os.path.join(ROOT, "frontend", "public", "zealova-logo.png")
-BRAND = (242, 106, 27, 255)   # Zealova orange
+BRAND = (10, 10, 10, 255)   # Zealova brand mark black (post-2026-07 rebrand)
 WORD  = "Zealova"
 
 FONTS = [
@@ -23,16 +23,18 @@ def _load_font(sz):
     return ImageFont.load_default()
 
 def _logo_transparent(h):
-    """Key out the light-gray logo background by colorfulness; keep the orange mark."""
+    """Key the white Z mark out of its solid near-black backdrop by brightness
+    (the new mark is monochrome, so a colorfulness-based key sees no saturation
+    difference between mark and background), recolored to BRAND for chip legibility."""
     logo = Image.open(LOGO_SRC).convert("RGBA")
     px = logo.load()
     w, ht = logo.size
     for y in range(ht):
         for x in range(w):
             r, g, b, a = px[x, y]
-            colorful = max(r, g, b) - min(r, g, b)
-            alpha = max(0, min(255, (colorful - 18) * 10))
-            px[x, y] = (r, g, b, alpha)
+            brightness = (r + g + b) / 3
+            alpha = max(0, min(255, int((brightness - 40) * 1.8)))
+            px[x, y] = (BRAND[0], BRAND[1], BRAND[2], alpha)
     ratio = h / logo.height
     return logo.resize((int(logo.width * ratio), h), Image.LANCZOS)
 

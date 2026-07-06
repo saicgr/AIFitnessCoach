@@ -80,7 +80,7 @@ export default function WorkoutRestTimer() {
       try {
         new Notification('Rest complete', {
           body: 'Back to the bar.',
-          icon: '/favicon.ico',
+          icon: '/favicon.png',
           silent: false,
         });
       } catch {

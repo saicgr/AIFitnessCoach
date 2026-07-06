@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="ic_launcher_background">#000000</color>
     <color name="notification_color">#00D9FF</color>
     <!-- Splash background: matches the dark first-frame app background so
          the splash → Flutter UI handoff doesn't flash white. Used in

@@ -39,7 +39,7 @@ try {
   // Falls back to the condensed system stack below.
 }
 
-// The real app icon (orange Z), inlined for the card's brand chip so share
+// The real app icon (Z mark), inlined for the card's brand chip so share
 // cards match the Play Store listing exactly.
 let appIconDataUri = '';
 try {
