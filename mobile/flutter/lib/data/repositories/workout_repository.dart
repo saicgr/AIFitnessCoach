@@ -444,6 +444,21 @@ class WorkoutRepository {
     }
   }
 
+  /// Move a workout to a new date, swapping with any workout already on that
+  /// date (both rows exchange dates in one server call).
+  Future<bool> swapWorkoutDate(String workoutId, String newDate) async {
+    try {
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/swap',
+        data: {'workout_id': workoutId, 'new_date': newDate},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error swapping workout date: $e');
+      return false;
+    }
+  }
+
   /// Get workout versions (history)
   Future<List<Map<String, dynamic>>> getWorkoutVersions(String workoutId) async {
     try {

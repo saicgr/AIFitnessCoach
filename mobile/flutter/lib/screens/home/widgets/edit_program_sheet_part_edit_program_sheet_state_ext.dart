@@ -445,6 +445,37 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                   ),
                 ),
               ),
+              // ── Swap this day's plan with another training day's ──
+              // Reorder which weekday a session lands on: swaps the two days'
+              // per-day overrides in place (whatever's configured for this day
+              // moves to the picked day and vice versa). Only useful with at
+              // least one OTHER training day to swap into.
+              if (trainingDays.length > 1)
+                TextButton(
+                  onPressed: () =>
+                      _showSwapDaySheet(colors, editingDay, trainingDays),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.swap_horiz_rounded, size: 15, color: accent),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Swap with…',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: accent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               // ── B5: Copy this day's settings to other training days ──
               // Only useful when there's at least one OTHER training day and
               // this day has an explicit override to copy.
@@ -758,6 +789,132 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
         SnackBar(
           content: Text(
             'Copied ${weekdayFull[sourceDay]} to ${selected.length} day${selected.length == 1 ? '' : 's'}',
+          ),
+        ),
+      );
+    }
+  }
+
+  /// Reorder which weekday a session falls on: swap [sourceDay]'s per-day plan
+  /// with another training day's. Shows a single-select chooser of the OTHER
+  /// training days; on confirm the two days' `workout_day_overrides` entries are
+  /// swapped in the client-side draft (a "AI decide" day — no override — swaps
+  /// cleanly too, moving the configured plan onto it and clearing the source).
+  /// Flows through the existing persist / Apply-now path unchanged, since the
+  /// save reads `_dayOverrides` directly.
+  Future<void> _showSwapDaySheet(
+    SheetColors colors,
+    int sourceDay,
+    List<int> trainingDays,
+  ) async {
+    const weekdayFull = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    final targets = trainingDays.where((d) => d != sourceDay).toList();
+    if (targets.isEmpty) return;
+    int? selected;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+
+    final pick = await showGlassSheet<int>(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (ctx, setSheetState) => Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Swap ${weekdayFull[sourceDay]} with…',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Swaps this day\'s focus, duration, intensity, gym & equipment with the day you pick — the two trade places.',
+                  style: TextStyle(fontSize: 13, color: colors.textMuted),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final d in targets)
+                      PerDayChip(
+                        label: weekdayFull[d],
+                        icon: selected == d ? Icons.check_rounded : null,
+                        selected: selected == d,
+                        accent: accent,
+                        textPrimary: colors.textPrimary,
+                        textMuted: colors.textMuted,
+                        onTap: () => setSheetState(
+                          () => selected = selected == d ? null : d,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: selected == null
+                        ? null
+                        : () => Navigator.pop(ctx, selected),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      selected == null
+                          ? 'Pick a day to swap with'
+                          : 'Swap with ${weekdayFull[selected!]}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (pick != null && mounted) {
+      setState(() {
+        final source = _dayOverrides[sourceDay];
+        final target = _dayOverrides[pick];
+        // Swap in place; a null (AI-decide) side means the other key clears.
+        if (target == null) {
+          _dayOverrides.remove(sourceDay);
+        } else {
+          _dayOverrides[sourceDay] = target;
+        }
+        if (source == null) {
+          _dayOverrides.remove(pick);
+        } else {
+          _dayOverrides[pick] = source;
+        }
+      });
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Swapped ${weekdayFull[sourceDay]} & ${weekdayFull[pick]}',
           ),
         ),
       );

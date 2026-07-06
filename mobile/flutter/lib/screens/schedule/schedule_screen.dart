@@ -1012,7 +1012,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             },
             onAcceptWithDetails: (details) async {
               setState(() => _targetDayIndex = null);
-              await _rescheduleWorkout(details.data, day, colors);
+              // If the drop target already holds a different workout, swap the
+              // two dates in one call; otherwise fall back to a plain move.
+              final occupants = dayWorkouts
+                  .where((w) => w.id != null && w.id != details.data.id)
+                  .toList();
+              await _rescheduleWorkout(details.data, day, colors,
+                  occupant: occupants.isEmpty ? null : occupants.first);
             },
             builder: (context, candidateData, rejectedData) {
               return AnimatedContainer(
@@ -1226,9 +1232,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Future<void> _rescheduleWorkout(
     Workout workout,
     DateTime newDate,
-    ThemeColors colors,
-  ) async {
+    ThemeColors colors, {
+    Workout? occupant,
+  }) async {
     final newDateStr = DateFormat('yyyy-MM-dd').format(newDate);
+    // The date the dragged workout is leaving — where a swapped occupant lands.
+    final originalDate = workout.scheduledDate == null
+        ? null
+        : DateTime.tryParse(workout.scheduledDate!);
+    final isSwap = occupant != null;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1253,19 +1265,22 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     try {
       final repository = ref.read(workoutRepositoryProvider);
-      final success = await repository.rescheduleWorkout(
-        workout.id!,
-        newDateStr,
-      );
+      final success = isSwap
+          ? await repository.swapWorkoutDate(workout.id!, newDateStr)
+          : await repository.rescheduleWorkout(workout.id!, newDateStr);
 
       if (success) {
         await ref.read(workoutsProvider.notifier).silentRefresh();
 
         if (mounted) {
-          AppSnackBar.success(
-            context,
-            'Workout moved to ${DateFormat('EEEE, MMM d').format(newDate)}',
-          );
+          if (isSwap && originalDate != null) {
+            _showSwapUndoSnackBar(workout, newDate, originalDate);
+          } else {
+            AppSnackBar.success(
+              context,
+              'Workout moved to ${DateFormat('EEEE, MMM d').format(newDate)}',
+            );
+          }
         }
       } else {
         throw Exception('Failed to reschedule');
@@ -1275,6 +1290,40 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         AppSnackBar.error(context, 'Failed to reschedule: $e');
       }
     }
+  }
+
+  /// After a two-workout date swap, offer a one-tap Undo that swaps the dragged
+  /// workout back to its original date (which re-swaps the occupant too).
+  void _showSwapUndoSnackBar(
+    Workout workout,
+    DateTime newDate,
+    DateTime originalDate,
+  ) {
+    final originalDateStr = DateFormat('yyyy-MM-dd').format(originalDate);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            'Swapped to ${DateFormat('EEEE, MMM d').format(newDate)}',
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              final repository = ref.read(workoutRepositoryProvider);
+              final reverted =
+                  await repository.swapWorkoutDate(workout.id!, originalDateStr);
+              if (reverted) {
+                await ref.read(workoutsProvider.notifier).silentRefresh();
+              } else if (mounted) {
+                AppSnackBar.error(context, 'Failed to undo swap');
+              }
+            },
+          ),
+        ),
+      );
   }
 
   void _changeWeek(WidgetRef ref, int delta) {
