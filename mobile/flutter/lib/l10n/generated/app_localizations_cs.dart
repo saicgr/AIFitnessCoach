@@ -3790,20 +3790,20 @@ class AppLocalizationsCs extends AppLocalizations {
   String get chatScreenTyping => 'Píše...';
 
   @override
-  String get chatScreenMastheadTitle => 'Coach';
+  String get chatScreenMastheadTitle => 'Kouč';
 
   @override
-  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+  String get chatScreenMastheadSubtitle => 'Tvůj prostor, vždy otevřený.';
 
   @override
-  String get chatScreenMastheadHistory => 'History';
+  String get chatScreenMastheadHistory => 'Historie';
 
   @override
-  String get chatScreenMastheadNew => 'New';
+  String get chatScreenMastheadNew => 'Nový';
 
   @override
   String chatScreenMastheadDay(int count) {
-    return 'Day $count';
+    return 'Den $count';
   }
 
   @override
@@ -11230,7 +11230,7 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get exercisesTabHistoryToggle => 'History';
+  String get exercisesTabHistoryToggle => 'Historie';
 
   @override
   String expandableSummaryExerciseCardKg(Object weightKg) {
@@ -16378,14 +16378,14 @@ class AppLocalizationsCs extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'ZOBRAZIT PLÁN NA ZÍTRA';
 
   @override
-  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+  String get heroWorkoutCardHidePlan => 'SKRÝT PLÁN';
 
   @override
-  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+  String get heroWorkoutCardOpenFullPlan => 'Otevřít celý plán';
 
   @override
   String heroWorkoutCardMoreExercises(int count) {
-    return '+$count more';
+    return '+$count další';
   }
 
   @override
@@ -19977,10 +19977,10 @@ class AppLocalizationsCs extends AppLocalizations {
   String get logMealSheetBackToResults => 'Zpět k výsledkům';
 
   @override
-  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+  String get logMealSheetAddSauceOrSide => 'Přidat omáčku nebo přílohu?';
 
   @override
-  String get logMealSheetAddSauceSide => 'Add sauce / item';
+  String get logMealSheetAddSauceSide => 'Přidat omáčku / položku';
 
   @override
   String get logMealSheetBarcode => 'Čárový kód';
@@ -25203,7 +25203,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Přihlaste se, abyste viděli své vzorce';
 
   @override
-  String get nutritionJournalTab => 'Journal';
+  String get nutritionJournalTab => 'Deník';
 
   @override
   String get nutritionPatternsTab => 'Vzorce';
@@ -25542,13 +25542,13 @@ class AppLocalizationsCs extends AppLocalizations {
   String get nutritionShowcaseDinner => 'Večeře';
 
   @override
-  String get nutritionShowcaseFieldCarbs => 'carbs';
+  String get nutritionShowcaseFieldCarbs => 'sacharidy';
 
   @override
-  String get nutritionShowcaseFieldFat => 'fat';
+  String get nutritionShowcaseFieldFat => 'tuky';
 
   @override
-  String get nutritionShowcaseFieldProtein => 'protein';
+  String get nutritionShowcaseFieldProtein => 'bílkoviny';
 
   @override
   String get nutritionShowcaseFilter => 'Filtr';
@@ -25561,10 +25561,10 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get nutritionShowcaseIntroSubtitle =>
-      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+      'Naskenuj jakékoli menu restaurace — Zealova seřadí každé jídlo podle tvých cílů 🍽️';
 
   @override
-  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
+  String get nutritionShowcaseIntroTitle => 'Už nikdy nehádej u menu';
 
   @override
   String get nutritionShowcaseLunchDinner => '— Oběd a večeře —';
@@ -25619,29 +25619,29 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get nutritionShowcaseSortCleared =>
-      'Sort cleared — original menu order';
+      'Řazení zrušeno — původní pořadí menu';
 
   @override
   String get nutritionShowcaseSortHint =>
-      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+      'Vyzkoušej — klepni na Bílkoviny pro seřazení podle bílkovin. Sacharidy, Tuky a Zánět také přeřadí menu.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
-    return 'Sorted ✓ — highest $field first';
+    return 'Seřazeno ✓ — nejvyšší $field první';
   }
 
   @override
   String get nutritionShowcaseSortedLeastInflammatory =>
-      'Sorted ✓ — least inflammatory first';
+      'Seřazeno ✓ — nejméně zánětlivé první';
 
   @override
   String nutritionShowcaseSortedLowest(Object field) {
-    return 'Sorted ✓ — lowest $field first';
+    return 'Seřazeno ✓ — nejnižší $field první';
   }
 
   @override
   String get nutritionShowcaseSortedMostInflammatory =>
-      'Sorted ✓ — most inflammatory first';
+      'Seřazeno ✓ — nejvíce zánětlivé první';
 
   @override
   String get nutritionShowcaseStarters => 'STARTOVAČE';
@@ -30091,7 +30091,8 @@ class AppLocalizationsCs extends AppLocalizations {
       'Které dny ti vyhovují nejlépe?';
 
   @override
-  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+  String get quizEquipmentAddMoreGymsLaterHint =>
+      'další posilovny můžeš přidat později';
 
   @override
   String get quizEquipmentApartmentFriendly => 'Vhodné do bytu';
@@ -30100,7 +30101,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get quizEquipmentBarbell => 'Velká činka';
 
   @override
-  String get quizEquipmentOlympicBarbell => 'Olympic Weightlifting Bar';
+  String get quizEquipmentOlympicBarbell => 'Olympijská činka';
 
   @override
   String get quizEquipmentEzBar => 'EZ Bar';
@@ -30227,19 +30228,19 @@ class AppLocalizationsCs extends AppLocalizations {
   String get quizEquipmentQuickPresets => 'Rychlé předvolby';
 
   @override
-  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+  String get quizEquipmentImportSubtitle => 'Fotky posilovny, které už máš';
 
   @override
-  String get quizEquipmentImportTitle => 'Import from Photos';
+  String get quizEquipmentImportTitle => 'Importovat z fotek';
 
   @override
   String get quizEquipmentRecommended => 'Doporučeno';
 
   @override
-  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+  String get quizEquipmentSnapSubtitle => 'Namiř na to fotoaparát';
 
   @override
-  String get quizEquipmentSnapTitle => 'Snap your gym';
+  String get quizEquipmentSnapTitle => 'Vyfoť svou posilovnu';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
@@ -42569,7 +42570,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get workoutShowcaseViralFormatsTap =>
-      '200+ viral formats for workouts & meals — tap any to preview';
+      '200+ virálních formátů pro tréninky a jídla — klepni na jakýkoli pro náhled';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM ODHAD';
@@ -42610,7 +42611,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
-    return 'Weight auto-increased +$delta $unit — progressive overload';
+    return 'Váha automaticky zvýšena o +$delta $unit — progresivní přetížení';
   }
 
   @override
@@ -42712,10 +42713,10 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get workoutShowcaseIntroSubtitle =>
-      'Zealova coaches every set — and levels your weights up automatically 💪';
+      'Zealova koučuje každou sérii — a automaticky zvyšuje tvé váhy 💪';
 
   @override
-  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+  String get workoutShowcaseIntroTitle => 'Pojďme začít tvůj první trénink';
 
   @override
   String get workoutShowcaseLR => 'L/P';
@@ -42752,7 +42753,7 @@ class AppLocalizationsCs extends AppLocalizations {
     Object set,
     Object weight,
   ) {
-    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+    return 'Série $set zaznamenána — další cíl automaticky zvýšen na $weight lb (+$delta lb)';
   }
 
   @override
@@ -44613,11 +44614,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String quizStepOfTotal(int current, int total) {
-    return 'STEP $current OF $total';
+    return 'KROK $current Z $total';
   }
 
   @override
-  String get quizAlmostDone => 'ALMOST DONE';
+  String get quizAlmostDone => 'TÉMĚŘ HOTOVO';
 
   @override
   String get introV7HeadlineLine1 => 'VÁŠ KOUČ';

@@ -3648,20 +3648,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get chatScreenTyping => '입력 중...';
 
   @override
-  String get chatScreenMastheadTitle => 'Coach';
+  String get chatScreenMastheadTitle => '코치';
 
   @override
-  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+  String get chatScreenMastheadSubtitle => '언제나 당신 편이에요.';
 
   @override
-  String get chatScreenMastheadHistory => 'History';
+  String get chatScreenMastheadHistory => '기록';
 
   @override
-  String get chatScreenMastheadNew => 'New';
+  String get chatScreenMastheadNew => '새로 만들기';
 
   @override
   String chatScreenMastheadDay(int count) {
-    return 'Day $count';
+    return '$count일차';
   }
 
   @override
@@ -10798,7 +10798,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get exercisesTabHistoryToggle => 'History';
+  String get exercisesTabHistoryToggle => '기록';
 
   @override
   String expandableSummaryExerciseCardKg(Object weightKg) {
@@ -15769,14 +15769,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => '내일 계획 보기';
 
   @override
-  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+  String get heroWorkoutCardHidePlan => '플랜 숨기기';
 
   @override
-  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+  String get heroWorkoutCardOpenFullPlan => '전체 플랜 보기';
 
   @override
   String heroWorkoutCardMoreExercises(int count) {
-    return '+$count more';
+    return '외 $count개';
   }
 
   @override
@@ -19179,10 +19179,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetBackToResults => '결과로 돌아가기';
 
   @override
-  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+  String get logMealSheetAddSauceOrSide => '소스나 사이드를 추가할까요?';
 
   @override
-  String get logMealSheetAddSauceSide => 'Add sauce / item';
+  String get logMealSheetAddSauceSide => '소스 / 항목 추가';
 
   @override
   String get logMealSheetBarcode => '바코드';
@@ -24226,7 +24226,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionPatternsSignInToSee => '로그인하여 패턴 확인하기';
 
   @override
-  String get nutritionJournalTab => 'Journal';
+  String get nutritionJournalTab => '일지';
 
   @override
   String get nutritionPatternsTab => '패턴';
@@ -24550,13 +24550,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionShowcaseDinner => '저녁';
 
   @override
-  String get nutritionShowcaseFieldCarbs => 'carbs';
+  String get nutritionShowcaseFieldCarbs => '탄수화물';
 
   @override
-  String get nutritionShowcaseFieldFat => 'fat';
+  String get nutritionShowcaseFieldFat => '지방';
 
   @override
-  String get nutritionShowcaseFieldProtein => 'protein';
+  String get nutritionShowcaseFieldProtein => '단백질';
 
   @override
   String get nutritionShowcaseFilter => '필터';
@@ -24569,10 +24569,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get nutritionShowcaseIntroSubtitle =>
-      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+      '메뉴판을 스캔하세요 — Zealova가 목표에 맞춰 모든 메뉴를 순위화해요 🍽️';
 
   @override
-  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
+  String get nutritionShowcaseIntroTitle => '이제 메뉴 고민은 그만';
 
   @override
   String get nutritionShowcaseLunchDinner => '— 점심 및 저녁 —';
@@ -24625,30 +24625,27 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionShowcaseSort => '종류:';
 
   @override
-  String get nutritionShowcaseSortCleared =>
-      'Sort cleared — original menu order';
+  String get nutritionShowcaseSortCleared => '정렬 해제 — 원래 메뉴 순서';
 
   @override
   String get nutritionShowcaseSortHint =>
-      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+      '눌러보세요 — \'단백질\'을 탭해 정렬. 탄수화물, 지방, 염증 기준으로도 정렬돼요.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
-    return 'Sorted ✓ — highest $field first';
+    return '정렬 완료 ✓ — $field 높은 순';
   }
 
   @override
-  String get nutritionShowcaseSortedLeastInflammatory =>
-      'Sorted ✓ — least inflammatory first';
+  String get nutritionShowcaseSortedLeastInflammatory => '정렬 완료 ✓ — 염증 낮은 순';
 
   @override
   String nutritionShowcaseSortedLowest(Object field) {
-    return 'Sorted ✓ — lowest $field first';
+    return '정렬 완료 ✓ — $field 낮은 순';
   }
 
   @override
-  String get nutritionShowcaseSortedMostInflammatory =>
-      'Sorted ✓ — most inflammatory first';
+  String get nutritionShowcaseSortedMostInflammatory => '정렬 완료 ✓ — 염증 높은 순';
 
   @override
   String get nutritionShowcaseStarters => '스타터';
@@ -28935,7 +28932,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => '어떤 요일이 가장 좋나요?';
 
   @override
-  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+  String get quizEquipmentAddMoreGymsLaterHint => '체육관은 나중에 더 추가할 수 있어요';
 
   @override
   String get quizEquipmentApartmentFriendly => '아파트 친화적';
@@ -28944,25 +28941,25 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizEquipmentBarbell => '바벨';
 
   @override
-  String get quizEquipmentOlympicBarbell => 'Olympic Weightlifting Bar';
+  String get quizEquipmentOlympicBarbell => '올림픽 역도 바';
 
   @override
-  String get quizEquipmentEzBar => 'EZ Bar';
+  String get quizEquipmentEzBar => 'EZ 바';
 
   @override
-  String get quizEquipmentTrapBar => 'Trap Bar';
+  String get quizEquipmentTrapBar => '트랩 바';
 
   @override
-  String get quizEquipmentSafetySquatBar => 'Safety Squat Bar';
+  String get quizEquipmentSafetySquatBar => '세이프티 스쿼트 바';
 
   @override
-  String get quizEquipmentCamberedBar => 'Cambered Bar';
+  String get quizEquipmentCamberedBar => '캠버 바';
 
   @override
-  String get quizEquipmentSwissBar => 'Swiss Bar';
+  String get quizEquipmentSwissBar => '스위스 바';
 
   @override
-  String get quizEquipmentLogBar => 'Log Bar';
+  String get quizEquipmentLogBar => '로그 바';
 
   @override
   String get quizEquipmentBodyweightBands => '맨몸 + 밴드';
@@ -29067,19 +29064,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizEquipmentQuickPresets => '빠른 프리셋';
 
   @override
-  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+  String get quizEquipmentImportSubtitle => '이미 있는 체육관 사진';
 
   @override
-  String get quizEquipmentImportTitle => 'Import from Photos';
+  String get quizEquipmentImportTitle => '사진에서 가져오기';
 
   @override
   String get quizEquipmentRecommended => '추천';
 
   @override
-  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+  String get quizEquipmentSnapSubtitle => '카메라로 비추세요';
 
   @override
-  String get quizEquipmentSnapTitle => 'Snap your gym';
+  String get quizEquipmentSnapTitle => '체육관 촬영';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
@@ -40934,7 +40931,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get workoutShowcaseViralFormatsTap =>
-      '200+ viral formats for workouts & meals — tap any to preview';
+      '운동과 식사용 인기 포맷 200개 이상 — 탭하면 미리보기';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM 추정치';
@@ -40975,7 +40972,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
-    return 'Weight auto-increased +$delta $unit — progressive overload';
+    return '무게 자동 증가 +$delta $unit — 점진적 과부하';
   }
 
   @override
@@ -41076,10 +41073,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get workoutShowcaseIntroSubtitle =>
-      'Zealova coaches every set — and levels your weights up automatically 💪';
+      'Zealova가 모든 세트를 코치하고 무게도 자동으로 올려줘요 💪';
 
   @override
-  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+  String get workoutShowcaseIntroTitle => '첫 운동을 시작해요';
 
   @override
   String get workoutShowcaseLR => '좌/우';
@@ -41116,7 +41113,7 @@ class AppLocalizationsKo extends AppLocalizations {
     Object set,
     Object weight,
   ) {
-    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+    return '$set세트 기록 완료 — 다음 목표 자동 상향 $weight lb (+$delta lb)';
   }
 
   @override
@@ -42925,11 +42922,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String quizStepOfTotal(int current, int total) {
-    return 'STEP $current OF $total';
+    return '$total단계 중 $current단계';
   }
 
   @override
-  String get quizAlmostDone => 'ALMOST DONE';
+  String get quizAlmostDone => '거의 다 됐어요';
 
   @override
   String get introV7HeadlineLine1 => '당신의 코치는';

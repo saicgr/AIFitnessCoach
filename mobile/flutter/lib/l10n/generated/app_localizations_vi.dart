@@ -3805,20 +3805,20 @@ class AppLocalizationsVi extends AppLocalizations {
   String get chatScreenTyping => 'Đang nhập...';
 
   @override
-  String get chatScreenMastheadTitle => 'Coach';
+  String get chatScreenMastheadTitle => 'Huấn luyện viên';
 
   @override
-  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+  String get chatScreenMastheadSubtitle => 'Luôn bên bạn, mọi lúc.';
 
   @override
-  String get chatScreenMastheadHistory => 'History';
+  String get chatScreenMastheadHistory => 'Lịch sử';
 
   @override
-  String get chatScreenMastheadNew => 'New';
+  String get chatScreenMastheadNew => 'Mới';
 
   @override
   String chatScreenMastheadDay(int count) {
-    return 'Day $count';
+    return 'Ngày $count';
   }
 
   @override
@@ -11252,7 +11252,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get exercisesTabHistoryToggle => 'History';
+  String get exercisesTabHistoryToggle => 'Lịch sử';
 
   @override
   String expandableSummaryExerciseCardKg(Object weightKg) {
@@ -16405,14 +16405,14 @@ class AppLocalizationsVi extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'XEM KẾ HOẠCH NGÀY MAI';
 
   @override
-  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+  String get heroWorkoutCardHidePlan => 'ẨN KẾ HOẠCH';
 
   @override
-  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+  String get heroWorkoutCardOpenFullPlan => 'Xem kế hoạch đầy đủ';
 
   @override
   String heroWorkoutCardMoreExercises(int count) {
-    return '+$count more';
+    return '+$count nữa';
   }
 
   @override
@@ -20014,10 +20014,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get logMealSheetBackToResults => 'Quay lại kết quả';
 
   @override
-  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+  String get logMealSheetAddSauceOrSide => 'Thêm sốt hoặc món phụ?';
 
   @override
-  String get logMealSheetAddSauceSide => 'Add sauce / item';
+  String get logMealSheetAddSauceSide => 'Thêm sốt / món';
 
   @override
   String get logMealSheetBarcode => 'Mã vạch';
@@ -25252,7 +25252,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Đăng nhập để xem các mô hình của bạn';
 
   @override
-  String get nutritionJournalTab => 'Journal';
+  String get nutritionJournalTab => 'Nhật ký';
 
   @override
   String get nutritionPatternsTab => 'Mẫu';
@@ -25591,13 +25591,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get nutritionShowcaseDinner => 'Bữa tối';
 
   @override
-  String get nutritionShowcaseFieldCarbs => 'carbs';
+  String get nutritionShowcaseFieldCarbs => 'tinh bột';
 
   @override
-  String get nutritionShowcaseFieldFat => 'fat';
+  String get nutritionShowcaseFieldFat => 'chất béo';
 
   @override
-  String get nutritionShowcaseFieldProtein => 'protein';
+  String get nutritionShowcaseFieldProtein => 'đạm';
 
   @override
   String get nutritionShowcaseFilter => 'Bộ lọc';
@@ -25610,10 +25610,10 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get nutritionShowcaseIntroSubtitle =>
-      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+      'Quét bất kỳ thực đơn nào — Zealova xếp hạng từng món theo mục tiêu của bạn 🍽️';
 
   @override
-  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
+  String get nutritionShowcaseIntroTitle => 'Không còn phải đoán khi gọi món';
 
   @override
   String get nutritionShowcaseLunchDinner => '— Bữa trưa & Bữa tối —';
@@ -25668,29 +25668,29 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get nutritionShowcaseSortCleared =>
-      'Sort cleared — original menu order';
+      'Đã xóa sắp xếp — thứ tự thực đơn gốc';
 
   @override
   String get nutritionShowcaseSortHint =>
-      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+      'Thử ngay — chạm Đạm để sắp xếp theo đạm. Tinh bột, Chất béo & Viêm cũng sắp xếp lại thực đơn.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
-    return 'Sorted ✓ — highest $field first';
+    return 'Đã sắp xếp ✓ — $field cao nhất trước';
   }
 
   @override
   String get nutritionShowcaseSortedLeastInflammatory =>
-      'Sorted ✓ — least inflammatory first';
+      'Đã sắp xếp ✓ — ít gây viêm nhất trước';
 
   @override
   String nutritionShowcaseSortedLowest(Object field) {
-    return 'Sorted ✓ — lowest $field first';
+    return 'Đã sắp xếp ✓ — $field thấp nhất trước';
   }
 
   @override
   String get nutritionShowcaseSortedMostInflammatory =>
-      'Sorted ✓ — most inflammatory first';
+      'Đã sắp xếp ✓ — gây viêm nhiều nhất trước';
 
   @override
   String get nutritionShowcaseStarters => 'KHAI VỊ';
@@ -30154,7 +30154,8 @@ class AppLocalizationsVi extends AppLocalizations {
       'Những ngày nào phù hợp nhất với bạn?';
 
   @override
-  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+  String get quizEquipmentAddMoreGymsLaterHint =>
+      'bạn có thể thêm phòng gym sau';
 
   @override
   String get quizEquipmentApartmentFriendly => 'Phù hợp với căn hộ';
@@ -30163,25 +30164,25 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizEquipmentBarbell => 'Đòn tạ';
 
   @override
-  String get quizEquipmentOlympicBarbell => 'Olympic Weightlifting Bar';
+  String get quizEquipmentOlympicBarbell => 'Thanh cử tạ Olympic';
 
   @override
-  String get quizEquipmentEzBar => 'EZ Bar';
+  String get quizEquipmentEzBar => 'Thanh EZ';
 
   @override
-  String get quizEquipmentTrapBar => 'Trap Bar';
+  String get quizEquipmentTrapBar => 'Thanh Trap';
 
   @override
-  String get quizEquipmentSafetySquatBar => 'Safety Squat Bar';
+  String get quizEquipmentSafetySquatBar => 'Thanh Safety Squat';
 
   @override
-  String get quizEquipmentCamberedBar => 'Cambered Bar';
+  String get quizEquipmentCamberedBar => 'Thanh Cambered';
 
   @override
-  String get quizEquipmentSwissBar => 'Swiss Bar';
+  String get quizEquipmentSwissBar => 'Thanh Swiss';
 
   @override
-  String get quizEquipmentLogBar => 'Log Bar';
+  String get quizEquipmentLogBar => 'Thanh Log';
 
   @override
   String get quizEquipmentBodyweightBands =>
@@ -30291,19 +30292,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizEquipmentQuickPresets => 'Cài đặt nhanh';
 
   @override
-  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+  String get quizEquipmentImportSubtitle => 'Ảnh phòng gym bạn đã có';
 
   @override
-  String get quizEquipmentImportTitle => 'Import from Photos';
+  String get quizEquipmentImportTitle => 'Nhập từ Ảnh';
 
   @override
   String get quizEquipmentRecommended => 'Được đề xuất';
 
   @override
-  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+  String get quizEquipmentSnapSubtitle => 'Hướng camera vào nó';
 
   @override
-  String get quizEquipmentSnapTitle => 'Snap your gym';
+  String get quizEquipmentSnapTitle => 'Chụp phòng gym của bạn';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
@@ -42652,7 +42653,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get workoutShowcaseViralFormatsTap =>
-      '200+ viral formats for workouts & meals — tap any to preview';
+      '200+ mẫu chia sẻ hot cho bài tập & bữa ăn — chạm để xem trước';
 
   @override
   String get workoutShowcase1rmEstimate => 'ƯỚC TÍNH 1RM';
@@ -42693,7 +42694,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
-    return 'Weight auto-increased +$delta $unit — progressive overload';
+    return 'Tự động tăng tạ +$delta $unit — tăng tải lũy tiến';
   }
 
   @override
@@ -42795,10 +42796,10 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get workoutShowcaseIntroSubtitle =>
-      'Zealova coaches every set — and levels your weights up automatically 💪';
+      'Zealova hướng dẫn từng hiệp — và tự động tăng mức tạ cho bạn 💪';
 
   @override
-  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+  String get workoutShowcaseIntroTitle => 'Bắt đầu buổi tập đầu tiên của bạn';
 
   @override
   String get workoutShowcaseLR => 'T/P';
@@ -42835,7 +42836,7 @@ class AppLocalizationsVi extends AppLocalizations {
     Object set,
     Object weight,
   ) {
-    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+    return 'Đã ghi hiệp $set — mục tiêu tiếp theo tự tăng lên $weight lb (+$delta lb)';
   }
 
   @override
@@ -44694,11 +44695,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String quizStepOfTotal(int current, int total) {
-    return 'STEP $current OF $total';
+    return 'BƯỚC $current/$total';
   }
 
   @override
-  String get quizAlmostDone => 'ALMOST DONE';
+  String get quizAlmostDone => 'SẮP XONG';
 
   @override
   String get introV7HeadlineLine1 => 'HLV CỦA BẠN';

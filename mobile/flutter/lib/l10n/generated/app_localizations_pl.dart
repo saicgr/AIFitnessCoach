@@ -3821,20 +3821,20 @@ class AppLocalizationsPl extends AppLocalizations {
   String get chatScreenTyping => 'Pisze...';
 
   @override
-  String get chatScreenMastheadTitle => 'Coach';
+  String get chatScreenMastheadTitle => 'Trener';
 
   @override
-  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+  String get chatScreenMastheadSubtitle => 'Twoje miejsce, zawsze otwarte.';
 
   @override
-  String get chatScreenMastheadHistory => 'History';
+  String get chatScreenMastheadHistory => 'Historia';
 
   @override
-  String get chatScreenMastheadNew => 'New';
+  String get chatScreenMastheadNew => 'Nowy';
 
   @override
   String chatScreenMastheadDay(int count) {
-    return 'Day $count';
+    return 'Dzień $count';
   }
 
   @override
@@ -11287,7 +11287,7 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get exercisesTabHistoryToggle => 'History';
+  String get exercisesTabHistoryToggle => 'Historia';
 
   @override
   String expandableSummaryExerciseCardKg(Object weightKg) {
@@ -16461,14 +16461,14 @@ class AppLocalizationsPl extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'ZOBACZ PLAN NA JUTRO';
 
   @override
-  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+  String get heroWorkoutCardHidePlan => 'UKRYJ PLAN';
 
   @override
-  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+  String get heroWorkoutCardOpenFullPlan => 'Otwórz pełny plan';
 
   @override
   String heroWorkoutCardMoreExercises(int count) {
-    return '+$count more';
+    return '+$count więcej';
   }
 
   @override
@@ -20077,10 +20077,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get logMealSheetBackToResults => 'Powrót do wyników';
 
   @override
-  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+  String get logMealSheetAddSauceOrSide => 'Dodać sos lub dodatek?';
 
   @override
-  String get logMealSheetAddSauceSide => 'Add sauce / item';
+  String get logMealSheetAddSauceSide => 'Dodaj sos / dodatek';
 
   @override
   String get logMealSheetBarcode => 'Kod kreskowy';
@@ -25314,7 +25314,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Zaloguj się, aby zobaczyć swoje wzorce';
 
   @override
-  String get nutritionJournalTab => 'Journal';
+  String get nutritionJournalTab => 'Dziennik';
 
   @override
   String get nutritionPatternsTab => 'Wzorce';
@@ -25659,13 +25659,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get nutritionShowcaseDinner => 'Kolacja';
 
   @override
-  String get nutritionShowcaseFieldCarbs => 'carbs';
+  String get nutritionShowcaseFieldCarbs => 'węglowodany';
 
   @override
-  String get nutritionShowcaseFieldFat => 'fat';
+  String get nutritionShowcaseFieldFat => 'tłuszcz';
 
   @override
-  String get nutritionShowcaseFieldProtein => 'protein';
+  String get nutritionShowcaseFieldProtein => 'białko';
 
   @override
   String get nutritionShowcaseFilter => 'Filtruj';
@@ -25679,10 +25679,10 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get nutritionShowcaseIntroSubtitle =>
-      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+      'Zeskanuj dowolne menu restauracji — Zealova oceni każde danie pod kątem Twoich celów 🍽️';
 
   @override
-  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
+  String get nutritionShowcaseIntroTitle => 'Nigdy więcej nie zgaduj przy menu';
 
   @override
   String get nutritionShowcaseLunchDinner => '— Lunch i kolacja —';
@@ -25737,29 +25737,29 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get nutritionShowcaseSortCleared =>
-      'Sort cleared — original menu order';
+      'Sortowanie wyczyszczone — oryginalna kolejność menu';
 
   @override
   String get nutritionShowcaseSortHint =>
-      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+      'Wypróbuj — dotknij Białko, aby sortować według białka. Węglowodany, Tłuszcz i Zapalność też zmieniają kolejność menu.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
-    return 'Sorted ✓ — highest $field first';
+    return 'Posortowano ✓ — najpierw najwyższe $field';
   }
 
   @override
   String get nutritionShowcaseSortedLeastInflammatory =>
-      'Sorted ✓ — least inflammatory first';
+      'Posortowano ✓ — najpierw najmniej zapalne';
 
   @override
   String nutritionShowcaseSortedLowest(Object field) {
-    return 'Sorted ✓ — lowest $field first';
+    return 'Posortowano ✓ — najpierw najniższe $field';
   }
 
   @override
   String get nutritionShowcaseSortedMostInflammatory =>
-      'Sorted ✓ — most inflammatory first';
+      'Posortowano ✓ — najpierw najbardziej zapalne';
 
   @override
   String get nutritionShowcaseStarters => 'PRZYSTAWKI';
@@ -30233,7 +30233,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => 'Które dni są najlepsze?';
 
   @override
-  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+  String get quizEquipmentAddMoreGymsLaterHint =>
+      'więcej siłowni możesz dodać później';
 
   @override
   String get quizEquipmentApartmentFriendly => 'Przyjazne dla mieszkania';
@@ -30242,7 +30243,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get quizEquipmentBarbell => 'Sztanga';
 
   @override
-  String get quizEquipmentOlympicBarbell => 'Olympic Weightlifting Bar';
+  String get quizEquipmentOlympicBarbell => 'Gryf olimpijski';
 
   @override
   String get quizEquipmentEzBar => 'EZ Bar';
@@ -30370,19 +30371,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get quizEquipmentQuickPresets => 'Szybkie ustawienia';
 
   @override
-  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+  String get quizEquipmentImportSubtitle => 'Zdjęcia siłowni, które już masz';
 
   @override
-  String get quizEquipmentImportTitle => 'Import from Photos';
+  String get quizEquipmentImportTitle => 'Importuj ze zdjęć';
 
   @override
   String get quizEquipmentRecommended => 'Zalecane';
 
   @override
-  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+  String get quizEquipmentSnapSubtitle => 'Skieruj na to aparat';
 
   @override
-  String get quizEquipmentSnapTitle => 'Snap your gym';
+  String get quizEquipmentSnapTitle => 'Sfotografuj swoją siłownię';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
@@ -42769,7 +42770,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get workoutShowcaseViralFormatsTap =>
-      '200+ viral formats for workouts & meals — tap any to preview';
+      'Ponad 200 wiralowych formatów dla treningów i posiłków — dotknij dowolny, aby zobaczyć podgląd';
 
   @override
   String get workoutShowcase1rmEstimate => 'SZACOWANE 1RM';
@@ -42810,7 +42811,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
-    return 'Weight auto-increased +$delta $unit — progressive overload';
+    return 'Ciężar automatycznie zwiększony o +$delta $unit — progresywne przeciążenie';
   }
 
   @override
@@ -42912,10 +42913,10 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get workoutShowcaseIntroSubtitle =>
-      'Zealova coaches every set — and levels your weights up automatically 💪';
+      'Zealova prowadzi każdą serię — i automatycznie zwiększa Twoje ciężary 💪';
 
   @override
-  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+  String get workoutShowcaseIntroTitle => 'Zacznijmy Twój pierwszy trening';
 
   @override
   String get workoutShowcaseLR => 'L/P';
@@ -42952,7 +42953,7 @@ class AppLocalizationsPl extends AppLocalizations {
     Object set,
     Object weight,
   ) {
-    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+    return 'Seria $set zapisana — następny cel automatycznie podniesiony do $weight lb (+$delta lb)';
   }
 
   @override
@@ -44820,11 +44821,11 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String quizStepOfTotal(int current, int total) {
-    return 'STEP $current OF $total';
+    return 'KROK $current Z $total';
   }
 
   @override
-  String get quizAlmostDone => 'ALMOST DONE';
+  String get quizAlmostDone => 'PRAWIE GOTOWE';
 
   @override
   String get introV7HeadlineLine1 => 'TWÓJ TRENER';

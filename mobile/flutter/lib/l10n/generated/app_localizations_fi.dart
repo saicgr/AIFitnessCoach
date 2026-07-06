@@ -3804,20 +3804,20 @@ class AppLocalizationsFi extends AppLocalizations {
   String get chatScreenTyping => 'Kirjoittaa...';
 
   @override
-  String get chatScreenMastheadTitle => 'Coach';
+  String get chatScreenMastheadTitle => 'Valmentaja';
 
   @override
-  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+  String get chatScreenMastheadSubtitle => 'Oma tilasi, aina auki.';
 
   @override
-  String get chatScreenMastheadHistory => 'History';
+  String get chatScreenMastheadHistory => 'Historia';
 
   @override
-  String get chatScreenMastheadNew => 'New';
+  String get chatScreenMastheadNew => 'Uusi';
 
   @override
   String chatScreenMastheadDay(int count) {
-    return 'Day $count';
+    return 'Päivä $count';
   }
 
   @override
@@ -11254,7 +11254,7 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get exercisesTabHistoryToggle => 'History';
+  String get exercisesTabHistoryToggle => 'Historia';
 
   @override
   String expandableSummaryExerciseCardKg(Object weightKg) {
@@ -16408,14 +16408,14 @@ class AppLocalizationsFi extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'KATSO HUOMISEN SUUNNITELMA';
 
   @override
-  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+  String get heroWorkoutCardHidePlan => 'PIILOTA OHJELMA';
 
   @override
-  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+  String get heroWorkoutCardOpenFullPlan => 'Avaa koko ohjelma';
 
   @override
   String heroWorkoutCardMoreExercises(int count) {
-    return '+$count more';
+    return '+$count lisää';
   }
 
   @override
@@ -20019,10 +20019,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get logMealSheetBackToResults => 'Takaisin tuloksiin';
 
   @override
-  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+  String get logMealSheetAddSauceOrSide => 'Lisätäänkö kastike tai lisuke?';
 
   @override
-  String get logMealSheetAddSauceSide => 'Add sauce / item';
+  String get logMealSheetAddSauceSide => 'Lisää kastike / lisuke';
 
   @override
   String get logMealSheetBarcode => 'Viivakoodi';
@@ -25267,7 +25267,7 @@ class AppLocalizationsFi extends AppLocalizations {
       'Kirjaudu sisään nähdäksesi kaavasi';
 
   @override
-  String get nutritionJournalTab => 'Journal';
+  String get nutritionJournalTab => 'Päiväkirja';
 
   @override
   String get nutritionPatternsTab => 'Kuviot';
@@ -25608,13 +25608,13 @@ class AppLocalizationsFi extends AppLocalizations {
   String get nutritionShowcaseDinner => 'Illallinen';
 
   @override
-  String get nutritionShowcaseFieldCarbs => 'carbs';
+  String get nutritionShowcaseFieldCarbs => 'hiilihydraatit';
 
   @override
-  String get nutritionShowcaseFieldFat => 'fat';
+  String get nutritionShowcaseFieldFat => 'rasva';
 
   @override
-  String get nutritionShowcaseFieldProtein => 'protein';
+  String get nutritionShowcaseFieldProtein => 'proteiini';
 
   @override
   String get nutritionShowcaseFilter => 'Suodattaa';
@@ -25627,10 +25627,10 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get nutritionShowcaseIntroSubtitle =>
-      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+      'Skannaa mikä tahansa ravintolan menu — Zealova asettaa jokaisen annoksen paremmuusjärjestykseen tavoitteidesi mukaan 🍽️';
 
   @override
-  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
+  String get nutritionShowcaseIntroTitle => 'Älä enää koskaan arvaile menua';
 
   @override
   String get nutritionShowcaseLunchDinner => '-lounas ja illallinen -';
@@ -25685,29 +25685,29 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get nutritionShowcaseSortCleared =>
-      'Sort cleared — original menu order';
+      'Lajittelu tyhjennetty — alkuperäinen menujärjestys';
 
   @override
   String get nutritionShowcaseSortHint =>
-      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+      'Kokeile — napauta Proteiini lajitellaksesi proteiinin mukaan. Myös Hiilihydraatit, Rasva ja Tulehdus järjestävät menun uudelleen.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
-    return 'Sorted ✓ — highest $field first';
+    return 'Lajiteltu ✓ — suurin $field ensin';
   }
 
   @override
   String get nutritionShowcaseSortedLeastInflammatory =>
-      'Sorted ✓ — least inflammatory first';
+      'Lajiteltu ✓ — vähiten tulehdusta aiheuttavat ensin';
 
   @override
   String nutritionShowcaseSortedLowest(Object field) {
-    return 'Sorted ✓ — lowest $field first';
+    return 'Lajiteltu ✓ — pienin $field ensin';
   }
 
   @override
   String get nutritionShowcaseSortedMostInflammatory =>
-      'Sorted ✓ — most inflammatory first';
+      'Lajiteltu ✓ — eniten tulehdusta aiheuttavat ensin';
 
   @override
   String get nutritionShowcaseStarters => 'ALOITUKSET';
@@ -30172,7 +30172,8 @@ class AppLocalizationsFi extends AppLocalizations {
       'Mitkä päivät sopivat parhaiten?';
 
   @override
-  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+  String get quizEquipmentAddMoreGymsLaterHint =>
+      'voit lisätä saleja myöhemmin';
 
   @override
   String get quizEquipmentApartmentFriendly => 'Sopii kerrostaloon';
@@ -30181,7 +30182,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizEquipmentBarbell => 'Levytanko';
 
   @override
-  String get quizEquipmentOlympicBarbell => 'Olympic Weightlifting Bar';
+  String get quizEquipmentOlympicBarbell => 'Olympiatanko';
 
   @override
   String get quizEquipmentEzBar => 'EZ Bar';
@@ -30309,19 +30310,19 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizEquipmentQuickPresets => 'Pika-asetukset';
 
   @override
-  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+  String get quizEquipmentImportSubtitle => 'Salikuvat, jotka sinulla jo on';
 
   @override
-  String get quizEquipmentImportTitle => 'Import from Photos';
+  String get quizEquipmentImportTitle => 'Tuo kuvista';
 
   @override
   String get quizEquipmentRecommended => 'Suositeltu';
 
   @override
-  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+  String get quizEquipmentSnapSubtitle => 'Suuntaa kamera siihen';
 
   @override
-  String get quizEquipmentSnapTitle => 'Snap your gym';
+  String get quizEquipmentSnapTitle => 'Kuvaa salisi';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
@@ -42655,7 +42656,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get workoutShowcaseViralFormatsTap =>
-      '200+ viral formats for workouts & meals — tap any to preview';
+      '200+ viraalia formaattia treeneille ja aterioille — napauta mitä tahansa esikatsellaksesi';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM ARVIO';
@@ -42696,7 +42697,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
-    return 'Weight auto-increased +$delta $unit — progressive overload';
+    return 'Paino nostettu automaattisesti +$delta $unit — progressiivinen ylikuormitus';
   }
 
   @override
@@ -42798,10 +42799,10 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get workoutShowcaseIntroSubtitle =>
-      'Zealova coaches every set — and levels your weights up automatically 💪';
+      'Zealova valmentaa jokaisen sarjan — ja nostaa painojasi automaattisesti 💪';
 
   @override
-  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+  String get workoutShowcaseIntroTitle => 'Aloitetaan ensimmäinen treenisi';
 
   @override
   String get workoutShowcaseLR => 'V/O';
@@ -42838,7 +42839,7 @@ class AppLocalizationsFi extends AppLocalizations {
     Object set,
     Object weight,
   ) {
-    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+    return 'Sarja $set kirjattu — seuraava tavoite nostettu automaattisesti $weight lb (+$delta lb)';
   }
 
   @override
@@ -44703,11 +44704,11 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String quizStepOfTotal(int current, int total) {
-    return 'STEP $current OF $total';
+    return 'VAIHE $current / $total';
   }
 
   @override
-  String get quizAlmostDone => 'ALMOST DONE';
+  String get quizAlmostDone => 'MELKEIN VALMIS';
 
   @override
   String get introV7HeadlineLine1 => 'VALMENTAJASI';

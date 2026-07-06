@@ -3787,20 +3787,20 @@ class AppLocalizationsHa extends AppLocalizations {
   String get chatScreenTyping => 'Yana rubutu...';
 
   @override
-  String get chatScreenMastheadTitle => 'Coach';
+  String get chatScreenMastheadTitle => 'Koci';
 
   @override
-  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+  String get chatScreenMastheadSubtitle => 'Kusurwarka, kullum a buɗe.';
 
   @override
-  String get chatScreenMastheadHistory => 'History';
+  String get chatScreenMastheadHistory => 'Tarihi';
 
   @override
-  String get chatScreenMastheadNew => 'New';
+  String get chatScreenMastheadNew => 'Sabo';
 
   @override
   String chatScreenMastheadDay(int count) {
-    return 'Day $count';
+    return 'Rana $count';
   }
 
   @override
@@ -11268,7 +11268,7 @@ class AppLocalizationsHa extends AppLocalizations {
   }
 
   @override
-  String get exercisesTabHistoryToggle => 'History';
+  String get exercisesTabHistoryToggle => 'Tarihi';
 
   @override
   String expandableSummaryExerciseCardKg(Object weightKg) {
@@ -16442,14 +16442,14 @@ class AppLocalizationsHa extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'DUBA TSARIN GOBE';
 
   @override
-  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+  String get heroWorkoutCardHidePlan => 'ƁOYE SHIRI';
 
   @override
-  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+  String get heroWorkoutCardOpenFullPlan => 'Buɗe cikakken shiri';
 
   @override
   String heroWorkoutCardMoreExercises(int count) {
-    return '+$count more';
+    return '+$count ƙari';
   }
 
   @override
@@ -20062,10 +20062,10 @@ class AppLocalizationsHa extends AppLocalizations {
   String get logMealSheetBackToResults => 'Koma ga sakamakon';
 
   @override
-  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+  String get logMealSheetAddSauceOrSide => 'Ƙara miya ko abin haɗi?';
 
   @override
-  String get logMealSheetAddSauceSide => 'Add sauce / item';
+  String get logMealSheetAddSauceSide => 'Ƙara miya / abu';
 
   @override
   String get logMealSheetBarcode => 'Barcode';
@@ -25308,7 +25308,7 @@ class AppLocalizationsHa extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'Shiga don ganin tsarinka';
 
   @override
-  String get nutritionJournalTab => 'Journal';
+  String get nutritionJournalTab => 'Jarida';
 
   @override
   String get nutritionPatternsTab => 'Tsarurruka';
@@ -25649,10 +25649,10 @@ class AppLocalizationsHa extends AppLocalizations {
   String get nutritionShowcaseFieldCarbs => 'carbs';
 
   @override
-  String get nutritionShowcaseFieldFat => 'fat';
+  String get nutritionShowcaseFieldFat => 'kitse';
 
   @override
-  String get nutritionShowcaseFieldProtein => 'protein';
+  String get nutritionShowcaseFieldProtein => 'furotin';
 
   @override
   String get nutritionShowcaseFilter => 'Tace';
@@ -25665,10 +25665,10 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get nutritionShowcaseIntroSubtitle =>
-      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+      'Duba kowane menu na gidan abinci — Zealova na tsara kowane abinci bisa ga burinka 🍽️';
 
   @override
-  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
+  String get nutritionShowcaseIntroTitle => 'Kada ka ƙara yin hasashe kan menu';
 
   @override
   String get nutritionShowcaseLunchDinner => '- Abincin rana & Abincin dare -';
@@ -25723,29 +25723,29 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get nutritionShowcaseSortCleared =>
-      'Sort cleared — original menu order';
+      'An share tsari — ainihin jerin menu';
 
   @override
   String get nutritionShowcaseSortHint =>
-      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+      'Gwada shi — danna Protein don tsara bisa furotin. Carbs, Fat & Inflam suna sake tsara menu ma.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
-    return 'Sorted ✓ — highest $field first';
+    return 'An tsara ✓ — mafi yawan $field da farko';
   }
 
   @override
   String get nutritionShowcaseSortedLeastInflammatory =>
-      'Sorted ✓ — least inflammatory first';
+      'An tsara ✓ — mafi ƙarancin kumburi da farko';
 
   @override
   String nutritionShowcaseSortedLowest(Object field) {
-    return 'Sorted ✓ — lowest $field first';
+    return 'An tsara ✓ — mafi ƙarancin $field da farko';
   }
 
   @override
   String get nutritionShowcaseSortedMostInflammatory =>
-      'Sorted ✓ — most inflammatory first';
+      'An tsara ✓ — mafi yawan kumburi da farko';
 
   @override
   String get nutritionShowcaseStarters => 'ABINCIN FARKO';
@@ -30204,7 +30204,8 @@ class AppLocalizationsHa extends AppLocalizations {
       'Wadanne kwanaki ne suka fi dacewa?';
 
   @override
-  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+  String get quizEquipmentAddMoreGymsLaterHint =>
+      'za ka iya ƙara ƙarin gyms daga baya';
 
   @override
   String get quizEquipmentApartmentFriendly => 'Ya dace da gidan haya';
@@ -30213,7 +30214,7 @@ class AppLocalizationsHa extends AppLocalizations {
   String get quizEquipmentBarbell => 'Barbell';
 
   @override
-  String get quizEquipmentOlympicBarbell => 'Olympic Weightlifting Bar';
+  String get quizEquipmentOlympicBarbell => 'Sandar Ɗaga Nauyi na Olympic';
 
   @override
   String get quizEquipmentEzBar => 'EZ Bar';
@@ -30340,19 +30341,19 @@ class AppLocalizationsHa extends AppLocalizations {
   String get quizEquipmentQuickPresets => 'Zaɓin sauri';
 
   @override
-  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+  String get quizEquipmentImportSubtitle => 'Hotunan gym da kake da su tuni';
 
   @override
-  String get quizEquipmentImportTitle => 'Import from Photos';
+  String get quizEquipmentImportTitle => 'Shigo daga Hotuna';
 
   @override
   String get quizEquipmentRecommended => 'An ba da shawarar';
 
   @override
-  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+  String get quizEquipmentSnapSubtitle => 'Kafa kyamararka a kansa';
 
   @override
-  String get quizEquipmentSnapTitle => 'Snap your gym';
+  String get quizEquipmentSnapTitle => 'Ɗauki hoton gym ɗinka';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
@@ -42714,7 +42715,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get workoutShowcaseViralFormatsTap =>
-      '200+ viral formats for workouts & meals — tap any to preview';
+      'Fiye da 200 na sanannun tsare-tsare na motsa jiki & abinci — danna kowanne don duba';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM KIMIYYA';
@@ -42755,7 +42756,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
-    return 'Weight auto-increased +$delta $unit — progressive overload';
+    return 'Nauyi ya ƙaru kai tsaye +$delta $unit — ci gaba da ƙara nauyi';
   }
 
   @override
@@ -42858,10 +42859,10 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get workoutShowcaseIntroSubtitle =>
-      'Zealova coaches every set — and levels your weights up automatically 💪';
+      'Zealova na koya maka kowane saiti — kuma yana ƙara nauyinka kai tsaye 💪';
 
   @override
-  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+  String get workoutShowcaseIntroTitle => 'Bari mu fara motsa jikinka na farko';
 
   @override
   String get workoutShowcaseLR => 'L/R';
@@ -42898,7 +42899,7 @@ class AppLocalizationsHa extends AppLocalizations {
     Object set,
     Object weight,
   ) {
-    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+    return 'An shigar da saiti $set — an ƙara maƙasudi na gaba kai tsaye zuwa $weight lb (+$delta lb)';
   }
 
   @override
@@ -44768,11 +44769,11 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String quizStepOfTotal(int current, int total) {
-    return 'STEP $current OF $total';
+    return 'MATAKI $current DAGA $total';
   }
 
   @override
-  String get quizAlmostDone => 'ALMOST DONE';
+  String get quizAlmostDone => 'KUSAN AN GAMA';
 
   @override
   String get introV7HeadlineLine1 => 'KOCINKA';

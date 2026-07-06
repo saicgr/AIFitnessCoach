@@ -3825,20 +3825,20 @@ class AppLocalizationsTe extends AppLocalizations {
   String get chatScreenTyping => 'టైప్ చేస్తున్నారు...';
 
   @override
-  String get chatScreenMastheadTitle => 'Coach';
+  String get chatScreenMastheadTitle => 'కోచ్';
 
   @override
-  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+  String get chatScreenMastheadSubtitle => 'మీ చోటు, ఎప్పుడూ తెరిచే ఉంటుంది.';
 
   @override
-  String get chatScreenMastheadHistory => 'History';
+  String get chatScreenMastheadHistory => 'చరిత్ర';
 
   @override
-  String get chatScreenMastheadNew => 'New';
+  String get chatScreenMastheadNew => 'కొత్తది';
 
   @override
   String chatScreenMastheadDay(int count) {
-    return 'Day $count';
+    return 'రోజు $count';
   }
 
   @override
@@ -11333,7 +11333,7 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String get exercisesTabHistoryToggle => 'History';
+  String get exercisesTabHistoryToggle => 'చరిత్ర';
 
   @override
   String expandableSummaryExerciseCardKg(Object weightKg) {
@@ -16521,14 +16521,14 @@ class AppLocalizationsTe extends AppLocalizations {
   String get heroWorkoutCardSeeTomorrowSPlan => 'రేపటి ప్లాన్ చూడండి';
 
   @override
-  String get heroWorkoutCardHidePlan => 'HIDE PLAN';
+  String get heroWorkoutCardHidePlan => 'ప్లాన్ దాచు';
 
   @override
-  String get heroWorkoutCardOpenFullPlan => 'Open full plan';
+  String get heroWorkoutCardOpenFullPlan => 'పూర్తి ప్లాన్ తెరవండి';
 
   @override
   String heroWorkoutCardMoreExercises(int count) {
-    return '+$count more';
+    return '+$count మరిన్ని';
   }
 
   @override
@@ -20156,10 +20156,10 @@ class AppLocalizationsTe extends AppLocalizations {
   String get logMealSheetBackToResults => 'ఫలితాలకు తిరిగి వెళ్ళు';
 
   @override
-  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+  String get logMealSheetAddSauceOrSide => 'సాస్ లేదా సైడ్ జోడించాలా?';
 
   @override
-  String get logMealSheetAddSauceSide => 'Add sauce / item';
+  String get logMealSheetAddSauceSide => 'సాస్ / ఐటెమ్ జోడించు';
 
   @override
   String get logMealSheetBarcode => 'బార్‌కోడ్';
@@ -25423,7 +25423,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'మీ ప్యాటర్న్స్‌ను చూడటానికి సైన్ ఇన్ చేయండి';
 
   @override
-  String get nutritionJournalTab => 'Journal';
+  String get nutritionJournalTab => 'జర్నల్';
 
   @override
   String get nutritionPatternsTab => 'నమూనాలు';
@@ -25766,13 +25766,13 @@ class AppLocalizationsTe extends AppLocalizations {
   String get nutritionShowcaseDinner => 'రాత్రి భోజనం';
 
   @override
-  String get nutritionShowcaseFieldCarbs => 'carbs';
+  String get nutritionShowcaseFieldCarbs => 'కార్బ్స్';
 
   @override
-  String get nutritionShowcaseFieldFat => 'fat';
+  String get nutritionShowcaseFieldFat => 'కొవ్వు';
 
   @override
-  String get nutritionShowcaseFieldProtein => 'protein';
+  String get nutritionShowcaseFieldProtein => 'ప్రొటీన్';
 
   @override
   String get nutritionShowcaseFilter => 'ఫిల్టర్';
@@ -25785,10 +25785,10 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get nutritionShowcaseIntroSubtitle =>
-      'Scan any restaurant menu — Zealova ranks every dish against your goals 🍽️';
+      'ఏ రెస్టారెంట్ మెనూనైనా స్కాన్ చేయండి — మీ లక్ష్యాల ప్రకారం ప్రతి వంటకాన్ని Zealova ర్యాంక్ చేస్తుంది 🍽️';
 
   @override
-  String get nutritionShowcaseIntroTitle => 'Never guess at a menu again';
+  String get nutritionShowcaseIntroTitle => 'ఇక మెనూలో ఊహించాల్సిన అవసరం లేదు';
 
   @override
   String get nutritionShowcaseLunchDinner => '— మధ్యాహ్న & రాత్రి భోజనం —';
@@ -25843,29 +25843,29 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get nutritionShowcaseSortCleared =>
-      'Sort cleared — original menu order';
+      'క్రమం తొలగించబడింది — అసలు మెనూ క్రమం';
 
   @override
   String get nutritionShowcaseSortHint =>
-      'Try it — tap Protein to sort by protein. Carbs, Fat & Inflam re-rank the menu too.';
+      'ప్రయత్నించండి — ప్రొటీన్ ప్రకారం క్రమబద్ధీకరించడానికి Protein ట్యాప్ చేయండి. కార్బ్స్, కొవ్వు & వాపు కూడా మెనూను తిరిగి క్రమబద్ధీకరిస్తాయి.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
-    return 'Sorted ✓ — highest $field first';
+    return 'క్రమబద్ధీకరించబడింది ✓ — ఎక్కువ $field ముందుగా';
   }
 
   @override
   String get nutritionShowcaseSortedLeastInflammatory =>
-      'Sorted ✓ — least inflammatory first';
+      'క్రమబద్ధీకరించబడింది ✓ — తక్కువ వాపు కలిగించేవి ముందుగా';
 
   @override
   String nutritionShowcaseSortedLowest(Object field) {
-    return 'Sorted ✓ — lowest $field first';
+    return 'క్రమబద్ధీకరించబడింది ✓ — తక్కువ $field ముందుగా';
   }
 
   @override
   String get nutritionShowcaseSortedMostInflammatory =>
-      'Sorted ✓ — most inflammatory first';
+      'క్రమబద్ధీకరించబడింది ✓ — ఎక్కువ వాపు కలిగించేవి ముందుగా';
 
   @override
   String get nutritionShowcaseStarters => 'స్టార్టర్స్';
@@ -30349,7 +30349,8 @@ class AppLocalizationsTe extends AppLocalizations {
       'ఏ రోజులు మీకు బాగా సరిపోతాయి?';
 
   @override
-  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+  String get quizEquipmentAddMoreGymsLaterHint =>
+      'మీరు తర్వాత మరిన్ని జిమ్‌లను జోడించవచ్చు';
 
   @override
   String get quizEquipmentApartmentFriendly => 'అపార్ట్‌మెంట్‌కు అనుకూలం';
@@ -30358,25 +30359,25 @@ class AppLocalizationsTe extends AppLocalizations {
   String get quizEquipmentBarbell => 'బార్‌బెల్';
 
   @override
-  String get quizEquipmentOlympicBarbell => 'Olympic Weightlifting Bar';
+  String get quizEquipmentOlympicBarbell => 'ఒలింపిక్ వెయిట్‌లిఫ్టింగ్ బార్';
 
   @override
-  String get quizEquipmentEzBar => 'EZ Bar';
+  String get quizEquipmentEzBar => 'EZ బార్';
 
   @override
-  String get quizEquipmentTrapBar => 'Trap Bar';
+  String get quizEquipmentTrapBar => 'ట్రాప్ బార్';
 
   @override
-  String get quizEquipmentSafetySquatBar => 'Safety Squat Bar';
+  String get quizEquipmentSafetySquatBar => 'సేఫ్టీ స్క్వాట్ బార్';
 
   @override
-  String get quizEquipmentCamberedBar => 'Cambered Bar';
+  String get quizEquipmentCamberedBar => 'కాంబర్డ్ బార్';
 
   @override
-  String get quizEquipmentSwissBar => 'Swiss Bar';
+  String get quizEquipmentSwissBar => 'స్విస్ బార్';
 
   @override
-  String get quizEquipmentLogBar => 'Log Bar';
+  String get quizEquipmentLogBar => 'లాగ్ బార్';
 
   @override
   String get quizEquipmentBodyweightBands => 'బాడీవెయిట్ + బ్యాండ్స్';
@@ -30485,19 +30486,19 @@ class AppLocalizationsTe extends AppLocalizations {
   String get quizEquipmentQuickPresets => 'త్వరిత ప్రీసెట్లు';
 
   @override
-  String get quizEquipmentImportSubtitle => 'Gym photos you already have';
+  String get quizEquipmentImportSubtitle => 'మీ వద్ద ఇప్పటికే ఉన్న జిమ్ ఫోటోలు';
 
   @override
-  String get quizEquipmentImportTitle => 'Import from Photos';
+  String get quizEquipmentImportTitle => 'ఫోటోల నుండి దిగుమతి చేయండి';
 
   @override
   String get quizEquipmentRecommended => 'సిఫార్సు చేయబడింది';
 
   @override
-  String get quizEquipmentSnapSubtitle => 'Point your camera at it';
+  String get quizEquipmentSnapSubtitle => 'దానిపై మీ కెమెరాను గురిపెట్టండి';
 
   @override
-  String get quizEquipmentSnapTitle => 'Snap your gym';
+  String get quizEquipmentSnapTitle => 'మీ జిమ్‌ను ఫోటో తీయండి';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
@@ -42935,7 +42936,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get workoutShowcaseViralFormatsTap =>
-      '200+ viral formats for workouts & meals — tap any to preview';
+      'వర్కౌట్‌లు & భోజనాల కోసం 200+ వైరల్ ఫార్మాట్‌లు — ప్రివ్యూ కోసం దేనినైనా ట్యాప్ చేయండి';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM అంచనా';
@@ -42976,7 +42977,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String workoutShowcaseAutoProgressFlash(Object delta, Object unit) {
-    return 'Weight auto-increased +$delta $unit — progressive overload';
+    return 'బరువు స్వయంచాలకంగా పెరిగింది +$delta $unit — ప్రోగ్రెసివ్ ఓవర్‌లోడ్';
   }
 
   @override
@@ -43078,10 +43079,10 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get workoutShowcaseIntroSubtitle =>
-      'Zealova coaches every set — and levels your weights up automatically 💪';
+      'Zealova ప్రతి సెట్‌కు మార్గనిర్దేశం చేస్తుంది — మీ బరువులను స్వయంచాలకంగా పెంచుతుంది 💪';
 
   @override
-  String get workoutShowcaseIntroTitle => 'Let\'s start your first workout';
+  String get workoutShowcaseIntroTitle => 'మీ మొదటి వర్కౌట్ ప్రారంభిద్దాం';
 
   @override
   String get workoutShowcaseLR => 'L/R';
@@ -43118,7 +43119,7 @@ class AppLocalizationsTe extends AppLocalizations {
     Object set,
     Object weight,
   ) {
-    return 'Set $set logged — next target auto-raised to $weight lb (+$delta lb)';
+    return 'సెట్ $set నమోదైంది — తదుపరి లక్ష్యం స్వయంచాలకంగా $weight lb కు పెరిగింది (+$delta lb)';
   }
 
   @override
@@ -44994,11 +44995,11 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String quizStepOfTotal(int current, int total) {
-    return 'STEP $current OF $total';
+    return 'దశ $current / $total';
   }
 
   @override
-  String get quizAlmostDone => 'ALMOST DONE';
+  String get quizAlmostDone => 'దాదాపు పూర్తయింది';
 
   @override
   String get introV7HeadlineLine1 => 'మీ కోచ్';
