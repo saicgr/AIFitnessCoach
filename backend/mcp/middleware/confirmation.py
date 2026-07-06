@@ -69,6 +69,14 @@ def needs_confirmation(tool_name: str, args: Dict[str, Any]) -> Optional[str]:
         except (TypeError, ValueError):
             pass
 
+    # assign_program_to_schedule as the primary slot ends any overlapping
+    # active primary assignment (assign_program_core's replace=True path) —
+    # same destructive shape as modify_workout.remove.
+    if tool_name == "assign_program_to_schedule":
+        slot = args.get("slot") or "primary"
+        if slot == "primary" and "assign_program_to_schedule.replace_primary" in required:
+            return "Starting this program will end your current primary program."
+
     return None
 
 

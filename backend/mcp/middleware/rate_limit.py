@@ -35,6 +35,9 @@ WRITE_TOOLS: set = {
     "modify_workout",
     "generate_workout_plan",
     "update_user_goal",
+    "assign_program_to_schedule",
+    "start_fast",
+    "end_fast",
 }
 
 # Specialized-limit tool sets (additive — a tool can be in WRITE_TOOLS AND here).

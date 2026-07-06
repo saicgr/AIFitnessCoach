@@ -208,6 +208,53 @@ async def _get_favorite_foods_impl(user: dict) -> Dict[str, Any]:
     return {"ok": True, "saved_foods": result.data or []}
 
 
+# ─── suggest_recipes_from_fridge ─────────────────────────────────────────────
+
+async def _suggest_recipes_from_fridge_impl(
+    user: dict,
+    items_text: Optional[List[str]] = None,
+    image_url: Optional[str] = None,
+    meal_type: Optional[str] = None,
+    count: int = 3,
+    additional_requirements: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Suggest recipes from a fridge/pantry photo and/or a text ingredient list.
+
+    Wraps the same `PantryAnalysisService.analyze()` the app's "From Your
+    Fridge" feature uses — no separate detection/generation logic. Generation
+    only, nothing is logged or persisted, hence read:nutrition (matches
+    search_food's classification).
+    """
+    from services.pantry_analysis_service import get_pantry_service
+    from models.recipe import PantryAnalyzeRequest
+
+    image_b64 = None
+    if image_url:
+        try:
+            image_b64 = await _download_as_base64(image_url)
+        except Exception as e:
+            return {"ok": False, "error": "image_fetch_failed", "detail": str(e)[:200]}
+
+    if not items_text and not image_b64:
+        return {"ok": False, "error": "missing_input", "detail": "Provide items_text and/or image_url."}
+
+    req = PantryAnalyzeRequest(
+        items_text=items_text,
+        image_b64=image_b64,
+        meal_type=meal_type,
+        count=max(1, min(int(count or 3), 8)),
+        additional_requirements=additional_requirements,
+    )
+    try:
+        result = await get_pantry_service().analyze(user["id"], req)
+    except Exception as e:
+        logger.error(f"suggest_recipes_from_fridge failed: {e}", exc_info=True)
+        return {"ok": False, "error": "analysis_failed", "detail": str(e)[:200]}
+
+    dumped = result.model_dump() if hasattr(result, "model_dump") else result
+    return {"ok": True, **dumped} if isinstance(dumped, dict) else {"ok": True, "result": dumped}
+
+
 # ─── Registrar ───────────────────────────────────────────────────────────────
 
 def register(mcp_app: Any) -> None:
@@ -321,4 +368,34 @@ def register(mcp_app: Any) -> None:
             required_scope="read:nutrition",
             impl=_get_favorite_foods_impl,
             args={},
+        )
+
+    @mcp_app.tool(
+        name="suggest_recipes_from_fridge",
+        description=(
+            "Suggest recipes from a fridge/pantry photo (image_url) and/or a "
+            "text ingredient list (items_text). Provide at least one. Optional: "
+            "meal_type, count (default 3, max 8), additional_requirements "
+            "(free text, e.g. 'high protein', 'under 20 minutes')."
+        ),
+    )
+    async def suggest_recipes_from_fridge(
+        ctx: Context,
+        items_text: Optional[List[str]] = None,
+        image_url: Optional[str] = None,
+        meal_type: Optional[str] = None,
+        count: int = 3,
+        additional_requirements: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        return await run_tool(
+            ctx, "suggest_recipes_from_fridge",
+            required_scope="read:nutrition",
+            impl=_suggest_recipes_from_fridge_impl,
+            args={
+                "items_text": items_text,
+                "image_url": image_url,
+                "meal_type": meal_type,
+                "count": count,
+                "additional_requirements": additional_requirements,
+            },
         )

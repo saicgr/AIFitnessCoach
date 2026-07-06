@@ -64,8 +64,12 @@ class MCPConfig(BaseSettings):
         "read:workouts":   "Read your workout plan and history",
         "read:nutrition":  "Read your meals and nutrition data",
         "read:scores":     "Read your strength and readiness scores",
+        "read:programs":   "Browse the program library and your assigned programs",
+        "read:fasting":    "Read your fasting history and current status",
         "write:logs":      "Log meals, water, sets, and body weight",
         "write:workouts":  "Generate and modify workout plans",
+        "write:programs":  "Assign programs to your schedule",
+        "write:fasting":   "Start and end fasts",
         "chat:coach":      "Chat with your AI coach",
         "export:data":     "Export your data and generate reports",
     }
@@ -77,6 +81,7 @@ class MCPConfig(BaseSettings):
         "modify_workout.remove",
         "generate_workout_plan.replace",
         "log_meal.over_3000_kcal",
+        "assign_program_to_schedule.replace_primary",
     ]
 
     class Config:
