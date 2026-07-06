@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova — ASO Screenshot Deck Proofs v9 (2026-07)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --shell-bg: #0c0d10;
+    --shell-panel: #16181d;
+    --shell-text: #e8eaee;
+    --shell-muted: #8b919c;
+    --brand: #4cd964;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--shell-bg); color: var(--shell-text); font-family: 'Barlow', sans-serif; min-height: 100vh; }
+
+  /* ---------- shell chrome ---------- */
+  header.shell {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    padding: 14px 22px;
+    background: rgba(12,13,16,.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  header.shell h1 { font-weight: 800; font-size: 19px; letter-spacing: .01em; text-transform: uppercase; }
+  header.shell h1 em { color: var(--brand); font-style: normal; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .controls .group { display: flex; gap: 4px; background: var(--shell-panel); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 4px; }
+  .controls button {
+    font-family: 'Barlow', sans-serif; font-weight: 600; font-size: 12.5px;
+    color: var(--shell-muted); background: transparent; border: 0;
+    padding: 6px 12px; border-radius: 7px; cursor: pointer; letter-spacing: .02em;
+  }
+  .controls button.active { background: rgba(76,217,100,.14); color: var(--brand); }
+  .controls button:hover:not(.active) { color: var(--shell-text); }
+  .hint { font-size: 12px; color: var(--shell-muted); }
+
+  /* ---------- gallery ---------- */
+  .board { padding: 26px 22px 8px; }
+  .board h2 {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .14em; font-size: 14px;
+    color: var(--shell-muted); margin-bottom: 14px;
+  }
+  .board h2 span { color: var(--shell-text); }
+  .rail { display: flex; overflow-x: auto; padding: 6px 2px 22px; align-items: flex-start; }
+  .rail::-webkit-scrollbar { height: 10px; }
+  .rail::-webkit-scrollbar-thumb { background: #2a2d34; border-radius: 5px; }
+  .slot { flex: 0 0 auto; margin-right: 18px; }
+  .slot .viewport { overflow: hidden; border-radius: 16px; box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+  .slot .meta { margin-top: 10px; max-width: 100%; padding-right: 8px; }
+  .slot .meta .tag {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--brand); margin-bottom: 3px;
+  }
+  .slot .meta .note { font-size: 12px; color: var(--shell-muted); line-height: 1.45; }
+  .slot .meta .warn { color: #f0b429; }
+
+  /* ---------- the canvas — Mob-clean system ---------- */
+  .canvas { position: relative; overflow: hidden; transform-origin: top left; font-family: 'Barlow', sans-serif; }
+
+  /* the single connective element: a soft gray wave crossing every frame at the same heights */
+  .canvas .wave { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+
+  /* caption — centered, dark ink, one green accent line (Mob pattern) */
+  .canvas .copy { position: absolute; z-index: 7; top: 9em; left: 5em; right: 5em; text-align: center; }
+  .canvas .line {
+    font-weight: 800; line-height: 1.04; letter-spacing: -.022em;
+    color: #16191c;
+  }
+  .canvas .line.accent { color: var(--accent); }
+  .canvas .line:not(.accent) { opacity: .88; margin-bottom: .12em; }
+  .canvas .pill {
+    display: inline-flex; align-items: center; margin-top: 1.7em;
+    padding: .72em 1.7em; border-radius: 99em;
+    font-size: 2.55em; font-weight: 700; letter-spacing: .03em;
+    color: color-mix(in srgb, var(--accent) 80%, #333);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border: .07em solid color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  /* phone — straight, thin bezel, soft shadow, fully placed (Mob-clean) */
+  .canvas .stage { position: absolute; z-index: 4; left: 0; right: 0; bottom: var(--pbottom); display: flex; justify-content: center; }
+  .canvas .phone {
+    width: var(--pwidth); padding: 1.3em; border-radius: 7.8em;
+    background: #101114;
+    box-shadow: 0 2.2em 5.5em rgba(25,28,25,.22), 0 .8em 2em rgba(25,28,25,.14);
+    transform: translateX(var(--pshift)) rotate(var(--tilt));
+  }
+  .canvas .screen {
+    border-radius: 6.6em; overflow: hidden; background: #000;
+    aspect-ratio: 1206 / 2482; position: relative;
+  }
+  .canvas .screen img { display: block; width: 100%; margin-top: -11.6%; }
+
+  /* popup callout cards — Mob-style: white card frame, generous rounding, inset UI crop */
+  .canvas .chip {
+    position: absolute; z-index: 6;
+    padding: 1.1em; background: #0F1013;
+    border-radius: 3.4em; border: .55em solid #ffffff;
+    box-shadow: 0 2.6em 5.5em rgba(25,28,25,.30), 0 .9em 2.2em rgba(25,28,25,.16);
+  }
+  .canvas .chip .ci { border-radius: 2.2em; background-repeat: no-repeat; }
+  .canvas .chip.sub { z-index: 3; }
+
+  /* ---------- notes ---------- */
+  .notes { padding: 10px 22px 60px; max-width: 1080px; }
+  .notes h2 {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .14em; font-size: 14px;
+    color: var(--shell-muted); margin: 26px 0 10px;
+  }
+  .notes p, .notes li { font-size: 13.5px; line-height: 1.6; color: #b9bec7; }
+  .notes ul { padding-left: 18px; }
+  .notes code { background: #1d2026; padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+</style>
+</head>
+<body>
+
+<header class="shell">
+  <h1>Zealova <em>ASO deck</em> — v10 working deck (9 frames, self-contained)</h1>
+  <div class="controls">
+    <div class="group" id="sizeGroup">
+      <button data-size="ios" class="active">App Store 1320×2868</button>
+      <button data-size="play">Play 1080×2400</button>
+      <button data-size="both">Both</button>
+    </div>
+    <div class="group" id="accentGroup">
+      <button data-accent="green" class="active">Green accent</button>
+      <button data-accent="orange">Orange accent</button>
+    </div>
+    <div class="group" id="zoomGroup">
+      <button data-zoom="0.075">Thumbnail (squint test)</button>
+      <button data-zoom="0.16">Small</button>
+      <button data-zoom="0.26" class="active">Fit</button>
+      <button data-zoom="0.5">50%</button>
+    </div>
+    <span class="hint">v9: F1 three-beat hero + pill, teal AI card on F2, day-picker on F4, white anatomy card on F5, orange accents, centered phones, blob+road background.</span>
+  </div>
+</header>
+
+<div id="boards"></div>
+
+<section class="notes">
+  <h2>v7 — the Mob reset (fifth critique pass)</h2>
+  <ul>
+    <li><b>Whole system reset to the Mob reference:</b> one clean off-white background on EVERY frame (their continuity is sameness, not effects), centered dark headlines with a single green accent line, straight phones with thin bezels and soft shadows, floating UI cards with white borders and gentle shadows. Deleted: EKG line, ghost numerals, noise grain, glows/halos/washes, source rings, ghost trails, screen dimming, tilts.</li>
+    <li><b>The one connective element:</b> a soft light-gray wave band flowing behind the device at identical heights on every frame — quiet, like Mob's gray road.</li>
+    <li><b>Menu pop-up chip recropped</b> — the "+" button is out; the chip is just the scanned menu.</li>
+    <li><b>Captions</b> stay the locked 5-word pairs, now two centered lines: ink first line, green accent second line — readable at thumbnail exactly like Mob's.</li>
+  </ul>
+  <h2>Flags before export</h2>
+  <ul>
+    <li><b>F2:</b> full multi-program restage still queued to earn "Run several."</li>
+    <li><b>F1 re-shoot</b> from very top w/ challenge card dismissed still queued (full phone is visible again in this layout, so the bottom-of-screen clutter shows until re-shot).</li>
+    <li><b>Back half</b> (F6–F10) per <code>../TODO.md</code>; F8 Overload = the proof frame.</li>
+  </ul>
+  <h2>Export</h2>
+  <p>On approval these render headless (exact canvas px) to PNG: App Store 1320×2868 + Play 1080×2400 per frame, plus the Play feature graphic (1024×500).</p>
+</section>
+
+<script>
+const SIZES = {
+  ios:  { w: 1320, h: 2868, label: 'App Store 6.9″ — 1320×2868' },
+  play: { w: 1080, h: 2400, label: 'Google Play phone — 1080×2400' },
+};
+const IW = 1206, IH = 2622;
+const SB = 140;
+const PHONE_W = 70, PHONE_BOTTOM = 26;   // standardized device, fully placed
+const BG = '#F7F5F1', INK = '#16191C', WAVE = '#EAE6DE', BLOB = '#F0ECE5';
+const ACCENTS = { orange: '#E97A1A', green: '#128A3E' };
+let ACCENT = ACCENTS.green;
+
+function cropStyle(img, r, wEm) {
+  const [x, y, w, h] = r;
+  const size = (IW / w) * 100;
+  const px = IW - w === 0 ? 50 : (x / (IW - w)) * 100;
+  const py = IH - h === 0 ? 50 : (y / (IH - h)) * 100;
+  return `width:${wEm}em;aspect-ratio:${w}/${h};background-image:url('${img}');` +
+         `background-size:${size.toFixed(2)}% auto;background-position:${px.toFixed(2)}% ${py.toFixed(2)}%;`;
+}
+
+const FRAMES = [
+  {
+    id: 'F1', img: 'mockups/assets/f1_home2.png',
+    lines: [ { t: 'One coach.', size: 8 }, { t: 'Lifts, meals, recovery.', size: 8, accent: true } ],
+    pill: '1,700+ exercises · 20+ programs · form check',
+    phone: { tilt: 0, shift: 0, w: 74.4, slices: [[140, 455], [608, 2622]] },
+    chips: [
+      { rect: [75, 725, 1060, 330],  w: 80, left: 9,  bottom: 116, rot: -1.5 },
+      { rect: [95, 1458, 1040, 375], w: 78, left: 10, bottom: 69,  rot: 1.5 },
+    ],
+    note: 'Three-beat hero: the coach SPEAKING ("Gigi, prioritize your rest tonight") → live macros peeking between popups → the to-do block w/ BOTH "Hit 117g protein" and "Start workout". Capability pill restored under headline.', warn: true,
+  },
+  {
+    id: 'F2', img: 'mockups/assets/f2_schedule4.png',
+    lines: [ { t: 'Marathon and gym?', size: 8 }, { t: 'Run both programs.', size: 8, accent: true } ],
+    pill: 'HYROX · marathon · strength — 20+ programs at once',
+    phone: { tilt: 0, shift: 0 },
+    chips: [
+      { rect: [230, 1352, 920, 295], w: 76, left: 16, bottom: 71, rot: -1.5 },
+      { rect: [233, 1933, 918, 290], w: 62, left: 23, bottom: 39, rot: 1.5 },
+    ],
+    note: 'RESTAGE DONE: pink HYROX RACE PREP card popped as hero + teal MAIN Full-Body card; the phone shows Saturday stacking BOTH programs w/ the "2 sessions today" banner. Caption fully earned.',
+  },
+  {
+    id: 'F3', img: 'mockups/assets/f3_menu.png',
+    lines: [ { t: 'Eating out?', size: 8 }, { t: 'Order the best pick.', size: 8, accent: true } ],
+    pill: 'Any menu scanned & sorted in seconds',
+    phone: { tilt: 0, shift: 0 },
+    chips: [
+      { rect: [445, 932, 320, 468],  w: 42, left: 28, bottom: 73, rot: -1.5 },
+      { rect: [40, 1500, 1130, 270], w: 54, left: 22, bottom: 69, rot: 0 },
+      { rect: [40, 1775, 1130, 600], w: 54, left: 26, bottom: 33, rot: 1.5 },
+    ],
+    note: 'Every popup sits ON TOP of its source — one menu (magnified over the on-screen one), the search+sort block, the #1 ranked pick. Zero duplicates.',
+  },
+  {
+    id: 'F4', img: 'mockups/assets/f4_perday.png',
+    lines: [ { t: 'Odd schedule?', size: 8 }, { t: 'Customize every day.', size: 8, accent: true } ],
+    pill: '2–6 days/wk · 45–90 min · auto-built',
+    phone: { tilt: 0, shift: 0 },
+    chips: [
+      { rect: [55, 905, 1090, 160],  w: 56, left: 21, bottom: 111, rot: 1.5 },
+      { rect: [40, 1280, 1130, 340], w: 78, left: 10, bottom: 78,  rot: -1.5 },
+    ],
+    note: 'Caption now matches the screen: program customization down to each day. Popups: green Fri/Sat day picker + per-day focus grid.',
+  },
+  {
+    id: 'F5', img: 'mockups/assets/f5_workout.png',
+    lines: [ { t: 'Mid-workout?', size: 8 }, { t: 'Guided, set by set.', size: 8, accent: true } ],
+    pill: 'Auto-logged, set by set',
+    phone: { tilt: 0, shift: 0 },
+    chips: [
+      { rect: [60, 545, 1090, 485],  w: 60, left: 19, bottom: 113, rot: 1.5 },
+      { rect: [40, 1225, 1130, 270], w: 82, left: 8,  bottom: 85,  rot: -1.5 },
+    ],
+    note: 'Bright anatomy-figure popup (the one WHITE card in the deck — breaks the dark monotony) above the capability toolbar; the phone\'s big 55×12 shows once below.',
+  },
+  {
+    id: 'F6', img: 'mockups/assets/f6_chat.png',
+    lines: [ { t: 'Hate logging?', size: 8 }, { t: 'Just tell your coach.', size: 8, accent: true } ],
+    pill: '489 cal logged from one sentence',
+    phone: { tilt: 0, shift: 0 },
+    chips: [
+      { rect: [195, 390, 955, 225], w: 56, left: 25, bottom: 142, rot: 1.5 },
+      { rect: [50, 688, 960, 700],  w: 64, left: 13, bottom: 88,  rot: -1.5 },
+    ],
+    note: 'The conversation frame: user bubble ("two chicken tacos and a Corona") + coach reply w/ the "View logged Dinner · 489 cal" chip. Yoga exchange visible on phone below.',
+  },
+  {
+    id: 'F7', img: 'mockups/assets/f7_formcheck.png',
+    lines: [ { t: 'Form feeling off?', size: 8 }, { t: 'Film a set.', size: 8, accent: true } ],
+    pill: 'Form · tempo · range — scored every rep',
+    phone: { tilt: 0, shift: 0 },
+    chips: [
+      { rect: [300, 600, 600, 580],  w: 40, left: 29, bottom: 104, rot: -1.5 },
+      { rect: [70, 1855, 1070, 350], w: 58, left: 20, bottom: 44,  rot: 1.5 },
+    ],
+    note: 'The 80 "Good" gauge popped as the hero + the "What You Did Well" bullets below; the real outdoor push-up video frame shows on the phone between them.',
+  },
+  {
+    id: 'F8', img: 'mockups/assets/f8_overload.png',
+    lines: [ { t: 'Is it working?', size: 8 }, { t: 'Watch strength climb.', size: 8, accent: true } ],
+    pill: '+10 strength in 30 days · 16 muscle groups',
+    phone: { tilt: 0, shift: 0 },
+    chips: [
+      { rect: [52, 613, 1100, 697], w: 74, left: 12, bottom: 92, rot: -1.5 },
+    ],
+    note: 'THE PROOF FRAME: strength 50 + "+10 30d" + percentile + climbing chart popped as the hero; the muscle radar glows on the phone below. Closes the deck\'s question arc.',
+  },
+  {
+    id: 'F9', img: 'mockups/assets/f9_fridge.png',
+    lines: [ { t: "What's for dinner?", size: 8 }, { t: 'Scan your fridge.', size: 8, accent: true } ],
+    pill: '25 ingredients scanned → 5 recipes ranked',
+    phone: { tilt: 0, shift: 0 },
+    chips: [
+      { rect: [60, 563, 1096, 446],  w: 74, left: 12, bottom: 110, rot: -1.5 },
+      { rect: [60, 1905, 1096, 355], w: 66, left: 16, bottom: 38,  rot: 1.5 },
+    ],
+    note: 'The warmth frame: real fridge photo ("25 ingredients found") popped as hero + the 97-MATCH recipe card w/ real food photography below. Input → output, and the deck\'s only food imagery moment.',
+  },
+  {
+    id: 'F10', img: 'mockups/assets/f10_imports2.png',
+    lines: [ { t: 'Switching apps?', size: 8 }, { t: 'Bring your history.', size: 8, accent: true } ],
+    pill: 'MyFitnessPal · Fitbod · Gravl — or email your export',
+    phone: { tilt: 0, shift: 0 },
+    chips: [
+      { rect: [50, 395, 1103, 495],  w: 56, left: 21, bottom: 121, rot: 1.5 },
+      { rect: [50, 1137, 1103, 630], w: 74, left: 12, bottom: 65,  rot: -1.5 },
+    ],
+    note: 'Updated capture: SIX import sources incl. Fitbod + Gravl (the direct competitors) — the strongest possible switch signal. Grid popup now shows all 3 rows.',
+  },
+];
+
+let zoom = 0.26;
+let sizeMode = 'ios';
+
+// Play allows only 8 phone screenshots. Selection + order for Play:
+// fridge (F9, universal warmth) takes slot 4; F4 customize + F10 imports are App-Store-only.
+const PLAY_IDS = ['F1', 'F2', 'F3', 'F9', 'F5', 'F6', 'F7', 'F8'];
+
+function canvasHTML(f, size, idx) {
+  const fs = size.w / 100;
+  const Hem = size.h / fs;
+  // hierarchy: the ANSWER (accent) line is the thumbnail hero — auto-sized by length;
+  // the question line is smaller and slightly muted
+  const lines = f.lines.map(l => {
+    const size = l.accent
+      ? (l.t.length <= 12 ? 9.4 : l.t.length <= 18 ? 8.6 : l.t.length <= 20 ? 8.2 : 7.9)
+      : 6.6;
+    return `<div class="line ${l.accent ? 'accent' : ''}" style="font-size:${size}em">${l.t}</div>`;
+  }).join('');
+
+  // ONE organic road across the whole 5-frame strip — varying width like Mob's brush ribbon,
+  // plus giant soft blobs straddling frame boundaries. Each frame renders its 100-unit slice.
+  const k = Hem / 217.27;
+  const cr = (P) => {
+    const p = [P[0], ...P, P[P.length - 1]];
+    let s = '';
+    for (let j = 1; j < p.length - 2; j++) {
+      const c1 = [p[j][0] + (p[j + 1][0] - p[j - 1][0]) / 6, p[j][1] + (p[j + 1][1] - p[j - 1][1]) / 6];
+      const c2 = [p[j + 1][0] - (p[j + 2][0] - p[j][0]) / 6, p[j + 1][1] - (p[j + 2][1] - p[j][1]) / 6];
+      s += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p[j + 1][0].toFixed(1)},${p[j + 1][1].toFixed(1)}`;
+    }
+    return s;
+  };
+  const topPts = [
+    [-40, 148], [0, 138], [70, 164], [140, 184], [210, 148],
+    [260, 114], [330, 130], [400, 170], [460, 142], [500, 128], [540, 120],
+  ].map(([x, y]) => [x, y * k]);
+  const thk = [30, 34, 48, 62, 44, 28, 40, 58, 38, 32, 30];
+  const botPts = topPts.map(([x, y], i) => [x, y + thk[i] * k]).reverse();
+  const road = `M${topPts[0][0]},${topPts[0][1].toFixed(1)}` + cr(topPts) +
+               ` L${botPts[0][0]},${botPts[0][1].toFixed(1)}` + cr(botPts) + ' Z';
+  const blobs = [[108, 56, 40], [192, 194, 46], [300, 48, 38], [412, 198, 46]]
+    .map(([cx, cy, r]) => `<circle cx="${cx}" cy="${(cy * k).toFixed(1)}" r="${r}" fill="${BLOB}"/>`).join('');
+  const wave = `
+  <svg class="wave" viewBox="${idx * 100} 0 100 ${Hem.toFixed(1)}" preserveAspectRatio="none" style="width:100%;height:100%">
+    ${blobs}
+    <path d="${road}" fill="${WAVE}"/>
+  </svg>`;
+
+  const p = f.phone;
+  let screenInner, screenAspect = '1206 / 2482';
+  if (p.slices) {
+    // composite: stack slices of the capture, skipping unwanted bands (e.g. empty metric strip)
+    const total = p.slices.reduce((s, [a, b]) => s + (b - a), 0);
+    screenAspect = `1206 / ${total}`;
+    screenInner = p.slices.map(([a, b]) => {
+      const hPct = ((b - a) / total * 100).toFixed(2);
+      const py = (a / (IH - (b - a)) * 100).toFixed(2);
+      return `<div style="height:${hPct}%;background-image:url('${f.img}');background-size:100% auto;background-position:50% ${py}%;background-repeat:no-repeat"></div>`;
+    }).join('');
+  } else {
+    screenInner = `<img src="${f.img}" alt="${f.id}">`;
+  }
+  const phone = `
+    <div class="stage" style="--pwidth:${(p.w || PHONE_W)}em;--pbottom:${PHONE_BOTTOM}em;--pshift:${p.shift}em;--tilt:${p.tilt}deg">
+      <div class="phone"><div class="screen" style="aspect-ratio:${screenAspect}">${screenInner}</div></div>
+    </div>`;
+
+  // spill: a neighbor frame's phone bleeding across this frame's edge (panoramic continuity)
+  let spill = '';
+  if (f.spill) {
+    const s = f.spill;
+    let sInner;
+    if (s.slices) {
+      const sTotal = s.slices.reduce((a, [x, y]) => a + (y - x), 0);
+      sInner = `<div class="screen" style="aspect-ratio:1206 / ${sTotal}">` + s.slices.map(([a, b]) => {
+        const hPct = ((b - a) / sTotal * 100).toFixed(2);
+        const py = (a / (IH - (b - a)) * 100).toFixed(2);
+        return `<div style="height:${hPct}%;background-image:url('${s.img}');background-size:100% auto;background-position:50% ${py}%;background-repeat:no-repeat"></div>`;
+      }).join('') + '</div>';
+    } else {
+      sInner = `<div class="screen"><img src="${s.img}"></div>`;
+    }
+    spill = `
+    <div class="stage" style="--pwidth:${s.w}em;--pbottom:${PHONE_BOTTOM}em;--pshift:${s.shift}em;--tilt:${s.tilt}deg">
+      <div class="phone">${sInner}</div>
+    </div>`;
+  }
+
+  const chips = f.chips.map(c =>
+    `<div class="chip ${c.sub ? 'sub' : ''}" style="left:${c.left}em;bottom:${c.bottom}em;transform:rotate(${c.rot}deg)">` +
+    `<div class="ci" style="${cropStyle(c.img || f.img, c.rect, c.w)}"></div></div>`
+  ).join('');
+
+  return `
+  <div class="canvas" style="width:${size.w}px;height:${size.h}px;font-size:${fs}px;background:${BG};--accent:${ACCENT};">
+    ${wave}
+    <div class="copy">${lines}${f.pill ? `<div class="pill">${f.pill}</div>` : ''}</div>
+    ${spill}
+    ${phone}
+    ${chips}
+  </div>`;
+}
+
+function render() {
+  const boards = document.getElementById('boards');
+  const modes = sizeMode === 'both' ? ['ios', 'play'] : [sizeMode];
+  boards.innerHTML = modes.map(m => {
+    const size = SIZES[m];
+    const frameSet = m === 'play'
+      ? PLAY_IDS.map(id => FRAMES.find(f => f.id === id))
+      : FRAMES;
+    const slots = frameSet.map((f, idx) => `
+      <div class="slot" style="width:${Math.round(size.w * zoom)}px">
+        <div class="viewport" style="width:${Math.round(size.w * zoom)}px;height:${Math.round(size.h * zoom)}px">
+          <div style="transform:scale(${zoom});transform-origin:top left">${canvasHTML(f, size, idx)}</div>
+        </div>
+        <div class="meta">
+          <span class="tag">${f.id}</span>
+          <div class="note ${f.warn ? 'warn' : ''}">${f.note}</div>
+        </div>
+      </div>`).join('');
+    return `<div class="board"><h2><span>${size.label}</span> — ${m === 'play' ? 'Play 8: F1–F3 · F9 fridge · F5–F8 (customize + imports are App-Store-only)' : 'App Store 10 of 10 — DECK COMPLETE'}</h2><div class="rail">${slots}</div></div>`;
+  }).join('');
+}
+
+document.getElementById('sizeGroup').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  sizeMode = b.dataset.size;
+  document.querySelectorAll('#sizeGroup button').forEach(x => x.classList.toggle('active', x === b));
+  render();
+});
+document.getElementById('accentGroup').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  ACCENT = ACCENTS[b.dataset.accent];
+  document.querySelectorAll('#accentGroup button').forEach(x => x.classList.toggle('active', x === b));
+  render();
+});
+document.getElementById('zoomGroup').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  zoom = parseFloat(b.dataset.zoom);
+  document.querySelectorAll('#zoomGroup button').forEach(x => x.classList.toggle('active', x === b));
+  render();
+});
+
+// EXPORT MODE: ?export=F1&store=ios|play renders ONE canvas at exact pixel size, no chrome
+const _params = new URLSearchParams(location.search);
+const _EXPORT = _params.get('export');
+if (_EXPORT) {
+  const store = _params.get('store') === 'play' ? 'play' : 'ios';
+  const setIds = store === 'play' ? PLAY_IDS : FRAMES.map(f => f.id);
+  const f = FRAMES.find(x => x.id === _EXPORT);
+  const idx = Math.max(0, setIds.indexOf(_EXPORT));
+  const size = SIZES[store];
+  document.body.style.margin = '0';
+  document.body.style.overflow = 'hidden';
+  document.body.innerHTML = canvasHTML(f, size, idx);
+} else {
+  render();
+}
+</script>
+</body>
+</html>
