@@ -41,6 +41,11 @@ class McpIntegrationsState {
   /// Human-readable error message from the most recent failed operation.
   final String? error;
 
+  /// Upgrade URL from the most recent 402 (subscription-gate) response, if
+  /// any. Lets the UI offer a tappable "Upgrade" action instead of a dead-end
+  /// error message.
+  final String? upgradeUrl;
+
   /// True once the initial load has completed (success OR error). Prevents
   /// the empty-state UI from flashing before the first fetch returns.
   final bool hasLoadedOnce;
@@ -51,6 +56,7 @@ class McpIntegrationsState {
     this.disconnectingId,
     this.isCreating = false,
     this.error,
+    this.upgradeUrl,
     this.hasLoadedOnce = false,
   });
 
@@ -60,6 +66,7 @@ class McpIntegrationsState {
     String? disconnectingId,
     bool? isCreating,
     String? error,
+    String? upgradeUrl,
     bool clearError = false,
     bool clearDisconnecting = false,
     bool? hasLoadedOnce,
@@ -72,6 +79,7 @@ class McpIntegrationsState {
           : (disconnectingId ?? this.disconnectingId),
       isCreating: isCreating ?? this.isCreating,
       error: clearError ? null : (error ?? this.error),
+      upgradeUrl: clearError ? null : (upgradeUrl ?? this.upgradeUrl),
       hasLoadedOnce: hasLoadedOnce ?? this.hasLoadedOnce,
     );
   }
@@ -116,11 +124,7 @@ class McpIntegrationsNotifier extends StateNotifier<McpIntegrationsState> {
     } on DioException catch (e) {
       final msg = _dioErrorMessage(e);
       debugPrint('❌ [MCPIntegrations] Load failed: $msg');
-      state = state.copyWith(
-        isLoading: false,
-        error: msg,
-        hasLoadedOnce: true,
-      );
+      state = state.copyWith(isLoading: false, error: msg, hasLoadedOnce: true);
     } catch (e) {
       debugPrint('❌ [MCPIntegrations] Load failed: $e');
       state = state.copyWith(
@@ -156,18 +160,14 @@ class McpIntegrationsNotifier extends StateNotifier<McpIntegrationsState> {
       debugPrint('🔌 [MCPIntegrations] Creating PAT "$trimmed"...');
       final response = await _client.post(
         '/users/me/mcp-integrations/pat',
-        data: {
-          'name': trimmed,
-          if (scopes != null) 'scopes': scopes,
-        },
+        data: {'name': trimmed, if (scopes != null) 'scopes': scopes},
       );
 
       final data = response.data;
       if (data is! Map) {
         throw StateError('Unexpected response shape');
       }
-      final created =
-          McpPatCreation.fromJson(Map<String, dynamic>.from(data));
+      final created = McpPatCreation.fromJson(Map<String, dynamic>.from(data));
 
       // Reload the list so the new row appears immediately. Fire and forget.
       load();
@@ -180,16 +180,24 @@ class McpIntegrationsNotifier extends StateNotifier<McpIntegrationsState> {
       final status = e.response?.statusCode;
       final data = e.response?.data;
       String msg;
+      String? upgradeUrl;
       if (status == 402 && data is Map) {
         final detail = data['detail'];
         msg = (detail is Map && detail['error_description'] is String)
             ? detail['error_description'] as String
             : 'A yearly subscription is required to create connections.';
+        upgradeUrl = (detail is Map && detail['upgrade_url'] is String)
+            ? detail['upgrade_url'] as String
+            : null;
       } else {
         msg = _dioErrorMessage(e);
       }
       debugPrint('❌ [MCPIntegrations] Create PAT failed ($status): $msg');
-      state = state.copyWith(isCreating: false, error: msg);
+      state = state.copyWith(
+        isCreating: false,
+        error: msg,
+        upgradeUrl: upgradeUrl,
+      );
       return null;
     } catch (e) {
       debugPrint('❌ [MCPIntegrations] Create PAT failed: $e');
@@ -211,10 +219,7 @@ class McpIntegrationsNotifier extends StateNotifier<McpIntegrationsState> {
       return false;
     }
 
-    state = state.copyWith(
-      disconnectingId: integration.id,
-      clearError: true,
-    );
+    state = state.copyWith(disconnectingId: integration.id, clearError: true);
 
     // PATs and OAuth clients use different DELETE paths.
     final path = integration.authType == McpIntegrationAuthType.pat
@@ -222,29 +227,27 @@ class McpIntegrationsNotifier extends StateNotifier<McpIntegrationsState> {
         : '/users/me/mcp-integrations/${integration.id}';
 
     try {
-      debugPrint('🔌 [MCPIntegrations] Revoking ${integration.authType.name} '
-          'id=${integration.id}...');
+      debugPrint(
+        '🔌 [MCPIntegrations] Revoking ${integration.authType.name} '
+        'id=${integration.id}...',
+      );
       await _client.delete(path);
 
       // Optimistic remove; matches the snappy UX the existing code had.
       final updated = state.integrations
-          .where((i) =>
-              !(i.id == integration.id && i.authType == integration.authType))
+          .where(
+            (i) =>
+                !(i.id == integration.id && i.authType == integration.authType),
+          )
           .toList(growable: false);
 
-      state = state.copyWith(
-        integrations: updated,
-        clearDisconnecting: true,
-      );
+      state = state.copyWith(integrations: updated, clearDisconnecting: true);
       debugPrint('✅ [MCPIntegrations] Revoked');
       return true;
     } on DioException catch (e) {
       final msg = _dioErrorMessage(e);
       debugPrint('❌ [MCPIntegrations] Revoke failed: $msg');
-      state = state.copyWith(
-        clearDisconnecting: true,
-        error: msg,
-      );
+      state = state.copyWith(clearDisconnecting: true, error: msg);
       return false;
     } catch (e) {
       debugPrint('❌ [MCPIntegrations] Revoke failed: $e');
@@ -280,7 +283,10 @@ class McpIntegrationsNotifier extends StateNotifier<McpIntegrationsState> {
 // PROVIDERS
 // ============================================
 
-final mcpIntegrationsProvider = StateNotifierProvider.autoDispose<
-    McpIntegrationsNotifier, McpIntegrationsState>((ref) {
-  return McpIntegrationsNotifier(ref.watch(apiClientProvider));
-});
+final mcpIntegrationsProvider =
+    StateNotifierProvider.autoDispose<
+      McpIntegrationsNotifier,
+      McpIntegrationsState
+    >((ref) {
+      return McpIntegrationsNotifier(ref.watch(apiClientProvider));
+    });

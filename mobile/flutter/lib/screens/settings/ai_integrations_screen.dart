@@ -12,9 +12,11 @@ import '../../data/models/mcp_integration.dart';
 import '../../data/providers/mcp_integrations_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../widgets/design_system/zealova.dart';
+import '../../widgets/glass_loading_overlay.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
 /// "AI Integrations" settings screen.
 ///
 /// Lets yearly subscribers generate Personal Access Tokens that connect
@@ -27,9 +29,6 @@ import '../../l10n/generated/app_localizations.dart';
 /// block, pastes it into their MCP client, done.
 class AiIntegrationsScreen extends ConsumerWidget {
   const AiIntegrationsScreen({super.key});
-
-  // Public docs URL — how to paste the generated config into each client.
-  static const _docsUrl = 'https://${Branding.marketingDomain}/mcp/docs';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,7 +48,9 @@ class AiIntegrationsScreen extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () => _openCreateFlow(context, ref, accent, isDark),
               icon: const Icon(Icons.add_link),
-              label: Text(AppLocalizations.of(context).aiIntegrationsCreateConnection),
+              label: Text(
+                AppLocalizations.of(context).aiIntegrationsCreateConnection,
+              ),
               backgroundColor: accent,
               foregroundColor: tc.accentContrast,
             )
@@ -88,7 +89,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
-        _HeaderCard(accent: accent, onOpenDocs: _openDocs),
+        _HeaderCard(accent: accent),
         const SizedBox(height: 24),
 
         if (state.error != null && state.hasLoadedOnce) ...[
@@ -110,7 +111,6 @@ class AiIntegrationsScreen extends ConsumerWidget {
           _EmptyState(
             accent: accent,
             onCreate: () => _openCreateFlow(context, ref, accent, isDark),
-            onOpenDocs: _openDocs,
           )
         else
           ...state.integrations.map(
@@ -120,8 +120,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
                 integration: integration,
                 accent: accent,
                 isDark: isDark,
-                isDisconnecting:
-                    state.disconnectingId == integration.id,
+                isDisconnecting: state.disconnectingId == integration.id,
                 onDisconnect: () =>
                     _confirmAndDisconnect(context, ref, integration, accent),
               ),
@@ -134,17 +133,6 @@ class AiIntegrationsScreen extends ConsumerWidget {
   // ───────────────────────────────────────────────
   // ACTIONS
   // ───────────────────────────────────────────────
-
-  Future<void> _openDocs() async {
-    try {
-      await launchUrl(
-        Uri.parse(_docsUrl),
-        mode: LaunchMode.externalApplication,
-      );
-    } catch (e) {
-      debugPrint('❌ [AIIntegrations] Could not open docs URL: $e');
-    }
-  }
 
   /// The full Create Connection flow.
   /// Step 1: name + Quick Setup vs Custom picker (bottom sheet).
@@ -161,30 +149,66 @@ class AiIntegrationsScreen extends ConsumerWidget {
     final result = await showGlassSheet<_CreateFlowResult>(
       context: context,
       builder: (sheetContext) => GlassSheet(
-        child: _CreateConnectionSheet(
-          accent: accent,
-          isDark: isDark,
-        ),
+        child: _CreateConnectionSheet(accent: accent, isDark: isDark),
       ),
     );
 
     if (result == null || !context.mounted) return;
 
-    final created = await ref.read(mcpIntegrationsProvider.notifier).createPat(
-          name: result.name,
-          scopes: result.scopes, // null = Quick Setup (backend defaults)
-        );
+    // The create sheet has already closed by this point, so without an
+    // overlay the screen sits silent for the round-trip — show one, per
+    // the same pattern as workout completion / regenerate.
+    final loading = showGlassLoadingOverlay(
+      context,
+      message: 'Creating connection…',
+    );
+    final McpPatCreation? created;
+    try {
+      created = await ref
+          .read(mcpIntegrationsProvider.notifier)
+          .createPat(
+            name: result.name,
+            scopes: result.scopes, // null = Quick Setup (backend defaults)
+          );
+    } finally {
+      loading.dismiss();
+    }
 
     if (!context.mounted) return;
 
     if (created == null) {
       // Error state is already surfaced via the inline error banner.
-      final err = ref.read(mcpIntegrationsProvider).error;
+      final failedState = ref.read(mcpIntegrationsProvider);
+      final err = failedState.error;
+      final upgradeUrl = failedState.upgradeUrl;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(err ?? AppLocalizations.of(context).aiIntegrationsCouldNotCreateConnection),
+          content: Text(
+            err ??
+                AppLocalizations.of(
+                  context,
+                ).aiIntegrationsCouldNotCreateConnection,
+          ),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
+          action: upgradeUrl != null
+              ? SnackBarAction(
+                  label: 'Upgrade',
+                  textColor: Colors.white,
+                  onPressed: () async {
+                    try {
+                      await launchUrl(
+                        Uri.parse(upgradeUrl),
+                        mode: LaunchMode.externalApplication,
+                      );
+                    } catch (e) {
+                      debugPrint(
+                        '❌ [AIIntegrations] Could not open upgrade URL: $e',
+                      );
+                    }
+                  },
+                )
+              : null,
         ),
       );
       return;
@@ -199,7 +223,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
         opaque: true,
         showHandle: false,
         child: _ConnectionReadySheet(
-          creation: created,
+          creation: created!,
           accent: accent,
           isDark: isDark,
         ),
@@ -219,7 +243,9 @@ class AiIntegrationsScreen extends ConsumerWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(AppLocalizations.of(context).aiIntegrationsDisconnectThisAssistant),
+          title: Text(
+            AppLocalizations.of(context).aiIntegrationsDisconnectThisAssistant,
+          ),
           content: Text(
             '${integration.name} will immediately lose access to your '
             '${Branding.appName} data. You can create a new connection anytime.',
@@ -232,7 +258,9 @@ class AiIntegrationsScreen extends ConsumerWidget {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
               style: TextButton.styleFrom(foregroundColor: Colors.red.shade400),
-              child: Text(AppLocalizations.of(context).googleCalendarConnectDisconnect),
+              child: Text(
+                AppLocalizations.of(context).googleCalendarConnectDisconnect,
+              ),
             ),
           ],
         );
@@ -256,8 +284,9 @@ class AiIntegrationsScreen extends ConsumerWidget {
               ? '${integration.name} disconnected'
               : 'Could not disconnect ${integration.name}.',
         ),
-        backgroundColor:
-            ok ? accent.withValues(alpha: 0.9) : Colors.red.shade700,
+        backgroundColor: ok
+            ? accent.withValues(alpha: 0.9)
+            : Colors.red.shade700,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -270,6 +299,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
 
 class _CreateFlowResult {
   final String name;
+
   /// null → Quick Setup (backend applies defaults).
   final List<String>? scopes;
 
@@ -375,7 +405,9 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                 controller: _nameController,
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context).aiIntegrationsMyLaptopClaude,
+                  hintText: AppLocalizations.of(
+                    context,
+                  ).aiIntegrationsMyLaptopClaude,
                   filled: true,
                   fillColor: theme.colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
@@ -387,7 +419,9 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                     borderSide: BorderSide(color: accent, width: 1.5),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 14),
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
                 ),
               ),
 
@@ -403,7 +437,9 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  AppLocalizations.of(context).aiIntegrationsUncheckAnythingYouWant,
+                  AppLocalizations.of(
+                    context,
+                  ).aiIntegrationsUncheckAnythingYouWant,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -429,7 +465,9 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                     Expanded(
                       flex: 2,
                       child: ZealovaButton(
-                        label: AppLocalizations.of(context).aiIntegrationsQuickSetup,
+                        label: AppLocalizations.of(
+                          context,
+                        ).aiIntegrationsQuickSetup,
                         onTap: () => _submit(quickSetup: true),
                         height: 48,
                       ),
@@ -447,7 +485,9 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                     Expanded(
                       flex: 2,
                       child: ZealovaButton(
-                        label: AppLocalizations.of(context).aiIntegrationsGenerate,
+                        label: AppLocalizations.of(
+                          context,
+                        ).aiIntegrationsGenerate,
                         onTap: _selected.isEmpty
                             ? null
                             : () => _submit(quickSetup: false),
@@ -517,7 +557,9 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                   Text(
                     def.description,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.65,
+                      ),
                     ),
                   ),
                 ],
@@ -534,7 +576,9 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).aiIntegrationsGiveThisConnectionA),
+          content: Text(
+            AppLocalizations.of(context).aiIntegrationsGiveThisConnectionA,
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -543,8 +587,9 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
     Navigator.of(context).pop(
       _CreateFlowResult(
         name: name,
-        // Quick Setup → null means "use backend defaults (all scopes)".
-        // Custom → explicit subset.
+        // Quick Setup → null means "use backend defaults" — a safe
+        // read-only subset (read:profile/workouts/nutrition), NOT all
+        // scopes. Custom → explicit subset the user picked.
         scopes: quickSetup ? null : _selected.toList(),
       ),
     );
@@ -574,8 +619,9 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
   String _justCopied = ''; // 'json' | 'token' | ''
 
   /// Pretty-print the server-provided JSON config so it paste-previews nicely.
-  late final String _prettyConfig = const JsonEncoder.withIndent('  ')
-      .convert(widget.creation.connectionConfig);
+  late final String _prettyConfig = const JsonEncoder.withIndent(
+    '  ',
+  ).convert(widget.creation.connectionConfig);
 
   @override
   Widget build(BuildContext context) {
@@ -699,7 +745,11 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
                       size: 16,
                     ),
                     label: Text(
-                      _justCopied == 'json' ? AppLocalizations.of(context).aiIntegrationsCopied : AppLocalizations.of(context).aiIntegrationsCopyConfig,
+                      _justCopied == 'json'
+                          ? AppLocalizations.of(context).aiIntegrationsCopied
+                          : AppLocalizations.of(
+                              context,
+                            ).aiIntegrationsCopyConfig,
                     ),
                     style: FilledButton.styleFrom(
                       backgroundColor: accent,
@@ -714,21 +764,25 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () =>
-                        _copy(widget.creation.token, 'token'),
+                    onPressed: () => _copy(widget.creation.token, 'token'),
                     icon: Icon(
                       _justCopied == 'token' ? Icons.check : Icons.vpn_key,
                       size: 16,
                       color: accent,
                     ),
                     label: Text(
-                      _justCopied == 'token' ? AppLocalizations.of(context).aiIntegrationsCopied : AppLocalizations.of(context).aiIntegrationsCopyTokenOnly,
+                      _justCopied == 'token'
+                          ? AppLocalizations.of(context).aiIntegrationsCopied
+                          : AppLocalizations.of(
+                              context,
+                            ).aiIntegrationsCopyTokenOnly,
                       style: TextStyle(
-                          color: accent, fontWeight: FontWeight.w600),
+                        color: accent,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side:
-                          BorderSide(color: accent.withValues(alpha: 0.4)),
+                      side: BorderSide(color: accent.withValues(alpha: 0.4)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -770,7 +824,9 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
             Center(
               child: TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(AppLocalizations.of(context).aiIntegrationsIVeSavedMy),
+                child: Text(
+                  AppLocalizations.of(context).aiIntegrationsIVeSavedMy,
+                ),
               ),
             ),
           ],
@@ -797,11 +853,7 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
 
 class _HeaderCard extends StatelessWidget {
   final Color accent;
-  final VoidCallback onOpenDocs;
-  const _HeaderCard({
-    required this.accent,
-    required this.onOpenDocs,
-  });
+  const _HeaderCard({required this.accent});
 
   @override
   Widget build(BuildContext context) {
@@ -843,30 +895,11 @@ class _HeaderCard extends StatelessWidget {
             'config into your tool, done. Yearly subscription required.',
             style: TextStyle(fontSize: 14, height: 1.45, color: textMuted),
           ),
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: onOpenDocs,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.open_in_new, size: 16, color: accent),
-                  const SizedBox(width: 6),
-                  Text(
-                    AppLocalizations.of(context).healthSyncSetupGuide,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: accent,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // "Setup Guide" deep link removed: https://zealova.com/mcp/docs
+          // doesn't exist yet. The copy above already covers the flow
+          // end-to-end. Re-add once the marketing page ships (needs
+          // `cd frontend && npm run deploy`, not just a commit) — restore
+          // the InkWell(onTap: onOpenDocs, ...) block from git history.
         ],
       ),
     );
@@ -901,129 +934,134 @@ class _IntegrationCard extends StatelessWidget {
     return ZealovaCard(
       padding: const EdgeInsets.all(16),
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _initialFor(integration.name),
-                    style: ZType.disp(18, color: accent),
-                  ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.cardBorder),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
+                alignment: Alignment.center,
+                child: Text(
+                  _initialFor(integration.name),
+                  style: ZType.disp(18, color: accent),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            integration.name,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (integration.authType ==
+                            McpIntegrationAuthType.oauth)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                             child: Text(
-                              integration.name,
+                              AppLocalizations.of(context).aiIntegrationsOauth,
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: textPrimary,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: accent,
+                                letterSpacing: 0.5,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (integration.authType ==
-                              McpIntegrationAuthType.oauth)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: accent.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                AppLocalizations.of(context).aiIntegrationsOauth,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: accent,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _subtitleFor(integration),
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _subtitleFor(integration),
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            if (integration.scopes.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                AppLocalizations.of(context).aiIntegrationsGrantedPermissions,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: textMuted,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: integration.scopes
-                    .map((s) => _ScopeChip(scope: s, accent: accent))
-                    .toList(),
               ),
             ],
+          ),
+          if (integration.scopes.isNotEmpty) ...[
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: isDisconnecting ? null : onDisconnect,
-                icon: isDisconnecting
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.red.shade400,
-                        ),
-                      )
-                    : Icon(Icons.link_off,
-                        size: 18, color: Colors.red.shade400),
-                label: Text(
-                  isDisconnecting ? AppLocalizations.of(context).aiIntegrationsDisconnecting : AppLocalizations.of(context).googleCalendarConnectDisconnect,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red.shade400,
-                  ),
+            Text(
+              AppLocalizations.of(context).aiIntegrationsGrantedPermissions,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+                letterSpacing: 0.4,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: integration.scopes
+                  .map((s) => _ScopeChip(scope: s, accent: accent))
+                  .toList(),
+            ),
+          ],
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: isDisconnecting ? null : onDisconnect,
+              icon: isDisconnecting
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.red.shade400,
+                      ),
+                    )
+                  : Icon(Icons.link_off, size: 18, color: Colors.red.shade400),
+              label: Text(
+                isDisconnecting
+                    ? AppLocalizations.of(context).aiIntegrationsDisconnecting
+                    : AppLocalizations.of(
+                        context,
+                      ).googleCalendarConnectDisconnect,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red.shade400,
                 ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: Colors.red.shade400.withValues(alpha: 0.5),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: BorderSide(
+                  color: Colors.red.shade400.withValues(alpha: 0.5),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1109,12 +1147,7 @@ class _ScopeChip extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   final Color accent;
   final VoidCallback onCreate;
-  final VoidCallback onOpenDocs;
-  const _EmptyState({
-    required this.accent,
-    required this.onCreate,
-    required this.onOpenDocs,
-  });
+  const _EmptyState({required this.accent, required this.onCreate});
 
   @override
   Widget build(BuildContext context) {
@@ -1154,15 +1187,6 @@ class _EmptyState extends StatelessWidget {
             expand: false,
             height: 48,
           ),
-          const SizedBox(height: 8),
-          TextButton.icon(
-            onPressed: onOpenDocs,
-            icon: Icon(Icons.open_in_new, size: 14, color: accent),
-            label: Text(
-              AppLocalizations.of(context).healthSyncSetupGuide,
-              style: TextStyle(color: accent, fontWeight: FontWeight.w600),
-            ),
-          ),
         ],
       ),
     );
@@ -1176,10 +1200,7 @@ class _EmptyState extends StatelessWidget {
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  const _ErrorView({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorView({required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -1189,11 +1210,7 @@ class _ErrorView extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       children: [
         const SizedBox(height: 64),
-        Icon(
-          Icons.cloud_off_outlined,
-          size: 56,
-          color: tc.textMuted,
-        ),
+        Icon(Icons.cloud_off_outlined, size: 56, color: tc.textMuted),
         const SizedBox(height: 16),
         Text(
           AppLocalizations.of(context).aiIntegrationsCouldNotLoadIntegrations,
@@ -1204,10 +1221,7 @@ class _ErrorView extends StatelessWidget {
         Text(
           message,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: tc.textSecondary,
-          ),
+          style: TextStyle(fontSize: 14, color: tc.textSecondary),
         ),
         const SizedBox(height: 20),
         Center(
@@ -1240,8 +1254,7 @@ class _InlineErrorBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.red.shade400.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: Colors.red.shade400.withValues(alpha: 0.4)),
+        border: Border.all(color: Colors.red.shade400.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
