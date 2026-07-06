@@ -1015,26 +1015,66 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     return out;
   }
 
-  Future<void> _openEquipmentWeightSheet(String id) async {
+  /// Ids sourced from the "Other Equipment" search sheet use display-string
+  /// casing ('Weight Plate', 'Bumper Plates') that doesn't match the
+  /// snake_case weight-table keys ('weight_plates', 'bumper_plates') used
+  /// everywhere else. Normalize here so both surfaces (main grid + Other
+  /// Equipment sheet) dispatch through the same logic below.
+  static const _otherEquipmentWeightKeys = {
+    'Weight Plate': 'weight_plates',
+    'Bumper Plates': 'bumper_plates',
+  };
+
+  Future<void> _openEquipmentWeightSheet(String rawId) async {
+    final id = _otherEquipmentWeightKeys[rawId] ?? rawId;
     const labels = {
       'dumbbells': 'Dumbbells',
       'kettlebell': 'Kettlebell',
       'barbell': 'Barbell',
+      'medicine_ball': 'Medicine Ball',
+      'weight_plates': 'Weight Plate',
+      'bumper_plates': 'Bumper Plates',
+      'sandbag': 'Sandbag',
+      'olympic_barbell': 'Olympic Weightlifting Bar',
+      'ez_bar': 'EZ Bar',
+      'trap_bar': 'Trap Bar',
+      'safety_squat_bar': 'Safety Squat Bar',
+      'cambered_bar': 'Cambered Bar',
+      'swiss_bar': 'Swiss Bar',
+      'log_bar': 'Log Bar',
     };
     const icons = {
       'dumbbells': 'eq_dumbbell',
       'kettlebell': 'eq_kettlebell',
       'barbell': 'eq_barbell',
+      'medicine_ball': 'eq_medicine_ball',
+      // Weight Plate/Bumper Plates/Sandbag don't have bespoke line-icon
+      // assets yet — share the barbell placeholder for now.
+      'weight_plates': 'eq_barbell',
+      'bumper_plates': 'eq_barbell',
+      'sandbag': 'eq_barbell',
+      // Specialty bars each have their own bespoke silhouette (line_icon.dart).
+      'olympic_barbell': 'eq_olympic_barbell',
+      'ez_bar': 'eq_ez_bar',
+      'trap_bar': 'eq_trap_bar',
+      'safety_squat_bar': 'eq_safety_squat_bar',
+      'cambered_bar': 'eq_cambered_bar',
+      'swiss_bar': 'eq_swiss_bar',
+      'log_bar': 'eq_log_bar',
     };
     final workoutUnit = ref.read(workoutWeightUnitProvider);
 
-    // Barbell = total loadable weight (bar + plates), a genuine continuous
-    // range — the min/max/jump sheet is the right model and matches how the
-    // backend snaps barbell lifts. Discrete owned collections (dumbbells /
-    // kettlebells) instead get the exact rack-tile inventory editor below —
-    // the same one used by home + workout equipment editing — so odd sets
+    // Continuous-range equipment (bar + plates, or an adjustable/fillable
+    // sandbag) uses the min/max/jump slider — the right model and the one
+    // that matches how the backend snaps these lifts. Discrete owned
+    // collections (dumbbells/kettlebells/medicine balls/weight & bumper
+    // plates) instead get the exact rack-tile inventory editor below — the
+    // same one used by home + workout equipment editing — so odd sets
     // (a lone 35 lb bell, a 10 + a 12) round-trip faithfully.
-    if (id == 'barbell') {
+    final isRangeBased = id == 'barbell' ||
+        id == 'sandbag' ||
+        QuizEquipment.specialtyBarIds.contains(id);
+    if (isRangeBased) {
       final spec = await showEquipmentWeightSheet(
         context,
         equipmentId: id,
@@ -1289,12 +1329,24 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       if (id == 'full_gym') {
         if (_selectedEquipment.contains('full_gym')) {
           _selectedEquipment.clear();
+          _otherSelectedEquipment.clear();
         } else {
-          _selectedEquipment.clear();
           // Use the shared comprehensive preset so the "Full Gym Access" /
           // commercial-gym selection unlocks every machine + cardio piece a
           // real commercial gym has, not the abridged 14-item subset.
-          _selectedEquipment.addAll(kCommercialGymEquipmentPreset);
+          // kCommercialGymEquipmentPreset mixes canonical chip ids with raw
+          // "Other equipment" catalog strings (sandbag, hay bale, EZ Bar…) —
+          // split it so each half lands in the set its own sheet reads for
+          // checkmarks, instead of dumping everything into _selectedEquipment
+          // only (the bug where the Other Equipment sheet never showed a
+          // check for preset-granted items like sandbag/hay bale).
+          final (canonical, other) = splitPresetEquipment(kCommercialGymEquipmentPreset);
+          _selectedEquipment
+            ..clear()
+            ..addAll(canonical);
+          _otherSelectedEquipment
+            ..clear()
+            ..addAll(other);
         }
       } else {
         if (_selectedEquipment.contains(id)) {
@@ -1327,6 +1379,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             _customEquipment.addAll(customList);
           });
         },
+        onEditWeights: _openEquipmentWeightSheet,
         ),
       ),
     );

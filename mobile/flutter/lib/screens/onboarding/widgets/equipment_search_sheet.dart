@@ -12,6 +12,11 @@ class EquipmentSearchSheet extends StatefulWidget {
   final Function(List<String>)? onCustomEquipmentChanged;
   /// Initial custom equipment (for edit mode)
   final List<String> initialCustomEquipment;
+  /// Optional callback to open the weight editor for a weight-bearing item
+  /// (Weight Plate, Bumper Plates, Sandbag). Mirrors the same-named callback
+  /// on the main equipment grid (`QuizEquipment.onEditWeights`) so both
+  /// surfaces reuse the one dispatch function in the parent screen.
+  final void Function(String equipmentId)? onEditWeights;
 
   const EquipmentSearchSheet({
     super.key,
@@ -20,7 +25,27 @@ class EquipmentSearchSheet extends StatefulWidget {
     required this.onSelectionChanged,
     this.onCustomEquipmentChanged,
     this.initialCustomEquipment = const [],
+    this.onEditWeights,
   });
+
+  /// Equipment ids that support a weight editor from this sheet. Kept
+  /// small and exact-cased to match `databaseEquipment`'s literal strings.
+  static const Set<String> weightBearing = {
+    'Weight Plate',
+    'Bumper Plates',
+    'sandbag',
+  };
+
+  /// Search aliases for catalog items whose common nickname doesn't appear
+  /// in the display string itself (e.g. "erg" should find "Rowing Machine").
+  /// Keep roughly in sync with the DB-side aliases seeded in
+  /// `equipment_types` (migration 2315_equipment_taxonomy_expansion.sql).
+  static const Map<String, List<String>> searchAliases = {
+    'Rowing Machine': ['rower', 'erg', 'ergometer'],
+    'Ski Ergometer': ['ski erg', 'erg'],
+    'Assault Bike': ['airbike', 'air bike', 'assault'],
+    'Exercise Ball': ['stability ball', 'swiss ball'],
+  };
 
   /// All equipment available in the database (excluding basic ones shown in main list)
   static const List<String> databaseEquipment = [
@@ -29,7 +54,7 @@ class EquipmentSearchSheet extends StatefulWidget {
     'hay bale',
     'sandbag',
     'tire',
-    'tire, sledgehammer',
+    'sledgehammer',
     // Indian/Traditional Equipment
     'gada (mace)',
     'gar nal (stone neck ring)',
@@ -42,7 +67,7 @@ class EquipmentSearchSheet extends StatefulWidget {
     'rope',
     // Gym Machines
     'Ab Roller',
-    'Airbike',
+    'Assault Bike',
     'Assisted Pull Up Machine',
     'Balance Board',
     'Bench',
@@ -54,7 +79,6 @@ class EquipmentSearchSheet extends StatefulWidget {
     'Dip Station',
     'Elliptical Machine',
     'Exercise Ball',
-    'EZ Bar',
     'Hack Squat Machine',
     'Hammer Strength Machines',
     'Hyperextension Bench',
@@ -65,13 +89,12 @@ class EquipmentSearchSheet extends StatefulWidget {
     'Loop Resistance Band',
     'Medicine Ball',
     'Rowing Machine',
-    'Seated Hip Abductor Machine',
+    'Hip Abductor Machine',
     'Ski Ergometer',
     'Slam Ball',
     'Smith Machine',
     'Stationary Exercise Bike',
     'Suspension Trainer',
-    'Trap Bar',
     'Treadmill',
     'Triceps Extension Machine',
     'Weight Plate',
@@ -87,6 +110,26 @@ class EquipmentSearchSheet extends StatefulWidget {
     'Agility Ladder',
     'Stair Climber',
     'Rebounder',
+    // Backed by real exercise_library equipment tags with no prior picker
+    // representation (2026-07 catalog completeness pass). EZ Bar / Trap Bar
+    // moved out of this list — they're now first-class main-grid chips with
+    // their own weight-range editor (see quiz_equipment.dart Free Weights).
+    'Ab Wheel',
+    'Ab Crunch Machine',
+    'Assisted Dip Machine',
+    'Bosu Ball',
+    'Bumper Plates',
+    'Cable Crossover Machine',
+    'Grip Trainer',
+    'Hip Adductor Machine',
+    'Landmine',
+    'Lateral Raise Machine',
+    'Leg Curl Machine',
+    'Multi-Hip Machine',
+    'Pec Deck / Fly Machine',
+    'Push-Pull Machine',
+    'Resistance Band',
+    'Yoga Block',
   ];
 
   @override
@@ -123,9 +166,13 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
     if (_searchQuery.isEmpty) {
       return equipmentList;
     }
-    return equipmentList
-        .where((e) => e.toLowerCase().contains(_searchQuery.toLowerCase()))
-        .toList();
+    final query = _searchQuery.toLowerCase();
+    return equipmentList.where((e) {
+      if (e.toLowerCase().contains(query)) return true;
+      final aliases = EquipmentSearchSheet.searchAliases[e];
+      if (aliases == null) return false;
+      return aliases.any((alias) => alias.toLowerCase().contains(query));
+    }).toList();
   }
 
   void _showAddCustomEquipmentDialog() {
@@ -394,6 +441,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                         textSecondary: textSecondary,
                         cardBorder: cardBorder,
                         isCustom: isCustom,
+                        isWeightBearing: EquipmentSearchSheet.weightBearing.contains(equipment),
                       );
                     },
                   ),
@@ -511,7 +559,9 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
     required Color textSecondary,
     required Color cardBorder,
     bool isCustom = false,
+    bool isWeightBearing = false,
   }) {
+    final canEditWeights = isWeightBearing && isSelected && widget.onEditWeights != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
@@ -580,6 +630,34 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                   ],
                 ),
               ),
+              if (canEditWeights) ...[
+                GestureDetector(
+                  onTap: () => widget.onEditWeights!(equipment),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.tune, color: Colors.white, size: 13),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Set weights',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
               Container(
                 width: 24,
                 height: 24,
@@ -613,39 +691,139 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
     }).join(' ');
   }
 
+  // Exact-name icon lookup, checked before any substring fallback. Every
+  // literal `databaseEquipment` string gets its own deliberate entry here so
+  // physically-different equipment never silently shares an icon because an
+  // earlier, broader substring check happened to match first (the bug this
+  // map replaces: "Tire" vs "Sledgehammer" both used to hit `contains('tire')`
+  // before the sledgehammer-specific branch could ever run; "Trap Bar" used
+  // to hit the generic `contains('bar')` branch before its own; "EZ Bar" had
+  // no branch at all).
+  static const Map<String, IconData> _exactIcons = {
+    // Unconventional/Farm
+    'battle ropes': Icons.cable,
+    'hay bale': Icons.grass,
+    'sandbag': Icons.inventory_2,
+    'tire': Icons.circle_outlined,
+    'sledgehammer': Icons.hardware,
+    'rope': Icons.linear_scale,
+    // Indian/Traditional
+    'gada (mace)': Icons.sports_martial_arts,
+    'gar nal (stone neck ring)': Icons.radio_button_unchecked,
+    'jori (indian clubs)': Icons.sports_kabaddi,
+    'lathi (bamboo staff)': Icons.straighten,
+    'mallakhamb pole': Icons.terrain,
+    'matka (water pot)': Icons.local_drink,
+    'nal (stone lock)': Icons.circle,
+    'samtola (indian barbell)': Icons.line_weight,
+    // Gym Machines
+    'Ab Roller': Icons.rotate_right,
+    'Assault Bike': Icons.pedal_bike,
+    'Assisted Pull Up Machine': Icons.vertical_align_top,
+    'Balance Board': Icons.balance,
+    'Bench': Icons.weekend,
+    'Box': Icons.check_box_outline_blank,
+    'Cable Pulley Machine': Icons.settings_ethernet,
+    'Cable Row Machine': Icons.rowing,
+    'Chair': Icons.chair,
+    'Chest Press Machine': Icons.arrow_forward_ios,
+    'Dip Station': Icons.vertical_align_bottom,
+    'Elliptical Machine': Icons.directions_walk,
+    'Exercise Ball': Icons.sports_baseball,
+    'Hack Squat Machine': Icons.precision_manufacturing,
+    'Hammer Strength Machines': Icons.fitness_center,
+    'Hyperextension Bench': Icons.airline_seat_flat,
+    'Jump rope': Icons.sports,
+    'Lat Pull Down Machine': Icons.vertical_align_center,
+    'Leg Extension Machine': Icons.expand,
+    'Leg Press Machine': Icons.compress,
+    'Loop Resistance Band': Icons.all_inclusive,
+    'Medicine Ball': Icons.circle,
+    'Rowing Machine': Icons.rowing,
+    'Hip Abductor Machine': Icons.open_in_full,
+    'Ski Ergometer': Icons.downhill_skiing,
+    'Slam Ball': Icons.sports_volleyball,
+    'Smith Machine': Icons.view_column,
+    'Stationary Exercise Bike': Icons.pedal_bike,
+    'Suspension Trainer': Icons.sports_gymnastics,
+    'Treadmill': Icons.directions_run,
+    'Triceps Extension Machine': Icons.arrow_upward,
+    'Weight Plate': Icons.album,
+    'Yoga Mat': Icons.self_improvement,
+    // Previously missing
+    'Pull-Up Bar': Icons.horizontal_rule,
+    'Gymnastic Rings': Icons.stadium,
+    'Sled': Icons.fire_truck,
+    'Plyo Box': Icons.crop_square,
+    'Foam Roller': Icons.circle,
+    'Agility Ladder': Icons.reorder,
+    'Stair Climber': Icons.stairs,
+    'Rebounder': Icons.change_history,
+    // 2026-07 catalog completeness additions
+    'Ab Wheel': Icons.trip_origin,
+    'Ab Crunch Machine': Icons.arrow_downward,
+    'Assisted Dip Machine': Icons.vertical_align_bottom,
+    'Bosu Ball': Icons.brightness_2,
+    'Bumper Plates': Icons.album,
+    'Cable Crossover Machine': Icons.call_merge,
+    'Grip Trainer': Icons.back_hand,
+    'Hip Adductor Machine': Icons.close_fullscreen,
+    'Landmine': Icons.architecture,
+    'Lateral Raise Machine': Icons.swap_horiz,
+    'Leg Curl Machine': Icons.undo,
+    'Multi-Hip Machine': Icons.accessibility_new,
+    'Pec Deck / Fly Machine': Icons.flutter_dash,
+    'Push-Pull Machine': Icons.sync_alt,
+    'Resistance Band': Icons.waves,
+    'Yoga Block': Icons.view_in_ar,
+  };
+
   IconData _getEquipmentIcon(String equipment) {
+    final exact = _exactIcons[equipment];
+    if (exact != null) return exact;
+
+    // Fallback substring chain for anything not in the exact map above
+    // (future/unanticipated strings only — every current catalog entry is
+    // covered exactly, so this chain should rarely if ever fire). Narrower,
+    // more specific checks are ordered before broader ones so a specific
+    // match can never be shadowed by a generic one.
     final lower = equipment.toLowerCase();
 
-    // Unconventional/Farm
+    if (lower.contains('sledgehammer')) return Icons.hardware;
     if (lower.contains('hay') || lower.contains('bale')) return Icons.grass;
     if (lower.contains('tire')) return Icons.circle_outlined;
     if (lower.contains('sandbag')) return Icons.inventory_2;
-    if (lower.contains('battle rope') || lower.contains('rope')) return Icons.cable;
-    if (lower.contains('sledgehammer')) return Icons.hardware;
+    if (lower.contains('battle rope')) return Icons.cable;
+    if (lower.contains('jump rope')) return Icons.sports;
+    if (lower.contains('rope')) return Icons.linear_scale;
 
     // Indian/Traditional
     if (lower.contains('gada') || lower.contains('mace')) return Icons.sports_martial_arts;
-    if (lower.contains('jori') || lower.contains('club')) return Icons.sports_martial_arts;
+    if (lower.contains('jori') || lower.contains('club')) return Icons.sports_kabaddi;
     if (lower.contains('lathi') || lower.contains('staff')) return Icons.straighten;
-    if (lower.contains('mallakhamb')) return Icons.sports_gymnastics;
+    if (lower.contains('mallakhamb')) return Icons.terrain;
     if (lower.contains('matka') || lower.contains('pot')) return Icons.local_drink;
-    if (lower.contains('nal') || lower.contains('stone')) return Icons.fitness_center;
+    if (lower.contains('nal') || lower.contains('stone')) return Icons.circle;
     if (lower.contains('samtola')) return Icons.line_weight;
 
     // Cardio machines
     if (lower.contains('treadmill')) return Icons.directions_run;
-    if (lower.contains('bike') || lower.contains('cycle')) return Icons.pedal_bike;
     if (lower.contains('elliptical')) return Icons.directions_walk;
     if (lower.contains('rowing')) return Icons.rowing;
     if (lower.contains('ski')) return Icons.downhill_skiing;
-    if (lower.contains('jump rope')) return Icons.sports;
+    if (lower.contains('bike') || lower.contains('cycle')) return Icons.pedal_bike;
 
-    // Weight equipment
+    // Weight equipment — specific bar types before the generic "bar" catch-all
+    if (lower.contains('trap bar')) return Icons.hexagon_outlined;
+    if (lower.contains('ez bar') || lower.contains('ez-bar')) return Icons.turn_right;
+    if (lower.contains('safety squat')) return Icons.change_history;
+    if (lower.contains('cambered')) return Icons.curtains_closed;
+    if (lower.contains('swiss bar')) return Icons.horizontal_split;
+    if (lower.contains('log bar')) return Icons.forest;
     if (lower.contains('barbell') || lower.contains('bar')) return Icons.line_weight;
     if (lower.contains('dumbbell')) return Icons.fitness_center;
     if (lower.contains('kettlebell')) return Icons.sports_handball;
-    if (lower.contains('plate')) return Icons.circle;
-    if (lower.contains('trap bar')) return Icons.hexagon_outlined;
+    if (lower.contains('plate')) return Icons.album;
 
     // Machines
     if (lower.contains('machine') || lower.contains('press')) return Icons.precision_manufacturing;
@@ -656,7 +834,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
 
     // Other
     if (lower.contains('ball')) return Icons.sports_baseball;
-    if (lower.contains('band')) return Icons.cable;
+    if (lower.contains('band')) return Icons.waves;
     if (lower.contains('mat') || lower.contains('yoga')) return Icons.self_improvement;
     if (lower.contains('box')) return Icons.check_box_outline_blank;
     if (lower.contains('chair')) return Icons.chair;

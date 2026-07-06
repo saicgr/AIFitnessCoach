@@ -50687,6 +50687,48 @@ abstract class AppLocalizations {
   /// **'Barbell'**
   String get quizEquipmentBarbell;
 
+  /// No description provided for @quizEquipmentOlympicBarbell.
+  ///
+  /// In en, this message translates to:
+  /// **'Olympic Weightlifting Bar'**
+  String get quizEquipmentOlympicBarbell;
+
+  /// No description provided for @quizEquipmentEzBar.
+  ///
+  /// In en, this message translates to:
+  /// **'EZ Bar'**
+  String get quizEquipmentEzBar;
+
+  /// No description provided for @quizEquipmentTrapBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Trap Bar'**
+  String get quizEquipmentTrapBar;
+
+  /// No description provided for @quizEquipmentSafetySquatBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety Squat Bar'**
+  String get quizEquipmentSafetySquatBar;
+
+  /// No description provided for @quizEquipmentCamberedBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Cambered Bar'**
+  String get quizEquipmentCamberedBar;
+
+  /// No description provided for @quizEquipmentSwissBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Swiss Bar'**
+  String get quizEquipmentSwissBar;
+
+  /// No description provided for @quizEquipmentLogBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Bar'**
+  String get quizEquipmentLogBar;
+
   /// No description provided for @quizEquipmentBodyweightBands.
   ///
   /// In en, this message translates to:

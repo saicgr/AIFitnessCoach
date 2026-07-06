@@ -26,14 +26,19 @@ const List<String> kCommercialGymEquipmentPreset = [
   // ── Free weights ────────────────────────────────────────────────────
   'bodyweight',
   'barbell',
-  'ez_curl_bar',
-  'EZ Bar',
-  'Trap Bar',
+  'olympic_barbell',
+  'ez_bar',
+  'trap_bar',
+  'safety_squat_bar',
+  'cambered_bar',
+  'swiss_bar',
+  'log_bar',
   'dumbbells',
   'kettlebell',
   'kettlebells',
   'weight_plates',
   'Weight Plate',
+  'Bumper Plates',
 
   // ── Bodyweight / accessories ────────────────────────────────────────
   'pull_up_bar',
@@ -79,7 +84,7 @@ const List<String> kCommercialGymEquipmentPreset = [
   'leg_extension_machine',
   'Leg Extension Machine',
   'calf_raise_machine',
-  'Seated Hip Abductor Machine',
+  'Hip Abductor Machine',
   'Triceps Extension Machine',
 
   // ── Cardio floor ────────────────────────────────────────────────────
@@ -87,7 +92,7 @@ const List<String> kCommercialGymEquipmentPreset = [
   'Treadmill',
   'stationary_bike',
   'Stationary Exercise Bike',
-  'Airbike',
+  'Assault Bike',
   'Ski Ergometer',
   'elliptical',
   'Elliptical Machine',
@@ -103,7 +108,7 @@ const List<String> kCommercialGymEquipmentPreset = [
   'rope',
   'sandbag',
   'tire',
-  'tire, sledgehammer',
+  'sledgehammer',
   'hay bale',
   'trx',
   'suspension_trainer',
@@ -119,6 +124,33 @@ const List<String> kCommercialGymEquipmentPreset = [
   'nal (stone lock)',
   'samtola (indian barbell)',
 ];
+
+/// Splits a mixed preset list (canonical snake_case ids + raw "Other
+/// equipment" catalog strings, as `kCommercialGymEquipmentPreset` is) into
+/// the two sets the onboarding screen actually tracks selection with:
+/// `_selectedEquipment` (canonical chips) and `_otherSelectedEquipment` (the
+/// Other Equipment sheet). Without this split, every preset entry landed in
+/// `_selectedEquipment` only, so "Other equipment" items granted by a preset
+/// (sandbag, hay bale, EZ Bar, …) never showed a checkmark in the sheet that
+/// actually owns them. Ids that match neither list (a handful of legacy
+/// snake_case ids like `weight_plates`/`smith_machine` with no dedicated
+/// chip or sheet row today) are kept in the canonical set so they still
+/// reach the backend equipment payload, even though no checkbox lights up
+/// for them — this preserves prior behavior for those orphan ids.
+(Set<String>, Set<String>) splitPresetEquipment(List<String> preset) {
+  final canonical = <String>{};
+  final other = <String>{};
+  for (final item in preset) {
+    if (item == 'full_gym' || QuizEquipment.canonicalEquipmentIds.contains(item)) {
+      canonical.add(item);
+    } else if (EquipmentSearchSheet.databaseEquipment.contains(item)) {
+      other.add(item);
+    } else {
+      canonical.add(item);
+    }
+  }
+  return (canonical, other);
+}
 
 /// Map a selected fitness level to a reasonable default training-experience
 /// bucket. IDs must match `_experienceOptions` in `quiz_fitness_level.dart`.
@@ -807,7 +839,13 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
           ]);
           break;
         case 'commercial_gym':
-          _selectedEquipment.addAll(kCommercialGymEquipmentPreset);
+          // Split so raw "Other equipment" catalog strings mixed into the
+          // preset (sandbag, hay bale, EZ Bar…) land in _otherSelectedEquipment
+          // — the set the Other Equipment sheet actually reads for
+          // checkmarks — instead of only ever landing in _selectedEquipment.
+          final (gymCanonical, gymOther) = splitPresetEquipment(kCommercialGymEquipmentPreset);
+          _selectedEquipment.addAll(gymCanonical);
+          _otherSelectedEquipment.addAll(gymOther);
           break;
         case 'hotel':
           _selectedEquipment.addAll([

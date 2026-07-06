@@ -266,6 +266,19 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
         'desc': '25 lb / 11 kg — wavy shaft, plates load on the ends.',
         'fixed': false,
       },
+      // Alias for onboarding's canonical id ('ez_bar', matching
+      // equipment_types.canonical_name) — same physical bar as
+      // 'ez_curl_bar' above, which the rest of the app (gym profile,
+      // weight editors, plate math) already keys on. Kept as a separate
+      // entry rather than renaming 'ez_curl_bar' to avoid touching its many
+      // existing call sites.
+      'ez_bar': {
+        'label': 'EZ Curl Bar',
+        'lbs': 25.0, 'kg': 11.0,
+        'icon': _BarIcon.ezCurl,
+        'desc': '25 lb / 11 kg — wavy shaft, plates load on the ends.',
+        'fixed': false,
+      },
       'trap_bar': {
         'label': 'Trap / Hex Bar',
         'lbs': 55.0, 'kg': 25.0,
@@ -292,6 +305,20 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
         'lbs': 50.0, 'kg': 23.0,
         'icon': _BarIcon.standard,
         'desc': '~50 lb / 23 kg — bent shaft, plates load on each side.',
+        'fixed': false,
+      },
+      'swiss_bar': {
+        'label': 'Swiss Bar',
+        'lbs': 35.0, 'kg': 16.0,
+        'icon': _BarIcon.standard,
+        'desc': '~35 lb / 16 kg — multi-grip handles, plates load on sleeves.',
+        'fixed': false,
+      },
+      'log_bar': {
+        'label': 'Log Bar',
+        'lbs': 40.0, 'kg': 18.0,
+        'icon': _BarIcon.standard,
+        'desc': '~40 lb / 18 kg — log/viking-press frame, plates load on sleeves.',
         'fixed': false,
       },
       'technique_bar': {

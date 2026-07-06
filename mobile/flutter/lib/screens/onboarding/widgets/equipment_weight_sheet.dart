@@ -39,15 +39,35 @@ Future<Map<String, dynamic>?> showEquipmentWeightSheet(
 }
 
 // [min, max, increment] sensible starting points per equipment + unit.
+// Specialty-bar lb defaults come from the real bar weights already used by
+// the in-workout bar-type selector (workout_sheets_mixin_ui.dart `barTypes`);
+// swiss_bar/log_bar/olympic_barbell aren't in that table, so their defaults
+// are reasonable starting points the user can edit like any other range.
 const Map<String, List<double>> _lbDefaults = {
   'dumbbells': [5, 50, 5],
   'kettlebell': [10, 50, 5],
   'barbell': [45, 225, 10],
+  'olympic_barbell': [45, 225, 10],
+  'ez_bar': [25, 115, 5],
+  'trap_bar': [55, 225, 10],
+  'safety_squat_bar': [65, 225, 10],
+  'cambered_bar': [50, 225, 10],
+  'swiss_bar': [35, 205, 10],
+  'log_bar': [40, 220, 10],
+  'sandbag': [10, 150, 10],
 };
 const Map<String, List<double>> _kgDefaults = {
   'dumbbells': [2.5, 24, 2.5],
   'kettlebell': [4, 24, 4],
   'barbell': [20, 100, 5],
+  'olympic_barbell': [20, 100, 5],
+  'ez_bar': [11, 52, 2.5],
+  'trap_bar': [25, 100, 5],
+  'safety_squat_bar': [29, 100, 5],
+  'cambered_bar': [23, 100, 5],
+  'swiss_bar': [16, 93, 5],
+  'log_bar': [18, 100, 5],
+  'sandbag': [5, 70, 5],
 };
 
 class _EquipmentWeightSheet extends StatefulWidget {

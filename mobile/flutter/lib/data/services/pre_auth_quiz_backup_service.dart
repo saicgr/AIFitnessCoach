@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/api_constants.dart';
-import '../../models/equipment_item.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../models/ai_profile_payload.dart';
 import '../repositories/auth_repository.dart';
@@ -111,31 +110,9 @@ class PreAuthQuizBackupService {
       if (quizData.pastBlockers != null && quizData.pastBlockers!.isNotEmpty) {
         payload['past_blockers'] = quizData.pastBlockers;
       }
-      // Fitbod-style available weights → the {id: [sorted weights]} shape the
-      // backend generator snaps prescribed set weights to. Exact-inventory
-      // specs carry an explicit `weights` list (dumbbells/kettlebells); the
-      // legacy/barbell {min,max,increment} range specs are expanded.
-      final ew = quizData.equipmentWeights;
-      if (ew != null && ew.isNotEmpty) {
-        final expanded = <String, List<double>>{};
-        ew.forEach((id, spec) {
-          if (spec is Map) {
-            final explicit = (spec['weights'] as List?)
-                ?.whereType<num>()
-                .map((e) => e.toDouble())
-                .toList();
-            final list = (explicit != null && explicit.isNotEmpty)
-                ? (explicit..sort())
-                : EquipmentItem.expandRange(
-                    (spec['min'] as num?)?.toDouble(),
-                    (spec['max'] as num?)?.toDouble(),
-                    (spec['increment'] as num?)?.toDouble(),
-                  );
-            if (list.isNotEmpty) expanded[id] = list;
-          }
-        });
-        if (expanded.isNotEmpty) payload['equipment_weights'] = expanded;
-      }
+      // custom_equipment + equipment_weights are now populated centrally by
+      // AIProfilePayloadBuilder.buildPayload() above — no need to patch them
+      // in here separately.
 
       final apiClient = _ref.read(apiClientProvider);
       await apiClient.post(

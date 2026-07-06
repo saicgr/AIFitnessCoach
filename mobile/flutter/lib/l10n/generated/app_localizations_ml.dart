@@ -30612,6 +30612,27 @@ class AppLocalizationsMl extends AppLocalizations {
   String get quizEquipmentBarbell => 'ബാർബെൽ';
 
   @override
+  String get quizEquipmentOlympicBarbell => 'Olympic Weightlifting Bar';
+
+  @override
+  String get quizEquipmentEzBar => 'EZ Bar';
+
+  @override
+  String get quizEquipmentTrapBar => 'Trap Bar';
+
+  @override
+  String get quizEquipmentSafetySquatBar => 'Safety Squat Bar';
+
+  @override
+  String get quizEquipmentCamberedBar => 'Cambered Bar';
+
+  @override
+  String get quizEquipmentSwissBar => 'Swiss Bar';
+
+  @override
+  String get quizEquipmentLogBar => 'Log Bar';
+
+  @override
   String get quizEquipmentBodyweightBands => 'ബോഡി വെയ്റ്റ് + ബാൻഡുകൾ';
 
   @override

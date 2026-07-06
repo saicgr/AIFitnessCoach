@@ -320,6 +320,14 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         if gym_profile:
             gym_profile_id = gym_profile.get("id")
             equipment = body.equipment or gym_profile.get("equipment") or []
+            # Merge custom equipment from user profile (e.g., "TRX Bands", "Yoga
+            # Wheel") so the FIRST generated workout honors typed-in gear, not
+            # just regenerations. Skip when the request explicitly sent [] —
+            # that's an intentional bodyweight-only choice (mirrors versioning.py).
+            if user and isinstance(equipment, list) and body.equipment != []:
+                for item in get_all_equipment(user):
+                    if item and item not in equipment:
+                        equipment.append(item)
             equipment_details = gym_profile.get("equipment_details") or []
             workout_environment = gym_profile.get("workout_environment") or preferences.get("workout_environment")
             training_split = gym_profile.get("training_split")
@@ -337,6 +345,14 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             gym_profile_id = None
             goals = normalize_goals_list(body.goals) if body.goals else normalize_goals_list(user.get("goals"))
             equipment = body.equipment or parse_json_field(user.get("equipment"), [])
+            # Merge custom equipment from user profile (e.g., "TRX Bands", "Yoga
+            # Wheel") so the FIRST generated workout honors typed-in gear, not
+            # just regenerations. Skip when the request explicitly sent [] —
+            # that's an intentional bodyweight-only choice (mirrors versioning.py).
+            if user and isinstance(equipment, list) and body.equipment != []:
+                for item in get_all_equipment(user):
+                    if item and item not in equipment:
+                        equipment.append(item)
             equipment_details = parse_json_field(user.get("equipment_details"), [])
             workout_environment = preferences.get("workout_environment")
             focus_areas = body.focus_areas or []

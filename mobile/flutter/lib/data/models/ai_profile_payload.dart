@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import '../../models/equipment_item.dart';
 import '../../screens/onboarding/pre_auth_quiz_screen.dart';
 
 /// Builder for creating AI-ready profile payloads with conditional fields.
@@ -52,6 +53,45 @@ class AIProfilePayloadBuilder {
 
     if (profile.equipment != null && profile.equipment!.isNotEmpty) {
       payload['equipment'] = profile.equipment;
+    }
+
+    // Custom (free-text) equipment the user typed in during onboarding —
+    // previously only patched in ad hoc by coach_selection_screen.dart's
+    // final submit, so it never reached the backend on any OTHER call site
+    // (notably the debounced backup service), meaning workouts generated
+    // before onboarding's final screen never accounted for it. Centralizing
+    // here means every caller of buildPayload() gets it consistently.
+    if (profile.customEquipment != null && profile.customEquipment!.isNotEmpty) {
+      payload['custom_equipment'] = profile.customEquipment;
+    }
+
+    // Fitbod-style available weights → the {id: [sorted weights]} shape the
+    // backend generator snaps prescribed set weights to. Exact-inventory
+    // specs carry an explicit `weights` list (dumbbells/kettlebells/medicine
+    // ball/plates); the range specs (barbell + specialty bars/sandbag,
+    // {min,max,increment}) are expanded. Previously only duplicated inside
+    // pre_auth_quiz_backup_service.dart — centralized here for the same
+    // reason as custom_equipment above.
+    final ew = profile.equipmentWeights;
+    if (ew != null && ew.isNotEmpty) {
+      final expanded = <String, List<double>>{};
+      ew.forEach((id, spec) {
+        if (spec is Map) {
+          final explicit = (spec['weights'] as List?)
+              ?.whereType<num>()
+              .map((e) => e.toDouble())
+              .toList();
+          final list = (explicit != null && explicit.isNotEmpty)
+              ? (explicit..sort())
+              : EquipmentItem.expandRange(
+                  (spec['min'] as num?)?.toDouble(),
+                  (spec['max'] as num?)?.toDouble(),
+                  (spec['increment'] as num?)?.toDouble(),
+                );
+          if (list.isNotEmpty) expanded[id] = list;
+        }
+      });
+      if (expanded.isNotEmpty) payload['equipment_weights'] = expanded;
     }
 
     if (profile.primaryGoal != null) {

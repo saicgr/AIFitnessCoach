@@ -107,4 +107,24 @@ const Map<String, String> _svg = {
       '<path d="M12 7.4v6 M6.5 10.5h11 M12 13.4l-3.2 6 M12 13.4l3.2 6"/></svg>',
   'eq_full_gym': '$_h<path d="M4 20V8.5l8-4.5 8 4.5V20 M3 20h18 '
       'M9.5 20v-5h5v5"/></svg>',
+  // ── Specialty bars ──────────────────────────────────────────────────
+  // Each silhouette distinguishes the bar's defining physical feature so
+  // the "Free weights" row doesn't read as 7 identical barbell chips.
+  'eq_olympic_barbell': '$_h<path d="M3 12h18 M6.5 8v8 M9 9.5v5 M15 9.5v5 '
+      'M17.5 8v8"/><circle cx="7.7" cy="12" r="0.8" fill="#000"/>'
+      '<circle cx="16.3" cy="12" r="0.8" fill="#000"/></svg>',
+  'eq_ez_bar': '$_h<path d="M3 12h2.2 M18.8 12h2.2 '
+      'M5.2 12l2.3-2.3 2.3 4.6 2.4-4.6 2.3 4.6 2.3-4.6 2.4 2.3"/>'
+      '<path d="M6.5 8.5v7 M17.5 8.5v7"/></svg>',
+  'eq_trap_bar': '$_h<path d="M8.5 8h7l2.7 4-2.7 4h-7l-2.7-4z"/>'
+      '<path d="M3 12h2.8 M18.2 12h3"/></svg>',
+  'eq_safety_squat_bar': '$_h<path d="M3.5 12h3.5 M17 12h3.5"/>'
+      '<path d="M7 12a5 5 0 0110 0"/><path d="M8.5 9.3v3.4 M15.5 9.3v3.4"/>'
+      '</svg>',
+  'eq_cambered_bar': '$_h<path d="M3 13c4.5-4 13.5-4 18 0"/>'
+      '<path d="M6.3 10.3v6 M17.7 10.3v6"/></svg>',
+  'eq_swiss_bar': '$_h<rect x="7" y="8" width="10" height="8" rx="1.2"/>'
+      '<path d="M7 10.7h10 M7 13.3h10 M3 12h4 M17 12h4"/></svg>',
+  'eq_log_bar': '$_h<path d="M3 12h3.5 M17.5 12h3.5"/>'
+      '<rect x="6.2" y="9" width="11.6" height="6" rx="3"/></svg>',
 };

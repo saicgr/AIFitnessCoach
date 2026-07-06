@@ -30,6 +30,7 @@ from .utils import (
     index_workout_to_rag,
     parse_json_field,
     normalize_goals_list,
+    get_all_equipment,
     get_user_strength_history,
     get_user_favorite_exercises,
     get_user_exercise_queue,
@@ -380,6 +381,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             if gym_profile:
                 gym_profile_id = gym_profile.get("id")
                 equipment = body.equipment or gym_profile.get("equipment") or []
+                # Merge custom equipment from user profile (e.g., "TRX Bands",
+                # "Yoga Wheel") so the FIRST generated workout honors typed-in
+                # gear, not just regenerations. Skip when the request explicitly
+                # sent [] — intentional bodyweight-only (mirrors versioning.py).
+                if user and isinstance(equipment, list) and body.equipment != []:
+                    for item in get_all_equipment(user):
+                        if item and item not in equipment:
+                            equipment.append(item)
                 training_split = gym_profile.get("training_split")
                 workout_days = gym_profile.get("workout_days") or []
                 profile_goals = normalize_goals_list(gym_profile.get("goals"))
@@ -391,6 +400,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             else:
                 goals = normalize_goals_list(body.goals) if body.goals else normalize_goals_list(user.get("goals"))
                 equipment = body.equipment or parse_json_field(user.get("equipment"), [])
+                # Merge custom equipment from user profile (e.g., "TRX Bands",
+                # "Yoga Wheel") so the FIRST generated workout honors typed-in
+                # gear, not just regenerations. Skip when the request explicitly
+                # sent [] — intentional bodyweight-only (mirrors versioning.py).
+                if user and isinstance(equipment, list) and body.equipment != []:
+                    for item in get_all_equipment(user):
+                        if item and item not in equipment:
+                            equipment.append(item)
                 training_split = user.get("training_split")
                 workout_days = parse_json_field(user.get("workout_days"), [])
 

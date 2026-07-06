@@ -35,6 +35,8 @@ FULL_GYM_EQUIPMENT = [
     "exercise ball", "bosu ball", "trx", "suspension trainer",
     "battle ropes", "gymnastic rings", "ab wheel", "landmine",
     "foam roller", "yoga mat", "jump rope", "trap bar",
+    "safety squat bar", "cambered bar", "swiss bar", "log bar",
+    "olympic barbell",
     "body weight", "bodyweight", "none",
 ]
 

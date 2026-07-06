@@ -250,7 +250,24 @@ class QuizEquipment extends StatefulWidget {
     'preset_full_gym': ['full_gym'],
   };
 
-  static const _allEquipmentIds = [
+  /// Equipment ids specific to specialty barbells — kept as a named group
+  /// so callers (preset splitting, weight-bearing checks) can reference them
+  /// without re-listing the seven strings each time.
+  static const specialtyBarIds = [
+    'olympic_barbell',
+    'ez_bar',
+    'trap_bar',
+    'safety_squat_bar',
+    'cambered_bar',
+    'swiss_bar',
+    'log_bar',
+  ];
+
+  /// All canonical (non-custom, non-"Other equipment") ids recognized by
+  /// this screen's chip/tile grid. Public so `pre_auth_quiz_screen_ext.dart`
+  /// can split `kCommercialGymEquipmentPreset` (which mixes these with raw
+  /// "Other equipment" catalog strings) into the two correct selection sets.
+  static const canonicalEquipmentIds = [
     'bodyweight',
     'dumbbells',
     'barbell',
@@ -262,6 +279,7 @@ class QuizEquipment extends StatefulWidget {
     'squat_rack',
     'medicine_ball',
     'trx',
+    ...specialtyBarIds,
   ];
 
   static List<Map<String, Object>> _buildEquipment(AppLocalizations l10n) => [
@@ -277,6 +295,13 @@ class QuizEquipment extends StatefulWidget {
     {'id': 'cable_machine', 'label': l10n.quizEquipmentCableMachine, 'icon': Icons.cable_rounded},
     {'id': 'medicine_ball', 'label': l10n.quizEquipmentMedicineBall, 'icon': Icons.sports_volleyball},
     {'id': 'trx', 'label': l10n.quizEquipmentTrxSuspension, 'icon': Icons.linear_scale_rounded},
+    {'id': 'olympic_barbell', 'label': l10n.quizEquipmentOlympicBarbell, 'icon': Icons.fitness_center},
+    {'id': 'ez_bar', 'label': l10n.quizEquipmentEzBar, 'icon': Icons.fitness_center},
+    {'id': 'trap_bar', 'label': l10n.quizEquipmentTrapBar, 'icon': Icons.fitness_center},
+    {'id': 'safety_squat_bar', 'label': l10n.quizEquipmentSafetySquatBar, 'icon': Icons.fitness_center},
+    {'id': 'cambered_bar', 'label': l10n.quizEquipmentCamberedBar, 'icon': Icons.fitness_center},
+    {'id': 'swiss_bar', 'label': l10n.quizEquipmentSwissBar, 'icon': Icons.fitness_center},
+    {'id': 'log_bar', 'label': l10n.quizEquipmentLogBar, 'icon': Icons.fitness_center},
   ];
 
   /// Visual-mode category grouping. Each section is a titled band of
@@ -301,6 +326,17 @@ class QuizEquipment extends StatefulWidget {
         _VisualItem(id: 'barbell', label: l10n.quizEquipmentBarbell, icon: 'eq_barbell'),
         _VisualItem(id: 'kettlebell', label: l10n.quizEquipmentKettlebell, icon: 'eq_kettlebell'),
         _VisualItem(id: 'medicine_ball', label: l10n.quizEquipmentMedicineBall, icon: 'eq_medicine_ball'),
+        // Specialty bars — each captures its own real-world bar weight via
+        // the same slider editor as generic Barbell (see _openEquipmentWeightSheet
+        // in pre_auth_quiz_screen.dart), and each gets a bespoke silhouette
+        // (line_icon.dart) distinguishing its defining physical feature.
+        _VisualItem(id: 'olympic_barbell', label: l10n.quizEquipmentOlympicBarbell, icon: 'eq_olympic_barbell'),
+        _VisualItem(id: 'ez_bar', label: l10n.quizEquipmentEzBar, icon: 'eq_ez_bar'),
+        _VisualItem(id: 'trap_bar', label: l10n.quizEquipmentTrapBar, icon: 'eq_trap_bar'),
+        _VisualItem(id: 'safety_squat_bar', label: l10n.quizEquipmentSafetySquatBar, icon: 'eq_safety_squat_bar'),
+        _VisualItem(id: 'cambered_bar', label: l10n.quizEquipmentCamberedBar, icon: 'eq_cambered_bar'),
+        _VisualItem(id: 'swiss_bar', label: l10n.quizEquipmentSwissBar, icon: 'eq_swiss_bar'),
+        _VisualItem(id: 'log_bar', label: l10n.quizEquipmentLogBar, icon: 'eq_log_bar'),
       ],
     ),
     _EquipmentCategory(
@@ -375,7 +411,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
 
   bool get _hasFullGym =>
       widget.selectedEquipment.contains('full_gym') ||
-      QuizEquipment._allEquipmentIds.every((id) => widget.selectedEquipment.contains(id));
+      QuizEquipment.canonicalEquipmentIds.every((id) => widget.selectedEquipment.contains(id));
 
   /// Check if a chip should show the "Recommended" badge
   bool _isRecommended(String chipId) {
@@ -680,7 +716,13 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   }
 
   // Equipment ids that support a Fitbod-style "available weights" editor.
-  static const _weightBearing = {'dumbbells', 'kettlebell', 'barbell'};
+  static const _weightBearing = {
+    'dumbbells',
+    'kettlebell',
+    'barbell',
+    'medicine_ball',
+    ...QuizEquipment.specialtyBarIds,
+  };
 
   Widget _buildCategorySection(
     BuildContext context,
@@ -1025,8 +1067,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     'dumbbell': 'dumbbells',
     'dumbbells': 'dumbbells',
     'barbell': 'barbell',
-    'olympic_barbell': 'barbell',
-    'ez_bar': 'barbell',
+    'olympic_barbell': 'olympic_barbell',
+    'ez_bar': 'ez_bar',
+    'trap_bar': 'trap_bar',
     'flat_bench': 'bench',
     'bench': 'bench',
     'adjustable_bench': 'bench',
@@ -1170,11 +1213,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               Expanded(
                 child: _snapSourceBox(
                   context: context,
-                  t: t,
                   accent: accent,
                   icon: Icons.camera_alt_rounded,
                   title: l10n.quizEquipmentSnapTitle,
-                  subtitle: l10n.quizEquipmentSnapSubtitle,
                   onTap: () =>
                       _launchSnapFlow(context, ref, source: SnapSource.camera),
                 ),
@@ -1183,11 +1224,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               Expanded(
                 child: _snapSourceBox(
                   context: context,
-                  t: t,
                   accent: accent,
                   icon: Icons.photo_library_rounded,
                   title: l10n.quizEquipmentImportTitle,
-                  subtitle: l10n.quizEquipmentImportSubtitle,
                   onTap: () =>
                       _launchSnapFlow(context, ref, source: SnapSource.gallery),
                 ),
@@ -1201,13 +1240,13 @@ class _QuizEquipmentState extends State<QuizEquipment> {
 
   Widget _snapSourceBox({
     required BuildContext context,
-    required OnboardingTheme t,
     required Color accent,
     required IconData icon,
     required String title,
-    required String subtitle,
     required VoidCallback onTap,
   }) {
+    // Compact single-line card (icon + title only, no subtitle) — reclaims
+    // vertical scroll room for the equipment list below.
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
@@ -1215,7 +1254,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -1231,36 +1270,28 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 width: 1.5,
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.20),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(icon, color: accent, size: 18),
+                  child: Icon(icon, color: accent, size: 14),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: t.textSecondary,
-                    height: 1.3,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
