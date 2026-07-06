@@ -715,7 +715,7 @@ async def get_calendar_heatmap(
         workouts_response = await loop.run_in_executor(
             None,
             lambda: db.client.table("workouts").select(
-                "id, name, scheduled_date, is_completed, generation_method"
+                "id, name, type, scheduled_date, is_completed, generation_method"
             ).eq("user_id", user_id).gte(
                 "scheduled_date", start_date.isoformat()
             ).lte(
@@ -745,6 +745,7 @@ async def get_calendar_heatmap(
             is_completed = workout["is_completed"] or workout.get("generation_method") == "health_connect_import"
             workout_map[workout_date] = {
                 "name": workout["name"],
+                "type": workout.get("type"),
                 "completed": is_completed,
             }
 
@@ -800,16 +801,19 @@ async def get_calendar_heatmap(
                     status = "missed"
                     total_missed += 1
                 workout_name = workout_info["name"]
+                workout_type = workout_info.get("type")
             else:
                 status = "rest"
                 total_rest += 1
                 workout_name = None
+                workout_type = None
 
             calendar_data.append(CalendarHeatmapData(
                 date=current_date,
                 day_of_week=sql_dow,
                 status=status,
                 workout_name=workout_name,
+                type=workout_type,
                 volume=round(volume_by_date.get(current_date, 0.0), 1),
             ))
 

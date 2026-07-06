@@ -227,6 +227,7 @@ CalendarHeatmapData _$CalendarHeatmapDataFromJson(Map<String, dynamic> json) =>
       dayOfWeek: (json['day_of_week'] as num).toInt(),
       status: json['status'] as String,
       workoutName: json['workout_name'] as String?,
+      type: json['type'] as String?,
       volume: (json['volume'] as num?)?.toDouble() ?? 0,
     );
 
@@ -237,6 +238,7 @@ Map<String, dynamic> _$CalendarHeatmapDataToJson(
   'day_of_week': instance.dayOfWeek,
   'status': instance.status,
   'workout_name': instance.workoutName,
+  'type': instance.type,
   'volume': instance.volume,
 };
 

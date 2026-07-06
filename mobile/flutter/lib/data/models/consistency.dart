@@ -472,6 +472,11 @@ class CalendarHeatmapData {
   @JsonKey(name: 'workout_name')
   final String? workoutName;
 
+  /// Legacy workout type (cardio/strength/flexibility/hiit/...) of the day's
+  /// resolved workout. Drives the heatmap cell's base hue (shade = volume).
+  @JsonKey(name: 'type')
+  final String? type;
+
   /// Total training volume (kg) lifted that day = sum(weight × reps). Drives the
   /// blue volume-intensity heatmap. 0 for rest/missed/non-lifting days.
   @JsonKey(name: 'volume')
@@ -482,6 +487,7 @@ class CalendarHeatmapData {
     required this.dayOfWeek,
     required this.status,
     this.workoutName,
+    this.type,
     this.volume = 0,
   });
 

@@ -323,6 +323,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                               volume: inWindow ? (dayData?.volume ?? 0) : 0,
                               thresholds: thresholds,
                               workoutName: dayData?.workoutName,
+                              type: inWindow ? dayData?.type : null,
                               isHighlighted:
                                   widget.highlightedDates?.contains(dateStr) ??
                                       false,
@@ -531,19 +532,34 @@ class _RangeDropdown extends StatelessWidget {
   }
 }
 
-/// The semantic blue volume ramp — a fixed data-color scale (like the existing
-/// AppColors.waterBlue), intentionally non-accent. Dim → bright = more volume.
-/// Shared by [_HeatmapCell] and the legend so they never drift.
+/// Volume ramp — a data-color scale where the HUE encodes the workout type
+/// (reusing the app-wide [AppColors.getWorkoutTypeColor] convention) and the
+/// SHADE (dim → bright) encodes training volume within that hue. Both signals
+/// live in one cell. Shared by [_HeatmapCell] and the legend so they never
+/// drift. The 4 lightness stops below reproduce the original blue ramp for the
+/// `strength` hue, so the look is unchanged for lifting days.
 class _VolumeRamp {
   const _VolumeRamp._();
 
-  /// Bucket 1 (dimmest) → bucket 4 (brightest).
-  static const List<Color> blueStops = [
-    Color(0xFF1E3A8A),
-    Color(0xFF2563EB),
-    Color(0xFF3B82F6),
-    Color(0xFF60A5FA),
-  ];
+  /// Lightness of bucket 1 (dimmest) → bucket 4 (brightest), applied to a
+  /// type's base hue. Chosen to match the legacy blue ramp
+  /// (0xFF1E3A8A → 0xFF60A5FA).
+  static const List<double> _lightnessStops = [0.33, 0.53, 0.60, 0.68];
+
+  /// Neutral blue reference ramp — kept for the legend, which illustrates the
+  /// SHADE (volume) dimension independent of any single type's hue.
+  static List<Color> get blueStops => stopsFor('strength');
+
+  /// The 4 ascending shade stops for a workout [type], derived from its base
+  /// hue. `null`/unknown types fall back to the default (blue) hue.
+  static List<Color> stopsFor(String? type) {
+    final base =
+        HSLColor.fromColor(AppColors.getWorkoutTypeColor(type ?? 'strength'));
+    final sat = base.saturation.clamp(0.55, 0.95);
+    return _lightnessStops
+        .map((l) => base.withSaturation(sat).withLightness(l).toColor())
+        .toList(growable: false);
+  }
 
   /// Subtle dark fill for no-volume / rest / missed / future cells. No border.
   static Color emptyColor(bool isDark) => isDark
@@ -551,24 +567,27 @@ class _VolumeRamp {
       : Colors.grey.withValues(alpha: 0.10);
 
   /// Resolve a cell's fill from its volume + status against the window
-  /// thresholds [t1,t2,t3]. Completed-but-zero-volume days (e.g. imported
-  /// cardio) get the lowest blue so a logged day never looks empty.
+  /// thresholds [t1,t2,t3], using the [type]'s hue. Completed-but-zero-volume
+  /// days (e.g. imported cardio) get the lowest shade of their hue so a logged
+  /// day never looks empty.
   static Color colorFor({
     required CalendarStatus status,
     required double volume,
     required List<double>? thresholds,
     required bool isDark,
+    String? type,
   }) {
+    final stops = stopsFor(type);
     if (volume <= 0) {
-      if (status == CalendarStatus.completed) return blueStops[0];
+      if (status == CalendarStatus.completed) return stops[0];
       return emptyColor(isDark);
     }
-    // Positive volume → 1 of 4 ascending blues by quantile thresholds.
-    if (thresholds == null) return blueStops[0];
-    if (volume <= thresholds[0]) return blueStops[0];
-    if (volume <= thresholds[1]) return blueStops[1];
-    if (volume <= thresholds[2]) return blueStops[2];
-    return blueStops[3];
+    // Positive volume → 1 of 4 ascending shades of the type hue.
+    if (thresholds == null) return stops[0];
+    if (volume <= thresholds[0]) return stops[0];
+    if (volume <= thresholds[1]) return stops[1];
+    if (volume <= thresholds[2]) return stops[2];
+    return stops[3];
   }
 }
 
@@ -579,6 +598,7 @@ class _HeatmapCell extends StatelessWidget {
   final double volume;
   final List<double>? thresholds;
   final String? workoutName;
+  final String? type;
   final bool isHighlighted;
   final VoidCallback? onTap;
   final double size;
@@ -590,6 +610,7 @@ class _HeatmapCell extends StatelessWidget {
     required this.volume,
     required this.thresholds,
     this.workoutName,
+    this.type,
     this.isHighlighted = false,
     this.onTap,
     this.size = 16,
@@ -605,6 +626,7 @@ class _HeatmapCell extends StatelessWidget {
       volume: volume,
       thresholds: thresholds,
       isDark: isDark,
+      type: type,
     );
 
     return GestureDetector(
