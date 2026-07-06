@@ -455,6 +455,10 @@ class ProgramTemplate {
   final String name;
   final String? description;
 
+  /// Free-text routine-level notes, shown in the builder and round-tripped
+  /// through the `user_program_templates.notes` column.
+  final String? notes;
+
   /// Length of the repeating cycle in days (default 7, supports 1..N).
   final int weekLength;
 
@@ -498,6 +502,7 @@ class ProgramTemplate {
     this.userId,
     required this.name,
     this.description,
+    this.notes,
     this.weekLength = 7,
     this.durationWeeks,
     this.days = const [],
@@ -526,6 +531,7 @@ class ProgramTemplate {
       userId: json['user_id']?.toString(),
       name: _asString(json['name'], fallback: 'Program'),
       description: json['description'] as String?,
+      notes: json['notes'] as String?,
       weekLength: _asInt(json['week_length']) ?? 7,
       durationWeeks: _asInt(json['duration_weeks']),
       days: days,
@@ -550,6 +556,7 @@ class ProgramTemplate {
   Map<String, dynamic> toCreateJson() => {
     'name': name,
     if (description != null) 'description': description,
+    if (notes != null) 'notes': notes,
     'week_length': weekLength,
     if (durationWeeks != null) 'duration_weeks': durationWeeks,
     'days': days.map((d) => d.toJson()).toList(),
@@ -593,6 +600,7 @@ class ProgramTemplate {
     String? userId,
     String? name,
     String? description,
+    String? notes,
     int? weekLength,
     int? durationWeeks,
     bool clearDurationWeeks = false,
@@ -614,6 +622,7 @@ class ProgramTemplate {
       userId: userId ?? this.userId,
       name: name ?? this.name,
       description: description ?? this.description,
+      notes: notes ?? this.notes,
       weekLength: weekLength ?? this.weekLength,
       durationWeeks: clearDurationWeeks
           ? null

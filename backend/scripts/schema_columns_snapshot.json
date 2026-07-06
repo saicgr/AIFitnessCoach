@@ -4751,12 +4751,15 @@
   "user_id"
  ],
  "neat_reminder_preferences": [
+  "active_threshold_minutes",
   "created_at",
   "id",
   "max_reminders_per_day",
+  "quiet_during_workout",
   "quiet_hours_end",
   "quiet_hours_start",
   "reminder_interval_minutes",
+  "reminder_message_style",
   "reminder_sound",
   "reminders_enabled",
   "smart_reminders",
@@ -8157,6 +8160,7 @@
   "duration_weeks",
   "id",
   "name",
+  "notes",
   "progression_strategy",
   "source",
   "source_program_id",

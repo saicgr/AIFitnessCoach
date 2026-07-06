@@ -161,6 +161,7 @@ class TemplateCreateRequest(BaseModel):
     """Authored / reviewed template payload (also used to save a parsed one)."""
     name: str = Field(..., min_length=1)
     description: Optional[str] = None
+    notes: Optional[str] = None
     week_length: int = Field(default=7, ge=1)
     days: List[Dict[str, Any]] = Field(...)
     deload_every_n_weeks: Optional[int] = 5
@@ -174,6 +175,7 @@ class TemplateCreateRequest(BaseModel):
 class TemplatePatchRequest(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    notes: Optional[str] = None
     week_length: Optional[int] = Field(default=None, ge=1)
     days: Optional[List[Dict[str, Any]]] = None
     deload_every_n_weeks: Optional[int] = None
@@ -302,6 +304,7 @@ def _template_row_to_dict(row: Dict[str, Any]) -> Dict[str, Any]:
         "user_id": str(row["user_id"]),
         "name": row.get("name"),
         "description": row.get("description"),
+        "notes": row.get("notes"),
         "week_length": row.get("week_length", 7),
         "days": row.get("days") or [],
         "deload_every_n_weeks": row.get("deload_every_n_weeks"),
@@ -2559,6 +2562,7 @@ async def create_template(
             "user_id": str(current_user["id"]),
             "name": request.name,
             "description": request.description,
+            "notes": request.notes,
             "week_length": request.week_length,
             "days": days,
             "deload_every_n_weeks": deload,
@@ -4467,7 +4471,7 @@ async def patch_template(
 
         updates: Dict[str, Any] = {}
         for field in (
-            "name", "description", "week_length", "days",
+            "name", "description", "notes", "week_length", "days",
             "deload_every_n_weeks", "progression_strategy",
             "apply_staples", "category",
         ):

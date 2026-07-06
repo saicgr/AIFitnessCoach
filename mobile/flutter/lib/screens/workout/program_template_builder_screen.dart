@@ -433,6 +433,42 @@ class _ProgramTemplateBuilderScreenState
               ),
               const SizedBox(height: 16),
 
+              // Routine notes (optional). Free-text guidance for the whole
+              // program — distinct from per-exercise notes. Inline throwaway
+              // controller (matching the name field above) because this
+              // builder replaces `_draft` across stages.
+              _fieldLabel('Notes (optional)', textSecondary),
+              const SizedBox(height: 6),
+              TextField(
+                controller:
+                    TextEditingController(text: draft.notes ?? '')
+                      ..selection = TextSelection.collapsed(
+                        offset: (draft.notes ?? '').length,
+                      ),
+                style: TextStyle(fontSize: 14, color: textPrimary),
+                minLines: 2,
+                maxLines: 5,
+                keyboardType: TextInputType.multiline,
+                textCapitalization: TextCapitalization.sentences,
+                onChanged: (v) => _update(draft.copyWith(notes: v)),
+                decoration: InputDecoration(
+                  hintText: 'e.g. Warm up 10 min before every session',
+                  hintStyle: TextStyle(fontSize: 13, color: textSecondary),
+                  filled: true,
+                  fillColor: fieldBg,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Template settings strip.
               ProgramTemplateMetaStrip(template: draft, onChanged: _update),
               const SizedBox(height: 16),
