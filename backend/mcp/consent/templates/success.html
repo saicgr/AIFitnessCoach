@@ -37,16 +37,6 @@
     </footer>
   </main>
 
-  <script>
-    // Try to auto-close after a short delay — many AI clients pop the consent
-    // UI in a browser window and want it to go away. Browsers will refuse to
-    // close windows not opened via script, so we fall back to a Close button.
-    document.getElementById("closeBtn").addEventListener("click", () => {
-      window.close();
-    });
-    setTimeout(() => {
-      try { window.close(); } catch (_) { /* ignored */ }
-    }, 2500);
-  </script>
+  <script src="/mcp/consent/static/success.js" defer></script>
 </body>
 </html>

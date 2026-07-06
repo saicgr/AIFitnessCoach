@@ -22,7 +22,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from core import branding
@@ -41,7 +40,9 @@ router = APIRouter(prefix="/mcp/consent", tags=["mcp-consent"])
 # typically from backend/, Lambda from /var/task — handle all three).
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _TEMPLATES_DIR = os.path.join(_HERE, "templates")
-_STATIC_DIR = os.path.join(_HERE, "static")
+
+# Public — main.py mounts this directly on the app (see NOTE below).
+STATIC_DIR = os.path.join(_HERE, "static")
 
 templates = Jinja2Templates(directory=_TEMPLATES_DIR)
 
@@ -57,15 +58,16 @@ templates.env.globals.update({
 })
 
 # Serve consent-specific CSS/JS assets at /mcp/consent/static/*.
-# Mount lazily so tests that never import the router don't trip on the dir.
-if os.path.isdir(_STATIC_DIR):
-    router.mount(
-        "/static",
-        StaticFiles(directory=_STATIC_DIR),
-        name="mcp-consent-static",
-    )
-else:  # pragma: no cover — only triggered if the package was mispackaged
-    logger.warning(f"MCP consent static dir missing: {_STATIC_DIR}")
+#
+# NOTE: this is NOT mounted here via `router.mount()`. FastAPI's
+# `app.include_router()` only migrates `APIRoute` (and websocket route)
+# entries from a child router onto the parent app — a bare Starlette `Mount`
+# added directly to an `APIRouter` is silently dropped in that process, never
+# actually reaching the app's route table. (Confirmed: after
+# `app.include_router(mcp_consent_router)`, no mount for this path exists in
+# `app.routes` at all — 100% 404 on every static asset, in every environment,
+# not a deploy-specific path issue.) `main.py` mounts `STATIC_DIR` directly on
+# `app` instead, right after including this router.
 
 
 # ─── GET /mcp/consent/authorize ──────────────────────────────────────────────

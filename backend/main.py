@@ -322,7 +322,14 @@ class LoggingMiddleware:
     @classmethod
     def _is_scanner_probe(cls, path: str) -> bool:
         # Never short-circuit our own surfaces or the API docs.
-        if path.startswith(("/api/", "/dev/", "/static/", "/.well-known/")):
+        # /mcp/ needed adding: the MCP consent page's static assets
+        # (authorize.js, success.js, upgrade.js, the vendored supabase.min.js)
+        # all end in .js, which \.js\b in _SCANNER_PROBE_RE matches as a
+        # generic "config/source probe" — silently 404ing every one of them
+        # via _send_bare_404 and leaving the consent page's JS never loaded.
+        # consent.css slipped through unnoticed since .css isn't in that
+        # regex at all, which is what made this so easy to miss.
+        if path.startswith(("/api/", "/dev/", "/static/", "/.well-known/", "/mcp/")):
             return False
         if path in cls._PROBE_ALLOWLIST:
             return False
@@ -1200,8 +1207,21 @@ app.include_router(public_router)
 # Phase 2 lands). Gated to yearly subscribers via mcp/subscription.py.
 from mcp.auth.oauth_server import router as mcp_oauth_router  # noqa: E402
 app.include_router(mcp_oauth_router)
-from mcp.consent.router import router as mcp_consent_router  # noqa: E402
+from mcp.consent.router import router as mcp_consent_router, STATIC_DIR as _mcp_consent_static_dir  # noqa: E402
 app.include_router(mcp_consent_router)
+# Mounted directly on `app`, NOT via `mcp_consent_router.mount()` — a bare
+# Starlette Mount added to a child APIRouter is silently dropped by
+# `include_router()` (only APIRoute/WebSocketRoute entries get migrated),
+# so `router.mount("/static", ...)` never actually reaches app.routes. See
+# the NOTE in mcp/consent/router.py.
+if os.path.isdir(_mcp_consent_static_dir):
+    app.mount(
+        "/mcp/consent/static",
+        StaticFiles(directory=_mcp_consent_static_dir),
+        name="mcp-consent-static",
+    )
+else:  # pragma: no cover — only triggered if the package was mispackaged
+    logger.warning(f"MCP consent static dir missing: {_mcp_consent_static_dir}")
 # Root-level RFC 8414 / RFC 9728 discovery aliases — see comment in
 # mcp/auth/oauth_server.py for why these need to live outside /mcp/oauth.
 from mcp.auth.oauth_server import root_router as mcp_root_metadata_router  # noqa: E402
