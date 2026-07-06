@@ -143,6 +143,15 @@ def _build_system_prompt(body: CoachPreviewRequest) -> str:
                 "What you know about them (weave in naturally when relevant, "
                 "don't recite): " + "; ".join(facts) + "."
             )
+
+    # Reinforce the persona voice LAST, immediately before generation — short
+    # factual replies otherwise tend to default to neutral coaching language,
+    # washing out what should be a clearly distinct coach-to-coach tone.
+    parts.append(
+        f"Stay unmistakably in {body.coach_name}'s voice described above — "
+        "don't flatten into neutral, generic coaching language just because "
+        "the reply is short."
+    )
     return " ".join(parts)
 
 
@@ -169,9 +178,12 @@ async def coach_preview(
                 locale=body.locale,
             ),
             # Tighter than the service's own 60s ceiling: the client shows a
-            # typing beat and gives up at 8s — replies slower than that land
-            # after the client already fell back.
-            timeout=7.0,
+            # typing beat and gives up at 12s — replies slower than that land
+            # after the client already fell back. Wider margin than before
+            # (was 7s server / 8s client, ~1s of network headroom) so real
+            # live replies land more often instead of silently degrading to
+            # the canned _FALLBACK_REPLIES.
+            timeout=6.5,
         )
         reply = (response or "").strip().strip('"').strip("'")
         if not reply:

@@ -196,7 +196,7 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
               'locale': Localizations.localeOf(context).languageCode,
             },
           )
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 12));
 
       if (!mounted || token != _s.flightToken) return;
       final data = response.data ?? const <String, dynamic>{};
@@ -294,9 +294,9 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
 
   Widget _bubble(PreviewMsg msg, bool isDark, Color textPrimary, Color cc) {
     final bubble = Container(
-      margin: const EdgeInsets.only(bottom: 7),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      constraints: const BoxConstraints(maxWidth: 270),
+      margin: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      constraints: const BoxConstraints(maxWidth: 250),
       decoration: BoxDecoration(
         color: msg.isUser
             ? cc.withValues(alpha: isDark ? 0.35 : 0.15)
@@ -332,7 +332,7 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
             ),
           Text(
             msg.text,
-            style: TextStyle(fontSize: 13, height: 1.35, color: textPrimary),
+            style: TextStyle(fontSize: 12, height: 1.25, color: textPrimary),
           ),
         ],
       ),
@@ -368,8 +368,8 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
     return Align(
       alignment: AlignmentDirectional.centerStart,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 7),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        margin: const EdgeInsets.only(bottom: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: isDark
               ? Colors.white.withValues(alpha: 0.10)

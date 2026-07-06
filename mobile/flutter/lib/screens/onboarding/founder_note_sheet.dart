@@ -163,21 +163,21 @@ class FounderNoteSheet extends ConsumerWidget {
                       //    without those costs and lets the body copy
                       //    do the trust-work via signed letter format.
                       Container(
-                        width: 80,
-                        height: 80,
+                        width: 64,
+                        height: 64,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.orange.withValues(alpha: 0.28),
-                              blurRadius: 24,
+                              blurRadius: 20,
                               spreadRadius: 1,
-                              offset: const Offset(0, 8),
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(18),
                           child: Image.asset(
                             'assets/icon/app_icon.png',
                             fit: BoxFit.cover,
@@ -187,7 +187,7 @@ class FounderNoteSheet extends ConsumerWidget {
                               child: const Text(
                                 'Z',
                                 style: TextStyle(
-                                  fontSize: 40,
+                                  fontSize: 32,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
                                 ),
@@ -200,7 +200,7 @@ class FounderNoteSheet extends ConsumerWidget {
                         curve: Curves.elasticOut,
                       ),
 
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 10),
 
                       Text(
                         'A NOTE FROM $_founderName'.toUpperCase(),
@@ -247,10 +247,13 @@ class FounderNoteSheet extends ConsumerWidget {
                       const Spacer(),
 
                       // ─────────────────────────────────────────────────
-                      //  FOUNDER'S NOTE — compressed to ~3 crisp lines so
-                      //  the whole letter fits ONE screen with no scroll.
+                      //  FOUNDER'S NOTE — a few crisp sentences so the
+                      //  whole letter fits ONE screen with no scroll.
                       //  Hardcoded English (NOT routed through app_en.arb).
-                      //  Flexible so it shrinks before the layout overflows.
+                      //  If this ever needs to shrink further on a short
+                      //  device, trim the middle sentence (the workout/food
+                      //  specifics) first — keep the opening cost hook and
+                      //  the closing "I read every message myself" ask.
                       // ─────────────────────────────────────────────────
                       // The body is the core content and must ALWAYS render in
                       // full — it is intentionally NOT wrapped in Flexible. It
@@ -272,7 +275,7 @@ class FounderNoteSheet extends ConsumerWidget {
                           children: [
                             const TextSpan(
                               text:
-                                  "I built the coach I wished I had — one that adapts to your week, not a rigid template. ",
+                                  "A food app, a workout app, a coach who still ignored an old injury — together they cost more than a real trainer. So I built one coach that does it all: workouts that adapt to your injuries, macros that adapt to wherever you eat. ",
                             ),
                             if (firstName != 'there') ...[
                               TextSpan(
@@ -287,13 +290,13 @@ class FounderNoteSheet extends ConsumerWidget {
                               const TextSpan(text: 'If'),
                             const TextSpan(
                               text:
-                                  " something feels off, find me below — I read every message myself.",
+                                  " it ever stops adapting, find me below — I read every message myself.",
                             ),
                           ],
                         ),
                       ).animate().fadeIn(delay: 480.ms),
 
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 10),
 
                       // Quiet signature — italic orange line plus a muted
                       // sub-line that signals "real human, version one".
@@ -506,7 +509,7 @@ class _BlurredOrbFieldState extends State<_BlurredOrbField>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 18),
+      duration: const Duration(seconds: 11),
     )..repeat();
   }
 
@@ -536,24 +539,24 @@ class _BlurredOrbFieldState extends State<_BlurredOrbField>
                   _orb(
                     maxW: maxW,
                     maxH: maxH,
-                    dx: 0.3 + 0.18 * math.sin(t),
-                    dy: 0.18 + 0.10 * math.cos(t * 0.7),
+                    dx: 0.3 + 0.30 * math.sin(t),
+                    dy: 0.18 + 0.18 * math.cos(t * 0.7),
                     size: 220,
                     color: AppColors.orange.withValues(alpha: 0.55),
                   ),
                   _orb(
                     maxW: maxW,
                     maxH: maxH,
-                    dx: 0.78 + 0.14 * math.cos(t * 1.1),
-                    dy: 0.42 + 0.12 * math.sin(t * 0.9),
+                    dx: 0.78 + 0.24 * math.cos(t * 1.1),
+                    dy: 0.42 + 0.20 * math.sin(t * 0.9),
                     size: 170,
                     color: const Color(0xFFFFB366).withValues(alpha: 0.55),
                   ),
                   _orb(
                     maxW: maxW,
                     maxH: maxH,
-                    dx: 0.22 + 0.10 * math.sin(t * 1.3),
-                    dy: 0.78 + 0.10 * math.cos(t * 1.5),
+                    dx: 0.22 + 0.18 * math.sin(t * 1.3),
+                    dy: 0.78 + 0.18 * math.cos(t * 1.5),
                     size: 200,
                     color: const Color(0xFFE74C3C).withValues(alpha: 0.30),
                   ),

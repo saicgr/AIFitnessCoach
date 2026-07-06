@@ -11,6 +11,7 @@ import 'founder_note_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/hold_to_confirm_button.dart';
 import '../../widgets/exercise_image.dart';
+import '../demo/preview_exercise_catalog.dart' show previewAssetForId, previewIdForName;
 
 import '../../l10n/generated/app_localizations.dart';
 
@@ -298,21 +299,34 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     // screen without scrolling on common phone heights.
     final feasibility = _feasibilityLine(quiz);
 
-    // Scroll-when-needed: when everything fits (typical 3–4-day plan on a
-    // normal phone) this renders exactly like a fixed column and never
-    // scrolls; when it doesn't (6–7-day plans, short screens), the WHOLE
-    // body scrolls. The previous Flexible-around-the-day-list approach
-    // crushed the list into a tiny scroll strip whenever the rest of the
-    // content ran tall — a full-height scroll beats a squeezed window.
+    // Non-scrollable, height-adaptive: this used to be a SingleChildScrollView
+    // that scrolled the whole body on 6–7-day plans / short screens. Per
+    // product decision, this screen must never require scrolling. Instead:
+    // (a) the "Other Workout Days" list is capped to 3 visible rows with a
+    // "+N more" summary so a 7-day plan can't blow the height budget, and
+    // (b) a LayoutBuilder scales the fixed gaps down when the measured
+    // height is tight, so the column compresses instead of overflowing.
+    // A NeverScrollableScrollPhysics SingleChildScrollView remains as a
+    // silent safety net (same pattern used in workout_showcase_screen.dart
+    // and the intro demo scenes) in case of any residual few-px overflow —
+    // it never surfaces a scroll gesture to the user.
     // Session map: per-day short labels (UPPER/LOWER/…) under the selected
     // dots, so the week reads as a plan rather than anonymous dots.
     final sessionShortByDay = <int, String>{
       for (var i = 0; i < selected.length; i++)
         selected[i]: _sessionShort(labels[i % labels.length]),
     };
+    const maxOtherDaysShown = 3;
+    final visibleRestDays = restWorkoutDays.take(maxOtherDaysShown).toList();
+    final hiddenRestDaysCount = restWorkoutDays.length - visibleRestDays.length;
 
-    return SingleChildScrollView(
-      physics: const ClampingScrollPhysics(),
+    return LayoutBuilder(builder: (context, constraints) {
+      final tight = constraints.maxHeight.isFinite && constraints.maxHeight < 620;
+      final gapLg = tight ? 8.0 : 14.0;
+      final gapMd = tight ? 8.0 : 12.0;
+
+      return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -321,7 +335,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
           sessionShortByDay: sessionShortByDay,
           firstSessionDay: firstDay,
         ).animate().fadeIn(delay: 380.ms),
-        const SizedBox(height: 14),
+        SizedBox(height: gapLg),
         _FirstSessionCard(
           dayLabel: dayShort[firstDay].toUpperCase(),
           workoutName: firstLabel,
@@ -331,7 +345,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
           exerciseNames: _exercisesFor(firstLabel),
         ).animate().fadeIn(delay: 480.ms).slideY(begin: 0.05),
         if (restWorkoutDays.isNotEmpty || unselectedDays.isNotEmpty) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: gapMd),
           Padding(
             padding: const EdgeInsetsDirectional.only(start: 4, bottom: 6),
             child: Text(
@@ -345,8 +359,9 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
             ),
           ),
           // One hairline-divided card instead of a stack of separate cards —
-          // the rest of the week reads as a single schedule. The page-level
-          // scroll handles 6–7-day plans; no inner viewport.
+          // the rest of the week reads as a single schedule. Capped to
+          // maxOtherDaysShown rows so a 6–7-day plan can't grow the card
+          // past its height budget; the remainder collapses to "+N more".
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
@@ -360,17 +375,27 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
             ),
             child: Column(
               children: [
-                for (var i = 0; i < restWorkoutDays.length; i++)
+                for (var i = 0; i < visibleRestDays.length; i++)
                   _ScheduleRow(
-                        dayLabel: dayShort[restWorkoutDays[i]].toUpperCase(),
+                        dayLabel: dayShort[visibleRestDays[i]].toUpperCase(),
                         title: labels[(i + 1) % labels.length],
                         trailing: durationLabel(),
-                        showDivider: i < restWorkoutDays.length - 1 ||
+                        showDivider: i < visibleRestDays.length - 1 ||
+                            hiddenRestDaysCount > 0 ||
                             unselectedDays.isNotEmpty,
                       )
                       .animate(delay: (650 + i * 80).ms)
                       .fadeIn()
                       .slideX(begin: 0.04, duration: 300.ms),
+                if (hiddenRestDaysCount > 0)
+                  _ScheduleRow(
+                    icon: Icons.more_horiz_rounded,
+                    title: '+$hiddenRestDaysCount more day'
+                        '${hiddenRestDaysCount == 1 ? '' : 's'}',
+                    trailing: '',
+                    muted: true,
+                    showDivider: unselectedDays.isNotEmpty,
+                  ).animate(delay: 950.ms).fadeIn(),
                 if (unselectedDays.isNotEmpty)
                   _ScheduleRow(
                     icon: Icons.self_improvement_rounded,
@@ -385,7 +410,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
             ),
           ),
         ],
-        const SizedBox(height: 12),
+        SizedBox(height: gapMd),
         // Outcome banner — the emotional peak. When we have a real weight
         // goal, the delta leads as an Anton stat ("–25 KG") with "this is
         // week 1 of that number"; otherwise it degrades to the plain
@@ -466,7 +491,8 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
         }).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.04),
         ],
       ),
-    );
+      );
+    });
   }
 
   /// User's first name, sentence-cased. Falls back to nothing so the
@@ -510,44 +536,47 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
   }
 
   /// Representative exercise names for a workout label, used only to seed
-  /// the thumbnail row on the first-session card. These are real
-  /// exercise-library display names so `ExerciseImage` resolves an
-  /// illustration (no fake AI list — these are the canonical compound lifts
-  /// a given split always trains, picked deterministically from the label).
+  /// the thumbnail row on the first-session card. These are exact display
+  /// names from the curated, media-verified `preview_exercise_catalog.dart`
+  /// (NOT the full exercise library) so `ExerciseImage` resolves the baked
+  /// offline illustration via `previewIdForName`/`previewAssetForId` — this
+  /// screen is pre-auth, so the network-backed `/exercise-images` lookup
+  /// has no session and always 404s. No fuzzy aliasing: every name here is
+  /// an exact catalog match (canonical compound lifts for the split).
   List<String> _exercisesFor(String label) {
     final l = label.toLowerCase();
     if (l.contains('push')) {
-      return ['Bench Press', 'Overhead Press', 'Tricep Pushdown'];
+      return ['Barbell Bench Press', 'Overhead Press', 'Tricep Pushdowns'];
     }
     if (l.contains('pull')) {
-      return ['Pull Up', 'Barbell Row', 'Bicep Curl'];
+      return ['Lat Pulldowns', 'Seated Cable Rows', 'Barbell Curls'];
     }
     if (l.contains('lower') || l.contains('legs')) {
-      return ['Barbell Squat', 'Romanian Deadlift', 'Leg Press'];
+      return ['Back Squats', 'Romanian Deadlift', 'Leg Press'];
     }
     if (l.contains('chest') && l.contains('back')) {
-      return ['Bench Press', 'Barbell Row', 'Lat Pulldown'];
+      return ['Barbell Bench Press', 'Seated Cable Rows', 'Lat Pulldowns'];
     }
     if (l.contains('chest')) {
-      return ['Bench Press', 'Incline Dumbbell Press', 'Tricep Pushdown'];
+      return ['Barbell Bench Press', 'Dumbbell Flyes', 'Tricep Pushdowns'];
     }
     if (l.contains('back')) {
-      return ['Pull Up', 'Barbell Row', 'Lat Pulldown'];
+      return ['Lat Pulldowns', 'Seated Cable Rows', 'Dumbbell Rows'];
     }
     if (l.contains('shoulders') && l.contains('arms')) {
-      return ['Overhead Press', 'Lateral Raise', 'Bicep Curl'];
+      return ['Overhead Press', 'Lateral Raises', 'Barbell Curls'];
     }
     if (l.contains('shoulders')) {
-      return ['Overhead Press', 'Lateral Raise', 'Face Pull'];
+      return ['Overhead Press', 'Lateral Raises', 'Face Pulls'];
     }
     if (l.contains('arms')) {
-      return ['Bicep Curl', 'Tricep Pushdown', 'Hammer Curl'];
+      return ['Barbell Curls', 'Tricep Pushdowns', 'Hammer Curls'];
     }
     if (l.contains('upper')) {
-      return ['Bench Press', 'Pull Up', 'Overhead Press'];
+      return ['Barbell Bench Press', 'Lat Pulldowns', 'Overhead Press'];
     }
     // Full Body / Total Body default — one big compound per region.
-    return ['Barbell Squat', 'Bench Press', 'Barbell Row'];
+    return ['Back Squats', 'Barbell Bench Press', 'Seated Cable Rows'];
   }
 
   /// Single-line equipment summary derived from quiz state. Combines
@@ -1197,6 +1226,14 @@ class _FirstSessionCard extends StatelessWidget {
                                   ),
                                   child: ExerciseImage(
                                     exerciseName: thumbs[i],
+                                    // Pre-auth screen: no session for the
+                                    // network /exercise-images lookup, so
+                                    // resolve the bundled offline preview
+                                    // asset by exact catalog name instead.
+                                    assetPath: previewAssetForId(
+                                      previewIdForName(thumbs[i]),
+                                    ),
+                                    brandFallback: true,
                                     width: 44,
                                     height: 44,
                                     borderRadius: 10,

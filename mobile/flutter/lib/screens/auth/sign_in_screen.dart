@@ -23,6 +23,7 @@ import 'widgets/pre_auth_referral_chip.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
 /// Glassmorphic sign-in screen shown after quiz and preview
 class SignInScreen extends ConsumerStatefulWidget {
   /// When true, renders in returning-user mode regardless of any lingering
@@ -75,14 +76,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     });
 
     int messageIndex = 0;
-    final messageTimer = Stream.periodic(
-      const Duration(seconds: 3),
-      (_) => _loadingMessages[++messageIndex % _loadingMessages.length],
-    ).listen((message) {
-      if (mounted && _isLoading) {
-        setState(() => _loadingMessage = message);
-      }
-    });
+    final messageTimer =
+        Stream.periodic(
+          const Duration(seconds: 3),
+          (_) => _loadingMessages[++messageIndex % _loadingMessages.length],
+        ).listen((message) {
+          if (mounted && _isLoading) {
+            setState(() => _loadingMessage = message);
+          }
+        });
 
     try {
       await ref.read(authStateProvider.notifier).signInWithApple();
@@ -96,7 +98,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
       final authState = ref.read(authStateProvider);
       final user = authState.user;
-      if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
+      if (user != null &&
+          user.isFirstLogin &&
+          user.hasSupportFriend &&
+          mounted) {
         _showSupportFriendWelcome();
       }
 
@@ -105,13 +110,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
       // Funnel: closes the demo-showcase → sign-in → paywall_pricing_viewed
       // gap so paywall-reach rate is measurable per auth method.
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'onboarding_signin_completed',
-        properties: {
-          'method': 'apple',
-          'is_first_login': user?.isFirstLogin ?? false,
-        },
-      );
+      ref
+          .read(posthogServiceProvider)
+          .capture(
+            eventName: 'onboarding_signin_completed',
+            properties: {
+              'method': 'apple',
+              'is_first_login': user?.isFirstLogin ?? false,
+            },
+          );
 
       _triggerEarlyGeneration();
 
@@ -129,26 +136,28 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           if (!mounted) return;
           String? loc;
           try {
-            loc = GoRouter.of(context)
-                .routerDelegate
-                .currentConfiguration
-                .uri
-                .path;
+            loc = GoRouter.of(
+              context,
+            ).routerDelegate.currentConfiguration.uri.path;
           } catch (e) {
             // Truly disconnected from the router — nothing we can safely do.
             debugPrint('🧭 [SignIn] Router unreachable post-auth: $e');
             return;
           }
           if (loc == '/sign-in') {
-            debugPrint('🧭 [SignIn] Auth flipped but redirect did not fire — '
-                'force-navigating to next onboarding step (router will rewrite if needed)');
+            debugPrint(
+              '🧭 [SignIn] Auth flipped but redirect did not fire — '
+              'force-navigating to next onboarding step (router will rewrite if needed)',
+            );
             // Post-paywall treatment routes a fresh user to coach-selection
             // first (personal-info now comes after the paywall); default order
             // still goes to personal-info. Either way the router redirect
             // rewrites to the user's true next step.
-            context.go(OnboardingExperiments.personalInfoAfterPaywall
-                ? '/coach-selection'
-                : '/personal-info');
+            context.go(
+              OnboardingExperiments.personalInfoAfterPaywall
+                  ? '/coach-selection'
+                  : '/personal-info',
+            );
           }
         });
       }
@@ -170,14 +179,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     });
 
     int messageIndex = 0;
-    final messageTimer = Stream.periodic(
-      const Duration(seconds: 3),
-      (_) => _loadingMessages[++messageIndex % _loadingMessages.length],
-    ).listen((message) {
-      if (mounted && _isLoading) {
-        setState(() => _loadingMessage = message);
-      }
-    });
+    final messageTimer =
+        Stream.periodic(
+          const Duration(seconds: 3),
+          (_) => _loadingMessages[++messageIndex % _loadingMessages.length],
+        ).listen((message) {
+          if (mounted && _isLoading) {
+            setState(() => _loadingMessage = message);
+          }
+        });
 
     try {
       await ref.read(authStateProvider.notifier).signInWithGoogle();
@@ -187,7 +197,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
       final authState = ref.read(authStateProvider);
       final user = authState.user;
-      if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
+      if (user != null &&
+          user.isFirstLogin &&
+          user.hasSupportFriend &&
+          mounted) {
         _showSupportFriendWelcome();
       }
 
@@ -196,13 +209,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
       // Funnel: closes the demo-showcase → sign-in → paywall_pricing_viewed
       // gap so paywall-reach rate is measurable per auth method.
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'onboarding_signin_completed',
-        properties: {
-          'method': 'google',
-          'is_first_login': user?.isFirstLogin ?? false,
-        },
-      );
+      ref
+          .read(posthogServiceProvider)
+          .capture(
+            eventName: 'onboarding_signin_completed',
+            properties: {
+              'method': 'google',
+              'is_first_login': user?.isFirstLogin ?? false,
+            },
+          );
 
       _triggerEarlyGeneration();
 
@@ -225,26 +240,28 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           if (!mounted) return;
           String? loc;
           try {
-            loc = GoRouter.of(context)
-                .routerDelegate
-                .currentConfiguration
-                .uri
-                .path;
+            loc = GoRouter.of(
+              context,
+            ).routerDelegate.currentConfiguration.uri.path;
           } catch (e) {
             // Truly disconnected from the router — nothing we can safely do.
             debugPrint('🧭 [SignIn] Router unreachable post-auth: $e');
             return;
           }
           if (loc == '/sign-in') {
-            debugPrint('🧭 [SignIn] Auth flipped but redirect did not fire — '
-                'force-navigating to next onboarding step (router will rewrite if needed)');
+            debugPrint(
+              '🧭 [SignIn] Auth flipped but redirect did not fire — '
+              'force-navigating to next onboarding step (router will rewrite if needed)',
+            );
             // Post-paywall treatment routes a fresh user to coach-selection
             // first (personal-info now comes after the paywall); default order
             // still goes to personal-info. Either way the router redirect
             // rewrites to the user's true next step.
-            context.go(OnboardingExperiments.personalInfoAfterPaywall
-                ? '/coach-selection'
-                : '/personal-info');
+            context.go(
+              OnboardingExperiments.personalInfoAfterPaywall
+                  ? '/coach-selection'
+                  : '/personal-info',
+            );
           }
         });
       }
@@ -290,9 +307,22 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Welcome to ${Branding.appName}!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                  Text(
+                    'Welcome to ${Branding.appName}!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text('${Branding.appName} Support is now your friend. Reach out anytime for help!', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                  Text(
+                    '${Branding.appName} Support is now your friend. Reach out anytime for help!',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -313,7 +343,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     final authState = ref.watch(authStateProvider);
 
     Widget errorWidget = const SizedBox.shrink();
-    if (authState.status == AuthStatus.error && authState.errorMessage != null) {
+    if (authState.status == AuthStatus.error &&
+        authState.errorMessage != null) {
       errorWidget = Container(
         margin: const EdgeInsets.only(top: 12),
         padding: const EdgeInsets.all(12),
@@ -340,67 +371,92 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: t.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      body: OnboardingBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        children: [
-                          _buildHeader(t),
-                          const Spacer(),
-                          _buildMainContent(t),
-                          const Spacer(),
-                          _buildSignInButtons(t),
-                          errorWidget,
-                          // Single consent disclosure lives above the
-                          // sign-in buttons in `_ConsentDisclosure` —
-                          // covers Terms, Privacy Policy, AND the
-                          // Health Disclaimer (the legally required
-                          // one for an AI fitness app). The duplicate
-                          // "By continuing…" line that used to render
-                          // here was redundant.
-                          const SizedBox(height: 24),
-                        ],
+        backgroundColor: Colors.transparent,
+        extendBodyBehindAppBar: true,
+        body: OnboardingBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          children: [
+                            _buildHeroZone(t),
+                            const Spacer(),
+                            _buildSignInButtons(t),
+                            errorWidget,
+                            // Single consent disclosure lives above the
+                            // sign-in buttons in `_ConsentDisclosure` —
+                            // covers Terms, Privacy Policy, AND the
+                            // Health Disclaimer (the legally required
+                            // one for an AI fitness app). The duplicate
+                            // "By continuing…" line that used to render
+                            // here was redundant.
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 
-  Widget _buildHeader(OnboardingTheme t) {
+  /// Merges the old `_buildHeader` (back + progress row) and the top of the
+  /// old `_buildMainContent` (icon/kicker/title/subtitle) into one zone so a
+  /// single full-bleed animated background can sit behind all of it — the
+  /// plan card stays outside, in the solid area below.
+  Widget _buildHeroZone(OnboardingTheme t) {
     // Progress reflects pre-auth quiz completion. Users who come directly to
     // sign-in from /intro (without doing the quiz) shouldn't see "90% done".
     final quizData = ref.watch(preAuthQuizProvider);
-    final quizStarted = !widget.forceReturning && (quizData.goals != null ||
-        quizData.fitnessLevel != null ||
-        quizData.daysPerWeek != null ||
-        (quizData.equipment?.isNotEmpty ?? false));
+    final quizStarted =
+        !widget.forceReturning &&
+        (quizData.goals != null ||
+            quizData.fitnessLevel != null ||
+            quizData.daysPerWeek != null ||
+            (quizData.equipment?.isNotEmpty ?? false));
     final showProgressPill = quizStarted;
     final progressFraction = quizData.isComplete ? 0.9 : 0.5;
     final progressPercent = (progressFraction * 100).round();
-    return Padding(
+    // "One quick step left" only holds up once we're actually at 90% —
+    // coach-selection/personal-info still follow sign-in either way, so
+    // don't imply near-completion earlier than that.
+    final showStepMicrocopy = quizData.isComplete;
+
+    // Intro carousel now routes *everyone* here via a single "Continue"
+    // button, so the copy must work for both new sign-ups and returning
+    // sign-ins. "Let's get started" + "Sign in or create an account"
+    // stays neutral; "Continue with Google/Email" below handles both
+    // paths transparently (the backend upserts on first Google auth;
+    // the email screen has its own Sign In / Sign Up toggle).
+    // v7: loss aversion replaces "Almost There!" — the user just watched
+    // their plan get built; signing in is now about not losing it.
+    final title = quizStarted
+        ? AppLocalizations.of(context).signInV7DontLoseIt
+        : AppLocalizations.of(context).signInV7LetsGetStarted;
+    final subtitle = quizStarted
+        ? _buildPersonalizedSubtitle(quizData)
+        : 'Sign in or create an account to continue';
+
+    final headerRow = Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          // Glassmorphic "← Back" pill — matches the back affordance on
-          // the /intro welcome panel (arrow + text label) so the two
-          // entry screens feel like one flow instead of two unrelated
-          // pages with mismatched chrome.
+          // De-emphasized back affordance — plain text, not a glass pill.
+          // This is an escape hatch, not a choice with equal weight to
+          // continuing, so it shouldn't compete visually with moving forward.
           GestureDetector(
             // Pop one screen back if anything pushed us here (demo-tasks,
             // capability-and-community, etc.). Only fall back to /intro
@@ -416,130 +472,112 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 );
               }
             },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: t.isDark
-                        ? Colors.white.withValues(alpha: 0.10)
-                        : Colors.black.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: t.isDark
-                          ? Colors.white.withValues(alpha: 0.18)
-                          : Colors.black.withValues(alpha: 0.15),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.arrow_back_rounded, color: t.textMuted, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    AppLocalizations.of(context).commonBack,
+                    style: TextStyle(
+                      color: t.textMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.arrow_back_rounded, color: t.textPrimary, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        AppLocalizations.of(context).commonBack,
-                        style: TextStyle(
-                          color: t.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
             ),
           ),
           const Spacer(),
           // Glassmorphic progress pill — only shown if the user has started the quiz
           if (showProgressPill)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: t.cardFill,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: t.borderDefault),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 60,
-                        height: 6,
-                        child: Stack(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: t.borderDefault,
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                            FractionallySizedBox(
-                              widthFactor: progressFraction,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      t.textPrimary.withValues(alpha: 0.9),
-                                      t.textPrimary.withValues(alpha: 0.6),
-                                    ],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: t.cardFill,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: t.borderDefault),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 60,
+                            height: 6,
+                            child: Stack(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: t.borderDefault,
+                                    borderRadius: BorderRadius.circular(3),
                                   ),
-                                  borderRadius: BorderRadius.circular(3),
                                 ),
-                              ),
+                                FractionallySizedBox(
+                                  widthFactor: progressFraction,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          t.textPrimary.withValues(alpha: 0.9),
+                                          t.textPrimary.withValues(alpha: 0.6),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$progressPercent%',
+                            style: TextStyle(
+                              color: t.textPrimary.withValues(alpha: 0.9),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '$progressPercent%',
-                        style: TextStyle(
-                          color: t.textPrimary.withValues(alpha: 0.9),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                if (showStepMicrocopy) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'One quick step left',
+                    style: TextStyle(
+                      color: t.accent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ],
             ),
           const Spacer(),
           const SizedBox(width: 44),
         ],
       ),
     ).animate().fadeIn(duration: 300.ms);
-  }
 
-  Widget _buildMainContent(OnboardingTheme t) {
-    final quizData = ref.watch(preAuthQuizProvider);
-    final quizStarted = !widget.forceReturning && (quizData.goals != null ||
-        quizData.fitnessLevel != null ||
-        quizData.daysPerWeek != null ||
-        (quizData.equipment?.isNotEmpty ?? false));
-    // Intro carousel now routes *everyone* here via a single "Continue"
-    // button, so the copy must work for both new sign-ups and returning
-    // sign-ins. "Let's get started" + "Sign in or create an account"
-    // stays neutral; "Continue with Google/Email" below handles both
-    // paths transparently (the backend upserts on first Google auth;
-    // the email screen has its own Sign In / Sign Up toggle).
-    // v7: loss aversion replaces "Almost There!" — the user just watched
-    // their plan get built; signing in is now about not losing it.
-    final title = quizStarted
-        ? AppLocalizations.of(context).signInV7DontLoseIt
-        : AppLocalizations.of(context).signInV7LetsGetStarted;
-    final subtitle = quizStarted
-        ? _buildPersonalizedSubtitle(quizData)
-        : 'Sign in or create an account to continue';
-    return Column(
+    final heroContent = Column(
       children: [
+        headerRow,
         // Pulsing app icon
         AnimatedBuilder(
           animation: _pulseController,
@@ -553,7 +591,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: t.textPrimary.withOpacity(0.15 + _pulseController.value * 0.1),
+                      color: t.textPrimary.withOpacity(
+                        0.15 + _pulseController.value * 0.1,
+                      ),
                       blurRadius: 24,
                       spreadRadius: 2,
                     ),
@@ -623,21 +663,32 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         // Subtitle
         Text(
           subtitle,
-          style: TextStyle(
-            fontSize: 16,
-            color: t.textSecondary,
-            height: 1.4,
-          ),
+          style: TextStyle(fontSize: 16, color: t.textSecondary, height: 1.4),
           textAlign: TextAlign.center,
         ).animate().fadeIn(delay: 400.ms),
+      ],
+    );
 
+    return Column(
+      children: [
+        // Full-bleed faded scene-loop background — same technique as the
+        // real intro screen's looping app-demo (AnimationController + bottom
+        // gradient scrim), dialed down to low-opacity background texture.
+        // Only shown once there's an actual plan to preview.
+        Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            Positioned.fill(child: _HeroSceneBackground(t: t)),
+            heroContent,
+          ],
+        ),
         if (quizStarted) ...[
           const SizedBox(height: 32),
           // Value reminder card — only meaningful if user actually did the quiz
-          _buildValueReminderCard(quizData, t)
-              .animate()
-              .fadeIn(delay: 500.ms)
-              .slideY(begin: 0.1),
+          _buildValueReminderCard(
+            quizData,
+            t,
+          ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
         ],
       ],
     );
@@ -685,8 +736,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: t.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(7),
@@ -736,21 +786,26 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                   width: double.infinity,
                   height: 54,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    // White pill: was black-on-black against the screen's
+                    // dark background, barely distinguishable from the
+                    // page or from the Google button below it.
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(27),
-                    border: Border.all(color: Colors.white.withOpacity(0.15)),
+                    border: Border.all(
+                      color: Colors.black.withValues(alpha: 0.05),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.apple, color: Colors.white, size: 22),
+                      Icon(Icons.apple, color: Colors.black, size: 22),
                       SizedBox(width: 10),
                       Text(
                         AppLocalizations.of(context).authContinueWithApple,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -773,29 +828,35 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 width: double.infinity,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: t.cardFill,
+                  // Matches the Apple button — white pill, same reasoning.
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(27),
-                  border: Border.all(color: t.borderDefault),
+                  border: Border.all(
+                    color: Colors.black.withValues(alpha: 0.05),
+                  ),
                 ),
                 child: _isLoading
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SizedBox(
+                          const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(t.textPrimary),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.black54,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            _loadingMessage ?? AppLocalizations.of(context).signInSigningIn,
-                            style: TextStyle(
+                            _loadingMessage ??
+                                AppLocalizations.of(context).signInSigningIn,
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: t.textSecondary,
+                              color: Colors.black54,
                             ),
                           ),
                         ],
@@ -807,19 +868,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                             'https://www.google.com/favicon.ico',
                             width: 20,
                             height: 20,
-                            errorBuilder: (_, __, ___) => Icon(
+                            errorBuilder: (_, __, ___) => const Icon(
                               Icons.g_mobiledata,
                               size: 24,
-                              color: t.textPrimary,
+                              color: Colors.black87,
                             ),
                           ),
                           const SizedBox(width: 12),
                           Text(
                             AppLocalizations.of(context).authContinueWithGoogle,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: t.textPrimary,
+                              color: Colors.black,
                             ),
                           ),
                         ],
@@ -831,23 +892,38 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
         const SizedBox(height: 16),
 
-        // Email Sign In link
+        // Email Sign In — bordered button. Was a plain underlined text
+        // link, easy to miss entirely below the two white Apple/Google
+        // pills; still visually tertiary to those two, but no longer
+        // invisible. (Was also a hardcoded English string — now routed
+        // through the existing `authContinueWithEmail` l10n key.)
         GestureDetector(
           onTap: _isLoading
               ? null
               : () => context.push(
-                    widget.forceReturning
-                        ? '/email-sign-in?returning=true'
-                        : '/email-sign-in',
-                  ),
-          child: Text(
-            'Continue with Email',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: t.textMuted,
-              decoration: TextDecoration.underline,
-              decorationColor: t.textMuted.withValues(alpha: 0.5),
+                  widget.forceReturning
+                      ? '/email-sign-in?returning=true'
+                      : '/email-sign-in',
+                ),
+          child: Container(
+            width: double.infinity,
+            height: 50,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: t.textPrimary.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(
+                color: t.textPrimary.withValues(alpha: 0.28),
+                width: 1.5,
+              ),
+            ),
+            child: Text(
+              AppLocalizations.of(context).authContinueWithEmail,
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+                color: t.textPrimary,
+              ),
             ),
           ),
         ).animate().fadeIn(delay: 800.ms),
@@ -936,6 +1012,253 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   }
 }
 
+/// Full-bleed, faded, looping background for the hero zone — reuses the
+/// same technique as the real `/intro` screen's live 4-scene app demo
+/// (an `AnimationController` looping fake UI content + a bottom gradient
+/// scrim), just dialed down from full-opacity foreground content to
+/// low-opacity background texture. Cycles through three abstract scenes
+/// (workout rows, a progress chart, a calendar grid) on a 12s loop.
+///
+/// Every scene is anchored from the TOP of the zone. Anything anchored
+/// from the bottom lands inside the scrim's fade-to-background area and
+/// renders but is invisible — hit this once building the HTML mockup this
+/// was ported from (see project_paywall_screen_bg_animation_mockup memory).
+class _HeroSceneBackground extends StatefulWidget {
+  final OnboardingTheme t;
+  const _HeroSceneBackground({required this.t});
+
+  @override
+  State<_HeroSceneBackground> createState() => _HeroSceneBackgroundState();
+}
+
+class _HeroSceneBackgroundState extends State<_HeroSceneBackground>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  static const _calendarOn = {1, 3, 6, 7, 10, 12, 15, 18};
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Each scene fades in, holds, and fades out within its own third of the
+  /// 12s loop, staggered so only one scene is ever fully visible at a time.
+  double _opacityFor(int sceneIndex) {
+    double phase = _controller.value - (sceneIndex / 3.0);
+    phase = phase % 1.0;
+    if (phase < 0) phase += 1.0;
+    if (phase < 0.06) return 0;
+    if (phase < 0.16) return (phase - 0.06) / 0.10;
+    if (phase < 0.26) return 1;
+    if (phase < 0.36) return 1 - (phase - 0.26) / 0.10;
+    return 0;
+  }
+
+  /// Anchors [child] to the top of the zone (not stretched to fill it) and
+  /// fades it in/out per [sceneIndex] — mirrors `position:absolute; top:`
+  /// in the source mockup rather than a Stack that stretches non-positioned
+  /// children to the full zone height.
+  Widget _scene(int sceneIndex, Widget child) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, cached) =>
+            Opacity(opacity: _opacityFor(sceneIndex), child: cached),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _row({required Color color, required double opacity}) {
+    return Container(
+      height: 14,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: opacity),
+        borderRadius: BorderRadius.circular(7),
+      ),
+    );
+  }
+
+  Widget _dot() {
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: BoxDecoration(
+        color: AppColors.orange.withValues(alpha: 0.55),
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+
+  Widget _chartBar(double height, Color color) {
+    return Container(
+      width: 16,
+      height: height,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            color.withValues(alpha: 0.55),
+            color.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.t.isDark;
+    final neutral = isDark ? Colors.white : Colors.black;
+    final scrimColor = isDark
+        ? const Color(0xFF050505)
+        : const Color(0xFFFAFAFA);
+
+    return Stack(
+      children: [
+        // Scene 1 — workout list rows, anchored top.
+        _scene(
+          0,
+          SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 40,
+                  child: _row(color: AppColors.orange, opacity: 0.32),
+                ),
+                Positioned(
+                  top: 22,
+                  left: 0,
+                  right: 90,
+                  child: _row(color: neutral, opacity: 0.16),
+                ),
+                Positioned(
+                  top: 44,
+                  left: 0,
+                  right: 40,
+                  child: _row(color: AppColors.orange, opacity: 0.32),
+                ),
+                Positioned(top: 0, right: 0, child: _dot()),
+                Positioned(top: 44, right: 0, child: _dot()),
+              ],
+            ),
+          ),
+        ),
+        // Scene 2 — progress chart, anchored top (bars grow up from a
+        // baseline near the top of the zone, not the bottom — see the
+        // class doc comment on why bottom-anchoring here is a trap).
+        _scene(
+          1,
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _chartBar(26, AppColors.purple),
+                  const SizedBox(width: 8),
+                  _chartBar(42, AppColors.purple),
+                  const SizedBox(width: 8),
+                  _chartBar(34, AppColors.purple),
+                  const SizedBox(width: 8),
+                  _chartBar(58, AppColors.cyan),
+                  const SizedBox(width: 8),
+                  _chartBar(46, AppColors.purple),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Scene 3 — calendar / week grid, anchored top.
+        _scene(
+          2,
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: SizedBox(
+                width: 180,
+                child: Column(
+                  children: List.generate(3, (row) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: List.generate(7, (col) {
+                          final on = _calendarOn.contains(row * 7 + col);
+                          return Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: AspectRatio(
+                                aspectRatio: 1,
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    color: on
+                                        ? AppColors.orange.withValues(
+                                            alpha: 0.50,
+                                          )
+                                        : neutral.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Bottom scrim — fades the loop into the surrounding page
+        // background (OnboardingBackground's gradient is solid by this
+        // point) so it blends instead of hard-cutting at an edge.
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.62, 0.85, 1.0],
+                colors: [
+                  Colors.transparent,
+                  Colors.transparent,
+                  scrimColor.withValues(alpha: 0.85),
+                  scrimColor,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Inline consent disclosure shown above the sign-in buttons.
 ///
 /// Onboarding v5.1: replaces the standalone /ai-consent and /health-disclaimer
@@ -955,11 +1278,7 @@ class _ConsentDisclosure extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = TextStyle(
-      fontSize: 11,
-      color: t.textSecondary,
-      height: 1.45,
-    );
+    final base = TextStyle(fontSize: 11, color: t.textSecondary, height: 1.45);
     final link = base.copyWith(
       color: AppColors.orange,
       fontWeight: FontWeight.w700,

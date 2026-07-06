@@ -46,7 +46,7 @@ class CoachProfileCard extends StatelessWidget {
         onTap?.call();
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(
@@ -85,7 +85,7 @@ class CoachProfileCard extends StatelessWidget {
             ? LayoutBuilder(
                 builder: (context, constraints) => Column(
                   children: [
-                    if (constraints.maxHeight >= 300)
+                    if (constraints.maxHeight >= 260)
                       _buildHeader(isDark, textPrimary, textSecondary),
                     Expanded(child: chat!),
                   ],
@@ -126,7 +126,7 @@ class CoachProfileCard extends StatelessWidget {
   Widget _buildHeader(bool isDark, Color textPrimary, Color textSecondary) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: AlignmentDirectional.topStart,
@@ -146,13 +146,13 @@ class CoachProfileCard extends StatelessWidget {
           // Coach avatar — tap opens the full photo viewer.
           CoachAvatar(
             coach: coach,
-            size: 48,
+            size: 40,
             showBorder: true,
             borderWidth: 2,
             showShadow: false,
             enableTapToView: true,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
 
           // Name + tagline
           Expanded(
@@ -183,18 +183,6 @@ class CoachProfileCard extends StatelessWidget {
             ),
           ),
 
-          // Selected badge
-          if (isSelected) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.check_circle, color: Colors.white, size: 16),
-            ),
-          ],
           // Coach detail sheet trigger
           if (onInfo != null) ...[
             const SizedBox(width: 8),

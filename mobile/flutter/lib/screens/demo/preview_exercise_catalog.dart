@@ -264,6 +264,18 @@ String? previewAssetForId(String? id) {
   return ok ? 'assets/preview_exercises/$id.jpg' : null;
 }
 
+/// Exact (case-insensitive) name → catalog id lookup. Deliberately NOT
+/// fuzzy — a near-match on a similar-sounding but different movement is
+/// worse than no match, per this catalog's "no blind name-matching"
+/// principle. Returns null when the exact display name isn't curated.
+String? previewIdForName(String name) {
+  final needle = name.trim().toLowerCase();
+  for (final e in _catalog) {
+    if (e.name.toLowerCase() == needle) return e.id;
+  }
+  return null;
+}
+
 /// Muscle-group buckets a workout-type id maps to.
 List<String> _catsForType(String typeId) {
   final t = typeId.toLowerCase();

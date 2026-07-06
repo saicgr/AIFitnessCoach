@@ -206,18 +206,6 @@ class _WorkoutShowcaseScreenState
       final w = _progression.targetWeights;
       if (!_completedRows.contains(next) && w[next] > w[rowIndex]) {
         setState(() => _advFlashRow = next);
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context).workoutShowcaseNextTargetRaised(
-                  '${w[next] - w[rowIndex]}', '$rowIndex', '${w[next]}'),
-            ),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          ),
-        );
         ref.read(posthogServiceProvider).capture(
           eventName: 'demo_autoprogress_shown',
           properties: {
@@ -1028,7 +1016,7 @@ class _AdvancedActiveLayout extends StatelessWidget {
               },
             ),
           ).animate(delay: 420.ms).fadeIn(),
-          // Bottom action chips (pinned, tap-to-toast)
+          // Bottom action chips (pinned)
           Builder(builder: (ctx) {
             final l10n = AppLocalizations.of(ctx)!;
             return Row(
@@ -1038,8 +1026,6 @@ class _AdvancedActiveLayout extends StatelessWidget {
                   icon: Icons.menu_book_rounded,
                   label: l10n.workoutShowcaseInstructions,
                   accent: const Color(0xFF22C55E),
-                  toast:
-                      'Step-by-step form cues + setup tips for ${progression.localizedLabel(l10n)} progression.',
                 ),
                 const SizedBox(width: 8),
                 _toastChip(
@@ -1047,8 +1033,6 @@ class _AdvancedActiveLayout extends StatelessWidget {
                   icon: Icons.play_circle_outline_rounded,
                   label: l10n.workoutShowcaseVideo,
                   accent: const Color(0xFFA855F7),
-                  toast:
-                      'Demo videos play here — slow-mo angles, common mistakes, fixes.',
                 ),
                 const SizedBox(width: 8),
                 _toastChip(
@@ -1056,8 +1040,6 @@ class _AdvancedActiveLayout extends StatelessWidget {
                   icon: Icons.water_drop_outlined,
                   label: l10n.workoutShowcaseLogDrink,
                   accent: const Color(0xFF06B6D4),
-                  toast:
-                      'One-tap hydration log — counts toward your daily target.',
                 ),
               ],
             );
@@ -1238,36 +1220,15 @@ class _AdvancedActiveLayout extends StatelessWidget {
     );
   }
 
-  /// Tap-to-toast chip — surfaces a SnackBar instead of being a no-op,
-  /// so demo users feel something happen when they tap Instructions/Video.
+  /// Tap chip — haptic-only, no toast.
   Widget _toastChip(
     BuildContext context, {
     required IconData icon,
     required String label,
     required Color accent,
-    required String toast,
   }) {
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(icon, color: accent, size: 16),
-                const SizedBox(width: 8),
-                Expanded(child: Text(toast)),
-              ],
-            ),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            // Sit at the very bottom of the screen so the toast doesn't
-            // cover the Log set button or the Log water pill above it.
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          ),
-        );
-      },
+      onTap: () => HapticFeedback.lightImpact(),
       child: _OutlinedChip(icon: icon, label: label, accent: accent),
     );
   }
@@ -1356,19 +1317,9 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
   String? _autoProgressMsg;
   int _autoProgressToken = 0;
 
+  // Haptic-only tap confirmation — no toast.
   void _toast(String msg) {
     HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        // Sit at the very bottom — keeps the toast clear of the Log
-        // set / Log water buttons in Easy mode.
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      ),
-    );
   }
 
   @override

@@ -512,15 +512,15 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
-                width: 48,
-                height: 48,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: coachColor,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
+                child: const Icon(Icons.smart_toy, color: Colors.white, size: 22),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
             ],
             Expanded(
               child: Column(

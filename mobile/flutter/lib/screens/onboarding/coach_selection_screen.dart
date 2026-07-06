@@ -1007,8 +1007,8 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
           if (quizData.obstacles != null) 'obstacles': quizData.obstacles,
           if (quizData.motivations != null) 'motivations': quizData.motivations,
 
-          // Custom equipment
-          if (quizData.customEquipment != null) 'custom_equipment': quizData.customEquipment,
+          // custom_equipment is now included via aiPayload (spread above) —
+          // AIProfilePayloadBuilder.buildPayload() populates it centrally.
 
           // Workout environment
           if (quizData.workoutEnvironment != null) 'workout_environment': quizData.workoutEnvironment,
@@ -1269,7 +1269,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                     return const SizedBox.shrink();
                   }
                   return Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                    padding: const EdgeInsets.fromLTRB(24, 10, 24, 6),
                     child: _buildHeader(textPrimary, textSecondary),
                   );
                 }),
@@ -1336,7 +1336,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
                 // Page indicator dots - use each coach's color
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
