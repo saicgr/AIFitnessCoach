@@ -1362,7 +1362,8 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         if (widget.selectedEnvironment != null) ...[
           const SizedBox(height: 8),
           Text(
-            environments.firstWhere((e) => e.id == widget.selectedEnvironment).description,
+            '${environments.firstWhere((e) => e.id == widget.selectedEnvironment).description} '
+            '· ${l10n.quizEquipmentAddMoreGymsLaterHint}',
             style: TextStyle(
               fontSize: 12,
               color: t.textSecondary,

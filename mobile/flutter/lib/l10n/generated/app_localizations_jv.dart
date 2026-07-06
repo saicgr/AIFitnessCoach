@@ -30109,6 +30109,9 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => 'Dina apa sing paling pas?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Cocog kanggo apartemen';
 
   @override

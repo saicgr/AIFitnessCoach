@@ -30508,6 +30508,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Quels jours vous conviennent le mieux ?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Adapté aux appartements';
 
   @override

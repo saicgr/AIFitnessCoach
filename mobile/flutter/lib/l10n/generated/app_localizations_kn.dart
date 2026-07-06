@@ -30367,6 +30367,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => 'ಯಾವ ದಿನಗಳು ಉತ್ತಮ?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'ಅಪಾರ್ಟ್ಮೆಂಟ್-ಸ್ನೇಹಿ';
 
   @override

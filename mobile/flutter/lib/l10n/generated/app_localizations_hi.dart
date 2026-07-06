@@ -30111,6 +30111,9 @@ class AppLocalizationsHi extends AppLocalizations {
       'कौन से दिन सबसे अच्छे रहेंगे?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'अपार्टमेंट के अनुकूल';
 
   @override

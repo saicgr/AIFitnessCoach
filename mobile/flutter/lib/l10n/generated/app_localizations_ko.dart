@@ -28935,6 +28935,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => '어떤 요일이 가장 좋나요?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => '아파트 친화적';
 
   @override

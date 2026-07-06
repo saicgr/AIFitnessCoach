@@ -30100,6 +30100,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Hangi günler senin için daha uygun?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Apartman dostu';
 
   @override

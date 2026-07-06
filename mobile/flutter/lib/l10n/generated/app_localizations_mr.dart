@@ -30108,6 +30108,9 @@ class AppLocalizationsMr extends AppLocalizations {
       'कोणते दिवस सर्वात सोयीचे आहेत?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'अपार्टमेंटसाठी योग्य';
 
   @override

@@ -30182,6 +30182,9 @@ class AppLocalizationsBn extends AppLocalizations {
       'কোন দিনগুলো আপনার জন্য সবচেয়ে ভালো?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'অ্যাপার্টমেন্টের জন্য উপযুক্ত';
 
   @override

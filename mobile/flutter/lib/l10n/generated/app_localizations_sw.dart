@@ -30213,6 +30213,9 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => 'Ni siku zipi zinafaa zaidi?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Inafaa kwa ghorofa';
 
   @override

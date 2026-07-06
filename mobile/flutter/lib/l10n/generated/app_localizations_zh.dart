@@ -28567,6 +28567,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => '哪几天最方便？';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => '公寓友好型';
 
   @override

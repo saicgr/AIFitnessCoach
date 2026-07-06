@@ -30582,6 +30582,9 @@ class AppLocalizationsTa extends AppLocalizations {
       'எந்த நாட்கள் உங்களுக்குச் சிறந்தவை?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'வீட்டிற்கு ஏற்றது';
 
   @override

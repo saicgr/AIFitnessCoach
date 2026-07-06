@@ -30270,6 +30270,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Quais dias funcionam melhor?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Ideal para apartamento';
 
   @override

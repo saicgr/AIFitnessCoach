@@ -30173,6 +30173,9 @@ class AppLocalizationsMs extends AppLocalizations {
       'Hari mana yang paling sesuai?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Sesuai untuk pangsapuri';
 
   @override

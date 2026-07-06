@@ -30081,6 +30081,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => 'ਕਿਹੜੇ ਦਿਨ ਸਭ ਤੋਂ ਵਧੀਆ ਹਨ?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'ਅਪਾਰਟਮੈਂਟ ਲਈ ਅਨੁਕੂਲ';
 
   @override

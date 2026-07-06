@@ -30349,6 +30349,9 @@ class AppLocalizationsTe extends AppLocalizations {
       'ఏ రోజులు మీకు బాగా సరిపోతాయి?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'అపార్ట్‌మెంట్‌కు అనుకూలం';
 
   @override

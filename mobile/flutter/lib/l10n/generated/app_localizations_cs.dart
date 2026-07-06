@@ -30091,6 +30091,9 @@ class AppLocalizationsCs extends AppLocalizations {
       'Které dny ti vyhovují nejlépe?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Vhodné do bytu';
 
   @override

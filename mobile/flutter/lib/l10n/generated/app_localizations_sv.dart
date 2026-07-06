@@ -30018,6 +30018,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => 'Vilka dagar passar bäst?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Lägenhetsvänlig';
 
   @override

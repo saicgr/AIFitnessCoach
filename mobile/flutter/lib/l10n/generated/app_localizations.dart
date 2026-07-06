@@ -28913,7 +28913,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeScreenTourNutritionDesc.
   ///
   /// In en, this message translates to:
-  /// **'Track your macros and daily nutrition'**
+  /// **'Track your macros, water, fasting, and daily nutrition'**
   String get homeScreenTourNutritionDesc;
 
   /// No description provided for @homeScreenTourNutritionTitle.
@@ -50668,6 +50668,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Which days work best?'**
   String get quizDaysSelectorWhichDaysWorkBest;
+
+  /// No description provided for @quizEquipmentAddMoreGymsLaterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'you can add more gyms later'**
+  String get quizEquipmentAddMoreGymsLaterHint;
 
   /// No description provided for @quizEquipmentApartmentFriendly.
   ///

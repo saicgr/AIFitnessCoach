@@ -30411,6 +30411,9 @@ class AppLocalizationsTl extends AppLocalizations {
       'Anong mga araw ang pinakamainam?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Swak sa apartment';
 
   @override

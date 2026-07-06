@@ -30245,6 +30245,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Какие дни подходят лучше всего?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Для квартиры';
 
   @override

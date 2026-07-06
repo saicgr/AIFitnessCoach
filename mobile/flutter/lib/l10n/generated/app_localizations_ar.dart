@@ -29807,6 +29807,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => 'ما هي الأيام الأنسب لك؟';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'مناسب للشقق';
 
   @override

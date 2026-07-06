@@ -30154,6 +30154,9 @@ class AppLocalizationsVi extends AppLocalizations {
       'Những ngày nào phù hợp nhất với bạn?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Phù hợp với căn hộ';
 
   @override

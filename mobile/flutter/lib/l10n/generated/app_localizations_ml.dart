@@ -30603,6 +30603,9 @@ class AppLocalizationsMl extends AppLocalizations {
       'ഏത് ദിവസങ്ങളാണ് ഏറ്റവും അനുയോജ്യം?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'അപ്പാർട്ട്മെന്റിന് അനുയോജ്യം';
 
   @override

@@ -30204,6 +30204,9 @@ class AppLocalizationsHa extends AppLocalizations {
       'Wadanne kwanaki ne suka fi dacewa?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'Ya dace da gidan haya';
 
   @override

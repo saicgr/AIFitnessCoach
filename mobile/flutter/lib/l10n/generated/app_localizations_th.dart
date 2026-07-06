@@ -30044,6 +30044,9 @@ class AppLocalizationsTh extends AppLocalizations {
       'วันไหนที่สะดวกที่สุดสำหรับคุณ?';
 
   @override
+  String get quizEquipmentAddMoreGymsLaterHint => 'you can add more gyms later';
+
+  @override
   String get quizEquipmentApartmentFriendly => 'เหมาะสำหรับพื้นที่จำกัด';
 
   @override
