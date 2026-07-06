@@ -19,6 +19,7 @@ import '../../data/providers/branded_program_provider.dart';
 import '../../data/providers/equipment_coverage_provider.dart';
 import '../../data/providers/gym_profile_provider.dart'
     show activeGymProfileProvider;
+import '../../widgets/glass_circle_fab.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/signature/signature.dart';
 import '../../data/models/assign_preview.dart';
@@ -27,6 +28,8 @@ import '../../data/models/user_program_assignment.dart';
 import '../../data/providers/schedule_provider.dart' show weekStartDayProvider;
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../home/widgets/components/equipment_selector.dart'
+    show defaultEquipmentOptions;
 import '../library/components/programs_intro_sheet.dart';
 import 'program_detail_screen.dart';
 import 'program_template_builder_screen.dart';
@@ -85,22 +88,6 @@ class ProgramLibraryScreen extends ConsumerStatefulWidget {
       _ProgramLibraryScreenState();
 }
 
-/// The library categories surfaced as filter chips. `null` = All.
-const List<String?> _kCategories = [
-  null,
-  'Goal-Based',
-  'Sport',
-  'Specialized',
-  'Yoga',
-  'Health',
-  'Stretching',
-  'Pain Management',
-  'Kettlebell',
-  'Engine & Endurance',
-  'Running',
-  'Getting Started',
-];
-
 const List<String?> _kDifficulties = [
   null,
   'Beginner',
@@ -135,6 +122,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   String? _difficulty;
   int? _sessionsPerWeek;
   final Set<String> _goals = <String>{};
+  final Set<String> _equipment = <String>{};
   int? _durationMin;
   int? _durationMax;
   String _search = '';
@@ -296,6 +284,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     goals: _goals.isEmpty ? null : _goals.toList(growable: false),
     durationMin: _durationMin,
     durationMax: _durationMax,
+    equipment: _equipment.isEmpty ? null : _equipment.toList(growable: false),
   );
 
   /// Whether the user has narrowed the library at all — when true the screen
@@ -306,6 +295,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       _difficulty != null ||
       _sessionsPerWeek != null ||
       _goals.isNotEmpty ||
+      _equipment.isNotEmpty ||
       _durationMin != null ||
       _durationMax != null ||
       _search.isNotEmpty;
@@ -318,6 +308,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     if (_sessionsPerWeek != null) n++;
     if (_durationMin != null || _durationMax != null) n++;
     n += _goals.length;
+    n += _equipment.length;
     return n;
   }
 
@@ -330,6 +321,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       _difficulty = null;
       _sessionsPerWeek = null;
       _goals.clear();
+      _equipment.clear();
       _durationMin = null;
       _durationMax = null;
       _search = '';
@@ -376,6 +368,13 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
               ),
             ],
           ),
+        ),
+        // Manual "build from scratch" — floating and spatially separate from
+        // the header's AI sparkle button so the two creation paths (manual
+        // vs. AI-assisted) don't read as interchangeable twins.
+        floatingActionButton: GlassCircleFab(
+          onPressed: _openBuildFromScratch,
+          tooltip: 'Build from scratch',
         ),
       ),
     );
@@ -435,19 +434,18 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           _HeaderActionButton(
             icon: Icons.bookmark_border_rounded,
             tooltip: 'Your programs',
+            label: 'Saved',
             onTap: _openYourPrograms,
           ),
           const SizedBox(width: 8),
-          // Add + AI creation entry points (point #8).
-          _HeaderActionButton(
-            icon: Icons.add_rounded,
-            tooltip: 'Build from scratch',
-            onTap: _openBuildFromScratch,
-          ),
-          const SizedBox(width: 8),
+          // AI creation entry point. Manual "build from scratch" now lives in
+          // the floating "+" (see `floatingActionButton` in build()) so it
+          // reads as a distinct, spatially-separate action from AI generation
+          // rather than a same-row twin of the sparkle button.
           _HeaderActionButton(
             icon: Icons.auto_awesome_rounded,
             tooltip: 'Create with AI',
+            label: 'AI',
             accent: true,
             onTap: _openAiCreateSheet,
           ),
@@ -940,6 +938,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       goals: null,
       durationMin: null,
       durationMax: null,
+      equipment: null,
     );
     return _Rail(
       title: 'QUICK · ≤30 MIN',
@@ -964,6 +963,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       goals: null,
       durationMin: null,
       durationMax: null,
+      equipment: null,
     );
     return _Rail(
       title: 'BEGINNER-FRIENDLY',
@@ -987,6 +987,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       goals: ['Build Muscle'],
       durationMin: null,
       durationMax: null,
+      equipment: null,
     );
     return _Rail(
       title: 'GOAL · BUILD MUSCLE',
@@ -1113,6 +1114,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     }
     for (final g in _goals) {
       chips.add(_activeChip(g));
+    }
+    for (final e in _equipment) {
+      chips.add(_activeChip(e));
     }
     if (_search.isNotEmpty) chips.add(_activeChip('"$_search"'));
 
@@ -1242,6 +1246,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           difficulty: _difficulty,
           sessionsPerWeek: _sessionsPerWeek,
           goals: _goals,
+          equipment: _equipment,
           durationMin: _durationMin,
           durationMax: _durationMax,
           onApply:
@@ -1250,6 +1255,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 required String? difficulty,
                 required int? sessionsPerWeek,
                 required Set<String> goals,
+                required Set<String> equipment,
                 required int? durationMin,
                 required int? durationMax,
               }) {
@@ -1260,6 +1266,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                   _goals
                     ..clear()
                     ..addAll(goals);
+                  _equipment
+                    ..clear()
+                    ..addAll(equipment);
                   _durationMin = durationMin;
                   _durationMax = durationMax;
                 });
@@ -1637,15 +1646,17 @@ typedef _ApplyFilter =
       required String? difficulty,
       required int? sessionsPerWeek,
       required Set<String> goals,
+      required Set<String> equipment,
       required int? durationMin,
       required int? durationMax,
     });
 
-class _ProgramFilterSheet extends StatefulWidget {
+class _ProgramFilterSheet extends ConsumerStatefulWidget {
   final String? category;
   final String? difficulty;
   final int? sessionsPerWeek;
   final Set<String> goals;
+  final Set<String> equipment;
   final int? durationMin;
   final int? durationMax;
   final _ApplyFilter onApply;
@@ -1655,20 +1666,23 @@ class _ProgramFilterSheet extends StatefulWidget {
     required this.difficulty,
     required this.sessionsPerWeek,
     required this.goals,
+    required this.equipment,
     required this.durationMin,
     required this.durationMax,
     required this.onApply,
   });
 
   @override
-  State<_ProgramFilterSheet> createState() => _ProgramFilterSheetState();
+  ConsumerState<_ProgramFilterSheet> createState() =>
+      _ProgramFilterSheetState();
 }
 
-class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
+class _ProgramFilterSheetState extends ConsumerState<_ProgramFilterSheet> {
   late String? _category = widget.category;
   late String? _difficulty = widget.difficulty;
   late int? _sessionsPerWeek = widget.sessionsPerWeek;
   late final Set<String> _goals = {...widget.goals};
+  late final Set<String> _equipment = {...widget.equipment};
   late int? _durationMin = widget.durationMin;
   late int? _durationMax = widget.durationMax;
 
@@ -1681,6 +1695,7 @@ class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
       _difficulty = null;
       _sessionsPerWeek = null;
       _goals.clear();
+      _equipment.clear();
       _durationMin = null;
       _durationMax = null;
     });
@@ -1736,7 +1751,18 @@ class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                   children: [
                     _section('CATEGORY', [
-                      for (final c in _kCategories)
+                      // Sourced from the SAME live provider the category grid/
+                      // quick-chips on the library screen use — a hardcoded
+                      // list here previously drifted from the real taxonomy
+                      // (e.g. stale 'Sport' vs. the real 'Sports Performance'),
+                      // silently returning 0 results for a real category.
+                      for (final c in [
+                        null,
+                        ...?ref
+                            .watch(programCategoryCountsProvider)
+                            .valueOrNull
+                            ?.map((e) => e.category),
+                      ])
                         ZChip(
                           label:
                               c ??
@@ -1820,6 +1846,23 @@ class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
                           },
                         ),
                     ]),
+                    _section('EQUIPMENT', [
+                      for (final e in defaultEquipmentOptions)
+                        ZChip(
+                          label: e,
+                          selected: _equipment.contains(e),
+                          onTap: () {
+                            HapticService.selection();
+                            setState(() {
+                              if (_equipment.contains(e)) {
+                                _equipment.remove(e);
+                              } else {
+                                _equipment.add(e);
+                              }
+                            });
+                          },
+                        ),
+                    ]),
                   ],
                 ),
               ),
@@ -1843,6 +1886,7 @@ class _ProgramFilterSheetState extends State<_ProgramFilterSheet> {
                           difficulty: _difficulty,
                           sessionsPerWeek: _sessionsPerWeek,
                           goals: _goals,
+                          equipment: _equipment,
                           durationMin: _durationMin,
                           durationMax: _durationMax,
                         );
@@ -1901,12 +1945,18 @@ class _HeaderActionButton extends StatelessWidget {
   final String tooltip;
   final VoidCallback onTap;
 
+  /// Short caption rendered under the icon (e.g. "Saved", "AI") so the two
+  /// header actions read as distinct, labeled entry points rather than bare
+  /// glyphs a user has to guess at.
+  final String label;
+
   /// When true the button gets the orange accent fill (used for the AI button).
   final bool accent;
 
   const _HeaderActionButton({
     required this.icon,
     required this.tooltip,
+    required this.label,
     required this.onTap,
     this.accent = false,
   });
@@ -1918,24 +1968,38 @@ class _HeaderActionButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          width: 38,
-          height: 38,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: accent
-                ? AppColors.orange.withValues(alpha: 0.16)
-                : AppColors.surface,
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(
-              color: accent ? AppColors.orange : AppColors.cardBorder,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: accent
+                    ? AppColors.orange.withValues(alpha: 0.16)
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(11),
+                border: Border.all(
+                  color: accent ? AppColors.orange : AppColors.cardBorder,
+                ),
+              ),
+              child: Icon(
+                icon,
+                size: 19,
+                color: accent ? AppColors.orange : AppColors.textPrimary,
+              ),
             ),
-          ),
-          child: Icon(
-            icon,
-            size: 19,
-            color: accent ? AppColors.orange : AppColors.textPrimary,
-          ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: ZType.lbl(
+                9,
+                color: accent ? AppColors.orange : AppColors.textSecondary,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
         ),
       ),
     );

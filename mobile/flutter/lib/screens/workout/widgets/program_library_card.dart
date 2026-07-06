@@ -26,6 +26,10 @@ class ProgramLibraryCardTile extends StatelessWidget {
   final ProgramLibraryCard data;
   final VoidCallback onTap;
 
+  /// Optional long-press handler (e.g. a saved template's Schedule/Edit/
+  /// Delete actions sheet). Omitted entirely for cards that don't need it.
+  final VoidCallback? onLongPress;
+
   /// When true the card lays out at full width (used in single-column lists);
   /// otherwise it sizes to its grid cell.
   final bool fullWidth;
@@ -40,6 +44,7 @@ class ProgramLibraryCardTile extends StatelessWidget {
     super.key,
     required this.data,
     required this.onTap,
+    this.onLongPress,
     this.fullWidth = false,
     this.showFavorite = false,
   });
@@ -97,6 +102,7 @@ class ProgramLibraryCardTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(18),
         child: Ink(
           decoration: BoxDecoration(
@@ -168,6 +174,7 @@ class ProgramLibraryCardTile extends StatelessWidget {
                       // Eyebrow row — category badge, plus celebrity name
                       // when present.
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _GlyphBadge(icon: theme.icon, compact: narrow),
                           SizedBox(width: narrow ? 6 : 8),
@@ -177,12 +184,15 @@ class ProgramLibraryCardTile extends StatelessWidget {
                                   ? data.celebrityName!.trim().toUpperCase()
                                   : (data.programCategory ?? 'PROGRAM')
                                       .toUpperCase(),
-                              maxLines: 1,
+                              // 2 lines — real category names like "Sports
+                              // Performance" truncated illegibly at 1 line.
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: eyebrowSize,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.8,
+                                height: 1.15,
                                 color: Colors.white.withValues(alpha: 0.85),
                               ),
                             ),

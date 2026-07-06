@@ -111,12 +111,6 @@ List<RouteBase> _workoutRoutes() => [
         },
       ),
 
-      // Saved program templates + the schedule sheet.
-      GoRoute(
-        path: '/workout/templates',
-        builder: (context, state) => const TemplateListScreen(),
-      ),
-
       GoRoute(
         path: '/workout/:id',
         builder: (context, state) {

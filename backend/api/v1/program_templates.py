@@ -713,6 +713,11 @@ async def browse_library(
     ),
     duration_min: Optional[int] = Query(default=None, ge=1),
     duration_max: Optional[int] = Query(default=None, ge=1),
+    equipment: Optional[str] = Query(
+        default=None,
+        description="Comma-separated equipment tokens; keep programs whose "
+        "equipment_summary contains ANY token (case-insensitive substring).",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """Browse the 259-program `programs` library as lightweight cards.
@@ -742,6 +747,7 @@ async def browse_library(
             (goals or "").strip().lower(),
             duration_min if duration_min is not None else -1,
             duration_max if duration_max is not None else -1,
+            (equipment or "").strip().lower(),
         )
         cached = await _library_browse_cache.get(cache_key)
         # The cache is JSON-backed (Redis): values MUST be plain dicts. A dict
@@ -819,9 +825,25 @@ async def browse_library(
             blob = " ".join(str(g).lower() for g in program_goals)
             return any(tok in blob for tok in goal_tokens)
 
+        # equipment_summary is free text (not a normalized enum), so match ANY
+        # requested token as a case-insensitive substring — same posture as
+        # the goals[] overlap check above and the ad-hoc equipment mention
+        # already folded into the free-text search rank (`_search_rank`).
+        equipment_tokens = [
+            e.strip().lower() for e in (equipment or "").split(",") if e.strip()
+        ]
+
+        def _matches_equipment(equipment_summary: Any) -> bool:
+            if not equipment_tokens:
+                return True
+            blob = str(equipment_summary or "").lower()
+            return any(tok in blob for tok in equipment_tokens)
+
         cards: List[LibraryProgramCard] = []
         for row in resp.data or []:
             if not _matches_goals(row.get("goals")):
+                continue
+            if not _matches_equipment(row.get("equipment_summary")):
                 continue
             # When searching, only keep rows that scored a match.
             if search_terms and str(row["id"]) not in _search_ranks:
@@ -888,6 +910,8 @@ async def browse_library(
             ):
                 continue
             if not _matches_goals(bc.goals):
+                continue
+            if not _matches_equipment(bc.equipment_summary):
                 continue
             cards.append(bc)
 
@@ -1908,6 +1932,11 @@ async def library_program_schedule(
                             "sets": str(ex.get("sets") or "") or None,
                             "reps": str(ex.get("reps") or "") or None,
                             "duration": str(ex.get("duration") or "") or None,
+                            "rest_seconds": ex.get("rest_seconds"),
+                            "duration_seconds": ex.get("duration_seconds"),
+                            "intensity_guidance": ex.get("weight_guidance") or None,
+                            "coach_cue": ex.get("form_cue") or None,
+                            "protocol_note": ex.get("notes") or None,
                             "image_url": image_url,
                             "video_url": video_url,
                             "gif_url": gif_url,
@@ -1982,6 +2011,11 @@ async def library_program_schedule(
                     "sets": str(ex.get("sets") or "") or None,
                     "reps": str(ex.get("reps") or "") or None,
                     "duration": str(ex.get("duration") or "") or None,
+                    "rest_seconds": ex.get("rest_seconds"),
+                    "duration_seconds": ex.get("duration_seconds"),
+                    "intensity_guidance": ex.get("weight_guidance") or None,
+                    "coach_cue": ex.get("form_cue") or None,
+                    "protocol_note": ex.get("notes") or None,
                     "image_url": None,
                     "video_url": None,
                     "gif_url": None,

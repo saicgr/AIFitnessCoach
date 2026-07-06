@@ -82,7 +82,6 @@ import '../screens/workout/exercise_progressions_screen.dart';
 import '../screens/workout/program_detail_screen.dart';
 import '../screens/workout/program_library_screen.dart';
 import '../screens/workout/program_template_builder_screen.dart';
-import '../screens/workout/template_list_screen.dart';
 import '../screens/workout/your_programs_screen.dart';
 import '../data/models/program_template.dart';
 import '../screens/schedule/schedule_screen.dart';

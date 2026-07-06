@@ -1,8 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/repositories/program_template_repository.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -11,11 +13,11 @@ import '../../../widgets/glass_sheet.dart';
 /// Wrapped in the shared [GlassSheet] so it matches every other glass
 /// bottom sheet in the app (blur 12, standard surface/border/handle) —
 /// previously it hand-rolled a heavier, more opaque glass of its own.
-class ProgramsIntroSheet extends StatelessWidget {
+class ProgramsIntroSheet extends ConsumerWidget {
   const ProgramsIntroSheet({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = ThemeColors.of(context).accent;
     final textPrimary = isDark
@@ -24,6 +26,17 @@ class ProgramsIntroSheet extends StatelessWidget {
     final textSecondary = isDark
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
+    // Real, live category counts — the same source of truth the library
+    // screen's category grid/filter use — so the total shown here and the
+    // category preview below can never drift into a stale hardcoded number.
+    final counts = ref.watch(programCategoryCountsProvider).valueOrNull;
+    final total = counts?.fold<int>(0, (s, c) => s + c.count);
+    final topCategories = (counts == null || counts.isEmpty)
+        ? const <String>[]
+        : (List.of(counts)..sort((a, b) => b.count.compareTo(a.count)))
+            .take(8)
+            .map((c) => c.category)
+            .toList();
     return GlassSheet(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
@@ -31,11 +44,11 @@ class ProgramsIntroSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with icon
+            // Header with the Zealova mark (not a generic dumbbell glyph).
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -51,10 +64,19 @@ class ProgramsIntroSheet extends StatelessWidget {
                       width: 1.5,
                     ),
                   ),
-                  child: Icon(
-                    Icons.fitness_center_rounded,
-                    size: 32,
-                    color: accentColor,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'assets/images/app_icon.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.fitness_center_rounded,
+                        size: 32,
+                        color: accentColor,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -126,7 +148,7 @@ class ProgramsIntroSheet extends StatelessWidget {
 
             _buildExpectationItem(
               icon: Icons.list_alt_rounded,
-              title: AppLocalizations.of(context).programsIntro185Programs,
+              title: total != null ? '$total+ Programs' : 'Programs',
               description: AppLocalizations.of(
                 context,
               ).programsIntroStrengthCardioMobilityM,
@@ -163,14 +185,8 @@ class ProgramsIntroSheet extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildCategoryChip('Strength', accentColor),
-                _buildCategoryChip('Weight Loss', accentColor),
-                _buildCategoryChip('Muscle Building', accentColor),
-                _buildCategoryChip('Athletic', accentColor),
-                _buildCategoryChip('Home', accentColor),
-                _buildCategoryChip('Bodyweight', accentColor),
-                _buildCategoryChip('HIIT', accentColor),
-                _buildCategoryChip('Yoga', accentColor),
+                for (final category in topCategories)
+                  _buildCategoryChip(category, accentColor),
               ],
             ),
 

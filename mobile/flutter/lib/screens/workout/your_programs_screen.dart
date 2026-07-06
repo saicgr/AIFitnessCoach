@@ -11,11 +11,13 @@ import '../../data/providers/program_assignments_provider.dart';
 import '../../data/providers/program_favorites_provider.dart';
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
 import 'program_detail_screen.dart';
 import 'program_template_builder_screen.dart';
 import 'widgets/ai_adaptive_plan_card.dart';
 import 'widgets/program_library_card.dart';
 import 'widgets/program_manage_sheet.dart';
+import 'widgets/program_schedule_sheet.dart';
 
 /// Route metadata for the Your Programs hub.
 class YourProgramsRoute {
@@ -291,13 +293,178 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
                   data: programCardFromTemplate(t),
                   onTap: () {
                     HapticService.light();
-                    context.push(ProgramBuilderRoute.path, extra: t);
+                    context.push(ProgramBuilderRoute.path, extra: t).then((_) {
+                      if (mounted) _loadTemplates();
+                    });
                   },
+                  onLongPress: () => _showTemplateActions(t),
                 ),
               );
             },
           );
         },
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Custom/AI-made template actions — Schedule / Edit / Delete. Long-press on
+  // a tile (tap alone opens the builder to edit, matching the tap behavior
+  // above) — parity with the retired My Programs screen's per-row actions.
+  // -------------------------------------------------------------------------
+
+  void _showTemplateActions(ProgramTemplate t) {
+    HapticService.light();
+    showGlassSheet<void>(
+      context: context,
+      builder: (sheetContext) => GlassSheet(
+        child: _TemplateActionsSheet(
+          template: t,
+          onSchedule: () {
+            Navigator.of(sheetContext).pop();
+            showScheduleTemplateSheet(context, t);
+          },
+          onEdit: () {
+            Navigator.of(sheetContext).pop();
+            context.push(ProgramBuilderRoute.path, extra: t).then((_) {
+              if (mounted) _loadTemplates();
+            });
+          },
+          onDelete: () {
+            Navigator.of(sheetContext).pop();
+            _confirmDeleteTemplate(t);
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteTemplate(ProgramTemplate template) async {
+    if (template.id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete program'),
+        content: Text(
+          'Remove "${template.name}"? Workouts already on your calendar '
+          'stay — only this template is deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final repo = ref.read(programTemplateRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await repo.deleteTemplate(template.id!);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Deleted "${template.name}"')),
+      );
+      _loadTemplates();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not delete. Please try again.')),
+      );
+    }
+  }
+}
+
+class _TemplateActionsSheet extends StatelessWidget {
+  final ProgramTemplate template;
+  final VoidCallback onSchedule;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _TemplateActionsSheet({
+    required this.template,
+    required this.onSchedule,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                template.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.sans(15,
+                    color: AppColors.textPrimary, weight: FontWeight.w800),
+              ),
+            ),
+          ),
+          _actionTile(
+            icon: Icons.event_available_rounded,
+            label: 'Schedule this',
+            onTap: onSchedule,
+          ),
+          _actionTile(
+            icon: Icons.edit_rounded,
+            label: 'Edit',
+            onTap: onEdit,
+          ),
+          _actionTile(
+            icon: Icons.delete_outline_rounded,
+            label: 'Delete',
+            iconColor: AppColors.error,
+            labelColor: AppColors.error,
+            onTap: onDelete,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionTile({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? iconColor,
+    Color? labelColor,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: iconColor ?? AppColors.textPrimary),
+              const SizedBox(width: 14),
+              Text(
+                label,
+                style: ZType.sans(
+                  14,
+                  color: labelColor ?? AppColors.textPrimary,
+                  weight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

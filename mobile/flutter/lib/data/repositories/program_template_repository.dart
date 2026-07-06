@@ -68,6 +68,7 @@ typedef ProgramLibraryFilter = ({
   List<String>? goals,
   int? durationMin,
   int? durationMax,
+  List<String>? equipment,
 });
 
 /// Cache-first `AsyncValue` notifier shared by every Program Library lane.
@@ -160,6 +161,7 @@ Future<ProgramLibraryResult> _browseLibraryWithRetry(
         goals: filter.goals,
         durationMin: filter.durationMin,
         durationMax: filter.durationMax,
+        equipment: filter.equipment,
       );
     } on DioException catch (e) {
       if (attempt >= maxAttempts || !_isTransientLibraryFailure(e)) rethrow;
@@ -267,6 +269,7 @@ class ProgramTemplateRepository {
     List<String>? goals,
     int? durationMin,
     int? durationMax,
+    List<String>? equipment,
   }) async {
     final query = <String, dynamic>{};
     if (category != null && category.isNotEmpty) {
@@ -295,6 +298,15 @@ class ProgramTemplateRepository {
     }
     if (durationMax != null) {
       query['duration_max'] = durationMax;
+    }
+    if (equipment != null) {
+      final clean = equipment
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList(growable: false);
+      if (clean.isNotEmpty) {
+        query['equipment'] = clean.join(',');
+      }
     }
     debugPrint('🏋️ [ProgramTemplate] browseLibrary | filters=$query');
     final resp = await _client.get(
@@ -403,6 +415,7 @@ class ProgramTemplateRepository {
       (f.goals ?? const <String>[]).join('|'),
       f.durationMin?.toString() ?? '',
       f.durationMax?.toString() ?? '',
+      (f.equipment ?? const <String>[]).join('|'),
     ];
     final hash = parts.join('~');
     return '$_kBrowseCachePrefix${hash.replaceAll('~', '') == '' ? 'default' : hash}';
@@ -412,6 +425,7 @@ class ProgramTemplateRepository {
   /// can derive its own cache key without the caller threading the filter in).
   ProgramLibraryFilter _filterFromQuery(Map<String, dynamic> q) {
     final rawGoals = q['goals'];
+    final rawEquipment = q['equipment'];
     return (
       category: q['category'] as String?,
       difficulty: q['difficulty_level'] as String?,
@@ -420,6 +434,7 @@ class ProgramTemplateRepository {
       goals: rawGoals is String ? rawGoals.split(',') : null,
       durationMin: q['duration_min'] as int?,
       durationMax: q['duration_max'] as int?,
+      equipment: rawEquipment is String ? rawEquipment.split(',') : null,
     );
   }
 

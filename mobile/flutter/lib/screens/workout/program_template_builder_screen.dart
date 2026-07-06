@@ -11,7 +11,7 @@ import 'program_builder_part_exercise_picker.dart';
 import 'program_builder_part_template_meta.dart';
 import '../../widgets/glass_sheet.dart';
 import 'program_library_screen.dart';
-import 'template_list_screen.dart';
+import 'your_programs_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 
@@ -104,7 +104,7 @@ class _ProgramTemplateBuilderScreenState
                 context,
               ).programTemplateBuilderMyTemplates,
               icon: Icon(Icons.folder_open_rounded, color: textPrimary),
-              onPressed: () => context.push(TemplateListRoute.path),
+              onPressed: () => context.push(YourProgramsRoute.path),
             ),
         ],
       ),
@@ -1093,8 +1093,10 @@ class _ProgramTemplateBuilderScreenState
           : await repo.createTemplate(draft);
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text('Saved "${saved.name}"')));
-      // Land on the template list so the user can schedule it next.
-      router.go(TemplateListRoute.path);
+      // Land on the Your Programs hub — the saved template now shows under
+      // its CUSTOM or AI-MADE section (partitioned by `source`), where the
+      // user can schedule/edit/delete it.
+      router.go(YourProgramsRoute.path);
     } on ProgramParseException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -1883,40 +1885,20 @@ class _ExerciseEditSheetState extends State<_ExerciseEditSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // No inner drag handle / close button here — the GlassSheet
+              // wrapper this sheet is opened inside already draws a single
+              // handle + close affordance (was double-stacked before).
               Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 4),
-                child: Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Text(
+                  widget.exercise.name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: textPrimary,
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        widget.exercise.name,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: textPrimary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.close_rounded, color: textSecondary),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               // Sets.
