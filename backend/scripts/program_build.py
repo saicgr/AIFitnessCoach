@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -97,18 +98,138 @@ def _bump_reps(reps: Any, delta: int) -> Any:
     return reps  # "30 seconds", "8-12", "AMRAP" -> unchanged
 
 
+_MINUTES_TEXT_RE = re.compile(r"(\d+(?:\.\d+)?)(\s*(?:minutes?|min)\b)", re.IGNORECASE)
+_SECONDS_TEXT_RE = re.compile(r"(\d+(?:\.\d+)?)(\s*(?:seconds?|secs?)\b)", re.IGNORECASE)
+_SESSION_TITLE_MIN_RE = re.compile(r"(—\s*)(\d+(?:\.\d+)?)(\s*min\b)", re.IGNORECASE)
+
+
+def _rewrite_minutes_text(text: Any, new_seconds: int) -> Any:
+    """Best-effort: swap the leading '<N> minute(s)'/'<N> second(s)' in a
+    human string (e.g. '30 minutes easy', '30 seconds') to match a newly-
+    scaled duration, using whichever unit the original text used. Safe no-op
+    if the text doesn't contain a recognizable minutes/seconds pattern."""
+    if not isinstance(text, str) or not text:
+        return text
+
+    if _SECONDS_TEXT_RE.search(text):
+        def _sub_secs(m: "re.Match") -> str:
+            return f"{new_seconds}{m.group(2)}"
+        new_text, n = _SECONDS_TEXT_RE.subn(_sub_secs, text, count=1)
+        if n:
+            return new_text
+
+    new_minutes = round(new_seconds / 60, 1)
+    new_minutes_str = str(int(new_minutes)) if new_minutes == int(new_minutes) else str(new_minutes)
+
+    def _sub_min(m: "re.Match") -> str:
+        return f"{new_minutes_str}{m.group(2)}"
+
+    new_text, n = _MINUTES_TEXT_RE.subn(_sub_min, text, count=1)
+    return new_text if n else text
+
+
+def _resync_session_duration(w: Dict[str, Any]) -> None:
+    """After scaling exercises' duration_seconds, recompute the session's
+    duration_minutes from its parts and rewrite any '— N min' embedded in the
+    workout_name/name so titles don't go stale against the new content."""
+    exercises = w.get("exercises", [])
+    total_seconds = 0
+    has_any_secs = False
+    for ex in exercises:
+        secs = ex.get("duration_seconds")
+        if secs:
+            has_any_secs = True
+            sets = ex.get("sets")
+            try:
+                sets_i = int(sets) if sets else 1
+            except (TypeError, ValueError):
+                sets_i = 1
+            rest = ex.get("rest_seconds") or 0
+            total_seconds += secs * max(sets_i, 1) + rest * max(sets_i - 1, 0)
+    if not has_any_secs:
+        return
+    new_minutes = max(1, round(total_seconds / 60))
+    w["duration_minutes"] = new_minutes
+    for key in ("workout_name", "name"):
+        val = w.get(key)
+        if isinstance(val, str) and val:
+            new_val, n = _SESSION_TITLE_MIN_RE.subn(
+                lambda m: f"{m.group(1)}{new_minutes}{m.group(3)}", val, count=1
+            )
+            if n:
+                w[key] = new_val
+
+
 def scale_intensity(week: Dict[str, Any], level: str) -> Dict[str, Any]:
-    """Easy: -1 set / +2 reps / +rest. Hard: +1 set / -2 reps / -rest. Rep-based
-    only — NEVER scale a timed/distance conditioning move."""
+    """Easy: -1 set / +2 reps / +rest. Hard: +1 set / -2 reps / -rest — for
+    rep-based exercises (unchanged behavior, exactly as before).
+
+    For timed/distance exercises, this used to unconditionally skip scaling
+    (a cardio program's Easy/Medium/Hard were byte-identical). Now: only
+    exercises explicitly marked `intensity_scalable: true` at author time
+    (the true "main effort" — never warmups/cooldowns/recovery days/fillers,
+    which stay completely untouched, exactly like today) get scaled:
+      - rounds-via-sets pattern (sets > 1, e.g. a 4x4 interval): vary ROUNDS
+        and REST, never the named work-interval length (protocol identity —
+        "4x4" stays 4-minute efforts — is preserved).
+      - continuous/per-effort pattern (sets in (None, 1), e.g. a Zone-2 jog):
+        vary DURATION (and rest, if present) directly.
+    Any timed/distance exercise WITHOUT the flag is left exactly as before
+    (unconditional skip) — zero behavior change for anything not explicitly
+    opted in.
+    """
     if level == "Medium":
         return week
     import copy
     wk = copy.deepcopy(week)
     for w in wk.get("workouts", []):
+        touched = False
         for ex in w.get("exercises", []):
             tt = (ex.get("tracking_type") or "").lower()
-            if tt in ("time", "distance") or "second" in str(ex.get("reps", "")).lower():
+            # duration_seconds presence is checked directly because
+            # gemini-authored content doesn't reliably set tracking_type —
+            # relying on that string alone silently misses timed exercises,
+            # which then fall through to the rep-based path below and get
+            # nonsensically "scaled" as if sets/reps (e.g. a continuous 25-min
+            # walk turning into "2 sets of 3 reps").
+            is_timed = (tt in ("time", "distance")
+                       or "second" in str(ex.get("reps", "")).lower()
+                       or bool(ex.get("duration_seconds")))
+            if is_timed:
+                if not ex.get("intensity_scalable"):
+                    continue
+                secs = ex.get("duration_seconds")
+                rest = ex.get("rest_seconds")
+                try:
+                    sets_i = int(ex.get("sets")) if ex.get("sets") else None
+                except (TypeError, ValueError):
+                    sets_i = None
+                if sets_i and sets_i > 1:
+                    # rounds-via-sets pattern: vary rounds + rest, not work length
+                    if level == "Hard":
+                        ex["sets"] = sets_i + 1
+                        if rest:
+                            ex["rest_seconds"] = max(20, round(int(rest) * 0.8 / 5) * 5)
+                    elif level == "Easy":
+                        ex["sets"] = max(2, sets_i - 1)
+                        if rest:
+                            ex["rest_seconds"] = round(int(rest) * 1.25 / 5) * 5
+                    touched = True
+                elif secs:
+                    # continuous/per-effort pattern: vary duration + rest directly.
+                    # Floor is relative to the original duration (not a flat
+                    # constant) so short bursts (e.g. a 30s jump-rope round)
+                    # don't get clamped up to something longer than Hard.
+                    factor = 1.15 if level == "Hard" else 0.85
+                    new_secs = max(10, round(int(secs) * factor / 5) * 5)
+                    ex["duration_seconds"] = new_secs
+                    ex["reps"] = _rewrite_minutes_text(ex.get("reps"), new_secs)
+                    if rest:
+                        rfactor = 0.8 if level == "Hard" else 1.25
+                        ex["rest_seconds"] = max(10, round(int(rest) * rfactor / 5) * 5)
+                    touched = True
                 continue
+            # rep-based path — unchanged
             try:
                 sets = int(ex.get("sets") or 3)
             except (TypeError, ValueError):
@@ -121,6 +242,8 @@ def scale_intensity(week: Dict[str, Any], level: str) -> Dict[str, Any]:
                 ex["sets"] = sets + 1
                 ex["reps"] = _bump_reps(ex.get("reps"), -2)
                 ex["rest_seconds"] = max(45, int(ex.get("rest_seconds") or 60) - 15)
+        if touched:
+            _resync_session_duration(w)
     return wk
 
 

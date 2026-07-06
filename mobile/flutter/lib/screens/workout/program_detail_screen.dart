@@ -1064,11 +1064,20 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// Threads the schedule row's exerciseId so media + stats resolve to the
   /// exact library row; falls back to name-only resolution when absent.
   void _openExerciseDetail(ProgramScheduleExercise ex) {
+    // Compose the program's own coaching text (already display-ready sentences)
+    // so the exercise-detail Notes card shows protocol context, not just the
+    // generic library entry. Order: intensity target, protocol note, form cue.
+    final parts = [ex.intensityGuidance, ex.protocolNote, ex.coachCue]
+        .where((p) => p != null && p.trim().isNotEmpty)
+        .map((p) => p!.trim())
+        .toList();
+    final contextNote = parts.isEmpty ? null : parts.join(' ');
     openExerciseBrowse(
       context,
       name: ex.name,
       exerciseId: ex.exerciseId,
       libraryId: ex.exerciseId,
+      contextNote: contextNote,
     );
   }
 
@@ -1616,6 +1625,10 @@ class _ScheduleExerciseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final volume = ex.volumeLabel;
+    // Program-authored subtitle: plain-English interval label, else the
+    // authored intensity target. Additive — the volume label stays trailing.
+    final subtitle = ex.intervalLabel ?? ex.intensityGuidance;
+    final hasSubtitle = subtitle != null && subtitle.trim().isNotEmpty;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -1637,15 +1650,30 @@ class _ScheduleExerciseRow extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                ex.name,
-                style: ZType.sans(
-                  13,
-                  color: AppColors.textPrimary,
-                  weight: FontWeight.w500,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    ex.name,
+                    style: ZType.sans(
+                      13,
+                      color: AppColors.textPrimary,
+                      weight: FontWeight.w500,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (hasSubtitle) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle.trim(),
+                      style: ZType.sans(11, color: AppColors.textMuted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
               ),
             ),
             if (volume.isNotEmpty) ...[

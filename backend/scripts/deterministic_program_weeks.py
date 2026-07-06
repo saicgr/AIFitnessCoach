@@ -26,8 +26,15 @@ import copy
 def ex(name: str, sets: int, reps, rest: int, *, guide: str = "Bodyweight",
        equipment: str = "Bodyweight", body_part: str = "full body",
        muscle: str = "Full Body", difficulty: str = "beginner",
-       cue: str = "", secs: int | None = None, notes: str | None = None) -> dict:
-    """Standard exercise entry; pass secs for timed moves (adds timer fields)."""
+       cue: str = "", secs: int | None = None, notes: str | None = None,
+       scalable: bool = False) -> dict:
+    """Standard exercise entry; pass secs for timed moves (adds timer fields).
+
+    Pass scalable=True on the true "main effort" of a session (the one that
+    should actually get harder/easier on the Easy/Medium/Hard axis) — NEVER
+    on warmups/cooldowns/recovery days/active-recovery fillers, which stay
+    fixed regardless of intensity tier. See program_build.py::scale_intensity.
+    """
     e = {
         "name": name,
         "exercise_name": name,
@@ -46,6 +53,8 @@ def ex(name: str, sets: int, reps, rest: int, *, guide: str = "Bodyweight",
                   "is_timed": True})
     if notes:
         e["notes"] = notes
+    if scalable:
+        e["intensity_scalable"] = True
     return e
 
 
@@ -102,7 +111,10 @@ def w_12_3_30(week: int, total: int, spw: int) -> dict:
                guide=f"Incline {incline}%, speed 3.0 mph",
                body_part="lower legs", muscle="Glutes",
                cue="Stand tall, light grip on rails only if needed",
-               notes="The 12-3-30: don't chase speed — the incline does the work."),
+               notes="The 12-3-30 protocol: a steep incline walk at a fixed "
+                     "3.0 mph pace. The incline — not speed — is what drives "
+                     "the cardio and glute work, so resist the urge to speed up.",
+               scalable=True),
             ex("Walking", 1, "3 minutes easy", 0, secs=180,
                guide="Flat, cool down", cue="Let the heart rate drift down"),
         ],
@@ -120,38 +132,82 @@ def w_vo2max(week: int, total: int, spw: int) -> dict:
     z2_a = min(30 + 3 * (week - 1), 50)      # jog/run zone-2 minutes
     z2_b = min(30 + 2 * (week - 1), 40)      # bike/row zone-2 minutes
     phase = "Base" if week <= 2 else ("Build" if week <= 4 else "Peak")
-    s1 = session(
-        "Norwegian 4×4 Intervals", "Cardio", 45,
-        [
-            ex("Jogging", 1, "10 minutes easy", 0, secs=600,
-               guide="Zone 1-2 warmup", cue="Finish the warmup slightly sweaty"),
-            ex("Running", 4, "4 minutes hard", 180, secs=240,
-               guide="90-95% max heart rate",
-               body_part="cardio", muscle="Full Body", difficulty="intermediate",
-               cue="Hard but repeatable — the 4th interval should match the 1st",
-               notes="3-minute ACTIVE recovery (slow walk/jog) between intervals."),
-            ex("Walking", 1, "5 minutes easy", 0, secs=300,
-               guide="Cool down", cue="Walk it off completely"),
-        ],
-        notes="The one hard day. Progress = same intervals at a faster pace.",
-    )
+
+    if phase == "Base":
+        # Weeks 1-2: a short, hard sprint-interval on-ramp. Research shows
+        # repeated short efforts (<=30s work / <=~90s recovery) produce
+        # meaningful VO2max gains in as little as 2 weeks at 3x/week — this
+        # is a fast-boost effect, not a permanent substitute for the 4x4
+        # that starts in week 3.
+        s1 = session(
+            "VO2max Sprint Intervals", "Cardio", 25,
+            [
+                ex("Jogging", 1, "5 minutes easy", 0, secs=300,
+                   guide="Zone 1-2 warmup", cue="Finish the warmup slightly sweaty"),
+                ex("Running", 8, "30 seconds hard", 90, secs=30,
+                   guide="~90% max heart rate",
+                   body_part="cardio", muscle="Full Body", difficulty="intermediate",
+                   cue="Close to an all-out effort each round — the short work "
+                       "time is what lets you recover and go again",
+                   notes="A short, hard on-ramp: repeated 30-second sprints are "
+                         "proven to raise VO2max fast in the first couple of "
+                         "weeks. The longer Norwegian 4×4 intervals take over "
+                         "in week 3, once this initial boost has landed.",
+                   scalable=True),
+                ex("Walking", 1, "5 minutes easy", 0, secs=300,
+                   guide="Cool down", cue="Walk it off completely"),
+            ],
+            notes="The one hard day this week. Push close to max effort each "
+                  "round — you get more recovery than the 4x4 intervals ahead.",
+        )
+        focus = ("Short, hard sprint intervals (8 rounds: 30 sec near-max effort, "
+                 "90 sec easy recovery) to kick-start VO2max fast, plus easy "
+                 "conversational-pace cardio days")
+    else:
+        s1 = session(
+            "Norwegian 4×4 Intervals", "Cardio", 45,
+            [
+                ex("Jogging", 1, "10 minutes easy", 0, secs=600,
+                   guide="Zone 1-2 warmup", cue="Finish the warmup slightly sweaty"),
+                ex("Running", 4, "4 minutes hard", 180, secs=240,
+                   guide="90-95% max heart rate",
+                   body_part="cardio", muscle="Full Body", difficulty="intermediate",
+                   cue="Hard but repeatable — the last interval should feel "
+                       "about as hard as the first, not a fade",
+                   notes="This is the Norwegian 4×4 protocol — one of the "
+                         "most-researched ways to raise VO2max. Four minutes at "
+                         "90-95% of your max heart rate is long enough to "
+                         "meaningfully stress your heart's ceiling; the active "
+                         "recovery (a slow walk or jog) between rounds lets you "
+                         "go hard again instead of flaming out after one.",
+                   scalable=True),
+                ex("Walking", 1, "5 minutes easy", 0, secs=300,
+                   guide="Cool down", cue="Walk it off completely"),
+            ],
+            notes="The one hard day. Progress = same intervals at a faster pace.",
+        )
+        focus = ("One interval day (4 rounds: run 4 min hard, recover ~3 min) "
+                 "+ easy conversational-pace cardio days")
+
     s2 = session(
         f"Zone 2 Run — {z2_a} min", "Cardio", z2_a + 5,
         [ex("Jogging", 1, f"{z2_a} minutes easy", 0, secs=z2_a * 60,
             guide="Zone 2 — conversational pace",
-            cue="If you can't speak a sentence, slow down")],
-        notes="Easy means easy. This session builds the base the 4×4 spends.",
+            cue="If you can't speak a sentence, slow down",
+            notes="Easy means easy. This is Zone 2 — a conversational pace "
+                  "that builds the aerobic base the hard interval day draws on.",
+            scalable=True)],
     )
     s3 = session(
         f"Zone 2 Cross — {z2_b} min", "Cardio", z2_b + 5,
         [ex("Stationary bike", 1, f"{z2_b} minutes easy", 0, secs=z2_b * 60,
             guide="Zone 2 — conversational pace", equipment="Stationary bike",
             cue="Smooth cadence, nose-breathing pace",
-            notes="Rowing or Elliptical are fine swaps — same duration, same easy effort.")],
+            notes="Rowing or Elliptical are fine swaps — same duration, same "
+                  "easy effort.",
+            scalable=True)],
     )
-    return {"week": week, "phase": phase,
-            "focus": "One interval day (4 rounds: run 4 min hard, recover 3 min) "
-                     "+ easy conversational-pace cardio days",
+    return {"week": week, "phase": phase, "focus": focus,
             "workouts": _clone_sessions([s1, s2, s3], spw)}
 
 
@@ -191,7 +247,8 @@ def w_zero_to_5k(week: int, total: int, spw: int) -> dict:
                             guide="Easy — you should be able to speak short sentences",
                             body_part="cardio", muscle="Full Body",
                             cue="Short strides, relaxed shoulders",
-                            notes="Walk briskly (don't stand) during every rest." if rest else None))
+                            notes="Walk briskly (don't stand) during every rest." if rest else None,
+                            scalable=True))
     exercises.append(ex("Walking", 1, "5 minutes cool-down", 0, secs=300,
                         guide="Easy pace", cue="Shake it out"))
     minutes = round(sum(e.get("duration_seconds", 0) * e["sets"] +
@@ -300,7 +357,8 @@ def w_rucking(week: int, total: int, spw: int) -> dict:
         [ex("Brisk walking", 1, f"{ruck_min} minutes loaded", 0, secs=ruck_min * 60,
             guide=f"Pack at ~{load_pct}% bodyweight", equipment="Backpack",
             cue="Tall posture, pack high and tight, roll through the whole foot",
-            notes="One variable at a time: this week's duration and load are set — don't add both.")],
+            notes="One variable at a time: this week's duration and load are set — don't add both.",
+            scalable=True)],
         notes="The ruck IS the workout. Walk with intent.",
     )
     s2 = session(
@@ -357,13 +415,15 @@ def w_jump_rope(week: int, total: int, spw: int) -> dict:
                                 guide="Smooth, low bounce", equipment="Jump rope",
                                 body_part="full body", muscle="Calves",
                                 cue="Wrists spin the rope, not the arms",
-                                notes="Trip? Restart the interval — it still counts."))
+                                notes="Trip? Restart the interval — it still counts.",
+                                scalable=True))
             exercises.append(ex(filler_name, 1, "30 seconds", rest, secs=30,
                                 body_part=bp, muscle=muscle,
                                 cue="Active recovery pace — keep breathing"))
         sessions.append(session(
             f"Jump Rope 10 — Circuit {chr(65 + i % 5)}", "HIIT", 10, exercises,
-            notes=f"{rounds} rounds of {work}s rope / 30s active. Ten minutes, done."))
+            notes=f"{rounds} rounds of jump-rope work with active recovery "
+                  "between rounds. Ten minutes, done."))
     return {"week": week, "phase": phase,
             "focus": f"{work}-second jump rope intervals with active breaks",
             "workouts": sessions}
@@ -394,7 +454,8 @@ def w_shadow_boxing(week: int, total: int, spw: int) -> dict:
                 guide="Jab-cross-hook combos, constant footwork",
                 body_part="full body", muscle="Full Body",
                 cue="Stay light on your feet; exhale on every punch",
-                notes=f"Round {r + 1} of {rounds}. Work at a talk-in-short-sentences pace."))
+                notes=f"Round {r + 1} of {rounds}. Work at a talk-in-short-sentences pace.",
+                scalable=True))
             a_name, bp, muscle = actives[r % len(actives)]
             timed = a_name in ("Plank", "Side Plank")
             exercises.append(ex(a_name, 1, "30 seconds", 30, secs=30 if timed else 30,
@@ -402,7 +463,7 @@ def w_shadow_boxing(week: int, total: int, spw: int) -> dict:
                                 cue="Active break — keep moving"))
         sessions.append(session(
             f"Shadow Boxing — Session {chr(65 + i % 5)}", "HIIT", 20, exercises,
-            notes=f"{rounds} × 3-minute rounds with actives between."))
+            notes=f"{rounds} boxing rounds with active recovery between rounds."))
     return {"week": week, "phase": phase,
             "focus": f"{rounds} three-minute boxing rounds with active breaks",
             "workouts": sessions}

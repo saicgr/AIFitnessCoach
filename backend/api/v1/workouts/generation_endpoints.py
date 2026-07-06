@@ -1495,6 +1495,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                         exercises=exercises,
                         focus_area=primary_focus,
                         workout_name=workout_name,
+                        candidate_pool=rag_exercises,
                     )
 
                     # Full-body muscle group coverage check

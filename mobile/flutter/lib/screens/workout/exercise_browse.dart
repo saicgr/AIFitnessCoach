@@ -42,12 +42,13 @@ Future<void> openExerciseBrowse(
   String? exerciseId,
   String? libraryId,
   WorkoutExercise? exercise,
+  String? contextNote,
 }) async {
   HapticFeedback.selectionClick();
 
   // 1. Caller already holds a fully-populated exercise — push immediately.
   if (exercise != null) {
-    _pushDetail(context, exercise);
+    _pushDetail(context, _withContextNote(exercise, contextNote));
     return;
   }
 
@@ -61,7 +62,7 @@ Future<void> openExerciseBrowse(
   // 2. No id to look up — push the minimal exercise (media + title only).
   final lookupId = exerciseId ?? libraryId;
   if (lookupId == null || lookupId.isEmpty) {
-    _pushDetail(context, minimal);
+    _pushDetail(context, _withContextNote(minimal, contextNote));
     return;
   }
 
@@ -89,7 +90,21 @@ Future<void> openExerciseBrowse(
   if (rootNav.canPop()) rootNav.pop();
 
   if (!context.mounted) return;
-  _pushDetail(context, resolved);
+  _pushDetail(context, _withContextNote(resolved, contextNote));
+}
+
+/// Overlay a program-specific [contextNote] onto a resolved exercise's `notes`
+/// so the exercise-detail Notes card surfaces the program's own coaching text.
+/// The contextNote is the primary content (shown first); an existing library
+/// note, if any, is kept below it rather than discarded. No-op when empty.
+WorkoutExercise _withContextNote(WorkoutExercise ex, String? contextNote) {
+  final note = contextNote?.trim();
+  if (note == null || note.isEmpty) return ex;
+  final existing = ex.notes?.trim();
+  final combined = (existing != null && existing.isNotEmpty && existing != note)
+      ? '$note\n\n$existing'
+      : note;
+  return ex.copyWith(notes: combined);
 }
 
 /// Build a populated [WorkoutExercise] from a base (name + ids) and the fetched

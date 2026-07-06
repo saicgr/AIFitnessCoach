@@ -746,6 +746,21 @@ class ProgramScheduleExercise {
   /// GIF URL — null when unavailable.
   final String? gifUrl;
 
+  /// Rest between rounds/sets, in seconds — null when not specified.
+  final int? restSeconds;
+
+  /// Per-effort work duration, in seconds — null for rep-based exercises.
+  final int? durationSeconds;
+
+  /// Program-authored intensity target (e.g. "90-95% max heart rate").
+  final String? intensityGuidance;
+
+  /// Program-authored form cue for this exercise.
+  final String? coachCue;
+
+  /// Program-authored protocol explanation / note.
+  final String? protocolNote;
+
   const ProgramScheduleExercise({
     this.exerciseId,
     required this.name,
@@ -755,6 +770,11 @@ class ProgramScheduleExercise {
     this.imageUrl,
     this.videoUrl,
     this.gifUrl,
+    this.restSeconds,
+    this.durationSeconds,
+    this.intensityGuidance,
+    this.coachCue,
+    this.protocolNote,
   });
 
   factory ProgramScheduleExercise.fromJson(Map<String, dynamic> json) =>
@@ -767,6 +787,11 @@ class ProgramScheduleExercise {
         imageUrl: json['image_url'] as String?,
         videoUrl: json['video_url'] as String?,
         gifUrl: json['gif_url'] as String?,
+        restSeconds: _asInt(json['rest_seconds']),
+        durationSeconds: _asInt(json['duration_seconds']),
+        intensityGuidance: json['intensity_guidance'] as String?,
+        coachCue: json['coach_cue'] as String?,
+        protocolNote: json['protocol_note'] as String?,
       );
 
   /// Compact "sets × reps" label; skips null side. E.g. "4 × 800 m", "3 sets".
@@ -784,6 +809,30 @@ class ProgramScheduleExercise {
     if (d != null && d.isNotEmpty) return d;
     if (s != null && s.isNotEmpty) return '$s sets';
     return '';
+  }
+
+  /// Plain-English rounds/work/rest label for genuine interval structures —
+  /// e.g. "4 rounds: 4 min hard, 3 min easy". Conservative: returns null unless
+  /// `sets` is a whole number > 1 AND `durationSeconds` is present, so it never
+  /// produces a confusing label. Additive — never replaces [volumeLabel].
+  String? get intervalLabel {
+    final rounds = int.tryParse(sets?.trim() ?? '');
+    if (rounds == null || rounds <= 1) return null;
+    final dur = durationSeconds;
+    if (dur == null || dur <= 0) return null;
+    final workMin = (dur / 60).round();
+    if (workMin <= 0) return null;
+
+    final rest = restSeconds;
+    if (rest != null && rest > 0) {
+      // Round rest to the nearest half-minute; drop a trailing ".0".
+      final restMin = (rest / 30).round() / 2;
+      final restStr = restMin == restMin.roundToDouble()
+          ? restMin.toStringAsFixed(0)
+          : restMin.toStringAsFixed(1);
+      return '$rounds rounds: $workMin min hard, $restStr min easy';
+    }
+    return '$rounds rounds: $workMin min';
   }
 }
 
