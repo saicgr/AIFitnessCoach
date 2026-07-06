@@ -31,7 +31,11 @@ class PaywallValueReel extends StatefulWidget {
   /// Jump straight past the reel to the offer page.
   final VoidCallback onSkip;
 
-  const PaywallValueReel({super.key, required this.onSkip});
+  /// Called when the user backs out of beat 0 (nowhere earlier to go within
+  /// the reel itself).
+  final VoidCallback onBack;
+
+  const PaywallValueReel({super.key, required this.onSkip, required this.onBack});
 
   @override
   State<PaywallValueReel> createState() => _PaywallValueReelState();
@@ -90,6 +94,12 @@ class _PaywallValueReelState extends State<PaywallValueReel>
   int _beat = 0;
   Timer? _timer;
 
+  /// Guards against the auto-advance timer and a tap both firing an advance
+  /// within the same frame (e.g. a tap queued just as the timer elapses),
+  /// which would otherwise skip a beat before it's ever painted.
+  DateTime _lastAdvanceAt = DateTime.fromMillisecondsSinceEpoch(0);
+  static const _advanceDebounce = Duration(milliseconds: 300);
+
   /// Drives the framed demo scene. Restarted at each beat so every scene
   /// plays from its opening moment; repeats so it loops during the dwell.
   late final AnimationController _sceneCtrl = AnimationController(
@@ -107,13 +117,7 @@ class _PaywallValueReelState extends State<PaywallValueReel>
     _timer?.cancel();
     _timer = Timer(_beatDuration, () {
       if (!mounted) return;
-      if (_beat < _beatCount - 1) {
-        _advanceTo(_beat + 1);
-        _scheduleNext();
-      } else {
-        // Reel finished its last beat — hand off to the host flow.
-        widget.onSkip();
-      }
+      _advanceBeat();
     });
   }
 
@@ -126,14 +130,37 @@ class _PaywallValueReelState extends State<PaywallValueReel>
       ..repeat();
   }
 
-  void _onBeatTap() {
-    // Tap anywhere advances; on the last beat it hands off.
+  /// Single choke point for moving forward a beat — both the auto-advance
+  /// timer and manual taps route through here so they can't stack two
+  /// advances within the same frame.
+  void _advanceBeat() {
+    final now = DateTime.now();
+    if (now.difference(_lastAdvanceAt) < _advanceDebounce) return;
+    _lastAdvanceAt = now;
     if (_beat < _beatCount - 1) {
       _advanceTo(_beat + 1);
       _scheduleNext();
     } else {
+      // Reel finished its last beat — hand off to the host flow.
       _timer?.cancel();
       widget.onSkip();
+    }
+  }
+
+  void _onBeatTap() {
+    // Tap anywhere advances; on the last beat it hands off.
+    _advanceBeat();
+  }
+
+  /// Retreat one beat, or exit the reel entirely from beat 0.
+  void _onBackTap() {
+    if (_beat > 0) {
+      _lastAdvanceAt = DateTime.now();
+      _advanceTo(_beat - 1);
+      _scheduleNext();
+    } else {
+      _timer?.cancel();
+      widget.onBack();
     }
   }
 
@@ -155,9 +182,15 @@ class _PaywallValueReelState extends State<PaywallValueReel>
             // Beat counter + Skip — the counter tells the user where they
             // are; Skip is always visible so they can bail to the offer.
             Padding(
-              padding: const EdgeInsets.fromLTRB(22, 8, 12, 0),
+              padding: const EdgeInsets.fromLTRB(6, 8, 12, 0),
               child: Row(
                 children: [
+                  IconButton(
+                    splashRadius: 20,
+                    icon: const Icon(Icons.chevron_left,
+                        size: 26, color: _kSigText),
+                    onPressed: _onBackTap,
+                  ),
                   Text(
                     '${'${_beat + 1}'.padLeft(2, '0')} / ${'$_beatCount'.padLeft(2, '0')}',
                     style: const TextStyle(

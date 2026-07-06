@@ -908,9 +908,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       backgroundColor: colors.background,
       body: SafeArea(
         child: PopScope(
-          canPop: _currentPage == 0,
+          canPop: false,
           onPopInvokedWithResult: (didPop, _) {
-            if (!didPop && _currentPage > 0) _goToPreviousPage();
+            if (!didPop) _goToPreviousPage();
           },
           child: Column(
             children: [
@@ -945,7 +945,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   children: [
                     // Page 0 — auto-advancing value reel. Skip / finish jumps
                     // straight to the timeline-offer page (the last page).
-                    PaywallValueReel(onSkip: _skipReelToOffer),
+                    PaywallValueReel(
+                        onSkip: _skipReelToOffer, onBack: _goToPreviousPage),
                     if (_founderPageEnabled)
                       _buildIntroPageFounder(colors)
                     else
@@ -2021,7 +2022,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     } else if (!success && context.mounted) {
       // Surface any error the subscription notifier set so users see *why* the
       // purchase didn't go through, instead of silently navigating away.
-      final purchaseError = ref.read(subscriptionProvider).error;
+      final subState = ref.read(subscriptionProvider);
+      final purchaseError = subState.error;
       if (purchaseError != null && purchaseError.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2029,15 +2031,21 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
+      } else if (subState.wasCancelled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Purchase cancelled'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
       if (isReturningUser) {
         // Returning user cancelled — just go back
         if (context.canPop()) context.pop();
-      } else {
-        // New user — let them through, hard paywall will gate premium features
-        await _markPaywallComplete(ref);
-        await _navigateAfterPaywall(context, ref);
       }
+      // New user: no unsuccessful purchase (cancelled or failed) advances
+      // them past the paywall anymore — they stay here and can retry, or
+      // explicitly tap "Maybe later"/Skip to bypass it.
     }
   }
 

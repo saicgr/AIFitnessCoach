@@ -121,7 +121,14 @@ class ProgramBuilderScene extends StatelessWidget {
         start: 22,
         end: 22,
       ),
-      child: Column(
+      // Absorbs overflow when every beat (header + both bubbles + program
+      // card + goal chip) is visible at once near the end of the loop —
+      // this is a passive looping background scene, not user-navigable
+      // content, so scrolling is disabled; it exists purely to prevent the
+      // RenderFlex overflow banner on short devices.
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // chat header
@@ -265,6 +272,7 @@ class ProgramBuilderScene extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }

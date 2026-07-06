@@ -250,7 +250,7 @@ class _WhyOptionCard extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             gradient: selected
                 ? LinearGradient(colors: t.cardSelectedGradient)
@@ -265,13 +265,13 @@ class _WhyOptionCard extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   color: option.color.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(option.icon, color: option.color, size: 22),
+                child: Icon(option.icon, color: option.color, size: 16),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -286,20 +286,19 @@ class _WhyOptionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              AnimatedScale(
-                scale: selected ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOutBack,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: t.checkBg,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.check_rounded,
-                      color: t.checkIcon, size: 16),
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: selected ? t.checkBg : Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: selected
+                      ? null
+                      : Border.all(color: t.checkBorderUnselected, width: 2),
                 ),
+                child: selected
+                    ? Icon(Icons.check_rounded, color: t.checkIcon, size: 14)
+                    : null,
               ),
             ],
           ),

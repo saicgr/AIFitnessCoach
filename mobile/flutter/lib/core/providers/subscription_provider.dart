@@ -118,6 +118,10 @@ class SubscriptionState {
   final DateTime? subscriptionEndDate;
   final bool isLoading;
   final String? error;
+  /// True when the most recent `purchase()` call failed because the user
+  /// dismissed the native store sheet, rather than a genuine error. Reset to
+  /// false by `copyWith` unless explicitly passed, mirroring [error].
+  final bool wasCancelled;
   final Map<String, dynamic> features;
   final bool isRevenueCatConfigured;
 
@@ -144,6 +148,7 @@ class SubscriptionState {
     this.subscriptionEndDate,
     this.isLoading = false,
     this.error,
+    this.wasCancelled = false,
     this.features = const {},
     this.isRevenueCatConfigured = false,
     this.offerings,
@@ -185,6 +190,7 @@ class SubscriptionState {
     DateTime? subscriptionEndDate,
     bool? isLoading,
     String? error,
+    bool? wasCancelled,
     Map<String, dynamic>? features,
     bool? isRevenueCatConfigured,
     Offerings? offerings,
@@ -205,6 +211,7 @@ class SubscriptionState {
       subscriptionEndDate: subscriptionEndDate ?? this.subscriptionEndDate,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      wasCancelled: wasCancelled ?? false,
       features: features ?? this.features,
       isRevenueCatConfigured: isRevenueCatConfigured ?? this.isRevenueCatConfigured,
       offerings: offerings ?? this.offerings,
@@ -1110,7 +1117,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
         _posthog?.capture(eventName: 'subscription_purchase_cancelled', properties: {'product_id': productId});
         debugPrint('ℹ️ Purchase cancelled by user');
-        state = state.copyWith(isLoading: false);
+        state = state.copyWith(isLoading: false, wasCancelled: true);
         return false;
       }
       // ProductAlreadyPurchasedError: user re-tapped Subscribe on a SKU they

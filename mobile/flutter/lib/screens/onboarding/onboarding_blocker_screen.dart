@@ -34,12 +34,13 @@ class _BlockerOption {
   final String id;
   final String label;
   final IconData icon;
+  final Color accent;
   final String acknowledgment;
   // 3 concrete "how the plan carries this" points (icon + short line) shown
   // under the acknowledgment so the lower half reads as substance, not space.
   final List<(IconData, String)> supports;
-  const _BlockerOption(
-      this.id, this.label, this.icon, this.acknowledgment, this.supports);
+  const _BlockerOption(this.id, this.label, this.icon, this.accent,
+      this.acknowledgment, this.supports);
 }
 
 class _OnboardingBlockerScreenState
@@ -50,6 +51,7 @@ class _OnboardingBlockerScreenState
       'no_time',
       "I couldn't find the time",
       Icons.schedule_rounded,
+      Color(0xFF3B82F6),
       'Time is the one nobody beats with willpower. Your plan is built '
           'around the exact days and session length you picked, and if you '
           'miss one the coach reshapes the week instead of piling on guilt.',
@@ -63,6 +65,7 @@ class _OnboardingBlockerScreenState
       'lost_motivation',
       'I lost motivation',
       Icons.battery_2_bar_rounded,
+      Color(0xFFF59E0B),
       'Motivation comes and goes for everyone. That is why the plan runs '
           'on a set schedule and small weekly wins, so showing up does not '
           'depend on feeling motivated that day.',
@@ -77,6 +80,7 @@ class _OnboardingBlockerScreenState
       'no_results',
       "I wasn't seeing results",
       Icons.trending_flat_rounded,
+      Color(0xFFEF4444),
       'No results usually means the plan stopped progressing. Yours adds '
           'a little every week with progressive overload, and the coach '
           'changes course when something stalls.',
@@ -90,6 +94,7 @@ class _OnboardingBlockerScreenState
       'unsure',
       "I didn't know what to do",
       Icons.help_outline_rounded,
+      Color(0xFF8B5CF6),
       'Not knowing what to do is a real wall. Every session here is laid '
           'out for you, with form guidance on each move, so there is no '
           'guesswork before you start.',
@@ -103,6 +108,7 @@ class _OnboardingBlockerScreenState
       'injury',
       'I got injured or burned out',
       Icons.healing_rounded,
+      Color(0xFFFF6B6B),
       'Injury and burnout are setbacks, not the end. Your plan works '
           'around the limitations you told us about and builds intensity '
           'gradually instead of all at once.',
@@ -116,6 +122,7 @@ class _OnboardingBlockerScreenState
       'first_time',
       'This is my first real attempt',
       Icons.flag_rounded,
+      Color(0xFF14B8A6),
       'A first real attempt is a strong place to begin. The plan meets '
           'you where you are today and builds up slowly, so nothing about '
           'week one is overwhelming.',
@@ -415,7 +422,15 @@ class _BlockerOptionCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(option.icon, size: 22, color: t.textSecondary),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: option.accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(option.icon, size: 18, color: option.accent),
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
