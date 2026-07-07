@@ -43,6 +43,7 @@ const RefundPolicy = lazy(() => import('./pages/RefundPolicy'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const About = lazy(() => import('./pages/About'));
 const Architecture = lazy(() => import('./pages/Architecture'));
+const MCPDocs = lazy(() => import('./pages/MCPDocs'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Changelog = lazy(() => import('./pages/Changelog'));
 const Roadmap = lazy(() => import('./pages/Roadmap'));
@@ -252,6 +253,7 @@ function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/about" element={<About />} />
         <Route path="/architecture" element={<Architecture />} />
+        <Route path="/mcp/docs" element={<MCPDocs />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/share" element={<Share />} />
         <Route path="/changelog" element={<Changelog />} />

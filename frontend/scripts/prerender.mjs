@@ -86,6 +86,7 @@ async function buildRouteList() {
     '/refunds',
     '/health-disclaimer',
     '/architecture',
+    '/mcp/docs',
     '/changelog',
     '/roadmap',
     '/waitlist',
