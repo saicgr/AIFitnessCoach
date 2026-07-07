@@ -135,17 +135,35 @@ async def consent_success(request: Request) -> HTMLResponse:
 async def consent_upgrade(
     request: Request,
     reason: Optional[str] = Query(None),
+    consent: Optional[str] = Query(
+        None,
+        description="Same signed consent-session token as /authorize, forwarded "
+                    "here on a 402 so 'Not now' can redirect back to the client "
+                    "instead of relying on window.close().",
+    ),
 ) -> HTMLResponse:
     """Shown when a user tries to authorize but is not on a yearly plan.
 
     Links to ``MCPConfig.UPGRADE_URL`` (the zealova.com checkout page).
     """
+    from mcp.auth import consent_session as _consent_session
+
+    redirect_uri = ""
+    state = ""
+    if consent:
+        payload = _consent_session.decode(consent)
+        if payload:
+            redirect_uri = payload.get("redirect_uri") or ""
+            state = payload.get("state") or ""
+
     return templates.TemplateResponse(
         "upgrade.html",
         {
             "request": request,
             "upgrade_url": _cfg.UPGRADE_URL,
             "reason": reason or "",
+            "redirect_uri": redirect_uri,
+            "state": state,
         },
     )
 

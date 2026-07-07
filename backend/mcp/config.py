@@ -73,7 +73,19 @@ class MCPConfig(BaseSettings):
         "chat:coach":      "Chat with your AI coach",
         "export:data":     "Export your data and generate reports",
     }
-    DEFAULT_SCOPES: list[str] = ["read:profile", "read:workouts", "read:nutrition"]
+    # Applied whenever a client's DCR registration or an /authorize request
+    # omits `scope` entirely — which is the common case: most MCP clients
+    # (including Claude Code) never send a scope param, relying entirely on
+    # the consent screen's per-permission checkboxes ("uncheck any permission
+    # you don't want this connection to have") as the real access-control
+    # surface. A narrow default here silently caps every such connection at
+    # read-only forever, regardless of what the user would have approved —
+    # so this must be the full catalog, not a curated subset.
+    DEFAULT_SCOPES: list[str] = [
+        "read:profile", "read:workouts", "read:nutrition", "read:scores",
+        "read:programs", "read:fasting", "write:logs", "write:workouts",
+        "write:programs", "write:fasting", "chat:coach", "export:data",
+    ]
 
     # Tools that require a confirmation-token round-trip before execution.
     # See backend/mcp/auth/confirmation.py.

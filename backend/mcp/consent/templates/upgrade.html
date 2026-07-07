@@ -7,7 +7,7 @@
   <title>Upgrade Required · {{ APP_NAME }}</title>
   <link rel="stylesheet" href="/mcp/consent/static/consent.css" />
 </head>
-<body>
+<body data-redirect-uri="{{ redirect_uri }}" data-state="{{ state }}">
   <main class="shell shell-center">
     <section class="card card-upgrade">
       <div class="upgrade-mark" aria-hidden="true">
@@ -43,6 +43,8 @@
         </a>
         <button type="button" class="btn btn-secondary" id="closeBtn">Not now</button>
       </div>
+
+      <p id="closeMsg" class="muted small" hidden></p>
 
       <p class="muted small">
         Already on yearly? Make sure you're signed into the account with the active subscription.

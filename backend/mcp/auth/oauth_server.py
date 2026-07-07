@@ -244,6 +244,13 @@ async def authorize_peek(consent: str = Query(...)):
         "client_id": payload["client_id"],
         "client_name": payload["client_name"],
         "requested_scopes": describe_scopes(payload["scopes"]),
+        # Non-secret — the client already sent both in plaintext at
+        # GET /authorize. Exposed here so the consent UI's Cancel/Not-now
+        # buttons can redirect back with an OAuth error instead of relying
+        # on window.close() (which silently no-ops on a tab the page itself
+        # didn't open, e.g. one launched by the OS/MCP client).
+        "redirect_uri": payload["redirect_uri"],
+        "state": payload.get("state"),
     }
 
 

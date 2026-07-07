@@ -84,6 +84,14 @@ const manualToken    = $("manualToken");
 // the user pastes one into the manual fallback textarea.
 let resolvedToken = "";
 
+// Populated from the /peek response. Non-secret (the client already sent
+// both in plaintext at GET /authorize) — used so Cancel can redirect back
+// to the client with a proper OAuth error instead of relying on
+// window.close(), which silently no-ops on a tab this page didn't open
+// itself (e.g. one the OS/MCP client launched directly).
+let redirectUri = "";
+let oauthState = "";
+
 // ─── State transitions ────────────────────────────────────────────────
 function showError(msg) {
   stateLoading.hidden = true;
@@ -145,6 +153,8 @@ function renderForm(data) {
   const name = data.client_name || "Unknown app";
   clientName.textContent = name;
   clientNameAck.textContent = name;
+  redirectUri = data.redirect_uri || "";
+  oauthState = data.state || "";
 
   scopeList.innerHTML = "";
   const scopes = data.requested_scopes || [];
@@ -320,7 +330,9 @@ async function submitAuthorization() {
     });
 
     if (resp.status === 402) {
-      window.location.href = UPGRADE_PATH;
+      // Forward the consent token so the upgrade page can also resolve
+      // redirect_uri/state (needed for its own "Not now" button).
+      window.location.href = `${UPGRADE_PATH}?consent=${encodeURIComponent(CONSENT_TOKEN)}`;
       return;
     }
 
@@ -355,7 +367,23 @@ async function submitAuthorization() {
 }
 
 cancelBtn.addEventListener("click", () => {
-  // Best-effort tab close (only works for windows opened via JS).
+  // Preferred path: send the client a proper OAuth error so it can detect
+  // the decline and stop waiting, instead of hanging on a code that never
+  // arrives.
+  if (redirectUri) {
+    const params = new URLSearchParams({
+      error: "access_denied",
+      error_description: "User declined the authorization request.",
+    });
+    if (oauthState) params.set("state", oauthState);
+    const sep = redirectUri.includes("?") ? "&" : "?";
+    window.location.href = `${redirectUri}${sep}${params.toString()}`;
+    return;
+  }
+
+  // Fallback (redirect_uri not yet resolved, e.g. cancelled before /peek
+  // returned): best-effort tab close, which only works for windows opened
+  // via JS, plus a visible message either way.
   window.close();
   setTimeout(() => {
     submitError.textContent = "Authorization cancelled. You can close this tab.";
