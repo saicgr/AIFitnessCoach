@@ -414,10 +414,14 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
           behavior: HitTestBehavior.opaque,
           onTap: () => _askChip(i, chip),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            // No maxWidth cap — the row scrolls horizontally, so each pill
+            // sizes to its own text instead of truncating with an ellipsis
+            // (the previous 130px cap clipped most chip variants, not just
+            // outliers — e.g. "Will my lower back be a problem?").
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
             decoration: BoxDecoration(
               color: cc.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: cc.withValues(alpha: 0.4)),
             ),
             child: Row(
@@ -426,12 +430,13 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
                 if (chip.personalized)
                   Padding(
                     padding: const EdgeInsetsDirectional.only(end: 4),
-                    child: Icon(Icons.auto_awesome, size: 12, color: cc),
+                    child: Icon(Icons.auto_awesome, size: 11, color: cc),
                   ),
                 Text(
                   chip.question,
+                  maxLines: 1,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: cc,
                   ),
@@ -444,7 +449,7 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
     }
     if (remaining.isEmpty) return const SizedBox(height: 4);
     return SizedBox(
-      height: 40,
+      height: 38,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
