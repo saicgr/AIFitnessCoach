@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, PlainTextResponse, FileResponse
+from fastapi.responses import JSONResponse, HTMLResponse, PlainTextResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -1291,6 +1291,22 @@ async def root():
     return result
 
 
+@app.head("/")
+@limiter.exempt
+async def root_head():
+    """HEAD / for uptime monitors that probe with HEAD instead of GET.
+
+    FastAPI's `@app.get()` does NOT auto-register HEAD the way plain
+    Starlette `Route` does (`APIRoute.__init__` builds its methods set
+    without the `"GET" in methods -> add("HEAD")` step Starlette's own
+    `Route` has) — so a HEAD request against any `@app.get(...)` route in
+    this app 405s by default, framework-wide, not a bug specific to this
+    endpoint. Only adding a dedicated handler here since `/` and `/health`
+    are the two paths anything external actually health-checks against.
+    """
+    return Response(status_code=200)
+
+
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
     return PlainTextResponse("User-agent: *\nDisallow: /\n")
@@ -1325,6 +1341,14 @@ async def health_keep_alive():
         "timestamp": datetime.utcnow().isoformat(),
         "redis": "connected" if redis_ok else "unavailable",
     }
+
+
+@app.head("/health", tags=["health"], include_in_schema=False)
+async def health_keep_alive_head():
+    """HEAD /health — see root_head() for why this needs its own handler.
+    Skips the Redis ping: HEAD is meant to be cheap, and GET already covers
+    the actual keep-alive/connectivity check."""
+    return Response(status_code=200)
 
 
 @app.get("/open", include_in_schema=False)
