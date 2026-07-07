@@ -86,14 +86,34 @@ _langgraph_service = None
 class SecurityHeadersMiddleware:
     """Pure ASGI middleware to add security headers to all responses."""
 
-    HEADERS = [
+    _BASE_HEADERS = [
         (b"x-content-type-options", b"nosniff"),
         (b"x-frame-options", b"DENY"),
         (b"x-xss-protection", b"1; mode=block"),
         (b"strict-transport-security", b"max-age=31536000; includeSubDomains"),
-        (b"content-security-policy", b"default-src 'self'"),
         (b"referrer-policy", b"strict-origin-when-cross-origin"),
     ]
+    _DEFAULT_CSP = b"default-src 'self'"
+
+    # The MCP consent page signs users in directly against Supabase Auth from
+    # the browser (email/password + Google/Apple OAuth) — a genuine
+    # cross-origin fetch/redirect to the project's own *.supabase.co origin.
+    # `default-src 'self'` blocks that outright (fetch() rejects with exactly
+    # "Failed to fetch", no CORS-looking error, which is what made this one
+    # non-obvious). Scoped to just this route prefix rather than loosening
+    # CSP app-wide.
+    _CONSENT_PATH_PREFIX = "/mcp/consent/"
+
+    @staticmethod
+    def _consent_csp() -> bytes:
+        from urllib.parse import urlparse
+        from core.config import get_settings
+
+        supabase_url = get_settings().supabase_url or ""
+        parsed = urlparse(supabase_url)
+        origin = f"{parsed.scheme}://{parsed.netloc}" if parsed.netloc else ""
+        connect_src = "'self'" + (f" {origin}" if origin else "")
+        return f"default-src 'self'; connect-src {connect_src}".encode()
 
     def __init__(self, app: ASGIApp):
         self.app = app
@@ -103,10 +123,14 @@ class SecurityHeadersMiddleware:
             await self.app(scope, receive, send)
             return
 
+        path = scope.get("path", "")
+        csp = self._consent_csp() if path.startswith(self._CONSENT_PATH_PREFIX) else self._DEFAULT_CSP
+        headers_to_add = self._BASE_HEADERS + [(b"content-security-policy", csp)]
+
         async def send_with_headers(message):
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
-                headers.extend(self.HEADERS)
+                headers.extend(headers_to_add)
                 message = {**message, "headers": headers}
             await send(message)
 

@@ -46,6 +46,16 @@
 
 * { box-sizing: border-box; }
 
+/* The native `[hidden]` UA rule (`display: none`) has the same specificity
+ * as a single class selector, so any class below that also sets `display`
+ * (`.signed-in`, `.oauth-row`, `.oauth-divider`, and any future one) wins on
+ * source order and silently un-hides the element regardless of the `hidden`
+ * attribute or JS state. This was showing the raw HTML placeholder text
+ * ("Signed in as you@zealova.com") permanently, whether or not sign-in had
+ * actually happened. One `!important` override here closes the whole class
+ * of bug instead of patching each selector that happens to collide with it. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
