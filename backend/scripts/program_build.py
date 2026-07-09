@@ -67,22 +67,49 @@ def _sb():
 # ---------------------------------------------------------------------------
 # Exercise resolution backstop (the reviewer is the real gate; this catches leaks)
 # ---------------------------------------------------------------------------
+def _norm_name(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
+
+
 def assert_all_resolve(sb, primary_weeks: List[Dict[str, Any]]) -> None:
     names = sorted({(e.get("name") or "").strip()
                     for w in primary_weeks for s in w.get("workouts", [])
                     for e in s.get("exercises", []) if (e.get("name") or "").strip()})
     bad = []
+    # Divergent-identity warnings (2026-07): the schedule shows an exercise's
+    # authored `name`, but its exercise_id/media/detail-screen content is
+    # whatever `resolve_exercise_demo_media` resolves that name to via the
+    # exercise_aliases -> exercise_canonical canonical stack. When a name's
+    # own canonical resolution is a SUBSTANTIALLY different exercise (not just
+    # a media-matching synonym/plural — see the Ski Erg Easy / "Ski Ergometer
+    # Cross Country Ski Basic Pull" incident), the schedule and detail screen
+    # disagree. Not hard-failed: the resolver is a fuzzy media-matcher, so
+    # trivial differences (e.g. "Burpee" vs "Burpees") are common and benign —
+    # only printed for the reviewer/human to judge, same posture as
+    # audit_program_exercise_name_consistency.py.
+    divergent = []
     for n in names:
         r = sb.rpc("resolve_exercise_demo_media", {"p_name": n}).execute().data
-        has_media = bool(r) and any((row.get("image_s3_path") or row.get("video_s3_path")
-                                     or row.get("image_url") or row.get("gif_url"))
-                                    for row in (r if isinstance(r, list) else [r]))
+        rows = r if isinstance(r, list) else ([r] if r else [])
+        has_media = bool(rows) and any((row.get("image_s3_path") or row.get("video_s3_path")
+                                        or row.get("image_url") or row.get("gif_url"))
+                                       for row in rows)
         if not has_media:
             bad.append(n)
+            continue
+        canonical_name = rows[0].get("canonical_name")
+        if canonical_name and _norm_name(canonical_name) != _norm_name(n):
+            divergent.append((n, canonical_name))
     if bad:
         raise SystemExit(f"❌ {len(bad)} exercises do not resolve to media (reviewer "
                          f"should have fixed these): {bad[:15]}")
     print(f"✅ all {len(names)} distinct exercises resolve to library media")
+    if divergent:
+        print(f"⚠️  {len(divergent)} exercise name(s) resolve to a DIFFERENT canonical "
+              f"exercise than their own text suggests — reviewer should confirm these "
+              f"are the intended exercise, not a wrong-alias drift (Ski Erg Easy class):")
+        for n, cn in divergent[:20]:
+            print(f"   '{n}' → resolves to '{cn}'")
 
 
 # ---------------------------------------------------------------------------

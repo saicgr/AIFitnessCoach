@@ -1912,6 +1912,19 @@ async def library_program_schedule(
                         )
                         canon_name = (media.get("canonical_name") or "").strip()
                         json_ex_id = str(ex.get("exercise_id") or "") or None
+                        # NOTE (2026-07-07/08): tried pairing exercise_id+name from
+                        # the same canon_name-resolved row whenever canon_id existed
+                        # (fixes the Ski Erg Easy class of bug generically) — reverted.
+                        # exercise_aliases' match_confidence/is_verified do NOT
+                        # reliably separate good matches from bad ones (e.g. "Kettlebell
+                        # Swings" carries confidence 0.95, same as clearly-fine
+                        # matches, yet resolves to the wrong-equipment "Dumbbell
+                        # Swing"). Applying canon_name broadly would have silently
+                        # relabeled many exercises to a WRONG identity catalog-wide.
+                        # Until the alias table has a trustworthy confidence signal,
+                        # only confirmed-and-reviewed corrections should change what's
+                        # shown — see audit_program_exercise_name_consistency.py
+                        # (--only-name-scoped) and [[feedback_name_canonical_direction_ask_user]].
                         exercise_id = (
                             (exercise_id_by_name.get(canon_name) if canon_name else None)
                             or json_ex_id
