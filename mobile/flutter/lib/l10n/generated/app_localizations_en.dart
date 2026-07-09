@@ -44490,7 +44490,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get paywallFounderKicker => 'A NOTE FROM THE FOUNDER';
+  String get paywallFounderKicker => 'WHY I BUILT THIS';
 
   @override
   String get paywallFounderHeadline => 'I BUILT THE COACH I COULDN\'T AFFORD.';
@@ -44513,11 +44513,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallTesterName => 'Keertan · early tester';
 
   @override
+  String get paywallTesterQuote2 =>
+      '“I\'m diabetic, so eating out used to be a guessing game. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carbs.”';
+
+  @override
+  String get paywallTesterName2 => 'Toby · type 2 diabetic';
+
+  @override
   String get paywallEarlyAccess =>
       'Early access · be one of the first 1,000 members';
 
   @override
   String get paywallRemindMeCta => 'Remind me 🔔';
+
+  @override
+  String get paywallValueReelKicker => 'EVERYTHING UNLOCKS TODAY';
+
+  @override
+  String get paywallValueHeadline => 'HERE\'S WHAT YOU GET.';
+
+  @override
+  String get paywallValueItem1Title => 'AI Workouts';
+
+  @override
+  String get paywallValueItem1Sub => 'Plans that adapt every week';
+
+  @override
+  String get paywallValueItem2Title => 'Food & Menu Scan';
+
+  @override
+  String get paywallValueItem2Sub => 'Snap a plate or scan any menu';
+
+  @override
+  String get paywallValueItem3Title => 'AI Form Check';
+
+  @override
+  String get paywallValueItem3Sub => 'Catches bad reps in real time';
+
+  @override
+  String get paywallValueItem4Title => 'Coach Chat';
+
+  @override
+  String get paywallValueItem4Sub => 'Ask anything, day or night';
+
+  @override
+  String get paywallValueSeeAllFeatures => 'See all features';
 
   @override
   String get paywallTrialToggleTitle => 'Free trial enabled';

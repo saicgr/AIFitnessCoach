@@ -499,79 +499,90 @@ class FoodScanScene extends StatelessWidget {
         start: 22,
         end: 22,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.introDemoPhotoLogging,
-              style: const TextStyle(
-                  fontFamily: 'Barlow Condensed',
-                  fontSize: 12,
-                  letterSpacing: 2.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.orange)),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: SizedBox(
-              height: 200,
-              width: double.infinity,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset('assets/images/demo_food.webp',
-                      fit: BoxFit.cover),
-                  PositionedDirectional(
-                    top: 8 + sweepT * 180,
-                    start: 12,
-                    end: 12,
-                    child: Container(
-                      height: 3,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(2),
-                        gradient: LinearGradient(colors: [
-                          AppColors.orange.withValues(alpha: 0),
-                          AppColors.orange,
-                          AppColors.orange.withValues(alpha: 0),
-                        ]),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.orange.withValues(alpha: 0.8),
-                            blurRadius: 14,
-                          ),
-                        ],
+      // This scene renders full-bleed on the intro screen (near full device
+      // height) but is also reused framed inside the paywall's value reel,
+      // where it only gets whatever's left after that beat's headline block
+      // — sometimes shorter than this scene's natural content height.
+      // SingleChildScrollView + NeverScrollableScrollPhysics absorbs that
+      // overflow instead of throwing the RenderFlex banner (same pattern as
+      // ProgramBuilderScene above) — it's a passive looping background
+      // scene, not user-navigable content, so scrolling is disabled.
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.introDemoPhotoLogging,
+                style: const TextStyle(
+                    fontFamily: 'Barlow Condensed',
+                    fontSize: 12,
+                    letterSpacing: 2.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.orange)),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: SizedBox(
+                height: 200,
+                width: double.infinity,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset('assets/images/demo_food.webp',
+                        fit: BoxFit.cover),
+                    PositionedDirectional(
+                      top: 8 + sweepT * 180,
+                      start: 12,
+                      end: 12,
+                      child: Container(
+                        height: 3,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          gradient: LinearGradient(colors: [
+                            AppColors.orange.withValues(alpha: 0),
+                            AppColors.orange,
+                            AppColors.orange.withValues(alpha: 0),
+                          ]),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.orange.withValues(alpha: 0.8),
+                              blurRadius: 14,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 7,
-            runSpacing: 7,
-            children: [
-              _macroChip(l10n.introDemoKcalChip, const Color(0xFF18181B),
-                  Colors.white, 700),
-              _macroChip(l10n.introDemoProteinChip, const Color(0xFFF3E8FF),
-                  const Color(0xFF7C3AED), 850),
-              _macroChip(l10n.introDemoCarbsChip, const Color(0xFFFFF7ED),
-                  const Color(0xFFC2410C), 1000),
-              _macroChip(l10n.introDemoFatChip, const Color(0xFFFDF2F8),
-                  const Color(0xFFDB2777), 1150),
-            ],
-          ),
-          const SizedBox(height: 12),
-          BeatIn(
-            localMs: localMs,
-            at: 1500,
-            child: Text(l10n.introDemoLoggedLine,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF16A34A))),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: [
+                _macroChip(l10n.introDemoKcalChip, const Color(0xFF18181B),
+                    Colors.white, 700),
+                _macroChip(l10n.introDemoProteinChip, const Color(0xFFF3E8FF),
+                    const Color(0xFF7C3AED), 850),
+                _macroChip(l10n.introDemoCarbsChip, const Color(0xFFFFF7ED),
+                    const Color(0xFFC2410C), 1000),
+                _macroChip(l10n.introDemoFatChip, const Color(0xFFFDF2F8),
+                    const Color(0xFFDB2777), 1150),
+              ],
+            ),
+            const SizedBox(height: 12),
+            BeatIn(
+              localMs: localMs,
+              at: 1500,
+              child: Text(l10n.introDemoLoggedLine,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF16A34A))),
+            ),
+          ],
+        ),
       ),
     );
   }

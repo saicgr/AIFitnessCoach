@@ -100,14 +100,22 @@ else
     echo -e "${GREEN}Launcher icons are up to date (set REGEN_ICONS=1 to force).${NC}"
 fi
 
-echo -e "${YELLOW}Fully removing existing app from simulator...${NC}"
-# 1) Terminate the app if running
-xcrun simctl terminate "$DEVICE_ID" com.zealova.app 2>/dev/null || true
-# 2) Uninstall bundle + data container
-xcrun simctl uninstall "$DEVICE_ID" com.zealova.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
-# 3) Kill SpringBoard so iOS flushes the cached launcher icon
-echo -e "${YELLOW}Flushing SpringBoard icon cache...${NC}"
-xcrun simctl spawn "$DEVICE_ID" launchctl stop com.apple.SpringBoard 2>/dev/null || true
+# By default we install OVER the existing app (like run_ios.sh) so login/session
+# AND the BootstrapPrefetchService disk cache blob survive across runs — otherwise
+# every run manufactures a worst-case true-fresh-install (empty cache, onboarding
+# flow) on top of debug-build JIT slowness, which reads as "the app is slow" when
+# it's actually just this script re-creating fresh-install conditions every time.
+# Pass FRESH_INSTALL=1 to actually wipe the app + data container (e.g. to test
+# onboarding or a real fresh-install cold start) and flush the SpringBoard icon cache.
+if [ "${FRESH_INSTALL:-0}" = "1" ]; then
+    echo -e "${YELLOW}FRESH_INSTALL=1: fully removing existing app from simulator...${NC}"
+    xcrun simctl terminate "$DEVICE_ID" com.zealova.app 2>/dev/null || true
+    xcrun simctl uninstall "$DEVICE_ID" com.zealova.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
+    echo -e "${YELLOW}Flushing SpringBoard icon cache...${NC}"
+    xcrun simctl spawn "$DEVICE_ID" launchctl stop com.apple.SpringBoard 2>/dev/null || true
+else
+    echo -e "${GREEN}Installing over existing app (login/session + disk cache preserved). Set FRESH_INSTALL=1 for a true fresh install.${NC}"
+fi
 
 echo -e "${GREEN}Building app in DEBUG mode for $TARGET_SIM...${NC}"
 # Build only — we install manually below to work around the iOS 26+

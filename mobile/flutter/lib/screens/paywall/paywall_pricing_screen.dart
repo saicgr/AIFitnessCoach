@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +25,6 @@ import '../../core/services/posthog_service.dart';
 import 'widgets/inline_referral_expander.dart';
 import 'widgets/credibility_strip.dart';
 import 'widgets/goal_speed_comparison.dart';
-import 'widgets/value_reel.dart';
 import '../onboarding/goal_speed_calculator.dart';
 import 'paywall_experiments.dart';
 import '../onboarding/onboarding_experiments.dart';
@@ -76,14 +76,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   // because the intro framing doesn't apply to them.
   late final PageController _pageController;
   int _currentPage = 0;
-  // Page 0 is the auto-advancing value reel (its own controls); pages 1-3 are
-  // the founder/hero → reminder → timeline-offer flow. The reel is excluded
-  // from the standard top-bar / bottom-CTA / dot wayfinding — those operate on
-  // the three "real" intro pages only.
+  // Cal AI-style 4-page intro flow: founder/hero → reminder → value grid →
+  // timeline-offer.
   static const int _totalPages = 4;
-  static const int _reelPage = 0;
-  // Index of the notification-primer (reminder) page after the reel shift.
-  static const int _reminderPage = 2;
+  // Index of the notification-primer (reminder) page.
+  static const int _reminderPage = 1;
+  // Index of the "here's what you unlock" value-grid page.
+  static const int _valuePage = 2;
 
   // Skip ("Maybe later") visibility — platform-aware.
   //
@@ -171,26 +170,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     });
   }
 
-  /// True while the reel→offer page animation is in flight. The intro
-  /// top bar + bottom CTA are suppressed during the handoff — otherwise
-  /// onPageChanged fires at page 1 mid-animation and both the reel's
-  /// chrome AND the intro chrome render at once for a broken-looking frame.
-  bool _reelHandoff = false;
-
-  /// Reel finished (or the user tapped Skip) → jump straight to the
-  /// timeline-offer page (the last page). The reel sits before the
-  /// founder/reminder beats, so a skip is an explicit "show me the offer".
-  Future<void> _skipReelToOffer() async {
-    if (!mounted) return;
-    setState(() => _reelHandoff = true);
-    await _pageController.animateToPage(
-      _totalPages - 1,
-      duration: const Duration(milliseconds: 360),
-      curve: Curves.easeOutCubic,
-    );
-    if (mounted) setState(() => _reelHandoff = false);
-  }
-
   void _goToNextPage() {
     HapticFeedback.lightImpact();
     if (_currentPage < _totalPages - 1) {
@@ -203,10 +182,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   void _goToPreviousPage() {
     HapticFeedback.selectionClick();
-    // Back from any interactive page (2+) steps one page; back from the first
-    // interactive page (page 1, the founder/hero beat) bails out of the
-    // paywall rather than replaying the value reel.
-    if (_currentPage > 1) {
+    // Back from any later page steps one page; back from the first page
+    // (page 0, the founder/hero beat) bails out of the paywall entirely.
+    if (_currentPage > 0) {
       _pageController.previousPage(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
@@ -238,12 +216,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _trialEndDateString() {
     final end = DateTime.now().add(const Duration(days: 7));
     return DateFormat('MMM d').format(end);
-  }
-
-  /// Date 5 days from now (reminder fires 2 days before trial ends).
-  String _reminderDateString() {
-    final reminder = DateTime.now().add(const Duration(days: 5));
-    return DateFormat('MMM d').format(reminder);
   }
 
   /// Get dynamic price string from RevenueCat offerings, with fallback
@@ -914,11 +886,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           },
           child: Column(
             children: [
-              // The reel is full-bleed with its own Skip + progress bars, so the
-              // standard top bar (back/restore) is suppressed while it shows
-              // and while the reel→offer handoff animation is in flight.
-              if (_currentPage != _reelPage && !_reelHandoff)
-                _buildIntroTopBar(colors, context, ref),
+              _buildIntroTopBar(colors, context, ref),
               Expanded(
                 child: PageView(
                   controller: _pageController,
@@ -929,7 +897,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     // the timer that fades the "Maybe later" skip in.
                     if (i == _totalPages - 1) _scheduleSkipReveal();
                     // v7: per-page funnel visibility (which beat loses
-                    // people: reel → proof → reminder → offer).
+                    // people: proof → reminder → offer).
                     ref
                         .read(posthogServiceProvider)
                         .capture(
@@ -943,24 +911,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         );
                   },
                   children: [
-                    // Page 0 — auto-advancing value reel. Skip / finish jumps
-                    // straight to the timeline-offer page (the last page).
-                    PaywallValueReel(
-                        onSkip: _skipReelToOffer, onBack: _goToPreviousPage),
                     if (_founderPageEnabled)
                       _buildIntroPageFounder(colors)
                     else
                       _buildIntroPageHero(colors),
                     _buildIntroPageReminder(colors),
+                    _buildIntroPageValue(colors),
                     _buildIntroPageTimeline(colors, subscriptionState),
                   ],
                 ),
               ),
-              // The reel owns the bottom region (its own controls); the
-              // standard CTA + dots bottom bar shows only on pages 1-3, and
-              // never mid reel→offer handoff.
-              if (_currentPage != _reelPage && !_reelHandoff)
-                _buildIntroBottomBar(colors, subscriptionState, currentTier),
+              _buildIntroBottomBar(colors, subscriptionState, currentTier),
             ],
           ),
         ),
@@ -977,23 +938,21 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Row(
         children: [
-          // Back chevron only on pages 1-2; on page 0 it'd duplicate the
-          // system back gesture and risk dropping the user out of the flow
-          // before they've even seen page 1.
+          // Back chevron on every page — on page 0 it bails out of the
+          // paywall entirely (see `_goToPreviousPage`), matching the system
+          // back gesture rather than duplicating a no-op.
           SizedBox(
             width: 44,
             height: 44,
-            child: _currentPage > 0
-                ? IconButton(
-                    splashRadius: 22,
-                    icon: Icon(
-                      Icons.chevron_left,
-                      size: 28,
-                      color: colors.textPrimary,
-                    ),
-                    onPressed: _goToPreviousPage,
-                  )
-                : null,
+            child: IconButton(
+              splashRadius: 22,
+              icon: Icon(
+                Icons.chevron_left,
+                size: 28,
+                color: colors.textPrimary,
+              ),
+              onPressed: _goToPreviousPage,
+            ),
           ),
           const Spacer(),
           GestureDetector(
@@ -1022,11 +981,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   ) {
     final isLast = _currentPage == _totalPages - 1;
     final label = switch (_currentPage) {
-      // Page 1 = founder/hero proof beat.
-      1 => 'Try for \$0.00',
-      // Page 2 IS the notification primer — the CTA asks for the reminder,
+      // Page 0 = founder/hero proof beat.
+      0 => 'Try for \$0.00',
+      // Page 1 IS the notification primer — the CTA asks for the reminder,
       // and tapping it fires the OS permission prompt.
       _reminderPage => AppLocalizations.of(context).paywallRemindMeCta,
+      // Page 2 = value grid — a plain "keep going", not a subscribe ask.
+      _valuePage => 'Continue',
       _ =>
         _selectedPlan.contains('yearly')
             ? 'Start My 7-Day Free Trial'
@@ -1111,14 +1072,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
           const SizedBox(height: 8),
           // Page-position dots — quiet wayfinding so users feel the
-          // 3-step shape rather than wondering how deep the flow is. Only the
-          // three "real" intro pages get dots; the reel (page 0) is excluded
-          // since it carries its own progress bars.
+          // 3-step shape rather than wondering how deep the flow is.
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(_totalPages - 1, (i) {
-              // Dot index 0..2 maps to page index 1..3.
-              final selected = (i + 1) == _currentPage;
+            children: List.generate(_totalPages, (i) {
+              final selected = i == _currentPage;
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -1177,143 +1135,149 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   // price against a $400/mo trainer before any number appears.
   Widget _buildIntroPageFounder(ThemeColors colors) {
     final l10n = AppLocalizations.of(context);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 26),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 14),
-          Text(
-            l10n.paywallFounderKicker,
-            style: const TextStyle(
-              fontFamily: 'Barlow Condensed',
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 2.5,
-              color: _paywallAccent,
-            ),
-          ).animate().fadeIn(),
-          const SizedBox(height: 8),
-          Text(
-            l10n.paywallFounderHeadline,
-            style: TextStyle(
-              fontFamily: 'Anton',
-              fontSize: 30,
-              height: 1.05,
-              color: colors.textPrimary,
-            ),
-          ).animate().fadeIn(delay: 80.ms).slideY(begin: 0.06),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colors.textMuted.withValues(alpha: 0.15),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.paywallFounderQuote,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    height: 1.55,
-                    color: colors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFFFFB366), _paywallAccent],
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'C',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
+    // No-scroll guarantee, same technique as the reminder/value/timeline
+    // pages: scale the whole page down to fit the viewport instead of
+    // scrolling past the third testimonial to reach the CTA.
+    return LayoutBuilder(
+      builder: (context, viewport) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 26),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: viewport.maxWidth - 52,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 14),
+                  Text(
+                    l10n.paywallFounderKicker,
+                    style: const TextStyle(
+                      fontFamily: 'Barlow Condensed',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2.5,
+                      color: _paywallAccent,
+                    ),
+                  ).animate().fadeIn(),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.paywallFounderHeadline,
+                    style: TextStyle(
+                      fontFamily: 'Anton',
+                      fontSize: 30,
+                      height: 1.05,
+                      color: colors.textPrimary,
+                    ),
+                  ).animate().fadeIn(delay: 80.ms).slideY(begin: 0.06),
+                  const SizedBox(height: 18),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: colors.textMuted.withValues(alpha: 0.15),
                       ),
                     ),
-                    const SizedBox(width: 9),
-                    Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          l10n.paywallFounderName,
+                          l10n.paywallFounderQuote,
                           style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: colors.textPrimary,
+                            fontSize: 13.5,
+                            height: 1.55,
+                            color: colors.textSecondary,
                           ),
                         ),
-                        Text(
-                          l10n.paywallFounderSub,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            color: colors.textMuted,
-                          ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [Color(0xFFFFB366), _paywallAccent],
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'C',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 9),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.paywallFounderName,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  l10n.paywallFounderSub,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    color: colors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ],
-            ),
-          ).animate().fadeIn(delay: 180.ms).slideY(begin: 0.08),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: colors.textMuted.withValues(alpha: 0.15),
+                  ).animate().fadeIn(delay: 180.ms).slideY(begin: 0.08),
+                  const SizedBox(height: 10),
+                  // Two tester quotes, each anchored to a distinct feature icon so
+                  // the pair reads as breadth (training discipline + nutrition with
+                  // a real medical constraint) rather than two interchangeable
+                  // "I like this app" blurbs.
+                  _TesterQuoteCard(
+                    quote: l10n.paywallTesterQuote,
+                    name: l10n.paywallTesterName,
+                    icon: Icons.fitness_center_rounded,
+                    accent: _paywallAccent,
+                    colors: colors,
+                    animDelayMs: 280,
+                  ),
+                  const SizedBox(height: 8),
+                  _TesterQuoteCard(
+                    quote: l10n.paywallTesterQuote2,
+                    name: l10n.paywallTesterName2,
+                    icon: Icons.restaurant_menu_rounded,
+                    accent: _paywallAccent,
+                    colors: colors,
+                    animDelayMs: 340,
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      l10n.paywallEarlyAccess,
+                      style: TextStyle(fontSize: 11, color: colors.textMuted),
+                    ),
+                  ).animate().fadeIn(delay: 380.ms),
+                  const SizedBox(height: 12),
+                ],
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  // TODO(user): replace with Keertan's real words.
-                  l10n.paywallTesterQuote,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    height: 1.5,
-                    color: colors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  l10n.paywallTesterName,
-                  style: TextStyle(fontSize: 11, color: colors.textMuted),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(delay: 280.ms).slideY(begin: 0.08),
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              l10n.paywallEarlyAccess,
-              style: TextStyle(fontSize: 11, color: colors.textMuted),
-            ),
-          ).animate().fadeIn(delay: 380.ms),
-          const SizedBox(height: 12),
-        ],
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -1407,6 +1371,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   // ── Page 2: reminder bell ────────────────────────────────────────
+  // This page's one job is the trial-reminder assurance — the bottom-bar
+  // CTA on this page ("Remind me 🔔") fires the OS notification prompt, so
+  // the bell + copy stay the prominent foreground content. (The value
+  // grid moved to its own page — see _buildIntroPageValue — rather than
+  // competing with this page's message.)
   Widget _buildIntroPageReminder(ThemeColors colors) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -1435,6 +1404,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               color: colors.textSecondary,
             ),
           ),
+          // Expanded already absorbs whatever space is left below the copy
+          // without overflowing or needing to scroll — the bell just
+          // occupies less of it on short phones (Center never forces the
+          // 220px box past what Expanded actually has).
           Expanded(
             child: Center(
               child: SizedBox(
@@ -1526,7 +1499,107 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     );
   }
 
-  // ── Page 3: timeline + plans ─────────────────────────────────────
+  // ── Page 3: value grid ───────────────────────────────────────────
+  // "Here's everything you unlock" — a 4-item squircle-icon + text grid,
+  // its own beat between the reminder and the price so the value recap
+  // is fully legible (not squeezed as a background element) right before
+  // the decision moment.
+  Widget _buildIntroPageValue(ThemeColors colors) {
+    final l10n = AppLocalizations.of(context);
+    return LayoutBuilder(
+      builder: (context, viewport) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 26),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: viewport.maxWidth - 52,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 14),
+                  Text(
+                    l10n.paywallValueReelKicker,
+                    style: const TextStyle(
+                      fontFamily: 'Barlow Condensed',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2.5,
+                      color: _paywallAccent,
+                    ),
+                  ).animate().fadeIn(),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.paywallValueHeadline,
+                    style: TextStyle(
+                      fontFamily: 'Anton',
+                      fontSize: 28,
+                      height: 1.08,
+                      color: colors.textPrimary,
+                    ),
+                  ).animate().fadeIn(delay: 80.ms).slideY(begin: 0.06),
+                  const SizedBox(height: 22),
+                  // Vertical auto-scrolling value reel — replaces the old
+                  // static 2×2 grid (4 features only). Same seamless-loop
+                  // Ticker technique as the horizontal marquee on
+                  // paywall_features_screen.dart, rotated to vertical with
+                  // full-width cards so it reads as "everything unlocks",
+                  // not just the headline four.
+                  SizedBox(
+                    height: 300,
+                    child: _VerticalValueMarquee(
+                      features: _valueMarqueeFeatures(l10n),
+                      pixelsPerSecond: 16,
+                      accent: _paywallAccent,
+                      colors: colors,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: GestureDetector(
+                      onTap: () => _open(AppLinks.features),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.paywallValueSeeAllFeatures,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textSecondary,
+                              decoration: TextDecoration.underline,
+                              decorationColor: colors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 14,
+                            color: colors.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _open(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  // ── Page 4: timeline + plans ─────────────────────────────────────
   Widget _buildIntroPageTimeline(
     ThemeColors colors,
     SubscriptionState subscriptionState,
@@ -1545,206 +1618,228 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       fallback: '\$59.99',
     );
     final savings = _getSavingsPercent(offerings: subscriptionState.offerings);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 4),
-          // Kicker carries the trial mechanics; the masthead leads with the
-          // real hook (nothing due today) instead of restating "free trial".
-          Text(
-            '7 DAYS · \$0.00 TODAY',
-            style: TextStyle(
-              fontFamily: 'Barlow Condensed',
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 2.5,
-              color: _paywallAccent,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'PAY NOTHING\nTODAY',
-            style: TextStyle(
-              fontFamily: 'Anton',
-              fontSize: 34,
-              height: 1.02,
-              color: colors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 14),
+    // No-scroll guarantee: scale the whole offer down to fit the page's
+    // fixed viewport instead of scrolling past it to reach the CTA/legal
+    // text — a no-op (scale 1.0) on phones tall enough to already fit,
+    // a uniform shrink only on short ones. Same technique as the feature
+    // marquee in paywall_features_screen.dart.
+    return LayoutBuilder(
+      builder: (context, viewport) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: viewport.maxWidth - 48,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  // Kicker carries the trial mechanics; the masthead leads with the
+                  // real hook (nothing due today) instead of restating "free trial".
+                  Text(
+                    '7 DAYS · \$0.00 TODAY',
+                    style: TextStyle(
+                      fontFamily: 'Barlow Condensed',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2.5,
+                      color: _paywallAccent,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'PAY NOTHING\nTODAY',
+                    style: TextStyle(
+                      fontFamily: 'Anton',
+                      fontSize: 34,
+                      height: 1.02,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
 
-          // ⚡ N× FASTER comparison hero — VALUE-FIRST placement: the derived
-          // per-user multiplier hits immediately after the headline, before
-          // the trial-mechanics timeline and the plan tiles (Cal AI / Noom
-          // pattern: outcome before mechanics). Ships dark; the A/B treatment
-          // is the PostHog flag `paywall_goal_speed_comparison`. Degrades to a
-          // cited "~2× more likely" line when body metrics are missing.
-          if (_experiments.goalSpeedComparison) ...[
-            Builder(
-              builder: (context) {
-                final quiz = ref.read(preAuthQuizProvider);
-                final proj = GoalSpeedCalculator.compute(
-                  currentWeightKg: quiz.weightKg ?? 0,
-                  goalWeightKg: quiz.goalWeightKg ?? 0,
-                  weightChangeRate: quiz.weightChangeRate,
-                );
-                return GoalSpeedComparison(
-                  projection: proj,
-                  colors: colors,
-                  accent: _paywallAccent,
-                );
-              },
-            ),
-            const SizedBox(height: 14),
-          ],
+                  // ⚡ N× FASTER comparison hero — VALUE-FIRST placement: the derived
+                  // per-user multiplier hits immediately after the headline, before
+                  // the trial-mechanics timeline and the plan tiles (Cal AI / Noom
+                  // pattern: outcome before mechanics). Ships dark; the A/B treatment
+                  // is the PostHog flag `paywall_goal_speed_comparison`. Degrades to a
+                  // cited "~2× more likely" line when body metrics are missing.
+                  if (_experiments.goalSpeedComparison) ...[
+                    Builder(
+                      builder: (context) {
+                        final quiz = ref.read(preAuthQuizProvider);
+                        final proj = GoalSpeedCalculator.compute(
+                          currentWeightKg: quiz.weightKg ?? 0,
+                          goalWeightKg: quiz.goalWeightKg ?? 0,
+                          weightChangeRate: quiz.weightChangeRate,
+                        );
+                        return GoalSpeedComparison(
+                          projection: proj,
+                          colors: colors,
+                          accent: _paywallAccent,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                  ],
 
-          // Trial mechanics as a compressed rail card — same three moments
-          // as the old roomy node list at half the height, dates in mono.
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: colors.cardBorder),
-            ),
-            child: Column(
-              children: [
-                _RailStep(
-                  filled: true,
-                  title: 'Today — everything unlocks',
-                  detail: 'Workouts, food scan, form check, coach.',
-                  colors: colors,
-                  accent: _paywallAccent,
-                ),
-                _RailStep(
-                  filled: false,
-                  title: 'Day 5 — we remind you',
-                  monoTag: _reminderDateString().toUpperCase(),
-                  colors: colors,
-                  accent: _paywallAccent,
-                ),
-                _RailStep(
-                  filled: false,
-                  isLast: true,
-                  title: 'Day 7 — first charge',
-                  monoTag:
-                      '${_trialEndDateString().toUpperCase()} · CANCEL ANYTIME BEFORE',
-                  colors: colors,
-                  accent: _paywallAccent,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
+                  // Trial mechanics as a compressed rail card — just the two
+                  // moments that matter on THIS page (unlock, first charge).
+                  // The day-5 reminder already got its own beat on page 2
+                  // (_buildIntroPageReminder) — repeating "we remind you"
+                  // here was flagged as redundant, so this card no longer
+                  // restates it; the date is still covered by the OS
+                  // notification the user opted into on that page.
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: colors.cardBorder),
+                    ),
+                    child: Column(
+                      children: [
+                        _RailStep(
+                          filled: true,
+                          title: 'Today — everything unlocks',
+                          detail: 'Workouts, food scan, form check, coach.',
+                          colors: colors,
+                          accent: _paywallAccent,
+                        ),
+                        _RailStep(
+                          filled: false,
+                          isLast: true,
+                          title: 'Day 7 — first charge',
+                          monoTag:
+                              '${_trialEndDateString().toUpperCase()} · CANCEL ANYTIME BEFORE',
+                          colors: colors,
+                          accent: _paywallAccent,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
 
-          // Plan selection is driven entirely by the two cards below — no
-          // trial TOGGLE. Apple's Jan 2026 Guideline 3.1.2c enforcement
-          // rejects a switch that enables/disables a free trial (this is
-          // what Cal AI was pulled for in Apr 2026), independent of the copy
-          // around it. The yearly card carries the trial terms compliantly.
-          // Yearly is the HERO tile (highest LTV, research-default); monthly
-          // demotes to a quiet selectable row below.
-          // COMPLIANCE (Apple pulled Cal AI for the inverse, Apr 2026): the
-          // hero's Anton headline is the REAL billed amount ($59.99 /yr);
-          // the per-month equivalence is the small subtitle — never the
-          // other way around.
-          _YearlyHeroTile(
-            price: yearlyTotal,
-            perMonth: yearlyMonthly,
-            ribbon: '7 DAYS FREE · SAVE $savings%',
-            isSelected: _selectedBillingCycle == 'yearly',
-            onTap: () => _selectBillingCycle('yearly'),
-            colors: colors,
-            accent: _paywallAccent,
-          ),
-          const SizedBox(height: 8),
-          // COMPLIANCE: the row's price stays the REAL renewal price
-          // ($7.99/mo); the "$1 first month" intro is the small ribbon,
-          // never the other way around. ⚠️ Ribbon defaults ON for pre-launch
-          // VISUAL PREVIEW (flag `paywall_monthly_intro`, default TRUE —
-          // see paywall_experiments.dart). The `onboarding_intro_monthly`
-          // SKU does NOT exist yet, so checkout still charges $7.99 —
-          // build + wire the SKU before selling to real users.
-          _MonthlyRowTile(
-            title: AppLocalizations.of(context).xpGoalsMonthly,
-            price: monthlyPrice,
-            ribbon: _experiments.monthlyIntro ? 'FIRST MONTH \$1' : null,
-            isSelected: _selectedBillingCycle == 'monthly',
-            onTap: () => _selectBillingCycle('monthly'),
-            colors: colors,
-            accent: _paywallAccent,
-          ),
-          const SizedBox(height: 12),
-          // Trust strip — answers the three objections at a glance; the full
-          // legally-required disclosure follows below (Play policy requires
-          // the complete cancel/renewal terms adjacent to the CTA, so the
-          // chips supplement it, never replace it).
-          Row(
-            children: [
-              _TrustChip(label: 'CANCEL ANYTIME', colors: colors),
-              const SizedBox(width: 6),
-              _TrustChip(label: 'DAY-5 REMINDER', colors: colors),
-              const SizedBox(width: 6),
-              _TrustChip(label: '\$0 TODAY', colors: colors),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const InlineReferralExpander(),
-          const SizedBox(height: 8),
-          // App Store Guideline 3.1.2 + Google Play subscription policy:
-          // auto-renewal AND cancellation terms must be disclosed adjacent to
-          // the purchase CTA. Google Play rejects/deactivates paywalls that
-          // omit how-to-cancel + the trial→paid conversion terms, so on the
-          // trial path we state explicitly that cancelling before the trial
-          // ends means no charge.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              _selectedBillingCycle == 'yearly'
-                  ? 'Your 7-day free trial is free — cancel before it ends and '
-                        'you won’t be charged. After the trial, the subscription '
-                        'auto-renews at the price above unless cancelled at least '
-                        '24 hours before the period ends. Cancel anytime in your '
-                        'device account settings.'
-                  : 'Subscription auto-renews at the price above unless '
-                        'cancelled at least 24 hours before the end of the current '
-                        'period. Cancel anytime in your device account settings.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                height: 1.35,
-                color: colors.textMuted,
+                  // Plan selection is driven entirely by the two cards below — no
+                  // trial TOGGLE. Apple's Jan 2026 Guideline 3.1.2c enforcement
+                  // rejects a switch that enables/disables a free trial (this is
+                  // what Cal AI was pulled for in Apr 2026), independent of the copy
+                  // around it. The yearly card carries the trial terms compliantly.
+                  // Yearly is the HERO tile (highest LTV, research-default); monthly
+                  // demotes to a quiet selectable row below.
+                  // COMPLIANCE (Apple pulled Cal AI for the inverse, Apr 2026): the
+                  // hero's Anton headline is the REAL billed amount ($59.99 /yr);
+                  // the per-month equivalence is the small subtitle — never the
+                  // other way around.
+                  _YearlyHeroTile(
+                    price: yearlyTotal,
+                    perMonth: yearlyMonthly,
+                    ribbon: '7 DAYS FREE · SAVE $savings%',
+                    isSelected: _selectedBillingCycle == 'yearly',
+                    onTap: () => _selectBillingCycle('yearly'),
+                    colors: colors,
+                    accent: _paywallAccent,
+                  ),
+                  const SizedBox(height: 8),
+                  // COMPLIANCE: the row's price stays the REAL renewal price
+                  // ($7.99/mo); the "$1 first month" intro is the small ribbon,
+                  // never the other way around. ⚠️ Ribbon defaults ON for pre-launch
+                  // VISUAL PREVIEW (flag `paywall_monthly_intro`, default TRUE —
+                  // see paywall_experiments.dart). The `onboarding_intro_monthly`
+                  // SKU does NOT exist yet, so checkout still charges $7.99 —
+                  // build + wire the SKU before selling to real users.
+                  _MonthlyRowTile(
+                    title: AppLocalizations.of(context).xpGoalsMonthly,
+                    price: monthlyPrice,
+                    ribbon: _experiments.monthlyIntro
+                        ? 'FIRST MONTH \$1'
+                        : null,
+                    isSelected: _selectedBillingCycle == 'monthly',
+                    onTap: () => _selectBillingCycle('monthly'),
+                    colors: colors,
+                    accent: _paywallAccent,
+                  ),
+                  const SizedBox(height: 12),
+                  // Trust strip — answers the three objections at a glance; the full
+                  // legally-required disclosure follows below (Play policy requires
+                  // the complete cancel/renewal terms adjacent to the CTA, so the
+                  // chips supplement it, never replace it).
+                  Row(
+                    children: [
+                      _TrustChip(label: 'CANCEL ANYTIME', colors: colors),
+                      const SizedBox(width: 6),
+                      _TrustChip(label: 'DAY-5 REMINDER', colors: colors),
+                      const SizedBox(width: 6),
+                      _TrustChip(label: '\$0 TODAY', colors: colors),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const InlineReferralExpander(),
+                  const SizedBox(height: 8),
+                  // App Store Guideline 3.1.2 + Google Play subscription policy:
+                  // auto-renewal AND cancellation terms must be disclosed adjacent to
+                  // the purchase CTA. Google Play rejects/deactivates paywalls that
+                  // omit how-to-cancel + the trial→paid conversion terms, so on the
+                  // trial path we state explicitly that cancelling before the trial
+                  // ends means no charge.
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      _selectedBillingCycle == 'yearly'
+                          ? 'Your 7-day free trial is free — cancel before it ends and '
+                                'you won’t be charged. After the trial, the subscription '
+                                'auto-renews at the price above unless cancelled at least '
+                                '24 hours before the period ends. Cancel anytime in your '
+                                'device account settings.'
+                          : 'Subscription auto-renews at the price above unless '
+                                'cancelled at least 24 hours before the end of the current '
+                                'period. Cancel anytime in your device account settings.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.35,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: _openTermsOfService,
+                        child: Text(
+                          AppLocalizations.of(context).paywallPricingTerms,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '  ·  ',
+                        style: TextStyle(fontSize: 12, color: colors.textMuted),
+                      ),
+                      GestureDetector(
+                        onTap: _openPrivacyPolicy,
+                        child: Text(
+                          AppLocalizations.of(context).settingsPrivacySection,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: _openTermsOfService,
-                child: Text(
-                  AppLocalizations.of(context).paywallPricingTerms,
-                  style: TextStyle(fontSize: 12, color: colors.textMuted),
-                ),
-              ),
-              Text(
-                '  ·  ',
-                style: TextStyle(fontSize: 12, color: colors.textMuted),
-              ),
-              GestureDetector(
-                onTap: _openPrivacyPolicy,
-                child: Text(
-                  AppLocalizations.of(context).settingsPrivacySection,
-                  style: TextStyle(fontSize: 12, color: colors.textMuted),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -2334,6 +2429,279 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// One tester quote on the founder page: a small feature-icon badge next
+/// to the quote instead of a bare text block, so each testimonial reads as
+/// proof of a specific capability rather than a generic "I like this app".
+class _TesterQuoteCard extends StatelessWidget {
+  final String quote;
+  final String name;
+  final IconData icon;
+  final Color accent;
+  final ThemeColors colors;
+  final int animDelayMs;
+
+  const _TesterQuoteCard({
+    required this.quote,
+    required this.name,
+    required this.icon,
+    required this.accent,
+    required this.colors,
+    required this.animDelayMs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 15, color: accent),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  quote,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.5,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: animDelayMs.ms).slideY(begin: 0.08);
+  }
+}
+
+/// A single entry in the vertical value reel: icon + short title + one-line
+/// benefit. First four entries reuse the existing localized copy (was the
+/// static grid's only content); the rest are plain strings, matching the
+/// precedent set by the horizontal marquee's `_Feat` list on
+/// paywall_features_screen.dart (decorative feature-breadth copy isn't
+/// localized there either).
+typedef _ValueFeat = (IconData, String, String);
+
+List<_ValueFeat> _valueMarqueeFeatures(AppLocalizations l10n) => [
+  (Icons.auto_fix_high_rounded, l10n.paywallValueItem1Title, l10n.paywallValueItem1Sub),
+  (Icons.restaurant_menu_rounded, l10n.paywallValueItem2Title, l10n.paywallValueItem2Sub),
+  (Icons.videocam_outlined, l10n.paywallValueItem3Title, l10n.paywallValueItem3Sub),
+  (Icons.chat_bubble_outline_rounded, l10n.paywallValueItem4Title, l10n.paywallValueItem4Sub),
+  (Icons.timer_outlined, 'Fasting Tracker', 'Guided windows with live body-status'),
+  (Icons.local_drink_outlined, 'Hydration Tracker', 'Daily water goal, logged in seconds'),
+  (Icons.map_outlined, 'Muscle Heatmap', 'See exactly what you\'ve trained'),
+  (Icons.mic_none_rounded, 'Voice Logging', 'Say your sets, hands stay free'),
+  (Icons.receipt_long_outlined, 'Recipe Import', 'Paste any link, get full macros'),
+  (Icons.healing_outlined, 'Injury-Safe Plans', 'Auto-routes around what hurts'),
+  (Icons.psychology_outlined, 'AI Coach Personas', '5 coaching styles to choose from'),
+  (Icons.battery_charging_full_rounded, 'Recovery Score', 'Know when to push or rest'),
+  (Icons.view_week_outlined, 'Superset Builder', 'Stack exercises your way'),
+  (Icons.watch_outlined, 'Wearable Sync', 'Apple Health & Health Connect'),
+  (Icons.emoji_events_outlined, '52+ Skill Progressions', 'From first pull-up to muscle-up'),
+  (Icons.insights_rounded, 'Progress Photos & Charts', 'Every metric, visualized'),
+  (Icons.groups_rounded, 'Active Community', 'Friends, groups & challenges'),
+  (Icons.tune_rounded, 'Fully Customizable', 'Build your own workouts, your way'),
+];
+
+/// One full-width card in the vertical value reel.
+class _ValueMarqueeCard extends StatelessWidget {
+  final _ValueFeat feat;
+  final Color accent;
+  final ThemeColors colors;
+
+  const _ValueMarqueeCard({
+    required this.feat,
+    required this.accent,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Icon(feat.$1, size: 18, color: accent),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  feat.$2,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  feat.$3,
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.3,
+                    color: colors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Vertical sibling of the horizontal `_Marquee` on
+/// paywall_features_screen.dart — same seamless-loop technique (a [Ticker]
+/// advances a [ScrollController]; content is rendered twice back-to-back and
+/// the offset wraps within one copy's extent so the loop has no visible
+/// seam), rotated to scroll vertically with full-width cards instead of
+/// pill chips. Replaces the old static 2×2 grid (4 features) so this page
+/// surfaces everything a subscriber unlocks, not just the headline four.
+class _VerticalValueMarquee extends StatefulWidget {
+  final List<_ValueFeat> features;
+  final double pixelsPerSecond;
+  final Color accent;
+  final ThemeColors colors;
+
+  const _VerticalValueMarquee({
+    required this.features,
+    required this.pixelsPerSecond,
+    required this.accent,
+    required this.colors,
+  });
+
+  @override
+  State<_VerticalValueMarquee> createState() => _VerticalValueMarqueeState();
+}
+
+class _VerticalValueMarqueeState extends State<_VerticalValueMarquee>
+    with SingleTickerProviderStateMixin {
+  late final Ticker _ticker;
+  final ScrollController _controller = ScrollController();
+  Duration _lastTick = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = createTicker(_onTick);
+    // Start after the first frame so the controller is attached and
+    // maxScrollExtent is known.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _ticker.start();
+    });
+  }
+
+  /// Height of ONE list copy. Content is two identical copies stacked, so
+  /// total content height is `maxScrollExtent + viewportDimension`; half of
+  /// that is exactly one copy.
+  double _oneCopyHeight() {
+    final p = _controller.position;
+    return (p.maxScrollExtent + p.viewportDimension) / 2;
+  }
+
+  void _onTick(Duration elapsed) {
+    final dtMs = (elapsed - _lastTick).inMicroseconds / 1e6;
+    _lastTick = elapsed;
+    if (!_controller.hasClients) return;
+    final oneCopy = _oneCopyHeight();
+    if (oneCopy <= 0) return;
+
+    var next = _controller.offset + widget.pixelsPerSecond * dtMs;
+    // Seamless wrap: keep the offset within [0, oneCopy) so copy-1 and
+    // copy-2 are visually interchangeable.
+    if (next >= oneCopy) next -= oneCopy;
+    _controller.jumpTo(next);
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget listCopy() => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final f in widget.features)
+          _ValueMarqueeCard(feat: f, accent: widget.accent, colors: widget.colors),
+      ],
+    );
+
+    // Edge fade: opaque in the middle, transparent at top/bottom, so cards
+    // dissolve into the background for the "infinite rail" feel.
+    return ShaderMask(
+      shaderCallback: (rect) => const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.transparent,
+          Colors.black,
+          Colors.black,
+          Colors.transparent,
+        ],
+        stops: [0.0, 0.08, 0.92, 1.0],
+      ).createShader(rect),
+      blendMode: BlendMode.dstIn,
+      child: ListView(
+        controller: _controller,
+        physics: const NeverScrollableScrollPhysics(),
+        children: [listCopy(), listCopy()],
+      ),
     );
   }
 }
@@ -2936,10 +3304,7 @@ class _MonthlyRowTile extends StatelessWidget {
             if (ribbon != null) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: accent.withValues(alpha: 0.4)),

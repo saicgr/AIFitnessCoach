@@ -167,28 +167,31 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
           // page wraps this card in a scroll-when-needed layout, so expanding
           // the full lineup scrolls the page on short phones instead of
           // overflowing.
-          AnimatedSize(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final r
-                    in (_expanded
-                        ? _rivals
-                        : _rivals.take(_collapsedCount))) ...[
-                  _bar(
-                    name: r.name,
-                    note: r.note,
-                    price: _fmt(_price(r)),
-                    frac: _price(r) / max,
-                    isZealova: false,
-                  ),
-                  const SizedBox(height: 4),
-                ],
+          //
+          // No AnimatedSize here: the parent screen sizes this card through
+          // IntrinsicHeight, which queries the CURRENT (target) intrinsic
+          // height of this tree — but AnimatedSize lerps its actual render
+          // height from the old size over time, so for ~220ms after a toggle
+          // the real content was taller/shorter than IntrinsicHeight had
+          // already allocated, throwing a RenderFlex overflow mid-animation.
+          // Resizing instantly keeps the two in lockstep.
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final r
+                  in (_expanded
+                      ? _rivals
+                      : _rivals.take(_collapsedCount))) ...[
+                _bar(
+                  name: r.name,
+                  note: r.note,
+                  price: _fmt(_price(r)),
+                  frac: _price(r) / max,
+                  isZealova: false,
+                ),
+                const SizedBox(height: 4),
               ],
-            ),
+            ],
           ),
           _expandToggle(),
           const SizedBox(height: 6),

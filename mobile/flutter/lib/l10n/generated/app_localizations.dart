@@ -75464,10 +75464,10 @@ abstract class AppLocalizations {
   /// **'Train with {coachName}'**
   String coachSelectionTrainWith(String coachName);
 
-  /// v7 paywall sequence
+  /// v7 paywall sequence — distinct from the post-purchase founderNoteFounderSoloStillOn sheet's "A NOTE FROM CHETAN" framing so the two don't read as the same screen twice
   ///
   /// In en, this message translates to:
-  /// **'A NOTE FROM THE FOUNDER'**
+  /// **'WHY I BUILT THIS'**
   String get paywallFounderKicker;
 
   /// v7 paywall sequence
@@ -75506,6 +75506,18 @@ abstract class AppLocalizations {
   /// **'Keertan · early tester'**
   String get paywallTesterName;
 
+  /// v7 paywall sequence — second tester testimonial, menu scan + recipe from fridge for a user managing diabetes
+  ///
+  /// In en, this message translates to:
+  /// **'“I\'m diabetic, so eating out used to be a guessing game. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carbs.”'**
+  String get paywallTesterQuote2;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'Toby · type 2 diabetic'**
+  String get paywallTesterName2;
+
   /// v7 paywall sequence
   ///
   /// In en, this message translates to:
@@ -75517,6 +75529,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remind me 🔔'**
   String get paywallRemindMeCta;
+
+  /// v7 paywall sequence — 4-item benefit grid, its own page
+  ///
+  /// In en, this message translates to:
+  /// **'EVERYTHING UNLOCKS TODAY'**
+  String get paywallValueReelKicker;
+
+  /// v7 paywall sequence — headline on the dedicated value-grid page
+  ///
+  /// In en, this message translates to:
+  /// **'HERE\'S WHAT YOU GET.'**
+  String get paywallValueHeadline;
+
+  /// v7 paywall sequence — value grid item 1 title
+  ///
+  /// In en, this message translates to:
+  /// **'AI Workouts'**
+  String get paywallValueItem1Title;
+
+  /// v7 paywall sequence — value grid item 1 subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Plans that adapt every week'**
+  String get paywallValueItem1Sub;
+
+  /// v7 paywall sequence — value grid item 2 title
+  ///
+  /// In en, this message translates to:
+  /// **'Food & Menu Scan'**
+  String get paywallValueItem2Title;
+
+  /// v7 paywall sequence — value grid item 2 subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Snap a plate or scan any menu'**
+  String get paywallValueItem2Sub;
+
+  /// v7 paywall sequence — value grid item 3 title
+  ///
+  /// In en, this message translates to:
+  /// **'AI Form Check'**
+  String get paywallValueItem3Title;
+
+  /// v7 paywall sequence — value grid item 3 subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Catches bad reps in real time'**
+  String get paywallValueItem3Sub;
+
+  /// v7 paywall sequence — value grid item 4 title
+  ///
+  /// In en, this message translates to:
+  /// **'Coach Chat'**
+  String get paywallValueItem4Title;
+
+  /// v7 paywall sequence — value grid item 4 subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Ask anything, day or night'**
+  String get paywallValueItem4Sub;
+
+  /// v7 paywall sequence — link to zealova.com/features from the value grid
+  ///
+  /// In en, this message translates to:
+  /// **'See all features'**
+  String get paywallValueSeeAllFeatures;
 
   /// v7 paywall sequence
   ///

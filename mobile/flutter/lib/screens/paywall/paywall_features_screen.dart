@@ -438,6 +438,7 @@ const List<_Feat> _marqueeRowTop = [
   (Icons.qr_code_scanner, 'Barcode scan'),
   (Icons.local_offer_outlined, 'Streak freezes'),
   (Icons.event_note_outlined, 'Weekly recap'),
+  (Icons.groups_rounded, 'Active community'),
 ];
 
 const List<_Feat> _marqueeRowBottom = [
@@ -455,6 +456,7 @@ const List<_Feat> _marqueeRowBottom = [
   (Icons.scale_outlined, 'Plate calculator'),
   (Icons.ac_unit_rounded, 'Deload weeks'),
   (Icons.insights_rounded, 'Progress photos & charts'),
+  (Icons.tune_rounded, 'Fully customizable'),
 ];
 
 /// One signature-v2 chip: a small orange icon + UPPERCASE Barlow Condensed

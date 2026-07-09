@@ -120,6 +120,15 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   /// `StretchMode.zoomBackground` do NOT fire inside a [NestedScrollView] (the
   /// inner tab body absorbs the overscroll, so the outer header never
   /// stretches). A [ValueNotifier] so only the hero image's transform rebuilds.
+  ///
+  /// IMPORTANT: this must only ever drive a paint-time `Transform.scale` on
+  /// the hero image — never the `SliverAppBar`'s `expandedHeight`. Mutating
+  /// the sliver's actual extent from inside a scroll-notification callback
+  /// races `NestedScrollView`'s own outer/inner scroll reconciliation (the
+  /// header's reported max extent changes while the coordinator is mid-way
+  /// through applying the very overscroll delta that's driving this value),
+  /// which previously crashed production with
+  /// `'extra >= 0.0': is not true` in nested_scroll_view.dart.
   final ValueNotifier<double> _headerZoom = ValueNotifier<double>(0);
 
   /// One light haptic per pull once the zoom crosses a threshold (re-armed when
@@ -245,9 +254,15 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     return false;
   }
 
-  /// Max extra header height a hard overscroll pull can add (px). The hero
-  /// grows from 280 → 420 at full stretch, then springs back on release.
+  /// Overscroll pull distance (px) at which the hero zoom reaches its max
+  /// scale, then springs back on release. The `SliverAppBar`'s `expandedHeight`
+  /// itself stays constant (see [_headerZoom] doc) — only the hero image's
+  /// paint-time scale responds to this.
   static const double _kMaxHeaderStretch = 140;
+
+  /// Max fractional zoom applied to the hero image at full overscroll pull
+  /// (e.g. 0.25 == image scales up to 125%).
+  static const double _kMaxHeaderZoomScale = 0.25;
 
   String get _resolveId => _card?.id ?? widget.programId ?? '';
 
@@ -458,10 +473,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
 
     return SliverAppBar(
       backgroundColor: AppColors.pureBlack,
-      // Grows with the overscroll pull (drag-down stretch). The taller header
-      // pushes the stat tiles + tabs down and the BoxFit.cover hero fills (and
-      // visually zooms into) the new space — matching the exercise-detail feel.
-      expandedHeight: 280 + stretch,
+      // Deliberately CONSTANT — see [_headerZoom] doc for why this must never
+      // vary with the overscroll pull. The stretch is instead applied as a
+      // paint-only Transform.scale on the hero background below, which never
+      // touches NestedScrollView's scroll-extent bookkeeping.
+      expandedHeight: 280,
       pinned: true,
       automaticallyImplyLeading: false,
       // Collapsed bar: back ‹ + program title + favorite heart.
@@ -515,56 +531,77 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         background: Stack(
           fit: StackFit.expand,
           children: [
-            if (hasCover) ...[
-              // Cover art fills the hero; scrim top+bottom keeps the back/heart
-              // controls and the title legible over any photo. BoxFit.cover
-              // means it fills (and visually zooms into) the taller header as
-              // the overscroll grows `expandedHeight`.
-              CachedNetworkImage(
-                imageUrl: card.imageUrl!,
-                fit: BoxFit.cover,
-                fadeInDuration: const Duration(milliseconds: 200),
-                errorWidget: (_, __, ___) => DecoratedBox(
-                  decoration: BoxDecoration(gradient: theme.headerGradient),
-                ),
-              ),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0x73000000),
-                      Color(0x1A000000),
-                      Color(0xE6000000),
+            // Hero art only — clipped + paint-scaled by the overscroll pull.
+            // Scaling (not resizing) keeps the SliverAppBar's real extent
+            // constant, so this can never destabilize NestedScrollView.
+            ClipRect(
+              child: Transform.scale(
+                alignment: Alignment.topCenter,
+                scale:
+                    1 +
+                    (stretch / _kMaxHeaderStretch) * _kMaxHeaderZoomScale,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (hasCover) ...[
+                      // Cover art; scrim top+bottom keeps the back/heart
+                      // controls legible over any photo. BoxFit.cover plus
+                      // the wrapping Transform.scale above is what produces
+                      // the "zoom in" feel on pull.
+                      CachedNetworkImage(
+                        imageUrl: card.imageUrl!,
+                        fit: BoxFit.cover,
+                        fadeInDuration: const Duration(milliseconds: 200),
+                        errorWidget: (_, __, ___) => DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: theme.headerGradient,
+                          ),
+                        ),
+                      ),
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0x73000000),
+                              Color(0x1A000000),
+                              Color(0xE6000000),
+                            ],
+                            stops: [0.0, 0.4, 1.0],
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      // Tinted gradient base + diagonal stripes.
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: theme.headerGradient,
+                        ),
+                      ),
+                      CustomPaint(
+                        painter: _DiagonalStripePainter(
+                          color: Colors.white.withValues(alpha: 0.05),
+                        ),
+                      ),
+                      // Bottom scrim so the title reads against the panel.
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Color(0xCC000000)],
+                            stops: [0.45, 1.0],
+                          ),
+                        ),
+                      ),
                     ],
-                    stops: [0.0, 0.4, 1.0],
-                  ),
+                  ],
                 ),
               ),
-            ] else ...[
-              // Tinted gradient base + diagonal stripes.
-              DecoratedBox(
-                decoration: BoxDecoration(gradient: theme.headerGradient),
-              ),
-              CustomPaint(
-                painter: _DiagonalStripePainter(
-                  color: Colors.white.withValues(alpha: 0.05),
-                ),
-              ),
-              // Bottom scrim so the title reads against the panel.
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Color(0xCC000000)],
-                    stops: [0.45, 1.0],
-                  ),
-                ),
-              ),
-            ],
-            // Title block anchored to the bottom of the expanded area.
+            ),
+            // Title block anchored to the bottom of the expanded area — kept
+            // OUTSIDE the scale transform so text always stays crisp/fixed.
             Positioned(
               left: 16,
               right: 16,

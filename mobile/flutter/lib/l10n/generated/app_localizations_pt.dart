@@ -45038,11 +45038,51 @@ class AppLocalizationsPt extends AppLocalizations {
   String get paywallTesterName => 'Keertan · testador inicial';
 
   @override
+  String get paywallTesterQuote2 =>
+      '“I\'m diabetic, so eating out used to be a guessing game. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carbs.”';
+
+  @override
+  String get paywallTesterName2 => 'Toby · type 2 diabetic';
+
+  @override
   String get paywallEarlyAccess =>
       'Acesso antecipado · seja um dos 1.000 primeiros membros';
 
   @override
   String get paywallRemindMeCta => 'Me lembre 🔔';
+
+  @override
+  String get paywallValueReelKicker => 'EVERYTHING UNLOCKS TODAY';
+
+  @override
+  String get paywallValueHeadline => 'HERE\'S WHAT YOU GET.';
+
+  @override
+  String get paywallValueItem1Title => 'AI Workouts';
+
+  @override
+  String get paywallValueItem1Sub => 'Plans that adapt every week';
+
+  @override
+  String get paywallValueItem2Title => 'Food & Menu Scan';
+
+  @override
+  String get paywallValueItem2Sub => 'Snap a plate or scan any menu';
+
+  @override
+  String get paywallValueItem3Title => 'AI Form Check';
+
+  @override
+  String get paywallValueItem3Sub => 'Catches bad reps in real time';
+
+  @override
+  String get paywallValueItem4Title => 'Coach Chat';
+
+  @override
+  String get paywallValueItem4Sub => 'Ask anything, day or night';
+
+  @override
+  String get paywallValueSeeAllFeatures => 'See all features';
 
   @override
   String get paywallTrialToggleTitle => 'Teste grátis ativado';

@@ -94,19 +94,19 @@ const Map<String, CoachPreviewContent> kCoachPreviewContent = {
         "Not on my watch. Your plan already works around that {part} — we "
         "build around it, not through it. {part}-friendly training is my "
         "specialty, champ.",
-    genericInjuryQuestion: "I've had injuries before — can we work around them?",
+    genericInjuryQuestion: 'Got old injuries?',
     genericInjuryAnswer:
         "Absolutely. Tell the app what's tender and the plan builds around "
         "it automatically — we train what's ready and protect what's not.",
     chips: [
       PreviewChip(
-        "I'm nervous about my first workout",
+        'First-workout nerves?',
         "Totally normal! We start light and nail your form first — small "
         "wins, big confidence. By week 3 you'll be chasing the workout, "
         "not fearing it.",
       ),
       PreviewChip(
-        'How fast will I see results?',
+        'How fast are results?',
         "Strength jumps in 2–3 weeks — that's your nervous system waking "
         "up. Visible changes around week 6–8 if you keep showing up. And "
         "I'll make sure you keep showing up.",
@@ -129,20 +129,20 @@ const Map<String, CoachPreviewContent> kCoachPreviewContent = {
         "No — and we won't guess. Your plan limits {part} loading to your "
         "pain-free range and rebuilds capacity progressively. Research "
         "favors controlled loading over rest for most {part} issues.",
-    genericInjuryQuestion: "I've had injuries before — can we work around them?",
+    genericInjuryQuestion: 'Got old injuries?',
     genericInjuryAnswer:
         "Yes. Log any limitation and the plan excludes aggravating patterns "
         "while loading what tolerates it — graded exposure is the "
         "evidence-based path back.",
     chips: [
       PreviewChip(
-        "I'm nervous about my first workout",
+        'First-workout nerves?',
         "That's a healthy signal, not a red flag. We begin near 60% effort "
         "to groove the patterns. Confidence follows competence — usually "
         "within two sessions.",
       ),
       PreviewChip(
-        'How fast will I see results?',
+        'How fast are results?',
         "Neural strength gains: 2–3 weeks. Measurable hypertrophy: 6–8 "
         "weeks. Habit consolidation: about 10. I'll show you each marker "
         "in your data as it arrives.",
@@ -166,18 +166,18 @@ const Map<String, CoachPreviewContent> kCoachPreviewContent = {
         "A bad {part} is intel, not an excuse. The plan already benched "
         "the risky {part} work until you earn it back. We train around it "
         "— smart AND hard.",
-    genericInjuryQuestion: "I've had injuries before — can we work around them?",
+    genericInjuryQuestion: 'Got old injuries?',
     genericInjuryAnswer:
         "Everyone's carrying something. Report it, the plan routes around "
         "it, and we attack everything else. No excuses left. Clear?",
     chips: [
       PreviewChip(
-        "I'm nervous about my first workout",
+        'First-workout nerves?',
         "Nervous? Good. Means you respect the work. We drill the basics "
         "light until they're boring. Then we load. That's the system.",
       ),
       PreviewChip(
-        'How fast will I see results?',
+        'How fast are results?',
         "You'll FEEL it in 2 weeks. You'll SEE it in 6 — IF you show up. "
         "Showing up is your only job. I handle the rest.",
       ),
@@ -197,19 +197,19 @@ const Map<String, CoachPreviewContent> kCoachPreviewContent = {
         "We'll listen to it, not fight it. Your plan avoids loading that "
         "{part} harshly and rebuilds gently — movement should feel like "
         "care, not punishment.",
-    genericInjuryQuestion: "I've had injuries before — can we work around them?",
+    genericInjuryQuestion: 'Got old injuries?',
     genericInjuryAnswer:
         "Of course. Tell the app where you're tender and your sessions "
         "flow around it. Healing and progress can share the same week.",
     chips: [
       PreviewChip(
-        "I'm nervous about my first workout",
+        'First-workout nerves?',
         "Nerves are just energy without a plan. We'll move slowly, "
         "breathe, and let the patterns settle. It becomes a ritual you "
         "look forward to.",
       ),
       PreviewChip(
-        'How fast will I see results?',
+        'How fast are results?',
         "Strength arrives quietly in 2–3 weeks; visible change closer to "
         "8. But notice your sleep and mood first — they shift within days.",
       ),
@@ -228,18 +228,18 @@ const Map<String, CoachPreviewContent> kCoachPreviewContent = {
     injuryAnswer:
         "We got you — the plan skips the spicy {part} stuff till it's "
         "ready. Training still goes CRAZY, just smarter. 😤",
-    genericInjuryQuestion: "I've had injuries before — can we work around them?",
+    genericInjuryQuestion: 'Got old injuries?',
     genericInjuryAnswer:
         "SAY LESS — log it and the plan dodges it automatically. We work "
         "with your body, not against it. Still gonna cook though 🔥",
     chips: [
       PreviewChip(
-        "I'm nervous about my first workout",
+        'First-workout nerves?',
         "FIRST SESSION?? That's a core memory loading. We start light, "
         "clean reps — by week 3 you're gonna be POSTING about it, fr.",
       ),
       PreviewChip(
-        'How fast will I see results?',
+        'How fast are results?',
         "2–3 weeks: strength buff unlocked. 6–8: the mirror starts "
         "agreeing with you. Just don't ghost me 💀",
       ),

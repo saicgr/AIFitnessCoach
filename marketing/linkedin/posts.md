@@ -115,3 +115,104 @@ If you're stuck on the same gate, comment "checklist" and I'll DM you the full l
 #BuildInPublic #IndieDev #SoloFounder #AIBuilder
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-07-07 — "I gave Claude and ChatGPT a key to my app"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-07-07):**
+- Algo finding: Dwell time is the dominant 2026 ranking signal (0-3s dwell = 1.2% engagement vs 61s+ = 15.6%, a 13x gap). Document/carousel posts are the single highest-engagement native format on LinkedIn right now, and outbound links in the body still cost roughly 60% of reach. Confirms the carousel default over a text-only post for this one.
+- Hashtag finding: 3-5 highly specific tags outperform broad/volume ones in 2026; keyword-rich body text now matters as much as the tags themselves. Chose #BuildInPublic (evergreen, matches prior posts), #MCP (exact-match category tag for this story), #AIAgents (growing 2026 category), #IndieDev (audience tag) — 4 tags, all directly on-topic rather than generic (dropped #AI as too broad per this session's research).
+- Trend hook hijack: none borrowed from a single viral post. Loosely riding the live "MCP is becoming shared infrastructure, not just an Anthropic format" moment (the Linux Foundation donation), used as real background context, not a hijacked headline.
+- Dev-context source: this is grounded in yesterday's actual git history, not a generic feature-launch framing — commits `bab364ef` (one-command OAuth setup), `9c882f75` (program/fasting tools), `dc866e7d` (Settings surface), `029cacb2`/`4d5a94e9` (consent-page repairs), `63d231b0` (`/mcp/docs` page), `a97ee51e` (default scope grant + dead button fix), all dated 2026-07-06.
+- Source links:
+  - https://www.dataslayer.ai/blog/linkedin-algorithm-february-2026-whats-working-now
+  - https://growleads.io/blog/linkedin-algorithm-2026-text-vs-video-reach/
+  - https://sproutsocial.com/insights/linkedin-hashtags/
+  - https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation
+  - https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation
+  - https://github.com/rdmgator12/awesome-claude-connectors (directory snapshot, last updated 2026-07-02)
+
+**Claim → proof map (facts asserted inside the draft):**
+- "Anthropic donated MCP to the Linux Foundation's new Agentic AI Foundation, backed by OpenAI, Google, Microsoft, and AWS" → https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation + https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation, verified 2026-07-07
+- "Claude's own connector directory already tracks 554 MCP integrations across 30 categories, including Strava for activity logging and Alma for nutrition coaching" → https://github.com/rdmgator12/awesome-claude-connectors, page states "Last Updated: July 2, 2026," verified live 2026-07-07. (Note: I originally planned to claim "no fitness coach is in the directory yet" — checked it directly first and found Strava + Alma already listed, so the claim was rewritten to the honest, narrower gap: nothing that also *generates* workouts and coaches day to day, which matches Zealova's actual wedge vs. tracker/nutrition-only apps per `_ZEALOVA_FACTS.md` §4.)
+- All product-mechanics claims (OAuth 2.1 + PKCE + DCR, PAT flow, tool scopes, rate limiting, audit log, anomaly detection, confirmation-before-write, yearly-subscriber gate, the one-day build timeline, the consent-page bugs) → verified directly against this session's git log/diff and the task's ground truth, not external sources; these are first-person claims about Zealova's own shipped code.
+
+**Plan:**
+- Format: Carousel (Document post) — per the Metricool 2026 study's 11x-interactions-over-single-images finding and this session's dwell-time research; also the natural format for a "here's what actually shipped" technical explainer.
+- Day/time: Wed 2026-07-08, 8:30am CT (LinkedIn's B2B/work-hours peak; today's post is 2 months after the last draft so no cadence conflict, but same-day posting skips warmup time)
+- Hashtags: #BuildInPublic #MCP #AIAgents #IndieDev
+- Pre-post warmup: 15 min of substantive comments on 5-8 indie-dev / AI-agent / fitness-builder posts the same morning
+- First comment: pin `zealova.com/mcp/docs` (the actual public setup page, live per commit `63d231b0`) — never in the body
+- First-hour: reply to the first 3 comments within 5 minutes; anyone who comments "connect" gets the setup-guide DM promised in the post
+- 48h moratorium: no other LinkedIn posts after this one
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+Yesterday I gave Claude and ChatGPT a key to Zealova, the AI fitness coach I'm building. Scoped. Audited. Revocable any time.
+
+For the last year the only way to touch your Zealova data was inside my app. That changed yesterday. Zealova now runs its own MCP server. If you live inside Claude, ChatGPT, or Cursor, your AI assistant can read and write your real workouts, meals, fasting, and body stats. Authenticated as you. Scoped to whatever you allow.
+
+Instead of opening five screens in my own app, I ask Claude what my strength progression looked like this month. It pulls the real report straight from my account.
+
+The part that took longer than the fun part was the guardrails. Rate limiting, a full audit log of every tool call, anomaly detection, and a confirmation step before any write. Yearly subscribers only, for now.
+
+Handing an AI write access to real fitness data with no guardrails is asking for trouble. That's how you end up on the front page of Hacker News.
+
+Built the whole thing in one day, bugs included. Swipe through for what shipped, including the consent screen I broke and fixed in the same afternoon.
+
+Would you actually want your AI reading and writing your own fitness data, or does that feel like one step too far? Comment "connect" and I'll send you the setup guide.
+
+#BuildInPublic #MCP #AIAgents #IndieDev
+
+### 📝 END POST CONTENT
+
+### 🎴 CAROUSEL SLIDES
+
+**Slide 1 (cover):**
+Title: I gave Claude and ChatGPT a key to Zealova
+Subtitle: Built in one day. Scoped. Audited. Revocable.
+
+**Slide 2:**
+Headline: What MCP actually is
+Body: A protocol that lets an AI assistant call real tools, not just chat about them. Anthropic donated it to the Linux Foundation's new Agentic AI Foundation this year, backed by OpenAI, Google, Microsoft, and AWS. It's not just Anthropic's format anymore.
+
+**Slide 3:**
+Headline: Two ways in
+Body: A Personal Access Token flow, live today: go to Settings, create a connection, paste one JSON config into Claude or ChatGPT. And a full OAuth 2.1 + PKCE + Dynamic Client Registration flow, built for future listings like Claude's connector directory or the ChatGPT Apps directory.
+
+**Slide 4:**
+Headline: Where to find it
+Body: Settings → AI Integrations → Create Connection. Copy the config it gives you, paste it into your AI client, and it connects authenticated as you.
+
+**Slide 5:**
+Headline: What your AI can actually touch
+Body: Workouts, nutrition, body stats, fasting, curated programs, coach chat, and full data exports. Scoped to whatever permissions you grant.
+
+**Slide 6:**
+Headline: Plus a report generator
+Body: Ask for a workout-adherence report, a nutrition deep dive, or a strength-progression summary. It hands back a real PDF, HTML, or Markdown doc, not a chat summary.
+
+**Slide 7:**
+Headline: The unglamorous half of the build
+Body: Rate limiting. An audit log of every single tool call. Anomaly detection middleware. A confirmation step before any write action. Locked to yearly subscribers only.
+
+**Slide 8:**
+Headline: One day, start to finish
+Body: Core OAuth server and tool registration in the morning. Program and fasting tools by afternoon. A public docs page at zealova.com/mcp/docs. Then hours fixing the consent screen I'd just broken: dead buttons, a stuck loading state, broken CSS.
+
+**Slide 9:**
+Headline: Why bother with this now
+Body: Claude's own connector directory already tracks 554 integrations, including Strava for activity logging and Alma for nutrition coaching. Nothing yet that also generates your workouts and coaches you day to day. That's the gap this is aimed at.
+
+**Slide 10 (CTA):**
+Headline: Would you hand an AI write access to your own fitness data?
+Body: Comment "connect" and I'll send you the setup guide for linking Claude, ChatGPT, or Cursor to your own Zealova account.
+Action: Follow for the real build, bugs included.

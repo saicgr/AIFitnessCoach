@@ -1,4 +1,5 @@
 import 'package:fitwiz/core/constants/branding.dart';
+
 /// Centralized external links, social media URLs, and app metadata.
 ///
 /// All external URLs live here so they can be updated in one place.
@@ -10,6 +11,7 @@ class AppLinks {
 
   static const String website = 'https://${Branding.marketingDomain}';
   static const String roadmap = 'https://${Branding.marketingDomain}/roadmap';
+  static const String features = 'https://${Branding.marketingDomain}/features';
 
   // ── Social Media ──────────────────────────────────────────────────────────
 
@@ -37,7 +39,8 @@ class AppLinks {
 
   // TODO: Switch back to production URL after public launch
   // static const String playStore = 'https://play.google.com/store/apps/details?id=com.aifitnesscoach.app';
-  static const String playStore = 'https://play.google.com/apps/testing/com.aifitnesscoach.app';
+  static const String playStore =
+      'https://play.google.com/apps/testing/com.aifitnesscoach.app';
   static const String appStore = ''; // TODO: add App Store listing URL
 
   // ── Legal & Support ───────────────────────────────────────────────────────

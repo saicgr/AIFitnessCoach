@@ -28320,9 +28320,9 @@
       }
     }
   },
-  "paywallFounderKicker": "A NOTE FROM THE FOUNDER",
+  "paywallFounderKicker": "WHY I BUILT THIS",
   "@paywallFounderKicker": {
-    "description": "v7 paywall sequence"
+    "description": "v7 paywall sequence — distinct from the post-purchase founderNoteFounderSoloStillOn sheet's \"A NOTE FROM CHETAN\" framing so the two don't read as the same screen twice"
   },
   "paywallFounderHeadline": "I BUILT THE COACH I COULDN'T AFFORD.",
   "@paywallFounderHeadline": {
@@ -28348,6 +28348,14 @@
   "@paywallTesterName": {
     "description": "v7 paywall sequence"
   },
+  "paywallTesterQuote2": "“I'm diabetic, so eating out used to be a guessing game. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I've got into dinner without blowing my carbs.”",
+  "@paywallTesterQuote2": {
+    "description": "v7 paywall sequence — second tester testimonial, menu scan + recipe from fridge for a user managing diabetes"
+  },
+  "paywallTesterName2": "Toby · type 2 diabetic",
+  "@paywallTesterName2": {
+    "description": "v7 paywall sequence"
+  },
   "paywallEarlyAccess": "Early access · be one of the first 1,000 members",
   "@paywallEarlyAccess": {
     "description": "v7 paywall sequence"
@@ -28355,6 +28363,50 @@
   "paywallRemindMeCta": "Remind me 🔔",
   "@paywallRemindMeCta": {
     "description": "v7 paywall sequence"
+  },
+  "paywallValueReelKicker": "EVERYTHING UNLOCKS TODAY",
+  "@paywallValueReelKicker": {
+    "description": "v7 paywall sequence — 4-item benefit grid, its own page"
+  },
+  "paywallValueHeadline": "HERE'S WHAT YOU GET.",
+  "@paywallValueHeadline": {
+    "description": "v7 paywall sequence — headline on the dedicated value-grid page"
+  },
+  "paywallValueItem1Title": "AI Workouts",
+  "@paywallValueItem1Title": {
+    "description": "v7 paywall sequence — value grid item 1 title"
+  },
+  "paywallValueItem1Sub": "Plans that adapt every week",
+  "@paywallValueItem1Sub": {
+    "description": "v7 paywall sequence — value grid item 1 subtitle"
+  },
+  "paywallValueItem2Title": "Food & Menu Scan",
+  "@paywallValueItem2Title": {
+    "description": "v7 paywall sequence — value grid item 2 title"
+  },
+  "paywallValueItem2Sub": "Snap a plate or scan any menu",
+  "@paywallValueItem2Sub": {
+    "description": "v7 paywall sequence — value grid item 2 subtitle"
+  },
+  "paywallValueItem3Title": "AI Form Check",
+  "@paywallValueItem3Title": {
+    "description": "v7 paywall sequence — value grid item 3 title"
+  },
+  "paywallValueItem3Sub": "Catches bad reps in real time",
+  "@paywallValueItem3Sub": {
+    "description": "v7 paywall sequence — value grid item 3 subtitle"
+  },
+  "paywallValueItem4Title": "Coach Chat",
+  "@paywallValueItem4Title": {
+    "description": "v7 paywall sequence — value grid item 4 title"
+  },
+  "paywallValueItem4Sub": "Ask anything, day or night",
+  "@paywallValueItem4Sub": {
+    "description": "v7 paywall sequence — value grid item 4 subtitle"
+  },
+  "paywallValueSeeAllFeatures": "See all features",
+  "@paywallValueSeeAllFeatures": {
+    "description": "v7 paywall sequence — link to zealova.com/features from the value grid"
   },
   "paywallTrialToggleTitle": "Free trial enabled",
   "@paywallTrialToggleTitle": {
