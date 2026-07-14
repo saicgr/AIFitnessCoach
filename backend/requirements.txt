@@ -1,5 +1,15 @@
 # FastAPI & Server
-fastapi==0.109.0
+fastapi>=0.116.2,<0.117.0
+# starlette is fastapi's transitive dep; floored explicitly for security.
+#   CVE-2024-47874 (unbounded multipart buffering -> OOM DoS, CVSS 8.7) fixed in 0.40.0
+#   CVE-2025-54121 (sync file rollover blocks the event loop)           fixed in 0.47.2
+# fastapi 0.115.x pins starlette<0.47.0 and so CANNOT reach the 0.47.2 fix —
+# 0.116.2 (starlette>=0.40.0,<0.49.0) is the minimum that clears both CVEs.
+# 0.37.2 is also the first starlette that stops passing app= to httpx.Client
+# (that kwarg was removed in httpx 0.28) — the TypeError that killed 29 test
+# modules at import. Do NOT downgrade httpx to dodge this: google-genai
+# requires httpx>=0.28.1, so pinning httpx<0.28 breaks Gemini.
+starlette>=0.47.2,<0.49.0
 # Floor lifted 2026-05-30: mcp>=1.27.2 (line 88) requires uvicorn>=0.31.1, which
 # conflicts with the old exact pin uvicorn==0.27.0. Use a bounded floor so pip can
 # resolve against mcp while staying on the 0.x line (no breaking 1.0 jump).
