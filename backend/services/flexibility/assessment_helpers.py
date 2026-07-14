@@ -33,6 +33,8 @@ def _get_rating_from_norms(
     higher_is_better: bool
 ) -> FlexibilityRating:
     """Determine the rating based on measurement and norms."""
+    from .assessment import FlexibilityRating
+
     if higher_is_better:
         if measurement >= norms.excellent[0]:
             return FlexibilityRating.EXCELLENT
@@ -61,6 +63,8 @@ def calculate_percentile(
     age: int
 ) -> int:
     """Calculate the approximate percentile for a flexibility measurement."""
+    from .assessment import FLEXIBILITY_TESTS
+
     test = FLEXIBILITY_TESTS.get(test_type)
     if not test:
         return 50  # Default to median if test not found
@@ -139,6 +143,8 @@ def calculate_percentile(
 
 def get_recommendations(test_type: str, rating: str) -> List[Dict[str, Any]]:
     """Get stretch recommendations based on test result."""
+    from .assessment import STRETCH_RECOMMENDATIONS
+
     if test_type not in STRETCH_RECOMMENDATIONS:
         return []
 
@@ -169,6 +175,8 @@ def evaluate_flexibility(
     Returns:
         Dictionary with evaluation results
     """
+    from .assessment import FLEXIBILITY_TESTS, FlexibilityRating
+
     test = FLEXIBILITY_TESTS.get(test_type)
     if not test:
         logger.warning(f"Unknown flexibility test type: {test_type}")
@@ -229,6 +237,8 @@ class FlexibilityAssessmentService:
 
     def __init__(self):
         """Initialize the flexibility assessment service."""
+        from .assessment import FLEXIBILITY_TESTS
+
         self.tests = FLEXIBILITY_TESTS
 
     def get_all_tests(self) -> List[Dict[str, Any]]:

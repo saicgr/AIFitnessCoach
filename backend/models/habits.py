@@ -12,7 +12,7 @@ These models support:
 - AI-powered habit suggestions
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List, Dict, Any
 from datetime import date as date_type, time as time_type, datetime
 from enum import Enum
@@ -66,6 +66,27 @@ class HabitCreate(BaseModel):
     color: str = Field(default="#4CAF50", max_length=20, description="Hex color code for display")
     reminder_time: Optional[time_type] = Field(None, description="Time for daily reminder")
     reminder_enabled: bool = Field(default=False, description="Whether reminders are enabled")
+
+    @model_validator(mode="after")
+    def _specific_days_requires_target_days(self):
+        """Enforce the constraint `target_days` already documents.
+
+        `frequency=specific_days` with no `target_days` is not a valid habit:
+        `get_today_habits` reads `if frequency == "specific_days" and target_days`,
+        so a habit with no days silently degrades to being tracked EVERY day, and
+        the calendar marks every unlogged day "missed" instead of "not_scheduled".
+        The field description has always said "Required for SPECIFIC_DAYS
+        frequency" — nothing enforced it, so the API accepted the broken habit
+        and produced wrong data downstream instead of rejecting it.
+
+        Only on create: HabitUpdate must stay permissive (a partial update that
+        changes only `frequency` can rely on days already stored on the row).
+        """
+        if self.frequency == HabitFrequency.SPECIFIC_DAYS.value and not self.target_days:
+            raise ValueError(
+                "target_days is required when frequency is 'specific_days'"
+            )
+        return self
 
     class Config:
         use_enum_values = True

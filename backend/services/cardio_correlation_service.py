@@ -13,6 +13,14 @@ Design notes
   - 1 day` with non-null `sleep_minutes > 0`). Mapping cardio→prior-night
   is correct domain modeling: the recovery state at workout start is
   driven by the previous night's sleep, not the night after.
+- **Timezone.** `cardio_logs.performed_at` is a UTC instant, but
+  `daily_activity.activity_date` is a **user-local calendar date**. The
+  workout's local date MUST therefore be resolved in the user's IANA zone
+  (`users.timezone`) before we subtract a day — reading `.date()` straight
+  off the UTC timestamp mis-pairs every evening workout in a negative-UTC
+  offset (a 7pm run in America/Chicago is already "tomorrow" in UTC, so the
+  naive math grabs the night *after* the run). Same convention as
+  `cardio_autotag_service._local_hour` / `cardio_digest_service`.
 - **Source of sleep.** `daily_activity.sleep_minutes` (see
   `backend/api/v1/activity.py` — the same column Apple Health / Health
   Connect imports write). NOTE: per `project_health_connect_sleep_aggregation`
@@ -44,6 +52,7 @@ import hashlib
 import random
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 try:
     import numpy as _np  # type: ignore
@@ -180,6 +189,56 @@ def _pick_copy(r: float, pct: float, user_id: str, n: int) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Timezone helpers
+# ---------------------------------------------------------------------------
+
+def _safe_zone(tz: Optional[str]) -> ZoneInfo:
+    """User's IANA zone, falling back to UTC on a missing/garbage value."""
+    try:
+        return ZoneInfo(tz or "UTC")
+    except (ZoneInfoNotFoundError, KeyError, ValueError):
+        return ZoneInfo("UTC")
+
+
+def _fetch_user_timezone(db, user_id: str) -> Optional[str]:
+    """`users.timezone` for this user (same lookup as cardio_autotag_service)."""
+    try:
+        res = (
+            db.client.table("users")
+            .select("timezone")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+        if res.data:
+            return res.data[0].get("timezone")
+    except Exception as exc:
+        logger.debug("[CardioCorrelation] timezone lookup failed: %s", exc)
+    return None
+
+
+def _local_date(performed: Any, zone: ZoneInfo) -> Optional[date]:
+    """Calendar date of a cardio session **in the user's timezone**.
+
+    `performed_at` is a UTC instant; `daily_activity.activity_date` is a
+    user-local date. Converting into `zone` before taking `.date()` is what
+    keeps the two aligned (see module docstring).
+    """
+    if isinstance(performed, str):
+        try:
+            dt = datetime.fromisoformat(performed.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    elif isinstance(performed, datetime):
+        dt = performed
+    else:
+        return None
+    if dt.tzinfo is None:  # naive rows are UTC by convention
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(zone).date()
+
+
+# ---------------------------------------------------------------------------
 # Data loading
 # ---------------------------------------------------------------------------
 
@@ -204,10 +263,16 @@ def _load_cardio_logs(db, user_id: str, days: int) -> List[Dict[str, Any]]:
     return list(resp.data or [])
 
 
-def _load_sleep_by_date(db, user_id: str, days: int) -> Dict[date, int]:
-    """`{activity_date: sleep_minutes}` for the lookback window."""
+def _load_sleep_by_date(db, user_id: str, days: int, zone: ZoneInfo) -> Dict[date, int]:
+    """`{activity_date: sleep_minutes}` for the lookback window.
+
+    The window bound is computed from the user's local "today" — these rows
+    are keyed by user-local calendar dates, so anchoring on the server's
+    date would clip (or over-fetch) a day at the edge.
+    """
     # +1 because the night-before for the oldest cardio session falls outside the cardio window.
-    since = (date.today() - timedelta(days=days + 1)).isoformat()
+    today_local = datetime.now(zone).date()
+    since = (today_local - timedelta(days=days + 1)).isoformat()
     try:
         resp = (
             db.client.table("daily_activity")
@@ -243,11 +308,13 @@ def _load_sleep_by_date(db, user_id: str, days: int) -> Dict[date, int]:
 def _pair_sessions(
     cardio: List[Dict[str, Any]],
     sleep_by_date: Dict[date, int],
+    zone: ZoneInfo,
 ) -> List[Tuple[float, float]]:
     """Build (sleep_hours_prior_night, pace_seconds_per_km) pairs.
 
     Drops HIIT (high split variance), missing prior-night sleep, and
-    sessions with unparseable timestamps.
+    sessions with unparseable timestamps. `zone` is the user's IANA zone —
+    the workout's calendar date is resolved there, NOT in UTC.
     """
     pairs: List[Tuple[float, float]] = []
     for row in cardio:
@@ -267,18 +334,13 @@ def _pair_sessions(
         if cov is not None and cov > HIIT_PACE_VARIANCE_THRESHOLD:
             continue
 
-        if isinstance(performed, str):
-            try:
-                perf_dt = datetime.fromisoformat(performed.replace("Z", "+00:00"))
-            except ValueError:
-                continue
-        elif isinstance(performed, datetime):
-            perf_dt = performed
-        else:
+        # Local calendar date of the session (UTC instant -> user's zone).
+        session_day = _local_date(performed, zone)
+        if session_day is None:
             continue
 
         # Prior-night sleep = sleep dated the day BEFORE the cardio session.
-        prior_night = (perf_dt.date() - timedelta(days=1))
+        prior_night = session_day - timedelta(days=1)
         sleep_min = sleep_by_date.get(prior_night)
         if sleep_min is None:
             continue
@@ -316,12 +378,16 @@ def compute_sleep_pace_correlation(
         )
         return None
 
-    sleep_by_date = _load_sleep_by_date(db, user_id, days)
+    # Sleep rows are keyed by user-local dates — resolve the zone once and do
+    # every calendar comparison in it.
+    zone = _safe_zone(_fetch_user_timezone(db, user_id))
+
+    sleep_by_date = _load_sleep_by_date(db, user_id, days, zone)
     if not sleep_by_date:
         logger.info("[CardioCorrelation] user=%s no sleep data — skip", user_id)
         return None
 
-    pairs = _pair_sessions(cardio, sleep_by_date)
+    pairs = _pair_sessions(cardio, sleep_by_date, zone)
     if len(pairs) < MIN_PAIRS:
         logger.info(
             "[CardioCorrelation] user=%s paired=%d <%d — skip",

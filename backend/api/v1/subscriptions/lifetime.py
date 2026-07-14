@@ -298,7 +298,7 @@ async def convert_to_lifetime(
             user_id=user_id,
             action="lifetime_conversion_failed",
             endpoint=f"/api/v1/subscriptions/{user_id}/convert-to-lifetime",
-            error_message=str(e),
+            error=e,
             metadata={"product_id": product_id, "price_paid": price_paid}
         )
         raise safe_internal_error(e, "convert_to_lifetime")

@@ -17,8 +17,14 @@ from core.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Supported export versions
-SUPPORTED_VERSIONS = ["1.0"]
+# Supported export versions.
+# Must always contain services.data_export.EXPORT_VERSION — an export this app
+# produces has to be an export this app can import back (round-trip invariant,
+# and GDPR Art. 20 portability requires the archive we hand the user be usable).
+# 2.0 is a superset of 1.0: it adds CSV files (chat_history, food_logs, ...) and
+# removes none, and the importer reads files by name and treats every file as
+# optional, so 1.0 archives keep importing unchanged.
+SUPPORTED_VERSIONS = ["1.0", "2.0"]
 
 # ZIP bomb protection limits
 _MAX_UNCOMPRESSED_SIZE = 200 * 1024 * 1024  # 200 MB

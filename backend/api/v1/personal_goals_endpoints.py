@@ -469,6 +469,24 @@ async def get_goal_suggestions(
         raise safe_internal_error(e, "personal_goals")
 
 
+# GET /goals/suggestions/summary
+#
+# `get_suggestions_summary` lives in personal_goals_endpoints_part2 (the module
+# was auto-split for size) and lost its route decorator in the split: part2's own
+# APIRouter is never included anywhere, so the endpoint was defined but never
+# mounted and every call 404'd — including the app's
+# PersonalGoalsService.getSuggestionsSummary(). Registered explicitly here rather
+# than including part2's router, because part2 also carries a stale duplicate of
+# /workout-sync that must NOT be mounted.
+router.add_api_route(
+    "/goals/suggestions/summary",
+    get_suggestions_summary,
+    methods=["GET"],
+    response_model=GoalSuggestionsSummary,
+    name="get_suggestions_summary",
+)
+
+
 @router.post("/goals/suggestions/{suggestion_id}/dismiss")
 async def dismiss_suggestion(
     user_id: str,

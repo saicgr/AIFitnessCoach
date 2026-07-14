@@ -427,14 +427,20 @@ def score_row(query_content: List[str], row: Dict[str, Any]) -> MatchScore:
     # candidate "Mutton Liver Fry" (content=["mutton","liver"]) → extras={"liver"}.
     # These are distinguishing ingredients/cuts and must not be silently absorbed
     # into a tier-A match — see classify().
+    #
+    # MUST use the SAME coverage primitive as the query→row direction above.
+    # It previously used exact/stem equality only, so a single-char typo made
+    # the SAME word count as both covered (fuzzy) AND extra (exact): query
+    # "paner masala dosa" vs row "Paneer Masala Dosa" scored coverage=1.0 with
+    # extras={"paneer"} → demoted out of tier A → the tier-A "specific wins
+    # outright" contract broke and the weaker "Masala Dosa" row (wrong
+    # calories) came back alongside it. Symmetric coverage keeps the two
+    # directions consistent: a word the query already expresses (exactly,
+    # by stem, by typo, or as a compound) is not an "extra".
     query_set = set(query_content)
     extras: Set[str] = set()
     for w in display_content:
-        if w in query_set:
-            continue
-        if _stem_plural(w) in query_set:
-            continue
-        if any(_stem_plural(q) == _stem_plural(w) for q in query_content):
+        if _token_is_covered(w, query_set):
             continue
         extras.add(w)
 

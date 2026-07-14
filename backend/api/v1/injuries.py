@@ -353,7 +353,7 @@ async def get_user_injuries(
 
     except Exception as e:
         logger.error(f"Failed to get user injuries: {e}", exc_info=True)
-        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+        raise safe_internal_error(e, "injuries")
 
 
 @router.get("/{user_id}/active", response_model=InjuryListResponse)
@@ -383,7 +383,7 @@ async def get_active_injuries(
 
     except Exception as e:
         logger.error(f"Failed to get active injuries: {e}", exc_info=True)
-        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+        raise safe_internal_error(e, "injuries")
 
 
 @router.post("/{user_id}/report", response_model=InjuryReportResponse)
@@ -425,7 +425,7 @@ async def report_injury(
         result = supabase.client.table("user_injuries").insert(injury_data).execute()
 
         if not result.data:
-            raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+            raise safe_internal_error(RuntimeError("DB insert returned no data"), "injuries")
 
         injury = _parse_injury(result.data[0])
 
@@ -451,7 +451,7 @@ async def report_injury(
         raise
     except Exception as e:
         logger.error(f"Failed to report injury: {e}", exc_info=True)
-        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+        raise safe_internal_error(e, "injuries")
 
 
 @router.get("/detail/{injury_id}", response_model=InjuryWithDetails)
@@ -538,7 +538,7 @@ async def get_injury(
         raise
     except Exception as e:
         logger.error(f"Failed to get injury details: {e}", exc_info=True)
-        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+        raise safe_internal_error(e, "injuries")
 
 
 @router.put("/{injury_id}")
@@ -590,7 +590,7 @@ async def update_injury(
         ).execute()
 
         if not result.data:
-            raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+            raise safe_internal_error(RuntimeError("DB insert returned no data"), "injuries")
 
         injury = _parse_injury(result.data[0])
 
@@ -608,7 +608,7 @@ async def update_injury(
         raise
     except Exception as e:
         logger.error(f"Failed to update injury: {e}", exc_info=True)
-        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+        raise safe_internal_error(e, "injuries")
 
 
 @router.delete("/{injury_id}")
@@ -664,7 +664,7 @@ async def mark_injury_healed(
         raise
     except Exception as e:
         logger.error(f"Failed to mark injury as healed: {e}", exc_info=True)
-        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+        raise safe_internal_error(e, "injuries")
 
 
 @router.post("/{injury_id}/check-in", response_model=InjuryCheckIn)
@@ -704,7 +704,7 @@ async def add_check_in(
         result = supabase.client.table("injury_updates").insert(check_in_data).execute()
 
         if not result.data:
-            raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+            raise safe_internal_error(RuntimeError("DB insert returned no data"), "injuries")
 
         # Update injury with latest pain level and recovery phase
         update_data = {"updated_at": now}
@@ -738,7 +738,7 @@ async def add_check_in(
         raise
     except Exception as e:
         logger.error(f"Failed to add check-in: {e}", exc_info=True)
-        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+        raise safe_internal_error(e, "injuries")
 
 
 @router.get("/{user_id}/workout-modifications", response_model=WorkoutModifications)
@@ -870,4 +870,4 @@ async def get_workout_modifications(
 
     except Exception as e:
         logger.error(f"Failed to get workout modifications: {e}", exc_info=True)
-        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+        raise safe_internal_error(e, "injuries")

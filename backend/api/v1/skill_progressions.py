@@ -757,12 +757,38 @@ async def unlock_next_step(user_id: str, chain_id: str,
 
         current_step = _parse_step(current_step_result.data[0])
 
-        # Check if criteria is met based on best performance
-        criteria_met = _check_unlock_criteria(
-            current_step.unlock_criteria,
-            progress_data.get("best_reps_at_current", 0),
-            1,  # Assume at least 1 set for best reps
-            progress_data.get("best_hold_at_current"),
+        # Check if criteria is met, using the user's LOGGED ATTEMPTS at this step
+        # as the source of truth.
+        #
+        # `user_skill_progress` only persists best REPS and best HOLD — it has no
+        # column for sets. The previous implementation therefore passed a
+        # hardcoded `sets=1` into `_check_unlock_criteria`, which made every step
+        # whose criteria required `min_sets > 1` permanently un-unlockable: the
+        # sets check (`sets < criteria.min_sets`) could never pass. Worse, the
+        # sibling endpoint `/log-attempt` evaluates the SAME criteria against the
+        # attempt's real `sets` and reports `can_unlock_next: true` — so the app
+        # would show the user an unlock action that this endpoint always rejected
+        # with "Unlock criteria not met".
+        #
+        # `skill_attempt_logs` is the only place sets is recorded, and it is
+        # written by /log-attempt on every attempt, so an attempt that satisfied
+        # the criteria is always present here. Unlocking is allowed when ANY
+        # logged attempt at the current step satisfies the full criteria — which
+        # is exactly the condition /log-attempt used to say "you can unlock".
+        attempts_result = db.client.table("skill_attempt_logs").select(
+            "reps, sets, hold_seconds"
+        ).eq("user_id", user_id).eq("chain_id", chain_id).eq(
+            "step_order", current_step_order
+        ).execute()
+
+        criteria_met = any(
+            _check_unlock_criteria(
+                current_step.unlock_criteria,
+                attempt.get("reps") or 0,
+                attempt.get("sets") or 1,
+                attempt.get("hold_seconds"),
+            )
+            for attempt in (attempts_result.data or [])
         )
 
         if not criteria_met:

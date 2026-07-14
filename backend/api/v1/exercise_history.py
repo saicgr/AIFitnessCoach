@@ -359,6 +359,154 @@ def _build_gym_breakdown(
 # Endpoints
 # ============================================
 
+# NOTE: this STATIC route MUST stay above the `/{exercise_name}` catch-all below.
+# Starlette matches routes in registration order, so a `/{exercise_name}` route
+# declared first swallows GET /exercise-history/most-performed (it binds
+# exercise_name="most-performed") and this endpoint becomes unreachable.
+@router.get("/most-performed", response_model=MostPerformedExercisesResponse)
+async def get_most_performed_exercises(
+    user_id: str = Query(..., description="User ID"),
+    limit: int = Query(10, ge=1, le=50, description="Number of exercises to return"),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter to a specific gym profile (per-gym progress)."),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get the most performed exercises for a user.
+
+    Returns exercises sorted by times performed, with volume
+    and weight statistics. When `gym_profile_id` is supplied, the aggregation is
+    scoped to that gym via the exercise_workout_history view.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    try:
+        db = get_supabase_db()
+
+        logger.info(f"Getting most performed exercises for user {user_id}")
+
+        # When a gym filter is supplied the aggregation RPC can't express it, so
+        # aggregate directly from the gym-aware history view instead.
+        if gym_profile_id:
+            view_q = db.client.from_("exercise_workout_history") \
+                .select("exercise_name, muscle_group, total_volume_kg, max_weight_kg, workout_date") \
+                .eq("user_id", user_id) \
+                .eq("gym_profile_id", gym_profile_id)
+            view_rows = (view_q.execute().data) or []
+            agg: Dict[str, Dict[str, Any]] = {}
+            for row in view_rows:
+                name = row.get("exercise_name", "")
+                if not name:
+                    continue
+                entry = agg.setdefault(name, {
+                    "exercise_name": name,
+                    "muscle_group": row.get("muscle_group", "") or "",
+                    "times_performed": 0,
+                    "total_volume_kg": 0.0,
+                    "max_weight_kg": 0.0,
+                    "last_performed_at": None,
+                })
+                entry["times_performed"] += 1
+                entry["total_volume_kg"] += float(row.get("total_volume_kg", 0) or 0)
+                entry["max_weight_kg"] = max(
+                    entry["max_weight_kg"], float(row.get("max_weight_kg", 0) or 0))
+                wd = row.get("workout_date")
+                if wd and (entry["last_performed_at"] is None or wd > entry["last_performed_at"]):
+                    entry["last_performed_at"] = wd
+            sorted_ex = sorted(
+                agg.values(), key=lambda x: x["times_performed"], reverse=True)[:limit]
+            exercises = [MostPerformedExercise(**ex) for ex in sorted_ex]
+            return MostPerformedExercisesResponse(
+                user_id=user_id,
+                exercises=exercises,
+                total_unique_exercises=len(agg),
+            )
+
+        # Query aggregated exercise data
+        query = db.client.rpc(
+            "get_most_performed_exercises",
+            {"p_user_id": user_id, "p_limit": limit}
+        )
+
+        result = query.execute()
+        data = result.data
+
+        if isinstance(data, dict):
+            exercises_data = data.get("exercises", [])
+            total_unique = data.get("total_unique_exercises", 0)
+        elif isinstance(data, list):
+            exercises_data = data
+            total_unique = len(data)
+        else:
+            exercises_data = []
+            total_unique = 0
+
+        exercises = []
+        for ex in exercises_data:
+            exercises.append(MostPerformedExercise(
+                exercise_name=ex.get("exercise_name", ""),
+                muscle_group=ex.get("muscle_group", ""),
+                times_performed=ex.get("times_performed", 0),
+                total_volume_kg=float(ex.get("total_volume_kg", 0) or 0),
+                max_weight_kg=float(ex.get("max_weight_kg", 0) or 0),
+                last_performed_at=ex.get("last_performed_at"),
+            ))
+
+        return MostPerformedExercisesResponse(
+            user_id=user_id,
+            exercises=exercises,
+            total_unique_exercises=total_unique,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting most performed exercises: {e}", exc_info=True)
+        # Fallback to simple query if RPC doesn't exist
+        try:
+            db = get_supabase_db()
+            query = db.client.from_("exercise_workout_history") \
+                .select("exercise_name, muscle_group") \
+                .eq("user_id", user_id)
+
+            result = query.execute()
+            data = result.data or []
+
+            # Aggregate manually
+            exercise_counts = {}
+            for row in data:
+                name = row.get("exercise_name", "")
+                if name not in exercise_counts:
+                    exercise_counts[name] = {
+                        "exercise_name": name,
+                        "muscle_group": row.get("muscle_group", ""),
+                        "times_performed": 0,
+                        "total_volume_kg": 0,
+                        "max_weight_kg": 0,
+                    }
+                exercise_counts[name]["times_performed"] += 1
+
+            # Sort by count
+            sorted_exercises = sorted(
+                exercise_counts.values(),
+                key=lambda x: x["times_performed"],
+                reverse=True
+            )[:limit]
+
+            exercises = [
+                MostPerformedExercise(**ex)
+                for ex in sorted_exercises
+            ]
+
+            return MostPerformedExercisesResponse(
+                user_id=user_id,
+                exercises=exercises,
+                total_unique_exercises=len(exercise_counts),
+            )
+
+        except Exception as e2:
+            logger.error(f"Fallback also failed: {e2}", exc_info=True)
+            raise safe_internal_error(e, "exercise_history")
+
+
 @router.get("/{exercise_name}", response_model=ExerciseHistoryResponse)
 async def get_exercise_history(
     request: Request,
@@ -737,150 +885,6 @@ async def get_exercise_personal_records(
     except Exception as e:
         logger.error(f"Error getting exercise PRs: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_history")
-
-
-@router.get("/most-performed", response_model=MostPerformedExercisesResponse)
-async def get_most_performed_exercises(
-    user_id: str = Query(..., description="User ID"),
-    limit: int = Query(10, ge=1, le=50, description="Number of exercises to return"),
-    gym_profile_id: Optional[str] = Query(
-        None, description="Filter to a specific gym profile (per-gym progress)."),
-    current_user: dict = Depends(get_current_user),
-):
-    """
-    Get the most performed exercises for a user.
-
-    Returns exercises sorted by times performed, with volume
-    and weight statistics. When `gym_profile_id` is supplied, the aggregation is
-    scoped to that gym via the exercise_workout_history view.
-    """
-    if str(current_user["id"]) != str(user_id):
-        raise HTTPException(status_code=403, detail="Access denied")
-    try:
-        db = get_supabase_db()
-
-        logger.info(f"Getting most performed exercises for user {user_id}")
-
-        # When a gym filter is supplied the aggregation RPC can't express it, so
-        # aggregate directly from the gym-aware history view instead.
-        if gym_profile_id:
-            view_q = db.client.from_("exercise_workout_history") \
-                .select("exercise_name, muscle_group, total_volume_kg, max_weight_kg, workout_date") \
-                .eq("user_id", user_id) \
-                .eq("gym_profile_id", gym_profile_id)
-            view_rows = (view_q.execute().data) or []
-            agg: Dict[str, Dict[str, Any]] = {}
-            for row in view_rows:
-                name = row.get("exercise_name", "")
-                if not name:
-                    continue
-                entry = agg.setdefault(name, {
-                    "exercise_name": name,
-                    "muscle_group": row.get("muscle_group", "") or "",
-                    "times_performed": 0,
-                    "total_volume_kg": 0.0,
-                    "max_weight_kg": 0.0,
-                    "last_performed_at": None,
-                })
-                entry["times_performed"] += 1
-                entry["total_volume_kg"] += float(row.get("total_volume_kg", 0) or 0)
-                entry["max_weight_kg"] = max(
-                    entry["max_weight_kg"], float(row.get("max_weight_kg", 0) or 0))
-                wd = row.get("workout_date")
-                if wd and (entry["last_performed_at"] is None or wd > entry["last_performed_at"]):
-                    entry["last_performed_at"] = wd
-            sorted_ex = sorted(
-                agg.values(), key=lambda x: x["times_performed"], reverse=True)[:limit]
-            exercises = [MostPerformedExercise(**ex) for ex in sorted_ex]
-            return MostPerformedExercisesResponse(
-                user_id=user_id,
-                exercises=exercises,
-                total_unique_exercises=len(agg),
-            )
-
-        # Query aggregated exercise data
-        query = db.client.rpc(
-            "get_most_performed_exercises",
-            {"p_user_id": user_id, "p_limit": limit}
-        )
-
-        result = query.execute()
-        data = result.data
-
-        if isinstance(data, dict):
-            exercises_data = data.get("exercises", [])
-            total_unique = data.get("total_unique_exercises", 0)
-        elif isinstance(data, list):
-            exercises_data = data
-            total_unique = len(data)
-        else:
-            exercises_data = []
-            total_unique = 0
-
-        exercises = []
-        for ex in exercises_data:
-            exercises.append(MostPerformedExercise(
-                exercise_name=ex.get("exercise_name", ""),
-                muscle_group=ex.get("muscle_group", ""),
-                times_performed=ex.get("times_performed", 0),
-                total_volume_kg=float(ex.get("total_volume_kg", 0) or 0),
-                max_weight_kg=float(ex.get("max_weight_kg", 0) or 0),
-                last_performed_at=ex.get("last_performed_at"),
-            ))
-
-        return MostPerformedExercisesResponse(
-            user_id=user_id,
-            exercises=exercises,
-            total_unique_exercises=total_unique,
-        )
-
-    except Exception as e:
-        logger.error(f"Error getting most performed exercises: {e}", exc_info=True)
-        # Fallback to simple query if RPC doesn't exist
-        try:
-            db = get_supabase_db()
-            query = db.client.from_("exercise_workout_history") \
-                .select("exercise_name, muscle_group") \
-                .eq("user_id", user_id)
-
-            result = query.execute()
-            data = result.data or []
-
-            # Aggregate manually
-            exercise_counts = {}
-            for row in data:
-                name = row.get("exercise_name", "")
-                if name not in exercise_counts:
-                    exercise_counts[name] = {
-                        "exercise_name": name,
-                        "muscle_group": row.get("muscle_group", ""),
-                        "times_performed": 0,
-                        "total_volume_kg": 0,
-                        "max_weight_kg": 0,
-                    }
-                exercise_counts[name]["times_performed"] += 1
-
-            # Sort by count
-            sorted_exercises = sorted(
-                exercise_counts.values(),
-                key=lambda x: x["times_performed"],
-                reverse=True
-            )[:limit]
-
-            exercises = [
-                MostPerformedExercise(**ex)
-                for ex in sorted_exercises
-            ]
-
-            return MostPerformedExercisesResponse(
-                user_id=user_id,
-                exercises=exercises,
-                total_unique_exercises=len(exercise_counts),
-            )
-
-        except Exception as e2:
-            logger.error(f"Fallback also failed: {e2}", exc_info=True)
-            raise safe_internal_error(e, "exercise_history")
 
 
 @router.post("/log-view")

@@ -43,7 +43,7 @@ def _normalize_for_matching(s: Optional[str]) -> str:
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
-from core.timezone_utils import user_today_date, get_user_today
+from core.timezone_utils import user_today_date, get_user_today, resolve_timezone
 
 from .exercise_preferences_models import (
     MUSCLE_GROUPS,
@@ -1609,22 +1609,37 @@ async def get_user_avoided_muscles(user_id: str, timezone_str: str) -> List[dict
         return []
 
 
-async def is_exercise_avoided(user_id: str, exercise_name: str) -> bool:
+async def is_exercise_avoided(
+    user_id: str, exercise_name: str, timezone_str: Optional[str] = None
+) -> bool:
     """
     Check if a specific exercise is in the user's avoidance list.
+
+    `timezone_str` decides which local day temporary avoidances expire on.
+    When omitted (non-HTTP callers: cron, RAG, workout generation) it is
+    resolved from users.timezone via the standard resolver.
     """
-    avoided = await get_user_avoided_exercises(user_id)
+    if timezone_str is None:
+        timezone_str = resolve_timezone(None, get_supabase_db(), user_id)
+    avoided = await get_user_avoided_exercises(user_id, timezone_str)
     return any(
         a.lower() == exercise_name.lower() for a in avoided
     )
 
 
-async def is_muscle_avoided(user_id: str, muscle_group: str) -> tuple[bool, str]:
+async def is_muscle_avoided(
+    user_id: str, muscle_group: str, timezone_str: Optional[str] = None
+) -> tuple[bool, str]:
     """
     Check if a muscle group is avoided and return severity.
     Returns (is_avoided, severity) tuple.
+
+    `timezone_str` decides which local day temporary avoidances expire on
+    (see is_exercise_avoided).
     """
-    avoided = await get_user_avoided_muscles(user_id)
+    if timezone_str is None:
+        timezone_str = resolve_timezone(None, get_supabase_db(), user_id)
+    avoided = await get_user_avoided_muscles(user_id, timezone_str)
     for item in avoided:
         if item["muscle_group"].lower() == muscle_group.lower():
             return (True, item["severity"])

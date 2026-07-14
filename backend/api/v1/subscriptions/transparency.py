@@ -287,7 +287,7 @@ async def request_refund(user_id: str, request: RefundRequest, current_user: dic
             user_id=user_id,
             action="refund_request_failed",
             endpoint=f"/api/v1/subscriptions/{user_id}/request-refund",
-            error_message=str(e),
+            error=e,
             metadata={"reason": request.reason}
         )
         raise safe_internal_error(e, "request_refund")

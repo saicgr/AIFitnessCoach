@@ -10,6 +10,7 @@ from core.logger import get_logger
 from core.config import get_settings
 from core.activity_logger import log_user_activity
 from core.auth import get_current_user
+from core.db_utils import safe_maybe_single
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
 
@@ -100,24 +101,31 @@ async def check_feature_access(user_id: str, request: FeatureAccessRequest, http
     try:
         supabase = get_supabase()
 
-        # Get user's subscription
-        sub_result = supabase.client.table("user_subscriptions")\
-            .select("tier, status, features")\
-            .eq("user_id", user_id)\
-            .single()\
-            .execute()
+        # .maybe_single() everywhere below, NOT .single(): supabase-py raises
+        # APIError(PGRST116) when .single() matches zero rows, so each "row is
+        # absent" fallback in this handler was unreachable dead code and the
+        # request 500'd instead (e.g. an unconfigured feature_key, or the first
+        # check of the day before any feature_usage row exists).
+        sub_result = safe_maybe_single(
+            supabase.client.table("user_subscriptions")
+            .select("tier, status, features")
+            .eq("user_id", user_id)
+            .maybe_single()
+        )
+        sub_row = sub_result.data if sub_result else None
 
-        user_tier = sub_result.data["tier"] if sub_result.data else "free"
-        sub_status = sub_result.data["status"] if sub_result.data else "active"
+        user_tier = sub_row["tier"] if sub_row else "free"
+        sub_status = sub_row["status"] if sub_row else "active"
 
         # Get feature gate config
-        gate_result = supabase.client.table("feature_gates")\
-            .select("*")\
-            .eq("feature_key", request.feature_key)\
-            .single()\
-            .execute()
+        gate_result = safe_maybe_single(
+            supabase.client.table("feature_gates")
+            .select("*")
+            .eq("feature_key", request.feature_key)
+            .maybe_single()
+        )
 
-        if not gate_result.data:
+        if not gate_result or not gate_result.data:
             # Feature not configured - allow access by default
             return FeatureAccessResponse(
                 feature_key=request.feature_key,
@@ -156,15 +164,17 @@ async def check_feature_access(user_id: str, request: FeatureAccessRequest, http
         if limit is not None:
             # Get today's usage
             today = user_today_date(http_request, None, user_id).isoformat()
-            usage_result = supabase.client.table("feature_usage")\
-                .select("usage_count")\
-                .eq("user_id", user_id)\
-                .eq("feature_key", request.feature_key)\
-                .eq("usage_date", today)\
-                .single()\
-                .execute()
+            usage_result = safe_maybe_single(
+                supabase.client.table("feature_usage")
+                .select("usage_count")
+                .eq("user_id", user_id)
+                .eq("feature_key", request.feature_key)
+                .eq("usage_date", today)
+                .maybe_single()
+            )
+            usage_row = usage_result.data if usage_result else None
 
-            current_usage = usage_result.data["usage_count"] if usage_result.data else 0
+            current_usage = usage_row["usage_count"] if usage_row else 0
 
             if current_usage >= limit:
                 return FeatureAccessResponse(

@@ -51,6 +51,7 @@ router = APIRouter()
 @router.post("/{user_id}/batch-log", response_model=BulkHabitLogResponse)
 async def batch_log_habits(
     user_id: str, request: BulkHabitLogCreate,
+    http_request: Request = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -71,15 +72,27 @@ async def batch_log_habits(
     failed_count = 0
     results = []
 
+    # log_habit is a FastAPI route handler: called directly (not via routing)
+    # its `current_user` default stays an unresolved `Depends` object, and
+    # verify_user_ownership then blew up with "'Depends' object is not
+    # subscriptable" — so EVERY batch log silently failed while the endpoint
+    # still returned 200. Pass the already-resolved dependencies explicitly.
     from .habits import log_habit
     for log in request.logs:
         try:
-            result = await log_habit(user_id, log)
+            result = await log_habit(
+                user_id, log, request=http_request, current_user=current_user
+            )
             created_count += 1
+            # Direct call ⇒ no response_model coercion: log_habit hands back the
+            # raw supabase row (a dict), so `result.id` was an AttributeError
+            # that would have kept every batch log "failed" even after the
+            # Depends fix above.
+            log_id = result["id"] if isinstance(result, dict) else result.id
             results.append({
                 "habit_id": str(log.habit_id),
                 "status": "success",
-                "log_id": str(result.id)
+                "log_id": str(log_id)
             })
         except Exception as e:
             failed_count += 1
@@ -131,6 +144,11 @@ async def get_all_streaks(
         logger.info(f"✅ Found {len(result.data)} streaks for user={user_id}")
         return result.data
 
+    # Deliberate 4xx (403 from verify_user_ownership, 404 from lookups) must
+    # survive the generic handler below — otherwise an auth/IDOR rejection is
+    # reported to the client as a 500 "internal error".
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Error getting streaks: {e}", exc_info=True)
         await log_user_error(user_id, "get_all_streaks", str(e))
@@ -226,13 +244,17 @@ async def get_habits_summary(
         best_rate = 0.0
         needs_attention = []
 
+        # `today_response.habits` is List[HabitWithStatus] (Pydantic models,
+        # NOT dicts — TodayHabitsResponse coerces them on construction), so
+        # these must be attribute reads. Dict-style `.get()` raised
+        # AttributeError and 500'd this endpoint for every user with >=1 habit.
         for habit in today_response.habits:
-            rate = habit.get("completion_rate_7d", 0)
+            rate = habit.completion_rate_7d or 0
             if rate > best_rate:
                 best_rate = rate
-                best_habit_name = habit.get("name")
+                best_habit_name = habit.name
             if rate < 50:  # Less than 50% completion
-                needs_attention.append(habit.get("name"))
+                needs_attention.append(habit.name)
 
         summary = HabitsSummary(
             total_active_habits=today_response.total_habits,
@@ -247,6 +269,11 @@ async def get_habits_summary(
         logger.info(f"✅ Summary: {summary.completed_today}/{summary.total_active_habits} today")
         return summary
 
+    # Deliberate 4xx (403 from verify_user_ownership, 404 from lookups) must
+    # survive the generic handler below — otherwise an auth/IDOR rejection is
+    # reported to the client as a 500 "internal error".
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Error getting habits summary: {e}", exc_info=True)
         await log_user_error(user_id, "get_habits_summary", str(e))
@@ -298,6 +325,11 @@ async def get_weekly_summary(
         logger.info(f"✅ Weekly summary: {len(summaries)} habits")
         return summaries
 
+    # Deliberate 4xx (403 from verify_user_ownership, 404 from lookups) must
+    # survive the generic handler below — otherwise an auth/IDOR rejection is
+    # reported to the client as a 500 "internal error".
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Error getting weekly summary: {e}", exc_info=True)
         await log_user_error(user_id, "get_weekly_summary", str(e))
@@ -509,8 +541,10 @@ async def create_habit_from_template(
             color=t.get("color", "#4CAF50"),
         )
 
+        # Pass the resolved current_user — create_habit's default is a
+        # Depends(...) marker that is only filled in by FastAPI's routing layer.
         from .habits import create_habit
-        return await create_habit(user_id, habit_create)
+        return await create_habit(user_id, habit_create, current_user=current_user)
 
     except HTTPException:
         raise
@@ -579,10 +613,17 @@ async def get_ai_suggestions(
             reasoning="Based on your fitness goals and current habits, these habits would complement your routine."
         )
 
+    # Deliberate 4xx (403 from verify_user_ownership, 404 from lookups) must
+    # survive the generic handler below — otherwise an auth/IDOR rejection is
+    # reported to the client as a 500 "internal error".
+    except HTTPException:
+        raise
     except ImportError:
         # Fallback to templates if AI service not available
         logger.warning("⚠️ AI suggestion service not available, falling back to templates", exc_info=True)
-        templates = await get_habit_templates()
+        # Explicit args: get_habit_templates' defaults are Query(...)/Depends(...)
+        # markers that only FastAPI's routing layer resolves.
+        templates = await get_habit_templates(category=None, current_user=current_user)
         return HabitSuggestionResponse(
             suggested_habits=templates[:5],
             reasoning="Popular habits that can help you build a healthier routine."
@@ -600,6 +641,7 @@ async def get_ai_suggestions(
 @router.get("/{user_id}/insights", response_model=HabitInsights)
 async def get_habit_insights(
     user_id: str,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -617,9 +659,14 @@ async def get_habit_insights(
         verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
-        # Get summary data
-        summary = await get_habits_summary(user_id)
-        weekly = await get_weekly_summary(user_id)
+        # Get summary data. Both are route handlers — called directly they get
+        # NO dependency resolution, so `request` and `current_user` must be
+        # threaded through explicitly (previously omitted: TypeError "missing 1
+        # required positional argument: 'request'" → this endpoint 500'd always).
+        summary = await get_habits_summary(user_id, request, current_user=current_user)
+        weekly = await get_weekly_summary(
+            user_id, request, week_start=None, current_user=current_user
+        )
 
         # Build insights based on data
         best_performing = []
@@ -671,6 +718,11 @@ async def get_habit_insights(
         logger.info(f"✅ Generated insights for user={user_id}")
         return insights
 
+    # Deliberate 4xx (403 from verify_user_ownership, 404 from lookups) must
+    # survive the generic handler below — otherwise an auth/IDOR rejection is
+    # reported to the client as a 500 "internal error".
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Error getting insights: {e}", exc_info=True)
         await log_user_error(user_id, "get_habit_insights", str(e))

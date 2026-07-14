@@ -62,6 +62,12 @@ async def get_milestone_definitions(
             category=category
         )
         return definitions
+    except HTTPException:
+        # verify_user_ownership() signals an IDOR attempt with HTTPException(403).
+        # Without this clause the generic handler below catches it and rewrites it
+        # as a 500 — the caller sees a server error instead of 'Access denied',
+        # and every blocked access fires a bogus Sentry 'internal error'.
+        raise
     except Exception as e:
         logger.error(f"Error getting milestone definitions: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
@@ -174,6 +180,12 @@ async def get_user_milestones(user_id: str,
         )
 
         return progress
+    except HTTPException:
+        # verify_user_ownership() signals an IDOR attempt with HTTPException(403).
+        # Without this clause the generic handler below catches it and rewrites it
+        # as a 500 — the caller sees a server error instead of 'Access denied',
+        # and every blocked access fires a bogus Sentry 'internal error'.
+        raise
     except Exception as e:
         logger.error(f"Error getting user milestones: {e}", exc_info=True)
         await log_user_error(
@@ -202,6 +214,12 @@ async def get_uncelebrated_milestones(user_id: str,
         verify_user_ownership(current_user, user_id)
         uncelebrated = await milestone_service.get_uncelebrated_milestones(user_id)
         return uncelebrated
+    except HTTPException:
+        # verify_user_ownership() signals an IDOR attempt with HTTPException(403).
+        # Without this clause the generic handler below catches it and rewrites it
+        # as a 500 — the caller sees a server error instead of 'Access denied',
+        # and every blocked access fires a bogus Sentry 'internal error'.
+        raise
     except Exception as e:
         logger.error(f"Error getting uncelebrated milestones: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
@@ -241,6 +259,12 @@ async def mark_milestones_celebrated(
             )
 
         return {"success": success}
+    except HTTPException:
+        # verify_user_ownership() signals an IDOR attempt with HTTPException(403).
+        # Without this clause the generic handler below catches it and rewrites it
+        # as a 500 — the caller sees a server error instead of 'Access denied',
+        # and every blocked access fires a bogus Sentry 'internal error'.
+        raise
     except Exception as e:
         logger.error(f"Error marking milestones celebrated: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
@@ -292,6 +316,12 @@ async def record_milestone_share(
             )
 
         return {"success": success}
+    except HTTPException:
+        # verify_user_ownership() signals an IDOR attempt with HTTPException(403).
+        # Without this clause the generic handler below catches it and rewrites it
+        # as a 500 — the caller sees a server error instead of 'Access denied',
+        # and every blocked access fires a bogus Sentry 'internal error'.
+        raise
     except Exception as e:
         logger.error(f"Error recording milestone share: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
@@ -391,6 +421,12 @@ async def check_milestones(user_id: str,
                 )
 
         return result
+    except HTTPException:
+        # verify_user_ownership() signals an IDOR attempt with HTTPException(403).
+        # Without this clause the generic handler below catches it and rewrites it
+        # as a 500 — the caller sees a server error instead of 'Access denied',
+        # and every blocked access fires a bogus Sentry 'internal error'.
+        raise
     except Exception as e:
         logger.error(f"Error checking milestones: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
@@ -442,6 +478,12 @@ async def get_roi_metrics(
         )
 
         return metrics
+    except HTTPException:
+        # verify_user_ownership() signals an IDOR attempt with HTTPException(403).
+        # Without this clause the generic handler below catches it and rewrites it
+        # as a 500 — the caller sees a server error instead of 'Access denied',
+        # and every blocked access fires a bogus Sentry 'internal error'.
+        raise
     except Exception as e:
         logger.error(f"Error getting ROI metrics: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
@@ -469,6 +511,12 @@ async def get_roi_summary(user_id: str,
         verify_user_ownership(current_user, user_id)
         summary = await milestone_service.get_roi_summary(user_id)
         return summary
+    except HTTPException:
+        # verify_user_ownership() signals an IDOR attempt with HTTPException(403).
+        # Without this clause the generic handler below catches it and rewrites it
+        # as a 500 — the caller sees a server error instead of 'Access denied',
+        # and every blocked access fires a bogus Sentry 'internal error'.
+        raise
     except Exception as e:
         logger.error(f"Error getting ROI summary: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
@@ -500,6 +548,12 @@ async def get_progress_overview(user_id: str,
             "milestones": milestones,
             "roi": roi_summary,
         }
+    except HTTPException:
+        # verify_user_ownership() signals an IDOR attempt with HTTPException(403).
+        # Without this clause the generic handler below catches it and rewrites it
+        # as a 500 — the caller sees a server error instead of 'Access denied',
+        # and every blocked access fires a bogus Sentry 'internal error'.
+        raise
     except Exception as e:
         logger.error(f"Error getting progress overview: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")

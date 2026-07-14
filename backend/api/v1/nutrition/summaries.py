@@ -416,6 +416,12 @@ async def get_nutrition_targets(user_id: str, current_user: dict = Depends(get_c
             daily_fat_target_g=targets.get("daily_fat_target_g"),
         )
 
+    except HTTPException:
+        # `verify_user_ownership` raises HTTPException(403). Without this
+        # re-raise the blanket handler below swallowed it and reissued it as a
+        # generic 500 — a blocked IDOR looked like a server fault (retry-able
+        # to the client, paged as an internal error in Sentry).
+        raise
     except Exception as e:
         logger.error(f"Failed to get nutrition targets: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
@@ -462,6 +468,10 @@ async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargets
             daily_fat_target_g=updated.get("daily_fat_target_g"),
         )
 
+    except HTTPException:
+        # Same as `get_nutrition_targets` — a 403 from `verify_user_ownership`
+        # must reach the client as a 403, not be laundered into a 500.
+        raise
     except Exception as e:
         logger.error(f"Failed to update nutrition targets: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")

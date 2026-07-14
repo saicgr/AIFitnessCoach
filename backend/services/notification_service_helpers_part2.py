@@ -133,9 +133,21 @@ class NotificationServicePart2:
         if fcm_token in _DEAD_FCM_TOKENS:
             logger.debug(f"Skipping send to known-dead FCM token {fcm_token[:20]}...")
             return False
-        try:
-            from firebase_admin import messaging
 
+        from firebase_admin import messaging
+        # InvalidArgumentError lives on firebase_admin.exceptions, NOT on
+        # firebase_admin.messaging (verified against the pinned
+        # firebase-admin==6.5.0 — messaging only exports UnregisteredError,
+        # SenderIdMismatchError, QuotaExceededError, ThirdPartyAuthError).
+        # Referencing `messaging.InvalidArgumentError` in an `except` clause
+        # raised AttributeError *while handling* any other send failure, so
+        # every non-Unregistered/non-SenderIdMismatch error escaped this method
+        # instead of returning False, and the `except Exception` net below was
+        # dead code. Both imports are hoisted out of the try so the except
+        # clauses can never reference an unbound name.
+        from firebase_admin import exceptions as firebase_exceptions
+
+        try:
             # Build the notification
             notification = messaging.Notification(
                 title=title,
@@ -217,7 +229,7 @@ class NotificationServicePart2:
         except messaging.SenderIdMismatchError:
             logger.error(f"❌ Sender ID mismatch - FCM token belongs to different Firebase project", exc_info=True)
             return False
-        except messaging.InvalidArgumentError as e:
+        except firebase_exceptions.InvalidArgumentError as e:
             logger.error(f"❌ Invalid argument error: {e}", exc_info=True)
             return False
         except Exception as e:

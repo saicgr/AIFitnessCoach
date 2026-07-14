@@ -1659,6 +1659,12 @@
   "verification_token_hash",
   "verified_at"
  ],
+ "email_cron_runs": [
+  "finished_at",
+  "hour_bucket",
+  "instance_id",
+  "started_at"
+ ],
  "email_preferences": [
   "achievement_emails",
   "coach_tips",

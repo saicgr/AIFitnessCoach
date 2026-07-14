@@ -900,7 +900,12 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             # goal — that pushes every set to failure on set 3 even for
             # beginner isolation. Override per goal: strength caps at
             # RIR 1, hypertrophy at RIR 1, mobility skips RIR/RPE.
-            exercises = apply_goal_aware_rir_override(exercises, goals=goals)
+            # fitness_level additionally enforces the documented per-level
+            # RPE ceiling (beginner 5-7 / intermediate 7-8 / advanced 8-10);
+            # without it this override raised beginners back up to RPE 9.
+            exercises = apply_goal_aware_rir_override(
+                exercises, goals=goals, fitness_level=fitness_level
+            )
 
             # is_timed name-pattern repair (Fix 11 / E6). Audit found 50
             # static-hold exercises (Wall Sit, Plank, Dead Hang, etc.)

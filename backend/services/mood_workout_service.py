@@ -352,12 +352,25 @@ NOTE: Warmup and cooldown exercises will be added separately using our exercise 
             MoodType enum value
 
         Raises:
-            ValueError: If mood string is invalid
+            ValueError: If mood string is invalid (including None / non-string)
         """
+        valid_moods = [m.value for m in MoodType]
+
+        # Non-string input (None, int, ...) used to blow up as
+        # AttributeError: 'NoneType' object has no attribute 'lower'. Callers
+        # guard this with `except ValueError` (mood_generation.py:89 turns it
+        # into an SSE 'error' event; mood_analytics passes DB row values such
+        # as row.get("mood") straight in, which is None for a NULL mood column)
+        # — so an AttributeError escaped the handled path and surfaced as an
+        # unhandled 500 / generic failure. Honor the documented contract.
+        if not isinstance(mood_str, str):
+            raise ValueError(
+                f"Invalid mood {mood_str!r}. Must be one of: {', '.join(valid_moods)}"
+            )
+
         try:
             return MoodType(mood_str.lower())
         except ValueError:
-            valid_moods = [m.value for m in MoodType]
             raise ValueError(
                 f"Invalid mood '{mood_str}'. Must be one of: {', '.join(valid_moods)}"
             )

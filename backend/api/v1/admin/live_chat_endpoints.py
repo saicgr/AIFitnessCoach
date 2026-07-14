@@ -33,41 +33,24 @@ from core.supabase_client import get_supabase
 
 
 async def verify_admin_token(authorization: str = Header(...)) -> AdminProfile:
-    """Verify admin token - thin re-implementation to avoid circular import."""
-    try:
-        if not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Invalid authorization header format")
-        token = authorization.replace("Bearer ", "")
-        supabase = get_supabase().auth_client
-        user_response = supabase.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid or expired token")
-        user_id = user_response.user.id
-        db = get_supabase_db()
-        result = db.client.table("users").select("id, email, name, role, avatar_url, created_at").eq("id", user_id).execute()
-        if not result.data:
-            raise HTTPException(status_code=401, detail="User not found")
-        user_data = result.data[0]
-        role = user_data.get("role", "user")
-        if role not in ["admin", "super_admin", "support"]:
-            raise HTTPException(status_code=403, detail="Insufficient permissions. Admin role required.")
-        active_chats_result = db.client.table("support_tickets").select(
-            "id", count="exact"
-        ).eq("assigned_to", user_id).in_("status", ["open", "in_progress"]).execute()
-        active_chats_count = active_chats_result.count or 0
-        return AdminProfile(
-            id=user_id,
-            email=user_data.get("email", ""),
-            name=user_data.get("name", user_data.get("display_name", "Admin")),
-            role=AdminRole(role) if role in [r.value for r in AdminRole] else AdminRole.SUPPORT,
-            is_online=True,
-            active_chats=active_chats_count,
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Admin auth error: {e}", exc_info=True)
-        raise HTTPException(status_code=401, detail="Authentication failed")
+    """Verify admin token for the endpoints in this sub-router.
+
+    This used to be a hand-copied "thin re-implementation to avoid circular
+    import" of `api.v1.admin.live_chat.verify_admin_token`. The copy drifted
+    from the `AdminProfile` model — it passed `active_chats=` (no such field)
+    and omitted the REQUIRED `created_at`, so constructing the profile always
+    raised pydantic ValidationError, which the broad `except Exception` turned
+    into a 401 "Authentication failed". Every endpoint in this module (close
+    chat, tickets, reports, dashboard, presence) was therefore unreachable for
+    a perfectly valid admin token.
+
+    It now delegates to the single canonical implementation so the two can
+    never drift again. The import is deferred to call time because
+    `api.v1.admin.live_chat` imports this module's router at import time.
+    """
+    from api.v1.admin.live_chat import verify_admin_token as _verify_admin_token
+
+    return await _verify_admin_token(authorization=authorization)
 
 router = APIRouter()
 @router.post("/live-chats/{ticket_id}/close", response_model=CloseChatResponse)

@@ -54,8 +54,8 @@ class ReportStatus(str, Enum):
 
 class ChatMessageReportCreate(BaseModel):
     """Create a new chat message report."""
-    user_id: str = Field(..., max_length=100)
-    message_id: str = Field(..., max_length=100, description="The ID of the reported AI message")
+    user_id: str = Field(..., min_length=1, max_length=100)
+    message_id: str = Field(..., min_length=1, max_length=100, description="The ID of the reported AI message")
     report_category: ReportCategory
     report_reason: Optional[str] = Field(None, max_length=1000, description="Optional detailed reason for the report")
     original_user_message: str = Field(..., max_length=5000, description="The user's original message that prompted the AI response")

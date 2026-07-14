@@ -30,7 +30,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import boto3
-import resend
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -41,6 +40,7 @@ from core.config import get_settings
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from core.supabase_client import get_supabase
+from services import email_sender
 from services.data_export import export_user_data
 
 logger = get_logger(__name__)
@@ -491,6 +491,40 @@ def _upload_and_sign(zip_bytes: bytes, key: str) -> tuple[str, datetime]:
 
 # --- Email templates -------------------------------------------------------
 
+# DSAR mail is legal/transactional: it is EXEMPT from the global frequency cap
+# (every `dsar_*` type matches an exempt prefix in services/email_sender.py), but
+# the undeliverable-domain guard still applies. A DSAR from a `@…​.invalid` address
+# is blocked at the chokepoint instead of being handed to SES to bounce.
+
+
+def _dsar_send(email: str, subject: str, html: str, email_type: str, what: str) -> None:
+    """Send one DSAR email through the chokepoint.
+
+    `user_id` is deliberately NOT passed: DSAR is pre-auth and email-keyed, so the
+    requester may have no account at all (`matched_user_id` is None on the
+    no-account path). The type is exempt, so the cap never applies regardless.
+    """
+    try:
+        resp = email_sender.send(
+            {
+                "from": os.getenv(
+                    "RESEND_FROM_EMAIL",
+                    f"{branding.APP_NAME} <{branding.PRIVACY_EMAIL}>",
+                ),
+                "to": [email],
+                "subject": subject,
+                "html": html,
+            },
+            user_id=None,
+            email_type=email_type,
+        )
+        if resp.get("skipped"):
+            logger.warning(
+                f"dsar: {what} email to {email} NOT sent (blocked: {resp.get('reason')})"
+            )
+    except Exception as e:
+        logger.error(f"dsar: failed to send {what} email to {email}: {e}")
+
 
 def _send_verification_email(
     email: str, request_type: str, verify_link: str, dsar_id: Optional[str]
@@ -498,8 +532,6 @@ def _send_verification_email(
     if not os.getenv("RESEND_API_KEY"):
         logger.warning("dsar: RESEND_API_KEY not set, skipping email")
         return
-    resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", f"{branding.APP_NAME} <{branding.PRIVACY_EMAIL}>")
 
     label = {
         "export": "export your data",
@@ -524,17 +556,13 @@ can safely ignore this email — no action will be taken.</p>
 <hr style="border:0;border-top:1px solid #1f2937;margin:32px 0">
 <p style="font-size:12px;color:#6b7280">{branding.APP_NAME} — GDPR/CCPA Data Rights Desk</p>
 </div></body></html>"""
-    try:
-        resend.Emails.send(
-            {
-                "from": from_email,
-                "to": [email],
-                "subject": f"Verify your {branding.APP_NAME} data request",
-                "html": html,
-            }
-        )
-    except Exception as e:
-        logger.error(f"dsar: failed to send verification email to {email}: {e}")
+    _dsar_send(
+        email,
+        f"Verify your {branding.APP_NAME} data request",
+        html,
+        "dsar_verification",
+        "verification",
+    )
 
 
 def _send_export_ready_email(
@@ -542,8 +570,6 @@ def _send_export_ready_email(
 ) -> None:
     if not os.getenv("RESEND_API_KEY"):
         return
-    resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", f"{branding.APP_NAME} <{branding.PRIVACY_EMAIL}>")
 
     verb = "export" if request_type == "export" else "access report"
     html = f"""<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;
@@ -563,24 +589,18 @@ file-by-file breakdown.</p>
 <p style="font-size:13px;color:#6b7280">Questions? Reply to this email or
 write to <a style="color:#06b6d4" href="mailto:{branding.PRIVACY_EMAIL}">{branding.PRIVACY_EMAIL}</a>.</p>
 </div></body></html>"""
-    try:
-        resend.Emails.send(
-            {
-                "from": from_email,
-                "to": [email],
-                "subject": f"Your {branding.APP_NAME} data {verb} is ready",
-                "html": html,
-            }
-        )
-    except Exception as e:
-        logger.error(f"dsar: failed to send export-ready email to {email}: {e}")
+    _dsar_send(
+        email,
+        f"Your {branding.APP_NAME} data {verb} is ready",
+        html,
+        "dsar_export_ready",
+        "export-ready",
+    )
 
 
 def _send_no_account_email(email: str, request_type: str) -> None:
     if not os.getenv("RESEND_API_KEY"):
         return
-    resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", f"{branding.APP_NAME} <{branding.PRIVACY_EMAIL}>")
 
     html = f"""<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;
 background:#0a0a0f;color:#e5e7eb;margin:0;padding:32px">
@@ -595,24 +615,18 @@ page</a> with that address.</p>
 <p style="font-size:13px;color:#6b7280">Questions? Write to
 <a style="color:#06b6d4" href="mailto:{branding.PRIVACY_EMAIL}">{branding.PRIVACY_EMAIL}</a>.</p>
 </div></body></html>"""
-    try:
-        resend.Emails.send(
-            {
-                "from": from_email,
-                "to": [email],
-                "subject": f"{branding.APP_NAME} data request — no account found",
-                "html": html,
-            }
-        )
-    except Exception as e:
-        logger.error(f"dsar: failed to send no-account email to {email}: {e}")
+    _dsar_send(
+        email,
+        f"{branding.APP_NAME} data request — no account found",
+        html,
+        "dsar_no_account",
+        "no-account",
+    )
 
 
 def _send_deletion_queued_email(email: str) -> None:
     if not os.getenv("RESEND_API_KEY"):
         return
-    resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", f"{branding.APP_NAME} <{branding.PRIVACY_EMAIL}>")
 
     html = f"""<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;
 background:#0a0a0f;color:#e5e7eb;margin:0;padding:32px">
@@ -625,14 +639,10 @@ the deletion is complete.</p>
 <p style="font-size:13px;color:#6b7280">If this was a mistake, reply to this
 email within 72 hours and we can cancel the request.</p>
 </div></body></html>"""
-    try:
-        resend.Emails.send(
-            {
-                "from": from_email,
-                "to": [email],
-                "subject": f"{branding.APP_NAME} deletion request received",
-                "html": html,
-            }
-        )
-    except Exception as e:
-        logger.error(f"dsar: failed to send deletion email to {email}: {e}")
+    _dsar_send(
+        email,
+        f"{branding.APP_NAME} deletion request received",
+        html,
+        "dsar_deletion_queued",
+        "deletion",
+    )

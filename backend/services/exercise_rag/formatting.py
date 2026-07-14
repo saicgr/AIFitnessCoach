@@ -11,6 +11,12 @@ Handles:
 from typing import Dict, List, Optional, Any
 
 from core.logger import get_logger
+from core.training_goals import (
+    RIR_RAMP_BY_CANONICAL_GOAL,
+    apply_fitness_level_rir_floor,
+    get_rir_ramp,
+    is_mobility_goal,
+)
 from core.weight_utils import (
     get_starting_weight,
     detect_equipment_type,
@@ -399,6 +405,7 @@ def format_exercise_for_workout(
         equipment=equipment, exercise_name=exercise_name,
         goals=goals,
         available_kg_list=available_kg_list,
+        fitness_level=validated_level,
     )
 
     if is_timed and hold_seconds:
@@ -461,6 +468,7 @@ def _build_set_targets(
     exercise_name: str,
     goals: Optional[List[str]] = None,
     available_kg_list: Optional[List[float]] = None,
+    fitness_level: Optional[str] = None,
 ) -> List[Dict]:
     """Build the set_targets array with warmup + working sets.
 
@@ -478,28 +486,30 @@ def _build_set_targets(
     set_targets = []
     is_bodyweight = equipment_type == "bodyweight" or equipment.lower() in ["bodyweight", "body weight", "none", ""]
     is_compound = exercise_type in ["compound_upper", "compound_lower"]
-    primary_goal = ""
-    if goals:
-        primary_goal = (goals[0] or "").strip().lower()
-    is_mobility_or_recovery = primary_goal in {"mobility", "recovery"}
+    is_mobility_or_recovery = is_mobility_goal(goals)
 
     # Goal → working-set RIR ramp. Index = working set ordinal (0-based).
-    _RIR_RAMP_BY_GOAL: Dict[str, List[int]] = {
-        "strength": [3, 2, 1, 1, 1],
-        "power":    [3, 2, 1, 1, 1],
-        "hypertrophy": [2, 1, 1, 1, 1],
-        "muscle_gain": [2, 1, 1, 1, 1],
-        "endurance": [3, 3, 2, 2, 2],
-        "fat_loss":  [3, 2, 1, 1, 1],
-    }
-    _DEFAULT_RAMP = [2, 1, 0, 0, 0]
-    rir_ramp = _RIR_RAMP_BY_GOAL.get(primary_goal, _DEFAULT_RAMP)
+    # BUGFIX 2026-07-14: this table used to be inlined here and keyed on
+    # "hypertrophy"/"muscle_gain"/"fat_loss"/... — none of which are goal
+    # strings the app actually sends ("build_muscle", "lose_weight",
+    # "increase_strength", ...). Every real user therefore missed the table
+    # and fell through to a [2, 1, 0, ...] default whose 3rd working set is
+    # RIR 0 = trained to failure, beginners included. Goal spellings are now
+    # canonicalized at a shared chokepoint (core.training_goals) that both
+    # this path and the Gemini path share, and an unknown goal now resolves
+    # to a conservative ramp instead of a to-failure one.
+    rir_ramp = get_rir_ramp(goals) or RIR_RAMP_BY_CANONICAL_GOAL["general"]
 
     def _get_working_set_rir(working_index: int) -> int:
-        """working_index is 0-based for working-only sets (warmup excluded)."""
-        if working_index >= len(rir_ramp):
-            return rir_ramp[-1]
-        return rir_ramp[working_index]
+        """working_index is 0-based for working-only sets (warmup excluded).
+
+        The goal ramp sets the *shape*; the fitness level sets the intensity
+        ceiling (RPE 5-7 beginner / 7-8 intermediate / 8-10 advanced, per the
+        documented difficulty scaling). Without the floor, a beginner on a
+        hypertrophy goal was prescribed RPE 9 working sets.
+        """
+        raw = rir_ramp[-1] if working_index >= len(rir_ramp) else rir_ramp[working_index]
+        return apply_fitness_level_rir_floor(raw, fitness_level)
 
     def _get_weight_for_rir(base_weight: float, target_rir: int, eq_type: str) -> float:
         """Calculate weight based on RIR target.

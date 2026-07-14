@@ -579,24 +579,23 @@ async def get_weight_correlation(
 
 # ==================== Impact Analysis Endpoints ====================
 
-@router.get("/analysis/{user_id}", response_model=FastingGoalImpactResponse)
-async def get_fasting_impact_analysis(
+async def compute_fasting_impact_analysis(
     request: Request,
     user_id: str,
-    period: str = Query(default="month", description="Period: 'week', 'month', '3months', 'all'"),
-    current_user: dict = Depends(get_current_user),
-):
+    period: str = "month",
+) -> FastingGoalImpactResponse:
     """
-    Analyze fasting impact on goals.
+    Compute the fasting impact analysis for a user.
 
-    Compares performance on fasting vs non-fasting days:
-    - Weight trends
-    - Workout completion rates
-    - Goal achievement rates
-    - Calculates correlation score
+    This is the plain (non-route) implementation so that other endpoints
+    (/analyze, /insights) can reuse it. Route functions must never be called
+    directly: their signatures contain FastAPI markers (Query/Depends) that are
+    only resolved by the framework, so a direct call binds the arguments to the
+    wrong parameters and leaves `current_user` as a raw `Depends` object.
+
+    Authorization is the caller's responsibility — every route that reaches this
+    helper checks `current_user["id"] == user_id` first.
     """
-    if str(current_user["id"]) != str(user_id):
-        raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Getting fasting impact analysis for user {user_id} (period: {period})")
 
     try:
@@ -797,8 +796,30 @@ async def get_fasting_impact_analysis(
         )
         raise safe_internal_error(e, "endpoint")
 
+@router.get("/analysis/{user_id}", response_model=FastingGoalImpactResponse)
+async def get_fasting_impact_analysis(
+    request: Request,
+    user_id: str,
+    period: str = Query(default="month", description="Period: 'week', 'month', '3months', 'all'"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Analyze fasting impact on goals.
+
+    Compares performance on fasting vs non-fasting days:
+    - Weight trends
+    - Workout completion rates
+    - Goal achievement rates
+    - Calculates correlation score
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return await compute_fasting_impact_analysis(request, user_id, period)
+
 @router.post("/analyze/{user_id}", response_model=FastingGoalImpactResponse)
 async def trigger_fasting_analysis(
+    request: Request,
     user_id: str,
     period: str = Query(default="month", description="Period: 'week', 'month', '3months', 'all'"),
     current_user: dict = Depends(get_current_user),
@@ -814,7 +835,7 @@ async def trigger_fasting_analysis(
 
     try:
         # Get the analysis
-        analysis = await get_fasting_impact_analysis(user_id, period)
+        analysis = await compute_fasting_impact_analysis(request, user_id, period)
 
         db = get_supabase_db()
 
@@ -876,6 +897,7 @@ async def trigger_fasting_analysis(
 
 @router.get("/insights/{user_id}", response_model=FastingImpactInsightResponse)
 async def get_fasting_insights(
+    request: Request,
     user_id: str,
     current_user: dict = Depends(get_current_user),
 ):
@@ -891,7 +913,7 @@ async def get_fasting_insights(
 
     try:
         # Get the analysis first
-        analysis = await get_fasting_impact_analysis(user_id, "month")
+        analysis = await compute_fasting_impact_analysis(request, user_id, "month")
 
         # Generate insights
         insights_data = generate_impact_insight(

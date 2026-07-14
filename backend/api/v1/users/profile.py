@@ -819,13 +819,24 @@ async def update_user(user_id: str, user: UserUpdate,
 
         # Handle notification preferences
         if user.notification_preferences is not None:
-            # Merge with existing notification preferences if any
-            existing_notif_prefs = existing.get("notification_preferences", {})
+            # Merge with existing notification preferences if any.
+            # `users.notification_preferences` is NULLABLE and rows with a NULL
+            # value exist (see migrations/1873 — "Users with NULL
+            # notification_preferences get the full default set"). PostgREST
+            # returns those as an explicit `"notification_preferences": None`,
+            # i.e. the KEY IS PRESENT — so `.get(key, {})` returns None, not the
+            # default, and `{**None}` raised
+            # `TypeError: 'NoneType' object is not a mapping` → 500 for every
+            # user writing a notification preference for the first time.
+            # `or {}` coerces both the missing-key and the NULL-value case.
+            existing_notif_prefs = existing.get("notification_preferences") or {}
             if isinstance(existing_notif_prefs, str):
                 try:
                     existing_notif_prefs = json.loads(existing_notif_prefs)
                 except json.JSONDecodeError:
                     existing_notif_prefs = {}
+            if not isinstance(existing_notif_prefs, dict):
+                existing_notif_prefs = {}
 
             # Merge the new preferences with existing
             merged_prefs = {**existing_notif_prefs, **user.notification_preferences}

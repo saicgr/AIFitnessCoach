@@ -745,6 +745,14 @@ async def get_muscle_training_frequency(
             if last_date:
                 try:
                     last_dt = datetime.fromisoformat(last_date.replace("Z", "+00:00"))
+                    # `exercise_workout_history.workout_date` is a DATE
+                    # (DATE(wl.completed_at)), so it parses to a NAIVE datetime.
+                    # Subtracting it from the aware `now` raised TypeError, which
+                    # the except below swallowed — leaving days_since_last_training
+                    # permanently null for every muscle group. Normalize to UTC,
+                    # matching the heatmap fallback above.
+                    if last_dt.tzinfo is None:
+                        last_dt = last_dt.replace(tzinfo=timezone.utc)
                     days_since = (now - last_dt).days
                 except Exception:
                     pass

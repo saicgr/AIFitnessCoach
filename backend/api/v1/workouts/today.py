@@ -368,8 +368,19 @@ def _attach_movement_meta(exercises: list) -> None:
 
 
 def _extract_primary_muscles(exercises: list) -> List[str]:
-    """Extract unique primary muscle groups from exercises."""
-    muscles = set()
+    """Extract unique primary muscle groups from exercises, in exercise order.
+
+    Dedupe preserves FIRST-SEEN order. It previously accumulated into a `set`
+    and returned `list(muscles)[:4]`, which made the 4-chip cap arbitrary AND
+    unstable: CPython randomizes string hashing per process, so set iteration
+    order — and therefore WHICH muscles survived the truncation — changed
+    between server processes. The same workout could render "Chest, Back,
+    Legs, Arms" on one worker and "Legs, Core, Arms, Chest" on another, and a
+    workout's lead muscle could be dropped in favour of a trailing accessory.
+    First-seen order makes the cap mean "the muscles this workout leads with".
+    """
+    muscles: List[str] = []
+    seen = set()
     for exercise in exercises:
         if isinstance(exercise, dict):
             # Check various field names for muscle info
@@ -382,8 +393,11 @@ def _extract_primary_muscles(exercises: list) -> List[str]:
                 ""
             )
             if muscle:
-                muscles.add(muscle.title())
-    return list(muscles)[:4]  # Limit to top 4
+                label = muscle.title()
+                if label not in seen:
+                    seen.add(label)
+                    muscles.append(label)
+    return muscles[:4]  # Limit to top 4
 
 
 def _row_to_summary(

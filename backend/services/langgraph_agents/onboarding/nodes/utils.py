@@ -145,7 +145,16 @@ def detect_field_from_response(response: str) -> Optional[str]:
     Returns:
         The detected field name, or None if not detected
     """
-    response_lower = response.lower()
+    # Normalize typographic punctuation before matching. Gemini frequently emits
+    # a curly apostrophe (U+2019) — "you’d", "what’s" — which would silently miss
+    # every apostrophe-bearing pattern below ("muscles you'd like to prioritize",
+    # "what's available", "weight you'd like") and drop the field to None.
+    response_lower = (
+        response.lower()
+        .replace("’", "'")   # ’ right single quote
+        .replace("‘", "'")   # ‘ left single quote
+        .replace("′", "'")   # ′ prime
+    )
     logger.info(f"[detect_field] Checking response: {response_lower[:100]}...")
 
     # Map keywords to fields - order matters (more specific patterns first)
@@ -171,9 +180,13 @@ def detect_field_from_response(response: str) -> Optional[str]:
             "followed any", "routine have you", "programs before",
         ],
         # Selected days - which specific days
+        # NOTE: coaches phrase this with a determiner ("select THE days that work
+        # for you") as often as without, so the bare "select days" / "days work
+        # for you" stems miss. Keep both shapes.
         "selected_days": [
             "which days", "what days", "pick your days", "choose your days", "select days",
             "days work for you", "days of the week", "prefer to train", "workout days",
+            "select the days", "pick the days", "choose the days", "days that work",
         ],
         # Workout duration - only match when specifically asking about duration
         # Coach variations: "How long per session?", "30, 45, 60, or 90?", "Session length?"
@@ -190,6 +203,11 @@ def detect_field_from_response(response: str) -> Optional[str]:
             "gain to", "happy where you are", "any target weight", "weight goal",
             "lose some weight", "gain some weight", "ideal weight", "weight in mind",
             "pounds to lose", "pounds to gain", "kg to lose", "kg to gain",
+            # Softer, aspirational phrasings (Zen Maya): "Is there a weight you'd
+            # like to work towards?" — all still anchored on "weight" so they
+            # can't steal a question about anything else.
+            "weight you'd like", "weight you want", "weight you're aiming",
+            "weight to work towards", "weight you'd want",
         ],
         # Workout variety - check BEFORE focus_areas because AI may say "full-body" when asking about variety
         # Coach variations: "Same exercises or mix it up?", "Prefer consistency?", "Like variety?"
@@ -242,6 +260,33 @@ def detect_field_from_response(response: str) -> Optional[str]:
             if kw in response_lower:
                 logger.info(f"[detect_field] MATCHED: field={field}, keyword='{kw}'")
                 return field
+
+    # LAST RESORT: a bare weekday name, with no other field signal anywhere in
+    # the message, means the coach is asking about training days — e.g.
+    # "Would Monday and Wednesday work?", which carries no "which days" stem and
+    # would otherwise fall through to None (no day_picker, user has to free-type).
+    #
+    # This deliberately runs AFTER every pattern above rather than as a
+    # selected_days keyword. Weekday names used to live in the selected_days
+    # keyword list and were dropped when the patterns were rewritten to be
+    # question-phrasing based, because a coach routinely ECHOES the chosen days
+    # while asking about the next field:
+    #     "Locked in — Monday and Friday. Now, what equipment do you have?"
+    # selected_days is checked before equipment, so a plain keyword match there
+    # would re-show the day picker instead of the equipment chips and stall
+    # onboarding. Running the weekday check only when nothing else matched keeps
+    # that message resolving to `equipment` while still catching the genuine
+    # weekday-phrased day question.
+    if re.search(
+        r"\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?\b",
+        response_lower,
+    ):
+        logger.info(
+            "[detect_field] MATCHED: field=selected_days "
+            "(weekday mention, no other field signal)"
+        )
+        return "selected_days"
+
     logger.info(f"[detect_field] No field detected from response")
     return None
 

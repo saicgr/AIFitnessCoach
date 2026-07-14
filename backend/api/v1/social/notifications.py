@@ -323,5 +323,11 @@ async def update_social_settings(
         update_data["user_id"] = user_id
         supabase.table("user_privacy_settings").insert(update_data).execute()
 
-    # Return updated settings
-    return await get_social_settings(user_id)
+    # Return updated settings.
+    # NOTE: `current_user` MUST be forwarded. get_social_settings is a FastAPI
+    # endpoint, so calling it directly leaves `current_user` bound to its
+    # `Depends(get_current_user)` default — a Depends marker object — and
+    # verify_user_ownership then raises
+    # `TypeError: 'Depends' object is not subscriptable`, 500-ing the request
+    # AFTER the settings row was already written.
+    return await get_social_settings(user_id=user_id, current_user=current_user)

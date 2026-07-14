@@ -441,31 +441,41 @@ def normalize_body_part(target_muscle: str) -> str:
 
     target_lower = target_muscle.lower()
 
-    # Map to broader categories
+    # Map to broader categories.
+    #
+    # ORDER MATTERS — the checks below are first-match-wins on substrings, so
+    # every MORE SPECIFIC muscle name must be tested BEFORE the generic one it
+    # contains. Three orderings were previously wrong and silently mislabeled
+    # rows (the SQL view's `display_body_part` mapping already got these right,
+    # so the Python fallback disagreed with the view on the same row):
+    #   · "lower back"      contains "back"    → was labeled Back, not Lower Back
+    #                                             (made the "Lower Back" branch dead code)
+    #   · "triceps brachii" contains "brachii" → was labeled Biceps, not Triceps
+    #   · "biceps femoris"  contains "bicep"   → was labeled Biceps, not Hamstrings
     if any(x in target_lower for x in ["chest", "pectoralis"]):
         return "Chest"
+    elif any(x in target_lower for x in ["lower back", "erector"]):
+        return "Lower Back"
     elif any(x in target_lower for x in ["back", "latissimus", "rhomboid", "trapezius"]):
         return "Back"
     elif any(x in target_lower for x in ["shoulder", "deltoid"]):
         return "Shoulders"
-    elif any(x in target_lower for x in ["bicep", "brachii"]):
-        return "Biceps"
     elif any(x in target_lower for x in ["tricep"]):
         return "Triceps"
+    elif any(x in target_lower for x in ["hamstring", "biceps femoris"]):
+        return "Hamstrings"
+    elif any(x in target_lower for x in ["bicep", "brachii"]):
+        return "Biceps"
     elif any(x in target_lower for x in ["forearm", "wrist"]):
         return "Forearms"
     elif any(x in target_lower for x in ["quad", "thigh"]):
         return "Quadriceps"
-    elif any(x in target_lower for x in ["hamstring"]):
-        return "Hamstrings"
     elif any(x in target_lower for x in ["glute"]):
         return "Glutes"
     elif any(x in target_lower for x in ["calf", "gastrocnemius", "soleus"]):
         return "Calves"
     elif any(x in target_lower for x in ["abdominal", "rectus abdominis", "core", "oblique"]):
         return "Core"
-    elif any(x in target_lower for x in ["lower back", "erector"]):
-        return "Lower Back"
     elif any(x in target_lower for x in ["hip", "adduct", "abduct"]):
         return "Hips"
     elif any(x in target_lower for x in ["neck"]):

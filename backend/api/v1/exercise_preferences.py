@@ -681,7 +681,16 @@ async def get_variation_preference(user_id: str, current_user: dict = Depends(ge
         if not result.data:
             raise HTTPException(status_code=404, detail="User not found")
 
-        percentage = result.data[0].get("variation_percentage", 30)
+        # `users.variation_percentage` is nullable (INTEGER DEFAULT 30, no NOT
+        # NULL — see migrations/063_staple_exercises.sql), and PostgREST always
+        # returns the key with a `None` value for a NULL column. So the dict
+        # `.get(..., 30)` default never fires; a NULL row fell through to the
+        # comparisons below as None and raised TypeError -> 500. Coerce NULL to
+        # the documented default of 30, matching the other readers of this same
+        # column (api/v1/workouts/user_preference_utils.get_user_variation_percentage).
+        percentage = result.data[0].get("variation_percentage")
+        if percentage is None:
+            percentage = 30
 
         # Generate description
         if percentage == 0:
@@ -1178,6 +1187,7 @@ async def get_avoided_exercises(request: Request, user_id: str, include_expired:
         raise safe_internal_error(e, "exercise_preferences")
 
 
-
-# Include secondary endpoints
-router.include_router(_endpoints_router)
+# NOTE: the secondary endpoints sub-router is already included at the top of this
+# module (right after `router` is created). It used to ALSO be included here,
+# which registered all 12 sub-routes twice (duplicate OpenAPI operation IDs +
+# a double-length route table). Do not re-add.

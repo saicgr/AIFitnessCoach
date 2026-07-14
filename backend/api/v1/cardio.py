@@ -37,6 +37,7 @@ from services.cardio import (
     estimate_vo2_max,
     get_fitness_age,
     get_cardio_metrics,
+    format_pace_per_km,
     CardioMetrics,
 )
 from models.cardio_session import (
@@ -616,11 +617,8 @@ async def create_cardio_session(
 
     # Calculate average pace if distance and duration provided
     avg_pace = request.avg_pace_per_km
-    if avg_pace is None and request.distance_km and request.distance_km > 0:
-        pace_minutes = request.duration_minutes / request.distance_km
-        pace_mins = int(pace_minutes)
-        pace_secs = int((pace_minutes - pace_mins) * 60)
-        avg_pace = f"{pace_mins}:{pace_secs:02d}"
+    if avg_pace is None:
+        avg_pace = format_pace_per_km(request.duration_minutes, request.distance_km)
 
     # Prepare data for insertion
     session_data = {

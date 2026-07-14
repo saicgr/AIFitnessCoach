@@ -1191,7 +1191,14 @@ async def _maybe_send_first_workout_email(
             logger.debug(f"N2 weight lookup skipped for {user_id}: {_e}")
 
         email_svc = get_email_service()
+        # Pass `user_id` explicitly: we are a real-time caller, and per
+        # `email_lifecycle._resolve_user_id` an explicit kwarg always wins over the
+        # `stats.user_id` fallback. This is what engages `email_sender`'s global
+        # frequency cap for this send. (Identity would ride on `stats.user_id`
+        # anyway — `_get_user_stats` populates it — so this is belt-and-suspenders,
+        # not a behaviour change.)
         result = await email_svc.send_first_workout_done(
+            user_id=user_id,
             to_email=user["email"],
             first_name_value=first_name(user),
             stats=stats,
@@ -1201,14 +1208,44 @@ async def _maybe_send_first_workout_email(
             calories_burned=calories_burned,
             user_weight_kg=user_weight_kg,
         )
-        # Record one-shot fire
+        # Record the one-shot fire — ONLY on a real send.
+        #
+        # `email_send_log` is the LIFETIME dedup gate for this email (see the
+        # `prior` query above: any row at all ⇒ never send again). So the insert
+        # MUST be dominated by `result.get("success")`, exactly like every
+        # `_log_email_sent(...)` call site in `api/v1/email_cron.py`.
+        #
+        # A non-success `result` is one of:
+        #   {"success": False, "skipped": True, "reason": "undeliverable_domain"
+        #                                              | "frequency_cap"
+        #                                              | "not_configured"}  ← email_sender.sent_result
+        #   {"skipped": "below_min_duration", ...}                          ← domain gate
+        #   {"error": "..."}                                                ← Resend 429/5xx, not configured
+        # In every one of those cases NO mail left the building. Writing the row
+        # anyway would permanently mark the user as having received their
+        # first-workout email — deleting the mail instead of leaving it eligible —
+        # and would also burn a non-exempt slot in email_sender's frequency cap
+        # (`first_workout_done` is TIER_CORE, not exempt), suppressing real mail
+        # for 7 days on behalf of a send that never happened.
+        if not (isinstance(result, dict) and result.get("success")):
+            reason = (
+                result.get("reason") or result.get("error") or result.get("skipped")
+                if isinstance(result, dict) else "unknown"
+            )
+            logger.warning(
+                f"N2 first-workout email NOT sent for user {user_id} "
+                f"(reason={reason!r}) — no email_send_log row written, "
+                f"user remains eligible."
+            )
+            return
+
         row = {
             "user_id": user_id,
             "email_type": "first_workout_done",
             "metadata": {"workout_name": workout_name},
         }
         # Persist the Resend id so the webhook can correlate delivery events.
-        if isinstance(result, dict) and result.get("success") and result.get("id"):
+        if result.get("id"):
             row["resend_email_id"] = result["id"]
         supabase.table("email_send_log").insert(row).execute()
     except Exception as e:

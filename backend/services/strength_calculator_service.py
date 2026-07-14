@@ -375,6 +375,22 @@ class StrengthScore:
     best_is_machine: bool = False
 
 
+# Brzycki (1RM = W × 36 / (37 - R)) has a pole at R = 37: it divides by zero at
+# exactly 37 reps and returns a NEGATIVE 1RM for 38+. High-rep sets are routine in
+# this product (bodyweight push-ups / sit-ups / air squats are fed straight through
+# calculate_1rm_average by personal_records_service.check_for_rep_pr), so the raw
+# formula must never see a rep count past its supported range. calculate_1rm's own
+# contract documents reps as 1-30, so we clamp the Brzycki term to that bound.
+# Epley and Lombardi stay monotonic and positive at any rep count and are NOT clamped.
+_BRZYCKI_MAX_REPS = 30
+
+
+def _brzycki_1rm(weight_kg: float, reps: int) -> float:
+    """Brzycki estimate, clamped to the formula's supported rep range (see above)."""
+    safe_reps = min(max(reps, 1), _BRZYCKI_MAX_REPS)
+    return weight_kg * (36 / (37 - safe_reps))
+
+
 class StrengthCalculatorService:
     """
     Calculates strength metrics, 1RM estimates, and strength scores.
@@ -420,8 +436,8 @@ class StrengthCalculatorService:
         # Calculate based on formula
         if formula == "brzycki":
             # Brzycki: 1RM = W × (36 / (37 - R))
-            # Most accurate for 1-10 reps
-            estimated = weight_kg * (36 / (37 - reps))
+            # Most accurate for 1-10 reps; clamped past 30 reps (pole at 37).
+            estimated = _brzycki_1rm(weight_kg, reps)
         elif formula == "epley":
             # Epley: 1RM = W × (1 + R/30)
             # Good for moderate rep ranges
@@ -432,7 +448,7 @@ class StrengthCalculatorService:
             estimated = weight_kg * (reps ** 0.1)
         else:
             # Default to Brzycki
-            estimated = weight_kg * (36 / (37 - reps))
+            estimated = _brzycki_1rm(weight_kg, reps)
 
         # Confidence decreases with higher reps
         # 1-5 reps: high confidence (0.95-0.85)
@@ -468,7 +484,7 @@ class StrengthCalculatorService:
         if reps <= 1:
             return weight_kg
 
-        brzycki = weight_kg * (36 / (37 - reps))
+        brzycki = _brzycki_1rm(weight_kg, reps)
         epley = weight_kg * (1 + reps / 30)
         lombardi = weight_kg * (reps ** 0.1)
 

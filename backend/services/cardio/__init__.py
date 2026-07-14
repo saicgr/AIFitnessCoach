@@ -16,8 +16,10 @@ from services.cardio.hr_zones import (
     get_cardio_metrics,
     CardioMetrics,
 )
+from services.cardio.pace import format_pace_per_km
 
 __all__ = [
+    "format_pace_per_km",
     "calculate_max_hr",
     "calculate_hr_zones",
     "calculate_age_from_dob",

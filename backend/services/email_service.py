@@ -13,10 +13,10 @@ import os
 import json
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any
-import resend
 
 from core import branding
 from core.logger import get_logger
+from services import email_sender
 from services.email_helpers import build_social_footer_html
 from services import email_signature_template as sig
 
@@ -69,12 +69,17 @@ class EmailService(
     """
 
     def __init__(self):
-        """Initialize the Resend client with API key from environment."""
+        """Initialize the email service.
+
+        The Resend API key is NOT set here any more — `services.email_sender` (the
+        single send chokepoint) reads `RESEND_API_KEY` from the environment itself,
+        so background tasks and scripts that never construct an EmailService get the
+        same guarantees. `self.api_key` is retained purely for `is_configured()`.
+        """
         self.api_key = os.getenv("RESEND_API_KEY")
         if not self.api_key:
             logger.warning("RESEND_API_KEY not found in environment variables")
         else:
-            resend.api_key = self.api_key
             logger.info("Email service initialized with Resend")
 
         # Default sender email (must be verified in Resend)
@@ -322,9 +327,9 @@ class EmailService(
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
+            response = email_sender.send(params, email_type="welcome")
             logger.info(f"Welcome email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send welcome email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -397,9 +402,9 @@ class EmailService(
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
+            response = email_sender.send(params, email_type="workout_reminder")
             logger.info(f"Workout reminder sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send workout reminder to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -436,9 +441,9 @@ class EmailService(
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": f"You're in, {display_name}. {branding.APP_NAME} {tier_label} is active.", "html": html_content}
-            response = resend.Emails.send(params)
+            response = email_sender.send(params, email_type="purchase_confirmation")
             logger.info(f"Purchase confirmation email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send purchase confirmation email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -474,9 +479,9 @@ class EmailService(
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": f"{display_name}, your {branding.APP_NAME} access is paused", "html": html_content}
-            response = resend.Emails.send(params)
+            response = email_sender.send(params, email_type="billing_issue")
             logger.info(f"Billing issue email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send billing issue email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -538,9 +543,19 @@ class EmailService(
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
+            # THE bounce source: the injury/loadtest harnesses mint users at
+            # @zealova.invalid / @zealova-loadtest.dev and every one of them got a
+            # real verification email (554 of the 566 lifetime bounces). The
+            # chokepoint's domain guard is what stops that at the source.
+            response = email_sender.send(params, email_type="verification")
+            if response.get("skipped"):
+                logger.info(
+                    f"Verification email NOT sent to {to_email} "
+                    f"(reason={response.get('reason')})"
+                )
+                return email_sender.sent_result(response)
             logger.info(f"Verification email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send verification email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}

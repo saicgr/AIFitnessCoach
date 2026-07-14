@@ -886,6 +886,35 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         except Exception as e:
             logger.warning(f"Error fetching nutrition_preferences for {user_id}: {e}", exc_info=True)
 
+        try:
+            # Fallback to users table for legacy data.
+            #
+            # This fallback is NOT optional. update_user_nutrition_targets()
+            # writes users.daily_*_target as the PRIMARY store and only
+            # best-effort-syncs nutrition_preferences inside a try/except. A
+            # PostgREST .update() against a user with no nutrition_preferences
+            # row matches zero rows and raises NOTHING — so the sync silently
+            # no-ops and the targets exist ONLY on users. Reading
+            # nutrition_preferences alone then returns all-None and the app
+            # falls back to its bogus 2000 kcal default.
+            #
+            # (Removed by accident in d79ea1a7, a bulk "update" commit, which
+            # left the docstring above still promising the fallback.)
+            result = (
+                self.client.table("users")
+                .select(
+                    "daily_calorie_target, daily_protein_target_g, "
+                    "daily_carbs_target_g, daily_fat_target_g"
+                )
+                .eq("id", user_id)
+                .maybe_single()
+                .execute()
+            )
+            if result and result.data:
+                return result.data
+        except Exception as e:
+            logger.warning(f"Error fetching user nutrition targets for {user_id}: {e}", exc_info=True)
+
         return empty_response
 
     def enrich_user_with_nutrition_targets(self, user_dict: dict) -> dict:

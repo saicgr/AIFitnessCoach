@@ -145,7 +145,7 @@ async def pause_subscription(user_id: str, request: PauseSubscriptionRequest, cu
             user_id=user_id,
             action="subscription_pause_failed",
             endpoint=f"/api/v1/subscriptions/{user_id}/pause",
-            error_message=str(e),
+            error=e,
             metadata={"duration_days": request.duration_days}
         )
         raise safe_internal_error(e, "pause_subscription")
@@ -239,7 +239,7 @@ async def resume_subscription(user_id: str, current_user: dict = Depends(get_cur
             user_id=user_id,
             action="subscription_resume_failed",
             endpoint=f"/api/v1/subscriptions/{user_id}/resume",
-            error_message=str(e),
+            error=e,
             metadata={}
         )
         raise safe_internal_error(e, "resume_subscription")
@@ -503,7 +503,7 @@ async def accept_retention_offer(user_id: str, request: AcceptOfferRequest, curr
             user_id=user_id,
             action="retention_offer_failed",
             endpoint=f"/api/v1/subscriptions/{user_id}/accept-offer",
-            error_message=str(e),
+            error=e,
             metadata={"offer_id": request.offer_id}
         )
         raise safe_internal_error(e, "accept_retention_offer")

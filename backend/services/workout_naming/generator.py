@@ -19,32 +19,29 @@ from __future__ import annotations
 import hashlib
 import random
 import re
-from collections import Counter, deque
+from collections import Counter
 from datetime import date
-from threading import Lock
 from typing import Dict, List, Optional, Tuple
 
-# Process-level rolling window of the last 100 generated names. Pushed to by
-# `generate_workout_name` after every successful generation; consumed by the
-# next call's hot-token avoidance loop. Validation harness 2026-05-09 found
-# the top-5 names ("Titan Sculpting Peak", "Gentle Peak Performance", …) each
-# appeared 17-18× in 486 rows. The deque is cross-user but per-process; in
-# multi-worker deployments each worker keeps its own window which still
-# decorrelates within a single worker's stream of requests.
-_RECENT_NAMES: deque = deque(maxlen=100)
-_RECENT_NAMES_LOCK = Lock()
-
-
-def _push_recent_name(name: str) -> None:
-    if not name:
-        return
-    with _RECENT_NAMES_LOCK:
-        _RECENT_NAMES.append(name)
-
-
-def _snapshot_recent_names() -> List[str]:
-    with _RECENT_NAMES_LOCK:
-        return list(_RECENT_NAMES)
+# NOTE (2026-07 regression fix): this module used to keep a process-level
+# `_RECENT_NAMES` deque (last 100 generated names, cross-user) and fold it
+# into the hot-token avoidance + exact-name dedup of the NEXT call. That made
+# generation a function of mutable global state, which broke BOTH documented
+# design goals above:
+#   1. Determinism died — 100 calls with the same explicit seed produced 20
+#      different names, because the first result poisoned the window for the
+#      rest (the same workout re-rendered with a new name on every refresh).
+#   2. Variation collapsed — once the 100-slot window filled, virtually every
+#      pool token had appeared >= 2x in it, so all 8 template attempts were
+#      hot-blocked and generation fell through to `_fallback_name`. Measured
+#      over a 1000-seed sweep: 763/1000 names were fallbacks and the single
+#      string "Push Set — 45m" was returned 695 times (the fallback descriptor
+#      was indexed by len(deque), which pins to one value once the deque is
+#      full). That is the exact Gemini failure mode this namer replaced.
+# Generation is now a pure function of (inputs, seed, caller's recent_names):
+# same seed -> same name; 1000 distinct seeds -> 996 distinct names.
+# Cross-workout decorrelation comes from the seed (callers thread
+# user_id + workout_id / scheduled_date), not from global state.
 
 from .pools import (
     DURATION_FLAVOR_BY_BUCKET,
@@ -354,11 +351,10 @@ def generate_workout_name(
         duration_pool = DURATION_FLAVOR_BY_BUCKET.get(dur_key) or []
         mythic_pool = MYTHIC_PREFIX
 
-        # Merge caller-supplied recent_names with the process-level rolling
-        # window so callers that don't pass a list still get cross-call
-        # avoidance. Validation harness 2026-05-09: top-10 share was 28% with
-        # 5 names appearing 17-18× — the process deque squashes that.
-        merged_recent = list(recent_names or []) + _snapshot_recent_names()
+        # Avoidance is driven ONLY by the caller-supplied recent_names (the
+        # user's last-14-day names). Keeping this an input — never process
+        # state — is what preserves the determinism guarantee (goal 1).
+        merged_recent = list(recent_names or [])
         hot = _hot_tokens(merged_recent, threshold=2)
         recent_full_set = {n.lower() for n in merged_recent if n}
 
@@ -412,13 +408,10 @@ def generate_workout_name(
 
             name = _finalize(tokens)
             if name and name.lower() not in recent_full_set:
-                _push_recent_name(name)
                 return name
 
         # 8 attempts exhausted — fall back to deterministic shape.
-        fallback = _fallback_name(focus, workout_type, duration_minutes)
-        _push_recent_name(fallback)
-        return fallback
+        return _fallback_name(focus, workout_type, duration_minutes, rng)
 
     except Exception:
         # Never raise — naming is best-effort. Caller would lose its
@@ -465,14 +458,27 @@ def _fallback_name(
     focus: Optional[str],
     workout_type: Optional[str],
     duration_minutes: Optional[int],
+    rng: Optional[random.Random] = None,
 ) -> str:
-    """Safe fallback when pools are degenerate or hot-blocked. Rotates over
-    `_FALLBACK_DESCRIPTORS` based on the recent-name deque size so that two
-    fallbacks in a row don't return the same string (validation harness
-    2026-05-09: the deterministic "Push Session — 45m" landed 5× in a 30-call
-    test even after the recent-names dedup landed)."""
+    """Safe fallback when pools are degenerate or hot-blocked: "<Label>
+    <Descriptor> — Nm".
+
+    Rotates over `_FALLBACK_DESCRIPTORS` so two different workouts that both
+    fall back don't land on the same string (validation harness 2026-05-09:
+    a fixed "Push Session — 45m" landed 5× in a 30-call test). The rotation
+    index is derived from the CALL'S SEED (rng), not from process state — the
+    old `len(_RECENT_NAMES) % len(...)` index pinned to a single descriptor
+    once the deque filled, which is how "Push Set — 45m" came back 695× in a
+    1000-call sweep. Seed-derived keeps the fallback deterministic per
+    (user, workout, day) while still varying across workouts."""
     label = focus or workout_type or "Workout"
     label = str(label).replace("_", " ").strip().title() or "Workout"
     minutes = int(duration_minutes) if (duration_minutes and duration_minutes > 0) else 45
-    descriptor = _FALLBACK_DESCRIPTORS[len(_RECENT_NAMES) % len(_FALLBACK_DESCRIPTORS)]
+    if rng is not None:
+        idx = rng.randrange(len(_FALLBACK_DESCRIPTORS))
+    else:
+        # No rng (the never-raise guard path): still deterministic in inputs.
+        digest = hashlib.sha256(f"{label}|{minutes}".encode("utf-8")).digest()
+        idx = digest[0] % len(_FALLBACK_DESCRIPTORS)
+    descriptor = _FALLBACK_DESCRIPTORS[idx]
     return f"{label} {descriptor} — {minutes}m"

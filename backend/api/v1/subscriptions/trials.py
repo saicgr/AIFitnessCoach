@@ -9,6 +9,7 @@ from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from core.auth import get_current_user
+from core.db_utils import safe_maybe_single
 from core.exceptions import safe_internal_error
 
 from api.v1.subscriptions.models import (
@@ -33,13 +34,17 @@ async def check_trial_eligibility(user_id: str, current_user: dict = Depends(get
     try:
         supabase = get_supabase()
 
-        sub_result = supabase.client.table("user_subscriptions")\
-            .select("*")\
-            .eq("user_id", user_id)\
-            .single()\
-            .execute()
+        # .maybe_single(), NOT .single(): supabase-py raises APIError(PGRST116)
+        # when .single() matches zero rows, so a user with no user_subscriptions
+        # row would 500 here instead of being reported as trial-eligible.
+        sub_result = safe_maybe_single(
+            supabase.client.table("user_subscriptions")
+            .select("*")
+            .eq("user_id", user_id)
+            .maybe_single()
+        )
 
-        subscription = sub_result.data
+        subscription = sub_result.data if sub_result else None
 
         previous_trials = 0
         has_had_extension = False
@@ -118,7 +123,12 @@ async def start_trial(user_id: str, request: StartTrialRequest, current_user: di
                 detail=f"Invalid plan type. Must be one of: {', '.join(valid_plans)}"
             )
 
-        eligibility = await check_trial_eligibility(user_id)
+        # Direct call — must pass current_user explicitly. FastAPI only resolves
+        # Depends() for requests it routes; calling the handler as a plain
+        # function leaves `current_user` bound to the Depends *object*, and the
+        # ownership check inside it then dies with
+        # "'Depends' object is not subscriptable" (→ every start-trial 500s).
+        eligibility = await check_trial_eligibility(user_id, current_user=current_user)
         if not eligibility.is_eligible:
             raise HTTPException(
                 status_code=400,
@@ -222,13 +232,16 @@ async def convert_trial_to_paid(user_id: str, request: TrialConversionRequest, c
     try:
         supabase = get_supabase()
 
-        sub_result = supabase.client.table("user_subscriptions")\
-            .select("*")\
-            .eq("user_id", user_id)\
-            .single()\
-            .execute()
+        # .maybe_single(): .single() raises APIError(PGRST116) on zero rows, which
+        # would surface as a 500 instead of the intended 404 below.
+        sub_result = safe_maybe_single(
+            supabase.client.table("user_subscriptions")
+            .select("*")
+            .eq("user_id", user_id)
+            .maybe_single()
+        )
 
-        if not sub_result.data:
+        if not sub_result or not sub_result.data:
             raise HTTPException(status_code=404, detail="No subscription found")
 
         subscription = sub_result.data
@@ -297,13 +310,16 @@ async def get_trial_status(user_id: str, current_user: dict = Depends(get_curren
     try:
         supabase = get_supabase()
 
-        sub_result = supabase.client.table("user_subscriptions")\
-            .select("*")\
-            .eq("user_id", user_id)\
-            .single()\
-            .execute()
+        # .maybe_single(): .single() raises APIError(PGRST116) on zero rows, which
+        # made the "no subscription" response below unreachable (500 instead).
+        sub_result = safe_maybe_single(
+            supabase.client.table("user_subscriptions")
+            .select("*")
+            .eq("user_id", user_id)
+            .maybe_single()
+        )
 
-        if not sub_result.data:
+        if not sub_result or not sub_result.data:
             return {
                 "is_on_trial": False,
                 "has_subscription": False,

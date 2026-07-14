@@ -1357,10 +1357,27 @@ def _calculate_volume_trend(data: List[WeeklyVolumeData]) -> Dict[str, Any]:
     # Find peak
     peak = max(data, key=lambda x: x.total_volume_kg)
 
-    # Calculate trend
+    # Calculate trend — recent window vs everything before it.
+    #
+    # BUG (fixed): the window used to be
+    #     recent = sorted_data[-4:] if len >= 4 else sorted_data[-2:]
+    #     older  = sorted_data[:-len(recent)] if len > len(recent) else []
+    # which swallowed the WHOLE series into `recent` whenever len(data) was
+    # exactly 2 or exactly 4 — `older` came out empty, `older_avg` fell back to
+    # `recent_avg`, so percent_change was hard 0 and the direction was always
+    # "maintaining". A user on the 4-week range (the shortest range the UI
+    # offers → exactly 4 weekly rows) could double their volume and still be
+    # told "maintaining, 0%".
+    #
+    # Fix: split at the midpoint, then slide the split later so the recent
+    # window never exceeds 4 weeks (long histories still compare the last month
+    # against everything before it, as originally intended). `older` is now
+    # guaranteed non-empty whenever there are >= 2 weeks of data.
     if len(sorted_data) >= 2:
-        recent_weeks = sorted_data[-4:] if len(sorted_data) >= 4 else sorted_data[-2:]
-        older_weeks = sorted_data[:-len(recent_weeks)] if len(sorted_data) > len(recent_weeks) else []
+        split = max(1, len(sorted_data) // 2)
+        split = max(split, len(sorted_data) - 4)
+        recent_weeks = sorted_data[split:]
+        older_weeks = sorted_data[:split]
 
         recent_avg = sum(d.total_volume_kg for d in recent_weeks) / len(recent_weeks)
         older_avg = sum(d.total_volume_kg for d in older_weeks) / len(older_weeks) if older_weeks else recent_avg

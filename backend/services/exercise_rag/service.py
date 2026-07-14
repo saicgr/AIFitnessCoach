@@ -1147,6 +1147,12 @@ class ExerciseRAGService:
         # Fail-open: when None, formatting behaves exactly as before.
         self._equipment_weights = equipment_weights
         self._weight_unit = weight_unit or "lbs"
+        # BUGFIX 2026-07-14: `goals` was accepted here but never forwarded to
+        # `format_exercise_for_workout`, so the goal-aware RIR/RPE ramp always
+        # ran with goals=None in the RAG path. Stashed with the same pattern as
+        # the weights above so every `_format_exercise_for_workout` call site
+        # picks it up without threading an extra arg through each one.
+        self._goals = goals
 
         # Derive single/double counts when no explicit count was provided.
         # Precedence: explicit arg > gym-profile weight_inventory units (the
@@ -2217,6 +2223,7 @@ class ExerciseRAGService:
         # Fail-open: when None, formatting behaves exactly as before.
         self._equipment_weights = equipment_weights
         self._weight_unit = weight_unit or "lbs"
+        self._goals = goals
 
         # ---- Tier 0: original RAG call --------------------------------------
         try:
@@ -2826,12 +2833,14 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
     ) -> Dict:
         """Format an exercise for inclusion in a workout. Delegates to formatting module.
 
-        Picks up `equipment_weights` / `weight_unit` stashed on the instance by
-        `select_exercises_for_workout` so prescribed set weights snap to the
-        user's owned weights. Fail-open: when unset, behaves as before.
+        Picks up `equipment_weights` / `weight_unit` / `goals` stashed on the
+        instance by `select_exercises_for_workout` so prescribed set weights
+        snap to the user's owned weights and the RIR/RPE ramp is goal-aware.
+        Fail-open: when unset, behaves as before.
         """
         return format_exercise_for_workout(
             exercise, fitness_level, workout_params, strength_history, progression_pace,
+            goals=getattr(self, "_goals", None),
             equipment_weights=getattr(self, "_equipment_weights", None),
             weight_unit=getattr(self, "_weight_unit", "lbs"),
         )

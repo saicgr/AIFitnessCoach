@@ -404,6 +404,78 @@ async def get_user_tickets(
 
 
 # =============================================================================
+# Get User Ticket Statistics
+# =============================================================================
+#
+# ROUTE ORDER IS LOAD-BEARING: this literal `/tickets/{user_id}/stats` route
+# MUST be declared before the `/tickets/{user_id}/{ticket_id}` route below.
+# Starlette matches routes in registration order, so if the parameterised
+# two-segment route wins the race it swallows `.../stats` as
+# ticket_id="stats" and the caller gets 404 "Ticket not found" instead of
+# their stats. Do not move this block below get_ticket.
+
+
+@router.get("/tickets/{user_id}/stats", response_model=SupportTicketStatsResponse)
+async def get_user_ticket_stats(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get support ticket statistics for a user.
+
+    Returns counts of tickets by status and average resolution time.
+    """
+    verify_user_ownership(current_user, user_id)
+    logger.info(f"Getting ticket stats for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get all user tickets
+        result = db.client.table("support_tickets").select("*").eq("user_id", user_id).execute()
+
+        tickets = result.data or []
+
+        if not tickets:
+            return SupportTicketStatsResponse(
+                total_tickets=0,
+                open_tickets=0,
+                resolved_tickets=0,
+                closed_tickets=0,
+                avg_resolution_time_hours=None,
+            )
+
+        # Calculate statistics
+        open_count = sum(1 for t in tickets if t["status"] in ["open", "in_progress", "waiting_response"])
+        resolved_count = sum(1 for t in tickets if t["status"] == "resolved")
+        closed_count = sum(1 for t in tickets if t["status"] == "closed")
+
+        # Calculate average resolution time for resolved/closed tickets
+        resolution_times = []
+        for t in tickets:
+            if t.get("resolved_at") and t.get("created_at"):
+                created = datetime.fromisoformat(t["created_at"].replace("Z", "+00:00"))
+                resolved = datetime.fromisoformat(t["resolved_at"].replace("Z", "+00:00"))
+                diff = (resolved - created).total_seconds() / 3600  # Convert to hours
+                resolution_times.append(diff)
+
+        avg_resolution = sum(resolution_times) / len(resolution_times) if resolution_times else None
+
+        return SupportTicketStatsResponse(
+            total_tickets=len(tickets),
+            open_tickets=open_count,
+            resolved_tickets=resolved_count,
+            closed_tickets=closed_count,
+            avg_resolution_time_hours=round(avg_resolution, 2) if avg_resolution else None,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get ticket stats: {e}", exc_info=True)
+        raise safe_internal_error(e, "support")
+
+
+# =============================================================================
 # Get Single Ticket with Messages
 # =============================================================================
 
@@ -685,68 +757,6 @@ async def close_ticket(ticket_id: str, user_id: str,
             metadata={"ticket_id": ticket_id},
             status_code=500
         )
-        raise safe_internal_error(e, "support")
-
-
-# =============================================================================
-# Get User Ticket Statistics
-# =============================================================================
-
-@router.get("/tickets/{user_id}/stats", response_model=SupportTicketStatsResponse)
-async def get_user_ticket_stats(user_id: str,
-    current_user: dict = Depends(get_current_user),
-):
-    """
-    Get support ticket statistics for a user.
-
-    Returns counts of tickets by status and average resolution time.
-    """
-    verify_user_ownership(current_user, user_id)
-    logger.info(f"Getting ticket stats for user {user_id}")
-
-    try:
-        db = get_supabase_db()
-
-        # Get all user tickets
-        result = db.client.table("support_tickets").select("*").eq("user_id", user_id).execute()
-
-        tickets = result.data or []
-
-        if not tickets:
-            return SupportTicketStatsResponse(
-                total_tickets=0,
-                open_tickets=0,
-                resolved_tickets=0,
-                closed_tickets=0,
-                avg_resolution_time_hours=None,
-            )
-
-        # Calculate statistics
-        open_count = sum(1 for t in tickets if t["status"] in ["open", "in_progress", "waiting_response"])
-        resolved_count = sum(1 for t in tickets if t["status"] == "resolved")
-        closed_count = sum(1 for t in tickets if t["status"] == "closed")
-
-        # Calculate average resolution time for resolved/closed tickets
-        resolution_times = []
-        for t in tickets:
-            if t.get("resolved_at") and t.get("created_at"):
-                created = datetime.fromisoformat(t["created_at"].replace("Z", "+00:00"))
-                resolved = datetime.fromisoformat(t["resolved_at"].replace("Z", "+00:00"))
-                diff = (resolved - created).total_seconds() / 3600  # Convert to hours
-                resolution_times.append(diff)
-
-        avg_resolution = sum(resolution_times) / len(resolution_times) if resolution_times else None
-
-        return SupportTicketStatsResponse(
-            total_tickets=len(tickets),
-            open_tickets=open_count,
-            resolved_tickets=resolved_count,
-            closed_tickets=closed_count,
-            avg_resolution_time_hours=round(avg_resolution, 2) if avg_resolution else None,
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to get ticket stats: {e}", exc_info=True)
         raise safe_internal_error(e, "support")
 
 

@@ -25,6 +25,21 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 
+def _match_longest_key(user_lower: str, mapping: dict):
+    """Return the value of the LONGEST mapping key contained in the message.
+
+    Substring keyword maps MUST be matched most-specific-first. Plain dict-order
+    iteration returns whichever key happens to be declared first, so "home gym"
+    matched the 'gym' key (-> commercial_gym) before ever reaching 'home gym'.
+    Longest-key-first makes the most specific phrase win regardless of dict order.
+    """
+    best_key = None
+    for key in mapping:
+        if key in user_lower and (best_key is None or len(key) > len(best_key)):
+            best_key = key
+    return mapping[best_key] if best_key is not None else None
+
+
 def _extract_name(user_message: str) -> str:
     """Extract name from user message using pattern matching."""
     user_lower = user_message.lower().strip()
@@ -38,7 +53,16 @@ def _extract_name(user_message: str) -> str:
         match = re.search(pattern, user_lower, re.IGNORECASE)
         if match:
             name = match.group(1).strip().title()
-            common_words = {'the', 'and', 'or', 'but', 'if', 'then', 'yes', 'no', 'ok', 'okay', 'hi', 'hey', 'what', 'how', 'when', 'where', 'why'}
+            # Greetings/filler must never be stored as the user's name — the coach
+            # would then address them as "Hello". Self-descriptions ("I'm a man")
+            # are captured by pattern 1 as "A Man"; they are gender answers, not names.
+            common_words = {
+                'the', 'and', 'or', 'but', 'if', 'then', 'yes', 'no', 'ok', 'okay',
+                'hi', 'hey', 'hello', 'hiya', 'yo', 'sup', 'thanks', 'thank you',
+                'what', 'how', 'when', 'where', 'why',
+                'a man', 'a woman', 'a guy', 'a girl', 'a boy', 'a lady', 'a dude',
+                'male', 'female', 'man', 'woman', 'guy', 'girl', 'boy', 'lady',
+            }
             if len(name) <= 30 and name.lower() not in common_words:
                 return name
     return None
@@ -62,17 +86,31 @@ def _extract_age(user_message: str) -> int:
 
 
 def _extract_gender(user_message: str) -> str:
-    """Extract gender from user message."""
-    user_lower = user_message.lower()
+    """Extract gender from user message.
 
-    if 'male' in user_lower and 'female' not in user_lower:
+    Handles both bare quick-reply answers ("m", "female") and free-text answers
+    ("I'm a man", "I'm a woman"). Word boundaries are required for the noun forms
+    so that "woman" is not read as "man" and "human" is not read as "man".
+    Single letters ("m"/"f") are only honoured as a whole message — otherwise the
+    "m" in "I'm" would be matched.
+    """
+    user_lower = user_message.lower()
+    stripped = user_lower.strip()
+
+    if stripped in ('m', 'male', 'man', 'guy', 'boy', 'dude'):
         return "male"
-    elif 'female' in user_lower:
+    if stripped in ('f', 'female', 'woman', 'girl', 'lady', 'gal'):
         return "female"
-    elif user_lower.strip() in ['m', 'man', 'guy', 'boy']:
+
+    # "female" must be tested before "male" ("male" is a substring of "female").
+    if 'female' in user_lower:
+        return "female"
+    if 'male' in user_lower:
         return "male"
-    elif user_lower.strip() in ['f', 'woman', 'girl', 'lady']:
+    if re.search(r"\b(woman|girl|lady|gal)\b", user_lower):
         return "female"
+    if re.search(r"\b(man|guy|boy|dude)\b", user_lower):
+        return "male"
     return None
 
 
@@ -349,10 +387,7 @@ def _extract_training_experience(user_message: str) -> str:
     }
 
     user_lower = user_message.strip().lower()
-    for key, value in experience_map.items():
-        if key in user_lower:
-            return value
-    return None
+    return _match_longest_key(user_lower, experience_map)
 
 
 def _extract_workout_environment(user_message: str) -> str:
@@ -390,10 +425,9 @@ def _extract_workout_environment(user_message: str) -> str:
     }
 
     user_lower = user_message.strip().lower()
-    for key, value in environment_map.items():
-        if key in user_lower:
-            return value
-    return None
+    # Most-specific phrase wins: "home gym"/"garage gym"/"apartment gym" must not
+    # be swallowed by the shorter 'gym' key (which maps to commercial_gym).
+    return _match_longest_key(user_lower, environment_map)
 
 
 def _extract_focus_areas(user_message: str) -> list:
@@ -449,10 +483,7 @@ def _extract_workout_variety(user_message: str) -> str:
     }
 
     user_lower = user_message.strip().lower()
-    for key, value in variety_map.items():
-        if key in user_lower:
-            return value
-    return None
+    return _match_longest_key(user_lower, variety_map)
 
 
 def _extract_biggest_obstacle(user_message: str) -> str:
@@ -481,10 +512,7 @@ def _extract_biggest_obstacle(user_message: str) -> str:
     }
 
     user_lower = user_message.strip().lower()
-    for key, value in obstacle_map.items():
-        if key in user_lower:
-            return value
-    return None
+    return _match_longest_key(user_lower, obstacle_map)
 
 
 def _extract_target_weight(user_message: str, current_weight_kg: float = None) -> dict:

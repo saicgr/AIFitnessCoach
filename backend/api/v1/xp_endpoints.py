@@ -1010,24 +1010,39 @@ async def award_social_xp(
 # LEVEL PROGRESSION (Unified 250-Level System - Migration 227)
 # =============================================================================
 
-# XP required for each level (1-175), levels 176-250 are flat 100,000 XP
+# XP required for each level (1-175), levels 176-250 are flat 100,000 XP.
+#
+# ⚠️ THIS MUST STAY IDENTICAL TO THE DB CURVE in calculate_level_from_xp — the
+# function award_xp/revoke_xp use to actually level users up. It is the single
+# source of truth; this list is a read-through mirror of it.
+#
+# It previously was NOT. Migration 1901 rescaled the DB curve ("Rescale level
+# thresholds so Level 2 = 150 XP" + "Recalculate all existing users' levels
+# under new curve") but left this table on the old migration-227 curve
+# (25, 30, 40, 50, ...). Result: GET /api/v1/xp/level-info under-reported the
+# cost of a level by up to ~13x (it claimed level 50 cost 32,960 XP total; the
+# DB actually charges enough that 32,960 XP only lands you on level 17), so the
+# XP-to-next-level bar could never fill at the advertised rate.
+#
+# tests/test_xp_database_integration.py::test_python_xp_table_matches_db_curve
+# pins this list to the live DB curve — if you edit one, that test fails.
 _XP_TABLE = [
-    # Levels 1-10 (Beginner): Quick early wins
-    25, 30, 40, 50, 65, 80, 100, 120, 150, 180,
-    # Levels 11-25 (Novice)
-    200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 500,
-    # Levels 26-50 (Apprentice)
-    550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1550, 1600, 1650, 1700, 1800,
-    # Levels 51-75 (Athlete)
-    1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500, 3600, 3700, 3800, 3900, 4000, 4100, 4200, 4500,
-    # Levels 76-100 (Elite)
-    4800, 5000, 5200, 5400, 5600, 5800, 6000, 6200, 6400, 6600, 6800, 7000, 7200, 7400, 7600, 7800, 8000, 8200, 8400, 8600, 8800, 9000, 9200, 9400, 10000,
+    # Levels 1-10 (Beginner): Meaningful early progression
+    150, 200, 300, 450, 650, 900, 1200, 1600, 2100, 2700,
+    # Levels 11-25 (Novice): Steady growth
+    3000, 3300, 3600, 3900, 4200, 4500, 4800, 5100, 5400, 5700, 6000, 6300, 6600, 6900, 7500,
+    # Levels 26-50 (Apprentice): Consistent effort required
+    8000, 8500, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 16000, 17000, 18000, 19000, 20000, 21000, 22000, 23000, 24000, 25000,
+    # Levels 51-75 (Athlete): Dedicated training
+    26000, 27000, 28000, 29000, 30000, 31000, 32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000, 40000, 42000, 44000, 46000, 48000, 50000, 52000, 54000, 56000, 58000, 60000,
+    # Levels 76-100 (Elite): Long-term commitment
+    62000, 64000, 66000, 68000, 70000, 72000, 74000, 76000, 78000, 80000, 82000, 84000, 86000, 88000, 90000, 92000, 94000, 96000, 98000, 100000, 102000, 104000, 106000, 108000, 110000,
     # Levels 101-125 (Master)
-    10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 16500, 17000, 17500, 18000, 18500, 19000, 19500, 20000, 20500, 21000, 21500, 22000, 23000,
+    112000, 114000, 116000, 118000, 120000, 122000, 124000, 126000, 128000, 130000, 132000, 134000, 136000, 138000, 140000, 142000, 144000, 146000, 148000, 150000, 152000, 154000, 156000, 158000, 160000,
     # Levels 126-150 (Champion)
-    24000, 25000, 26000, 27000, 28000, 29000, 30000, 31000, 32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000, 40000, 41000, 42000, 43000, 44000, 45000, 46000, 47000, 50000,
+    162000, 164000, 166000, 168000, 170000, 172000, 174000, 176000, 178000, 180000, 182000, 184000, 186000, 188000, 190000, 192000, 194000, 196000, 198000, 200000, 202000, 204000, 206000, 208000, 210000,
     # Levels 151-175 (Legend)
-    52000, 54000, 56000, 58000, 60000, 62000, 64000, 66000, 68000, 70000, 72000, 74000, 76000, 78000, 80000, 82000, 84000, 86000, 88000, 90000, 92000, 94000, 96000, 98000, 100000
+    212000, 214000, 216000, 218000, 220000, 222000, 224000, 226000, 228000, 230000, 232000, 234000, 236000, 238000, 240000, 242000, 244000, 246000, 248000, 250000, 252000, 254000, 256000, 258000, 260000
 ]
 
 
@@ -1157,14 +1172,16 @@ async def get_level_info(
     Get XP requirements and rewards for a specific level.
 
     Unified 250-level progressive system (migration 227):
-    - Levels 1-10 (Beginner): 25-180 XP each
-    - Levels 11-25 (Novice): 200-500 XP each
-    - Levels 26-50 (Apprentice): 550-1,800 XP each
-    - Levels 51-75 (Athlete): 1,900-4,500 XP each
-    - Levels 76-100 (Elite): 4,800-10,000 XP each
-    - Levels 101-125 (Master): 10,500-23,000 XP each
-    - Levels 126-150 (Champion): 24,000-50,000 XP each
-    - Levels 151-175 (Legend): 52,000-100,000 XP each
+    XP per level (post-migration-1901 curve — matches calculate_level_from_xp,
+    the function that actually levels users up):
+    - Levels 1-10 (Beginner): 150-2,700 XP each
+    - Levels 11-25 (Novice): 3,000-7,500 XP each
+    - Levels 26-50 (Apprentice): 8,000-25,000 XP each
+    - Levels 51-75 (Athlete): 26,000-60,000 XP each
+    - Levels 76-100 (Elite): 62,000-110,000 XP each
+    - Levels 101-125 (Master): 112,000-160,000 XP each
+    - Levels 126-150 (Champion): 162,000-210,000 XP each
+    - Levels 151-175 (Legend): 212,000-260,000 XP each
     - Levels 176-200 (Mythic): 100,000 XP each
     - Levels 201-225 (Immortal): 100,000 XP each
     - Levels 226-250 (Transcendent): 100,000 XP each

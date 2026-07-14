@@ -279,6 +279,13 @@ GOOD example: "You pressed 175lb x 5 on Bench last session — open with 180lb x
     # Deterministic fallback based on workout data (no AI needed)
     def _build_fallback(headline_text: str = None):
         fb_headline = headline_text or "Time to get to work"
+        # The 5-word cap is a UI-overflow guard on the headline slot, so it has
+        # to hold on EVERY path. headline_text here is a raw model string (we
+        # keep the AI's headline even when its sections were unusable), and it
+        # used to bypass the cap that the success path applies — a >5-word
+        # headline reached the card whenever the model returned <3 sections.
+        if len(fb_headline.split()) > 5:
+            fb_headline = " ".join(fb_headline.split()[:5])
         first_exercise = exercises[0].get("name", workout_focus) if exercises else workout_focus
         fb_sections = [
             {"icon": "🎯", "title": "Today's Target", "content": f"This session hits your {workout_focus} — {exercise_count} exercises, {total_sets} total sets. Stay controlled on each rep.", "color": "cyan"},

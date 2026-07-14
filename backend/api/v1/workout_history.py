@@ -188,7 +188,7 @@ async def bulk_import_workout_history(request: BulkImportRequest,
     Bulk import multiple workout history entries.
 
     Useful for importing from spreadsheets or other fitness apps.
-    Maximum 100 entries per request.
+    Maximum 500 entries per request (enforced by BulkImportRequest.entries).
     """
     verify_user_ownership(current_user, request.user_id)
     logger.info(f"Bulk importing {len(request.entries)} entries for user {request.user_id}")

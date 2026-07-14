@@ -114,6 +114,12 @@ GOAL_NOUN_BY_GOAL: Dict[str, List[str]] = {
         "Punch", "Drive", "Drop", "Lift-off", "Wave", "Pulse", "Sprint",
         "Speed", "Spring", "Rebound", "Fast-Twitch", "Dynamic",
         "Contrast", "Triple-Extension",
+        # The 2026 de-jargon/de-violence pass (34bce1c1) pruned this pool to
+        # 27 entries — below the 28-entry floor every goal pool must clear to
+        # keep name variation up (spec asks 40+). Topped back up with credible
+        # coach-speak power vocabulary (no fantasy/violent words).
+        "Acceleration", "Ballistic", "Plyo", "Bound", "Takeoff",
+        "Elastic", "Rate-Of-Force", "Overspeed",
     ],
     "recovery": [
         "Restore", "Renew", "Revival", "Soothe", "Soothing", "Reset",

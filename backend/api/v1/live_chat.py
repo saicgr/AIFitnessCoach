@@ -213,9 +213,9 @@ async def _send_admin_webhook(
     if settings.admin_notification_email:
         try:
             from services.email_service import EmailService
+            from services import email_sender
             email_svc = EmailService()
             if email_svc.is_configured():
-                import resend
                 category = metadata.get("category", "General")
                 queue_position = metadata.get("queue_position", "N/A")
 
@@ -229,13 +229,27 @@ async def _send_admin_webhook(
                 <p><strong>Message:</strong> {message}</p>
                 """
 
-                resend.Emails.send({
-                    "from": email_svc.from_email,
-                    "to": [settings.admin_notification_email],
-                    "subject": subject,
-                    "html": html_body,
-                })
-                logger.info(f"Admin email sent to {settings.admin_notification_email}")
+                # The recipient is the ADMIN, not `user_id` (which is the reporting
+                # user). Passing user_id here would bill support mail against that
+                # user's frequency cap and could suppress a support alert — so it is
+                # deliberately omitted. `live_chat` is an exempt type either way.
+                resp = email_sender.send(
+                    {
+                        "from": email_svc.from_email,
+                        "to": [settings.admin_notification_email],
+                        "subject": subject,
+                        "html": html_body,
+                    },
+                    user_id=None,
+                    email_type="live_chat",
+                )
+                if resp.get("skipped"):
+                    logger.warning(
+                        f"Admin email NOT sent to {settings.admin_notification_email} "
+                        f"(blocked: {resp.get('reason')})"
+                    )
+                else:
+                    logger.info(f"Admin email sent to {settings.admin_notification_email}")
         except Exception as e:
             logger.error(f"Admin email notification failed: {e}", exc_info=True)
 

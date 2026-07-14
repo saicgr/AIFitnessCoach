@@ -7,6 +7,12 @@ import re
 import logging
 from typing import List, Dict, Optional
 
+from core.training_goals import (
+    apply_fitness_level_rir_floor,
+    get_rir_ramp,
+    is_mobility_goal,
+)
+
 logger = logging.getLogger("gemini")
 
 
@@ -168,6 +174,7 @@ def infer_set_type(exercise: Dict, set_target: Dict, set_index: int, total_sets:
 def apply_goal_aware_rir_override(
     exercises: List[Dict],
     goals: Optional[List[str]] = None,
+    fitness_level: Optional[str] = None,
 ) -> List[Dict]:
     """Rewrite working-set RIR/RPE per goal (Fix 7 / D2 from
     peppy-conjuring-valley.md).
@@ -187,18 +194,17 @@ def apply_goal_aware_rir_override(
     if not primary_goal:
         return exercises
 
-    _RIR_RAMP = {
-        "strength":    [3, 2, 1, 1, 1],
-        "power":       [3, 2, 1, 1, 1],
-        "hypertrophy": [2, 1, 1, 1, 1],
-        "muscle_gain": [2, 1, 1, 1, 1],
-        "endurance":   [3, 3, 2, 2, 2],
-        "fat_loss":    [3, 2, 1, 1, 1],
-    }
-    is_mobility = primary_goal in {"mobility", "recovery"}
-    ramp = _RIR_RAMP.get(primary_goal)
-    if ramp is None and not is_mobility:
-        return exercises
+    # BUGFIX 2026-07-14: the ramp table used to be inlined here, keyed on
+    # "hypertrophy"/"muscle_gain"/"fat_loss"/... — none of which are goal
+    # strings the app actually sends ("build_muscle", "lose_weight",
+    # "increase_strength", ...). `ramp` was therefore None for every real
+    # user and this override returned early, leaving Gemini's raw mechanical
+    # 2->1->0 ramp (the exact to-failure ramp this function exists to
+    # replace) untouched — i.e. the fix was a no-op in production. Goal
+    # spellings are now canonicalized at a shared chokepoint that this path
+    # and the exercise_rag path have in common.
+    is_mobility = is_mobility_goal(goals)
+    ramp = None if is_mobility else get_rir_ramp(goals)
 
     _effective_types = {"working", "drop", "failure", "amrap"}
     for exercise in exercises:
@@ -223,7 +229,14 @@ def apply_goal_aware_rir_override(
                 continue
             if set_type_lower not in _effective_types:
                 continue
-            target_rir = ramp[min(working_idx, len(ramp) - 1)]
+            # Goal sets the ramp shape; fitness level sets the intensity
+            # ceiling (beginner RPE 5-7 / intermediate 7-8 / advanced 8-10,
+            # per the DIFFICULTY SCALING BY FITNESS LEVEL block in the cached
+            # system prompt). Without the floor this override *overwrote* the
+            # level-appropriate RPE Gemini was instructed to emit.
+            target_rir = apply_fitness_level_rir_floor(
+                ramp[min(working_idx, len(ramp) - 1)], fitness_level
+            )
             st["target_rir"] = target_rir
             st["target_rpe"] = max(1, min(10 - target_rir, 10))
             # Strength / hypertrophy: never tag as failure on automatic

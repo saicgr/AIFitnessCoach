@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from services.cardio import format_pace_per_km
 
 from .cardio_models import (
     HRZoneResponse,
@@ -59,6 +60,41 @@ def _parse_cardio_session_summary(row):
     from .cardio import _parse_cardio_session_summary as _impl
     return _impl(row)
 
+
+def _normalize_date_bound(value: Optional[str], *, field: str, end_of_day: bool) -> Optional[str]:
+    """Turn a user-supplied date filter into a valid PostgREST timestamp bound.
+
+    This used to be a bare f-string (`f"{start_date}T00:00:00"`), which meant
+    ANY input that wasn't exactly `YYYY-MM-DD` produced a malformed timestamp
+    that PostgREST rejects — a 500 on user input. That included the mobile
+    client's own calls: CardioRepository.getSessions sends
+    `startDate.toIso8601String()` ("2026-07-06T00:00:00.000"), which became
+    "2026-07-06T00:00:00.000T00:00:00".
+
+    Accepts the documented `YYYY-MM-DD` (widened to cover the whole day) and a
+    full ISO-8601 timestamp (used as-is). Anything else is a client error: 422.
+    """
+    if value is None:
+        return None
+
+    raw = value.strip()
+    if not raw:
+        return None
+
+    candidate = raw[:-1] + "+00:00" if raw[-1] in ("Z", "z") else raw
+    try:
+        parsed = datetime.fromisoformat(candidate)
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid {field}: expected YYYY-MM-DD or an ISO-8601 timestamp",
+        )
+
+    if len(raw) == 10:  # date-only → bound the whole day
+        return f"{raw}T23:59:59" if end_of_day else f"{raw}T00:00:00"
+    return parsed.isoformat()
+
+
 @router.get("/sessions/{user_id}", response_model=CardioSessionsListResponse, tags=["Cardio Sessions"])
 async def list_cardio_sessions(
     user_id: str,
@@ -78,6 +114,12 @@ async def list_cardio_sessions(
     """
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
+
+    # Validate the date filters BEFORE touching the DB — an unparseable bound
+    # is a 422, never a malformed PostgREST filter (see _normalize_date_bound).
+    start_bound = _normalize_date_bound(start_date, field="start_date", end_of_day=False)
+    end_bound = _normalize_date_bound(end_date, field="end_date", end_of_day=True)
+
     db = get_supabase_db()
 
     # Verify user exists
@@ -98,11 +140,11 @@ async def list_cardio_sessions(
     if location:
         query = query.eq("location", location.value)
 
-    if start_date:
-        query = query.gte("created_at", f"{start_date}T00:00:00")
+    if start_bound:
+        query = query.gte("created_at", start_bound)
 
-    if end_date:
-        query = query.lte("created_at", f"{end_date}T23:59:59")
+    if end_bound:
+        query = query.lte("created_at", end_bound)
 
     # Calculate pagination
     offset = (page - 1) * page_size
@@ -205,12 +247,7 @@ async def get_cardio_session_stats(
         type_hr_sessions = [s for s in sessions if s.get("avg_heart_rate")]
 
         # Calculate average pace
-        avg_pace = None
-        if type_distance > 0:
-            pace_minutes = type_duration / type_distance
-            pace_mins = int(pace_minutes)
-            pace_secs = int((pace_minutes - pace_mins) * 60)
-            avg_pace = f"{pace_mins}:{pace_secs:02d}"
+        avg_pace = format_pace_per_km(type_duration, type_distance)
 
         # Calculate average speed
         avg_speed = (type_distance / type_duration * 60) if type_duration > 0 else 0
@@ -420,11 +457,10 @@ async def update_cardio_session(
                 update_data["avg_speed_kmh"] = round((float(new_distance) / new_duration) * 60, 2)
 
             # Recalculate pace if not explicitly provided
-            if "avg_pace_per_km" not in update_data and float(new_distance) > 0:
-                pace_minutes = new_duration / float(new_distance)
-                pace_mins = int(pace_minutes)
-                pace_secs = int((pace_minutes - pace_mins) * 60)
-                update_data["avg_pace_per_km"] = f"{pace_mins}:{pace_secs:02d}"
+            if "avg_pace_per_km" not in update_data:
+                recalculated_pace = format_pace_per_km(new_duration, new_distance)
+                if recalculated_pace is not None:
+                    update_data["avg_pace_per_km"] = recalculated_pace
 
     if not update_data:
         # No changes requested

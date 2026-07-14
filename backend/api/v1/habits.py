@@ -122,6 +122,11 @@ async def get_habits(
         logger.info(f"✅ Found {len(result.data)} habits for user={user_id}")
         return result.data
 
+    # Deliberate 4xx (the 403 from verify_user_ownership above) must survive:
+    # without this, an IDOR attempt was swallowed by the generic handler and
+    # reported to the client as a 500 "internal error".
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Error getting habits: {e}", exc_info=True)
         await log_user_error(user_id, "get_habits", str(e))
@@ -235,6 +240,8 @@ async def get_today_habits(
             completion_percentage=round(completion_percentage, 1)
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Error getting today's habits: {e}", exc_info=True)
         await log_user_error(user_id, "get_today_habits", str(e))
@@ -464,7 +471,13 @@ async def archive_habit(
     Returns:
         Success message
     """
-    return await delete_habit(user_id, habit_id, hard_delete=False)
+    # delete_habit is a route handler — its `current_user` default is a
+    # Depends(...) marker that only FastAPI's routing layer fills in. Calling it
+    # without one made verify_user_ownership blow up ("'Depends' object is not
+    # subscriptable"), so archiving ALWAYS 500'd.
+    return await delete_habit(
+        user_id, habit_id, hard_delete=False, current_user=current_user
+    )
 
 
 # ============================================================================
