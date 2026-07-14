@@ -133,6 +133,31 @@ def init_sentry(settings: Settings) -> bool:
         logger.info("ℹ️ pytest detected — Sentry init skipped.")
         return False
 
+    # Only a REAL DEPLOY may report to Sentry. Without this, any laptop that
+    # imports `main` — an ad-hoc script, a TestClient smoke check, a REPL —
+    # initializes the SDK with the production DSN straight out of the .env file
+    # and starts filing "production" issues from `http://testserver`. That
+    # happened: a batch of MagicMock/Depends TypeErrors landed in Sentry from
+    # a dev machine and read exactly like a live outage.
+    #
+    # The pytest guard above does NOT cover this: it only fires when pytest is
+    # actually imported. And popping SENTRY_DSN out of os.environ (as conftest
+    # does) achieves nothing either, because Settings reads `.env` from DISK.
+    #
+    # Render injects RENDER + RENDER_GIT_COMMIT into every deploy, so it is the
+    # one signal that cannot be faked by a local shell that sourced .env.
+    is_real_deploy = bool(
+        os.environ.get("RENDER")
+        or os.environ.get("RENDER_SERVICE_ID")
+        or (settings.environment or "").lower() == "production"
+    )
+    if not is_real_deploy and os.environ.get("SENTRY_ALLOW_LOCAL") != "1":
+        logger.info(
+            "ℹ️ Not a deployed environment — Sentry init skipped "
+            "(set SENTRY_ALLOW_LOCAL=1 to override)."
+        )
+        return False
+
     dsn = settings.sentry_dsn
     if not dsn:
         logger.info("ℹ️ Sentry DSN not set — error tracking disabled.")
@@ -148,7 +173,18 @@ def init_sentry(settings: Settings) -> bool:
         logger.warning(f"⚠️ sentry-sdk not installed — skipping init: {err}")
         return False
 
-    env = settings.sentry_environment or settings.environment or "production"
+    # Tagging. render.yaml never sets ENVIRONMENT, so `settings.environment`
+    # is the "development" default even on the live Render service — which
+    # tagged every production backend error as `development` and made real
+    # incidents indistinguishable from a dev machine's noise. Trust the Render
+    # signal over the (unset) config default.
+    _on_render = bool(os.environ.get("RENDER") or os.environ.get("RENDER_SERVICE_ID"))
+    env = (
+        settings.sentry_environment
+        or ("production" if _on_render else None)
+        or settings.environment
+        or "production"
+    )
     # Prefer explicit APP_VERSION, fall back to Render's auto-injected git SHA,
     # then to the config default. This keeps release tags meaningful even
     # when APP_VERSION isn't set.
