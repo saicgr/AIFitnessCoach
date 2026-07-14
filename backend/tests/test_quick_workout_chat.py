@@ -89,21 +89,43 @@ def sample_chat_request(sample_user_id, sample_user_profile):
 
 @pytest.fixture
 def mock_gemini_service():
-    """Mock Gemini service for intent extraction."""
+    """Mock Gemini service for intent extraction.
+
+    This is a test double for the LLM classifier (`GeminiService.extract_intent`,
+    services/gemini/chat.py). It models the intent SPEC that lives in that
+    prompt, which defines generate_quick_workout as:
+
+        "User wants to CREATE/GENERATE a new workout (e.g. 'give me a quick
+         workout', 'create a 15-minute workout', 'make me a cardio workout',
+         'I need a short workout', 'new workout please')"
+
+    The double previously matched a fixed list of exact substrings
+    ("i need a workout", "make me a workout", …). That list did not cover the
+    spec's own examples — "I need a short workout" fell through to QUESTION —
+    so the double contradicted the production prompt it stands in for. It now
+    models the spec's rule (creation cue + a workout noun) rather than a
+    handful of literal strings.
+    """
     service = MagicMock(spec=GeminiService)
 
-    async def mock_extract_intent(user_message):
+    # Real signature: extract_intent(user_message, user_id=None)
+    async def mock_extract_intent(user_message, user_id=None):
         message_lower = user_message.lower()
 
-        # Quick workout generation patterns
-        quick_workout_patterns = [
-            "quick workout", "create a workout", "generate a workout",
-            "make me a workout", "give me a workout", "15 minute",
-            "15-minute", "i need a workout", "cardio workout",
-            "new workout", "build me a workout"
+        # A create/generate cue …
+        creation_cues = [
+            "give me", "create", "generate", "make me", "build me",
+            "i need", "i want", "new workout", "quick workout",
         ]
+        # … applied to a workout-shaped noun.
+        workout_nouns = ["workout", "routine", "session"]
 
-        if any(pattern in message_lower for pattern in quick_workout_patterns):
+        wants_new_workout = (
+            any(cue in message_lower for cue in creation_cues)
+            and any(noun in message_lower for noun in workout_nouns)
+        )
+
+        if wants_new_workout:
             return IntentExtraction(
                 intent=CoachIntent.GENERATE_QUICK_WORKOUT,
                 exercises=[],
@@ -288,13 +310,34 @@ class TestGenerateQuickWorkoutTool:
     """Tests for the generate_quick_workout tool."""
 
     async def test_generate_quick_workout_tool_returns_action_data(self):
-        """Test that generate_quick_workout tool returns proper action_data with workout_id."""
+        """Test that generate_quick_workout tool returns proper action_data with workout_id.
+
+        Mock-shape note: this test used to give `run_async_in_sync` a two-item
+        `side_effect` — exercise selection first, adaptive params second. The
+        tool no longer awaits exercise selection: selection is now the
+        synchronous, ChromaDB-free ladder in `services.workout_fallback`
+        (indexed SQL → curated static set), and `run_async_in_sync` is called
+        exactly ONCE, for `get_adaptive_parameters`. The stale side_effect
+        therefore handed the tool a LIST where it expected the adaptive-params
+        DICT, and `adaptive_params["sets"]` blew up with
+        "list indices must be integers or slices, not str" → success=False.
+        The assertions are unchanged; only the mock wiring was corrected to the
+        tool's current collaborators.
+        """
         from services.langgraph_agents.tools import generate_quick_workout
 
         sample_user_id = str(uuid.uuid4())
 
-        # Mock the database and RAG service
+        selected_exercises = [
+            {"name": "Push Ups", "muscle_group": "chest", "equipment": "Bodyweight"},
+            {"name": "Squats", "muscle_group": "legs", "equipment": "Bodyweight"},
+            {"name": "Plank", "muscle_group": "core", "equipment": "Bodyweight"},
+        ]
+
+        # Mock the database, the (synchronous) exercise selector and the single
+        # async hop the tool still makes (adaptive params).
         with patch("services.langgraph_agents.tools.workout_tools.get_supabase_db") as mock_db, \
+             patch("services.workout_fallback.sql_exercises", return_value=selected_exercises) as mock_sql, \
              patch("services.langgraph_agents.tools.workout_tools.run_async_in_sync") as mock_run_async:
 
             # Setup mock database
@@ -316,17 +359,8 @@ class TestGenerateQuickWorkoutTool:
             new_workout_id = str(uuid.uuid4())
             db_mock.create_workout.return_value = {"id": new_workout_id}
 
-            # Mock exercise RAG service
-            mock_run_async.side_effect = [
-                # First call: select_exercises_for_workout
-                [
-                    {"name": "Push Ups", "muscle_group": "chest", "equipment": "Bodyweight"},
-                    {"name": "Squats", "muscle_group": "legs", "equipment": "Bodyweight"},
-                    {"name": "Plank", "muscle_group": "core", "equipment": "Bodyweight"},
-                ],
-                # Second call: get_adaptive_parameters
-                {"sets": 3, "reps": 12, "rest_seconds": 60},
-            ]
+            # Only async call left in the tool: get_adaptive_parameters
+            mock_run_async.return_value = {"sets": 3, "reps": 12, "rest_seconds": 60}
 
             # Execute the tool
             result = generate_quick_workout.invoke({
@@ -344,15 +378,26 @@ class TestGenerateQuickWorkoutTool:
             assert "workout_name" in result
             assert "exercises_added" in result
             assert len(result["exercises_added"]) > 0
+            # The selected library exercises must actually make it into the workout.
+            assert mock_sql.called
+            assert {"Push Ups", "Squats", "Plank"}.issubset(set(result["exercises_added"]))
 
     async def test_generate_quick_workout_tool_updates_existing_workout(self):
-        """Test that generate_quick_workout updates existing workout if workout_id is provided."""
+        """Test that generate_quick_workout updates existing workout if workout_id is provided.
+
+        Same stale-mock correction as the test above (run_async_in_sync is now
+        called once, for adaptive params only; exercise selection is the
+        synchronous workout_fallback ladder). Assertions unchanged.
+        """
         from services.langgraph_agents.tools import generate_quick_workout
 
         sample_user_id = str(uuid.uuid4())
         existing_workout_id = str(uuid.uuid4())
 
         with patch("services.langgraph_agents.tools.workout_tools.get_supabase_db") as mock_db, \
+             patch("services.workout_fallback.sql_exercises", return_value=[
+                 {"name": "New Push Ups", "muscle_group": "chest", "equipment": "Bodyweight"},
+             ]), \
              patch("services.langgraph_agents.tools.workout_tools.run_async_in_sync") as mock_run_async:
 
             db_mock = MagicMock()
@@ -371,10 +416,7 @@ class TestGenerateQuickWorkoutTool:
                 "equipment": ["Dumbbells"],
             }
 
-            mock_run_async.side_effect = [
-                [{"name": "New Push Ups", "muscle_group": "chest", "equipment": "Bodyweight"}],
-                {"sets": 3, "reps": 12, "rest_seconds": 60},
-            ]
+            mock_run_async.return_value = {"sets": 3, "reps": 12, "rest_seconds": 60}
 
             result = generate_quick_workout.invoke({
                 "user_id": sample_user_id,
@@ -387,6 +429,9 @@ class TestGenerateQuickWorkoutTool:
             assert result["success"] is True
             assert result["workout_id"] == existing_workout_id
             assert "Old Exercise" in result.get("exercises_removed", [])
+            # The existing workout is UPDATED in place, not re-created.
+            db_mock.update_workout.assert_called_once()
+            db_mock.create_workout.assert_not_called()
 
 
 # ============================================================
@@ -426,7 +471,13 @@ class TestChatResponseIntegration:
             mock_gemini = MagicMock()
             mock_gemini_cls.return_value = mock_gemini
 
-            async def mock_extract_intent(msg):
+            # LangGraphCoachService calls
+            # `gemini_service.extract_intent(message, user_id=user_id)`
+            # (services/langgraph_service.py::_extract_intent). The double must
+            # accept that kwarg — it previously took `msg` only, so the real
+            # call raised
+            # TypeError: mock_extract_intent() got an unexpected keyword argument 'user_id'.
+            async def mock_extract_intent(msg, user_id=None):
                 return IntentExtraction(
                     intent=CoachIntent.GENERATE_QUICK_WORKOUT,
                     exercises=[],
@@ -606,7 +657,17 @@ class TestQuickWorkoutChatEdgeCases:
             assert response.action_data["workout_id"] == sample_workout_context.id
 
     async def test_quick_workout_various_phrases(self, mock_gemini_service):
-        """Test that various natural language phrases extract correctly."""
+        """Test that various natural language phrases extract correctly.
+
+        Two layers, because intent extraction itself is an LLM call:
+        1. The classifier double (modelled on the production intent spec in
+           services/gemini/chat.py) maps each phrase to GENERATE_QUICK_WORKOUT.
+        2. Production's DETERMINISTIC keyword router
+           (LangGraphCoachService._infer_agent_from_keywords) — real code, no
+           mock — must send every one of these phrases to the WORKOUT agent.
+           This is the layer that actually protects the flow when the LLM's
+           intent is unavailable/degraded.
+        """
         phrases = [
             "give me a quick 15-minute workout",
             "create a workout for me",
@@ -617,10 +678,16 @@ class TestQuickWorkoutChatEdgeCases:
             "can you create a new workout",
         ]
 
-        for phrase in phrases:
-            extraction = await mock_gemini_service.extract_intent(phrase)
-            assert extraction.intent == CoachIntent.GENERATE_QUICK_WORKOUT, \
-                f"Phrase '{phrase}' should extract to GENERATE_QUICK_WORKOUT, got {extraction.intent}"
+        with patch.object(LangGraphCoachService, '__init__', lambda self: None):
+            router = LangGraphCoachService()
+
+            for phrase in phrases:
+                extraction = await mock_gemini_service.extract_intent(phrase)
+                assert extraction.intent == CoachIntent.GENERATE_QUICK_WORKOUT, \
+                    f"Phrase '{phrase}' should extract to GENERATE_QUICK_WORKOUT, got {extraction.intent}"
+
+                assert router._infer_agent_from_keywords(phrase) == AgentType.WORKOUT, \
+                    f"Phrase '{phrase}' should keyword-route to the WORKOUT agent"
 
 
 # ============================================================

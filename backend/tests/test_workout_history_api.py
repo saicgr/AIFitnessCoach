@@ -9,6 +9,16 @@ from unittest.mock import MagicMock, patch, AsyncMock
 from datetime import datetime, timedelta
 
 
+# The workout-history endpoints authenticate with
+# `current_user: dict = Depends(get_current_user)` and then call
+# `verify_user_ownership(current_user, user_id)`. These tests invoke the endpoint
+# coroutines directly (no ASGI stack), so FastAPI never resolves the dependency —
+# the tests must pass the dict the dependency would have injected. Passing the
+# matching id keeps the ownership check honest: it is really executed, and it passes
+# because the caller owns "user-123".
+AUTH_USER = {"id": "user-123"}
+
+
 class TestSingleImport:
     """Tests for single workout history entry import."""
 
@@ -32,7 +42,7 @@ class TestSingleImport:
             sets=3,
         )
 
-        result = await import_workout_history(request)
+        result = await import_workout_history(request, current_user=AUTH_USER)
 
         assert result.imported_count == 1
         assert result.failed_count == 0
@@ -61,7 +71,7 @@ class TestSingleImport:
             performed_at=custom_date,
         )
 
-        result = await import_workout_history(request)
+        result = await import_workout_history(request, current_user=AUTH_USER)
 
         assert result.imported_count == 1
         # Verify the date was passed to the database
@@ -94,7 +104,7 @@ class TestBulkImport:
             source="spreadsheet",
         )
 
-        result = await bulk_import_workout_history(request)
+        result = await bulk_import_workout_history(request, current_user=AUTH_USER)
 
         assert result.imported_count == 3
         assert result.failed_count == 0
@@ -116,7 +126,7 @@ class TestBulkImport:
             source="import",
         )
 
-        result = await bulk_import_workout_history(request)
+        result = await bulk_import_workout_history(request, current_user=AUTH_USER)
 
         # Verify source was passed
         call_args = mock_db.client.table.return_value.insert.call_args
@@ -149,7 +159,7 @@ class TestGetHistory:
         ]
         mock_get_db.return_value = mock_db
 
-        result = await get_user_workout_history("user-123")
+        result = await get_user_workout_history("user-123", current_user=AUTH_USER)
 
         assert len(result) == 1
         assert result[0].exercise_name == "Bench Press"
@@ -166,7 +176,7 @@ class TestGetHistory:
         mock_db.client.table.return_value.select.return_value.eq.return_value.ilike.return_value.order.return_value.range.return_value.execute.return_value.data = []
         mock_get_db.return_value = mock_db
 
-        result = await get_user_workout_history("user-123", exercise_name="bench")
+        result = await get_user_workout_history("user-123", exercise_name="bench", current_user=AUTH_USER)
 
         # Verify filter was applied
         mock_db.client.table.return_value.select.return_value.eq.return_value.ilike.assert_called_once()
@@ -191,7 +201,7 @@ class TestStrengthSummary:
         ]
         mock_get_db.return_value = mock_db
 
-        result = await get_strength_summary("user-123")
+        result = await get_strength_summary("user-123", current_user=AUTH_USER)
 
         assert len(result) == 2  # Two unique exercises
         bench_summary = next((s for s in result if s.exercise_name == "Bench Press"), None)
@@ -215,7 +225,7 @@ class TestDeleteHistory:
         ]
         mock_get_db.return_value = mock_db
 
-        result = await delete_workout_history_entry("user-123", "entry-123")
+        result = await delete_workout_history_entry("user-123", "entry-123", current_user=AUTH_USER)
 
         assert result["id"] == "entry-123"
         assert "deleted" in result["message"].lower()
@@ -232,7 +242,7 @@ class TestDeleteHistory:
         mock_get_db.return_value = mock_db
 
         with pytest.raises(HTTPException) as exc_info:
-            await delete_workout_history_entry("user-123", "nonexistent")
+            await delete_workout_history_entry("user-123", "nonexistent", current_user=AUTH_USER)
 
         assert exc_info.value.status_code == 404
 
@@ -248,7 +258,7 @@ class TestDeleteHistory:
         ]
         mock_get_db.return_value = mock_db
 
-        result = await clear_workout_history("user-123")
+        result = await clear_workout_history("user-123", current_user=AUTH_USER)
 
         assert result["deleted_count"] == 3
 
@@ -294,7 +304,7 @@ class TestStrengthHistoryWithImports:
     """Tests for strength history combining completed workouts and imports."""
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     @patch('services.workout_feedback_rag_service.get_workout_feedback_rag_service')
     async def test_combines_chromadb_and_imports(self, mock_get_rag, mock_get_db):
         """Test that strength history combines both data sources."""
@@ -329,7 +339,7 @@ class TestStrengthHistoryWithImports:
         assert result["Squat"]["source"] == "imported"
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     @patch('services.workout_feedback_rag_service.get_workout_feedback_rag_service')
     async def test_imports_fill_gap_when_no_completed_workouts(self, mock_get_rag, mock_get_db):
         """Test that imports provide data when no completed workouts exist."""
@@ -399,16 +409,35 @@ class TestValidation:
             )
 
     def test_bulk_import_max_entries(self):
-        """Test that bulk import has max entry limit."""
+        """Test that bulk import enforces a max entry limit.
+
+        RETIRED BEHAVIOR: this used to assert 101 entries were rejected, because the
+        cap was 100. The cap was deliberately raised to 500 (BulkImportRequest.entries
+        is Field(..., min_items=1, max_items=500)) when the WorkoutHistoryImporter
+        pipeline started shipping full per-set canonical rows, where one imported
+        workout log can easily exceed 100 rows.
+
+        The guarantee this test protects is unchanged: bulk import is BOUNDED — an
+        unbounded list would let one request insert arbitrarily many rows. So it now
+        asserts the boundary is real at the current cap: 500 is accepted, 501 rejected.
+        """
         from api.v1.workout_history import BulkImportRequest, WorkoutHistoryEntry
         from pydantic import ValidationError
 
-        # This should fail - too many entries
+        def entries(n):
+            return [
+                WorkoutHistoryEntry(exercise_name=f"Exercise {i}", weight_kg=50, reps=10)
+                for i in range(n)
+            ]
+
+        # At the cap: accepted.
+        request = BulkImportRequest(user_id="user-123", entries=entries(500))
+        assert len(request.entries) == 500
+
+        # One over the cap: rejected.
         with pytest.raises(ValidationError):
-            BulkImportRequest(
-                user_id="user-123",
-                entries=[
-                    WorkoutHistoryEntry(exercise_name=f"Exercise {i}", weight_kg=50, reps=10)
-                    for i in range(101)  # Max is 100
-                ],
-            )
+            BulkImportRequest(user_id="user-123", entries=entries(501))
+
+        # And an empty list is still rejected (min_items=1).
+        with pytest.raises(ValidationError):
+            BulkImportRequest(user_id="user-123", entries=[])

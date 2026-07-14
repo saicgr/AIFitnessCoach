@@ -454,29 +454,65 @@ class TestStrengthRecordModel:
     """Test StrengthRecord model methods."""
 
     def test_calculate_1rm_epley(self):
-        """Test 1RM calculation using Epley formula."""
+        """Test 1RM calculation using the Epley formula.
+
+        CALL FIX (formerly failing-by-luck): this test asserts Epley values but
+        never passed `formula="epley"`, so it actually exercised the DEFAULT
+        formula, which is Brzycki (models/performance.py:137). It only passed
+        because Brzycki and Epley coincide exactly at 10 reps
+        (36/(37-10) == 1 + 10/30 == 4/3). The assertion is unchanged; the call
+        now selects the formula it claims to test.
+        """
         # 100kg x 10 reps = 100 * (1 + 10/30) = 133.33 kg
-        result = StrengthRecord.calculate_1rm(100.0, 10)
+        result = StrengthRecord.calculate_1rm(100.0, 10, formula="epley")
         expected = 100.0 * (1 + 10 / 30)
         assert abs(result - expected) < 0.01
 
     def test_calculate_1rm_single_rep(self):
-        """Test 1RM for single rep is the weight itself."""
-        result = StrengthRecord.calculate_1rm(150.0, 1)
-        expected = 150.0 * (1 + 1 / 30)
-        assert abs(result - expected) < 0.01
+        """Test 1RM for single rep is the weight itself.
+
+        ASSERTION FIX: the expected value (150 * (1 + 1/30) = 155) contradicted
+        this test's own stated intent ("1RM for single rep is the weight
+        itself") and is physically wrong — a single rep at 150kg IS a 150kg 1RM,
+        never 155kg. models/performance.py short-circuits `reps == 1 -> weight`,
+        which is correct and is also what Brzycki gives (36/(37-1) == 1.0).
+        The guarantee protected: estimating a 1RM from a 1-rep set must not
+        inflate the load, for ANY formula.
+        """
+        for formula in ("brzycki", "epley", "lander"):
+            result = StrengthRecord.calculate_1rm(150.0, 1, formula=formula)
+            assert abs(result - 150.0) < 0.01
 
     def test_calculate_1rm_various_weights(self):
-        """Test 1RM calculation for various weights."""
-        test_cases = [
+        """Test 1RM calculation for various weights.
+
+        FIX: the original cases asserted Epley values while calling with the
+        default formula, which is Brzycki. Both formulas are now covered
+        explicitly: the Epley cases keep their original expected values (now
+        passing formula="epley"), and the DEFAULT (Brzycki) is asserted too —
+        that is the one that matters in production, since
+        StrengthTrackingService.record_strength (services/strength_tracking_service.py:46)
+        calls calculate_1rm without a formula argument.
+        """
+        epley_cases = [
             (80.0, 8, 80.0 * (1 + 8 / 30)),   # 101.3 kg
             (60.0, 12, 60.0 * (1 + 12 / 30)), # 84 kg
             (120.0, 5, 120.0 * (1 + 5 / 30)), # 140 kg
         ]
+        for weight, reps, expected in epley_cases:
+            result = StrengthRecord.calculate_1rm(weight, reps, formula="epley")
+            assert abs(result - expected) < 0.01
 
-        for weight, reps, expected in test_cases:
+        # Default formula == Brzycki: weight * (36 / (37 - reps))
+        brzycki_cases = [
+            (80.0, 8, 80.0 * (36 / 29)),    # 99.3 kg
+            (60.0, 12, 60.0 * (36 / 25)),   # 86.4 kg
+            (120.0, 5, 120.0 * (36 / 32)),  # 135.0 kg
+        ]
+        for weight, reps, expected in brzycki_cases:
             result = StrengthRecord.calculate_1rm(weight, reps)
             assert abs(result - expected) < 0.01
+            assert abs(StrengthRecord.calculate_1rm(weight, reps, formula="brzycki") - expected) < 0.01
 
 
 # ============================================================

@@ -14,9 +14,28 @@ Tests cover:
 """
 
 import pytest
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
+
+
+# The scheduling endpoints resolve "today" from the caller's timezone
+# (`core.timezone_utils.user_today_date` → X-User-Timezone header, else UTC),
+# NOT from the server's local clock. Tests that built dates from a bare
+# `date.today()` (machine-local) therefore broke whenever the machine's local
+# date differed from the resolved date — e.g. any run after 19:00 US/Central,
+# where local "today" is already a *past* date in UTC and every reschedule was
+# rejected with 400 "Cannot reschedule to a past date".
+#
+# We pin the request timezone to UTC (the mobile app always sends this header)
+# and derive test dates in that same zone, so "today" means the same thing on
+# both sides of the call at any hour of any day.
+TEST_TIMEZONE = "UTC"
+
+
+def server_today() -> date:
+    """The date the API will consider 'today' for a TEST_TIMEZONE request."""
+    return datetime.now(timezone.utc).date()
 
 # Mock Supabase before importing the router
 @pytest.fixture(autouse=True)
@@ -30,14 +49,28 @@ def mock_supabase():
 
 @pytest.fixture
 def client():
-    """Create test client."""
+    """Create test client.
+
+    The scheduling endpoints are behind `Depends(get_current_user)` (Supabase JWT
+    auth). These tests exercise the scheduling BUSINESS LOGIC, not authentication —
+    auth itself is covered by the auth tests — so the auth dependency is overridden
+    with a stub user. Without the override every request 401s before the handler runs.
+    """
     from fastapi import FastAPI
+    from core.auth import get_current_user
     from api.v1.scheduling import router
 
     app = FastAPI()
     app.include_router(router, prefix="/scheduling")
 
-    return TestClient(app)
+    async def _current_user():
+        return {"id": "test-user-123", "email": "test@example.com"}
+
+    app.dependency_overrides[get_current_user] = _current_user
+
+    # Send the same timezone header the mobile app sends, so the server's notion
+    # of "today" is deterministic (see server_today above).
+    return TestClient(app, headers={"X-User-Timezone": TEST_TIMEZONE})
 
 
 @pytest.fixture
@@ -111,7 +144,7 @@ class TestRescheduleWorkout:
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
         mock_supabase.table.return_value.insert.return_value.execute.return_value = MagicMock()
 
-        new_date = date.today().isoformat()
+        new_date = server_today().isoformat()
         response = client.post(
             "/scheduling/reschedule",
             json={
@@ -134,7 +167,7 @@ class TestRescheduleWorkout:
             "/scheduling/reschedule",
             json={
                 "workout_id": "nonexistent",
-                "new_date": date.today().isoformat(),
+                "new_date": server_today().isoformat(),
             }
         )
 
@@ -149,7 +182,7 @@ class TestRescheduleWorkout:
             "/scheduling/reschedule",
             json={
                 "workout_id": "workout-123",
-                "new_date": date.today().isoformat(),
+                "new_date": server_today().isoformat(),
             }
         )
 
@@ -160,7 +193,7 @@ class TestRescheduleWorkout:
         """Test that rescheduling to a past date fails."""
         mock_supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = sample_workout
 
-        past_date = (date.today() - timedelta(days=1)).isoformat()
+        past_date = (server_today() - timedelta(days=1)).isoformat()
         response = client.post(
             "/scheduling/reschedule",
             json={
@@ -443,7 +476,7 @@ class TestRescheduleWithSwap:
             "/scheduling/reschedule",
             json={
                 "workout_id": "workout-123",
-                "new_date": date.today().isoformat(),
+                "new_date": server_today().isoformat(),
                 "swap_with_workout_id": "workout-456",
             }
         )

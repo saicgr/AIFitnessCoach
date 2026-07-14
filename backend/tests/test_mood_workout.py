@@ -107,7 +107,23 @@ class TestMoodWorkoutService:
         assert params["intensity_preference"] == "medium"  # Adjusted up
 
     def test_build_generation_prompt_contains_mood(self):
-        """Test that the generation prompt contains mood information."""
+        """Test that the generation prompt contains mood information and honours
+        the requested duration budget.
+
+        RETIRED ASSERTION: this used to assert the requested TOTAL duration ("25")
+        appeared verbatim in the prompt. That was retired when warmup/cooldown
+        generation moved OUT of the LLM and into the deterministic
+        `warmup_stretch_service` (see api/v1/workouts/mood_generation.py — it now
+        calls generate_warmup() / generate_stretches() against the exercise
+        library and appends them to the workout). The prompt therefore asks Gemini
+        for the MAIN BLOCK only, and the number in it is the main-block duration.
+
+        GUARANTEE PROTECTED (unchanged in substance): the user's requested 25-min
+        budget must be fully accounted for, and the prompt must carry the mood,
+        the fitness level and the user's equipment. So we assert the exact
+        main-block duration that appears, AND that warmup + main + cooldown
+        reconstructs the requested 25 minutes exactly — no time is silently lost.
+        """
         prompt = self.service.build_generation_prompt(
             mood=MoodType.GREAT,
             user_fitness_level="intermediate",
@@ -121,10 +137,32 @@ class TestMoodWorkoutService:
         assert "challenging" in prompt.lower()
         assert "intermediate" in prompt.lower()
         assert "dumbbells" in prompt.lower()
-        assert "25" in prompt
+
+        # The full 25-minute budget is split warmup + main + cooldown; the prompt
+        # carries the main block, the other two are built from the library.
+        config = MOOD_CONFIGS[MoodType.GREAT]
+        expected_main = 25 - config.warmup_duration - config.cooldown_duration
+        assert config.warmup_duration + expected_main + config.cooldown_duration == 25
+        assert f"{expected_main}-minute quick workout" in prompt
+        assert f"Duration: {expected_main} minutes" in prompt
 
     def test_build_generation_prompt_returns_json_format_instructions(self):
-        """Test that the prompt requests JSON output."""
+        """Test that the prompt requests JSON output with the current schema.
+
+        RETIRED ASSERTIONS: `'"warmup"' in prompt` / `'"cooldown"' in prompt`.
+        The LLM used to be asked to author the warmup and cooldown arrays itself.
+        That was retired — warmup/cooldown are now generated deterministically
+        from the exercise library by `warmup_stretch_service`
+        (api/v1/workouts/mood_generation.py), which guarantees real, media-backed
+        exercises instead of hallucinated names.
+
+        GUARANTEE PROTECTED: the prompt must still pin an exact JSON schema. We
+        now assert the keys the model IS required to emit, and we assert the
+        inverse of the retired pair — the model must NOT be asked for warmup /
+        cooldown JSON keys, and must be told they are added separately. If someone
+        re-adds them to the prompt, the library-built warmup would be silently
+        overwritten by hallucinated exercises, and this test fails.
+        """
         prompt = self.service.build_generation_prompt(
             mood=MoodType.GOOD,
             user_fitness_level="intermediate",
@@ -136,33 +174,39 @@ class TestMoodWorkoutService:
         assert "JSON" in prompt
         assert '"name"' in prompt
         assert '"exercises"' in prompt
-        assert '"warmup"' in prompt
-        assert '"cooldown"' in prompt
+        assert '"mood"' in prompt
+        assert '"estimated_duration_minutes"' in prompt
+        assert '"motivational_message"' in prompt
+
+        # Warmup/cooldown are NOT the model's job any more.
+        assert '"warmup"' not in prompt
+        assert '"cooldown"' not in prompt
+        assert "added separately" in prompt.lower()
 
     def test_get_context_data_time_of_day_morning(self):
         """Test that context data correctly identifies morning."""
-        with patch("backend.services.mood_workout_service.datetime") as mock_datetime:
+        with patch("services.mood_workout_service.datetime") as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 1, 1, 8, 0, 0)
             context = self.service.get_context_data()
             assert context["time_of_day"] == "morning"
 
     def test_get_context_data_time_of_day_afternoon(self):
         """Test that context data correctly identifies afternoon."""
-        with patch("backend.services.mood_workout_service.datetime") as mock_datetime:
+        with patch("services.mood_workout_service.datetime") as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 1, 1, 14, 0, 0)
             context = self.service.get_context_data()
             assert context["time_of_day"] == "afternoon"
 
     def test_get_context_data_time_of_day_evening(self):
         """Test that context data correctly identifies evening."""
-        with patch("backend.services.mood_workout_service.datetime") as mock_datetime:
+        with patch("services.mood_workout_service.datetime") as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 1, 1, 19, 0, 0)
             context = self.service.get_context_data()
             assert context["time_of_day"] == "evening"
 
     def test_get_context_data_time_of_day_night(self):
         """Test that context data correctly identifies night."""
-        with patch("backend.services.mood_workout_service.datetime") as mock_datetime:
+        with patch("services.mood_workout_service.datetime") as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 1, 1, 23, 0, 0)
             context = self.service.get_context_data()
             assert context["time_of_day"] == "night"
@@ -393,7 +437,19 @@ class TestMoodPromptGeneration:
         assert "dynamic" in prompt.lower() or "warm" in prompt.lower()
 
     def test_prompt_includes_cooldown_instructions(self):
-        """Test that prompt includes cooldown section instructions."""
+        """Test that the cooldown/stretch phase is accounted for in the session.
+
+        RETIRED ASSERTION: `"stretch" in prompt.lower()`. The prompt used to ask
+        the LLM to write the stretch/cooldown block. It no longer does — that
+        block is now produced by `warmup_stretch_service.generate_stretches()`
+        in api/v1/workouts/mood_generation.py from the real exercise library.
+
+        GUARANTEE PROTECTED (the reason the test existed): a mood workout must
+        still RESERVE time for a cooldown, and the model must be told not to
+        duplicate it. So we assert (1) the prompt names cooldown and says it is
+        handled separately, and (2) the config reserves real cooldown minutes
+        which are excluded from the main block the model is asked to fill.
+        """
         prompt = self.service.build_generation_prompt(
             mood=MoodType.GREAT,
             user_fitness_level="intermediate",
@@ -402,7 +458,17 @@ class TestMoodPromptGeneration:
             duration_minutes=25,
         )
         assert "cooldown" in prompt.lower()
-        assert "stretch" in prompt.lower()
+        assert "added separately" in prompt.lower()
+
+        # Cooldown time is really reserved, not just mentioned.
+        params = self.service.get_workout_params(
+            mood=MoodType.GREAT, duration_override=25
+        )
+        assert params["cooldown_duration"] >= 2
+        assert (
+            params["main_workout_duration"]
+            == 25 - params["warmup_duration"] - params["cooldown_duration"]
+        )
 
     def test_prompt_includes_user_equipment(self):
         """Test that prompt includes user's available equipment."""

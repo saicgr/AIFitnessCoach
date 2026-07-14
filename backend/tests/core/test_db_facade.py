@@ -45,6 +45,12 @@ class MockQueryBuilder:
     def ilike(self, *args):
         return self
 
+    def is_(self, *args):
+        # PostgREST `is` filter — production uses .is_("deleted_at", "null")
+        # on food_logs (soft-delete). Missing here, the double raised
+        # AttributeError instead of exercising the delegation path.
+        return self
+
     def or_(self, *args):
         return self
 

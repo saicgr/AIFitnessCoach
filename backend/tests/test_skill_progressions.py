@@ -21,6 +21,13 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
+from core.auth import get_current_user
+
+
+# Identity the overridden auth dependency hands back to the endpoints.
+# Every skill-progression endpoint declares `current_user: dict = Depends(get_current_user)`,
+# so without an override every request in this file 401s before the handler runs.
+TEST_AUTH_USER = {"id": "skill-progressions-test-user", "email": "test@example.com"}
 
 
 # ============ Mock Data Generators ============
@@ -132,8 +139,19 @@ def generate_mock_attempt(
 
 @pytest.fixture
 def client():
-    """Create a test client."""
-    return TestClient(app)
+    """Create a test client with the auth dependency satisfied.
+
+    The endpoints under test are all behind `Depends(get_current_user)`, which
+    validates a real Supabase JWT. These are endpoint-behaviour tests, not auth
+    tests, so we override the dependency with a fixed identity (the standard
+    FastAPI mechanism) instead of minting a token. The override is removed on
+    teardown so it cannot leak into other test modules in the same process.
+    """
+    app.dependency_overrides[get_current_user] = lambda: TEST_AUTH_USER
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture
@@ -625,11 +643,24 @@ class TestUnlockNextStep:
     """Tests for POST /api/v1/skill-progressions/user/{user_id}/progress/{chain_id}/unlock-next endpoint."""
 
     def test_unlock_next_step_success(self, client, mock_supabase, mock_user_id, mock_chain_id):
-        """Test successfully unlocking the next step."""
+        """Test successfully unlocking the next step.
+
+        The unlock check is evaluated against the user's logged attempts at the
+        current step (`skill_attempt_logs`) — that is the only table that records
+        `sets`, which the criteria (min_reps=15, min_sets=3) requires. The user
+        here has a qualifying attempt of 20 reps x 3 sets, so the next step
+        unlocks.
+        """
         progress = generate_mock_progress(mock_user_id, mock_chain_id, best_reps=20, current_step_order=0)
         current_step = generate_mock_step(mock_chain_id, 0, "Wall Push-ups")
         current_step["unlock_criteria"]["min_reps"] = 15
         next_step = generate_mock_step(mock_chain_id, 1, "Incline Push-ups")
+
+        # A logged attempt that satisfies the step's unlock criteria
+        # (20 reps x 3 sets vs min_reps=15, min_sets=3).
+        qualifying_attempt = generate_mock_attempt(
+            mock_user_id, mock_chain_id, step_order=0, reps=20, success=True
+        )
 
         updated_progress = progress.copy()
         updated_progress["current_step_order"] = 1
@@ -645,6 +676,10 @@ class TestUnlockNextStep:
                 mock_update = MagicMock()
                 mock_update.data = [updated_progress]
                 mock_table.update.return_value.eq.return_value.execute.return_value = mock_update
+            elif table_name == "skill_attempt_logs":
+                mock_attempts = MagicMock()
+                mock_attempts.data = [qualifying_attempt]
+                mock_table.select.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = mock_attempts
             elif table_name == "exercise_progression_steps":
                 def step_eq_side_effect(field, value):
                     mock_eq = MagicMock()
@@ -677,10 +712,19 @@ class TestUnlockNextStep:
                 assert data["is_chain_completed"] is False
 
     def test_unlock_next_criteria_not_met(self, client, mock_supabase, mock_user_id, mock_chain_id):
-        """Test unlocking when criteria not met."""
+        """Test unlocking when criteria not met.
+
+        Best logged attempt is 10 reps but the step needs 15, so the unlock is
+        rejected with 400.
+        """
         progress = generate_mock_progress(mock_user_id, mock_chain_id, best_reps=10, current_step_order=0)
         current_step = generate_mock_step(mock_chain_id, 0, "Wall Push-ups")
         current_step["unlock_criteria"]["min_reps"] = 15
+
+        # Logged attempts fall short of the criteria (10 reps < min_reps=15).
+        short_attempt = generate_mock_attempt(
+            mock_user_id, mock_chain_id, step_order=0, reps=10, success=False
+        )
 
         def mock_table_side_effect(table_name):
             mock_table = MagicMock()
@@ -688,6 +732,10 @@ class TestUnlockNextStep:
                 mock_select = MagicMock()
                 mock_select.data = [progress]
                 mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_select
+            elif table_name == "skill_attempt_logs":
+                mock_attempts = MagicMock()
+                mock_attempts.data = [short_attempt]
+                mock_table.select.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = mock_attempts
             elif table_name == "exercise_progression_steps":
                 mock_result = MagicMock()
                 mock_result.data = [current_step]
@@ -709,10 +757,18 @@ class TestUnlockNextStep:
             assert "criteria not met" in response.json()["detail"]
 
     def test_unlock_completes_chain(self, client, mock_supabase, mock_user_id, mock_chain_id):
-        """Test unlocking when at last step completes the chain."""
+        """Test unlocking when at last step completes the chain.
+
+        The user has a qualifying attempt (20 reps x 3 sets) at the final step
+        and there is no step 5, so the chain is marked complete.
+        """
         progress = generate_mock_progress(mock_user_id, mock_chain_id, best_reps=20, current_step_order=4)
         current_step = generate_mock_step(mock_chain_id, 4, "Diamond Push-ups", "advanced")
         current_step["unlock_criteria"]["min_reps"] = 15
+
+        qualifying_attempt = generate_mock_attempt(
+            mock_user_id, mock_chain_id, step_order=4, reps=20, success=True
+        )
 
         updated_progress = progress.copy()
         updated_progress["is_completed"] = True
@@ -727,6 +783,10 @@ class TestUnlockNextStep:
                 mock_update = MagicMock()
                 mock_update.data = [updated_progress]
                 mock_table.update.return_value.eq.return_value.execute.return_value = mock_update
+            elif table_name == "skill_attempt_logs":
+                mock_attempts = MagicMock()
+                mock_attempts.data = [qualifying_attempt]
+                mock_table.select.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = mock_attempts
             elif table_name == "exercise_progression_steps":
                 def step_eq_side_effect(field, value):
                     mock_eq = MagicMock()

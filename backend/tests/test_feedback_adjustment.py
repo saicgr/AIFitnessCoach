@@ -24,6 +24,7 @@ from services.exercise_rag.service import (
     get_adjusted_difficulty_ceiling,
     is_exercise_too_difficult,
     DIFFICULTY_CEILING,
+    DEFAULT_FITNESS_LEVEL,
 )
 
 
@@ -264,15 +265,32 @@ class TestDifficultyCeilingModification:
 
     def test_ceiling_clamped_to_min_1(self):
         """Test that adjusted ceiling is clamped to minimum of 1."""
-        # Beginner ceiling is 3, -5 adjustment should give 1 (clamped)
+        # Beginner ceiling is 6, -5 adjustment gives 1 (clamped at the floor).
         result = get_adjusted_difficulty_ceiling("beginner", -5)
         assert result == 1
 
     def test_invalid_fitness_level_uses_default(self):
-        """Test that invalid fitness level falls back to default."""
+        """Test that invalid fitness level falls back to the default level's ceiling.
+
+        RETIRED ASSERTION: this used to assert `result == 6`, with the comment
+        "Should use intermediate as default (ceiling 6)". The fallback level is
+        still intermediate (DEFAULT_FITNESS_LEVEL — pinned in
+        tests/test_fitness_level_edge_cases.py), but the *intermediate ceiling*
+        was deliberately raised from 6 to 8. That 6 was a stale copy of the
+        pre-raise ceiling table, so the assertion contradicted
+        TestConstants.test_difficulty_ceilings_are_correct in THIS SAME FILE,
+        which asserts DIFFICULTY_CEILING["intermediate"] == 8.
+
+        The guarantee is unchanged: an unrecognized fitness level must not crash
+        and must resolve to DEFAULT_FITNESS_LEVEL's ceiling — never to some
+        harsher or more permissive ad-hoc number.
+        """
         result = get_adjusted_difficulty_ceiling("invalid_level", 0)
-        # Should use intermediate as default (ceiling 6)
-        assert result == 6
+
+        # Exact value, not a weakened bound: invalid -> intermediate -> 8.
+        assert result == 8
+        assert result == DIFFICULTY_CEILING[DEFAULT_FITNESS_LEVEL]
+        assert DEFAULT_FITNESS_LEVEL == "intermediate"
 
 
 class TestIsExerciseTooDifficult:

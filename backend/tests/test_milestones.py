@@ -14,6 +14,10 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from fastapi.testclient import TestClient
+
+from main import app
+from core.auth import get_current_user
 from models.milestones import (
     MilestoneCategory,
     MilestoneTier,
@@ -28,6 +32,88 @@ from models.milestones import (
     MarkMilestoneCelebratedRequest,
     MilestoneCheckResult,
 )
+
+
+# Every endpoint in this module is `/progress/.../{user_id}` and guards itself
+# with `verify_user_ownership(current_user, user_id)`, so the authenticated
+# identity has to match the user_id used in the request paths below.
+TEST_USER_ID = "test-user"
+
+
+# ============================================================================
+# Fixtures
+# ============================================================================
+
+@pytest.fixture(autouse=True)
+def isolate_milestone_dependencies(monkeypatch):
+    """Keep every request in this module off the real database.
+
+    `api.v1.milestones` holds module-level singletons (`milestone_service`,
+    `user_context_service`) and the activity loggers, all of which talk to
+    Supabase. Tests that don't declare their own `@patch` for these (e.g. the
+    `test_endpoint_exists` routing checks, which POST to /celebrate and /check)
+    would otherwise issue live reads AND WRITES against the production project,
+    because pydantic settings load `backend/.env`.
+
+    This installs benign, correctly-typed doubles as the module default. Tests
+    that need specific behaviour still `@patch` on top of these — their patch is
+    applied after this fixture and reverted before it, so layering is safe.
+    """
+    service = MagicMock()
+    service.get_all_milestone_definitions = AsyncMock(return_value=[])
+    service.get_milestone_progress = AsyncMock(
+        return_value=MilestonesResponse(
+            achieved=[], upcoming=[], total_points=0, total_achieved=0
+        )
+    )
+    service.get_uncelebrated_milestones = AsyncMock(return_value=[])
+    service.mark_milestones_celebrated = AsyncMock(return_value=True)
+    service.record_milestone_share = AsyncMock(return_value=True)
+    service.check_and_award_milestones = AsyncMock(
+        return_value=MilestoneCheckResult(
+            new_milestones=[], total_new_points=0, roi_updated=False
+        )
+    )
+    service.get_roi_metrics = AsyncMock(return_value=ROIMetrics(user_id=TEST_USER_ID))
+    service.get_roi_summary = AsyncMock(return_value=ROISummary())
+    monkeypatch.setattr("api.v1.milestones.milestone_service", service)
+
+    context = MagicMock()
+    context.log_event = AsyncMock()
+    monkeypatch.setattr("api.v1.milestones.user_context_service", context)
+
+    monkeypatch.setattr("api.v1.milestones.log_user_activity", AsyncMock())
+    monkeypatch.setattr("api.v1.milestones.log_user_error", AsyncMock())
+
+    # `get_user_milestones` additionally counts rows in `user_achievements`
+    # through a direct `core.db.get_supabase_db()` call (imported inside the
+    # handler, so patch it at its source module).
+    fake_db = MagicMock()
+    fake_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        count=0, data=[]
+    )
+    monkeypatch.setattr("core.db.get_supabase_db", lambda: fake_db)
+
+    yield
+
+
+@pytest.fixture
+def client():
+    """Test client with the auth dependency satisfied.
+
+    These are endpoint-behaviour tests, not auth tests: without overriding
+    `get_current_user` (which validates a real Supabase JWT) every request 401s
+    before reaching the handler. The override is torn down so it cannot leak
+    into other test modules sharing the same `app` object.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": TEST_USER_ID,
+        "email": "test@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 # ============================================================================
@@ -196,7 +282,17 @@ class TestROIMetricsModel:
         assert metrics.journey_days == 90
 
     def test_compute_derived_fields(self):
-        """Should compute derived fields correctly."""
+        """Should compute derived fields correctly.
+
+        `journey_summary` changes unit at the 30-day boundary by design: under 30
+        days it echoes the raw day count ("29 days of dedication"); from 30 days
+        on it reports whole months ("1 month of commitment"). This test used to
+        assert `"30 days" in journey_summary` for journey_days=30 — a value the
+        model has never produced, since 30 days IS one month under its own rule.
+        The guarantee being protected (the summary reflects the user's journey
+        length) is unchanged; both sides of the boundary are now pinned exactly,
+        so the day-count branch stays covered.
+        """
         metrics = ROIMetrics(
             user_id="test-user",
             total_workout_time_seconds=7200,  # 2 hours
@@ -211,7 +307,12 @@ class TestROIMetricsModel:
         assert metrics.total_workout_time_hours == 2.0
         assert metrics.average_workout_duration_minutes == 30
         assert "15%" in metrics.strength_summary
-        assert "30 days" in metrics.journey_summary
+        assert metrics.journey_summary == "1 month of commitment"
+
+        # Just under the boundary the summary is still expressed in days.
+        under_a_month = ROIMetrics(user_id="test-user", journey_days=29)
+        under_a_month.compute_derived_fields()
+        assert "29 days" in under_a_month.journey_summary
 
 
 class TestROISummaryModel:
@@ -691,6 +792,42 @@ class TestMilestoneErrorHandling:
 # ============================================================================
 # Validation Tests
 # ============================================================================
+
+class TestMilestoneOwnership:
+    """Tests that a user cannot read another user's milestones/ROI.
+
+    Every handler calls `verify_user_ownership(current_user, user_id)`, which
+    raises HTTPException(403). Regression guard: those calls sit inside a
+    `try/except Exception` that funnels everything into `safe_internal_error()`,
+    so without an explicit `except HTTPException: raise` clause the 403 was
+    rewritten as a 500 — the client saw "internal server error" for a blocked
+    access, and every IDOR attempt raised a bogus Sentry internal-error alert.
+    """
+
+    def test_cannot_read_another_users_milestones(self, client):
+        """Requesting another user's milestones is denied with 403."""
+        response = client.get("/api/v1/progress/milestones/somebody-else")
+
+        assert response.status_code == 403
+        assert response.json()["detail"] == "Access denied"
+
+    def test_cannot_read_another_users_roi(self, client):
+        """Requesting another user's ROI metrics is denied with 403."""
+        response = client.get("/api/v1/progress/roi/somebody-else")
+
+        assert response.status_code == 403
+        assert response.json()["detail"] == "Access denied"
+
+    def test_cannot_celebrate_another_users_milestones(self, client):
+        """Writing to another user's milestones is denied with 403."""
+        response = client.post(
+            "/api/v1/progress/milestones/somebody-else/celebrate",
+            json={"milestone_ids": ["milestone-1"]},
+        )
+
+        assert response.status_code == 403
+        assert response.json()["detail"] == "Access denied"
+
 
 class TestMilestoneValidation:
     """Tests for request validation in milestone endpoints."""

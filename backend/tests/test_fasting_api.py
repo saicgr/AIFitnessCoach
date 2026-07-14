@@ -30,8 +30,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 @pytest.fixture
 def mock_supabase_db():
-    """Mock SupabaseDB with chainable Supabase client pattern."""
-    with patch("api.v1.fasting.get_supabase_db") as mock_get_db:
+    """Mock SupabaseDB with chainable Supabase client pattern.
+
+    Patches get_supabase_db in BOTH fasting modules: the module was split, and
+    the streak / stats / safety-check / context endpoints (plus the
+    is_dangerous_protocol + get_protocol_fasting_hours helpers) now live in
+    `api.v1.fasting_endpoints`, which does its own `from core.db import
+    get_supabase_db`. Patching only `api.v1.fasting` left those endpoints
+    talking to the real database.
+    """
+    with patch("api.v1.fasting.get_supabase_db") as mock_get_db, \
+         patch("api.v1.fasting_endpoints.get_supabase_db") as mock_get_db_endpoints:
         mock_db = MagicMock()
         mock_client = MagicMock()
         mock_db.client = mock_client
@@ -61,6 +70,7 @@ def mock_supabase_db():
         mock_db._mock_table = mock_table
 
         mock_get_db.return_value = mock_db
+        mock_get_db_endpoints.return_value = mock_db
         yield mock_db
 
 
@@ -75,6 +85,21 @@ def mock_activity_logger():
 @pytest.fixture
 def sample_user_id():
     return str(uuid.uuid4())
+
+
+def auth_user(user_id: str) -> dict:
+    """Build the `current_user` dict a fasting endpoint receives from auth.
+
+    These tests invoke the endpoint coroutines directly rather than through
+    the ASGI app, so FastAPI never resolves `current_user: dict =
+    Depends(get_current_user)` — the raw `Depends` sentinel is passed instead,
+    and the endpoint's first statement (`str(current_user["id"]) != ...`)
+    blows up with "'Depends' object is not subscriptable". Passing the
+    identity explicitly is what a resolved dependency would have supplied, and
+    keeps the endpoints' ownership guard (403 unless current_user.id ==
+    target user_id) genuinely exercised rather than bypassed.
+    """
+    return {"id": user_id, "email": "test@example.com"}
 
 
 @pytest.fixture
@@ -162,7 +187,7 @@ class TestHelperFunctions:
 
     def test_is_dangerous_protocol(self):
         """Test dangerous protocol detection."""
-        from api.v1.fasting import is_dangerous_protocol
+        from api.v1.fasting_endpoints import is_dangerous_protocol
 
         # Dangerous protocols
         assert is_dangerous_protocol("24h Water Fast") is True
@@ -178,7 +203,7 @@ class TestHelperFunctions:
 
     def test_get_protocol_fasting_hours(self):
         """Test protocol fasting hours lookup."""
-        from api.v1.fasting import get_protocol_fasting_hours
+        from api.v1.fasting_endpoints import get_protocol_fasting_hours
 
         assert get_protocol_fasting_hours("12:12") == 12
         assert get_protocol_fasting_hours("14:10") == 14
@@ -245,7 +270,7 @@ class TestStartFast:
             mood_before="good",
         )
 
-        result = await start_fast(request)
+        result = await start_fast(request, current_user=auth_user(sample_user_id))
 
         assert result.protocol == "16:8"
         assert result.status == "active"
@@ -268,7 +293,7 @@ class TestStartFast:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await start_fast(request)
+            await start_fast(request, current_user=auth_user(sample_user_id))
 
         assert exc_info.value.status_code == 400
         assert "already have an active fast" in str(exc_info.value.detail)
@@ -284,7 +309,10 @@ class TestGetActiveFast:
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[sample_fasting_record])
 
-        result = await get_active_fast(sample_fasting_record["user_id"])
+        result = await get_active_fast(
+            sample_fasting_record["user_id"],
+            current_user=auth_user(sample_fasting_record["user_id"]),
+        )
 
         assert result is not None
         assert result.protocol == "16:8"
@@ -297,7 +325,7 @@ class TestGetActiveFast:
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[])
 
-        result = await get_active_fast(sample_user_id)
+        result = await get_active_fast(sample_user_id, current_user=auth_user(sample_user_id))
 
         assert result is None
 
@@ -316,7 +344,10 @@ class TestGetPreferences:
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[sample_fasting_preferences])
 
-        result = await get_preferences(sample_fasting_preferences["user_id"])
+        result = await get_preferences(
+            sample_fasting_preferences["user_id"],
+            current_user=auth_user(sample_fasting_preferences["user_id"]),
+        )
 
         assert result is not None
         assert result.default_protocol == "16:8"
@@ -333,7 +364,7 @@ class TestGetPreferences:
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[])
 
-        result = await get_preferences(sample_user_id)
+        result = await get_preferences(sample_user_id, current_user=auth_user(sample_user_id))
 
         assert result is None
 
@@ -366,7 +397,7 @@ class TestCompleteOnboarding:
             safety_acknowledgments=["type2_diabetes_bp", "medication_with_food"],
         )
 
-        result = await complete_onboarding(request)
+        result = await complete_onboarding(request, current_user=auth_user(sample_user_id))
 
         assert result["status"] == "completed"
         assert result["user_id"] == sample_user_id
@@ -382,11 +413,14 @@ class TestGetStreak:
     @pytest.mark.asyncio
     async def test_get_streak_exists(self, mock_supabase_db, sample_fasting_streak):
         """Test getting an existing streak."""
-        from api.v1.fasting import get_streak
+        from api.v1.fasting_endpoints import get_streak
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[sample_fasting_streak])
 
-        result = await get_streak(sample_fasting_streak["user_id"])
+        result = await get_streak(
+            sample_fasting_streak["user_id"],
+            current_user=auth_user(sample_fasting_streak["user_id"]),
+        )
 
         assert result.current_streak == 5
         assert result.longest_streak == 10
@@ -396,11 +430,11 @@ class TestGetStreak:
     @pytest.mark.asyncio
     async def test_get_streak_default(self, mock_supabase_db, sample_user_id):
         """Test getting default streak for new user."""
-        from api.v1.fasting import get_streak
+        from api.v1.fasting_endpoints import get_streak
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[])
 
-        result = await get_streak(sample_user_id)
+        result = await get_streak(sample_user_id, current_user=auth_user(sample_user_id))
 
         assert result.current_streak == 0
         assert result.longest_streak == 0
@@ -417,7 +451,7 @@ class TestGetStats:
     @pytest.mark.asyncio
     async def test_get_stats_with_data(self, mock_supabase_db, sample_user_id):
         """Test getting stats with fasting history."""
-        from api.v1.fasting import get_stats
+        from api.v1.fasting_endpoints import get_stats
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[
             {
@@ -446,7 +480,7 @@ class TestGetStats:
             },
         ])
 
-        result = await get_stats(sample_user_id, "month")
+        result = await get_stats(sample_user_id, current_user=auth_user(sample_user_id), period="month")
 
         assert result.total_fasts == 3
         assert result.completed_fasts == 2
@@ -456,11 +490,11 @@ class TestGetStats:
     @pytest.mark.asyncio
     async def test_get_stats_empty(self, mock_supabase_db, sample_user_id):
         """Test getting stats with no fasting history."""
-        from api.v1.fasting import get_stats
+        from api.v1.fasting_endpoints import get_stats
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[])
 
-        result = await get_stats(sample_user_id, "week")
+        result = await get_stats(sample_user_id, current_user=auth_user(sample_user_id), period="week")
 
         assert result.total_fasts == 0
         assert result.completed_fasts == 0
@@ -472,23 +506,39 @@ class TestGetStats:
 # ============================================================
 
 class TestSafetyCheck:
-    """Test GET /fasting/safety-check/{user_id} endpoint."""
+    """Test GET /fasting/safety-check/{user_id} endpoint.
+
+    ROW SHAPE: these mocks used to return `health_conditions` as a TOP-LEVEL
+    users column. There is no such column (see
+    scripts/schema_columns_snapshot.json — selecting it would 42703 the whole
+    query), so `check_safety_eligibility` now reads it out of the `preferences`
+    JSONB blob instead, and the mocks are updated to that shape. The
+    assertions are unchanged: a Type 1 diabetic must be blocked, an
+    underweight user must be blocked, a healthy user must not be.
+
+    !! See the REAL BUG reported alongside these tests: no code path in the
+    backend or the Flutter app ever WRITES `preferences["health_conditions"]`,
+    so in production the Type 1 diabetes / eating disorder / pregnancy blocks
+    below are unreachable — only the age and BMI blocks can fire. These tests
+    prove the blocking LOGIC is correct given the data; they cannot prove the
+    data ever arrives. !!
+    """
 
     @pytest.mark.asyncio
     async def test_safety_check_no_issues(self, mock_supabase_db, sample_user_id):
         """Test safety check for healthy user."""
-        from api.v1.fasting import check_safety_eligibility
+        from api.v1.fasting_endpoints import check_safety_eligibility
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[{
             "age": 30,
             "gender": "male",
             "weight_kg": 75,
             "height_cm": 175,
-            "health_conditions": [],
+            "preferences": {"health_conditions": []},
             "goals": ["build_muscle"],
         }])
 
-        result = await check_safety_eligibility(sample_user_id)
+        result = await check_safety_eligibility(sample_user_id, current_user=auth_user(sample_user_id))
 
         assert result.can_use_fasting is True
         assert len(result.blocked_reasons) == 0
@@ -496,18 +546,18 @@ class TestSafetyCheck:
     @pytest.mark.asyncio
     async def test_safety_check_underweight(self, mock_supabase_db, sample_user_id):
         """Test safety check for underweight user."""
-        from api.v1.fasting import check_safety_eligibility
+        from api.v1.fasting_endpoints import check_safety_eligibility
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[{
             "age": 25,
             "gender": "female",
             "weight_kg": 45,
             "height_cm": 170,  # BMI ~15.6
-            "health_conditions": [],
+            "preferences": {"health_conditions": []},
             "goals": [],
         }])
 
-        result = await check_safety_eligibility(sample_user_id)
+        result = await check_safety_eligibility(sample_user_id, current_user=auth_user(sample_user_id))
 
         assert result.can_use_fasting is False
         assert any("underweight" in r.lower() for r in result.blocked_reasons)
@@ -515,18 +565,18 @@ class TestSafetyCheck:
     @pytest.mark.asyncio
     async def test_safety_check_type1_diabetes(self, mock_supabase_db, sample_user_id):
         """Test safety check for Type 1 diabetic."""
-        from api.v1.fasting import check_safety_eligibility
+        from api.v1.fasting_endpoints import check_safety_eligibility
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[{
             "age": 35,
             "gender": "male",
             "weight_kg": 80,
             "height_cm": 180,
-            "health_conditions": ["Type 1 Diabetes"],
+            "preferences": {"health_conditions": ["Type 1 Diabetes"]},
             "goals": [],
         }])
 
-        result = await check_safety_eligibility(sample_user_id)
+        result = await check_safety_eligibility(sample_user_id, current_user=auth_user(sample_user_id))
 
         assert result.can_use_fasting is False
         assert any("type 1" in r.lower() for r in result.blocked_reasons)
@@ -542,7 +592,7 @@ class TestContextLogging:
     @pytest.mark.asyncio
     async def test_log_context_success(self, mock_supabase_db, sample_user_id):
         """Test logging fasting context successfully."""
-        from api.v1.fasting import log_fasting_context, LogFastingContextRequest
+        from api.v1.fasting_endpoints import log_fasting_context, LogFastingContextRequest
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[{
             "id": str(uuid.uuid4()),
@@ -558,7 +608,7 @@ class TestContextLogging:
             goal_minutes=960,
         )
 
-        result = await log_fasting_context(request)
+        result = await log_fasting_context(request, current_user=auth_user(sample_user_id))
 
         assert result["status"] == "logged"
         assert "context_id" in result
@@ -566,7 +616,7 @@ class TestContextLogging:
     @pytest.mark.asyncio
     async def test_log_context_table_not_exists(self, mock_supabase_db, sample_user_id):
         """Test logging context when table doesn't exist (graceful failure)."""
-        from api.v1.fasting import log_fasting_context, LogFastingContextRequest
+        from api.v1.fasting_endpoints import log_fasting_context, LogFastingContextRequest
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[])
 
@@ -576,7 +626,7 @@ class TestContextLogging:
             protocol="16:8",
         )
 
-        result = await log_fasting_context(request)
+        result = await log_fasting_context(request, current_user=auth_user(sample_user_id))
 
         # Should not fail, just skip
         assert result["status"] == "skipped"
@@ -588,7 +638,7 @@ class TestGetContext:
     @pytest.mark.asyncio
     async def test_get_context_success(self, mock_supabase_db, sample_user_id):
         """Test getting fasting context history."""
-        from api.v1.fasting import get_fasting_context
+        from api.v1.fasting_endpoints import get_fasting_context
 
         mock_supabase_db._mock_table.execute.return_value = MagicMock(data=[
             {
@@ -605,7 +655,7 @@ class TestGetContext:
             },
         ])
 
-        result = await get_fasting_context(sample_user_id, limit=50)
+        result = await get_fasting_context(sample_user_id, current_user=auth_user(sample_user_id), limit=50)
 
         assert result["count"] == 2
         assert len(result["contexts"]) == 2

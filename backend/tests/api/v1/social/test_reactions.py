@@ -8,9 +8,39 @@ Tests cover:
 """
 import pytest
 from unittest.mock import MagicMock, patch
-from fastapi import HTTPException
+from fastapi import BackgroundTasks, HTTPException
+from starlette.requests import Request
 
 from models.social import ActivityReactionCreate, ReactionType
+
+
+def make_request(method: str = "POST", path: str = "/reactions") -> Request:
+    """Build a real starlette Request for direct endpoint calls.
+
+    add_reaction / remove_reaction are wrapped in @limiter.limit(...) (slowapi),
+    whose wrapper asserts the `request` argument is a real
+    starlette.requests.Request and reads request["path"], request.client and
+    request.state. Calling the endpoint function with only its business args
+    (as these tests used to) blows up inside slowapi before any product code
+    runs. `state` must be in the scope because slowapi writes
+    request.state.view_rate_limit / _rate_limiting_complete.
+    """
+    return Request(
+        {
+            "type": "http",
+            "http_version": "1.1",
+            "method": method,
+            "scheme": "http",
+            "server": ("testserver", 80),
+            "path": path,
+            "raw_path": path.encode(),
+            "query_string": b"",
+            "root_path": "",
+            "headers": [],
+            "client": ("127.0.0.1", 12345),
+            "state": {},
+        }
+    )
 
 
 class TestAddReaction:
@@ -40,14 +70,29 @@ class TestAddReaction:
 
         with patch("api.v1.social.reactions.get_supabase_client", return_value=mock_client):
             with patch("api.v1.social.reactions.get_social_rag_service"):
-                result = await add_reaction("user-1", reaction_create)
+                result = await add_reaction(
+                    request=make_request(),
+                    user_id="user-1",
+                    reaction=reaction_create,
+                    background_tasks=BackgroundTasks(),
+                    current_user={"id": "user-1"},
+                )
 
         assert result.id == "reaction-1"
         assert result.reaction_type == "cheer"
 
     @pytest.mark.asyncio
     async def test_add_reaction_update_existing(self):
-        """Test updating existing reaction."""
+        """Test updating existing reaction.
+
+        Reaction type updated: this test used ReactionType.LOVE. There is no
+        such member — the enum is CHEER/FIRE/STRONG/CLAP/HEART, and the DB
+        column has only ever allowed 'cheer','fire','strong','clap','heart'
+        (migrations/028_social_features.sql), so 'love' could never round-trip.
+        Same guarantee protected: when a reaction already exists for
+        (activity, user), add_reaction UPDATEs it (no second insert) and
+        returns the new reaction_type.
+        """
         from api.v1.social.reactions import add_reaction
 
         mock_client = MagicMock()
@@ -60,20 +105,32 @@ class TestAddReaction:
             "id": "existing-reaction",
             "activity_id": "activity-1",
             "user_id": "user-1",
-            "reaction_type": "love",
+            "reaction_type": "heart",
             "created_at": "2024-01-15T00:00:00Z",
         }]
 
         reaction_create = ActivityReactionCreate(
             activity_id="activity-1",
-            reaction_type=ReactionType.LOVE,
+            reaction_type=ReactionType.HEART,
         )
 
         with patch("api.v1.social.reactions.get_supabase_client", return_value=mock_client):
             with patch("api.v1.social.reactions.get_social_rag_service"):
-                result = await add_reaction("user-1", reaction_create)
+                result = await add_reaction(
+                    request=make_request(),
+                    user_id="user-1",
+                    reaction=reaction_create,
+                    background_tasks=BackgroundTasks(),
+                    current_user={"id": "user-1"},
+                )
 
-        assert result.reaction_type == "love"
+        assert result.id == "existing-reaction"
+        assert result.reaction_type == "heart"
+        # Update path taken, not insert.
+        mock_client.table.return_value.update.assert_called_once_with(
+            {"reaction_type": "heart"}
+        )
+        mock_client.table.return_value.insert.assert_not_called()
 
 
 class TestRemoveReaction:
@@ -92,7 +149,13 @@ class TestRemoveReaction:
 
         with patch("api.v1.social.reactions.get_supabase_client", return_value=mock_client):
             with patch("api.v1.social.reactions.get_social_rag_service"):
-                result = await remove_reaction("user-1", "activity-1")
+                result = await remove_reaction(
+                    request=make_request("DELETE", "/reactions/activity-1"),
+                    user_id="user-1",
+                    activity_id="activity-1",
+                    background_tasks=BackgroundTasks(),
+                    current_user={"id": "user-1"},
+                )
 
         assert result["message"] == "Reaction removed successfully"
 
@@ -107,7 +170,13 @@ class TestRemoveReaction:
 
         with patch("api.v1.social.reactions.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await remove_reaction("user-1", "activity-1")
+                await remove_reaction(
+                    request=make_request("DELETE", "/reactions/activity-1"),
+                    user_id="user-1",
+                    activity_id="activity-1",
+                    background_tasks=BackgroundTasks(),
+                    current_user={"id": "user-1"},
+                )
 
         assert exc_info.value.status_code == 404
 

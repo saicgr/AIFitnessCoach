@@ -99,7 +99,24 @@ class TestInitialRecommendation:
     """Test recommendations for new exercises."""
 
     def test_initial_recommendation_no_history(self, progression_service):
-        """Test recommendation when no performance history exists."""
+        """Test recommendation when no performance history exists.
+
+        Retired behavior: this used to assert a hardcoded first-session
+        prescription of 20.0 kg / 10 reps / 3 sets for ANY exercise. That was
+        deliberately replaced by equipment-aware starting weights
+        (`core.weight_utils.get_starting_weight`) because the flat 20 kg
+        default put a barbell's worth of load on movements that have no load
+        at all. An exercise name with no equipment keyword ("New Exercise")
+        now resolves to `bodyweight` (the documented conservative default in
+        `detect_equipment_type`) → 0.0 kg, and the first session is prescribed
+        at the beginner default of 10 reps × 2 sets ("start light to learn
+        form").
+
+        The guarantee protected here is unchanged: a first-time exercise gets
+        a LINEAR, low-confidence, explicitly-first-time recommendation with a
+        sane starting prescription — and the 20 kg figure still holds where it
+        actually means something (a barbell lift starts at the empty bar).
+        """
         recommendation = progression_service.get_recommendation(
             exercise_id="new_exercise",
             exercise_name="New Exercise",
@@ -109,11 +126,22 @@ class TestInitialRecommendation:
 
         assert isinstance(recommendation, ProgressionRecommendation)
         assert recommendation.strategy == ProgressionStrategy.LINEAR
-        assert recommendation.recommended_weight_kg == 20.0
+        assert recommendation.recommended_weight_kg == 0.0  # unknown → bodyweight
         assert recommendation.recommended_reps == 10
-        assert recommendation.recommended_sets == 3
+        assert recommendation.recommended_sets == 2
         assert recommendation.confidence == 0.5
         assert "first time" in recommendation.reason.lower()
+
+        # A barbell lift still starts at the bar: 20.0 kg.
+        barbell = progression_service.get_recommendation(
+            exercise_id="barbell_squat",
+            exercise_name="Barbell Squat",
+            last_performance=None,
+            performance_history=[],
+        )
+        assert barbell.strategy == ProgressionStrategy.LINEAR
+        assert barbell.recommended_weight_kg == 20.0
+        assert barbell.confidence == 0.5
 
     def test_initial_recommendation_fields(self, progression_service):
         """Test initial recommendation has correct fields."""
@@ -137,17 +165,31 @@ class TestInitialRecommendation:
 class TestLinearProgression:
     """Test linear progression strategy."""
 
-    @patch('services.progression_service.get_exercise_type')
-    @patch('services.progression_service.PROGRESSION_INCREMENTS', {'compound': 2.5, 'isolation': 1.25})
-    def test_linear_progression_compound(self, mock_get_type, progression_service, low_rpe_performance):
-        """Test linear progression for compound exercise."""
-        mock_get_type.return_value = 'compound'
+    def test_linear_progression_compound(self, progression_service, low_rpe_performance):
+        """Test linear progression for compound exercise.
 
+        How this test *calls* the service was stale in two ways (the
+        assertions are unchanged — 75 kg + one 2.5 kg barbell step = 77.5):
+
+        1. It patched `PROGRESSION_INCREMENTS` / `get_exercise_type` to control
+           the weight step. The service no longer derives the increment from
+           exercise type — it's equipment-aware now
+           (`get_equipment_increment(equipment_type)`), so those patches were
+           inert and the real increment came from name-sniffing. We pass
+           `equipment_type="barbell"` explicitly instead: 2.5 kg per step.
+        2. It expected LINEAR off a single ready session. Progression is now
+           pace-gated (`PROGRESSION_PACE_THRESHOLDS`) and the default "medium"
+           pace requires 2 consecutive ready sessions before adding weight
+           (see TestProgressionPace). This test is about the LINEAR weight
+           calculation, so it opts into "fast" pace to reach that branch.
+        """
         recommendation = progression_service.get_recommendation(
             exercise_id="bench_press",
             exercise_name="Bench Press",
             last_performance=low_rpe_performance,
             performance_history=[low_rpe_performance],
+            progression_pace="fast",
+            equipment_type="barbell",
         )
 
         # Low RPE means ready for linear progression
@@ -155,17 +197,18 @@ class TestLinearProgression:
         assert recommendation.recommended_weight_kg == 77.5  # 75 + 2.5
         assert recommendation.confidence >= 0.8
 
-    @patch('services.progression_service.get_exercise_type')
-    @patch('services.progression_service.PROGRESSION_INCREMENTS', {'compound': 2.5, 'isolation': 1.25})
-    def test_linear_progression_reason(self, mock_get_type, progression_service, low_rpe_performance):
-        """Test linear progression has appropriate reason."""
-        mock_get_type.return_value = 'compound'
+    def test_linear_progression_reason(self, progression_service, low_rpe_performance):
+        """Test linear progression has appropriate reason.
 
+        Same call-site corrections as test_linear_progression_compound.
+        """
         recommendation = progression_service.get_recommendation(
             exercise_id="bench_press",
             exercise_name="Bench Press",
             last_performance=low_rpe_performance,
             performance_history=[low_rpe_performance],
+            progression_pace="fast",
+            equipment_type="barbell",
         )
 
         assert "progression" in recommendation.reason.lower() or "strong" in recommendation.reason.lower()
@@ -365,24 +408,35 @@ class TestWaveProgression:
 class TestAverageRPECalculation:
     """Test average RPE calculation."""
 
+    @staticmethod
+    def _perf_with_rpe(rpe):
+        """An ExercisePerformance whose computed average_rpe is `rpe`.
+
+        `ExercisePerformance.average_rpe` is a read-only @property derived
+        from the sets (mean of each set's rpe, None when no set carries one) —
+        passing `average_rpe=...`/`sets=[]` to the constructor, as these tests
+        used to, is silently dropped by pydantic and yields average_rpe=None,
+        so the assertions below were being made against an empty input. Build
+        the RPE the way production does: from the sets. (Same technique the
+        pace tests below already use.)
+        """
+        return ExercisePerformance(
+            exercise_id="test", exercise_name="Test",
+            target_sets=3, target_reps=8,
+            sets=[
+                SetPerformance(
+                    set_number=1, weight_kg=80.0, reps_completed=8,
+                    rpe=rpe, completed=True,
+                ),
+            ],
+        )
+
     def test_calculate_average_rpe(self, progression_service):
         """Test average RPE calculation with valid data."""
         performances = [
-            ExercisePerformance(
-                exercise_id="test", exercise_name="Test",
-                target_sets=3, target_reps=8,
-                sets=[], average_rpe=7.0, total_reps=24, total_volume=1920.0,
-            ),
-            ExercisePerformance(
-                exercise_id="test", exercise_name="Test",
-                target_sets=3, target_reps=8,
-                sets=[], average_rpe=8.0, total_reps=24, total_volume=1920.0,
-            ),
-            ExercisePerformance(
-                exercise_id="test", exercise_name="Test",
-                target_sets=3, target_reps=8,
-                sets=[], average_rpe=9.0, total_reps=24, total_volume=1920.0,
-            ),
+            self._perf_with_rpe(7.0),
+            self._perf_with_rpe(8.0),
+            self._perf_with_rpe(9.0),
         ]
 
         avg = progression_service._calculate_average_rpe(performances)
@@ -391,17 +445,10 @@ class TestAverageRPECalculation:
     def test_calculate_average_rpe_with_none_values(self, progression_service):
         """Test average RPE calculation handles None values."""
         performances = [
-            ExercisePerformance(
-                exercise_id="test", exercise_name="Test",
-                target_sets=3, target_reps=8,
-                sets=[], average_rpe=7.0, total_reps=24, total_volume=1920.0,
-            ),
-            ExercisePerformance(
-                exercise_id="test", exercise_name="Test",
-                target_sets=3, target_reps=8,
-                sets=[], average_rpe=None, total_reps=24, total_volume=1920.0,
-            ),
+            self._perf_with_rpe(7.0),
+            self._perf_with_rpe(None),  # no RPE logged → average_rpe is None
         ]
+        assert performances[1].average_rpe is None  # precondition
 
         avg = progression_service._calculate_average_rpe(performances)
         assert avg == 7.0

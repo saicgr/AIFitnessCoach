@@ -51,6 +51,23 @@ def sample_user_id():
 
 
 @pytest.fixture
+def current_user(sample_user_id):
+    """The authenticated caller.
+
+    These endpoints are called directly as plain coroutines (not through the
+    ASGI stack), so FastAPI never resolves `current_user: dict =
+    Depends(get_current_user)` for us — the parameter default is the raw
+    `Depends` marker object. Endpoints that IDOR-check the caller
+    (`verify_user_ownership(current_user, request.user_id)`) then blow up with
+    `TypeError: 'Depends' object is not subscriptable`, which the endpoint's
+    own `except Exception` converts into a 500. Passing the identity explicitly
+    is what FastAPI would have injected, and lets the real behavior under test
+    (404 / success / DB-error paths) actually run.
+    """
+    return {"id": sample_user_id, "email": "user@example.com"}
+
+
+@pytest.fixture
 def sample_fcm_token():
     return "fcm_token_abc123xyz"
 
@@ -72,7 +89,7 @@ def sample_user():
 class TestTestNotification:
     """Test test notification endpoint."""
 
-    def test_send_test_notification_success(self, mock_supabase_db, mock_notification_service, sample_user, sample_user_id, sample_fcm_token):
+    def test_send_test_notification_success(self, mock_supabase_db, mock_notification_service, sample_user, sample_user_id, sample_fcm_token, current_user):
         """Test successful test notification."""
         from api.v1.notifications import send_test_notification, TestNotificationRequest
         import asyncio
@@ -85,13 +102,13 @@ class TestTestNotification:
         )
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_test_notification(request)
+            send_test_notification(request, current_user=current_user)
         )
 
         assert result["success"] is True
         mock_supabase_db.update_user.assert_called_with(sample_user_id, {"fcm_token": sample_fcm_token})
 
-    def test_send_test_notification_user_not_found(self, mock_supabase_db, mock_notification_service, sample_user_id, sample_fcm_token):
+    def test_send_test_notification_user_not_found(self, mock_supabase_db, mock_notification_service, sample_user_id, sample_fcm_token, current_user):
         """Test test notification for non-existent user."""
         from api.v1.notifications import send_test_notification, TestNotificationRequest
         from fastapi import HTTPException
@@ -106,13 +123,19 @@ class TestTestNotification:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                send_test_notification(request)
+                send_test_notification(request, current_user=current_user)
             )
 
         assert exc_info.value.status_code == 404
 
-    def test_send_test_notification_failure(self, mock_supabase_db, mock_notification_service, sample_user, sample_user_id, sample_fcm_token):
-        """Test test notification failure."""
+    def test_send_test_notification_failure(self, mock_supabase_db, mock_notification_service, sample_user, sample_user_id, sample_fcm_token, current_user):
+        """Test test notification failure.
+
+        Was passing for the WRONG reason: with no `current_user` the endpoint
+        died on `TypeError: 'Depends' object is not subscriptable` inside
+        verify_user_ownership, which its `except Exception` mapped to the very
+        500 this test asserts — so the FCM-send-failed path was never reached.
+        """
         from api.v1.notifications import send_test_notification, TestNotificationRequest
         from fastapi import HTTPException
         import asyncio
@@ -127,7 +150,7 @@ class TestTestNotification:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                send_test_notification(request)
+                send_test_notification(request, current_user=current_user)
             )
 
         assert exc_info.value.status_code == 500
@@ -140,9 +163,19 @@ class TestTestNotification:
 class TestRegisterFCMToken:
     """Test FCM token registration endpoint."""
 
-    def test_register_token_success(self, mock_supabase_db, sample_user, sample_user_id, sample_fcm_token):
-        """Test successful FCM token registration."""
+    def test_register_token_success(self, mock_supabase_db, sample_user, sample_user_id, sample_fcm_token, current_user):
+        """Test successful FCM token registration.
+
+        UPDATED WRITE PAYLOAD: /register used to persist exactly
+        {"fcm_token": ...}. It now ALSO stamps `last_active_at` — a token
+        register (login / token refresh / reinstall) is a real foreground
+        signal, and the dormancy-taper notification engine reads that column.
+        The original guarantee (the token the client sent is what gets written,
+        under that user's id) is asserted exactly as before; the new column is
+        asserted too, so a silent regression in either is still caught.
+        """
         from api.v1.notifications import register_fcm_token, RegisterTokenRequest
+        from datetime import datetime
         import asyncio
 
         mock_supabase_db.get_user.return_value = sample_user
@@ -153,13 +186,19 @@ class TestRegisterFCMToken:
         )
 
         result = asyncio.get_event_loop().run_until_complete(
-            register_fcm_token(request)
+            register_fcm_token(request, current_user=current_user)
         )
 
         assert result["success"] is True
-        mock_supabase_db.update_user.assert_called_with(sample_user_id, {"fcm_token": sample_fcm_token})
+        mock_supabase_db.update_user.assert_called_once()
+        called_user_id, payload = mock_supabase_db.update_user.call_args[0]
+        assert called_user_id == sample_user_id
+        assert set(payload.keys()) == {"fcm_token", "last_active_at"}
+        assert payload["fcm_token"] == sample_fcm_token
+        # last_active_at must be a real ISO-8601 timestamp, not a placeholder
+        assert datetime.fromisoformat(payload["last_active_at"]) is not None
 
-    def test_register_token_user_not_found(self, mock_supabase_db, sample_user_id, sample_fcm_token):
+    def test_register_token_user_not_found(self, mock_supabase_db, sample_user_id, sample_fcm_token, current_user):
         """Test token registration for non-existent user."""
         from api.v1.notifications import register_fcm_token, RegisterTokenRequest
         from fastapi import HTTPException
@@ -174,7 +213,7 @@ class TestRegisterFCMToken:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                register_fcm_token(request)
+                register_fcm_token(request, current_user=current_user)
             )
 
         assert exc_info.value.status_code == 404
@@ -374,18 +413,39 @@ class TestSchedulerEndpoints:
         assert "total_users" in result
         assert "notifications_sent" in result
 
-    def test_scheduler_status(self):
-        """Test scheduler status endpoint."""
+    def test_scheduler_status(self, current_user):
+        """Test scheduler status endpoint.
+
+        RETIRED ASSERTION: `len(result["endpoints"]) == 2`. The scheduler had 2
+        cron endpoints when this was written; it now has 5 (billing reminders,
+        NEAT movement reminders and optimal-send-time recalculation were added
+        after). A bare count is also a weak assertion — it can't tell WHICH
+        endpoint went missing. It is replaced by an exact-set assertion on the
+        advertised paths, which is strictly stronger: it fails if any cron
+        endpoint disappears from the manifest the external cron jobs are wired
+        against, and it fails if one appears undocumented.
+        """
         from api.v1.notifications import scheduler_status
         import asyncio
 
         result = asyncio.get_event_loop().run_until_complete(
-            scheduler_status()
+            scheduler_status(current_user=current_user)
         )
 
         assert result["status"] == "ok"
-        assert len(result["endpoints"]) == 2
+        assert {e["path"] for e in result["endpoints"]} == {
+            "/scheduler/check-inactive-users",
+            "/scheduler/send-workout-reminders",
+            "/scheduler/send-billing-reminders",
+            "/scheduler/send-movement-reminders",
+            "/scheduler/recalculate-optimal-times",
+        }
         assert any(e["path"] == "/scheduler/check-inactive-users" for e in result["endpoints"])
+        # Every advertised endpoint must carry the info a cron operator needs
+        for e in result["endpoints"]:
+            assert e["method"] == "POST"
+            assert e["description"]
+            assert e["recommended_schedule"]
 
 
 # ============================================================
@@ -461,8 +521,15 @@ class TestErrorHandling:
 
         assert exc_info.value.status_code == 500
 
-    def test_database_error(self, mock_supabase_db, sample_user_id, sample_fcm_token):
-        """Test handling database errors."""
+    def test_database_error(self, mock_supabase_db, sample_user_id, sample_fcm_token, current_user):
+        """Test handling database errors.
+
+        Was passing for the WRONG reason: with no `current_user` the endpoint
+        raised TypeError in verify_user_ownership *before* touching the DB, and
+        that TypeError produced the asserted 500 — the DB-failure path was
+        never exercised. Now the caller is authenticated, so the 500 really
+        does come from `get_user` raising.
+        """
         from api.v1.notifications import register_fcm_token, RegisterTokenRequest
         from fastapi import HTTPException
         import asyncio
@@ -476,7 +543,7 @@ class TestErrorHandling:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                register_fcm_token(request)
+                register_fcm_token(request, current_user=current_user)
             )
 
         assert exc_info.value.status_code == 500

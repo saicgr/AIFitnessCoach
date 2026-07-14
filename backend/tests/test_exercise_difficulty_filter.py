@@ -114,10 +114,35 @@ class TestIsExerciseTooDifficultStrict:
         assert is_exercise_too_difficult_strict("beginner", "beginner") is False
         assert is_exercise_too_difficult_strict(3, "beginner") is False
 
-    def test_beginner_cannot_do_intermediate_exercises_strict(self):
-        """Intermediate exercises are filtered for beginners in strict mode."""
-        assert is_exercise_too_difficult_strict("intermediate", "beginner") is True
-        assert is_exercise_too_difficult_strict(5, "beginner") is True
+    def test_beginner_ceiling_boundary_strict(self):
+        """Strict mode blocks exercises ABOVE the beginner ceiling (6), not at/below it.
+
+        RETIRED ASSERTION: this test was named
+        `test_beginner_cannot_do_intermediate_exercises_strict` and asserted
+        `is_exercise_too_difficult_strict("intermediate", "beginner") is True`.
+        That was written when DIFFICULTY_CEILING["beginner"] was 3, which put
+        intermediate (numeric 5) above the ceiling. The beginner ceiling was
+        deliberately raised to 6 (beginners were being starved of exercises), so
+        intermediate (5) is now legitimately *under* the beginner ceiling and
+        must NOT be blocked. The ceiling of 6 is pinned by
+        TestDifficultyCeilings.test_beginner_ceiling_is_6 in this very file, plus
+        test_workout_generation.py, test_fitness_level_edge_cases.py and
+        test_feedback_adjustment.py — so the old assertion contradicted its own
+        module and could only have passed against the retired ceiling table.
+
+        The guarantee this test protects is unchanged in substance: the strict
+        filter is the one that actually enforces DIFFICULTY_CEILING (block iff
+        difficulty > ceiling). It now pins BOTH sides of that boundary.
+        """
+        # At/below the ceiling of 6 -> allowed.
+        assert is_exercise_too_difficult_strict("intermediate", "beginner") is False  # 5
+        assert is_exercise_too_difficult_strict(5, "beginner") is False
+        assert is_exercise_too_difficult_strict(6, "beginner") is False
+
+        # Above the ceiling -> blocked. This is what makes it "strict".
+        assert is_exercise_too_difficult_strict(7, "beginner") is True
+        assert is_exercise_too_difficult_strict("advanced", "beginner") is True  # 8
+        assert is_exercise_too_difficult_strict("elite", "beginner") is True  # 10
 
 
 class TestDifficultyCategories:

@@ -4,6 +4,7 @@ Pytest configuration and fixtures for backend tests.
 These fixtures provide mock services and test data that can be used
 across all test files.
 """
+import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
@@ -31,7 +32,58 @@ from models.chat import (
 )
 
 
+# ============ Regression Gate: sys.modules poisoning ============
+
+def pytest_collection_finish(session):
+    """Fail loudly if a test module replaced a real package with a stub.
+
+    Writing stubs into sys.modules at import time is global state corruption:
+    pytest imports every test module into ONE process, so the stub leaks into
+    every test collected afterwards. `tests/test_equipment_snap.py` and
+    `tests/test_identify_equipment_tool.py` used to do exactly this to `core`,
+    `core.config`, `services` and `api` — which made unrelated files fail with
+    "module 'services' has no attribute 'form_analysis_service'" and
+    "'SimpleNamespace' object has no attribute 'backend_base_url'", purely
+    because of collection ORDER.
+
+    A real package always has `__file__`; a bare ModuleType stub never does.
+    If you must stub, do it with a scoped fixture / context manager that
+    restores sys.modules on exit — never a module-level write.
+    """
+    import sys
+    poisoned = [
+        name for name in ("core", "core.config", "services", "api", "api.v1")
+        if name in sys.modules and getattr(sys.modules[name], "__file__", None) is None
+    ]
+    if poisoned:
+        raise pytest.UsageError(
+            f"sys.modules poisoned during collection: {poisoned}. "
+            "A test module replaced a real package with a stub at import time."
+        )
+
+
 # ============ Mock Services ============
+
+@pytest.fixture(autouse=True)
+def _ensure_event_loop():
+    """Repair the event loop that `asyncio.run()` tears down.
+
+    `asyncio.run()` calls `set_event_loop(None)` and flips the policy's
+    `_set_called` flag. Any *later* test in the same process using the legacy
+    `asyncio.get_event_loop().run_until_complete()` idiom then dies with
+    "There is no current event loop in thread 'MainThread'". 13 test files call
+    `asyncio.run()`; 21 use the legacy idiom — so the failure is ordering-dependent
+    and bites whichever suite happens to run second. Not interpreter-specific:
+    the `_set_called` guard is byte-identical on 3.9 and 3.12.
+
+    Restoring a loop before each test makes the two idioms coexist.
+    """
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+    yield
+
 
 @pytest.fixture
 def mock_gemini_service():

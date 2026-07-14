@@ -47,6 +47,30 @@ def sample_user_id():
     return str(uuid.uuid4())
 
 
+@pytest.fixture(autouse=True)
+def auth_user(sample_user_id):
+    """Satisfy the ``Depends(get_current_user)`` on every workout-gallery route.
+
+    Every route in api/v1/workout_gallery.py is behind ``get_current_user`` and
+    then calls ``verify_user_ownership(current_user, user_id)``. Without an
+    override the app returns 401 before the handler ever runs, so none of the
+    assertions below would exercise the gallery logic they were written for.
+
+    The override returns ``sample_user_id`` — the same id the tests pass as the
+    ``user_id`` query/path param — so the ownership check passes. It yields the
+    mutable dict so a test can re-point the authenticated identity (used by
+    ``test_delete_image_wrong_user`` to authenticate as a *different* user).
+    """
+    from core.auth import get_current_user
+
+    current_user = {"id": sample_user_id, "email": "test@example.com"}
+    app.dependency_overrides[get_current_user] = lambda: current_user
+    try:
+        yield current_user
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
+
 @pytest.fixture
 def sample_workout_log_id():
     """Sample workout log ID for testing."""
@@ -179,7 +203,16 @@ class TestUploadGalleryImage:
     def test_upload_image_invalid_base64(
         self, mock_supabase, sample_user_id, sample_workout_log_id, sample_workout_snapshot
     ):
-        """Test uploading with invalid base64 data."""
+        """Test uploading with invalid base64 data.
+
+        Used to assert the body contained "Invalid base64" — the handler then
+        raised ``detail=f"Invalid base64 image: {e}"``. That was retired in
+        6df23338, which replaced it with a fixed ``"Invalid image data"``
+        because interpolating the exception leaked internals into the HTTP
+        response. Same intent, current contract: undecodable image data is
+        rejected with 400 and a client-safe message that does not echo the
+        underlying exception.
+        """
         response = client.post(
             f"/api/v1/workout-gallery/upload?user_id={sample_user_id}",
             json={
@@ -191,7 +224,10 @@ class TestUploadGalleryImage:
         )
 
         assert response.status_code == 400
-        assert "Invalid base64" in response.json()["detail"]
+        detail = response.json()["detail"]
+        assert detail == "Invalid image data"
+        # The rejection must not leak the decoder's exception text.
+        assert "binascii" not in detail and "padding" not in detail.lower()
 
     def test_upload_image_with_user_photo(
         self, mock_supabase, sample_user_id, sample_workout_log_id,
@@ -439,13 +475,35 @@ class TestDeleteGalleryImage:
 
         assert response.status_code == 404
 
-    def test_delete_image_wrong_user(self, mock_supabase, sample_user_id, sample_image_id):
-        """Test deleting image owned by different user."""
+    def test_delete_image_wrong_user(self, mock_supabase, auth_user, sample_user_id, sample_image_id):
+        """Test deleting an image owned by a different user.
+
+        Intent (unchanged): a user must never be able to delete someone else's
+        image. The route now has two independent guards, and this test covers
+        both:
+
+        1. ``verify_user_ownership`` — authenticating as user B while passing
+           ``user_id=A`` in the query is an IDOR attempt and is rejected 403.
+        2. The user-scoped ``.eq("user_id", ...)`` DB lookup — authenticating as
+           user B and asking to delete an image that belongs to A finds no row,
+           so it 404s. This is the original 404 the test asserted, reached the
+           way a real caller would now reach it.
+        """
         other_user_id = str(uuid.uuid4())
 
         # Mock no match (user doesn't own this image)
         mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.is_.return_value.single.return_value.execute.return_value.data = None
 
+        # Authenticated as the other user...
+        auth_user["id"] = other_user_id
+
+        # ...trying to act on the victim's user_id is blocked outright.
+        idor_response = client.delete(
+            f"/api/v1/workout-gallery/{sample_image_id}?user_id={sample_user_id}"
+        )
+        assert idor_response.status_code == 403
+
+        # ...and asking under their own id can't reach the victim's image either.
         response = client.delete(
             f"/api/v1/workout-gallery/{sample_image_id}?user_id={other_user_id}"
         )
@@ -665,7 +723,16 @@ class TestEdgeCases:
         self, mock_supabase, sample_user_id, sample_workout_log_id,
         sample_image_base64, sample_workout_snapshot
     ):
-        """Test handling database insert failure."""
+        """Test handling database insert failure.
+
+        Used to assert the body contained "Failed to save" — the handler then
+        raised ``detail="Failed to save gallery image"``. Retired in 498fb26a,
+        which routed it through ``core.exceptions.safe_internal_error``: the
+        internal reason is logged and sent to Sentry, and the client gets a
+        fixed generic 500 body. Same intent, current contract: an empty insert
+        result is a server error (500), never a silent success, and the body
+        must not leak the internal reason.
+        """
         # Mock storage success
         storage_mock = MagicMock()
         storage_mock.from_.return_value.upload.return_value = {"path": "test.png"}
@@ -686,7 +753,9 @@ class TestEdgeCases:
         )
 
         assert response.status_code == 500
-        assert "Failed to save" in response.json()["detail"]
+        detail = response.json()["detail"]
+        assert detail == "An internal error occurred. Please try again."
+        assert "gallery" not in detail.lower()  # internal reason stays internal
 
     def test_list_with_max_page_size(self, mock_supabase, sample_user_id):
         """Test that page_size is capped at 50."""

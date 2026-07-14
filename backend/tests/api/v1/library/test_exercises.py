@@ -10,9 +10,46 @@ Tests cover:
 - GET /exercises/types - Get exercise types
 - GET /exercises/filter-options - Get filter options
 """
+import inspect
+
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
+from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
+
+
+# These tests call the endpoint coroutines DIRECTLY (no TestClient), so FastAPI
+# never resolves their injected parameters. Un-resolved, a `Query(default=None)`
+# / `Header(default=None)` parameter keeps its raw FieldInfo object as its value
+# — which is TRUTHY and is not a str, so `equipment.split(",")` /
+# `parse_accept_language(accept_language)` blow up with AttributeError. And
+# `response: Response` has no default at all, so the call fails with a missing
+# positional arg.
+#
+# `call_endpoint` below does exactly what FastAPI's dependency resolution does
+# for a request that supplies no query params and no headers: every FieldInfo
+# default collapses to its declared default value. This is a test-harness
+# concern, not a product defect — the HTTP surface resolves all of these.
+def call_endpoint(func, **overrides):
+    """Invoke a FastAPI endpoint coroutine directly with its defaults resolved.
+
+    Returns the coroutine (await it). `overrides` supplies path params and the
+    injected `response: Response`, plus any query value under test.
+    """
+    kwargs = {}
+    for name, param in inspect.signature(func).parameters.items():
+        if name in overrides:
+            kwargs[name] = overrides[name]
+            continue
+        default = param.default
+        if isinstance(default, FieldInfo):
+            # Query(...)/Header(...) → the value FastAPI would pass when the
+            # request omits it.
+            kwargs[name] = None if default.default is PydanticUndefined else default.default
+        elif default is not inspect.Parameter.empty:
+            kwargs[name] = default
+    return func(**kwargs)
 
 
 class TestListExercises:
@@ -37,7 +74,7 @@ class TestListExercises:
         ]
 
         with patch("api.v1.library.exercises.get_supabase_db", return_value=mock_db):
-            result = await list_exercises()
+            result = await call_endpoint(list_exercises, response=Response())
 
         assert len(result) >= 0  # May be filtered
 
@@ -56,7 +93,7 @@ class TestListExercises:
 
         with patch("api.v1.library.exercises.get_supabase_db", return_value=mock_db):
             with patch("api.v1.library.exercises.fetch_all_rows", side_effect=mock_fetch_all_rows):
-                result = await list_exercises(body_parts="Chest")
+                result = await call_endpoint(list_exercises, response=Response(), body_parts="Chest")
 
         assert all(ex.body_part == "Chest" for ex in result)
 
@@ -80,7 +117,7 @@ class TestGetExercisesGrouped:
 
         with patch("api.v1.library.exercises.get_supabase_db", return_value=mock_db):
             with patch("api.v1.library.exercises.fetch_all_rows", side_effect=mock_fetch_all_rows):
-                result = await get_exercises_grouped(limit_per_group=10)
+                result = await call_endpoint(get_exercises_grouped, limit_per_group=10)
 
         # Should have at least 2 groups (Quadriceps and Chest)
         assert len(result) >= 2
@@ -112,7 +149,7 @@ class TestGetExercise:
         }]
 
         with patch("api.v1.library.exercises.get_supabase_db", return_value=mock_db):
-            result = await get_exercise("ex-1")
+            result = await call_endpoint(get_exercise, exercise_id="ex-1")
 
         assert result.id == "ex-1"
         assert result.name == "Squat"
@@ -130,7 +167,7 @@ class TestGetExercise:
 
         with patch("api.v1.library.exercises.get_supabase_db", return_value=mock_db):
             with pytest.raises(HTTPException) as exc_info:
-                await get_exercise("nonexistent-id")
+                await call_endpoint(get_exercise, exercise_id="nonexistent-id")
 
         assert exc_info.value.status_code == 404
 
@@ -154,7 +191,7 @@ class TestGetBodyParts:
 
         with patch("api.v1.library.exercises.get_supabase_db", return_value=mock_db):
             with patch("api.v1.library.exercises.fetch_all_rows", side_effect=mock_fetch_all_rows):
-                result = await get_body_parts()
+                result = await call_endpoint(get_body_parts)
 
         # Should have at least Quadriceps and Chest
         body_part_names = [bp["name"] for bp in result]
@@ -182,7 +219,7 @@ class TestGetEquipmentTypes:
 
         with patch("api.v1.library.exercises.get_supabase_db", return_value=mock_db):
             with patch("api.v1.library.exercises.fetch_all_rows", side_effect=mock_fetch_all_rows):
-                result = await get_equipment_types()
+                result = await call_endpoint(get_equipment_types)
 
         equipment_names = [eq["name"] for eq in result]
         assert "barbell" in equipment_names
@@ -208,7 +245,7 @@ class TestGetExerciseTypes:
 
         with patch("api.v1.library.exercises.get_supabase_db", return_value=mock_db):
             with patch("api.v1.library.exercises.fetch_all_rows", side_effect=mock_fetch_all_rows):
-                result = await get_exercise_types()
+                result = await call_endpoint(get_exercise_types)
 
         type_names = [et["name"] for et in result]
         assert "Strength" in type_names
@@ -241,7 +278,7 @@ class TestGetFilterOptions:
 
         with patch("api.v1.library.exercises.get_supabase_db", return_value=mock_db):
             with patch("api.v1.library.exercises.fetch_all_rows", side_effect=mock_fetch_all_rows):
-                result = await get_filter_options()
+                result = await call_endpoint(get_filter_options, response=Response())
 
         assert "body_parts" in result
         assert "equipment" in result

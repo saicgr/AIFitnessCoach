@@ -235,10 +235,14 @@ def test_persona_mood_strong_streak_is_proud():
 
 
 def test_social_footer_has_both_logos_and_links():
+    from core import branding
     from services.email_helpers import build_social_footer_html
     html = build_social_footer_html()
     assert "discord.gg/WAYNZpVgsK" in html
-    assert "instagram.com/zealova.com" in html
+    # Assert against branding, not a literal — the handle moved once already
+    # (the old literal here was `instagram.com/zealova.com`, which was never a
+    # real account) and a hardcoded copy just rots again on the next change.
+    assert branding.INSTAGRAM_URL in html
     # Icon <img> tags must reference the simpleicons CDN (or our static fallback)
     assert "discord" in html.lower()
     assert "instagram" in html.lower()
@@ -314,27 +318,51 @@ def test_day3_launches_today_morning_uses_anticipatory_voice(render_email):
     assert "worried" not in captured["subject"].lower()
 
 
-def test_day3_overdue_uses_guilt_voice(render_email):
-    """Firm "worried" voice only fires once the balanced escalation window expires
-    (14+ days). Earlier days render softer nudge/concerned copy."""
+def test_day3_overdue_firm_tier_escalates_but_stays_blameless(render_email):
+    """The firm tier fires only after the balanced window expires (14+ days),
+    and even then it does NOT guilt the user.
+
+    History: this test used to assert a "worried" subject carrying the persona
+    name. That copy was deliberately retired — the old ladder fired
+    "Disappointed" language after a SINGLE missed day (see the comment above
+    `overdue_tier` in email_lifecycle). The escalation itself is still the
+    behavior worth protecting, so we assert the tier changes, not the shaming.
+    """
     from services.email_service import EmailService
     from models.email import UserStats, ScheduleState, TimeBand
 
     os.environ.setdefault("RESEND_API_KEY", "dummy")
     svc = EmailService()
-    stats = UserStats(
-        schedule_state=ScheduleState.OVERDUE,
-        time_band=TimeBand.MORNING,
-        days_overdue=14,
-        coach_name="Max",  # user picked custom persona
-    )
-    captured = render_email(
-        svc.send_day3_activation(
-            to_email="t@example.com", first_name_value="Sai", stats=stats
+
+    def _render(days_overdue: int):
+        stats = UserStats(
+            schedule_state=ScheduleState.OVERDUE,
+            time_band=TimeBand.MORNING,
+            days_overdue=days_overdue,
+            coach_name="Max",  # user picked custom persona
         )
-    )
-    assert "Max" in captured["subject"]  # persona name in subject
-    assert "worried" in captured["subject"].lower()
+        return render_email(
+            svc.send_day3_activation(
+                to_email="t@example.com", first_name_value="Sai", stats=stats
+            )
+        )
+
+    firm = _render(14)
+    nudge = _render(1)
+
+    # The ladder actually escalates — day 14 is not the day-1 copy.
+    assert firm["subject"] != nudge["subject"]
+    assert "your plan's waiting" in nudge["subject"].lower()
+    assert "still waiting" in firm["subject"].lower()
+
+    # The user is addressed by name, and the persona still speaks in the body.
+    assert "Sai" in firm["subject"]
+    assert "Max" in firm["html"]
+
+    # No shaming, at any tier. This is the guarantee the old assertion inverted.
+    for word in ("disappointed", "worried", "failed", "excuses"):
+        assert word not in firm["subject"].lower()
+        assert word not in nudge["subject"].lower()
 
 
 def test_day3_overdue_day_one_uses_soft_nudge_copy(render_email):
@@ -384,7 +412,16 @@ def test_day3_subject_always_contains_first_name(render_email):
 
 
 def test_weekly_summary_embeds_nutrition_data(render_email):
+    """The Monday recap must show what the user ate, not just what they lifted.
+
+    Nutrition now reaches this email through the `WeeklyProgress` tiles
+    (`zealova_tiles`), not the old stats-only summary line — so drive it the way
+    the cron actually does. Passing `progress=None` (as this test used to) hits
+    the defensive minimal-check-in branch, which by design carries no tiles at
+    all, so it could never have proven anything about nutrition.
+    """
     from services.email_service import EmailService
+    from services.weekly_progress_service import WeeklyProgress, Tile
     from models.email import UserStats
 
     os.environ.setdefault("RESEND_API_KEY", "dummy")
@@ -395,16 +432,29 @@ def test_weekly_summary_embeds_nutrition_data(render_email):
         nutrition_avg_calories_week=2100,
         nutrition_avg_protein_g_week=135,
     )
+    progress = WeeklyProgress(
+        week_label="Jul 6 – Jul 12",
+        has_wearable=False,
+        is_first_week=False,
+        empty_week=False,
+        workouts_this_week=3,
+        zealova_tiles=[
+            Tile("dumbbell", "3", "Workouts", "", "flat"),
+            Tile("utensils", "5 / 7", "Days logged", "", "flat"),
+            Tile("salad", "2,100", "Cal eaten", "", "flat"),
+        ],
+    )
     captured = render_email(
         svc.send_weekly_summary(
             to_email="t@example.com", first_name_value="Sai", stats=stats,
-            total_duration_minutes=180,
+            progress=progress, total_duration_minutes=180,
         )
     )
-    # Nutrition stats must be visible in the body
-    assert "5/7" in captured["html"]
+    # Nutrition must be visible in the body.
+    assert "5 / 7" in captured["html"]
+    assert "Days logged" in captured["html"]
     assert "2,100" in captured["html"]
-    assert "135g" in captured["html"]
+    assert "Cal eaten" in captured["html"]
 
 
 def test_every_email_html_contains_social_footer(render_email):
@@ -421,5 +471,6 @@ def test_every_email_html_contains_social_footer(render_email):
             to_email="t@example.com", first_name_value="Sai", stats=stats
         )
     )
+    from core import branding
     assert "discord.gg/WAYNZpVgsK" in captured["html"]
-    assert "instagram.com/zealova.com" in captured["html"]
+    assert branding.INSTAGRAM_URL in captured["html"]

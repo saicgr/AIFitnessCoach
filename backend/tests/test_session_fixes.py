@@ -156,23 +156,50 @@ class TestUserSearchBioColumnFix:
     @pytest.mark.asyncio
     async def test_search_users_without_bio_column(self):
         """
-        User search should work without the bio column.
-        The response should have bio=None.
+        User search should return a matching user with bio=None when the row
+        carries no bio value.
+
+        Two things had rotted since this test was written:
+
+        1. CALL (a): `search_users` is a FastAPI endpoint whose `current_user`
+           parameter is `Depends(get_current_user)`. Calling the coroutine
+           directly leaves that parameter bound to the `Depends` marker object,
+           and the endpoint's first statement — `verify_user_ownership(
+           current_user, user_id)` — blew up with
+           "TypeError: 'Depends' object is not subscriptable".
+           The dependency is now resolved explicitly by the test, exactly as
+           FastAPI would at request time.
+
+        2. SHAPE (b): the endpoint used to return `List[UserSearchResult]`. It
+           now returns a PAGINATED envelope
+           `{"results": [...], "total_count": N, "has_more": bool}` with each
+           result already `model_dump()`-ed, and it queries with `.range()`
+           (offset pagination) + `count="exact"`, plus a `get_workout_counts`
+           RPC. The assertions below check the same guarantees against the
+           current shape: one matching user, name preserved, bio is None.
+
+        Note the ORIGINAL bug this file names ("users table has no bio column")
+        was fixed at the schema level — `users.bio` exists today
+        (scripts/schema_columns_snapshot.json) and IS selected. What still has
+        to hold, and is what this test now pins, is that a row without a bio
+        surfaces as `bio=None` rather than KeyError-ing the search.
         """
         with patch("api.v1.social.users.get_supabase_client") as mock_client:
             # Mock the Supabase client
             mock_supabase = MagicMock()
             mock_client.return_value = mock_supabase
 
-            # Mock users table query (without bio)
+            # Mock users table query (row carries no 'bio' key)
             users_result = MagicMock()
             users_result.data = [
                 {"id": "user-1", "name": "John Doe", "username": "johnd", "avatar_url": None}
             ]
+            users_result.count = 1
 
             # Mock empty results for various queries
             empty_result = MagicMock()
             empty_result.data = []
+            empty_result.count = 0
 
             # Create a more sophisticated mock that returns different results based on table
             def mock_table_factory(table_name):
@@ -181,6 +208,7 @@ class TestUserSearchBioColumnFix:
                 mock_table.or_.return_value = mock_table
                 mock_table.neq.return_value = mock_table
                 mock_table.limit.return_value = mock_table
+                mock_table.range.return_value = mock_table
                 mock_table.eq.return_value = mock_table
                 mock_table.in_.return_value = mock_table
 
@@ -193,19 +221,27 @@ class TestUserSearchBioColumnFix:
                 return mock_table
 
             mock_supabase.table.side_effect = mock_table_factory
+            # Batch workout-count RPC (get_workout_counts) — no rows for this user.
+            rpc_result = MagicMock()
+            rpc_result.data = []
+            mock_supabase.rpc.return_value.execute.return_value = rpc_result
 
             from api.v1.social.users import search_users
 
-            result = await search_users(
+            response = await search_users(
                 user_id="test-user-id",
                 query="John",
-                limit=10
+                limit=10,
+                offset=0,
+                current_user={"id": "test-user-id"},
             )
 
             # Verify the result
-            assert len(result) == 1
-            assert result[0].name == "John Doe"
-            assert result[0].bio is None  # Bio should be None
+            results = response["results"]
+            assert len(results) == 1
+            assert response["total_count"] == 1
+            assert results[0]["name"] == "John Doe"
+            assert results[0]["bio"] is None  # Bio should be None
 
     def test_user_search_result_model_allows_none_bio(self):
         """UserSearchResult model should accept bio=None."""
@@ -366,48 +402,64 @@ class TestQuickWorkoutEndpointIntegration:
     async def test_quick_workout_endpoint_with_time_based_exercises(self):
         """
         Quick workout endpoint should handle Gemini responses with null reps.
+
+        CALL FIX (a): this test used to open
+        `patch("api.v1.workouts.quick.GeminiService")`, which now raises
+        `AttributeError: module 'api.v1.workouts.quick' does not have the
+        attribute 'GeminiService'` — quick.py was refactored to call
+        `services.gemini.constants.gemini_generate_with_retry` and no longer
+        imports GeminiService at all. Those three patches were inert scaffolding
+        (nothing in the test body ever touched the mocked db/Gemini); they only
+        served to make the `with` block explode at setup.
+
+        The assertions are unchanged. What IS new: instead of calling
+        `validate_and_cap_exercise_parameters` in isolation, the test now runs
+        the exercises through the EXACT post-Gemini pipeline the /quick endpoint
+        runs (api/v1/workouts/quick.py:481-497) —
+        json.loads -> ensure_exercises_are_dicts -> normalize_exercise_numeric_fields
+        -> validate_and_cap_exercise_parameters — so a regression in ANY of those
+        three steps (not just the last one) re-breaks `"reps": null`.
         """
-        with patch("api.v1.workouts.quick.get_supabase_db") as mock_db, \
-             patch("api.v1.workouts.quick.GeminiService") as mock_gemini, \
-             patch("google.genai.Client") as mock_client:
+        import json
 
-            # Mock database
-            db_mock = MagicMock()
-            mock_db.return_value = db_mock
-            db_mock.get_user.return_value = {
-                "id": "test-user",
-                "fitness_level": "intermediate",
-                "equipment": ["dumbbells", "mat"]
-            }
-            db_mock.create_workout.return_value = {"id": "workout-123"}
+        from api.v1.workouts.generation import (
+            ensure_exercises_are_dicts,
+            normalize_exercise_numeric_fields,
+        )
+        from api.v1.workouts.utils import validate_and_cap_exercise_parameters
 
-            # Mock Gemini response with null reps (time-based exercise)
-            mock_response = MagicMock()
-            mock_response.text = '''
-            {
-                "name": "Quick 10min Blast",
-                "type": "cardio",
-                "difficulty": "intermediate",
-                "exercises": [
-                    {"name": "Jumping Jacks", "sets": 3, "reps": null, "duration_seconds": 45, "rest_seconds": 15},
-                    {"name": "Push-ups", "sets": 3, "reps": 10, "rest_seconds": 30}
-                ]
-            }
-            '''
+        # Exactly what Gemini returns for a time-based quick workout: reps null.
+        gemini_text = '''
+        {
+            "name": "Quick 10min Blast",
+            "type": "cardio",
+            "difficulty": "intermediate",
+            "exercises": [
+                {"name": "Jumping Jacks", "sets": 3, "reps": null, "duration_seconds": 45, "rest_seconds": 15},
+                {"name": "Push-ups", "sets": 3, "reps": 10, "rest_seconds": 30}
+            ]
+        }
+        '''
 
-            # This should not raise an error
-            from api.v1.workouts.utils import validate_and_cap_exercise_parameters
-            import json
+        workout_data = json.loads(gemini_text.strip())
+        exercises = workout_data.get("exercises", [])
+        fitness_level = "intermediate"
+        difficulty = workout_data.get("difficulty", fitness_level)
 
-            workout_data = json.loads(mock_response.text.strip())
-            exercises = workout_data.get("exercises", [])
+        # The /quick endpoint's real normalization chain.
+        exercises = ensure_exercises_are_dicts(exercises)
+        exercises = normalize_exercise_numeric_fields(exercises)
 
-            # The fix ensures this works
-            validated = validate_and_cap_exercise_parameters(exercises, "intermediate")
+        # The fix ensures this works
+        validated = validate_and_cap_exercise_parameters(
+            exercises=exercises,
+            fitness_level=fitness_level,
+            difficulty=difficulty,
+        )
 
-            assert len(validated) == 2
-            assert validated[0]["reps"] == 10  # None -> default
-            assert validated[1]["reps"] == 10  # Already valid
+        assert len(validated) == 2
+        assert validated[0]["reps"] == 10  # None -> default
+        assert validated[1]["reps"] == 10  # Already valid
 
 
 if __name__ == "__main__":

@@ -305,7 +305,18 @@ class TestLeaderboardModels:
         assert "record" in request.challenge_message
 
     def test_async_challenge_request_defaults(self):
-        """Test AsyncChallengeRequest default values."""
+        """Test AsyncChallengeRequest default values.
+
+        Used to assert the default was "I'm coming for your record! muscle".
+        That literal is an artifact of the emoji-stripping sweep in c1da5a09:
+        the model's default was "I'm coming for your record! 💪" and the sweep
+        removed the emoji from models/leaderboard.py while rewriting it to the
+        word "muscle" in this assertion — so the two never matched. Backend
+        user-facing strings are deliberately emoji-free, so the current default
+        is "I'm coming for your record!". The guarantee protected is unchanged
+        and still an exact-equality check: an omitted challenge_message falls
+        back to the canned taunt (never None/empty), and workout_log_id stays None.
+        """
         from models.leaderboard import AsyncChallengeRequest
 
         request = AsyncChallengeRequest(
@@ -313,7 +324,7 @@ class TestLeaderboardModels:
         )
 
         assert request.workout_log_id is None
-        assert request.challenge_message == "I'm coming for your record! muscle"
+        assert request.challenge_message == "I'm coming for your record!"
 
 
 # ============================================================
@@ -460,29 +471,45 @@ class TestSocialModels:
     """Test social models."""
 
     def test_activity_type_enum(self):
-        """Test ActivityType enum values."""
+        """Test ActivityType enum values.
+
+        Members are accessed by their UPPER_CASE names (ActivityType.WORKOUT_COMPLETED);
+        this test previously used lower-case attribute names, which never existed on
+        models.social (the enum has been UPPER_CASE since it was introduced in 5d4655b1),
+        so it raised AttributeError before reaching any assertion. The guarantee under
+        test is unchanged and still exact: each member's *wire value* is the snake_case
+        string the DB/API contract stores.
+        """
         from models.social import ActivityType
 
-        assert ActivityType.workout_completed == "workout_completed"
-        assert ActivityType.achievement_earned == "achievement_earned"
-        assert ActivityType.personal_record == "personal_record"
-        assert ActivityType.streak_milestone == "streak_milestone"
+        assert ActivityType.WORKOUT_COMPLETED == "workout_completed"
+        assert ActivityType.ACHIEVEMENT_EARNED == "achievement_earned"
+        assert ActivityType.PERSONAL_RECORD == "personal_record"
+        assert ActivityType.STREAK_MILESTONE == "streak_milestone"
 
     def test_visibility_enum(self):
-        """Test Visibility enum values."""
+        """Test Visibility enum values.
+
+        Same fix as test_activity_type_enum: members are UPPER_CASE; the asserted
+        wire values are unchanged.
+        """
         from models.social import Visibility
 
-        assert Visibility.public == "public"
-        assert Visibility.friends == "friends"
-        assert Visibility.private == "private"
+        assert Visibility.PUBLIC == "public"
+        assert Visibility.FRIENDS == "friends"
+        assert Visibility.PRIVATE == "private"
 
     def test_reaction_type_enum(self):
-        """Test ReactionType enum values."""
+        """Test ReactionType enum values.
+
+        Same fix as test_activity_type_enum: members are UPPER_CASE; the asserted
+        wire values are unchanged.
+        """
         from models.social import ReactionType
 
-        assert ReactionType.fire == "fire"
-        assert ReactionType.strong == "strong"
-        assert ReactionType.cheer == "cheer"
+        assert ReactionType.FIRE == "fire"
+        assert ReactionType.STRONG == "strong"
+        assert ReactionType.CHEER == "cheer"
 
 
 # ============================================================
@@ -504,29 +531,45 @@ class TestChatModels:
         assert CoachIntent.REPORT_INJURY == "report_injury"
 
     def test_chat_request_model(self):
-        """Test ChatRequest model."""
+        """Test ChatRequest model.
+
+        user_id is `str` (a Supabase UUID) — the test used to pass the int `1`,
+        which only worked under pydantic v1's lax int->str coercion. Under
+        pydantic v2 that is a `string_type` error. The identifier type is the
+        product contract (users are UUIDs, not ints), so the *call* was stale,
+        not the model. Assertions are unchanged, plus user_id round-trip.
+        """
         from models.chat import ChatRequest
 
+        user_id = str(uuid.uuid4())
         request = ChatRequest(
             message="Add push-ups to my workout",
-            user_id=1,
+            user_id=user_id,
         )
 
         assert request.message == "Add push-ups to my workout"
+        assert request.user_id == user_id
         assert request.conversation_history == []
 
     def test_user_profile_model(self):
-        """Test UserProfile model."""
+        """Test UserProfile model.
+
+        `id` is `str` (Supabase UUID); see test_chat_request_model — the int `1`
+        only validated under pydantic v1 coercion. Assertions unchanged, plus id
+        round-trip.
+        """
         from models.chat import UserProfile
 
+        user_id = str(uuid.uuid4())
         profile = UserProfile(
-            id=1,
+            id=user_id,
             fitness_level="intermediate",
             goals=["build muscle", "lose fat"],
             equipment=["dumbbells", "barbell"],
             active_injuries=["shoulder"],
         )
 
+        assert profile.id == user_id
         assert profile.fitness_level == "intermediate"
         assert len(profile.goals) == 2
         assert "shoulder" in profile.active_injuries

@@ -25,18 +25,50 @@ MOCK_MUSCLE_ID = "avoided-muscle-789"
 
 @pytest.fixture
 def mock_supabase():
-    """Create a mock Supabase client."""
-    with patch("api.v1.exercise_preferences.get_supabase_db") as mock:
-        mock_db = MagicMock()
-        mock.return_value = mock_db
+    """Create a mock Supabase client.
+
+    The exercise-preferences router was split into two modules
+    (``api.v1.exercise_preferences`` keeps the staples/variation/GET-avoided
+    routes, ``api.v1.exercise_preferences_endpoints`` holds the rest of the
+    avoidance CRUD + substitute engine). Each module does its own
+    ``from core.db import get_supabase_db``, so both namespaces must be patched
+    or half the endpoints keep talking to the real database.
+
+    The substitute engine memoizes library reads in a module-level TTL cache;
+    it is cleared on teardown so a mocked (empty) result never leaks into
+    another test.
+    """
+    mock_db = MagicMock()
+    with patch("api.v1.exercise_preferences.get_supabase_db", return_value=mock_db), \
+         patch("api.v1.exercise_preferences_endpoints.get_supabase_db", return_value=mock_db), \
+         patch("api.v1.workouts.user_preference_utils.get_supabase_db", return_value=mock_db):
         yield mock_db
+
+    from api.v1.exercise_preferences_endpoints import _LIBRARY_CACHE
+    _LIBRARY_CACHE.clear()
 
 
 @pytest.fixture
 def client():
-    """Create a test client."""
+    """Create a test client with the auth dependency satisfied.
+
+    Every exercise-preferences route is behind ``Depends(get_current_user)``,
+    so without an override the app short-circuits with 401 before the handler
+    (and its ownership check ``current_user["id"] == user_id``) ever runs.
+    The override returns MOCK_USER_ID so the ownership check passes for the
+    user whose data these tests operate on.
+    """
     from main import app
-    return TestClient(app)
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": MOCK_USER_ID,
+        "email": "test@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 def generate_mock_avoided_exercise(
@@ -396,8 +428,13 @@ class TestHelperFunctions:
 
     @pytest.mark.asyncio
     async def test_get_user_avoided_exercises(self, mock_supabase):
-        """Test helper function to get avoided exercise names."""
-        from api.v1.exercise_preferences import get_user_avoided_exercises
+        """Test helper function to get avoided exercise names.
+
+        The helper now lives in api.v1.exercise_preferences_endpoints (module
+        split) and takes an explicit ``timezone_str`` so temporary-avoidance
+        expiry is evaluated in the user's local day, not the server's.
+        """
+        from api.v1.exercise_preferences_endpoints import get_user_avoided_exercises
 
         mock_result = MagicMock()
         mock_result.data = [
@@ -406,7 +443,7 @@ class TestHelperFunctions:
         ]
         mock_supabase.client.table.return_value.select.return_value.eq.return_value.or_.return_value.execute.return_value = mock_result
 
-        result = await get_user_avoided_exercises(MOCK_USER_ID)
+        result = await get_user_avoided_exercises(MOCK_USER_ID, "America/Chicago")
 
         assert len(result) == 2
         assert "Barbell Squat" in result
@@ -414,8 +451,11 @@ class TestHelperFunctions:
 
     @pytest.mark.asyncio
     async def test_get_user_avoided_muscles(self, mock_supabase):
-        """Test helper function to get avoided muscles with severity."""
-        from api.v1.exercise_preferences import get_user_avoided_muscles
+        """Test helper function to get avoided muscles with severity.
+
+        Same module split + ``timezone_str`` parameter as the exercise helper.
+        """
+        from api.v1.exercise_preferences_endpoints import get_user_avoided_muscles
 
         mock_result = MagicMock()
         mock_result.data = [
@@ -424,7 +464,7 @@ class TestHelperFunctions:
         ]
         mock_supabase.client.table.return_value.select.return_value.eq.return_value.or_.return_value.execute.return_value = mock_result
 
-        result = await get_user_avoided_muscles(MOCK_USER_ID)
+        result = await get_user_avoided_muscles(MOCK_USER_ID, "America/Chicago")
 
         assert len(result) == 2
         assert result[0]["muscle_group"] == "lower_back"
@@ -434,7 +474,7 @@ class TestHelperFunctions:
     @pytest.mark.asyncio
     async def test_is_exercise_avoided_true(self, mock_supabase):
         """Test checking if specific exercise is avoided."""
-        from api.v1.exercise_preferences import is_exercise_avoided
+        from api.v1.exercise_preferences_endpoints import is_exercise_avoided
 
         mock_result = MagicMock()
         mock_result.data = [{"exercise_name": "Barbell Squat"}]
@@ -446,7 +486,7 @@ class TestHelperFunctions:
     @pytest.mark.asyncio
     async def test_is_muscle_avoided(self, mock_supabase):
         """Test checking if muscle is avoided with severity."""
-        from api.v1.exercise_preferences import is_muscle_avoided
+        from api.v1.exercise_preferences_endpoints import is_muscle_avoided
 
         mock_result = MagicMock()
         mock_result.data = [{"muscle_group": "lower_back", "severity": "avoid"}]
@@ -515,6 +555,7 @@ class TestSubstituteSuggestions:
         response = client.post(
             "/api/v1/exercise-preferences/suggest-substitutes",
             json={
+                "user_id": MOCK_USER_ID,
                 "exercise_name": "Barbell Squat",
                 "reason": "knee injury"
             }
@@ -538,6 +579,7 @@ class TestSubstituteSuggestions:
         response = client.post(
             "/api/v1/exercise-preferences/suggest-substitutes",
             json={
+                "user_id": MOCK_USER_ID,
                 "exercise_name": "Barbell Bench Press"
             }
         )
@@ -574,7 +616,14 @@ class TestAutoSubstituteHelpers:
 
     @pytest.mark.asyncio
     async def test_get_substitute_exercise(self, mock_supabase):
-        """Test finding a substitute for an avoided exercise."""
+        """Test finding a substitute for an avoided exercise.
+
+        ``get_substitute_exercise`` is defined in
+        api.v1.workouts.user_preference_utils (api.v1.workouts.utils only
+        re-exports it), so ``get_supabase_db`` has to be patched in the module
+        that *defines* it — patching the re-exporting module left the helper
+        talking to the real database. The mock_supabase fixture does that.
+        """
         from api.v1.workouts.utils import get_substitute_exercise
 
         # Mock the exercise library query
@@ -585,14 +634,13 @@ class TestAutoSubstituteHelpers:
         ]
         mock_supabase.client.table.return_value.select.return_value.or_.return_value.limit.return_value.execute.return_value = mock_result
 
-        with patch("api.v1.workouts.utils.get_supabase_db", return_value=mock_supabase):
-            result = await get_substitute_exercise(
-                exercise_name="Barbell Squat",
-                muscle_group="quadriceps",
-                user_id=MOCK_USER_ID,
-                avoided_exercises=["barbell squat", "lunge"],
-                equipment=["machine", "dumbbell"],
-            )
+        result = await get_substitute_exercise(
+            exercise_name="Barbell Squat",
+            muscle_group="quadriceps",
+            user_id=MOCK_USER_ID,
+            avoided_exercises=["barbell squat", "lunge"],
+            equipment=["machine", "dumbbell"],
+        )
 
         assert result is not None
         assert result["name"] in ["Leg Extension", "Step Up"]
@@ -612,14 +660,13 @@ class TestAutoSubstituteHelpers:
         ]
         mock_supabase.client.table.return_value.select.return_value.or_.return_value.limit.return_value.execute.return_value = mock_result
 
-        with patch("api.v1.workouts.utils.get_supabase_db", return_value=mock_supabase):
-            result = await get_substitute_exercise(
-                exercise_name="Barbell Squat",
-                muscle_group="quadriceps",
-                user_id=MOCK_USER_ID,
-                avoided_exercises=["barbell squat", "lunge"],  # Lunge is also avoided
-                equipment=None,
-            )
+        result = await get_substitute_exercise(
+            exercise_name="Barbell Squat",
+            muscle_group="quadriceps",
+            user_id=MOCK_USER_ID,
+            avoided_exercises=["barbell squat", "lunge"],  # Lunge is also avoided
+            equipment=None,
+        )
 
         # Should return Leg Press, not Lunge
         assert result is not None
@@ -644,14 +691,13 @@ class TestAutoSubstituteHelpers:
             {"name": "Barbell Squat", "muscle_group": "quadriceps", "sets": 4, "reps": "8"},
         ]
 
-        with patch("api.v1.workouts.utils.get_supabase_db", return_value=mock_supabase):
-            result = await auto_substitute_filtered_exercises(
-                exercises=exercises.copy(),
-                filtered_exercises=filtered,
-                user_id=MOCK_USER_ID,
-                avoided_exercises=["barbell squat"],
-                equipment=["dumbbell"],
-            )
+        result = await auto_substitute_filtered_exercises(
+            exercises=exercises.copy(),
+            filtered_exercises=filtered,
+            user_id=MOCK_USER_ID,
+            avoided_exercises=["barbell squat"],
+            equipment=["dumbbell"],
+        )
 
         # Should have added a substitute
         assert len(result) == 2
@@ -665,7 +711,7 @@ class TestInjuryMappings:
 
     def test_detect_injury_type_knee(self):
         """Test detecting knee injury from reason text."""
-        from api.v1.exercise_preferences import detect_injury_type
+        from api.v1.exercise_preferences_endpoints import detect_injury_type
 
         assert detect_injury_type("knee injury") == "knee"
         assert detect_injury_type("my knee hurts") == "knee"
@@ -673,17 +719,27 @@ class TestInjuryMappings:
         assert detect_injury_type("ACL surgery recovery") == "knee"
 
     def test_detect_injury_type_back(self):
-        """Test detecting back injury from reason text."""
-        from api.v1.exercise_preferences import detect_injury_type
+        """Test detecting back injury from reason text.
 
-        assert detect_injury_type("lower back pain") == "back"
-        assert detect_injury_type("spine issues") == "back"
-        assert detect_injury_type("herniated disc") == "back"
-        assert detect_injury_type("lumbar problems") == "back"
+        Used to assert the injury key was ``"back"``. That key was retired: the
+        injury taxonomy standardized on ``"lower_back"`` so a single identifier
+        keys INJURY_KEYWORDS, INJURY_EXERCISE_CONTRAINDICATIONS,
+        INJURY_AVOID_IF_KEYWORDS, SAFE_ALTERNATIVES and
+        INJURY_SAFE_MUSCLE_EXPANSION (``"back"`` is now only a *muscle group*
+        name, which is a different namespace). The guarantee under test is
+        unchanged: every way a user phrases a back problem must resolve to the
+        one back injury type that drives contraindication filtering.
+        """
+        from api.v1.exercise_preferences_endpoints import detect_injury_type
+
+        assert detect_injury_type("lower back pain") == "lower_back"
+        assert detect_injury_type("spine issues") == "lower_back"
+        assert detect_injury_type("herniated disc") == "lower_back"
+        assert detect_injury_type("lumbar problems") == "lower_back"
 
     def test_detect_injury_type_shoulder(self):
         """Test detecting shoulder injury from reason text."""
-        from api.v1.exercise_preferences import detect_injury_type
+        from api.v1.exercise_preferences_endpoints import detect_injury_type
 
         assert detect_injury_type("shoulder injury") == "shoulder"
         assert detect_injury_type("rotator cuff tear") == "shoulder"
@@ -691,20 +747,29 @@ class TestInjuryMappings:
 
     def test_detect_injury_type_no_match(self):
         """Test that non-injury reasons return None."""
-        from api.v1.exercise_preferences import detect_injury_type
+        from api.v1.exercise_preferences_endpoints import detect_injury_type
 
         assert detect_injury_type("I just don't like it") is None
         assert detect_injury_type("prefer other exercises") is None
         assert detect_injury_type("") is None
 
     def test_get_exercise_muscle_group(self):
-        """Test getting muscle group for common exercises."""
-        from api.v1.exercise_preferences import get_exercise_muscle_group
+        """Test getting muscle group for common exercises.
+
+        Used to assert Deadlift -> ``"back"``. That mapping was retired: the
+        classifier feeds substitute retrieval (MUSCLE_TO_LIBRARY_QUERY ->
+        exercise_library_cleaned.display_body_part), and the deadlift family is
+        deliberately bucketed with the posterior chain (``"glutes"``) so a
+        deadlift swap returns hip-hinge alternatives rather than lat/row work.
+        The guarantee under test is unchanged: each common lift resolves to the
+        muscle group used to source its substitutes.
+        """
+        from api.v1.exercise_preferences_endpoints import get_exercise_muscle_group
 
         assert get_exercise_muscle_group("Barbell Squat") == "quadriceps"
         assert get_exercise_muscle_group("Lunge") == "quadriceps"
         assert get_exercise_muscle_group("Bench Press") == "chest"
-        assert get_exercise_muscle_group("Deadlift") == "back"
+        assert get_exercise_muscle_group("Deadlift") == "glutes"
         assert get_exercise_muscle_group("Shoulder Press") == "shoulders"
 
 

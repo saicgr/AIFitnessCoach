@@ -351,13 +351,45 @@ class TestGetVolumeAlerts:
 
 
 class TestAcknowledgeAlert:
-    """Tests for POST /strain-prevention/alerts/{alert_id}/acknowledge"""
+    """Tests for POST /strain-prevention/alerts/{alert_id}/acknowledge
+
+    These two tests exercise a REAL route (unlike most of the paths in this
+    module), so they actually reach the endpoint — which means they hit two
+    call-site problems the other tests never did:
+
+    1. `acknowledge_alert` depends on `get_current_user`, which the tests never
+       overrode, so every request died at 401 before the endpoint ran. Fixed
+       with the standard `app.dependency_overrides` pattern used across this
+       test suite.
+    2. They patched `services.strain_prevention_service.get_supabase_db`, but
+       the endpoint doesn't go through the service — it calls
+       `core.supabase_client.get_supabase` as imported into
+       `api.v1.strain_prevention`. The patch targeted a module the code under
+       test never touches. Now patched where it's looked up.
+
+    Assertions are unchanged in intent (200 on success, 404 when the alert
+    doesn't exist) and are tightened to exact codes now that the request
+    actually reaches the handler.
+    """
+
+    @pytest.fixture(autouse=True)
+    def override_auth(self):
+        """Authenticate requests in this class as MOCK_USER_ID."""
+        from main import app
+        from core.auth import get_current_user
+
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": MOCK_USER_ID,
+            "email": "strain-user@example.com",
+        }
+        yield
+        app.dependency_overrides.pop(get_current_user, None)
 
     def test_acknowledge_alert_success(self, client, mock_supabase):
         """Test successfully acknowledging an alert."""
         mock_db, mock_client = mock_supabase
 
-        with patch("services.strain_prevention_service.get_supabase_db") as mock_get_db:
+        with patch("api.v1.strain_prevention.get_supabase") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -370,13 +402,17 @@ class TestAcknowledgeAlert:
                 f"/api/v1/strain-prevention/alerts/{MOCK_ALERT_ID}/acknowledge",
                 params={"user_id": MOCK_USER_ID}
             )
-            assert response.status_code in [200, 404]
+            assert response.status_code == 200
+            assert response.json()["success"] is True
+            # The update must be scoped to the alert being acknowledged.
+            mock_client.table.assert_called_with("volume_increase_alerts")
+            mock_table.eq.assert_called_with("id", MOCK_ALERT_ID)
 
     def test_acknowledge_alert_not_found(self, client, mock_supabase):
         """Test acknowledging non-existent alert."""
         mock_db, mock_client = mock_supabase
 
-        with patch("services.strain_prevention_service.get_supabase_db") as mock_get_db:
+        with patch("api.v1.strain_prevention.get_supabase") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -415,7 +451,18 @@ class TestGetVolumeCaps:
 
 
 class TestStrainPreventionService:
-    """Unit tests for StrainPreventionService methods."""
+    """Unit tests for StrainPreventionService methods.
+
+    Call-site fix (2026-07): track_workout_volume / assess_strain_risk /
+    record_strain now take a REQUIRED `timezone_str` — "today" and the week
+    boundary are resolved in the user's local timezone (`get_user_today`)
+    rather than on the server clock, so a user in CST doesn't get their week
+    rolled over at 6pm. These tests were still calling the pre-timezone
+    signature and died with TypeError before asserting anything. They now pass
+    an explicit timezone; every assertion below is unchanged.
+    """
+
+    TZ = "America/Chicago"
 
     @pytest.mark.asyncio
     async def test_track_workout_volume(self, mock_supabase):
@@ -443,7 +490,7 @@ class TestStrainPreventionService:
                 {"primary_muscle": "triceps", "sets_completed": 3, "reps_completed": 30, "weight_kg": 20},
             ]
 
-            result = await service.track_workout_volume(MOCK_USER_ID, exercises)
+            result = await service.track_workout_volume(MOCK_USER_ID, exercises, self.TZ)
 
             assert result.total_sets == 7
             assert result.total_reps == 70
@@ -474,7 +521,7 @@ class TestStrainPreventionService:
                 MagicMock(data=[]),
             ]
 
-            assessments = await service.assess_strain_risk(MOCK_USER_ID)
+            assessments = await service.assess_strain_risk(MOCK_USER_ID, self.TZ)
 
             assert len(assessments) == 1
             assert assessments[0].muscle_group == "chest"
@@ -506,7 +553,10 @@ class TestStrainPreventionService:
                 MagicMock(data=[{"id": "cap-123"}]),
             ]
 
-            result = await service.record_strain(MOCK_USER_ID, body_part="chest", severity="moderate")
+            result = await service.record_strain(
+                MOCK_USER_ID, body_part="chest", severity="moderate",
+                timezone_str=self.TZ,
+            )
 
             assert result["recorded"] is True
             assert result["volume_cap_adjusted"] is True

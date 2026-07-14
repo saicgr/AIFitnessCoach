@@ -3,73 +3,31 @@ Pytest for `POST /api/v1/equipment/snap`.
 
 Covers the response shapes for: matched, low-confidence, not-equipment,
 quota_exceeded (429), paywall (402). Vision + extractor + DB are mocked at
-the module boundary; we test the endpoint coroutine directly to avoid
-spinning the full FastAPI app (whose top-level imports require Python 3.10+
-syntax that isn't compatible with this repo's 3.9 venv).
+the module boundary; we test the endpoint coroutine directly rather than
+going through the HTTP layer, so the auth/quota/vision seams stay explicit.
 
 Run with:
-    cd backend && .venv/bin/pytest tests/test_equipment_snap.py -v
+    cd backend && .venv312/bin/pytest tests/test_equipment_snap.py -v
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
-# Top-level helpers from the module under test ---------------------------
+# The module under test, imported normally.
 #
-# IMPORTANT: we cannot do `from api.v1.equipment import snap` because the
-# `api.v1` package __init__ imports `videos.py` which uses Python 3.10+ PEP 604
-# `X | None` syntax. The local repo venv is pinned to 3.9 (the production runtime
-# uses 3.10+). We sidestep that by loading `snap.py` directly via importlib.
-import importlib.util as _il
-import os as _os
-import sys as _sys
-
-# Stub the `core.auth.get_current_user` dependency that snap.py imports at
-# module load time — the real one pulls Supabase clients we don't need here.
-import types as _t
-_core = _t.ModuleType("core")
-_core_auth = _t.ModuleType("core.auth")
-async def _stub_get_current_user(*a, **kw):  # pragma: no cover
-    return {"id": "u"}
-_core_auth.get_current_user = _stub_get_current_user
-_core_db = _t.ModuleType("core.db")
-def _stub_get_supabase_db(*a, **kw):  # pragma: no cover
-    return MagicMock()
-_core_db.get_supabase_db = _stub_get_supabase_db
-_core_logger = _t.ModuleType("core.logger")
-import logging as _logging
-def _stub_get_logger(name): return _logging.getLogger(name)
-_core_logger.get_logger = _stub_get_logger
-_core_config = _t.ModuleType("core.config")
-def _stub_get_settings():  # pragma: no cover
-    return _t.SimpleNamespace(s3_bucket_name="b", aws_access_key_id="x",
-                              aws_secret_access_key="y", aws_default_region="us-east-1")
-_core_config.get_settings = _stub_get_settings
-
-_services = _t.ModuleType("services")
-_services_vision = _t.ModuleType("services.vision_service")
-def _stub_get_vision_service():  # pragma: no cover
-    return MagicMock()
-_services_vision.get_vision_service = _stub_get_vision_service
-_services_extr = _t.ModuleType("services.gym_equipment_extractor")
-class _StubExtractor:  # pragma: no cover
-    def __init__(self, *a, **kw): pass
-_services_extr.GymEquipmentExtractor = _StubExtractor
-
-for _m in (_core, _core_auth, _core_db, _core_logger, _core_config,
-           _services, _services_vision, _services_extr):
-    _sys.modules[_m.__name__] = _m
-
-_HERE = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-_SNAP_PATH = _os.path.join(_HERE, "api", "v1", "equipment", "snap.py")
-_spec = _il.spec_from_file_location("snap_under_test", _SNAP_PATH)
-snap_module = _il.module_from_spec(_spec)
-_spec.loader.exec_module(snap_module)
+# This file used to importlib-load snap.py from its path after shoving stub
+# `core.*` / `services.*` modules into sys.modules, to dodge Python 3.9's
+# inability to parse PEP 604 `X | None` in api/v1/videos.py. That workaround is
+# obsolete — tests/conftest.py already does `from main import app`, so the whole
+# suite requires 3.10+ (prod runs 3.11) — and it was ACTIVELY CORRUPTING other
+# tests: writing to sys.modules at import time replaced the real `core` and
+# `services` packages process-wide for every test module imported afterwards,
+# so unrelated files died with "module 'services' has no attribute ...".
+# Never mutate sys.modules at import time in a test module.
+import api.v1.equipment.snap as snap_module
 
 
 def _fake_db(used_today: int = 0, tier: str = "premium"):
@@ -79,7 +37,7 @@ def _fake_db(used_today: int = 0, tier: str = "premium"):
         db.client.table(X).select(Y).eq(...).gte(...).execute()  → count
         db.client.table('subscriptions').select(...).eq(...).limit(1).execute() → tier
         db.client.table('exercise_library_cleaned').select(...).or_(...).limit(...).execute()
-        db.client.table('workout_set_logs')...
+        db.client.table('performance_logs')...
         db.client.table('snapped_equipment').insert({...}).execute()
     Everything is fluent-chained, so we return self until .execute() is called.
     """
@@ -118,7 +76,12 @@ def _fake_db(used_today: int = 0, tier: str = "premium"):
                      "equipment": "lat pulldown machine",
                      "primary_equipment": "lat_pulldown"},
                 ])
-            if self._t == "workout_set_logs":
+            # Production reranks from performance_logs (snap.py:283 — "Per-set
+            # history lives in performance_logs"). NOTE: `workout_set_logs` does
+            # not exist in the schema — the old fake stubbed a dead table, so the
+            # recently-used boost silently never fired and this fixture was
+            # asserting against a table production has never read.
+            if self._t == "performance_logs":
                 return SimpleNamespace(data=[{"exercise_id": "ex-1"}, {"exercise_id": "ex-1"}])
             return SimpleNamespace(data=[])
 
@@ -261,6 +224,29 @@ async def test_snap_low_confidence_returns_unmatched():
     assert resp.unmatched_reason == "low_confidence"
 
 
+# ---------------------------------------------------------------------------
+# Quota / paywall denial paths.
+#
+# ⚠️  `_upload_to_s3` and `_blur_faces` MUST be patched in these two tests even
+# though a *correctly ordered* endpoint would never reach them. Reason: with the
+# stub `core.config` gone, `get_settings()` inside `_upload_to_s3` reads the real
+# `.env` off disk (core/config.py:262 sets `env_file = ".env"`), so it picks up
+# live AWS credentials and PUTs to the PRODUCTION bucket from a test run.
+#
+# That is not hypothetical — it is REAL BUG 3 (see the run report): production
+# `snap_equipment` blurs and uploads at snap.py:522-523 and only *then* calls
+# `equipment_snap_core`, whose first act is `_check_quota_and_tier`
+# (snap.py:339). So a denied (402/429) request still burns an S3 PutObject and
+# persists a photo of a user who was refused. An un-patched run of this file
+# demonstrably wrote objects into `s3://ai-fitness-coach/snapped_equipment/`.
+#
+# Once snap.py is reordered to check quota BEFORE the upload branch, add this
+# strictly-stronger guarantee to both tests (it fails today, which is the point):
+#     mock_upload.assert_not_awaited()
+# Not added yet only because api/v1/equipment/snap.py is outside this change's
+# ownership and the reorder is a product call (are denied snaps still stored?).
+# ---------------------------------------------------------------------------
+
 @pytest.mark.asyncio
 async def test_snap_paywall_for_free_tier_after_5():
     """Free tier with >=5 snaps in last 24h → 402."""
@@ -270,7 +256,9 @@ async def test_snap_paywall_for_free_tier_after_5():
     fake_image.content_type = "image/jpeg"
     fake_image.read = AsyncMock(return_value=b"x")
 
-    with patch.object(snap_module, "get_supabase_db", return_value=_fake_db(used_today=5, tier="free")):
+    with patch.object(snap_module, "get_supabase_db", return_value=_fake_db(used_today=5, tier="free")), \
+         patch.object(snap_module, "_upload_to_s3", new=AsyncMock(return_value="k")) as mock_upload, \
+         patch.object(snap_module, "_blur_faces", side_effect=lambda b: b):
         with pytest.raises(HTTPException) as ei:
             await snap_module.snap_equipment(
                 request=MagicMock(), image=fake_image, mode="identify",
@@ -290,7 +278,9 @@ async def test_snap_429_when_over_hard_quota():
     fake_image.content_type = "image/jpeg"
     fake_image.read = AsyncMock(return_value=b"x")
 
-    with patch.object(snap_module, "get_supabase_db", return_value=_fake_db(used_today=50, tier="premium")):
+    with patch.object(snap_module, "get_supabase_db", return_value=_fake_db(used_today=50, tier="premium")), \
+         patch.object(snap_module, "_upload_to_s3", new=AsyncMock(return_value="k")) as mock_upload, \
+         patch.object(snap_module, "_blur_faces", side_effect=lambda b: b):
         with pytest.raises(HTTPException) as ei:
             await snap_module.snap_equipment(
                 request=MagicMock(), image=fake_image, mode="identify",

@@ -9,14 +9,22 @@ from fastapi.testclient import TestClient
 from datetime import datetime, timezone
 from uuid import uuid4
 
-# Import your FastAPI app
-# from main import app
-# client = TestClient(app)
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from main import app
+from core.auth import get_current_user
+from models.leaderboard import LeaderboardType, LeaderboardFilter
+from services.leaderboard_service import LeaderboardService
 
 # Mock test data
 MOCK_USER_ID = str(uuid4())
 MOCK_FRIEND_ID = str(uuid4())
 MOCK_STRANGER_ID = str(uuid4())
+# A user who has only completed 3 workouts — below the 10-workout gate that
+# unlocks the global/country boards.
+MOCK_NEW_USER_ID = str(uuid4())
 
 
 class TestLeaderboardEndpoints:
@@ -39,9 +47,16 @@ class TestLeaderboardEndpoints:
         assert data["filter_type"] == "global"
 
     def test_get_global_leaderboard_locked(self, client, new_user_auth_headers):
-        """Test getting global leaderboard when locked (< 10 workouts)."""
+        """Test getting global leaderboard when locked (< 10 workouts).
+
+        NOTE: the endpoint resolves *whose* unlock state to check from the
+        `user_id` QUERY PARAMETER, not from the bearer token, so the new user's
+        id is what has to be sent here (the original test sent MOCK_USER_ID —
+        the unlocked user — with a new-user token, which the handler never
+        looks at, so it could never have produced a 403).
+        """
         response = client.get(
-            f"/api/v1/leaderboard/?user_id={MOCK_USER_ID}&leaderboard_type=challenge_masters&filter_type=global",
+            f"/api/v1/leaderboard/?user_id={MOCK_NEW_USER_ID}&leaderboard_type=challenge_masters&filter_type=global",
             headers=new_user_auth_headers,
         )
 
@@ -229,9 +244,14 @@ class TestLeaderboardEndpoints:
             assert data["progress_percentage"] == 100
 
     def test_get_unlock_status_locked(self, client, new_user_auth_headers):
-        """Test getting unlock status for locked user (< 10 workouts)."""
+        """Test getting unlock status for locked user (< 10 workouts).
+
+        As in test_get_global_leaderboard_locked, the endpoint reads the
+        `user_id` query parameter (not the token) to decide whose unlock state to
+        report, so the locked user's id has to be the one sent.
+        """
         response = client.get(
-            f"/api/v1/leaderboard/unlock-status?user_id={MOCK_USER_ID}",
+            f"/api/v1/leaderboard/unlock-status?user_id={MOCK_NEW_USER_ID}",
             headers=new_user_auth_headers,
         )
 
@@ -400,17 +420,203 @@ class TestLeaderboardDataIntegrity:
 # FIXTURES
 # ============================================================
 
+def _make_rows():
+    """Build a deterministic set of leaderboard view rows.
+
+    Column set is the union of the four leaderboard views
+    (`leaderboard_challenge_masters`, `_volume_kings`, `_streaks`,
+    `_weekly_challenges`) — the API's `_build_leaderboard_entry()` reads a
+    different subset per leaderboard_type, so every row carries all of them.
+    `first_wins` (the challenge_masters order column) is strictly descending by
+    construction, and MOCK_USER_ID / MOCK_FRIEND_ID / MOCK_STRANGER_ID all sit
+    on the board.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    fixed_ids = [MOCK_USER_ID, MOCK_FRIEND_ID, MOCK_STRANGER_ID]
+    rows = []
+    for i in range(12):
+        user_id = fixed_ids[i] if i < len(fixed_ids) else str(uuid4())
+        rows.append({
+            "user_id": user_id,
+            "user_name": f"Athlete {i}",
+            "avatar_url": None,
+            "country_code": "US" if i % 2 == 0 else "CA",
+            # challenge_masters
+            "first_wins": 100 - (i * 5),
+            "win_rate": 0.9 - (i * 0.01),
+            "total_completed": 200 - i,
+            # volume_kings
+            "total_volume_lbs": 500000.0 - (i * 1000),
+            "total_workouts": 300 - i,
+            "avg_volume_per_workout": 1600.0 - i,
+            # streaks
+            "current_streak": 30 - i,
+            "best_streak": 60 - i,
+            # LeaderboardEntry types this as a datetime, so the double supplies
+            # a full timestamp rather than a bare date.
+            "last_workout_date": now,
+            # weekly_challenges
+            "weekly_wins": 12 - i,
+            "weekly_completed": 14 - i,
+            "weekly_win_rate": 0.85 - (i * 0.01),
+            "last_updated": now,
+        })
+    return rows
+
+
+class FakeLeaderboardService:
+    """In-memory stand-in for `LeaderboardService`.
+
+    Mirrors the real service's contract exactly — same method names, same
+    argument names, same return shapes (see services/leaderboard_service.py) —
+    but reads from a fixed row set instead of Supabase views/RPCs. Ordering and
+    paging reuse the production `ORDER_COLUMNS` map so the double cannot drift
+    from the real ordering rules.
+
+    Unlock state is keyed on `user_id`, exactly as the real
+    `check_unlock_status` is: MOCK_USER_ID has 25 completed workouts (unlocked),
+    MOCK_NEW_USER_ID has 3 (still locked out of global/country).
+    """
+
+    WORKOUTS_COMPLETED = {}  # filled in __init__
+
+    def __init__(self):
+        self.rows = _make_rows()
+        self.friend_ids = [MOCK_FRIEND_ID]
+        self.workouts_completed = {
+            MOCK_USER_ID: 25,
+            MOCK_FRIEND_ID: 40,
+            MOCK_STRANGER_ID: 15,
+            MOCK_NEW_USER_ID: 3,
+        }
+        self.known_user_ids = {r["user_id"] for r in self.rows}
+
+    # --- unlock -------------------------------------------------------
+    def check_unlock_status(self, user_id: str, scope: str = "global"):
+        completed = self.workouts_completed.get(user_id, 0)
+        threshold = 1 if scope == "friends" else 10
+        return {
+            "is_unlocked": completed >= threshold,
+            "workouts_completed": completed,
+            "workouts_needed": max(threshold - completed, 0),
+            "threshold": threshold,
+            "days_active": 0,
+        }
+
+    # --- board --------------------------------------------------------
+    def _ordered_rows(self, leaderboard_type, filter_type=None, user_id=None,
+                      country_code=None):
+        if filter_type == LeaderboardFilter.friends:
+            rows = [r for r in self.rows if r["user_id"] in self.friend_ids]
+        elif filter_type == LeaderboardFilter.country:
+            rows = [r for r in self.rows if r["country_code"] == country_code]
+        else:
+            rows = list(self.rows)
+        order_column = LeaderboardService.ORDER_COLUMNS[leaderboard_type]
+        return sorted(rows, key=lambda r: r[order_column], reverse=True)
+
+    def get_leaderboard_entries(self, leaderboard_type, filter_type, user_id,
+                                country_code=None, limit=100, offset=0):
+        rows = self._ordered_rows(leaderboard_type, filter_type, user_id, country_code)
+        return {"entries": rows[offset:offset + limit], "total": len(rows)}
+
+    def _get_friend_ids(self, user_id: str):
+        return list(self.friend_ids)
+
+    def get_strength_scores_for_users(self, user_ids):
+        return {user_id: 750 for user_id in user_ids}
+
+    def get_user_rank(self, user_id, leaderboard_type, country_filter=None):
+        rows = self._ordered_rows(
+            leaderboard_type,
+            LeaderboardFilter.country if country_filter else LeaderboardFilter.global_lb,
+            user_id,
+            country_filter,
+        )
+        for idx, row in enumerate(rows):
+            if row["user_id"] == user_id:
+                rank = idx + 1
+                total = len(rows)
+                percentile = round((1 - (rank - 1) / total) * 100, 1)
+                return {
+                    "rank_info": {
+                        "rank": rank,
+                        "total_users": total,
+                        "percentile": percentile,
+                    },
+                    "stats": row,
+                }
+        return None
+
+    # --- stats --------------------------------------------------------
+    def get_leaderboard_stats(self):
+        total_users = len(self.rows)
+        countries = {r["country_code"] for r in self.rows if r.get("country_code")}
+        total_wins = sum(r["first_wins"] for r in self.rows)
+        return {
+            "total_users": total_users,
+            "total_countries": len(countries),
+            "top_country": "US",
+            "average_wins": round(total_wins / total_users, 1),
+            "highest_streak": max(r["best_streak"] for r in self.rows),
+            "total_volume_lifted": round(sum(r["total_volume_lbs"] for r in self.rows), 0),
+        }
+
+    # --- async challenge ----------------------------------------------
+    def create_async_challenge(self, user_id, target_user_id, workout_log_id=None,
+                               challenge_message="I'm coming for your record! 💪"):
+        # Real service raises ValueError when the target user (or their
+        # workouts) can't be found; the endpoint turns that into a 404.
+        if target_user_id not in self.known_user_ids:
+            raise ValueError("Target user not found")
+        return {
+            "challenge_id": str(uuid4()),
+            "target_user_name": "Athlete 2",
+            "workout_name": "Their Best Workout",
+            "target_stats": {
+                "duration_minutes": 45,
+                "total_volume": 12000,
+                "exercises_count": 6,
+            },
+        }
+
+
 @pytest.fixture
-def client():
-    """FastAPI test client."""
-    # from main import app
-    # return TestClient(app)
-    pass  # Implement with actual app import
+def leaderboard_service(monkeypatch):
+    """Swap the module-level service singleton for the in-memory double.
+
+    `api.v1.leaderboard` builds `leaderboard_service = LeaderboardService()` at
+    import time and every handler calls that object, so patching the attribute on
+    the API module is what routes the endpoints at the fake.
+    """
+    fake = FakeLeaderboardService()
+    monkeypatch.setattr("api.v1.leaderboard.leaderboard_service", fake)
+    return fake
+
+
+@pytest.fixture
+def client(leaderboard_service):
+    """FastAPI test client with the auth dependency satisfied.
+
+    Every leaderboard endpoint is behind `Depends(get_current_user)`, which
+    validates a real Supabase JWT — these are endpoint-behaviour tests, not auth
+    tests, so the dependency is overridden with a fixed identity. Note the
+    handlers read the *user_id query parameter*, not the token, to decide whose
+    board/unlock-state to serve (see NOTE in test_get_global_leaderboard_locked).
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": MOCK_USER_ID,
+        "email": "test@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture
 def auth_headers():
-    """Mock authentication headers for unlocked user."""
+    """Authentication headers for the unlocked user (25 completed workouts)."""
     return {
         "Authorization": "Bearer mock_token",
     }
@@ -418,7 +624,7 @@ def auth_headers():
 
 @pytest.fixture
 def new_user_auth_headers():
-    """Mock authentication headers for new user (< 10 workouts)."""
+    """Authentication headers for a new user (3 completed workouts, < 10)."""
     return {
         "Authorization": "Bearer mock_new_user_token",
     }

@@ -8,6 +8,35 @@ from unittest.mock import patch, MagicMock, AsyncMock
 import json
 
 
+def _hold_set_targets(sets: int, hold_seconds: int) -> list:
+    """Build the per-set targets Gemini's structured schema requires.
+
+    `GeneratedWorkoutResponse` (models/gemini_schemas.py) makes `set_targets`
+    REQUIRED on every exercise, and `validate_set_targets_strict` raises if it
+    is missing — so a realistic mocked Gemini response must carry them.
+    """
+    return [
+        {
+            "set_number": i + 1,
+            "set_type": "working",
+            "target_reps": 1,
+            "target_weight_kg": None,
+            "target_hold_seconds": hold_seconds,
+            "target_rpe": 4,
+            "target_rir": 4,
+        }
+        for i in range(sets)
+    ]
+
+
+def _gemini_response(workout: dict) -> MagicMock:
+    """A google.genai structured-output response: `.parsed` holds the object."""
+    response = MagicMock()
+    response.parsed = workout
+    response.text = json.dumps(workout)
+    return response
+
+
 class TestMobilityWorkoutType:
     """Tests for mobility workout type generation."""
 
@@ -22,14 +51,23 @@ class TestMobilityWorkoutType:
         assert 'recovery' in valid_types
 
     @pytest.mark.asyncio
-    @patch('services.gemini_service.genai')
-    async def test_mobility_workout_prompt_generated(self, mock_genai):
-        """Test that mobility workout generates correct prompt elements."""
+    @patch('services.gemini.workout_generation_helpers.gemini_generate_with_retry')
+    async def test_mobility_workout_prompt_generated(self, mock_generate):
+        """Test that mobility workout generates correct prompt elements.
+
+        Mock target updated (2026-07): the service migrated off the legacy
+        `google.generativeai` SDK (`genai.GenerativeModel(...).generate_content_async`)
+        onto the `google.genai` client, which is reached exclusively through
+        `services.gemini.constants.gemini_generate_with_retry` and returns a
+        structured-output response read via `response.parsed`. The old
+        `services.gemini_service.genai` patch target no longer exists.
+        Assertions are unchanged.
+        """
         from services.gemini_service import GeminiService
 
-        # Mock the Gemini response
-        mock_response = MagicMock()
-        mock_response.text = json.dumps({
+        # Mock the Gemini response (structured output — matches GeneratedWorkoutResponse,
+        # which makes set_targets REQUIRED on every exercise).
+        workout_json = {
             "name": "Zen Flow Flexibility",
             "type": "mobility",
             "difficulty": "beginner",
@@ -45,7 +83,8 @@ class TestMobilityWorkoutType:
                     "equipment": "bodyweight",
                     "muscle_group": "hips",
                     "is_unilateral": True,
-                    "notes": "Hold each side, breathe deeply"
+                    "notes": "Hold each side, breathe deeply",
+                    "set_targets": _hold_set_targets(2, hold_seconds=45),
                 },
                 {
                     "name": "Downward Dog",
@@ -56,15 +95,14 @@ class TestMobilityWorkoutType:
                     "equipment": "bodyweight",
                     "muscle_group": "full body",
                     "is_unilateral": False,
-                    "notes": "Press heels toward ground"
+                    "notes": "Press heels toward ground",
+                    "set_targets": _hold_set_targets(3, hold_seconds=30),
                 }
             ],
             "notes": "Focus on breathing throughout"
-        })
+        }
 
-        mock_model = MagicMock()
-        mock_model.generate_content_async = AsyncMock(return_value=mock_response)
-        mock_genai.GenerativeModel.return_value = mock_model
+        mock_generate.return_value = _gemini_response(workout_json)
 
         service = GeminiService()
         result = await service.generate_workout_plan(
@@ -82,13 +120,16 @@ class TestMobilityWorkoutType:
         assert len(exercises_with_hold) >= 1, "Mobility workout should have exercises with hold_seconds"
 
     @pytest.mark.asyncio
-    @patch('services.gemini_service.genai')
-    async def test_recovery_workout_prompt_generated(self, mock_genai):
-        """Test that recovery workout generates correct prompt elements."""
+    @patch('services.gemini.workout_generation_helpers.gemini_generate_with_retry')
+    async def test_recovery_workout_prompt_generated(self, mock_generate):
+        """Test that recovery workout generates correct prompt elements.
+
+        Mock target updated (2026-07) for the same google.genai SDK migration
+        described on test_mobility_workout_prompt_generated. Assertions unchanged.
+        """
         from services.gemini_service import GeminiService
 
-        mock_response = MagicMock()
-        mock_response.text = json.dumps({
+        workout_json = {
             "name": "Gentle Recovery Flow",
             "type": "recovery",
             "difficulty": "easy",
@@ -103,7 +144,8 @@ class TestMobilityWorkoutType:
                     "rest_seconds": 0,
                     "equipment": "none",
                     "muscle_group": "legs",
-                    "notes": "Easy pace, focus on breathing"
+                    "notes": "Easy pace, focus on breathing",
+                    "set_targets": _hold_set_targets(1, hold_seconds=300),
                 },
                 {
                     "name": "Gentle Quad Stretch",
@@ -114,15 +156,14 @@ class TestMobilityWorkoutType:
                     "equipment": "bodyweight",
                     "muscle_group": "quads",
                     "is_unilateral": True,
-                    "notes": "Hold wall for balance"
+                    "notes": "Hold wall for balance",
+                    "set_targets": _hold_set_targets(2, hold_seconds=60),
                 }
             ],
             "notes": "This is an active recovery session"
-        })
+        }
 
-        mock_model = MagicMock()
-        mock_model.generate_content_async = AsyncMock(return_value=mock_response)
-        mock_genai.GenerativeModel.return_value = mock_model
+        mock_generate.return_value = _gemini_response(workout_json)
 
         service = GeminiService()
         result = await service.generate_workout_plan(

@@ -19,6 +19,7 @@ from datetime import datetime, timezone, timedelta
 import uuid
 
 from main import app
+from core.auth import get_current_user
 from models.workout_challenges import (
     ChallengeStatus, NotificationType,
     SendChallengeRequest, CompleteChallengeRequest, AbandonChallengeRequest,
@@ -31,6 +32,36 @@ client = TestClient(app)
 # ============================================================
 # FIXTURES
 # ============================================================
+
+@pytest.fixture
+def sample_user_id():
+    """Sample user ID for testing.
+
+    This is also the identity the auth dependency is stubbed to return (see
+    `auth_as_sample_user`), because the challenges endpoints take the acting
+    user from the verified token — `user_id = str(current_user["id"])` — and no
+    longer trust the `?user_id=` query param.
+    """
+    return str(uuid.uuid4())
+
+
+@pytest.fixture(autouse=True)
+def auth_as_sample_user(sample_user_id):
+    """Authenticate every request in this module as `sample_user_id`.
+
+    The challenges endpoints are behind `Depends(get_current_user)` (Supabase
+    JWT). These tests cover challenge BUSINESS LOGIC, not authentication, so the
+    auth dependency is overridden with a stub user; without it every request
+    401s before the handler runs. The override is removed after each test so the
+    shared `main.app` object is not left mutated for other test modules.
+    """
+    async def _current_user():
+        return {"id": sample_user_id, "email": "test@example.com"}
+
+    app.dependency_overrides[get_current_user] = _current_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
 
 @pytest.fixture
 def mock_supabase():
@@ -50,12 +81,6 @@ def mock_social_rag():
         rag_mock.get_social_collection.return_value = collection_mock
         mock.return_value = rag_mock
         yield rag_mock, collection_mock
-
-
-@pytest.fixture
-def sample_user_id():
-    """Sample user ID for testing."""
-    return str(uuid.uuid4())
 
 
 @pytest.fixture
@@ -626,9 +651,19 @@ class TestChallengeNotifications:
     """Test challenge notifications."""
 
     def test_get_notifications(self, mock_supabase, sample_user_id):
-        """Test getting challenge notifications."""
+        """Test getting challenge notifications.
+
+        The embedded `challenge` is a FULL workout_challenges row: the endpoint
+        selects `*, challenge:workout_challenges(*)`, so PostgREST returns every
+        column of the joined challenge, and it is parsed into the nested
+        `WorkoutChallenge` model. The old mock embedded only {id, workout_name},
+        a shape the database can never return, so response validation failed on
+        the nested model's required fields (from_user_id, workout_data, status,
+        created_at, expires_at, ...). Assertions are unchanged.
+        """
         notification_id = str(uuid.uuid4())
         challenge_id = str(uuid.uuid4())
+        challenger_id = str(uuid.uuid4())
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(
             data=[{
@@ -640,7 +675,15 @@ class TestChallengeNotifications:
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "challenge": {
                     "id": challenge_id,
+                    "from_user_id": challenger_id,
+                    "to_user_id": sample_user_id,
                     "workout_name": "Leg Day",
+                    "workout_data": {"duration_minutes": 45, "total_volume": 5000},
+                    "status": "pending",
+                    "is_retry": False,
+                    "retry_count": 0,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
                 },
             }],
             count=1

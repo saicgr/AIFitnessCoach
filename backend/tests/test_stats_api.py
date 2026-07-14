@@ -14,6 +14,26 @@ from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime, timedelta
 from fastapi.testclient import TestClient
 
+from main import app
+from core.auth import get_current_user
+
+
+@pytest.fixture(autouse=True)
+def override_auth():
+    """Authenticate every request in this module.
+
+    All /stats endpoints are gated by `Depends(get_current_user)`. Without an
+    override the TestClient sends no Authorization header, so every request is
+    rejected with 401 before the endpoint body runs and none of the aggregation
+    assertions below are actually exercised.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "test-user-123",
+        "email": "test-user-123@example.com",
+    }
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
 
 # Mock data generators
 def generate_mock_workout_logs(user_id: str, count: int = 10):

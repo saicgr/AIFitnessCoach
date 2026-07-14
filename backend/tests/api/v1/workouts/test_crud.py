@@ -7,12 +7,47 @@ Tests cover:
 - GET /{id} - Get workout by ID
 - PUT /{id} - Update workout
 - DELETE /{id} - Delete workout
-- POST /{id}/complete - Complete workout
+- POST /{id}/complete - Complete workout (now lives in crud_completion.py)
+
+CALLING CONVENTION
+------------------
+These tests invoke the endpoint coroutines DIRECTLY (no TestClient), so FastAPI
+never runs the dependency injector for them. Two things therefore have to be
+supplied by hand, or the handler blows up before it reaches the behavior under
+test:
+
+1. `current_user` — every handler declares `current_user: dict = Depends(get_current_user)`.
+   Called directly, that default is the raw `Depends` marker object, and the
+   first `current_user["id"]` / ownership check dies with
+   "'Depends' object is not subscriptable". We pass AUTH_USER explicitly.
+   AUTH_USER["id"] matches the mock rows' `user_id` so `verify_user_ownership` /
+   `verify_resource_ownership` see the owner, not a stranger.
+
+2. `background_tasks` — `create_workout` / `update_workout` / `complete_workout`
+   take a `BackgroundTasks` param (RAG indexing was moved off the request path),
+   which has no default. A real `BackgroundTasks()` is passed so the
+   `add_task(...)` calls are exercised rather than mocked away.
 """
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
-from fastapi import HTTPException, BackgroundTasks
+from fastapi import HTTPException, BackgroundTasks, Request
+
+
+# The identity the (bypassed) auth dependency would have returned. Must match
+# the `user_id` on the mocked workout rows so ownership checks pass.
+AUTH_USER = {"id": "user-1", "email": "user-1@example.com"}
+
+
+def _make_request() -> Request:
+    """Minimal ASGI Request — `complete_workout` reads headers for timezone."""
+    return Request({
+        "type": "http",
+        "method": "POST",
+        "path": "/",
+        "headers": [],
+        "query_string": b"",
+    })
 
 
 class TestCreateWorkout:
@@ -49,7 +84,11 @@ class TestCreateWorkout:
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with patch("api.v1.workouts.crud.index_workout_to_rag", new_callable=AsyncMock):
-                result = await create_workout(workout_create)
+                result = await create_workout(
+                    workout_create,
+                    background_tasks=BackgroundTasks(),
+                    current_user=AUTH_USER,
+                )
 
         assert result.id == "new-workout-id"
         assert result.name == "Test Workout"
@@ -85,7 +124,11 @@ class TestCreateWorkout:
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with patch("api.v1.workouts.crud.index_workout_to_rag", new_callable=AsyncMock):
-                result = await create_workout(workout_create)
+                result = await create_workout(
+                    workout_create,
+                    background_tasks=BackgroundTasks(),
+                    current_user=AUTH_USER,
+                )
 
         assert result.name == "Test"
 
@@ -119,7 +162,7 @@ class TestListWorkouts:
         ]
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
-            result = await list_workouts(user_id="user-1")
+            result = await list_workouts(user_id="user-1", current_user=AUTH_USER)
 
         assert len(result) == 2
         assert result[0].name == "Workout 1"
@@ -138,7 +181,8 @@ class TestListWorkouts:
                 user_id="user-1",
                 is_completed=False,
                 from_date=datetime(2024, 1, 1),
-                limit=10
+                limit=10,
+                current_user=AUTH_USER,
             )
 
         assert result == []
@@ -164,7 +208,7 @@ class TestGetWorkout:
         }
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
-            result = await get_workout("workout-1")
+            result = await get_workout("workout-1", current_user=AUTH_USER)
 
         assert result.id == "workout-1"
         assert result.name == "Test Workout"
@@ -179,7 +223,7 @@ class TestGetWorkout:
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with pytest.raises(HTTPException) as exc_info:
-                await get_workout("nonexistent-id")
+                await get_workout("nonexistent-id", current_user=AUTH_USER)
 
         assert exc_info.value.status_code == 404
 
@@ -215,7 +259,12 @@ class TestUpdateWorkout:
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with patch("api.v1.workouts.crud.index_workout_to_rag", new_callable=AsyncMock):
-                result = await update_workout("workout-1", update_data)
+                result = await update_workout(
+                    update_data,
+                    background_tasks=BackgroundTasks(),
+                    workout_id="workout-1",
+                    current_user=AUTH_USER,
+                )
 
         assert result.name == "New Name"
 
@@ -230,7 +279,12 @@ class TestUpdateWorkout:
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with pytest.raises(HTTPException) as exc_info:
-                await update_workout("nonexistent-id", WorkoutUpdate(name="Test"))
+                await update_workout(
+                    WorkoutUpdate(name="Test"),
+                    background_tasks=BackgroundTasks(),
+                    workout_id="nonexistent-id",
+                    current_user=AUTH_USER,
+                )
 
         assert exc_info.value.status_code == 404
 
@@ -250,7 +304,7 @@ class TestDeleteWorkout:
         }
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
-            result = await delete_workout("workout-1")
+            result = await delete_workout("workout-1", current_user=AUTH_USER)
 
         assert result["message"] == "Workout deleted successfully"
         mock_db.delete_workout.assert_called_once()
@@ -265,18 +319,23 @@ class TestDeleteWorkout:
 
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with pytest.raises(HTTPException) as exc_info:
-                await delete_workout("nonexistent-id")
+                await delete_workout("nonexistent-id", current_user=AUTH_USER)
 
         assert exc_info.value.status_code == 404
 
 
 class TestCompleteWorkout:
-    """Tests for complete_workout endpoint."""
+    """Tests for complete_workout endpoint.
+
+    `complete_workout` was extracted from crud.py into crud_completion.py (its
+    router is re-included by crud.py, so the HTTP route is unchanged) — hence the
+    import + patch targets point at `api.v1.workouts.crud_completion`.
+    """
 
     @pytest.mark.asyncio
     async def test_complete_workout_success(self):
         """Test successful workout completion."""
-        from api.v1.workouts.crud import complete_workout
+        from api.v1.workouts.crud_completion import complete_workout
 
         mock_db = MagicMock()
         mock_db.get_workout.return_value = {
@@ -300,23 +359,34 @@ class TestCompleteWorkout:
 
         mock_background_tasks = MagicMock(spec=BackgroundTasks)
 
-        with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
-            with patch("api.v1.workouts.crud.index_workout_to_rag", new_callable=AsyncMock):
-                result = await complete_workout("workout-1", mock_background_tasks)
+        with patch("api.v1.workouts.crud_completion.get_supabase_db", return_value=mock_db):
+            with patch("api.v1.workouts.crud_completion.index_workout_to_rag", new_callable=AsyncMock):
+                result = await complete_workout(
+                    request=_make_request(),
+                    workout_id="workout-1",
+                    background_tasks=mock_background_tasks,
+                    completion_method="tracked",
+                    current_user=AUTH_USER,
+                )
 
         assert result.workout.is_completed is True
 
     @pytest.mark.asyncio
     async def test_complete_workout_not_found(self):
         """Test complete workout not found raises 404."""
-        from api.v1.workouts.crud import complete_workout
+        from api.v1.workouts.crud_completion import complete_workout
 
         mock_db = MagicMock()
         mock_db.get_workout.return_value = None
         mock_background_tasks = MagicMock(spec=BackgroundTasks)
 
-        with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
+        with patch("api.v1.workouts.crud_completion.get_supabase_db", return_value=mock_db):
             with pytest.raises(HTTPException) as exc_info:
-                await complete_workout("nonexistent-id", mock_background_tasks)
+                await complete_workout(
+                    request=_make_request(),
+                    workout_id="nonexistent-id",
+                    background_tasks=mock_background_tasks,
+                    current_user=AUTH_USER,
+                )
 
         assert exc_info.value.status_code == 404

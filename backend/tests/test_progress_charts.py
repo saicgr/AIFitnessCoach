@@ -14,6 +14,10 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from fastapi.testclient import TestClient
+
+from main import app
+from core.auth import get_current_user
 from api.v1.progress import (
     TimeRange,
     ChartType,
@@ -32,6 +36,54 @@ from api.v1.progress import (
     _calculate_volume_trend,
     _calculate_exercise_improvement,
 )
+
+
+TEST_USER_ID = "test-user"
+
+
+@pytest.fixture(autouse=True)
+def stub_progress_db():
+    """Keep the progress endpoints off the real database.
+
+    The `test_endpoint_exists` tests were previously stopped by the auth
+    dependency (401) before the handler ran. Now that auth is overridden they
+    execute for real — and POST /progress/log-view *inserts* a row into
+    progress_charts_views, so an un-stubbed run would write junk analytics rows
+    to production on every test run (and make live reads for a user that does
+    not exist).
+
+    Tests that need specific rows back re-patch this same target with their own
+    @patch decorator, which takes precedence for the duration of the test.
+    """
+    with patch('api.v1.progress.get_supabase_db') as mock_db:
+        yield mock_db
+
+
+@pytest.fixture
+def client():
+    """TestClient with the progress routes' auth dependency satisfied.
+
+    Every /api/v1/progress/* route now declares
+    `current_user: dict = Depends(get_current_user)` — progress data is private
+    per-user, so an unauthenticated call is rejected with 401 before the handler
+    ever runs. These endpoint tests were written before that dependency existed
+    and called the routes anonymously, so they asserted `401 == 200`.
+
+    Overriding the dependency (FastAPI's supported way to test a protected
+    route) is a fix to HOW the test calls the endpoint. Nothing about WHAT the
+    tests assert (status 200 + payload shape) changed. This shadows conftest's
+    unauthenticated `client` fixture for this module only, and the override is
+    removed on teardown so it cannot leak into other test modules.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": TEST_USER_ID,
+        "auth_id": TEST_USER_ID,
+        "email": "progress-tests@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 # ============================================================================

@@ -42,6 +42,34 @@ def mock_email_service():
 
 
 @pytest.fixture
+def mock_http_request():
+    """Minimal real Request for endpoints that now require ``http_request``.
+
+    A rate limiter was added to these endpoint functions, giving them a
+    required ``http_request: Request`` parameter. The tests call the
+    endpoint functions directly (not through FastAPI's TestClient), so a
+    Request instance has to be supplied by hand. The only thing these
+    endpoints actually do with it is ``user_today_date(http_request)`` ->
+    ``resolve_timezone()``, which reads ``request.headers.get("x-user-timezone")``
+    (and falls back to UTC when absent) -- so a real ``starlette.requests.Request``
+    built over a minimal ASGI scope (with a client tuple, for parity with the
+    IP-based rate limiter's ``request.client.host`` usage elsewhere) is enough,
+    rather than hand-mocking the Headers API.
+    """
+    from starlette.requests import Request
+
+    scope = {
+        "type": "http",
+        "method": "POST",
+        "path": "/",
+        "headers": [],
+        "client": ("127.0.0.1", 12345),
+        "query_string": b"",
+    }
+    return Request(scope)
+
+
+@pytest.fixture
 def sample_user_id():
     return "user-123-abc"
 
@@ -109,7 +137,7 @@ class TestEmailStatus:
 class TestSendDailyReminders:
     """Test daily reminder sending endpoint."""
 
-    def test_send_daily_reminders_success(self, mock_supabase_db, mock_email_service, sample_user, sample_workout):
+    def test_send_daily_reminders_success(self, mock_supabase_db, mock_email_service, sample_user, sample_workout, mock_http_request):
         """Test successful daily reminder sending."""
         from api.v1.reminders import send_daily_reminders
         import asyncio
@@ -118,14 +146,14 @@ class TestSendDailyReminders:
         mock_supabase_db.list_current_workouts.return_value = [sample_workout]
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_daily_reminders()
+            send_daily_reminders(mock_http_request)
         )
 
         assert result.success is True
         assert result.sent_count == 1
         assert result.failed_count == 0
 
-    def test_send_daily_reminders_no_workouts(self, mock_supabase_db, mock_email_service, sample_user):
+    def test_send_daily_reminders_no_workouts(self, mock_supabase_db, mock_email_service, sample_user, mock_http_request):
         """Test daily reminders when users have no workouts."""
         from api.v1.reminders import send_daily_reminders
         import asyncio
@@ -134,13 +162,13 @@ class TestSendDailyReminders:
         mock_supabase_db.list_current_workouts.return_value = []
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_daily_reminders()
+            send_daily_reminders(mock_http_request)
         )
 
         assert result.sent_count == 0
         assert result.failed_count == 0
 
-    def test_send_daily_reminders_no_email(self, mock_supabase_db, mock_email_service, sample_workout):
+    def test_send_daily_reminders_no_email(self, mock_supabase_db, mock_email_service, sample_workout, mock_http_request):
         """Test daily reminders when user has no email."""
         from api.v1.reminders import send_daily_reminders
         import asyncio
@@ -150,13 +178,13 @@ class TestSendDailyReminders:
         mock_supabase_db.list_current_workouts.return_value = [sample_workout]
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_daily_reminders()
+            send_daily_reminders(mock_http_request)
         )
 
         assert result.sent_count == 0
         assert result.failed_count == 1
 
-    def test_send_daily_reminders_email_not_configured(self, mock_supabase_db, mock_email_service):
+    def test_send_daily_reminders_email_not_configured(self, mock_supabase_db, mock_email_service, mock_http_request):
         """Test daily reminders when email service is not configured."""
         from api.v1.reminders import send_daily_reminders
         from fastapi import HTTPException
@@ -166,12 +194,12 @@ class TestSendDailyReminders:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                send_daily_reminders()
+                send_daily_reminders(mock_http_request)
             )
 
         assert exc_info.value.status_code == 503
 
-    def test_send_daily_reminders_with_target_date(self, mock_supabase_db, mock_email_service, sample_user, sample_workout):
+    def test_send_daily_reminders_with_target_date(self, mock_supabase_db, mock_email_service, sample_user, sample_workout, mock_http_request):
         """Test daily reminders with specific target date."""
         from api.v1.reminders import send_daily_reminders
         import asyncio
@@ -180,7 +208,7 @@ class TestSendDailyReminders:
         mock_supabase_db.list_current_workouts.return_value = [sample_workout]
 
         asyncio.get_event_loop().run_until_complete(
-            send_daily_reminders(target_date="2025-01-15")
+            send_daily_reminders(mock_http_request, target_date="2025-01-15")
         )
 
         # Verify the date was used in the query
@@ -188,7 +216,7 @@ class TestSendDailyReminders:
         assert call_args[1]["from_date"] == "2025-01-15"
         assert call_args[1]["to_date"] == "2025-01-15"
 
-    def test_send_daily_reminders_invalid_date(self, mock_supabase_db, mock_email_service):
+    def test_send_daily_reminders_invalid_date(self, mock_supabase_db, mock_email_service, mock_http_request):
         """Test daily reminders with invalid date format."""
         from api.v1.reminders import send_daily_reminders
         from fastapi import HTTPException
@@ -196,12 +224,12 @@ class TestSendDailyReminders:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                send_daily_reminders(target_date="invalid-date")
+                send_daily_reminders(mock_http_request, target_date="invalid-date")
             )
 
         assert exc_info.value.status_code == 400
 
-    def test_send_daily_reminders_email_failure(self, mock_supabase_db, mock_email_service, sample_user, sample_workout):
+    def test_send_daily_reminders_email_failure(self, mock_supabase_db, mock_email_service, sample_user, sample_workout, mock_http_request):
         """Test handling email send failures."""
         from api.v1.reminders import send_daily_reminders
         import asyncio
@@ -213,7 +241,7 @@ class TestSendDailyReminders:
         )
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_daily_reminders()
+            send_daily_reminders(mock_http_request)
         )
 
         assert result.sent_count == 0
@@ -227,7 +255,7 @@ class TestSendDailyReminders:
 class TestSendUserReminder:
     """Test single user reminder endpoint."""
 
-    def test_send_user_reminder_success(self, mock_supabase_db, mock_email_service, sample_user, sample_workout, sample_user_id):
+    def test_send_user_reminder_success(self, mock_supabase_db, mock_email_service, sample_user, sample_workout, sample_user_id, mock_http_request):
         """Test successful single user reminder."""
         from api.v1.reminders import send_user_reminder
         import asyncio
@@ -236,13 +264,13 @@ class TestSendUserReminder:
         mock_supabase_db.list_current_workouts.return_value = [sample_workout]
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_user_reminder(sample_user_id)
+            send_user_reminder(sample_user_id, mock_http_request)
         )
 
         assert result.success is True
         assert "john@example.com" in result.message
 
-    def test_send_user_reminder_user_not_found(self, mock_supabase_db, mock_email_service, sample_user_id):
+    def test_send_user_reminder_user_not_found(self, mock_supabase_db, mock_email_service, sample_user_id, mock_http_request):
         """Test reminder for non-existent user."""
         from api.v1.reminders import send_user_reminder
         from fastapi import HTTPException
@@ -252,12 +280,12 @@ class TestSendUserReminder:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                send_user_reminder(sample_user_id)
+                send_user_reminder(sample_user_id, mock_http_request)
             )
 
         assert exc_info.value.status_code == 404
 
-    def test_send_user_reminder_no_workouts(self, mock_supabase_db, mock_email_service, sample_user, sample_user_id):
+    def test_send_user_reminder_no_workouts(self, mock_supabase_db, mock_email_service, sample_user, sample_user_id, mock_http_request):
         """Test reminder when user has no workouts scheduled."""
         from api.v1.reminders import send_user_reminder
         import asyncio
@@ -266,13 +294,13 @@ class TestSendUserReminder:
         mock_supabase_db.list_current_workouts.return_value = []
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_user_reminder(sample_user_id)
+            send_user_reminder(sample_user_id, mock_http_request)
         )
 
         assert result.success is False
         assert "No workouts scheduled" in result.message
 
-    def test_send_user_reminder_no_email(self, mock_supabase_db, mock_email_service, sample_workout, sample_user_id):
+    def test_send_user_reminder_no_email(self, mock_supabase_db, mock_email_service, sample_workout, sample_user_id, mock_http_request):
         """Test reminder when user has no email configured."""
         from api.v1.reminders import send_user_reminder
         from fastapi import HTTPException
@@ -284,12 +312,12 @@ class TestSendUserReminder:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                send_user_reminder(sample_user_id)
+                send_user_reminder(sample_user_id, mock_http_request)
             )
 
         assert exc_info.value.status_code == 400
 
-    def test_send_user_reminder_email_failure(self, mock_supabase_db, mock_email_service, sample_user, sample_workout, sample_user_id):
+    def test_send_user_reminder_email_failure(self, mock_supabase_db, mock_email_service, sample_user, sample_workout, sample_user_id, mock_http_request):
         """Test handling email send failure."""
         from api.v1.reminders import send_user_reminder
         from fastapi import HTTPException
@@ -303,7 +331,7 @@ class TestSendUserReminder:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                send_user_reminder(sample_user_id)
+                send_user_reminder(sample_user_id, mock_http_request)
             )
 
         assert exc_info.value.status_code == 500
@@ -316,19 +344,19 @@ class TestSendUserReminder:
 class TestSendTestReminder:
     """Test test reminder endpoint."""
 
-    def test_send_test_reminder_success(self, mock_email_service):
+    def test_send_test_reminder_success(self, mock_email_service, mock_http_request):
         """Test successful test reminder."""
         from api.v1.reminders import send_test_reminder
         import asyncio
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_test_reminder("test@example.com")
+            send_test_reminder("test@example.com", mock_http_request)
         )
 
         assert result["success"] is True
         assert result["email_id"] == "email-123"
 
-    def test_send_test_reminder_not_configured(self, mock_email_service):
+    def test_send_test_reminder_not_configured(self, mock_email_service, mock_http_request):
         """Test test reminder when email not configured."""
         from api.v1.reminders import send_test_reminder
         from fastapi import HTTPException
@@ -338,12 +366,12 @@ class TestSendTestReminder:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                send_test_reminder("test@example.com")
+                send_test_reminder("test@example.com", mock_http_request)
             )
 
         assert exc_info.value.status_code == 503
 
-    def test_send_test_reminder_failure(self, mock_email_service):
+    def test_send_test_reminder_failure(self, mock_email_service, mock_http_request):
         """Test test reminder failure."""
         from api.v1.reminders import send_test_reminder
         from fastapi import HTTPException
@@ -355,7 +383,7 @@ class TestSendTestReminder:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                send_test_reminder("invalid-email")
+                send_test_reminder("invalid-email", mock_http_request)
             )
 
         assert exc_info.value.status_code == 500
@@ -406,7 +434,7 @@ class TestReminderModels:
 class TestEdgeCases:
     """Test edge cases and special scenarios."""
 
-    def test_preferences_as_string(self, mock_supabase_db, mock_email_service, sample_workout, sample_user_id):
+    def test_preferences_as_string(self, mock_supabase_db, mock_email_service, sample_workout, sample_user_id, mock_http_request):
         """Test handling preferences stored as JSON string."""
         from api.v1.reminders import send_user_reminder
         import asyncio
@@ -421,12 +449,12 @@ class TestEdgeCases:
         mock_supabase_db.list_current_workouts.return_value = [sample_workout]
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_user_reminder(sample_user_id)
+            send_user_reminder(sample_user_id, mock_http_request)
         )
 
         assert result.success is True
 
-    def test_exercises_as_list(self, mock_supabase_db, mock_email_service, sample_user, sample_user_id):
+    def test_exercises_as_list(self, mock_supabase_db, mock_email_service, sample_user, sample_user_id, mock_http_request):
         """Test handling exercises_json as list instead of string."""
         from api.v1.reminders import send_user_reminder
         import asyncio
@@ -441,12 +469,12 @@ class TestEdgeCases:
         mock_supabase_db.list_current_workouts.return_value = [workout_with_list]
 
         result = asyncio.get_event_loop().run_until_complete(
-            send_user_reminder(sample_user_id)
+            send_user_reminder(sample_user_id, mock_http_request)
         )
 
         assert result.success is True
 
-    def test_malformed_exercises_json(self, mock_supabase_db, mock_email_service, sample_user, sample_user_id):
+    def test_malformed_exercises_json(self, mock_supabase_db, mock_email_service, sample_user, sample_user_id, mock_http_request):
         """Test handling malformed exercises_json."""
         from api.v1.reminders import send_user_reminder
         import asyncio
@@ -462,7 +490,7 @@ class TestEdgeCases:
 
         # Should still send reminder with empty exercises
         result = asyncio.get_event_loop().run_until_complete(
-            send_user_reminder(sample_user_id)
+            send_user_reminder(sample_user_id, mock_http_request)
         )
 
         assert result.success is True

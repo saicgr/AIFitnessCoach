@@ -39,7 +39,9 @@ def sample_workout_performances():
         workout_id=1,
         user_id=100,
         workout_name="Push Day",
+        workout_type="strength",
         scheduled_date=today - timedelta(days=2),
+        started_at=today - timedelta(days=2),
         exercises=[
             ExercisePerformance(
                 exercise_id="bench_press",
@@ -65,7 +67,9 @@ def sample_workout_performances():
         workout_id=2,
         user_id=100,
         workout_name="Leg Day",
+        workout_type="strength",
         scheduled_date=today - timedelta(days=1),
+        started_at=today - timedelta(days=1),
         exercises=[
             ExercisePerformance(
                 exercise_id="squat",
@@ -193,7 +197,9 @@ class TestCalculateWeeklyVolume:
                 workout_id=i,
                 user_id=100,
                 workout_name=f"Workout {i}",
+                workout_type="strength",
                 scheduled_date=today - timedelta(days=i),
+                started_at=today - timedelta(days=i),
                 exercises=[
                     ExercisePerformance(
                         exercise_id="bench_press",
@@ -243,7 +249,9 @@ class TestCalculateWeeklyVolume:
             workout_id=1,
             user_id=100,
             workout_name="Chest Day",
+            workout_type="strength",
             scheduled_date=today,
+            started_at=today,
             exercises=[
                 ExercisePerformance(
                     exercise_id="bench_press",
@@ -504,7 +512,9 @@ class TestVolumeTrackingIntegration:
         # Monday: Chest
         workouts.append(WorkoutPerformance(
             workout_id=1, user_id=100, workout_name="Chest Day",
+            workout_type="strength",
             scheduled_date=today - timedelta(days=6),
+            started_at=today - timedelta(days=6),
             exercises=[
                 ExercisePerformance(
                     exercise_id="bench", exercise_name="Bench Press",
@@ -519,7 +529,9 @@ class TestVolumeTrackingIntegration:
         # Wednesday: Back
         workouts.append(WorkoutPerformance(
             workout_id=2, user_id=100, workout_name="Back Day",
+            workout_type="strength",
             scheduled_date=today - timedelta(days=4),
+            started_at=today - timedelta(days=4),
             exercises=[
                 ExercisePerformance(
                     exercise_id="rows", exercise_name="Rows",
@@ -534,7 +546,9 @@ class TestVolumeTrackingIntegration:
         # Friday: Legs
         workouts.append(WorkoutPerformance(
             workout_id=3, user_id=100, workout_name="Leg Day",
+            workout_type="strength",
             scheduled_date=today - timedelta(days=2),
+            started_at=today - timedelta(days=2),
             exercises=[
                 ExercisePerformance(
                     exercise_id="squat", exercise_name="Squat",

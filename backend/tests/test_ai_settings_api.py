@@ -21,6 +21,17 @@ from datetime import datetime
 # FIXTURES
 # ============================================================
 
+# These tests call the endpoint coroutines directly (no TestClient), so FastAPI
+# never resolves their dependencies for us. Every /ai-settings/{user_id} route now
+# takes `current_user: dict = Depends(get_current_user)` and enforces
+# `current_user["id"] == user_id` (403 otherwise). Calling with only `user_id`
+# leaves `current_user` bound to the raw `Depends` object, so the ownership check
+# blows up with "TypeError: 'Depends' object is not subscriptable" before the
+# handler body runs. Pass the resolved caller explicitly — same identity as
+# `sample_user_id`, so the real ownership guard is exercised rather than bypassed.
+AUTHED_USER = {"id": "user-123-abc", "email": "test@example.com"}
+
+
 @pytest.fixture
 def mock_supabase_client():
     """Mock Supabase client for AI settings operations."""
@@ -104,7 +115,7 @@ class TestGetAISettings:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_ai_settings(sample_user_id)
+            get_ai_settings(sample_user_id, current_user=AUTHED_USER)
         )
 
         assert result.user_id == sample_user_id
@@ -127,7 +138,7 @@ class TestGetAISettings:
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = mock_created_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_ai_settings(sample_user_id)
+            get_ai_settings(sample_user_id, current_user=AUTHED_USER)
         )
 
         assert result.user_id == sample_user_id
@@ -143,7 +154,7 @@ class TestGetAISettings:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                get_ai_settings(sample_user_id)
+                get_ai_settings(sample_user_id, current_user=AUTHED_USER)
             )
 
         assert exc_info.value.status_code == 500
@@ -181,7 +192,7 @@ class TestUpdateAISettings:
         )
 
         result = asyncio.get_event_loop().run_until_complete(
-            update_ai_settings(sample_user_id, request)
+            update_ai_settings(sample_user_id, request, current_user=AUTHED_USER)
         )
 
         assert result.coaching_style == "strict"
@@ -205,7 +216,7 @@ class TestUpdateAISettings:
         request = AISettingsUpdate(use_emojis=False)
 
         asyncio.get_event_loop().run_until_complete(
-            update_ai_settings(sample_user_id, request)
+            update_ai_settings(sample_user_id, request, current_user=AUTHED_USER)
         )
 
         # Verify history was recorded (insert was called for ai_settings_history)
@@ -229,7 +240,7 @@ class TestUpdateAISettings:
         request = AISettingsUpdate(coaching_style="friendly")
 
         result = asyncio.get_event_loop().run_until_complete(
-            update_ai_settings(sample_user_id, request)
+            update_ai_settings(sample_user_id, request, current_user=AUTHED_USER)
         )
 
         assert result is not None
@@ -254,7 +265,13 @@ class TestSettingsHistory:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_ai_settings_history(sample_user_id)
+            get_ai_settings_history(
+                sample_user_id,
+                setting_name=None,
+                limit=50,
+                offset=0,
+                current_user=AUTHED_USER,
+            )
         )
 
         assert result.total_count == 2
@@ -274,7 +291,13 @@ class TestSettingsHistory:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_ai_settings_history(sample_user_id, setting_name="coaching_style")
+            get_ai_settings_history(
+                sample_user_id,
+                setting_name="coaching_style",
+                limit=50,
+                offset=0,
+                current_user=AUTHED_USER,
+            )
         )
 
         assert result.total_count == 1
@@ -291,7 +314,13 @@ class TestSettingsHistory:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_ai_settings_history(sample_user_id)
+            get_ai_settings_history(
+                sample_user_id,
+                setting_name=None,
+                limit=50,
+                offset=0,
+                current_user=AUTHED_USER,
+            )
         )
 
         assert result.total_count == 0
@@ -318,7 +347,7 @@ class TestResetSettings:
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = MagicMock()
 
         result = asyncio.get_event_loop().run_until_complete(
-            reset_ai_settings(sample_user_id)
+            reset_ai_settings(sample_user_id, current_user=AUTHED_USER)
         )
 
         assert result["success"] is True
@@ -337,7 +366,7 @@ class TestResetSettings:
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = MagicMock()
 
         asyncio.get_event_loop().run_until_complete(
-            reset_ai_settings(sample_user_id)
+            reset_ai_settings(sample_user_id, current_user=AUTHED_USER)
         )
 
         # Check history was recorded
@@ -489,7 +518,7 @@ class TestErrorHandling:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                get_ai_settings(sample_user_id)
+                get_ai_settings(sample_user_id, current_user=AUTHED_USER)
             )
 
         assert exc_info.value.status_code == 500
@@ -506,7 +535,7 @@ class TestErrorHandling:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                update_ai_settings(sample_user_id, request)
+                update_ai_settings(sample_user_id, request, current_user=AUTHED_USER)
             )
 
         assert exc_info.value.status_code == 500

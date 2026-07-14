@@ -28,11 +28,25 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
+from core.auth import get_current_user
 
 
 # ============================================================================
 # CONSTANTS
 # ============================================================================
+
+# Identity injected in place of a real Supabase JWT for endpoint tests.
+TEST_AUTH_USER = {
+    "id": "00000000-0000-0000-0000-000000000002",
+    "email": "progression-test@example.com",
+}
+
+# The skill-progression API reads these Supabase tables. The mocks below must
+# key on the SAME names the endpoints use, or the patched client hands back the
+# wrong query chain.
+CHAINS_TABLE = "exercise_progression_chains"
+STEPS_TABLE = "exercise_progression_steps"
+PROGRESS_TABLE = "user_skill_progress"
 
 # Default consecutive easy sessions required for progression readiness
 DEFAULT_CONSECUTIVE_EASY_FOR_PROGRESSION = 3
@@ -299,8 +313,20 @@ def get_sample_squat_chain():
 
 @pytest.fixture
 def client():
-    """Create a test client."""
-    return TestClient(app)
+    """Create a test client with the auth dependency overridden.
+
+    Every /api/v1/skill-progressions route depends on `core.auth.get_current_user`,
+    which validates a real Supabase JWT and 401s without one — so these endpoint
+    tests never reached their endpoint. They are endpoint-behaviour tests, not
+    auth tests, so we override the dependency with a fixed identity (the standard
+    FastAPI mechanism) instead of minting a token. The override is popped on
+    teardown so it cannot leak into other test modules in the same process.
+    """
+    app.dependency_overrides[get_current_user] = lambda: TEST_AUTH_USER
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture
@@ -387,7 +413,12 @@ class TestGetAllProgressionChains:
     """Tests for GET /api/v1/exercise-progressions/chains endpoint."""
 
     def test_get_all_chains_success(self, client, mock_supabase):
-        """Test successfully fetching all progression chains."""
+        """Test successfully fetching all progression chains.
+
+        Mock fixed: the endpoint sorts with .order("category").order("name"),
+        i.e. TWO chained .order() calls, so the single-.order() mock chain never
+        supplied the result. Assertions unchanged.
+        """
         push_chain, _ = get_sample_push_up_chain()
         pull_chain, _ = get_sample_pull_up_chain()
         squat_chain, _ = get_sample_squat_chain()
@@ -396,7 +427,7 @@ class TestGetAllProgressionChains:
 
         mock_result = MagicMock()
         mock_result.data = chains
-        mock_supabase.table.return_value.select.return_value.order.return_value.execute.return_value = mock_result
+        mock_supabase.table.return_value.select.return_value.order.return_value.order.return_value.execute.return_value = mock_result
 
         with patch("api.v1.skill_progressions.get_supabase_db") as mock_get_db:
             mock_db = MagicMock()
@@ -431,7 +462,13 @@ class TestGetChainById:
     """Tests for GET /api/v1/exercise-progressions/chains/{chain_id} endpoint."""
 
     def test_get_chain_by_id_success(self, client, mock_supabase):
-        """Test successfully fetching a chain by ID."""
+        """Test successfully fetching a chain by ID.
+
+        Mock fixed: the endpoint reads the `exercise_progression_chains` /
+        `exercise_progression_steps` tables, not `skill_progression_*`, so the
+        chain branch of this side_effect never fired and the chain query got a
+        bare MagicMock back. Assertions unchanged.
+        """
         chain, variants = get_sample_push_up_chain()
 
         mock_chain_result = MagicMock()
@@ -442,7 +479,7 @@ class TestGetChainById:
 
         def mock_table_side_effect(table_name):
             mock_table = MagicMock()
-            if table_name == "skill_progression_chains":
+            if table_name == CHAINS_TABLE:
                 mock_table.select.return_value.eq.return_value.execute.return_value = mock_chain_result
             else:
                 mock_table.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_variants_result
@@ -521,9 +558,9 @@ class TestGetChainWithVariants:
 
         def mock_table_side_effect(table_name):
             mock_table = MagicMock()
-            if table_name == "skill_progression_chains":
+            if table_name == CHAINS_TABLE:
                 mock_table.select.return_value.eq.return_value.execute.return_value = mock_chain_result
-            else:  # skill_progression_steps
+            else:  # exercise_progression_steps
                 mock_table.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_steps_result
             return mock_table
 
@@ -567,10 +604,16 @@ class TestGetUserMastery:
     """Tests for user exercise mastery endpoints."""
 
     def test_get_user_mastery_empty_new_user(self, client, mock_supabase, mock_user_id):
-        """Test fetching mastery for new user returns empty list."""
+        """Test fetching mastery for new user returns empty list.
+
+        Mock fixed: the endpoint's query is
+        .select(...).eq("user_id", ...).order("last_practiced_at", desc=True),
+        so the result has to hang off .eq().order().execute(), not .eq().execute().
+        Assertions unchanged.
+        """
         mock_result = MagicMock()
         mock_result.data = []
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
 
         with patch("api.v1.skill_progressions.get_supabase_db") as mock_get_db:
             mock_db = MagicMock()
@@ -583,7 +626,16 @@ class TestGetUserMastery:
             assert response.json() == []
 
     def test_get_user_mastery_with_data(self, client, mock_supabase, mock_user_id):
-        """Test fetching mastery data for user with exercise history."""
+        """Test fetching mastery data for user with exercise history.
+
+        Mock fixed: the embedded-join key the endpoint reads is
+        `exercise_progression_chains` (it selects "*, exercise_progression_chains(*)"),
+        and the steps table is `exercise_progression_steps` — the old mock used
+        the `skill_progression_*` names, so the steps branch never matched and the
+        joined chain was never seen. Assertions unchanged, plus the response is
+        now checked to actually carry the joined chain and the resolved
+        current/next step (which is the whole point of this endpoint).
+        """
         chain, variants = get_sample_push_up_chain()
 
         # Create user skill progress that matches the actual schema
@@ -595,7 +647,7 @@ class TestGetUserMastery:
             best_reps_at_current=15,
         )
         # Add the chain data as it would be returned with the join
-        progress["skill_progression_chains"] = chain
+        progress["exercise_progression_chains"] = chain
 
         mock_progress_result = MagicMock()
         mock_progress_result.data = [progress]
@@ -606,11 +658,11 @@ class TestGetUserMastery:
 
         def mock_table_side_effect(table_name):
             mock_table = MagicMock()
-            if table_name == "user_skill_progress":
+            if table_name == PROGRESS_TABLE:
                 mock_select = MagicMock()
                 mock_select.eq.return_value.order.return_value.execute.return_value = mock_progress_result
                 mock_table.select.return_value = mock_select
-            elif table_name == "skill_progression_steps":
+            elif table_name == STEPS_TABLE:
                 mock_select = MagicMock()
                 mock_select.eq.return_value.order.return_value.execute.return_value = mock_steps_result
                 mock_table.select.return_value = mock_select
@@ -628,6 +680,14 @@ class TestGetUserMastery:
             assert response.status_code == 200
             data = response.json()
             assert len(data) >= 1
+
+            row = data[0]
+            assert row["chain_id"] == chain["id"]
+            assert row["current_step_order"] == 3
+            assert row["chain"]["name"] == "Push-up Progression"
+            # Step 3 is the current one, step 4 the next unlockable one.
+            assert row["current_step"]["exercise_name"] == "Standard Push-ups"
+            assert row["next_step"]["exercise_name"] == "Diamond Push-ups"
 
 
 class TestUpdateExerciseMastery:

@@ -30,6 +30,39 @@ Edge Cases:
 18. test_unauthorized_access - Non-admin cannot access admin endpoints
 19. test_chat_not_found - Handle missing ticket
 20. test_already_ended_chat - Cannot send message to ended chat
+
+
+HOW THESE TESTS TALK TO THE APP (updated — the endpoints moved, the guarantees did not)
+---------------------------------------------------------------------------------------
+Three things about the app changed underneath this file. None of the
+guarantees asserted below changed, so every assertion is preserved verbatim;
+only the *plumbing* was corrected.
+
+1. ROUTE PREFIX. The user-facing live chat router was remounted from
+   `/api/v1/live-chat/...` to `/api/v1/support/live-chat/...` (commit
+   00400f9f). Requests to the old prefix 404. Paths updated.
+
+2. MODULE SPLIT. `api.v1.live_chat` and `api.v1.admin.live_chat` were each
+   split, with roughly half their endpoints moved into a `*_endpoints.py`
+   sub-router (typing / read / end / messages / availability, and admin
+   close / tickets / reports / dashboard / presence). Those sub-modules import
+   `get_supabase_db` (and friends) into their OWN namespace, so patching only
+   the parent module left the moved endpoints talking to the real database.
+   Fixtures now patch both halves with the same fake.
+
+3. AUTH IS A FastAPI DEPENDENCY. `Depends(get_current_user)` /
+   `Depends(verify_admin_token)` capture the function object at import time, so
+   `patch("...verify_admin_token")` cannot intercept them. Tests now use
+   `app.dependency_overrides`, which is the supported seam.
+
+The Supabase mocking was also rewritten from long `MagicMock` attribute chains
+(`table.return_value.select.return_value.eq.return_value...`) to a small fake
+query builder keyed by (table, operation). The chains were ambiguous — several
+different queries in one endpoint share the same chain shape (e.g. the
+dashboard issues seven distinct `support_tickets.select(count="exact")` calls),
+so a single chain stub had to serve them all and silently handed back a
+`MagicMock` where an `int` was required. The fake keys results by the table and
+operation the production code actually performs, which is unambiguous.
 """
 
 import pytest
@@ -51,6 +84,114 @@ MOCK_MESSAGE_ID = "message-abc-123"
 MOCK_ACCESS_TOKEN = "mock-access-token-12345"
 MOCK_REFRESH_TOKEN = "mock-refresh-token-67890"
 
+# The live chat router is mounted under /support (api/v1/__init__.py).
+LIVE_CHAT = "/api/v1/support/live-chat"
+ADMIN = "/api/v1/admin"
+
+
+# =============================================================================
+# Fake Supabase query builder
+#
+# Mirrors the supabase-py surface the endpoints actually use:
+#     db.client.table("t").select("...").eq(...).order(...).execute()
+# Results are registered per (table, operation), which is how the production
+# code is actually structured, so a stub can never be accidentally shared
+# between two unrelated queries.
+# =============================================================================
+
+class FakeResult:
+    """Stand-in for a supabase-py APIResponse."""
+
+    def __init__(self, data=None, count=None):
+        self.data = [] if data is None else data
+        self.count = count if count is not None else len(self.data)
+
+
+class FakeQuery:
+    """Chainable stand-in for the supabase-py query builder.
+
+    Every filter/order/limit/range call returns self; `execute()` hands back the
+    result registered for this (table, operation).
+    """
+
+    def __init__(self, db, table: str, op: str):
+        self._db = db
+        self._table = table
+        self._op = op
+
+    @property
+    def not_(self):
+        # PostgREST negation is an attribute, not a call: .not_.is_(...)
+        return self
+
+    def __getattr__(self, name):
+        # eq / neq / lt / gte / in_ / is_ / order / limit / range / single / ...
+        def _chain(*args, **kwargs):
+            return self
+        return _chain
+
+    def execute(self):
+        return self._db._resolve(self._table, self._op)
+
+
+class FakeTable:
+    def __init__(self, db, name: str):
+        self._db = db
+        self._name = name
+
+    def select(self, *args, **kwargs):
+        return FakeQuery(self._db, self._name, "select")
+
+    def insert(self, *args, **kwargs):
+        return FakeQuery(self._db, self._name, "insert")
+
+    def update(self, *args, **kwargs):
+        return FakeQuery(self._db, self._name, "update")
+
+    def delete(self, *args, **kwargs):
+        return FakeQuery(self._db, self._name, "delete")
+
+    def upsert(self, *args, **kwargs):
+        return FakeQuery(self._db, self._name, "upsert")
+
+
+class FakeSupabaseDB:
+    """Stand-in for the object returned by `core.db.get_supabase_db()`."""
+
+    def __init__(self):
+        self._results = {}
+        self.calls = []
+
+    @property
+    def client(self):
+        return self
+
+    def table(self, name: str) -> FakeTable:
+        return FakeTable(self, name)
+
+    def set(self, table: str, op: str, result):
+        """Register the result of `table(table).<op>(...).execute()`.
+
+        `result` may be a FakeResult, an Exception (raised on execute), or a
+        list of either — consumed in order, with the last entry repeating.
+        """
+        self._results[(table, op)] = result
+
+    def _resolve(self, table: str, op: str):
+        self.calls.append((table, op))
+        value = self._results.get((table, op))
+
+        if value is None:
+            return FakeResult(data=[], count=0)
+
+        if isinstance(value, list):
+            value = value.pop(0) if len(value) > 1 else value[0]
+
+        if isinstance(value, Exception):
+            raise value
+
+        return value
+
 
 # =============================================================================
 # Fixtures
@@ -58,30 +199,45 @@ MOCK_REFRESH_TOKEN = "mock-refresh-token-67890"
 
 @pytest.fixture
 def mock_supabase():
-    """Create a mock Supabase client."""
-    with patch("api.v1.live_chat.get_supabase_db") as mock:
-        mock_db = MagicMock()
-        mock.return_value = mock_db
-        yield mock_db
+    """Fake Supabase for the user-facing live chat endpoints.
+
+    Patches BOTH halves of the split module (`live_chat` and
+    `live_chat_endpoints`) with the same fake, so typing / read / end /
+    availability hit the fake rather than the real database.
+    """
+    db = FakeSupabaseDB()
+    with patch("api.v1.live_chat.get_supabase_db", return_value=db), \
+         patch("api.v1.live_chat_endpoints.get_supabase_db", return_value=db):
+        yield db
 
 
 @pytest.fixture
 def mock_supabase_admin():
-    """Create a mock Supabase client for admin endpoints."""
-    with patch("api.v1.admin.live_chat.get_supabase_db") as mock_db:
-        with patch("api.v1.admin.live_chat.get_supabase_client") as mock_client:
-            mock_database = MagicMock()
-            mock_auth_client = MagicMock()
-            mock_db.return_value = mock_database
-            mock_client.return_value = mock_auth_client
-            yield mock_database, mock_auth_client
+    """Fake Supabase for the admin endpoints (both halves of the split module).
+
+    Production calls `get_supabase().auth_client` for auth (the old
+    `get_supabase_client` helper no longer exists), so the auth client is
+    exposed through a manager stub.
+    """
+    db = FakeSupabaseDB()
+    mock_auth_client = MagicMock()
+    manager = MagicMock()
+    manager.auth_client = mock_auth_client
+
+    with patch("api.v1.admin.live_chat.get_supabase_db", return_value=db), \
+         patch("api.v1.admin.live_chat_endpoints.get_supabase_db", return_value=db), \
+         patch("api.v1.admin.live_chat.get_supabase", return_value=manager), \
+         patch("api.v1.admin.live_chat_endpoints.get_supabase", return_value=manager):
+        yield db, mock_auth_client
 
 
 @pytest.fixture
 def mock_user_context():
-    """Mock user context service."""
-    with patch("api.v1.live_chat.user_context_service") as mock:
-        mock.log_event = AsyncMock(return_value="event-id-123")
+    """Mock user context service (patched in both halves of the split module)."""
+    mock = MagicMock()
+    mock.log_event = AsyncMock(return_value="event-id-123")
+    with patch("api.v1.live_chat.user_context_service", mock), \
+         patch("api.v1.live_chat_endpoints.user_context_service", mock):
         yield mock
 
 
@@ -90,7 +246,9 @@ def mock_activity_logger():
     """Mock activity logger for live chat."""
     with patch("api.v1.live_chat.log_user_activity", new_callable=AsyncMock) as mock_activity:
         with patch("api.v1.live_chat.log_user_error", new_callable=AsyncMock) as mock_error:
-            yield mock_activity, mock_error
+            with patch("api.v1.live_chat_endpoints.log_user_activity", new_callable=AsyncMock), \
+                 patch("api.v1.live_chat_endpoints.log_user_error", new_callable=AsyncMock):
+                yield mock_activity, mock_error
 
 
 @pytest.fixture
@@ -111,9 +269,28 @@ def mock_notification_service():
 
 
 @pytest.fixture
+def mock_webhook():
+    """Silence the outbound admin webhook (Discord/email) by default.
+
+    `_send_admin_webhook` is fire-and-forget I/O; the tests that assert on it
+    patch it themselves.
+    """
+    with patch("api.v1.live_chat._send_admin_webhook", new_callable=AsyncMock) as mock:
+        yield mock
+
+
+@pytest.fixture
 def mock_admin_token_verification():
-    """Mock admin token verification to bypass authentication."""
+    """Bypass admin authentication via FastAPI's dependency_overrides.
+
+    `Depends(verify_admin_token)` binds the function object at import time, so
+    monkeypatching the module attribute cannot intercept it. Both copies of the
+    dependency (the parent module's and the sub-router's) are overridden.
+    """
+    from main import app
     from models.admin import AdminProfile, AdminRole
+    from api.v1.admin.live_chat import verify_admin_token as verify_parent
+    from api.v1.admin.live_chat_endpoints import verify_admin_token as verify_sub
 
     admin_profile = AdminProfile(
         id=MOCK_ADMIN_USER_ID,
@@ -126,15 +303,39 @@ def mock_admin_token_verification():
         active_chats_count=0,
     )
 
-    with patch("api.v1.admin.live_chat.verify_admin_token", return_value=admin_profile):
+    async def _override():
+        return admin_profile
+
+    app.dependency_overrides[verify_parent] = _override
+    app.dependency_overrides[verify_sub] = _override
+    try:
         yield admin_profile
+    finally:
+        app.dependency_overrides.pop(verify_parent, None)
+        app.dependency_overrides.pop(verify_sub, None)
 
 
 @pytest.fixture
 def client():
-    """Create a test client."""
+    """Create a test client with the user auth dependency satisfied.
+
+    The live chat endpoints authorize against the `user_id` in the request body
+    (which is what these tests exercise); `get_current_user` only gates access
+    to the route at all. Overriding it keeps the tests focused on live chat
+    behavior instead of JWT plumbing. Admin routes do NOT use this dependency,
+    so admin authorization is still genuinely exercised.
+    """
     from main import app
-    return TestClient(app)
+    from core.auth import get_current_user
+
+    async def _override_current_user():
+        return {"id": MOCK_USER_ID}
+
+    app.dependency_overrides[get_current_user] = _override_current_user
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 # =============================================================================
@@ -241,6 +442,11 @@ def generate_mock_presence(
     }
 
 
+def _regular_user_role():
+    """`_check_if_user_is_agent` reads users.role — a plain user is not an agent."""
+    return FakeResult(data=[{"role": "user"}])
+
+
 # =============================================================================
 # Live Chat API Tests - Start Live Chat
 # =============================================================================
@@ -249,47 +455,25 @@ class TestStartLiveChat:
     """Tests for POST /live-chat/start"""
 
     def test_start_live_chat_success(
-        self, client, mock_supabase, mock_user_context, mock_activity_logger
+        self, client, mock_supabase, mock_user_context, mock_activity_logger, mock_webhook
     ):
         """Test successfully starting a new live chat session."""
         # Setup mocks
-        mock_ticket = generate_mock_ticket()
-        mock_message = generate_mock_message()
-        mock_queue = generate_mock_queue_entry()
+        mock_supabase.set("support_tickets", "insert", FakeResult(data=[generate_mock_ticket()]))
+        mock_supabase.set("live_chat_messages", "insert", FakeResult(data=[generate_mock_message()]))
+        mock_supabase.set("live_chat_queue", "insert", FakeResult(data=[generate_mock_queue_entry()]))
 
-        mock_insert_ticket = MagicMock()
-        mock_insert_ticket.data = [mock_ticket]
-
-        mock_insert_message = MagicMock()
-        mock_insert_message.data = [mock_message]
-
-        mock_insert_queue = MagicMock()
-        mock_insert_queue.data = [mock_queue]
-
-        # Mock queue position queries
-        mock_queue_entry_result = MagicMock()
-        mock_queue_entry_result.data = [{"created_at": "2024-12-30T12:00:00Z"}]
-
-        mock_queue_count_result = MagicMock()
-        mock_queue_count_result.count = 0
-
-        mock_agents_result = MagicMock()
-        mock_agents_result.count = 2
-
-        # Chain the mock calls
-        mock_supabase.client.table.return_value.insert.return_value.execute.side_effect = [
-            mock_insert_ticket,
-            mock_insert_message,
-            mock_insert_queue,
-        ]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_queue_entry_result
-        mock_supabase.client.table.return_value.select.return_value.lt.return_value.execute.return_value = mock_queue_count_result
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_agents_result
+        # Queue position: first select reads this ticket's queue entry, second
+        # counts the entries ahead of it.
+        mock_supabase.set("live_chat_queue", "select", [
+            FakeResult(data=[{"created_at": "2024-12-30T12:00:00Z"}]),
+            FakeResult(count=0),
+        ])
+        mock_supabase.set("admin_presence", "select", FakeResult(count=2))
 
         # Make request
         response = client.post(
-            "/api/v1/live-chat/start",
+            f"{LIVE_CHAT}/start",
             json={
                 "user_id": MOCK_USER_ID,
                 "category": "technical",
@@ -306,48 +490,25 @@ class TestStartLiveChat:
         assert data["status"] == "queued"
 
     def test_start_live_chat_with_escalation(
-        self, client, mock_supabase, mock_user_context, mock_activity_logger
+        self, client, mock_supabase, mock_user_context, mock_activity_logger, mock_webhook
     ):
         """Test starting a live chat with AI escalation context."""
         ai_context = "User was asking about nutrition plans but AI couldn't provide specific calorie recommendations."
 
-        mock_ticket = generate_mock_ticket(
+        mock_supabase.set("support_tickets", "insert", FakeResult(data=[generate_mock_ticket(
             escalated_from_ai=True,
             ai_handoff_context=ai_context,
-        )
-        mock_message = generate_mock_message()
-        mock_queue = generate_mock_queue_entry()
-
-        mock_insert_ticket = MagicMock()
-        mock_insert_ticket.data = [mock_ticket]
-
-        mock_insert_message = MagicMock()
-        mock_insert_message.data = [mock_message]
-
-        mock_insert_queue = MagicMock()
-        mock_insert_queue.data = [mock_queue]
-
-        mock_queue_entry_result = MagicMock()
-        mock_queue_entry_result.data = [{"created_at": "2024-12-30T12:00:00Z"}]
-
-        mock_queue_count_result = MagicMock()
-        mock_queue_count_result.count = 0
-
-        mock_agents_result = MagicMock()
-        mock_agents_result.count = 1
-
-        mock_supabase.client.table.return_value.insert.return_value.execute.side_effect = [
-            mock_insert_ticket,
-            mock_insert_message,
-            mock_insert_queue,
-        ]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_queue_entry_result
-        mock_supabase.client.table.return_value.select.return_value.lt.return_value.execute.return_value = mock_queue_count_result
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_agents_result
+        )]))
+        mock_supabase.set("live_chat_messages", "insert", FakeResult(data=[generate_mock_message()]))
+        mock_supabase.set("live_chat_queue", "insert", FakeResult(data=[generate_mock_queue_entry()]))
+        mock_supabase.set("live_chat_queue", "select", [
+            FakeResult(data=[{"created_at": "2024-12-30T12:00:00Z"}]),
+            FakeResult(count=0),
+        ])
+        mock_supabase.set("admin_presence", "select", FakeResult(count=1))
 
         response = client.post(
-            "/api/v1/live-chat/start",
+            f"{LIVE_CHAT}/start",
             json={
                 "user_id": MOCK_USER_ID,
                 "category": "other",
@@ -372,26 +533,15 @@ class TestGetQueuePosition:
 
     def test_get_queue_position(self, client, mock_supabase):
         """Test getting queue position for a ticket."""
-        mock_ticket = generate_mock_ticket()
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_queue_entry = MagicMock()
-        mock_queue_entry.data = [{"created_at": "2024-12-30T12:00:00Z"}]
-
-        mock_position_count = MagicMock()
-        mock_position_count.count = 2  # 2 people ahead
-
-        mock_agents_result = MagicMock()
-        mock_agents_result.count = 3
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_ticket_result
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_queue_entry
-        mock_supabase.client.table.return_value.select.return_value.lt.return_value.execute.return_value = mock_position_count
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_agents_result
+        mock_supabase.set("support_tickets", "select", FakeResult(data=[generate_mock_ticket()]))
+        mock_supabase.set("live_chat_queue", "select", [
+            FakeResult(data=[{"created_at": "2024-12-30T12:00:00Z"}]),
+            FakeResult(count=2),  # 2 people ahead
+        ])
+        mock_supabase.set("admin_presence", "select", FakeResult(count=3))
 
         response = client.get(
-            f"/api/v1/live-chat/queue-position/{MOCK_TICKET_ID}?user_id={MOCK_USER_ID}"
+            f"{LIVE_CHAT}/queue-position/{MOCK_TICKET_ID}?user_id={MOCK_USER_ID}"
         )
 
         assert response.status_code == 200
@@ -402,12 +552,10 @@ class TestGetQueuePosition:
 
     def test_get_queue_position_not_found(self, client, mock_supabase):
         """Test getting queue position for non-existent ticket."""
-        mock_result = MagicMock()
-        mock_result.data = []
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.set("support_tickets", "select", FakeResult(data=[]))
 
         response = client.get(
-            f"/api/v1/live-chat/queue-position/nonexistent-ticket?user_id={MOCK_USER_ID}"
+            f"{LIVE_CHAT}/queue-position/nonexistent-ticket?user_id={MOCK_USER_ID}"
         )
 
         assert response.status_code == 404
@@ -420,32 +568,18 @@ class TestGetQueuePosition:
 class TestSendMessage:
     """Tests for POST /live-chat/{ticket_id}/message"""
 
-    def test_send_message(self, client, mock_supabase, mock_activity_logger):
+    def test_send_message(self, client, mock_supabase, mock_activity_logger, mock_webhook):
         """Test sending a message in active chat."""
-        mock_ticket = generate_mock_ticket(status="in_progress", assigned_to=MOCK_AGENT_ID)
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_message = generate_mock_message()
-        mock_message_result = MagicMock()
-        mock_message_result.data = [mock_message]
-
-        mock_update_result = MagicMock()
-        mock_update_result.data = [{}]
-
-        # Mock user role check (not an agent)
-        mock_user_check = MagicMock()
-        mock_user_check.data = [{"role": "user"}]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.side_effect = [
-            mock_ticket_result,
-            mock_user_check,
-        ]
-        mock_supabase.client.table.return_value.insert.return_value.execute.return_value = mock_message_result
-        mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_update_result
+        mock_supabase.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(status="in_progress", assigned_to=MOCK_AGENT_ID)]
+        ))
+        mock_supabase.set("users", "select", _regular_user_role())
+        mock_supabase.set("live_chat_messages", "insert", FakeResult(data=[generate_mock_message()]))
+        mock_supabase.set("support_tickets", "update", FakeResult(data=[{}]))
+        mock_supabase.set("live_chat_queue", "update", FakeResult(data=[{}]))
 
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/message",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/message",
             json={
                 "user_id": MOCK_USER_ID,
                 "message": "Thank you for your help!",
@@ -459,14 +593,12 @@ class TestSendMessage:
 
     def test_send_message_to_closed_chat(self, client, mock_supabase):
         """Test that sending message to closed chat fails."""
-        mock_ticket = generate_mock_ticket(status="closed")
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_ticket_result
+        mock_supabase.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(status="closed")]
+        ))
 
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/message",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/message",
             json={
                 "user_id": MOCK_USER_ID,
                 "message": "Trying to send to closed chat",
@@ -478,20 +610,13 @@ class TestSendMessage:
 
     def test_send_message_unauthorized(self, client, mock_supabase):
         """Test that user cannot send message to another user's chat."""
-        mock_ticket = generate_mock_ticket(user_id=MOCK_OTHER_USER_ID)
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_user_check = MagicMock()
-        mock_user_check.data = [{"role": "user"}]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.side_effect = [
-            mock_ticket_result,
-            mock_user_check,
-        ]
+        mock_supabase.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(user_id=MOCK_OTHER_USER_ID)]
+        ))
+        mock_supabase.set("users", "select", _regular_user_role())
 
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/message",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/message",
             json={
                 "user_id": MOCK_USER_ID,
                 "message": "Trying to access other's chat",
@@ -510,24 +635,12 @@ class TestTypingIndicator:
 
     def test_send_typing_indicator(self, client, mock_supabase):
         """Test sending typing status update."""
-        mock_ticket = generate_mock_ticket()
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_user_check = MagicMock()
-        mock_user_check.data = [{"role": "user"}]
-
-        mock_update_result = MagicMock()
-        mock_update_result.data = [{}]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.side_effect = [
-            mock_ticket_result,
-            mock_user_check,
-        ]
-        mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_update_result
+        mock_supabase.set("support_tickets", "select", FakeResult(data=[generate_mock_ticket()]))
+        mock_supabase.set("users", "select", _regular_user_role())
+        mock_supabase.set("live_chat_queue", "update", FakeResult(data=[{}]))
 
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/typing",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/typing",
             json={
                 "user_id": MOCK_USER_ID,
                 "is_typing": True,
@@ -541,24 +654,12 @@ class TestTypingIndicator:
 
     def test_clear_typing_indicator(self, client, mock_supabase):
         """Test clearing typing indicator."""
-        mock_ticket = generate_mock_ticket()
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_user_check = MagicMock()
-        mock_user_check.data = [{"role": "user"}]
-
-        mock_update_result = MagicMock()
-        mock_update_result.data = [{}]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.side_effect = [
-            mock_ticket_result,
-            mock_user_check,
-        ]
-        mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_update_result
+        mock_supabase.set("support_tickets", "select", FakeResult(data=[generate_mock_ticket()]))
+        mock_supabase.set("users", "select", _regular_user_role())
+        mock_supabase.set("live_chat_queue", "update", FakeResult(data=[{}]))
 
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/typing",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/typing",
             json={
                 "user_id": MOCK_USER_ID,
                 "is_typing": False,
@@ -580,24 +681,12 @@ class TestMarkMessagesRead:
 
     def test_mark_messages_read(self, client, mock_supabase):
         """Test marking messages as read."""
-        mock_ticket = generate_mock_ticket()
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_user_check = MagicMock()
-        mock_user_check.data = [{"role": "user"}]
-
-        mock_update_result = MagicMock()
-        mock_update_result.data = [{}]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.side_effect = [
-            mock_ticket_result,
-            mock_user_check,
-        ]
-        mock_supabase.client.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = mock_update_result
+        mock_supabase.set("support_tickets", "select", FakeResult(data=[generate_mock_ticket()]))
+        mock_supabase.set("users", "select", _regular_user_role())
+        mock_supabase.set("live_chat_messages", "update", FakeResult(data=[{}]))
 
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/read",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/read",
             json={
                 "user_id": MOCK_USER_ID,
                 "message_ids": ["msg-1", "msg-2", "msg-3"],
@@ -619,32 +708,16 @@ class TestEndChat:
 
     def test_end_chat(self, client, mock_supabase, mock_user_context, mock_activity_logger):
         """Test ending a chat session."""
-        mock_ticket = generate_mock_ticket(status="in_progress")
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_user_check = MagicMock()
-        mock_user_check.data = [{"role": "user"}]
-
-        mock_insert_result = MagicMock()
-        mock_insert_result.data = [{}]
-
-        mock_update_result = MagicMock()
-        mock_update_result.data = [{}]
-
-        mock_delete_result = MagicMock()
-        mock_delete_result.data = []
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.side_effect = [
-            mock_ticket_result,
-            mock_user_check,
-        ]
-        mock_supabase.client.table.return_value.insert.return_value.execute.return_value = mock_insert_result
-        mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_update_result
-        mock_supabase.client.table.return_value.delete.return_value.eq.return_value.execute.return_value = mock_delete_result
+        mock_supabase.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(status="in_progress")]
+        ))
+        mock_supabase.set("users", "select", _regular_user_role())
+        mock_supabase.set("live_chat_messages", "insert", FakeResult(data=[{}]))
+        mock_supabase.set("support_tickets", "update", FakeResult(data=[{}]))
+        mock_supabase.set("live_chat_queue", "delete", FakeResult(data=[]))
 
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/end",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/end",
             json={
                 "user_id": MOCK_USER_ID,
                 "resolution_note": "Issue resolved by the support agent.",
@@ -658,20 +731,13 @@ class TestEndChat:
 
     def test_end_already_ended_chat(self, client, mock_supabase, mock_user_context, mock_activity_logger):
         """Test ending an already ended chat returns success."""
-        mock_ticket = generate_mock_ticket(status="resolved")
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_user_check = MagicMock()
-        mock_user_check.data = [{"role": "user"}]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.side_effect = [
-            mock_ticket_result,
-            mock_user_check,
-        ]
+        mock_supabase.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(status="resolved")]
+        ))
+        mock_supabase.set("users", "select", _regular_user_role())
 
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/end",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/end",
             json={
                 "user_id": MOCK_USER_ID,
             }
@@ -692,16 +758,10 @@ class TestCheckAvailability:
 
     def test_check_availability_agents_online(self, client, mock_supabase):
         """Test checking availability when agents are online."""
-        mock_agents_result = MagicMock()
-        mock_agents_result.count = 3
+        mock_supabase.set("admin_presence", "select", FakeResult(count=3))
+        mock_supabase.set("live_chat_queue", "select", FakeResult(count=2))
 
-        mock_queue_result = MagicMock()
-        mock_queue_result.count = 2
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_agents_result
-        mock_supabase.client.table.return_value.select.return_value.execute.return_value = mock_queue_result
-
-        response = client.get("/api/v1/live-chat/availability")
+        response = client.get(f"{LIVE_CHAT}/availability")
 
         assert response.status_code == 200
         data = response.json()
@@ -710,16 +770,10 @@ class TestCheckAvailability:
 
     def test_check_availability_no_agents(self, client, mock_supabase):
         """Test checking availability when no agents are online."""
-        mock_agents_result = MagicMock()
-        mock_agents_result.count = 0
+        mock_supabase.set("admin_presence", "select", FakeResult(count=0))
+        mock_supabase.set("live_chat_queue", "select", FakeResult(count=0))
 
-        mock_queue_result = MagicMock()
-        mock_queue_result.count = 0
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_agents_result
-        mock_supabase.client.table.return_value.select.return_value.execute.return_value = mock_queue_result
-
-        response = client.get("/api/v1/live-chat/availability")
+        response = client.get(f"{LIVE_CHAT}/availability")
 
         assert response.status_code == 200
         data = response.json()
@@ -736,7 +790,15 @@ class TestAdminLogin:
     """Tests for POST /admin/login"""
 
     def test_admin_login_success(self, client, mock_supabase_admin, mock_activity_logger_admin):
-        """Test successful admin login with valid credentials."""
+        """Test successful admin login with valid credentials.
+
+        `AdminLoginRequest.password` now enforces a complexity policy (min 12
+        chars + upper/lower/digit/special — see the `SECURITY:` validator in
+        models/admin.py), so the passwords below satisfy it. Anything weaker is
+        rejected by request validation with a 422 before authentication is even
+        attempted, which is a different guarantee than the one these tests
+        protect (valid creds -> 200, wrong role -> 403, bad creds -> 401).
+        """
         mock_db, mock_auth_client = mock_supabase_admin
 
         # Mock successful authentication
@@ -754,22 +816,15 @@ class TestAdminLogin:
         mock_auth_client.auth.sign_in_with_password.return_value = mock_auth_response
 
         # Mock user data lookup
-        mock_user_data = generate_mock_admin_user()
-        mock_user_result = MagicMock()
-        mock_user_result.data = [mock_user_data]
-
-        mock_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_user_result
-
+        mock_db.set("users", "select", FakeResult(data=[generate_mock_admin_user()]))
         # Mock presence update
-        mock_upsert_result = MagicMock()
-        mock_upsert_result.data = [{}]
-        mock_db.client.table.return_value.upsert.return_value.execute.return_value = mock_upsert_result
+        mock_db.set("admin_presence", "upsert", FakeResult(data=[{}]))
 
         response = client.post(
-            "/api/v1/admin/login",
+            f"{ADMIN}/login",
             json={
                 "email": "admin@example.com",
-                "password": "secure-password-123",
+                "password": "Secure-Password-123!",
             }
         )
 
@@ -798,17 +853,15 @@ class TestAdminLogin:
         mock_auth_client.auth.sign_in_with_password.return_value = mock_auth_response
 
         # Mock user data lookup - returns regular user role
-        mock_user_data = generate_mock_admin_user(user_id=MOCK_USER_ID, role="user")
-        mock_user_result = MagicMock()
-        mock_user_result.data = [mock_user_data]
-
-        mock_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_user_result
+        mock_db.set("users", "select", FakeResult(
+            data=[generate_mock_admin_user(user_id=MOCK_USER_ID, role="user")]
+        ))
 
         response = client.post(
-            "/api/v1/admin/login",
+            f"{ADMIN}/login",
             json={
                 "email": "user@example.com",
-                "password": "user-password-123",
+                "password": "User-Password-123!",
             }
         )
 
@@ -823,14 +876,104 @@ class TestAdminLogin:
         mock_auth_client.auth.sign_in_with_password.return_value = None
 
         response = client.post(
-            "/api/v1/admin/login",
+            f"{ADMIN}/login",
             json={
                 "email": "admin@example.com",
-                "password": "wrong-password",
+                "password": "Wrong-Password-123!",
             }
         )
 
         assert response.status_code == 401
+
+
+# =============================================================================
+# Admin API Tests - Token Verification (regression gate)
+# =============================================================================
+
+class TestVerifyAdminToken:
+    """Direct tests for the `verify_admin_token` dependency itself.
+
+    REGRESSION GATE. The admin endpoints were split across two modules, and each
+    got its OWN copy of `verify_admin_token`. The copy in
+    `api/v1/admin/live_chat_endpoints.py` drifted from the `AdminProfile` model
+    (passed `active_chats=`, which is not a field, and omitted the REQUIRED
+    `created_at`), so it raised pydantic ValidationError on every call — which
+    its broad `except Exception` converted into 401 "Authentication failed".
+    Result: close-chat / tickets / reports / dashboard / presence were
+    unreachable for every valid admin, in production.
+
+    The endpoint tests below can't catch this because they override the
+    dependency (that is the only way to stub a FastAPI `Depends`), so the
+    dependency is exercised here directly — both copies, to prove they cannot
+    drift apart again.
+    """
+
+    @staticmethod
+    def _arrange(mock_db, mock_auth_client, role: str = "admin"):
+        user = MagicMock()
+        user.id = MOCK_ADMIN_USER_ID
+        auth_response = MagicMock()
+        auth_response.user = user
+        mock_auth_client.auth.get_user.return_value = auth_response
+
+        mock_db.set("users", "select", FakeResult(
+            data=[generate_mock_admin_user(role=role)]
+        ))
+        mock_db.set("support_tickets", "select", FakeResult(count=4))
+
+    @pytest.mark.asyncio
+    async def test_verify_admin_token_returns_profile(self, mock_supabase_admin):
+        """A valid admin token yields a populated AdminProfile (not a 401)."""
+        from api.v1.admin.live_chat import verify_admin_token
+        from models.admin import AdminProfile, AdminRole
+
+        mock_db, mock_auth_client = mock_supabase_admin
+        self._arrange(mock_db, mock_auth_client)
+
+        profile = await verify_admin_token(authorization=f"Bearer {MOCK_ACCESS_TOKEN}")
+
+        assert isinstance(profile, AdminProfile)
+        assert profile.id == MOCK_ADMIN_USER_ID
+        assert profile.email == "admin@example.com"
+        assert profile.role == AdminRole.ADMIN
+        assert profile.active_chats_count == 4
+
+    @pytest.mark.asyncio
+    async def test_verify_admin_token_sub_router_returns_profile(self, mock_supabase_admin):
+        """The sub-router's dependency must behave identically to the canonical one.
+
+        This is the exact assertion that was failing in production: it used to
+        raise HTTPException(401) for a perfectly valid admin token.
+        """
+        from api.v1.admin.live_chat_endpoints import verify_admin_token
+        from models.admin import AdminProfile, AdminRole
+
+        mock_db, mock_auth_client = mock_supabase_admin
+        self._arrange(mock_db, mock_auth_client)
+
+        profile = await verify_admin_token(authorization=f"Bearer {MOCK_ACCESS_TOKEN}")
+
+        assert isinstance(profile, AdminProfile)
+        assert profile.id == MOCK_ADMIN_USER_ID
+        assert profile.role == AdminRole.ADMIN
+        assert profile.active_chats_count == 4
+
+    @pytest.mark.asyncio
+    async def test_verify_admin_token_rejects_non_admin(self, mock_supabase_admin):
+        """A non-admin role is rejected with 403 by both copies."""
+        from fastapi import HTTPException
+        from api.v1.admin.live_chat import verify_admin_token as verify_parent
+        from api.v1.admin.live_chat_endpoints import verify_admin_token as verify_sub
+
+        mock_db, mock_auth_client = mock_supabase_admin
+
+        for verify in (verify_parent, verify_sub):
+            self._arrange(mock_db, mock_auth_client, role="user")
+
+            with pytest.raises(HTTPException) as exc_info:
+                await verify(authorization=f"Bearer {MOCK_ACCESS_TOKEN}")
+
+            assert exc_info.value.status_code == 403
 
 
 # =============================================================================
@@ -858,25 +1001,26 @@ class TestGetActiveLiveChats:
             },
         ]
 
-        mock_tickets_result = MagicMock()
-        mock_tickets_result.data = mock_tickets
-
-        mock_count_result = MagicMock()
-        mock_count_result.count = 2
-
-        mock_unread_result = MagicMock()
-        mock_unread_result.count = 1
-
-        mock_last_msg_result = MagicMock()
-        mock_last_msg_result.data = [{"message": "Last message preview", "created_at": "2024-12-30T12:00:00Z"}]
-
-        mock_db.client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_tickets_result
-        mock_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_count_result
-        mock_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.is_.return_value.execute.return_value = mock_unread_result
-        mock_db.client.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = mock_last_msg_result
+        # The endpoint runs the count query first, then the paginated list query.
+        mock_db.set("support_tickets", "select", [
+            FakeResult(count=2),
+            FakeResult(data=mock_tickets, count=2),
+        ])
+        # Per ticket: unread count, then last-message preview.
+        mock_db.set("live_chat_messages", "select", [
+            FakeResult(count=1),
+            FakeResult(data=[{"message": "Last message preview", "created_at": "2024-12-30T12:00:00Z"}]),
+            FakeResult(count=1),
+            FakeResult(data=[{"message": "Last message preview", "created_at": "2024-12-30T12:00:00Z"}]),
+        ])
+        # ticket-2 is unassigned + open, so it gets a queue-position lookup.
+        mock_db.set("live_chat_queue", "select", [
+            FakeResult(data=[{"created_at": "2024-12-30T12:00:00Z"}]),
+            FakeResult(count=0),
+        ])
 
         response = client.get(
-            "/api/v1/admin/live-chats",
+            f"{ADMIN}/live-chats",
             headers={"Authorization": f"Bearer {MOCK_ACCESS_TOKEN}"}
         )
 
@@ -899,31 +1043,21 @@ class TestAdminReply:
         """Test sending reply as admin."""
         mock_db, _ = mock_supabase_admin
 
-        mock_ticket = generate_mock_ticket(status="in_progress", assigned_to=MOCK_ADMIN_USER_ID)
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_message = generate_mock_message(
+        mock_db.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(status="in_progress", assigned_to=MOCK_ADMIN_USER_ID)]
+        ))
+        mock_db.set("live_chat_messages", "insert", FakeResult(data=[generate_mock_message(
             sender_role="agent",
             sender_id=MOCK_ADMIN_USER_ID,
             message="Hello, how can I help you today?",
-        )
-        mock_message_result = MagicMock()
-        mock_message_result.data = [mock_message]
-
-        mock_update_result = MagicMock()
-        mock_update_result.data = [{}]
-
-        mock_fcm_result = MagicMock()
-        mock_fcm_result.data = [{"fcm_token": "mock-fcm-token"}]
-
-        mock_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_ticket_result
-        mock_db.client.table.return_value.insert.return_value.execute.return_value = mock_message_result
-        mock_db.client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_update_result
-        mock_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = mock_fcm_result
+        )]))
+        mock_db.set("support_tickets", "update", FakeResult(data=[{}]))
+        mock_db.set("live_chat_queue", "update", FakeResult(data=[{}]))
+        # Push notification looks up the recipient's FCM token on `users`.
+        mock_db.set("users", "select", FakeResult(data=[{"fcm_token": "mock-fcm-token"}]))
 
         response = client.post(
-            f"/api/v1/admin/live-chats/{MOCK_TICKET_ID}/reply",
+            f"{ADMIN}/live-chats/{MOCK_TICKET_ID}/reply",
             json={
                 "message": "Hello, how can I help you today?",
             },
@@ -941,14 +1075,12 @@ class TestAdminReply:
         """Test that admin cannot reply to closed chat."""
         mock_db, _ = mock_supabase_admin
 
-        mock_ticket = generate_mock_ticket(status="resolved")
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_ticket_result
+        mock_db.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(status="resolved")]
+        ))
 
         response = client.post(
-            f"/api/v1/admin/live-chats/{MOCK_TICKET_ID}/reply",
+            f"{ADMIN}/live-chats/{MOCK_TICKET_ID}/reply",
             json={
                 "message": "Trying to reply to closed chat",
             },
@@ -971,35 +1103,19 @@ class TestAssignChat:
         """Test assigning chat to agent."""
         mock_db, _ = mock_supabase_admin
 
-        mock_ticket = generate_mock_ticket(status="open")
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_agent_data = generate_mock_admin_user(user_id=MOCK_AGENT_ID, name="Support Agent")
-        mock_agent_result = MagicMock()
-        mock_agent_result.data = [mock_agent_data]
-
-        mock_update_result = MagicMock()
-        mock_update_result.data = [{}]
-
-        mock_delete_result = MagicMock()
-        mock_delete_result.data = []
-
-        mock_insert_result = MagicMock()
-        mock_insert_result.data = [{}]
-
-        mock_fcm_result = MagicMock()
-        mock_fcm_result.data = [{"fcm_token": "mock-fcm-token"}]
-
-        mock_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_ticket_result
-        mock_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_agent_result
-        mock_db.client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_update_result
-        mock_db.client.table.return_value.delete.return_value.eq.return_value.execute.return_value = mock_delete_result
-        mock_db.client.table.return_value.insert.return_value.execute.return_value = mock_insert_result
-        mock_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = mock_fcm_result
+        mock_db.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(status="open")]
+        ))
+        mock_db.set("support_tickets", "update", FakeResult(data=[{}]))
+        mock_db.set("live_chat_queue", "delete", FakeResult(data=[]))
+        mock_db.set("live_chat_messages", "insert", FakeResult(data=[{}]))
+        mock_db.set("users", "select", FakeResult(data=[{
+            **generate_mock_admin_user(user_id=MOCK_AGENT_ID, name="Support Agent"),
+            "fcm_token": "mock-fcm-token",
+        }]))
 
         response = client.post(
-            f"/api/v1/admin/live-chats/{MOCK_TICKET_ID}/assign",
+            f"{ADMIN}/live-chats/{MOCK_TICKET_ID}/assign",
             json={
                 "agent_id": MOCK_AGENT_ID,
                 "agent_name": "Support Agent",
@@ -1026,30 +1142,16 @@ class TestCloseChat:
         """Test closing/resolving a chat."""
         mock_db, _ = mock_supabase_admin
 
-        mock_ticket = generate_mock_ticket(status="in_progress", assigned_to=MOCK_ADMIN_USER_ID)
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_insert_result = MagicMock()
-        mock_insert_result.data = [{}]
-
-        mock_update_result = MagicMock()
-        mock_update_result.data = [{}]
-
-        mock_delete_result = MagicMock()
-        mock_delete_result.data = []
-
-        mock_fcm_result = MagicMock()
-        mock_fcm_result.data = [{"fcm_token": "mock-fcm-token"}]
-
-        mock_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_ticket_result
-        mock_db.client.table.return_value.insert.return_value.execute.return_value = mock_insert_result
-        mock_db.client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_update_result
-        mock_db.client.table.return_value.delete.return_value.eq.return_value.execute.return_value = mock_delete_result
-        mock_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = mock_fcm_result
+        mock_db.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(status="in_progress", assigned_to=MOCK_ADMIN_USER_ID)]
+        ))
+        mock_db.set("live_chat_messages", "insert", FakeResult(data=[{}]))
+        mock_db.set("support_tickets", "update", FakeResult(data=[{}]))
+        mock_db.set("live_chat_queue", "delete", FakeResult(data=[]))
+        mock_db.set("users", "select", FakeResult(data=[{"fcm_token": "mock-fcm-token"}]))
 
         response = client.post(
-            f"/api/v1/admin/live-chats/{MOCK_TICKET_ID}/close",
+            f"{ADMIN}/live-chats/{MOCK_TICKET_ID}/close",
             json={
                 "resolution_note": "Issue resolved. User was able to complete their workout.",
             },
@@ -1075,34 +1177,25 @@ class TestDashboardStats:
         """Test getting dashboard statistics."""
         mock_db, _ = mock_supabase_admin
 
-        # Mock various stats queries
-        mock_count_result = MagicMock()
-        mock_count_result.count = 5
-
-        mock_queue_times_result = MagicMock()
-        mock_queue_times_result.data = [
-            {"created_at": "2024-12-30T11:50:00Z"},
-            {"created_at": "2024-12-30T11:55:00Z"},
-        ]
-
-        mock_agents_result = MagicMock()
-        mock_agents_result.data = [
+        # Every support_tickets read on the dashboard is a count query
+        # (active / open / pending / resolved-today / started-today / per-agent).
+        mock_db.set("support_tickets", "select", FakeResult(count=5))
+        mock_db.set("live_chat_queue", "select", FakeResult(
+            data=[
+                {"created_at": "2024-12-30T11:50:00Z"},
+                {"created_at": "2024-12-30T11:55:00Z"},
+            ],
+            count=2,
+        ))
+        mock_db.set("chat_message_reports", "select", FakeResult(count=5))
+        mock_db.set("admin_presence", "select", FakeResult(data=[
             {"admin_id": MOCK_ADMIN_USER_ID, "is_online": True, "last_seen": "2024-12-30T12:00:00Z"}
-        ]
-
-        mock_agent_info = MagicMock()
-        mock_agent_info.data = [{"name": "Test Admin"}]
-
-        # Set up return values for all the dashboard queries
-        mock_db.client.table.return_value.select.return_value.eq.return_value.not_.return_value.is_.return_value.neq.return_value.neq.return_value.execute.return_value = mock_count_result
-        mock_db.client.table.return_value.select.return_value.execute.return_value = mock_count_result
-        mock_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_agents_result
-        mock_db.client.table.return_value.select.return_value.neq.return_value.in_.return_value.execute.return_value = mock_count_result
-        mock_db.client.table.return_value.select.return_value.gte.return_value.execute.return_value = mock_count_result
-        mock_db.client.table.return_value.select.return_value.in_.return_value.execute.return_value = mock_count_result
+        ]))
+        # users: total-agent count query and the per-agent name lookup.
+        mock_db.set("users", "select", FakeResult(data=[{"name": "Test Admin"}], count=3))
 
         response = client.get(
-            "/api/v1/admin/dashboard",
+            f"{ADMIN}/dashboard",
             headers={"Authorization": f"Bearer {MOCK_ACCESS_TOKEN}"}
         )
 
@@ -1126,40 +1219,17 @@ class TestWebhookNotifications:
     ):
         """Test that webhook is called when user starts chat."""
         with patch("api.v1.live_chat._send_admin_webhook", new_callable=AsyncMock) as mock_webhook:
-            mock_ticket = generate_mock_ticket()
-            mock_message = generate_mock_message()
-            mock_queue = generate_mock_queue_entry()
-
-            mock_insert_ticket = MagicMock()
-            mock_insert_ticket.data = [mock_ticket]
-
-            mock_insert_message = MagicMock()
-            mock_insert_message.data = [mock_message]
-
-            mock_insert_queue = MagicMock()
-            mock_insert_queue.data = [mock_queue]
-
-            mock_queue_entry_result = MagicMock()
-            mock_queue_entry_result.data = [{"created_at": "2024-12-30T12:00:00Z"}]
-
-            mock_queue_count_result = MagicMock()
-            mock_queue_count_result.count = 0
-
-            mock_agents_result = MagicMock()
-            mock_agents_result.count = 2
-
-            mock_supabase.client.table.return_value.insert.return_value.execute.side_effect = [
-                mock_insert_ticket,
-                mock_insert_message,
-                mock_insert_queue,
-            ]
-
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_queue_entry_result
-            mock_supabase.client.table.return_value.select.return_value.lt.return_value.execute.return_value = mock_queue_count_result
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_agents_result
+            mock_supabase.set("support_tickets", "insert", FakeResult(data=[generate_mock_ticket()]))
+            mock_supabase.set("live_chat_messages", "insert", FakeResult(data=[generate_mock_message()]))
+            mock_supabase.set("live_chat_queue", "insert", FakeResult(data=[generate_mock_queue_entry()]))
+            mock_supabase.set("live_chat_queue", "select", [
+                FakeResult(data=[{"created_at": "2024-12-30T12:00:00Z"}]),
+                FakeResult(count=0),
+            ])
+            mock_supabase.set("admin_presence", "select", FakeResult(count=2))
 
             response = client.post(
-                "/api/v1/live-chat/start",
+                f"{LIVE_CHAT}/start",
                 json={
                     "user_id": MOCK_USER_ID,
                     "category": "technical",
@@ -1178,29 +1248,16 @@ class TestWebhookNotifications:
     ):
         """Test that webhook is called on new user message."""
         with patch("api.v1.live_chat._send_admin_webhook", new_callable=AsyncMock) as mock_webhook:
-            mock_ticket = generate_mock_ticket(status="in_progress", assigned_to=MOCK_AGENT_ID)
-            mock_ticket_result = MagicMock()
-            mock_ticket_result.data = [mock_ticket]
-
-            mock_message = generate_mock_message()
-            mock_message_result = MagicMock()
-            mock_message_result.data = [mock_message]
-
-            mock_user_check = MagicMock()
-            mock_user_check.data = [{"role": "user"}]
-
-            mock_update_result = MagicMock()
-            mock_update_result.data = [{}]
-
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.side_effect = [
-                mock_ticket_result,
-                mock_user_check,
-            ]
-            mock_supabase.client.table.return_value.insert.return_value.execute.return_value = mock_message_result
-            mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_update_result
+            mock_supabase.set("support_tickets", "select", FakeResult(
+                data=[generate_mock_ticket(status="in_progress", assigned_to=MOCK_AGENT_ID)]
+            ))
+            mock_supabase.set("users", "select", _regular_user_role())
+            mock_supabase.set("live_chat_messages", "insert", FakeResult(data=[generate_mock_message()]))
+            mock_supabase.set("support_tickets", "update", FakeResult(data=[{}]))
+            mock_supabase.set("live_chat_queue", "update", FakeResult(data=[{}]))
 
             response = client.post(
-                f"/api/v1/live-chat/{MOCK_TICKET_ID}/message",
+                f"{LIVE_CHAT}/{MOCK_TICKET_ID}/message",
                 json={
                     "user_id": MOCK_USER_ID,
                     "message": "Thank you for your help!",
@@ -1222,14 +1279,19 @@ class TestEdgeCases:
     """Tests for edge cases and error handling."""
 
     def test_unauthorized_access(self, client, mock_supabase_admin):
-        """Test that non-admin cannot access admin endpoints."""
+        """Test that non-admin cannot access admin endpoints.
+
+        NOTE: deliberately does NOT use `mock_admin_token_verification` — the
+        real `verify_admin_token` dependency runs, so this genuinely exercises
+        the rejection path.
+        """
         mock_db, mock_auth_client = mock_supabase_admin
 
         # Mock failed token verification
         mock_auth_client.auth.get_user.return_value = None
 
         response = client.get(
-            "/api/v1/admin/live-chats",
+            f"{ADMIN}/live-chats",
             headers={"Authorization": "Bearer invalid-token"}
         )
 
@@ -1237,12 +1299,10 @@ class TestEdgeCases:
 
     def test_chat_not_found(self, client, mock_supabase):
         """Test handling of missing ticket."""
-        mock_result = MagicMock()
-        mock_result.data = []
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.set("support_tickets", "select", FakeResult(data=[]))
 
         response = client.post(
-            "/api/v1/live-chat/nonexistent-ticket/message",
+            f"{LIVE_CHAT}/nonexistent-ticket/message",
             json={
                 "user_id": MOCK_USER_ID,
                 "message": "Hello?",
@@ -1254,14 +1314,12 @@ class TestEdgeCases:
 
     def test_already_ended_chat(self, client, mock_supabase):
         """Test that cannot send message to ended chat."""
-        mock_ticket = generate_mock_ticket(status="resolved")
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_ticket_result
+        mock_supabase.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(status="resolved")]
+        ))
 
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/message",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/message",
             json={
                 "user_id": MOCK_USER_ID,
                 "message": "Trying to send to ended chat",
@@ -1274,7 +1332,7 @@ class TestEdgeCases:
     def test_invalid_category(self, client, mock_supabase):
         """Test that invalid category is rejected."""
         response = client.post(
-            "/api/v1/live-chat/start",
+            f"{LIVE_CHAT}/start",
             json={
                 "user_id": MOCK_USER_ID,
                 "category": "invalid_category_xyz",
@@ -1287,7 +1345,7 @@ class TestEdgeCases:
     def test_empty_message(self, client, mock_supabase):
         """Test that empty message is rejected."""
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/message",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/message",
             json={
                 "user_id": MOCK_USER_ID,
                 "message": "",
@@ -1299,7 +1357,7 @@ class TestEdgeCases:
     def test_message_too_long(self, client, mock_supabase):
         """Test that message exceeding max length is rejected."""
         response = client.post(
-            f"/api/v1/live-chat/{MOCK_TICKET_ID}/message",
+            f"{LIVE_CHAT}/{MOCK_TICKET_ID}/message",
             json={
                 "user_id": MOCK_USER_ID,
                 "message": "x" * 5001,  # Max is 5000
@@ -1310,10 +1368,10 @@ class TestEdgeCases:
 
     def test_database_error_handling(self, client, mock_supabase, mock_activity_logger):
         """Test graceful handling of database errors."""
-        mock_supabase.client.table.return_value.insert.return_value.execute.side_effect = Exception("Database connection failed")
+        mock_supabase.set("support_tickets", "insert", Exception("Database connection failed"))
 
         response = client.post(
-            "/api/v1/live-chat/start",
+            f"{LIVE_CHAT}/start",
             json={
                 "user_id": MOCK_USER_ID,
                 "category": "technical",
@@ -1332,36 +1390,23 @@ class TestEscalation:
     """Tests for escalating existing tickets to live chat."""
 
     def test_escalate_ticket_to_live_chat(
-        self, client, mock_supabase, mock_user_context, mock_activity_logger
+        self, client, mock_supabase, mock_user_context, mock_activity_logger, mock_webhook
     ):
         """Test escalating an existing ticket to live chat."""
-        mock_ticket = generate_mock_ticket(chat_mode="ticket")  # Regular ticket
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_update_result = MagicMock()
-        mock_update_result.data = [{}]
-
-        mock_insert_result = MagicMock()
-        mock_insert_result.data = [{}]
-
-        mock_queue_entry_result = MagicMock()
-        mock_queue_entry_result.data = [{"created_at": "2024-12-30T12:00:00Z"}]
-
-        mock_queue_count_result = MagicMock()
-        mock_queue_count_result.count = 0
-
-        mock_agents_result = MagicMock()
-        mock_agents_result.count = 1
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_ticket_result
-        mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_update_result
-        mock_supabase.client.table.return_value.insert.return_value.execute.return_value = mock_insert_result
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_queue_entry_result
-        mock_supabase.client.table.return_value.select.return_value.lt.return_value.execute.return_value = mock_queue_count_result
+        mock_supabase.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(chat_mode="ticket")]  # Regular ticket
+        ))
+        mock_supabase.set("support_tickets", "update", FakeResult(data=[{}]))
+        mock_supabase.set("live_chat_queue", "insert", FakeResult(data=[{}]))
+        mock_supabase.set("live_chat_messages", "insert", FakeResult(data=[{}]))
+        mock_supabase.set("live_chat_queue", "select", [
+            FakeResult(data=[{"created_at": "2024-12-30T12:00:00Z"}]),
+            FakeResult(count=0),
+        ])
+        mock_supabase.set("admin_presence", "select", FakeResult(count=1))
 
         response = client.post(
-            f"/api/v1/live-chat/escalate/{MOCK_TICKET_ID}",
+            f"{LIVE_CHAT}/escalate/{MOCK_TICKET_ID}",
             json={
                 "user_id": MOCK_USER_ID,
                 "ai_handoff_context": "User requested human support after AI couldn't answer their question.",
@@ -1375,28 +1420,20 @@ class TestEscalation:
         assert data["status"] == "queued"
 
     def test_escalate_already_live_chat(
-        self, client, mock_supabase, mock_user_context, mock_activity_logger
+        self, client, mock_supabase, mock_user_context, mock_activity_logger, mock_webhook
     ):
         """Test escalating a ticket that is already in live chat mode."""
-        mock_ticket = generate_mock_ticket(chat_mode="live_chat")
-        mock_ticket_result = MagicMock()
-        mock_ticket_result.data = [mock_ticket]
-
-        mock_queue_entry_result = MagicMock()
-        mock_queue_entry_result.data = [{"created_at": "2024-12-30T12:00:00Z"}]
-
-        mock_queue_count_result = MagicMock()
-        mock_queue_count_result.count = 0
-
-        mock_agents_result = MagicMock()
-        mock_agents_result.count = 1
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_ticket_result
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_queue_entry_result
-        mock_supabase.client.table.return_value.select.return_value.lt.return_value.execute.return_value = mock_queue_count_result
+        mock_supabase.set("support_tickets", "select", FakeResult(
+            data=[generate_mock_ticket(chat_mode="live_chat")]
+        ))
+        mock_supabase.set("live_chat_queue", "select", [
+            FakeResult(data=[{"created_at": "2024-12-30T12:00:00Z"}]),
+            FakeResult(count=0),
+        ])
+        mock_supabase.set("admin_presence", "select", FakeResult(count=1))
 
         response = client.post(
-            f"/api/v1/live-chat/escalate/{MOCK_TICKET_ID}",
+            f"{LIVE_CHAT}/escalate/{MOCK_TICKET_ID}",
             json={
                 "user_id": MOCK_USER_ID,
             }
@@ -1409,12 +1446,10 @@ class TestEscalation:
 
     def test_escalate_ticket_not_found(self, client, mock_supabase):
         """Test escalating non-existent ticket."""
-        mock_result = MagicMock()
-        mock_result.data = []
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase.set("support_tickets", "select", FakeResult(data=[]))
 
         response = client.post(
-            "/api/v1/live-chat/escalate/nonexistent-ticket",
+            f"{LIVE_CHAT}/escalate/nonexistent-ticket",
             json={
                 "user_id": MOCK_USER_ID,
             }
@@ -1436,13 +1471,10 @@ class TestAdminPresence:
         """Test updating admin presence to online."""
         mock_db, _ = mock_supabase_admin
 
-        mock_upsert_result = MagicMock()
-        mock_upsert_result.data = [{}]
-
-        mock_db.client.table.return_value.upsert.return_value.execute.return_value = mock_upsert_result
+        mock_db.set("admin_presence", "upsert", FakeResult(data=[{}]))
 
         response = client.post(
-            "/api/v1/admin/presence",
+            f"{ADMIN}/presence",
             json={
                 "is_online": True,
                 "status_message": "Available",
@@ -1461,13 +1493,10 @@ class TestAdminPresence:
         """Test updating admin presence to offline."""
         mock_db, _ = mock_supabase_admin
 
-        mock_upsert_result = MagicMock()
-        mock_upsert_result.data = [{}]
-
-        mock_db.client.table.return_value.upsert.return_value.execute.return_value = mock_upsert_result
+        mock_db.set("admin_presence", "upsert", FakeResult(data=[{}]))
 
         response = client.post(
-            "/api/v1/admin/presence",
+            f"{ADMIN}/presence",
             json={
                 "is_online": False,
             },

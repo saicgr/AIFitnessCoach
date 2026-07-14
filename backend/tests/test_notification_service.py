@@ -23,25 +23,74 @@ from datetime import datetime
 
 @pytest.fixture
 def mock_firebase():
-    """Mock Firebase Admin SDK."""
-    with patch("services.notification_service.firebase_admin") as mock_admin:
-        with patch("services.notification_service.credentials") as mock_creds:
-            with patch("services.notification_service.messaging") as mock_messaging:
-                mock_admin.initialize_app = MagicMock()
-                mock_creds.Certificate = MagicMock()
-                mock_messaging.send = MagicMock(return_value="message-id-123")
-                mock_messaging.send_each_for_multicast = MagicMock()
-                mock_messaging.Notification = MagicMock()
-                mock_messaging.AndroidConfig = MagicMock()
-                mock_messaging.AndroidNotification = MagicMock()
-                mock_messaging.Message = MagicMock()
-                mock_messaging.MulticastMessage = MagicMock()
+    """Mock the Firebase Admin SDK at its real import site.
+
+    `services.notification_service` no longer holds `firebase_admin` /
+    `credentials` / `messaging` as module-level attributes: the SDK is imported
+    lazily *inside* `initialize_firebase()` and inside the send methods
+    (`from firebase_admin import messaging`, see
+    services/notification_service_helpers_part2.py:137). Patching
+    `services.notification_service.messaging` therefore raises AttributeError.
+
+    Patching the attributes on the `firebase_admin` package itself is the
+    equivalent seam: the lazy `from firebase_admin import messaging` resolves
+    the attribute at call time and so picks up the mock. Same coverage, current
+    import structure.
+
+    The three FCM error classes are kept REAL: `send_notification` has
+    `except messaging.UnregisteredError:` clauses, and `except <MagicMock>`
+    raises TypeError ("catching classes that do not inherit from BaseException"),
+    which would mask the behaviour under test.
+    """
+    import firebase_admin
+    from firebase_admin import messaging as real_messaging
+
+    # Production memoises tokens FCM rejected in a module-level set; clear it so
+    # one test's unregistered-token case can't short-circuit the next test that
+    # reuses the same sample token.
+    from services.notification_service_helpers_part2 import _DEAD_FCM_TOKENS
+    _DEAD_FCM_TOKENS.clear()
+
+    mock_messaging = MagicMock()
+    mock_messaging.send = MagicMock(return_value="message-id-123")
+    mock_messaging.send_each_for_multicast = MagicMock()
+    mock_messaging.Notification = MagicMock()
+    mock_messaging.AndroidConfig = MagicMock()
+    mock_messaging.AndroidNotification = MagicMock()
+    mock_messaging.APNSConfig = MagicMock()
+    mock_messaging.APNSPayload = MagicMock()
+    mock_messaging.Aps = MagicMock()
+    mock_messaging.Message = MagicMock()
+    mock_messaging.MulticastMessage = MagicMock()
+    mock_messaging.UnregisteredError = real_messaging.UnregisteredError
+    mock_messaging.SenderIdMismatchError = real_messaging.SenderIdMismatchError
+    # NOTE: InvalidArgumentError is NOT on firebase_admin.messaging (only on
+    # firebase_admin.exceptions). Production used to catch
+    # `messaging.InvalidArgumentError` — that was a real bug, fixed in
+    # services/notification_service_helpers_part2.py. `firebase_admin.exceptions`
+    # is deliberately left unpatched so the real class is caught.
+
+    mock_credentials = MagicMock()
+    mock_credentials.Certificate = MagicMock()
+
+    with patch.object(firebase_admin, "messaging", mock_messaging):
+        with patch.object(firebase_admin, "credentials", mock_credentials):
+            with patch.object(firebase_admin, "initialize_app", MagicMock()):
                 yield mock_messaging
+
+    _DEAD_FCM_TOKENS.clear()
 
 
 @pytest.fixture
 def notification_service(mock_firebase):
-    """Create notification service with mocked Firebase."""
+    """Create notification service with mocked Firebase.
+
+    Gemini personalization (`_generate_personalized_message`) is stubbed out to
+    return None so the service takes its deterministic template path: it is a
+    live network dependency, not the unit under test here, and letting it run
+    would make these tests hit the Gemini API. Returning None is exactly what
+    production does on any Gemini failure, so the send path exercised is real.
+    """
     # Reset singleton
     import services.notification_service as ns
     ns._firebase_app = MagicMock()  # Pretend Firebase is initialized
@@ -49,7 +98,12 @@ def notification_service(mock_firebase):
 
     from services.notification_service import NotificationService
     service = NotificationService()
-    yield service
+    with patch.object(
+        NotificationService,
+        "_generate_personalized_message",
+        AsyncMock(return_value=None),
+    ):
+        yield service
 
 
 @pytest.fixture
@@ -431,7 +485,15 @@ class TestFirebaseInitialization:
     """Test Firebase initialization."""
 
     def test_initialize_firebase_with_credentials_file(self):
-        """Test initialization with credentials file."""
+        """Test initialization with credentials file.
+
+        Patch target updated: `initialize_firebase()` imports firebase_admin
+        lazily inside the function body, so `services.notification_service` has
+        no `firebase_admin`/`credentials` module attribute to patch. Patching
+        the attributes on the firebase_admin package is the same seam. The
+        assertions (Certificate built from the creds file, initialize_app
+        called once) are unchanged.
+        """
         import os
         import tempfile
         import json
@@ -452,21 +514,24 @@ class TestFirebaseInitialization:
             json.dump(creds, f)
             creds_path = f.name
 
+        import services.notification_service as ns
+
         try:
             with patch.dict("os.environ", {"FIREBASE_CREDENTIALS_PATH": creds_path}):
-                with patch("services.notification_service.firebase_admin") as mock_admin:
-                    with patch("services.notification_service.credentials") as mock_creds:
+                with patch("firebase_admin.initialize_app") as mock_initialize_app:
+                    with patch("firebase_admin.credentials") as mock_creds:
                         # Reset singleton
-                        import services.notification_service as ns
                         ns._firebase_app = None
 
                         from services.notification_service import initialize_firebase
 
                         initialize_firebase()
 
-                        mock_creds.Certificate.assert_called_once()
-                        mock_admin.initialize_app.assert_called_once()
+                        mock_creds.Certificate.assert_called_once_with(creds_path)
+                        mock_initialize_app.assert_called_once()
         finally:
+            # Don't leak the MagicMock app into other tests' globals.
+            ns._firebase_app = None
             os.unlink(creds_path)
 
     def test_initialize_firebase_returns_cached(self):

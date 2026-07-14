@@ -18,6 +18,17 @@ from fastapi import HTTPException
 from models.friend_request import SocialNotificationType, SocialPrivacySettingsUpdate
 
 
+# Every endpoint in api/v1/social/notifications.py takes
+# `current_user: dict = Depends(get_current_user)` and immediately calls
+# `verify_user_ownership(current_user, user_id)`, which does `current_user["id"]`.
+# These tests call the endpoint coroutines DIRECTLY (no FastAPI dependency
+# solving), so the default value of that parameter is the raw `Depends(...)`
+# marker object — `Depends` is not subscriptable, so every call blew up with
+# TypeError before reaching the code under test. Direct callers must therefore
+# pass the authenticated user themselves, exactly as the dependency would.
+CURRENT_USER = {"id": "user-1", "email": "user-1@example.com"}
+
+
 class TestGetNotifications:
     """Tests for get_notifications endpoint."""
 
@@ -91,6 +102,7 @@ class TestGetNotifications:
                 notification_type=None,
                 limit=50,
                 offset=0,
+                current_user=CURRENT_USER,
             )
 
         assert len(result.notifications) == 1
@@ -138,6 +150,7 @@ class TestGetNotifications:
                 notification_type=None,
                 limit=50,
                 offset=0,
+                current_user=CURRENT_USER,
             )
 
         assert result.notifications == []
@@ -157,7 +170,7 @@ class TestGetUnreadCount:
         mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            result = await get_unread_count(user_id="user-1")
+            result = await get_unread_count(user_id="user-1", current_user=CURRENT_USER)
 
         assert result["count"] == 7
 
@@ -172,7 +185,7 @@ class TestGetUnreadCount:
         mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            result = await get_unread_count(user_id="user-1")
+            result = await get_unread_count(user_id="user-1", current_user=CURRENT_USER)
 
         assert result["count"] == 0
 
@@ -192,7 +205,9 @@ class TestMarkNotificationRead:
         mock_client.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [{}]
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            result = await mark_notification_read(notification_id="notif-1", user_id="user-1")
+            result = await mark_notification_read(
+                notification_id="notif-1", user_id="user-1", current_user=CURRENT_USER,
+            )
 
         assert result["message"] == "Notification marked as read"
 
@@ -206,7 +221,9 @@ class TestMarkNotificationRead:
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await mark_notification_read(notification_id="nonexistent", user_id="user-1")
+                await mark_notification_read(
+                    notification_id="nonexistent", user_id="user-1", current_user=CURRENT_USER,
+                )
 
         assert exc_info.value.status_code == 404
 
@@ -225,7 +242,7 @@ class TestMarkAllNotificationsRead:
         ]
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            result = await mark_all_notifications_read(user_id="user-1")
+            result = await mark_all_notifications_read(user_id="user-1", current_user=CURRENT_USER)
 
         assert "3" in result["message"]
         assert result["count"] == 3
@@ -246,7 +263,9 @@ class TestDeleteNotification:
         mock_client.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = [{}]
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            result = await delete_notification(notification_id="notif-1", user_id="user-1")
+            result = await delete_notification(
+                notification_id="notif-1", user_id="user-1", current_user=CURRENT_USER,
+            )
 
         assert result["message"] == "Notification deleted"
 
@@ -260,7 +279,9 @@ class TestDeleteNotification:
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await delete_notification(notification_id="nonexistent", user_id="user-1")
+                await delete_notification(
+                    notification_id="nonexistent", user_id="user-1", current_user=CURRENT_USER,
+                )
 
         assert exc_info.value.status_code == 404
 
@@ -279,7 +300,7 @@ class TestClearAllNotifications:
         ]
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            result = await clear_all_notifications(user_id="user-1")
+            result = await clear_all_notifications(user_id="user-1", current_user=CURRENT_USER)
 
         assert "5" in result["message"]
         assert result["count"] == 5
@@ -307,7 +328,7 @@ class TestGetSocialSettings:
         }]
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            result = await get_social_settings(user_id="user-1")
+            result = await get_social_settings(user_id="user-1", current_user=CURRENT_USER)
 
         assert result.notify_friend_requests is True
         assert result.notify_reactions is False
@@ -322,7 +343,7 @@ class TestGetSocialSettings:
         mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            result = await get_social_settings(user_id="user-1")
+            result = await get_social_settings(user_id="user-1", current_user=CURRENT_USER)
 
         # Check defaults
         assert result.notify_friend_requests is True
@@ -334,13 +355,35 @@ class TestUpdateSocialSettings:
 
     @pytest.mark.asyncio
     async def test_update_settings_success(self):
-        """Test updating social settings."""
+        """Test updating social settings.
+
+        `get_social_settings` is deliberately NOT patched here. update_social_settings
+        ends with `return await get_social_settings(...)`, and stubbing that call out
+        hid a real 500: the internal call did not forward `current_user`, so the
+        parameter kept its `Depends(get_current_user)` default and
+        verify_user_ownership raised `TypeError: 'Depends' object is not subscriptable`
+        AFTER the settings had already been written. Running the real read-back is the
+        regression gate for that.
+        """
         from api.v1.social.notifications import update_social_settings
 
         mock_client = MagicMock()
 
-        # Mock existing settings
-        mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [{"id": "settings-1"}]
+        # Both the existence check and the read-back select from
+        # user_privacy_settings — return the post-update row.
+        updated_row = {
+            "user_id": "user-1",
+            "notify_friend_requests": False,
+            "notify_reactions": True,
+            "notify_comments": True,
+            "notify_challenge_invites": True,
+            "notify_friend_activity": True,
+            "require_follow_approval": True,
+            "allow_friend_requests": True,
+            "allow_challenge_invites": True,
+            "show_on_leaderboards": True,
+        }
+        mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [updated_row]
 
         # Mock update
         mock_client.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [{}]
@@ -351,32 +394,47 @@ class TestUpdateSocialSettings:
         )
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            with patch("api.v1.social.notifications.get_social_settings") as mock_get:
-                mock_get.return_value = MagicMock(
-                    notify_friend_requests=False,
-                    notify_reactions=True,
-                    notify_comments=True,
-                    notify_challenge_invites=True,
-                    notify_friend_activity=True,
-                    require_follow_approval=True,
-                    allow_friend_requests=True,
-                    allow_challenge_invites=True,
-                    show_on_leaderboards=True,
-                )
-                result = await update_social_settings(user_id="user-1", settings=settings)
+            result = await update_social_settings(
+                user_id="user-1", settings=settings, current_user=CURRENT_USER,
+            )
 
+        # Existing row → UPDATE, not INSERT.
+        mock_client.table.return_value.update.assert_called_once_with({
+            "notify_friend_requests": False,
+            "require_follow_approval": True,
+        })
         assert result.notify_friend_requests is False
         assert result.require_follow_approval is True
 
     @pytest.mark.asyncio
     async def test_update_settings_creates_when_not_exist(self):
-        """Test that settings are created if they don't exist."""
+        """Test that settings are created if they don't exist.
+
+        Also exercises the real `get_social_settings` read-back (see the docstring
+        of test_update_settings_success).
+        """
         from api.v1.social.notifications import update_social_settings
 
         mock_client = MagicMock()
 
-        # Mock no existing settings
-        mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
+        created_row = {
+            "user_id": "user-1",
+            "notify_friend_requests": True,
+            "notify_reactions": True,
+            "notify_comments": True,
+            "notify_challenge_invites": True,
+            "notify_friend_activity": True,
+            "require_follow_approval": True,
+            "allow_friend_requests": True,
+            "allow_challenge_invites": True,
+            "show_on_leaderboards": True,
+        }
+        # 1st select = existence check (no row yet); 2nd select = read-back
+        # after the insert.
+        mock_client.table.return_value.select.return_value.eq.return_value.execute.side_effect = [
+            MagicMock(data=[]),
+            MagicMock(data=[created_row]),
+        ]
 
         # Mock insert
         mock_client.table.return_value.insert.return_value.execute.return_value.data = [{}]
@@ -384,19 +442,13 @@ class TestUpdateSocialSettings:
         settings = SocialPrivacySettingsUpdate(require_follow_approval=True)
 
         with patch("api.v1.social.notifications.get_supabase_client", return_value=mock_client):
-            with patch("api.v1.social.notifications.get_social_settings") as mock_get:
-                mock_get.return_value = MagicMock(
-                    notify_friend_requests=True,
-                    notify_reactions=True,
-                    notify_comments=True,
-                    notify_challenge_invites=True,
-                    notify_friend_activity=True,
-                    require_follow_approval=True,
-                    allow_friend_requests=True,
-                    allow_challenge_invites=True,
-                    show_on_leaderboards=True,
-                )
-                result = await update_social_settings(user_id="user-1", settings=settings)
+            result = await update_social_settings(
+                user_id="user-1", settings=settings, current_user=CURRENT_USER,
+            )
 
         # Verify insert was called
-        mock_client.table.return_value.insert.assert_called_once()
+        mock_client.table.return_value.insert.assert_called_once_with({
+            "require_follow_approval": True,
+            "user_id": "user-1",
+        })
+        assert result.require_follow_approval is True

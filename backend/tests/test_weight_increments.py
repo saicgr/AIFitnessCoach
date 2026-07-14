@@ -19,11 +19,31 @@ def mock_db():
 
 @pytest.fixture(scope="module")
 def client(mock_db):
-    """Test client with mocked DB and activity logger."""
+    """Test client with mocked DB, activity logger and authentication.
+
+    The weight-increments endpoints gained `current_user: dict = Depends(get_current_user)`
+    after these tests were written, so every request here was answered with 401 before
+    it ever reached the handler. Overriding the dependency (rather than forging a JWT)
+    is the supported FastAPI way to exercise the handler itself; the auth contract is
+    covered by core.auth's own tests.
+    """
+    from main import app
+    from core.auth import get_current_user
+
     with patch("api.v1.weight_increments.get_supabase_db", return_value=mock_db):
         with patch("api.v1.weight_increments.log_user_activity", new_callable=AsyncMock):
-            from main import app
-            yield TestClient(app)
+            previous = app.dependency_overrides.get(get_current_user)
+            app.dependency_overrides[get_current_user] = lambda: {"id": "test-user-123"}
+            try:
+                yield TestClient(app)
+            finally:
+                # Restore, don't just pop: `app` is a process-wide singleton shared with
+                # every other test module, so blindly popping could strip an override
+                # another module installed.
+                if previous is None:
+                    app.dependency_overrides.pop(get_current_user, None)
+                else:
+                    app.dependency_overrides[get_current_user] = previous
 
 
 class TestWeightIncrementsAPI:

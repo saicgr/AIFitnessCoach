@@ -15,6 +15,7 @@ Run with: pytest backend/tests/test_one_at_a_time_generation.py -v
 
 import pytest
 from datetime import date, timedelta
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
 import uuid
@@ -39,11 +40,36 @@ def sample_user_id():
     return str(uuid.uuid4())
 
 
+class _EmptyQuery:
+    """Chainable stand-in for the Supabase query builder.
+
+    A bare MagicMock is not good enough here: /today reaches past the
+    `db.list_workouts(...)` helpers straight into `db.client.table(...)...
+    .execute().data` (active gym profile lookup, 'is a workout generating?'
+    probe). With a bare MagicMock those reads yield MagicMocks rather than
+    rows, and the MagicMock for the gym-profile id then fails
+    TodayWorkoutResponse validation (`gym_profile_id` must be a str) — a 500
+    that has nothing to do with the behavior under test.
+
+    Every builder method returns self; execute() yields an empty result set,
+    i.e. "this user has no active gym profile and nothing is generating".
+    """
+
+    def __getattr__(self, _name):
+        def _chain(*_args, **_kwargs):
+            return self
+        return _chain
+
+    def execute(self):
+        return SimpleNamespace(data=[])
+
+
 @pytest.fixture
 def mock_supabase_db():
     """Mock Supabase database for testing."""
     with patch("api.v1.workouts.today.get_supabase_db") as mock:
         db_mock = MagicMock()
+        db_mock.client.table.return_value = _EmptyQuery()
         mock.return_value = db_mock
         yield db_mock
 
@@ -56,6 +82,42 @@ def mock_user_context_service():
         yield mock
 
 
+@pytest.fixture
+def no_background_generation():
+    """Stub out /today's background workout-generation tasks.
+
+    TestClient runs BackgroundTasks in-process after the response. When /today
+    decides a scheduled day has no workout it queues real generation work, and
+    that work builds its OWN Supabase client (it does not go through the
+    get_supabase_db patched above) — so these tests were firing live INSERTs at
+    the production database (they only bounced off a users FK constraint) and
+    the extra list_workouts calls those tasks made polluted the call assertions
+    below. Neither test is about generation; both are about which workout /today
+    SELECTS. Stub the tasks so the unit under test stays a unit.
+    """
+    with patch("api.v1.workouts.today._sequential_generate_workouts", new=AsyncMock()), \
+         patch("api.v1.workouts.generation.generate_next_day_background", new=AsyncMock()), \
+         patch("api.v1.workouts.today._backfill_gym_profile_id", new=MagicMock()):
+        yield
+
+
+@pytest.fixture
+def auth_override(sample_user_id):
+    """Satisfy the auth gate on GET /api/v1/workouts/today.
+
+    The endpoint declares `current_user: dict = Depends(get_current_user)`, so an
+    unauthenticated call is rejected with 401 before any of the sort-order logic
+    under test runs. These tests are about the ASC-order/next-workout behavior,
+    not about auth, so we override the dependency with the same user the request
+    passes as ?user_id=. Auth itself is covered by the auth test suites.
+    """
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {"id": sample_user_id}
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
+
 # ============================================================
 # TEST: SORT ORDER FOR NEXT WORKOUT
 # ============================================================
@@ -64,7 +126,8 @@ class TestNextWorkoutSortOrder:
     """Tests for the sort order fix that returns earliest upcoming workout."""
 
     def test_order_asc_returns_earliest_workout(
-        self, sample_user_id, mock_supabase_db, mock_user_context_service
+        self, sample_user_id, mock_supabase_db, mock_user_context_service,
+        auth_override, no_background_generation
     ):
         """
         Critical test: When multiple future workouts exist,
@@ -116,11 +179,43 @@ class TestNextWorkoutSortOrder:
             "preferences": '{"workout_days": [0, 2, 4]}'
         }
 
-        # Mock: no workout today
-        mock_supabase_db.list_workouts.side_effect = [
-            [],  # First call: today's workouts (empty)
-            [earliest_workout],  # Second call: future workouts with order_asc=True
-        ]
+        # Fake DB. NOTE: this replaces a positional `side_effect=[[], [earliest]]`
+        # list, which encoded a stale assumption — that /today issues exactly two
+        # list_workouts calls, sequentially, in a fixed order. It now issues THREE
+        # (today / future / completed-today) concurrently via asyncio.gather on a
+        # thread pool, so a positional side_effect both runs out (StopIteration ->
+        # 500) and is order-racy.
+        #
+        # Serving the query from all three workouts, honoring order_asc + limit,
+        # is also strictly stronger than hard-coding [earliest] as the answer: if
+        # /today ever regressed to DESC order (the original "27 days" bug), this
+        # fake would hand back latest_workout and the assertions below would fail,
+        # which is exactly the regression this test exists to catch.
+        all_workouts = [earliest_workout, middle_workout, latest_workout]
+
+        def _as_date(value):
+            # from_date/to_date arrive as UTC-range ISO timestamps; we only need the day.
+            return date.fromisoformat(str(value)[:10]) if value else None
+
+        def fake_list_workouts(**kwargs):
+            if kwargs.get("is_completed") is True:
+                return []  # nothing completed today
+            from_date = _as_date(kwargs.get("from_date"))
+            to_date = _as_date(kwargs.get("to_date"))
+            rows = [
+                w for w in all_workouts
+                if (from_date is None or date.fromisoformat(w["scheduled_date"]) >= from_date)
+                and (to_date is None or date.fromisoformat(w["scheduled_date"]) <= to_date)
+            ]
+            # Real query semantics: ORDER BY scheduled_date ASC/DESC, then LIMIT.
+            rows.sort(
+                key=lambda w: w["scheduled_date"],
+                reverse=not kwargs.get("order_asc", False),
+            )
+            limit = kwargs.get("limit")
+            return rows[:limit] if limit else rows
+
+        mock_supabase_db.list_workouts.side_effect = fake_list_workouts
 
         response = client.get(
             "/api/v1/workouts/today",
@@ -136,7 +231,8 @@ class TestNextWorkoutSortOrder:
         assert data["days_until_next"] == 2  # NOT 27!
 
     def test_list_workouts_called_with_order_asc(
-        self, sample_user_id, mock_supabase_db, mock_user_context_service
+        self, sample_user_id, mock_supabase_db, mock_user_context_service,
+        auth_override, no_background_generation
     ):
         """Verify that list_workouts is called with order_asc=True for future workouts."""
         today = date.today()
@@ -152,16 +248,29 @@ class TestNextWorkoutSortOrder:
             params={"user_id": sample_user_id}
         )
 
-        # Check that the second call (future workouts) used order_asc=True
+        # /today fires its today / future / completed-today queries CONCURRENTLY
+        # (asyncio.gather over a thread pool), so call_args_list order is not
+        # deterministic — identify the future-window query by its arguments
+        # rather than by position. (This assertion also used to sit behind an
+        # `if len(calls) >= 2:` guard, which silently made the test vacuous
+        # whenever the request never reached the DB at all.)
         calls = mock_supabase_db.list_workouts.call_args_list
+        assert calls, "/today should have queried workouts"
 
-        # First call is for today's workouts
-        # Second call is for future workouts - should have order_asc=True
-        if len(calls) >= 2:
-            future_call_kwargs = calls[1].kwargs if calls[1].kwargs else {}
-            # The call should include order_asc=True
-            assert future_call_kwargs.get("order_asc", False) == True, \
-                "Future workout query should use order_asc=True"
+        tomorrow = today + timedelta(days=1)
+        future_calls = [
+            c.kwargs for c in calls
+            if not c.kwargs.get("is_completed")
+            and str(c.kwargs.get("from_date", ""))[:10] >= tomorrow.isoformat()
+        ]
+
+        assert len(future_calls) == 1, \
+            f"Expected exactly one future-workout query, got {len(future_calls)}"
+        # The upcoming-workout query must be ASC so limit=1 yields the EARLIEST
+        # upcoming workout (DESC + limit=1 returned the furthest-out one — the
+        # original "27 days" bug this module exists to guard).
+        assert future_calls[0].get("order_asc", False) == True, \
+            "Future workout query should use order_asc=True"
 
 
 # ============================================================

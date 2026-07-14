@@ -42,26 +42,58 @@ MOCK_FASTING_RECORD_ID = "fasting-record-789"
 
 @pytest.fixture
 def mock_supabase():
-    """Create a mock Supabase client for fasting impact tests."""
+    """Create a mock Supabase client for fasting impact tests.
+
+    The fasting-impact API was split into two modules — `api.v1.fasting_impact`
+    (weight logging, analysis, insights) and `api.v1.fasting_impact_endpoints`
+    (calendar + AI endpoints, included as a sub-router). Each module imported
+    `get_supabase_db` into its own namespace, so both bindings must be patched
+    or the sub-router's endpoints would hit the real database.
+    """
     with patch("api.v1.fasting_impact.get_supabase_db") as mock:
-        mock_db = MagicMock()
-        mock.return_value = mock_db
-        yield mock_db
+        with patch("api.v1.fasting_impact_endpoints.get_supabase_db") as mock_endpoints:
+            mock_db = MagicMock()
+            mock.return_value = mock_db
+            mock_endpoints.return_value = mock_db
+            yield mock_db
 
 
 @pytest.fixture
 def mock_activity_logger():
-    """Mock the activity logger to avoid database writes during tests."""
+    """Mock the activity logger to avoid database writes during tests.
+
+    Patched in both fasting-impact modules (see `mock_supabase` for why there
+    are two).
+    """
     with patch("api.v1.fasting_impact.log_user_activity", new_callable=AsyncMock) as mock_log:
         with patch("api.v1.fasting_impact.log_user_error", new_callable=AsyncMock) as mock_error:
-            yield {"log_activity": mock_log, "log_error": mock_error}
+            with patch("api.v1.fasting_impact_endpoints.log_user_activity", new_callable=AsyncMock):
+                with patch("api.v1.fasting_impact_endpoints.log_user_error", new_callable=AsyncMock):
+                    yield {"log_activity": mock_log, "log_error": mock_error}
 
 
 @pytest.fixture
 def client():
-    """Create a test client."""
+    """Create a test client with the auth dependency overridden.
+
+    Every /fasting-impact endpoint declares `current_user: dict =
+    Depends(get_current_user)` and then rejects a mismatched user with 403, so
+    an unauthenticated TestClient request is turned away with 401 before the
+    handler ever runs. These tests exercise handler logic, not the auth layer,
+    so the dependency is overridden with the same user the requests are made
+    for (MOCK_USER_ID). Auth itself is covered by the auth tests.
+    """
     from main import app
-    return TestClient(app)
+    from core.auth import get_current_user
+
+    async def _current_user():
+        return {"id": MOCK_USER_ID, "email": "test@example.com"}
+
+    app.dependency_overrides[get_current_user] = _current_user
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture
@@ -98,6 +130,28 @@ def generate_mock_weight_log(
         "fasting_completion_percent": fasting_completion_percent,
         "created_at": datetime.utcnow().isoformat(),
     }
+
+
+def mock_weight_write(mock_supabase, row: dict):
+    """Wire the mock DB for the POST /fasting-impact/weight write path.
+
+    The endpoint stores weight in `body_measurements` and then re-reads the
+    inserted row (`.select("*").eq("id", ...).single().execute()`) so the
+    response carries the fasting context that the DB trigger populates. Both
+    legs have to be mocked: the insert (Supabase returns a *list*) and the
+    single-row refetch (Supabase returns the *row*). Mocking only the insert
+    leaves the refetch returning a bare MagicMock, which the endpoint then
+    reads fasting fields off of.
+    """
+    insert_result = MagicMock()
+    insert_result.data = [row]
+    mock_supabase.client.table.return_value.insert.return_value.execute.return_value = insert_result
+
+    refetch_result = MagicMock()
+    refetch_result.data = row
+    mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = refetch_result
+
+    return insert_result
 
 
 def generate_mock_fasting_record(
@@ -181,19 +235,17 @@ class TestLogWeightWithFasting:
             )
         ]
 
-        # Mock weight log insert
-        mock_insert_result = MagicMock()
-        mock_insert_result.data = [generate_mock_weight_log(
+        # Setup mock chain
+        mock_supabase.client.table.return_value.select.return_value.eq.return_value.neq.return_value.or_.return_value.execute.return_value = mock_fasting_result
+
+        # Mock weight log insert + trigger-populated refetch
+        mock_weight_write(mock_supabase, generate_mock_weight_log(
             weight_kg=75.0,
             date_str=today,
             is_fasting_day=True,
             fasting_protocol="16:8",
             fasting_completion_percent=75.0,
-        )]
-
-        # Setup mock chain
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.neq.return_value.or_.return_value.execute.return_value = mock_fasting_result
-        mock_supabase.client.table.return_value.insert.return_value.execute.return_value = mock_insert_result
+        ))
 
         response = client.post(
             "/api/v1/fasting-impact/weight",
@@ -219,16 +271,14 @@ class TestLogWeightWithFasting:
         mock_fasting_result = MagicMock()
         mock_fasting_result.data = []
 
-        # Mock weight log insert
-        mock_insert_result = MagicMock()
-        mock_insert_result.data = [generate_mock_weight_log(
+        mock_supabase.client.table.return_value.select.return_value.eq.return_value.neq.return_value.or_.return_value.execute.return_value = mock_fasting_result
+
+        # Mock weight log insert + trigger-populated refetch
+        mock_weight_write(mock_supabase, generate_mock_weight_log(
             weight_kg=76.0,
             date_str=today,
             is_fasting_day=False,
-        )]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.neq.return_value.or_.return_value.execute.return_value = mock_fasting_result
-        mock_supabase.client.table.return_value.insert.return_value.execute.return_value = mock_insert_result
+        ))
 
         response = client.post(
             "/api/v1/fasting-impact/weight",
@@ -254,17 +304,15 @@ class TestLogWeightWithFasting:
         mock_fasting_result = MagicMock()
         mock_fasting_result.data = [generate_mock_fasting_record()]
 
-        # Mock weight log insert
-        mock_insert_result = MagicMock()
-        mock_insert_result.data = [generate_mock_weight_log(
+        mock_supabase.client.table.return_value.select.return_value.eq.return_value.neq.return_value.or_.return_value.execute.return_value = mock_fasting_result
+
+        # Mock weight log insert + trigger-populated refetch
+        mock_weight_write(mock_supabase, generate_mock_weight_log(
             weight_kg=74.5,
             date_str=today,
             is_fasting_day=True,
             fasting_record_id=explicit_fasting_id,
-        )]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.neq.return_value.or_.return_value.execute.return_value = mock_fasting_result
-        mock_supabase.client.table.return_value.insert.return_value.execute.return_value = mock_insert_result
+        ))
 
         response = client.post(
             "/api/v1/fasting-impact/weight",
@@ -837,7 +885,7 @@ class TestGetAIFastingInsight:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        with patch("api.v1.fasting_impact.get_fasting_insight_service") as mock_service:
+        with patch("services.fasting_insight_service.get_fasting_insight_service") as mock_service:
             mock_fasting_service = MagicMock()
             mock_fasting_service.get_fasting_summary_for_insight = AsyncMock(return_value={
                 "total_fasting_days": 10,
@@ -876,7 +924,7 @@ class TestGetAIFastingInsight:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        with patch("api.v1.fasting_impact.get_fasting_insight_service") as mock_service:
+        with patch("services.fasting_insight_service.get_fasting_insight_service") as mock_service:
             mock_fasting_service = MagicMock()
             mock_fasting_service.get_fasting_summary_for_insight = AsyncMock(return_value={})
             mock_fasting_service.generate_fasting_impact_insight = AsyncMock(return_value=mock_insight)
@@ -917,7 +965,7 @@ class TestRefreshAIFastingInsight:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        with patch("api.v1.fasting_impact.get_fasting_insight_service") as mock_service:
+        with patch("services.fasting_insight_service.get_fasting_insight_service") as mock_service:
             mock_fasting_service = MagicMock()
             mock_fasting_service.get_fasting_summary_for_insight = AsyncMock(return_value={})
             mock_fasting_service.generate_fasting_impact_insight = AsyncMock(return_value=mock_insight)
@@ -941,7 +989,7 @@ class TestGetAICorrelationScore:
 
     def test_get_correlation_score_success(self, client, mock_supabase):
         """Test getting AI correlation score."""
-        with patch("api.v1.fasting_impact.get_fasting_insight_service") as mock_service:
+        with patch("services.fasting_insight_service.get_fasting_insight_service") as mock_service:
             mock_fasting_service = MagicMock()
             mock_fasting_service.calculate_correlation_score = AsyncMock(return_value=0.45)
             mock_service.return_value = mock_fasting_service
@@ -958,7 +1006,7 @@ class TestGetAICorrelationScore:
 
     def test_get_correlation_score_no_correlation(self, client, mock_supabase):
         """Test correlation score when there's no correlation."""
-        with patch("api.v1.fasting_impact.get_fasting_insight_service") as mock_service:
+        with patch("services.fasting_insight_service.get_fasting_insight_service") as mock_service:
             mock_fasting_service = MagicMock()
             mock_fasting_service.calculate_correlation_score = AsyncMock(return_value=0.0)
             mock_service.return_value = mock_fasting_service
@@ -984,7 +1032,7 @@ class TestGetAIFastingSummary:
             "correlation_score": 0.35,
         }
 
-        with patch("api.v1.fasting_impact.get_fasting_insight_service") as mock_service:
+        with patch("services.fasting_insight_service.get_fasting_insight_service") as mock_service:
             mock_fasting_service = MagicMock()
             mock_fasting_service.get_fasting_summary_for_insight = AsyncMock(return_value=mock_summary)
             mock_service.return_value = mock_fasting_service
@@ -1153,7 +1201,7 @@ class TestInterpretAICorrelation:
 
     def test_strong_positive(self):
         """Test strong positive correlation interpretation."""
-        from api.v1.fasting_impact import interpret_ai_correlation
+        from api.v1.fasting_impact_endpoints import interpret_ai_correlation
 
         result = interpret_ai_correlation(0.6)
         assert "Strong positive" in result
@@ -1161,42 +1209,42 @@ class TestInterpretAICorrelation:
 
     def test_moderate_positive(self):
         """Test moderate positive correlation interpretation."""
-        from api.v1.fasting_impact import interpret_ai_correlation
+        from api.v1.fasting_impact_endpoints import interpret_ai_correlation
 
         result = interpret_ai_correlation(0.4)
         assert "Moderate positive" in result
 
     def test_slight_positive(self):
         """Test slight positive correlation interpretation."""
-        from api.v1.fasting_impact import interpret_ai_correlation
+        from api.v1.fasting_impact_endpoints import interpret_ai_correlation
 
         result = interpret_ai_correlation(0.15)
         assert "Slight positive" in result
 
     def test_no_correlation(self):
         """Test no correlation interpretation."""
-        from api.v1.fasting_impact import interpret_ai_correlation
+        from api.v1.fasting_impact_endpoints import interpret_ai_correlation
 
         result = interpret_ai_correlation(0.05)
         assert "No clear correlation" in result
 
     def test_slight_negative(self):
         """Test slight negative correlation interpretation."""
-        from api.v1.fasting_impact import interpret_ai_correlation
+        from api.v1.fasting_impact_endpoints import interpret_ai_correlation
 
         result = interpret_ai_correlation(-0.2)
         assert "Slight negative" in result
 
     def test_moderate_negative(self):
         """Test moderate negative correlation interpretation."""
-        from api.v1.fasting_impact import interpret_ai_correlation
+        from api.v1.fasting_impact_endpoints import interpret_ai_correlation
 
         result = interpret_ai_correlation(-0.4)
         assert "Moderate negative" in result
 
     def test_strong_negative(self):
         """Test strong negative correlation interpretation."""
-        from api.v1.fasting_impact import interpret_ai_correlation
+        from api.v1.fasting_impact_endpoints import interpret_ai_correlation
 
         result = interpret_ai_correlation(-0.6)
         assert "Strong negative" in result
@@ -1290,13 +1338,20 @@ class TestAsyncHelperFunctions:
 
     @pytest.mark.asyncio
     async def test_get_weight_data_for_ai(self, mock_supabase):
-        """Test getting weight data for AI analysis."""
-        from api.v1.fasting_impact import get_weight_data_for_ai
+        """Test getting weight data for AI analysis.
+
+        `weight_logs` stores its timestamp in `logged_at` (not a `date` column),
+        and the helper now takes a required keyword-only `timezone_str` so the
+        analysis window is anchored to the user's local today rather than UTC.
+        The guarantee under test is unchanged: each weight log comes back tagged
+        with whether its day was a fasting day.
+        """
+        from api.v1.fasting_impact_endpoints import get_weight_data_for_ai
 
         mock_weight_result = MagicMock()
         mock_weight_result.data = [
-            {"date": "2024-12-01", "weight_kg": 75.0},
-            {"date": "2024-12-02", "weight_kg": 74.5},
+            {"logged_at": "2024-12-01T08:00:00Z", "weight_kg": 75.0},
+            {"logged_at": "2024-12-02T08:00:00Z", "weight_kg": 74.5},
         ]
 
         mock_fasting_result = MagicMock()
@@ -1307,17 +1362,25 @@ class TestAsyncHelperFunctions:
         mock_supabase.client.table.return_value.select.return_value.eq.return_value.gte.return_value.order.return_value.execute.return_value = mock_weight_result
         mock_supabase.client.table.return_value.select.return_value.eq.return_value.eq.return_value.gte.return_value.execute.return_value = mock_fasting_result
 
-        with patch("api.v1.fasting_impact.get_supabase_db", return_value=mock_supabase):
-            data = await get_weight_data_for_ai(MOCK_USER_ID, 30)
+        data = await get_weight_data_for_ai(MOCK_USER_ID, 30, timezone_str="UTC")
 
         assert len(data) == 2
+        assert data[0]["date"] == "2024-12-01"
         assert data[0]["is_fasting_day"] is True  # Dec 1 was a fasting day
         assert data[1]["is_fasting_day"] is False  # Dec 2 was not
 
     @pytest.mark.asyncio
     async def test_get_goal_data_for_ai(self, mock_supabase):
-        """Test getting goal data for AI analysis."""
-        from api.v1.fasting_impact import get_goal_data_for_ai
+        """Test getting goal data for AI analysis.
+
+        Schema the helper reads today: `workout_logs.completed_at` (every row is
+        a completed workout) and `weekly_personal_goals.created_at` + `.status`
+        (a goal is hit when status == 'completed'). The helper also takes a
+        required keyword-only `timezone_str`. The guarantee under test is
+        unchanged: goals and workouts are split into fasting vs non-fasting
+        buckets by day.
+        """
+        from api.v1.fasting_impact_endpoints import get_goal_data_for_ai
 
         mock_fasting_result = MagicMock()
         mock_fasting_result.data = [
@@ -1326,14 +1389,14 @@ class TestAsyncHelperFunctions:
 
         mock_workout_result = MagicMock()
         mock_workout_result.data = [
-            {"date": "2024-12-01", "completed": True},
-            {"date": "2024-12-02", "completed": True},
+            {"completed_at": "2024-12-01T18:00:00Z"},  # fasting day
+            {"completed_at": "2024-12-02T18:00:00Z"},  # non-fasting day
         ]
 
         mock_goals_result = MagicMock()
         mock_goals_result.data = [
-            {"date": "2024-12-01", "completed": True},
-            {"date": "2024-12-02", "completed": True},
+            {"created_at": "2024-12-01T09:00:00Z", "status": "completed"},  # fasting day
+            {"created_at": "2024-12-02T09:00:00Z", "status": "completed"},  # non-fasting day
         ]
 
         mock_supabase.client.table.return_value.select.return_value.eq.return_value.eq.return_value.gte.return_value.execute.return_value = mock_fasting_result
@@ -1341,13 +1404,18 @@ class TestAsyncHelperFunctions:
             mock_workout_result, mock_goals_result
         ]
 
-        with patch("api.v1.fasting_impact.get_supabase_db", return_value=mock_supabase):
-            data = await get_goal_data_for_ai(MOCK_USER_ID, 30)
+        data = await get_goal_data_for_ai(MOCK_USER_ID, 30, timezone_str="UTC")
 
         assert "goals_fasting" in data
         assert "goals_non_fasting" in data
         assert "workout_completion_fasting" in data
         assert "workout_completion_non_fasting" in data
+
+        # The Dec 1 goal/workout land in the fasting bucket, Dec 2 in the other.
+        assert data["goals_fasting"] == 1
+        assert data["goals_non_fasting"] == 1
+        assert data["workout_completion_fasting"] == 100.0
+        assert data["workout_completion_non_fasting"] == 100.0
 
 
 # =============================================================================
@@ -1432,15 +1500,13 @@ class TestFastingImpactIntegration:
         mock_fasting_result = MagicMock()
         mock_fasting_result.data = [generate_mock_fasting_record()]
 
-        mock_insert_result = MagicMock()
-        mock_insert_result.data = [generate_mock_weight_log(
+        mock_supabase.client.table.return_value.select.return_value.eq.return_value.neq.return_value.or_.return_value.execute.return_value = mock_fasting_result
+
+        mock_weight_write(mock_supabase, generate_mock_weight_log(
             weight_kg=75.0,
             is_fasting_day=True,
             fasting_protocol="16:8",
-        )]
-
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.neq.return_value.or_.return_value.execute.return_value = mock_fasting_result
-        mock_supabase.client.table.return_value.insert.return_value.execute.return_value = mock_insert_result
+        ))
 
         log_response = client.post(
             "/api/v1/fasting-impact/weight",

@@ -16,10 +16,12 @@ Run with: pytest backend/tests/test_saved_workouts_api.py -v
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch, MagicMock
+from collections import defaultdict
 from datetime import datetime, date, time, timezone, timedelta
 import uuid
 
 from main import app
+from core.auth import get_current_user
 from models.saved_workouts import (
     ScheduledWorkoutStatus, DifficultyLevel,
 )
@@ -33,12 +35,54 @@ client = TestClient(app)
 # ============================================================
 
 @pytest.fixture
+def sample_user_id():
+    """Sample user ID for testing."""
+    return str(uuid.uuid4())
+
+
+@pytest.fixture(autouse=True)
+def override_auth(sample_user_id):
+    """Bypass the JWT auth dependency.
+
+    Every /saved-workouts endpoint declares `current_user: dict =
+    Depends(get_current_user)`, so an unauthenticated TestClient request is
+    rejected with 401 before the handler ever runs. These tests exercise the
+    handler logic (not the auth layer), so we override the dependency with the
+    same user the request is made for. Auth itself is covered by the auth tests.
+    """
+    async def _current_user():
+        return {"id": sample_user_id, "email": "test@example.com"}
+
+    app.dependency_overrides[get_current_user] = _current_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.fixture
 def mock_supabase():
     """Mock Supabase client for testing."""
     with patch('api.v1.saved_workouts.get_supabase') as mock:
         supabase_mock = MagicMock()
         mock.return_value.client = supabase_mock
         yield supabase_mock
+
+
+def route_tables(mock_supabase):
+    """Give each `supabase.table("<name>")` call its own MagicMock.
+
+    A plain MagicMock hands back the SAME child for every table() call, so
+    `table.return_value.select...execute.return_value.data = X` configures
+    workout_shares, activity_feed AND users at once — last assignment wins.
+    Handlers that query several tables therefore read the wrong rows (e.g. the
+    users-name row gets served as the workout_shares row). Real Supabase
+    returns different rows per table; routing per table name restores that.
+
+    Returns a defaultdict keyed by table name so a test only configures the
+    tables it cares about.
+    """
+    tables = defaultdict(MagicMock)
+    mock_supabase.table.side_effect = lambda name: tables[name]
+    return tables
 
 
 @pytest.fixture
@@ -50,12 +94,6 @@ def mock_social_rag():
         rag_mock.get_social_collection.return_value = collection_mock
         mock.return_value = rag_mock
         yield rag_mock, collection_mock
-
-
-@pytest.fixture
-def sample_user_id():
-    """Sample user ID for testing."""
-    return str(uuid.uuid4())
 
 
 @pytest.fixture
@@ -113,23 +151,21 @@ class TestChallengeTracking:
     def test_track_challenge_click_new(self, mock_supabase, mock_social_rag, sample_user_id, sample_activity_id):
         """Test tracking a new challenge click."""
         rag_mock, collection_mock = mock_social_rag
+        tables = route_tables(mock_supabase)
 
         # Mock no existing share entry
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
+        tables["workout_shares"].select.return_value.eq.return_value.execute.return_value.data = []
 
         # Mock activity lookup
-        activity_mock = MagicMock()
-        activity_mock.execute.return_value.data = [{"user_id": str(uuid.uuid4())}]
-        mock_supabase.table.return_value.select.return_value.eq.return_value = MagicMock()
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+        tables["activity_feed"].select.return_value.eq.return_value.execute.return_value.data = [
             {"user_id": str(uuid.uuid4())}
         ]
 
         # Mock insert
-        mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [{}]
+        tables["workout_shares"].insert.return_value.execute.return_value.data = [{}]
 
         # Mock user name lookup
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+        tables["users"].select.return_value.eq.return_value.execute.return_value.data = [
             {"name": "Test User"}
         ]
 
@@ -146,21 +182,23 @@ class TestChallengeTracking:
         """Test tracking challenge click on existing share entry."""
         rag_mock, collection_mock = mock_social_rag
         share_id = str(uuid.uuid4())
+        tables = route_tables(mock_supabase)
 
         # Mock existing share entry
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [{
+        tables["workout_shares"].select.return_value.eq.return_value.execute.return_value.data = [{
             "id": share_id,
+            "shared_by": str(uuid.uuid4()),
             "challenge_count": 5,
         }]
 
         # Mock update
-        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [{
+        tables["workout_shares"].update.return_value.eq.return_value.execute.return_value.data = [{
             "id": share_id,
             "challenge_count": 6,
         }]
 
         # Mock user name lookup
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+        tables["users"].select.return_value.eq.return_value.execute.return_value.data = [
             {"name": "Test User"}
         ]
 
@@ -297,16 +335,16 @@ class TestSaveWorkoutFromActivity:
         """Test successfully saving a workout from activity."""
         rag_mock, collection_mock = mock_social_rag
         saved_workout_id = str(uuid.uuid4())
+        tables = route_tables(mock_supabase)
 
         # Mock activity lookup
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [sample_activity_data]
+        tables["activity_feed"].select.return_value.eq.return_value.execute.return_value.data = [sample_activity_data]
 
         # Mock no existing save
-        check_mock = MagicMock()
-        check_mock.execute.return_value.data = []
+        tables["saved_workouts"].select.return_value.eq.return_value.eq.return_value.execute.return_value.data = []
 
         # Mock insert
-        mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [{
+        tables["saved_workouts"].insert.return_value.execute.return_value.data = [{
             "id": saved_workout_id,
             "user_id": sample_user_id,
             "source_activity_id": sample_activity_id,
@@ -324,7 +362,7 @@ class TestSaveWorkoutFromActivity:
         }]
 
         # Mock user name lookup
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+        tables["users"].select.return_value.eq.return_value.execute.return_value.data = [
             {"name": "Test User"}
         ]
 
@@ -835,6 +873,7 @@ class TestEdgeCases:
     def test_chromadb_failure_doesnt_fail_save(self, mock_supabase, sample_user_id, sample_activity_id, sample_activity_data):
         """Test that ChromaDB failure doesn't fail the save request."""
         saved_workout_id = str(uuid.uuid4())
+        tables = route_tables(mock_supabase)
 
         with patch('api.v1.saved_workouts.get_social_rag_service') as mock_rag:
             rag_mock = MagicMock()
@@ -844,13 +883,13 @@ class TestEdgeCases:
             mock_rag.return_value = rag_mock
 
             # Mock activity lookup
-            mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [sample_activity_data]
+            tables["activity_feed"].select.return_value.eq.return_value.execute.return_value.data = [sample_activity_data]
 
             # Mock no existing save
-            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value.data = []
+            tables["saved_workouts"].select.return_value.eq.return_value.eq.return_value.execute.return_value.data = []
 
             # Mock insert
-            mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [{
+            tables["saved_workouts"].insert.return_value.execute.return_value.data = [{
                 "id": saved_workout_id,
                 "user_id": sample_user_id,
                 "workout_name": "Full Body Blast",
@@ -864,7 +903,7 @@ class TestEdgeCases:
             }]
 
             # Mock user name lookup
-            mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+            tables["users"].select.return_value.eq.return_value.execute.return_value.data = [
                 {"name": "Test User"}
             ]
 

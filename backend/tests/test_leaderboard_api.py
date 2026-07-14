@@ -19,6 +19,7 @@ from datetime import datetime, timezone, timedelta
 import uuid
 
 from main import app
+from core.auth import get_current_user
 from models.leaderboard import LeaderboardType, LeaderboardFilter
 
 
@@ -29,10 +30,38 @@ client = TestClient(app)
 # FIXTURES
 # ============================================================
 
+@pytest.fixture(autouse=True)
+def override_auth():
+    """Satisfy the ``Depends(get_current_user)`` guard on every leaderboard route.
+
+    All /leaderboard routes are behind JWT auth, so without an override the app
+    short-circuits with 401 before the handler ever runs and every assertion in
+    this file compares 401 to the real status code. The override supplies a
+    verified identity; it does NOT weaken any assertion — the handler logic
+    under test still executes end to end.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "auth-user-under-test",
+        "email": "test@example.com",
+    }
+    try:
+        yield
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
+
 @pytest.fixture
 def mock_leaderboard_service():
-    """Mock LeaderboardService for testing."""
+    """Mock LeaderboardService for testing.
+
+    ``get_strength_scores_for_users`` is stubbed to an empty mapping because the
+    GET /leaderboard handler batches strength scores for every entry and feeds
+    the result into ``LeaderboardEntry.strength_score`` (Optional[int]). A bare
+    MagicMock return would fail Pydantic validation with a 500 for reasons that
+    have nothing to do with what these tests assert.
+    """
     with patch('api.v1.leaderboard.leaderboard_service') as mock:
+        mock.get_strength_scores_for_users.return_value = {}
         yield mock
 
 
@@ -162,12 +191,30 @@ class TestGetLeaderboard:
         assert "workouts" in response.json()["detail"].lower()
 
     def test_get_friends_leaderboard(self, mock_leaderboard_service, sample_user_id, sample_leaderboard_entries):
-        """Test getting friends-only leaderboard (always accessible)."""
-        mock_leaderboard_service.check_unlock_status.return_value = {
-            "is_unlocked": False,  # Even locked users can see friends
-            "workouts_completed": 5,
-            "workouts_needed": 5,
-        }
+        """Test getting friends-only leaderboard (open before the global board is).
+
+        RETIRED BEHAVIOR: this used to mock ``check_unlock_status`` to a flat
+        ``is_unlocked: False`` and assert 200 — i.e. "even a user with zero
+        workouts can see the friends board", because the endpoint only gated the
+        *global* filter. Commit cdc3841c (migration 1939) made the unlock gate
+        SCOPE-AWARE: the friends board unlocks at 1 completed workout, while
+        global/country still require 10. A user with zero completed workouts is
+        now, deliberately, 403'd on every scope including friends.
+
+        The guarantee this test protects is unchanged: a user who has NOT
+        unlocked the global board (5 workouts < 10) must still be able to read
+        the friends board. The mock is now scope-aware, which additionally pins
+        that the endpoint asks the service for the ``friends`` scope rather than
+        silently checking the global threshold.
+        """
+        def _unlock_status(_user_id, scope="global"):
+            # Mirrors LeaderboardService.check_unlock_status: friends threshold
+            # is 1 workout, global/country is 10. This user has 5.
+            if scope == "friends":
+                return {"is_unlocked": True, "workouts_completed": 5, "workouts_needed": 0}
+            return {"is_unlocked": False, "workouts_completed": 5, "workouts_needed": 5}
+
+        mock_leaderboard_service.check_unlock_status.side_effect = _unlock_status
 
         # Only friends entries
         friend_entries = [sample_leaderboard_entries[0]]
@@ -188,6 +235,8 @@ class TestGetLeaderboard:
         data = response.json()
         assert data["filter_type"] == "friends"
         assert len(data["entries"]) == 1
+        # The gate must be evaluated against the friends scope, not global.
+        assert mock_leaderboard_service.check_unlock_status.call_args.kwargs["scope"] == "friends"
 
     def test_get_country_leaderboard(self, mock_leaderboard_service, sample_user_id, sample_leaderboard_entries):
         """Test getting country-specific leaderboard."""
@@ -425,16 +474,33 @@ class TestGetUserRank:
         assert data["rank"] == 5
         assert data["total_users"] == 50
 
-    def test_get_user_rank_not_found(self, mock_leaderboard_service, sample_user_id):
-        """Test getting rank for user not in leaderboard."""
+    def test_get_user_rank_unranked_user_returns_null_rank(self, mock_leaderboard_service, sample_user_id):
+        """Test getting rank for a user with no ranking data yet.
+
+        RETIRED BEHAVIOR: this used to assert 404 ("User rank not found").
+        Commit bfddfc5f deliberately changed GET /leaderboard/rank to return a
+        200 with a null rank for unranked users, because a brand-new user with
+        zero completed workouts is not an error condition and the frontend was
+        rendering the 404 as a failure state.
+
+        The guarantee this test protects is unchanged in substance: when the
+        service has no rank row for the user, the endpoint must NOT invent a
+        rank. It must report the user as unranked — rank/percentile/user_stats
+        all null and total_users 0.
+        """
         mock_leaderboard_service.get_user_rank.return_value = None
 
         response = client.get(
             f"/api/v1/leaderboard/rank?user_id={sample_user_id}"
         )
 
-        assert response.status_code == 404
-        assert "not found" in response.json()["detail"].lower()
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user_id"] == sample_user_id
+        assert data["rank"] is None
+        assert data["total_users"] == 0
+        assert data["percentile"] is None
+        assert data["user_stats"] is None
 
 
 # ============================================================
@@ -613,7 +679,19 @@ class TestAsyncChallenge:
         assert response.status_code == 404
 
     def test_create_async_challenge_failure(self, mock_leaderboard_service, sample_user_id):
-        """Test handling of unexpected error during challenge creation."""
+        """Test handling of unexpected error during challenge creation.
+
+        RETIRED BEHAVIOR: this used to assert the body contained
+        "Failed to create challenge". The endpoint now routes unexpected
+        exceptions through ``core.exceptions.safe_internal_error``, which
+        deliberately returns a generic body so internal details never leak to
+        the client. Asserting the old string would force the endpoint to
+        re-introduce an information leak.
+
+        The guarantee is preserved and strengthened: an unexpected service
+        exception must surface as a 500 (not a 200, not a crash) AND the
+        internal exception text must not appear in the response body.
+        """
         target_user_id = str(uuid.uuid4())
 
         mock_leaderboard_service.create_async_challenge.side_effect = Exception("Database error")
@@ -626,7 +704,9 @@ class TestAsyncChallenge:
         )
 
         assert response.status_code == 500
-        assert "Failed to create challenge" in response.json()["detail"]
+        detail = response.json()["detail"]
+        assert detail == "An internal error occurred. Please try again."
+        assert "Database error" not in detail
 
 
 # ============================================================

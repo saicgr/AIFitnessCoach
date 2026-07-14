@@ -278,11 +278,38 @@ class TestWorkoutGenerationRespectsRepsLimit:
     """Tests that generated workouts respect max_reps limit."""
 
     def test_cap_exercise_reps_respects_fitness_level(self):
-        """Test that validate_and_cap_exercise_parameters respects rep limits."""
-        from api.v1.workouts.utils import validate_and_cap_exercise_parameters, FITNESS_LEVEL_CAPS
+        """Test that validate_and_cap_exercise_parameters respects rep limits.
 
+        USED TO ASSERT: that "Lateral Raise" @ 20 reps was capped to the flat
+        FITNESS_LEVEL_CAPS["beginner"]["max_reps"] (12).
+
+        WHY THAT WAS RETIRED: commit 2975f6d1 (2026-02-15) deliberately added
+        HIGH_REP_EXERCISE_KEYWORDS — exercises that naturally use higher rep
+        ranges (core, calves, glutes, light isolation, bodyweight conditioning)
+        get a documented +8 bonus on top of the fitness-level cap. "lateral
+        raise" is explicitly on that list, so 20 reps is now the *correct*
+        ceiling for it, not a violation. The old test happened to pick an
+        exercise that later became exempt.
+
+        WHAT THIS PROTECTS NOW: the same original guarantee — Gemini cannot push
+        a beginner past their rep cap — asserted on a normal (non-exempt)
+        compound lift, PLUS a bound on the exemption itself so the +8 bonus
+        can never silently grow into an unbounded escape hatch.
+        """
+        from api.v1.workouts.utils import (
+            validate_and_cap_exercise_parameters,
+            FITNESS_LEVEL_CAPS,
+            ABSOLUTE_MAX_REPS,
+            is_high_rep_exercise,
+        )
+
+        beginner_max_reps = FITNESS_LEVEL_CAPS["beginner"]["max_reps"]
+
+        # A normal compound lift gets the strict fitness-level cap.
+        assert not is_high_rep_exercise("Bench Press"), \
+            "Bench Press must not be a high-rep-exempt exercise"
         exercises = [{
-            "name": "Lateral Raise",
+            "name": "Bench Press",
             "sets": 3,
             "reps": 20,  # Too high for beginner
             "rest_seconds": 45,
@@ -290,9 +317,20 @@ class TestWorkoutGenerationRespectsRepsLimit:
 
         capped = validate_and_cap_exercise_parameters(exercises, "beginner")
 
-        beginner_max_reps = FITNESS_LEVEL_CAPS["beginner"]["max_reps"]
         assert capped[0]["reps"] <= beginner_max_reps, \
             f"Reps should be capped at {beginner_max_reps} for beginner"
+
+        # A high-rep-exempt exercise gets cap + 8 — and no more.
+        exempt_ceiling = min(beginner_max_reps + 8, ABSOLUTE_MAX_REPS)
+        assert is_high_rep_exercise("Lateral Raise"), \
+            "Lateral Raise is expected to be high-rep exempt"
+        exempt = validate_and_cap_exercise_parameters(
+            [{"name": "Lateral Raise", "sets": 3, "reps": 50, "rest_seconds": 45}],
+            "beginner",
+        )
+        assert exempt[0]["reps"] == exempt_ceiling, \
+            f"High-rep exemption must cap at {exempt_ceiling} for beginner, " \
+            f"got {exempt[0]['reps']}"
 
     def test_cap_exercise_reps_preserves_valid_reps(self):
         """Test that valid reps values are preserved."""

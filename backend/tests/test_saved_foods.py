@@ -11,6 +11,59 @@ from unittest.mock import MagicMock, patch, AsyncMock
 import json
 from datetime import datetime
 
+from fastapi.testclient import TestClient
+
+from main import app
+from core.auth import get_current_user
+
+
+# Every /saved-foods endpoint declares `current_user: dict = Depends(get_current_user)`.
+# Without an override the TestClient sends no Authorization header, so FastAPI
+# resolves the security dependency FIRST and returns 401 before the request body
+# is ever validated — which is why the routing/validation assertions below cannot
+# be exercised through the unauthenticated conftest `client` fixture. Overriding
+# the dependency (the standard FastAPI test seam) restores exactly what these
+# tests are here to check: routing, request validation, and handler behavior.
+TEST_AUTH_USER = {"id": "test-user", "email": "test-user@example.com"}
+
+
+@pytest.fixture
+def client():
+    """Authenticated TestClient — shadows the unauthenticated conftest fixture."""
+    app.dependency_overrides[get_current_user] = lambda: TEST_AUTH_USER
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
+
+class _QueryStub:
+    """Chainable stand-in for a PostgREST query builder.
+
+    Hand-built `table.return_value.select.return_value.eq.return_value...` chains
+    are brittle: they encode the handler's exact filter order, so ONE new `.eq()`
+    or `.range()` in production silently detaches the stub, `execute().data`
+    becomes an auto-MagicMock, and the endpoint 500s while a lenient
+    `assert status in [200, ..., 500]` still passes. This stub accepts any
+    builder method in any order and always terminates in the configured result.
+    """
+
+    class _Result:
+        def __init__(self, data, count):
+            self.data = data
+            self.count = count
+
+    def __init__(self, data, count=None):
+        self._result = self._Result(data, count if count is not None else 0)
+
+    def __getattr__(self, _name):
+        # select / eq / is_ / order / range / ilike / gte / lte / contains /
+        # single / insert / update / delete … all just continue the chain.
+        return lambda *args, **kwargs: self
+
+    def execute(self):
+        return self._result
+
 
 # ============================================================
 # PYDANTIC MODEL TESTS
@@ -234,7 +287,16 @@ class TestSavedFoodsRAGService:
 
     @pytest.fixture
     def mock_chroma_collection(self):
-        """Mock ChromaDB collection."""
+        """Mock ChromaDB collection.
+
+        Models `core.chroma_http_client.ChromaCollection`: the blocking
+        add/query/delete/count methods PLUS the async `a*` variants that simply
+        run their sync twin in a worker thread (`asyncio.to_thread`, added so a
+        slow Chroma round-trip can't freeze the event loop). SavedFoodsRAGService
+        awaits the `a*` variants, so the mock delegates each one to its sync twin
+        — that keeps every `collection.add/query/delete` call assertion below
+        meaningful while matching the interface the service actually calls.
+        """
         collection = MagicMock()
         collection.count.return_value = 5
         collection.add = MagicMock()
@@ -251,6 +313,13 @@ class TestSavedFoodsRAGService:
         collection.get = MagicMock(return_value={
             "ids": ["food-1", "food-2"]
         })
+        # Async variants — delegate to the sync twins, exactly as the real
+        # ChromaCollection does via asyncio.to_thread().
+        collection.aadd = AsyncMock(side_effect=lambda *a, **kw: collection.add(*a, **kw))
+        collection.aquery = AsyncMock(side_effect=lambda *a, **kw: collection.query(*a, **kw))
+        collection.adelete = AsyncMock(side_effect=lambda *a, **kw: collection.delete(*a, **kw))
+        collection.aget = AsyncMock(side_effect=lambda *a, **kw: collection.get(*a, **kw))
+        collection.acount = AsyncMock(side_effect=lambda *a, **kw: collection.count(*a, **kw))
         return collection
 
     @pytest.fixture
@@ -543,8 +612,8 @@ class TestSavedFoodsAPIEndpoints:
         # Either 422 (validation) or different handling based on implementation
         assert response.status_code in [401, 422, 400]
 
-    @patch('api.v1.nutrition.get_supabase_db')
-    @patch('api.v1.nutrition.get_saved_foods_rag_service')
+    @patch('api.v1.nutrition.saved_foods.get_supabase_db')
+    @patch('api.v1.nutrition.saved_foods.get_saved_foods_rag_service')
     def test_save_food_success(self, mock_rag, mock_db, client):
         """Test successfully saving a food via /saved-foods/save endpoint (JSON body)."""
         # Mock database
@@ -584,15 +653,26 @@ class TestSavedFoodsAPIEndpoints:
             }
         )
 
-        # Should succeed or hit DB issue
-        assert response.status_code in [200, 201, 500]
+        # Should succeed and echo back the persisted row.
+        assert response.status_code == 200
+        body = response.json()
+        assert body["id"] == "new-saved-food-uuid"
+        assert body["name"] == "Test Meal"
+        # The meal must also be indexed into ChromaDB for semantic search.
+        mock_rag_instance.save_food.assert_awaited_once()
 
-    @patch('api.v1.nutrition.get_supabase_db')
+    @patch('api.v1.nutrition.saved_foods.get_supabase_db')
     def test_get_saved_foods_returns_list(self, mock_db, client):
-        """Test getting saved foods returns a list."""
-        # Mock database response
-        mock_db_instance = MagicMock()
-        mock_db_instance.client.table.return_value.select.return_value.eq.return_value.is_.return_value.order.return_value.execute.return_value.data = [
+        """Test getting saved foods returns a list.
+
+        The old mock stubbed `select().eq().is_().order().execute()`, but the
+        handler now chains `.order().order().range()` for the page plus a second
+        `select(count="exact")` round trip for the total — so the stub never
+        matched, `result.data` was an auto-MagicMock, and the endpoint 500'd
+        while the assertion (`in [200, 401, 500]`) still went green. A chainable
+        stub is used instead so the list path is actually exercised.
+        """
+        rows = [
             {
                 "id": "food-1",
                 "user_id": "test-user",
@@ -616,15 +696,20 @@ class TestSavedFoodsAPIEndpoints:
                 "food_items": []
             }
         ]
+
+        mock_db_instance = MagicMock()
+        mock_db_instance.client.table.return_value = _QueryStub(rows, count=2)
         mock_db.return_value = mock_db_instance
 
         response = client.get("/api/v1/nutrition/saved-foods?user_id=test-user")
 
-        # Should return 200 or hit auth issue
-        assert response.status_code in [200, 401, 500]
+        assert response.status_code == 200
+        body = response.json()
+        assert body["total_count"] == 2
+        assert [item["name"] for item in body["items"]] == ["Saved Meal 1", "Saved Meal 2"]
 
-    @patch('api.v1.nutrition.get_supabase_db')
-    @patch('api.v1.nutrition.get_saved_foods_rag_service')
+    @patch('api.v1.nutrition.saved_foods.get_supabase_db')
+    @patch('api.v1.nutrition.saved_foods.get_saved_foods_rag_service')
     def test_delete_saved_food_soft_deletes(self, mock_rag, mock_db, client):
         """Test deleting a saved food performs soft delete."""
         # Mock database
@@ -642,15 +727,18 @@ class TestSavedFoodsAPIEndpoints:
         # Should succeed or hit auth issue
         assert response.status_code in [200, 204, 401, 404, 500]
 
-    @patch('api.v1.nutrition.get_supabase_db')
+    @patch('api.v1.nutrition.saved_foods.get_supabase_db')
     def test_relog_saved_food_creates_log(self, mock_db, client):
-        """Test re-logging a saved food creates a new food log."""
-        # Mock database - get saved food
-        mock_db_instance = MagicMock()
+        """Test re-logging a saved food creates a new food log.
 
-        # Mock select for getting saved food
-        mock_select = MagicMock()
-        mock_select.eq.return_value.is_.return_value.single.return_value.execute.return_value.data = {
+        Two stale mocks made this test vacuous: the saved-food lookup now chains
+        a second `.eq("user_id", ...)` (so the old `select().eq().is_().single()`
+        stub never matched), and the food log is written through
+        `db.create_food_log(...)`, not a raw `table().insert()`. Both are fixed
+        here, and the assertions now pin the ACTUAL contract: 200 + the new log
+        id + the saved food's macros copied onto the log.
+        """
+        saved_food_row = {
             "id": "saved-food-id",
             "user_id": "test-user",
             "name": "Saved Meal",
@@ -659,15 +747,13 @@ class TestSavedFoodsAPIEndpoints:
             "total_carbs_g": 45.0,
             "total_fat_g": 15.0,
             "total_fiber_g": 5.0,
+            "times_logged": 2,
             "food_items": [{"name": "Item", "calories": 500}]
         }
 
-        # Mock insert for creating food log
-        mock_insert = MagicMock()
-        mock_insert.execute.return_value.data = [{"id": "new-log-id"}]
-
-        mock_db_instance.client.table.return_value.select = MagicMock(return_value=mock_select)
-        mock_db_instance.client.table.return_value.insert = MagicMock(return_value=mock_insert)
+        mock_db_instance = MagicMock()
+        mock_db_instance.client.table.return_value = _QueryStub(saved_food_row)
+        mock_db_instance.create_food_log.return_value = {"id": "new-log-id"}
         mock_db.return_value = mock_db_instance
 
         # user_id is a query param, meal_type in JSON body
@@ -678,8 +764,20 @@ class TestSavedFoodsAPIEndpoints:
             }
         )
 
-        # Should succeed or hit DB/auth issue
-        assert response.status_code in [200, 201, 401, 404, 500]
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+        assert body["food_log_id"] == "new-log-id"
+        # The saved food's macros must be carried onto the new log verbatim.
+        assert body["total_calories"] == 500
+        assert body["protein_g"] == 30.0
+        assert body["carbs_g"] == 45.0
+        assert body["fat_g"] == 15.0
+
+        # A food log row must actually be written for the requested meal.
+        mock_db_instance.create_food_log.assert_called_once()
+        assert mock_db_instance.create_food_log.call_args.kwargs["meal_type"] == "lunch"
+        assert mock_db_instance.create_food_log.call_args.kwargs["user_id"] == "test-user"
 
 
 # ============================================================

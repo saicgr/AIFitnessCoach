@@ -73,11 +73,14 @@ class TestKegelPreferencesEndpoints:
             {"id": str(uuid4())}
         ]
 
+        # A real kegel_preferences row always carries created_at (NOT NULL), and
+        # the KegelPreferences response model requires it.
         mock_result = {
             "id": str(uuid4()),
             "user_id": TEST_USER_ID,
             "kegels_enabled": True,
             "target_sessions_per_day": 5,
+            "created_at": "2025-01-01T00:00:00Z",
             "updated_at": "2025-01-01T00:00:00Z",
         }
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [mock_result]
@@ -262,7 +265,13 @@ class TestKegelExercisesEndpoints:
     """Tests for kegel exercises reference data."""
 
     def test_get_all_exercises(self, client, mock_supabase):
-        """Test getting all kegel exercises."""
+        """Test getting all kegel exercises.
+
+        Rows mirror a full `kegel_exercises` row: the KegelExercise response
+        model requires focus_muscles / default_hold_seconds /
+        rest_between_reps_seconds / benefits, so a partial fixture row makes the
+        endpoint fail response validation before the assertions are reached.
+        """
         mock_data = [
             {
                 "id": str(uuid4()),
@@ -271,9 +280,12 @@ class TestKegelExercisesEndpoints:
                 "description": "Foundation exercise",
                 "instructions": ["Step 1", "Step 2"],
                 "target_audience": "all",
+                "focus_muscles": ["pelvic_floor"],
                 "difficulty": "beginner",
                 "default_duration_seconds": 60,
                 "default_reps": 10,
+                "default_hold_seconds": 5,
+                "rest_between_reps_seconds": 5,
                 "benefits": ["Strengthens pelvic floor"],
             },
             {
@@ -283,9 +295,12 @@ class TestKegelExercisesEndpoints:
                 "description": "Rapid contractions",
                 "instructions": ["Step 1", "Step 2"],
                 "target_audience": "all",
+                "focus_muscles": ["pelvic_floor"],
                 "difficulty": "beginner",
                 "default_duration_seconds": 60,
                 "default_reps": 20,
+                "default_hold_seconds": 1,
+                "rest_between_reps_seconds": 1,
                 "benefits": ["Fast-twitch response"],
             },
         ]
@@ -303,8 +318,16 @@ class TestKegelExercisesEndpoints:
                 "id": str(uuid4()),
                 "name": "prostate_support",
                 "display_name": "Prostate Support Kegels",
+                "description": "Targeted support for prostate health",
+                "instructions": ["Step 1", "Step 2"],
                 "target_audience": "male",
+                "focus_muscles": ["pelvic_floor"],
                 "difficulty": "beginner",
+                "default_duration_seconds": 90,
+                "default_reps": 12,
+                "default_hold_seconds": 6,
+                "rest_between_reps_seconds": 4,
+                "benefits": ["Supports prostate health"],
             },
         ]
         mock_supabase.table.return_value.select.return_value.eq.return_value.in_.return_value.order.return_value.execute.return_value.data = mock_data
@@ -322,7 +345,13 @@ class TestKegelExercisesEndpoints:
             "description": "Foundation exercise",
             "instructions": ["Step 1", "Step 2"],
             "target_audience": "all",
+            "focus_muscles": ["pelvic_floor"],
             "difficulty": "beginner",
+            "default_duration_seconds": 60,
+            "default_reps": 10,
+            "default_hold_seconds": 5,
+            "rest_between_reps_seconds": 5,
+            "benefits": ["Strengthens pelvic floor"],
         }
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [mock_data]
 
@@ -412,15 +441,35 @@ class TestKegelWorkoutIntegration:
 # Pytest fixtures
 @pytest.fixture
 def client():
-    """Create test client."""
+    """Create test client with the auth dependency satisfied.
+
+    Every /api/v1/kegel route depends on `get_current_user`, so without an
+    override each request 401s before the handler runs. The override supplies
+    the same user the tests address in the path (TEST_USER_ID).
+    """
     from main import app
-    return TestClient(app)
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": TEST_USER_ID,
+        "email": "kegel-test@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture
 def mock_supabase():
-    """Mock Supabase client."""
-    with patch("api.v1.kegel.get_supabase_client") as mock:
+    """Mock the Supabase client used by api.v1.kegel.
+
+    `api.v1.kegel` imports `get_supabase` (from core.supabase_client) and calls
+    `get_supabase().client`. The old patch target (`get_supabase_client`) never
+    existed on this module, so every test errored with AttributeError before it
+    could exercise a single endpoint.
+    """
+    with patch("api.v1.kegel.get_supabase") as mock:
         mock_client = MagicMock()
-        mock.return_value = mock_client
+        mock.return_value.client = mock_client
         yield mock_client

@@ -22,6 +22,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
+from core.auth import get_current_user
 from services.flexibility.assessment import (
     evaluate_flexibility,
     calculate_percentile,
@@ -151,15 +152,30 @@ def generate_mock_summary(
 # ============ Fixtures ============
 
 @pytest.fixture
-def client():
-    """Create a test client."""
-    return TestClient(app)
-
-
-@pytest.fixture
 def mock_user_id():
     """Generate a mock user ID."""
     return str(uuid.uuid4())
+
+
+@pytest.fixture
+def client(mock_user_id):
+    """Create a test client with the auth dependency overridden.
+
+    Every /api/v1/flexibility route is guarded by `Depends(get_current_user)`,
+    and the user-scoped routes additionally enforce ownership
+    (`str(current_user["id"]) != str(user_id)` -> 403). An unauthenticated
+    TestClient therefore gets 401 on every request before the handler ever
+    runs. We authenticate AS `mock_user_id` -- the very id these tests put in
+    the URL path -- so both the auth gate and the ownership check pass and the
+    handler logic under test is actually exercised. This changes only HOW the
+    endpoints are called; no assertion is relaxed.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": mock_user_id,
+        "email": "test@example.com",
+    }
+    yield TestClient(app)
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture
@@ -553,11 +569,19 @@ class TestRecordAssessment:
         mock_insert_result = MagicMock()
         mock_insert_result.data = [created_assessment]
 
+        # The handler looks up the most recent prior assessment before inserting
+        # (select -> eq -> eq -> order -> limit -> execute) to decide
+        # is_improvement / rating_improved. Model that chain explicitly: no prior
+        # assessment exists, so this is the user's first recording.
+        mock_previous_result = MagicMock()
+        mock_previous_result.data = []
+
         def mock_table_side_effect(table_name):
             mock_table = MagicMock()
             if table_name == "users":
                 mock_table.select.return_value.eq.return_value.execute.return_value = mock_user_result
             elif table_name == "flexibility_assessments":
+                mock_table.select.return_value.eq.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = mock_previous_result
                 mock_table.insert.return_value.execute.return_value = mock_insert_result
             return mock_table
 
@@ -665,30 +689,54 @@ class TestGetProgressTrend:
     """Tests for GET /api/v1/flexibility/user/{user_id}/progress/{test_type} endpoint."""
 
     def test_get_progress_success(self, client, mock_supabase, mock_user_id):
-        """Test successfully fetching progress trend."""
+        """Test successfully fetching progress trend.
+
+        This test used to assert a FLAT `improvement_absolute` key on the
+        response. The API does not (and per git history never did) return that
+        shape: `FlexibilityTrend` (models/flexibility.py) exposes a NESTED
+        `improvement` dict -- {absolute, percentage, is_positive,
+        rating_levels_gained} -- and that nested shape is what the shipped
+        Flutter client consumes (`FlexibilityTrend.improvement` is a
+        Map<String, dynamic>; `improvementAbsolute` is a derived Dart getter
+        reading `improvement['absolute']`). The flat assertion could therefore
+        never have passed. Rewritten to assert the CURRENT contract, and
+        tightened from a bare key-presence check to the exact improvement value:
+        sit_and_reach is higher-is-better, so 2.0 -> 7.0 is +5.0 absolute.
+        Guarantee protected: the endpoint reports the true improvement
+        magnitude and full trend series.
+        """
         assessments = [
             {
+                "id": str(uuid.uuid4()),
+                "user_id": mock_user_id,
+                "test_type": "sit_and_reach",
                 "measurement": 2.0,
                 "rating": "fair",
                 "assessed_at": "2024-01-01T00:00:00",
             },
             {
+                "id": str(uuid.uuid4()),
+                "user_id": mock_user_id,
+                "test_type": "sit_and_reach",
                 "measurement": 4.0,
                 "rating": "fair",
                 "assessed_at": "2024-02-01T00:00:00",
             },
             {
+                "id": str(uuid.uuid4()),
+                "user_id": mock_user_id,
+                "test_type": "sit_and_reach",
                 "measurement": 7.0,
                 "rating": "good",
                 "assessed_at": "2024-03-01T00:00:00",
             },
         ]
 
-        test_info = generate_mock_flexibility_test()
-
         mock_result = MagicMock()
         mock_result.data = assessments
-        mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
+        # Handler chain: select -> eq(user_id) -> eq(test_type)
+        #                -> gte(assessed_at, cutoff) -> order -> execute
+        mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
 
         with patch("api.v1.flexibility.get_supabase_db") as mock_get_db:
             mock_db = MagicMock()
@@ -702,13 +750,26 @@ class TestGetProgressTrend:
             assert response.status_code == 200
             data = response.json()
             assert "trend_data" in data
-            assert "improvement_absolute" in data
+            assert len(data["trend_data"]) == 3
+            assert data["total_assessments"] == 3
+            assert data["improvement"]["absolute"] == 5.0
+            assert data["improvement"]["is_positive"] is True
+            # fair -> good is one rating level gained
+            assert data["improvement"]["rating_levels_gained"] == 1
 
     def test_get_progress_insufficient_data(self, client, mock_supabase, mock_user_id):
         """Test progress with only one assessment."""
         mock_result = MagicMock()
-        mock_result.data = [{"measurement": 5.0, "rating": "good", "assessed_at": "2024-01-01"}]
-        mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
+        mock_result.data = [{
+            "id": str(uuid.uuid4()),
+            "user_id": mock_user_id,
+            "test_type": "sit_and_reach",
+            "measurement": 5.0,
+            "rating": "good",
+            "assessed_at": "2024-01-01T00:00:00",
+        }]
+        # Handler chain includes a gte(assessed_at, cutoff) window filter.
+        mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
 
         with patch("api.v1.flexibility.get_supabase_db") as mock_get_db:
             mock_db = MagicMock()
@@ -727,17 +788,64 @@ class TestGetFlexibilitySummary:
     """Tests for GET /api/v1/flexibility/user/{user_id}/summary endpoint."""
 
     def test_get_summary_success(self, client, mock_supabase, mock_user_id):
-        """Test successfully fetching flexibility summary."""
-        # Mock latest assessments for different test types
+        """Test successfully fetching flexibility summary.
+
+        The handler reads TWO tables -- `latest_flexibility_assessments` (the
+        per-test latest rows, select -> eq -> execute, no .order()) and
+        `flexibility_summary` (aggregate counts) -- so the mock is dispatched
+        per table name rather than through one shared chain. Rows must carry the
+        columns `_parse_assessment` requires (id, user_id, test_type,
+        measurement).
+        """
         latest_assessments = [
-            {"test_type": "sit_and_reach", "measurement": 6.0, "rating": "good"},
-            {"test_type": "shoulder_flexibility", "measurement": 3.0, "rating": "fair"},
-            {"test_type": "hamstring", "measurement": 75.0, "rating": "good"},
+            {
+                "id": str(uuid.uuid4()),
+                "user_id": mock_user_id,
+                "test_type": "sit_and_reach",
+                "measurement": 6.0,
+                "rating": "good",
+                "percentile": 65,
+                "assessed_at": "2024-03-01T00:00:00",
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "user_id": mock_user_id,
+                "test_type": "shoulder_flexibility",
+                "measurement": 3.0,
+                "rating": "fair",
+                "percentile": 40,
+                "assessed_at": "2024-03-01T00:00:00",
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "user_id": mock_user_id,
+                "test_type": "hamstring",
+                "measurement": 75.0,
+                "rating": "good",
+                "percentile": 60,
+                "assessed_at": "2024-03-01T00:00:00",
+            },
         ]
 
-        mock_result = MagicMock()
-        mock_result.data = latest_assessments
-        mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
+        mock_latest_result = MagicMock()
+        mock_latest_result.data = latest_assessments
+
+        mock_summary_result = MagicMock()
+        mock_summary_result.data = [{
+            "total_assessments": 9,
+            "first_assessment": "2024-01-01T00:00:00",
+            "latest_assessment": "2024-03-01T00:00:00",
+        }]
+
+        def mock_table_side_effect(table_name):
+            mock_table = MagicMock()
+            if table_name == "latest_flexibility_assessments":
+                mock_table.select.return_value.eq.return_value.execute.return_value = mock_latest_result
+            elif table_name == "flexibility_summary":
+                mock_table.select.return_value.eq.return_value.execute.return_value = mock_summary_result
+            return mock_table
+
+        mock_supabase.table.side_effect = mock_table_side_effect
 
         with patch("api.v1.flexibility.get_supabase_db") as mock_get_db:
             mock_db = MagicMock()
@@ -751,21 +859,44 @@ class TestGetFlexibilitySummary:
             assert "overall_score" in data
             assert "overall_rating" in data
             assert "tests_completed" in data
+            assert data["tests_completed"] == 3
+            assert data["total_assessments"] == 9
+            # shoulder_flexibility is the only sub-"good" rating, so it is the
+            # one area flagged for improvement.
+            assert data["areas_needing_improvement"] == ["shoulder_flexibility"]
 
 
 class TestGetFlexibilityScore:
     """Tests for GET /api/v1/flexibility/user/{user_id}/score endpoint."""
 
     def test_get_score_success(self, client, mock_supabase, mock_user_id):
-        """Test successfully fetching flexibility score."""
-        latest_assessments = [
-            {"test_type": "sit_and_reach", "rating": "good"},
-            {"test_type": "hamstring", "rating": "excellent"},
-        ]
+        """Test successfully fetching flexibility score.
 
+        Two things were stale here:
+
+        1. The endpoint does NOT read a table -- it calls the Postgres function
+           `db.client.rpc("get_flexibility_score", {"p_user_id": ...})`. The old
+           mock wired up a `.table().select()...` chain that the handler never
+           touches, so `.rpc()` returned a bare MagicMock and the response blew
+           up in pydantic validation (500).
+        2. It asserted a top-level `score` key. No such key exists: the response
+           model is `FlexibilityScoreResponse` {overall_score, overall_rating,
+           tests_completed, areas_needing_improvement}, and the shipped Flutter
+           client decodes exactly that (@JsonKey(name: 'overall_score')). The
+           `score` assertion could never have passed.
+
+        Rewritten to drive the real RPC and assert the current contract in full,
+        preserving the original intent (the endpoint returns the user's overall
+        flexibility score) and tightening key-presence into exact values.
+        """
         mock_result = MagicMock()
-        mock_result.data = latest_assessments
-        mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
+        mock_result.data = [{
+            "overall_score": 78.5,
+            "overall_rating": "good",
+            "tests_completed": 2,
+            "areas_needing_improvement": ["shoulder_flexibility"],
+        }]
+        mock_supabase.rpc.return_value.execute.return_value = mock_result
 
         with patch("api.v1.flexibility.get_supabase_db") as mock_get_db:
             mock_db = MagicMock()
@@ -776,7 +907,14 @@ class TestGetFlexibilityScore:
 
             assert response.status_code == 200
             data = response.json()
-            assert "score" in data
+            assert data["overall_score"] == 78.5
+            assert data["overall_rating"] == "good"
+            assert data["tests_completed"] == 2
+            assert data["areas_needing_improvement"] == ["shoulder_flexibility"]
+
+            mock_supabase.rpc.assert_called_once_with(
+                "get_flexibility_score", {"p_user_id": mock_user_id}
+            )
 
 
 class TestDeleteAssessment:

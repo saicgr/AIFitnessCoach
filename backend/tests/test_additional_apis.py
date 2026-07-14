@@ -16,15 +16,63 @@ from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from datetime import datetime, date, timedelta, timezone
 import uuid
 
+import api.v1.achievements as achievements_api
+from core.auth import get_current_user
 from main import app
 
 
 client = TestClient(app)
 
 
+# Fixed identity for the whole module. The achievements endpoints enforce
+# ownership (`current_user["id"] != user_id` -> 403), so the authenticated
+# principal and the {user_id} path param must be the same value.
+TEST_USER_ID = "11111111-2222-3333-4444-555555555555"
+
+# Streak endpoints derive "today" from the request's resolved timezone, so the
+# tests pin it explicitly instead of relying on the test machine's local clock.
+_UTC_TZ_HEADER = {"X-User-Timezone": "UTC"}
+
+
+def _server_today() -> date:
+    """The calendar date the API will consider "today" for a UTC-timezone user."""
+    return datetime.now(timezone.utc).date()
+
+
 # ============================================================
 # FIXTURES
 # ============================================================
+
+@pytest.fixture(autouse=True)
+def override_auth():
+    """Satisfy the `Depends(get_current_user)` on every endpoint under test.
+
+    These endpoints all require a Supabase bearer token. Without an override
+    FastAPI resolves the real dependency, which 401s before any handler runs,
+    so every assertion in this module was measuring the auth layer instead of
+    the endpoint. Overriding the dependency (the standard pattern used across
+    this suite) restores the tests to actually exercising the handlers.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": TEST_USER_ID,
+        "email": "test@example.com",
+    }
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.fixture(autouse=True)
+def reset_achievement_types_cache():
+    """Clear the achievements module's process-wide 1-hour type cache.
+
+    `api/v1/achievements.py` memoizes achievement_types in a module global, so
+    without this reset one test's data (or a warm cache) leaks into the next and
+    the DB mock is never consulted.
+    """
+    achievements_api._achievement_types_cache = None
+    yield
+    achievements_api._achievement_types_cache = None
+
 
 @pytest.fixture
 def mock_supabase_db():
@@ -55,8 +103,8 @@ def mock_hydration_db():
 
 @pytest.fixture
 def sample_user_id():
-    """Sample user ID."""
-    return str(uuid.uuid4())
+    """Sample user ID — must match the authenticated principal (see TEST_USER_ID)."""
+    return TEST_USER_ID
 
 
 @pytest.fixture
@@ -159,9 +207,15 @@ class TestAchievementTypes:
         assert data[0]["id"] == "streak_7_days"
 
     def test_get_achievements_by_category(self, mock_supabase_db, sample_achievement_types):
-        """Test getting achievements filtered by category."""
-        streaks_only = [a for a in sample_achievement_types if a["category"] == "streaks"]
-        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = streaks_only
+        """Test getting achievements filtered by category.
+
+        The endpoint used to push the category filter into the query
+        (`select().eq("category", ...)`); it now loads the full type table once
+        into a 1-hour module cache and buckets by category in Python. The mock
+        therefore feeds the unfiltered `select().execute()` and the assertion is
+        unchanged: /types/category/streaks must return only the streaks types.
+        """
+        mock_supabase_db.client.table.return_value.select.return_value.execute.return_value.data = sample_achievement_types
 
         response = client.get("/api/v1/achievements/types/category/streaks")
 
@@ -319,8 +373,15 @@ class TestStreaks:
         assert data[0]["current_streak"] == 14
 
     def test_update_streak_continue(self, mock_supabase_db, sample_user_id):
-        """Test updating streak (continuing)."""
-        yesterday = date.today() - timedelta(days=1)
+        """Test updating streak (continuing).
+
+        "Today" is resolved server-side from the user's timezone
+        (X-User-Timezone header -> users.timezone -> UTC), NOT from the test
+        machine's local clock — so the fixture dates are anchored to an explicit
+        UTC request header. Without that, this test silently drifts into the
+        wrong branch whenever the machine's local date != UTC date.
+        """
+        yesterday = _server_today() - timedelta(days=1)
         streak = {
             "id": str(uuid.uuid4()),
             "user_id": sample_user_id,
@@ -336,15 +397,23 @@ class TestStreaks:
         # Mock achievement check
         mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
 
-        response = client.post(f"/api/v1/achievements/user/{sample_user_id}/streaks/workout/update")
+        response = client.post(
+            f"/api/v1/achievements/user/{sample_user_id}/streaks/workout/update",
+            headers=_UTC_TZ_HEADER,
+        )
 
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
 
     def test_update_streak_already_today(self, mock_supabase_db, sample_user_id):
-        """Test updating streak when already updated today."""
-        today = date.today()
+        """Test updating streak when already updated today.
+
+        Anchored to the server's timezone-resolved today (see
+        test_update_streak_continue) — date.today() is the test machine's local
+        date and does not necessarily match it.
+        """
+        today = _server_today()
         streak = {
             "id": str(uuid.uuid4()),
             "user_id": sample_user_id,
@@ -356,7 +425,10 @@ class TestStreaks:
 
         mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value.data = [streak]
 
-        response = client.post(f"/api/v1/achievements/user/{sample_user_id}/streaks/workout/update")
+        response = client.post(
+            f"/api/v1/achievements/user/{sample_user_id}/streaks/workout/update",
+            headers=_UTC_TZ_HEADER,
+        )
 
         assert response.status_code == 200
         assert "Already updated today" in response.json()["message"]
@@ -522,15 +594,26 @@ class TestExercises:
         assert response.status_code == 200
 
     def test_create_exercise(self, mock_exercises_db, sample_exercise):
-        """Test creating an exercise."""
+        """Test creating an exercise.
+
+        `ExerciseCreate` (models/exercise.py) requires external_id, body_part,
+        equipment, target and instructions — the library rows are unusable
+        without them — so the old minimal payload 422'd before reaching the
+        handler. Payload now carries the required fields; assertions unchanged.
+        """
         mock_exercises_db.create_exercise.return_value = sample_exercise
 
         response = client.post(
             "/api/v1/exercises/",
             json={
+                "external_id": "ex_001",
                 "name": "Bench Press",
                 "category": "strength",
                 "primary_muscle": "chest",
+                "body_part": "upper body",
+                "equipment": "barbell",
+                "target": "pectorals",
+                "instructions": "Lie on bench. Lower bar to chest. Press up.",
                 "default_sets": 4,
                 "default_reps": 8,
             }
@@ -568,7 +651,7 @@ class TestHydration:
     def test_log_hydration(self, mock_hydration_db, sample_user_id, sample_hydration_log):
         """Test logging hydration intake."""
         sample_hydration_log["user_id"] = sample_user_id
-        mock_hydration_db.table.return_value.insert.return_value.execute.return_value.data = [sample_hydration_log]
+        mock_hydration_db.client.table.return_value.insert.return_value.execute.return_value.data = [sample_hydration_log]
 
         response = client.post(
             "/api/v1/hydration/log",
@@ -585,15 +668,22 @@ class TestHydration:
         assert data["drink_type"] == "water"
 
     def test_get_daily_hydration(self, mock_hydration_db, sample_user_id, sample_hydration_log):
-        """Test getting daily hydration summary."""
+        """Test getting daily hydration summary.
+
+        The handler now filters on the `local_date` column
+        (select().eq(user).eq(local_date).order()) and only falls back to a
+        logged_at UTC range when that column is missing/empty, so the mock feeds
+        the local_date chain. Assertions unchanged.
+        """
         sample_hydration_log["user_id"] = sample_user_id
-        mock_hydration_db.table.return_value.select.return_value.eq.return_value.gte.return_value.lte.return_value.order.return_value.execute.return_value.data = [
+        logs = [
             sample_hydration_log,
             {**sample_hydration_log, "amount_ml": 300, "drink_type": "protein_shake"},
         ]
+        mock_hydration_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value.data = logs
 
         # Mock goal query
-        mock_hydration_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
+        mock_hydration_db.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
             "hydration_goal_ml": 2500
         }
 
@@ -604,11 +694,13 @@ class TestHydration:
         assert "total_ml" in data
         assert "goal_ml" in data
         assert "goal_percentage" in data
+        assert data["total_ml"] == 800
+        assert data["goal_ml"] == 2500
 
     def test_get_hydration_logs(self, mock_hydration_db, sample_user_id, sample_hydration_log):
         """Test getting hydration logs."""
         sample_hydration_log["user_id"] = sample_user_id
-        mock_hydration_db.table.return_value.select.return_value.eq.return_value.gte.return_value.order.return_value.limit.return_value.execute.return_value.data = [sample_hydration_log]
+        mock_hydration_db.client.table.return_value.select.return_value.eq.return_value.gte.return_value.order.return_value.limit.return_value.execute.return_value.data = [sample_hydration_log]
 
         response = client.get(f"/api/v1/hydration/logs/{sample_user_id}")
 
@@ -619,7 +711,9 @@ class TestHydration:
     def test_delete_hydration_log(self, mock_hydration_db):
         """Test deleting hydration log."""
         log_id = str(uuid.uuid4())
-        mock_hydration_db.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = [{"id": log_id}]
+        mock_hydration_db.client.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = [
+            {"id": log_id, "user_id": TEST_USER_ID}
+        ]
 
         response = client.delete(f"/api/v1/hydration/log/{log_id}")
 
@@ -629,7 +723,7 @@ class TestHydration:
     def test_delete_hydration_log_not_found(self, mock_hydration_db):
         """Test deleting non-existent hydration log."""
         log_id = str(uuid.uuid4())
-        mock_hydration_db.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = []
+        mock_hydration_db.client.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = []
 
         response = client.delete(f"/api/v1/hydration/log/{log_id}")
 
@@ -637,7 +731,7 @@ class TestHydration:
 
     def test_get_hydration_goal(self, mock_hydration_db, sample_user_id):
         """Test getting hydration goal."""
-        mock_hydration_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
+        mock_hydration_db.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = {
             "hydration_goal_ml": 3000
         }
 
@@ -649,7 +743,7 @@ class TestHydration:
 
     def test_update_hydration_goal(self, mock_hydration_db, sample_user_id):
         """Test updating hydration goal."""
-        mock_hydration_db.table.return_value.upsert.return_value.execute.return_value.data = [{}]
+        mock_hydration_db.client.table.return_value.upsert.return_value.execute.return_value.data = [{}]
 
         response = client.put(
             f"/api/v1/hydration/goal/{sample_user_id}",
@@ -662,7 +756,7 @@ class TestHydration:
     def test_quick_log_hydration(self, mock_hydration_db, sample_user_id, sample_hydration_log):
         """Test quick log hydration."""
         sample_hydration_log["user_id"] = sample_user_id
-        mock_hydration_db.table.return_value.insert.return_value.execute.return_value.data = [sample_hydration_log]
+        mock_hydration_db.client.table.return_value.insert.return_value.execute.return_value.data = [sample_hydration_log]
 
         response = client.post(
             f"/api/v1/hydration/quick-log/{sample_user_id}",
@@ -696,8 +790,13 @@ class TestEdgeCases:
         assert response.status_code == 500
 
     def test_hydration_db_error(self, mock_hydration_db, sample_user_id):
-        """Test database error handling in hydration."""
-        mock_hydration_db.table.return_value.select.return_value.eq.return_value.gte.return_value.lte.return_value.order.return_value.execute.side_effect = Exception("DB Error")
+        """Test database error handling in hydration.
+
+        The daily-summary query is now local_date-filtered
+        (select().eq(user).eq(local_date).order()), so the failure is injected
+        there. Assertion unchanged: a DB failure surfaces as a 500.
+        """
+        mock_hydration_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.side_effect = Exception("DB Error")
 
         response = client.get(f"/api/v1/hydration/daily/{sample_user_id}")
 

@@ -37,11 +37,29 @@ def mock_gemini_service():
 
 @pytest.fixture
 def client():
-    """Create a test client."""
+    """Create a test client with the auth dependency overridden.
+
+    Both rest-suggestion routes depend on `core.auth.get_current_user`, which
+    validates a real Supabase JWT and 401s without one — so every endpoint test
+    here was getting 401 instead of exercising the endpoint. These are
+    endpoint-behaviour tests, not auth tests, so we override the dependency
+    with a fixed identity (the standard FastAPI mechanism) rather than minting
+    a token. The override is popped on teardown so it cannot leak into other
+    test modules sharing the same app instance in this process.
+    """
     if not HAS_TEST_CLIENT:
         pytest.skip("FastAPI TestClient not available")
     from main import app
-    return TestClient(app)
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "email": "rest-suggestion-test@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 # =============================================================================
@@ -330,11 +348,22 @@ class TestRestSuggestionEndpoint:
 
     @pytest.mark.skipif(not HAS_TEST_CLIENT, reason="TestClient not available")
     def test_rpe_below_minimum_rejected(self, client):
-        """Test that RPE below 6 is rejected."""
+        """Test that RPE below the allowed minimum is rejected.
+
+        Retired assertion: this used to send rpe=5 and expect 422 ("below
+        minimum of 6"). Commit 7bd03086 deliberately relaxed the bound from
+        ge=6 to ge=5 — "relax RPE validation from 6-10 to 5-10 to match
+        frontend RPE selector range" — because the app's RPE selector starts at
+        5 and every 5-RPE set was 422-ing mid-workout.
+
+        The guarantee this test protects is unchanged: the endpoint enforces
+        the lower RPE bound and rejects out-of-range values, so garbage RPE can
+        never reach the rest calculator. It now pins the *current* bound (5).
+        """
         response = client.post(
             "/api/v1/workouts/rest-suggestion",
             json={
-                "rpe": 5,  # Below minimum of 6
+                "rpe": 4,  # Below the current minimum of 5
                 "exercise_type": "strength",
                 "is_compound": True,
                 "sets_remaining": 2,

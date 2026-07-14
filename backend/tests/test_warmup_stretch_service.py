@@ -449,21 +449,43 @@ class TestCreateStretchesForWorkout:
 class TestGetWarmupStretchesForWorkout:
     """Test getting warmup and stretches for workout."""
 
+    def _stub_current_row_query(self, warmup_service, data):
+        """Wire the mock for the real query chain used to fetch the current row.
+
+        get_warmup_for_workout / get_stretches_for_workout build:
+            .select("*").eq("workout_id", ...).eq("is_current", True)
+            .order("valid_from", desc=True).limit(1).execute()
+
+        The `.order(...)` step is load-bearing: a workout can have several
+        is_current=True rows (historically each generation inserted a new one
+        without superseding the prior), so the query must return the LATEST.
+        These tests previously stubbed the chain without `.order()`, so the
+        stub was never reached and `.execute()` returned an auto-MagicMock,
+        making `result.data[0]` a truthy mock. That silently defeated the
+        not-found test and made the found-tests pass vacuously.
+        """
+        query = warmup_service.supabase.table.return_value.select.return_value
+        query.eq.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+            data=data
+        )
+        return query
+
     def test_get_warmup_for_workout(self, warmup_service):
         """Test getting warmup for workout."""
-        warmup_service.supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
-            data=[{"id": 1, "exercises_json": []}]
-        )
+        row = {"id": 1, "exercises_json": []}
+        query = self._stub_current_row_query(warmup_service, [row])
 
         result = warmup_service.get_warmup_for_workout("w1")
 
-        assert result is not None
+        assert result == row
+        # The latest current version must be the one returned.
+        query.eq.return_value.eq.return_value.order.assert_called_once_with(
+            "valid_from", desc=True
+        )
 
     def test_get_warmup_for_workout_not_found(self, warmup_service):
         """Test getting non-existent warmup."""
-        warmup_service.supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
-            data=[]
-        )
+        self._stub_current_row_query(warmup_service, [])
 
         result = warmup_service.get_warmup_for_workout("w1")
 
@@ -471,13 +493,15 @@ class TestGetWarmupStretchesForWorkout:
 
     def test_get_stretches_for_workout(self, warmup_service):
         """Test getting stretches for workout."""
-        warmup_service.supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
-            data=[{"id": 1, "exercises_json": []}]
-        )
+        row = {"id": 1, "exercises_json": []}
+        query = self._stub_current_row_query(warmup_service, [row])
 
         result = warmup_service.get_stretches_for_workout("w1")
 
-        assert result is not None
+        assert result == row
+        query.eq.return_value.eq.return_value.order.assert_called_once_with(
+            "valid_from", desc=True
+        )
 
 
 # ============================================================

@@ -22,11 +22,43 @@ import asyncio
 
 @pytest.fixture
 def mock_supabase_db():
-    """Mock SupabaseDB for XP operations."""
-    with patch("api.v1.xp.get_supabase_db") as mock_get_db:
+    """Mock SupabaseDB for XP operations.
+
+    The XP API is split across two modules that each do their own
+    ``from core.db import get_supabase_db``: ``api.v1.xp`` (checkpoints,
+    goal XP, first-time bonuses) and ``api.v1.xp_endpoints`` (consumables,
+    crates — included into xp's router as a sub-router). Both names are
+    patched to the SAME mock so a test doesn't have to care which module its
+    handler happens to live in.
+    """
+    with patch("api.v1.xp.get_supabase_db") as mock_get_db, \
+         patch("api.v1.xp_endpoints.get_supabase_db") as mock_get_db_endpoints:
         mock_db = MagicMock()
         mock_get_db.return_value = mock_db
+        mock_get_db_endpoints.return_value = mock_db
         yield mock_db
+
+
+@pytest.fixture
+def http_request():
+    """A real Starlette Request for handlers that take one.
+
+    Several XP handlers now take ``request: Request`` so they can resolve the
+    caller's timezone (``resolve_timezone`` reads the X-User-Timezone header
+    and falls back to the DB). Pinning the header to UTC keeps the
+    date-dependent branches deterministic and keeps the resolver off the
+    mocked DB.
+    """
+    from starlette.requests import Request
+
+    return Request({
+        "type": "http",
+        "method": "GET",
+        "path": "/",
+        "root_path": "",
+        "query_string": b"",
+        "headers": [(b"x-user-timezone", b"UTC")],
+    })
 
 
 @pytest.fixture
@@ -213,7 +245,7 @@ class TestFirstTimeBonuses:
 class TestCheckpointProgress:
     """Test checkpoint progress endpoints."""
 
-    def test_get_checkpoint_progress_weekly(self, mock_supabase_db, mock_current_user, sample_checkpoint_progress):
+    def test_get_checkpoint_progress_weekly(self, mock_supabase_db, mock_current_user, sample_checkpoint_progress, http_request):
         """Test getting weekly checkpoint progress."""
         from api.v1.xp import get_checkpoint_progress
 
@@ -221,7 +253,7 @@ class TestCheckpointProgress:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                get_checkpoint_progress("weekly", mock_current_user)
+                get_checkpoint_progress(http_request, checkpoint_type="weekly", current_user=mock_current_user)
             )
 
         assert result["checkpoint_type"] == "weekly"
@@ -230,7 +262,7 @@ class TestCheckpointProgress:
         assert result["progress_percent"] == 40
         assert result["xp_reward"] == 200
 
-    def test_get_checkpoint_progress_monthly(self, mock_supabase_db, mock_current_user, sample_checkpoint_progress):
+    def test_get_checkpoint_progress_monthly(self, mock_supabase_db, mock_current_user, sample_checkpoint_progress, http_request):
         """Test getting monthly checkpoint progress."""
         from api.v1.xp import get_checkpoint_progress
 
@@ -238,7 +270,7 @@ class TestCheckpointProgress:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                get_checkpoint_progress("monthly", mock_current_user)
+                get_checkpoint_progress(http_request, checkpoint_type="monthly", current_user=mock_current_user)
             )
 
         assert result["checkpoint_type"] == "monthly"
@@ -337,7 +369,8 @@ class TestConsumables:
 
     def test_use_consumable_streak_shield(self, mock_supabase_db, mock_current_user):
         """Test using a streak shield."""
-        from api.v1.xp import use_consumable, UseConsumableRequest
+        from api.v1.xp_endpoints import use_consumable
+        from api.v1.xp_models import UseConsumableRequest
 
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = True
 
@@ -353,7 +386,8 @@ class TestConsumables:
 
     def test_use_consumable_2x_token(self, mock_supabase_db, mock_current_user):
         """Test using a 2x XP token."""
-        from api.v1.xp import use_consumable, UseConsumableRequest
+        from api.v1.xp_endpoints import use_consumable
+        from api.v1.xp_models import UseConsumableRequest
 
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = True
 
@@ -369,7 +403,8 @@ class TestConsumables:
 
     def test_use_consumable_no_items(self, mock_supabase_db, mock_current_user):
         """Test using a consumable when none available."""
-        from api.v1.xp import use_consumable, UseConsumableRequest
+        from api.v1.xp_endpoints import use_consumable
+        from api.v1.xp_models import UseConsumableRequest
 
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = False
 
@@ -384,7 +419,8 @@ class TestConsumables:
 
     def test_use_consumable_invalid_type(self, mock_supabase_db, mock_current_user):
         """Test using an invalid consumable type."""
-        from api.v1.xp import use_consumable, UseConsumableRequest
+        from api.v1.xp_endpoints import use_consumable
+        from api.v1.xp_models import UseConsumableRequest
         from fastapi import HTTPException
 
         request = UseConsumableRequest(item_type="invalid_item")
@@ -399,7 +435,8 @@ class TestConsumables:
 
     def test_open_crate_fitness(self, mock_supabase_db, mock_current_user):
         """Test opening a fitness crate."""
-        from api.v1.xp import open_crate, OpenCrateRequest
+        from api.v1.xp_endpoints import open_crate
+        from api.v1.xp_models import OpenCrateRequest
 
         # Mock: user has the crate
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = True
@@ -417,7 +454,8 @@ class TestConsumables:
 
     def test_open_crate_no_crate(self, mock_supabase_db, mock_current_user):
         """Test opening a crate when none available."""
-        from api.v1.xp import open_crate, OpenCrateRequest
+        from api.v1.xp_endpoints import open_crate
+        from api.v1.xp_models import OpenCrateRequest
 
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = False
 
@@ -438,15 +476,15 @@ class TestConsumables:
 class TestDailyCrates:
     """Test daily crate system endpoints."""
 
-    def test_get_daily_crates(self, mock_supabase_db, mock_current_user, sample_daily_crates):
+    def test_get_daily_crates(self, mock_supabase_db, mock_current_user, sample_daily_crates, http_request):
         """Test getting daily crate availability."""
-        from api.v1.xp import get_daily_crates
+        from api.v1.xp_endpoints import get_daily_crates
 
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = sample_daily_crates
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                get_daily_crates(mock_current_user)
+                get_daily_crates(http_request, mock_current_user)
             )
 
         assert result.daily_crate_available is True
@@ -454,9 +492,10 @@ class TestDailyCrates:
         assert result.activity_crate_available is False
         assert result.claimed is False
 
-    def test_claim_daily_crate_success(self, mock_supabase_db, mock_current_user):
+    def test_claim_daily_crate_success(self, mock_supabase_db, mock_current_user, http_request):
         """Test claiming a daily crate."""
-        from api.v1.xp import claim_daily_crate, ClaimDailyCrateRequest
+        from api.v1.xp_endpoints import claim_daily_crate
+        from api.v1.xp_models import ClaimDailyCrateRequest
 
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = {
             "success": True,
@@ -469,16 +508,17 @@ class TestDailyCrates:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                claim_daily_crate(request, mock_current_user)
+                claim_daily_crate(request, http_request, mock_current_user)
             )
 
         assert result["success"] is True
         assert result["crate_type"] == "daily"
         assert "reward" in result
 
-    def test_claim_daily_crate_already_claimed(self, mock_supabase_db, mock_current_user):
+    def test_claim_daily_crate_already_claimed(self, mock_supabase_db, mock_current_user, http_request):
         """Test claiming when already claimed today."""
-        from api.v1.xp import claim_daily_crate, ClaimDailyCrateRequest
+        from api.v1.xp_endpoints import claim_daily_crate
+        from api.v1.xp_models import ClaimDailyCrateRequest
 
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = {
             "success": False,
@@ -489,14 +529,15 @@ class TestDailyCrates:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                claim_daily_crate(request, mock_current_user)
+                claim_daily_crate(request, http_request, mock_current_user)
             )
 
         assert result["success"] is False
 
-    def test_claim_streak_crate_unavailable(self, mock_supabase_db, mock_current_user):
+    def test_claim_streak_crate_unavailable(self, mock_supabase_db, mock_current_user, http_request):
         """Test claiming streak crate when not available."""
-        from api.v1.xp import claim_daily_crate, ClaimDailyCrateRequest
+        from api.v1.xp_endpoints import claim_daily_crate
+        from api.v1.xp_models import ClaimDailyCrateRequest
 
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = {
             "success": False,
@@ -507,15 +548,16 @@ class TestDailyCrates:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                claim_daily_crate(request, mock_current_user)
+                claim_daily_crate(request, http_request, mock_current_user)
             )
 
         assert result["success"] is False
         assert "7+ day streak" in result.get("message", "")
 
-    def test_claim_invalid_crate_type(self, mock_supabase_db, mock_current_user):
+    def test_claim_invalid_crate_type(self, mock_supabase_db, mock_current_user, http_request):
         """Test claiming invalid crate type."""
-        from api.v1.xp import claim_daily_crate, ClaimDailyCrateRequest
+        from api.v1.xp_endpoints import claim_daily_crate
+        from api.v1.xp_models import ClaimDailyCrateRequest
         from fastapi import HTTPException
 
         request = ClaimDailyCrateRequest(crate_type="invalid")
@@ -523,20 +565,20 @@ class TestDailyCrates:
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             with pytest.raises(HTTPException) as exc_info:
                 asyncio.get_event_loop().run_until_complete(
-                    claim_daily_crate(request, mock_current_user)
+                    claim_daily_crate(request, http_request, mock_current_user)
                 )
 
         assert exc_info.value.status_code == 400
 
-    def test_unlock_activity_crate(self, mock_supabase_db, mock_current_user):
+    def test_unlock_activity_crate(self, mock_supabase_db, mock_current_user, http_request):
         """Test unlocking activity crate when all goals complete."""
-        from api.v1.xp import unlock_activity_crate
+        from api.v1.xp_endpoints import unlock_activity_crate
 
         mock_supabase_db.client.rpc.return_value.execute.return_value.data = True
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                unlock_activity_crate(mock_current_user)
+                unlock_activity_crate(http_request, mock_current_user)
             )
 
         assert result["success"] is True
@@ -549,7 +591,7 @@ class TestDailyCrates:
 class TestDailyGoalsXP:
     """Test daily goals XP awarding."""
 
-    def test_award_goal_xp_workout(self, mock_supabase_db, mock_current_user):
+    def test_award_goal_xp_workout(self, mock_supabase_db, mock_current_user, http_request):
         """Test awarding XP for workout completion."""
         from api.v1.xp import award_goal_xp, AwardGoalXPRequest
 
@@ -565,14 +607,14 @@ class TestDailyGoalsXP:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                award_goal_xp(request, mock_current_user)
+                award_goal_xp(request, http_request, mock_current_user)
             )
 
         assert result.success is True
         assert result.xp_awarded > 0
         assert result.already_claimed is False
 
-    def test_award_goal_xp_already_claimed(self, mock_supabase_db, mock_current_user):
+    def test_award_goal_xp_already_claimed(self, mock_supabase_db, mock_current_user, http_request):
         """Test that duplicate goal XP is prevented."""
         from api.v1.xp import award_goal_xp, AwardGoalXPRequest
 
@@ -588,14 +630,14 @@ class TestDailyGoalsXP:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                award_goal_xp(request, mock_current_user)
+                award_goal_xp(request, http_request, mock_current_user)
             )
 
         assert result.success is True
         assert result.xp_awarded == 0
         assert result.already_claimed is True
 
-    def test_award_goal_xp_body_measurements(self, mock_supabase_db, mock_current_user):
+    def test_award_goal_xp_body_measurements(self, mock_supabase_db, mock_current_user, http_request):
         """Test awarding XP for body measurements."""
         from api.v1.xp import award_goal_xp, AwardGoalXPRequest
 
@@ -610,26 +652,29 @@ class TestDailyGoalsXP:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                award_goal_xp(request, mock_current_user)
+                award_goal_xp(request, http_request, mock_current_user)
             )
 
         assert result.success is True
         assert "body" in result.message.lower()
 
-    def test_get_daily_goals_status(self, mock_supabase_db, mock_current_user):
+    def test_get_daily_goals_status(self, mock_supabase_db, mock_current_user, http_request):
         """Test getting daily goals completion status."""
         from api.v1.xp import get_daily_goals_status
 
         mock_table = MagicMock()
         mock_supabase_db.client.table.return_value = mock_table
-        mock_table.select.return_value.eq.return_value.gte.return_value.execute.return_value.data = [
+        # The query is a bounded local-day window now: .gte(day_start).lt(day_end).
+        # The mock chain must include the .lt() or it hands the handler a bare
+        # MagicMock (which iterates empty) and every goal silently reads False.
+        mock_table.select.return_value.eq.return_value.gte.return_value.lt.return_value.execute.return_value.data = [
             {"source": "daily_goal_workout_complete"},
             {"source": "daily_goal_weight_log"},
         ]
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                get_daily_goals_status(mock_current_user)
+                get_daily_goals_status(http_request, mock_current_user)
             )
 
         assert result.workout_complete is True
@@ -679,7 +724,7 @@ class TestBonusTypesValidation:
 
     def test_crate_rewards_defined(self):
         """Verify crate reward tables are defined."""
-        from api.v1.xp import CRATE_REWARDS
+        from api.v1.xp_endpoints import CRATE_REWARDS
 
         assert "fitness_crate" in CRATE_REWARDS
         assert "premium_crate" in CRATE_REWARDS
@@ -694,7 +739,7 @@ class TestBonusTypesValidation:
 class TestDynamicCheckpointTargets:
     """Test dynamic checkpoint targets based on user's days_per_week."""
 
-    def test_checkpoint_progress_includes_days_per_week(self, mock_supabase_db, mock_current_user):
+    def test_checkpoint_progress_includes_days_per_week(self, mock_supabase_db, mock_current_user, http_request):
         """Test that checkpoint progress response includes days_per_week."""
         from api.v1.xp import get_checkpoint_progress
 
@@ -722,14 +767,14 @@ class TestDynamicCheckpointTargets:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                get_checkpoint_progress("weekly", mock_current_user)
+                get_checkpoint_progress(http_request, checkpoint_type="weekly", current_user=mock_current_user)
             )
 
         assert result["checkpoint_type"] == "weekly"
         assert result["workouts_target"] == 4
         assert result["days_per_week"] == 4
 
-    def test_checkpoint_progress_dynamic_targets_3_days(self, mock_supabase_db, mock_current_user):
+    def test_checkpoint_progress_dynamic_targets_3_days(self, mock_supabase_db, mock_current_user, http_request):
         """Test checkpoint targets for 3 days/week user."""
         from api.v1.xp import get_checkpoint_progress
 
@@ -757,16 +802,16 @@ class TestDynamicCheckpointTargets:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             weekly = asyncio.get_event_loop().run_until_complete(
-                get_checkpoint_progress("weekly", mock_current_user)
+                get_checkpoint_progress(http_request, checkpoint_type="weekly", current_user=mock_current_user)
             )
             monthly = asyncio.get_event_loop().run_until_complete(
-                get_checkpoint_progress("monthly", mock_current_user)
+                get_checkpoint_progress(http_request, checkpoint_type="monthly", current_user=mock_current_user)
             )
 
         assert weekly["workouts_target"] == 3
         assert monthly["workouts_target"] == 13
 
-    def test_checkpoint_progress_dynamic_targets_6_days(self, mock_supabase_db, mock_current_user):
+    def test_checkpoint_progress_dynamic_targets_6_days(self, mock_supabase_db, mock_current_user, http_request):
         """Test checkpoint targets for 6 days/week user."""
         from api.v1.xp import get_checkpoint_progress
 
@@ -794,10 +839,10 @@ class TestDynamicCheckpointTargets:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             weekly = asyncio.get_event_loop().run_until_complete(
-                get_checkpoint_progress("weekly", mock_current_user)
+                get_checkpoint_progress(http_request, checkpoint_type="weekly", current_user=mock_current_user)
             )
             monthly = asyncio.get_event_loop().run_until_complete(
-                get_checkpoint_progress("monthly", mock_current_user)
+                get_checkpoint_progress(http_request, checkpoint_type="monthly", current_user=mock_current_user)
             )
 
         assert weekly["workouts_target"] == 6
@@ -829,7 +874,7 @@ class TestDynamicCheckpointTargets:
         assert result["weekly_workouts"] == 3
         assert result["monthly_workouts"] == 8
 
-    def test_checkpoint_fallback_uses_default(self, mock_supabase_db, mock_current_user):
+    def test_checkpoint_fallback_uses_default(self, mock_supabase_db, mock_current_user, http_request):
         """Test that fallback uses default 5 days/week."""
         from api.v1.xp import get_checkpoint_progress
 
@@ -838,14 +883,14 @@ class TestDynamicCheckpointTargets:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                get_checkpoint_progress("weekly", mock_current_user)
+                get_checkpoint_progress(http_request, checkpoint_type="weekly", current_user=mock_current_user)
             )
 
         # Fallback uses default 5 days/week
         assert result["workouts_target"] == 5
         assert result["days_per_week"] == 5
 
-    def test_checkpoint_fallback_monthly_uses_formula(self, mock_supabase_db, mock_current_user):
+    def test_checkpoint_fallback_monthly_uses_formula(self, mock_supabase_db, mock_current_user, http_request):
         """Test that monthly fallback uses ceil(5 * 4.3) = 22."""
         from api.v1.xp import get_checkpoint_progress
 
@@ -854,7 +899,7 @@ class TestDynamicCheckpointTargets:
 
         with patch("api.v1.xp.get_current_user", return_value=mock_current_user):
             result = asyncio.get_event_loop().run_until_complete(
-                get_checkpoint_progress("monthly", mock_current_user)
+                get_checkpoint_progress(http_request, checkpoint_type="monthly", current_user=mock_current_user)
             )
 
         # Fallback: ceil(5 * 4.3) = 22

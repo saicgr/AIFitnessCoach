@@ -275,8 +275,26 @@ class TestSecurityHeadersMiddleware:
 class TestRateLimiterWithProxyHeaders:
     """Tests for rate limiter with various proxy header configurations."""
 
-    def test_rate_limiting_uses_x_forwarded_for(self):
-        """Rate limiter should use X-Forwarded-For for client identification."""
+    def test_rate_limiting_uses_x_forwarded_for(self, monkeypatch):
+        """Rate limiter should use X-Forwarded-For for client identification
+        WHEN running behind Render's reverse proxy.
+
+        History: this test originally exercised get_real_client_ip with no env
+        setup, because the function used to trust X-Forwarded-For
+        unconditionally. That was retired by core/rate_limiter.py (RENDER gate):
+        trusting a client-supplied X-Forwarded-For when NOT behind a trusted
+        proxy lets anyone evade every per-IP rate limit by rotating a spoofed
+        header. The header is now honored only when os.environ["RENDER"] is set
+        (i.e. we know a trusted proxy terminated the connection).
+
+        The original INTENT — "per-forwarded-IP buckets: two IPs must not share
+        one rate-limit counter" — is unchanged and still asserted here; the test
+        now sets up the proxied environment the behavior requires.
+        (The complementary anti-spoof guarantee is asserted in
+        test_x_forwarded_for_ignored_when_not_behind_proxy below.)
+        """
+        monkeypatch.setenv("RENDER", "true")
+
         app = FastAPI()
         test_limiter = Limiter(
             key_func=get_real_client_ip,
@@ -315,3 +333,40 @@ class TestRateLimiterWithProxyHeaders:
             headers={"X-Forwarded-For": "192.168.1.2"}
         )
         assert response.status_code == 200
+
+    def test_x_forwarded_for_ignored_when_not_behind_proxy(self, monkeypatch):
+        """Anti-spoof guarantee: with no trusted proxy (RENDER unset), a
+        client-supplied X-Forwarded-For must NOT be used as the rate-limit key.
+
+        Otherwise any caller could bypass every per-IP limit forever by sending
+        a fresh fake X-Forwarded-For on each request. All requests below must
+        fall back to the real socket peer, so they share ONE bucket and the
+        third is rejected even though each claims a different forwarded IP.
+        """
+        monkeypatch.delenv("RENDER", raising=False)
+
+        app = FastAPI()
+        test_limiter = Limiter(
+            key_func=get_real_client_ip,
+            default_limits=["100/minute"],
+            swallow_errors=True
+        )
+        app.state.limiter = test_limiter
+        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+        app.add_middleware(SlowAPIMiddleware)
+
+        @app.post("/test")
+        @test_limiter.limit("2/minute")
+        async def test_endpoint(request: Request):
+            return {"status": "ok"}
+
+        client = TestClient(app)
+
+        # Two requests, each claiming a DIFFERENT forwarded IP — both counted
+        # against the same real peer, so both are still within the 2/minute cap.
+        assert client.post("/test", headers={"X-Forwarded-For": "10.0.0.1"}).status_code == 200
+        assert client.post("/test", headers={"X-Forwarded-For": "10.0.0.2"}).status_code == 200
+
+        # A third spoofed IP must NOT get a fresh bucket.
+        response = client.post("/test", headers={"X-Forwarded-For": "10.0.0.3"})
+        assert response.status_code == 429

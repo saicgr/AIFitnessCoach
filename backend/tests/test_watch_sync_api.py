@@ -6,6 +6,15 @@ Tests the watch sync system endpoints:
 - Activity goals (GET /watch-sync/goals/{user_id})
 
 Run with: pytest backend/tests/test_watch_sync_api.py -v
+
+CALLING CONVENTION: both endpoints now take `current_user: dict = Depends(get_current_user)`
+and enforce `current_user["id"] == user_id` (403 otherwise). These tests invoke the
+endpoint coroutines DIRECTLY (not through the ASGI stack), so FastAPI never resolves
+the dependency — the parameter default is the raw `Depends(...)` sentinel and the
+ownership check blew up with `TypeError: 'Depends' object is not subscriptable`.
+Direct callers must therefore pass `current_user=` explicitly. `_owner()` builds the
+authenticated-owner dict so the ownership guard is exercised (matching id → allowed)
+rather than bypassed.
 """
 
 import pytest
@@ -17,6 +26,11 @@ import os
 
 # Add the backend directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+
+def _owner(user_id: str) -> dict:
+    """The `current_user` dict FastAPI would inject for the request's own user."""
+    return {"id": user_id}
 
 
 # ============================================================
@@ -181,7 +195,7 @@ class TestWatchSyncBatchEndpoint:
             workout_sets=[SetLogRequest(**sample_set_log)]
         )
 
-        result = await sync_watch_data(request)
+        result = await sync_watch_data(request, current_user=_owner(sample_user_id))
 
         assert result.success is True
         assert result.synced_items == 1
@@ -211,7 +225,7 @@ class TestWatchSyncBatchEndpoint:
             food_logs=[FoodLogRequest(**sample_food_log)]
         )
 
-        result = await sync_watch_data(request)
+        result = await sync_watch_data(request, current_user=_owner(sample_user_id))
 
         assert result.success is True
         assert result.synced_items == 1
@@ -241,7 +255,7 @@ class TestWatchSyncBatchEndpoint:
             activity=ActivitySyncRequest(**sample_activity)
         )
 
-        result = await sync_watch_data(request)
+        result = await sync_watch_data(request, current_user=_owner(sample_user_id))
 
         assert result.success is True
         assert result.synced_items == 1
@@ -271,7 +285,7 @@ class TestWatchSyncBatchEndpoint:
             fasting_events=[FastingEventRequest(**sample_fasting_event)]
         )
 
-        result = await sync_watch_data(request)
+        result = await sync_watch_data(request, current_user=_owner(sample_user_id))
 
         assert result.success is True
         assert result.synced_items == 1
@@ -296,7 +310,7 @@ class TestWatchSyncBatchEndpoint:
             device_source="watch"
         )
 
-        result = await sync_watch_data(request)
+        result = await sync_watch_data(request, current_user=_owner(sample_user_id))
 
         assert result.success is True
         assert result.synced_items == 0
@@ -333,7 +347,7 @@ class TestWatchSyncBatchEndpoint:
             activity=ActivitySyncRequest(**sample_activity)
         )
 
-        result = await sync_watch_data(request)
+        result = await sync_watch_data(request, current_user=_owner(sample_user_id))
 
         assert result.success is True
         assert result.synced_items == 3  # 1 set + 1 food + 1 activity
@@ -369,7 +383,7 @@ class TestWatchSyncBatchEndpoint:
             workout_sets=[SetLogRequest(**sample_set_log)]
         )
 
-        result = await sync_watch_data(request)
+        result = await sync_watch_data(request, current_user=_owner(sample_user_id))
 
         # Should handle error gracefully
         assert result.failed_items >= 0
@@ -396,7 +410,7 @@ class TestActivityGoalsEndpoint:
         mock_response.data = None
         mock_supabase_db._mock_table.execute.return_value = mock_response
 
-        result = await get_activity_goals(sample_user_id)
+        result = await get_activity_goals(sample_user_id, current_user=_owner(sample_user_id))
 
         assert result.steps_goal == 10000
         assert result.active_minutes_goal == 30
@@ -425,7 +439,7 @@ class TestActivityGoalsEndpoint:
 
         mock_supabase_db._mock_table.execute.side_effect = execute_side_effect
 
-        result = await get_activity_goals(sample_user_id)
+        result = await get_activity_goals(sample_user_id, current_user=_owner(sample_user_id))
 
         assert result.steps_goal == 12000
 
@@ -458,7 +472,7 @@ class TestActivityGoalsEndpoint:
 
         mock_supabase_db._mock_table.execute.side_effect = execute_side_effect
 
-        result = await get_activity_goals(sample_user_id)
+        result = await get_activity_goals(sample_user_id, current_user=_owner(sample_user_id))
 
         assert result.water_ml_goal == 3000
 
@@ -576,7 +590,7 @@ class TestErrorHandling:
             food_logs=[food_log]
         )
 
-        result = await sync_watch_data(request)
+        result = await sync_watch_data(request, current_user=_owner(sample_user_id))
 
         # Should still succeed using fallback values
         assert result.success is True
@@ -613,7 +627,7 @@ class TestErrorHandling:
             workout_sets=[SetLogRequest(**sample_set_log)]
         )
 
-        result = await sync_watch_data(request)
+        result = await sync_watch_data(request, current_user=_owner(sample_user_id))
 
         # Should track the failure
         assert result.failed_items > 0

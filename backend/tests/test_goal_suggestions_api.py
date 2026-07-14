@@ -12,18 +12,47 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, date, timedelta, timezone
 from fastapi.testclient import TestClient
+from fastapi import Request
 
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
+from core.auth import get_current_user
+
+# The goal-suggestions / workout-sync handlers do NOT live in api.v1.personal_goals.
+# That module was split: the suggestion + sync endpoints are defined in
+# api.v1.personal_goals_endpoints (mounted as a sub-router) and the summary
+# handler in api.v1.personal_goals_endpoints_part2. Patching get_supabase_db on
+# api.v1.personal_goals therefore patched a name the handlers never read, and the
+# real client was used. These are the modules the handlers actually resolve
+# get_supabase_db from.
+ENDPOINTS_MODULE = "api.v1.personal_goals_endpoints"
+PART2_MODULE = "api.v1.personal_goals_endpoints_part2"
 
 
 @pytest.fixture
 def client():
-    """Synchronous test client for FastAPI."""
-    return TestClient(app)
+    """Synchronous test client with the auth dependency satisfied.
+
+    Every endpoint under /personal-goals depends on `get_current_user` and then
+    rejects the request with 403 unless the authenticated id equals the `user_id`
+    query param. Without an override each request 401s before the handler runs.
+    The override mirrors the requested user_id so the tests exercise the handler
+    rather than the ownership guard.
+    """
+    async def _current_user(request: Request):
+        return {
+            "id": request.query_params.get("user_id", "user123"),
+            "email": "goals-test@example.com",
+        }
+
+    app.dependency_overrides[get_current_user] = _current_user
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture
@@ -39,7 +68,13 @@ class TestGetGoalSuggestions:
     """Tests for GET /goals/suggestions endpoint."""
 
     def test_get_suggestions_returns_categories(self, client, mock_supabase):
-        """Test that suggestions are returned organized by category."""
+        """Test that suggestions are returned organized by category.
+
+        Three cached rows, not two: the endpoint only serves from cache when it
+        holds at least 3 fresh suggestions, so a 2-row fixture silently fell
+        through to the regeneration path and this test never covered the cached
+        path it describes.
+        """
         mock_db, mock_client = mock_supabase
 
         # Mock cached suggestions
@@ -76,9 +111,25 @@ class TestGetGoalSuggestions:
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "expires_at": (datetime.now(timezone.utc) + timedelta(hours=12)).isoformat(),
             },
+            {
+                "id": "sug3",
+                "user_id": "user123",
+                "suggestion_type": "new_challenge",
+                "exercise_name": "Burpees",
+                "goal_type": "weekly_volume",
+                "suggested_target": 50,
+                "reasoning": "Try 50 burpees this week!",
+                "confidence_score": 0.65,
+                "source_data": {"type": "new_challenge"},
+                "category": "new_challenges",
+                "priority_rank": 0,
+                "is_dismissed": False,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "expires_at": (datetime.now(timezone.utc) + timedelta(hours=12)).isoformat(),
+            },
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             # Setup chained mock calls
@@ -103,11 +154,21 @@ class TestGetGoalSuggestions:
             assert "generated_at" in data
             assert "expires_at" in data
 
+            # Served from cache, grouped one category per cached suggestion.
+            assert data["total_suggestions"] == 3
+            assert {c["category_id"] for c in data["categories"]} == {
+                "beat_your_records",
+                "popular_with_friends",
+                "new_challenges",
+            }
+            # Cache hit => no regeneration (old suggestions are never deleted).
+            assert not mock_table.delete.called
+
     def test_get_suggestions_empty_for_new_user(self, client, mock_supabase):
         """Test suggestions for new user with no history."""
         mock_db, mock_client = mock_supabase
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -135,7 +196,7 @@ class TestGetGoalSuggestions:
         """Test that force_refresh bypasses cache."""
         mock_db, mock_client = mock_supabase
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -168,7 +229,7 @@ class TestDismissSuggestion:
         """Test dismissing a suggestion."""
         mock_db, mock_client = mock_supabase
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -192,7 +253,7 @@ class TestDismissSuggestion:
         """Test dismissing non-existent suggestion."""
         mock_db, mock_client = mock_supabase
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -224,6 +285,10 @@ class TestAcceptSuggestion:
             "suggested_target": 35,
         }
 
+        # Mirrors a real weekly_personal_goals row: `updated_at` is a NOT NULL
+        # column on that table and a required field on the WeeklyPersonalGoal
+        # response model, so omitting it made the endpoint fail response
+        # validation (500) instead of returning the created goal.
         created_goal = {
             "id": "goal1",
             "user_id": "user123",
@@ -239,9 +304,10 @@ class TestAcceptSuggestion:
             "source_suggestion_id": "sug1",
             "visibility": "friends",
             "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -301,9 +367,10 @@ class TestAcceptSuggestion:
             "source_suggestion_id": "sug1",
             "visibility": "friends",
             "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -347,7 +414,7 @@ class TestAcceptSuggestion:
             "id": "existing_goal",
         }
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -382,7 +449,9 @@ class TestSuggestionsSummary:
             {"category": "popular_with_friends", "expires_at": (datetime.now(timezone.utc) + timedelta(hours=12)).isoformat()},
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        # The summary handler lives in part2, so that is where it resolves
+        # get_supabase_db from.
+        with patch(f"{PART2_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -407,7 +476,7 @@ class TestSuggestionsSummary:
         """Test getting summary with no suggestions."""
         mock_db, mock_client = mock_supabase
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{PART2_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -452,7 +521,7 @@ class TestWorkoutSync:
             }
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -462,7 +531,7 @@ class TestWorkoutSync:
             mock_table.update.return_value = mock_table
             mock_table.execute.return_value = MagicMock(data=active_goals)
 
-            with patch("api.v1.personal_goals.log_user_activity"):
+            with patch(f"{ENDPOINTS_MODULE}.log_user_activity", new_callable=AsyncMock):
                 response = client.post(
                     "/api/v1/personal-goals/workout-sync",
                     params={"user_id": "user123"},
@@ -505,7 +574,7 @@ class TestWorkoutSync:
             }
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -515,7 +584,7 @@ class TestWorkoutSync:
             mock_table.update.return_value = mock_table
             mock_table.execute.return_value = MagicMock(data=active_goals)
 
-            with patch("api.v1.personal_goals.log_user_activity"):
+            with patch(f"{ENDPOINTS_MODULE}.log_user_activity", new_callable=AsyncMock):
                 response = client.post(
                     "/api/v1/personal-goals/workout-sync",
                     params={"user_id": "user123"},
@@ -536,7 +605,7 @@ class TestWorkoutSync:
         mock_db, mock_client = mock_supabase
 
         # Empty goals list
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -581,7 +650,7 @@ class TestWorkoutSync:
             }
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -591,7 +660,7 @@ class TestWorkoutSync:
             mock_table.update.return_value = mock_table
             mock_table.execute.return_value = MagicMock(data=active_goals)
 
-            with patch("api.v1.personal_goals.log_user_activity"):
+            with patch(f"{ENDPOINTS_MODULE}.log_user_activity", new_callable=AsyncMock):
                 response = client.post(
                     "/api/v1/personal-goals/workout-sync",
                     params={"user_id": "user123"},
@@ -615,7 +684,7 @@ class TestWorkoutSync:
         mock_db, mock_client = mock_supabase
 
         # The query filters for weekly_volume only, so empty result is expected
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch(f"{ENDPOINTS_MODULE}.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()

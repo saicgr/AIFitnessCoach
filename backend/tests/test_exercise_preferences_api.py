@@ -13,6 +13,42 @@ import pytest
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
 
+from fastapi import Request
+
+from core.auth import get_current_user
+from main import app
+
+
+async def _override_current_user(request: Request) -> dict:
+    """Auth override: authenticate as the user the request is addressing.
+
+    These endpoints gained `Depends(get_current_user)` + an ownership check
+    (403 on mismatch) after this test file was written, so every request here
+    was getting a 401 before it ever reached the handler. The override supplies
+    an authenticated identity that matches the `user_id` in the path (or, for
+    the body-addressed endpoints like POST /staples and PUT /variation, the
+    `user_id` in the JSON body), which is exactly the caller each test intends
+    to simulate. Nothing about what the tests assert changes — auth/IDOR
+    behaviour is covered by the auth tests, not here.
+    """
+    user_id = request.path_params.get("user_id")
+    if user_id is None:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                user_id = body.get("user_id")
+        except Exception:
+            user_id = None
+    return {"id": user_id or "test-user-123", "email": "test@example.com"}
+
+
+@pytest.fixture(autouse=True)
+def auth_override():
+    """Install + tear down the get_current_user dependency override."""
+    app.dependency_overrides[get_current_user] = _override_current_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
 
 # Helper to create a properly chained mock for Supabase operations
 def create_mock_db(user_data=None, table_data=None, check_existing_data=None):
@@ -84,7 +120,7 @@ def create_mock_db(user_data=None, table_data=None, check_existing_data=None):
 class TestFavoriteExercisesAPI:
     """Tests for the favorite exercises API endpoints."""
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_get_favorite_exercises_empty(self, mock_get_db, client):
         """Test getting favorites for user with no favorites."""
         user_id = "test-user-123"
@@ -100,7 +136,7 @@ class TestFavoriteExercisesAPI:
         assert response.status_code == 200
         assert response.json() == []
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_get_favorite_exercises_with_data(self, mock_get_db, client):
         """Test getting favorites returns list of favorites."""
         user_id = "test-user-123"
@@ -136,7 +172,7 @@ class TestFavoriteExercisesAPI:
         assert data[0]["exercise_name"] == "Bench Press"
         assert data[1]["exercise_name"] == "Deadlift"
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_add_favorite_exercise(self, mock_get_db, client):
         """Test adding a new favorite exercise."""
         user_id = "test-user-123"
@@ -168,7 +204,7 @@ class TestFavoriteExercisesAPI:
         assert data["exercise_name"] == "Squat"
         assert data["id"] == "new-fav-id"
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_add_favorite_exercise_without_exercise_id(self, mock_get_db, client):
         """Test adding a favorite without optional exercise_id."""
         user_id = "test-user-123"
@@ -197,7 +233,7 @@ class TestFavoriteExercisesAPI:
         assert data["exercise_name"] == "Custom Exercise"
         assert data["exercise_id"] is None
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_add_favorite_duplicate_returns_400(self, mock_get_db, client):
         """Test adding a duplicate favorite returns 400."""
         user_id = "test-user-123"
@@ -227,7 +263,7 @@ class TestFavoriteExercisesAPI:
         assert response.status_code == 400
         assert "already in favorites" in response.json()["detail"].lower()
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_remove_favorite_exercise(self, mock_get_db, client):
         """Test removing a favorite exercise."""
         user_id = "test-user-123"
@@ -246,7 +282,7 @@ class TestFavoriteExercisesAPI:
         assert response.status_code == 200
         assert "removed" in response.json()["message"].lower()
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_remove_favorite_url_encoded_name(self, mock_get_db, client):
         """Test removing a favorite with URL-encoded name (spaces)."""
         user_id = "test-user-123"
@@ -264,7 +300,7 @@ class TestFavoriteExercisesAPI:
 
         assert response.status_code == 200
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_remove_nonexistent_favorite(self, mock_get_db, client):
         """Test removing a favorite that doesn't exist returns 404."""
         user_id = "test-user-123"
@@ -281,7 +317,7 @@ class TestFavoriteExercisesAPI:
 
         assert response.status_code == 404
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_get_favorites_user_not_found(self, mock_get_db, client):
         """Test getting favorites for non-existent user returns 404."""
         mock_db = MagicMock()
@@ -296,7 +332,7 @@ class TestFavoriteExercisesAPI:
 class TestExerciseQueueAPI:
     """Tests for the exercise queue API endpoints."""
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_get_exercise_queue_empty(self, mock_get_db, client):
         """Test getting queue for user with no queued exercises."""
         user_id = "test-user-123"
@@ -312,7 +348,7 @@ class TestExerciseQueueAPI:
         assert response.status_code == 200
         assert response.json() == []
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_get_exercise_queue_with_data(self, mock_get_db, client):
         """Test getting queue returns list of queued exercises."""
         user_id = "test-user-123"
@@ -358,7 +394,7 @@ class TestExerciseQueueAPI:
         assert data[0]["target_muscle_group"] == "back"
         assert data[1]["priority"] == 1
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_add_to_exercise_queue(self, mock_get_db, client):
         """Test adding an exercise to the queue."""
         user_id = "test-user-123"
@@ -397,7 +433,7 @@ class TestExerciseQueueAPI:
         assert data["exercise_name"] == "Tricep Dip"
         assert data["target_muscle_group"] == "arms"
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_add_to_queue_minimal_data(self, mock_get_db, client):
         """Test adding to queue with only required fields."""
         user_id = "test-user-123"
@@ -430,7 +466,7 @@ class TestExerciseQueueAPI:
         data = response.json()
         assert data["exercise_name"] == "Custom Exercise"
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_add_to_queue_duplicate_returns_400(self, mock_get_db, client):
         """Test adding duplicate to queue returns 400."""
         user_id = "test-user-123"
@@ -460,7 +496,7 @@ class TestExerciseQueueAPI:
         assert response.status_code == 400
         assert "already in queue" in response.json()["detail"].lower()
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_remove_from_exercise_queue(self, mock_get_db, client):
         """Test removing an exercise from the queue."""
         user_id = "test-user-123"
@@ -479,7 +515,7 @@ class TestExerciseQueueAPI:
         assert response.status_code == 200
         assert "removed" in response.json()["message"].lower()
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_remove_from_queue_url_encoded_name(self, mock_get_db, client):
         """Test removing from queue with URL-encoded name."""
         user_id = "test-user-123"
@@ -497,7 +533,7 @@ class TestExerciseQueueAPI:
 
         assert response.status_code == 200
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_remove_nonexistent_from_queue(self, mock_get_db, client):
         """Test removing non-existent queue item returns 404."""
         user_id = "test-user-123"
@@ -518,8 +554,8 @@ class TestExerciseQueueAPI:
 class TestConsistencyModeAPI:
     """Tests for the exercise consistency mode preferences."""
 
-    @patch('api.v1.users.get_supabase_db')
-    @patch('api.v1.users.log_user_activity')
+    @patch('api.v1.users.profile.get_supabase_db')
+    @patch('api.v1.users.profile.log_user_activity')
     def test_update_consistency_mode_to_consistent(self, mock_log, mock_get_db, client):
         """Test updating consistency mode from vary to consistent."""
         user_id = "test-user-123"
@@ -556,8 +592,8 @@ class TestConsistencyModeAPI:
         assert response.status_code == 200
         # Just verify the endpoint responds successfully
 
-    @patch('api.v1.users.get_supabase_db')
-    @patch('api.v1.users.log_user_activity')
+    @patch('api.v1.users.profile.get_supabase_db')
+    @patch('api.v1.users.profile.log_user_activity')
     def test_update_consistency_mode_to_vary(self, mock_log, mock_get_db, client):
         """Test updating consistency mode from consistent to vary."""
         user_id = "test-user-456"
@@ -593,8 +629,8 @@ class TestConsistencyModeAPI:
 
         assert response.status_code == 200
 
-    @patch('api.v1.users.get_supabase_db')
-    @patch('api.v1.users.log_user_activity')
+    @patch('api.v1.users.profile.get_supabase_db')
+    @patch('api.v1.users.profile.log_user_activity')
     def test_consistency_mode_preserves_other_preferences(self, mock_log, mock_get_db, client):
         """Test updating consistency mode doesn't overwrite other preferences."""
         user_id = "test-user-789"
@@ -661,7 +697,7 @@ class TestExercisePreferencesValidation:
         )
         assert response.status_code == 422
 
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.exercises.get_supabase_db')
     def test_add_favorite_empty_exercise_name(self, mock_get_db, client):
         """Test adding favorite with empty exercise_name."""
         user_id = "test-user"

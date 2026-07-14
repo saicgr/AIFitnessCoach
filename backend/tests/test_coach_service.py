@@ -12,6 +12,84 @@ from models.chat import (
 from services.coach_service import CoachService
 
 
+# ---------------------------------------------------------------------------
+# Local fixture overrides — schema drift in the shared conftest fixtures.
+#
+# `tests/conftest.py::sample_user_profile` builds UserProfile(id=1) and
+# `sample_chat_request` builds ChatRequest(user_id=1). Both fields are typed
+# `str` today (models/chat.py: "UUID from Supabase") because user ids moved
+# from an int PK to a Supabase UUID. Pydantic v1 silently coerced 1 -> "1";
+# pydantic v2 does not, so the shared fixtures now raise
+# ValidationError [type=string_type] at setup and every test using them ERRORs
+# before its body ever runs.
+#
+# These module-local fixtures shadow the conftest ones with the *same* data,
+# id typed correctly. Nothing about what the tests assert changes. The conftest
+# fixtures are shared with other test modules and are fixed separately.
+# ---------------------------------------------------------------------------
+
+MOCK_USER_ID = "test-user-1"
+
+
+@pytest.fixture
+def mock_coach_service(mock_gemini_service, mock_rag_service):
+    """CoachService wired to fully-mocked collaborators.
+
+    Two gaps the shared conftest fixture leaves open, both of which this
+    override closes:
+
+    1. `gemini.extract_exercises_from_response` is never configured, so
+       `MagicMock(spec=GeminiService)` hands back a bare AsyncMock. Step 4.5 of
+       `process_message` treats that truthy mock as the authoritative exercise
+       list and assigns it onto `IntentExtraction.exercises`; step 6 then does
+       `json.dumps(intent_extraction.exercises)` and blows up with
+       "Object of type AsyncMock is not JSON serializable". Returning `[]`
+       models the real "AI response named no exercises" path, which leaves the
+       exercises extracted from the user's message in place.
+
+    2. `CoachService.__init__` constructs a real `WorkoutModifier()`, which
+       holds a real Supabase client. Left alone, these "unit" tests fire live
+       HTTP at production Postgres on every add/remove/intensity intent (it was
+       returning `invalid input syntax for type uuid: "1"` from the DB). The
+       modifier's own behavior is covered elsewhere; here it is a collaborator
+       and must be a stub so the test is hermetic.
+    """
+    from services.workout_modifier import WorkoutModifier
+
+    mock_gemini_service.extract_exercises_from_response = AsyncMock(return_value=[])
+
+    service = CoachService(mock_gemini_service, mock_rag_service)
+    service.workout_modifier = MagicMock(spec=WorkoutModifier)
+    service.workout_modifier.add_exercises_to_workout.return_value = True
+    service.workout_modifier.remove_exercises_from_workout.return_value = True
+    service.workout_modifier.modify_workout_intensity.return_value = True
+    return service
+
+
+@pytest.fixture
+def sample_user_profile():
+    """Sample user profile for testing (id is a string user id, as the model requires)."""
+    return UserProfile(
+        id=MOCK_USER_ID,
+        fitness_level="intermediate",
+        goals=["build muscle", "lose fat"],
+        equipment=["dumbbells", "barbell", "pull-up bar"],
+        active_injuries=["shoulder"],
+    )
+
+
+@pytest.fixture
+def sample_chat_request(sample_user_profile, sample_workout_context):
+    """Sample chat request for testing (user_id is a string, as the model requires)."""
+    return ChatRequest(
+        message="Add push-ups to my workout",
+        user_id=MOCK_USER_ID,
+        user_profile=sample_user_profile,
+        current_workout=sample_workout_context,
+        conversation_history=[],
+    )
+
+
 class TestCoachService:
     """Tests for CoachService class."""
 
@@ -122,7 +200,7 @@ class TestCoachService:
         """Test processing when no current workout is set."""
         request = ChatRequest(
             message="How do I do a deadlift?",
-            user_id=1,
+            user_id=MOCK_USER_ID,
             user_profile=sample_user_profile,
             current_workout=None,
             conversation_history=[],

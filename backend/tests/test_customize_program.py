@@ -244,30 +244,83 @@ class TestGenerateMonthlyWithIntensity:
             "generate-monthly should read intensity_preference from user profile"
 
 
-class TestGenerateRemainingWithIntensity:
-    """Tests for generate-remaining endpoint with intensity."""
+def _workouts_module_source(module_name: str) -> str:
+    source_file = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "api", "v1", "workouts", module_name,
+    )
+    with open(source_file, "r") as f:
+        return f.read()
 
-    def test_generate_remaining_has_intensity_preference_variable(self):
+
+class TestGenerationHonorsSavedIntensityPreference:
+    """
+    The user's saved intensity_preference must reach workout generation.
+
+    ORIGINAL INTENT (class was `TestGenerateRemainingWithIntensity`): the month
+    fill-in endpoint `POST /generate-remaining` silently generated every workout
+    at the default intensity because it never read
+    `preferences["intensity_preference"]` off the user profile — a user who chose
+    "hard" in customize-program quietly got medium workouts. The test pinned the
+    fix by grepping api/v1/workouts/generation.py for that extraction.
+
+    WHY THAT ASSERTION WAS RETIRED: commit 3063fbd1 deleted BOTH /generate-monthly
+    and /generate-remaining, shrinking generation.py from 2066 lines to an
+    orchestrator that only re-exports sub-routers. Grepping generation.py for the
+    old local variable can no longer pass — there is no endpoint body left in that
+    file to find it in. The endpoint is gone; the guarantee is not.
+
+    WHAT THIS PROTECTS NOW: exactly the same guarantee at its current home. Both
+    surviving generation entrypoints must resolve intensity from the user's saved
+    preferences, falling back to fitness level ONLY when the user has no saved
+    preference — so a saved "hard" is never silently downgraded.
+    """
+
+    def test_generate_endpoint_reads_intensity_preference_from_profile(self):
+        """POST /generate (generation_endpoints.py) resolves intensity from saved preferences."""
+        source = _workouts_module_source("generation_endpoints.py")
+
+        assert 'preferences.get("intensity_preference")' in source, \
+            "/generate must extract intensity_preference from the user's saved preferences"
+        assert "intensity_preference = (" in source, \
+            "/generate must bind the resolved intensity to intensity_preference"
+        assert "get_intensity_from_fitness_level(fitness_level)" in source, \
+            "/generate must fall back to fitness level only when no preference is saved"
+
+    def test_generate_stream_endpoint_reads_intensity_preference_from_profile(self):
+        """POST /generate-stream (generation_streaming.py) resolves intensity from saved preferences."""
+        source = _workouts_module_source("generation_streaming.py")
+
+        assert 'intensity_preference = body.intensity_preference or preferences.get("intensity_preference")' in source, \
+            "/generate-stream must extract intensity_preference from the user's saved preferences"
+        assert "get_intensity_from_fitness_level(fitness_level)" in source, \
+            "/generate-stream must fall back to fitness level only when no preference is saved"
+
+    def test_saved_preference_wins_over_fitness_level_fallback(self):
         """
-        Verify that generate-remaining endpoint extracts intensity_preference.
+        The precedence chain is per-day override > saved preference > fitness-level default.
 
-        This validates the fix added at line 747 in generation.py:
-        intensity_preference = preferences.get("intensity_preference", "medium")
+        Asserted behaviorally on the same `or` chain both endpoints use, so this
+        breaks if someone reorders it and lets the fitness-level default shadow a
+        preference the user explicitly chose (the original bug).
         """
-        # Read the source code to verify the fix is in place
-        import ast
+        from api.v1.workouts.utils import parse_json_field
 
-        source_file = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "api", "v1", "workouts", "generation.py"
-        )
+        def resolve(body_intensity, saved_prefs_json, fitness_level_default):
+            preferences = parse_json_field(saved_prefs_json, {})
+            return (
+                body_intensity
+                or preferences.get("intensity_preference")
+                or fitness_level_default
+            )
 
-        with open(source_file, "r") as f:
-            source = f.read()
-
-        # Check that intensity_preference is extracted in generate_remaining_workouts
-        assert 'intensity_preference = preferences.get("intensity_preference"' in source, \
-            "generate-remaining should extract intensity_preference from user preferences"
+        # Saved "hard" must survive — this is the case the retired endpoint got wrong.
+        assert resolve(None, '{"intensity_preference": "hard"}', "medium") == "hard"
+        # A per-day override outranks the saved preference.
+        assert resolve("hell", '{"intensity_preference": "hard"}', "medium") == "hell"
+        # Fitness-level default applies only when nothing is saved.
+        assert resolve(None, "{}", "medium") == "medium"
+        assert resolve(None, None, "easy") == "easy"
 
 
 class TestEdgeCases:

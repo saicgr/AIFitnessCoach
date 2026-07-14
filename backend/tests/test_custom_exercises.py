@@ -368,10 +368,28 @@ class TestExerciseAPIEndpoints:
 
     @pytest.fixture
     def client(self):
-        """Create test client."""
+        """Create a test client with the auth dependency satisfied.
+
+        The exercise endpoints are all behind `Depends(get_current_user)`, which
+        validates a real Supabase JWT — an unauthenticated TestClient request
+        gets a 401 before the route body ever runs. These are endpoint-behaviour
+        tests, not auth tests, so we override the dependency with a fixed
+        identity (the standard FastAPI mechanism, same as tests/test_skill_progressions.py)
+        instead of minting a token. The override is popped on teardown so it
+        cannot leak into other test modules in the same process.
+        """
         from fastapi.testclient import TestClient
         from main import app
-        return TestClient(app)
+        from core.auth import get_current_user
+
+        app.dependency_overrides[get_current_user] = lambda: {
+            "id": TEST_USER_ID,
+            "email": "test@example.com",
+        }
+        try:
+            yield TestClient(app)
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
 
     @pytest.fixture
     def mock_supabase(self):
@@ -395,8 +413,16 @@ class TestExerciseAPIEndpoints:
         return MockSupabaseDB(MockSupabaseClient(exercises=exercises))
 
     def test_search_exercise_library(self, client, mock_supabase):
-        """Test searching the exercise library."""
-        with patch('api.v1.exercises.get_supabase_db', return_value=mock_supabase):
+        """Test searching the exercise library.
+
+        Patch target note: GET /library/search is defined in
+        `api.v1.exercises_endpoints` (a sub-router included by `api.v1.exercises`),
+        and that module binds `get_supabase_db` at import time. Patching
+        `api.v1.exercises.get_supabase_db` therefore rebinds a name the route
+        never reads — the route would hit the real Supabase client. Patch the
+        module that actually resolves the symbol.
+        """
+        with patch('api.v1.exercises_endpoints.get_supabase_db', return_value=mock_supabase):
             response = client.get("/api/v1/exercises/library/search?query=bench")
 
             # The endpoint should return results
@@ -404,6 +430,10 @@ class TestExerciseAPIEndpoints:
             data = response.json()
             assert "results" in data
             assert "count" in data
+            # Proves the mocked DB was actually the one queried (2 seeded
+            # exercise_library rows), not a silently-real client returning [].
+            assert data["count"] == 2
+            assert [r["name"] for r in data["results"]] == ["Bench Press", "Chest Fly"]
 
 
 # ============================================================================

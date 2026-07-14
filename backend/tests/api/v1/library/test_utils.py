@@ -198,7 +198,18 @@ class TestRowToLibraryExercise:
     """Tests for row_to_library_exercise conversion."""
 
     def test_from_cleaned_view(self):
-        """Test conversion from cleaned view."""
+        """Test conversion from cleaned view.
+
+        Fixture updated: `difficulty_level` used to be an int (3) here. The
+        column is TEXT in the database ('Beginner' / 'Intermediate' / …) and
+        LibraryExercise.difficulty_level was changed int -> str in e23ab1eb
+        ("Update LibraryExercise model types to match database schema", which
+        fixed 500s on the library API). Verified against production:
+        exercise_library_cleaned.difficulty_level returns 'Beginner'.
+        Feeding an int here tested a row shape the DB can never produce.
+        Same guarantee protected: a cleaned-view row converts to LibraryExercise
+        with the cleaned name, original name, normalized body part and equipment.
+        """
         row = {
             "id": "ex-1",
             "name": "Squat",
@@ -207,7 +218,7 @@ class TestRowToLibraryExercise:
             "body_part": "legs",
             "equipment": "barbell",
             "instructions": "Stand, squat, repeat",
-            "difficulty_level": 3,
+            "difficulty_level": "Intermediate",
             "gif_url": "https://example.com/squat.gif",
             "video_url": "s3://bucket/squat.mp4",
             "goals": ["Muscle Building"],
@@ -222,6 +233,9 @@ class TestRowToLibraryExercise:
         assert exercise.original_name == "Squat_Male"
         assert exercise.body_part == "Quadriceps"
         assert exercise.equipment == "barbell"
+        assert exercise.difficulty_level == "Intermediate"
+        assert exercise.instructions == "Stand, squat, repeat"
+        assert exercise.goals == ["Muscle Building"]
 
     def test_from_base_table(self):
         """Test conversion from base table."""
@@ -242,23 +256,37 @@ class TestRowToLibraryExercise:
 
 
 class TestRowToLibraryProgram:
-    """Tests for row_to_library_program conversion."""
+    """Tests for row_to_library_program conversion.
+
+    Row shape updated: these tests used to feed a `program_name` /
+    `program_category` / `program_subcategory` / `tags` /
+    `session_duration_minutes` / `short_description` row. That was the schema of
+    the retired programs table. `row_to_library_program` now converts rows from
+    `branded_programs`, whose real columns (verified against production) are:
+    name, category, split_type, difficulty_level, duration_weeks,
+    sessions_per_week, goals, description, tagline — there is no tags,
+    session_duration_minutes, short_description or celebrity_name column.
+    The converter therefore maps split_type -> subcategory, goals -> tags,
+    tagline -> short_description, and derives session_duration_minutes.
+
+    Same guarantee protected: a DB row converts into a fully-populated
+    LibraryProgram, and a sparse row converts without raising and yields empty
+    (not None) list fields.
+    """
 
     def test_full_program(self):
-        """Test conversion with full program data."""
+        """Test conversion with full program data (branded_programs row)."""
         row = {
             "id": "prog-1",
-            "program_name": "Strength Builder",
-            "program_category": "Strength Training",
-            "program_subcategory": "Intermediate",
+            "name": "Strength Builder",
+            "category": "Strength Training",
+            "split_type": "Upper/Lower",
             "difficulty_level": "Intermediate",
             "duration_weeks": 8,
             "sessions_per_week": 4,
-            "session_duration_minutes": 60,
-            "tags": ["strength", "muscle"],
             "goals": ["Build Muscle", "Increase Strength"],
             "description": "An 8-week strength program",
-            "short_description": "Build strength",
+            "tagline": "Build strength",
         }
 
         program = row_to_library_program(row)
@@ -266,15 +294,24 @@ class TestRowToLibraryProgram:
         assert program.id == "prog-1"
         assert program.name == "Strength Builder"
         assert program.category == "Strength Training"
+        assert program.subcategory == "Upper/Lower"
+        assert program.difficulty_level == "Intermediate"
         assert program.duration_weeks == 8
-        assert program.tags == ["strength", "muscle"]
+        assert program.sessions_per_week == 4
+        # goals double as tags (branded_programs has no tags column)
+        assert program.tags == ["Build Muscle", "Increase Strength"]
+        assert program.goals == ["Build Muscle", "Increase Strength"]
+        assert program.description == "An 8-week strength program"
+        assert program.short_description == "Build strength"
+        # <=4 sessions/week => 45 min estimate
+        assert program.session_duration_minutes == 45
 
     def test_minimal_program(self):
-        """Test conversion with minimal program data."""
+        """Test conversion with minimal program data (branded_programs row)."""
         row = {
             "id": "prog-2",
-            "program_name": "Quick HIIT",
-            "program_category": "Cardio",
+            "name": "Quick HIIT",
+            "category": "Cardio",
         }
 
         program = row_to_library_program(row)

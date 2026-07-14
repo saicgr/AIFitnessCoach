@@ -24,6 +24,23 @@ import asyncio
 # FIXTURES
 # ============================================================
 
+@pytest.fixture(autouse=True)
+def clear_library_ref_cache():
+    """Drop the library reference cache around every test.
+
+    `GET /exercises/filter-options` memoizes its payload for 1h in a process-local
+    RedisCache (no REDIS_URL in tests → in-memory dict). Without this, the FIRST
+    filter-options test to run caches its payload and every later test is served that
+    stale body instead of its own mocked rows — a false pass/fail that depends purely
+    on test order.
+    """
+    from api.v1.library.exercises import invalidate_library_ref_cache
+
+    asyncio.get_event_loop().run_until_complete(invalidate_library_ref_cache())
+    yield
+    asyncio.get_event_loop().run_until_complete(invalidate_library_ref_cache())
+
+
 @pytest.fixture
 def client():
     """Create a test client for the FastAPI app."""
@@ -117,45 +134,47 @@ def sample_exercise_row_bodyweight():
 
 @pytest.fixture
 def sample_program_row():
-    """Sample program row from branded_programs table."""
+    """Sample program row as `branded_programs` actually stores it.
+
+    The library program endpoints read `branded_programs`, NOT the older `programs`
+    table. Per the production schema snapshot, `branded_programs` columns are:
+    name, category, split_type, difficulty_level, duration_weeks, sessions_per_week,
+    goals, tagline, description, is_active, is_featured, is_premium, requires_gym,
+    icon_name, color_hex — it has NO `program_name`, `program_category`,
+    `program_subcategory`, `tags`, `session_duration_minutes` or `celebrity_name`.
+    This fixture used to carry those retired `programs`-table keys, so every row it fed
+    the converter came out blank (name == "") while claiming to be a branded_programs row.
+    """
     return {
         "id": "prog-123-uuid",
-        "program_name": "12-Week Muscle Builder",
-        "program_category": "Goal-Based",
-        "program_subcategory": "Hypertrophy",
+        "name": "12-Week Muscle Builder",
+        "category": "Goal-Based",
+        "split_type": "Hypertrophy",  # -> subcategory
         "difficulty_level": "Intermediate",
         "duration_weeks": 12,
         "sessions_per_week": 4,
-        "session_duration_minutes": 60,
-        "tags": ["muscle", "hypertrophy", "strength"],
-        "goals": ["Muscle Building"],
+        "goals": ["Muscle Building"],  # -> both goals and tags
         "description": "A comprehensive 12-week program for building muscle mass.",
-        "short_description": "Build muscle in 12 weeks",
-        "celebrity_name": None,
+        "tagline": "Build muscle in 12 weeks",  # -> short_description
         "is_active": True,
-        "category": "Goal-Based",
     }
 
 
 @pytest.fixture
 def sample_program_row_2():
-    """Second sample program row for testing filters."""
+    """Second `branded_programs` row for testing filters."""
     return {
         "id": "prog-456-uuid",
-        "program_name": "Chris Hemsworth Thor Workout",
-        "program_category": "Celebrity",
-        "program_subcategory": "Action Hero",
+        "name": "Thor Hero Physique",
+        "category": "Celebrity",
+        "split_type": "Action Hero",
         "difficulty_level": "Advanced",
         "duration_weeks": 8,
         "sessions_per_week": 5,
-        "session_duration_minutes": 75,
-        "tags": ["celebrity", "strength", "superhero"],
         "goals": ["Muscle Building", "Strength"],
-        "description": "Train like Thor with this celebrity workout.",
-        "short_description": "Train like Thor",
-        "celebrity_name": "Chris Hemsworth",
+        "description": "Train like a superhero with this action-hero workout.",
+        "tagline": "Train like a hero",
         "is_active": True,
-        "category": "Celebrity",
     }
 
 
@@ -174,13 +193,31 @@ def setup_mock_pagination(mock_db, rows, empty_on_second=True):
     """
     mock_result = MagicMock()
     mock_result.data = rows
-    mock_empty = MagicMock()
-    mock_empty.data = []
 
-    if empty_on_second:
-        mock_db.client.table.return_value.select.return_value.order.return_value.range.return_value.execute.side_effect = [mock_result, mock_empty]
-    else:
-        mock_db.client.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = mock_result
+    select = mock_db.client.table.return_value.select.return_value
+
+    # `fetch_all_rows()` only inserts `.order()` into the chain when it is passed an
+    # `order_by` (see api/v1/library/utils.py). So there are TWO real chains:
+    #   order_by given (list_exercises):            table→select→order→range→execute
+    #   no order_by (filter-options / body-parts):  table→select→range→execute
+    # This helper used to wire only the first. The endpoints that take the second path
+    # therefore hit an *unconfigured* MagicMock, whose `.data` iterates empty and whose
+    # `__len__` is 0 — so they silently saw ZERO exercises and every count assertion
+    # ("assert 0 >= 1") failed while the mock looked correct. Wire both chains.
+    chains = [
+        select.order.return_value.range.return_value.execute,
+        select.range.return_value.execute,
+    ]
+
+    for execute in chains:
+        if empty_on_second:
+            # Fresh empty sentinel per chain: a paginating caller consumes rows then a
+            # terminating empty page, and side_effect lists must not be shared.
+            mock_empty = MagicMock()
+            mock_empty.data = []
+            execute.side_effect = [mock_result, mock_empty]
+        else:
+            execute.return_value = mock_result
 
     return mock_result
 
@@ -668,10 +705,16 @@ class TestListPrograms:
     """Tests for GET /api/v1/library/programs endpoint."""
 
     def test_list_programs_basic(self, client, mock_supabase_db, sample_program_row):
-        """Test basic program listing."""
+        """Test basic program listing.
+
+        Mock chain corrected: list_programs always filters `.eq("is_active", True)`
+        before ordering, so the real chain is table→select→eq→order→range→execute.
+        The old mock omitted the `.eq`, so the handler read an unconfigured MagicMock
+        and saw zero programs.
+        """
         mock_result = MagicMock()
         mock_result.data = [sample_program_row]
-        mock_supabase_db.client.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = mock_result
+        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_result
 
         response = client.get("/api/v1/library/programs")
 
@@ -720,10 +763,14 @@ class TestListPrograms:
         assert isinstance(data, list)
 
     def test_list_programs_returns_proper_fields(self, client, mock_supabase_db, sample_program_row):
-        """Test that programs include all expected fields."""
+        """Test that programs include all expected fields.
+
+        Mock chain corrected to include the `.eq("is_active", True)` filter that
+        list_programs always applies (table→select→eq→order→range→execute).
+        """
         mock_result = MagicMock()
         mock_result.data = [sample_program_row]
-        mock_supabase_db.client.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = mock_result
+        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_result
 
         response = client.get("/api/v1/library/programs")
 
@@ -861,7 +908,7 @@ class TestGetProgram:
         program_with_workouts = {**sample_program_row, "workouts": [{"day": 1, "exercises": []}]}
         mock_result = MagicMock()
         mock_result.data = [program_with_workouts]
-        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
 
         response = client.get("/api/v1/library/programs/prog-123-uuid")
 
@@ -874,7 +921,7 @@ class TestGetProgram:
         """Test 404 response for non-existent program."""
         mock_empty = MagicMock()
         mock_empty.data = []
-        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_empty
+        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_empty
 
         response = client.get("/api/v1/library/programs/nonexistent-id")
 
@@ -882,17 +929,24 @@ class TestGetProgram:
         assert "not found" in response.json()["detail"].lower()
 
     def test_get_program_returns_full_details(self, client, mock_supabase_db, sample_program_row):
-        """Test that single program includes all fields and workouts."""
-        program_with_workouts = {
-            **sample_program_row,
-            "workouts": [
-                {"day": 1, "focus": "Chest", "exercises": [{"name": "Bench Press", "sets": 3}]},
-                {"day": 2, "focus": "Back", "exercises": [{"name": "Pull Up", "sets": 3}]}
-            ]
-        }
+        """Test that a single program returns the full detail payload.
+
+        RETIRED: this used to assert the response carried an embedded `workouts` blob
+        (`len(data["workouts"]) == 2`). The library detail endpoint now reads
+        `branded_programs`, which has NO `workouts` column — session content lives in
+        `program_variant_weeks` and is served by the program-schedule endpoints, not
+        here (this endpoint is metadata-only, and no client reads `workouts` off it).
+        Asserting a `workouts` key here could only ever pass by feeding the mock a
+        column the table does not have.
+
+        The guarantee preserved: every field the detail payload promises is present, the
+        branded presentation fields come through, and the values map from the right
+        source columns. Field-presence assertions are unchanged; the workouts
+        assertions are replaced with the schedule-source contract that replaced them.
+        """
         mock_result = MagicMock()
-        mock_result.data = [program_with_workouts]
-        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        mock_result.data = [sample_program_row]
+        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
 
         response = client.get("/api/v1/library/programs/prog-123-uuid")
 
@@ -913,25 +967,49 @@ class TestGetProgram:
         assert "description" in data
         assert "short_description" in data
         assert "celebrity_name" in data
-        assert "workouts" in data
 
-        # Verify workouts are included
-        assert isinstance(data["workouts"], list)
-        assert len(data["workouts"]) == 2
+        # Branded presentation fields the detail payload adds on top of LibraryProgram
+        assert "is_featured" in data
+        assert "is_premium" in data
+        assert "requires_gym" in data
+        assert "icon_name" in data
+        assert "color_hex" in data
+
+        # Values map from the correct branded_programs source columns
+        assert data["id"] == "prog-123-uuid"
+        assert data["name"] == "12-Week Muscle Builder"
+        assert data["subcategory"] == "Hypertrophy"  # split_type
+        assert data["short_description"] == "Build muscle in 12 weeks"  # tagline
+        assert data["session_duration_minutes"] == 45  # derived from sessions_per_week=4
+
+        # Metadata-only contract: schedule content is NOT served from this endpoint.
+        assert "workouts" not in data
 
     def test_get_program_with_celebrity(self, client, mock_supabase_db, sample_program_row_2):
-        """Test retrieving a celebrity program."""
-        program_with_workouts = {**sample_program_row_2, "workouts": []}
+        """Test retrieving a program filed under the Celebrity category.
+
+        RETIRED: this used to assert `celebrity_name == "Chris Hemsworth"`. The library
+        moved off the `programs` table (which has a `celebrity_name` column) onto
+        `branded_programs`, which does not — so get_program hardcodes
+        `"celebrity_name": None`. A row can still be *categorised* "Celebrity"; there is
+        just no per-program celebrity attribution column behind it any more.
+
+        The guarantee preserved: a Celebrity-category program resolves and reports its
+        category, and `celebrity_name` remains in the payload (the response contract
+        still carries the key, now always null) rather than disappearing silently.
+        """
         mock_result = MagicMock()
-        mock_result.data = [program_with_workouts]
-        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_result
+        mock_result.data = [sample_program_row_2]
+        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
 
         response = client.get("/api/v1/library/programs/prog-456-uuid")
 
         assert response.status_code == 200
         data = response.json()
-        assert data["celebrity_name"] == "Chris Hemsworth"
+        assert data["name"] == "Thor Hero Physique"
         assert data["category"] == "Celebrity"
+        assert "celebrity_name" in data
+        assert data["celebrity_name"] is None
 
 
 # ============================================================
@@ -951,8 +1029,14 @@ class TestErrorHandling:
         assert "detail" in response.json()
 
     def test_list_programs_database_error(self, client, mock_supabase_db):
-        """Test 500 response on database error in list programs."""
-        mock_supabase_db.client.table.return_value.select.return_value.order.return_value.range.return_value.execute.side_effect = Exception("Connection timeout")
+        """Test 500 response on database error in list programs.
+
+        Chain corrected: list_programs is table→select→eq(is_active)→order→range→execute.
+        The old mock armed the exception on a chain the handler never walks, so nothing
+        raised and the endpoint returned 200 — the test could never have caught a real
+        DB outage.
+        """
+        mock_supabase_db.client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.side_effect = Exception("Connection timeout")
 
         response = client.get("/api/v1/library/programs")
 
@@ -960,16 +1044,23 @@ class TestErrorHandling:
         assert "detail" in response.json()
 
     def test_get_filter_options_database_error(self, client, mock_supabase_db):
-        """Test 500 response on database error in filter options."""
-        mock_supabase_db.client.table.return_value.select.return_value.order.return_value.range.return_value.execute.side_effect = Exception("Query failed")
+        """Test 500 response on database error in filter options.
+
+        Chain corrected: fetch_all_rows() is called without `order_by` here, so the real
+        chain is table→select→range→execute (no `.order`). See setup_mock_pagination.
+        """
+        mock_supabase_db.client.table.return_value.select.return_value.range.return_value.execute.side_effect = Exception("Query failed")
 
         response = client.get("/api/v1/library/exercises/filter-options")
 
         assert response.status_code == 500
 
     def test_get_body_parts_database_error(self, client, mock_supabase_db):
-        """Test 500 response on database error in body parts."""
-        mock_supabase_db.client.table.return_value.select.return_value.order.return_value.range.return_value.execute.side_effect = Exception("Network error")
+        """Test 500 response on database error in body parts.
+
+        Chain corrected: no `order_by` → table→select→range→execute (no `.order`).
+        """
+        mock_supabase_db.client.table.return_value.select.return_value.range.return_value.execute.side_effect = Exception("Network error")
 
         response = client.get("/api/v1/library/exercises/body-parts")
 
@@ -1181,7 +1272,21 @@ class TestRowConversion:
         assert result.avoid_if == []
 
     def test_row_to_library_program(self, sample_program_row):
-        """Test converting program row."""
+        """Test converting a branded_programs row into a LibraryProgram.
+
+        Two assertions here changed when the library moved off the `programs` table
+        onto `branded_programs` (which has no `session_duration_minutes` and no `tags`
+        column — see the fixture docstring):
+
+        - `session_duration_minutes` used to be read straight off the row. It is now
+          DERIVED by row_to_library_program: 45 min if sessions_per_week <= 4 else 60.
+          The row here has sessions_per_week=4, so the contract is 45, not the stored 60.
+        - `tags` used to be its own free-text column ("muscle", "hypertrophy", ...).
+          branded_programs has no such column, so tags are now sourced from `goals`.
+
+        The guarantee this still protects is unchanged: every LibraryProgram field is
+        populated from the correct source column, and none of them come back blank.
+        """
         from api.v1.library.utils import row_to_library_program
 
         result = row_to_library_program(sample_program_row)
@@ -1189,21 +1294,27 @@ class TestRowConversion:
         assert result.id == "prog-123-uuid"
         assert result.name == "12-Week Muscle Builder"
         assert result.category == "Goal-Based"
-        assert result.subcategory == "Hypertrophy"
+        assert result.subcategory == "Hypertrophy"  # mapped from split_type
         assert result.duration_weeks == 12
         assert result.sessions_per_week == 4
-        assert result.session_duration_minutes == 60
-        assert "muscle" in result.tags
+        assert result.session_duration_minutes == 45  # derived: <=4 sessions/wk
+        assert result.tags == ["Muscle Building"]  # tags now mirror goals
         assert "Muscle Building" in result.goals
+        assert result.short_description == "Build muscle in 12 weeks"  # from tagline
 
     def test_row_to_library_program_handles_missing_fields(self):
-        """Test that missing optional program fields are handled."""
+        """Test that missing optional program fields are handled.
+
+        Row keys updated from the retired `programs` schema (program_name/
+        program_category) to the `branded_programs` schema (name/category) that
+        row_to_library_program actually reads. Assertions are unchanged.
+        """
         from api.v1.library.utils import row_to_library_program
 
         minimal_row = {
             "id": "prog-minimal",
-            "program_name": "Minimal Program",
-            "program_category": "Basic",
+            "name": "Minimal Program",
+            "category": "Basic",
         }
 
         result = row_to_library_program(minimal_row)

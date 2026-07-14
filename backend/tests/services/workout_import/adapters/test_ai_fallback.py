@@ -65,11 +65,21 @@ async def test_ai_fallback_transforms_gemini_rows():
         Part=SimpleNamespace(from_bytes=lambda data, mime_type: ("part", mime_type)),
         GenerateContentConfig=lambda **kw: kw,
     )
+    # The adapter does `from core.config import get_settings; settings = get_settings()`.
+    # (It used to do `from core.config import settings`, which never existed on
+    # core.config and made the whole AI fallback ImportError into a silent no-op.)
+    # The stub module must therefore expose get_settings, not settings — stubbing
+    # only `settings` makes the adapter's `except ImportError` swallow the call and
+    # return zero rows, which is exactly what this test would then fail on.
+    fake_config_module = SimpleNamespace(
+        get_settings=lambda: fake_settings,
+        settings=fake_settings,
+    )
     with patch.dict(
         "sys.modules",
         {
             "google.genai": SimpleNamespace(types=fake_types_module),
-            "core.config": SimpleNamespace(settings=fake_settings),
+            "core.config": fake_config_module,
         },
     ), patch(
         "services.gemini.constants.gemini_generate_with_retry",

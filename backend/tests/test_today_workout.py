@@ -26,6 +26,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
+from core.auth import get_current_user
 
 
 client = TestClient(app)
@@ -39,6 +40,25 @@ client = TestClient(app)
 def sample_user_id():
     """Sample user ID for testing."""
     return str(uuid.uuid4())
+
+
+@pytest.fixture(autouse=True)
+def auth_as_sample_user(sample_user_id):
+    """Authenticate every request in this module as `sample_user_id`.
+
+    `GET /workouts/today` and `POST /workouts/today/start` are behind
+    `Depends(get_current_user)` (Supabase JWT). These tests cover today-workout
+    BUSINESS LOGIC, not authentication — auth is covered by the auth tests — so
+    the dependency is stubbed; without it every request 401s before the handler
+    runs. The override is torn down after each test so the shared `main.app`
+    object is not left mutated for other test modules.
+    """
+    async def _current_user():
+        return {"id": sample_user_id, "email": "test@example.com"}
+
+    app.dependency_overrides[get_current_user] = _current_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture
@@ -643,7 +663,14 @@ class TestHelperFunctions:
         assert len(muscles) <= 4
 
     def test_row_to_summary_basic(self):
-        """Test converting a row to TodayWorkoutSummary."""
+        """Test converting a row to TodayWorkoutSummary.
+
+        `_row_to_summary` now takes the caller's resolved `user_today_str` and
+        raises if it is missing — it must never fall back to the UTC server's
+        `date.today()` when deciding `is_today`, or users west of UTC see the
+        wrong day flagged. Passing it is the current calling convention; the
+        assertions below are unchanged.
+        """
         from api.v1.workouts.today import _row_to_summary
 
         today_str = date.today().isoformat()
@@ -660,7 +687,7 @@ class TestHelperFunctions:
             ],
         }
 
-        summary = _row_to_summary(row)
+        summary = _row_to_summary(row, today_str)
 
         assert summary.id == "workout-123"
         assert summary.name == "Test Workout"

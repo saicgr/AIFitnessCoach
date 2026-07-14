@@ -7,7 +7,19 @@ The namer's contract:
     3. Random seed sweep → ≥95% unique names (variation guarantee).
     4. recent_names with hot tokens → next 100 generated names avoid
        any token that appeared ≥3× in the recent list.
-    5. Degenerate inputs → deterministic ``"<X> Session — Nm"`` fallback.
+    5. Degenerate inputs → deterministic ``"<X> <Descriptor> — Nm"`` fallback.
+
+Note on the fallback shape (2026-07): the fallback used to be the single
+fixed shape ``"<X> Session — Nm"``. The namer now rotates the descriptor over
+``_FALLBACK_DESCRIPTORS`` (Session/Block/Builder/…) so two different workouts
+that both fall back don't land on the identical string — a deliberate change
+(the fixed "Push Session — 45m" was landing 5× in a 30-call validation run).
+The rotation index is derived from the call's seed, so the fallback is still
+deterministic per (user, workout, day). Tests below assert the rotating shape
+instead of the retired literal "Session"; the guarantee they protect is
+unchanged — degenerate/blocked input must yield the deterministic
+"<label> <descriptor> — <duration>m" escape hatch, never a crash or a
+half-built name.
 """
 
 from __future__ import annotations
@@ -18,8 +30,15 @@ import pytest
 
 from services.workout_naming import generate_workout_name
 from services.workout_naming.generator import (
+    _FALLBACK_DESCRIPTORS,
     _hot_tokens,
     _tokens_of,
+)
+
+# Matches the fallback escape hatch in any of its descriptor rotations,
+# e.g. "Push Session — 45m", "Push Block — 45m", "Push Builder — 42m".
+_FALLBACK_RE = re.compile(
+    r"^.+ (?:%s) — \d+m$" % "|".join(re.escape(d) for d in _FALLBACK_DESCRIPTORS)
 )
 from services.workout_naming.pools import (
     DURATION_FLAVOR_BY_BUCKET,
@@ -150,15 +169,14 @@ def test_recent_names_avoid_hot_tokens():
         ))
 
     # Of the 100 generated, NONE should contain a hot token (we have 8
-    # retry attempts per call, fallback if blocked). Fallback shape is
-    # "<Focus> Session — Nm" which contains none of the hot words.
-    # Fallback shape ("Push Session — 45m") is a documented escape hatch
-    # and may legitimately echo the requested focus token. Exclude it
-    # from the leak check.
-    fallback_re = re.compile(r" Session — \d+m$")
+    # retry attempts per call, fallback if blocked).
+    # The fallback shape ("Push Session — 45m" / "Push Block — 45m" / …) is a
+    # documented escape hatch and may legitimately echo the requested focus
+    # token. Exclude it from the leak check — matching every descriptor
+    # rotation, not just the retired fixed "Session" one.
     leaked = []
     for n in fresh_names:
-        if fallback_re.search(n):
+        if _FALLBACK_RE.match(n):
             continue
         for tok in _tokens_of(n):
             if tok in hot:
@@ -172,6 +190,10 @@ def test_recent_names_avoid_hot_tokens():
 # ---------------------------------------------------------------------------
 
 def test_fallback_shape_when_pools_degenerate(monkeypatch):
+    """Degenerate pools → the deterministic "<Label> <Descriptor> — Nm" escape
+    hatch (see module docstring: the descriptor rotates over
+    _FALLBACK_DESCRIPTORS now instead of always being the literal "Session";
+    same seed still yields the same fallback string)."""
     # Force the pool lookups to all return empty by monkeypatching the
     # relevant pool dicts. The 8-attempt loop will fail every template
     # and we should land in the deterministic fallback.
@@ -192,9 +214,19 @@ def test_fallback_shape_when_pools_degenerate(monkeypatch):
         difficulty="medium",
         seed=1,
     )
-    # Shape: "<Label> Session — 42m"
-    assert re.match(r".+ Session — \d+m$", name), name
+    # Shape: "<Label> <Descriptor> — 42m"
+    assert _FALLBACK_RE.match(name), name
     assert "42m" in name
+    # …and it is still deterministic for a given seed.
+    again = generate_workout_name(
+        goal="strength",
+        focus="push",
+        equipment=["barbell"],
+        duration_minutes=42,
+        difficulty="medium",
+        seed=1,
+    )
+    assert again == name
 
 
 def test_no_exception_on_empty_inputs():

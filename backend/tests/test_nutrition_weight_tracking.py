@@ -25,9 +25,38 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 # ============================================================
 
 @pytest.fixture
+def mock_current_user():
+    """Stand-in for the get_current_user dependency.
+
+    The endpoints are called directly (not through the ASGI app), so FastAPI
+    never resolves Depends(get_current_user) for us — the tests must pass it.
+    """
+    return {"id": "user-123-abc", "email": "test@example.com"}
+
+
+@pytest.fixture
+def mock_request():
+    """Minimal Request stand-in for endpoints that resolve the user timezone.
+
+    resolve_timezone() reads the X-User-Timezone header first, so pinning it to
+    UTC keeps the day-boundary maths deterministic instead of machine-dependent.
+    """
+    req = MagicMock()
+    req.headers = {"x-user-timezone": "UTC"}
+    return req
+
+
+@pytest.fixture
 def mock_supabase_db():
-    """Mock SupabaseDB with chainable Supabase client pattern."""
-    with patch("api.v1.nutrition.get_supabase_db") as mock_get_db:
+    """Mock SupabaseDB with chainable Supabase client pattern.
+
+    Patch target note: nutrition.py was split into the api/v1/nutrition/
+    package, so the weight endpoints (and the get_supabase_db symbol they
+    call) now live in api.v1.nutrition.weight_tracking. Patching
+    "api.v1.nutrition.get_supabase_db" targeted a name that no longer exists
+    on the package and raised AttributeError before any test body ran.
+    """
+    with patch("api.v1.nutrition.weight_tracking.get_supabase_db") as mock_get_db:
         mock_db = MagicMock()
         mock_client = MagicMock()
         mock_db.client = mock_client
@@ -101,10 +130,10 @@ def sample_weight_history():
 class TestWeightLogs:
     """Test weight logging endpoints."""
 
-    def test_create_weight_log_success(self, mock_supabase_db, sample_weight_log):
+    def test_create_weight_log_success(self, mock_supabase_db, mock_current_user, sample_weight_log):
         """Test successful weight log creation."""
-        from api.v1.nutrition import create_weight_log, WeightLogCreate
-        import asyncio
+        from api.v1.nutrition.weight_tracking import create_weight_log
+        from api.v1.nutrition.models import WeightLogCreate
 
         # Setup mock to return data via execute()
         mock_result = MagicMock()
@@ -117,18 +146,20 @@ class TestWeightLogs:
         request.logged_at = None
         request.notes = sample_weight_log["notes"]
         request.source = "manual"
+        # Explicitly None so the endpoint takes the plain INSERT path rather
+        # than the idempotency replay lookup (a spec'd MagicMock would hand
+        # back a truthy Mock for this attribute otherwise).
+        request.idempotency_key = None
 
-        result = asyncio.get_event_loop().run_until_complete(
-            create_weight_log(request)
-        )
+        result = asyncio.run(create_weight_log(request, current_user=mock_current_user))
 
         assert result.weight_kg == 75.5
         assert result.source == "manual"
 
-    def test_create_weight_log_with_custom_date(self, mock_supabase_db, sample_weight_log):
+    def test_create_weight_log_with_custom_date(self, mock_supabase_db, mock_current_user, sample_weight_log):
         """Test weight log creation with custom date."""
-        from api.v1.nutrition import create_weight_log, WeightLogCreate
-        import asyncio
+        from api.v1.nutrition.weight_tracking import create_weight_log
+        from api.v1.nutrition.models import WeightLogCreate
 
         sample_weight_log["logged_at"] = "2025-01-05T07:00:00+00:00"
         mock_result = MagicMock()
@@ -141,32 +172,57 @@ class TestWeightLogs:
         request.logged_at = datetime(2025, 1, 5, 7, 0, 0)
         request.notes = None
         request.source = "manual"
+        request.idempotency_key = None
 
-        result = asyncio.get_event_loop().run_until_complete(
-            create_weight_log(request)
-        )
+        result = asyncio.run(create_weight_log(request, current_user=mock_current_user))
 
         assert "2025-01-05" in str(result.logged_at)
 
-    def test_get_weight_logs_success(self, mock_supabase_db, sample_user_id, sample_weight_history):
+    def test_create_weight_log_idempotent_replay(self, mock_supabase_db, mock_current_user, sample_weight_log):
+        """A replayed POST with the same idempotency_key returns the existing row.
+
+        Guards migration 2246: a double-tap of "Save weight" (or a Dio 401-refresh
+        retry) reuses the key, so the endpoint must return the already-created log
+        instead of inserting a duplicate.
+        """
+        from api.v1.nutrition.weight_tracking import create_weight_log
+        from api.v1.nutrition.models import WeightLogCreate
+
+        mock_result = MagicMock()
+        mock_result.data = [sample_weight_log]
+        mock_supabase_db._mock_table.execute.return_value = mock_result
+
+        request = MagicMock(spec=WeightLogCreate)
+        request.user_id = sample_weight_log["user_id"]
+        request.weight_kg = sample_weight_log["weight_kg"]
+        request.logged_at = None
+        request.notes = sample_weight_log["notes"]
+        request.source = "manual"
+        request.idempotency_key = "dedupe-key-1"
+
+        result = asyncio.run(create_weight_log(request, current_user=mock_current_user))
+
+        assert result.id == sample_weight_log["id"]
+        # The prior-row lookup short-circuits: no INSERT is ever issued.
+        mock_supabase_db._mock_table.insert.assert_not_called()
+
+    def test_get_weight_logs_success(self, mock_supabase_db, mock_current_user, sample_user_id, sample_weight_history):
         """Test successful weight logs retrieval."""
-        from api.v1.nutrition import get_weight_logs
-        import asyncio
+        from api.v1.nutrition.weight_tracking import get_weight_logs
 
         mock_result = MagicMock()
         mock_result.data = sample_weight_history
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
-        result = asyncio.get_event_loop().run_until_complete(
-            get_weight_logs(sample_user_id)
+        result = asyncio.run(
+            get_weight_logs(sample_user_id, current_user=mock_current_user, limit=30)
         )
 
         assert len(result) == 14
 
-    def test_get_weight_logs_with_limit(self, mock_supabase_db, sample_user_id, sample_weight_history):
+    def test_get_weight_logs_with_limit(self, mock_supabase_db, mock_current_user, sample_user_id, sample_weight_history):
         """Test weight logs with limit parameter."""
-        from api.v1.nutrition import get_weight_logs
-        import asyncio
+        from api.v1.nutrition.weight_tracking import get_weight_logs
 
         limited_history = sample_weight_history[:5]
 
@@ -174,54 +230,61 @@ class TestWeightLogs:
         mock_result.data = limited_history
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
-        result = asyncio.get_event_loop().run_until_complete(
-            get_weight_logs(sample_user_id, limit=5)
+        result = asyncio.run(
+            get_weight_logs(sample_user_id, current_user=mock_current_user, limit=5)
         )
 
         assert len(result) == 5
+        # The limit is pushed down to the query, not applied in Python.
+        mock_supabase_db._mock_table.limit.assert_called_once_with(5)
 
-    def test_get_weight_logs_empty(self, mock_supabase_db, sample_user_id):
+    def test_get_weight_logs_empty(self, mock_supabase_db, mock_current_user, sample_user_id):
         """Test weight logs when none exist."""
-        from api.v1.nutrition import get_weight_logs
-        import asyncio
+        from api.v1.nutrition.weight_tracking import get_weight_logs
 
         mock_result = MagicMock()
         mock_result.data = []
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
-        result = asyncio.get_event_loop().run_until_complete(
-            get_weight_logs(sample_user_id)
+        result = asyncio.run(
+            get_weight_logs(sample_user_id, current_user=mock_current_user, limit=30)
         )
 
         assert len(result) == 0
 
-    def test_delete_weight_log_success(self, mock_supabase_db, sample_user_id, sample_weight_log):
+    def test_delete_weight_log_success(self, mock_supabase_db, mock_current_user, sample_user_id, sample_weight_log):
         """Test successful weight log deletion."""
-        from api.v1.nutrition import delete_weight_log
-        import asyncio
+        from api.v1.nutrition.weight_tracking import delete_weight_log
 
         mock_result = MagicMock()
         mock_result.data = [sample_weight_log]  # Return something to indicate success
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
-        result = asyncio.get_event_loop().run_until_complete(
-            delete_weight_log(sample_weight_log["id"], sample_weight_log["user_id"])
+        result = asyncio.run(
+            delete_weight_log(
+                sample_weight_log["id"],
+                current_user=mock_current_user,
+                user_id=sample_weight_log["user_id"],
+            )
         )
 
         assert result["success"] == True
 
-    def test_delete_weight_log_error(self, mock_supabase_db, sample_user_id):
+    def test_delete_weight_log_error(self, mock_supabase_db, mock_current_user, sample_user_id):
         """Test deleting weight log with database error."""
-        from api.v1.nutrition import delete_weight_log
+        from api.v1.nutrition.weight_tracking import delete_weight_log
         from fastapi import HTTPException
-        import asyncio
 
         # Simulate database error
         mock_supabase_db._mock_table.execute.side_effect = Exception("Database error")
 
         with pytest.raises(HTTPException) as exc_info:
-            asyncio.get_event_loop().run_until_complete(
-                delete_weight_log("nonexistent-id", sample_user_id)
+            asyncio.run(
+                delete_weight_log(
+                    "nonexistent-id",
+                    current_user=mock_current_user,
+                    user_id=sample_user_id,
+                )
             )
 
         assert exc_info.value.status_code == 500
@@ -234,28 +297,29 @@ class TestWeightLogs:
 class TestWeightTrend:
     """Test weight trend calculation endpoint."""
 
-    def test_get_weight_trend_losing(self, mock_supabase_db, sample_user_id, sample_weight_history):
+    def test_get_weight_trend_losing(self, mock_supabase_db, mock_request, mock_current_user, sample_user_id, sample_weight_history):
         """Test weight trend calculation when losing weight."""
-        from api.v1.nutrition import get_weight_trend
-        import asyncio
+        from api.v1.nutrition.weight_tracking import get_weight_trend
 
         # Mock the chainable query result
         mock_result = MagicMock()
         mock_result.data = sample_weight_history
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
-        # Pass days as an int (not a Query object)
-        result = asyncio.get_event_loop().run_until_complete(
-            get_weight_trend(sample_user_id, days=14)
+        # get_weight_trend now takes the Request first (it resolves the user's
+        # timezone from the X-User-Timezone header to fix the day boundary).
+        result = asyncio.run(
+            get_weight_trend(
+                mock_request, sample_user_id, days=14, current_user=mock_current_user
+            )
         )
 
         assert result.direction == "losing"
         assert result.weekly_rate_kg < 0  # Negative for weight loss
 
-    def test_get_weight_trend_gaining(self, mock_supabase_db, sample_user_id):
+    def test_get_weight_trend_gaining(self, mock_supabase_db, mock_request, mock_current_user, sample_user_id):
         """Test weight trend calculation when gaining weight."""
-        from api.v1.nutrition import get_weight_trend
-        import asyncio
+        from api.v1.nutrition.weight_tracking import get_weight_trend
 
         # Create gaining weight history
         base_date = datetime(2025, 1, 1)
@@ -274,18 +338,18 @@ class TestWeightTrend:
         mock_result.data = gaining_history
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
-        # Pass days as an int
-        result = asyncio.get_event_loop().run_until_complete(
-            get_weight_trend(sample_user_id, days=14)
+        result = asyncio.run(
+            get_weight_trend(
+                mock_request, sample_user_id, days=14, current_user=mock_current_user
+            )
         )
 
         assert result.direction == "gaining"
         assert result.weekly_rate_kg > 0
 
-    def test_get_weight_trend_maintaining(self, mock_supabase_db, sample_user_id):
+    def test_get_weight_trend_maintaining(self, mock_supabase_db, mock_request, mock_current_user, sample_user_id):
         """Test weight trend calculation when maintaining weight."""
-        from api.v1.nutrition import get_weight_trend
-        import asyncio
+        from api.v1.nutrition.weight_tracking import get_weight_trend
 
         # Create stable weight history
         base_date = datetime(2025, 1, 1)
@@ -304,18 +368,18 @@ class TestWeightTrend:
         mock_result.data = stable_history
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
-        # Pass days as an int
-        result = asyncio.get_event_loop().run_until_complete(
-            get_weight_trend(sample_user_id, days=14)
+        result = asyncio.run(
+            get_weight_trend(
+                mock_request, sample_user_id, days=14, current_user=mock_current_user
+            )
         )
 
         assert result.direction == "maintaining"
         assert abs(result.weekly_rate_kg) < 0.5  # Small change
 
-    def test_get_weight_trend_insufficient_data(self, mock_supabase_db, sample_user_id):
+    def test_get_weight_trend_insufficient_data(self, mock_supabase_db, mock_request, mock_current_user, sample_user_id):
         """Test weight trend with insufficient data returns maintaining with zero confidence."""
-        from api.v1.nutrition import get_weight_trend
-        import asyncio
+        from api.v1.nutrition.weight_tracking import get_weight_trend
 
         # Only one weight entry
         mock_result = MagicMock()
@@ -329,9 +393,10 @@ class TestWeightTrend:
         ]
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
-        # Pass days as an int
-        result = asyncio.get_event_loop().run_until_complete(
-            get_weight_trend(sample_user_id, days=14)
+        result = asyncio.run(
+            get_weight_trend(
+                mock_request, sample_user_id, days=14, current_user=mock_current_user
+            )
         )
 
         # With insufficient data, returns maintaining with 0 confidence
@@ -410,7 +475,7 @@ class TestWeightLogModels:
 
     def test_weight_log_response_model(self):
         """Test WeightLogResponse model creation."""
-        from api.v1.nutrition import WeightLogResponse
+        from api.v1.nutrition.models import WeightLogResponse
 
         response = WeightLogResponse(
             id="test-123",
@@ -427,7 +492,7 @@ class TestWeightLogModels:
 
     def test_weight_trend_response_model(self):
         """Test WeightTrendResponse model creation."""
-        from api.v1.nutrition import WeightTrendResponse
+        from api.v1.nutrition.models import WeightTrendResponse
 
         response = WeightTrendResponse(
             start_weight=80.0,
@@ -445,7 +510,7 @@ class TestWeightLogModels:
 
     def test_weight_trend_response_maintaining(self):
         """Test WeightTrendResponse model with maintaining direction."""
-        from api.v1.nutrition import WeightTrendResponse
+        from api.v1.nutrition.models import WeightTrendResponse
 
         response = WeightTrendResponse(
             direction="maintaining",

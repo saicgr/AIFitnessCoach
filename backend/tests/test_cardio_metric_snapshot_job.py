@@ -112,7 +112,21 @@ def _iso_at(days_ago: int) -> str:
 
 @pytest.fixture
 def cardio_db() -> FakeDB:
-    """A user with 3 runs in the last 7 days + weather data."""
+    """A user with 3 runs in the last 7 days + weather data.
+
+    IMPORTANT — the two source tables store DIFFERENT units, and this fixture
+    mirrors the real schema exactly (see scripts/schema_columns_snapshot.json):
+
+      cardio_logs     → distance_m  (meters)     + duration_seconds + performed_at
+      cardio_sessions → distance_km (kilometers) + duration_minutes + started_at
+
+    The fixture previously gave the cardio_sessions row `distance_m`/
+    `duration_seconds` — columns that do not exist on that table. The loader
+    (`_fetch_recent_cardio`) reads the real columns and converts km→m and
+    min→s, so the phantom-column row contributed None distance and was silently
+    dropped from every rolling-window metric. Same 3km / 900s run, expressed in
+    the units the table actually uses.
+    """
     return FakeDB({
         "cardio_logs": [
             # 5km in 1500s, 3 days ago, 20°C
@@ -125,9 +139,9 @@ def cardio_db() -> FakeDB:
              "weather_json": {"temperature_c": 18.0}},
         ],
         "cardio_sessions": [
-            # 3km in 900s, 1 day ago, 22°C (manual)
-            {"user_id": USER, "cardio_type": "run", "distance_m": 3000,
-             "duration_seconds": 900, "started_at": _iso_at(1),
+            # 3km (= 3000m) in 15min (= 900s), 1 day ago, 22°C (manual)
+            {"user_id": USER, "cardio_type": "run", "distance_km": 3.0,
+             "duration_minutes": 15.0, "started_at": _iso_at(1),
              "weather_json": {"temperature_c": 22.0}},
         ],
     })

@@ -5,6 +5,7 @@ Tests CRUD operations for email subscription preferences.
 """
 
 import pytest
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 
@@ -169,21 +170,21 @@ async def test_get_email_preferences_existing(mock_user_id, mock_user_data, mock
         mock_supabase = MagicMock()
         mock_get_supabase.return_value = mock_supabase
 
-        # Mock user exists check
+        # Mock user exists check (endpoint uses .single() for this lookup)
         mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
             data=mock_user_data
+        )
+
+        # Mock existing preferences fetch (endpoint uses .maybe_single() for this
+        # lookup, a distinct mock chain from .single() above)
+        mock_supabase.client.table.return_value.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value = MagicMock(
+            data=mock_email_preferences
         )
 
         # Import endpoint
         from api.v1.email_preferences import get_email_preferences
 
-        # First call returns user, second returns preferences
-        mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-            MagicMock(data=mock_user_data),
-            MagicMock(data=mock_email_preferences),
-        ]
-
-        result = await get_email_preferences(mock_user_id)
+        result = await get_email_preferences(mock_user_id, current_user=mock_user_data)
 
         assert result.user_id == mock_user_id
         assert result.workout_reminders is True
@@ -206,7 +207,10 @@ async def test_get_email_preferences_user_not_found():
         from fastapi import HTTPException
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_email_preferences("non-existent-user")
+            await get_email_preferences(
+                "non-existent-user",
+                current_user={"id": "non-existent-user"},
+            )
 
         assert exc_info.value.status_code == 404
         assert "User not found" in exc_info.value.detail
@@ -235,7 +239,7 @@ async def test_update_email_preferences(mock_user_id, mock_user_data, mock_email
         )
 
         update = EmailPreferencesUpdate(promotional=True)
-        result = await update_email_preferences(mock_user_id, update)
+        result = await update_email_preferences(mock_user_id, update, current_user=mock_user_data)
 
         assert result.promotional is True
 
@@ -270,7 +274,7 @@ async def test_unsubscribe_from_marketing(mock_user_id, mock_user_data, mock_ema
             data=[unsubscribed_prefs]
         )
 
-        result = await unsubscribe_from_marketing(mock_user_id)
+        result = await unsubscribe_from_marketing(mock_user_id, current_user=mock_user_data)
 
         assert result.success is True
         assert "unsubscribed" in result.message.lower()
@@ -311,7 +315,7 @@ async def test_subscribe_to_all(mock_user_id, mock_user_data, mock_email_prefere
             data=[all_subscribed]
         )
 
-        result = await subscribe_to_all(mock_user_id)
+        result = await subscribe_to_all(mock_user_id, current_user=mock_user_data)
 
         assert result.workout_reminders is True
         assert result.weekly_summary is True
@@ -398,7 +402,8 @@ def test_rls_policy_documentation():
     ]
 
     # Verify our migration includes these policies
-    with open("backend/migrations/088_email_preferences.sql", "r") as f:
+    migration_path = Path(__file__).resolve().parents[1] / "migrations" / "088_email_preferences.sql"
+    with open(migration_path, "r") as f:
         migration_content = f.read()
 
     for policy in expected_policies:
@@ -432,7 +437,7 @@ async def test_activity_logging_on_update(mock_user_id, mock_user_data, mock_ema
         )
 
         update = EmailPreferencesUpdate(promotional=True)
-        await update_email_preferences(mock_user_id, update)
+        await update_email_preferences(mock_user_id, update, current_user=mock_user_data)
 
         # Verify logging was called
         mock_log.assert_called_once()
@@ -462,7 +467,7 @@ async def test_activity_logging_on_unsubscribe(mock_user_id, mock_user_data, moc
             data=[unsubscribed_prefs]
         )
 
-        await unsubscribe_from_marketing(mock_user_id)
+        await unsubscribe_from_marketing(mock_user_id, current_user=mock_user_data)
 
         # Verify logging was called with correct action
         mock_log.assert_called_once()

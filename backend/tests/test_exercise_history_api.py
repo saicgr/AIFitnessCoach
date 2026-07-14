@@ -3,6 +3,24 @@ Tests for Exercise History API endpoints.
 
 Tests per-exercise workout history, progression charts,
 personal records, and most performed exercises.
+
+TWO STALE-CALL FIXES (the assertions themselves are unchanged):
+
+1. AUTH. Every endpoint in this router now carries
+   `current_user: dict = Depends(get_current_user)` plus an ownership guard
+   (`current_user["id"] != user_id` -> 403). The tests sent no Authorization
+   header, so every request died at the dependency with 401 before the endpoint
+   ran. Fixed by overriding the dependency (`app.dependency_overrides`) with the
+   request's own user, which is what an authenticated call looks like.
+
+2. DB MOCKING. The tests hand-wired one exact builder chain
+   (`from_.return_value.select.return_value.eq.return_value...`), which encodes a
+   single call ORDER for a single table and silently returns a bare MagicMock the
+   moment the endpoint adds a step. The endpoints have since grown per-gym scope
+   resolution (`exercise_library_cleaned`, `gym_profiles`) and a gym_breakdown
+   query, so those chains no longer matched. Replaced with `_Query` — a
+   chainable builder stub dispatched PER TABLE — so a test states what each table
+   returns rather than replaying a brittle call sequence.
 """
 
 import pytest
@@ -13,6 +31,7 @@ import uuid
 
 # Import app and router
 from main import app
+from core.auth import get_current_user
 from api.v1.exercise_history import (
     router,
     TimeRange,
@@ -29,24 +48,73 @@ TEST_USER_ID = str(uuid.uuid4())
 TEST_EXERCISE_NAME = "bench press"
 
 
+# ============================================
+# Test doubles
+# ============================================
+
+@pytest.fixture(autouse=True)
+def authenticated_user():
+    """Authenticate every request as TEST_USER_ID (the owner of the data).
+
+    The endpoints' ownership guard still runs — it compares this id against the
+    `user_id` in the request, so the guard is exercised, not bypassed.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {"id": TEST_USER_ID}
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+def _result(data=None, count=None):
+    """A supabase-py APIResponse stand-in (.data / .count)."""
+    response = MagicMock()
+    response.data = data
+    response.count = count
+    return response
+
+
+class _Query:
+    """Chainable stand-in for a supabase-py query builder.
+
+    Every builder method (select / eq / ilike / gte / order / range / limit /
+    in_ / single / maybe_single / insert / upsert / ...) returns self; execute()
+    returns the configured result, or raises the configured error.
+    """
+
+    def __init__(self, result=None, error: Exception = None):
+        self._result = result if result is not None else _result(data=[], count=0)
+        self._error = error
+
+    def execute(self):
+        if self._error is not None:
+            raise self._error
+        return self._result
+
+    def __getattr__(self, _name):
+        return lambda *args, **kwargs: self
+
+
+def _db(tables: dict = None, rpc: _Query = None):
+    """A get_supabase_db() stand-in whose client dispatches per table name."""
+    tables = tables or {}
+    db = MagicMock()
+    # Timezone resolution (user_today_date -> resolve_timezone) reads the user
+    # row; an empty dict makes it deterministically fall back to UTC.
+    db.get_user.return_value = {}
+    fallback = _Query()
+    db.client.from_.side_effect = lambda name, *a, **k: tables.get(name, fallback)
+    db.client.table.side_effect = lambda name, *a, **k: tables.get(name, fallback)
+    if rpc is not None:
+        db.client.rpc.side_effect = lambda *a, **k: rpc
+    return db
+
+
 class TestExerciseHistoryEndpoint:
     """Tests for GET /exercise-history/{exercise_name}"""
 
     def test_get_exercise_history_success(self):
         """Test successful exercise history retrieval."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            # Mock the database queries
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-
-            # Mock count query
-            mock_count_result = MagicMock()
-            mock_count_result.count = 5
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.execute.return_value = mock_count_result
-
-            # Mock history query
-            mock_history_result = MagicMock()
-            mock_history_result.data = [
+            history_rows = [
                 {
                     "workout_log_id": str(uuid.uuid4()),
                     "exercise_name": "bench press",
@@ -75,15 +143,13 @@ class TestExerciseHistoryEndpoint:
                 },
             ]
 
-            # Configure the chain of method calls
-            mock_chain = MagicMock()
-            mock_chain.execute.return_value = mock_history_result
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.range.return_value = mock_chain
-
-            # Mock PR query
-            mock_pr_result = MagicMock()
-            mock_pr_result.data = []
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.eq.return_value.execute.return_value = mock_pr_result
+            mock_db.return_value = _db({
+                # count query + paginated query + summary query + gym breakdown
+                "exercise_workout_history": _Query(_result(data=history_rows, count=5)),
+                "exercise_personal_records": _Query(_result(data=[])),
+                # no equipment row -> combined (cross-gym) scope, no gym filter
+                "exercise_library_cleaned": _Query(_result(data=[])),
+            })
 
             response = client.get(
                 f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}",
@@ -99,15 +165,11 @@ class TestExerciseHistoryEndpoint:
     def test_get_exercise_history_empty(self):
         """Test exercise history with no data."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-
-            # Mock empty results
-            mock_result = MagicMock()
-            mock_result.count = 0
-            mock_result.data = []
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.execute.return_value = mock_result
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.range.return_value.execute.return_value = mock_result
+            mock_db.return_value = _db({
+                "exercise_workout_history": _Query(_result(data=[], count=0)),
+                "exercise_personal_records": _Query(_result(data=[])),
+                "exercise_library_cleaned": _Query(_result(data=[])),
+            })
 
             response = client.get(
                 f"/api/v1/exercise-history/unknown_exercise",
@@ -127,20 +189,12 @@ class TestExerciseHistoryEndpoint:
     def test_get_exercise_history_pagination(self):
         """Test exercise history pagination."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-
-            mock_result = MagicMock()
-            mock_result.count = 50
-            mock_result.data = [{"workout_log_id": str(uuid.uuid4())} for _ in range(20)]
-
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.execute.return_value = mock_result
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.range.return_value.execute.return_value = mock_result
-
-            # Mock PR query
-            mock_pr_result = MagicMock()
-            mock_pr_result.data = []
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.eq.return_value.execute.return_value = mock_pr_result
+            rows = [{"workout_log_id": str(uuid.uuid4())} for _ in range(20)]
+            mock_db.return_value = _db({
+                "exercise_workout_history": _Query(_result(data=rows, count=50)),
+                "exercise_personal_records": _Query(_result(data=[])),
+                "exercise_library_cleaned": _Query(_result(data=[])),
+            })
 
             response = client.get(
                 f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}",
@@ -159,11 +213,7 @@ class TestExerciseChartDataEndpoint:
     def test_get_chart_data_success(self):
         """Test successful chart data retrieval."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-
-            mock_result = MagicMock()
-            mock_result.data = [
+            points = [
                 {
                     "workout_date": "2024-01-01",
                     "max_weight_kg": 70.0,
@@ -189,7 +239,10 @@ class TestExerciseChartDataEndpoint:
                     "estimated_1rm_kg": 96.0,
                 },
             ]
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
+            mock_db.return_value = _db({
+                "exercise_workout_history": _Query(_result(data=points)),
+                "exercise_library_cleaned": _Query(_result(data=[])),
+            })
 
             response = client.get(
                 f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}/chart",
@@ -206,15 +259,13 @@ class TestExerciseChartDataEndpoint:
     def test_get_chart_data_declining_trend(self):
         """Test chart data with declining trend."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-
-            mock_result = MagicMock()
-            mock_result.data = [
-                {"workout_date": "2024-01-01", "max_weight_kg": 80.0},
-                {"workout_date": "2024-01-15", "max_weight_kg": 70.0},
-            ]
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
+            mock_db.return_value = _db({
+                "exercise_workout_history": _Query(_result(data=[
+                    {"workout_date": "2024-01-01", "max_weight_kg": 80.0},
+                    {"workout_date": "2024-01-15", "max_weight_kg": 70.0},
+                ])),
+                "exercise_library_cleaned": _Query(_result(data=[])),
+            })
 
             response = client.get(
                 f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}/chart",
@@ -228,12 +279,12 @@ class TestExerciseChartDataEndpoint:
     def test_get_chart_data_insufficient_data(self):
         """Test chart data with insufficient data points."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-
-            mock_result = MagicMock()
-            mock_result.data = [{"workout_date": "2024-01-01", "max_weight_kg": 70.0}]
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.gte.return_value.order.return_value.execute.return_value = mock_result
+            mock_db.return_value = _db({
+                "exercise_workout_history": _Query(_result(
+                    data=[{"workout_date": "2024-01-01", "max_weight_kg": 70.0}]
+                )),
+                "exercise_library_cleaned": _Query(_result(data=[])),
+            })
 
             response = client.get(
                 f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}/chart",
@@ -251,36 +302,34 @@ class TestExercisePersonalRecordsEndpoint:
     def test_get_prs_success(self):
         """Test successful PR retrieval."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-
-            mock_result = MagicMock()
-            mock_result.data = [
-                {
-                    "record_type": "max_weight",
-                    "record_value": 100.0,
-                    "record_unit": "kg",
-                    "achieved_at": "2024-01-15T10:00:00",
-                    "workout_name": "Push Day",
-                    "reps_at_record": 5,
-                    "weight_at_record_kg": 100.0,
-                },
-                {
-                    "record_type": "best_1rm",
-                    "record_value": 120.0,
-                    "record_unit": "kg",
-                    "achieved_at": "2024-01-15T10:00:00",
-                    "workout_name": "Push Day",
-                },
-                {
-                    "record_type": "max_volume",
-                    "record_value": 3000.0,
-                    "record_unit": "kg",
-                    "achieved_at": "2024-01-10T09:00:00",
-                    "workout_name": "Upper Body",
-                },
-            ]
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
+            mock_db.return_value = _db({
+                "exercise_personal_records": _Query(_result(data=[
+                    {
+                        "record_type": "max_weight",
+                        "record_value": 100.0,
+                        "record_unit": "kg",
+                        "achieved_at": "2024-01-15T10:00:00",
+                        "workout_name": "Push Day",
+                        "reps_at_record": 5,
+                        "weight_at_record_kg": 100.0,
+                    },
+                    {
+                        "record_type": "best_1rm",
+                        "record_value": 120.0,
+                        "record_unit": "kg",
+                        "achieved_at": "2024-01-15T10:00:00",
+                        "workout_name": "Push Day",
+                    },
+                    {
+                        "record_type": "max_volume",
+                        "record_value": 3000.0,
+                        "record_unit": "kg",
+                        "achieved_at": "2024-01-10T09:00:00",
+                        "workout_name": "Upper Body",
+                    },
+                ])),
+                "exercise_library_cleaned": _Query(_result(data=[])),
+            })
 
             response = client.get(
                 f"/api/v1/exercise-history/{TEST_EXERCISE_NAME}/prs",
@@ -297,12 +346,10 @@ class TestExercisePersonalRecordsEndpoint:
     def test_get_prs_empty(self):
         """Test PR retrieval with no records."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-
-            mock_result = MagicMock()
-            mock_result.data = []
-            mock_client.from_.return_value.select.return_value.eq.return_value.ilike.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
+            mock_db.return_value = _db({
+                "exercise_personal_records": _Query(_result(data=[])),
+                "exercise_library_cleaned": _Query(_result(data=[])),
+            })
 
             response = client.get(
                 f"/api/v1/exercise-history/unknown_exercise/prs",
@@ -319,13 +366,18 @@ class TestMostPerformedExercisesEndpoint:
     """Tests for GET /exercise-history/most-performed"""
 
     def test_get_most_performed_success(self):
-        """Test successful most performed exercises retrieval."""
-        with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
+        """Test successful most performed exercises retrieval.
 
-            mock_result = MagicMock()
-            mock_result.data = {
+        REGRESSION GATE: this endpoint's path is STATIC, but it used to be
+        registered AFTER `GET /{exercise_name}`. Starlette matches in
+        registration order, so `/exercise-history/most-performed` bound to the
+        catch-all as exercise_name="most-performed" and this endpoint was
+        unreachable — the app's "most performed" list silently rendered empty
+        (the history payload has no `exercises` key). Asserting the response
+        shape here fails if the route is ever shadowed again.
+        """
+        with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
+            mock_db.return_value = _db(rpc=_Query(_result(data={
                 "exercises": [
                     {
                         "exercise_name": "bench press",
@@ -345,8 +397,7 @@ class TestMostPerformedExercisesEndpoint:
                     },
                 ],
                 "total_unique_exercises": 25,
-            }
-            mock_client.rpc.return_value.execute.return_value = mock_result
+            })))
 
             response = client.get(
                 "/api/v1/exercise-history/most-performed",
@@ -366,12 +417,9 @@ class TestLogViewEndpoint:
     def test_log_view_success(self):
         """Test successful view logging."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-
-            mock_result = MagicMock()
-            mock_result.data = [{"id": str(uuid.uuid4())}]
-            mock_client.from_.return_value.insert.return_value.execute.return_value = mock_result
+            mock_db.return_value = _db({
+                "muscle_analytics_logs": _Query(_result(data=[{"id": str(uuid.uuid4())}])),
+            })
 
             response = client.post(
                 "/api/v1/exercise-history/log-view",
@@ -389,9 +437,9 @@ class TestLogViewEndpoint:
     def test_log_view_handles_error(self):
         """Test view logging handles database errors gracefully."""
         with patch("api.v1.exercise_history.get_supabase_db") as mock_db:
-            mock_client = MagicMock()
-            mock_db.return_value.client = mock_client
-            mock_client.from_.return_value.insert.return_value.execute.side_effect = Exception("DB Error")
+            mock_db.return_value = _db({
+                "muscle_analytics_logs": _Query(error=Exception("DB Error")),
+            })
 
             response = client.post(
                 "/api/v1/exercise-history/log-view",

@@ -18,8 +18,37 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi import _rate_limit_exceeded_handler
 
+from core.auth import get_current_user
 from core.rate_limiter import limiter, get_real_client_ip
 from models.chat import ChatRequest, ChatResponse, CoachIntent, AgentType
+
+
+# Test user identity injected in place of the real JWT-backed auth dependency.
+# /api/v1/chat/send is an AUTHENTICATED endpoint (core.auth.get_current_user);
+# calling it with no bearer token returns 401 before any of the middleware /
+# validation / service behavior these tests exist to protect is ever reached.
+# Overriding the dependency (rather than minting a real JWT) keeps the tests
+# offline while still exercising the full app + middleware stack.
+_TEST_USER_ID = "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+
+
+@pytest.fixture
+def authed_app():
+    """Yield the real `main.app` with the auth dependency overridden.
+
+    Cleans the override up afterwards — `main.app` is a process-wide singleton
+    shared with every other test module in the session.
+    """
+    from main import app
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": _TEST_USER_ID,
+        "email": "test@example.com",
+    }
+    try:
+        yield app
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 class TestChatEndpointRateLimiting:
@@ -52,12 +81,23 @@ class TestChatEndpointRateLimiting:
         assert response.status_code == 200
         assert response.json()["message"] == "Hello!"
 
-    def test_chat_send_with_reverse_proxy_headers(self):
+    def test_chat_send_with_reverse_proxy_headers(self, monkeypatch):
         """
         Chat endpoint should work when called through a reverse proxy.
 
         This simulates the Render deployment scenario where X-Forwarded-For is set.
+
+        NOTE (behavior tightened, not retired): `get_real_client_ip` now trusts
+        X-Forwarded-For ONLY when the RENDER env var is present — i.e. only when
+        we really are behind Render's proxy. Trusting the header unconditionally
+        let any client spoof its rate-limit key by sending its own
+        X-Forwarded-For. The guarantee this test protects is unchanged (behind
+        the proxy the FIRST forwarded IP is the rate-limit key, not the proxy's
+        own socket IP), so the test now sets RENDER=1 to actually be in that
+        deployment scenario instead of relying on the header alone.
         """
+        monkeypatch.setenv("RENDER", "1")
+
         app = FastAPI()
         app.state.limiter = limiter
         app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -107,6 +147,37 @@ class TestChatEndpointRateLimiting:
         assert response.status_code == 200
         # Should fallback to testclient's IP or 127.0.0.1
         assert response.json()["detected_ip"] is not None
+
+    def test_forwarded_for_not_trusted_outside_render(self, monkeypatch):
+        """
+        Off Render (no RENDER env), a client-supplied X-Forwarded-For must be
+        IGNORED — otherwise anyone can rotate their rate-limit key at will by
+        spoofing the header. Companion guarantee to
+        test_chat_send_with_reverse_proxy_headers.
+        """
+        monkeypatch.delenv("RENDER", raising=False)
+
+        app = FastAPI()
+        app.state.limiter = limiter
+        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+        app.add_middleware(SlowAPIMiddleware)
+
+        @app.post("/api/v1/chat/send")
+        @limiter.limit("10/minute")
+        async def send_message(request: Request):
+            return {"detected_ip": get_real_client_ip(request)}
+
+        client = TestClient(app)
+
+        response = client.post(
+            "/api/v1/chat/send",
+            json={"user_id": "test-123", "message": "Hi"},
+            headers={"X-Forwarded-For": "203.0.113.7"},
+        )
+
+        assert response.status_code == 200
+        # The spoofed header must NOT become the key; the socket peer wins.
+        assert response.json()["detected_ip"] != "203.0.113.7"
 
 
 class TestChatEndpointRequestBody:
@@ -236,13 +307,15 @@ class TestChatEndpointErrorHandling:
         assert response2.status_code == 429
         # Should NOT be 500 Internal Server Error
 
-    def test_validation_error_returns_422_not_500(self):
+    def test_validation_error_returns_422_not_500(self, authed_app):
         """
         Request validation errors should return 422, not 500.
-        """
-        from main import app
 
-        client = TestClient(app, raise_server_exceptions=False)
+        Uses `authed_app` because /chat/send now requires auth — without the
+        override the request dies at 401 and never reaches body validation,
+        which is the thing under test.
+        """
+        client = TestClient(authed_app, raise_server_exceptions=False)
 
         # Missing required field should return 422
         response = client.post(
@@ -258,16 +331,17 @@ class TestChatEndpointErrorHandling:
 class TestChatEndpointResponseFormat:
     """Tests for chat endpoint response format."""
 
-    def test_chat_endpoint_response_format_when_service_unavailable(self):
+    def test_chat_endpoint_response_format_when_service_unavailable(self, authed_app):
         """
         Chat endpoint should return 503 when service is not initialized.
 
         This tests the proper error handling when the LangGraph service
         is not available (common in test environments).
-        """
-        from main import app
 
-        client = TestClient(app, raise_server_exceptions=False)
+        Uses `authed_app`: /chat/send is authenticated, so an unauthenticated
+        call would only ever prove that 401 works.
+        """
+        client = TestClient(authed_app, raise_server_exceptions=False)
 
         response = client.post(
             "/api/v1/chat/send",
@@ -293,7 +367,20 @@ class TestHealthEndpointDebugGemini:
     """Tests for the debug/gemini health endpoint."""
 
     def test_debug_gemini_endpoint_exists(self):
-        """Debug gemini endpoint should exist and return proper format."""
+        """Debug gemini endpoint should exist and return proper format.
+
+        RETIRED ASSERTION: this used to require a `gemini_test` key, back when
+        GET /health/debug/gemini fired a live Gemini generate call and reported
+        its result. That was removed deliberately — the endpoint is documented
+        as "shows Gemini config without making API calls" (api/v1/health.py), so
+        an unauthenticated health probe can no longer burn Gemini quota/latency
+        (or be used as a free LLM ping by anyone who finds the URL).
+
+        The guarantee this test protects is unchanged: the endpoint exists,
+        answers 200, and reports the *resolved* Gemini configuration so a
+        misconfigured deploy (missing API key, wrong model) is diagnosable from
+        the outside. It now asserts the full current contract.
+        """
         from main import app
 
         client = TestClient(app, raise_server_exceptions=False)
@@ -307,7 +394,9 @@ class TestHealthEndpointDebugGemini:
         assert "model" in data
         assert "embedding_model" in data
         assert "api_key_set" in data
-        assert "gemini_test" in data
+        assert "cache_enabled" in data
+        assert data["status"] == "configured"
+        assert isinstance(data["api_key_set"], bool)
 
     def test_debug_gemini_shows_model_info(self):
         """Debug gemini endpoint should show configured model information."""
@@ -327,15 +416,16 @@ class TestHealthEndpointDebugGemini:
 class TestChatEndpointIntegration:
     """Integration tests for the full chat endpoint stack."""
 
-    def test_full_middleware_stack_with_chat(self):
+    def test_full_middleware_stack_with_chat(self, authed_app):
         """
         Test the full middleware stack works with chat endpoint.
 
         This tests the complete fix: LoggingMiddleware + SecurityHeaders + SlowAPI.
-        """
-        from main import app
 
-        client = TestClient(app, raise_server_exceptions=False)
+        Uses `authed_app` so the request actually traverses the endpoint instead
+        of being short-circuited at 401 by the auth dependency.
+        """
+        client = TestClient(authed_app, raise_server_exceptions=False)
 
         response = client.post(
             "/api/v1/chat/send",
@@ -354,15 +444,16 @@ class TestChatEndpointIntegration:
         assert "X-Content-Type-Options" in response.headers
         assert "X-Request-ID" in response.headers
 
-    def test_multiple_requests_with_rate_limiting(self):
+    def test_multiple_requests_with_rate_limiting(self, authed_app):
         """
         Test multiple requests work with rate limiting enabled.
 
         Verifies the fix allows multiple requests without 500 errors.
-        """
-        from main import app
 
-        client = TestClient(app, raise_server_exceptions=False)
+        Uses `authed_app`: /chat/send is authenticated, so unauthenticated
+        requests would be rejected at 401 before the limiter path is exercised.
+        """
+        client = TestClient(authed_app, raise_server_exceptions=False)
 
         # Make several requests
         for i in range(3):

@@ -203,10 +203,25 @@ class TestDetectEquipmentType:
         result = detect_equipment_type("Smith Machine Squat")
         assert result in ["smith_machine", "machine"]  # Either is acceptable
 
-    def test_default_to_dumbbell(self):
-        """Unknown exercises should default to dumbbell."""
-        assert detect_equipment_type("Some Random Exercise") == "dumbbell"
-        assert detect_equipment_type("") == "dumbbell"
+    def test_default_to_bodyweight(self):
+        """Unknown/unnamed exercises must default to bodyweight, not dumbbell.
+
+        Retired behavior: this used to assert the default was 'dumbbell'. That
+        default was deliberately changed to 'bodyweight' in core/weight_utils.py
+        because a dumbbell default cascaded into a phantom load for movements
+        that carry no external weight — a 2.5 kg increment, a bogus starting
+        weight and a weight-entry UI on the frontend for e.g. burpees.
+
+        Guarantee protected (unchanged in spirit): an exercise with no equipment
+        signal in its name and no equipment list must resolve to a well-defined
+        equipment type, and that type must be the load-free one so downstream
+        weight math produces no weight (increment 0, baseline 0).
+        """
+        assert detect_equipment_type("Some Random Exercise") == "bodyweight"
+        assert detect_equipment_type("") == "bodyweight"
+        # The default must carry no load: no increment, no baseline weight.
+        assert get_equipment_increment("bodyweight") == 0
+        assert round_to_equipment_increment(10.0, "bodyweight") == 0.0
 
     def test_with_equipment_list(self):
         """Should use equipment list if name doesn't have indicators."""
@@ -223,19 +238,52 @@ class TestGetStartingWeight:
         assert weight == 10.0
 
     def test_beginner_isolation_dumbbell(self):
-        """Beginner isolation dumbbell should be ~5 kg."""
+        """Beginner isolation dumbbell should be 7.5 kg.
+
+        Retired value: this asserted 5.0 kg. The beginner isolation base weight
+        was deliberately retuned 5.0 -> 7.5 in ba36c2ad (5 kg was too light to be
+        a useful starting point for most isolation work).
+
+        Guarantee protected: a beginner's isolation start is (a) a real dumbbell
+        weight off the rack and (b) strictly lighter than the beginner compound
+        start — the two must not collapse to the same number.
+        """
         weight = get_starting_weight("Dumbbell Curl", "dumbbell", "beginner")
-        assert weight == 5.0
+        assert weight == 7.5
+        assert weight in STANDARD_DUMBBELL_WEIGHTS
+        assert weight < get_starting_weight("Dumbbell Bench Press", "dumbbell", "beginner")
 
     def test_intermediate_compound_barbell(self):
-        """Intermediate compound barbell should be ~20 kg."""
+        """Intermediate compound barbell should be 30 kg (20 kg bar + 10 kg plates).
+
+        Retired value: this asserted 20.0 kg, from before barbells got baseline
+        handling (cf90fdc7). get_starting_weight now models the bar itself: an
+        Olympic bar IS 20 kg, so 20 kg means an empty bar — that is the BEGINNER
+        prescription. An intermediate lifter gets bar + 5 kg per side = 30 kg.
+
+        Guarantee protected: a barbell recommendation is never below the 20 kg
+        bar, and it scales up with fitness level.
+        """
         weight = get_starting_weight("Barbell Squat", "barbell", "intermediate")
-        assert weight == 20.0
+        assert weight == 30.0
+        # Never lighter than the bar, and level-scaled.
+        assert get_starting_weight("Barbell Squat", "barbell", "beginner") == 20.0
+        assert get_starting_weight("Barbell Squat", "barbell", "advanced") == 50.0
 
     def test_advanced_compound_machine(self):
-        """Advanced compound machine should be higher (~50 kg)."""
+        """Advanced compound machine should be 60 kg.
+
+        Retired value: this asserted 50.0 kg (advanced compound 40 kg x the old
+        1.2 machine multiplier = 48, snapped to 50). The machine/cable multiplier
+        was deliberately raised 1.2 -> 1.5 in ba36c2ad, giving 40 x 1.5 = 60.
+
+        Guarantee protected: machines start heavier than free weights for the
+        same movement/level, and land on a valid 5 kg pin-stack increment.
+        """
         weight = get_starting_weight("Machine Chest Press", "machine", "advanced")
-        assert weight == 50.0
+        assert weight == 60.0
+        assert weight % 5 == 0  # machine pin stacks move in 5 kg steps
+        assert weight > get_starting_weight("Dumbbell Bench Press", "dumbbell", "advanced")
 
     def test_kettlebell_starts_lighter(self):
         """Kettlebells should start lighter (60% of base)."""

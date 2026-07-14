@@ -20,6 +20,7 @@ import os
 import sys
 from datetime import datetime, date, timedelta, timezone
 from typing import Any, Dict, List, Optional
+from zoneinfo import ZoneInfo
 import uuid
 
 import pytest
@@ -39,6 +40,28 @@ from services.cardio_correlation_service import (  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
+# Fixture constants
+# ---------------------------------------------------------------------------
+
+USER = "22222222-2222-2222-2222-222222222222"
+
+# The user lives in America/Chicago (UTC-5/-6) — the real user base. Fixtures
+# below deliberately schedule workouts at 19:00 LOCAL, which is already the
+# NEXT day in UTC. That rollover is the regression this suite guards: the
+# service must resolve the session's calendar date in the user's zone, not by
+# reading `.date()` off the raw UTC instant.
+USER_TZ = "America/Chicago"
+_ZONE = ZoneInfo(USER_TZ)
+
+# "Today" from the USER's perspective — every date below is user-local, exactly
+# like the `activity_date` column. (Using the server's `date.today()` here made
+# the suite pass/fail depending on the wall-clock hour it ran at.)
+TODAY = datetime.now(_ZONE).date()
+
+WORKOUT_LOCAL_HOUR = 19  # 7pm local -> 00:00/01:00 UTC the following day
+
+
+# ---------------------------------------------------------------------------
 # Fake Supabase
 # ---------------------------------------------------------------------------
 
@@ -53,6 +76,7 @@ class _FakeQuery:
         self._table = table_name
         self._filters: List[tuple] = []
         self._not = False
+        self._limit: Optional[int] = None
 
     def select(self, *_args, **_kwargs) -> "_FakeQuery":
         return self
@@ -80,6 +104,10 @@ class _FakeQuery:
         self._filters.append(("notnull", col, None))
         return self
 
+    def limit(self, n: int) -> "_FakeQuery":
+        self._limit = n
+        return self
+
     def execute(self) -> _FakeResp:
         rows = list(self._db.tables.get(self._table, []))
         for op, col, val in self._filters:
@@ -97,6 +125,8 @@ class _FakeQuery:
                 ]
             elif op == "notnull":
                 rows = [r for r in rows if r.get(col) is not None]
+        if self._limit is not None:
+            rows = rows[: self._limit]
         return _FakeResp(rows)
 
 
@@ -109,10 +139,13 @@ class _FakeClient:
 
 
 class _FakeDB:
-    def __init__(self) -> None:
+    def __init__(self, timezone_name: str = USER_TZ) -> None:
         self.tables: Dict[str, List[Dict[str, Any]]] = {
             "cardio_logs": [],
             "daily_activity": [],
+            # The service resolves `users.timezone` to map a UTC `performed_at`
+            # onto the user-local `daily_activity.activity_date`.
+            "users": [{"id": USER, "timezone": timezone_name}],
         }
         self.client = _FakeClient(self)
 
@@ -121,28 +154,35 @@ class _FakeDB:
 # Helpers
 # ---------------------------------------------------------------------------
 
-USER = "22222222-2222-2222-2222-222222222222"
-TODAY = date.today()
-
-
 def _cardio(
     *,
     days_ago: int,
     pace: float,
     splits_json: Optional[list] = None,
+    local_hour: int = WORKOUT_LOCAL_HOUR,
 ) -> Dict[str, Any]:
-    perf = datetime.now(timezone.utc) - timedelta(days=days_ago)
+    """A cardio row as production stores it: `performed_at` is a UTC instant.
+
+    The session happens at `local_hour` on the user-local day `days_ago` days
+    back; we serialize the equivalent UTC timestamp, mirroring timestamptz.
+    """
+    local_day = TODAY - timedelta(days=days_ago)
+    local_dt = datetime(
+        local_day.year, local_day.month, local_day.day, local_hour, tzinfo=_ZONE
+    )
+    perf_utc = local_dt.astimezone(timezone.utc)
     return {
         "id": str(uuid.uuid4()),
         "user_id": USER,
         "activity_type": "run",
-        "performed_at": perf.isoformat(),
+        "performed_at": perf_utc.isoformat(),
         "avg_pace_seconds_per_km": pace,
         "splits_json": splits_json,
     }
 
 
 def _sleep(*, days_ago: int, minutes: int) -> Dict[str, Any]:
+    """A `daily_activity` row — keyed by the user's LOCAL calendar date."""
     return {
         "user_id": USER,
         "activity_date": (TODAY - timedelta(days=days_ago)).isoformat(),
@@ -239,6 +279,37 @@ def test_missing_prior_night_sleep_excludes_the_pair():
     result = compute_sleep_pace_correlation(db, USER, days=60)
     # 19 < MIN_PAIRS, so we expect None even though there are 22 cardio rows.
     assert result is None
+
+
+def test_evening_workout_pairs_with_the_correct_prior_night():
+    """REGRESSION: an evening run must pair with the night BEFORE it.
+
+    `cardio_logs.performed_at` is a UTC instant; `daily_activity.activity_date`
+    is a user-LOCAL date. The service used to read `.date()` straight off the
+    UTC timestamp, so for a user in America/Chicago a 7pm run (= 00:00 UTC the
+    NEXT day) resolved to tomorrow's date, and `date - 1 day` landed on the day
+    of the run itself — i.e. it correlated the run against the sleep of the
+    night AFTER it, and dropped the pair entirely when that row didn't exist.
+
+    Guarantee protected: the prior-night lookup is done on the workout's
+    user-local calendar date. Here every 7pm-local session has exactly one
+    matching prior-night sleep row, so all 22 must pair.
+    """
+    db = _FakeDB(timezone_name="America/Chicago")
+    for i in range(22):
+        days_ago = i + 1
+        # 7pm local == next-day UTC. Distinct sleep per day so a mis-paired
+        # lookup can't accidentally land on an identical value.
+        db.tables["cardio_logs"].append(
+            _cardio(days_ago=days_ago, pace=300.0 + i, local_hour=19)
+        )
+        db.tables["daily_activity"].append(
+            _sleep(days_ago=days_ago + 1, minutes=400 + i)
+        )
+
+    result = compute_sleep_pace_correlation(db, USER, days=60)
+    assert result is not None, "evening sessions were dropped — UTC/local drift"
+    assert result["n"] == 22, f"expected all 22 evening runs paired, got {result['n']}"
 
 
 def test_copy_variant_pool_has_at_least_four():

@@ -102,8 +102,24 @@ def generate_mock_user_assignment(
 
 @pytest.fixture
 def client():
-    """Create a test client."""
-    return TestClient(app)
+    """Create a test client with the auth dependency satisfied.
+
+    Every /programs route is behind ``Depends(get_current_user)``, so without an
+    override the app short-circuits with 401 before the handler ever runs and
+    every status assertion in this file compares against 401. The override
+    supplies a verified identity only — the handler logic under test still
+    executes end to end and no assertion is relaxed.
+    """
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "test-auth-user",
+        "email": "test@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture

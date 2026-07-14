@@ -13,9 +13,43 @@ but then hit a paywall to even see how the app works"
 """
 
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from datetime import datetime
+from unittest.mock import MagicMock, patch
 import uuid
+
+
+@pytest.fixture
+async def client():
+    """Async HTTP client bound to the app via ASGITransport.
+
+    Every test in this module is `async def` and awaits `client.get(...)`,
+    but the `client` fixture in conftest.py is a *synchronous*
+    `fastapi.testclient.TestClient`, whose methods return a Response object
+    directly. Awaiting that raises
+    `TypeError: object Response can't be used in 'await' expression`, which is
+    what killed all 19 tests here. Shadowing it with a real httpx.AsyncClient
+    (the type these tests already annotate for) is the fix.
+
+    The slowapi per-IP limiter is also disabled for the duration of the
+    fixture. The demo endpoints carry deliberately tight anti-abuse caps
+    (`/generate-preview-plan` = 3/hour, `/try-workout` = 5/hour, keyed by
+    client IP). This module legitimately calls those routes far more often
+    than that from one in-process IP, so tests late in the file were getting
+    429s purely as a side effect of earlier tests' traffic. No test here
+    asserts rate-limit behavior.
+    """
+    from main import app
+    from core.rate_limiter import limiter
+
+    _limiter_was_enabled = limiter.enabled
+    limiter.enabled = False
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            yield ac
+    finally:
+        limiter.enabled = _limiter_was_enabled
 
 
 class TestPreviewWorkoutDay:
@@ -455,17 +489,42 @@ class TestDemoSessionTracking:
         assert "conversion_offer" in complete_response.json()
 
         # 6. Convert session (simulate signup)
+        #
+        # `demo_sessions.converted_to_user_id` is FK-constrained to `users.id`
+        # (demo_sessions_converted_to_user_id_fkey). The other five steps run
+        # against the live Supabase project, but this step cannot: a test may
+        # not mint a real `users` row (it is itself FK'd to Supabase auth), and
+        # passing a random UUID makes Postgres reject the UPDATE with 23503 —
+        # which the handler correctly surfaces as a 500. That FK rejection is
+        # right; in production the app calls this only AFTER signup, with the
+        # id of the row that signup just created. So the DB accessor is stubbed
+        # for this one call to stand in for "the user exists", and we assert
+        # the handler's real behavior: it stamps converted_to_user_id +
+        # conversion_trigger on the session and reports "converted".
         user_id = str(uuid.uuid4())
-        convert_response = await client.post(
-            "/api/v1/demo/session/convert",
-            json={
-                "session_id": session_id,
-                "user_id": user_id,
-                "trigger": "try_workout_complete",
-            }
-        )
+        mock_db = MagicMock()
+        session_select = MagicMock()
+        session_select.data = [{
+            "session_id": session_id,
+            "started_at": datetime.utcnow().isoformat(),
+        }]
+        mock_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value = session_select
+
+        with patch("api.v1.demo.get_supabase_db", return_value=mock_db):
+            convert_response = await client.post(
+                "/api/v1/demo/session/convert",
+                json={
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "trigger": "try_workout_complete",
+                }
+            )
         assert convert_response.status_code == 200
         assert convert_response.json()["status"] == "converted"
+
+        update_payload = mock_db.client.table.return_value.update.call_args_list[0][0][0]
+        assert update_payload["converted_to_user_id"] == user_id
+        assert update_payload["conversion_trigger"] == "try_workout_complete"
 
     @pytest.mark.asyncio
     async def test_preview_plan_generates_full_4_weeks(self, client: AsyncClient):

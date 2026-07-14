@@ -13,6 +13,32 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, AsyncMock
 
+from main import app
+from core.auth import get_current_user
+
+
+@pytest.fixture
+def authed_client():
+    """TestClient whose requests pass the `get_current_user` auth dependency.
+
+    The onboarding routes are `Depends(get_current_user)`-protected. FastAPI
+    resolves dependencies BEFORE it validates the request body, so an
+    unauthenticated call to a malformed body returns 401 and never reaches
+    Pydantic — which means an anonymous client cannot exercise request-model
+    validation at all. Overriding the dependency lets the body-validation tests
+    assert what they were written to assert (422 on a missing required field)
+    without weakening the auth guard.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "test-user-123",
+        "auth_id": "test-auth-123",
+        "email": "test@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
 
 class TestOnboardingEndpoints:
     """Tests for onboarding API endpoints at the HTTP layer."""
@@ -100,9 +126,14 @@ class TestOnboardingEndpoints:
             # Response should be a dict
             assert isinstance(data, dict), "Response should be a dict"
 
-    def test_parse_response_missing_user_id(self, client):
-        """Test that missing user_id returns validation error."""
-        response = client.post(
+    def test_parse_response_missing_user_id(self, authed_client):
+        """Test that missing user_id returns validation error.
+
+        Uses `authed_client`: the route now requires auth, and auth is resolved
+        before body validation, so an anonymous client would get 401 and never
+        reach the 422 this test exists to protect.
+        """
+        response = authed_client.post(
             "/api/v1/onboarding/parse-response",
             json={
                 "message": "I'm 25 years old",
@@ -114,9 +145,13 @@ class TestOnboardingEndpoints:
         assert response.status_code == 422, \
             f"Expected 422 for missing user_id, got {response.status_code}"
 
-    def test_parse_response_missing_message(self, client):
-        """Test that missing message returns validation error."""
-        response = client.post(
+    def test_parse_response_missing_message(self, authed_client):
+        """Test that missing message returns validation error.
+
+        Uses `authed_client` for the same reason as
+        test_parse_response_missing_user_id (auth resolves before body validation).
+        """
+        response = authed_client.post(
             "/api/v1/onboarding/parse-response",
             json={
                 "user_id": "test-user-123",

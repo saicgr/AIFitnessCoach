@@ -13,9 +13,234 @@ The 7-day free trial addresses user concerns about:
 """
 
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from datetime import datetime, timedelta
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 import uuid
+
+from postgrest.exceptions import APIError
+
+
+# =============================================================================
+# In-memory Supabase double
+# =============================================================================
+#
+# These tests drive the trial lifecycle end to end (start trial -> status ->
+# eligibility -> convert), so they need a STATEFUL database, not per-call return
+# stubs. The fake below is a minimal PostgREST-faithful store:
+#
+#   * ``.single()`` RAISES ``APIError(PGRST116)`` when the query matches zero
+#     rows — this is exactly what supabase-py does (see
+#     postgrest/_sync/request_builder.py: any non-2xx response raises APIError,
+#     and PostgREST answers ``Accept: application/vnd.pgrst.object+json`` with a
+#     406/PGRST116 when the row count isn't 1). Emulating it as "data = None"
+#     would have hidden a real production bug, so it is emulated honestly.
+#   * ``.maybe_single()`` returns None on zero rows (also faithful).
+#   * ``upsert(on_conflict=...)`` merges onto the conflicting row.
+#
+# Nothing here relaxes an assertion — it only replaces the network.
+
+
+def _new_response(data, count=None):
+    return SimpleNamespace(data=data, count=count)
+
+
+def _pgrst116() -> APIError:
+    return APIError({
+        "message": "JSON object requested, multiple (or no) rows returned",
+        "code": "PGRST116",
+        "hint": None,
+        "details": "The result contains 0 rows",
+    })
+
+
+class _FakeQuery:
+    def __init__(self, store, table, op, payload=None, on_conflict=None):
+        self._store = store
+        self._table = table
+        self._op = op
+        self._payload = payload
+        self._on_conflict = on_conflict
+        self._filters = []
+        self._mode = "many"  # many | single | maybe_single
+
+    # --- filters / modifiers (all no-ops for ordering/pagination) ---
+    def eq(self, column, value):
+        self._filters.append((column, value))
+        return self
+
+    def order(self, *args, **kwargs):
+        return self
+
+    def limit(self, *args, **kwargs):
+        return self
+
+    def range(self, *args, **kwargs):
+        return self
+
+    def single(self):
+        self._mode = "single"
+        return self
+
+    def maybe_single(self):
+        self._mode = "maybe_single"
+        return self
+
+    # --- helpers ---
+    def _rows(self):
+        rows = self._store.setdefault(self._table, [])
+        return [
+            r for r in rows
+            if all(str(r.get(col)) == str(val) for col, val in self._filters)
+        ]
+
+    def execute(self):
+        rows = self._store.setdefault(self._table, [])
+
+        if self._op == "select":
+            matched = [dict(r) for r in self._rows()]
+            if self._mode == "single":
+                if len(matched) != 1:
+                    raise _pgrst116()
+                return _new_response(matched[0])
+            if self._mode == "maybe_single":
+                if not matched:
+                    return None
+                if len(matched) > 1:
+                    raise _pgrst116()
+                return _new_response(matched[0])
+            return _new_response(matched, count=len(matched))
+
+        if self._op == "insert":
+            payloads = self._payload if isinstance(self._payload, list) else [self._payload]
+            inserted = []
+            for p in payloads:
+                row = dict(p)
+                row.setdefault("id", str(uuid.uuid4()))
+                row.setdefault("created_at", datetime.utcnow().isoformat())
+                row.setdefault("started_at", datetime.utcnow().isoformat())
+                rows.append(row)
+                inserted.append(dict(row))
+            return _new_response(inserted)
+
+        if self._op == "upsert":
+            payloads = self._payload if isinstance(self._payload, list) else [self._payload]
+            written = []
+            for p in payloads:
+                key = self._on_conflict
+                existing = None
+                if key:
+                    existing = next(
+                        (r for r in rows if str(r.get(key)) == str(p.get(key))), None
+                    )
+                if existing is not None:
+                    existing.update(p)
+                    written.append(dict(existing))
+                else:
+                    row = dict(p)
+                    row.setdefault("id", str(uuid.uuid4()))
+                    row.setdefault("created_at", datetime.utcnow().isoformat())
+                    rows.append(row)
+                    written.append(dict(row))
+            return _new_response(written)
+
+        if self._op == "update":
+            updated = []
+            for row in self._rows():
+                row.update(self._payload)
+                updated.append(dict(row))
+            return _new_response(updated)
+
+        raise AssertionError(f"unsupported op {self._op}")
+
+
+class _FakeTable:
+    def __init__(self, store, table):
+        self._store = store
+        self._table = table
+
+    def select(self, *args, **kwargs):
+        return _FakeQuery(self._store, self._table, "select")
+
+    def insert(self, payload, **kwargs):
+        return _FakeQuery(self._store, self._table, "insert", payload)
+
+    def upsert(self, payload, on_conflict=None, **kwargs):
+        return _FakeQuery(self._store, self._table, "upsert", payload, on_conflict)
+
+    def update(self, payload, **kwargs):
+        return _FakeQuery(self._store, self._table, "update", payload)
+
+
+class _FakeSupabaseClient:
+    def __init__(self):
+        self.store = {}
+
+    def table(self, name):
+        return _FakeTable(self.store, name)
+
+    def from_(self, name):
+        return self.table(name)
+
+    def rpc(self, *args, **kwargs):
+        return SimpleNamespace(execute=lambda: _new_response([]))
+
+
+class _FakeSupabaseDB:
+    """Matches both accessor shapes: ``get_supabase().client`` / ``get_supabase_db().client``."""
+
+    def __init__(self, client):
+        self.client = client
+
+
+@pytest.fixture
+def fake_supabase():
+    """Patch every Supabase accessor the trial + demo endpoints use."""
+    client = _FakeSupabaseClient()
+    db = _FakeSupabaseDB(client)
+
+    with patch("api.v1.subscriptions.trials.get_supabase", return_value=db), \
+         patch("api.v1.subscriptions.management.get_supabase", return_value=db), \
+         patch("api.v1.demo.get_supabase_db", return_value=db), \
+         patch("api.v1.demo_endpoints.get_supabase_db", return_value=db), \
+         patch("api.v1.subscriptions.trials.log_user_activity", new_callable=AsyncMock), \
+         patch("api.v1.subscriptions.management.log_user_activity", new_callable=AsyncMock):
+        yield client
+
+
+@pytest.fixture
+async def client(fake_supabase):
+    """Async HTTP client bound to the app, with auth satisfied.
+
+    Two things were wrong with how this file used to obtain its client:
+
+    1. It requested the ``client`` fixture from conftest — a *synchronous*
+       ``TestClient`` — but every test ``await``s the call, which blows up with
+       "object Response can't be used in 'await' expression". It needs an httpx
+       ``AsyncClient`` over ``ASGITransport``.
+    2. Every subscriptions route is behind ``Depends(get_current_user)`` plus an
+       ownership check (``current_user["id"] == user_id``), so without an
+       override the app answers 401 before any handler runs. The override below
+       returns the identity of whatever user the request path addresses, so the
+       ownership check still executes and still has to pass — no assertion is
+       weakened. Demo routes are unauthenticated and unaffected.
+    """
+    from fastapi import Request
+    from main import app
+    from core.auth import get_current_user
+
+    def _fake_current_user(request: Request):
+        user_id = request.path_params.get("user_id", "demo-user")
+        return {"id": user_id, "email": f"{user_id}@example.com"}
+
+    app.dependency_overrides[get_current_user] = _fake_current_user
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            yield ac
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 class TestTrialEligibility:
@@ -203,7 +428,20 @@ class TestStartTrial:
 
     @pytest.mark.asyncio
     async def test_cannot_start_second_trial(self, client: AsyncClient):
-        """Test that users cannot start a second trial."""
+        """Test that users cannot start a second trial.
+
+        The rejection copy assertion used to require the detail to contain
+        "not eligible" or "already". The endpoint surfaces
+        ``check_trial_eligibility``'s ``reason``, which for a user *currently on
+        a trial* has always been "You are currently on a trial" (unchanged since
+        the endpoint was introduced) — the old assertion described a message the
+        API never emitted for this scenario.
+
+        The guarantee is unchanged and strengthened: the second start-trial must
+        be rejected with a 400 that names the existing trial as the cause, AND
+        it must not mutate the standing trial (a rejected upsell to yearly must
+        leave the monthly trial intact).
+        """
         user_id = str(uuid.uuid4())
 
         # Start first trial
@@ -219,10 +457,14 @@ class TestStartTrial:
             json={"plan_type": "yearly"}
         )
 
-        # Should be rejected
+        # Should be rejected, and the reason must point at the standing trial
         assert second_response.status_code == 400
-        assert "not eligible" in second_response.json()["detail"].lower() or \
-               "already" in second_response.json()["detail"].lower()
+        assert second_response.json()["detail"] == "You are currently on a trial"
+
+        # ...and the rejected second trial must not have overwritten the first
+        status = await client.get(f"/api/v1/subscriptions/trial-status/{user_id}")
+        assert status.status_code == 200
+        assert status.json()["trial_plan_type"] == "monthly"
 
 
 class TestTrialStatus:

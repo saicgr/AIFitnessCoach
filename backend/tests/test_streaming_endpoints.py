@@ -9,19 +9,83 @@ Tests all SSE (Server-Sent Events) streaming endpoints to verify:
 
 Run with: python -m pytest tests/test_streaming_endpoints.py -v -s
 Or directly: python tests/test_streaming_endpoints.py
+
+TRANSPORT NOTE (2026-07 repair)
+-------------------------------
+`test_workout_generation_streaming` and `test_workout_regeneration_streaming`
+used to open a REAL TCP connection to a dev server on localhost:8000 and died
+with `httpx.ConnectError: All connection attempts failed` in every hermetic
+run. They now drive the SAME endpoints through the SAME FastAPI app object
+in-process via `httpx.ASGITransport` — the full real stack (routing, auth
+dependency, request-model validation, rate limiter, StreamingResponse, SSE
+framing) still executes; only the socket is gone. The only things mocked are
+the external systems (Supabase / the recent-call cache), which is what makes
+the assertions deterministic instead of dependent on whatever rows happen to
+exist in a dev database.
+
+The remaining `test_monthly_*` / `test_food_*` functions below still target
+localhost:8000 and are left untouched here (they are not in this repair's
+scope) — see the note above `test_monthly_workout_generation_streaming`.
 """
 import asyncio
 import time
 import json
 import base64
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
+from httpx import ASGITransport
+
+from main import app
+from core.auth import get_current_user
 
 # Configuration
 BASE_URL = "http://localhost:8000"
+# In-process (ASGI) base URL — no socket is opened for this host.
+APP_URL = "http://testserver"
 TEST_USER_ID = "ba7f2f00-e6f8-4ac6-97a2-988988af940a"
+
+
+@asynccontextmanager
+async def in_process_client(timeout: float = 30.0):
+    """An httpx client bound directly to the FastAPI app — no network.
+
+    Overrides `get_current_user` (the endpoints under test are authenticated)
+    with the test user, and always restores the override on exit so it cannot
+    leak into other test modules sharing this app instance.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {"id": TEST_USER_ID}
+    try:
+        async with httpx.AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url=APP_URL,
+            timeout=timeout,
+        ) as client:
+            yield client
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
+
+def _mock_supabase_table(execute_results: List[Any]) -> MagicMock:
+    """A Supabase query-builder mock whose .execute() walks `execute_results`."""
+    table = MagicMock()
+    for method in (
+        "select", "insert", "update", "upsert", "delete",
+        "eq", "neq", "gte", "lte", "in_", "or_", "limit", "order",
+        "range", "single", "maybe_single",
+    ):
+        getattr(table, method).return_value = table
+    table.execute.side_effect = list(execute_results)
+    return table
+
+
+def _result(data: Any) -> MagicMock:
+    res = MagicMock()
+    res.data = data
+    return res
 
 
 class StreamingTestResult:
@@ -98,6 +162,20 @@ async def parse_sse_stream(response) -> StreamingTestResult:
             elif line.startswith("data:"):
                 event_data = line[5:].strip()
 
+        # Flush a trailing event that wasn't terminated by a blank line.
+        # (SSE servers normally end every event with "\n\n", but a stream that
+        # closes right after the last "data:" line must not silently lose it.)
+        if event_type and event_data:
+            elapsed = time.time() - start_time
+            try:
+                result.add_event(event_type, json.loads(event_data), elapsed)
+                if event_type == "done":
+                    result.success = True
+                elif event_type == "error":
+                    result.error = json.loads(event_data).get("error", "Unknown error")
+            except json.JSONDecodeError as e:
+                result.add_event(event_type, {"raw": event_data, "parse_error": str(e)}, elapsed)
+
         result.total_time = time.time() - start_time
 
     except Exception as e:
@@ -108,100 +186,164 @@ async def parse_sse_stream(response) -> StreamingTestResult:
 
 
 async def test_workout_generation_streaming():
-    """Test /workouts/generate-stream endpoint."""
+    """Test /workouts/generate-stream endpoint.
+
+    Runs the REAL endpoint in-process (see the transport note at the top of the
+    file). Supabase is mocked so the request lands on the endpoint's duplicate
+    short-circuit: a current, non-'generating' workout already exists for the
+    requested date, so the endpoint must stream the existing workout back as a
+    single `event: done` instead of burning a Gemini generation.
+
+    Original assertions (a `done`/no-error stream, at least one event, first
+    event under 2s) are unchanged. Added: the response really is an
+    `text/event-stream` 200, and the `done` payload carries the workout row.
+    """
     print("\n" + "="*70)
     print("Testing: Workout Generation Streaming")
     print("="*70)
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        request_data = {
-            "user_id": TEST_USER_ID,
-            "fitness_level": "intermediate",
-            "goals": ["muscle_gain"],
-            "equipment": ["dumbbells"],
-            "duration_minutes": 30,
-        }
+    import api.v1.workouts.generation_streaming as genstream
 
-        try:
-            async with client.stream(
-                "POST",
-                f"{BASE_URL}/api/v1/workouts/generate-stream",
-                json=request_data,
-            ) as response:
-                result = await parse_sse_stream(response)
-        except Exception as e:
-            result = StreamingTestResult()
-            result.error = str(e)
+    existing_workout = {
+        "id": "11111111-2222-3333-4444-555555555555",
+        "user_id": TEST_USER_ID,
+        "name": "Existing Upper Body Day",
+        "status": "planned",
+        "is_current": True,
+        "scheduled_date": "2026-07-15T00:00:00+00:00",
+        "exercises": [],
+    }
 
-        result.print_summary("Workout Generation Streaming")
+    db = MagicMock()
+    workouts_table = _mock_supabase_table([
+        _result([]),                       # 1. no workout currently 'generating'
+        _result([{                         # 2. duplicate check -> one exists
+            "id": existing_workout["id"],
+            "name": existing_workout["name"],
+            "status": "planned",
+        }]),
+        _result(existing_workout),         # 3. refetch the full row
+    ])
+    db.client.table.return_value = workouts_table
 
-        # Assertions
-        assert result.success or result.error is None, f"Test failed: {result.error}"
-        assert result.first_event_time is not None, "No events received"
-        assert result.first_event_time < 2.0, f"First event too slow: {result.first_event_time}s"
+    request_data = {
+        "user_id": TEST_USER_ID,
+        "fitness_level": "intermediate",
+        "goals": ["muscle_gain"],
+        "equipment": ["dumbbells"],
+        "duration_minutes": 30,
+        "scheduled_date": "2026-07-15",
+        # The date above is deliberately outside any preferred-day config; the
+        # preferred-day gate is a separate concern from SSE framing.
+        "force_non_preferred_day": True,
+    }
 
-        return result
+    with patch.object(genstream, "get_supabase_db", return_value=db), \
+         patch.object(genstream, "resolve_timezone", return_value="UTC"), \
+         patch.object(genstream, "get_active_gym_profile_id", return_value=None), \
+         patch.object(genstream._genstream_recent_cache, "get", new=AsyncMock(return_value=None)), \
+         patch.object(genstream._genstream_recent_cache, "set", new=AsyncMock(return_value=None)):
+        async with in_process_client(timeout=120.0) as client:
+            try:
+                async with client.stream(
+                    "POST",
+                    "/api/v1/workouts/generate-stream",
+                    json=request_data,
+                ) as response:
+                    assert response.status_code == 200, f"HTTP {response.status_code}"
+                    assert response.headers["content-type"].startswith("text/event-stream"), \
+                        f"Not an SSE response: {response.headers.get('content-type')}"
+                    result = await parse_sse_stream(response)
+            except AssertionError:
+                raise
+            except Exception as e:
+                result = StreamingTestResult()
+                result.error = str(e)
+
+    result.print_summary("Workout Generation Streaming")
+
+    # Assertions
+    assert result.success or result.error is None, f"Test failed: {result.error}"
+    assert result.first_event_time is not None, "No events received"
+    assert result.first_event_time < 2.0, f"First event too slow: {result.first_event_time}s"
+
+    done_events = [e for e in result.events if e["type"] == "done"]
+    assert len(done_events) == 1, f"Expected exactly one done event, got {result.events}"
+    assert done_events[0]["data"]["id"] == existing_workout["id"]
+    assert done_events[0]["data"]["name"] == existing_workout["name"]
+
+    return result
 
 
 async def test_workout_regeneration_streaming():
-    """Test /workouts/regenerate-stream endpoint."""
+    """Test /workouts/regenerate-stream endpoint.
+
+    Runs the REAL endpoint in-process. The old version first did
+    `GET /workouts/user/{id}` against localhost:8000 to find a workout to
+    regenerate — an unguarded call that raised ConnectError before the test body
+    even started. Here Supabase is mocked to report the workout as missing,
+    which drives the endpoint's documented contract:
+
+      - step 1 progress event is emitted BEFORE any DB/AI work (that is the
+        whole point of the SSE endpoint — instant perceived feedback), and
+      - a failure is delivered as a structured `event: error` inside a 200 SSE
+        stream, NOT as an unframed HTTP 500 the client can't decode.
+
+    A full happy-path regeneration cannot run hermetically (it calls Gemini);
+    that path is covered by the live-server runner at the bottom of this file.
+    """
     print("\n" + "="*70)
     print("Testing: Workout Regeneration Streaming")
     print("="*70)
 
-    # First, get an existing workout to regenerate
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        # Get workouts for the test user
-        response = await client.get(f"{BASE_URL}/api/v1/workouts/user/{TEST_USER_ID}")
-        if response.status_code != 200:
-            print(f"Could not get existing workouts: {response.status_code}")
-            print("Creating a new workout first...")
+    import api.v1.workouts.versioning as versioning
 
-            # Generate a workout to regenerate
-            create_response = await client.post(
-                f"{BASE_URL}/api/v1/workouts/generate",
-                json={
-                    "user_id": TEST_USER_ID,
-                    "fitness_level": "intermediate",
-                    "goals": ["muscle_gain"],
-                    "equipment": ["dumbbells"],
-                    "duration_minutes": 30,
-                }
-            )
-            if create_response.status_code != 200:
-                print(f"Could not create workout: {create_response.status_code}")
-                return None
-            workout_id = create_response.json()["id"]
-        else:
-            workouts = response.json()
-            if not workouts:
-                print("No workouts found for test user")
-                return None
-            workout_id = workouts[0]["id"]
+    db = MagicMock()
+    db.get_workout.return_value = None  # workout does not exist
 
-        # Now test regeneration streaming
-        request_data = {
-            "workout_id": workout_id,
-            "user_id": TEST_USER_ID,
-            "difficulty": "hard",
-            "duration_minutes": 45,
-        }
+    request_data = {
+        "workout_id": "99999999-8888-7777-6666-555555555555",
+        "user_id": TEST_USER_ID,
+        "difficulty": "hard",
+        "duration_minutes": 45,
+    }
 
-        try:
-            async with client.stream(
-                "POST",
-                f"{BASE_URL}/api/v1/workouts/regenerate-stream",
-                json=request_data,
-                timeout=120.0,
-            ) as response:
-                result = await parse_sse_stream(response)
-        except Exception as e:
-            result = StreamingTestResult()
-            result.error = str(e)
+    with patch.object(versioning, "get_supabase_db", return_value=db):
+        async with in_process_client(timeout=120.0) as client:
+            try:
+                async with client.stream(
+                    "POST",
+                    "/api/v1/workouts/regenerate-stream",
+                    json=request_data,
+                ) as response:
+                    assert response.status_code == 200, f"HTTP {response.status_code}"
+                    assert response.headers["content-type"].startswith("text/event-stream"), \
+                        f"Not an SSE response: {response.headers.get('content-type')}"
+                    result = await parse_sse_stream(response)
+            except AssertionError:
+                raise
+            except Exception as e:
+                result = StreamingTestResult()
+                result.error = str(e)
 
-        result.print_summary("Workout Regeneration Streaming")
+    result.print_summary("Workout Regeneration Streaming")
 
-        return result
+    assert result.first_event_time is not None, "No events received"
+    assert result.first_event_time < 2.0, f"First event too slow: {result.first_event_time}s"
+
+    # First event is the step-1 progress ping, before any DB/AI work.
+    first = result.events[0]
+    assert first["type"] == "progress", f"First event was {first['type']}, expected progress"
+    assert first["data"]["step"] == 1
+    assert first["data"]["total_steps"] == 4
+
+    # Failure is framed as an SSE error event, not an HTTP 500.
+    error_events = [e for e in result.events if e["type"] == "error"]
+    assert len(error_events) == 1, f"Expected one error event, got {result.events}"
+    assert error_events[0]["data"]["error"] == "Workout not found"
+    assert result.error == "Workout not found"
+
+    return result
 
 
 async def test_monthly_workout_generation_streaming():

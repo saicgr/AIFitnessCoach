@@ -74,15 +74,35 @@ def generate_mock_tiles():
 # ============ Fixtures ============
 
 @pytest.fixture
-def client():
-    """Create a test client."""
-    return TestClient(app)
+def auth_user():
+    """The authenticated user seen by the layouts endpoints.
+
+    Every /api/v1/layouts route now sits behind
+    `current_user: dict = Depends(get_current_user)` (added after these tests were
+    written), and the user-scoped ones additionally call
+    `verify_user_ownership(current_user, user_id)`. Without an override every
+    request 401'd before reaching the handler. Tests mutate `["id"]` so the
+    authenticated identity matches the user_id in the path/query — the IDOR guard
+    stays live, it just has a caller to compare against.
+    """
+    return {"id": str(uuid.uuid4()), "email": "layouts-test@example.com"}
 
 
 @pytest.fixture
-def mock_user_id():
-    """Generate a mock user ID."""
-    return str(uuid.uuid4())
+def client(auth_user):
+    """Create a test client with the auth dependency satisfied."""
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: auth_user
+    yield TestClient(app)
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.fixture
+def mock_user_id(auth_user):
+    """Generate a mock user ID and authenticate as that user."""
+    auth_user["id"] = str(uuid.uuid4())
+    return auth_user["id"]
 
 
 @pytest.fixture
@@ -398,8 +418,14 @@ class TestUpdateLayout:
 
             assert response.status_code == 404
 
-    def test_update_layout_unauthorized(self, client, mock_supabase, mock_layout_id):
-        """Test updating layout owned by another user."""
+    def test_update_layout_unauthorized(self, client, mock_supabase, mock_layout_id, auth_user):
+        """Test updating layout owned by another user.
+
+        Authenticate as "my-user-id" so the request passes the auth-vs-param
+        ownership guard and actually reaches the resource-ownership check being
+        tested here (layout row belongs to "different-user-id").
+        """
+        auth_user["id"] = "my-user-id"
         existing_layout = {"user_id": "different-user-id"}
 
         mock_check = MagicMock()
@@ -446,17 +472,30 @@ class TestDeleteLayout:
                 assert response.json()["message"] == "Layout deleted successfully"
 
     def test_delete_only_layout_prevented(self, client, mock_supabase, mock_user_id, mock_layout_id):
-        """Test preventing deletion of only layout."""
+        """Test preventing deletion of only layout.
+
+        The endpoint issues TWO selects on home_layouts: the ownership lookup
+        (.eq().single().execute()) and the layout count (.eq().execute()). The
+        shared `mock_select` in the fixture returns itself from both .eq() and
+        .single(), so wiring both results onto that one object made the count
+        result clobber the ownership row (the handler then read a bare MagicMock
+        as `user_id` and 403'd instead of reaching the only-layout guard).
+        side_effect gives each select call its own chain.
+        """
         existing_layout = {"user_id": mock_user_id, "is_active": True}
 
         mock_check = MagicMock()
         mock_check.data = existing_layout
-        mock_supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = mock_check
+        ownership_chain = MagicMock()
+        ownership_chain.eq.return_value.single.return_value.execute.return_value = mock_check
 
         # Mock count - only 1 layout exists
         mock_count = MagicMock()
         mock_count.count = 1
-        mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_count
+        count_chain = MagicMock()
+        count_chain.eq.return_value.execute.return_value = mock_count
+
+        mock_supabase.table.return_value.select.side_effect = [ownership_chain, count_chain]
 
         with patch("api.v1.layouts.get_supabase_db") as mock_get_db:
             mock_db = MagicMock()

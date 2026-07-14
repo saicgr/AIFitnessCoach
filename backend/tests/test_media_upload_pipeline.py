@@ -160,7 +160,10 @@ class TestFormAnalysisRouting:
         mock_client.models.generate_content = MagicMock(return_value=mock_response)
 
         with (
-            patch("services.form_analysis_service.get_genai_client", return_value=mock_client),
+            # _analyze_from_gemini_file runs on the Developer-API *files* client
+            # (get_genai_files_client), NOT the default get_genai_client — a
+            # generativelanguage file URI can't be read by a Vertex client.
+            patch("services.form_analysis_service.get_genai_files_client", return_value=mock_client),
             patch("services.form_analysis_service.get_settings") as mock_settings,
             patch("services.form_analysis_service._get_form_cache", return_value=None),
             patch("asyncio.sleep", new_callable=AsyncMock),
@@ -181,11 +184,17 @@ class TestFormAnalysisRouting:
 # ───────────────────────────────────────────────────────────────────────────
 
 class TestMediaUploadValidation:
-    """Test content-type and media_type validation logic from the endpoint."""
+    """Test content-type and media_type validation logic from the endpoint.
+
+    MOVED MODULE: `api.v1.chat` was split — the media-upload endpoint and its
+    ALLOWED_CONTENT_TYPES / EXT_MAP constants now live in `api.v1.chat_endpoints`
+    (whose router `api.v1.chat` mounts). The endpoint and the guarantees below
+    are unchanged; only the import path moved.
+    """
 
     def test_allowed_content_types_includes_video_and_image(self):
         """ALLOWED_CONTENT_TYPES accepts common video and image MIME types."""
-        from api.v1.chat import ALLOWED_CONTENT_TYPES
+        from api.v1.chat_endpoints import ALLOWED_CONTENT_TYPES
 
         assert "video/mp4" in ALLOWED_CONTENT_TYPES
         assert "video/quicktime" in ALLOWED_CONTENT_TYPES
@@ -195,14 +204,14 @@ class TestMediaUploadValidation:
 
     def test_ext_map_covers_all_allowed_types(self):
         """EXT_MAP has an extension for every allowed content type."""
-        from api.v1.chat import ALLOWED_CONTENT_TYPES, EXT_MAP
+        from api.v1.chat_endpoints import ALLOWED_CONTENT_TYPES, EXT_MAP
 
         missing = [ct for ct in ALLOWED_CONTENT_TYPES if ct not in EXT_MAP]
         assert missing == [], f"EXT_MAP missing extensions for: {missing}"
 
     def test_media_upload_response_model_structure(self):
         """MediaUploadResponse serialises all required fields."""
-        from api.v1.chat import MediaUploadResponse
+        from api.v1.chat_endpoints import MediaUploadResponse
 
         resp = MediaUploadResponse(
             s3_key="chat_media/user/abc.mp4",
@@ -218,11 +227,11 @@ class TestMediaUploadValidation:
     def test_user_log_context_is_set_in_endpoint_source(self):
         """Verify set_log_context is imported and called in upload_media_for_analysis."""
         import inspect
-        import api.v1.chat as chat_module
+        import api.v1.chat_endpoints as chat_module
 
         # set_log_context must be imported in the module
         assert hasattr(chat_module, "set_log_context"), \
-            "set_log_context not imported in api.v1.chat"
+            "set_log_context not imported in api.v1.chat_endpoints"
 
         # The endpoint function source must call set_log_context
         src = inspect.getsource(chat_module.upload_media_for_analysis)

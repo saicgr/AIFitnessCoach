@@ -7,6 +7,29 @@ batch_lookup_foods() finds DB matches -> enhancement pipeline
 applies per-100g nutrition data.
 
 Run with: pytest backend/tests/test_food_database_lookup.py -v
+
+ARCHITECTURE NOTE (commit e1fca962, "update0.74.170")
+-----------------------------------------------------
+The lookup service used to search a generic `food_database` table through two
+Supabase RPCs (`search_food_database`, `batch_lookup_foods`) with an
+OpenFoodFacts fallback, and filtered bad hits with a private static helper
+`FoodDatabaseLookupService._is_good_match(query, result_name)` (restaurant-brand
+skip + 50% word-overlap ratio).
+
+That entire tier was DELETED. The service is now overrides-only, as its own
+module docstring states:
+
+    1. food_nutrition_overrides — hand-curated premium (200K+ items, DB-queried)
+    2. If no match → caller uses AI text analysis (Gemini)
+
+so `lookup_single_food` / `batch_lookup_foods` resolve names against the
+`food_nutrition_overrides` TABLE (exact `food_name_normalized` → `variant_names`
+→ stemmed/trigram fuzzy), and match quality is enforced by
+`services.food_match_gate` (coverage tiers A/B/C/D), not by `_is_good_match`.
+
+The tests below therefore drive the override table instead of the dead RPCs, and
+the old `TestIsGoodMatch` class is now `TestMatchQualityGate` — same eight cases,
+same accept/reject expectations, asserted against the gate that replaced it.
 """
 import asyncio
 
@@ -20,45 +43,197 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 # ── Test Data ────────────────────────────────────────────────────
+# Rows in the shape the service reads from `food_nutrition_overrides`.
 
-BIRYANI_DB_RESULT = {
-    "input_name": "Chicken Biryani",
-    "matched_name": "Chicken biryani, cooked",
-    "calories_per_100g": 150.0,
-    "protein_per_100g": 8.5,
-    "carbs_per_100g": 18.0,
-    "fat_per_100g": 5.2,
-    "fiber_per_100g": 0.8,
-}
+def _override_row(
+    display_name: str,
+    food_name_normalized: str,
+    calories: float,
+    protein: float,
+    carbs: float,
+    fat: float,
+    fiber: float,
+    variant_names=None,
+    region=None,
+) -> dict:
+    return {
+        "id": food_name_normalized,
+        "display_name": display_name,
+        "food_name_normalized": food_name_normalized,
+        "calories_per_100g": calories,
+        "protein_per_100g": protein,
+        "carbs_per_100g": carbs,
+        "fat_per_100g": fat,
+        "fiber_per_100g": fiber,
+        "default_weight_per_piece_g": None,
+        "default_serving_g": None,
+        "source": "usda",
+        "restaurant_name": None,
+        "food_category": None,
+        "default_count": 1,
+        "variant_names": variant_names or [],
+        "region": region,
+        "is_active": True,
+    }
 
-NAAN_DB_RESULT = {
-    "input_name": "Naan",
-    "matched_name": "Naan bread, plain",
-    "calories_per_100g": 290.0,
-    "protein_per_100g": 9.0,
-    "carbs_per_100g": 50.0,
-    "fat_per_100g": 5.5,
-    "fiber_per_100g": 2.0,
-}
 
-CHICKEN_BREAST_RPC_ROW = {
-    "name": "Chicken Breast, raw",
-    "calories_per_100g": 165,
-    "protein_per_100g": 31.0,
-    "carbs_per_100g": 0.0,
-    "fat_per_100g": 3.6,
-    "fiber_per_100g": 0.0,
-}
+BIRYANI_OVERRIDE_ROW = _override_row(
+    "Chicken biryani, cooked", "chicken biryani",
+    150.0, 8.5, 18.0, 5.2, 0.8,
+)
 
-APPLE_DB_RESULT = {
-    "input_name": "Apple",
-    "matched_name": "Apple, raw, with skin",
-    "calories_per_100g": 52.0,
-    "protein_per_100g": 0.3,
-    "carbs_per_100g": 13.8,
-    "fat_per_100g": 0.2,
-    "fiber_per_100g": 2.4,
-}
+NAAN_OVERRIDE_ROW = _override_row(
+    "Naan bread, plain", "naan",
+    290.0, 9.0, 50.0, 5.5, 2.0,
+)
+
+CHICKEN_BREAST_OVERRIDE_ROW = _override_row(
+    "Chicken Breast, raw", "chicken breast",
+    165, 31.0, 0.0, 3.6, 0.0,
+)
+
+APPLE_OVERRIDE_ROW = _override_row(
+    "Apple, raw, with skin", "apple",
+    52.0, 0.3, 13.8, 0.2, 2.4,
+)
+
+
+# ── Fake Supabase (override table) ───────────────────────────────
+# A tiny in-memory stand-in for the `food_nutrition_overrides` table that honours
+# the filters the service actually issues (eq / is_ / contains / overlaps / limit)
+# and records every executed query, so the tests can assert WHICH lookups ran
+# (the modern equivalent of the old `rpc.assert_called_once_with(...)` checks).
+
+class _FakeResult:
+    def __init__(self, data):
+        self.data = data
+
+
+class _FakeRow:
+    def __init__(self, mapping):
+        self._mapping = mapping
+
+
+class _FakeSQLResult:
+    def __init__(self, rows):
+        self._rows = [_FakeRow(r) for r in rows]
+
+    def fetchone(self):
+        return self._rows[0] if self._rows else None
+
+    def fetchall(self):
+        return self._rows
+
+
+class _FakeSession:
+    """Async session for the trigram phase (Step 4 of _check_override_fuzzy_db)."""
+
+    def __init__(self, trigram_rows):
+        self._trigram_rows = trigram_rows
+
+    async def execute(self, statement, params=None):
+        sql = str(statement).lower()
+        if "similarity" in sql and "food_nutrition_overrides" in sql:
+            return _FakeSQLResult(self._trigram_rows)
+        return _FakeSQLResult([])
+
+
+class _FakeManagedSession:
+    def __init__(self, trigram_rows):
+        self._trigram_rows = trigram_rows
+
+    async def __aenter__(self):
+        return _FakeSession(self._trigram_rows)
+
+    async def __aexit__(self, *exc):
+        return False
+
+
+class _FakeQuery:
+    def __init__(self, table_name, rows, log):
+        self.table_name = table_name
+        self.rows = rows
+        self.log = log
+        self.filters = {}
+        self._limit = None
+
+    def select(self, *_args, **_kwargs):
+        return self
+
+    def eq(self, column, value):
+        self.filters[column] = value
+        return self
+
+    def is_(self, column, value):
+        self.filters[f"is_{column}"] = value
+        return self
+
+    def contains(self, column, values):
+        self.filters[f"contains_{column}"] = list(values)
+        return self
+
+    def overlaps(self, column, values):
+        self.filters[f"overlaps_{column}"] = list(values)
+        return self
+
+    def ilike(self, column, value):
+        self.filters[f"ilike_{column}"] = value
+        return self
+
+    def limit(self, n):
+        self._limit = n
+        return self
+
+    def execute(self):
+        self.log.append((self.table_name, dict(self.filters)))
+        if self.table_name != "food_nutrition_overrides":
+            return _FakeResult([])
+
+        matched = [r for r in self.rows if r.get("is_active", True)]
+
+        if self.filters.get("is_region") == "null":
+            matched = [r for r in matched if r.get("region") is None]
+
+        if "food_name_normalized" in self.filters:
+            wanted = self.filters["food_name_normalized"]
+            matched = [r for r in matched if r["food_name_normalized"] == wanted]
+
+        wanted_variants = (
+            self.filters.get("contains_variant_names")
+            or self.filters.get("overlaps_variant_names")
+        )
+        if wanted_variants is not None:
+            wanted_set = {v.lower() for v in wanted_variants}
+            matched = [
+                r for r in matched
+                if wanted_set & {v.lower() for v in (r.get("variant_names") or [])}
+            ]
+
+        if self._limit is not None:
+            matched = matched[: self._limit]
+        return _FakeResult(matched)
+
+
+class _FakeSyncClient:
+    def __init__(self, rows, log):
+        self.rows = rows
+        self.log = log
+
+    def table(self, name):
+        return _FakeQuery(name, self.rows, self.log)
+
+
+class FakeSupabase:
+    """Stand-in for core.supabase_client.get_supabase()'s return value."""
+
+    def __init__(self, rows=None, trigram_rows=None):
+        self.rows = list(rows or [])
+        self.trigram_rows = list(trigram_rows or [])
+        self.queries = []  # [(table, filters), ...]
+        self.client = _FakeSyncClient(self.rows, self.queries)
+
+    def get_managed_session(self):
+        return _FakeManagedSession(self.trigram_rows)
 
 
 # ================================================================
@@ -66,28 +241,49 @@ APPLE_DB_RESULT = {
 # ================================================================
 
 class TestFoodDatabaseLookupService:
-    """Unit tests for FoodDatabaseLookupService with mocked Supabase RPC."""
+    """Unit tests for FoodDatabaseLookupService against a mocked override table.
+
+    (Was: "with mocked Supabase RPC" — the RPC tier no longer exists; see the
+    ARCHITECTURE NOTE at the top of this module.)
+    """
 
     @pytest.fixture
-    def mock_food_db_service(self):
-        """Create a FoodDatabaseLookupService with mocked Supabase."""
-        with patch("services.food_database_lookup_service.get_supabase") as mock_get_sb:
-            mock_client = MagicMock()
-            mock_get_sb.return_value = MagicMock(client=mock_client)
+    def make_service(self):
+        """Build a FoodDatabaseLookupService wired to a fake override table.
+
+        The service reaches Supabase through THREE bindings — the module-level
+        `get_supabase` in each helper module plus a function-local
+        `from core.supabase_client import get_supabase` re-import inside
+        `_check_override` / `batch_lookup_foods` — so all of them are patched.
+        """
+        patches = []
+
+        def _make(rows=None, trigram_rows=None):
+            fake_sb = FakeSupabase(rows=rows, trigram_rows=trigram_rows)
+            for target in (
+                "core.supabase_client.get_supabase",
+                "services.food_database_lookup_service_helpers.get_supabase",
+                "services.food_database_lookup_service_helpers_part2.get_supabase",
+            ):
+                p = patch(target, return_value=fake_sb)
+                p.start()
+                patches.append(p)
 
             from services.food_database_lookup_service import FoodDatabaseLookupService
             service = FoodDatabaseLookupService()
             service._cache.clear()
-            yield service, mock_client
+            service._overrides.clear()
+            return service, fake_sb
+
+        yield _make
+
+        for p in patches:
+            p.stop()
 
     @pytest.mark.asyncio
-    async def test_lookup_single_food_success(self, mock_food_db_service):
-        """RPC returns chicken breast -> returns per-100g nutrition dict."""
-        service, mock_client = mock_food_db_service
-
-        mock_execute = MagicMock()
-        mock_execute.data = [CHICKEN_BREAST_RPC_ROW]
-        mock_client.rpc.return_value.execute.return_value = mock_execute
+    async def test_lookup_single_food_success(self, make_service):
+        """Override table holds chicken breast -> returns per-100g nutrition dict."""
+        service, fake_sb = make_service(rows=[CHICKEN_BREAST_OVERRIDE_ROW])
 
         result = await service.lookup_single_food("chicken breast")
 
@@ -97,45 +293,46 @@ class TestFoodDatabaseLookupService:
         assert result["carbs_per_100g"] == 0.0
         assert result["fat_per_100g"] == 3.6
         assert result["fiber_per_100g"] == 0.0
-        mock_client.rpc.assert_called_once_with(
-            "search_food_database",
-            {"search_query": "chicken breast", "result_limit": 1, "result_offset": 0},
-        )
+        # Replaces the old `rpc.assert_called_once_with("search_food_database", ...)`:
+        # the name must be resolved by exact lookup on the overrides table.
+        assert (
+            "food_nutrition_overrides",
+            {"is_active": True, "food_name_normalized": "chicken breast"},
+        ) in fake_sb.queries
 
     @pytest.mark.asyncio
-    async def test_lookup_single_food_no_match(self, mock_food_db_service):
-        """RPC returns empty -> returns None."""
-        service, mock_client = mock_food_db_service
-
-        mock_execute = MagicMock()
-        mock_execute.data = []
-        mock_client.rpc.return_value.execute.return_value = mock_execute
+    async def test_lookup_single_food_no_match(self, make_service):
+        """Override table has no row for the name -> returns None."""
+        service, _fake_sb = make_service(rows=[CHICKEN_BREAST_OVERRIDE_ROW])
 
         result = await service.lookup_single_food("xyzfoobar")
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_lookup_single_food_poor_match(self, mock_food_db_service):
-        """RPC returns unrelated food (low word overlap) -> _is_good_match rejects -> None."""
-        service, mock_client = mock_food_db_service
+    async def test_lookup_single_food_poor_match(self, make_service):
+        """Fuzzy phase surfaces an unrelated food (no word overlap) -> gate rejects -> None.
 
-        mock_execute = MagicMock()
-        mock_execute.data = [{"name": "Cinnabon Pudding", "calories_per_100g": 200,
-                              "protein_per_100g": 3, "carbs_per_100g": 30,
-                              "fat_per_100g": 8, "fiber_per_100g": 0}]
-        mock_client.rpc.return_value.execute.return_value = mock_execute
+        Was: "_is_good_match rejects". The word-overlap helper is gone; the
+        trigram/fuzzy candidate now goes through services.food_match_gate, which
+        classifies "Cinnabon Pudding" for query "chicken biryani" as tier D
+        (coverage 0.0) and drops it. Same guarantee: a poor DB match must never
+        be served as this food's nutrition.
+        """
+        cinnabon = _override_row(
+            "Cinnabon Pudding", "cinnabon pudding", 200, 3, 30, 8, 0,
+        )
+        cinnabon["sim"] = 0.45  # trigram similarity column returned by the SQL phase
+        service, _fake_sb = make_service(rows=[], trigram_rows=[cinnabon])
 
         result = await service.lookup_single_food("chicken biryani")
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_batch_lookup_foods_success(self, mock_food_db_service):
-        """Batch RPC returns 2 matches for biryani and naan."""
-        service, mock_client = mock_food_db_service
-
-        mock_execute = MagicMock()
-        mock_execute.data = [BIRYANI_DB_RESULT, NAAN_DB_RESULT]
-        mock_client.rpc.return_value.execute.return_value = mock_execute
+    async def test_batch_lookup_foods_success(self, make_service):
+        """Batch lookup resolves both biryani and naan from the override table."""
+        service, fake_sb = make_service(
+            rows=[BIRYANI_OVERRIDE_ROW, NAAN_OVERRIDE_ROW]
+        )
 
         result = await service.batch_lookup_foods(["Chicken Biryani", "Naan"])
 
@@ -143,20 +340,20 @@ class TestFoodDatabaseLookupService:
         assert "Naan" in result
         assert result["Chicken Biryani"]["calories_per_100g"] == 150.0
         assert result["Naan"]["calories_per_100g"] == 290.0
-        mock_client.rpc.assert_called_once_with(
-            "batch_lookup_foods",
-            {"food_names": ["Chicken Biryani", "Naan"]},
-        )
+        # Replaces the old `rpc.assert_called_once_with("batch_lookup_foods", ...)`:
+        # every requested name must be resolved against the overrides table.
+        exact_lookups = [
+            f.get("food_name_normalized")
+            for t, f in fake_sb.queries
+            if t == "food_nutrition_overrides" and "food_name_normalized" in f
+        ]
+        assert "chicken biryani" in exact_lookups
+        assert "naan" in exact_lookups
 
     @pytest.mark.asyncio
-    async def test_batch_lookup_foods_partial_match(self, mock_food_db_service):
+    async def test_batch_lookup_foods_partial_match(self, make_service):
         """One food matches, one doesn't -> dict with one nutrition entry and one None."""
-        service, mock_client = mock_food_db_service
-
-        mock_execute = MagicMock()
-        # Only biryani returned, naan has no match
-        mock_execute.data = [BIRYANI_DB_RESULT]
-        mock_client.rpc.return_value.execute.return_value = mock_execute
+        service, _fake_sb = make_service(rows=[BIRYANI_OVERRIDE_ROW])
 
         result = await service.batch_lookup_foods(["Chicken Biryani", "Mystery Food 12345"])
 
@@ -165,100 +362,184 @@ class TestFoodDatabaseLookupService:
         assert result["Mystery Food 12345"] is None
 
     @pytest.mark.asyncio
-    async def test_batch_lookup_foods_empty_list(self, mock_food_db_service):
-        """Empty input -> returns empty dict."""
-        service, mock_client = mock_food_db_service
+    async def test_batch_lookup_foods_empty_list(self, make_service):
+        """Empty input -> returns empty dict, no DB query at all."""
+        service, fake_sb = make_service(rows=[BIRYANI_OVERRIDE_ROW])
 
         result = await service.batch_lookup_foods([])
         assert result == {}
-        mock_client.rpc.assert_not_called()
+        assert fake_sb.queries == []
 
     @pytest.mark.asyncio
-    async def test_cache_hit(self, mock_food_db_service):
-        """Second call uses cache, RPC called only once."""
-        service, mock_client = mock_food_db_service
-
-        mock_execute = MagicMock()
-        mock_execute.data = [CHICKEN_BREAST_RPC_ROW]
-        mock_client.rpc.return_value.execute.return_value = mock_execute
+    async def test_cache_hit(self, make_service):
+        """Second call uses cache, the DB is queried only once."""
+        service, fake_sb = make_service(rows=[CHICKEN_BREAST_OVERRIDE_ROW])
 
         result1 = await service.lookup_single_food("chicken breast")
+        queries_after_first = len(fake_sb.queries)
         result2 = await service.lookup_single_food("chicken breast")
 
         assert result1 == result2
         assert result1["calories_per_100g"] == 165
-        # RPC should only be called once
-        assert mock_client.rpc.call_count == 1
+        assert queries_after_first >= 1
+        # Second lookup must be served from cache — no additional DB round trip.
+        assert len(fake_sb.queries) == queries_after_first
 
     @pytest.mark.asyncio
-    async def test_cache_expiry(self, mock_food_db_service):
+    async def test_cache_expiry(self, make_service):
         """After TTL expires, second call re-queries the database."""
-        service, mock_client = mock_food_db_service
-
-        mock_execute = MagicMock()
-        mock_execute.data = [CHICKEN_BREAST_RPC_ROW]
-        mock_client.rpc.return_value.execute.return_value = mock_execute
+        service, fake_sb = make_service(rows=[CHICKEN_BREAST_OVERRIDE_ROW])
 
         # First call
         await service.lookup_single_food("chicken breast")
-        assert mock_client.rpc.call_count == 1
+        queries_after_first = len(fake_sb.queries)
+        assert queries_after_first >= 1
 
-        # Simulate cache expiry by manipulating the cached timestamp
+        # Simulate cache expiry by manipulating the cached timestamp.
+        # The in-memory override dict is a second cache layer in front of the DB,
+        # so it has to be expired too for the lookup to hit the table again.
         cache_key = "lookup:chicken breast"
-        if cache_key in service._cache:
-            _, data = service._cache[cache_key]
-            service._cache[cache_key] = (time.time() - service._cache_ttl - 1, data)
+        assert cache_key in service._cache
+        _, data = service._cache[cache_key]
+        service._cache[cache_key] = (time.time() - service._cache_ttl - 1, data)
+        service._overrides.clear()
 
         # Second call should re-query
         await service.lookup_single_food("chicken breast")
-        assert mock_client.rpc.call_count == 2
+        assert len(fake_sb.queries) > queries_after_first
 
 
 # ================================================================
-# CLASS 2: TestIsGoodMatch
+# CLASS 2: TestMatchQualityGate  (was TestIsGoodMatch)
 # ================================================================
 
-class TestIsGoodMatch:
-    """Unit tests for the static _is_good_match method."""
+async def _gate_accepts(query: str, result_name: str) -> bool:
+    """Does the current match-quality gate accept `result_name` for `query`?
 
-    @pytest.fixture
-    def service_cls(self):
-        from services.food_database_lookup_service import FoodDatabaseLookupService
-        return FoodDatabaseLookupService
+    Direct replacement for the retired
+    `FoodDatabaseLookupService._is_good_match(query, result_name)`.
+    `use_gemini=False` pins the deterministic core of the gate (tier A/B/C/D
+    classification) — the same fallback path production takes when Gemini is
+    unavailable — so these stay pure unit tests with no network call.
+    """
+    from services.food_match_gate import accept_tier
+    result = await accept_tier(query, [{"display_name": result_name}], use_gemini=False)
+    return bool(result.rows)
 
-    def test_exact_match(self, service_cls):
-        """'chicken breast' vs 'Chicken Breast, raw' -> True."""
-        assert service_cls._is_good_match("chicken breast", "Chicken Breast, raw") is True
 
-    def test_partial_match(self, service_cls):
-        """'chicken biryani' vs 'Chicken biryani, cooked' -> True."""
-        assert service_cls._is_good_match("chicken biryani", "Chicken biryani, cooked") is True
+class TestMatchQualityGate:
+    """Match-quality filtering for DB candidates.
 
-    def test_poor_match(self, service_cls):
-        """'chicken biryani' vs 'Cinnabon Pudding' -> False."""
-        assert service_cls._is_good_match("chicken biryani", "Cinnabon Pudding") is False
+    Was `TestIsGoodMatch`, testing the static
+    `FoodDatabaseLookupService._is_good_match` (restaurant-brand skip + 50%
+    word-overlap ratio). That helper was deleted with the food_database RPC tier
+    (commit e1fca962); the guarantee it protected — an unrelated DB row must
+    never be served as the user's food — now lives in `services.food_match_gate`,
+    which the lookup service calls at every fuzzy/variant step.
 
-    def test_restaurant_brand_skip(self, service_cls):
-        """'taco bell burrito' -> False (restaurant brand detected)."""
-        assert service_cls._is_good_match("taco bell burrito", "Burrito, bean and cheese") is False
+    Same eight cases, same accept/reject expectations, except the two noted
+    below where the contract genuinely changed.
+    """
 
-    def test_mcdonalds_brand_skip(self, service_cls):
-        """'mcdonalds big mac' -> False."""
-        assert service_cls._is_good_match("mcdonalds big mac", "Big Mac, fast food") is False
+    @pytest.mark.asyncio
+    async def test_exact_match(self):
+        """'chicken breast' vs 'Chicken Breast, raw' -> accepted."""
+        assert await _gate_accepts("chicken breast", "Chicken Breast, raw") is True
 
-    def test_short_query_words_skipped(self, service_cls):
-        """Short words (<3 chars) are excluded from match ratio calculation."""
-        # "an egg" -> only "egg" is considered (>= 3 chars), "an" is dropped
-        # "Egg, whole, raw" contains "egg" -> match
-        assert service_cls._is_good_match("an egg", "Egg, whole, raw") is True
+    @pytest.mark.asyncio
+    async def test_partial_match(self):
+        """'chicken biryani' vs 'Chicken biryani, cooked' -> accepted."""
+        assert await _gate_accepts("chicken biryani", "Chicken biryani, cooked") is True
 
-    def test_all_short_words_returns_false(self, service_cls):
-        """Query with only short words (<3 chars) -> False (no significant words)."""
-        assert service_cls._is_good_match("a b", "Apple, raw") is False
+    @pytest.mark.asyncio
+    async def test_poor_match(self):
+        """'chicken biryani' vs 'Cinnabon Pudding' -> rejected."""
+        assert await _gate_accepts("chicken biryani", "Cinnabon Pudding") is False
 
-    def test_empty_query(self, service_cls):
-        """Empty query returns False."""
-        assert service_cls._is_good_match("", "Chicken Breast") is False
+    @pytest.mark.asyncio
+    async def test_restaurant_brand_skip(self):
+        """'taco bell burrito' vs a generic burrito row -> rejected.
+
+        Reason changed, outcome did not. `_is_good_match` skipped ANY query
+        containing a restaurant brand outright (the old generic food_database had
+        no branded items). Restaurant items are now first-class rows
+        (`food_nutrition_overrides.restaurant_name`, `_restaurant_variant_match`),
+        so a blanket brand skip would be wrong; instead the gate rejects this
+        candidate because the query's brand words ('taco', 'bell') are not covered
+        by the generic row — coverage 1/3, tier D.
+        """
+        assert await _gate_accepts("taco bell burrito", "Burrito, bean and cheese") is False
+
+    @pytest.mark.asyncio
+    async def test_mcdonalds_brand_skip(self):
+        """'mcdonalds big mac' vs an unbranded 'Big Mac, fast food' row -> rejected.
+
+        The brand word 'mcdonalds' is uncovered by the candidate, so the gate
+        drops it (tier D) rather than silently serving an unbranded row.
+        """
+        assert await _gate_accepts("mcdonalds big mac", "Big Mac, fast food") is False
+
+    @pytest.mark.asyncio
+    async def test_short_query_words_skipped(self):
+        """Short/stop words are excluded from the coverage calculation.
+
+        "an egg" -> content word 'egg' only ("an" is dropped), which
+        'Egg, whole, raw' covers -> accepted.
+        """
+        assert await _gate_accepts("an egg", "Egg, whole, raw") is True
+
+    @pytest.mark.asyncio
+    async def test_all_short_words_returns_false(self):
+        """A query with no significant words must not resolve to a food.
+
+        Contract change: `_is_good_match("a b", "Apple, raw")` returned False (no
+        significant words -> reject). The gate no longer rejects here — a query
+        that collapses to zero content words can't discriminate between
+        candidates, so `accept_tier` passes rows through untouched (see its
+        `if not content:` branch). The guarantee is preserved one level up
+        instead: no override row can be reached for such a query, so the SERVICE
+        still returns no food. That end-to-end guarantee is what is asserted here,
+        plus the gate's documented current behaviour.
+        """
+        from services.food_match_gate import content_words, accept_tier
+
+        # Gate's current behaviour: zero content words -> nothing to discriminate.
+        assert content_words("a b") == []
+        gate = await accept_tier("a b", [{"display_name": "Apple, raw"}], use_gemini=False)
+        assert [r["display_name"] for r in gate.rows] == ["Apple, raw"]
+
+        # The guarantee the original test protected, asserted where it now lives:
+        # the lookup service resolves nothing for a query with no significant words.
+        fake_sb = FakeSupabase(rows=[APPLE_OVERRIDE_ROW])
+        with patch("core.supabase_client.get_supabase", return_value=fake_sb), \
+                patch("services.food_database_lookup_service_helpers.get_supabase",
+                      return_value=fake_sb), \
+                patch("services.food_database_lookup_service_helpers_part2.get_supabase",
+                      return_value=fake_sb):
+            from services.food_database_lookup_service import FoodDatabaseLookupService
+            service = FoodDatabaseLookupService()
+            assert await service.lookup_single_food("a b") is None
+
+    @pytest.mark.asyncio
+    async def test_empty_query(self):
+        """An empty query must not resolve to a food.
+
+        Contract change, same shape as test_all_short_words_returns_false:
+        `_is_good_match("", "Chicken Breast")` returned False. The gate itself now
+        treats a contentless query as trivially acceptable, so the guarantee is
+        asserted at the service: `lookup_single_food("")` short-circuits to None
+        and never touches the DB.
+        """
+        fake_sb = FakeSupabase(rows=[CHICKEN_BREAST_OVERRIDE_ROW])
+        with patch("core.supabase_client.get_supabase", return_value=fake_sb), \
+                patch("services.food_database_lookup_service_helpers.get_supabase",
+                      return_value=fake_sb), \
+                patch("services.food_database_lookup_service_helpers_part2.get_supabase",
+                      return_value=fake_sb):
+            from services.food_database_lookup_service import FoodDatabaseLookupService
+            service = FoodDatabaseLookupService()
+            assert await service.lookup_single_food("") is None
+            assert fake_sb.queries == []
 
 
 # ================================================================

@@ -727,38 +727,86 @@ class TestGetBaselines:
 # ============ 1RM Calculation Tests ============
 
 class Test1RMCalculation:
-    """Tests for the 1RM calculation helper function."""
+    """
+    Tests for Brzycki 1RM estimation.
+
+    RETIRED TARGET: these tests originally called `api.v1.calibration._calculate_estimated_1rm`.
+    That helper was deleted with the whole calibration feature in 8f0f6f56 (2026-02-03).
+    The Brzycki engine it implemented did NOT die with it — it survives as
+    `StrengthCalculatorService.calculate_1rm` / `.calculate_1rm_average`, which is what
+    now feeds strength scores, PRs and smart-weight suggestions. These tests are therefore
+    re-pointed at the surviving engine with their original bounds intact: the guarantee
+    they protect (Brzycki must be correct at normal reps and must never blow up at
+    degenerate reps) is unchanged, only the address of the code that owes it.
+    """
 
     def test_brzycki_formula_10_reps(self):
         """Test Brzycki formula with 10 reps."""
-        from api.v1.calibration import _calculate_estimated_1rm
+        from services.strength_calculator_service import StrengthCalculatorService
 
         # 135 lbs x 10 reps should give approximately 180 lbs 1RM
-        result = _calculate_estimated_1rm(135, 10)
+        result = StrengthCalculatorService.calculate_1rm(135, 10, formula="brzycki").estimated_1rm
         assert 175 <= result <= 185
 
     def test_brzycki_formula_1_rep(self):
         """Test Brzycki formula with 1 rep (should equal weight)."""
-        from api.v1.calibration import _calculate_estimated_1rm
+        from services.strength_calculator_service import StrengthCalculatorService
 
-        result = _calculate_estimated_1rm(200, 1)
+        result = StrengthCalculatorService.calculate_1rm(200, 1).estimated_1rm
         assert result == 200.0
 
     def test_brzycki_formula_high_reps(self):
-        """Test Brzycki formula with very high reps (capped at 36)."""
-        from api.v1.calibration import _calculate_estimated_1rm
+        """
+        Test Brzycki formula with very high reps (rep count clamped to the formula's
+        supported range).
+
+        REGRESSION GATE for a real production bug. Brzycki (1RM = W x 36/(37-R)) has a
+        pole at R=37: the surviving StrengthCalculatorService raised ZeroDivisionError at
+        exactly 37 reps and returned a NEGATIVE 1RM at 38+. That is reachable from real
+        user data — personal_records_service.check_for_rep_pr feeds bodyweight rep sets
+        (push-ups / sit-ups / air squats, routinely 40+ reps) straight into
+        calculate_1rm_average. The rep clamp that the retired calibration helper had was
+        never carried over. Original bounds (>0, <10000) preserved verbatim; the pole and
+        the sign inversion are pinned explicitly so the guard cannot be dropped again.
+        """
+        from services.strength_calculator_service import StrengthCalculatorService
 
         # Should not return infinity or unrealistic values
-        result = _calculate_estimated_1rm(50, 40)
+        result = StrengthCalculatorService.calculate_1rm(50, 40).estimated_1rm
         assert result > 0
         assert result < 10000  # Reasonable upper bound
 
-    def test_brzycki_formula_zero_values(self):
-        """Test Brzycki formula with zero values."""
-        from api.v1.calibration import _calculate_estimated_1rm
+        # The pole itself (37 reps) must not divide by zero, and past it the estimate
+        # must stay positive — a negative 1RM silently corrupts PRs and strength scores.
+        for reps in (36, 37, 38, 50, 100):
+            single = StrengthCalculatorService.calculate_1rm(50, reps).estimated_1rm
+            averaged = StrengthCalculatorService.calculate_1rm_average(50, reps)
+            assert single > 0, f"calculate_1rm(50, {reps}) returned {single}"
+            assert single < 10000, f"calculate_1rm(50, {reps}) returned {single}"
+            assert averaged > 0, f"calculate_1rm_average(50, {reps}) returned {averaged}"
+            assert averaged < 10000, f"calculate_1rm_average(50, {reps}) returned {averaged}"
 
-        assert _calculate_estimated_1rm(0, 10) == 0.0
-        assert _calculate_estimated_1rm(100, 0) == 0.0
+    def test_brzycki_formula_zero_values(self):
+        """
+        Test Brzycki formula with zero values.
+
+        BEHAVIOR CHANGE (deliberate, not a weakening): the retired calibration helper
+        returned 0.0 for BOTH zero weight and zero reps. The surviving engine keeps
+        `zero weight -> 0.0`, but for zero reps it returns the weight back with
+        `confidence == 0.0` — an explicit "cannot estimate" sentinel rather than a 0.0
+        that a caller could mistake for a real 1RM. That contract is deliberate and is
+        independently pinned by tests/test_strength_calculator.py::test_calculate_1rm_zero_reps
+        and tests/test_smart_weights.py::test_zero_reps_handled, so it is asserted here as
+        the current intended behavior. The original intent — degenerate input must never
+        produce a garbage 1RM — is preserved, with exact equality on both branches.
+        """
+        from services.strength_calculator_service import StrengthCalculatorService
+
+        assert StrengthCalculatorService.calculate_1rm(0, 10).estimated_1rm == 0.0
+
+        zero_reps = StrengthCalculatorService.calculate_1rm(100, 0)
+        assert zero_reps.estimated_1rm == 100.0
+        assert zero_reps.confidence == 0.0  # sentinel: no estimate was made
 
 
 # ============ Integration Tests ============

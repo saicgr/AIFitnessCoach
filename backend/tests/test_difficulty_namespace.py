@@ -35,10 +35,58 @@ def test_legacy_fitness_level_normalized(legacy, expected):
     assert _coerce_workout_difficulty(legacy) == expected
 
 
-@pytest.mark.parametrize("bad", ["bogus", "extreme", "ultra", "novice", "expert"])
+@pytest.mark.parametrize("synonym,expected", [
+    ("moderate", "medium"),
+    ("normal", "medium"),
+    ("intense", "hard"),
+    ("extreme", "hell"),
+    ("Extreme", "hell"),
+    ("INSANE", "hell"),
+])
+def test_ai_synonym_coerced_into_namespace(synonym, expected):
+    """
+    Gemini-authored difficulty synonyms are COERCED into the namespace, not rejected.
+
+    RETIRED ASSERTION: `test_unknown_value_rejected` used to list "extreme" among
+    the values `_coerce_workout_difficulty` must raise ValueError on.
+
+    WHY IT WAS RETIRED: commit d270653e deliberately added a synonym map
+    (moderate/normal/intense/extreme/insane) to `_FITNESS_LEVEL_TO_DIFFICULTY`.
+    Gemini drifts into these words when it authors a workout, and because Workout
+    is a *response* model, raising on read meant one bad legacy row 500'd the whole
+    `/workouts/` list endpoint. Coercing is now the intended behavior.
+
+    WHAT THIS PROTECTS: the same guarantee the rejection did — a fitness-level or
+    AI-synonym token must never LEAK INTO the workout-difficulty namespace as-is.
+    It now has to come out mapped onto {easy, medium, hard, hell}, which is what
+    the 2026-05-08 regression (difficulty="beginner" on 145/428 rows) violated.
+    """
+    result = _coerce_workout_difficulty(synonym)
+    assert result == expected
+    assert result in ALLOWED_WORKOUT_DIFFICULTIES
+
+
+@pytest.mark.parametrize("bad", ["bogus", "ultra", "novice", "expert"])
 def test_unknown_value_rejected(bad):
     with pytest.raises(ValueError):
         _coerce_workout_difficulty(bad)
+
+
+def test_every_coercion_target_stays_inside_the_namespace():
+    """No entry in the coercion map may map onto a value outside {easy,medium,hard,hell}.
+
+    This is the invariant the 2026-05-08 regression broke. Guarding the map itself
+    (not just the handful of tokens spelled out above) means a future synonym added
+    to `_FITNESS_LEVEL_TO_DIFFICULTY` cannot reintroduce a leak like "beginner".
+    """
+    from models.schemas import _FITNESS_LEVEL_TO_DIFFICULTY
+
+    for token, target in _FITNESS_LEVEL_TO_DIFFICULTY.items():
+        assert target in ALLOWED_WORKOUT_DIFFICULTIES, (
+            f"coercion map sends {token!r} to {target!r}, which is outside the "
+            f"workout-difficulty namespace"
+        )
+        assert _coerce_workout_difficulty(token) in ALLOWED_WORKOUT_DIFFICULTIES
 
 
 def test_none_passthrough():

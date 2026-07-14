@@ -253,12 +253,20 @@ class TestApply1RMWeightsToExercises:
 
 
 class TestGetUser1RMData:
-    """Tests for get_user_1rm_data function."""
+    """Tests for get_user_1rm_data function.
+
+    Patch target note: these helpers are DEFINED in
+    `api.v1.workouts.user_preference_utils` and merely re-exported by
+    `api.v1.workouts.utils`. Patching `api.v1.workouts.utils.get_supabase_db`
+    therefore has no effect on them (they resolve `get_supabase_db` from their
+    own module globals) — the tests were silently hitting the real DB path and
+    falling into the except-branch defaults. Patch the defining module.
+    """
 
     @pytest.mark.asyncio
     async def test_returns_empty_dict_when_no_data(self):
         """Test that empty dict is returned when no 1RM data exists."""
-        with patch('api.v1.workouts.utils.get_supabase_db') as mock_db:
+        with patch('api.v1.workouts.user_preference_utils.get_supabase_db') as mock_db:
             mock_client = MagicMock()
             mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = None
             mock_db.return_value.client = mock_client
@@ -269,7 +277,7 @@ class TestGetUser1RMData:
     @pytest.mark.asyncio
     async def test_returns_1rm_data_normalized(self):
         """Test that 1RM data is returned with lowercase exercise names."""
-        with patch('api.v1.workouts.utils.get_supabase_db') as mock_db:
+        with patch('api.v1.workouts.user_preference_utils.get_supabase_db') as mock_db:
             mock_client = MagicMock()
             mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
                 {"exercise_name": "Bench Press", "one_rep_max_kg": 100.0, "source": "manual", "confidence": 1.0},
@@ -291,7 +299,7 @@ class TestGetUserTrainingIntensity:
     @pytest.mark.asyncio
     async def test_returns_default_75_when_not_set(self):
         """Test that default 75% is returned when not set."""
-        with patch('api.v1.workouts.utils.get_supabase_db') as mock_db:
+        with patch('api.v1.workouts.user_preference_utils.get_supabase_db') as mock_db:
             mock_client = MagicMock()
             mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
                 {"training_intensity_percent": None}
@@ -304,7 +312,7 @@ class TestGetUserTrainingIntensity:
     @pytest.mark.asyncio
     async def test_returns_user_set_intensity(self):
         """Test that user's set intensity is returned."""
-        with patch('api.v1.workouts.utils.get_supabase_db') as mock_db:
+        with patch('api.v1.workouts.user_preference_utils.get_supabase_db') as mock_db:
             mock_client = MagicMock()
             mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
                 {"training_intensity_percent": 80}
@@ -317,7 +325,7 @@ class TestGetUserTrainingIntensity:
     @pytest.mark.asyncio
     async def test_clamps_intensity_to_valid_range(self):
         """Test that intensity outside 50-100 is clamped."""
-        with patch('api.v1.workouts.utils.get_supabase_db') as mock_db:
+        with patch('api.v1.workouts.user_preference_utils.get_supabase_db') as mock_db:
             mock_client = MagicMock()
             # Test below 50
             mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [

@@ -8,7 +8,8 @@ Tests the cardio service's HR zone calculation functions including:
 - Fitness age calculation
 """
 import pytest
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from services.cardio.hr_zones import (
     calculate_max_hr,
@@ -182,26 +183,56 @@ class TestCalculateHRZones:
 
 
 class TestCalculateAgeFromDOB:
-    """Tests for age calculation from date of birth."""
+    """Tests for age calculation from date of birth.
+
+    STALE CALL FIXED: these tests used to call ``calculate_age_from_dob(dob)``
+    with no second argument and compare against the *server's* ``date.today()``.
+    ``calculate_age_from_dob`` now takes a required ``timezone_str`` and resolves
+    "today" in the USER's timezone (``get_user_today``), because a server-local
+    "today" makes a user's age (and therefore their max-HR / training zones) flip
+    a day early or late on their birthday depending on which region Render runs in.
+
+    No assertion was weakened: each test still pins the exact age. They now
+    derive their own reference "today" in the same timezone they pass in
+    (computed independently via ``zoneinfo``, not by calling back into the
+    module under test).
+    """
+
+    # Timezones spanning the full UTC-11..UTC+14 range, so a regression back to a
+    # server-local "today" would break these whenever the local dates diverge.
+    TIMEZONES = ["UTC", "America/Chicago", "Pacific/Kiritimati", "Pacific/Niue"]
+
+    @staticmethod
+    def _today_in(timezone_str: str) -> date:
+        """Today's date in ``timezone_str``, computed independently of hr_zones."""
+        return datetime.now(ZoneInfo(timezone_str)).date()
+
+    @staticmethod
+    def _birthday_years_ago(today: date, years: int) -> date:
+        """``today`` shifted back ``years`` years (Feb-29 safe)."""
+        try:
+            return today.replace(year=today.year - years)
+        except ValueError:  # Feb 29 -> non-leap target year
+            return today.replace(year=today.year - years, day=28)
 
     def test_age_calculation_simple(self):
         """Test simple age calculation."""
-        # If today is 2024-12-30 and DOB is 1994-01-15, age should be 30
+        # DOB 1994-01-15: anyone born then is at least 30 by 2024-01-15 onwards.
         dob = date(1994, 1, 15)
-        # This test will vary based on current date
-        age = calculate_age_from_dob(dob)
+        age = calculate_age_from_dob(dob, "America/Chicago")
         assert age >= 30  # Should be at least 30
 
     def test_age_calculation_birthday_not_yet(self):
         """Test age when birthday hasn't occurred this year."""
-        today = date.today()
+        tz = "America/Chicago"
+        today = self._today_in(tz)
         # Set DOB to be later this year (or next month if December)
         if today.month < 12:
             future_birthday = date(today.year - 30, today.month + 1, 15)
         else:
             future_birthday = date(today.year - 30, 1, 15)
 
-        age = calculate_age_from_dob(future_birthday)
+        age = calculate_age_from_dob(future_birthday, tz)
         # Should be 29 if birthday is in the future this year
         if today.month < 12:
             assert age == 29
@@ -210,10 +241,31 @@ class TestCalculateAgeFromDOB:
 
     def test_age_calculation_same_day(self):
         """Test age when today is the birthday."""
-        today = date.today()
-        dob = date(today.year - 25, today.month, today.day)
-        age = calculate_age_from_dob(dob)
+        tz = "America/Chicago"
+        today = self._today_in(tz)
+        dob = self._birthday_years_ago(today, 25)
+        age = calculate_age_from_dob(dob, tz)
         assert age == 25
+
+    def test_age_is_resolved_in_the_users_timezone(self):
+        """Age must be computed against the USER's today, not the server's.
+
+        This is the guarantee the ``timezone_str`` parameter exists for: on the
+        user's birthday, each timezone must independently report the exact age,
+        even when the server's local date is a different calendar day.
+        """
+        for tz in self.TIMEZONES:
+            today = self._today_in(tz)
+
+            # Birthday is today in this timezone -> exactly 30.
+            dob = self._birthday_years_ago(today, 30)
+            assert calculate_age_from_dob(dob, tz) == 30, tz
+
+            # Birthday is Dec 31 (never Feb 29, so always representable):
+            # not reached yet -> 29, unless today already IS Dec 31 -> 30.
+            dob_year_end = date(today.year - 30, 12, 31)
+            expected = 30 if (today.month, today.day) == (12, 31) else 29
+            assert calculate_age_from_dob(dob_year_end, tz) == expected, tz
 
 
 class TestEstimateVO2Max:

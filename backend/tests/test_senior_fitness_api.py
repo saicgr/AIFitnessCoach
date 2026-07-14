@@ -25,6 +25,26 @@ MOCK_USER_ID = "test-user-senior-123"
 MOCK_WORKOUT_ID = "test-workout-456"
 
 
+@pytest.fixture(autouse=True)
+def override_auth():
+    """Authenticate every request in this module as MOCK_USER_ID.
+
+    Every `/api/v1/senior-fitness/*` route depends on `get_current_user`
+    (api/v1/senior_fitness.py). Without an override the JWT check rejects the
+    request with 401 before any endpoint logic runs, so the mobility/balance
+    library tests asserted `status_code in [200, 404]` against a 401 and failed.
+    """
+    from main import app
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": MOCK_USER_ID,
+        "email": "senior@example.com",
+    }
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
+
 @pytest.fixture
 def mock_supabase():
     """Create a mock Supabase client."""
@@ -700,83 +720,115 @@ class TestIsSeniorCheck:
 # =============================================================================
 
 class TestMobilityExercises:
-    """Tests for GET /senior-fitness/mobility-exercises"""
+    """Tests for GET /senior-fitness/mobility-exercises
 
-    def test_get_mobility_exercises_success(self, client, mock_supabase):
+    These endpoints serve a STATIC curated library (see
+    `get_mobility_exercise_library()` / `get_balance_exercise_library()` in
+    api/v1/senior_fitness.py) — they never touch Supabase — so with auth in
+    place the only correct outcome is 200 with the full library. 404 is no
+    longer accepted (it used to be, which let a hard 401 slip past the old
+    `in [200, 404]` assertion... except it didn't: that's exactly how these
+    tests were failing).
+
+    Supported filter is `target_area` (mobility) / `difficulty` (balance);
+    there is no `count` parameter in the API contract, and FastAPI ignores
+    unknown query params — asserted explicitly below.
+    """
+
+    def test_get_mobility_exercises_success(self, client):
         """Test getting mobility exercises."""
-        mock_db, mock_client = mock_supabase
+        from api.v1.senior_fitness import get_mobility_exercise_library
 
-        with patch("services.senior_workout_service.get_supabase_db") as mock_get_db:
-            mock_get_db.return_value = mock_db
+        response = client.get("/api/v1/senior-fitness/mobility-exercises")
 
-            mock_data = [
-                generate_mock_mobility_exercise("Cat-Cow Stretch"),
-                generate_mock_mobility_exercise("Hip Circles"),
-                generate_mock_mobility_exercise("Arm Circles"),
-            ]
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body) == len(get_mobility_exercise_library())
+        assert len(body) > 0
+        for exercise in body:
+            assert exercise["id"]
+            assert exercise["name"]
+            assert exercise["target_areas"]
+            assert exercise["duration_seconds"] > 0
+            assert exercise["difficulty"] in ("easy", "moderate")
 
-            mock_table = MagicMock()
-            mock_client.table.return_value = mock_table
-            mock_table.select.return_value = mock_table
-            mock_table.eq.return_value = mock_table
-            mock_table.limit.return_value = mock_table
-            mock_table.execute.return_value = MagicMock(data=mock_data)
+    def test_get_mobility_exercises_with_count(self, client):
+        """Test the mobility library under a query param the API does not define.
 
-            response = client.get("/api/v1/senior-fitness/mobility-exercises")
+        Was: passed `count=2` and accepted [200, 404] (it got 401 — no auth).
+        The API exposes no `count` filter; unknown query params are ignored, so
+        the full library must come back unchanged. The real, supported filter
+        (`target_area`) is asserted alongside it so the filtering guarantee is
+        actually covered.
+        """
+        from api.v1.senior_fitness import get_mobility_exercise_library
 
-            assert response.status_code in [200, 404]
+        full_library = get_mobility_exercise_library()
 
-    def test_get_mobility_exercises_with_count(self, client, mock_supabase):
-        """Test getting specific number of mobility exercises."""
-        mock_db, mock_client = mock_supabase
+        response = client.get(
+            "/api/v1/senior-fitness/mobility-exercises",
+            params={"count": 2}
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == len(full_library)
 
-        with patch("services.senior_workout_service.get_supabase_db") as mock_get_db:
-            mock_get_db.return_value = mock_db
-
-            mock_data = [
-                generate_mock_mobility_exercise("Cat-Cow Stretch"),
-                generate_mock_mobility_exercise("Hip Circles"),
-            ]
-
-            mock_table = MagicMock()
-            mock_client.table.return_value = mock_table
-            mock_table.select.return_value = mock_table
-            mock_table.eq.return_value = mock_table
-            mock_table.limit.return_value = mock_table
-            mock_table.execute.return_value = MagicMock(data=mock_data)
-
-            response = client.get(
-                "/api/v1/senior-fitness/mobility-exercises",
-                params={"count": 2}
-            )
-
-            assert response.status_code in [200, 404]
+        # The filter the endpoint actually implements.
+        expected_neck = [e for e in full_library if "neck" in [t.lower() for t in e["target_areas"]]]
+        filtered = client.get(
+            "/api/v1/senior-fitness/mobility-exercises",
+            params={"target_area": "neck"}
+        )
+        assert filtered.status_code == 200
+        assert len(filtered.json()) == len(expected_neck)
+        assert all("neck" in [t.lower() for t in e["target_areas"]] for e in filtered.json())
 
 
 class TestBalanceExercises:
     """Tests for GET /senior-fitness/balance-exercises"""
 
-    def test_get_balance_exercises_success(self, client, mock_supabase):
+    def test_get_balance_exercises_success(self, client):
         """Test getting balance exercises."""
-        mock_db, mock_client = mock_supabase
+        from api.v1.senior_fitness import get_balance_exercise_library
 
-        with patch("services.senior_workout_service.get_supabase_db") as mock_get_db:
-            mock_get_db.return_value = mock_db
+        response = client.get("/api/v1/senior-fitness/balance-exercises")
 
-            response = client.get("/api/v1/senior-fitness/balance-exercises")
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body) == len(get_balance_exercise_library())
+        assert len(body) > 0
+        for exercise in body:
+            assert exercise["id"]
+            assert exercise["name"]
+            assert exercise["duration_seconds"] > 0
+            assert isinstance(exercise["requires_support"], bool)
 
-            assert response.status_code in [200, 404]
+    def test_get_balance_exercises_with_count(self, client):
+        """Test the balance library under a query param the API does not define.
 
-    def test_get_balance_exercises_with_count(self, client, mock_supabase):
-        """Test getting specific number of balance exercises."""
-        mock_db, mock_client = mock_supabase
+        Same correction as the mobility case: `count` is not part of the API
+        contract (the endpoint filters by `difficulty`), unknown params are
+        ignored, and the full library must be returned. The supported
+        `difficulty` filter is asserted too.
+        """
+        from api.v1.senior_fitness import get_balance_exercise_library
+
+        full_library = get_balance_exercise_library()
 
         response = client.get(
             "/api/v1/senior-fitness/balance-exercises",
             params={"count": 1}
         )
+        assert response.status_code == 200
+        assert len(response.json()) == len(full_library)
 
-        assert response.status_code in [200, 404]
+        expected_beginner = [e for e in full_library if e["difficulty"].lower() == "beginner"]
+        filtered = client.get(
+            "/api/v1/senior-fitness/balance-exercises",
+            params={"difficulty": "beginner"}
+        )
+        assert filtered.status_code == 200
+        assert len(filtered.json()) == len(expected_beginner)
+        assert all(e["difficulty"] == "beginner" for e in filtered.json())
 
 
 # =============================================================================

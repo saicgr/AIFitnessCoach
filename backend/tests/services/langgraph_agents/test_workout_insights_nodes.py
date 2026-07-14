@@ -156,27 +156,50 @@ class TestAnalyzeWorkoutNode:
 # ============ generate_structured_insights_node tests ============
 
 
+def _valid_sections(n=3):
+    """Build n well-formed sections — the minimum the node now accepts."""
+    palette = [
+        {"icon": "🎯", "title": "Focus", "content": "Upper body power", "color": "cyan"},
+        {"icon": "💪", "title": "Volume", "content": "Heavy compound lifts", "color": "purple"},
+        {"icon": "🔋", "title": "Recovery", "content": "Protein and sleep", "color": "orange"},
+        {"icon": "🔥", "title": "Tempo", "content": "Slow the lowering", "color": "green"},
+    ]
+    return [dict(s) for s in palette[:n]]
+
+
 class TestGenerateInsightsNodeFallback:
     """
     Tests that generate_structured_insights_node returns fallback data
     instead of raising when Gemini fails.
 
     These verify the fix for the "Expected 2 sections, got 0" production error.
+
+    Contract updates since these tests were written (behavior deliberately
+    retired, tests rewritten to assert the CURRENT guarantee — the intent,
+    "a bad/absent model response must still yield a complete insight card
+    rather than an exception", is unchanged):
+
+      * Minimum section count moved 2 -> 3. The prompt now asks for "3 to 5
+        sections total" and the deterministic fallback builds exactly 3, so a
+        response with 0, 1 or 2 sections is what now triggers the fallback.
+      * Section content truncation moved 10 -> 36 words (a progressive-overload
+        sentence citing real weights/reps runs longer than a generic cue).
+      * The no-response fallback headline is "Time to get to work".
+        "Let's crush this workout!" survives only as the default for a parsed
+        dict that omits a headline, so it is asserted there instead.
+      * The Gemini seam moved: the node no longer builds its own genai.Client
+        and no longer runs its own retry loop. It calls the shared
+        services.gemini.constants.gemini_generate_with_retry helper, which
+        owns concurrency limiting + transient-error backoff. Patching
+        `nodes.genai` targeted a name the module no longer imports.
     """
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_empty_sections_returns_fallback(self, mock_settings, mock_genai):
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_empty_sections_returns_fallback(self, mock_generate):
         """When Gemini returns empty sections array, node should return fallback."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
-
-        response = _mock_gemini_response(
+        mock_generate.return_value = _mock_gemini_response(
             parsed_data={"headline": "Great Workout!", "sections": []}
         )
-        mock_client = MagicMock()
-        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
-        mock_genai.Client.return_value = mock_client
 
         state = _make_state()
         result = await generate_structured_insights_node(state)
@@ -184,192 +207,190 @@ class TestGenerateInsightsNodeFallback:
         assert "headline" in result
         assert "sections" in result
         assert "summary" in result
-        assert len(result["sections"]) == 2
+        assert len(result["sections"]) == 3
         # Headline preserved from AI response
         assert result["headline"] == "Great Workout!"
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_single_section_returns_fallback(self, mock_settings, mock_genai):
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_single_section_returns_fallback(self, mock_generate):
         """When Gemini returns only 1 section, node should return fallback."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
-
-        response = _mock_gemini_response(
-            parsed_data={
-                "headline": "Push It!",
-                "sections": [
-                    {"icon": "🎯", "title": "Focus", "content": "Test", "color": "cyan"}
-                ],
-            }
+        mock_generate.return_value = _mock_gemini_response(
+            parsed_data={"headline": "Push It!", "sections": _valid_sections(1)}
         )
-        mock_client = MagicMock()
-        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
-        mock_genai.Client.return_value = mock_client
 
         state = _make_state()
         result = await generate_structured_insights_node(state)
 
-        assert len(result["sections"]) == 2
+        assert len(result["sections"]) == 3
         assert result["headline"] == "Push It!"
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_none_response_returns_fallback(self, mock_settings, mock_genai):
-        """When Gemini returns None parsed and empty text, node should return fallback."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_two_sections_returns_fallback(self, mock_generate):
+        """2 sections is now BELOW the minimum and must also fall back.
 
+        Pins the current boundary: the node requires >= 3 sections. Two used to
+        be an acceptable response; it no longer is.
+        """
+        mock_generate.return_value = _mock_gemini_response(
+            parsed_data={"headline": "Push It!", "sections": _valid_sections(2)}
+        )
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert len(result["sections"]) == 3
+
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_none_response_returns_fallback(self, mock_generate):
+        """When Gemini returns None parsed and empty text, node should return fallback."""
         response = MagicMock()
         response.parsed = None
         response.text = ""
         response.candidates = []
-
-        mock_client = MagicMock()
-        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
-        mock_genai.Client.return_value = mock_client
+        mock_generate.return_value = response
 
         state = _make_state()
         result = await generate_structured_insights_node(state)
 
         assert "headline" in result
-        assert len(result["sections"]) == 2
+        assert len(result["sections"]) == 3
+        assert result["headline"] == "Time to get to work"
+
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_missing_headline_uses_default(self, mock_generate):
+        """A parsed response with sections but no headline gets the stock headline."""
+        mock_generate.return_value = _mock_gemini_response(
+            parsed_data={"sections": _valid_sections(3)}
+        )
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
         assert result["headline"] == "Let's crush this workout!"
+        assert len(result["sections"]) == 3
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_gemini_exception_returns_fallback(self, mock_settings, mock_genai):
-        """When Gemini throws, node should return fallback after retries."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_gemini_exception_returns_fallback(self, mock_generate):
+        """When Gemini throws, node should return fallback rather than propagate."""
+        mock_generate.side_effect = Exception("API quota exceeded")
 
-        mock_client = MagicMock()
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert "headline" in result
+        assert len(result["sections"]) == 3
+        assert result["headline"] == "Time to get to work"
+
+    @patch("asyncio.sleep", new_callable=AsyncMock)
+    @patch("services.gemini.constants.client")
+    async def test_retries_before_fallback(self, mock_client, mock_sleep):
+        """A transient Gemini error is retried, and only then does the node fall back.
+
+        The retry loop moved out of the node into the shared
+        gemini_generate_with_retry helper, so this drives the REAL helper (the
+        node's actual call path) with a patched SDK client instead of asserting
+        on a per-node retry counter that no longer exists. The helper's default
+        is max_retries=3, i.e. 1 initial attempt + 3 retries = 4 calls, after
+        which the error propagates and the node returns its fallback.
+        """
         mock_client.aio.models.generate_content = AsyncMock(
-            side_effect=Exception("API quota exceeded")
+            side_effect=Exception("429 rate limit exceeded")  # transient -> retried
         )
-        mock_genai.Client.return_value = mock_client
 
         state = _make_state()
         result = await generate_structured_insights_node(state)
 
-        assert "headline" in result
-        assert len(result["sections"]) == 2
-        assert result["headline"] == "Let's crush this workout!"
+        assert mock_client.aio.models.generate_content.call_count == 4
+        assert len(result["sections"]) == 3
+        assert result["headline"] == "Time to get to work"
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_retries_before_fallback(self, mock_settings, mock_genai):
-        """Should retry max_retries times before falling back."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
-
-        response = _mock_gemini_response(
-            parsed_data={"headline": "Test!", "sections": []}
+    @patch("asyncio.sleep", new_callable=AsyncMock)
+    @patch("services.gemini.constants.client")
+    async def test_non_transient_error_is_not_retried(self, mock_client, mock_sleep):
+        """A non-transient error fails fast — one call, then the fallback."""
+        mock_client.aio.models.generate_content = AsyncMock(
+            side_effect=Exception("invalid api key")  # not in the transient list
         )
-        mock_client = MagicMock()
-        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
-        mock_genai.Client.return_value = mock_client
 
         state = _make_state()
         result = await generate_structured_insights_node(state)
 
-        # initial + 2 retries = 3 calls
-        assert mock_client.aio.models.generate_content.call_count == 3
-        assert len(result["sections"]) == 2
+        assert mock_client.aio.models.generate_content.call_count == 1
+        assert len(result["sections"]) == 3
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_success_on_first_try(self, mock_settings, mock_genai):
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_success_on_first_try(self, mock_generate):
         """Valid response on first try should return immediately with no retries."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
-
-        response = _mock_gemini_response(
-            parsed_data={
-                "headline": "Crush It!",
-                "sections": [
-                    {"icon": "🎯", "title": "Focus", "content": "Upper body power", "color": "cyan"},
-                    {"icon": "💪", "title": "Volume", "content": "Heavy compound lifts", "color": "purple"},
-                ],
-            }
+        mock_generate.return_value = _mock_gemini_response(
+            parsed_data={"headline": "Crush It!", "sections": _valid_sections(3)}
         )
-        mock_client = MagicMock()
-        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
-        mock_genai.Client.return_value = mock_client
 
         state = _make_state()
         result = await generate_structured_insights_node(state)
 
         assert result["headline"] == "Crush It!"
-        assert len(result["sections"]) == 2
+        assert len(result["sections"]) == 3
         assert result["sections"][0]["title"] == "Focus"
-        assert mock_client.aio.models.generate_content.call_count == 1
+        assert mock_generate.call_count == 1
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_headline_truncated_to_5_words(self, mock_settings, mock_genai):
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_headline_truncated_to_5_words(self, mock_generate):
         """Headlines longer than 5 words should be truncated."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
-
-        response = _mock_gemini_response(
+        mock_generate.return_value = _mock_gemini_response(
             parsed_data={
                 "headline": "This Is A Very Long Headline That Exceeds",
-                "sections": [
-                    {"icon": "🎯", "title": "Focus", "content": "Test", "color": "cyan"},
-                    {"icon": "💪", "title": "Volume", "content": "Test", "color": "purple"},
-                ],
+                "sections": _valid_sections(3),
             }
         )
-        mock_client = MagicMock()
-        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
-        mock_genai.Client.return_value = mock_client
 
         state = _make_state()
         result = await generate_structured_insights_node(state)
 
         assert len(result["headline"].split()) <= 5
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_section_content_truncated_to_10_words(self, mock_settings, mock_genai):
-        """Section content longer than 10 words should be truncated."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_headline_truncated_on_fallback_path_too(self, mock_generate):
+        """The 5-word headline cap must hold even when the sections force a fallback.
 
-        response = _mock_gemini_response(
+        REGRESSION GUARD: the fallback carries the model's headline through
+        verbatim, so a long headline used to escape the cap (and overflow the
+        card) whenever the model returned too few sections.
+        """
+        mock_generate.return_value = _mock_gemini_response(
             parsed_data={
-                "headline": "Go!",
-                "sections": [
-                    {"icon": "🎯", "title": "Focus",
-                     "content": "One two three four five six seven eight nine ten eleven twelve",
-                     "color": "cyan"},
-                    {"icon": "💪", "title": "Volume", "content": "Short", "color": "purple"},
-                ],
+                "headline": "This Is A Very Long Headline That Exceeds",
+                "sections": [],  # forces the fallback
             }
         )
-        mock_client = MagicMock()
-        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
-        mock_genai.Client.return_value = mock_client
 
         state = _make_state()
         result = await generate_structured_insights_node(state)
 
-        assert len(result["sections"][0]["content"].split()) <= 10
+        assert len(result["sections"]) == 3
+        assert len(result["headline"].split()) <= 5
+
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_section_content_truncated_to_36_words(self, mock_generate):
+        """Section content longer than 36 words should be truncated."""
+        long_content = " ".join(f"word{i}" for i in range(50))
+        sections = _valid_sections(3)
+        sections[0]["content"] = long_content
+        sections[1]["content"] = "Short"
+
+        mock_generate.return_value = _mock_gemini_response(
+            parsed_data={"headline": "Go!", "sections": sections}
+        )
+
+        state = _make_state()
+        result = await generate_structured_insights_node(state)
+
+        assert len(result["sections"][0]["content"].split()) == 36
         assert result["sections"][1]["content"] == "Short"
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_fallback_uses_workout_context(self, mock_settings, mock_genai):
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_fallback_uses_workout_context(self, mock_generate):
         """Fallback sections should reference the workout's focus and duration."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
-
-        mock_client = MagicMock()
-        mock_client.aio.models.generate_content = AsyncMock(
-            side_effect=Exception("timeout")
-        )
-        mock_genai.Client.return_value = mock_client
+        mock_generate.side_effect = Exception("timeout")
 
         state = _make_state(workout_focus="leg day", duration_minutes=60)
         result = await generate_structured_insights_node(state)
@@ -377,25 +398,12 @@ class TestGenerateInsightsNodeFallback:
         all_content = " ".join(s["content"] for s in result["sections"])
         assert "leg day" in all_content or "60" in all_content
 
-    @patch("services.langgraph_agents.workout_insights.nodes.genai")
-    @patch("services.langgraph_agents.workout_insights.nodes.settings")
-    async def test_summary_is_valid_json(self, mock_settings, mock_genai):
+    @patch("services.langgraph_agents.workout_insights.nodes.gemini_generate_with_retry")
+    async def test_summary_is_valid_json(self, mock_generate):
         """The summary field should be valid JSON matching headline/sections."""
-        mock_settings.gemini_api_key = "test-key"
-        mock_settings.gemini_model = "test-model"
-
-        response = _mock_gemini_response(
-            parsed_data={
-                "headline": "Go Hard!",
-                "sections": [
-                    {"icon": "🎯", "title": "Focus", "content": "Push it", "color": "cyan"},
-                    {"icon": "💪", "title": "Volume", "content": "Max reps", "color": "purple"},
-                ],
-            }
+        mock_generate.return_value = _mock_gemini_response(
+            parsed_data={"headline": "Go Hard!", "sections": _valid_sections(3)}
         )
-        mock_client = MagicMock()
-        mock_client.aio.models.generate_content = AsyncMock(return_value=response)
-        mock_genai.Client.return_value = mock_client
 
         state = _make_state()
         result = await generate_structured_insights_node(state)
@@ -478,6 +486,35 @@ class TestCachedStreamingTokenLimit:
     to prevent truncation of workouts with set_targets.
     """
 
+    @staticmethod
+    def _max_output_tokens_in(func):
+        """Extract every literal max_output_tokens=N passed inside func's body.
+
+        Resolves the function OBJECT and reads its source via inspect, rather
+        than hard-coding a path to services/gemini_service.py. That file is now
+        a 43-line backward-compat shim (the implementation moved to
+        services/gemini/workout_streaming.py), so the old line-scanner found no
+        max_output_tokens at all and the assertion failed on a stale path
+        instead of on the real limit. inspect.getsource follows the code
+        wherever it lives, so this cannot rot the same way again.
+        """
+        import ast
+        import inspect
+        import textwrap
+
+        # Can't textwrap.dedent this: the prompt strings inside these functions
+        # contain column-0 lines, so the common prefix is "" and the method's
+        # own 4-space indent survives. Re-indent uniformly and wrap in a dummy
+        # class instead, which parses regardless of the original base indent.
+        src = textwrap.indent(inspect.getsource(func), "    ")
+        tree = ast.parse("class _Wrapper:\n" + src)
+        found = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.keyword) and node.arg == "max_output_tokens":
+                if isinstance(node.value, ast.Constant) and isinstance(node.value.value, int):
+                    found.append(node.value.value)
+        return found
+
     def test_cached_streaming_token_limit_matches_non_cached(self):
         """
         The cached streaming max_output_tokens must be >= 16384
@@ -485,39 +522,23 @@ class TestCachedStreamingTokenLimit:
 
         This was the root cause of the production JSON parse error.
         """
-        import ast
-        import os
+        from services.gemini.workout_streaming import WorkoutStreamingMixin
 
-        # Read the source file and find max_output_tokens in the cached function
-        source_path = os.path.join(
-            os.path.dirname(__file__),
-            "..", "..", "..",
-            "services", "gemini_service.py"
+        cached_limits = self._max_output_tokens_in(
+            WorkoutStreamingMixin.generate_workout_plan_streaming_cached
         )
-        source_path = os.path.normpath(source_path)
+        non_cached_limits = self._max_output_tokens_in(
+            WorkoutStreamingMixin.generate_workout_plan_streaming
+        )
 
-        with open(source_path, "r") as f:
-            source = f.read()
+        assert cached_limits, "Could not find max_output_tokens in cached streaming function"
+        assert non_cached_limits, "Could not find max_output_tokens in non-cached streaming function"
 
-        # Find the cached streaming function and its max_output_tokens
-        # Look for the pattern within generate_workout_plan_streaming_cached
-        in_cached_func = False
-        cached_token_limit = None
-        non_cached_token_limit = None
-
-        for line in source.splitlines():
-            if "async def generate_workout_plan_streaming_cached" in line:
-                in_cached_func = True
-            elif "async def " in line and in_cached_func:
-                break  # Hit next function
-            if in_cached_func and "max_output_tokens=" in line and "cached_content" not in line:
-                # Extract the numeric value
-                token_val = line.split("max_output_tokens=")[1].split(",")[0].split("#")[0].strip()
-                cached_token_limit = int(token_val)
-                break
-
-        assert cached_token_limit is not None, "Could not find max_output_tokens in cached streaming function"
+        cached_token_limit = min(cached_limits)
         assert cached_token_limit >= 16384, (
             f"Cached streaming max_output_tokens={cached_token_limit} is too low. "
             f"Must be >= 16384 to prevent truncation of workouts with set_targets."
         )
+        # The name of this test: the cached path must not be capped any lower
+        # than the non-cached path it mirrors.
+        assert cached_token_limit >= min(non_cached_limits)

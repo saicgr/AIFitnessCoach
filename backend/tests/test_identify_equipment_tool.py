@@ -1,11 +1,6 @@
 """
 Pytest for the Issue 2 LangGraph tool `identify_equipment(s3_key, user_id)`.
 
-Mirrors the loader trick from `test_equipment_snap.py`: the local 3.9 venv
-can't import `api.v1.__init__` (PEP 604 syntax in `videos.py`), so we load
-`api/v1/equipment/snap.py` and `services/langgraph_agents/tools/equipment_tools.py`
-directly via importlib.
-
 Covers:
   • success path: matched + canonical → action='open_swap_or_add' with matches
   • empty matches: vision says gym_equipment but library lookup returns 0
@@ -13,81 +8,23 @@ Covers:
     empty matches and unmatched_reason='not_equipment'
 
 Run:
-    cd backend && .venv/bin/pytest tests/test_identify_equipment_tool.py -v
+    cd backend && .venv312/bin/pytest tests/test_identify_equipment_tool.py -v
 """
 from __future__ import annotations
 
-import importlib.util as _il
-import logging as _logging
-import os as _os
-import sys as _sys
-import types as _t
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# ── Stub the same `core.*` modules used by snap.py + the tool wrapper ──
-_core = _t.ModuleType("core")
-_core_auth = _t.ModuleType("core.auth")
-async def _stub_get_current_user(*a, **kw):  # pragma: no cover
-    return {"id": "u"}
-_core_auth.get_current_user = _stub_get_current_user
-_core_db = _t.ModuleType("core.db")
-def _stub_get_supabase_db(*a, **kw):  # pragma: no cover
-    return MagicMock()
-_core_db.get_supabase_db = _stub_get_supabase_db
-_core_logger = _t.ModuleType("core.logger")
-def _stub_get_logger(name): return _logging.getLogger(name)
-_core_logger.get_logger = _stub_get_logger
-_core_config = _t.ModuleType("core.config")
-def _stub_get_settings():  # pragma: no cover
-    return SimpleNamespace(s3_bucket_name="b", aws_access_key_id="x",
-                           aws_secret_access_key="y", aws_default_region="us-east-1")
-_core_config.get_settings = _stub_get_settings
-
-_services = _t.ModuleType("services")
-_services_vision = _t.ModuleType("services.vision_service")
-def _stub_get_vision_service():  # pragma: no cover
-    return MagicMock()
-_services_vision.get_vision_service = _stub_get_vision_service
-_services_extr = _t.ModuleType("services.gym_equipment_extractor")
-class _StubExtractor:  # pragma: no cover
-    def __init__(self, *a, **kw): pass
-_services_extr.GymEquipmentExtractor = _StubExtractor
-
-for _m in (_core, _core_auth, _core_db, _core_logger, _core_config,
-           _services, _services_vision, _services_extr):
-    _sys.modules[_m.__name__] = _m
-
-_HERE = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-_SNAP_PATH = _os.path.join(_HERE, "api", "v1", "equipment", "snap.py")
-_spec = _il.spec_from_file_location("snap_under_test_for_tool", _SNAP_PATH)
-snap_module = _il.module_from_spec(_spec)
-_spec.loader.exec_module(snap_module)
-
-# Register snap_module as the importable path the tool uses, so the lazy
-# `from api.v1.equipment.snap import equipment_snap_core` succeeds at the
-# point the tool calls it.
-_api_pkg = _t.ModuleType("api")
-_api_v1 = _t.ModuleType("api.v1")
-_api_v1_eq = _t.ModuleType("api.v1.equipment")
-_api_v1_eq_snap = snap_module
-_sys.modules["api"] = _api_pkg
-_sys.modules["api.v1"] = _api_v1
-_sys.modules["api.v1.equipment"] = _api_v1_eq
-_sys.modules["api.v1.equipment.snap"] = _api_v1_eq_snap
-
-_TOOL_PATH = _os.path.join(
-    _HERE,
-    "services",
-    "langgraph_agents",
-    "tools",
-    "equipment_tools.py",
-)
-_tspec = _il.spec_from_file_location("equipment_tools_under_test", _TOOL_PATH)
-equipment_tools = _il.module_from_spec(_tspec)
-_tspec.loader.exec_module(equipment_tools)
+# Real imports — see the note in test_equipment_snap.py. The old sys.modules
+# stubbing existed only to work around the retired Python 3.9 venv, and it
+# corrupted `core` / `services` / `api` for every test module imported after this
+# one. Importing for real also makes the tool's lazy
+# `from api.v1.equipment.snap import equipment_snap_core` resolve to the SAME
+# module object these tests patch, instead of a hand-forged sys.modules entry.
+import api.v1.equipment.snap as snap_module
+import services.langgraph_agents.tools.equipment_tools as equipment_tools
 
 
 def _fake_db(tier: str = "premium", library_rows=None, usage_rows=None,
@@ -125,7 +62,9 @@ def _fake_db(tier: str = "premium", library_rows=None, usage_rows=None,
                 return SimpleNamespace(data=[{"tier": tier, "is_lifetime": False}])
             if self._t == "exercise_library_cleaned":
                 return SimpleNamespace(data=library_rows)
-            if self._t == "workout_set_logs":
+            # Production reranks from performance_logs (snap.py:283), not the
+            # non-existent `workout_set_logs` this fake used to stub.
+            if self._t == "performance_logs":
                 return SimpleNamespace(data=usage_rows)
             return SimpleNamespace(data=[])
 

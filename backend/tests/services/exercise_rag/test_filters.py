@@ -503,17 +503,56 @@ class TestDifficultyFiltering:
             assert is_exercise_too_difficult("beginner", level) is False
             assert is_exercise_too_difficult(2, level) is False
 
-    def test_strict_blocks_intermediate_for_beginners(self):
-        """Strict filter blocks intermediate exercises for beginners.
+    def test_strict_enforces_the_difficulty_ceiling_for_beginners(self):
+        """Strict filter blocks anything ABOVE the beginner DIFFICULTY_CEILING.
 
-        This is the OLD behavior that caused the bug. The strict filter
-        has a ceiling of 3 for beginners, which blocks intermediate (5).
+        RETIRED ASSERTION: this test used to assert
+        `is_exercise_too_difficult_strict("intermediate", "beginner") is True`,
+        on the premise that the beginner ceiling was 3 (so intermediate = 5 was
+        blocked). That ceiling was deliberately raised to 6 — the same product
+        change this class documents (beginners were starved of exercises). The
+        ceiling of 6 is pinned independently by tests/test_workout_generation.py,
+        tests/test_exercise_difficulty_filter.py, tests/test_fitness_level_edge_cases.py
+        and tests/test_feedback_adjustment.py, so intermediate (5) is now
+        legitimately *under* the beginner ceiling and must NOT be blocked.
+
+        The guarantee this test protects is unchanged in substance: the strict
+        filter is the one that actually enforces DIFFICULTY_CEILING (block iff
+        difficulty > ceiling), and it is strictly tighter than the permissive
+        filter, which only blocks Elite (10).
         """
         from services.exercise_rag.service import is_exercise_too_difficult_strict
+        from services.exercise_rag.difficulty import DIFFICULTY_CEILING
 
-        # Strict filter should block intermediate (5) for beginners (ceiling 3)
-        assert is_exercise_too_difficult_strict("intermediate", "beginner") is True
-        assert is_exercise_too_difficult_strict(5, "beginner") is True
+        # The ceiling this test is written against.
+        assert DIFFICULTY_CEILING["beginner"] == 6
+
+        # At/below the ceiling → allowed.
+        assert is_exercise_too_difficult_strict("intermediate", "beginner") is False
+        assert is_exercise_too_difficult_strict(5, "beginner") is False
+        assert is_exercise_too_difficult_strict(6, "beginner") is False
+
+        # Above the ceiling → blocked. This is what makes it "strict".
+        assert is_exercise_too_difficult_strict(7, "beginner") is True
+        assert is_exercise_too_difficult_strict("advanced", "beginner") is True  # 8
+        assert is_exercise_too_difficult_strict(8, "beginner") is True
+        assert is_exercise_too_difficult_strict("elite", "beginner") is True  # 10
+
+    def test_strict_is_tighter_than_permissive(self):
+        """The strict filter must block strictly more than the permissive one.
+
+        Advanced (8) is the discriminating case: permissive lets it through for
+        beginners (it is ranked down instead), strict blocks it against the
+        ceiling of 6. If these two ever agree on advanced, one of them has been
+        silently rewired.
+        """
+        from services.exercise_rag.service import (
+            is_exercise_too_difficult,
+            is_exercise_too_difficult_strict,
+        )
+
+        assert is_exercise_too_difficult("advanced", "beginner") is False
+        assert is_exercise_too_difficult_strict("advanced", "beginner") is True
 
     def test_strict_allows_beginner_exercises_for_beginners(self):
         """Strict filter allows beginner exercises for beginners."""

@@ -42,11 +42,25 @@ class TestExerciseConstants:
         assert "bodyweight" in PROGRESSION_INCREMENTS
 
     def test_progression_increment_values(self):
-        """Progression increments should have appropriate values."""
+        """Progression increments should have appropriate values.
+
+        RETIRED ASSERTION: this used to assert ``isolation == 1.25`` (a bare
+        micro-plate step). That was deliberately retired — see the inline
+        comment on ``PROGRESSION_INCREMENTS`` in ``core/exercise_data.py``:
+        "Changed from 1.25 to 2.5 (realistic for dumbbells)". A 1.25 kg step is
+        not achievable on a standard dumbbell rack (5 lb / 2.5 kg jumps), so it
+        produced un-loadable weight recommendations.
+
+        Guarantee protected now: every increment is a real, loadable gym step,
+        lower body steps harder than upper body, and bodyweight never adds load.
+        """
         assert PROGRESSION_INCREMENTS["compound_lower"] == 5.0
         assert PROGRESSION_INCREMENTS["compound_upper"] == 2.5
-        assert PROGRESSION_INCREMENTS["isolation"] == 1.25
+        assert PROGRESSION_INCREMENTS["isolation"] == 2.5
         assert PROGRESSION_INCREMENTS["bodyweight"] == 0
+        # Invariants the exact values must keep satisfying.
+        assert PROGRESSION_INCREMENTS["compound_lower"] > PROGRESSION_INCREMENTS["compound_upper"]
+        assert PROGRESSION_INCREMENTS["isolation"] > PROGRESSION_INCREMENTS["bodyweight"]
 
     def test_exercise_substitutes_defined(self):
         """Exercise substitutes should be defined for common exercises."""
@@ -115,13 +129,45 @@ class TestGetExerciseType:
         assert get_exercise_type("Weighted Pull-ups") == "compound_upper"
 
     def test_bodyweight_exercises(self):
-        """Bodyweight exercises should be classified correctly."""
-        assert get_exercise_type("Push-up") == "bodyweight"
-        assert get_exercise_type("Diamond Push-ups") == "bodyweight"
-        assert get_exercise_type("Dip") == "bodyweight"
-        assert get_exercise_type("Tricep Dips") == "bodyweight"
+        """Unloadable core/conditioning movements should be classified bodyweight.
+
+        RETIRED ASSERTIONS: this used to assert Push-up / Diamond Push-ups /
+        Dip / Tricep Dips == "bodyweight". That was retired in core/exercise_data.py
+        (commit d730c1a9), which moved the push and dip patterns into
+        COMPOUND_UPPER ("# Push variants", "# Dip variants") and narrowed the
+        bodyweight bucket to movements that genuinely cannot be externally
+        loaded. Rationale: push-ups and dips ARE loadable compound upper-body
+        presses (weighted dips, weight-vest push-ups), so they belong on the
+        compound_upper progression/rep track. Their reclassification is asserted
+        directly in ``test_pushup_and_dip_are_compound_upper`` below, so no name
+        loses coverage.
+
+        (Note: "Dip" already returned compound_upper even before that commit —
+        COMPOUND_UPPER is scanned before the bodyweight list and already
+        contained "dip" — so the old expectation was never satisfiable.)
+
+        Guarantee protected now: the bodyweight type (increment 0, wide 5-20 rep
+        band) is reserved for movements with no external load to add.
+        """
         assert get_exercise_type("Plank") == "bodyweight"
         assert get_exercise_type("Side Plank") == "bodyweight"
+        assert get_exercise_type("Crunch") == "bodyweight"
+        assert get_exercise_type("Sit-up") == "bodyweight"
+        assert get_exercise_type("Burpee") == "bodyweight"
+        assert get_exercise_type("Mountain Climber") == "bodyweight"
+        assert get_exercise_type("Dead Bug") == "bodyweight"
+        assert get_exercise_type("Bird Dog") == "bodyweight"
+
+    def test_pushup_and_dip_are_compound_upper(self):
+        """Push-ups and dips are loadable upper-body compounds, not bodyweight.
+
+        Covers the names moved out of ``test_bodyweight_exercises`` when
+        core/exercise_data.py reclassified the push/dip patterns.
+        """
+        assert get_exercise_type("Push-up") == "compound_upper"
+        assert get_exercise_type("Diamond Push-ups") == "compound_upper"
+        assert get_exercise_type("Dip") == "compound_upper"
+        assert get_exercise_type("Tricep Dips") == "compound_upper"
 
     def test_isolation_exercises(self):
         """Isolation exercises should default to isolation type."""
@@ -131,10 +177,18 @@ class TestGetExerciseType:
         assert get_exercise_type("Tricep Kickback") == "isolation"
 
     def test_case_insensitivity(self):
-        """Exercise type detection should be case insensitive."""
+        """Exercise type detection should be case insensitive.
+
+        RETIRED ASSERTION: ``"PUSH-UP" == "bodyweight"``. Push-ups are now
+        compound_upper (see ``test_bodyweight_exercises``); the case-insensitivity
+        guarantee this test actually protects is unchanged — the same name in a
+        different case must yield the same type.
+        """
         assert get_exercise_type("SQUAT") == "compound_lower"
         assert get_exercise_type("bench press") == "compound_upper"
-        assert get_exercise_type("PUSH-UP") == "bodyweight"
+        assert get_exercise_type("PUSH-UP") == "compound_upper"
+        assert get_exercise_type("PUSH-UP") == get_exercise_type("push-up")
+        assert get_exercise_type("PLANK") == get_exercise_type("plank") == "bodyweight"
 
 
 class TestGetExercisePriority:

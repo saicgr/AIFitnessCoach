@@ -121,33 +121,58 @@ class TestViewMappings:
 # CHECK UNLOCK STATUS TESTS
 # ============================================================
 
+def _mock_completed_workout_count(mock_supabase, count):
+    """Point the `workouts` count query used by check_unlock_status at `count`.
+
+    check_unlock_status runs:
+        supabase.table("workouts").select("id", count="exact")
+                .eq("user_id", …).eq("is_completed", True).execute()
+    so the count lives on the *response*, not in `.data`.
+    """
+    resp = MagicMock()
+    resp.count = count
+    (
+        mock_supabase.table.return_value
+        .select.return_value
+        .eq.return_value
+        .eq.return_value
+        .execute.return_value
+    ) = resp
+    return resp
+
+
 class TestCheckUnlockStatus:
-    """Test unlock status checking."""
+    """Test unlock status checking.
+
+    RETIRED BEHAVIOR: these tests used to mock the `check_leaderboard_unlock`
+    Postgres RPC and assert it was invoked. That RPC is no longer the source of
+    truth — migration 1939 / Workstream 2 replaced it with a direct count of the
+    user's completed workouts plus a per-scope threshold (global/country gate at
+    10 workouts, friends relaxed to 1 so week-1 users see friend rankings).
+    The guarantee these tests protect is unchanged and still asserted verbatim:
+    the unlock payload's is_unlocked / workouts_completed / workouts_needed must
+    reflect the user's real completed-workout count against the scope threshold.
+    Only the mocked data source moved (RPC → `workouts` count query).
+    """
 
     def test_check_unlock_status_unlocked(self, leaderboard_service, mock_supabase, sample_user_id):
         """Test checking unlock status for unlocked user."""
-        mock_supabase.rpc.return_value.execute.return_value.data = [{
-            "is_unlocked": True,
-            "workouts_completed": 15,
-            "workouts_needed": 0,
-            "days_active": 30,
-        }]
+        _mock_completed_workout_count(mock_supabase, 15)
 
         result = leaderboard_service.check_unlock_status(sample_user_id)
 
         assert result["is_unlocked"] is True
         assert result["workouts_completed"] == 15
         assert result["workouts_needed"] == 0
-        mock_supabase.rpc.assert_called_with("check_leaderboard_unlock", {"p_user_id": sample_user_id})
+        # The count must come from the user's COMPLETED workouts, not all workouts.
+        mock_supabase.table.assert_called_with("workouts")
+        mock_supabase.table.return_value.select.assert_called_with("id", count="exact")
+        mock_supabase.table.return_value.select.return_value.eq.assert_called_with("user_id", sample_user_id)
+        mock_supabase.table.return_value.select.return_value.eq.return_value.eq.assert_called_with("is_completed", True)
 
     def test_check_unlock_status_locked(self, leaderboard_service, mock_supabase, sample_user_id):
         """Test checking unlock status for locked user."""
-        mock_supabase.rpc.return_value.execute.return_value.data = [{
-            "is_unlocked": False,
-            "workouts_completed": 5,
-            "workouts_needed": 5,
-            "days_active": 10,
-        }]
+        _mock_completed_workout_count(mock_supabase, 5)
 
         result = leaderboard_service.check_unlock_status(sample_user_id)
 
@@ -157,13 +182,31 @@ class TestCheckUnlockStatus:
 
     def test_check_unlock_status_no_data(self, leaderboard_service, mock_supabase, sample_user_id):
         """Test checking unlock status when no data returned."""
-        mock_supabase.rpc.return_value.execute.return_value.data = None
+        _mock_completed_workout_count(mock_supabase, None)
 
         result = leaderboard_service.check_unlock_status(sample_user_id)
 
         assert result["is_unlocked"] is False
         assert result["workouts_completed"] == 0
         assert result["workouts_needed"] == 10
+
+    def test_check_unlock_status_friends_scope_unlocks_at_one_workout(
+        self, leaderboard_service, mock_supabase, sample_user_id
+    ):
+        """Friends scope unlocks at 1 completed workout (migration 1939)."""
+        _mock_completed_workout_count(mock_supabase, 1)
+
+        result = leaderboard_service.check_unlock_status(sample_user_id, scope="friends")
+
+        assert result["is_unlocked"] is True
+        assert result["threshold"] == 1
+        assert result["workouts_needed"] == 0
+
+        # …while the same user is still LOCKED out of the global board.
+        result_global = leaderboard_service.check_unlock_status(sample_user_id)
+        assert result_global["is_unlocked"] is False
+        assert result_global["threshold"] == 10
+        assert result_global["workouts_needed"] == 9
 
 
 # ============================================================
@@ -598,16 +641,18 @@ class TestIntegration:
     """Integration tests for leaderboard service."""
 
     def test_full_leaderboard_flow(self, leaderboard_service, mock_supabase, sample_user_id, sample_leaderboard_data):
-        """Test complete leaderboard retrieval flow."""
-        # 1. Check unlock
-        mock_supabase.rpc.return_value.execute.return_value.data = [{
-            "is_unlocked": True,
-            "workouts_completed": 15,
-            "workouts_needed": 0,
-        }]
+        """Test complete leaderboard retrieval flow.
+
+        Step 1 mocks the completed-workout count (the current unlock source of
+        truth) instead of the retired `check_leaderboard_unlock` RPC — see
+        TestCheckUnlockStatus's docstring.
+        """
+        # 1. Check unlock (15 completed workouts ≥ the 10-workout global gate)
+        _mock_completed_workout_count(mock_supabase, 15)
 
         unlock_status = leaderboard_service.check_unlock_status(sample_user_id)
         assert unlock_status["is_unlocked"] is True
+        assert unlock_status["workouts_completed"] == 15
 
         # 2. Get entries
         mock_query = MagicMock()

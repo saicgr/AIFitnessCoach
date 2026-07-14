@@ -8,6 +8,8 @@ import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from dataclasses import asdict
 
+from starlette.requests import Request
+
 from services.recipe_suggestion_service import (
     RecipeSuggestionService,
     RecipeSuggestion,
@@ -16,6 +18,36 @@ from services.recipe_suggestion_service import (
     MealType,
     BodyType,
 )
+
+
+# ============================================================================
+# HELPERS
+# ============================================================================
+
+
+def _http_request(path: str) -> Request:
+    """A minimal real starlette Request.
+
+    The recipe endpoints are decorated with `@limiter.limit(...)` (slowapi),
+    which requires the endpoint's first parameter to be an actual
+    `starlette.requests.Request` (it reads `.headers`/`.client` for the rate-limit
+    key and stashes state on `.state`). A stub/MagicMock is rejected outright.
+    """
+    return Request(
+        {
+            "type": "http",
+            "http_version": "1.1",
+            "method": "POST",
+            "scheme": "http",
+            "path": path,
+            "raw_path": path.encode(),
+            "query_string": b"",
+            "root_path": "",
+            "headers": [],
+            "client": ("127.0.0.1", 50000),
+            "server": ("testserver", 80),
+        }
+    )
 
 
 # ============================================================================
@@ -238,12 +270,23 @@ class TestRecipeSuggestionService:
 
     @pytest.mark.asyncio
     async def test_suggest_recipes_validates_count(self, service, mock_user_context):
-        """Test that recipe count is respected."""
+        """Test that recipe count is respected.
+
+        Mock target updated (2026-07): the service no longer holds a module-level
+        `client` — every Gemini call goes through
+        `services.gemini.constants.gemini_generate_with_retry` (imported into this
+        module's namespace), which adds the semaphore + retry wrapper around
+        `client.aio.models.generate_content`. Patching `...recipe_suggestion_service.client`
+        raised AttributeError because that name is gone. Assertion unchanged.
+        """
         with patch.object(service, "get_user_context", return_value=mock_user_context):
-            with patch("services.recipe_suggestion_service.client") as mock_client:
+            with patch(
+                "services.recipe_suggestion_service.gemini_generate_with_retry",
+                new_callable=AsyncMock,
+            ) as mock_generate:
                 mock_response = MagicMock()
                 mock_response.text = '{"recipes": [{"recipe_name": "Test", "recipe_description": "", "cuisine": "indian", "category": "lunch", "ingredients": [], "instructions": [], "servings": 1, "calories_per_serving": 400, "protein_per_serving_g": 30, "carbs_per_serving_g": 40, "fat_per_serving_g": 15, "fiber_per_serving_g": 5, "prep_time_minutes": 10, "cook_time_minutes": 20, "suggestion_reason": "Test", "goal_alignment_score": 80, "cuisine_match_score": 90, "diet_compliance_score": 100, "overall_match_score": 85}]}'
-                mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)
+                mock_generate.return_value = mock_response
 
                 with patch.object(service, "_save_suggestion_session", return_value="session-123"):
                     recipes = await service.suggest_recipes(
@@ -333,7 +376,15 @@ class TestRecipeSuggestionsAPI:
 
     @pytest.mark.asyncio
     async def test_suggest_recipes_endpoint_success(self):
-        """Test successful recipe suggestion request."""
+        """Test successful recipe suggestion request.
+
+        Call site updated (2026-07): the endpoint signature is now
+        `suggest_recipes(request: Request, user_id: str, body: SuggestRecipesRequest,
+        current_user=Depends(get_current_user))` — it is rate-limited (slowapi
+        requires a real starlette Request as the first arg) and ownership-checked
+        (`verify_user_ownership`). The old two-positional-arg call passed a str
+        where slowapi expected the Request. Assertions unchanged.
+        """
         from api.v1.recipe_suggestions import suggest_recipes, SuggestRecipesRequest
 
         request = SuggestRecipesRequest(
@@ -367,7 +418,12 @@ class TestRecipeSuggestionsAPI:
             mock_service.suggest_recipes = AsyncMock(return_value=[mock_suggestion])
 
             with patch("api.v1.recipe_suggestions.UserContextService"):
-                response = await suggest_recipes("test-user-123", request)
+                response = await suggest_recipes(
+                    _http_request("/api/v1/recipes/test-user-123/suggest"),
+                    "test-user-123",
+                    request,
+                    current_user={"id": "test-user-123"},
+                )
 
             assert response.success
             assert len(response.recipes) == 1

@@ -26,7 +26,7 @@ import asyncio
 @pytest.fixture
 def mock_supabase_client():
     """Mock Supabase client for subscription operations."""
-    with patch("api.v1.subscriptions.get_supabase") as mock_get_supabase:
+    with patch("api.v1.subscriptions.transparency.get_supabase") as mock_get_supabase:
         mock_supabase = MagicMock()
         mock_client = MagicMock()
         mock_supabase.client = mock_client
@@ -36,15 +36,32 @@ def mock_supabase_client():
 
 @pytest.fixture
 def mock_activity_logger():
-    """Mock activity logger to prevent actual logging."""
-    with patch("api.v1.subscriptions.log_user_activity", new_callable=AsyncMock) as mock_log:
-        with patch("api.v1.subscriptions.log_user_error", new_callable=AsyncMock) as mock_error:
+    """Mock activity logger to prevent actual logging.
+
+    autospec=True (not a bare AsyncMock): the mock then enforces the REAL signature
+    of log_user_activity/log_user_error, so a handler that calls them with the wrong
+    kwargs fails the test instead of being silently absorbed. A bare AsyncMock hid a
+    live bug — request_refund's except-handler called
+    `log_user_error(..., error_message=str(e))` while the helper takes `error: Exception`
+    and has no `error_message` param, so every real refund failure raised TypeError
+    from inside the error handler (no DB error row, no alert, original cause masked).
+    """
+    with patch("api.v1.subscriptions.transparency.log_user_activity", autospec=True) as mock_log:
+        with patch("api.v1.subscriptions.transparency.log_user_error", autospec=True) as mock_error:
             yield {"log_activity": mock_log, "log_error": mock_error}
 
 
 @pytest.fixture
 def sample_user_id():
     return "user-123-abc"
+
+
+# The transparency endpoints are invoked directly here (not through the ASGI app), so
+# FastAPI never resolves `current_user: dict = Depends(get_current_user)`. Each handler
+# starts with `if str(current_user["id"]) != str(user_id): raise 403`, which is why the
+# direct calls used to die with "TypeError: 'Depends' object is not subscriptable".
+# Authenticate as the same user the request is for; the ownership guard stays live.
+CURRENT_USER = {"id": "user-123-abc"}
 
 
 @pytest.fixture
@@ -142,7 +159,7 @@ class TestSubscriptionHistory:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_history_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_subscription_history(sample_user_id)
+            get_subscription_history(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert result.user_id == sample_user_id
@@ -168,7 +185,7 @@ class TestSubscriptionHistory:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_history_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_subscription_history(sample_user_id)
+            get_subscription_history(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert result.user_id == sample_user_id
@@ -204,7 +221,7 @@ class TestSubscriptionHistory:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_history_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_subscription_history(sample_user_id, limit=10, offset=50)
+            get_subscription_history(sample_user_id, current_user=CURRENT_USER, limit=10, offset=50)
         )
 
         assert result.total_count == 100
@@ -221,7 +238,7 @@ class TestSubscriptionHistory:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                get_subscription_history(sample_user_id)
+                get_subscription_history(sample_user_id, current_user=CURRENT_USER)
             )
 
         assert exc_info.value.status_code == 500
@@ -246,7 +263,7 @@ class TestUpcomingRenewal:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_upcoming_renewal(sample_user_id)
+            get_upcoming_renewal(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert result.user_id == sample_user_id
@@ -282,7 +299,7 @@ class TestUpcomingRenewal:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_upcoming_renewal(sample_user_id)
+            get_upcoming_renewal(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert result.is_trial is True
@@ -313,7 +330,7 @@ class TestUpcomingRenewal:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_upcoming_renewal(sample_user_id)
+            get_upcoming_renewal(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert result.will_cancel is True
@@ -331,7 +348,7 @@ class TestUpcomingRenewal:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_upcoming_renewal(sample_user_id)
+            get_upcoming_renewal(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert result.tier == "free"
@@ -363,7 +380,7 @@ class TestUpcomingRenewal:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_upcoming_renewal(sample_user_id)
+            get_upcoming_renewal(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert result.status == "grace_period"
@@ -380,7 +397,7 @@ class TestUpcomingRenewal:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                get_upcoming_renewal(sample_user_id)
+                get_upcoming_renewal(sample_user_id, current_user=CURRENT_USER)
             )
 
         assert exc_info.value.status_code == 500
@@ -426,7 +443,7 @@ class TestRefundRequest:
         )
 
         result = asyncio.get_event_loop().run_until_complete(
-            request_refund(sample_user_id, request)
+            request_refund(sample_user_id, request, current_user=CURRENT_USER)
         )
 
         assert result.tracking_id == "RF-20250130-ABC12"
@@ -463,7 +480,7 @@ class TestRefundRequest:
         request = RefundRequest(reason="Charge appeared on my account")
 
         result = asyncio.get_event_loop().run_until_complete(
-            request_refund(sample_user_id, request)
+            request_refund(sample_user_id, request, current_user=CURRENT_USER)
         )
 
         # Should still create request even without subscription
@@ -487,7 +504,7 @@ class TestRefundRequest:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                request_refund(sample_user_id, request)
+                request_refund(sample_user_id, request, current_user=CURRENT_USER)
             )
 
         assert exc_info.value.status_code == 500
@@ -512,7 +529,7 @@ class TestGetRefundRequests:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_refund_requests(sample_user_id)
+            get_refund_requests(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert len(result) == 1
@@ -532,7 +549,7 @@ class TestGetRefundRequests:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_refund_requests(sample_user_id)
+            get_refund_requests(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert len(result) == 0
@@ -572,7 +589,7 @@ class TestGetRefundRequests:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_refund_requests(sample_user_id)
+            get_refund_requests(sample_user_id, current_user=CURRENT_USER)
         )
 
         assert len(result) == 2
@@ -713,7 +730,7 @@ class TestTransparencyScenarios:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_history
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_subscription_history(sample_user_id)
+            get_subscription_history(sample_user_id, current_user=CURRENT_USER)
         )
 
         # User can see the unwanted upgrade
@@ -749,7 +766,7 @@ class TestTransparencyScenarios:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = mock_result
 
         result = asyncio.get_event_loop().run_until_complete(
-            get_upcoming_renewal(sample_user_id)
+            get_upcoming_renewal(sample_user_id, current_user=CURRENT_USER)
         )
 
         # User can see upcoming charge details

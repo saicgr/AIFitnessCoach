@@ -233,37 +233,49 @@ class TestExtractSelectedDays:
 
 
 class TestExtractEquipment:
-    """Tests for _extract_equipment function."""
+    """Tests for _extract_equipment function.
+
+    Retired behavior: these tests originally asserted Title-Case labels
+    ("Full Gym", "Dumbbells", "Resistance Bands"). The extractor now emits the
+    canonical snake_case equipment tokens ('full_gym', 'dumbbells',
+    'resistance_bands') because that is the format the Flutter client stores and
+    renders (mobile/flutter/lib/core/utils/equipment_display.dart maps
+    'full_gym' -> "Full Gym"); emitting display labels here wrote un-matchable
+    equipment into the user profile. The guarantee protected is unchanged:
+    the phrase is recognised and mapped to the right equipment token, multiple
+    items are all captured, and extraction merges with (never drops) equipment
+    already collected.
+    """
 
     def test_extracts_full_gym(self):
         """Test extracting full gym."""
         from services.langgraph_agents.onboarding.nodes.extraction import _extract_equipment
 
         result = _extract_equipment("full gym")
-        assert "Full Gym" in result
+        assert "full_gym" in result
 
     def test_extracts_dumbbells(self):
         """Test extracting dumbbells."""
         from services.langgraph_agents.onboarding.nodes.extraction import _extract_equipment
 
         result = _extract_equipment("I have dumbbells")
-        assert "Dumbbells" in result
+        assert "dumbbells" in result
 
     def test_extracts_multiple(self):
         """Test extracting multiple equipment types."""
         from services.langgraph_agents.onboarding.nodes.extraction import _extract_equipment
 
         result = _extract_equipment("dumbbells and resistance bands")
-        assert "Dumbbells" in result
-        assert "Resistance Bands" in result
+        assert "dumbbells" in result
+        assert "resistance_bands" in result
 
     def test_merges_with_existing(self):
         """Test merging with existing equipment."""
         from services.langgraph_agents.onboarding.nodes.extraction import _extract_equipment
 
-        result = _extract_equipment("barbell", ["Dumbbells"])
-        assert "Dumbbells" in result
-        assert "Barbell" in result
+        result = _extract_equipment("barbell", ["dumbbells"])
+        assert "dumbbells" in result
+        assert "barbell" in result
 
 
 class TestExtractGoals:

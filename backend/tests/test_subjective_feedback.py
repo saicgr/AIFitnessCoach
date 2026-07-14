@@ -25,6 +25,31 @@ from api.v1.subjective_feedback import (
     _compute_mood_change,
 )
 
+# Every /subjective-feedback/* route is behind `Depends(get_current_user)`, and the
+# write routes additionally reject a body whose `user_id` is not the caller
+# (403 "Access denied"). The unauthenticated conftest `client` therefore gets a
+# blanket 401 before any handler runs. Override the auth dependency with the same
+# identity the tests post as ("test-user") so the request reaches the handler and
+# the assertions below exercise the real endpoint logic — not the auth wall.
+MOCK_USER_ID = "test-user"
+
+
+@pytest.fixture
+def client():
+    """Authenticated TestClient (shadows the unauthenticated conftest fixture)."""
+    from fastapi.testclient import TestClient
+    from main import app
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": MOCK_USER_ID,
+        "email": "test@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
 
 # ============================================================================
 # Unit Tests for Helper Functions

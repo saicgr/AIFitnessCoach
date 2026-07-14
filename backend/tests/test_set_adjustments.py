@@ -118,16 +118,33 @@ def generate_mock_set_adjustment(
     }
 
 
-def generate_mock_performance_sets(reps_pattern: list, weight_kg: float = 50.0):
-    """Generate mock sets with specific rep patterns for fatigue testing."""
+def generate_mock_performance_sets(
+    reps_pattern: list,
+    weight_kg: float = 50.0,
+    target_reps: int = 10,
+):
+    """Generate mock sets with specific rep patterns for fatigue testing.
+
+    Emits the session-set contract that the real
+    `services.fatigue_detection_service.detect_fatigue` consumes (and that
+    `POST /workouts/fatigue-check` forwards to it — see
+    `api/v1/workouts/fatigue_alerts.py`):
+      - "reps"        = reps ACTUALLY completed on that set
+      - "weight"      = load in kg actually lifted on that set
+      - "target_reps" = the per-set rep target from the progression model
+
+    Historical note: this helper used to emit `reps_completed`/`weight_kg`
+    with "reps" meaning *target* reps. No production code has ever spoken
+    that shape — it only fed an inline stub defined inside this test file.
+    """
     sets = []
     for i, reps in enumerate(reps_pattern):
         sets.append({
             "set_number": i + 1,
-            "reps": 10,  # Target reps
-            "reps_completed": reps,  # Actual reps
-            "weight_kg": weight_kg,
-            "rpe": 6 + (i * 0.5),  # Increasing RPE
+            "reps": reps,               # Actual reps completed
+            "target_reps": target_reps,  # Per-set target from progression
+            "weight": weight_kg,         # kg actually lifted
+            "rpe": 6 + (i * 0.5),        # Increasing RPE
             "completed": True,
         })
     return sets
@@ -489,76 +506,113 @@ def get_fatigue_recommendation_inline(
 
 
 class TestFatigueDetection:
-    """Tests for fatigue detection algorithms."""
+    """Tests for fatigue detection algorithms.
+
+    These exercise the REAL detector,
+    `services.fatigue_detection_service.detect_fatigue`, which now exists and
+    is what `POST /workouts/fatigue-check` calls
+    (`api/v1/workouts/fatigue_alerts.py`).
+
+    They used to `try: from services... except ImportError:` and fall back to
+    an inline stub defined in this file, then assert that stub's invented dict
+    shape (`detection_reason`, `decline_percentage`). Once the service shipped,
+    the import stopped raising and the calls blew up with
+    `TypeError: detect_fatigue() missing 1 required positional argument:
+    'current_weight'`. The stub-shaped assertions were never a contract any
+    production code honored (a fallback to a function defined in the test file
+    can only ever assert against itself).
+
+    Intent preserved 1:1 against the real `FatigueAlert` contract:
+      - rep decline >= 20% off target  -> fatigue detected, rep-decline indicator
+      - escalating/high RPE            -> fatigue detected, RPE indicator
+      - weight dropped mid-exercise    -> fatigue detected, weight indicator
+      - consistent performance         -> no fatigue
+    """
 
     def test_fatigue_detection_rep_decline(self):
-        """Test detecting fatigue from declining rep counts."""
-        # Try importing from service, fall back to inline implementation
-        try:
-            from services.fatigue_detection_service import detect_fatigue
-        except ImportError:
-            detect_fatigue = detect_fatigue_inline
+        """Test detecting fatigue from declining rep counts.
 
-        # Pattern: 10, 8, 6 reps - clear decline
-        sets = generate_mock_performance_sets([10, 8, 6], weight_kg=50.0)
+        Was: asserted stub keys detection_reason == "rep_decline" and
+        decline_percentage >= 20. Now: asserts the real detector raises a
+        rep-decline indicator and reports the same >= 20% magnitude (40% here)
+        in its user-facing reasoning.
+        """
+        from services.fatigue_detection_service import detect_fatigue
 
-        result = detect_fatigue(sets)
+        # Pattern: 10, 8, 6 reps against a per-set target of 10 - clear decline
+        sets = generate_mock_performance_sets([10, 8, 6], weight_kg=50.0, target_reps=10)
 
-        assert result["fatigue_detected"] is True
-        assert result["detection_reason"] == "rep_decline"
-        assert result["decline_percentage"] >= 20
+        alert = detect_fatigue(sets, current_weight=50.0)
+
+        assert alert.fatigue_detected is True
+        # 40% below target lands in the "severe" bucket (>= 30%); both the
+        # severe and normal buckets carry the rep_decline signal.
+        assert any("rep_decline" in i for i in alert.indicators)
+        assert alert.severity == "critical"
+        # Same >= 20% decline magnitude the old assertion pinned, now surfaced
+        # in the reasoning the user actually sees.
+        assert "40%" in alert.reasoning
+        # A fatigue alert must never suggest going UP in weight.
+        assert alert.suggested_weight < 50.0
 
     def test_fatigue_detection_high_rpe(self):
-        """Test detecting fatigue from high RPE values."""
-        try:
-            from services.fatigue_detection_service import detect_fatigue
-        except ImportError:
-            detect_fatigue = detect_fatigue_inline
+        """Test detecting fatigue from high RPE values.
 
-        # Sets with escalating high RPE
+        Was: asserted "rpe" in the stub's detection_reason. Now: asserts the
+        real detector's indicator list carries an RPE signal (RPE 7 -> 9 is a
+        +2 consecutive-set spike).
+        """
+        from services.fatigue_detection_service import detect_fatigue
+
+        # Sets with escalating high RPE (reps held at target so RPE is the
+        # only signal under test)
         sets = [
-            {"set_number": 1, "reps_completed": 10, "weight_kg": 50, "rpe": 7, "completed": True},
-            {"set_number": 2, "reps_completed": 10, "weight_kg": 50, "rpe": 9, "completed": True},
-            {"set_number": 3, "reps_completed": 9, "weight_kg": 50, "rpe": 10, "completed": True},
+            {"set_number": 1, "reps": 10, "target_reps": 10, "weight": 50, "rpe": 7},
+            {"set_number": 2, "reps": 10, "target_reps": 10, "weight": 50, "rpe": 9},
+            {"set_number": 3, "reps": 9, "target_reps": 10, "weight": 50, "rpe": 10},
         ]
 
-        result = detect_fatigue(sets)
+        alert = detect_fatigue(sets, current_weight=50.0)
 
-        assert result["fatigue_detected"] is True
-        assert "rpe" in result["detection_reason"].lower()
+        assert alert.fatigue_detected is True
+        assert any("rpe" in i.lower() for i in alert.indicators)
+        assert alert.severity in ("moderate", "high", "critical")
 
     def test_fatigue_detection_weight_reduction(self):
-        """Test detecting fatigue when user reduces weight mid-exercise."""
-        try:
-            from services.fatigue_detection_service import detect_fatigue
-        except ImportError:
-            detect_fatigue = detect_fatigue_inline
+        """Test detecting fatigue when user reduces weight mid-exercise.
+
+        Was: asserted "weight" in the stub's detection_reason. Now: asserts the
+        real detector's `weight_reduced` indicator fires on a mid-exercise drop.
+        """
+        from services.fatigue_detection_service import detect_fatigue
 
         # User starts heavy, then drops weight significantly
         sets = [
-            {"set_number": 1, "reps_completed": 10, "weight_kg": 60, "rpe": 7, "completed": True},
-            {"set_number": 2, "reps_completed": 10, "weight_kg": 60, "rpe": 8, "completed": True},
-            {"set_number": 3, "reps_completed": 10, "weight_kg": 45, "rpe": 8, "completed": True},  # Dropped weight
+            {"set_number": 1, "reps": 10, "target_reps": 10, "weight": 60, "rpe": 7},
+            {"set_number": 2, "reps": 10, "target_reps": 10, "weight": 60, "rpe": 8},
+            {"set_number": 3, "reps": 10, "target_reps": 10, "weight": 45, "rpe": 8},  # Dropped weight
         ]
 
-        result = detect_fatigue(sets)
+        alert = detect_fatigue(sets, current_weight=45.0)
 
-        assert result["fatigue_detected"] is True
-        assert "weight" in result["detection_reason"].lower()
+        assert alert.fatigue_detected is True
+        assert any("weight" in i.lower() for i in alert.indicators)
+        # Suggestion anchors on the weight actually lifted last (45kg), never
+        # on the heavier opening set.
+        assert alert.suggested_weight < 45.0
 
     def test_fatigue_detection_no_fatigue(self):
         """Test that consistent performance doesn't trigger fatigue detection."""
-        try:
-            from services.fatigue_detection_service import detect_fatigue
-        except ImportError:
-            detect_fatigue = detect_fatigue_inline
+        from services.fatigue_detection_service import detect_fatigue
 
-        # Consistent performance
-        sets = generate_mock_performance_sets([10, 10, 10], weight_kg=50.0)
+        # Consistent performance: reps on target, constant weight, benign RPE
+        sets = generate_mock_performance_sets([10, 10, 10], weight_kg=50.0, target_reps=10)
 
-        result = detect_fatigue(sets)
+        alert = detect_fatigue(sets, current_weight=50.0)
 
-        assert result["fatigue_detected"] is False
+        assert alert.fatigue_detected is False
+        assert alert.indicators == []
+        assert alert.suggested_weight_reduction == 0
 
 
 class TestFatigueRecommendations:

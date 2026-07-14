@@ -33,18 +33,39 @@ def _bypass_auth():
     app.dependency_overrides.clear()
 
 
-def _supabase_stub(rows_for_query):
-    """Build a get_supabase_db() stub that returns canned rows for ANY .ilike/.eq query."""
+def _supabase_stub(rows_for_query, demo_rows=None):
+    """Build a get_supabase_db() stub that returns canned rows for ANY table query.
+
+    The stub must model EVERY chain method the endpoint actually calls. The
+    name-lookup path calls `.order(...)` twice (the C7 multi-row tiebreak that
+    prefers the row carrying a real `ILLUSTRATIONS ALL/` path), so a stub that
+    only wires select/ilike/eq/limit hands back an auto-generated child MagicMock
+    whose `.data` is itself a MagicMock — truthy, but empty when iterated. That
+    made `_pick_best()` call `max()` on an empty iterable and the endpoint's
+    catch-all turned the resulting ValueError into a generic 404, so these tests
+    were "passing the 404 status" for entirely the wrong reason.
+
+    `demo_rows` models the canonical `resolve_exercise_demo_media` RPC fallback
+    (exact normalized-alias resolution, no fuzzy matching). It defaults to EMPTY:
+    these tests pin down the no-image / not-found behavior of a DB where nothing
+    else can resolve the name, which is exactly the state the lat-pulldown bug
+    was served from.
+    """
     db = MagicMock()
     chain = MagicMock()
     chain.select.return_value = chain
     chain.ilike.return_value = chain
     chain.eq.return_value = chain
+    chain.order.return_value = chain
     chain.limit.return_value = chain
     exec_result = MagicMock()
     exec_result.data = rows_for_query
     chain.execute.return_value = exec_result
     db.client.table.return_value = chain
+
+    rpc_result = MagicMock()
+    rpc_result.data = demo_rows or []
+    db.client.rpc.return_value.execute.return_value = rpc_result
     return db
 
 

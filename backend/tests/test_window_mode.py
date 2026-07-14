@@ -41,9 +41,26 @@ def mock_activity_logger():
 
 @pytest.fixture
 def client():
-    """Create a test client."""
+    """Create a test client with the auth dependency satisfied.
+
+    Both window-mode routes are behind ``Depends(get_current_user)`` and call
+    ``verify_user_ownership(current_user, user_id)``. Without an override the
+    app short-circuits with 401 before the handler (and its validation) ever
+    runs, so every assertion below would be testing the auth layer instead of
+    the window-mode logic it was written for. The override returns
+    MOCK_USER_ID so the ownership check passes for the user these tests act on.
+    """
     from main import app
-    return TestClient(app)
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": MOCK_USER_ID,
+        "email": "test@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 def generate_mock_window_log(

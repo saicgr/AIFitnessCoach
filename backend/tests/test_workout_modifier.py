@@ -402,8 +402,37 @@ class TestModifyIntensity:
 
         assert result is False
 
-    def test_modify_intensity_respects_bounds(self, workout_modifier, mock_db):
-        """Test intensity modification respects min/max bounds."""
+    @pytest.mark.parametrize(
+        "fitness_level,expected_reps",
+        [
+            # reps floor = FITNESS_CEILINGS[level]["reps_min"]; start reps = 5,
+            # "easier" subtracts 2 → 3, then clamps up to the level's floor.
+            ("beginner", 6),      # reps_min 6 → floor binds
+            ("intermediate", 4),  # reps_min 4 → floor binds
+            ("advanced", 3),      # reps_min 1 → floor does not bind, 5 - 2 = 3
+        ],
+    )
+    def test_modify_intensity_respects_bounds(
+        self, workout_modifier, mock_db, fitness_level, expected_reps
+    ):
+        """Test 'easier' clamps at the min bounds and never goes below them.
+
+        This test used to assert a universal `reps >= 5` floor, matching the
+        original hardcoded `max(5, ex.get("reps", 12) - 2)`. That universal
+        floor was deliberately retired (commit b8bfc59b) in favour of a
+        per-fitness-level floor — FITNESS_CEILINGS[level]["reps_min"]:
+        beginner 6, intermediate 4, advanced 1 — so a beginner is never dropped
+        into low-rep strength territory while an advanced lifter still can be.
+
+        The guarantee under test is unchanged: making a workout easier must
+        clamp at the floor and never fall below it (sets never below 1).
+        It is now asserted against the current, fitness-level-aware contract.
+
+        The old version also never stubbed `get_user`, so `fitness_level` was an
+        unconfigured MagicMock that fell through to the "intermediate" default —
+        the ceiling logic it meant to cover was never actually exercised. The
+        level is now set explicitly and every level is covered.
+        """
         # Workout with minimal values
         minimal_workout = {
             "id": 123,
@@ -415,6 +444,7 @@ class TestModifyIntensity:
             "modification_history": []
         }
         mock_db.get_workout.return_value = minimal_workout
+        mock_db.get_user.return_value = {"fitness_level": fitness_level}
         mock_db.update_workout.return_value = None
         mock_db.create_workout_change.return_value = None
 
@@ -431,10 +461,33 @@ class TestModifyIntensity:
         # Check bounds are respected
         first_exercise = update_data["exercises"][0]
         assert first_exercise["sets"] >= 1
-        assert first_exercise["reps"] >= 5
+        assert first_exercise["sets"] == 1  # already at the floor, stays there
+        assert first_exercise["reps"] >= expected_reps
+        assert first_exercise["reps"] == expected_reps
+        assert first_exercise["rest_seconds"] == 45  # 30 + 15, under the 120 cap
 
-    def test_modify_intensity_respects_max_bounds(self, workout_modifier, mock_db):
-        """Test intensity modification respects max bounds."""
+    @pytest.mark.parametrize(
+        "fitness_level,sets_max,reps_max,expected_sets,expected_reps",
+        [
+            # Ceilings: start sets 5 / reps 20, "harder" adds 1 / 2 then clamps
+            # down to FITNESS_CEILINGS[level]["sets_max"/"reps_max"].
+            ("beginner", 3, 12, 3, 12),
+            ("intermediate", 5, 15, 5, 15),
+            ("advanced", 8, 20, 6, 20),  # sets_max 8 not reached (5 + 1); reps_max 20 binds
+        ],
+    )
+    def test_modify_intensity_respects_max_bounds(
+        self, workout_modifier, mock_db, fitness_level, sets_max, reps_max,
+        expected_sets, expected_reps
+    ):
+        """Test 'harder' clamps at the per-fitness-level max ceilings.
+
+        Same history as the min-bounds test: the ceilings are fitness-level
+        dependent, and the old version left `get_user` unstubbed so the level
+        was a MagicMock silently defaulting to "intermediate". The level is now
+        explicit, so this really covers the "beginners can't be pushed to
+        inappropriate volume" guarantee the ceiling exists for.
+        """
         # Workout with high values
         max_workout = {
             "id": 123,
@@ -446,6 +499,7 @@ class TestModifyIntensity:
             "modification_history": []
         }
         mock_db.get_workout.return_value = max_workout
+        mock_db.get_user.return_value = {"fitness_level": fitness_level}
         mock_db.update_workout.return_value = None
         mock_db.create_workout_change.return_value = None
 
@@ -461,8 +515,11 @@ class TestModifyIntensity:
 
         # Check bounds are respected
         first_exercise = update_data["exercises"][0]
-        assert first_exercise["sets"] <= 5
-        assert first_exercise["reps"] <= 20
+        assert first_exercise["sets"] <= sets_max
+        assert first_exercise["reps"] <= reps_max
+        assert first_exercise["sets"] == expected_sets
+        assert first_exercise["reps"] == expected_reps
+        assert first_exercise["rest_seconds"] == 110  # 120 - 10, above the 30 floor
 
     def test_modify_intensity_updates_history(self, workout_modifier, mock_db, sample_workout):
         """Test modification history is updated."""

@@ -16,6 +16,15 @@ from fastapi import HTTPException
 from models.friend_request import FriendRequestCreate, FriendRequestStatus
 
 
+# These endpoints are invoked directly (not through the ASGI app), so FastAPI never
+# resolves `current_user: dict = Depends(get_current_user)` for us. The endpoints
+# gained that auth dependency (and a `verify_user_ownership(current_user, user_id)`
+# call) after these tests were written, which is why every direct call blew up with
+# "TypeError: 'Depends' object is not subscriptable". Passing the authenticated user
+# explicitly is the correct way to call them; ownership still has to match `user_id`.
+CURRENT_USER = {"id": "user-1"}
+
+
 class TestSendFriendRequest:
     """Tests for send_friend_request endpoint."""
 
@@ -53,7 +62,7 @@ class TestSendFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with patch("api.v1.social.friend_requests.create_social_notification", new_callable=AsyncMock):
-                result = await send_friend_request(user_id="user-1", request=request)
+                result = await send_friend_request(user_id="user-1", current_user=CURRENT_USER, request=request)
 
         assert result.id == "req-1"
         assert result.status == FriendRequestStatus.PENDING
@@ -66,7 +75,7 @@ class TestSendFriendRequest:
         request = FriendRequestCreate(to_user_id="user-1")
 
         with pytest.raises(HTTPException) as exc_info:
-            await send_friend_request(user_id="user-1", request=request)
+            await send_friend_request(user_id="user-1", current_user=CURRENT_USER, request=request)
 
         assert exc_info.value.status_code == 400
         assert "yourself" in exc_info.value.detail.lower()
@@ -83,7 +92,7 @@ class TestSendFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await send_friend_request(user_id="user-1", request=request)
+                await send_friend_request(user_id="user-1", current_user=CURRENT_USER, request=request)
 
         assert exc_info.value.status_code == 404
 
@@ -110,7 +119,7 @@ class TestSendFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await send_friend_request(user_id="user-1", request=request)
+                await send_friend_request(user_id="user-1", current_user=CURRENT_USER, request=request)
 
         assert exc_info.value.status_code == 400
         assert "already" in exc_info.value.detail.lower()
@@ -125,7 +134,7 @@ class TestGetReceivedRequests:
         from api.v1.social.friend_requests import get_received_requests
 
         mock_client = MagicMock()
-        mock_client.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value.data = [
+        mock_client.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value.data = [
             {
                 "id": "req-1",
                 "from_user_id": "user-2",
@@ -139,7 +148,7 @@ class TestGetReceivedRequests:
         ]
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
-            result = await get_received_requests(user_id="user-1", status=None)
+            result = await get_received_requests(user_id="user-1", current_user=CURRENT_USER, status=None)
 
         assert len(result) == 1
         assert result[0].from_user_name == "John Doe"
@@ -150,12 +159,13 @@ class TestGetReceivedRequests:
         from api.v1.social.friend_requests import get_received_requests
 
         mock_client = MagicMock()
-        mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value.data = []
+        mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value.data = []
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             result = await get_received_requests(
                 user_id="user-1",
-                status=FriendRequestStatus.PENDING
+                status=FriendRequestStatus.PENDING,
+                current_user=CURRENT_USER,
             )
 
         assert result == []
@@ -170,7 +180,7 @@ class TestGetSentRequests:
         from api.v1.social.friend_requests import get_sent_requests
 
         mock_client = MagicMock()
-        mock_client.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value.data = [
+        mock_client.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value.data = [
             {
                 "id": "req-1",
                 "from_user_id": "user-1",
@@ -184,7 +194,7 @@ class TestGetSentRequests:
         ]
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
-            result = await get_sent_requests(user_id="user-1", status=None)
+            result = await get_sent_requests(user_id="user-1", current_user=CURRENT_USER, status=None)
 
         assert len(result) == 1
         assert result[0].to_user_name == "Jane Doe"
@@ -216,7 +226,7 @@ class TestAcceptFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with patch("api.v1.social.friend_requests.create_social_notification", new_callable=AsyncMock):
-                result = await accept_friend_request(request_id="req-1", user_id="user-1")
+                result = await accept_friend_request(request_id="req-1", user_id="user-1", current_user=CURRENT_USER)
 
         assert result["message"] == "Friend request accepted"
         assert result["connection_created"] is True
@@ -236,7 +246,7 @@ class TestAcceptFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await accept_friend_request(request_id="req-1", user_id="user-1")
+                await accept_friend_request(request_id="req-1", user_id="user-1", current_user=CURRENT_USER)
 
         assert exc_info.value.status_code == 403
 
@@ -255,7 +265,7 @@ class TestAcceptFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await accept_friend_request(request_id="req-1", user_id="user-1")
+                await accept_friend_request(request_id="req-1", user_id="user-1", current_user=CURRENT_USER)
 
         assert exc_info.value.status_code == 400
 
@@ -269,7 +279,7 @@ class TestAcceptFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await accept_friend_request(request_id="nonexistent", user_id="user-1")
+                await accept_friend_request(request_id="nonexistent", user_id="user-1", current_user=CURRENT_USER)
 
         assert exc_info.value.status_code == 404
 
@@ -292,7 +302,7 @@ class TestDeclineFriendRequest:
         mock_client.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [{}]
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
-            result = await decline_friend_request(request_id="req-1", user_id="user-1")
+            result = await decline_friend_request(request_id="req-1", user_id="user-1", current_user=CURRENT_USER)
 
         assert result["message"] == "Friend request declined"
 
@@ -311,7 +321,7 @@ class TestDeclineFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await decline_friend_request(request_id="req-1", user_id="user-1")
+                await decline_friend_request(request_id="req-1", user_id="user-1", current_user=CURRENT_USER)
 
         assert exc_info.value.status_code == 403
 
@@ -334,7 +344,7 @@ class TestCancelFriendRequest:
         mock_client.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = [{}]
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
-            result = await cancel_friend_request(request_id="req-1", user_id="user-1")
+            result = await cancel_friend_request(request_id="req-1", user_id="user-1", current_user=CURRENT_USER)
 
         assert result["message"] == "Friend request cancelled"
 
@@ -353,7 +363,7 @@ class TestCancelFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await cancel_friend_request(request_id="req-1", user_id="user-1")
+                await cancel_friend_request(request_id="req-1", user_id="user-1", current_user=CURRENT_USER)
 
         assert exc_info.value.status_code == 403
 
@@ -372,7 +382,7 @@ class TestCancelFriendRequest:
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
             with pytest.raises(HTTPException) as exc_info:
-                await cancel_friend_request(request_id="req-1", user_id="user-1")
+                await cancel_friend_request(request_id="req-1", user_id="user-1", current_user=CURRENT_USER)
 
         assert exc_info.value.status_code == 400
 
@@ -391,6 +401,6 @@ class TestGetPendingCount:
         mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
 
         with patch("api.v1.social.friend_requests.get_supabase_client", return_value=mock_client):
-            result = await get_pending_count(user_id="user-1")
+            result = await get_pending_count(user_id="user-1", current_user=CURRENT_USER)
 
         assert result["count"] == 5

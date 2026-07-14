@@ -15,6 +15,43 @@ import json
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 from datetime import datetime
+from fastapi.testclient import TestClient
+
+
+MOCK_AUTH_USER_ID = "user-test-001"
+
+
+@pytest.fixture
+def client():
+    """Authenticated TestClient for the /workouts/add-exercise endpoint.
+
+    Shadows the unauthenticated `client` fixture in conftest.py. POST
+    /api/v1/workouts/add-exercise is guarded by `Depends(get_current_user)`
+    (core.auth), so an un-overridden client gets 401 before FastAPI ever
+    validates the body or reaches the handler — which is correct product
+    behavior, not a bug. These tests exercise the handler, so they must
+    supply an authenticated identity.
+
+    The per-endpoint slowapi limiter ("10/minute", keyed by client IP) is
+    disabled for the duration of the fixture: this module fires ~20 POSTs at
+    the same route from the same in-process IP, which would otherwise trip a
+    429 partway through the file. No test here asserts rate-limit behavior.
+    """
+    from main import app
+    from core.auth import get_current_user
+    from core.rate_limiter import limiter
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": MOCK_AUTH_USER_ID,
+        "email": "test@example.com",
+    }
+    _limiter_was_enabled = limiter.enabled
+    limiter.enabled = False
+    try:
+        yield TestClient(app)
+    finally:
+        limiter.enabled = _limiter_was_enabled
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 # =============================================================================
@@ -269,10 +306,10 @@ def make_mock_db(workout_row=None, warmup_rows=None, stretch_rows=None):
 class TestAddExerciseMainSection:
     """Tests for adding exercise to main section (default, existing behavior)."""
 
-    @patch("api.v1.workouts.generation.index_workout_to_rag", new_callable=AsyncMock)
-    @patch("api.v1.workouts.generation.log_workout_change")
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.index_workout_to_rag", new_callable=AsyncMock)
+    @patch("api.v1.workouts.workout_operations.log_workout_change")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_exercise_main_default(self, mock_get_db, mock_get_lib, mock_log, mock_rag, client):
         """Adding exercise without section defaults to main."""
         mock_db = make_mock_db(workout_row=MOCK_WORKOUT_ROW)
@@ -296,10 +333,10 @@ class TestAddExerciseMainSection:
         assert len(exercises) == 3  # 2 original + 1 new
         assert exercises[-1]["name"] == "Dumbbell Lateral Raise"
 
-    @patch("api.v1.workouts.generation.index_workout_to_rag", new_callable=AsyncMock)
-    @patch("api.v1.workouts.generation.log_workout_change")
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.index_workout_to_rag", new_callable=AsyncMock)
+    @patch("api.v1.workouts.workout_operations.log_workout_change")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_exercise_main_explicit(self, mock_get_db, mock_get_lib, mock_log, mock_rag, client):
         """Explicitly passing section='main' works the same as default."""
         mock_db = make_mock_db(workout_row=MOCK_WORKOUT_ROW)
@@ -326,12 +363,22 @@ class TestAddExerciseMainSection:
         assert exercises[-1]["muscle_group"] == "shoulders"
         assert exercises[-1]["library_id"] == "lib-ex-001"
 
-    @patch("api.v1.workouts.generation.index_workout_to_rag", new_callable=AsyncMock)
-    @patch("api.v1.workouts.generation.log_workout_change")
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.index_workout_to_rag", new_callable=AsyncMock)
+    @patch("api.v1.workouts.workout_operations.log_workout_change")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_exercise_main_not_in_library(self, mock_get_db, mock_get_lib, mock_log, mock_rag, client):
-        """Exercise not found in library still gets added with basic info."""
+        """Exercise not found in library still gets added with the caller's sets/reps.
+
+        Behavior change (commit a13acd75): the endpoint used to persist
+        `reps` verbatim as the request string ("15"). It now parses the first
+        integer out of the reps string ("8-12" -> 8, "15" -> 15) before
+        writing exercises_json, because the canonical exercise shape is
+        `models/workout.py::Exercise.reps: int`. This test therefore asserts
+        the normalized int; the guarantee it protects is unchanged — a
+        custom (non-library) exercise is appended honoring the sets/reps the
+        caller asked for, not the endpoint defaults.
+        """
         mock_db = make_mock_db(workout_row=MOCK_WORKOUT_ROW)
         mock_get_db.return_value = mock_db
 
@@ -356,10 +403,11 @@ class TestAddExerciseMainSection:
         assert len(exercises) == 3
         assert exercises[-1]["name"] == "Custom Exercise"
         assert exercises[-1]["sets"] == 5
-        assert exercises[-1]["reps"] == "15"
+        assert exercises[-1]["reps"] == 15
+        assert exercises[-1]["rest_seconds"] == 30
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_exercise_workout_not_found(self, mock_get_db, mock_get_lib, client):
         """Returns 404 when workout doesn't exist."""
         mock_db = make_mock_db(workout_row=None)
@@ -387,8 +435,8 @@ class TestAddExerciseMainSection:
 class TestAddExerciseWarmupSection:
     """Tests for adding exercise to warmup section."""
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_to_existing_warmup(self, mock_get_db, mock_get_lib, client):
         """Exercise appended to existing warmup exercises."""
         mock_db = make_mock_db(
@@ -427,8 +475,8 @@ class TestAddExerciseWarmupSection:
         assert warmup_exercises[-1]["duration_seconds"] == 30
         assert warmup_exercises[-1]["rest_seconds"] == 10
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_create_new_warmup_when_none_exists(self, mock_get_db, mock_get_lib, client):
         """Creates a new warmup when none exists for the workout."""
         mock_db = make_mock_db(
@@ -464,10 +512,20 @@ class TestAddExerciseWarmupSection:
         assert warmup_exercises[0]["name"] == "Dumbbell Lateral Raise"
         assert warmup_exercises[0]["muscle_group"] == "shoulders"
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_exercise_format(self, mock_get_db, mock_get_lib, client):
-        """Warmup exercise has correct WarmupExercise format."""
+        """Warmup exercise has correct WarmupExercise format.
+
+        Behavior change: `equipment` used to be hardcoded to "none" for every
+        warmup exercise. It is now inherited from the matched library
+        exercise (`exercise_data[0]["equipment"]`), falling back to "none"
+        when the library has no match — so a treadmill/bike warmup carries its
+        real equipment through to the client. The mocked library here returns
+        a dumbbell exercise, so "dumbbell" is the expected value. The "none"
+        fallback is asserted in
+        TestAddExerciseEdgeCases::test_warmup_with_no_library_match.
+        """
         mock_db = make_mock_db(
             workout_row=MOCK_WORKOUT_ROW,
             warmup_rows=[],
@@ -497,10 +555,11 @@ class TestAddExerciseWarmupSection:
         # Verify WarmupExercise format
         assert "name" in ex
         assert ex["sets"] == 1
+        assert ex["reps"] is None
         assert ex["duration_seconds"] == 30
         assert ex["rest_seconds"] == 10
-        assert ex["equipment"] == "none"
-        assert "muscle_group" in ex
+        assert ex["equipment"] == "dumbbell"  # inherited from the library match
+        assert ex["muscle_group"] == "shoulders"
 
 
 # =============================================================================
@@ -510,8 +569,8 @@ class TestAddExerciseWarmupSection:
 class TestAddExerciseStretchesSection:
     """Tests for adding exercise to stretches section."""
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_to_existing_stretches(self, mock_get_db, mock_get_lib, client):
         """Exercise appended to existing stretch exercises."""
         mock_db = make_mock_db(
@@ -551,8 +610,8 @@ class TestAddExerciseStretchesSection:
         assert stretch_exercises[-1]["duration_seconds"] == 30
         assert stretch_exercises[-1]["rest_seconds"] == 0  # Stretches have 0 rest
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_create_new_stretch_when_none_exists(self, mock_get_db, mock_get_lib, client):
         """Creates a new stretch when none exists for the workout."""
         mock_db = make_mock_db(
@@ -587,10 +646,18 @@ class TestAddExerciseStretchesSection:
         assert len(stretch_exercises) == 1
         assert stretch_exercises[0]["name"] == "Dumbbell Lateral Raise"
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_stretch_exercise_format(self, mock_get_db, mock_get_lib, client):
-        """Stretch exercise has correct StretchExercise format."""
+        """Stretch exercise has correct StretchExercise format.
+
+        Behavior change: `equipment` used to be hardcoded to "none" for every
+        stretch exercise; it is now inherited from the matched library
+        exercise, falling back to "none" when there is no match. The mocked
+        library returns a dumbbell exercise here. The "none" fallback is
+        asserted in TestAddExerciseEdgeCases::test_stretch_with_no_library_match.
+        rest_seconds=0 (vs warmup's 10) remains the key format difference.
+        """
         mock_db = make_mock_db(
             workout_row=MOCK_WORKOUT_ROW,
             stretch_rows=[],
@@ -623,11 +690,11 @@ class TestAddExerciseStretchesSection:
         assert ex["reps"] == 1
         assert ex["duration_seconds"] == 30
         assert ex["rest_seconds"] == 0  # Key difference from warmup
-        assert ex["equipment"] == "none"
-        assert "muscle_group" in ex
+        assert ex["equipment"] == "dumbbell"  # inherited from the library match
+        assert ex["muscle_group"] == "shoulders"
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_stretch_vs_warmup_rest_seconds(self, mock_get_db, mock_get_lib, client):
         """Warmup has rest_seconds=10, stretches have rest_seconds=0."""
         # This test verifies the key difference between warmup and stretch formats
@@ -651,8 +718,8 @@ class TestAddExerciseStretchesSection:
 class TestAddExerciseEdgeCases:
     """Edge case tests for the add-exercise endpoint."""
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_with_no_library_match(self, mock_get_db, mock_get_lib, client):
         """Warmup exercise uses 'general' muscle_group when not found in library."""
         mock_db = make_mock_db(
@@ -681,9 +748,10 @@ class TestAddExerciseEdgeCases:
         warmup_exercises = json.loads(insert_args["exercises_json"])
         assert warmup_exercises[0]["muscle_group"] == "general"
         assert warmup_exercises[0]["name"] == "Custom Warm Up Move"
+        assert warmup_exercises[0]["equipment"] == "none"  # fallback when no library match
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_stretch_with_no_library_match(self, mock_get_db, mock_get_lib, client):
         """Stretch exercise uses 'general' muscle_group when not found in library."""
         mock_db = make_mock_db(
@@ -711,9 +779,10 @@ class TestAddExerciseEdgeCases:
         insert_args = stretch_table.insert.call_args[0][0]
         stretch_exercises = json.loads(insert_args["exercises_json"])
         assert stretch_exercises[0]["muscle_group"] == "general"
+        assert stretch_exercises[0]["equipment"] == "none"  # fallback when no library match
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_workout_not_found(self, mock_get_db, mock_get_lib, client):
         """Returns 404 for warmup section when workout doesn't exist."""
         mock_db = make_mock_db(workout_row=None)
@@ -733,8 +802,8 @@ class TestAddExerciseEdgeCases:
 
         assert response.status_code == 404
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_returns_main_workout_unchanged(self, mock_get_db, mock_get_lib, client):
         """Warmup section returns the main workout without modifying its exercises."""
         mock_db = make_mock_db(
@@ -767,8 +836,8 @@ class TestAddExerciseEdgeCases:
         # update_workout should NOT have been called for warmup section
         mock_db.update_workout.assert_not_called()
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_stretches_returns_main_workout_unchanged(self, mock_get_db, mock_get_lib, client):
         """Stretches section returns the main workout without modifying its exercises."""
         mock_db = make_mock_db(
@@ -825,8 +894,8 @@ class TestAddExerciseEdgeCases:
 class TestExistingExercisesParsing:
     """Tests for parsing existing exercises_json in warmup/stretch tables."""
 
-    @patch("api.v1.workouts.generation.get_exercise_library_service")
-    @patch("api.v1.workouts.generation.get_supabase_db")
+    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_exercises_json_as_list(self, mock_get_db, mock_get_lib, client):
         """Handles warmup exercises_json stored as a list (not string)."""
         warmup_with_list = {

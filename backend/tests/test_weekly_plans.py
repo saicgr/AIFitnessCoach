@@ -89,8 +89,20 @@ class TestWeeklyPlansAPI:
 
     @pytest.fixture
     def mock_gemini(self):
-        """Create a mock Gemini service."""
-        with patch("api.v1.weekly_plans.GeminiService") as mock:
+        """Create a mock Gemini service.
+
+        Stale patch target fixed: `api.v1.weekly_plans` has never held a
+        module-level `GeminiService` attribute — the module imports it lazily
+        inside the request handler (`from services.gemini_service import
+        GeminiService`, api/v1/weekly_plans.py:534), so the only patchable seam
+        is the class in its defining module. Patching the source module also
+        covers the lazy import, which is resolved at call time.
+
+        Same intent, real target: the AI layer that produces the holistic weekly
+        plan (`GeminiService.generate_weekly_holistic_plan`, defined on the
+        meal-plans mixin in services/gemini/meal_plans.py:26).
+        """
+        with patch("services.gemini_service.GeminiService") as mock:
             service = AsyncMock()
             mock.return_value = service
             yield service

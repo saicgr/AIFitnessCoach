@@ -12,6 +12,7 @@ Run with: pytest backend/tests/test_text_export.py -v
 """
 
 import pytest
+from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 from datetime import datetime
 
@@ -483,21 +484,53 @@ except (ImportError, ModuleNotFoundError):
     TestClient = None
 
 
+@contextmanager
+def authenticated_as(user_id: str):
+    """Authenticate the TestClient as `user_id` for the duration of the block.
+
+    `GET /api/v1/users/{user_id}/export-text` now takes
+    `current_user: dict = Depends(get_current_user)` and calls
+    `verify_user_ownership(current_user, user_id)` (core/auth.py) — an IDOR
+    guard added after these tests were written. Without an override the route
+    short-circuits at 401 before any export code runs, so every assertion below
+    was testing the auth layer instead of the export. Overriding the dependency
+    with the *owner* of the path user_id restores the original test intent:
+    exercising the export response itself.
+    """
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": user_id,
+        "email": "john@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
+
 @pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI app not available - skipping API tests")
 class TestExportTextApiEndpoint:
-    """Test the API endpoint returns correct content-type."""
+    """Test the API endpoint returns correct content-type.
+
+    NOTE ON PATCH TARGET: the endpoint lives in `api/v1/users/data_export.py`
+    and does `from core.db import get_supabase_db`, so it resolves the symbol in
+    ITS OWN module namespace. Patching `api.v1.users.get_supabase_db` (the
+    package re-export) leaves the endpoint bound to the real client, so these
+    tests must patch `api.v1.users.data_export.get_supabase_db`.
+    """
 
     def test_export_text_api_returns_plain_text_content_type(self, mock_db, sample_user, sample_workout_logs, sample_performance_logs):
         """Test API endpoint returns correct content-type header."""
         # Setup mocks
         mock_db.get_user.return_value = sample_user
 
-        with patch("api.v1.users.get_supabase_db", return_value=mock_db):
+        with patch("api.v1.users.data_export.get_supabase_db", return_value=mock_db):
             with patch("services.data_export.get_supabase_db", return_value=mock_db):
                 with patch("services.data_export._get_filtered_workout_logs", return_value=sample_workout_logs):
                     with patch("services.data_export._get_filtered_performance_logs", return_value=sample_performance_logs):
-                        client = TestClient(app)
-                        response = client.get("/api/v1/users/user-123/export-text")
+                        with authenticated_as("user-123") as client:
+                            response = client.get("/api/v1/users/user-123/export-text")
 
         assert response.status_code == 200
         assert "text/plain" in response.headers.get("content-type", "")
@@ -506,12 +539,12 @@ class TestExportTextApiEndpoint:
         """Test API endpoint returns Content-Disposition header for download."""
         mock_db.get_user.return_value = sample_user
 
-        with patch("api.v1.users.get_supabase_db", return_value=mock_db):
+        with patch("api.v1.users.data_export.get_supabase_db", return_value=mock_db):
             with patch("services.data_export.get_supabase_db", return_value=mock_db):
                 with patch("services.data_export._get_filtered_workout_logs", return_value=sample_workout_logs):
                     with patch("services.data_export._get_filtered_performance_logs", return_value=sample_performance_logs):
-                        client = TestClient(app)
-                        response = client.get("/api/v1/users/user-123/export-text")
+                        with authenticated_as("user-123") as client:
+                            response = client.get("/api/v1/users/user-123/export-text")
 
         assert response.status_code == 200
         content_disposition = response.headers.get("content-disposition", "")
@@ -523,9 +556,9 @@ class TestExportTextApiEndpoint:
         """Test API returns 404 for non-existent user."""
         mock_db.get_user.return_value = None
 
-        with patch("api.v1.users.get_supabase_db", return_value=mock_db):
-            client = TestClient(app)
-            response = client.get("/api/v1/users/nonexistent-user/export-text")
+        with patch("api.v1.users.data_export.get_supabase_db", return_value=mock_db):
+            with authenticated_as("nonexistent-user") as client:
+                response = client.get("/api/v1/users/nonexistent-user/export-text")
 
         assert response.status_code == 404
 
@@ -533,18 +566,33 @@ class TestExportTextApiEndpoint:
         """Test API endpoint accepts date query parameters."""
         mock_db.get_user.return_value = sample_user
 
-        with patch("api.v1.users.get_supabase_db", return_value=mock_db):
+        with patch("api.v1.users.data_export.get_supabase_db", return_value=mock_db):
             with patch("services.data_export.get_supabase_db", return_value=mock_db):
                 with patch("services.data_export._get_filtered_workout_logs", return_value=sample_workout_logs):
                     with patch("services.data_export._get_filtered_performance_logs", return_value=sample_performance_logs):
-                        client = TestClient(app)
-                        response = client.get(
-                            "/api/v1/users/user-123/export-text",
-                            params={"start_date": "2025-01-01", "end_date": "2025-01-31"}
-                        )
+                        with authenticated_as("user-123") as client:
+                            response = client.get(
+                                "/api/v1/users/user-123/export-text",
+                                params={"start_date": "2025-01-01", "end_date": "2025-01-31"}
+                            )
 
         assert response.status_code == 200
         assert "Period: 2025-01-01 to 2025-01-31" in response.text
+
+    def test_export_text_api_requires_authentication(self, mock_db, sample_user):
+        """Unauthenticated callers must not be able to export another user's logs.
+
+        Guards the auth dependency the four tests above deliberately override:
+        with no Authorization header the route must reject before touching data.
+        """
+        mock_db.get_user.return_value = sample_user
+
+        with patch("api.v1.users.data_export.get_supabase_db", return_value=mock_db):
+            client = TestClient(app)
+            response = client.get("/api/v1/users/user-123/export-text")
+
+        assert response.status_code == 401
+        mock_db.get_user.assert_not_called()
 
 
 # ============================================================

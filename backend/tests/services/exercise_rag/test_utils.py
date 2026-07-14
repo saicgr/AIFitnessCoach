@@ -76,25 +76,60 @@ class TestInferEquipmentFromName:
         assert infer_equipment_from_name("kb goblet squat") == "Kettlebell"
 
     def test_infers_resistance_bands(self):
-        """Test inferring resistance bands from name."""
+        """Test inferring resistance bands from name.
+
+        RETIRED ASSERTION: this used to expect the plural "Resistance Bands".
+        The per-exercise equipment label is singular ("Resistance Band") — the
+        plural is the USER-PROFILE label (see `_EQUIPMENT_DISPLAY_MAP`
+        `resistance_bands` -> "Resistance Bands" and the onboarding extractor).
+        The two forms are reconciled by the alias-aware `filter_by_equipment`
+        (see tests/test_filter_equipment_aliases.py::test_b7_resistance_band_underscore_plural,
+        which pins "Resistance Band" matching a user's `resistance_bands`), and
+        every caller of `infer_equipment_from_name` routes its result through
+        that filter rather than comparing strings directly.
+
+        Guarantee protected now: band exercises resolve to the band equipment
+        label (not Bodyweight), for both "resistance band ..." and bare "band ...".
+        """
         from services.exercise_rag.utils import infer_equipment_from_name
 
-        assert infer_equipment_from_name("resistance band pull-apart") == "Resistance Bands"
-        assert infer_equipment_from_name("band face pull") == "Resistance Bands"
+        assert infer_equipment_from_name("resistance band pull-apart") == "Resistance Band"
+        assert infer_equipment_from_name("band face pull") == "Resistance Band"
 
     def test_infers_pull_up_bar(self):
-        """Test inferring pull-up bar from name."""
+        """Test inferring pull-up bar from name.
+
+        RETIRED ASSERTION: expected "Pull-up Bar"; the canonical casing is
+        "Pull-Up Bar" (compound-word hyphenates are title-cased on both sides —
+        see `_HYPHENATION_FIXES` and `_EQUIPMENT_DISPLAY_MAP` in
+        services/exercise_rag/utils.py). Same guarantee, corrected casing.
+        """
         from services.exercise_rag.utils import infer_equipment_from_name
 
-        assert infer_equipment_from_name("pull-up bar hang") == "Pull-up Bar"
-        assert infer_equipment_from_name("chin-up bar exercise") == "Pull-up Bar"
+        assert infer_equipment_from_name("pull-up bar hang") == "Pull-Up Bar"
+        assert infer_equipment_from_name("chin-up bar exercise") == "Pull-Up Bar"
 
     def test_infers_machine(self):
-        """Test inferring machine from name."""
+        """Test inferring machine equipment from name.
+
+        RETIRED ASSERTIONS: this used to expect the generic "Machine" for
+        "leg press machine" and "lat pulldown". Those now resolve to their
+        SPECIFIC machines ("Leg Press Machine", "Lat Pulldown Machine") — the
+        pattern table is deliberately ordered specific-first, with generic
+        "machine" as the LAST fallback, so the coach can tell a user which
+        machine to walk to. The original intent (a machine name never falls
+        through to "Bodyweight", and the generic catch-all still works) is
+        preserved and strengthened below.
+        """
         from services.exercise_rag.utils import infer_equipment_from_name
 
-        assert infer_equipment_from_name("leg press machine") == "Machine"
-        assert infer_equipment_from_name("lat pulldown") == "Machine"
+        # Specific machines win over the generic fallback.
+        assert infer_equipment_from_name("leg press machine") == "Leg Press Machine"
+        assert infer_equipment_from_name("lat pulldown") == "Lat Pulldown Machine"
+
+        # Generic catch-all still fires for machines with no specific rule.
+        assert infer_equipment_from_name("chest fly machine") == "Machine"
+        assert infer_equipment_from_name("seated calf raise machine") == "Machine"
 
     def test_defaults_to_bodyweight(self):
         """Test defaulting to bodyweight for unknown equipment."""

@@ -14,6 +14,10 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from fastapi import Request
+
+from main import app
+from core.auth import get_current_user
 from api.v1.consistency import (
     get_day_name,
     get_time_of_day_name,
@@ -38,6 +42,42 @@ from models.consistency import (
     CalendarHeatmapData,
     CalendarHeatmapResponse,
 )
+
+
+# ============================================================================
+# Auth
+# ============================================================================
+
+@pytest.fixture(autouse=True)
+def override_auth():
+    """Authenticate every request in this module.
+
+    Every /consistency endpoint is gated by `Depends(get_current_user)` and then
+    enforces ownership (`current_user["id"] == user_id`). The TestClient sends no
+    Authorization header, so without this override each request is rejected with
+    401 inside dependency solving — before the endpoint body (or even query-param
+    validation) ever runs, which is why the endpoint assertions below could not be
+    exercised at all.
+
+    The stub authenticates as whoever the request claims to be (query param first,
+    then JSON body), so each test keeps its own user_id and the real ownership
+    check still executes. IDOR behaviour is covered by core.auth's own tests; this
+    module tests the consistency aggregation logic.
+    """
+    async def _current_user(request: Request) -> dict:
+        user_id = request.query_params.get("user_id")
+        if user_id is None:
+            try:
+                body = await request.json()
+            except Exception:
+                body = None
+            if isinstance(body, dict):
+                user_id = body.get("user_id")
+        return {"id": user_id or "test-user", "email": "test-user@example.com"}
+
+    app.dependency_overrides[get_current_user] = _current_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 # ============================================================================
@@ -567,10 +607,16 @@ class TestCalendarHeatmapEndpoint:
     def test_returns_calendar_data(self, mock_db, client):
         """Should return calendar heatmap data."""
         today = date.today()
+        # `workouts.is_completed` is the real column the endpoint selects and
+        # indexes with `workout["is_completed"]`; the old mock rows used a
+        # `completed` key, so every row raised KeyError → 500 and the assertions
+        # below were never reached.
         mock_result = MagicMock()
         mock_result.data = [
-            {"id": "w1", "name": "Upper Body", "scheduled_date": today.isoformat(), "completed": True},
-            {"id": "w2", "name": "Lower Body", "scheduled_date": (today - timedelta(days=1)).isoformat(), "completed": False},
+            {"id": "w1", "name": "Upper Body", "type": "strength",
+             "scheduled_date": today.isoformat(), "is_completed": True},
+            {"id": "w2", "name": "Lower Body", "type": "strength",
+             "scheduled_date": (today - timedelta(days=1)).isoformat(), "is_completed": False},
         ]
 
         mock_db_instance = MagicMock()
@@ -726,17 +772,21 @@ class TestStreakRecoveryEndpoint:
         )
         assert response.status_code != 404
 
-    @patch('api.v1.consistency.get_supabase_db')
+    @patch('api.v1.consistency_endpoints.get_supabase_db')
     def test_initiates_recovery(self, mock_db, client):
-        """Should initiate streak recovery."""
-        mock_user_result = MagicMock()
-        mock_user_result.data = {
-            "current_streak": 0,
-            "last_workout_date": (date.today() - timedelta(days=3)).isoformat(),
-        }
+        """Should initiate streak recovery.
 
-        mock_history_result = MagicMock()
-        mock_history_result.data = [{"streak_length": 7}]
+        The endpoint no longer reads `users.current_streak` / `users.last_workout_date`
+        (those columns never existed — Sentry PYTHON-FASTAPI-2X) nor a `streak_history`
+        table (PYTHON-FASTAPI-35); it derives days-since-last-workout from the most
+        recent completed row in `workouts`. The mocks below feed that source: a
+        workout completed 3 days ago.
+        """
+        # Most recent completed workout — 3 days ago.
+        mock_last_workout_result = MagicMock()
+        mock_last_workout_result.data = [
+            {"scheduled_date": (date.today() - timedelta(days=3)).isoformat()}
+        ]
 
         mock_insert_result = MagicMock()
         mock_insert_result.data = [{"id": "recovery-123"}]
@@ -752,10 +802,8 @@ class TestStreakRecoveryEndpoint:
             query.limit.return_value = query
             query.insert.return_value = query
 
-            if table_name == "users":
-                query.execute.return_value = mock_user_result
-            elif table_name == "streak_history":
-                query.execute.return_value = mock_history_result
+            if table_name == "workouts":
+                query.execute.return_value = mock_last_workout_result
             elif table_name == "streak_recovery_attempts":
                 query.execute.return_value = mock_insert_result
             return query
@@ -786,7 +834,7 @@ class TestCompleteStreakRecoveryEndpoint:
         )
         assert response.status_code != 404
 
-    @patch('api.v1.consistency.get_supabase_db')
+    @patch('api.v1.consistency_endpoints.get_supabase_db')
     def test_completes_recovery_successfully(self, mock_db, client):
         """Should complete recovery attempt."""
         mock_result = MagicMock()
@@ -808,7 +856,7 @@ class TestCompleteStreakRecoveryEndpoint:
         data = response.json()
         assert data["success"] is True
 
-    @patch('api.v1.consistency.get_supabase_db')
+    @patch('api.v1.consistency_endpoints.get_supabase_db')
     def test_returns_404_for_missing_attempt(self, mock_db, client):
         """Should return 404 for missing attempt."""
         mock_result = MagicMock()

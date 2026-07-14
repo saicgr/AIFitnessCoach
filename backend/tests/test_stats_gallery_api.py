@@ -20,6 +20,7 @@ import uuid
 import base64
 
 from main import app
+from core.auth import get_current_user
 
 
 client = TestClient(app)
@@ -28,6 +29,25 @@ client = TestClient(app)
 # ============================================================
 # FIXTURES
 # ============================================================
+
+@pytest.fixture(autouse=True)
+def override_auth(sample_user_id):
+    """Authenticate every request in this module as `sample_user_id`.
+
+    Every /stats-gallery endpoint is gated by `Depends(get_current_user)` plus
+    an ownership check (`verify_user_ownership` / explicit id compare) against
+    the `user_id` in the path or query. The TestClient sends no Authorization
+    header, so without this override every request is rejected 401 before the
+    endpoint runs. Overriding with the same id the tests pass as `user_id`
+    keeps the ownership check exercised for real.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": sample_user_id,
+        "email": "sample@example.com",
+    }
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
 
 @pytest.fixture
 def mock_supabase():
@@ -155,7 +175,18 @@ class TestUploadStatsImage:
         assert data["image"]["template_type"] == "overview"
 
     def test_upload_image_invalid_base64(self, mock_supabase, sample_user_id):
-        """Test uploading with invalid base64 returns error."""
+        """Test uploading with invalid base64 returns a 400 and no DB write.
+
+        Guarantee protected: undecodable image payloads are rejected at the
+        boundary with 400 and never reach the stats_gallery insert.
+
+        This used to assert `"Invalid base64" in detail`, because the endpoint
+        answered f"Invalid base64 image: {e}". Commit 6df23338 deliberately
+        replaced that with the constant "Invalid image data" so the raw
+        binascii exception text is no longer echoed back to the client. The
+        assertion now pins that constant (exact match, and additionally proves
+        nothing was inserted).
+        """
         response = client.post(
             f"/api/v1/stats-gallery/upload?user_id={sample_user_id}",
             json={
@@ -166,7 +197,8 @@ class TestUploadStatsImage:
         )
 
         assert response.status_code == 400
-        assert "Invalid base64" in response.json()["detail"]
+        assert response.json()["detail"] == "Invalid image data"
+        mock_supabase.client.table.return_value.insert.assert_not_called()
 
     def test_upload_image_all_template_types(
         self, mock_supabase, sample_user_id, sample_image_base64

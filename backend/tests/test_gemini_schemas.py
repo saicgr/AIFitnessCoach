@@ -225,7 +225,20 @@ class TestFoodAnalysisSchemas:
     """Test food analysis schemas."""
 
     def test_food_item_schema(self):
-        """Test FoodItemSchema."""
+        """Test FoodItemSchema.
+
+        Behavior change (2026-05-11): this test used to construct a FoodItemSchema
+        WITHOUT `portion_basis`, because the field did not exist. It was added as
+        Layer 1 of the 3-layer portion-validation defense after the "blueberries
+        99 x 148g = 8316 kcal" incident (Gemini emitted the per-cup weight as the
+        per-piece weight), and it is deliberately REQUIRED so the model must
+        declare how it measured the portion and downstream code can reject
+        by_count abuse for by_weight foods.
+
+        The guarantee protected here is unchanged in spirit — a valid food item
+        parses and preserves its macros — plus the new one: a food item that does
+        NOT declare its portion basis is rejected, never silently defaulted.
+        """
         food = FoodItemSchema(
             name="Chicken Breast",
             amount="150g",
@@ -233,13 +246,31 @@ class TestFoodAnalysisSchemas:
             protein_g=31.0,
             carbs_g=0.0,
             fat_g=3.6,
+            portion_basis="by_weight",
         )
         assert food.name == "Chicken Breast"
         assert food.calories == 165
         assert food.protein_g == 31.0
+        assert food.portion_basis == "by_weight"
+
+        # portion_basis is mandatory — omitting it must fail loudly, not default.
+        with pytest.raises(ValidationError):
+            FoodItemSchema(
+                name="Blueberries",
+                amount="1 cup",
+                calories=85,
+                protein_g=1.1,
+                carbs_g=21.0,
+                fat_g=0.5,
+            )
 
     def test_food_analysis_response(self):
-        """Test FoodAnalysisResponse with valid data."""
+        """Test FoodAnalysisResponse with valid data.
+
+        `portion_basis` added to the nested item for the same reason as above —
+        it became a required field of FoodItemSchema on 2026-05-11. The
+        assertions on the response itself are unchanged.
+        """
         analysis = FoodAnalysisResponse(
             food_items=[
                 FoodItemSchema(
@@ -249,6 +280,7 @@ class TestFoodAnalysisSchemas:
                     protein_g=5.0,
                     carbs_g=57.0,
                     fat_g=0.6,
+                    portion_basis="by_weight",
                 ),
             ],
             total_calories=260,

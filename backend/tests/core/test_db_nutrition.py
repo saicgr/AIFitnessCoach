@@ -9,10 +9,25 @@ from datetime import datetime, timedelta
 
 
 class MockQueryBuilder:
-    """Mock Supabase query builder for testing."""
+    """Mock Supabase query builder for testing.
+
+    Mirrors the postgrest builder surface that NutritionDB actually uses.
+    Filters are no-ops (the seeded table data is returned as-is) but the
+    *shape* of the response must match the real client, in particular:
+
+      - ``is_()``  — the soft-delete filter (``.is_("deleted_at", "null")``)
+        that get_food_log / list_food_logs apply. Missing here previously,
+        which blew up with AttributeError before any assertion ran.
+      - ``maybe_single()`` / ``single()`` — these make PostgREST return a
+        single OBJECT in ``.data`` (or None when there is no row), not a
+        list. get_user_nutrition_targets relies on that distinction, so the
+        fake has to reproduce it or the test would be exercising a shape
+        production never sees.
+    """
 
     def __init__(self, data=None):
         self._data = data or []
+        self._single = False
 
     def select(self, *args, **kwargs):
         return self
@@ -30,6 +45,12 @@ class MockQueryBuilder:
     def eq(self, *args):
         return self
 
+    def neq(self, *args):
+        return self
+
+    def is_(self, *args):
+        return self
+
     def gte(self, *args):
         return self
 
@@ -42,7 +63,17 @@ class MockQueryBuilder:
     def limit(self, *args):
         return self
 
+    def single(self, *args):
+        self._single = True
+        return self
+
+    def maybe_single(self, *args):
+        self._single = True
+        return self
+
     def execute(self):
+        if self._single:
+            return MagicMock(data=self._data[0] if self._data else None)
         return MagicMock(data=self._data)
 
 

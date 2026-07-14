@@ -19,12 +19,26 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
+from core.auth import get_current_user
+
+TEST_USER_ID = "user123"
 
 
 @pytest.fixture
 def client():
-    """Synchronous test client for FastAPI."""
-    return TestClient(app)
+    """Synchronous test client for FastAPI.
+
+    The endpoint gained `current_user: dict = Depends(get_current_user)` (plus an
+    IDOR check against the `user_id` query param) after these tests were written,
+    so an un-overridden client got 401 on every request. Override the auth
+    dependency with the same user the tests pass as `user_id` so the IDOR check
+    passes and the handler body is actually exercised.
+    """
+    app.dependency_overrides[get_current_user] = lambda: {"id": TEST_USER_ID}
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 @pytest.fixture
@@ -71,8 +85,8 @@ class TestWorkoutGoalsSync:
             },
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db, \
-             patch("api.v1.personal_goals.log_user_activity") as mock_log:
+        with patch("api.v1.personal_goals_endpoints.get_supabase_db") as mock_get_db, \
+             patch("api.v1.personal_goals_endpoints.log_user_activity") as mock_log:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -102,10 +116,19 @@ class TestWorkoutGoalsSync:
             assert len(data["synced_goals"]) == 2
 
     def test_sync_no_matching_goals(self, client, mock_supabase):
-        """Test sync when no active goals match workout exercises."""
+        """Test sync when no active goals match workout exercises.
+
+        Retired detail: this asserted the message "No active weekly volume goals",
+        which is the wording of the *unmounted* duplicate of this handler in
+        api/v1/personal_goals_endpoints_part2.py. The handler that is actually
+        routed (api/v1/personal_goals_endpoints.py::sync_workout_with_goals) says
+        "No active weekly_volume goals to sync". The guarantee is unchanged: with
+        no active weekly-volume goals the endpoint 200s, updates nothing, and says
+        so in the message.
+        """
         mock_db, mock_client = mock_supabase
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch("api.v1.personal_goals_endpoints.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -128,7 +151,7 @@ class TestWorkoutGoalsSync:
             data = response.json()
 
             assert data["total_goals_updated"] == 0
-            assert "No active weekly volume goals" in data["message"]
+            assert "No active weekly_volume goals" in data["message"]
 
     def test_sync_detects_pr(self, client, mock_supabase):
         """Test that sync detects when a new PR is achieved."""
@@ -150,8 +173,8 @@ class TestWorkoutGoalsSync:
             },
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db, \
-             patch("api.v1.personal_goals.log_user_activity") as mock_log:
+        with patch("api.v1.personal_goals_endpoints.get_supabase_db") as mock_get_db, \
+             patch("api.v1.personal_goals_endpoints.log_user_activity") as mock_log:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -198,8 +221,8 @@ class TestWorkoutGoalsSync:
             },
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db, \
-             patch("api.v1.personal_goals.log_user_activity") as mock_log:
+        with patch("api.v1.personal_goals_endpoints.get_supabase_db") as mock_get_db, \
+             patch("api.v1.personal_goals_endpoints.log_user_activity") as mock_log:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -244,8 +267,8 @@ class TestWorkoutGoalsSync:
             },
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db, \
-             patch("api.v1.personal_goals.log_user_activity") as mock_log:
+        with patch("api.v1.personal_goals_endpoints.get_supabase_db") as mock_get_db, \
+             patch("api.v1.personal_goals_endpoints.log_user_activity") as mock_log:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -271,7 +294,35 @@ class TestWorkoutGoalsSync:
             assert data["total_goals_updated"] == 1
 
     def test_sync_partial_name_matching(self, client, mock_supabase):
-        """Test that partial exercise name matches work."""
+        """Test that partial exercise name matches work.
+
+        KNOWN FAILING — OPEN QUESTION, deliberately left red rather than rewritten.
+
+        The routed handler (api/v1/personal_goals_endpoints.py) matches goal names
+        to workout exercise names with EXACT case-insensitive equality. The
+        unmounted duplicate (api/v1/personal_goals_endpoints_part2.py) also does
+        substring matching in both directions, with the comment
+        `# Try partial matching (e.g., "Push-ups" matches "Push-ups (Standard)")`.
+
+        Evidence this is a PRODUCTION BUG (exact match is too strict): goal names
+        are free text / hand-written chips in the app
+        (mobile/flutter/lib/screens/personal_goals/create_goal_sheet.dart ->
+        'Push-ups', 'Squats', or a custom TextField), while workout-sync sends the
+        exercise-library name of what was actually performed
+        (workout_complete_screen_ext_1.dart). Those two name spaces routinely
+        differ, so exact matching means a "500 push-ups this week" challenge gets
+        no credit from a workout containing "Push-Up".
+
+        Evidence this is RETIRED behavior (exact match is intended): the partial
+        matcher lives only in the duplicate that a maintainer explicitly marked
+        stale and "must NOT be mounted", it has never served a request (it was the
+        second /workout-sync route registered, so route order never reached it),
+        and its naive two-way substring rule mis-credits goals (a "Squat" goal is
+        credited by "Bulgarian Split Squat" reps).
+
+        Which side is correct is a product call (fuzzy vs exact goal crediting, and
+        the fuzzy rule to use), so this test is left failing for a human decision.
+        """
         mock_db, mock_client = mock_supabase
 
         active_goals = [
@@ -289,8 +340,8 @@ class TestWorkoutGoalsSync:
             },
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db, \
-             patch("api.v1.personal_goals.log_user_activity") as mock_log:
+        with patch("api.v1.personal_goals_endpoints.get_supabase_db") as mock_get_db, \
+             patch("api.v1.personal_goals_endpoints.log_user_activity") as mock_log:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -324,7 +375,7 @@ class TestWorkoutGoalsSync:
         # This is implicitly tested by the .eq("goal_type", "weekly_volume") filter
         # Here we just verify the endpoint works when there are no matching goals
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+        with patch("api.v1.personal_goals_endpoints.get_supabase_db") as mock_get_db:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -349,7 +400,16 @@ class TestWorkoutGoalsSync:
             assert data["total_goals_updated"] == 0
 
     def test_sync_logs_activity(self, client, mock_supabase):
-        """Test that syncing goals logs user activity."""
+        """Test that syncing goals logs user activity.
+
+        Retired detail: the expected action label was "goals_workout_sync", which
+        is the label used by the *unmounted* duplicate handler in
+        api/v1/personal_goals_endpoints_part2.py. The routed handler logs
+        "workout_goal_sync". Nothing reads either string (it is a free-text label
+        in user_activity_log), so the guarantee protected is unchanged: a sync that
+        updates goals logs one activity row, attributed to the right user, carrying
+        the workout_log_id in its metadata.
+        """
         mock_db, mock_client = mock_supabase
 
         active_goals = [
@@ -367,8 +427,8 @@ class TestWorkoutGoalsSync:
             },
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db, \
-             patch("api.v1.personal_goals.log_user_activity") as mock_log:
+        with patch("api.v1.personal_goals_endpoints.get_supabase_db") as mock_get_db, \
+             patch("api.v1.personal_goals_endpoints.log_user_activity") as mock_log:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()
@@ -395,8 +455,9 @@ class TestWorkoutGoalsSync:
             mock_log.assert_called_once()
             call_kwargs = mock_log.call_args[1]
             assert call_kwargs["user_id"] == "user123"
-            assert call_kwargs["action"] == "goals_workout_sync"
+            assert call_kwargs["action"] == "workout_goal_sync"
             assert "workout_log_id" in call_kwargs["metadata"]
+            assert call_kwargs["metadata"]["workout_log_id"] == "workout_abc"
 
     def test_sync_returns_progress_percentage(self, client, mock_supabase):
         """Test that sync returns accurate progress percentage."""
@@ -417,8 +478,8 @@ class TestWorkoutGoalsSync:
             },
         ]
 
-        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db, \
-             patch("api.v1.personal_goals.log_user_activity") as mock_log:
+        with patch("api.v1.personal_goals_endpoints.get_supabase_db") as mock_get_db, \
+             patch("api.v1.personal_goals_endpoints.log_user_activity") as mock_log:
             mock_get_db.return_value = mock_db
 
             mock_table = MagicMock()

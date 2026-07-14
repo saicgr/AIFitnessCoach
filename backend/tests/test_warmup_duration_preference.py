@@ -3,9 +3,57 @@ Tests for Warmup/Stretch Duration Preference API.
 
 Tests the warmup_duration_minutes and stretch_duration_minutes settings.
 These preferences control how long warmup and cooldown stretches should last.
+
+Two calling conventions these tests must respect (both are why they used to
+fail with `assert 401 == 200` / a swallowed 500 — neither is a product bug):
+
+1. Auth. Every `/api/v1/workouts/{id}/warmup|stretches|warmup-and-stretches`
+   route and `PUT /api/v1/users/{id}` are behind `Depends(get_current_user)`,
+   which validates a real Supabase JWT. A TestClient request has no JWT, so the
+   dependency 401s before the handler runs. These tests exercise the *handler's*
+   duration-preference logic, so the dependency is overridden (the
+   FastAPI-sanctioned approach); the JWT contract is covered elsewhere.
+
+2. Async service. `create_warmup_for_workout`, `create_stretches_for_workout`
+   and `generate_warmup_and_stretches_for_workout` are `async def`
+   (services/warmup_stretch_service_helpers.py) and are `await`ed by the
+   handlers, so the service double must expose them as AsyncMock — a plain
+   MagicMock returns a non-awaitable and the handler's except-block turns it
+   into a 500 (or, for the combined route, a silent `{"warmup": None}`).
 """
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+from fastapi.testclient import TestClient
+
+
+# The `PUT /users/{id}` handler additionally enforces ownership
+# (current_user["id"] == user_id), so tests impersonate the exact user under test.
+_DEFAULT_AUTH_USER = {"id": "test-auth-user-id", "email": "test@example.com"}
+_TEST_AUTH_USER: dict = dict(_DEFAULT_AUTH_USER)
+
+
+def _authenticate_as(user_id: str) -> None:
+    """Make the overridden auth dependency return `user_id` as the caller."""
+    _TEST_AUTH_USER["id"] = user_id
+
+
+@pytest.fixture
+def client():
+    """TestClient with the Supabase-JWT auth dependency overridden.
+
+    Shadows the conftest `client` fixture (which has no auth) for this module.
+    """
+    from main import app
+    from core.auth import get_current_user
+
+    _TEST_AUTH_USER.clear()
+    _TEST_AUTH_USER.update(_DEFAULT_AUTH_USER)
+
+    app.dependency_overrides[get_current_user] = lambda: dict(_TEST_AUTH_USER)
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 class TestWarmupDurationPreference:
@@ -38,10 +86,10 @@ class TestWarmupDurationPreference:
 
         # Mock warmup service
         mock_service_instance = MagicMock()
-        mock_service_instance.create_warmup_for_workout.return_value = {
+        mock_service_instance.create_warmup_for_workout = AsyncMock(return_value={
             "id": "warmup-123",
             "exercises": [{"name": "Jumping Jacks", "duration": 60}],
-        }
+        })
         mock_service.return_value = mock_service_instance
 
         # Call API without duration parameter - should use default (5)
@@ -81,10 +129,10 @@ class TestWarmupDurationPreference:
 
         # Mock warmup service
         mock_service_instance = MagicMock()
-        mock_service_instance.create_warmup_for_workout.return_value = {
+        mock_service_instance.create_warmup_for_workout = AsyncMock(return_value={
             "id": "warmup-456",
             "exercises": [{"name": "Arm Circles", "duration": 60}],
-        }
+        })
         mock_service.return_value = mock_service_instance
 
         # Call API without duration parameter - should use user preference (10)
@@ -124,10 +172,10 @@ class TestWarmupDurationPreference:
 
         # Mock warmup service
         mock_service_instance = MagicMock()
-        mock_service_instance.create_warmup_for_workout.return_value = {
+        mock_service_instance.create_warmup_for_workout = AsyncMock(return_value={
             "id": "warmup-789",
             "exercises": [{"name": "Leg Swings", "duration": 60}],
-        }
+        })
         mock_service.return_value = mock_service_instance
 
         # Call API WITH explicit duration parameter (3) - should override preference
@@ -170,10 +218,10 @@ class TestWarmupDurationPreference:
 
         # Mock stretch service
         mock_service_instance = MagicMock()
-        mock_service_instance.create_stretches_for_workout.return_value = {
+        mock_service_instance.create_stretches_for_workout = AsyncMock(return_value={
             "id": "stretch-123",
             "exercises": [{"name": "Hamstring Stretch", "duration": 60}],
-        }
+        })
         mock_service.return_value = mock_service_instance
 
         # Call stretches API without duration parameter - should use user preference (12)
@@ -213,10 +261,10 @@ class TestWarmupDurationPreference:
 
         # Mock combined service
         mock_service_instance = MagicMock()
-        mock_service_instance.generate_warmup_and_stretches_for_workout.return_value = {
+        mock_service_instance.generate_warmup_and_stretches_for_workout = AsyncMock(return_value={
             "warmup": {"exercises": []},
             "stretches": {"exercises": []},
-        }
+        })
         mock_service.return_value = mock_service_instance
 
         # Call combined API without duration parameters - should use user preferences
@@ -257,10 +305,10 @@ class TestWarmupDurationPreference:
 
         # Mock warmup service
         mock_service_instance = MagicMock()
-        mock_service_instance.create_warmup_for_workout.return_value = {
+        mock_service_instance.create_warmup_for_workout = AsyncMock(return_value={
             "id": "warmup-clamped",
             "exercises": [],
-        }
+        })
         mock_service.return_value = mock_service_instance
 
         # Call API - values should be clamped to valid range
@@ -300,10 +348,10 @@ class TestWarmupDurationPreference:
 
         # Mock warmup service
         mock_service_instance = MagicMock()
-        mock_service_instance.create_warmup_for_workout.return_value = {
+        mock_service_instance.create_warmup_for_workout = AsyncMock(return_value={
             "id": "warmup-null",
             "exercises": [],
-        }
+        })
         mock_service.return_value = mock_service_instance
 
         # Call API - should use defaults due to null preferences
@@ -316,11 +364,15 @@ class TestWarmupDurationPreference:
         call_args = mock_service_instance.create_warmup_for_workout.call_args
         assert call_args[0][2] == 5  # Default duration
 
-    @patch('api.v1.users.get_supabase_db')
-    @patch('api.v1.users.log_user_activity')
+    # The PUT handler lives in api.v1.users.profile and holds its OWN module-level
+    # refs to get_supabase_db / log_user_activity — patching the api.v1.users
+    # package re-exports patches names nothing calls.
+    @patch('api.v1.users.profile.get_supabase_db')
+    @patch('api.v1.users.profile.log_user_activity')
     def test_update_warmup_duration_preference(self, mock_log, mock_db, client):
         """Test updating warmup duration via user preferences update."""
         user_id = "test-user-update-warmup"
+        _authenticate_as(user_id)  # PUT /users/{id} is ownership-checked
 
         # Mock existing user
         existing_user = {

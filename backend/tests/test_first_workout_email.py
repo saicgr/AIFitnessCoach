@@ -228,21 +228,30 @@ def test_send_first_workout_done_renders_workout_kcal_label(monkeypatch):
     assert "Sai" in html, "First name must appear in body"
 
 
-def test_send_first_workout_done_html_has_centered_social_pills(monkeypatch):
-    """Bug 8 end-to-end: the rendered first-workout email's "Hang out with us"
-    section uses align="center" on the pills table."""
-    import resend
+def test_send_first_workout_done_html_has_centered_social_row(monkeypatch):
+    """Bug 8 end-to-end: the rendered first-workout email centers its social row.
+
+    The email moved to the signature template, whose footer is a centered row of
+    icon links (Discord / Instagram / Reddit) — the old "Hang out with us" text
+    pills only exist in `build_social_footer_html`, which this email no longer
+    calls. The guarantee worth protecting is unchanged and is what we assert:
+    the social row is present, complete, and CENTERED (left-aligned rows are the
+    Gmail-Android bug this test was written for).
+    """
+    from core import branding
+    from services import email_sender
     from services.email_service import EmailService
     from models.email import UserStats
 
     os.environ.setdefault("RESEND_API_KEY", "dummy")
     captured = {}
 
-    def fake_send(params):
+    def fake_send(params, **kwargs):
         captured["html"] = params["html"]
         return {"id": "fake"}
 
-    monkeypatch.setattr(resend.Emails, "send", fake_send)
+    # Patch the chokepoint — services/email_sender.send is the only path to Resend.
+    monkeypatch.setattr(email_sender, "send", fake_send)
 
     svc = EmailService()
     stats = UserStats(workouts_total=1)
@@ -257,14 +266,20 @@ def test_send_first_workout_done_html_has_centered_social_pills(monkeypatch):
         )
     )
     html = captured["html"]
-    assert "Hang out with us" in html
-    # After premailer inlining, attributes survive — check for align=center on
-    # at least one role=presentation table near the pills section.
-    pills_section_match = re.search(
-        r"Hang out with us.*?</table>", html, re.DOTALL
+
+    # Every social destination survives.
+    assert "discord.gg/" in html
+    assert branding.INSTAGRAM_URL in html
+
+    # The row carrying them is centered.
+    social_row = re.search(
+        r'<table[^>]*align="center"[^>]*>(?:(?!</table>).)*?discord\.gg/.*?</table>',
+        html,
+        re.DOTALL,
     )
-    assert pills_section_match, "Pills section not found in rendered HTML"
-    pills_section = pills_section_match.group(0)
-    assert 'align="center"' in pills_section, (
-        "Pills section missing align=\"center\":\n" + pills_section[:1500]
+    assert social_row, (
+        'Social icon row is not inside an align="center" table — Gmail Android '
+        "will left-align it. HTML:\n" + html[-2500:]
     )
+    # Icons render as <img>, not bare text links.
+    assert "<img" in social_row.group(0).lower()

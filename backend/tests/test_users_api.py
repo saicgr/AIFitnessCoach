@@ -2,6 +2,30 @@
 Tests for Users API endpoints.
 
 Tests the Google OAuth authentication and user management endpoints.
+
+Calling conventions these tests must respect (they are why the tests used to
+fail with `assert 401 == 200`, NOT a product regression):
+
+1. Auth. `POST /users/auth/google` is behind `Depends(get_verified_auth_token)`
+   and `PUT|GET /users/{id}` are behind `Depends(get_current_user)` — both
+   validate a real Supabase JWT. A TestClient request carries no JWT, so the
+   dependency short-circuits with 401 before the handler ever runs. These tests
+   exercise the *handler*, so they override the dependency (the FastAPI-blessed
+   way); the JWT contract itself is covered by the auth test modules.
+   `PUT /users/{id}` additionally enforces ownership
+   (`current_user["id"] == user_id`), so the override impersonates the exact
+   user under test via `_authenticate_as`.
+
+2. Patch targets. `api/v1/users` is a PACKAGE now: the handlers live in
+   `api.v1.users.auth` / `api.v1.users.profile` and hold their own module-level
+   references to `get_supabase`, `get_supabase_db`, `log_user_activity`.
+   `api.v1.users.__init__` only *re-exports* those names, so patching
+   `api.v1.users.get_supabase_db` patches a name nothing calls. Patch the
+   defining module instead.
+
+3. Rate limiting. `/auth/google` is `@limiter.limit("5/minute")` keyed on client
+   IP, and every test shares the "testclient" IP, so the limiter budget is reset
+   per test rather than letting test #6 (or another module) eat a 429.
 """
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
@@ -10,6 +34,45 @@ from fastapi import Request
 import inspect
 
 from api.v1.users import google_auth, GoogleAuthRequest, row_to_user
+
+
+# Identity the overridden auth dependencies hand back. Mutated per-test via
+# `_authenticate_as()` for endpoints that enforce ownership; reset by the
+# `client` fixture so no test leaks its identity into the next one.
+_DEFAULT_AUTH_USER = {
+    "id": "test-auth-user-id",
+    "auth_id": "supabase-auth-id",
+    "email": "test@example.com",
+}
+_TEST_AUTH_USER: dict = dict(_DEFAULT_AUTH_USER)
+
+
+def _authenticate_as(user_id: str) -> None:
+    """Make the overridden auth dependency return `user_id` as the caller."""
+    _TEST_AUTH_USER["id"] = user_id
+
+
+@pytest.fixture
+def client():
+    """TestClient with the Supabase-JWT auth dependencies overridden.
+
+    Shadows the conftest `client` fixture (which has no auth) for this module.
+    """
+    from main import app
+    from core.auth import get_current_user, get_verified_auth_token
+    from core.rate_limiter import limiter
+
+    _TEST_AUTH_USER.clear()
+    _TEST_AUTH_USER.update(_DEFAULT_AUTH_USER)
+    limiter.reset()
+
+    app.dependency_overrides[get_verified_auth_token] = lambda: dict(_TEST_AUTH_USER)
+    app.dependency_overrides[get_current_user] = lambda: dict(_TEST_AUTH_USER)
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_verified_auth_token, None)
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 class TestGoogleAuthEndpoint:
@@ -70,8 +133,8 @@ class TestGoogleAuthEndpoint:
         # Should fail validation (422) due to missing access_token
         assert response.status_code == 422
 
-    @patch('api.v1.users.get_supabase')
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.auth.get_supabase')
+    @patch('api.v1.users.auth.get_supabase_db')
     def test_google_auth_with_invalid_token(self, mock_db, mock_supabase, client):
         """Test Google auth returns 401 for invalid token."""
         # Mock Supabase to return None user (invalid token)
@@ -87,8 +150,8 @@ class TestGoogleAuthEndpoint:
         assert response.status_code == 401
         assert "Invalid or expired" in response.json()["detail"]
 
-    @patch('api.v1.users.get_supabase')
-    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.auth.get_supabase')
+    @patch('api.v1.users.auth.get_supabase_db')
     def test_google_auth_existing_user(self, mock_db, mock_supabase, client):
         """Test Google auth returns existing user."""
         # Mock Supabase user response
@@ -130,9 +193,11 @@ class TestGoogleAuthEndpoint:
         assert data["email"] == "test@example.com"
         assert data["onboarding_completed"] == True
 
-    @patch('api.v1.users.get_supabase')
-    @patch('api.v1.users.get_supabase_db')
-    def test_google_auth_new_user_creation(self, mock_db, mock_supabase, client):
+    @patch('api.v1.users.auth.notify_signup')
+    @patch('api.v1.users.auth.generate_username_sync', return_value="testuser1")
+    @patch('api.v1.users.auth.get_supabase')
+    @patch('api.v1.users.auth.get_supabase_db')
+    def test_google_auth_new_user_creation(self, mock_db, mock_supabase, mock_username, mock_notify, client):
         """Test Google auth creates new user when not found."""
         # Mock Supabase user response
         mock_user = MagicMock()
@@ -256,8 +321,16 @@ class TestRowToUser:
 class TestUserEndpoints:
     """Tests for general user management endpoints."""
 
-    def test_get_user_not_found(self, client):
+    @patch('api.v1.users.profile.get_supabase_db')
+    def test_get_user_not_found(self, mock_db, client):
         """Test getting a non-existent user returns 404."""
+        # GET /users/{id} is ownership-checked, so authenticate AS the id we ask for.
+        _authenticate_as("non-existent-user-id")
+
+        mock_db_instance = MagicMock()
+        mock_db_instance.get_user.return_value = None  # no such row
+        mock_db.return_value = mock_db_instance
+
         response = client.get("/api/v1/users/non-existent-user-id")
 
         # Should be 404 or 500 (if DB error), but endpoint should exist
@@ -270,11 +343,12 @@ class TestUserEndpoints:
         # Should not be 404
         assert response.status_code != 404
 
-    @patch('api.v1.users.get_supabase_db')
-    @patch('api.v1.users.log_user_activity')
+    @patch('api.v1.users.profile.get_supabase_db')
+    @patch('api.v1.users.profile.log_user_activity')
     def test_update_training_preferences(self, mock_log, mock_db, client):
         """Test updating progression_pace and workout_type_preference saves to Supabase."""
         user_id = "test-user-uuid-123"
+        _authenticate_as(user_id)
 
         # Mock existing user with current preferences
         existing_user = {
@@ -328,11 +402,12 @@ class TestUserEndpoints:
         # Original preference should be preserved
         assert prefs.get("days_per_week") == 4
 
-    @patch('api.v1.users.get_supabase_db')
-    @patch('api.v1.users.log_user_activity')
+    @patch('api.v1.users.profile.get_supabase_db')
+    @patch('api.v1.users.profile.log_user_activity')
     def test_update_progression_pace_only(self, mock_log, mock_db, client):
         """Test updating only progression_pace without affecting workout_type."""
         user_id = "test-user-uuid-456"
+        _authenticate_as(user_id)
 
         existing_user = {
             "id": user_id,
@@ -375,11 +450,12 @@ class TestUserEndpoints:
         # workout_type_preference should be preserved (not overwritten)
         assert prefs.get("workout_type_preference") == "strength"
 
-    @patch('api.v1.users.get_supabase_db')
-    @patch('api.v1.users.log_user_activity')
+    @patch('api.v1.users.profile.get_supabase_db')
+    @patch('api.v1.users.profile.log_user_activity')
     def test_update_workout_type_only(self, mock_log, mock_db, client):
         """Test updating only workout_type_preference without affecting progression_pace."""
         user_id = "test-user-uuid-789"
+        _authenticate_as(user_id)
 
         existing_user = {
             "id": user_id,

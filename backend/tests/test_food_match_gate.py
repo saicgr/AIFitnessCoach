@@ -99,9 +99,30 @@ class TestContentWords:
         assert content_words("large pizza") == ["pizza"]
         assert content_words("mini pizza") == ["pizza"]
 
-    def test_drops_sensory_descriptors(self):
-        assert content_words("spicy chicken curry") == ["chicken", "curry"]
-        assert content_words("mild dal makhani") == ["dal", "makhani"]
+    def test_keeps_sensory_descriptors_as_content(self):
+        """Sensory words ("spicy", "mild", "sweet", "sour", "plain") are CONTENT.
+
+        RETIRED ASSERTION: this test used to be `test_drops_sensory_descriptors`
+        and required content_words("spicy chicken curry") == ["chicken","curry"] —
+        i.e. sensory adjectives were tokenized away like size/temperature words.
+        That was deliberately retired (see the NOTE in food_match_gate.py): a
+        sensory word is frequently part of a DISTINCT product whose nutrition
+        differs — "Spicy McChicken" ≠ "McChicken", "Sweet Potato" ≠ "Potato",
+        "Sour Cream" ≠ "Cream" — so dropping it silently logged the wrong food.
+
+        The original intent (a descriptor must never *block* finding the food)
+        is now served one layer up instead of at tokenization: the row still
+        matches, but as tier B, where Gemini adjudicates whether the descriptor
+        difference is benign ("Pure descriptors (spicy, large, fresh) can
+        differ" is in the validator prompt). See
+        TestAcceptTier.test_spicy_chicken_curry_still_finds_row.
+
+        Size/temperature/personal descriptors ARE still dropped — asserted in
+        test_drops_size_descriptors / test_drops_possessive_personal.
+        """
+        assert content_words("spicy chicken curry") == ["spicy", "chicken", "curry"]
+        assert content_words("mild dal makhani") == ["mild", "dal", "makhani"]
+        assert content_words("sweet potato") == ["sweet", "potato"]
 
     def test_drops_cooking_methods(self):
         assert content_words("grilled chicken") == ["chicken"]
@@ -351,12 +372,27 @@ class TestAcceptTier:
         assert len(result.rows) == 1
         assert result.partial_match is True
 
-    async def test_spicy_chicken_curry_descriptor_ignored(self, gemini_accept_all):
+    async def test_spicy_chicken_curry_still_finds_row(self, gemini_accept_all):
+        """A sensory descriptor must not BLOCK the match — but it is no longer
+        silently ignored either.
+
+        RETIRED ASSERTION: was `test_spicy_chicken_curry_descriptor_ignored`,
+        asserting partial_match is False on the theory that "spicy" is dropped
+        at tokenization (cov=1.0 → tier A, no Gemini). Sensory words are now
+        content (see TestContentWords.test_keeps_sensory_descriptors_as_content
+        — "Spicy McChicken" ≠ "McChicken"), so "spicy chicken curry" vs a plain
+        "Chicken Curry" row is coverage 2/3 → tier B → Gemini decides.
+
+        The guarantee under test is unchanged and still asserted: the row IS
+        returned. What changed is that it comes back flagged partial_match=True
+        so the UI can show the approximate-match hint instead of pretending the
+        user's "spicy" variant was matched exactly.
+        """
         rows = [_row("Chicken Curry", variant_names=["chicken curry"])]
         result = await accept_tier("spicy chicken curry", rows)
-        # cov=1.0 (spicy is descriptor) → tier A, no Gemini needed
         assert len(result.rows) == 1
-        assert result.partial_match is False
+        assert result.rows[0]["display_name"] == "Chicken Curry"
+        assert result.partial_match is True
 
     async def test_large_pizza_descriptor_ignored(self, gemini_accept_all):
         rows = [_row("Pizza", variant_names=["pizza"])]
@@ -386,9 +422,19 @@ class TestAcceptTier:
         assert result.partial_match is False  # typo resolved via coverage trigram
 
     async def test_empty_content_words_returns_all(self, gemini_reject_all):
-        # Query is all descriptors — gate should not filter
+        """Query collapses to zero content words → gate must not filter anything.
+
+        The query text was changed from "the spicy my favorite" to a genuinely
+        descriptor-only phrase: "spicy" is now a CONTENT word (see
+        TestContentWords.test_keeps_sensory_descriptors_as_content), so the old
+        phrase no longer satisfies this test's own precondition — it scored
+        ["spicy"] against Pizza/Burger and correctly rejected both. The
+        guarantee being asserted (empty content words ⇒ pass every row through)
+        is unchanged.
+        """
         rows = [_row("Pizza"), _row("Burger")]
-        result = await accept_tier("the spicy my favorite", rows)
+        assert content_words("the large my favorite") == []  # precondition
+        result = await accept_tier("the large my favorite", rows)
         assert len(result.rows) == 2
 
     async def test_unknown_query_returns_empty(self, gemini_reject_all):
@@ -500,13 +546,37 @@ class TestSanitizeForPrompt:
 
 class TestCacheEviction:
     def test_cache_cap(self):
-        from services.food_match_gate import _cache_put, _VALIDATE_CACHE, _VALIDATE_CACHE_MAX
-        _VALIDATE_CACHE.clear()
-        # Fill past the cap
-        for i in range(_VALIDATE_CACHE_MAX + 100):
-            _cache_put((f"q{i}", frozenset(), None), (float(i), set()))
+        """The Gemini verdict cache must stay bounded — no unbounded memory growth.
+
+        REWRITTEN AGAINST THE CURRENT IMPLEMENTATION (the guarantee is
+        unchanged; only the mechanism moved). The verdict cache used to be a
+        per-worker module-level dict `_VALIDATE_CACHE` written through
+        `_cache_put()` and swept by a hand-rolled LRU against
+        `_VALIDATE_CACHE_MAX`. It is now a `RedisCache` shared across all
+        workers (so a verdict cached by one worker is reused by the rest), with
+        a per-worker in-memory dict as the fallback when Redis is unavailable —
+        the old three symbols no longer exist, hence the rewrite.
+
+        The in-memory fallback is the only unbounded-growth risk left (Redis
+        entries expire via TTL), so that is what this asserts: hammering it far
+        past the cap must evict, never grow.
+        """
+        from services.food_match_gate import _VALIDATE_CACHE, _VALIDATE_TTL
+
+        cap = _VALIDATE_CACHE._max_size
+        assert cap > 0
+        assert _VALIDATE_TTL > 0  # Redis-side entries are bounded by TTL
+
+        _VALIDATE_CACHE._local.clear()
+        # Fill past the cap (verdicts are stored as sorted index lists)
+        for i in range(cap + 100):
+            _VALIDATE_CACHE.set_sync(f"q{i}", [i])
+
         # Should NOT exceed the cap
-        assert len(_VALIDATE_CACHE) <= _VALIDATE_CACHE_MAX
+        assert len(_VALIDATE_CACHE._local) <= cap
+        # And the cache is still usable after eviction (most-recent key survives)
+        assert _VALIDATE_CACHE.get_sync(f"q{cap + 99}") == [cap + 99]
+        _VALIDATE_CACHE._local.clear()
 
 
 @pytest.mark.asyncio

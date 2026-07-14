@@ -1,12 +1,44 @@
 """
-Tests for Audio Preferences API endpoints.
+Tests for the Audio Preferences API (`api/v1/audio_preferences.py`).
 
-Tests CRUD operations for audio preferences including:
-- Volume levels (master_volume, music_volume, voice_volume, sfx_volume)
-- Audio ducking settings (duck_volume_level, enable_ducking)
-- Other audio settings
+Covers the three shipped endpoints:
+- GET  /api/v1/audio-preferences/{user_id}
+- PUT  /api/v1/audio-preferences/{user_id}
+- POST /api/v1/audio-preferences/{user_id}
 
-All volume values should be in the range 0.0-1.0.
+HISTORY — WHY THIS FILE WAS REWRITTEN (2026-07-13)
+---------------------------------------------------
+This file was originally written TDD-style (every test was wrapped in
+`try: import ... except ImportError: pytest.skip("not yet implemented")`)
+against a *proposed* audio model that was never built:
+
+    master_volume / music_volume / voice_volume / sfx_volume / enable_ducking
+    helpers `_get_default_preferences(user_id)` / `_preferences_to_response(row)`
+    a model `AudioPreferencesCreate`
+    a 404 "User not found" branch and a 409 "already exist" conflict branch
+
+None of those names exist anywhere in the product: not in
+`api/v1/audio_preferences.py`, not in the `audio_preferences` Postgres table
+(whose real columns are `id, user_id, allow_background_music, tts_volume,
+audio_ducking, duck_volume_level, mute_during_video, created_at, updated_at`),
+and not in the Flutter client. The API that actually shipped models audio as a
+*TTS-vs-background-music ducking* problem, not a game-style volume mixer.
+
+So every test below has been retargeted onto the real, shipped contract while
+preserving the ORIGINAL INTENT of each test. Where the intent maps onto a
+different mechanism than the one originally imagined, the docstring says so
+explicitly (what it used to assert / why that was retired / what guarantee it
+protects now). No assertion was weakened, and the phantom-field tests were
+converted into coverage of the *real* volume fields plus the model-level
+guarantees they were reaching for (range bounds, boundary values, type
+strictness) rather than dropped.
+
+The other, mechanical reason every test failed: they called the async endpoints
+directly without supplying `current_user`, so the `Depends(get_current_user)`
+default object leaked into the body (`TypeError: 'Depends' object is not
+subscriptable`), and they mocked a `.single()` Supabase chain the endpoints
+never use (production uses `.select(...).eq(...).execute()` and reads
+`result.data[0]`, precisely to avoid PostgREST's PGRST116-on-zero-rows).
 
 Run with: pytest backend/tests/test_audio_preferences.py -v
 """
@@ -14,7 +46,27 @@ Run with: pytest backend/tests/test_audio_preferences.py -v
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
+
 from fastapi import HTTPException
+from pydantic import ValidationError
+
+from main import app
+from core.auth import get_current_user
+from api.v1.audio_preferences import (
+    AudioPreferences,
+    AudioPreferencesResponse,
+    AudioPreferencesUpdate,
+    create_audio_preferences,
+    get_audio_preferences,
+    get_default_preferences,
+    update_audio_preferences,
+)
+
+# The two float ("volume") fields the shipped model actually has. The original
+# file hand-rolled one test per imagined volume field; parametrising over the
+# real ones keeps that per-field rigor without inventing fields.
+VOLUME_FIELDS = ["tts_volume", "duck_volume_level"]
+BOOLEAN_FIELDS = ["allow_background_music", "audio_ducking", "mute_during_video"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -24,49 +76,28 @@ from fastapi import HTTPException
 
 @pytest.fixture
 def mock_user_id():
-    """Sample user ID for testing."""
+    """Sample user ID for testing (this is `users.id`, the backend id that
+    `get_current_user()` returns — NOT the Supabase `auth_id`)."""
     return "test-user-audio-123"
 
 
 @pytest.fixture
-def mock_user_data(mock_user_id):
-    """Sample user data."""
-    return {
-        "id": mock_user_id,
-        "email": "test@example.com",
-        "name": "Test User",
-    }
+def current_user(mock_user_id):
+    """The authenticated-user dict the real `get_current_user` dependency returns."""
+    return {"id": mock_user_id, "email": "test@example.com"}
 
 
 @pytest.fixture
 def mock_audio_preferences(mock_user_id):
-    """Sample audio preferences data with all fields."""
+    """A full `audio_preferences` row, using the real column names."""
     return {
         "id": "audio-pref-123",
         "user_id": mock_user_id,
-        "master_volume": 0.8,
-        "music_volume": 0.5,
-        "voice_volume": 1.0,
-        "sfx_volume": 0.7,
+        "allow_background_music": True,
+        "tts_volume": 0.8,
+        "audio_ducking": True,
         "duck_volume_level": 0.3,
-        "enable_ducking": True,
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat(),
-    }
-
-
-@pytest.fixture
-def default_audio_preferences(mock_user_id):
-    """Default audio preferences for new user."""
-    return {
-        "id": "audio-pref-default",
-        "user_id": mock_user_id,
-        "master_volume": 1.0,
-        "music_volume": 0.5,
-        "voice_volume": 1.0,
-        "sfx_volume": 0.8,
-        "duck_volume_level": 0.3,
-        "enable_ducking": True,
+        "mute_during_video": False,
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat(),
     }
@@ -74,9 +105,67 @@ def default_audio_preferences(mock_user_id):
 
 @pytest.fixture
 def mock_supabase():
-    """Mock Supabase client."""
-    mock = MagicMock()
-    return mock
+    """Patch `get_supabase` inside the endpoint module and hand back the client mock.
+
+    Wires the exact call chains production uses:
+        .table(t).select(cols).eq(...).execute()
+        .table(t).update(data).eq(...).execute()
+        .table(t).insert(data).execute()
+    """
+    with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase:
+        supabase = MagicMock()
+        mock_get_supabase.return_value = supabase
+        yield supabase
+
+
+def set_select_result(supabase, rows):
+    """Program the SELECT chain to return `rows` (a list, as PostgREST does)."""
+    supabase.client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=rows
+    )
+
+
+def set_update_result(supabase, rows):
+    supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=rows
+    )
+
+
+def set_insert_result(supabase, rows):
+    supabase.client.table.return_value.insert.return_value.execute.return_value = MagicMock(
+        data=rows
+    )
+
+
+def insert_payload(supabase):
+    """The dict production passed to `.insert(...)`."""
+    return supabase.client.table.return_value.insert.call_args.args[0]
+
+
+def update_payload(supabase):
+    """The dict production passed to `.update(...)`."""
+    return supabase.client.table.return_value.update.call_args.args[0]
+
+
+@pytest.fixture
+def mock_activity_log():
+    """Patch the activity logger so we can assert on analytics calls."""
+    with patch(
+        "api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock
+    ) as mock_log:
+        yield mock_log
+
+
+@pytest.fixture
+def authed_client(client, current_user):
+    """FastAPI TestClient with the auth dependency satisfied."""
+
+    async def _current_user():
+        return current_user
+
+    app.dependency_overrides[get_current_user] = _current_user
+    yield client
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -88,64 +177,70 @@ class TestAudioPreferencesHelpers:
     """Tests for audio preferences helper functions."""
 
     def test_get_default_preferences(self):
-        """Test that default preferences have correct values."""
-        try:
-            from api.v1.audio_preferences import _get_default_preferences
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
+        """Defaults are complete, in-range, and correctly typed.
 
-        user_id = "test-user-123"
-        defaults = _get_default_preferences(user_id)
+        Originally called `_get_default_preferences(user_id)` and asserted a
+        `user_id` key plus four volume sliders. The shipped helper is
+        `get_default_preferences()` — it takes no user_id (the endpoints attach
+        that themselves) and returns the five real settings. Same guarantee:
+        every default the API can hand a brand-new user is valid.
+        """
+        defaults = get_default_preferences()
 
-        # Check all defaults are in valid range
-        assert defaults["user_id"] == user_id
-        assert 0.0 <= defaults["master_volume"] <= 1.0
-        assert 0.0 <= defaults["music_volume"] <= 1.0
-        assert 0.0 <= defaults["voice_volume"] <= 1.0
-        assert 0.0 <= defaults["sfx_volume"] <= 1.0
-        assert 0.0 <= defaults["duck_volume_level"] <= 1.0
-        assert isinstance(defaults["enable_ducking"], bool)
+        assert set(defaults) == set(VOLUME_FIELDS) | set(BOOLEAN_FIELDS)
 
-    def test_preferences_to_response(self, mock_audio_preferences):
-        """Test conversion from database row to response model."""
-        try:
-            from api.v1.audio_preferences import _preferences_to_response
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
+        for field in VOLUME_FIELDS:
+            assert 0.0 <= defaults[field] <= 1.0
+        for field in BOOLEAN_FIELDS:
+            assert isinstance(defaults[field], bool)
 
-        response = _preferences_to_response(mock_audio_preferences)
+        # The defaults must agree with the model's own declared defaults,
+        # otherwise a POST with no body and a GET with no row would disagree.
+        model_defaults = AudioPreferences().model_dump()
+        assert defaults == model_defaults
 
-        assert response.id == mock_audio_preferences["id"]
+    @pytest.mark.asyncio
+    async def test_preferences_row_maps_to_response(
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences
+    ):
+        """Every stored column is surfaced on the response, unmodified.
+
+        Originally asserted a `_preferences_to_response(row)` helper. No such
+        helper exists — the DB-row → response mapping lives inside the
+        endpoints, so this now exercises that mapping through GET (the real
+        code path), which is strictly stronger than testing a helper.
+        """
+        set_select_result(mock_supabase, [mock_audio_preferences])
+
+        response = await get_audio_preferences(mock_user_id, current_user=current_user)
+
         assert response.user_id == mock_audio_preferences["user_id"]
-        assert response.master_volume == mock_audio_preferences["master_volume"]
-        assert response.music_volume == mock_audio_preferences["music_volume"]
-        assert response.voice_volume == mock_audio_preferences["voice_volume"]
-        assert response.sfx_volume == mock_audio_preferences["sfx_volume"]
+        assert response.allow_background_music == mock_audio_preferences["allow_background_music"]
+        assert response.tts_volume == mock_audio_preferences["tts_volume"]
+        assert response.audio_ducking == mock_audio_preferences["audio_ducking"]
         assert response.duck_volume_level == mock_audio_preferences["duck_volume_level"]
-        assert response.enable_ducking == mock_audio_preferences["enable_ducking"]
+        assert response.mute_during_video == mock_audio_preferences["mute_during_video"]
+        assert response.created_at == mock_audio_preferences["created_at"]
+        assert response.updated_at == mock_audio_preferences["updated_at"]
 
-    def test_preferences_to_response_with_missing_fields(self):
-        """Test conversion handles missing fields gracefully with defaults."""
-        try:
-            from api.v1.audio_preferences import _preferences_to_response
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
+    @pytest.mark.asyncio
+    async def test_preferences_row_with_missing_fields_falls_back_to_defaults(
+        self, mock_user_id, current_user, mock_supabase
+    ):
+        """A partial row (column added after the row was written) still maps cleanly.
 
-        incomplete_data = {
-            "id": "audio-pref-123",
-            "user_id": "user-123",
-            # Missing volume fields
-        }
+        Same intent as the original `_preferences_to_response` missing-fields
+        test, retargeted onto the real mapping and the real default values.
+        """
+        set_select_result(mock_supabase, [{"user_id": mock_user_id}])
 
-        response = _preferences_to_response(incomplete_data)
+        response = await get_audio_preferences(mock_user_id, current_user=current_user)
 
-        # Should use defaults for missing fields
-        assert response.master_volume == 1.0
-        assert response.music_volume == 0.5
-        assert response.voice_volume == 1.0
-        assert response.sfx_volume == 0.8
+        assert response.allow_background_music is True
+        assert response.tts_volume == 0.8
+        assert response.audio_ducking is True
         assert response.duck_volume_level == 0.3
-        assert response.enable_ducking is True
+        assert response.mute_during_video is False
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -157,79 +252,68 @@ class TestAudioPreferencesModels:
     """Tests for audio preferences Pydantic models."""
 
     def test_audio_preferences_update_partial(self):
-        """Test that update model accepts partial updates."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        # Only update one field
-        update = AudioPreferencesUpdate(master_volume=0.5)
+        """The update model accepts a single field (partial update)."""
+        update = AudioPreferencesUpdate(tts_volume=0.5)
         data = update.model_dump(exclude_none=True)
 
         assert len(data) == 1
-        assert data["master_volume"] == 0.5
+        assert data["tts_volume"] == 0.5
 
     def test_audio_preferences_update_all_fields(self):
-        """Test that update model accepts all fields."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
+        """The update model accepts every settable field at once."""
         update = AudioPreferencesUpdate(
-            master_volume=0.9,
-            music_volume=0.6,
-            voice_volume=0.8,
-            sfx_volume=0.5,
+            allow_background_music=False,
+            tts_volume=0.9,
+            audio_ducking=False,
             duck_volume_level=0.2,
-            enable_ducking=False,
+            mute_during_video=True,
         )
         data = update.model_dump(exclude_none=True)
 
-        assert len(data) == 6
-        assert data["master_volume"] == 0.9
-        assert data["music_volume"] == 0.6
-        assert data["voice_volume"] == 0.8
-        assert data["sfx_volume"] == 0.5
+        assert len(data) == 5
+        assert data["allow_background_music"] is False
+        assert data["tts_volume"] == 0.9
+        assert data["audio_ducking"] is False
         assert data["duck_volume_level"] == 0.2
-        assert data["enable_ducking"] is False
+        assert data["mute_during_video"] is True
 
     def test_audio_preferences_update_empty(self):
-        """Test that update model allows no fields (no-op update)."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
+        """The update model allows no fields at all (the endpoint 400s on it)."""
         update = AudioPreferencesUpdate()
         data = update.model_dump(exclude_none=True)
 
         assert len(data) == 0
 
     def test_audio_preferences_response_model(self):
-        """Test AudioPreferencesResponse model validation."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesResponse
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
+        """AudioPreferencesResponse validates and round-trips every field."""
         response = AudioPreferencesResponse(
-            id="audio-pref-123",
             user_id="user-123",
-            master_volume=0.8,
-            music_volume=0.5,
-            voice_volume=1.0,
-            sfx_volume=0.7,
+            allow_background_music=True,
+            tts_volume=0.8,
+            audio_ducking=True,
             duck_volume_level=0.3,
-            enable_ducking=True,
+            mute_during_video=False,
             created_at="2025-01-01T00:00:00Z",
             updated_at="2025-01-01T00:00:00Z",
         )
 
-        assert response.id == "audio-pref-123"
-        assert response.master_volume == 0.8
-        assert response.enable_ducking is True
+        assert response.user_id == "user-123"
+        assert response.tts_volume == 0.8
+        assert response.audio_ducking is True
+        assert response.mute_during_video is False
+
+    def test_audio_preferences_response_requires_user_id(self):
+        """user_id is not optional — a response can never be user-ambiguous."""
+        with pytest.raises(ValidationError) as exc_info:
+            AudioPreferencesResponse(
+                allow_background_music=True,
+                tts_volume=0.8,
+                audio_ducking=True,
+                duck_volume_level=0.3,
+                mute_during_video=False,
+            )
+
+        assert "user_id" in str(exc_info.value)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -238,165 +322,60 @@ class TestAudioPreferencesModels:
 
 
 class TestVolumeValidation:
-    """Tests for volume value validation (0.0-1.0 range)."""
+    """Volume validation (0.0–1.0) on every real volume field.
 
-    def test_master_volume_valid_range(self):
-        """Test that master_volume accepts valid values (0.0-1.0)."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
+    The original class had one trio of tests per imagined slider
+    (master/music/voice/sfx). Those fields do not exist. The class now
+    parametrises the identical checks — valid range, reject < 0.0, reject > 1.0,
+    boundaries, non-numeric — across the volume fields that DO exist
+    (`tts_volume`, `duck_volume_level`), on BOTH models that carry them
+    (`AudioPreferencesUpdate` for PUT and `AudioPreferences` for POST), so no
+    range guarantee the original file reached for is lost.
+    """
 
-        # Valid values
-        for volume in [0.0, 0.5, 1.0, 0.001, 0.999]:
-            update = AudioPreferencesUpdate(master_volume=volume)
-            assert update.master_volume == volume
+    @pytest.mark.parametrize("field", VOLUME_FIELDS)
+    @pytest.mark.parametrize("volume", [0.0, 0.001, 0.25, 0.5, 0.75, 0.999, 1.0])
+    def test_volume_valid_range(self, field, volume):
+        """Every value in [0.0, 1.0] is accepted and stored verbatim."""
+        update = AudioPreferencesUpdate(**{field: volume})
+        assert getattr(update, field) == volume
 
-    def test_master_volume_invalid_negative(self):
-        """Test that master_volume rejects negative values."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-            from pydantic import ValidationError
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
+    @pytest.mark.parametrize("field", VOLUME_FIELDS)
+    @pytest.mark.parametrize("volume", [-0.01, -0.1, -1.0])
+    def test_volume_invalid_negative(self, field, volume):
+        """Negative volumes are rejected, and the error names the field."""
         with pytest.raises(ValidationError) as exc_info:
-            AudioPreferencesUpdate(master_volume=-0.1)
+            AudioPreferencesUpdate(**{field: volume})
 
-        assert "master_volume" in str(exc_info.value)
+        assert field in str(exc_info.value)
 
-    def test_master_volume_invalid_over_one(self):
-        """Test that master_volume rejects values greater than 1.0."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-            from pydantic import ValidationError
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
+    @pytest.mark.parametrize("field", VOLUME_FIELDS)
+    @pytest.mark.parametrize("volume", [1.01, 1.1, 1.5, 2.0])
+    def test_volume_invalid_over_one(self, field, volume):
+        """Volumes above 1.0 are rejected, and the error names the field."""
         with pytest.raises(ValidationError) as exc_info:
-            AudioPreferencesUpdate(master_volume=1.5)
+            AudioPreferencesUpdate(**{field: volume})
 
-        assert "master_volume" in str(exc_info.value)
+        assert field in str(exc_info.value)
 
-    def test_music_volume_valid_range(self):
-        """Test that music_volume accepts valid values (0.0-1.0)."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        for volume in [0.0, 0.25, 0.75, 1.0]:
-            update = AudioPreferencesUpdate(music_volume=volume)
-            assert update.music_volume == volume
-
-    def test_music_volume_invalid_negative(self):
-        """Test that music_volume rejects negative values."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-            from pydantic import ValidationError
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
+    @pytest.mark.parametrize("field", VOLUME_FIELDS)
+    def test_volume_rejects_non_numeric(self, field):
+        """A non-numeric volume is rejected rather than coerced."""
         with pytest.raises(ValidationError):
-            AudioPreferencesUpdate(music_volume=-0.5)
+            AudioPreferencesUpdate(**{field: "loud"})
 
-    def test_music_volume_invalid_over_one(self):
-        """Test that music_volume rejects values greater than 1.0."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-            from pydantic import ValidationError
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
+    @pytest.mark.parametrize("field", VOLUME_FIELDS)
+    @pytest.mark.parametrize("volume", [-0.1, 1.5])
+    def test_create_model_enforces_same_bounds(self, field, volume):
+        """The POST body model (`AudioPreferences`) enforces the same 0.0–1.0 bounds.
 
-        with pytest.raises(ValidationError):
-            AudioPreferencesUpdate(music_volume=2.0)
-
-    def test_voice_volume_valid_range(self):
-        """Test that voice_volume accepts valid values (0.0-1.0)."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        for volume in [0.0, 0.5, 1.0]:
-            update = AudioPreferencesUpdate(voice_volume=volume)
-            assert update.voice_volume == volume
-
-    def test_voice_volume_invalid_values(self):
-        """Test that voice_volume rejects invalid values."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-            from pydantic import ValidationError
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        with pytest.raises(ValidationError):
-            AudioPreferencesUpdate(voice_volume=-1.0)
-
-        with pytest.raises(ValidationError):
-            AudioPreferencesUpdate(voice_volume=1.01)
-
-    def test_sfx_volume_valid_range(self):
-        """Test that sfx_volume accepts valid values (0.0-1.0)."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        for volume in [0.0, 0.3, 0.8, 1.0]:
-            update = AudioPreferencesUpdate(sfx_volume=volume)
-            assert update.sfx_volume == volume
-
-    def test_sfx_volume_invalid_values(self):
-        """Test that sfx_volume rejects invalid values."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-            from pydantic import ValidationError
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        with pytest.raises(ValidationError):
-            AudioPreferencesUpdate(sfx_volume=-0.01)
-
-        with pytest.raises(ValidationError):
-            AudioPreferencesUpdate(sfx_volume=1.1)
-
-    def test_duck_volume_level_valid_range(self):
-        """Test that duck_volume_level accepts valid values (0.0-1.0)."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        for volume in [0.0, 0.3, 0.5, 1.0]:
-            update = AudioPreferencesUpdate(duck_volume_level=volume)
-            assert update.duck_volume_level == volume
-
-    def test_duck_volume_level_invalid_negative(self):
-        """Test that duck_volume_level rejects negative values."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-            from pydantic import ValidationError
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
+        Without this, an out-of-range volume rejected by PUT could still be
+        smuggled in through POST.
+        """
         with pytest.raises(ValidationError) as exc_info:
-            AudioPreferencesUpdate(duck_volume_level=-0.1)
+            AudioPreferences(**{field: volume})
 
-        assert "duck_volume_level" in str(exc_info.value)
-
-    def test_duck_volume_level_invalid_over_one(self):
-        """Test that duck_volume_level rejects values greater than 1.0."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-            from pydantic import ValidationError
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        with pytest.raises(ValidationError) as exc_info:
-            AudioPreferencesUpdate(duck_volume_level=1.5)
-
-        assert "duck_volume_level" in str(exc_info.value)
+        assert field in str(exc_info.value)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -405,120 +384,103 @@ class TestVolumeValidation:
 
 
 class TestGetAudioPreferences:
-    """Tests for GET /api/v1/audio-preferences/{user_id} endpoint."""
+    """Tests for GET /api/v1/audio-preferences/{user_id}."""
 
     @pytest.mark.asyncio
     async def test_get_audio_preferences_returns_default_for_new_user(
-        self, mock_user_id, mock_user_data, default_audio_preferences
+        self, mock_user_id, current_user, mock_supabase
     ):
-        """Test that GET returns default preferences for new user without existing preferences."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock):
+        """A user with no stored row gets the defaults back.
 
-            try:
-                from api.v1.audio_preferences import get_audio_preferences
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        The original expected GET to *insert* a defaults row on first read. The
+        shipped endpoint deliberately does not write on a read — it returns the
+        defaults unpersisted (`created_at`/`updated_at` stay null until the user
+        actually saves something). Both facts are asserted here so a future
+        change to either half is caught.
+        """
+        set_select_result(mock_supabase, [])
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        result = await get_audio_preferences(mock_user_id, current_user=current_user)
 
-            # User exists, but no preferences yet
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),  # User exists check
-                MagicMock(data=None),  # No existing preferences
-            ]
+        assert result.user_id == mock_user_id
+        assert result.allow_background_music is True
+        assert result.tts_volume == 0.8
+        assert result.audio_ducking is True
+        assert result.duck_volume_level == 0.3
+        assert result.mute_during_video is False
+        assert result.created_at is None
+        assert result.updated_at is None
 
-            # Mock insert for creating defaults
-            mock_supabase.client.table.return_value.insert.return_value.execute.return_value = MagicMock(
-                data=[default_audio_preferences]
-            )
-
-            result = await get_audio_preferences(mock_user_id)
-
-            assert result.user_id == mock_user_id
-            assert result.master_volume == 1.0  # Default value
+        # A read must never write.
+        mock_supabase.client.table.return_value.insert.assert_not_called()
+        mock_supabase.client.table.return_value.update.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_get_audio_preferences_returns_saved_preferences(
-        self, mock_user_id, mock_user_data, mock_audio_preferences
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences
     ):
-        """Test that GET returns saved preferences for existing user."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock):
+        """A user with a stored row gets that row back, not the defaults."""
+        saved = {
+            **mock_audio_preferences,
+            "allow_background_music": False,
+            "tts_volume": 0.4,
+            "audio_ducking": False,
+            "duck_volume_level": 0.1,
+            "mute_during_video": True,
+        }
+        set_select_result(mock_supabase, [saved])
 
-            try:
-                from api.v1.audio_preferences import get_audio_preferences
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        result = await get_audio_preferences(mock_user_id, current_user=current_user)
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        assert result.user_id == mock_user_id
+        assert result.allow_background_music is False
+        assert result.tts_volume == 0.4
+        assert result.audio_ducking is False
+        assert result.duck_volume_level == 0.1
+        assert result.mute_during_video is True
 
-            # User exists and has preferences
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),  # User exists check
-                MagicMock(data=mock_audio_preferences),  # Existing preferences
-            ]
-
-            result = await get_audio_preferences(mock_user_id)
-
-            assert result.user_id == mock_user_id
-            assert result.master_volume == 0.8
-            assert result.music_volume == 0.5
-            assert result.voice_volume == 1.0
-            assert result.sfx_volume == 0.7
-            assert result.duck_volume_level == 0.3
-            assert result.enable_ducking is True
+        # It must read the caller's row, from the right table.
+        mock_supabase.client.table.assert_called_with("audio_preferences")
+        mock_supabase.client.table.return_value.select.return_value.eq.assert_called_with(
+            "user_id", mock_user_id
+        )
 
     @pytest.mark.asyncio
-    async def test_get_audio_preferences_user_not_found(self):
-        """Test that GET returns 404 for non-existent user."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase:
+    async def test_get_audio_preferences_other_user_forbidden(
+        self, current_user, mock_supabase
+    ):
+        """Reading someone else's preferences is refused with 403.
 
-            try:
-                from api.v1.audio_preferences import get_audio_preferences
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
-
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
-
-            # User not found
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-                data=None
+        Originally this asserted a 404 "User not found" branch. That branch does
+        not exist and is unreachable by design: the endpoint is authenticated,
+        so a nonexistent user can never reach it (`get_current_user` already
+        401s on an unknown/absent user). The guarantee the original test was
+        really protecting — *you cannot read preferences that are not yours* —
+        is enforced by the `current_user["id"] != user_id` check, which is what
+        is asserted now.
+        """
+        with pytest.raises(HTTPException) as exc_info:
+            await get_audio_preferences(
+                "somebody-elses-user-id", current_user=current_user
             )
 
-            with pytest.raises(HTTPException) as exc_info:
-                await get_audio_preferences("non-existent-user")
+        assert exc_info.value.status_code == 403
+        assert "Access denied" in exc_info.value.detail
 
-            assert exc_info.value.status_code == 404
-            assert "User not found" in exc_info.value.detail
+        # The refusal must happen before any DB read.
+        mock_supabase.client.table.assert_not_called()
 
-    @pytest.mark.asyncio
-    async def test_get_audio_preferences_unauthenticated(self):
-        """Test that GET returns 401 for unauthenticated request (no user_id)."""
-        # This would typically be handled by auth middleware
-        # but we test the endpoint behavior for empty/invalid user_id
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase:
+    def test_get_audio_preferences_unauthenticated(self, client):
+        """An unauthenticated GET is rejected with 401.
 
-            try:
-                from api.v1.audio_preferences import get_audio_preferences
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        Originally this called the endpoint function with an empty user_id and
+        hoped for 400/401/404 — which cannot test auth at all, since calling the
+        function directly bypasses the dependency. Auth is only observable over
+        HTTP, so this now issues a real request with no Authorization header.
+        """
+        response = client.get("/api/v1/audio-preferences/test-user-audio-123")
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
-
-            # Empty user_id should fail validation or return 401
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-                data=None
-            )
-
-            with pytest.raises(HTTPException) as exc_info:
-                await get_audio_preferences("")
-
-            assert exc_info.value.status_code in [400, 401, 404]
+        assert response.status_code == 401
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -527,181 +489,162 @@ class TestGetAudioPreferences:
 
 
 class TestUpdateAudioPreferences:
-    """Tests for PUT /api/v1/audio-preferences/{user_id} endpoint."""
+    """Tests for PUT /api/v1/audio-preferences/{user_id}."""
 
     @pytest.mark.asyncio
     async def test_update_all_preference_fields(
-        self, mock_user_id, mock_user_data, mock_audio_preferences
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
     ):
-        """Test that PUT updates all preference fields."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock):
+        """PUT writes every provided field and returns the new state."""
+        set_select_result(mock_supabase, [mock_audio_preferences])
 
-            try:
-                from api.v1.audio_preferences import update_audio_preferences, AudioPreferencesUpdate
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        updated_prefs = {
+            **mock_audio_preferences,
+            "allow_background_music": False,
+            "tts_volume": 0.6,
+            "audio_ducking": False,
+            "duck_volume_level": 0.2,
+            "mute_during_video": True,
+        }
+        set_update_result(mock_supabase, [updated_prefs])
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        update = AudioPreferencesUpdate(
+            allow_background_music=False,
+            tts_volume=0.6,
+            audio_ducking=False,
+            duck_volume_level=0.2,
+            mute_during_video=True,
+        )
+        result = await update_audio_preferences(
+            mock_user_id, update, current_user=current_user
+        )
 
-            # Mock responses
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),  # User exists check
-                MagicMock(data={"id": "audio-pref-123"}),  # Preferences exist check
-            ]
+        assert result.allow_background_music is False
+        assert result.tts_volume == 0.6
+        assert result.audio_ducking is False
+        assert result.duck_volume_level == 0.2
+        assert result.mute_during_video is True
 
-            updated_prefs = {
-                **mock_audio_preferences,
-                "master_volume": 0.6,
-                "music_volume": 0.4,
-                "voice_volume": 0.9,
-                "sfx_volume": 0.5,
-                "duck_volume_level": 0.2,
-                "enable_ducking": False,
-            }
-            mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[updated_prefs]
-            )
-
-            update = AudioPreferencesUpdate(
-                master_volume=0.6,
-                music_volume=0.4,
-                voice_volume=0.9,
-                sfx_volume=0.5,
-                duck_volume_level=0.2,
-                enable_ducking=False,
-            )
-            result = await update_audio_preferences(mock_user_id, update)
-
-            assert result.master_volume == 0.6
-            assert result.music_volume == 0.4
-            assert result.voice_volume == 0.9
-            assert result.sfx_volume == 0.5
-            assert result.duck_volume_level == 0.2
-            assert result.enable_ducking is False
+        # Every field must actually have been sent to the DB, plus a fresh
+        # updated_at — and it must be an UPDATE of the existing row, not an insert.
+        written = update_payload(mock_supabase)
+        assert written["allow_background_music"] is False
+        assert written["tts_volume"] == 0.6
+        assert written["audio_ducking"] is False
+        assert written["duck_volume_level"] == 0.2
+        assert written["mute_during_video"] is True
+        assert "updated_at" in written
+        mock_supabase.client.table.return_value.insert.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_update_partial_preferences(
-        self, mock_user_id, mock_user_data, mock_audio_preferences
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
     ):
-        """Test that PUT allows partial updates."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock):
+        """A partial PUT writes ONLY the provided field and leaves the rest alone."""
+        set_select_result(mock_supabase, [mock_audio_preferences])
 
-            try:
-                from api.v1.audio_preferences import update_audio_preferences, AudioPreferencesUpdate
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        updated_prefs = {**mock_audio_preferences, "tts_volume": 0.5}
+        set_update_result(mock_supabase, [updated_prefs])
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        update = AudioPreferencesUpdate(tts_volume=0.5)
+        result = await update_audio_preferences(
+            mock_user_id, update, current_user=current_user
+        )
 
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),
-                MagicMock(data={"id": "audio-pref-123"}),
-            ]
+        assert result.tts_volume == 0.5
+        # Untouched values must survive.
+        assert result.duck_volume_level == mock_audio_preferences["duck_volume_level"]
+        assert result.allow_background_music == mock_audio_preferences["allow_background_music"]
 
-            # Only update master_volume
-            updated_prefs = {**mock_audio_preferences, "master_volume": 0.5}
-            mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[updated_prefs]
-            )
-
-            update = AudioPreferencesUpdate(master_volume=0.5)
-            result = await update_audio_preferences(mock_user_id, update)
-
-            assert result.master_volume == 0.5
-            # Other values should remain unchanged
-            assert result.music_volume == mock_audio_preferences["music_volume"]
+        # Crucially: the un-provided fields must NOT be written (no null-clobber).
+        written = update_payload(mock_supabase)
+        assert set(written) == {"tts_volume", "updated_at"}
 
     @pytest.mark.asyncio
     async def test_update_returns_updated_preferences(
-        self, mock_user_id, mock_user_data, mock_audio_preferences
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
     ):
-        """Test that PUT returns the updated preferences."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock):
+        """PUT echoes back the row the DB returned, not the request body."""
+        set_select_result(mock_supabase, [mock_audio_preferences])
 
-            try:
-                from api.v1.audio_preferences import update_audio_preferences, AudioPreferencesUpdate
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        updated_prefs = {**mock_audio_preferences, "audio_ducking": False}
+        set_update_result(mock_supabase, [updated_prefs])
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        update = AudioPreferencesUpdate(audio_ducking=False)
+        result = await update_audio_preferences(
+            mock_user_id, update, current_user=current_user
+        )
 
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),
-                MagicMock(data={"id": "audio-pref-123"}),
-            ]
-
-            updated_prefs = {**mock_audio_preferences, "enable_ducking": False}
-            mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[updated_prefs]
-            )
-
-            update = AudioPreferencesUpdate(enable_ducking=False)
-            result = await update_audio_preferences(mock_user_id, update)
-
-            assert result.enable_ducking is False
-            assert result.user_id == mock_user_id
+        assert result.audio_ducking is False
+        assert result.user_id == mock_user_id
 
     @pytest.mark.asyncio
-    async def test_update_user_not_found(self):
-        """Test that PUT returns 404 for non-existent user."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase:
+    async def test_update_other_user_forbidden(self, current_user, mock_supabase):
+        """PUT refuses to write to someone else's preferences (403).
 
-            try:
-                from api.v1.audio_preferences import update_audio_preferences, AudioPreferencesUpdate
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        Retargeted from the original 404 "User not found" expectation for the
+        same reason as the GET case: the branch doesn't exist and is unreachable
+        behind auth. The real guarantee — *you cannot write preferences that are
+        not yours* — is what's asserted, including that nothing is written.
+        """
+        update = AudioPreferencesUpdate(tts_volume=0.5)
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
-
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-                data=None
+        with pytest.raises(HTTPException) as exc_info:
+            await update_audio_preferences(
+                "somebody-elses-user-id", update, current_user=current_user
             )
 
-            update = AudioPreferencesUpdate(master_volume=0.5)
-
-            with pytest.raises(HTTPException) as exc_info:
-                await update_audio_preferences("non-existent-user", update)
-
-            assert exc_info.value.status_code == 404
+        assert exc_info.value.status_code == 403
+        mock_supabase.client.table.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_update_creates_preferences_if_not_exist(
-        self, mock_user_id, mock_user_data, default_audio_preferences
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
     ):
-        """Test that PUT creates preferences if they don't exist yet."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock):
+        """PUT upserts: with no existing row it inserts, filling defaults."""
+        set_select_result(mock_supabase, [])
 
-            try:
-                from api.v1.audio_preferences import update_audio_preferences, AudioPreferencesUpdate
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        new_prefs = {**mock_audio_preferences, "tts_volume": 0.7}
+        set_insert_result(mock_supabase, [new_prefs])
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        update = AudioPreferencesUpdate(tts_volume=0.7)
+        result = await update_audio_preferences(
+            mock_user_id, update, current_user=current_user
+        )
 
-            # User exists but no preferences
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),  # User exists
-                MagicMock(data=None),  # No preferences exist
-            ]
+        assert result.tts_volume == 0.7
 
-            new_prefs = {**default_audio_preferences, "master_volume": 0.7}
-            mock_supabase.client.table.return_value.insert.return_value.execute.return_value = MagicMock(
-                data=[new_prefs]
+        # The inserted row must carry the user, the requested value, and defaults
+        # for everything the caller didn't send.
+        written = insert_payload(mock_supabase)
+        assert written["user_id"] == mock_user_id
+        assert written["tts_volume"] == 0.7
+        assert written["allow_background_music"] is True
+        assert written["audio_ducking"] is True
+        assert written["duck_volume_level"] == 0.3
+        assert written["mute_during_video"] is False
+        assert "created_at" in written and "updated_at" in written
+        mock_supabase.client.table.return_value.update.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_update_with_no_fields_rejected(
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences
+    ):
+        """An empty PUT body is a 400, not a silent no-op write."""
+        set_select_result(mock_supabase, [mock_audio_preferences])
+
+        with pytest.raises(HTTPException) as exc_info:
+            await update_audio_preferences(
+                mock_user_id, AudioPreferencesUpdate(), current_user=current_user
             )
 
-            update = AudioPreferencesUpdate(master_volume=0.7)
-            result = await update_audio_preferences(mock_user_id, update)
-
-            assert result.master_volume == 0.7
+        assert exc_info.value.status_code == 400
+        mock_supabase.client.table.return_value.update.assert_not_called()
+        mock_supabase.client.table.return_value.insert.assert_not_called()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -710,96 +653,116 @@ class TestUpdateAudioPreferences:
 
 
 class TestCreateAudioPreferences:
-    """Tests for POST /api/v1/audio-preferences/{user_id} endpoint."""
+    """Tests for POST /api/v1/audio-preferences/{user_id}."""
 
     @pytest.mark.asyncio
     async def test_create_preferences_for_new_user(
-        self, mock_user_id, mock_user_data, default_audio_preferences
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
     ):
-        """Test that POST creates preferences for new user."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock):
+        """POST with a body creates the row from that body.
 
-            try:
-                from api.v1.audio_preferences import create_audio_preferences, AudioPreferencesCreate
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        Originally imported `AudioPreferencesCreate`, which does not exist — the
+        POST body model is `AudioPreferences`. Same intent.
+        """
+        set_select_result(mock_supabase, [])
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        created = {
+            **mock_audio_preferences,
+            "allow_background_music": False,
+            "tts_volume": 0.55,
+            "mute_during_video": True,
+        }
+        set_insert_result(mock_supabase, [created])
 
-            # User exists, no preferences yet
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),  # User exists
-                MagicMock(data=None),  # No existing preferences
-            ]
+        create_data = AudioPreferences(
+            allow_background_music=False,
+            tts_volume=0.55,
+            mute_during_video=True,
+        )
+        result = await create_audio_preferences(
+            mock_user_id, create_data, current_user=current_user
+        )
 
-            mock_supabase.client.table.return_value.insert.return_value.execute.return_value = MagicMock(
-                data=[default_audio_preferences]
-            )
+        assert result.user_id == mock_user_id
+        assert result.allow_background_music is False
+        assert result.tts_volume == 0.55
+        assert result.mute_during_video is True
 
-            create_data = AudioPreferencesCreate(
-                master_volume=0.8,
-                music_volume=0.5,
-                voice_volume=1.0,
-                sfx_volume=0.7,
-            )
-            result = await create_audio_preferences(mock_user_id, create_data)
-
-            assert result.user_id == mock_user_id
+        written = insert_payload(mock_supabase)
+        assert written["user_id"] == mock_user_id
+        assert written["allow_background_music"] is False
+        assert written["tts_volume"] == 0.55
+        assert written["mute_during_video"] is True
+        # Unspecified fields fall back to the model defaults, never to null.
+        assert written["audio_ducking"] is True
+        assert written["duck_volume_level"] == 0.3
 
     @pytest.mark.asyncio
-    async def test_create_preferences_conflict_if_already_exist(
-        self, mock_user_id, mock_user_data, mock_audio_preferences
+    async def test_create_preferences_with_no_body_uses_defaults(
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
     ):
-        """Test that POST returns 409 conflict if preferences already exist."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase:
+        """POST with no body creates a defaults row (the bootstrap call)."""
+        set_select_result(mock_supabase, [])
+        set_insert_result(mock_supabase, [mock_audio_preferences])
 
-            try:
-                from api.v1.audio_preferences import create_audio_preferences, AudioPreferencesCreate
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        result = await create_audio_preferences(
+            mock_user_id, None, current_user=current_user
+        )
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        assert result.user_id == mock_user_id
 
-            # User exists and already has preferences
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),  # User exists
-                MagicMock(data=mock_audio_preferences),  # Preferences already exist
-            ]
-
-            create_data = AudioPreferencesCreate(master_volume=0.8)
-
-            with pytest.raises(HTTPException) as exc_info:
-                await create_audio_preferences(mock_user_id, create_data)
-
-            assert exc_info.value.status_code == 409
-            assert "already exist" in exc_info.value.detail.lower()
+        written = insert_payload(mock_supabase)
+        assert written["user_id"] == mock_user_id
+        for field, value in get_default_preferences().items():
+            assert written[field] == value
 
     @pytest.mark.asyncio
-    async def test_create_user_not_found(self):
-        """Test that POST returns 404 for non-existent user."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase:
+    async def test_create_is_idempotent_when_preferences_already_exist(
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
+    ):
+        """POST on an existing row returns it and does NOT create a duplicate.
 
-            try:
-                from api.v1.audio_preferences import create_audio_preferences, AudioPreferencesCreate
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        The original expected a 409 Conflict. The shipped endpoint is
+        deliberately an idempotent get-or-create (its docstring: "If preferences
+        already exist, returns the existing ones") — the client bootstraps
+        preferences by POSTing unconditionally, so a 409 would be a false alarm.
+        The guarantee the 409 was protecting — *a second POST must never
+        overwrite or duplicate a user's saved settings* — is asserted directly:
+        the caller's saved values come back untouched, and nothing is written.
+        """
+        set_select_result(mock_supabase, [mock_audio_preferences])
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        result = await create_audio_preferences(
+            mock_user_id, AudioPreferences(tts_volume=0.1), current_user=current_user
+        )
 
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-                data=None
+        # The EXISTING values win — the POST body must not clobber them.
+        assert result.tts_volume == mock_audio_preferences["tts_volume"] == 0.8
+        assert result.user_id == mock_user_id
+
+        mock_supabase.client.table.return_value.insert.assert_not_called()
+        mock_supabase.client.table.return_value.update.assert_not_called()
+        mock_activity_log.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_create_other_user_forbidden(self, current_user, mock_supabase):
+        """POST refuses to create preferences for another user (403).
+
+        Retargeted from the original 404 "User not found" expectation — see
+        `test_get_audio_preferences_other_user_forbidden`.
+        """
+        with pytest.raises(HTTPException) as exc_info:
+            await create_audio_preferences(
+                "somebody-elses-user-id",
+                AudioPreferences(),
+                current_user=current_user,
             )
 
-            create_data = AudioPreferencesCreate(master_volume=0.8)
-
-            with pytest.raises(HTTPException) as exc_info:
-                await create_audio_preferences("non-existent-user", create_data)
-
-            assert exc_info.value.status_code == 404
+        assert exc_info.value.status_code == 403
+        mock_supabase.client.table.assert_not_called()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -810,109 +773,71 @@ class TestCreateAudioPreferences:
 class TestAudioPreferencesEdgeCases:
     """Tests for edge cases in audio preferences."""
 
-    def test_volume_boundary_values(self):
-        """Test that boundary values (0.0 and 1.0) are accepted."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
+    @pytest.mark.parametrize("field", VOLUME_FIELDS)
+    @pytest.mark.parametrize("boundary", [0.0, 1.0])
+    def test_volume_boundary_values(self, field, boundary):
+        """The exact boundaries 0.0 (silent) and 1.0 (full) are inclusive."""
+        update = AudioPreferencesUpdate(**{field: boundary})
+        assert getattr(update, field) == boundary
 
-        # Exact boundary values should work
-        update_zero = AudioPreferencesUpdate(
-            master_volume=0.0,
-            music_volume=0.0,
-            voice_volume=0.0,
-            sfx_volume=0.0,
-            duck_volume_level=0.0,
-        )
-        assert update_zero.master_volume == 0.0
-
-        update_one = AudioPreferencesUpdate(
-            master_volume=1.0,
-            music_volume=1.0,
-            voice_volume=1.0,
-            sfx_volume=1.0,
-            duck_volume_level=1.0,
-        )
-        assert update_one.master_volume == 1.0
-
-    def test_missing_required_fields_in_response(self):
-        """Test handling of missing required fields in database response."""
-        try:
-            from api.v1.audio_preferences import _preferences_to_response
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        # Minimal data - only required id and user_id
-        minimal_data = {
-            "id": "audio-123",
-            "user_id": "user-123",
-        }
-
-        response = _preferences_to_response(minimal_data)
-
-        # Should have default values for missing fields
-        assert response.id == "audio-123"
-        assert response.user_id == "user-123"
-        assert 0.0 <= response.master_volume <= 1.0
-        assert 0.0 <= response.duck_volume_level <= 1.0
+        create = AudioPreferences(**{field: boundary})
+        assert getattr(create, field) == boundary
 
     @pytest.mark.asyncio
-    async def test_database_error_handling(self, mock_user_id, mock_user_data):
-        """Test proper error handling when database fails."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase:
+    async def test_missing_fields_in_db_row_are_defaulted(
+        self, mock_user_id, current_user, mock_supabase
+    ):
+        """A row carrying only user_id still produces a fully-valid response."""
+        set_select_result(mock_supabase, [{"user_id": mock_user_id}])
 
-            try:
-                from api.v1.audio_preferences import get_audio_preferences
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        response = await get_audio_preferences(mock_user_id, current_user=current_user)
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        assert response.user_id == mock_user_id
+        assert 0.0 <= response.tts_volume <= 1.0
+        assert 0.0 <= response.duck_volume_level <= 1.0
+        assert isinstance(response.allow_background_music, bool)
+        assert isinstance(response.audio_ducking, bool)
+        assert isinstance(response.mute_during_video, bool)
 
-            # Simulate database error
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = Exception(
-                "Database connection failed"
-            )
+    @pytest.mark.asyncio
+    async def test_database_error_handling(
+        self, mock_user_id, current_user, mock_supabase
+    ):
+        """A DB failure surfaces as a 500, not a leaked exception."""
+        mock_supabase.client.table.return_value.select.return_value.eq.return_value.execute.side_effect = Exception(
+            "Database connection failed"
+        )
 
-            with pytest.raises(HTTPException) as exc_info:
-                await get_audio_preferences(mock_user_id)
+        with pytest.raises(HTTPException) as exc_info:
+            await get_audio_preferences(mock_user_id, current_user=current_user)
 
-            assert exc_info.value.status_code == 500
+        assert exc_info.value.status_code == 500
+        # The internal error text must not leak to the client.
+        assert "Database connection failed" not in str(exc_info.value.detail)
 
-    def test_enable_ducking_boolean_type(self):
-        """Test that enable_ducking only accepts boolean values."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-            from pydantic import ValidationError
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
+    def test_boolean_fields_reject_non_boolean(self):
+        """The boolean settings accept True/False and reject non-booleans.
 
-        # Valid boolean values
-        update_true = AudioPreferencesUpdate(enable_ducking=True)
-        assert update_true.enable_ducking is True
+        (Originally `enable_ducking`; the real field is `audio_ducking`, joined
+        here by the other two booleans the model carries.)
+        """
+        for field in BOOLEAN_FIELDS:
+            assert getattr(AudioPreferencesUpdate(**{field: True}), field) is True
+            assert getattr(AudioPreferencesUpdate(**{field: False}), field) is False
 
-        update_false = AudioPreferencesUpdate(enable_ducking=False)
-        assert update_false.enable_ducking is False
+            with pytest.raises(ValidationError):
+                AudioPreferencesUpdate(**{field: "not-a-bool"})
 
-        # Invalid non-boolean values should fail (Pydantic may coerce some)
-        # Test with explicit type checking in the model
+            # 0/1 are the only ints Pydantic treats as bool; 2 is nonsense.
+            with pytest.raises(ValidationError):
+                AudioPreferencesUpdate(**{field: 2})
 
     def test_very_small_volume_values(self):
-        """Test that very small but valid volume values are accepted."""
-        try:
-            from api.v1.audio_preferences import AudioPreferencesUpdate
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
+        """Very small but valid volumes are preserved exactly (no rounding to 0)."""
+        update = AudioPreferencesUpdate(tts_volume=0.001, duck_volume_level=0.00001)
 
-        update = AudioPreferencesUpdate(
-            master_volume=0.001,
-            music_volume=0.0001,
-            voice_volume=0.00001,
-        )
-        assert update.master_volume == 0.001
-        assert update.music_volume == 0.0001
-        assert update.voice_volume == 0.00001
+        assert update.tts_volume == 0.001
+        assert update.duck_volume_level == 0.00001
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -925,70 +850,82 @@ class TestAudioPreferencesLogging:
 
     @pytest.mark.asyncio
     async def test_activity_logging_on_create(
-        self, mock_user_id, mock_user_data, default_audio_preferences
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
     ):
-        """Test that preference creation is logged for analytics."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock) as mock_log:
+        """Creating preferences is logged for analytics.
 
-            try:
-                from api.v1.audio_preferences import get_audio_preferences
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        The original drove this through GET (it assumed GET lazily created the
+        row). GET does not create — POST does — so this now exercises POST, the
+        endpoint that actually emits `audio_preferences_created`.
+        """
+        set_select_result(mock_supabase, [])
+        set_insert_result(mock_supabase, [mock_audio_preferences])
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        await create_audio_preferences(
+            mock_user_id, AudioPreferences(), current_user=current_user
+        )
 
-            # User exists, no preferences (will create defaults)
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),
-                MagicMock(data=None),
-            ]
-            mock_supabase.client.table.return_value.insert.return_value.execute.return_value = MagicMock(
-                data=[default_audio_preferences]
-            )
-
-            await get_audio_preferences(mock_user_id)
-
-            # Verify logging was called
-            mock_log.assert_called_once()
-            call_kwargs = mock_log.call_args.kwargs
-            assert call_kwargs["action"] == "audio_preferences_created"
+        mock_activity_log.assert_called_once()
+        call_kwargs = mock_activity_log.call_args.kwargs
+        assert call_kwargs["action"] == "audio_preferences_created"
+        assert call_kwargs["user_id"] == mock_user_id
+        assert call_kwargs["status_code"] == 201
+        assert call_kwargs["metadata"]["tts_volume"] == mock_audio_preferences["tts_volume"]
 
     @pytest.mark.asyncio
     async def test_activity_logging_on_update(
-        self, mock_user_id, mock_user_data, mock_audio_preferences
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
     ):
-        """Test that preference updates are logged for analytics."""
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock) as mock_log:
+        """Toggling background-music support is logged, with its previous value.
 
-            try:
-                from api.v1.audio_preferences import update_audio_preferences, AudioPreferencesUpdate
-            except ImportError:
-                pytest.skip("audio_preferences module not yet implemented")
+        The original asserted that ANY update logs, with a `changed_fields`
+        metadata list. The shipped endpoint logs a narrower, deliberate signal:
+        it records the background-music toggle (the setting that changes how the
+        app behaves against Spotify/Apple Music) together with its old value, so
+        support can see what a user flipped. That exact contract is asserted
+        here; the companion test below pins the other half of it.
+        """
+        set_select_result(
+            mock_supabase, [{**mock_audio_preferences, "allow_background_music": True}]
+        )
+        set_update_result(
+            mock_supabase, [{**mock_audio_preferences, "allow_background_music": False}]
+        )
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        update = AudioPreferencesUpdate(allow_background_music=False)
+        await update_audio_preferences(mock_user_id, update, current_user=current_user)
 
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=mock_user_data),
-                MagicMock(data={"id": "audio-pref-123"}),
-            ]
+        mock_activity_log.assert_called_once()
+        call_kwargs = mock_activity_log.call_args.kwargs
+        assert call_kwargs["action"] == "audio_preferences_updated"
+        assert call_kwargs["user_id"] == mock_user_id
+        assert call_kwargs["metadata"]["allow_background_music"] is False
+        assert call_kwargs["metadata"]["previous_value"] is True
+        assert call_kwargs["message"] == "Disabled background music support"
 
-            updated_prefs = {**mock_audio_preferences, "master_volume": 0.5}
-            mock_supabase.client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
-                data=[updated_prefs]
-            )
+    @pytest.mark.asyncio
+    async def test_activity_logging_skipped_when_background_music_unchanged(
+        self, mock_user_id, current_user, mock_supabase, mock_audio_preferences,
+        mock_activity_log,
+    ):
+        """A no-op toggle does not spam the activity log.
 
-            update = AudioPreferencesUpdate(master_volume=0.5)
-            await update_audio_preferences(mock_user_id, update)
+        Pins the other half of the logging contract: the log fires on a CHANGE
+        to `allow_background_music`, not on every PUT (a volume-slider drag
+        would otherwise write an activity row per frame).
+        """
+        set_select_result(
+            mock_supabase, [{**mock_audio_preferences, "allow_background_music": True}]
+        )
+        set_update_result(mock_supabase, [mock_audio_preferences])
 
-            # Verify logging was called
-            mock_log.assert_called_once()
-            call_kwargs = mock_log.call_args.kwargs
-            assert call_kwargs["action"] == "audio_preferences_updated"
-            assert "master_volume" in call_kwargs["metadata"]["changed_fields"]
+        # Same value as stored → no change → no log.
+        update = AudioPreferencesUpdate(allow_background_music=True, tts_volume=0.42)
+        await update_audio_preferences(mock_user_id, update, current_user=current_user)
+
+        mock_activity_log.assert_not_called()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -999,73 +936,58 @@ class TestAudioPreferencesLogging:
 class TestAudioPreferencesHTTPEndpoints:
     """Tests using FastAPI TestClient for HTTP-level testing."""
 
-    def test_get_audio_preferences_http(self, client):
-        """Test GET endpoint via HTTP client."""
-        try:
-            from api.v1 import audio_preferences as _  # noqa: F401
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
+    def test_get_audio_preferences_http(
+        self, authed_client, mock_user_id, mock_supabase, mock_audio_preferences
+    ):
+        """GET returns 200 and the stored preferences over HTTP."""
+        set_select_result(mock_supabase, [mock_audio_preferences])
 
-        with patch("api.v1.audio_preferences.get_supabase") as mock_get_supabase, \
-             patch("api.v1.audio_preferences.log_user_activity", new_callable=AsyncMock):
+        response = authed_client.get(f"/api/v1/audio-preferences/{mock_user_id}")
 
-            mock_supabase = MagicMock()
-            mock_get_supabase.return_value = mock_supabase
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user_id"] == mock_user_id
+        assert data["tts_volume"] == 0.8
+        assert data["allow_background_music"] is True
+        assert data["duck_volume_level"] == 0.3
 
-            user_data = {"id": "test-user", "email": "test@test.com"}
-            prefs_data = {
-                "id": "pref-123",
-                "user_id": "test-user",
-                "master_volume": 0.8,
-                "music_volume": 0.5,
-                "voice_volume": 1.0,
-                "sfx_volume": 0.7,
-                "duck_volume_level": 0.3,
-                "enable_ducking": True,
-                "created_at": "2025-01-01T00:00:00Z",
-                "updated_at": "2025-01-01T00:00:00Z",
-            }
-
-            mock_supabase.client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = [
-                MagicMock(data=user_data),
-                MagicMock(data=prefs_data),
-            ]
-
-            response = client.get("/api/v1/audio-preferences/test-user")
-
-            assert response.status_code == 200
-            data = response.json()
-            assert data["master_volume"] == 0.8
-
-    def test_put_audio_preferences_invalid_volume_http(self, client):
-        """Test PUT endpoint rejects invalid volume via HTTP client."""
-        try:
-            from api.v1 import audio_preferences as _  # noqa: F401
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        # Volume > 1.0 should be rejected
-        response = client.put(
-            "/api/v1/audio-preferences/test-user",
-            json={"master_volume": 1.5}
+    @pytest.mark.parametrize("field", VOLUME_FIELDS)
+    def test_put_audio_preferences_invalid_volume_http(
+        self, authed_client, mock_user_id, mock_supabase, field
+    ):
+        """PUT rejects a volume above 1.0 with 422 before touching the DB."""
+        response = authed_client.put(
+            f"/api/v1/audio-preferences/{mock_user_id}",
+            json={field: 1.5},
         )
 
-        assert response.status_code == 422  # Validation error
+        assert response.status_code == 422
+        mock_supabase.client.table.assert_not_called()
 
-    def test_put_audio_preferences_negative_volume_http(self, client):
-        """Test PUT endpoint rejects negative volume via HTTP client."""
-        try:
-            from api.v1 import audio_preferences as _  # noqa: F401
-        except ImportError:
-            pytest.skip("audio_preferences module not yet implemented")
-
-        # Negative volume should be rejected
-        response = client.put(
-            "/api/v1/audio-preferences/test-user",
-            json={"master_volume": -0.1}
+    @pytest.mark.parametrize("field", VOLUME_FIELDS)
+    def test_put_audio_preferences_negative_volume_http(
+        self, authed_client, mock_user_id, mock_supabase, field
+    ):
+        """PUT rejects a negative volume with 422 before touching the DB."""
+        response = authed_client.put(
+            f"/api/v1/audio-preferences/{mock_user_id}",
+            json={field: -0.1},
         )
 
-        assert response.status_code == 422  # Validation error
+        assert response.status_code == 422
+        mock_supabase.client.table.assert_not_called()
+
+    def test_put_audio_preferences_other_user_http(
+        self, authed_client, mock_supabase, mock_audio_preferences
+    ):
+        """PUT at another user's path is 403 over HTTP, and writes nothing."""
+        response = authed_client.put(
+            "/api/v1/audio-preferences/somebody-elses-user-id",
+            json={"tts_volume": 0.5},
+        )
+
+        assert response.status_code == 403
+        mock_supabase.client.table.assert_not_called()
 
 
 if __name__ == "__main__":

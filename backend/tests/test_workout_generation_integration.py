@@ -80,10 +80,18 @@ class TestStrengthHistoryIntegration:
 
 
 class TestFavoritesIntegration:
-    """Tests for favorite exercises integration in workout generation."""
+    """Tests for favorite exercises integration in workout generation.
+
+    Patch target note: these helpers were moved out of `api.v1.workouts.utils`
+    into `api.v1.workouts.user_preference_utils` (utils.py now only re-exports
+    them). Patching `api.v1.workouts.utils.get_supabase_db` therefore no longer
+    intercepts the DB handle the helper actually resolves — the helper reached
+    the REAL Supabase client, blew up on the non-UUID test user id, and its
+    except-branch returned []. Patch the defining module instead.
+    """
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     async def test_get_user_favorite_exercises_returns_list(self, mock_get_db):
         """Test that favorites returns list of exercise names."""
         from api.v1.workouts.utils import get_user_favorite_exercises
@@ -104,7 +112,7 @@ class TestFavoritesIntegration:
         assert "Pull-up" in result
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     async def test_get_user_favorite_exercises_empty(self, mock_get_db):
         """Test that empty favorites returns empty list."""
         from api.v1.workouts.utils import get_user_favorite_exercises
@@ -122,7 +130,7 @@ class TestConsistencyModeIntegration:
     """Tests for consistency mode integration in workout generation."""
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     async def test_get_consistency_mode_vary(self, mock_get_db):
         """Test that vary mode is returned correctly."""
         from api.v1.workouts.utils import get_user_consistency_mode
@@ -139,7 +147,7 @@ class TestConsistencyModeIntegration:
         assert result == "vary"
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     async def test_get_consistency_mode_consistent(self, mock_get_db):
         """Test that consistent mode is returned correctly."""
         from api.v1.workouts.utils import get_user_consistency_mode
@@ -156,7 +164,7 @@ class TestConsistencyModeIntegration:
         assert result == "consistent"
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     async def test_get_consistency_mode_default_vary(self, mock_get_db):
         """Test that default is vary when not set."""
         from api.v1.workouts.utils import get_user_consistency_mode
@@ -173,7 +181,7 @@ class TestConsistencyModeIntegration:
         assert result == "vary"
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     async def test_get_consistency_mode_handles_json_string(self, mock_get_db):
         """Test that JSON string preferences are parsed."""
         from api.v1.workouts.utils import get_user_consistency_mode
@@ -194,7 +202,7 @@ class TestExerciseQueueIntegration:
     """Tests for exercise queue integration in workout generation."""
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     async def test_get_exercise_queue_returns_list(self, mock_get_db):
         """Test that queue returns list of exercise dicts."""
         from api.v1.workouts.utils import get_user_exercise_queue
@@ -229,7 +237,7 @@ class TestExerciseQueueIntegration:
         assert result[1]["name"] == "Bicep Curl"
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     async def test_get_exercise_queue_filters_by_focus(self, mock_get_db):
         """Test that queue filters by focus area."""
         from api.v1.workouts.utils import get_user_exercise_queue
@@ -262,7 +270,7 @@ class TestExerciseQueueIntegration:
         assert result[0]["name"] == "Lat Pulldown"
 
     @pytest.mark.asyncio
-    @patch('api.v1.workouts.utils.get_supabase_db')
+    @patch('api.v1.workouts.user_preference_utils.get_supabase_db')
     async def test_get_exercise_queue_empty(self, mock_get_db):
         """Test that empty queue returns empty list."""
         from api.v1.workouts.utils import get_user_exercise_queue
@@ -344,8 +352,20 @@ class TestGeminiWorkoutFromLibrary:
 
     @pytest.mark.asyncio
     async def test_generate_workout_preserves_exercise_weights(self):
-        """Test that Gemini doesn't override exercise weights from RAG."""
+        """Test that Gemini doesn't override exercise weights from RAG.
+
+        Patch target note: the service no longer calls a module-level
+        `services.gemini_service.client` (that shim module now only re-exports
+        the `services.gemini` package). Library generation goes through
+        `gemini_generate_with_retry` in
+        `services.gemini.workout_generation_helpers_part2` and reads the
+        SDK-parsed structured output (`response.parsed` → WorkoutNamingResponse).
+        The guarantee under test is unchanged: Gemini names the workout, and the
+        RAG-selected exercises (incl. their historical weights) pass through
+        untouched.
+        """
         from services.gemini_service import GeminiService
+        from models.gemini_schemas import WorkoutNamingResponse
 
         # The key is that generate_workout_from_library returns exercises as-is
         # We verify this by checking the function signature and return value
@@ -372,11 +392,17 @@ class TestGeminiWorkoutFromLibrary:
         ]
 
         # Mock the Gemini response (only workout name, not exercises)
-        with patch('services.gemini_service.client') as mock_client:
-            mock_response = MagicMock()
-            mock_response.text = '{"name": "Power Chest Day", "type": "strength", "notes": "Focus on form"}'
-            mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)
-
+        mock_response = MagicMock()
+        mock_response.parsed = WorkoutNamingResponse(
+            name="Power Chest Day",
+            type="strength",
+            difficulty="medium",
+            notes="Focus on form",
+        )
+        with patch(
+            'services.gemini.workout_generation_helpers_part2.gemini_generate_with_retry',
+            new=AsyncMock(return_value=mock_response),
+        ):
             service = GeminiService()
             result = await service.generate_workout_from_library(
                 exercises=exercises,

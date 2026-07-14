@@ -54,9 +54,26 @@ def mock_activity_logger():
 
 @pytest.fixture
 def client():
-    """Create a test client."""
+    """Create a test client authenticated as MOCK_USER_ID.
+
+    Every /support endpoint takes `current_user: dict = Depends(get_current_user)`
+    and then calls `verify_user_ownership(current_user, user_id)`. Without an
+    override the dependency looks for a real Supabase JWT in the Authorization
+    header, so every request 401s before the handler ever runs. Overriding the
+    dependency injects a fixed identity, which is what lets these tests exercise
+    the handler bodies (and, in TestRLSSecurity, the ownership check itself).
+    """
     from main import app
-    return TestClient(app)
+    from core.auth import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": MOCK_USER_ID,
+        "email": "test-user@example.com",
+    }
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 # =============================================================================
@@ -693,18 +710,32 @@ class TestRLSSecurity:
     """Tests for Row Level Security (user isolation)."""
 
     def test_user_cannot_access_other_user_tickets(self, client, mock_supabase):
-        """Test that RLS prevents accessing other users' tickets."""
-        # When querying with user_id filter, should only get that user's tickets
+        """Test that user A cannot list user B's tickets.
+
+        RETIRED ASSERTION: this used to assert 200 + an empty list, on the theory
+        that Postgres RLS would silently filter another user's rows out of the
+        result set. That is no longer how the endpoint defends itself (and it was
+        always the weaker guarantee — it relied on the DB policy alone, and it
+        leaked a 200 for a resource the caller had no business naming).
+
+        CURRENT GUARANTEE (what this now protects): `get_user_tickets` calls
+        `verify_user_ownership(current_user, user_id)` before it touches the DB,
+        so a mismatched user_id is rejected outright with 403 and the query is
+        never issued. Same intent — user isolation — asserted at the stronger,
+        earlier chokepoint. Asserting the DB was never reached is what stops a
+        future refactor from quietly downgrading this back to "trust RLS".
+        """
         mock_result = MagicMock()
-        mock_result.data = []  # RLS would filter out other user's tickets
+        mock_result.data = []
         mock_supabase.client.from_.return_value.select.return_value.eq.return_value.order.return_value.range.return_value.execute.return_value = mock_result
 
-        # User A trying to get User B's tickets should return empty
+        # User A (authenticated as MOCK_USER_ID) trying to list User B's tickets
         response = client.get(f"/api/v1/support/tickets/{MOCK_OTHER_USER_ID}")
 
-        assert response.status_code == 200
-        # RLS ensures the query only returns tickets for the authenticated user
-        # In this test, we verify the API properly filters by user_id
+        assert response.status_code == 403
+        assert "denied" in response.json()["detail"].lower()
+        # The ownership check must short-circuit BEFORE any DB read
+        mock_supabase.client.from_.assert_not_called()
 
     def test_user_cannot_view_other_user_ticket(self, client, mock_supabase):
         """Test that user cannot view a ticket belonging to another user."""

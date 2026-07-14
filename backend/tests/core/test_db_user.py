@@ -9,47 +9,77 @@ from datetime import datetime
 
 
 class MockQueryBuilder:
-    """Mock Supabase query builder for testing."""
+    """Mock Supabase query builder for testing.
+
+    Mirrors the real postgrest-py builder surface that `core/db/user_db.py`
+    actually calls. `in_()` and `offset()` were missing, so `list_injuries(
+    is_active=...)` and `list_chat_history()` died with AttributeError inside
+    the MOCK — the production calls are valid (postgrest 2.31's
+    SyncSelectRequestBuilder exposes both).
+
+    Filter calls are recorded on `.calls` so tests can assert the query the
+    code under test actually built, not just the rows the mock hands back.
+    """
 
     def __init__(self, data=None):
         self._data = data or []
+        self.calls = []
+
+    def _record(self, name, *args, **kwargs):
+        self.calls.append((name, args, kwargs))
+        return self
 
     def select(self, *args, **kwargs):
-        return self
+        return self._record("select", *args, **kwargs)
 
     def insert(self, data):
         self._data = [data] if isinstance(data, dict) else data
-        return self
+        return self._record("insert", data)
 
     def update(self, data):
-        return self
+        return self._record("update", data)
 
     def delete(self):
-        return self
+        return self._record("delete")
 
     def eq(self, *args):
-        return self
+        return self._record("eq", *args)
 
     def neq(self, *args):
-        return self
+        return self._record("neq", *args)
+
+    def in_(self, *args):
+        return self._record("in_", *args)
+
+    def is_(self, *args):
+        return self._record("is_", *args)
 
     def gte(self, *args):
-        return self
+        return self._record("gte", *args)
 
     def lte(self, *args):
-        return self
+        return self._record("lte", *args)
 
     def ilike(self, *args):
-        return self
+        return self._record("ilike", *args)
 
     def order(self, *args, **kwargs):
-        return self
+        return self._record("order", *args, **kwargs)
 
     def limit(self, *args):
-        return self
+        return self._record("limit", *args)
+
+    def offset(self, *args):
+        return self._record("offset", *args)
 
     def range(self, *args):
-        return self
+        return self._record("range", *args)
+
+    def single(self):
+        return self._record("single")
+
+    def maybe_single(self):
+        return self._record("maybe_single")
 
     def execute(self):
         return MagicMock(data=self._data)
@@ -60,10 +90,13 @@ class MockSupabaseClient:
 
     def __init__(self, table_data=None):
         self._table_data = table_data or {}
+        self.builders = {}
 
     def table(self, name):
         data = self._table_data.get(name, [])
-        return MockQueryBuilder(data)
+        builder = MockQueryBuilder(data)
+        self.builders[name] = builder
+        return builder
 
 
 class MockSupabaseManager:
@@ -227,12 +260,20 @@ class TestUserDBInjuries:
     """Test UserDB injury methods."""
 
     def test_list_injuries_all(self, mock_supabase_manager):
-        """Should list all injuries for user."""
+        """Should list all injuries for user.
+
+        SCHEMA NOTE: injuries live in `user_injuries` (status: active/recovering/
+        healed), not the retired `injuries` table (is_active bool) this fixture
+        used to seed. No production code reads `injuries` any more — every
+        injury surface (api/v1/injuries.py, readiness_utils, warmup_stretch,
+        core/db/user_db.py) is on `user_injuries`. Seeding the retired table
+        meant UserDB queried an empty table and the assertion could never hold.
+        """
         injuries = [
-            {"id": 1, "user_id": "user-123", "body_part": "shoulder", "is_active": True},
-            {"id": 2, "user_id": "user-123", "body_part": "knee", "is_active": False},
+            {"id": 1, "user_id": "user-123", "body_part": "shoulder", "status": "active"},
+            {"id": 2, "user_id": "user-123", "body_part": "knee", "status": "healed"},
         ]
-        mock_supabase_manager._client._table_data["injuries"] = injuries
+        mock_supabase_manager._client._table_data["user_injuries"] = injuries
 
         from core.db.user_db import UserDB
         db = UserDB(mock_supabase_manager)
@@ -240,18 +281,30 @@ class TestUserDBInjuries:
         result = db.list_injuries("user-123")
         assert len(result) == 2
 
+        # No status filter should be applied when is_active is omitted.
+        builder = mock_supabase_manager._client.builders["user_injuries"]
+        assert not [c for c in builder.calls if c[0] == "in_"]
+
     def test_list_injuries_active_only(self, mock_supabase_manager):
-        """Should filter by active status."""
+        """Should filter by active status.
+
+        `is_active=True` must narrow the query to the non-healed statuses
+        (`active`, `recovering`) — see the schema note on test_list_injuries_all.
+        """
         injuries = [
-            {"id": 1, "user_id": "user-123", "body_part": "shoulder", "is_active": True},
+            {"id": 1, "user_id": "user-123", "body_part": "shoulder", "status": "active"},
         ]
-        mock_supabase_manager._client._table_data["injuries"] = injuries
+        mock_supabase_manager._client._table_data["user_injuries"] = injuries
 
         from core.db.user_db import UserDB
         db = UserDB(mock_supabase_manager)
 
         result = db.list_injuries("user-123", is_active=True)
         assert len(result) == 1
+
+        # The active filter must reach the query, not just the returned rows.
+        builder = mock_supabase_manager._client.builders["user_injuries"]
+        assert ("in_", ("status", ["active", "recovering"]), {}) in builder.calls
 
     def test_create_injury(self, user_db):
         """Should create injury record."""

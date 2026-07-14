@@ -29,10 +29,61 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 # FIXTURES
 # ============================================================
 
+# The nutrition endpoints used to live in ONE module (`api/v1/nutrition.py`), so
+# `patch("api.v1.nutrition.get_supabase_db")` reached every handler. They now
+# live in a PACKAGE (`api/v1/nutrition/`), one module per concern, and each
+# module does `from core.db import get_supabase_db` — binding the name into its
+# OWN namespace. The package `__init__` only re-exports the handler functions,
+# not `get_supabase_db`, so the old patch target raises AttributeError at setup
+# and every test that used this fixture errored out.
+#
+# Patching `core.db.get_supabase_db` would NOT work either: the submodules bound
+# the function at import time, so they hold their own reference. The only correct
+# target is the name inside each handler module that the tests exercise.
+_NUTRITION_DB_PATCH_TARGETS = (
+    "api.v1.nutrition.preferences.get_supabase_db",
+    "api.v1.nutrition.streaks.get_supabase_db",
+    "api.v1.nutrition.adaptive.get_supabase_db",
+    "api.v1.nutrition.onboarding.get_supabase_db",
+    "api.v1.nutrition.saved_foods.get_supabase_db",
+)
+
+
+def make_request(headers: dict | None = None):
+    """Build a real Starlette Request for handlers called directly (no TestClient).
+
+    `use_streak_freeze` (and other write endpoints) take `request: Request` so
+    they can resolve the caller's timezone from the X-User-Timezone header.
+    Calling the coroutine directly means FastAPI isn't there to inject it, so
+    the test must supply one.
+
+    Default: NO headers. Sending X-User-Timezone makes resolve_timezone's
+    self-healing write-through fire an extra users.timezone UPDATE, which would
+    consume one of the mock's queued `execute()` side effects and desync the
+    rest of the handler's DB calls. Header-less keeps the DB-call sequence
+    exactly what the handler under test issues.
+    """
+    from starlette.requests import Request
+
+    raw = [
+        (k.lower().encode(), v.encode())
+        for k, v in (headers or {}).items()
+    ]
+    return Request({
+        "type": "http",
+        "method": "POST",
+        "path": "/",
+        "headers": raw,
+        "query_string": b"",
+    })
+
+
 @pytest.fixture
 def mock_supabase_db():
     """Mock SupabaseDB with chainable Supabase client pattern."""
-    with patch("api.v1.nutrition.get_supabase_db") as mock_get_db:
+    from contextlib import ExitStack
+
+    with ExitStack() as stack:
         mock_db = MagicMock()
         mock_client = MagicMock()
         mock_db.client = mock_client
@@ -60,7 +111,9 @@ def mock_supabase_db():
         # Store mock_table for easy access in tests
         mock_db._mock_table = mock_table
 
-        mock_get_db.return_value = mock_db
+        for target in _NUTRITION_DB_PATCH_TARGETS:
+            stack.enter_context(patch(target, return_value=mock_db))
+
         yield mock_db
 
 
@@ -381,7 +434,7 @@ class TestNutritionStreak:
         ]
 
         result = asyncio.get_event_loop().run_until_complete(
-            use_streak_freeze(sample_nutrition_streak["user_id"])
+            use_streak_freeze(make_request(), sample_nutrition_streak["user_id"])
         )
 
         assert result.freezes_available == 1
@@ -401,7 +454,7 @@ class TestNutritionStreak:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                use_streak_freeze(sample_nutrition_streak["user_id"])
+                use_streak_freeze(make_request(), sample_nutrition_streak["user_id"])
             )
 
         assert exc_info.value.status_code == 400

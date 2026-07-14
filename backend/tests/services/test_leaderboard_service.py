@@ -46,21 +46,42 @@ class TestViewMappings:
 
 
 class TestCheckUnlockStatus:
-    """Tests for check_unlock_status method."""
+    """Tests for check_unlock_status method.
+
+    Retired behavior: these tests used to mock the `check_leaderboard_unlock`
+    RPC, because check_unlock_status called it. Commit 00400f9f replaced the
+    RPC with a direct `workouts` count query
+    (`.table("workouts").select("id", count="exact").eq(...).eq(...)`), and
+    cdc3841c added the `scope` argument (friends unlocks at 1 workout,
+    global/country still at 10). The RPC no longer exists in this path, so the
+    RPC mocks were dead and `result.count` came back as a bare MagicMock.
+
+    The guarantee these tests protect is unchanged and is still asserted below:
+    a user's completed-workout count drives is_unlocked / workouts_completed /
+    workouts_needed, and a user with no completed workouts gets the locked
+    defaults with the 10-workout gate.
+    """
+
+    @staticmethod
+    def _mock_client_with_count(count):
+        """Build a supabase client mock whose workouts count query returns `count`."""
+        mock_client = MagicMock()
+        count_result = MagicMock()
+        count_result.count = count
+        (
+            mock_client.table.return_value
+            .select.return_value
+            .eq.return_value
+            .eq.return_value
+            .execute.return_value
+        ) = count_result
+        return mock_client
 
     @patch('services.leaderboard_service.get_supabase_client')
     @patch('services.leaderboard_service.get_social_rag_service')
     def test_returns_unlock_data(self, mock_rag, mock_supabase):
         """Test returning unlock status data."""
-        mock_client = MagicMock()
-        mock_rpc_result = MagicMock()
-        mock_rpc_result.execute.return_value.data = [{
-            "is_unlocked": True,
-            "workouts_completed": 15,
-            "workouts_needed": 10,
-            "days_active": 20
-        }]
-        mock_client.rpc.return_value = mock_rpc_result
+        mock_client = self._mock_client_with_count(15)
         mock_supabase.return_value = mock_client
         mock_rag.return_value = MagicMock()
 
@@ -69,17 +90,18 @@ class TestCheckUnlockStatus:
         service = LeaderboardService()
         result = service.check_unlock_status("user-123")
 
+        # Counted against the completed-workouts table, not an RPC.
+        mock_client.table.assert_called_with("workouts")
+
         assert result["is_unlocked"] is True
         assert result["workouts_completed"] == 15
+        assert result["workouts_needed"] == 0
 
     @patch('services.leaderboard_service.get_supabase_client')
     @patch('services.leaderboard_service.get_social_rag_service')
     def test_returns_defaults_when_no_data(self, mock_rag, mock_supabase):
         """Test returning defaults when no data."""
-        mock_client = MagicMock()
-        mock_rpc_result = MagicMock()
-        mock_rpc_result.execute.return_value.data = None
-        mock_client.rpc.return_value = mock_rpc_result
+        mock_client = self._mock_client_with_count(None)
         mock_supabase.return_value = mock_client
         mock_rag.return_value = MagicMock()
 
@@ -92,6 +114,32 @@ class TestCheckUnlockStatus:
         assert result["workouts_completed"] == 0
         assert result["workouts_needed"] == 10
         assert result["days_active"] == 0
+
+    @patch('services.leaderboard_service.get_supabase_client')
+    @patch('services.leaderboard_service.get_social_rag_service')
+    def test_friends_scope_unlocks_at_one_workout(self, mock_rag, mock_supabase):
+        """Friends scope unlocks at 1 completed workout (global still needs 10).
+
+        Added with the scope argument (cdc3841c) so the relaxed friends gate is
+        covered — previously only the 10-workout global gate was.
+        """
+        mock_client = self._mock_client_with_count(1)
+        mock_supabase.return_value = mock_client
+        mock_rag.return_value = MagicMock()
+
+        from services.leaderboard_service import LeaderboardService
+
+        service = LeaderboardService()
+
+        friends = service.check_unlock_status("user-123", scope="friends")
+        assert friends["is_unlocked"] is True
+        assert friends["threshold"] == 1
+        assert friends["workouts_needed"] == 0
+
+        glob = service.check_unlock_status("user-123", scope="global")
+        assert glob["is_unlocked"] is False
+        assert glob["threshold"] == 10
+        assert glob["workouts_needed"] == 9
 
 
 class TestGetLeaderboardEntries:
@@ -128,7 +176,9 @@ class TestGetLeaderboardEntries:
         service = LeaderboardService()
         result = service.get_leaderboard_entries(
             leaderboard_type=LeaderboardType.challenge_masters,
-            filter_type=LeaderboardFilter.global_,
+            # Enum member is `global_lb` (value "global"); `global_` never existed
+            # on the current model — stale name in the test.
+            filter_type=LeaderboardFilter.global_lb,
             user_id="user-123",
             limit=10,
             offset=0

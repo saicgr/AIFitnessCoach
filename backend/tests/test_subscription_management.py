@@ -22,8 +22,15 @@ import asyncio
 
 @pytest.fixture
 def mock_supabase_client():
-    """Mock Supabase client for subscription operations."""
-    with patch("api.v1.subscriptions.get_supabase") as mock_get_supabase:
+    """Mock Supabase client for subscription operations.
+
+    Patch target note: these endpoints now live in the `api.v1.subscriptions.retention`
+    submodule (the old flat `api/v1/subscriptions.py` was split into a package).
+    `retention.py` does `from core.supabase_client import get_supabase`, so it holds its
+    OWN binding — patching the `api.v1.subscriptions` package re-export does not rebind
+    it and the mock is silently ignored. Patch the module that actually calls it.
+    """
+    with patch("api.v1.subscriptions.retention.get_supabase") as mock_get_supabase:
         mock_supabase = MagicMock()
         mock_client = MagicMock()
         mock_supabase.client = mock_client
@@ -33,15 +40,27 @@ def mock_supabase_client():
 
 @pytest.fixture
 def mock_activity_logger():
-    """Mock activity logger to prevent actual logging."""
-    with patch("api.v1.subscriptions.log_user_activity", new_callable=AsyncMock) as mock_log:
-        with patch("api.v1.subscriptions.log_user_error", new_callable=AsyncMock) as mock_error:
+    """Mock activity logger to prevent actual logging (patched on the retention module)."""
+    with patch("api.v1.subscriptions.retention.log_user_activity", new_callable=AsyncMock) as mock_log:
+        with patch("api.v1.subscriptions.retention.log_user_error", new_callable=AsyncMock) as mock_error:
             yield {"log_activity": mock_log, "log_error": mock_error}
 
 
 @pytest.fixture
 def sample_user_id():
     return "user-123-abc"
+
+
+@pytest.fixture
+def current_user(sample_user_id):
+    """The authenticated caller, as FastAPI's `get_current_user` dependency would resolve it.
+
+    These endpoints take `current_user: dict = Depends(get_current_user)` and enforce
+    `current_user["id"] == user_id` (403 otherwise). Calling the endpoint coroutine
+    directly bypasses FastAPI's dependency injection, so the test has to resolve the
+    dependency itself — otherwise the parameter is left as the raw `Depends` sentinel.
+    """
+    return {"id": sample_user_id}
 
 
 @pytest.fixture
@@ -130,7 +149,7 @@ class TestPauseSubscription:
 
     @pytest.mark.asyncio
     async def test_pause_subscription_success(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription
     ):
         """Test successfully pausing a subscription."""
@@ -144,7 +163,7 @@ class TestPauseSubscription:
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}])
 
         request = PauseSubscriptionRequest(duration_days=14, reason="vacation")
-        result = await pause_subscription(sample_user_id, request)
+        result = await pause_subscription(sample_user_id, request, current_user=current_user)
 
         assert result.status == "paused"
         assert result.duration_days == 14
@@ -153,7 +172,7 @@ class TestPauseSubscription:
 
     @pytest.mark.asyncio
     async def test_pause_subscription_invalid_duration(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription
     ):
         """Test pausing with invalid duration fails."""
@@ -167,14 +186,14 @@ class TestPauseSubscription:
         request = PauseSubscriptionRequest(duration_days=100)  # Invalid - max is 90
 
         with pytest.raises(HTTPException) as exc_info:
-            await pause_subscription(sample_user_id, request)
+            await pause_subscription(sample_user_id, request, current_user=current_user)
 
         assert exc_info.value.status_code == 400
         assert "Invalid duration" in exc_info.value.detail
 
     @pytest.mark.asyncio
     async def test_pause_lifetime_subscription_fails(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_lifetime_subscription
     ):
         """Test that lifetime subscriptions cannot be paused."""
@@ -188,14 +207,14 @@ class TestPauseSubscription:
         request = PauseSubscriptionRequest(duration_days=7)
 
         with pytest.raises(HTTPException) as exc_info:
-            await pause_subscription(sample_user_id, request)
+            await pause_subscription(sample_user_id, request, current_user=current_user)
 
         assert exc_info.value.status_code == 400
         assert "Lifetime" in exc_info.value.detail or "lifetime" in exc_info.value.detail
 
     @pytest.mark.asyncio
     async def test_pause_free_subscription_fails(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_free_subscription
     ):
         """Test that free tier cannot be paused."""
@@ -209,14 +228,14 @@ class TestPauseSubscription:
         request = PauseSubscriptionRequest(duration_days=7)
 
         with pytest.raises(HTTPException) as exc_info:
-            await pause_subscription(sample_user_id, request)
+            await pause_subscription(sample_user_id, request, current_user=current_user)
 
         assert exc_info.value.status_code == 400
         assert "Free" in exc_info.value.detail or "free" in exc_info.value.detail
 
     @pytest.mark.asyncio
     async def test_pause_already_paused_fails(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_paused_subscription
     ):
         """Test pausing an already paused subscription fails."""
@@ -230,14 +249,14 @@ class TestPauseSubscription:
         request = PauseSubscriptionRequest(duration_days=7)
 
         with pytest.raises(HTTPException) as exc_info:
-            await pause_subscription(sample_user_id, request)
+            await pause_subscription(sample_user_id, request, current_user=current_user)
 
         assert exc_info.value.status_code == 400
         assert "already paused" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
     async def test_pause_no_subscription_fails(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id
     ):
         """Test pausing when no subscription exists fails."""
@@ -251,7 +270,7 @@ class TestPauseSubscription:
         request = PauseSubscriptionRequest(duration_days=7)
 
         with pytest.raises(HTTPException) as exc_info:
-            await pause_subscription(sample_user_id, request)
+            await pause_subscription(sample_user_id, request, current_user=current_user)
 
         assert exc_info.value.status_code == 404
 
@@ -265,7 +284,7 @@ class TestResumeSubscription:
 
     @pytest.mark.asyncio
     async def test_resume_subscription_success(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_paused_subscription
     ):
         """Test successfully resuming a paused subscription."""
@@ -278,7 +297,7 @@ class TestResumeSubscription:
         mock_supabase_client.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(data=[{}])
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}])
 
-        result = await resume_subscription(sample_user_id)
+        result = await resume_subscription(sample_user_id, current_user=current_user)
 
         assert result.status == "active"
         assert result.tier == "premium"
@@ -286,7 +305,7 @@ class TestResumeSubscription:
 
     @pytest.mark.asyncio
     async def test_resume_not_paused_fails(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription
     ):
         """Test resuming a subscription that is not paused fails."""
@@ -298,14 +317,14 @@ class TestResumeSubscription:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await resume_subscription(sample_user_id)
+            await resume_subscription(sample_user_id, current_user=current_user)
 
         assert exc_info.value.status_code == 400
         assert "not paused" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
     async def test_resume_no_subscription_fails(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id
     ):
         """Test resuming when no subscription exists fails."""
@@ -317,7 +336,7 @@ class TestResumeSubscription:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await resume_subscription(sample_user_id)
+            await resume_subscription(sample_user_id, current_user=current_user)
 
         assert exc_info.value.status_code == 404
 
@@ -331,7 +350,7 @@ class TestRetentionOffers:
 
     @pytest.mark.asyncio
     async def test_get_retention_offers_premium_user(
-        self, mock_supabase_client, sample_user_id, sample_premium_subscription
+        self, mock_supabase_client, current_user, sample_user_id, sample_premium_subscription
     ):
         """Test getting retention offers for a premium user."""
         from api.v1.subscriptions import get_retention_offers
@@ -343,7 +362,7 @@ class TestRetentionOffers:
             data=[]  # No previous offers accepted
         )
 
-        result = await get_retention_offers(sample_user_id, reason="too_expensive")
+        result = await get_retention_offers(sample_user_id, reason="too_expensive", current_user=current_user)
 
         assert result.user_id == sample_user_id
         assert len(result.offers) > 0
@@ -360,7 +379,7 @@ class TestRetentionOffers:
 
     @pytest.mark.asyncio
     async def test_get_retention_offers_lifetime_returns_empty(
-        self, mock_supabase_client, sample_user_id, sample_lifetime_subscription
+        self, mock_supabase_client, current_user, sample_user_id, sample_lifetime_subscription
     ):
         """Test that lifetime members get no retention offers."""
         from api.v1.subscriptions import get_retention_offers
@@ -369,14 +388,14 @@ class TestRetentionOffers:
             data=sample_lifetime_subscription
         )
 
-        result = await get_retention_offers(sample_user_id)
+        result = await get_retention_offers(sample_user_id, current_user=current_user)
 
         assert result.user_id == sample_user_id
         assert len(result.offers) == 0
 
     @pytest.mark.asyncio
     async def test_get_retention_offers_no_subscription(
-        self, mock_supabase_client, sample_user_id
+        self, mock_supabase_client, current_user, sample_user_id
     ):
         """Test getting offers when no subscription exists returns empty."""
         from api.v1.subscriptions import get_retention_offers
@@ -385,14 +404,14 @@ class TestRetentionOffers:
             data=None
         )
 
-        result = await get_retention_offers(sample_user_id)
+        result = await get_retention_offers(sample_user_id, current_user=current_user)
 
         assert result.user_id == sample_user_id
         assert len(result.offers) == 0
 
     @pytest.mark.asyncio
     async def test_get_retention_offers_filters_previously_accepted(
-        self, mock_supabase_client, sample_user_id, sample_premium_subscription
+        self, mock_supabase_client, current_user, sample_user_id, sample_premium_subscription
     ):
         """Test that previously accepted offers are filtered out."""
         from api.v1.subscriptions import get_retention_offers
@@ -404,7 +423,7 @@ class TestRetentionOffers:
             data=[{"offer_type": "pause"}]  # Already accepted pause offer
         )
 
-        result = await get_retention_offers(sample_user_id)
+        result = await get_retention_offers(sample_user_id, current_user=current_user)
 
         # Should not include pause offer since already accepted
         pause_offers = [o for o in result.offers if o.type == "pause"]
@@ -412,7 +431,7 @@ class TestRetentionOffers:
 
     @pytest.mark.asyncio
     async def test_get_retention_offers_premium_plus_includes_downgrade(
-        self, mock_supabase_client, sample_user_id
+        self, mock_supabase_client, current_user, sample_user_id
     ):
         """Test that premium plus users get downgrade offers."""
         from api.v1.subscriptions import get_retention_offers
@@ -432,7 +451,7 @@ class TestRetentionOffers:
             data=[]
         )
 
-        result = await get_retention_offers(sample_user_id)
+        result = await get_retention_offers(sample_user_id, current_user=current_user)
 
         downgrade_offers = [o for o in result.offers if o.type == "downgrade"]
         assert len(downgrade_offers) > 0
@@ -448,7 +467,7 @@ class TestAcceptOffer:
 
     @pytest.mark.asyncio
     async def test_accept_discount_offer(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription
     ):
         """Test accepting a discount offer."""
@@ -463,7 +482,7 @@ class TestAcceptOffer:
             offer_id=f"discount_50_{sample_user_id}_12345",
             cancellation_reason="too_expensive"
         )
-        result = await accept_retention_offer(sample_user_id, request)
+        result = await accept_retention_offer(sample_user_id, request, current_user=current_user)
 
         assert result.applied == True
         assert result.offer_type == "discount"
@@ -472,7 +491,7 @@ class TestAcceptOffer:
 
     @pytest.mark.asyncio
     async def test_accept_extension_offer(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription
     ):
         """Test accepting an extension offer."""
@@ -488,7 +507,7 @@ class TestAcceptOffer:
             offer_id=f"extension_14_{sample_user_id}_12345",
             cancellation_reason="busy"
         )
-        result = await accept_retention_offer(sample_user_id, request)
+        result = await accept_retention_offer(sample_user_id, request, current_user=current_user)
 
         assert result.applied == True
         assert result.offer_type == "extension"
@@ -497,7 +516,7 @@ class TestAcceptOffer:
 
     @pytest.mark.asyncio
     async def test_accept_downgrade_offer(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id
     ):
         """Test accepting a downgrade offer."""
@@ -519,7 +538,7 @@ class TestAcceptOffer:
         request = AcceptOfferRequest(
             offer_id=f"downgrade_premium_{sample_user_id}_12345"
         )
-        result = await accept_retention_offer(sample_user_id, request)
+        result = await accept_retention_offer(sample_user_id, request, current_user=current_user)
 
         assert result.applied == True
         assert result.offer_type == "downgrade"
@@ -527,7 +546,7 @@ class TestAcceptOffer:
 
     @pytest.mark.asyncio
     async def test_accept_invalid_offer_id_fails(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription
     ):
         """Test that invalid offer ID format fails."""
@@ -541,13 +560,13 @@ class TestAcceptOffer:
         request = AcceptOfferRequest(offer_id="invalid")
 
         with pytest.raises(HTTPException) as exc_info:
-            await accept_retention_offer(sample_user_id, request)
+            await accept_retention_offer(sample_user_id, request, current_user=current_user)
 
         assert exc_info.value.status_code == 400
 
     @pytest.mark.asyncio
     async def test_accept_unknown_offer_type_fails(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription
     ):
         """Test that unknown offer type fails."""
@@ -561,14 +580,14 @@ class TestAcceptOffer:
         request = AcceptOfferRequest(offer_id=f"unknown_type_{sample_user_id}_12345")
 
         with pytest.raises(HTTPException) as exc_info:
-            await accept_retention_offer(sample_user_id, request)
+            await accept_retention_offer(sample_user_id, request, current_user=current_user)
 
         assert exc_info.value.status_code == 400
         assert "Unknown offer type" in exc_info.value.detail
 
     @pytest.mark.asyncio
     async def test_accept_offer_no_subscription_fails(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id
     ):
         """Test accepting offer when no subscription exists fails."""
@@ -582,7 +601,7 @@ class TestAcceptOffer:
         request = AcceptOfferRequest(offer_id=f"discount_25_{sample_user_id}_12345")
 
         with pytest.raises(HTTPException) as exc_info:
-            await accept_retention_offer(sample_user_id, request)
+            await accept_retention_offer(sample_user_id, request, current_user=current_user)
 
         assert exc_info.value.status_code == 404
 
@@ -596,7 +615,7 @@ class TestPauseResumeFlow:
 
     @pytest.mark.asyncio
     async def test_pause_and_resume_flow(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription
     ):
         """Test the full pause and resume flow."""
@@ -610,7 +629,7 @@ class TestPauseResumeFlow:
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}])
 
         pause_request = PauseSubscriptionRequest(duration_days=14, reason="travel")
-        pause_result = await pause_subscription(sample_user_id, pause_request)
+        pause_result = await pause_subscription(sample_user_id, pause_request, current_user=current_user)
 
         assert pause_result.status == "paused"
         assert pause_result.duration_days == 14
@@ -626,7 +645,7 @@ class TestPauseResumeFlow:
         )
         mock_supabase_client.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(data=[{}])
 
-        resume_result = await resume_subscription(sample_user_id)
+        resume_result = await resume_subscription(sample_user_id, current_user=current_user)
 
         assert resume_result.status == "active"
         assert resume_result.tier == "premium"
@@ -637,7 +656,7 @@ class TestRetentionFlow:
 
     @pytest.mark.asyncio
     async def test_get_and_accept_offer_flow(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription
     ):
         """Test getting offers and accepting one."""
@@ -651,7 +670,7 @@ class TestRetentionFlow:
             data=[]
         )
 
-        offers_result = await get_retention_offers(sample_user_id, reason="too_expensive")
+        offers_result = await get_retention_offers(sample_user_id, reason="too_expensive", current_user=current_user)
 
         assert len(offers_result.offers) > 0
         discount_offer = next((o for o in offers_result.offers if o.type == "discount"), None)
@@ -664,7 +683,7 @@ class TestRetentionFlow:
             offer_id=discount_offer.id,
             cancellation_reason="too_expensive"
         )
-        accept_result = await accept_retention_offer(sample_user_id, accept_request)
+        accept_result = await accept_retention_offer(sample_user_id, accept_request, current_user=current_user)
 
         assert accept_result.applied == True
         assert accept_result.offer_type == "discount"
@@ -680,7 +699,7 @@ class TestValidDurations:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("duration", [7, 14, 30, 60, 90])
     async def test_valid_pause_durations(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription, duration
     ):
         """Test that all valid durations work."""
@@ -693,7 +712,7 @@ class TestValidDurations:
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}])
 
         request = PauseSubscriptionRequest(duration_days=duration)
-        result = await pause_subscription(sample_user_id, request)
+        result = await pause_subscription(sample_user_id, request, current_user=current_user)
 
         assert result.status == "paused"
         assert result.duration_days == duration
@@ -701,7 +720,7 @@ class TestValidDurations:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("duration", [1, 5, 10, 21, 45, 100, 365])
     async def test_invalid_pause_durations(
-        self, mock_supabase_client, mock_activity_logger,
+        self, mock_supabase_client, current_user, mock_activity_logger,
         sample_user_id, sample_premium_subscription, duration
     ):
         """Test that invalid durations are rejected."""
@@ -715,7 +734,7 @@ class TestValidDurations:
         request = PauseSubscriptionRequest(duration_days=duration)
 
         with pytest.raises(HTTPException) as exc_info:
-            await pause_subscription(sample_user_id, request)
+            await pause_subscription(sample_user_id, request, current_user=current_user)
 
         assert exc_info.value.status_code == 400
 

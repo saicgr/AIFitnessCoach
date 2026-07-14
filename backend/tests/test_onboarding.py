@@ -36,6 +36,42 @@ from services.langgraph_agents.onboarding.prompts import (
 
 # ============ Fixtures ============
 
+@pytest.fixture(autouse=True)
+def real_gemini_credentials(monkeypatch):
+    """Restore the REAL Gemini credentials for this module's live-API tests.
+
+    Why this is needed (test-infrastructure bug, not a product bug):
+
+    `core.config.get_settings()` is `@lru_cache()`d, and `core.gemini_client
+    .get_langchain_llm()` reads the API key from it. The package-level autouse
+    `mock_env` fixture in tests/conftest.py sets GEMINI_API_KEY="test-api-key"
+    for EVERY test. On its own that is harmless here, because the cache was
+    already populated from .env with the real key before any fixture ran.
+
+    But tests/test_core_modules.py::TestConfig::test_settings_loads_from_env
+    calls `get_settings.cache_clear()` *while that fake env is active*, which
+    repopulates the cache with gemini_api_key="test-api-key" and never clears
+    it again. Since test_core_modules.py is collected before test_onboarding.py,
+    every subsequent Gemini call in the session gets HTTP 400 API_KEY_INVALID.
+    onboarding_agent_node then exhausts its 3 retries and returns its
+    "I'm having a moment" fallback with quick_replies=None / component=None —
+    so the TestQuickReplies assertions below fail for an environment reason
+    while passing when this file is run on its own.
+
+    Dropping the fake env vars and rebuilding Settings from .env restores the
+    real key, so the tests below actually exercise the real Gemini API as they
+    document ("no mocks, no fallbacks"). The cache is deliberately NOT cleared
+    on teardown — leaving a correctly-built Settings in place is strictly
+    better for the rest of the session than leaving the poisoned one.
+    """
+    from core.config import get_settings
+
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
+    get_settings.cache_clear()
+    yield
+
+
 @pytest.fixture
 def empty_state():
     """Initial empty onboarding state."""
