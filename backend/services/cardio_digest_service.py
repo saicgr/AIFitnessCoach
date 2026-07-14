@@ -1,9 +1,18 @@
 """Weekly cardio digest service.
 
-Pure rollup + copy generator for the Sunday-morning cardio digest
-(push + email). Owns NO transport — the cron jobs call into this
-module, then hand the resulting payload to the existing email and
-push services.
+Pure rollup + copy generator for the weekly cardio digest (push +
+the cardio section of the Monday weekly summary). Owns NO transport —
+the cron jobs call into this module, then hand the resulting payload
+to the existing mail and push layers.
+
+Three public surfaces
+---------------------
+* `compute_weekly_cardio_summary` — the rollup (None on a zero-cardio week).
+* `format_digest_copy` — push title/body (+ a standalone subject/body kept for
+  callers that still want the whole-document form).
+* `render_digest_section_html` — the EMBEDDABLE `<tr>`-rooted block spliced into
+  the Monday weekly summary. This is what ships to inboxes now: one Monday
+  recap that absorbs the cardio digest instead of two recaps 24h apart.
 
 Design notes
 ------------
@@ -530,3 +539,147 @@ def _render_email_html(name: str, s: WeeklyCardioSummary, tone: str) -> str:
   <p style="font-size:12px;color:#9CA3AF;margin-top:20px">Open the app to see the full breakdown.</p>
 </body></html>
 """
+
+
+# ────────────────────────────────────────────────────────────────────
+# Embeddable section (the Monday weekly-summary merge)
+# ────────────────────────────────────────────────────────────────────
+#
+# `render_digest_section_html` returns <tr>-rooted rows built from the shared
+# signature builders, to be spliced into the weekly summary's 600px table. It is
+# a SECTION, not a document: no <html>/<body>, no greeting, no footer, no
+# unsubscribe, no "open the app" line — that chrome belongs to the envelope and
+# duplicating it would nest a second document inside the first.
+#
+# Copy logic is REUSED, not forked: `_classify_tone`, `_fmt_pace_sec`,
+# `_fmt_date`, `_first_name_for_copy`, `_stable_variant` are the same functions
+# the push path uses.
+
+_SECTION_LEDE_POSITIVE = [
+    "Your cardio stacked up this week, {name}.",
+    "{name}, the cardio volume went the right way this week.",
+    "Cardio trended up this week, {name}.",
+    "Strong cardio week, {name} — you added distance.",
+]
+
+_SECTION_LEDE_NEUTRAL = [
+    "Here's how your cardio week landed, {name}.",
+    "{name}, your cardio week in numbers.",
+    "Cardio held steady this week, {name}.",
+    "{name}, this is the cardio side of your week.",
+]
+
+_SECTION_LEDE_NEGATIVE = [
+    "A lighter cardio week, {name} — and that's fine.",
+    "{name}, cardio was quieter this week. It still counts.",
+    "Cardio volume dipped this week, {name}. Easy to rebuild.",
+    "{name}, the cardio week was light. No drama, just data.",
+]
+
+_SECTION_LEDE_BASELINE = [
+    "First cardio week — this is your baseline, {name}.",
+    "{name}, week one of cardio is on the books. Everything measures against this.",
+    "This is your cardio starting line, {name}.",
+    "{name}, baseline locked in. Next week we compare.",
+]
+
+_SECTION_LEDE_POOLS = {
+    "positive": _SECTION_LEDE_POSITIVE,
+    "neutral": _SECTION_LEDE_NEUTRAL,
+    "negative": _SECTION_LEDE_NEGATIVE,
+    "baseline": _SECTION_LEDE_BASELINE,
+}
+
+
+@dataclass
+class _SectionTile:
+    """Duck-types the weekly report's Tile (.icon .value .label .delta .dir)
+    so `metric_grid` renders it identically to the Activity / Zealova grids."""
+
+    icon: str
+    value: str
+    label: str
+    delta: str
+    dir: str        # 'up' (orange) | 'flat' (grey) — a bad week never reads red.
+
+
+def _plural_sessions(n: int) -> str:
+    return f"{n} session{'s' if n != 1 else ''}"
+
+
+def _section_tiles(s: WeeklyCardioSummary) -> List[_SectionTile]:
+    """2–4 tiles, ordered lede-first. Every tile is conditional on real data —
+    we never render a placeholder metric."""
+    tiles: List[_SectionTile] = []
+
+    delta_text, delta_dir = "", "flat"
+    if s.delta_pct is not None:
+        sign = "+" if s.delta_pct >= 0 else ""
+        delta_text = f"{sign}{s.delta_pct:g}% vs last week"
+        delta_dir = "up" if s.delta_pct >= 0 else "flat"
+
+    if s.km_this_week > 0:
+        tiles.append(_SectionTile(
+            icon="activity", value=f"{s.km_this_week:g} km", label="Distance",
+            delta=delta_text, dir=delta_dir,
+        ))
+
+    if s.total_hours > 0:
+        # On a time-only week (hiit/boxing/elliptical logged with duration and no
+        # distance) this is the LEAD tile — we never headline a "0 km".
+        tiles.append(_SectionTile(
+            icon="clock", value=f"{s.total_hours:g} hrs", label="Cardio time",
+            delta=_plural_sessions(s.session_count), dir="flat",
+        ))
+    elif s.km_this_week <= 0:
+        # Neither distance nor duration on any row — the session count is the
+        # only number we actually have.
+        tiles.append(_SectionTile(
+            icon="activity", value=str(s.session_count), label="Cardio sessions",
+            delta="", dir="flat",
+        ))
+
+    if s.longest_run_km:
+        tiles.append(_SectionTile(
+            icon="foot", value=f"{s.longest_run_km:g} km", label="Longest run",
+            delta=_fmt_date(s.longest_run_date), dir="flat",
+        ))
+
+    if s.fastest_mile_sec:
+        tiles.append(_SectionTile(
+            icon="timer", value=_fmt_pace_sec(s.fastest_mile_sec), label="Fastest mile",
+            delta=_fmt_date(s.fastest_mile_date), dir="flat",
+        ))
+
+    return tiles
+
+
+def render_digest_section_html(
+    summary: Optional[WeeklyCardioSummary], first_name: str
+) -> str:
+    """Embeddable `<tr>` rows for the Monday weekly summary's cardio band.
+
+    Returns "" for a falsy summary (zero-cardio week) so the caller can splice
+    unconditionally and the no-cardio user's email is byte-for-byte unchanged.
+    """
+    if not summary:
+        return ""
+
+    from services import email_signature_template as sig
+
+    tiles = _section_tiles(summary)
+    if not tiles:
+        return ""
+
+    name = _first_name_for_copy(first_name)
+    tone = _classify_tone(summary)
+    # Salted by the week's own numbers → stable across cron retries, varied
+    # week to week (feedback_dynamic_copy_not_robotic).
+    salt = f"{name}:{summary.km_this_week:g}:{summary.session_count}:cardio-section"
+    lede = _stable_variant(_SECTION_LEDE_POOLS[tone], salt).format(name=name)
+
+    return (
+        sig.section_label("Your cardio week")
+        + sig.metric_grid(tiles)
+        + sig.callout(lede)
+    )

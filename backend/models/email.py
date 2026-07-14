@@ -69,6 +69,13 @@ class UserStats:
     2. Populate it in `_get_user_stats()` (add a query or reuse one).
     3. Reference it from templates via `stats.field_name`.
     """
+    # ── Identity ──
+    # `users.id` of the subject. Required by the global frequency cap in
+    # `services/email_sender.py` — send helpers pass `stats.user_id` through so
+    # the chokepoint can count that user's recent lifecycle sends. Optional so
+    # existing positional/keyword construction stays valid.
+    user_id: Optional[str] = None
+
     # ── Workouts ──
     workouts_total: int = 0
     workouts_this_week: int = 0

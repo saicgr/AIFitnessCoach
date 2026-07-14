@@ -27,6 +27,7 @@ from core.logger import get_logger
 from core.rate_limiter import limiter
 from core.supabase_client import get_supabase
 from mcp.auth.token_service import hash_token  # reuse the keyed-SHA256 helper
+from services import email_sender
 from services.email_service import get_email_service
 
 logger = get_logger(__name__)
@@ -87,14 +88,39 @@ def _plan_from_user_row(user: dict) -> dict:
 async def issue_and_send_verification(
     *, user_id: str, email: str, name: str | None = None,
     plan: dict | None = None,
-) -> None:
+) -> dict:
     """Mint a fresh verification token for [user_id], store its hash, and email
     the branded verification link. Never raises — a failed send must not break
     signup; the banner + Resend recover it.
 
     `plan` (optional) carries the onboarding answers (goal / experience / days /
     weight target) so the email can render a "Your plan so far" recap card.
+
+    Returns `{"sent": bool, "reason": str | None, "id": str | None}`.
+
+    `sent` is TRUE ONLY when Resend accepted the message and returned an id. It is
+    FALSE — with a machine-readable `reason` — when `services.email_sender` BLOCKED
+    the send (`undeliverable_domain` / `not_configured` / `frequency_cap`) or when
+    the send errored. A blocked send is normal control flow, not an exception: it is
+    how the test harnesses' `@zealova.invalid` / `@zealova-loadtest.dev` accounts
+    stop generating SES bounces. Callers MUST NOT treat a `{"sent": False}` result
+    as a delivered email — in particular `api/v1/email_cron.py`'s
+    `email_verification_reminder` job must not write an `email_send_log` row for it,
+    or the 2-day cooldown gets burned on mail that never left the building.
     """
+    # Deliverability is checked BEFORE the token is minted. `email_sender` would
+    # block the send anyway, but rotating `email_verification_token_hash` and
+    # stamping `email_verification_sent_at` for mail that provably cannot be
+    # delivered would (a) invalidate any still-valid link and (b) make the reminder
+    # cron believe a nudge went out. Same policy predicate the chokepoint uses — the
+    # chokepoint stays authoritative, this only keeps our DB state honest.
+    if email_sender.is_undeliverable(email):
+        logger.warning(
+            f"Verification email NOT issued for user {user_id}: "
+            f"undeliverable address {email}"
+        )
+        return {"sent": False, "reason": "undeliverable_domain", "id": None}
+
     try:
         raw, token_hash = _new_token()
         get_supabase().client.table("users").update({
@@ -105,18 +131,49 @@ async def issue_and_send_verification(
         verify_url = (
             f"{get_settings().backend_base_url}/api/v1/auth/email/verify?token={raw}"
         )
-        await get_email_service().send_verification_email(
+        result = await get_email_service().send_verification_email(
             to_email=email,
             first_name=_first_name(name),
             verify_url=verify_url,
             plan=plan,
-        )
+        ) or {}
+
+        # Three possible shapes out of the email service:
+        #   blocked  -> {"success": False, "skipped": True, "reason": R, "id": None}
+        #   failed   -> {"error": "..."}          (Resend raised, or not configured)
+        #   sent     -> {"success": True, "id": "<resend id>"}
+        if result.get("skipped"):
+            reason = result.get("reason") or "skipped"
+            logger.warning(
+                f"Verification email BLOCKED for user {user_id} ({email}): {reason}"
+            )
+            return {"sent": False, "reason": reason, "id": None}
+
+        if result.get("error"):
+            logger.error(
+                f"Verification email failed for user {user_id}: {result['error']}"
+            )
+            return {"sent": False, "reason": "send_failed", "id": None}
+
+        email_id = result.get("id")
+        if not email_id:
+            # Resend always returns an id on a real accept. No id and no skip marker
+            # means we cannot claim delivery — report it rather than paper over it.
+            logger.error(
+                f"Verification email for user {user_id} returned no id "
+                f"(unconfirmed send): {result!r}"
+            )
+            return {"sent": False, "reason": "no_id", "id": None}
+
         logger.info(f"Verification email issued for user {user_id}")
+        return {"sent": True, "reason": None, "id": email_id}
+
     except Exception as e:  # noqa: BLE001 — verification is best-effort
         logger.error(
             f"issue_and_send_verification failed for user {user_id}: {e}",
             exc_info=True,
         )
+        return {"sent": False, "reason": "exception", "id": None}
 
 
 # ── Result pages ─────────────────────────────────────────────────────────────
@@ -261,8 +318,16 @@ async def resend_verification(
         except (ValueError, TypeError):
             pass
 
-    await issue_and_send_verification(
+    result = await issue_and_send_verification(
         user_id=user["id"], email=user["email"], name=user.get("name"),
         plan=_plan_from_user_row(user),
     )
+    # Report the truth. A send blocked by `services.email_sender` (undeliverable
+    # address, Resend not configured) is NOT a delivered email, so it must not come
+    # back as {"sent": true} — the app would tell the user "check your inbox" for
+    # mail that was never sent. It is also NOT a 500: blocking is normal control
+    # flow, and this endpoint is exactly the path the injury/loadtest harnesses
+    # hammer with @zealova.invalid accounts.
+    if not result.get("sent"):
+        return {"sent": False, "reason": result.get("reason") or "send_failed"}
     return {"sent": True}

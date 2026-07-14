@@ -10,12 +10,12 @@ Covers:
 
 Motivational voice throughout — persona-driven, stats-heavy.
 """
-import resend
-from typing import Dict, Any
+from typing import Any, Dict, Optional
 
 from core import branding
 from core.logger import get_logger
 from models.email import UserStats
+from services import email_sender
 from services.email_helpers import (
     build_persona_signature_html,
     build_stats_grid_html,
@@ -29,7 +29,7 @@ class EmailEngagementMixin:
 
     async def send_idle_nudge(
         self, to_email: str, first_name_value: str, stats: UserStats,
-        days_idle: int,
+        days_idle: int, *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Mid-gap nudge — fires at day 7 or 14 of inactivity.
 
@@ -85,15 +85,19 @@ class EmailEngagementMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Idle nudge ({days_idle}d) sent to {to_email}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=user_id, email_type="idle_nudge")
+            if response.get("skipped"):
+                logger.info(f"Idle nudge ({days_idle}d) skipped for {to_email}: {response.get('reason')}")
+            else:
+                logger.info(f"Idle nudge ({days_idle}d) sent to {to_email}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send idle nudge to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_one_workout_wonder(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Fires 7 days after a user with exactly one lifetime workout.
 
@@ -143,15 +147,19 @@ class EmailEngagementMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"One-workout-wonder email sent to {to_email}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=user_id, email_type="one_workout_wonder")
+            if response.get("skipped"):
+                logger.info(f"One-workout-wonder email skipped for {to_email}: {response.get('reason')}")
+            else:
+                logger.info(f"One-workout-wonder email sent to {to_email}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send one-workout-wonder email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_premium_idle(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Refund-risk mitigation for paid users who haven't used the app in 14+ days.
 
@@ -199,15 +207,19 @@ class EmailEngagementMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Premium-idle email sent to {to_email}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=user_id, email_type="premium_idle")
+            if response.get("skipped"):
+                logger.info(f"Premium-idle email skipped for {to_email}: {response.get('reason')}")
+            else:
+                logger.info(f"Premium-idle email sent to {to_email}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send premium-idle email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_welcome_back_premium(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """One-shot celebration when a churned user resubscribes to Premium.
 
@@ -254,9 +266,12 @@ class EmailEngagementMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Welcome-back-premium email sent to {to_email}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=user_id, email_type="welcome_back_premium")
+            if response.get("skipped"):
+                logger.info(f"Welcome-back-premium email skipped for {to_email}: {response.get('reason')}")
+            else:
+                logger.info(f"Welcome-back-premium email sent to {to_email}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send welcome-back-premium email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}

@@ -12,6 +12,7 @@ curl -s -X POST https://aifitnesscoach-zqi3.onrender.com/api/v1/emails/cron \
 """
 import asyncio
 import hmac
+import os
 from datetime import datetime, timedelta, date, timezone
 from typing import Optional, List, Dict, Any
 
@@ -23,6 +24,7 @@ from core.config import get_settings
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from core.timezone_utils import get_user_today, _safe_zone
+from services import email_sender
 from services.email_service import get_email_service
 from services.email_helpers import first_name, time_band
 from services.notification_suppression import should_suppress_notification
@@ -270,6 +272,80 @@ def _log_email_sent(
     )
 
 
+# ─── Cron run lock (single-writer election per UTC hour) ────────────────────
+
+def _is_duplicate_key_error(e: Exception) -> bool:
+    """True only for a Postgres unique-violation (23505) on the lock insert.
+
+    PostgREST raises `APIError`, which carries a STRUCTURED `code` — read that
+    first. String-sniffing the message alone is fragile: any other failure whose
+    text happens to lack both tokens (a missing table, an RLS denial, a network
+    blip) would otherwise be misread, and the fail-open branch below depends on
+    telling "someone else already claimed this hour" (23505 → contend) apart from
+    "the lock itself is broken" (anything else → proceed, never mute all email).
+    """
+    code = getattr(e, "code", None)
+    if code is not None and str(code) == "23505":
+        return True
+    text = str(e).lower()
+    return "duplicate key" in text or "23505" in text
+
+
+def _claim_cron_hour(supabase, hour_bucket: str) -> bool:
+    """Single-writer election for this UTC hour. A PK insert is atomic in Postgres.
+
+    Prevents two overlapping runs (Render retry / >1 gunicorn worker / manual curl)
+    from each holding their own in-process frequency-cap ledger and each granting a
+    full 2/day budget to the same user.
+
+    Requires the `email_cron_runs` table (migration 2316). Without it the insert
+    errors with PGRST205 (schema cache miss) and this function fails OPEN — a
+    broken lock table must never mute all email — but the election is then a
+    no-op, so the cap is only in-process-exact. Watch for the ERROR log below.
+    """
+    try:
+        supabase.client.table("email_cron_runs").insert({
+            "hour_bucket": hour_bucket,
+            "instance_id": os.getenv("RENDER_INSTANCE_ID", "local"),
+        }).execute()
+        return True
+    except Exception as e:
+        if not _is_duplicate_key_error(e):
+            logger.error(f"❌ [EmailCron] run-lock insert failed: {e} — proceeding (fail open)")
+            return True  # a broken lock table must never mute all email
+
+    # Duplicate key → someone already claimed this hour. Reclaim it only if the
+    # previous holder crashed (started >30min ago and never finished).
+    try:
+        rows = supabase.client.table("email_cron_runs") \
+            .select("started_at, finished_at") \
+            .eq("hour_bucket", hour_bucket) \
+            .limit(1) \
+            .execute().data or []
+        if rows and rows[0].get("finished_at") is None:
+            started = datetime.fromisoformat(
+                str(rows[0]["started_at"]).replace("Z", "+00:00")
+            )
+            if (datetime.now(timezone.utc) - started) > timedelta(minutes=30):
+                supabase.client.table("email_cron_runs").update(
+                    {"started_at": datetime.now(timezone.utc).isoformat()}
+                ).eq("hour_bucket", hour_bucket).execute()
+                logger.warning(f"♻️ [EmailCron] reclaimed stale run lock {hour_bucket}")
+                return True
+    except Exception as e:
+        logger.error(f"❌ [EmailCron] run-lock check failed: {e}")
+    return False
+
+
+def _release_cron_hour(supabase, hour_bucket: str) -> None:
+    try:
+        supabase.client.table("email_cron_runs").update(
+            {"finished_at": datetime.now(timezone.utc).isoformat()}
+        ).eq("hour_bucket", hour_bucket).execute()
+    except Exception as e:
+        logger.warning(f"⚠️ [EmailCron] run-lock release failed: {e}")
+
+
 # ─── Main Endpoint ──────────────────────────────────────────────────────────
 
 @router.post("/cron")
@@ -285,11 +361,30 @@ async def run_email_cron(
     per-user by time-band in the user's local timezone, so a single hourly run
     reaches every timezone at the right local moment without needing separate
     cron entries per region.
+
+    Two structural guards wrap the jobs:
+      * an hour run-lock (`email_cron_runs`) so only one process runs a given UTC
+        hour — two concurrent runs would each hold their own frequency-cap ledger
+        and each grant a full daily budget;
+      * `services.email_sender`'s global per-user frequency cap (2 non-exempt
+        lifecycle emails per user-local day, 4 per rolling 7 days), enforced at
+        send time on a first-come-first-served basis. Priority is bought by
+        running the jobs in sequential tiers (T1 transactional → T2 high-value
+        lifecycle → T3 re-engagement → T4 gamification) so scarce daily slots go
+        to the highest-value mail first.
     """
     _verify_cron_secret(request, x_cron_secret)
 
     supabase = get_supabase()
     email_svc = get_email_service()
+
+    hour_bucket = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H")
+    if not _claim_cron_hour(supabase, hour_bucket):
+        logger.warning(f"⏭️ [EmailCron] hour {hour_bucket} already claimed by another run")
+        return {"skipped": "already_running", "hour": hour_bucket}
+
+    # Fresh in-process cap ledger per run; email_send_log is the cross-run truth.
+    email_sender.reset_state()
 
     results: Dict[str, int] = {}
     total_sent = 0
@@ -297,53 +392,78 @@ async def run_email_cron(
     # All jobs are safe to run hourly — each filters to the right time band
     # for the user's local timezone, so users only see messages during their
     # appropriate window (morning/evening/quiet-hours-respected).
-    jobs = [
-        ("streak_at_risk", _job_streak_at_risk(supabase, email_svc)),
-        ("day3_activation", _job_day3_activation(supabase, email_svc)),
-        ("trial_ending", _job_trial_ending(supabase, email_svc)),
-        ("win_back_30", _job_win_back_30(supabase, email_svc)),
-        ("7day_upsell", _job_7day_upsell(supabase, email_svc)),
-        ("onboarding_incomplete", _job_onboarding_incomplete(supabase, email_svc)),
-        ("email_verification_reminder", _job_email_verification_reminder(supabase, email_svc)),
-        ("weekly_summary", _job_weekly_summary(supabase, email_svc)),
-        ("comeback", _job_comeback(supabase, email_svc)),
-        ("idle_nudge", _job_idle_nudge(supabase, email_svc)),
-        ("one_workout_wonder", _job_one_workout_wonder(supabase, email_svc)),
-        ("premium_idle", _job_premium_idle(supabase, email_svc)),
-        # Post-cancel ladder — each runs in its own day-bucket job
-        ("cancel_grace", _job_cancel_grace(supabase, email_svc)),
-        ("cancel_expired", _job_cancel_expired(supabase, email_svc)),
-        ("cancel_offer_7d", _job_cancel_offer(supabase, email_svc, days=7, discount=10)),
-        ("cancel_offer_14d", _job_cancel_offer(supabase, email_svc, days=14, discount=20)),
-        ("cancel_offer_60d", _job_cancel_offer(supabase, email_svc, days=60, discount=30)),
-        ("cancel_sunset", _job_cancel_sunset(supabase, email_svc)),
-        # Merch milestone engagement (migration 1931)
-        ("merch_proximity", _job_merch_proximity_email(supabase, email_svc)),
-        ("merch_unlocked", _job_merch_unlocked_email(supabase, email_svc)),
-        ("merch_claim_reminder", _job_merch_claim_reminder_email(supabase, email_svc)),
-        ("level_milestone_celebration", _job_level_milestone_celebration_email(supabase, email_svc)),
-        # Week-1 ladder (W4)
-        ("week1_day1", _job_week1_day1_email(supabase, email_svc)),
-        ("week1_day3", _job_week1_day3_email(supabase, email_svc)),
-        ("week1_day5", _job_week1_day5_email(supabase, email_svc)),
-        ("week1_day7", _job_week1_day7_email(supabase, email_svc)),
+    #
+    # Tiers run SEQUENTIALLY so higher-value mail claims the day's scarce cap
+    # slots first. Within a tier, order is a don't-care (the sender's lock makes
+    # it race-free either way). Wall clock is unchanged vs. the old single
+    # gather: every job body is sync-blocking end to end, so the 26 coroutines
+    # already executed back-to-back on the loop thread.
+    tiers: List[List[Any]] = [
+        [   # T1 — transactional / revenue (cap-exempt, but first regardless)
+            ("trial_ending", _job_trial_ending(supabase, email_svc)),
+            ("email_verification_reminder", _job_email_verification_reminder(supabase, email_svc)),
+            ("cancel_grace", _job_cancel_grace(supabase, email_svc)),
+            ("cancel_expired", _job_cancel_expired(supabase, email_svc)),
+            ("cancel_offer_7d", _job_cancel_offer(supabase, email_svc, days=7, discount=10)),
+            ("cancel_offer_14d", _job_cancel_offer(supabase, email_svc, days=14, discount=20)),
+            ("cancel_offer_60d", _job_cancel_offer(supabase, email_svc, days=60, discount=30)),
+            ("cancel_sunset", _job_cancel_sunset(supabase, email_svc)),
+        ],
+        [   # T2 — high-value lifecycle
+            ("weekly_summary", _job_weekly_summary(supabase, email_svc)),
+            ("day3_activation", _job_day3_activation(supabase, email_svc)),
+            ("onboarding_incomplete", _job_onboarding_incomplete(supabase, email_svc)),
+            ("week1_day1", _job_week1_day1_email(supabase, email_svc)),
+            ("week1_day3", _job_week1_day3_email(supabase, email_svc)),
+            ("week1_day5", _job_week1_day5_email(supabase, email_svc)),
+            ("week1_day7", _job_week1_day7_email(supabase, email_svc)),
+            ("comeback", _job_comeback(supabase, email_svc)),
+        ],
+        [   # T3 — re-engagement. one_workout_wonder FIRST: 365-day cooldown, one
+            # lifetime shot — it must not lose a slot to a 6-day idle_nudge.
+            ("one_workout_wonder", _job_one_workout_wonder(supabase, email_svc)),
+            ("streak_at_risk", _job_streak_at_risk(supabase, email_svc)),
+            ("idle_nudge", _job_idle_nudge(supabase, email_svc)),
+            ("premium_idle", _job_premium_idle(supabase, email_svc)),
+            ("win_back_30", _job_win_back_30(supabase, email_svc)),
+            ("7day_upsell", _job_7day_upsell(supabase, email_svc)),
+        ],
+        [   # T4 — gamification (merch milestone engagement, migration 1931)
+            ("merch_unlocked", _job_merch_unlocked_email(supabase, email_svc)),
+            ("level_milestone_celebration", _job_level_milestone_celebration_email(supabase, email_svc)),
+            ("merch_claim_reminder", _job_merch_claim_reminder_email(supabase, email_svc)),
+            ("merch_proximity", _job_merch_proximity_email(supabase, email_svc)),
+        ],
     ]
 
-    # Run all jobs concurrently
-    job_names = [j[0] for j in jobs]
-    job_coros = [j[1] for j in jobs]
-    counts = await asyncio.gather(*job_coros, return_exceptions=True)
+    job_names: List[str] = []
+    try:
+        for tier_index, tier in enumerate(tiers, start=1):
+            names = [n for n, _ in tier]
+            counts = await asyncio.gather(*[c for _, c in tier], return_exceptions=True)
+            for name, count in zip(names, counts):
+                if isinstance(count, Exception):
+                    logger.error(f"❌ Cron job '{name}' (T{tier_index}) failed: {count}")
+                    results[name] = 0
+                else:
+                    results[name] = count
+                    total_sent += count
+            job_names.extend(names)
+    finally:
+        capped = email_sender.drain_cap_blocks()
+        _release_cron_hour(supabase, hour_bucket)
 
-    for name, count in zip(job_names, counts):
-        if isinstance(count, Exception):
-            logger.error(f"❌ Cron job '{name}' failed: {count}")
-            results[name] = 0
-        else:
-            results[name] = count
-            total_sent += count
-
-    logger.info(f"✅ Email cron complete: {total_sent} emails sent — {results}")
-    return {"jobs_run": job_names, "results": results, "emails_sent": total_sent}
+    logger.info(
+        f"✅ Email cron complete: {total_sent} sent, {sum(capped.values())} capped — "
+        f"{results} — capped={capped}"
+    )
+    return {
+        "jobs_run": job_names,
+        "results": results,
+        "emails_sent": total_sent,
+        "capped": capped,
+        "hour": hour_bucket,
+    }
 
 
 # ─── Job: Streak At Risk ────────────────────────────────────────────────────
@@ -425,6 +545,7 @@ async def _job_streak_at_risk(supabase, email_svc) -> int:
                     to_email=user["email"],
                     first_name_value=first_name(user),
                     stats=stats,
+                    user_id=uid,
                 )
                 if result.get("success"):
                     _log_email_sent(supabase, uid, email_type, {
@@ -521,6 +642,7 @@ async def _job_day3_activation(supabase, email_svc) -> int:
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type, {
@@ -635,6 +757,7 @@ async def _job_trial_ending(supabase, email_svc) -> int:
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
                 days_remaining=days_rem,
                 trial_end_date=trial_end_local.isoformat(),
                 discount_percent=25,
@@ -715,6 +838,7 @@ async def _job_win_back_30(supabase, email_svc) -> int:
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
                 days_since_expiry=30,
                 discount_percent=25,
             )
@@ -832,6 +956,7 @@ async def _job_7day_upsell(supabase, email_svc) -> int:
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
                 free_workouts_remaining=0,
             )
             if result.get("success"):
@@ -903,6 +1028,7 @@ async def _job_onboarding_incomplete(supabase, email_svc) -> int:
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type, resend_email_id=result.get("id"))
@@ -924,7 +1050,13 @@ async def _job_email_verification_reminder(supabase, email_svc) -> int:
     Naturally caps at ~2 sends: the 5-day `created_at` window combined with the
     2-day cooldown means roughly a day-1 and a day-3 nudge, then the user ages
     out of the window. No preference gate — verifying your own account is
-    transactional/security mail, not marketing.
+    transactional/security mail, not marketing. Exempt from the global frequency
+    cap (services/email_sender) for the same reason.
+
+    The log row is written ONLY on a confirmed send. `services.email_sender` can
+    block an undeliverable recipient (test-harness `@zealova.invalid` users), and
+    logging that as sent would poison the very bounce ledger this gate exists to
+    protect.
     """
     # Local import avoids a module-level cycle (email_verification imports
     # email_service, which is imported widely at startup).
@@ -949,11 +1081,23 @@ async def _job_email_verification_reminder(supabase, email_svc) -> int:
                 continue
             if _was_recently_sent(supabase, uid, email_type, cooldown_days=2):
                 continue
-            await issue_and_send_verification(
+            # Contract: issue_and_send_verification returns
+            # {"sent": bool, "reason": str | None, "id": str | None} — `sent` is
+            # the ONLY success key it emits (it is NOT the email_service
+            # {"success": ...} shape used by the other jobs in this file). Gating
+            # on the wrong key would leave the log row unwritten, which is what
+            # arms the 2-day cooldown below — an unverified user would then be
+            # re-mailed (and their verification token re-minted, invalidating the
+            # link already in their inbox) on every single cron run.
+            result = await issue_and_send_verification(
                 user_id=uid, email=user["email"], name=user.get("name"),
-            )
-            _log_email_sent(supabase, uid, email_type)
-            sent += 1
+            ) or {}
+            if result.get("sent"):
+                _log_email_sent(
+                    supabase, uid, email_type,
+                    resend_email_id=result.get("id"),
+                )
+                sent += 1
 
     except Exception as e:
         logger.error(f"❌ email_verification_reminder job failed: {e}", exc_info=True)
@@ -967,23 +1111,31 @@ async def _job_email_verification_reminder(supabase, email_svc) -> int:
 
 async def _job_weekly_summary(supabase, email_svc) -> int:
     """
-    Send weekly summary to users who completed at least 1 workout in the past 7 days.
-    Only sends if it's Monday in the user's timezone.
-    Gate: weekly_summary preference.
-    Cooldown: 7 days.
+    Send the Monday-morning weekly recap — ONE email per week, per user.
+
+    Cohort: everyone with the `weekly_summary` email preference on. Quiet weeks
+    are NOT excluded — a user who logged nothing still gets the recap (the email
+    says so, and the coach card asks them back). The only cadence gates are:
+      * Monday in the user's local timezone,
+      * the user-local MORNING time band,
+      * `_was_recently_sent(weekly_summary)` — 7-day cooldown, plus vacation /
+        comeback suppression and the unverified-address guard.
+
+    The email carries an optional CARDIO SECTION, rendered inside the same
+    Monday template when `compute_weekly_cardio_summary` returns data. This
+    replaces the old standalone Sunday-morning `cardio_digest` email — two
+    recaps in 24h behind a single preference flag. The `cardio_digest` EMAIL type
+    is retired (historical email_send_log rows are left alone); the cardio PUSH
+    in api/v1/weekly_wrapped_cron.py is unaffected.
+
+    Gate: weekly_summary preference. Cooldown: 7 days.
     """
     email_type = "weekly_summary"
-    cardio_email_type = "cardio_digest"
     sent = 0
-    cardio_sent = 0
 
     # Lazy imports — only needed when we actually have an opted-in cohort.
     from services import cardio_digest_service as cardio_svc
     from services.weekly_progress_service import compute_weekly_progress
-    try:
-        import resend as _resend  # noqa: WPS433
-    except ImportError:
-        _resend = None
 
     try:
         # Pool: everyone who's opted into weekly summary (we send even to quiet weeks
@@ -1007,56 +1159,6 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
             user_tz = user.get("timezone") or "UTC"
             user_today = date.fromisoformat(get_user_today(user_tz))
 
-            # ─── Section: Sunday morning cardio digest (SLICE_DIGEST) ──
-            # Independent of the Monday weekly summary block below — fires
-            # on Sunday only, in the user-local morning band. Reuses the
-            # same opt-in flag (weekly_summary preference) plus the shared
-            # _was_recently_sent gate (covers vacation + comeback + cooldown).
-            if user_today.weekday() == 6 and user.get("email"):
-                try:
-                    tb = time_band(user_tz)
-                except Exception:
-                    tb = None
-                if (
-                    tb == TimeBand.MORNING
-                    and _resend is not None
-                    and email_svc.is_configured()
-                    and not _was_recently_sent(supabase, uid, cardio_email_type)
-                ):
-                    try:
-                        cardio_summary = cardio_svc.compute_weekly_cardio_summary(
-                            supabase, uid, user_tz,
-                        )
-                    except Exception as e:
-                        cardio_summary = None
-                        logger.warning(f"[cardio_digest] compute failed for {uid}: {e}")
-                    if cardio_summary is not None:
-                        copy = cardio_svc.format_digest_copy(
-                            cardio_summary,
-                            user_first_name=first_name(user),
-                            user_email=user.get("email"),
-                            variant_salt=f"{uid}:{user_today.isoformat()}",
-                        )
-                        try:
-                            cardio_resp = _resend.Emails.send({
-                                "from": email_svc.from_email,
-                                "to": [user["email"]],
-                                "subject": copy["email_subject"],
-                                "html": copy["email_body_html"],
-                            })
-                            _log_email_sent(supabase, uid, cardio_email_type, {
-                                "km_this_week": cardio_summary.km_this_week,
-                                "delta_pct": cardio_summary.delta_pct,
-                                "session_count": cardio_summary.session_count,
-                                "is_first_week": cardio_summary.is_first_week,
-                            }, resend_email_id=(cardio_resp or {}).get("id"))
-                            cardio_sent += 1
-                        except Exception as e:
-                            logger.error(
-                                f"[cardio_digest] send failed for {uid}: {e}",
-                                exc_info=True,
-                            )
-
             # Send only on Monday (user-local) — weekly cadence.
             if user_today.weekday() != 0:
                 continue
@@ -1079,17 +1181,31 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
                 logger.warning(f"[weekly_summary] progress compute failed for {uid}: {e}")
                 progress = None
 
+            # Cardio section (merged in from the retired Sunday cardio_digest).
+            # `None` = this user has no cardio in the window → the template omits
+            # the section entirely. A compute failure must never cost the user
+            # their weekly summary, so it degrades to `None` too.
+            try:
+                cardio = cardio_svc.compute_weekly_cardio_summary(supabase, uid, user_tz)
+            except Exception as e:
+                cardio = None
+                logger.warning(f"[weekly_summary] cardio compute failed for {uid}: {e}")
+
             result = await email_svc.send_weekly_summary(
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
                 progress=progress,
+                cardio=cardio,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type, {
                     "workouts_this_week": stats.workouts_this_week,
                     "meals_this_week": stats.nutrition_days_logged_this_week,
                     "total_steps": getattr(progress, "total_steps", None),
+                    "cardio_km": getattr(cardio, "km_this_week", None),
+                    "cardio_sessions": getattr(cardio, "session_count", None),
                 }, resend_email_id=result.get("id"))
                 sent += 1
 
@@ -1097,10 +1213,8 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
         logger.error(f"❌ weekly_summary job failed: {e}", exc_info=True)
         raise
 
-    logger.info(
-        f"🎯 weekly_summary: {sent} emails sent · cardio_digest: {cardio_sent} emails sent"
-    )
-    return sent + cardio_sent
+    logger.info(f"🎯 weekly_summary: {sent} emails sent")
+    return sent
 
 
 # ─── Job: Comeback Celebration (N3) ─────────────────────────────────────────
@@ -1179,6 +1293,7 @@ async def _job_comeback(supabase, email_svc) -> int:
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
                 days_gone=gap_days,
             )
             if result.get("success"):
@@ -1271,6 +1386,7 @@ async def _job_idle_nudge(supabase, email_svc) -> int:
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
                 days_idle=days_idle,
             )
             if result.get("success"):
@@ -1350,6 +1466,7 @@ async def _job_one_workout_wonder(supabase, email_svc) -> int:
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type, resend_email_id=result.get("id"))
@@ -1421,6 +1538,7 @@ async def _job_premium_idle(supabase, email_svc) -> int:
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type, resend_email_id=result.get("id"))
@@ -1534,6 +1652,7 @@ async def _run_cancel_job(
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                user_id=uid,
                 **extra_kwargs,
             )
             if result.get("success"):
@@ -1925,6 +2044,10 @@ def _get_user_stats(supabase, user: Dict[str, Any]) -> UserStats:
     band = time_band(user_tz)
 
     return UserStats(
+        # Identity — carried so services/email_sender can apply the global
+        # per-user frequency cap without every send_* signature growing a
+        # user_id kwarg.
+        user_id=user_id,
         workouts_total=workouts_total,
         workouts_this_week=workouts_this_week,
         current_streak_days=streak,
@@ -2051,26 +2174,28 @@ async def _job_week1_email(
             if day_target == 1:
                 result = await email_svc.send_week1_day1(
                     to_email=user["email"], first_name_value=first_name(user), stats=stats,
+                    user_id=uid,
                 )
             elif day_target == 3:
                 if count >= 1:
                     result = await email_svc.send_week1_day3_completed(
                         to_email=user["email"], first_name_value=first_name(user),
-                        stats=stats, workouts_count=count,
+                        stats=stats, user_id=uid, workouts_count=count,
                     )
                 else:
                     result = await email_svc.send_week1_day3_stalled(
                         to_email=user["email"], first_name_value=first_name(user), stats=stats,
+                        user_id=uid,
                     )
             elif day_target == 5:
                 result = await email_svc.send_week1_day5(
                     to_email=user["email"], first_name_value=first_name(user),
-                    stats=stats, workouts_count=count,
+                    stats=stats, user_id=uid, workouts_count=count,
                 )
             elif day_target == 7:
                 result = await email_svc.send_week1_day7(
                     to_email=user["email"], first_name_value=first_name(user),
-                    stats=stats, workouts_count=count,
+                    stats=stats, user_id=uid, workouts_count=count,
                 )
             else:
                 continue
@@ -2176,6 +2301,7 @@ async def _job_merch_proximity_email(supabase, email_svc) -> int:
                     to_email=user["email"],
                     first_name_value=first_name(user),
                     stats=stats,
+                    user_id=uid,
                     merch_type=merch_type,
                     next_level=next_merch,
                     levels_away=next_merch - level,
@@ -2243,6 +2369,7 @@ async def _job_merch_unlocked_email(supabase, email_svc) -> int:
                     to_email=user["email"],
                     first_name_value=first_name(user),
                     stats=stats,
+                    user_id=uid,
                     merch_type=claim["merch_type"],
                     awarded_at_level=claim["awarded_at_level"],
                 )
@@ -2341,6 +2468,7 @@ async def _job_level_milestone_celebration_email(supabase, email_svc) -> int:
                     to_email=user["email"],
                     first_name_value=first_name(user),
                     stats=stats,
+                    user_id=uid,
                     level_reached=row["level_reached"],
                     rewards_summary=summary or "New rewards in your inventory.",
                     has_merch=has_merch,
@@ -2425,6 +2553,7 @@ async def _job_merch_claim_reminder_email(supabase, email_svc) -> int:
                     to_email=user["email"],
                     first_name_value=first_name(user),
                     stats=stats,
+                    user_id=uid,
                     merch_type=claim["merch_type"],
                     awarded_at_level=claim["awarded_at_level"],
                     days_waiting=claim["days_waiting"],

@@ -11,10 +11,9 @@ true) but ignores the master "marketing emails off" switch.
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-import resend
-
 from core import branding
 from core.logger import get_logger
+from services import email_sender
 from services import email_signature_template as sig
 
 logger = get_logger(__name__)
@@ -103,7 +102,20 @@ class EmailSecurityMixin:
                     {"name": "type", "value": "new_device_signin"},
                 ],
             }
-            email = resend.Emails.send(params)
+            # EXEMPT from the frequency cap (security mail always goes out); the
+            # undeliverable-domain guard still applies.
+            email = email_sender.send(params, email_type="new_device_signin")
+            if email.get("skipped"):
+                logger.info(
+                    f"New-device alert NOT sent to {to_email} "
+                    f"(reason={email.get('reason')})"
+                )
+                return {
+                    "success": False,
+                    "skipped": True,
+                    "reason": email.get("reason"),
+                    "email_id": None,
+                }
             logger.info(
                 f"Sent new-device alert to {to_email} (device={safe_device}, "
                 f"location={safe_location}, id={email.get('id') if email else '?'})"

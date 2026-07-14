@@ -11,10 +11,9 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Optional
 
-import resend
-
 from core import branding
 from core.logger import get_logger
+from services import email_sender
 from services import email_signature_template as sig
 
 logger = get_logger(__name__)
@@ -100,13 +99,13 @@ class WaitlistEmailService:
     """Wraps Resend send for waitlist confirmation emails."""
 
     def __init__(self):
+        # The Resend API key is set by `services.email_sender` (the single send
+        # chokepoint) straight from the environment — nothing to configure here.
         self.api_key = os.getenv("RESEND_API_KEY")
         self.from_email = os.getenv(
             "RESEND_FROM_EMAIL",
             f"{branding.APP_NAME} <onboarding@resend.dev>",
         )
-        if self.api_key:
-            resend.api_key = self.api_key
 
     def is_configured(self) -> bool:
         return bool(self.api_key)
@@ -139,7 +138,15 @@ class WaitlistEmailService:
                 "subject": f"You're in — and {branding.APP_NAME} just went live on Android",
                 "html": html_content,
             }
-            email = resend.Emails.send(params)
+            # `waitlist_*` is EXEMPT from the frequency cap (there is no user
+            # account yet); the undeliverable-domain guard still applies.
+            email = email_sender.send(params, email_type="waitlist_confirmation")
+            if email.get("skipped"):
+                logger.info(
+                    f"Waitlist confirmation NOT sent to {to_email} "
+                    f"(reason={email.get('reason')})"
+                )
+                return {"id": None, "status": "skipped", "reason": email.get("reason")}
             logger.info(f"Waitlist confirmation sent to {to_email}: id={email.get('id')}")
             return {"id": email.get("id"), "status": "sent"}
         except Exception as e:

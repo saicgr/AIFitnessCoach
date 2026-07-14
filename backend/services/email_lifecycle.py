@@ -15,23 +15,36 @@ All methods take a pre-resolved `first_name_value` from the caller (via
 for applying schedule-state and time-band gates before calling us; send methods
 render safety-net variants rather than crashing if called in an unexpected state.
 """
-import resend
 from typing import Dict, Any, Optional
 
 from core import branding
 from core.logger import get_logger
 from models.email import UserStats, ScheduleState, TimeBand
+from services import email_sender
 from services.email_helpers import (
     build_persona_signature_html,
     build_stats_grid_html,
     build_first_workout_stats_grid,
     build_zero_state_row_html,
-    build_nutrition_grid_html,
     lifecycle_open_url,
     overdue_tier,
 )
 
 logger = get_logger(__name__)
+
+
+def _resolve_user_id(user_id: Optional[str], stats: Optional[UserStats]) -> Optional[str]:
+    """Resolve the recipient's `users.id` for the `email_sender` frequency cap.
+
+    The cron (`api/v1/email_cron.py`) builds one populated `UserStats` per user and
+    calls `send_*(to_email, first_name_value, stats)` WITHOUT a `user_id=` kwarg —
+    identity rides on `stats.user_id`. Without this fallback every capped lifecycle
+    send reaches `email_sender.send()` with `user_id=None`, which takes the uncapped
+    fast path, and the global cap (MAX 2/day, 4/rolling-7d) never engages.
+
+    An explicit `user_id=` kwarg (real-time callers) always wins.
+    """
+    return user_id or getattr(stats, "user_id", None)
 
 
 class EmailLifecycleMixin:
@@ -46,12 +59,17 @@ class EmailLifecycleMixin:
 
     async def send_cancellation_retention(
         self, to_email: str, first_name_value: str, stats: UserStats, tier: str,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Transactional cancellation email with user's real stats as reason to stay.
 
         Opens with Zealova brand voice on the cancel fact; closes with the persona's
         voice on what they'll lose. References their actual workout count so it
         feels earned, not generic.
+
+        `user_id` is threaded to `email_sender` for the frequency cap. This type is
+        EXEMPT (transactional), so it is never capped — the id is still passed so
+        telemetry attributes the send correctly.
         """
         if not self.is_configured():
             return {"error": "Email service not configured"}
@@ -96,15 +114,17 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Cancellation retention email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="cancellation_retention")
+            if not response.get("skipped"):
+                logger.info(f"Cancellation retention email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send cancellation retention email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_trial_expired(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Trial-expired email — Zealova voice (transactional) with stats as loss aversion."""
         if not self.is_configured():
@@ -148,9 +168,10 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Trial expired email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="trial_expired")
+            if not response.get("skipped"):
+                logger.info(f"Trial expired email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send trial expired email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -162,6 +183,7 @@ class EmailLifecycleMixin:
     async def send_trial_ending(
         self, to_email: str, first_name_value: str, stats: UserStats,
         days_remaining: int, trial_end_date: str, discount_percent: int = 25,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Trial ending soon — Zealova opens, persona closes. Uses stats for urgency."""
         if not self.is_configured():
@@ -208,9 +230,10 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Trial ending email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="trial_ending")
+            if not response.get("skipped"):
+                logger.info(f"Trial ending email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send trial ending email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -221,6 +244,7 @@ class EmailLifecycleMixin:
 
     async def send_streak_at_risk(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Streak-at-risk nudge. Persona voice, full stats grid including nutrition.
 
@@ -271,15 +295,17 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Streak at risk email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="streak_at_risk")
+            if not response.get("skipped"):
+                logger.info(f"Streak at risk email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send streak at risk email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_day3_activation(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """The Day-3 activation email with schedule- and time-aware voice.
 
@@ -294,6 +320,8 @@ class EmailLifecycleMixin:
             to_email: recipient
             first_name_value: pre-resolved via `first_name()` helper
             stats: pre-populated via `_get_user_stats()`
+            user_id: recipient's `users.id` — threaded to `email_sender` so the
+                global lifecycle frequency cap applies. Omit only when unknown.
         """
         if not self.is_configured():
             return {"error": "Email service not configured"}
@@ -431,15 +459,17 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Day-3 activation email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="day3_activation")
+            if not response.get("skipped"):
+                logger.info(f"Day-3 activation email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send day-3 activation email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_onboarding_incomplete(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Motivational nudge for users who started but didn't finish onboarding.
 
@@ -486,9 +516,10 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Onboarding incomplete email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="onboarding_incomplete")
+            if not response.get("skipped"):
+                logger.info(f"Onboarding incomplete email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send onboarding incomplete email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -505,6 +536,7 @@ class EmailLifecycleMixin:
         calories_burned: Optional[int] = None,
         user_weight_kg: Optional[float] = None,
         min_duration_seconds: int = 180,
+        user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """N2. One-shot celebration when the user's first-ever workout is logged.
 
@@ -521,6 +553,12 @@ class EmailLifecycleMixin:
             user_weight_kg: For the MET fallback when calories_burned is missing.
             min_duration_seconds: Sub-threshold workouts are skipped (default 180).
                 Returns {"skipped": "below_min_duration"} so callers can log it.
+                NOTE: that sentinel's `skipped` is a STRING (a domain-level "we chose
+                not to send"), distinct from `email_sender`'s `{"skipped": True,
+                "reason": ...}` (a delivery-level block). Both are falsy on
+                `.get("success")`, which is what every caller actually gates on.
+            user_id: recipient's `users.id` — threaded to `email_sender` for the
+                global lifecycle frequency cap.
         """
         # Min-duration gate — a 60-second tap-through "workout" should NOT fire
         # the celebration email. We use authoritative duration_seconds when
@@ -588,9 +626,10 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"First-workout-done email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="first_workout_done")
+            if not response.get("skipped"):
+                logger.info(f"First-workout-done email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send first-workout-done email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -598,6 +637,7 @@ class EmailLifecycleMixin:
     async def send_achievement_unlocked(
         self, to_email: str, first_name_value: str, stats: UserStats,
         achievement_name: str, achievement_description: Optional[str] = None,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """N1. Real-time send when a trophy/achievement is granted.
 
@@ -642,9 +682,10 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Achievement email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="achievement_unlocked")
+            if not response.get("skipped"):
+                logger.info(f"Achievement email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send achievement email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -652,6 +693,7 @@ class EmailLifecycleMixin:
     async def send_comeback(
         self, to_email: str, first_name_value: str, stats: UserStats,
         days_gone: int,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """N3. Celebrate when a user returns after a ≥7-day gap and logs a workout.
 
@@ -698,9 +740,10 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Comeback email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="comeback")
+            if not response.get("skipped"):
+                logger.info(f"Comeback email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send comeback email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -710,6 +753,7 @@ class EmailLifecycleMixin:
 
     async def send_week1_day1(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Day 1 email for users who haven't completed their first workout yet."""
         if not self.is_configured():
@@ -741,16 +785,18 @@ class EmailLifecycleMixin:
             category_name="onboarding",
         )
         try:
-            response = resend.Emails.send({
-                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
-            })
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(
+                {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content},
+                user_id=_resolve_user_id(user_id, stats), email_type="week1_day1",
+            )
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"send_week1_day1 failed for {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_week1_day3_completed(
         self, to_email: str, first_name_value: str, stats: UserStats, workouts_count: int,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Day 3 for users who've done at least 1 workout — celebrate + encourage."""
         if not self.is_configured():
@@ -782,16 +828,18 @@ class EmailLifecycleMixin:
             category_name="onboarding",
         )
         try:
-            response = resend.Emails.send({
-                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
-            })
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(
+                {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content},
+                user_id=_resolve_user_id(user_id, stats), email_type="week1_day3_completed",
+            )
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"send_week1_day3_completed failed for {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_week1_day3_stalled(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Day 3 for users who haven't started — gentle, compassionate re-engage."""
         if not self.is_configured():
@@ -823,16 +871,18 @@ class EmailLifecycleMixin:
             category_name="onboarding",
         )
         try:
-            response = resend.Emails.send({
-                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
-            })
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(
+                {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content},
+                user_id=_resolve_user_id(user_id, stats), email_type="week1_day3_stalled",
+            )
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"send_week1_day3_stalled failed for {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_week1_day5(
         self, to_email: str, first_name_value: str, stats: UserStats, workouts_count: int,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Day 5 — halfway through week 1."""
         if not self.is_configured():
@@ -864,16 +914,18 @@ class EmailLifecycleMixin:
             category_name="onboarding",
         )
         try:
-            response = resend.Emails.send({
-                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
-            })
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(
+                {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content},
+                user_id=_resolve_user_id(user_id, stats), email_type="week1_day5",
+            )
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"send_week1_day5 failed for {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_week1_day7(
         self, to_email: str, first_name_value: str, stats: UserStats, workouts_count: int,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Day 7 — full week-1 celebration recap."""
         if not self.is_configured():
@@ -905,10 +957,11 @@ class EmailLifecycleMixin:
             category_name="onboarding",
         )
         try:
-            response = resend.Emails.send({
-                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
-            })
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(
+                {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content},
+                user_id=_resolve_user_id(user_id, stats), email_type="week1_day7",
+            )
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"send_week1_day7 failed for {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -926,6 +979,7 @@ class EmailLifecycleMixin:
     async def send_merch_proximity(
         self, to_email: str, first_name_value: str, stats: UserStats,
         merch_type: str, next_level: int, levels_away: int,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """User is 1-3 levels from a merch tier. Encourage the final push."""
         if not self.is_configured():
@@ -963,8 +1017,8 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="merch_proximity")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send merch_proximity email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -972,6 +1026,7 @@ class EmailLifecycleMixin:
     async def send_merch_unlocked(
         self, to_email: str, first_name_value: str, stats: UserStats,
         merch_type: str, awarded_at_level: int,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """User just hit a merch-tier level. Celebrate + CTA to accept in-app."""
         if not self.is_configured():
@@ -1009,8 +1064,8 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="merch_unlocked")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send merch_unlocked email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -1018,6 +1073,7 @@ class EmailLifecycleMixin:
     async def send_level_milestone_celebration(
         self, to_email: str, first_name_value: str, stats: UserStats,
         level_reached: int, rewards_summary: str, has_merch: bool = False,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Celebrate when user hits a major XP milestone (L5/10/25/50/75/100/...)."""
         if not self.is_configured():
@@ -1062,8 +1118,8 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="level_milestone_celebration")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send level_milestone_celebration to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -1071,6 +1127,7 @@ class EmailLifecycleMixin:
     async def send_merch_claim_reminder(
         self, to_email: str, first_name_value: str, stats: UserStats,
         merch_type: str, awarded_at_level: int, days_waiting: int,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Claim still unaccepted after D+1/D+3/D+7. Reminder to tap Accept."""
         if not self.is_configured():
@@ -1108,8 +1165,8 @@ class EmailLifecycleMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=_resolve_user_id(user_id, stats), email_type="merch_claim_reminder")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send merch_claim_reminder email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}

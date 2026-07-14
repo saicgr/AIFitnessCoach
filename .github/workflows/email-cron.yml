@@ -1,13 +1,39 @@
-name: Daily Email Cron
+name: Hourly Email Cron
+
+# Drives the lifecycle/marketing email engine (`POST /api/v1/emails/cron`).
+#
+# MUST run HOURLY, not daily. Two things in the backend depend on it:
+#   1. Time bands — every job fires per-user only when the user's LOCAL hour is
+#      in the target band (MORNING/EVENING). A once-a-day UTC tick only ever
+#      matches the narrow tz slice whose local morning happens to line up with
+#      that one UTC hour; everyone else is never eligible.
+#   2. The global frequency cap (services/email_sender.py, MAX 2 lifecycle
+#      emails/local-day, 4/rolling-7d). A capped send writes no email_send_log
+#      row, so its per-type cooldown is untouched and it is retried on the NEXT
+#      TICK. That "deferred, never deleted" guarantee only holds if the next
+#      tick comes within the hour — with a 24h period, a day-gated job's
+#      selection window (e.g. week1_day3 = created_at in a 24h slice) has moved
+#      past the user by the next run and the email is lost forever.
+#
+# The endpoint is X-Cron-Secret gated, idempotent (per-type cooldowns +
+# email_send_log dedupe) and internally timezone-aware, so GitHub's schedule
+# jitter (5-30 min) is harmless and re-running a tick is safe.
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # daily at 6 AM UTC
+    - cron: '0 * * * *'  # hourly, on the hour (tz-aware bands + cap deferral require it)
   workflow_dispatch:       # allow manual trigger from GitHub UI
+
+# Never let two ticks process the same users at once: the sender's in-process
+# frequency ledger has a 600s TTL, so overlapping runs could double-send.
+concurrency:
+  group: email-cron
+  cancel-in-progress: false
 
 jobs:
   run-email-cron:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Trigger email cron endpoint
         run: |
@@ -15,6 +41,7 @@ jobs:
             https://aifitnesscoach-zqi3.onrender.com/api/v1/emails/cron \
             -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json" \
+            --max-time 900 \
             -d "{}")
 
           body=$(echo "$response" | head -n -1)

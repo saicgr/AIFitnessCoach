@@ -5,16 +5,17 @@ All methods take pre-resolved `first_name_value` + populated `UserStats`.
 Weekly summary is the premier nutrition-showcase email; win-back references
 the user's actual lifetime stats as re-engagement hooks.
 """
-import resend
-from typing import Dict, Any, Optional
+import copy
+import dataclasses
+from typing import Dict, Any, Optional, Tuple
 
 from core import branding
 from core.logger import get_logger
 from models.email import UserStats
+from services import email_sender
 from services.email_helpers import (
     build_persona_signature_html,
     build_stats_grid_html,
-    build_nutrition_grid_html,
     lifecycle_open_url,
 )
 
@@ -30,6 +31,7 @@ class EmailMarketingMixin:
     async def send_win_back(
         self, to_email: str, first_name_value: str, stats: UserStats,
         days_since_expiry: int, discount_percent: int = 25,
+        user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Win-back email for lapsed users — 30-day post-cancel ladder entry.
 
@@ -81,9 +83,9 @@ class EmailMarketingMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
+            response = email_sender.send(params, user_id=user_id, email_type="win_back_30")
             logger.info(f"Win-back email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send win-back email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -91,6 +93,7 @@ class EmailMarketingMixin:
     async def send_7day_upsell(
         self, to_email: str, first_name_value: str, stats: UserStats,
         free_workouts_remaining: int = 0,
+        user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """7-day upsell for free-tier users at trial end (trial is 7 days).
 
@@ -145,9 +148,9 @@ class EmailMarketingMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
+            response = email_sender.send(params, user_id=user_id, email_type="7day_upsell")
             logger.info(f"7-day upsell email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send 7-day upsell email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -155,12 +158,14 @@ class EmailMarketingMixin:
     async def send_weekly_summary(
         self, to_email: str, first_name_value: str, stats: UserStats,
         progress: Optional[Any] = None,        # WeeklyProgress (the report data)
+        cardio: Optional[Any] = None,          # WeeklyCardioSummary — absorbs the old Sunday digest
         total_duration_minutes: int = 0, top_exercise: str = "",
         top_exercise_volume_lbs: float = 0,
         percentile: Optional[float] = None,   # retained for signature compat (unused)
         percentile_tier: Optional[str] = None,
+        user_id: Optional[str] = None,        # recipient's users.id — arms the frequency cap
     ) -> Dict[str, Any]:
-        """Weekly progress report — the Google-Health-style numbers email.
+        """Weekly progress report — the one Monday recap.
 
         Renders the signature template (`email_signature_template`): orange rail,
         avatar greeting, hero card (steps, or workouts when no wearable), per-day
@@ -170,6 +175,16 @@ class EmailMarketingMixin:
         `progress` is a `WeeklyProgress` from `weekly_progress_service`. When it's
         absent (defensive — the cron always supplies it) we still send a minimal
         coach check-in rather than crash.
+
+        `cardio` is a `WeeklyCardioSummary` from `cardio_digest_service`. It is the
+        MERGE: what used to be a separate Sunday-morning cardio digest is now a
+        "Your cardio week" band inside this email — one recap a week, not two 24h
+        apart. It is `None` for a user with no cardio in the window, and then this
+        email renders exactly as it did before (zero visual diff).
+
+        Cardio also counts as ACTIVITY: `progress.empty_week` is computed without
+        ever reading `cardio_logs`, so it is reconciled here (`_reconcile_cardio_week`)
+        before any copy branches on it.
         """
         if not self.is_configured():
             return {"error": "Email service not configured"}
@@ -182,51 +197,43 @@ class EmailMarketingMixin:
         name = first_name_value or "there"
         coach = stats.coach_name or "Your coach"
 
+        # THE chokepoint: reconcile the quiet-week verdict with cardio ONCE, before
+        # subject/greeting/preheader/body read `progress.empty_week`.
+        progress, cardio_led = _reconcile_cardio_week(progress, cardio)
+
         if progress is None:
             html_content = sig.signature_email(
                 header_tag="Weekly", greeting=f"Hi, {name}.",
                 greeting_sub="Your weekly check-in", avatar=name[:1],
                 body_html=sig.coach_card(coach, f"Checking in, {name} — open the app to see your week.")
+                + _cardio_section(cardio, first_name_value)
                 + sig.pill_cta("View in app →", open_url),
                 category_label="weekly reports",
             )
             subject = f"{name}, your weekly check-in"
         else:
-            subject = _weekly_subject(progress, name)
+            subject = _weekly_subject(progress, name, cardio if cardio_led else None)
             html_content = sig.signature_email(
                 header_tag=f"Weekly · {progress.week_label}",
                 greeting=_weekly_greeting(progress, name, stats),
                 greeting_sub=f"Your stats for {progress.week_label}",
                 avatar=name[:1],
-                body_html=_compose_weekly_body(progress, coach, open_url),
+                body_html=_compose_weekly_body(progress, coach, open_url,
+                                               cardio=cardio, name=first_name_value,
+                                               cardio_led=cardio_led),
                 category_label="weekly reports",
-                preheader=_weekly_preheader(progress, name),
+                preheader=_weekly_preheader(progress, name,
+                                            cardio if cardio_led else None),
             )
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
+            response = email_sender.send(params, user_id=user_id, email_type="weekly_summary")
             logger.info(f"Weekly summary email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send weekly summary email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
-
-
-def _nutrition_summary_line(stats: UserStats) -> str:
-    """One-liner describing the user's nutrition week for the feature block.
-
-    Adapts to zero-state vs logged: "You logged 3 meals this week, averaging
-    1,840 cal and 120g protein." vs "Nothing logged. Nutrition is blind."
-    """
-    if stats.nutrition_days_logged_this_week == 0:
-        return "Nothing logged this week. Coach can't see what you eat if you don't tell us."
-    parts = [f"{stats.nutrition_days_logged_this_week}/7 days logged"]
-    if stats.nutrition_avg_calories_week:
-        parts.append(f"~{stats.nutrition_avg_calories_week:,} cal/day")
-    if stats.nutrition_avg_protein_g_week:
-        parts.append(f"~{stats.nutrition_avg_protein_g_week}g protein/day")
-    return ". ".join(parts) + "."
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -240,6 +247,69 @@ _TOD_WORD = {
 }
 
 
+def _cardio_is_active(cardio: Optional[Any]) -> bool:
+    """True when the WeeklyCardioSummary carries real activity in the window."""
+    if cardio is None:
+        return False
+    try:
+        sessions = int(getattr(cardio, "session_count", 0) or 0)
+        km = float(getattr(cardio, "km_this_week", 0) or 0)
+    except (TypeError, ValueError):
+        return False
+    return sessions > 0 or km > 0
+
+
+def _reconcile_cardio_week(progress: Optional[Any],
+                           cardio: Optional[Any]) -> Tuple[Optional[Any], bool]:
+    """Cardio is activity — reconcile it into the quiet-week verdict, once.
+
+    `weekly_progress_service.compute_weekly_progress` derives `empty_week` from
+    steps + `workout_logs` + nutrition days + awards. It never reads `cardio_logs`
+    (a disjoint table written by manual entry and the Strava/Garmin import
+    pipeline), so a runner who logs only cardio and has no step sync is classified
+    "quiet" — and the email then said "You logged 0 steps and 0 workouts this week"
+    directly above a cardio band reading "21.4 km · 4 sessions".
+
+    Four call sites read `empty_week` (subject, greeting, coach message, body), so
+    the fix belongs here — at the one place that owns both objects — not as a guard
+    in each of them. Returns `(progress, cardio_led)`; `cardio_led` is True when
+    cardio is the ONLY activity of the week, which makes it the week's headline
+    (the workouts hero would otherwise read "0").
+    """
+    if progress is None or not _cardio_is_active(cardio):
+        return progress, False
+    if not getattr(progress, "empty_week", False):
+        return progress, False
+
+    fields = {"empty_week": False, "quiet_line": ""}
+    try:
+        progress = dataclasses.replace(progress, **fields)
+    except TypeError:
+        # Not a dataclass instance (e.g. a test double) — never mutate the caller's
+        # object; shallow-copy and override.
+        progress = copy.copy(progress)
+        for key, value in fields.items():
+            setattr(progress, key, value)
+    return progress, True
+
+
+def _fmt_km(km: float) -> str:
+    return f"{km:.1f}".rstrip("0").rstrip(".")
+
+
+def _cardio_headline(cardio: Any) -> Tuple[str, int]:
+    """(km string, session count) for cardio-led subject/preheader copy."""
+    try:
+        km = float(getattr(cardio, "km_this_week", 0) or 0)
+    except (TypeError, ValueError):
+        km = 0.0
+    try:
+        sessions = int(getattr(cardio, "session_count", 0) or 0)
+    except (TypeError, ValueError):
+        sessions = 0
+    return _fmt_km(km), sessions
+
+
 def _weekly_greeting(progress: Any, name: str, stats: UserStats) -> str:
     if progress.is_first_week:
         return f"Welcome, {name}."
@@ -251,8 +321,24 @@ def _weekly_greeting(progress: Any, name: str, stats: UserStats) -> str:
     return f"{_TOD_WORD.get(band, 'Hi')}, {name}."
 
 
-def _weekly_subject(progress: Any, name: str) -> str:
-    """Numbers-first subject, variant pool ≥4 (feedback_dynamic_copy_not_robotic)."""
+def _weekly_subject(progress: Any, name: str, cardio: Optional[Any] = None) -> str:
+    """Numbers-first subject, variant pool ≥4 (feedback_dynamic_copy_not_robotic).
+
+    `cardio` is supplied ONLY when the week was cardio-led (see
+    `_reconcile_cardio_week`) — the week's numbers live in `cardio`, not in
+    `progress`, so the subject must lead with distance, never "0 workouts".
+    """
+    if cardio is not None:
+        km, sessions = _cardio_headline(cardio)
+        s = "s" if sessions != 1 else ""
+        pool = [
+            f"{name}, your cardio week: {km} km",
+            f"{km} km this week, {name}",
+            f"{name}, {sessions} cardio session{s} — here's your week",
+            f"Your weekly stats, {name} — {km} km logged",
+        ]
+        idx = (sessions + len(name)) % len(pool)
+        return pool[idx]
     if progress.empty_week:
         pool = [
             f"{name}, a quiet week — we're here when you're ready",
@@ -288,7 +374,11 @@ def _weekly_subject(progress: Any, name: str) -> str:
     return pool[idx]
 
 
-def _weekly_preheader(progress: Any, name: str) -> str:
+def _weekly_preheader(progress: Any, name: str, cardio: Optional[Any] = None) -> str:
+    if cardio is not None:
+        km, sessions = _cardio_headline(cardio)
+        return (f"{km} km across {sessions} cardio session"
+                f"{'s' if sessions != 1 else ''} — your week.")
     if progress.has_wearable and progress.total_steps > 0:
         return f"{progress.total_steps:,} steps and {progress.workouts_this_week} workouts — your week."
     return f"{progress.workouts_this_week} workouts this week — your Zealova report."
@@ -306,7 +396,34 @@ def _weekly_coach_msg(progress: Any) -> str:
     return "Solid week. Consistency is the whole game — keep showing up."
 
 
-def _compose_weekly_body(progress: Any, coach: str, cta_url: str) -> str:
+def _cardio_section(cardio: Optional[Any], name: str) -> str:
+    """The absorbed cardio digest, as an embeddable band. "" when the user logged
+    no cardio (`compute_weekly_cardio_summary` returns None) — the email is then
+    byte-for-byte what it was before the merge.
+
+    Rendering lives in `cardio_digest_service` (it owns the rollup and the copy);
+    this is only the splice point.
+
+    The band renders IFF cardio counted as activity (`_cardio_is_active`) — the
+    same predicate that clears the quiet-week verdict. A 0 km / 0 session band
+    under quiet-week copy would be the same contradiction in the other direction.
+    """
+    if not _cardio_is_active(cardio):
+        return ""
+    from services import cardio_digest_service as cardio_svc
+
+    try:
+        return cardio_svc.render_digest_section_html(cardio, name)
+    except Exception as e:
+        # A malformed summary must never cost the user their weekly report — the
+        # rest of the email is independent of this band.
+        logger.error(f"Weekly summary: cardio section render failed: {e}", exc_info=True)
+        return ""
+
+
+def _compose_weekly_body(progress: Any, coach: str, cta_url: str,
+                         cardio: Optional[Any] = None, name: str = "",
+                         cardio_led: bool = False) -> str:
     from services import email_signature_template as sig
 
     parts: list = []
@@ -316,6 +433,10 @@ def _compose_weekly_body(progress: Any, coach: str, cta_url: str) -> str:
     if progress.empty_week:
         if progress.quiet_line:
             parts.append(sig.callout(progress.quiet_line))
+    elif cardio_led:
+        # Cardio was the week's only activity (see `_reconcile_cardio_week`): the
+        # cardio band below IS the hero. A workouts hero here would read "0".
+        pass
     elif progress.has_wearable and progress.total_steps > 0:
         pills = [(f"Avg {progress.avg_steps:,} / day", "flat")]
         if progress.steps_delta:
@@ -344,6 +465,12 @@ def _compose_weekly_body(progress: Any, coach: str, cta_url: str) -> str:
     if progress.zealova_tiles:
         parts.append(sig.section_label("Your Zealova week"))
         parts.append(sig.metric_grid(progress.zealova_tiles))
+
+    # The absorbed cardio digest — a third labelled data band, parallel to
+    # "Activity" and "Your Zealova week". It sits AFTER the grids (so it doesn't
+    # compete with the steps hero, which is also distance/effort) and BEFORE the
+    # coach card (so the coach's read of the week lands after all the numbers).
+    parts.append(_cardio_section(cardio, name))
 
     if not progress.has_wearable and not progress.empty_week:
         parts.append(sig.callout(

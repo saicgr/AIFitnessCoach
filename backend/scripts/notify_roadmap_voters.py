@@ -24,8 +24,8 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-import resend  # noqa: E402
 from core.supabase_client import get_supabase  # noqa: E402
+from services import email_sender  # noqa: E402
 
 
 def _email_html(feature_title: str) -> str:
@@ -99,23 +99,36 @@ def main() -> int:
         print(f"\nRe-run without --dry-run to send to {len(emails)} address(es).")
         return 0
 
-    resend.api_key = api_key
     html = _email_html(feature_title)
-    sent, failed = 0, 0
+    sent, skipped, failed = 0, 0, 0
     for email in emails:
         try:
-            resend.Emails.send({
-                "from": from_email,
-                "to": [email],
-                "subject": f"{feature_title} just shipped — you voted for it",
-                "html": html,
-            })
-            sent += 1
+            # Routed through the ONE chokepoint (services/email_sender.py): roadmap_votes
+            # rows come from the unauthenticated public /roadmap vote form (no account, no
+            # email verification), so this is the most bounce-prone list in the system —
+            # the undeliverable-domain block + EMAIL_SUPPRESS_DOMAINS lever must apply.
+            # `roadmap_ship` is in EXEMPT_EMAIL_TYPES: opt-in and one-off per address, so
+            # the lifecycle frequency cap deliberately does not gate it (and no user_id is
+            # in scope here — a voter need not be a user).
+            resp = email_sender.send(
+                {
+                    "from": from_email,
+                    "to": [email],
+                    "subject": f"{feature_title} just shipped — you voted for it",
+                    "html": html,
+                },
+                email_type="roadmap_ship",
+            )
+            if (resp or {}).get("skipped"):
+                skipped += 1
+                print(f"  SKIPPED {email}: {(resp or {}).get('reason')}")
+            else:
+                sent += 1
         except Exception as e:  # noqa: BLE001
             failed += 1
             print(f"  FAILED {email}: {e}")
 
-    print(f"\nDone. Sent {sent}, failed {failed}.")
+    print(f"\nDone. Sent {sent}, skipped {skipped}, failed {failed}.")
     return 0 if failed == 0 else 1
 
 

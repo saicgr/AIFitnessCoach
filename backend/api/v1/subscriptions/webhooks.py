@@ -125,6 +125,52 @@ async def revenuecat_webhook(
         raise safe_internal_error(e, "revenuecat_webhook")
 
 
+def _has_churned_before(supabase, user_id: str) -> bool:
+    """True when this user has previously expired or cancelled a subscription.
+
+    Distinguishes a resubscribe from a first-time purchase — RevenueCat emits
+    INITIAL_PURCHASE for both. Fails CLOSED (False): on a query error we send
+    the ordinary purchase confirmation, because greeting a first-time buyer
+    with "welcome back" is worse than a returning member getting the standard
+    receipt.
+    """
+    try:
+        prior = supabase.client.table("subscription_history") \
+            .select("id") \
+            .eq("user_id", user_id) \
+            .in_("event_type", ["expired", "cancelled"]) \
+            .limit(1) \
+            .execute()
+        return bool(prior.data)
+    except Exception as e:
+        logger.warning(f"churn-history lookup failed for user={user_id}: {e}")
+        return False
+
+
+async def _send_welcome_back_premium(supabase, user_row: dict):
+    """Returning-member celebration. Runs in a BackgroundTask, never inline.
+
+    Owns the stats compute (several Supabase reads) so it stays off the webhook
+    request path — RevenueCat retries a slow webhook.
+    """
+    from api.v1.email_cron import _get_user_stats
+    from services.email_helpers import first_name
+
+    try:
+        stats = _get_user_stats(supabase, user_row)
+        await get_email_service().send_welcome_back_premium(
+            user_row["email"],
+            first_name(user_row),
+            stats,
+            user_id=str(user_row["id"]),
+        )
+    except Exception as e:
+        logger.error(
+            f"❌ welcome-back-premium send failed for user={user_row.get('id')}: {e}",
+            exc_info=True,
+        )
+
+
 async def _handle_initial_purchase(supabase, event: dict, background_tasks=None):
     """Handle new subscription purchase."""
     user_id = event.get("app_user_id")
@@ -211,7 +257,7 @@ async def _handle_initial_purchase(supabase, event: dict, background_tasks=None)
     if background_tasks:
         try:
             user_result = supabase.client.table("users") \
-                .select("email, name") \
+                .select("id, email, name, timezone") \
                 .eq("id", user_id) \
                 .maybe_single() \
                 .execute()
@@ -219,16 +265,27 @@ async def _handle_initial_purchase(supabase, event: dict, background_tasks=None)
                 user_email = user_result.data["email"]
                 user_name = user_result.data.get("name", "")
 
-                # Purchase confirmation email (skip for trials)
+                # Purchase confirmation email (skip for trials). A user who
+                # churned and came back gets the returning-member email instead
+                # — never both. RevenueCat re-sends INITIAL_PURCHASE after a
+                # lapse, so a prior expired/cancelled row is what distinguishes
+                # a resubscribe from a first-time buyer.
                 if not is_trial:
-                    background_tasks.add_task(
-                        get_email_service().send_purchase_confirmation,
-                        user_email,
-                        user_name,
-                        tier,
-                        price,
-                        currency,
-                    )
+                    if _has_churned_before(supabase, user_id):
+                        background_tasks.add_task(
+                            _send_welcome_back_premium,
+                            supabase,
+                            user_result.data,
+                        )
+                    else:
+                        background_tasks.add_task(
+                            get_email_service().send_purchase_confirmation,
+                            user_email,
+                            user_name,
+                            tier,
+                            price,
+                            currency,
+                        )
 
                 # Discord notification for all purchases (trial and paid)
                 background_tasks.add_task(

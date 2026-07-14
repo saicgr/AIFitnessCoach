@@ -13,10 +13,10 @@ Voice rules (project-wide):
 
 from typing import Any, Dict, Optional
 import json
-import resend
 
 from core import branding
 from core.logger import get_logger
+from services import email_sender
 from services import email_signature_template as sig
 
 logger = get_logger(__name__)
@@ -194,17 +194,25 @@ class EmailFreeToolsMixin:
                     {"name": "tool", "value": tool_slug[:50]},
                 ],
             }
-            response = resend.Emails.send(params)
-            logger.info(
-                "[email_free_tools] sent to=%s*** tool=%s id=%s",
-                to_email[:3],
-                tool_slug,
-                response.get("id") if isinstance(response, dict) else response,
-            )
-            return {
-                "success": True,
-                "id": response.get("id") if isinstance(response, dict) else None,
-            }
+            # EXEMPT from the frequency cap (free-tool leads have no account, and
+            # this is the one thing they explicitly asked us to send); the
+            # undeliverable-domain guard still applies.
+            response = email_sender.send(params, email_type="free_tool_result")
+            if response.get("skipped"):
+                logger.info(
+                    "[email_free_tools] NOT sent to=%s*** tool=%s reason=%s",
+                    to_email[:3],
+                    tool_slug,
+                    response.get("reason"),
+                )
+            else:
+                logger.info(
+                    "[email_free_tools] sent to=%s*** tool=%s id=%s",
+                    to_email[:3],
+                    tool_slug,
+                    response.get("id"),
+                )
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(
                 "[email_free_tools] send failed to=%s*** tool=%s: %s",

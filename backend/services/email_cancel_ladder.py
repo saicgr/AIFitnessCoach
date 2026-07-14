@@ -17,12 +17,12 @@ Stages:
 - C6 Post-cancel +60d      — strongest discount (30%)
 - C7 Post-cancel +90d      — sunset, one-click re-opt-in
 """
-import resend
 from typing import Dict, Any, Optional
 
 from core import branding
 from core.logger import get_logger
 from models.email import UserStats
+from services import email_sender
 from services.email_helpers import (
     build_achievement_recap_html,
     build_persona_signature_html,
@@ -37,7 +37,7 @@ class EmailCancelLadderMixin:
 
     async def send_grace_period(
         self, to_email: str, first_name_value: str, stats: UserStats,
-        days_until_expiry: int,
+        days_until_expiry: int, *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """C1. Day after cancel, while access still active. Hybrid voice.
 
@@ -96,15 +96,22 @@ class EmailCancelLadderMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"C1 grace period email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            # Cancel-ladder mail is transactional — EXEMPT from the frequency cap
+            # (`cancel*` prefix in email_sender.EXEMPT_PREFIXES). The email_type is
+            # still passed so the exemption is explicit rather than accidental.
+            response = email_sender.send(params, user_id=user_id, email_type="cancel_grace")
+            if response.get("skipped"):
+                logger.info(f"C1 grace period email skipped for {to_email}: {response.get('reason')}")
+            else:
+                logger.info(f"C1 grace period email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send grace period email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_access_expired(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """C2. Sent the day access actually ends. Zealova brand voice — this is
         a billing fact, not a guilt trip. But we use their stats as nostalgia."""
@@ -150,9 +157,12 @@ class EmailCancelLadderMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"C2 access expired email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=user_id, email_type="cancel_expired")
+            if response.get("skipped"):
+                logger.info(f"C2 access expired email skipped for {to_email}: {response.get('reason')}")
+            else:
+                logger.info(f"C2 access expired email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send access expired email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
@@ -160,12 +170,19 @@ class EmailCancelLadderMixin:
     async def send_post_cancel_offer(
         self, to_email: str, first_name_value: str, stats: UserStats,
         days_since_expiry: int, discount_percent: int,
+        *, user_id: Optional[str] = None, email_type: Optional[str] = None,
     ) -> Dict[str, Any]:
         """C3/C4/C6. Tiered discount offers post-expiry. Persona voice.
 
         The discount_percent is chosen by the cron caller based on days since
         expiry (10/20/30). Copy adjusts tone: week 1 is conversational, week
         2+ is more urgent, week 8 is "last chance."
+
+        `email_type` is the ladder-stage string the cron caller uses for its
+        `email_send_log` row (`cancel_offer_7d` / `_14d` / `_60d`) — the caller
+        owns the stage→days mapping, so it is passed in rather than re-derived
+        here. When omitted we fall back to the actual days-since-expiry. Either
+        way it starts with `cancel`, so the chokepoint treats it as EXEMPT.
         """
         if not self.is_configured():
             return {"error": "Email service not configured"}
@@ -226,15 +243,23 @@ class EmailCancelLadderMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"Post-cancel offer ({days_since_expiry}d, {discount_percent}%) sent to {to_email}")
-            return {"success": True, "id": response.get("id")}
+            resolved_type = email_type or f"cancel_offer_{days_since_expiry}d"
+            response = email_sender.send(params, user_id=user_id, email_type=resolved_type)
+            if response.get("skipped"):
+                logger.info(
+                    f"Post-cancel offer ({days_since_expiry}d, {discount_percent}%) skipped "
+                    f"for {to_email}: {response.get('reason')}"
+                )
+            else:
+                logger.info(f"Post-cancel offer ({days_since_expiry}d, {discount_percent}%) sent to {to_email}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send post-cancel offer to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_sunset(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        *, user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """C7. Final email before going quiet — compliance-friendly, respectful.
 
@@ -282,9 +307,12 @@ class EmailCancelLadderMixin:
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
-            response = resend.Emails.send(params)
-            logger.info(f"C7 sunset email sent to {to_email}: {response}")
-            return {"success": True, "id": response.get("id")}
+            response = email_sender.send(params, user_id=user_id, email_type="cancel_sunset")
+            if response.get("skipped"):
+                logger.info(f"C7 sunset email skipped for {to_email}: {response.get('reason')}")
+            else:
+                logger.info(f"C7 sunset email sent to {to_email}: {response}")
+            return email_sender.sent_result(response)
         except Exception as e:
             logger.error(f"Failed to send sunset email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}

@@ -25,13 +25,25 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-import resend
-
 from core import branding
 from core.logger import get_logger
+from services import email_sender
 from services import email_signature_template as sig
 
 logger = get_logger(__name__)
+
+
+def _result(response: Dict[str, Any]) -> Dict[str, Any]:
+    """Adapt an `email_sender.send` response to this mixin's `{"id", "status"}` shape.
+
+    A blocked send (undeliverable domain / Resend not configured) is NORMAL control
+    flow, not an error: it reports `status="skipped"` with the reason rather than a
+    phantom `status="sent"` with a null id. All three Founding 500 emails are
+    `lifetime_*` → EXEMPT from the frequency cap; only the domain guard can block them.
+    """
+    if response.get("skipped"):
+        return {"id": None, "status": "skipped", "reason": response.get("reason")}
+    return {"id": response.get("id"), "status": "sent"}
 
 
 class EmailLifetimeMixin:
@@ -111,9 +123,12 @@ class EmailLifetimeMixin:
                 "subject": f"You&apos;re on the {branding.APP_NAME} Founding 500 waitlist",
                 "html": html_content,
             }
-            email = resend.Emails.send(params)
-            logger.info(f"Lifetime waitlist confirmation sent to {to_email}")
-            return {"id": email.get("id"), "status": "sent"}
+            email = email_sender.send(params, email_type="lifetime_waitlist")
+            logger.info(
+                f"Lifetime waitlist confirmation to {to_email}: "
+                f"{'skipped (' + str(email.get('reason')) + ')' if email.get('skipped') else 'sent'}"
+            )
+            return _result(email)
         except Exception as e:
             logger.error(f"Failed to send lifetime waitlist confirmation: {e}", exc_info=True)
             return {"error": str(e)}
@@ -192,9 +207,12 @@ class EmailLifetimeMixin:
                 "subject": f"It&apos;s open. {branding.APP_NAME} Founding 500 — your 24-hour early access starts now",
                 "html": html_content,
             }
-            email = resend.Emails.send(params)
-            logger.info(f"Lifetime checkout-open email sent to {to_email}")
-            return {"id": email.get("id"), "status": "sent"}
+            email = email_sender.send(params, email_type="lifetime_checkout_open")
+            logger.info(
+                f"Lifetime checkout-open email to {to_email}: "
+                f"{'skipped (' + str(email.get('reason')) + ')' if email.get('skipped') else 'sent'}"
+            )
+            return _result(email)
         except Exception as e:
             logger.error(f"Failed to send lifetime checkout-open email: {e}", exc_info=True)
             return {"error": str(e)}
@@ -309,9 +327,12 @@ class EmailLifetimeMixin:
                 "subject": f"You&apos;re Founder #{seat_number:03d}. Activate {branding.APP_NAME} Lifetime in 30 seconds.",
                 "html": html_content,
             }
-            email = resend.Emails.send(params)
-            logger.info(f"Lifetime purchase confirmation sent to {to_email} (seat #{seat_number})")
-            return {"id": email.get("id"), "status": "sent"}
+            email = email_sender.send(params, email_type="lifetime_purchase")
+            logger.info(
+                f"Lifetime purchase confirmation to {to_email} (seat #{seat_number}): "
+                f"{'skipped (' + str(email.get('reason')) + ')' if email.get('skipped') else 'sent'}"
+            )
+            return _result(email)
         except Exception as e:
             logger.error(f"Failed to send lifetime purchase confirmation: {e}", exc_info=True)
             return {"error": str(e)}
