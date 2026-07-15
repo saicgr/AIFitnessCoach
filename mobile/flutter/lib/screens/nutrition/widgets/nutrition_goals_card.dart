@@ -118,11 +118,15 @@ class NutritionGoalsCard extends ConsumerWidget {
     final nutritionGoal = prefsState.preferences?.nutritionGoalEnum;
     final prefs = prefsState.preferences;
 
-    // Use provider's unified targets (dynamic > prefs > defaults) — same source as profile
-    final effectiveCalories = prefsState.currentCalorieTarget.toDouble();
-    final effectiveProtein = prefsState.currentProteinTarget.toDouble();
-    final effectiveCarbs = prefsState.currentCarbsTarget.toDouble();
-    final effectiveFat = prefsState.currentFatTarget.toDouble();
+    // Never render target rings against a fabricated number — hide the card
+    // until the user has configured real targets.
+    if (!prefsState.hasConfiguredTargets) return const SizedBox.shrink();
+
+    // Use provider's unified targets (dynamic > prefs) — same source as profile
+    final effectiveCalories = prefsState.currentCalorieTarget!.toDouble();
+    final effectiveProtein = (prefsState.currentProteinTarget ?? 0).toDouble();
+    final effectiveCarbs = (prefsState.currentCarbsTarget ?? 0).toDouble();
+    final effectiveFat = (prefsState.currentFatTarget ?? 0).toDouble();
 
     // Current consumed values
     final consumedCalories = (summary?.totalCalories ?? 0).toDouble();
@@ -609,11 +613,13 @@ class CompactMacroTargets extends ConsumerWidget {
     final orange = isDark ? AppColors.orange : AppColorsLight.orange;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    // Use provider's unified targets (dynamic > prefs > defaults) — single source of truth
+    // Use provider's unified targets (dynamic > prefs) — single source of truth
     final prefsState = ref.watch(nutritionPreferencesProvider);
-    final effectiveProtein = prefsState.currentProteinTarget.toDouble();
-    final effectiveCarbs = prefsState.currentCarbsTarget.toDouble();
-    final effectiveFat = prefsState.currentFatTarget.toDouble();
+    // Never render target rings against a fabricated number.
+    if (!prefsState.hasConfiguredTargets) return const SizedBox.shrink();
+    final effectiveProtein = (prefsState.currentProteinTarget ?? 0).toDouble();
+    final effectiveCarbs = (prefsState.currentCarbsTarget ?? 0).toDouble();
+    final effectiveFat = (prefsState.currentFatTarget ?? 0).toDouble();
 
     final consumedProtein = (summary?.totalProteinG ?? 0).toDouble();
     final consumedCarbs = (summary?.totalCarbsG ?? 0).toDouble();

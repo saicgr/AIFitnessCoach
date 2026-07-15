@@ -42,8 +42,8 @@ final todayScoreProvider = Provider<TodayScore>((ref) {
   // ---- Nutrition (Fuel) --------------------------------------------------
   final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
   final prefs = ref.watch(nutritionPreferencesProvider);
-  final calorieTarget = prefs.currentCalorieTarget;
-  final proteinTargetG = prefs.currentProteinTarget.round();
+  final calorieTarget = prefs.currentCalorieTarget ?? 0;
+  final proteinTargetG = prefs.currentProteinTarget ?? 0;
   final hasNutritionTargets = calorieTarget > 0 && proteinTargetG > 0;
 
   // ---- Activity (Move) ---------------------------------------------------

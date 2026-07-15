@@ -49,7 +49,7 @@ final Map<String, MetricDescriptor> metricRegistry = {
     defaultChart: PremiumChartType.bar,
     series: TrendMetric.calories,
     goalOf: (ref) =>
-        ref.watch(nutritionPreferencesProvider).currentCalorieTarget.toDouble(),
+        ref.watch(nutritionPreferencesProvider).currentCalorieTarget?.toDouble(),
     subViews: [
       MetricSubView(
         label: 'Calories',
@@ -58,7 +58,7 @@ final Map<String, MetricDescriptor> metricRegistry = {
         goalOf: (ref) => ref
             .watch(nutritionPreferencesProvider)
             .currentCalorieTarget
-            .toDouble(),
+            ?.toDouble(),
       ),
       MetricSubView(
         label: 'Protein',
@@ -67,7 +67,7 @@ final Map<String, MetricDescriptor> metricRegistry = {
         goalOf: (ref) => ref
             .watch(nutritionPreferencesProvider)
             .currentProteinTarget
-            .toDouble(),
+            ?.toDouble(),
       ),
       const MetricSubView(label: 'Carbs', series: TrendMetric.carbs, unit: 'g'),
       const MetricSubView(label: 'Fat', series: TrendMetric.fat, unit: 'g'),
@@ -174,7 +174,7 @@ final Map<String, MetricDescriptor> metricRegistry = {
     defaultChart: PremiumChartType.bar,
     series: TrendMetric.protein,
     goalOf: (ref) =>
-        ref.watch(nutritionPreferencesProvider).currentProteinTarget.toDouble(),
+        ref.watch(nutritionPreferencesProvider).currentProteinTarget?.toDouble(),
     ringName: 'protein',
     fullScreenRoute: '/nutrition',
   ),

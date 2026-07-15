@@ -33,7 +33,7 @@ class TodayScoreSetupCard extends ConsumerWidget {
           orElse: () => false,
         );
     final hasNutrition =
-        ref.watch(nutritionPreferencesProvider).currentCalorieTarget > 0;
+        (ref.watch(nutritionPreferencesProvider).currentCalorieTarget ?? 0) > 0;
     final healthConnected = ref.watch(healthSyncProvider).isConnected;
     final hasFirstSleep = ref.watch(sleepHistoryProvider).maybeWhen(
           data: (h) => h.nights.isNotEmpty,

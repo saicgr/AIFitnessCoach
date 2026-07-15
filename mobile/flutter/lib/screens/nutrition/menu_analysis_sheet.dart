@@ -535,10 +535,13 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     final summary = ref.read(dailyNutritionProvider(todayNutritionKey())).summary;
 
     final ctx = RecommendationContext(
-      calorieTarget: state.currentCalorieTarget.toDouble(),
-      proteinTarget: state.currentProteinTarget.toDouble(),
-      carbsTarget: state.currentCarbsTarget.toDouble(),
-      fatTarget: state.currentFatTarget.toDouble(),
+      // Unconfigured targets fall through to 0 — the scoring engine only
+      // subtracts (needCal = max(0, target - consumed)), so a 0 target simply
+      // deprioritizes macro-fit rather than fabricating a plan.
+      calorieTarget: (state.currentCalorieTarget ?? 0).toDouble(),
+      proteinTarget: (state.currentProteinTarget ?? 0).toDouble(),
+      carbsTarget: (state.currentCarbsTarget ?? 0).toDouble(),
+      fatTarget: (state.currentFatTarget ?? 0).toDouble(),
       consumedCalories: (summary?.totalCalories ?? 0).toDouble(),
       consumedProteinG: (summary?.totalProteinG ?? 0).toDouble(),
       consumedCarbsG: (summary?.totalCarbsG ?? 0).toDouble(),
@@ -1647,6 +1650,9 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Widget _budgetRings(ThemeColors colors) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(nutritionPreferencesProvider);
+    // Budget rings need real targets — hide the block rather than render rings
+    // against a fabricated target when the user hasn't set one.
+    if (!state.hasConfiguredTargets) return const SizedBox.shrink();
     final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
     final totals = _selectedTotals;
     final consumedCal = (summary?.totalCalories ?? 0) + totals.cal;
@@ -1679,13 +1685,13 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 MacroBudgetRing(
                   label: AppLocalizations.of(context).workoutShowcaseCal,
                   consumed: consumedCal.toDouble(),
-                  target: state.currentCalorieTarget.toDouble(),
+                  target: state.currentCalorieTarget!.toDouble(),
                   color: isDark ? AppColors.coral : AppColorsLight.coral,
                 ),
                 MacroBudgetRing(
                   label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   consumed: consumedP,
-                  target: state.currentProteinTarget.toDouble(),
+                  target: (state.currentProteinTarget ?? 0).toDouble(),
                   color: isDark
                       ? AppColors.macroProtein
                       : AppColorsLight.macroProtein,
@@ -1694,7 +1700,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 MacroBudgetRing(
                   label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   consumed: consumedC,
-                  target: state.currentCarbsTarget.toDouble(),
+                  target: (state.currentCarbsTarget ?? 0).toDouble(),
                   color: isDark
                       ? AppColors.macroCarbs
                       : AppColorsLight.macroCarbs,
@@ -1703,7 +1709,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 MacroBudgetRing(
                   label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                   consumed: consumedF,
-                  target: state.currentFatTarget.toDouble(),
+                  target: (state.currentFatTarget ?? 0).toDouble(),
                   color:
                       isDark ? AppColors.macroFat : AppColorsLight.macroFat,
                   unit: 'g',

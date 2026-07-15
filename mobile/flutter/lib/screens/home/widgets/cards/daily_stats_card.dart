@@ -51,16 +51,20 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
     final nutritionState = ref.watch(dailyNutritionProvider(todayNutritionKey()));
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final caloriesConsumed = nutritionState.summary?.totalCalories ?? 0;
-    final calorieTarget = prefsState.currentCalorieTarget;
+    // Unconfigured → null → 0; the deficit is meaningless without a target, so
+    // it's shown as "—" below rather than computed against a fabricated 2000.
+    final hasCalorieTarget = prefsState.hasConfiguredTargets;
+    final calorieTarget = prefsState.currentCalorieTarget ?? 0;
 
     // Calculate deficit: target - consumed + exercise burned
     // Positive = in deficit (good for fat loss), Negative = over calories
     final deficit = calorieTarget - caloriesConsumed + caloriesBurned.round();
-    final isInDeficit = deficit > 0;
+    final isInDeficit = hasCalorieTarget && deficit > 0;
 
     // Format values
     final stepsFormatted = _formatNumber(steps);
-    final deficitFormatted = deficit.abs().toString();
+    final deficitFormatted =
+        hasCalorieTarget ? deficit.abs().toString() : '—';
 
     // Build the appropriate layout based on size
     if (size == TileSize.compact) {

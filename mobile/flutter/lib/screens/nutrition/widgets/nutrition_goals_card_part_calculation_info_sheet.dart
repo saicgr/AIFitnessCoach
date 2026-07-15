@@ -41,7 +41,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
     final tdee = prefs.calculatedTdee ?? 0;
     // Use dynamic target (same source as the Daily Goals card) for consistency
     final prefsState = ref.watch(nutritionPreferencesProvider);
-    final targetCal = prefsState.currentCalorieTarget;
+    final targetCal = prefsState.currentCalorieTarget ?? 0;
     final goalAdjustment = targetCal - tdee;
     final goal = prefs.primaryGoalEnum;
     final dietType = prefs.dietTypeEnum;

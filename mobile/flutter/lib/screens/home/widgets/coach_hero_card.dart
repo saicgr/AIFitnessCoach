@@ -172,9 +172,13 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   Widget _statBand(ThemeColors c) {
     final prefs = ref.watch(nutritionPreferencesProvider);
     final nut = ref.watch(dailyNutritionProvider(todayNutritionKey()));
-    final calTarget = prefs.currentCalorieTarget;
-    final pTarget = prefs.currentProteinTarget;
-    if (calTarget <= 0) return const SizedBox.shrink();
+    // No configured targets yet (e.g. onboarding skipped/interrupted → no
+    // nutrition_preferences row) → hide the band entirely. Never fabricate a
+    // 2000/150 placeholder — that's why we gate on hasConfiguredTargets, not on
+    // `currentCalorieTarget` (which is null, not 0, when unset).
+    if (!prefs.hasConfiguredTargets) return const SizedBox.shrink();
+    final calTarget = prefs.currentCalorieTarget!;
+    final pTarget = prefs.currentProteinTarget ?? 0;
 
     // Today's dynamic targets aren't resolved yet (cold start on a day whose
     // workout/rest status differs from the last open). The headline numbers
@@ -256,7 +260,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     //    the same surface the "Fuel before you train" nudge used.
     final prefs = ref.watch(nutritionPreferencesProvider);
     final nut = ref.watch(dailyNutritionProvider(todayNutritionKey()));
-    final pTarget = prefs.currentProteinTarget;
+    final pTarget = prefs.currentProteinTarget ?? 0;
     final pCur = (nut.summary?.totalProteinG ?? 0).round();
     // Skip the protein task while today's target is still resolving — its label
     // embeds the number ("Hit 128g protein"), so rendering it now would flash

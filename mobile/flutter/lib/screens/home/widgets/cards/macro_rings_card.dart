@@ -46,9 +46,12 @@ class MacroRingsCard extends ConsumerWidget {
     final carbsConsumed = (summary?.totalCarbsG ?? 0).round();
     final fatConsumed = (summary?.totalFatG ?? 0).round();
 
-    final proteinTarget = prefs.currentProteinTarget;
-    final carbsTarget = prefs.currentCarbsTarget;
-    final fatTarget = prefs.currentFatTarget;
+    // Unconfigured targets are null (never a fabricated 150/200/65) → 0 here,
+    // which the `> 0 ?` ring guards below render as an empty ring, and the
+    // legend shows consumed-only (no "/0g"). See hasConfiguredTargets.
+    final proteinTarget = prefs.currentProteinTarget ?? 0;
+    final carbsTarget = prefs.currentCarbsTarget ?? 0;
+    final fatTarget = prefs.currentFatTarget ?? 0;
 
     // Allow overshoot up to 1.5x so the overshoot lick is visible but clamped.
     final proteinProgress = proteinTarget > 0
@@ -188,7 +191,7 @@ class _MacroLegendRow extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            '${consumed}g / ${target}g',
+            target > 0 ? '${consumed}g / ${target}g' : '${consumed}g',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,

@@ -194,9 +194,9 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
           // never present the 150/200/65 placeholder split as a real plan.
           if (hasTargets)
             _buildMacrosRow(
-              protein: currentProtein,
-              carbs: currentCarbs,
-              fat: currentFat,
+              protein: currentProtein ?? 0,
+              carbs: currentCarbs ?? 0,
+              fat: currentFat ?? 0,
               isDark: isDark,
               textPrimary: textPrimary,
               textMuted: textMuted,

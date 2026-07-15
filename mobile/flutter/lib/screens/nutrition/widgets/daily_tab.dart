@@ -664,13 +664,13 @@ class _DailyTabState extends ConsumerState<DailyTab>
                         : null,
                     totalCaloriesEaten: widget.summary?.totalCalories ?? 0,
                     proteinTarget: prefs.hasConfiguredTargets
-                        ? prefs.currentProteinTarget
+                        ? (prefs.currentProteinTarget ?? 0)
                         : 0,
                     carbsTarget: prefs.hasConfiguredTargets
-                        ? prefs.currentCarbsTarget
+                        ? (prefs.currentCarbsTarget ?? 0)
                         : 0,
                     fatTarget: prefs.hasConfiguredTargets
-                        ? prefs.currentFatTarget
+                        ? (prefs.currentFatTarget ?? 0)
                         : 0,
                     consumedProtein: widget.summary?.totalProteinG ?? 0,
                     consumedCarbs: widget.summary?.totalCarbsG ?? 0,
@@ -1380,10 +1380,10 @@ class _NutritionHeadline extends ConsumerWidget {
       cTarget = sumC.round();
       fTarget = sumF.round();
     } else {
-      calTarget = configured ? prefs.currentCalorieTarget : 0;
-      pTarget = configured ? prefs.currentProteinTarget : 0;
-      cTarget = configured ? prefs.currentCarbsTarget : 0;
-      fTarget = configured ? prefs.currentFatTarget : 0;
+      calTarget = configured ? (prefs.currentCalorieTarget ?? 0) : 0;
+      pTarget = configured ? (prefs.currentProteinTarget ?? 0) : 0;
+      cTarget = configured ? (prefs.currentCarbsTarget ?? 0) : 0;
+      fTarget = configured ? (prefs.currentFatTarget ?? 0) : 0;
     }
 
     final calLeft = (calTarget - eatenCal);

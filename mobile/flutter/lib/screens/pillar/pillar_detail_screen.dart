@@ -358,8 +358,8 @@ class _ComponentBreakdownCard extends ConsumerWidget {
         final prefs = ref.watch(nutritionPreferencesProvider);
         final cal = (summary?.totalCalories ?? 0).toDouble();
         final prot = (summary?.totalProteinG ?? 0).toDouble();
-        final calGoal = prefs.currentCalorieTarget.toDouble();
-        final protGoal = prefs.currentProteinTarget;
+        final calGoal = (prefs.currentCalorieTarget ?? 0).toDouble();
+        final protGoal = prefs.currentProteinTarget ?? 0;
         final calHit = calGoal > 0 ? (cal / calGoal).clamp(0.0, 1.0) : 0.0;
         final protHit = protGoal > 0 ? (prot / protGoal).clamp(0.0, 1.0) : 0.0;
         // Variety placeholder — daily distinct-food count isn't exposed yet.

@@ -232,11 +232,11 @@ Future<List<PillarDayScore>> _computeNourish(
   // back to the goal columns on the response so a brand-new prefs cache
   // still renders something.
   final prefs = ref.read(nutritionPreferencesProvider);
-  final calGoal = prefs.currentCalorieTarget > 0
-      ? prefs.currentCalorieTarget
+  final calGoal = (prefs.currentCalorieTarget ?? 0) > 0
+      ? (prefs.currentCalorieTarget ?? 0)
       : (summary.calorieGoal ?? 0);
-  final protGoal = prefs.currentProteinTarget > 0
-      ? prefs.currentProteinTarget.round()
+  final protGoal = (prefs.currentProteinTarget ?? 0) > 0
+      ? (prefs.currentProteinTarget ?? 0)
       : (summary.proteinGoal ?? 0);
   if (calGoal <= 0 || protGoal <= 0) return const [];
 

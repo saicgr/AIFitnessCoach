@@ -1445,16 +1445,19 @@ class HomeFuelStrip extends ConsumerWidget {
     }
 
     final prefs = ref.watch(nutritionPreferencesProvider);
-    final calTarget = prefs.currentCalorieTarget;
-    final pTarget = prefs.currentProteinTarget;
-    final cTarget = prefs.currentCarbsTarget;
-    final fTarget = prefs.currentFatTarget;
+    // Unconfigured targets are null (never a fabricated 2000/150) → 0 here; the
+    // headline shows "LOGGED" instead of "LEFT/OVER" when !hasTargets.
+    final hasTargets = prefs.hasConfiguredTargets;
+    final calTarget = prefs.currentCalorieTarget ?? 0;
+    final pTarget = prefs.currentProteinTarget ?? 0;
+    final cTarget = prefs.currentCarbsTarget ?? 0;
+    final fTarget = prefs.currentFatTarget ?? 0;
     final eatenCal = summary?.totalCalories ?? 0;
     final eatenP = (summary?.totalProteinG ?? 0).round();
     final eatenC = (summary?.totalCarbsG ?? 0).round();
     final eatenF = (summary?.totalFatG ?? 0).round();
     final calLeft = calTarget - eatenCal;
-    final over = calLeft < 0;
+    final over = hasTargets && calLeft < 0;
     final nf = NumberFormat.decimalPattern();
 
     return Padding(
@@ -1483,7 +1486,9 @@ class HomeFuelStrip extends ConsumerWidget {
                       Text('FUEL', style: ZType.lbl(11, color: c.textMuted)),
                       const SizedBox(height: 4),
                       Text(
-                        '${nf.format(eatenCal)} / ${nf.format(calTarget)}',
+                        hasTargets
+                            ? '${nf.format(eatenCal)} / ${nf.format(calTarget)}'
+                            : '${nf.format(eatenCal)} logged',
                         style: ZType.lbl(11.5, color: c.textSecondary),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
@@ -1497,7 +1502,7 @@ class HomeFuelStrip extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      nf.format(over ? -calLeft : calLeft),
+                      nf.format(hasTargets ? (over ? -calLeft : calLeft) : eatenCal),
                       style: ZType.disp(30,
                               color: over ? c.warning : c.accent)
                           .copyWith(height: 1.0),
@@ -1506,7 +1511,9 @@ class HomeFuelStrip extends ConsumerWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 3),
                       child: Text(
-                        over ? 'KCAL OVER' : 'KCAL LEFT',
+                        hasTargets
+                            ? (over ? 'KCAL OVER' : 'KCAL LEFT')
+                            : 'KCAL LOGGED',
                         style: ZType.lbl(9,
                             color: over ? c.warning : c.textMuted,
                             letterSpacing: 1),
@@ -1758,10 +1765,13 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
     }
 
     final prefs = ref.watch(nutritionPreferencesProvider);
-    final calTarget = prefs.currentCalorieTarget;
-    final proteinTarget = prefs.currentProteinTarget;
-    final carbsTarget = prefs.currentCarbsTarget;
-    final fatTarget = prefs.currentFatTarget;
+    // Unconfigured targets are null (never a fabricated 2000/150) → 0 here; the
+    // kcal figure shows "logged" instead of "left/over" when !hasTargets.
+    final hasTargets = prefs.hasConfiguredTargets;
+    final calTarget = prefs.currentCalorieTarget ?? 0;
+    final proteinTarget = prefs.currentProteinTarget ?? 0;
+    final carbsTarget = prefs.currentCarbsTarget ?? 0;
+    final fatTarget = prefs.currentFatTarget ?? 0;
 
     final eatenCal = summary?.totalCalories ?? 0;
     final eatenP = (summary?.totalProteinG ?? 0).round();
@@ -1769,7 +1779,7 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
     final eatenF = (summary?.totalFatG ?? 0).round();
 
     final calLeft = calTarget - eatenCal;
-    final over = calLeft < 0;
+    final over = hasTargets && calLeft < 0;
 
     final hydration = ref.watch(hydrationProvider);
     final userId = ref.watch(currentUserProvider).valueOrNull?.id;
@@ -1843,7 +1853,7 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  over ? '${-calLeft}' : '$calLeft',
+                  hasTargets ? (over ? '${-calLeft}' : '$calLeft') : '$eatenCal',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -1853,9 +1863,12 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  over
-                      ? AppLocalizations.of(context)!.unifiedHomeWidgetsKcal
-                      : AppLocalizations.of(context)!.unifiedHomeWidgetsKcalLeft,
+                  hasTargets
+                      ? (over
+                          ? AppLocalizations.of(context)!.unifiedHomeWidgetsKcal
+                          : AppLocalizations.of(context)!
+                              .unifiedHomeWidgetsKcalLeft)
+                      : 'kcal logged',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,

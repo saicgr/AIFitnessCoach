@@ -251,24 +251,30 @@ class NutritionPreferencesState {
       preferences?.targetCalories != null;
 
   /// Get current calorie target (dynamic if available, otherwise base).
-  /// Returns a SAFE non-null value for arithmetic; callers that need to
-  /// distinguish "real plan" vs. "no plan set" must check
-  /// [hasConfiguredTargets] FIRST and render a "Set a target" CTA when
-  /// false. Never present the fallback as a real plan.
-  int get currentCalorieTarget =>
-      dynamicTargets?.targetCalories ?? preferences?.targetCalories ?? 2000;
+  ///
+  /// **Nullable by design.** Returns `null` when the user has NOT configured
+  /// nutrition targets (no dynamic value AND no stored preference) — there is
+  /// deliberately NO magic-number fallback (formerly `?? 2000`), because that
+  /// let an unconfigured target masquerade as a real plan on any surface whose
+  /// author forgot to check [hasConfiguredTargets]. The type system now forces
+  /// every consumer to handle the "no plan set" case:
+  ///   • presenting surfaces → gate on [hasConfiguredTargets], show a
+  ///     "Set a target" CTA when false, never a fabricated number.
+  ///   • arithmetic → `final t = currentCalorieTarget ?? 0;` then guard `t > 0`.
+  int? get currentCalorieTarget =>
+      dynamicTargets?.targetCalories ?? preferences?.targetCalories;
 
   /// Get current protein target. See note on [currentCalorieTarget].
-  int get currentProteinTarget =>
-      dynamicTargets?.targetProteinG ?? preferences?.targetProteinG ?? 150;
+  int? get currentProteinTarget =>
+      dynamicTargets?.targetProteinG ?? preferences?.targetProteinG;
 
   /// Get current carbs target. See note on [currentCalorieTarget].
-  int get currentCarbsTarget =>
-      dynamicTargets?.targetCarbsG ?? preferences?.targetCarbsG ?? 200;
+  int? get currentCarbsTarget =>
+      dynamicTargets?.targetCarbsG ?? preferences?.targetCarbsG;
 
   /// Get current fat target. See note on [currentCalorieTarget].
-  int get currentFatTarget =>
-      dynamicTargets?.targetFatG ?? preferences?.targetFatG ?? 65;
+  int? get currentFatTarget =>
+      dynamicTargets?.targetFatG ?? preferences?.targetFatG;
 
   /// True when we hold dynamic targets that were actually computed for TODAY
   /// (not a stale cross-day disk seed).
@@ -1295,13 +1301,16 @@ final nutritionOnboardingCompletedProvider = Provider<bool>((ref) {
   return ref.watch(nutritionPreferencesProvider).onboardingCompleted;
 });
 
-/// Current calorie target provider (convenience)
-final currentCalorieTargetProvider = Provider<int>((ref) {
+/// Current calorie target provider (convenience). Nullable — mirrors
+/// [NutritionPreferencesState.currentCalorieTarget], which is null when the
+/// user hasn't configured targets (no fabricated fallback).
+final currentCalorieTargetProvider = Provider<int?>((ref) {
   return ref.watch(nutritionPreferencesProvider).currentCalorieTarget;
 });
 
-/// Current protein target provider (convenience)
-final currentProteinTargetProvider = Provider<int>((ref) {
+/// Current protein target provider (convenience). Nullable — see
+/// [currentCalorieTargetProvider].
+final currentProteinTargetProvider = Provider<int?>((ref) {
   return ref.watch(nutritionPreferencesProvider).currentProteinTarget;
 });
 

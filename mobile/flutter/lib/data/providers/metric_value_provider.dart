@@ -186,13 +186,14 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
             .currentCalorieTarget;
         final cals = summary?.totalCalories;
         if (cals == null) return base(empty: true, unit: 'kcal');
-        final pct = goal > 0 ? (cals / goal).clamp(0.0, 1.0) : null;
+        final hasGoal = (goal ?? 0) > 0;
+        final pct = hasGoal ? (cals / goal!).clamp(0.0, 1.0) : null;
         return base(
           value: cals.toDouble(),
           unit: 'kcal',
-          goal: goal.toDouble(),
+          goal: goal?.toDouble(),
           pct: pct,
-          deltaLabel: goal > 0
+          deltaLabel: hasGoal
               ? '${((pct ?? 0) * 100).round()}% of $goal'
               : null,
         );
@@ -326,13 +327,14 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
         final goal =
             ref.watch(nutritionPreferencesProvider).currentProteinTarget;
         if (eaten == null) return base(empty: true, unit: 'g');
-        final pct = goal > 0 ? (eaten / goal).clamp(0.0, 1.0) : null;
+        final hasGoal = (goal ?? 0) > 0;
+        final pct = hasGoal ? (eaten / goal!).clamp(0.0, 1.0) : null;
         return base(
           value: eaten.toDouble(),
           unit: 'g',
-          goal: goal.toDouble(),
+          goal: goal?.toDouble(),
           pct: pct,
-          deltaLabel: goal > 0 ? 'of ${goal}g' : null,
+          deltaLabel: hasGoal ? 'of ${goal}g' : null,
         );
       }
     case RingKind.zoneMinutes:

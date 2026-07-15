@@ -396,15 +396,19 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final dynamicTargets = prefsState.dynamicTargets;
 
+    // No fabricated "/2000" bar for users who haven't set targets — the
+    // "value / target" pairs are meaningless without a real target.
+    if (!prefsState.hasConfiguredTargets) return const SizedBox.shrink();
+
     final cal = summary?.totalCalories ?? 0;
     final carbs = summary?.totalCarbsG.round() ?? 0;
     final protein = summary?.totalProteinG.round() ?? 0;
     final fat = summary?.totalFatG.round() ?? 0;
 
-    final calTarget = prefsState.currentCalorieTarget;
-    final carbsTarget = prefsState.currentCarbsTarget;
-    final proteinTarget = prefsState.currentProteinTarget;
-    final fatTarget = prefsState.currentFatTarget;
+    final calTarget = prefsState.currentCalorieTarget!;
+    final carbsTarget = prefsState.currentCarbsTarget ?? 0;
+    final proteinTarget = prefsState.currentProteinTarget ?? 0;
+    final fatTarget = prefsState.currentFatTarget ?? 0;
 
     // Build adjustment label for training/rest day
     final adjustmentLabel = dynamicTargets != null &&

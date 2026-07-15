@@ -396,19 +396,34 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
           // Four macro rings: Calories (accent) · Protein · Carbs · Fat.
           // Replaces the old vertical text table so the block reads as a
           // glance-able KPI strip instead of a wall of numbers.
-          _MacroRingsRow(
-            isDark: isDark,
-            caloriesTarget: prefsState.currentCalorieTarget,
-            proteinTarget: prefsState.currentProteinTarget,
-            carbsTarget: prefsState.currentCarbsTarget,
-            fatTarget: prefsState.currentFatTarget,
-            baseCaloriesNote:
-                preferences.targetCalories != prefsState.currentCalorieTarget
-                    ? 'base ${preferences.targetCalories}'
-                    : null,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
-          ),
+          // Only render the target rings when the user has actually configured
+          // targets — never present a fabricated number as a real plan.
+          if (prefsState.hasConfiguredTargets)
+            _MacroRingsRow(
+              isDark: isDark,
+              caloriesTarget: prefsState.currentCalorieTarget!,
+              proteinTarget: prefsState.currentProteinTarget ?? 0,
+              carbsTarget: prefsState.currentCarbsTarget ?? 0,
+              fatTarget: prefsState.currentFatTarget ?? 0,
+              baseCaloriesNote:
+                  preferences.targetCalories != prefsState.currentCalorieTarget
+                      ? 'base ${preferences.targetCalories}'
+                      : null,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Set your calorie and macro targets to see them here.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
           const SizedBox(height: 14),
           // Goal pill (merged-in from the old "Nutrition Goals" section).
           // Tap to open the same edit sheet. We always render it so users

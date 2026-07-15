@@ -260,14 +260,14 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     // render a "Set a calorie target" CTA instead of presenting 2000 as real.
     final hasCalorieTarget = prefsState.hasConfiguredTargets;
     final calorieTarget = hasCalorieTarget
-        ? prefsState.currentCalorieTarget
+        ? prefsState.currentCalorieTarget!
         : 0;
     final proteinConsumed = (summary?.totalProteinG ?? 0).round();
     final carbsConsumed = (summary?.totalCarbsG ?? 0).round();
     final fatConsumed = (summary?.totalFatG ?? 0).round();
-    final proteinTarget = prefsState.currentProteinTarget;
-    final carbsTarget = prefsState.currentCarbsTarget;
-    final fatTarget = prefsState.currentFatTarget;
+    final proteinTarget = prefsState.currentProteinTarget ?? 0;
+    final carbsTarget = prefsState.currentCarbsTarget ?? 0;
+    final fatTarget = prefsState.currentFatTarget ?? 0;
     final caloriesRemaining = calorieTarget - caloriesConsumed;
 
     // F4 — exercise burn folded into the budget. Only surface the net row when

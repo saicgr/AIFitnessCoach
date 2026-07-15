@@ -905,11 +905,11 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
     final proteinTarget = prefsState.currentProteinTarget;
 
     return _FitsYourDay(
-      caloriesRemaining: calTarget - consumedCal,
+      caloriesRemaining: (calTarget ?? 0) - consumedCal,
       proteinRemaining:
           prefsState.preferences?.targetProteinG != null ||
                   prefsState.dynamicTargets != null
-              ? proteinTarget - consumedProtein
+              ? (proteinTarget ?? 0) - consumedProtein
               : null,
       dateLabel: _fitsDateLabel(target),
       // C7 — a planned refeed / high-output day surfaces as a positive

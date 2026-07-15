@@ -36,7 +36,12 @@ class CaloriesSummaryCard extends ConsumerWidget {
     final accent = ref.colors(context).accent;
 
     final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
-    final calorieTarget = ref.watch(nutritionPreferencesProvider).currentCalorieTarget;
+    final prefs = ref.watch(nutritionPreferencesProvider);
+    // null (unconfigured) → 0; the display below shows "logged" instead of a
+    // "left"/"over" figure against a fabricated target. Gate on the flag, never
+    // on the value (which is null, not 0, when unset).
+    final hasTarget = prefs.hasConfiguredTargets;
+    final calorieTarget = prefs.currentCalorieTarget ?? 0;
 
     // Phase D — surface the cycle-phase calorie delta (e.g. +200 luteal) as
     // a compact chip below the progress bar. Reuses the existing
@@ -53,7 +58,7 @@ class CaloriesSummaryCard extends ConsumerWidget {
     final progress = calorieTarget > 0
         ? (consumed / calorieTarget).clamp(0.0, 1.0)
         : 0.0;
-    final isOver = consumed > calorieTarget;
+    final isOver = hasTarget && consumed > calorieTarget;
     final progressColor = isOver ? AppColors.error : accent;
 
     return GestureDetector(
@@ -100,7 +105,9 @@ class CaloriesSummaryCard extends ConsumerWidget {
               children: [
                 Flexible(
                   child: Text(
-                    isOver ? '+${(remaining).abs()}' : '$remaining',
+                    hasTarget
+                        ? (isOver ? '+${(remaining).abs()}' : '$remaining')
+                        : '$consumed',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -113,7 +120,7 @@ class CaloriesSummaryCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  isOver ? 'over' : 'left',
+                  hasTarget ? (isOver ? 'over' : 'left') : 'logged',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
