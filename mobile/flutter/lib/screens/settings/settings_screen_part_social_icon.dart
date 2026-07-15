@@ -21,7 +21,9 @@ const _kSettingsLocaleNames = <String?, String>{
 
 /// A single row in the settings screen
 class _SocialIcon {
-  final IconData icon;
+  // font_awesome_flutter 11 returns FaIconData (not an IconData subtype, since
+  // IconData became a final class) — these rows are FA-only, rendered via FaIcon.
+  final FaIconData icon;
   final Color color;
   final String label;
   const _SocialIcon(this.icon, this.color, this.label);

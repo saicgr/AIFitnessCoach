@@ -351,7 +351,8 @@ class _Divider extends StatelessWidget {
 }
 
 class _SocialChip extends StatelessWidget {
-  final IconData icon;
+  // FA-only chip; font_awesome_flutter 11 icons are FaIconData, rendered via FaIcon.
+  final FaIconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
@@ -382,7 +383,7 @@ class _SocialChip extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 18),
+              FaIcon(icon, color: color, size: 18),
               const SizedBox(width: 8),
               Text(
                 label,

@@ -445,7 +445,8 @@ class FounderNoteSheet extends ConsumerWidget {
 /// Lower visual weight than the previous full-width brand chips so
 /// the primary CTA at the bottom dominates the footer.
 class _InlineSocialLink extends StatelessWidget {
-  final IconData icon;
+  // FA-only link; font_awesome_flutter 11 icons are FaIconData, rendered via FaIcon.
+  final FaIconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
@@ -470,7 +471,7 @@ class _InlineSocialLink extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
+            FaIcon(icon, size: 16, color: color),
             const SizedBox(width: 8),
             Text(
               label,
