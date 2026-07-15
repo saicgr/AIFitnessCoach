@@ -10,6 +10,10 @@
 .history
 .svn/
 .swiftpm/
+# Redundant auto-generated SwiftPM resolution inside the .xcodeproj's implicit
+# workspace — identical to the tracked Runner.xcworkspace copy, but it churns.
+# We commit only ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved.
+ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
