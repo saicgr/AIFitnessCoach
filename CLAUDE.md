@@ -444,6 +444,36 @@ rows must be session-attached to render in-app. Insert proactive coach
 messages via `_mirror_proactive_to_chat` (`backend/api/v1/push_nudge_cron.py`),
 never a hand-rolled insert.
 
+## maybe_single() returns None on 0 rows (a whole class of 500s)
+
+PostgREST's `.maybe_single().execute()` does NOT return an `APIResponse` with
+`data=None` when zero rows match — it returns **`None`** (the response object
+itself; see `postgrest/_async/request_builder.py` `AsyncMaybeSingleRequestBuilder`).
+So `result.data` (or `if not result.data:`) throws `'NoneType' object has no
+attribute 'data'` → a 500, for any account **missing the queried row** (fresh /
+reviewer accounts, interrupted onboarding). 2026-07-15: `get_adherence_summary`
+500'd for a user with no `nutrition_preferences` row; a sweep found 50+ sibling
+sites. Correct pattern guards the RESULT OBJECT, not just `.data`:
+
+```python
+res = db.client.table("t").select("...").eq(...).maybe_single().execute()
+if not res or not res.data:          # res may be None
+    ...                              # 404 for reads; INSERT branch for upserts
+val = (res.data if res else None) or {}   # inline extraction
+```
+
+**Gate — run after adding any backend `.maybe_single()` query:**
+
+```bash
+python backend/scripts/audit_maybe_single_guards.py --check
+```
+
+It flags every `.maybe_single().execute()` whose result is dereferenced without a
+None-guard. Frontend mirror: nutrition target getters
+(`currentCalorieTarget` etc. in `nutrition_preferences_provider.dart`) are
+**nullable** (`int?`, no `?? 2000/150` magic-number fallback) — presenting
+surfaces MUST gate on `hasConfiguredTargets`, never render a fabricated target.
+
 ## Curated program session volume (don't ship thin sessions)
 
 The 18 launch programs (`programs.is_published`) schedule their content from
