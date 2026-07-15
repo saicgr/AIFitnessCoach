@@ -96,7 +96,7 @@ def _calculate_completion_calories(
             user_resp = supabase.table("users").select("weight_kg").eq(
                 "id", user_id
             ).maybe_single().execute()
-            if user_resp.data:
+            if user_resp and user_resp.data:
                 user_weight_kg = float(user_resp.data.get("weight_kg") or 70)
                 user_weight_kg = max(30.0, min(user_weight_kg, 250.0))
         except Exception:

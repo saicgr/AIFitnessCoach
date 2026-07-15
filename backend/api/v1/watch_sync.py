@@ -267,16 +267,16 @@ async def get_activity_goals(user_id: str, current_user: dict = Depends(get_curr
         calories_burned_goal = 500
         water_ml_goal = 2000
 
-        if neat_result.data:
+        if neat_result and neat_result.data:
             steps_goal = neat_result.data.get("daily_step_goal", 10000)
 
-        if user_result.data:
+        if user_result and user_result.data:
             # Could get water goal from nutrition preferences
             pass
 
         # Check hydration settings
         hydration_result = db.table("hydration_settings").select("*").eq("user_id", user_id).maybe_single().execute()
-        if hydration_result.data:
+        if hydration_result and hydration_result.data:
             water_ml_goal = hydration_result.data.get("daily_goal_ml", 2000)
 
         return ActivityGoalsResponse(

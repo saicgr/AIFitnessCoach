@@ -634,7 +634,7 @@ async def should_send_reminder(user_id: str,
                 "user_id", user_id
             ).eq("is_completed", False).gte("last_modified_at", one_hour_ago).maybe_single().execute()
 
-            if workout_response.data:
+            if workout_response and workout_response.data:
                 return ShouldRemindResponse(
                     should_remind=False,
                     reason="User has an active workout",

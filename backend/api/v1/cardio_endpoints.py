@@ -127,7 +127,7 @@ async def list_cardio_sessions(
         "id", user_id
     ).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Build query
@@ -187,7 +187,7 @@ async def get_cardio_session_stats(
         "id", user_id
     ).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Get sessions for current period
@@ -367,7 +367,7 @@ async def get_cardio_session(
         "user_id", user_id
     ).maybe_single().execute()
 
-    if not response.data:
+    if not response or not response.data:
         raise HTTPException(status_code=404, detail="Cardio session not found")
 
     return _parse_cardio_session(response.data)
@@ -391,7 +391,7 @@ async def update_cardio_session(
         "id", session_id
     ).maybe_single().execute()
 
-    if not existing_response.data:
+    if not existing_response or not existing_response.data:
         raise HTTPException(status_code=404, detail="Cardio session not found")
 
     existing = existing_response.data
@@ -406,7 +406,7 @@ async def update_cardio_session(
         workout_response = db.client.table("workouts").select("id").eq(
             "id", request.workout_id
         ).maybe_single().execute()
-        if not workout_response.data:
+        if not workout_response or not workout_response.data:
             raise HTTPException(status_code=404, detail="Workout not found")
         update_data["workout_id"] = request.workout_id
 
@@ -496,7 +496,7 @@ async def delete_cardio_session(
         "id", session_id
     ).maybe_single().execute()
 
-    if not existing_response.data:
+    if not existing_response or not existing_response.data:
         raise HTTPException(status_code=404, detail="Cardio session not found")
 
     if str(current_user["id"]) != str(existing_response.data["user_id"]):

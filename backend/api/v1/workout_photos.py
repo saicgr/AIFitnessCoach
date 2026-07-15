@@ -306,7 +306,7 @@ async def delete_workout_photo(
             .maybe_single() \
             .execute()
 
-        if not photo.data:
+        if not photo or not photo.data:
             raise HTTPException(status_code=404, detail="Photo not found")
 
         db.client.table('workout_photos') \
@@ -492,7 +492,7 @@ async def get_slideshow_job(
             .maybe_single() \
             .execute()
 
-        if not res.data:
+        if not res or not res.data:
             raise HTTPException(status_code=404, detail="Slideshow job not found")
 
         job = res.data

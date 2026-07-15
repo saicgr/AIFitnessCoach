@@ -424,7 +424,7 @@ async def get_progress_photo(user_id: str, photo_id: str, current_user: dict = D
             .maybe_single() \
             .execute()
 
-        if not result.data:
+        if not result or not result.data:
             raise HTTPException(status_code=404, detail="Photo not found")
 
         return ProgressPhotoResponse(**_presign_photo(result.data))
@@ -456,7 +456,7 @@ async def update_progress_photo(
             .maybe_single() \
             .execute()
 
-        if not existing.data:
+        if not existing or not existing.data:
             raise HTTPException(status_code=404, detail="Photo not found")
 
         # Update
@@ -500,7 +500,7 @@ async def delete_progress_photo(
             .maybe_single() \
             .execute()
 
-        if not photo.data:
+        if not photo or not photo.data:
             raise HTTPException(status_code=404, detail="Photo not found")
 
         # Delete from S3
@@ -557,7 +557,7 @@ async def create_photo_comparison(data: PhotoComparisonCreate, current_user: dic
             .maybe_single() \
             .execute()
 
-        if not before_photo.data or not after_photo.data:
+        if not (before_photo and before_photo.data and after_photo and after_photo.data):
             raise HTTPException(status_code=404, detail="One or both photos not found")
 
         # Calculate stats
@@ -630,7 +630,7 @@ async def update_photo_comparison(
             .maybe_single() \
             .execute()
 
-        if not existing.data:
+        if not existing or not existing.data:
             raise HTTPException(status_code=404, detail="Comparison not found")
 
         # Build update dict

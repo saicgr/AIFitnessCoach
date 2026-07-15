@@ -261,7 +261,7 @@ async def _handle_initial_purchase(supabase, event: dict, background_tasks=None)
                 .eq("id", user_id) \
                 .maybe_single() \
                 .execute()
-            if user_result.data:
+            if user_result and user_result.data:
                 user_email = user_result.data["email"]
                 user_name = user_result.data.get("name", "")
 
@@ -383,7 +383,7 @@ async def _handle_cancellation(supabase, event: dict, background_tasks=None):
             # supabase-py versions instead of an APIResponse with data=None.
             promotional_ok = True
             if pref_result is not None and getattr(pref_result, "data", None) \
-                    and pref_result.data.get("promotional") is False:
+                    and pref_result and pref_result.data.get("promotional") is False:
                 promotional_ok = False
             user_data = getattr(user_result, "data", None) if user_result is not None else None
             sub_data = getattr(sub_result, "data", None) if sub_result is not None else None
@@ -419,7 +419,7 @@ async def _handle_expiration(supabase, event: dict, background_tasks=None):
         .maybe_single()\
         .execute()
 
-    prev_tier = prev_result.data["tier"] if prev_result.data else None
+    prev_tier = prev_result.data["tier"] if prev_result and prev_result.data else None
 
     supabase.client.table("user_subscriptions")\
         .update({
@@ -454,7 +454,7 @@ async def _handle_expiration(supabase, event: dict, background_tasks=None):
                 .eq("id", user_id) \
                 .maybe_single() \
                 .execute()
-            if user_result.data:
+            if user_result and user_result.data:
                 workout_count_result = supabase.client.table("workout_logs") \
                     .select("id") \
                     .eq("user_id", user_id) \
@@ -547,8 +547,8 @@ async def _handle_billing_issue(supabase, event: dict, background_tasks=None):
                 .eq("user_id", user_id) \
                 .maybe_single() \
                 .execute()
-            if user_result.data:
-                tier_name = sub_result.data.get("tier", "premium") if sub_result.data else "premium"
+            if user_result and user_result.data:
+                tier_name = sub_result.data.get("tier", "premium") if sub_result and sub_result.data else "premium"
                 background_tasks.add_task(
                     get_email_service().send_billing_issue,
                     user_result.data["email"],

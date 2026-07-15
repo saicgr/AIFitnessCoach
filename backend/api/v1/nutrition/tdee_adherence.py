@@ -151,10 +151,10 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
             .maybe_single()\
             .execute()
 
-        current_goal = prefs_result.data.get("nutrition_goal", "maintain") if prefs_result.data else "maintain"
+        current_goal = prefs_result.data.get("nutrition_goal", "maintain") if prefs_result and prefs_result.data else "maintain"
         current_deficit = 500  # Default deficit
 
-        if prefs_result.data and prefs_result.data.get("target_calories"):
+        if prefs_result and prefs_result.data and prefs_result.data.get("target_calories"):
             current_deficit = calculation.tdee - prefs_result.data.get("target_calories", calculation.tdee)
 
         # Detect metabolic adaptation
@@ -240,7 +240,7 @@ async def get_adherence_summary(request: Request, user_id: str, weeks: int = Que
             .maybe_single()\
             .execute()
 
-        if not prefs_result.data:
+        if not prefs_result or not prefs_result.data:
             raise HTTPException(status_code=404, detail="Nutrition preferences not found")
 
         prefs = prefs_result.data

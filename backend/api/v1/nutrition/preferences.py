@@ -156,7 +156,7 @@ async def update_nutrition_preferences(user_id: str, request: NutritionPreferenc
             .maybe_single()\
             .execute()
 
-        if existing.data:
+        if existing and existing.data:
             # Update existing
             result = db.client.table("nutrition_preferences")\
                 .update(update_data)\

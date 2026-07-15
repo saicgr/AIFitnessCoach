@@ -359,7 +359,7 @@ class InflammationService:
                 .maybe_single()\
                 .execute()
 
-            if not result.data:
+            if not result or not result.data:
                 return UserInflammationStatsResponse(user_id=user_id)
 
             data = result.data

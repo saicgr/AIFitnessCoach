@@ -196,7 +196,7 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, cur
             .maybe_single()\
             .execute()
 
-        if existing.data:
+        if existing and existing.data:
             result = db.client.table("nutrition_preferences")\
                 .update(prefs_data)\
                 .eq("user_id", request.user_id)\
@@ -227,7 +227,7 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, cur
             .maybe_single()\
             .execute()
 
-        if not streak_exists.data:
+        if not streak_exists or not streak_exists.data:
             db.client.table("nutrition_streaks")\
                 .insert({"user_id": request.user_id})\
                 .execute()
@@ -276,7 +276,7 @@ async def skip_nutrition_onboarding(request: SkipOnboardingRequest, current_user
             .maybe_single()\
             .execute()
 
-        if existing.data:
+        if existing and existing.data:
             # Update existing preferences
             db.client.table("nutrition_preferences")\
                 .update({
@@ -347,7 +347,7 @@ async def recalculate_nutrition_targets(user_id: str, current_user: dict = Depen
             .maybe_single()\
             .execute()
 
-        if not prefs_result.data:
+        if not prefs_result or not prefs_result.data:
             raise HTTPException(status_code=404, detail="Nutrition preferences not found")
 
         prefs = prefs_result.data

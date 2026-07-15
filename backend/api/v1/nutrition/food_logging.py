@@ -278,7 +278,7 @@ def _update_nutrition_streak(user_id: str, user_tz: str) -> None:
             .eq("user_id", user_id) \
             .maybe_single() \
             .execute()
-        data: dict = result.data or {}
+        data: dict = (result.data if result else None) or {}
 
         current_streak: int = data.get("current_streak_days", 0)
         total_logged: int = data.get("total_days_logged", 0)

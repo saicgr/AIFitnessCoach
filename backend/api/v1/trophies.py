@@ -877,7 +877,7 @@ async def get_user_xp(user_id: str,
             .maybe_single() \
             .execute()
 
-        if xp_result.data:
+        if xp_result and xp_result.data:
             data = xp_result.data
             total_xp = data.get("total_xp", 0)
             current_level = data.get("current_level", 1)

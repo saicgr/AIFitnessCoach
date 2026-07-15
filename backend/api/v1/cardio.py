@@ -167,7 +167,7 @@ async def get_hr_zones(
         "id, date_of_birth, gender"
     ).eq("id", user_id).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
     user = user_response.data
@@ -283,7 +283,7 @@ async def get_cardio_metrics_endpoint(
         "id, date_of_birth, gender, weight_kg"
     ).eq("id", user_id).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
     user = user_response.data
@@ -386,7 +386,7 @@ async def save_cardio_metrics(
         "id, date_of_birth, gender"
     ).eq("id", request.user_id).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
     user = user_response.data
@@ -477,7 +477,7 @@ async def get_cardio_metrics_history(
         "id", user_id
     ).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Get history
@@ -598,7 +598,7 @@ async def create_cardio_session(
         "id", request.user_id
     ).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Verify workout exists if provided
@@ -607,7 +607,7 @@ async def create_cardio_session(
             "id", request.workout_id
         ).maybe_single().execute()
 
-        if not workout_response.data:
+        if not workout_response or not workout_response.data:
             raise HTTPException(status_code=404, detail="Workout not found")
 
     # Calculate average speed if distance and duration provided

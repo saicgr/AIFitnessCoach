@@ -194,7 +194,7 @@ async def generate_next_day_background(user_id: str, target_date: str):
                 ).eq(
                     "is_active", True
                 ).maybe_single().execute()
-                if active_result.data:
+                if active_result and active_result.data:
                     gym_profile_id = active_result.data.get("id")
             except Exception as e:
                 logger.warning(f"Failed to get active gym profile: {e}", exc_info=True)

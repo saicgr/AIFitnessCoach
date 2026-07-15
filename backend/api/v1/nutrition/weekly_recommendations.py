@@ -248,7 +248,7 @@ async def generate_weekly_recommendation(request: Request, user_id: str, current
             .maybe_single()\
             .execute()
 
-        prefs = prefs_result.data or {}
+        prefs = (prefs_result.data if prefs_result else None) or {}
         current_goal = prefs.get("nutrition_goal", "maintain")
         current_calories = prefs.get("target_calories", 2000)
         current_protein = prefs.get("target_protein_g", 150)

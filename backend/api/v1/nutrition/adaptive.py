@@ -105,7 +105,7 @@ async def get_adaptive_calculation(user_id: str, current_user: dict = Depends(ge
             .maybe_single()\
             .execute()
 
-        if not result.data:
+        if not result or not result.data:
             return None
 
         data = result.data

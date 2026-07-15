@@ -54,7 +54,7 @@ async def trial_status_v5(current_user: dict = Depends(get_current_user)):
             .maybe_single()\
             .execute()
 
-        if not result.data:
+        if not result or not result.data:
             return TrialStatusV5Response(is_in_trial=False)
 
         row = result.data
@@ -131,7 +131,7 @@ async def trial_summary(current_user: dict = Depends(get_current_user)):
             .maybe_single()\
             .execute()
 
-        user_row = user_result.data or {}
+        user_row = (user_result.data if user_result else None) or {}
         trial_start_str = user_row.get("trial_start_date")
         if not trial_start_str:
             # No trial recorded — return zero summary rather than error
@@ -218,7 +218,7 @@ async def trial_summary(current_user: dict = Depends(get_current_user)):
                 .eq("user_id", user_id)\
                 .maybe_single()\
                 .execute()
-            streak_days = streak_result.data.get("current_streak", 0) if streak_result.data else 0
+            streak_days = streak_result.data.get("current_streak", 0) if streak_result and streak_result.data else 0
         except Exception:
             streak_days = workouts_completed
 

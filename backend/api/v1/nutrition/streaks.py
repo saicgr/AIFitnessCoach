@@ -55,7 +55,7 @@ async def get_nutrition_streak(user_id: str, current_user: dict = Depends(get_cu
                     .eq("id", user_id) \
                     .maybe_single() \
                     .execute()
-                tz_str = (user_tz_result.data or {}).get("timezone") or "UTC"
+                tz_str = ((user_tz_result.data if user_tz_result else None) or {}).get("timezone") or "UTC"
                 # Standardize on ZoneInfo via _safe_zone (the codebase-wide
                 # helper) instead of pytz — same behavior, no extra dependency,
                 # and a bad tz string degrades to UTC instead of raising.
@@ -143,7 +143,7 @@ async def use_streak_freeze(request: Request, user_id: str, current_user: dict =
             .maybe_single()\
             .execute()
 
-        if not result.data:
+        if not result or not result.data:
             raise HTTPException(status_code=404, detail="Streak not found")
 
         data = result.data
