@@ -19,7 +19,8 @@ Reppora-specific guidance lives in **`/Users/saichetangrandhe/Reppora/`** repo. 
 
 ## Critical invariants (apply to ALL flavors)
 
-- **DO NOT run `dart run build_runner build`** — analyzer 7.x crash with Dart 3.11 dot-shorthand AST. The 13 `.g.dart` files under `lib/data/local/` MUST stay in git. Flutter pinned to **3.38.10 / Dart 3.10.9** via `/opt/homebrew/Caskroom/flutter/3.38.3/`.
+- **Flutter is now 3.44.6 / Dart 3.12.2** (upgraded 2026-07-15 from 3.38.10 / Dart 3.10.9; the Caskroom dir is still named `/opt/homebrew/Caskroom/flutter/3.38.3/` but contains 3.44.6 — the run scripts' path still works). The 3.38→3.44 jump required `font_awesome_flutter ^10→^11` (IconData became a `final class`; FA icons are now `FaIconData`, rendered via `FaIcon`, never material `Icon`). CI (`android-release.yml`) pins `3.44.6`.
+- **STILL DO NOT run `dart run build_runner build`** — the original blocker (analyzer 7.x crash on Dart 3.11 dot-shorthand AST) predates this SDK and has NOT been re-verified on 3.12.2. The 13 `.g.dart` files under `lib/data/local/` MUST stay in git and be hand-edited; the committed-`.g.dart` approach is SDK-independent, so there is no need to run build_runner regardless.
 - **iOS Runner.xcodeproj phase order:** `Embed Foundation Extensions` MUST come BEFORE `Thin Binary` in `buildPhases`. Reverting to Xcode default → "Cycle inside Runner" build failure (Live Activity dependency).
 - **iOS `flutter_gemma` strip script** must run at build time (Xcode build phase id `B1A5BEEF1F901F6004384FC0`), not just `pod install` — `flutter run` regenerates `GeneratedPluginRegistrant.m` between pod install and compile.
 - **Widget app-group ID** = `group.com.aifitnesscoach.widgets` (NOT `group.com.fitwiz.widgets`). Widget URL scheme = `fitwiz://`. New flavor schemes: `reppora://` (client), `reppora-coach://` (coach) — register in Info.plist + AndroidManifest before any widget work.

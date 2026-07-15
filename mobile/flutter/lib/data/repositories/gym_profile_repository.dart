@@ -375,7 +375,7 @@ class GymProfileRepository {
 //
 // Plain Dart classes (no freezed / json_serializable) because:
 //   * this file is not currently using code-gen, and
-//   * build_runner is forbidden by project policy (Flutter 3.38.10 pin).
+//   * build_runner is forbidden by project policy (Flutter 3.44.6 pin).
 //
 // Tradeoff: hand-written fromJson/toJson. Kept minimal and defensive —
 // unknown / missing fields default to sensible empty values instead of

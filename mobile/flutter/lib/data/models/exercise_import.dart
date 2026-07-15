@@ -10,7 +10,7 @@
 ///
 /// These are plain Dart classes — no code generation. The canonical
 /// `.g.dart` files for this project are committed, Flutter is pinned to
-/// 3.38.10, and we must NEVER run `build_runner`.
+/// 3.44.6, and we must NEVER run `build_runner`.
 library;
 
 import 'custom_exercise.dart';

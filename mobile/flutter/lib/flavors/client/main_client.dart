@@ -11,7 +11,7 @@
 //   - "Powered by Reppora" footer (non-removable on Free tier)
 //
 // DO NOT run `dart run build_runner build` — committed .g.dart files only.
-// Flutter pinned 3.38.10 / Dart 3.10.9.
+// Flutter pinned 3.44.6 / Dart 3.12.2.
 
 import 'package:flutter/material.dart';
 

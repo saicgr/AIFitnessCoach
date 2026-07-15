@@ -5,7 +5,7 @@
 //
 // The Coach flavor is REPLY/MONITOR only — program building stays on the
 // web app per docs/strategy/STRATEGY.md.
-// DO NOT run `dart run build_runner build`. Flutter pinned 3.38.10.
+// DO NOT run `dart run build_runner build`. Flutter pinned 3.44.6.
 
 import 'package:flutter/material.dart';
 

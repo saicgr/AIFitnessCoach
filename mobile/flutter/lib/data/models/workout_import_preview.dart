@@ -1,7 +1,7 @@
 /// Workout history import — PREVIEW shapes.
 ///
 /// Models the JSON returned by `POST /workout-history/import/preview`.
-/// Hand-written because this repo pins Flutter at 3.38.10 and deliberately
+/// Hand-written because this repo pins Flutter at 3.44.6 and deliberately
 /// avoids `build_runner` (see `project_codegen_gotcha.md`). The generated
 /// [WorkoutImportPreview.fromJson] and friends live in the .g.dart file.
 library;

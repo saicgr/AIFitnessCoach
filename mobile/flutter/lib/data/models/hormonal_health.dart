@@ -736,7 +736,7 @@ class HormonalRecommendation {
 // CYCLE TRACKING — Phase B
 // ----------------------------------------------------------------------------
 // The classes below are HAND-WRITTEN (no @JsonSerializable / no generated
-// `.g.dart` part) on purpose: this repo pins Flutter 3.38.10 and commits its
+// `.g.dart` part) on purpose: this repo pins Flutter 3.44.6 and commits its
 // `.g.dart` files, and `build_runner` is intentionally not runnable here.
 // Field names mirror the backend Pydantic models in
 // `backend/models/hormonal_health.py` (snake_case JSON keys) exactly.
