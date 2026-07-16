@@ -85,9 +85,9 @@ class SentryService {
 
           // Privacy: redact text inputs and images so screenshots/hierarchies
           // don't leak PII (food names the user is typing, coach chat, etc.).
-          // Sentry 8.x still exposes this under `experimental` until 9.x.
-          options.experimental.privacy.maskAllText = true;
-          options.experimental.privacy.maskAllImages = true;
+          // Sentry 9.x promoted this out of `experimental` → `options.privacy`.
+          options.privacy.maskAllText = true;
+          options.privacy.maskAllImages = true;
 
           options.sendDefaultPii = false;
           options.enableAutoSessionTracking = true;
