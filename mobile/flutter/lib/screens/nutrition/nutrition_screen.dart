@@ -1814,15 +1814,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       logId,
       // Transform: FoodLog has no copyWith (generated model) — rebuild the row
       // with every field preserved and only the edited macros/calories
-      // swapped. `foodItems` is kept as-is; the background network response is
-      // the source of truth for the per-item breakdown, and the rings only
-      // read the row-level totals below.
+      // swapped. When the caller passes an updated `foodItems` (e.g. a child
+      // item was removed), apply it so the visible child rows change in the
+      // same frame; otherwise keep the existing breakdown. The background
+      // network response remains the source of truth for the per-item macros.
       (m) => FoodLog(
         id: m.id,
         userId: m.userId,
         mealType: m.mealType,
         loggedAt: m.loggedAt,
-        foodItems: m.foodItems,
+        foodItems: foodItems != null
+            ? foodItems.map((e) => FoodItem.fromJson(e)).toList()
+            : m.foodItems,
         totalCalories: calories,
         proteinG: proteinG,
         carbsG: carbsG,

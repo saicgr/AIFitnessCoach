@@ -1172,8 +1172,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     // Recent/Saved/Food-DB browser gets real scroll room under the fixed chrome
     // (quick-log rail + search field + tabs above, action row + Analyze + macro
     // bar below) — at 0.85 it only showed ~3 rows.
+    // Keyboard up: take the FULL height available above the keyboard (no extra
+    // fudge). The handle + header + fixed footer (5 capture chips + Analyze +
+    // macro bar) can't shrink, so the earlier −20 reservation left them ~29px
+    // short of the sheet → bottom overflow. Using all the space above the
+    // keyboard (plus the keyboard-aware footer trim below) fits with headroom.
     final sheetHeight = keyboardVisible
-        ? screenHeight - keyboardHeight - MediaQuery.of(context).padding.top - 20
+        ? screenHeight - keyboardHeight - MediaQuery.of(context).padding.top
         : screenHeight * 0.92;
 
     return PopScope(

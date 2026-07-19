@@ -715,9 +715,19 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                       .set(_kFoodBrowserLastUsedKey, filter.name);
                 },
                 onFoodLogged: () {
-                  ref
-                      .read(dailyNutritionProvider(todayNutritionKey()).notifier)
-                      .load(widget.userId);
+                  // Defer the daily-nutrition reload out of the current frame.
+                  // Running it synchronously tears down the still-watched
+                  // autoDispose `foodSearchStateProvider` (watched by the panel
+                  // deep in this callback's subtree) mid-frame, tripping the
+                  // framework assertion `_dependents.isEmpty is not true`. A
+                  // post-frame callback runs it after the panel's add-success
+                  // rebuild settles.
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    ref
+                        .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+                        .load(widget.userId);
+                  });
                 },
                 selectedDate: widget.selectedDate,
                 // Thread the ranked one-tap smart-pill list (owned by this

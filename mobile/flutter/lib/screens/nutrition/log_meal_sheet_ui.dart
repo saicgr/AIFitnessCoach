@@ -131,6 +131,15 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
 
   Widget _buildBottomBar(bool isDark) {
     final hasText = _descriptionController.text.trim().isNotEmpty;
+    // Keyboard-open: tighten the footer's fixed vertical gaps so the chips +
+    // Analyze CTA + macro bar clear the shrunken sheet with zero overflow. The
+    // safe-area inset is already absorbed by the keyboard, so drop it too.
+    final keyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    final double topPad = keyboardVisible ? 4 : 8;
+    final double ctaGap = keyboardVisible ? 4 : 8;
+    final double macroGap = keyboardVisible ? 2 : 4;
+    final double bottomPad =
+        keyboardVisible ? 4 : MediaQuery.of(context).padding.bottom + 4;
 
     // Solid footer surface. The capture chips and Analyze pill are themselves
     // translucent (tinted Material on the glass sheet); without an opaque
@@ -147,7 +156,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
         ),
       ),
       child: Padding(
-      padding: EdgeInsets.fromLTRB(12, 8, 12, MediaQuery.of(context).padding.bottom + 4),
+      padding: EdgeInsets.fromLTRB(12, topPad, 12, bottomPad),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -226,7 +235,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
             ],
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: ctaGap),
 
           // Analyze — THE one reserved-accent primary CTA for this sheet.
           ZealovaButton(
@@ -237,7 +246,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
             height: 48,
           ),
 
-          const SizedBox(height: 4),
+          SizedBox(height: macroGap),
 
           // Daily macro summary pill
           _buildDailyMacroBar(isDark),

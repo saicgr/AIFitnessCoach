@@ -1694,7 +1694,7 @@ class LoggedMealsSection extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     bool undone = false;
     messenger.clearSnackBars();
-    messenger.showSnackBar(
+    final snackBarController = messenger.showSnackBar(
       SnackBar(
         content: Text(AppLocalizations.of(context).loggedMealsRemovedItem(parent.foodItems[itemIdx].name)),
         action: SnackBarAction(label: AppLocalizations.of(context).logMealSheetUndo, onPressed: () { undone = true; }),
@@ -1702,6 +1702,9 @@ class LoggedMealsSection extends StatelessWidget {
       ),
     );
     Future.delayed(const Duration(seconds: 4), () {
+      // Force-dismiss the toast (TickerMode freeze under the IndexedStack shell
+      // otherwise leaves the undo toast on screen indefinitely).
+      if (!undone) snackBarController.close();
       if (undone) return;
       if (parent.foodItems.length <= 1) {
         onDeleteMeal(parent.id);
@@ -3389,13 +3392,16 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
     });
     _commitFullUpdate(editField: 'removed_item', editIndex: 0, prevValue: removedCal, newValue: 0);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    final removalController = ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Removed $removedName'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ),
     );
+    // Force-dismiss after its window so a frozen entrance animation (TickerMode)
+    // can't strand the toast on screen.
+    Future.delayed(const Duration(seconds: 4), removalController.close);
   }
 
   void _showSwapOrAddDialog({int? replaceIndex}) {
@@ -4774,7 +4780,7 @@ class _FoodGroup extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     bool undone = false;
     messenger.clearSnackBars();
-    messenger.showSnackBar(
+    final snackBarController = messenger.showSnackBar(
       SnackBar(
         content: Text('Removed ${parent.foodItems[idx].name}'),
         action: SnackBarAction(label: 'Undo', onPressed: () { undone = true; }),
@@ -4782,6 +4788,11 @@ class _FoodGroup extends StatelessWidget {
       ),
     );
     await Future.delayed(const Duration(seconds: 4));
+    // Force-dismiss the toast. Its own 4s duration only counts down after the
+    // entrance animation completes — if this tab goes offstage in the shell's
+    // IndexedStack, TickerMode freezes that animation and the toast lingers
+    // until manually swiped. close() is safe if it already dismissed.
+    if (!undone) snackBarController.close();
     if (undone) return false;
 
     if (parent.foodItems.length <= 1) {
