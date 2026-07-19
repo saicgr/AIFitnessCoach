@@ -32,13 +32,15 @@ import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../nutrition/log_meal_sheet.dart';
+import '../../workout/widgets/hydration_dialog.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/ai_settings_provider.dart';
 import '../../../data/providers/coach_card_visibility_provider.dart';
 import '../../../data/providers/contextual_nudge_provider.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
 import '../../../data/providers/sub_card_shown_today_provider.dart';
-import '../../../data/services/health_service.dart' show healthSyncProvider;
+import '../../../data/services/health_service.dart'
+    show healthSyncProvider, dailyActivityProvider;
 import '../../../widgets/coach/coach_contextual_nudge_row.dart';
 import '../../../widgets/coach/sub_card_ranker.dart';
 import '../../../core/widgets/skeleton/skeleton_box.dart';
@@ -170,8 +172,18 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   /// signature-v2 typography rather than inventing a bespoke surface. Hidden
   /// when no calorie target exists yet (e.g. a fresh install pre-onboarding).
   Widget _statBand(ThemeColors c) {
-    final prefs = ref.watch(nutritionPreferencesProvider);
-    final nut = ref.watch(dailyNutritionProvider(todayNutritionKey()));
+    // Select only the fields this band reads: the four target-related prefs
+    // fields (record field names mirror the getters, so the body below is
+    // unchanged) + the day's nutrition summary. weightHistory / entry-list
+    // churn on those providers no longer rebuilds the band.
+    final prefs = ref.watch(nutritionPreferencesProvider.select((p) => (
+          hasConfiguredTargets: p.hasConfiguredTargets,
+          currentCalorieTarget: p.currentCalorieTarget,
+          currentProteinTarget: p.currentProteinTarget,
+          dynamicTargetsPending: p.dynamicTargetsPending,
+        )));
+    final nutSummary = ref.watch(
+        dailyNutritionProvider(todayNutritionKey()).select((n) => n.summary));
     // No configured targets yet (e.g. onboarding skipped/interrupted → no
     // nutrition_preferences row) → hide the band entirely. Never fabricate a
     // 2000/150 placeholder — that's why we gate on hasConfiguredTargets, not on
@@ -187,8 +199,8 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     // jump. Resolves in ~300-500ms, then never jumps. (dynamicTargetsPending)
     final pending = prefs.dynamicTargetsPending;
 
-    final eatenCal = (nut.summary?.totalCalories ?? 0).round();
-    final eatenP = (nut.summary?.totalProteinG ?? 0).round();
+    final eatenCal = (nutSummary?.totalCalories ?? 0).round();
+    final eatenP = (nutSummary?.totalProteinG ?? 0).round();
     final calLeft = (calTarget - eatenCal).clamp(0, calTarget);
     final pLeft = pTarget > 0 ? (pTarget - eatenP).clamp(0, pTarget) : 0;
     final nf = NumberFormat.decimalPattern();
@@ -258,10 +270,17 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
 
     // 1) Protein target progress (nutrition) → tap opens the log-meal sheet,
     //    the same surface the "Fuel before you train" nudge used.
-    final prefs = ref.watch(nutritionPreferencesProvider);
-    final nut = ref.watch(dailyNutritionProvider(todayNutritionKey()));
+    // Only the protein target + the pending flag drive this task; select them
+    // (record field names mirror the getters) so unrelated prefs churn doesn't
+    // rebuild, and select just the day's summary off the nutrition provider.
+    final prefs = ref.watch(nutritionPreferencesProvider.select((p) => (
+          currentProteinTarget: p.currentProteinTarget,
+          dynamicTargetsPending: p.dynamicTargetsPending,
+        )));
+    final nutSummary = ref.watch(
+        dailyNutritionProvider(todayNutritionKey()).select((n) => n.summary));
     final pTarget = prefs.currentProteinTarget ?? 0;
-    final pCur = (nut.summary?.totalProteinG ?? 0).round();
+    final pCur = (nutSummary?.totalProteinG ?? 0).round();
     // Skip the protein task while today's target is still resolving — its label
     // embeds the number ("Hit 128g protein"), so rendering it now would flash
     // the base value then re-render with the boosted one. Reappears (correct)
@@ -283,7 +302,8 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
 
     // 2) Today's workout (start/open it) → push the active workout screen,
     //    reusing the `todayWorkoutProvider` value read here.
-    final tw = ref.watch(todayWorkoutProvider).valueOrNull?.todayWorkout;
+    final tw = ref.watch(
+        todayWorkoutProvider.select((a) => a.valueOrNull?.todayWorkout));
     final twName = tw?.name ?? '';
     if (twName.isNotEmpty && twName != 'Generating...') {
       final done = tw?.isCompleted == true;
@@ -307,8 +327,9 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       ));
     }
 
-    // 3) Hydration (log a drink) → jump to the Nutrition water card.
-    final water = ref.watch(hydrationProvider).todaySummary;
+    // 3) Hydration (log a drink) → open the real hydration tracker sheet in
+    //    place (same flow as the Nutrition "Log water" card), not a tab jump.
+    final water = ref.watch(hydrationProvider.select((h) => h.todaySummary));
     final waterMl = water?.totalMl ?? 0;
     tasks.add(_TodoTask(
       icon: Icons.local_drink_rounded,
@@ -319,11 +340,24 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           ? "You're well hydrated today. Keep sipping."
           : "${(waterMl / 1000).toStringAsFixed(1)}L logged so far — top up toward ~2L.",
       actionLabel: 'Log water',
-      onTap: () => context.go('/nutrition?fuelSection=water'),
+      onTap: () async {
+        final result = await showHydrationDialog(
+          context: context,
+          totalIntakeMl: ref.read(hydrationProvider).todaySummary?.totalMl ?? 0,
+        );
+        if (result == null) return;
+        final userId = await ref.read(apiClientProvider).getUserId();
+        if (userId == null) return;
+        await ref.read(hydrationProvider.notifier).quickLog(
+              userId: userId,
+              drinkType: result.drinkType.name,
+              amountMl: result.amountMl,
+            );
+      },
     ));
 
     // 4) Last night's sleep (log it) → open the sleep detail screen.
-    final sleep = ref.watch(sleepScoreProvider).valueOrNull;
+    final sleep = ref.watch(sleepScoreProvider.select((a) => a.valueOrNull));
     final logged = sleep?.hasData ?? false;
     final mins = sleep?.summary.totalMinutes ?? 0;
     tasks.add(_TodoTask(
@@ -1787,6 +1821,79 @@ class _CoachChromeIconButton extends StatelessWidget {
   }
 }
 
+/// Overlay the live device step count onto the coach card's server-built steps
+/// blocks. The backend `Steps today` metric + steps chart read
+/// `daily_activity.steps`, which lags the live Health Connect / HealthKit value
+/// Home's steps pill shows (the sync that stamps the DB row is consent-gated and
+/// can trail the device). When the live count is present AND higher than the
+/// server value (steps only accrue through the day) we swap it into the metric's
+/// value, recompute the trailing-average subtext + delta from the same series,
+/// and replace the chart's last point — so the coach card matches Home instead
+/// of a stale number. NEVER fabricates: absent/lower live data leaves the
+/// server blocks untouched. Only touches blocks whose `spec.unit == 'steps'`.
+List<Map<String, dynamic>> _overlayLiveSteps(
+    List<Map<String, dynamic>> blocks, int? liveSteps) {
+  if (liveSteps == null || liveSteps <= 0) return blocks;
+
+  num serverToday = 0;
+  List<num>? chartPoints;
+  for (final b in blocks) {
+    final spec = b['spec'];
+    if (spec is! Map || spec['unit'] != 'steps') continue;
+    if (b['type'] == 'metric') {
+      serverToday = (spec['value'] as num?) ?? serverToday;
+    } else if (b['type'] == 'chart' && spec['points'] is List) {
+      chartPoints = (spec['points'] as List).whereType<num>().toList();
+    }
+  }
+  if (serverToday == 0 && chartPoints != null && chartPoints.isNotEmpty) {
+    serverToday = chartPoints.last;
+  }
+  // Server already fresh (or ahead) — nothing to correct.
+  if (liveSteps <= serverToday) return blocks;
+
+  int? newAvg;
+  if (chartPoints != null && chartPoints.isNotEmpty) {
+    final pts = List<num>.from(chartPoints);
+    pts[pts.length - 1] = liveSteps;
+    newAvg = (pts.reduce((a, b) => a + b) / pts.length).round();
+  }
+
+  final fmt = NumberFormat('#,###');
+  final patched = <Map<String, dynamic>>[];
+  for (final b in blocks) {
+    final spec = b['spec'];
+    if (spec is! Map || spec['unit'] != 'steps') {
+      patched.add(b);
+      continue;
+    }
+    final newSpec = Map<String, dynamic>.from(spec);
+    if (b['type'] == 'metric') {
+      newSpec['value'] = liveSteps;
+      if (newAvg != null && chartPoints != null) {
+        final diff = liveSteps - newAvg;
+        newSpec['subtext'] = '${chartPoints.length}-day avg ${fmt.format(newAvg)}';
+        newSpec['delta'] = {
+          'value': diff.abs(),
+          'unit': 'steps',
+          'direction': diff == 0 ? 'flat' : (diff > 0 ? 'up' : 'down'),
+        };
+      } else {
+        // No series to recompute against — drop the now-inconsistent delta.
+        newSpec.remove('delta');
+      }
+    } else if (b['type'] == 'chart' && newSpec['points'] is List) {
+      final np = List<dynamic>.from(newSpec['points'] as List);
+      if (np.isNotEmpty) np[np.length - 1] = liveSteps;
+      newSpec['points'] = np;
+    }
+    final nb = Map<String, dynamic>.from(b);
+    nb['spec'] = newSpec;
+    patched.add(nb);
+  }
+  return patched;
+}
+
 /// Swipeable carousel of the coach card's grounded graphs — one visible at a
 /// time with page dots. When health is NOT connected the user only has one real
 /// graph (nutrition), so we append "connect" prompt pages for the health topics
@@ -1834,11 +1941,19 @@ class _BlocksCarouselState extends ConsumerState<_BlocksCarousel> {
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
-    final connected = ref.watch(healthSyncProvider).isConnected;
+    final connected =
+        ref.watch(healthSyncProvider.select((s) => s.isConnected));
+
+    // The server steps block reads `daily_activity.steps`, which lags the live
+    // device count Home shows. Overlay live steps so the coach card matches
+    // Home instead of a stale value (never fabricates — see helper).
+    final liveSteps =
+        ref.watch(dailyActivityProvider.select((s) => s.today?.steps));
+    final blocks = _overlayLiveSteps(widget.blocks, liveSteps);
 
     // Real graph pages (one per backend block).
     final pages = <Widget>[
-      for (final b in widget.blocks)
+      for (final b in blocks)
         Align(
           alignment: Alignment.topCenter,
           child: GenericBlocksRenderer(blocks: [b], compact: true),
@@ -1860,9 +1975,9 @@ class _BlocksCarouselState extends ConsumerState<_BlocksCarousel> {
 
     if (pages.length <= 1) {
       // Single real graph, nothing to swipe — render it inline (no dots).
-      return widget.blocks.isEmpty
+      return blocks.isEmpty
           ? const SizedBox.shrink()
-          : GenericBlocksRenderer(blocks: widget.blocks, compact: true);
+          : GenericBlocksRenderer(blocks: blocks, compact: true);
     }
 
     return Column(

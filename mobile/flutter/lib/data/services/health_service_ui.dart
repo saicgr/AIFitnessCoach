@@ -290,8 +290,10 @@ extension HealthServiceExt on HealthService {
   /// other session of that wake date becomes a nap.
   ///
   /// Each session's points are aggregated through [aggregateSleepSummary]
-  /// individually; because one session never overlaps itself, the
-  /// multi-source overlap pre-pass inside the aggregator is a no-op here.
+  /// individually; the aggregator's own overlap pre-pass is a no-op on a
+  /// single session, so [dedupeOverlappingSessions] runs FIRST across the
+  /// night's sessions to drop multi-source duplicates before they're summed
+  /// as naps (otherwise a watch + phone double-record inflates the total ~2×).
   ///
   /// The uuid-grouping + wake-date-bucketing is shared with
   /// [getDailySleepByWakeDate] via [bucketSleepPointsByWakeDate].
@@ -318,14 +320,18 @@ extension HealthServiceExt on HealthService {
 
       final nights = <DailySleep>[];
       byNight.forEach((wakeDate, nightSessions) {
+        // Drop multi-source duplicate sessions of the same night BEFORE
+        // splitting main/naps, so a watch + phone double-record isn't summed
+        // as a bogus nap (the primary cause of ~2× inflated totals).
+        final sessions = dedupeOverlappingSessions(nightSessions);
         // Longest session (by wall-clock span) is the main sleep; the rest
         // are naps. Sort descending by span so index 0 is the main sleep
         // and naps stay longest-first.
-        nightSessions.sort((a, b) => _sessionSpanMinutes(b)
+        sessions.sort((a, b) => _sessionSpanMinutes(b)
             .compareTo(_sessionSpanMinutes(a)));
 
-        final mainSleep = aggregateSleepSummary(nightSessions.first);
-        final naps = nightSessions
+        final mainSleep = aggregateSleepSummary(sessions.first);
+        final naps = sessions
             .skip(1)
             .map((pts) => aggregateSleepSummary(pts))
             .toList();
@@ -455,6 +461,84 @@ extension HealthServiceExt on HealthService {
     if (start == null || end == null) return 0;
     final span = end.difference(start).inMinutes;
     return span > 0 ? span : 0;
+  }
+
+  /// Drop multi-source DUPLICATE sessions of the same night before they are
+  /// summed as "naps". Two apps tracking one night (a watch + a phone bedtime
+  /// detector, a Google Fit mirror) each write their own SleepSessionRecord
+  /// with a DISTINCT uuid; summing both double-counts the night. This mirrors
+  /// the pairwise overlap pre-pass inside [aggregateSleepSummary] (which is a
+  /// no-op in the per-session history path because each session is aggregated
+  /// individually) but operates across whole sessions: drop the shorter of any
+  /// two sessions whose `[start,end]` envelopes overlap by more than 50% of the
+  /// SHORTER span. Deterministic — on equal span keep the earlier-starting
+  /// session. Disjoint sessions (genuine naps / separate nights) are untouched,
+  /// so single-source nights pass through unchanged.
+  @visibleForTesting
+  List<List<HealthDataPoint>> dedupeOverlappingSessions(
+      List<List<HealthDataPoint>> sessions) {
+    if (sessions.length < 2) return sessions;
+
+    DateTime? startOf(List<HealthDataPoint> pts) {
+      DateTime? s;
+      for (final p in pts) {
+        if (s == null || p.dateFrom.isBefore(s)) s = p.dateFrom;
+      }
+      return s;
+    }
+
+    DateTime? endOf(List<HealthDataPoint> pts) {
+      DateTime? e;
+      for (final p in pts) {
+        if (e == null || p.dateTo.isAfter(e)) e = p.dateTo;
+      }
+      return e;
+    }
+
+    final dropped = <int>{};
+    for (var i = 0; i < sessions.length; i++) {
+      if (dropped.contains(i)) continue;
+      for (var j = i + 1; j < sessions.length; j++) {
+        if (dropped.contains(j)) continue;
+        final aStart = startOf(sessions[i]);
+        final aEnd = endOf(sessions[i]);
+        final bStart = startOf(sessions[j]);
+        final bEnd = endOf(sessions[j]);
+        if (aStart == null || aEnd == null || bStart == null || bEnd == null) {
+          continue;
+        }
+        final aSpan = aEnd.difference(aStart).inMinutes;
+        final bSpan = bEnd.difference(bStart).inMinutes;
+        if (aSpan <= 0 || bSpan <= 0) continue;
+
+        // Intersection of the two [start,end] intervals.
+        final overlapStart = aStart.isAfter(bStart) ? aStart : bStart;
+        final overlapEnd = aEnd.isBefore(bEnd) ? aEnd : bEnd;
+        final overlapMin = overlapEnd.difference(overlapStart).inMinutes;
+        if (overlapMin <= 0) continue; // disjoint — real nap / separate night
+
+        final shorterSpan = aSpan < bSpan ? aSpan : bSpan;
+        // More than 50% of the SHORTER span overlapping ⇒ same night.
+        if (overlapMin * 2 <= shorterSpan) continue;
+
+        // Drop the shorter; on equal span keep the earlier-starting session.
+        int loser;
+        if (aSpan != bSpan) {
+          loser = aSpan < bSpan ? i : j;
+        } else {
+          loser = aStart.isAfter(bStart) ? i : j;
+        }
+        dropped.add(loser);
+        if (loser == i) break; // i is gone — stop pairing it further
+      }
+    }
+
+    if (dropped.isEmpty) return sessions;
+    final kept = <List<HealthDataPoint>>[];
+    for (var i = 0; i < sessions.length; i++) {
+      if (!dropped.contains(i)) kept.add(sessions[i]);
+    }
+    return kept;
   }
 
 
