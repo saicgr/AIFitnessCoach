@@ -42,9 +42,9 @@ class BodyCompMilestoneCard extends ConsumerWidget {
     String resolvedLabel = milestoneLabel ?? '';
     String resolvedBody = body ?? '';
     if (milestoneLabel == null || body == null) {
-      final state = ref.watch(measurementsProvider);
-      final history =
-          state.historyByType[MeasurementType.weight] ?? const [];
+      final history = ref.watch(measurementsProvider
+              .select((s) => s.historyByType[MeasurementType.weight])) ??
+          const [];
       if (history.length < 2) return const SizedBox.shrink();
       // Repository sorts history newest-first; oldest is the last entry.
       final newest = history.first;

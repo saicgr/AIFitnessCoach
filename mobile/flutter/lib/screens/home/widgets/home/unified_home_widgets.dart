@@ -1269,11 +1269,13 @@ class _WorkoutHeroIntensityLine extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sleepAsync = ref.watch(sleepScoreProvider);
-    final historyAsync = ref.watch(userHistorySnapshotProvider);
-
-    final sleepScore = sleepAsync.valueOrNull?.score?.total;
-    final history = historyAsync.valueOrNull;
+    // Select only the derived signals this line actually reads — the sleep
+    // score total and the resolved history snapshot — so pure loading/refresh
+    // ticks on those async providers don't rebuild the intensity pill.
+    final sleepScore = ref
+        .watch(sleepScoreProvider.select((a) => a.valueOrNull?.score?.total));
+    final history =
+        ref.watch(userHistorySnapshotProvider.select((a) => a.valueOrNull));
 
     // No usable signal → render the meta line alone, matching the old card's
     // "we don't fabricate a tier" rule (see `strain_coach_card.dart` :53).

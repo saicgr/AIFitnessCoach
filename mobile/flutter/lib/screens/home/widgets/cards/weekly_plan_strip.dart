@@ -52,7 +52,7 @@ class WeeklyPlanStrip extends ConsumerWidget {
     if (days != null && days!.isNotEmpty) {
       resolvedDays = days!;
     } else {
-      final plan = ref.watch(weeklyPlanProvider).currentPlan;
+      final plan = ref.watch(weeklyPlanProvider.select((s) => s.currentPlan));
       if (plan == null || plan.dailyEntries.isEmpty) {
         return const SizedBox.shrink();
       }

@@ -135,6 +135,10 @@ class ProgressPhotoCard extends ConsumerWidget {
             child: Image.network(
               url,
               fit: BoxFit.cover,
+              // Two-up thumbnails render at ~half screen width; decode to ~2x
+              // that (~400px) rather than the full-resolution progress photo so
+              // the image cache doesn't hold multi-MP bitmaps for a small tile.
+              cacheWidth: 400,
               errorBuilder: (_, __, ___) => Container(
                 color: textMuted.withValues(alpha: 0.1),
                 child: Icon(Icons.image_not_supported, color: textMuted, size: 24),

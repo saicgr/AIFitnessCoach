@@ -21,7 +21,7 @@ class AccountabilityPartnerNudge extends ConsumerWidget {
 
     String? userId;
     try {
-      userId = ref.watch(currentUserProvider).valueOrNull?.id;
+      userId = ref.watch(currentUserProvider.select((u) => u.valueOrNull?.id));
     } catch (_) {}
     if (userId == null) return const SizedBox.shrink();
 

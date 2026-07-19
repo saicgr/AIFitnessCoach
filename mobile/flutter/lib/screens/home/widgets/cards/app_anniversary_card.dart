@@ -33,8 +33,8 @@ class AppAnniversaryCard extends ConsumerWidget {
     // Constructor override (if provided) wins; otherwise compute from auth.
     int resolvedYears = years ?? 0;
     if (years == null) {
-      final user = ref.watch(currentUserProvider).valueOrNull;
-      final createdAtStr = user?.createdAt;
+      final createdAtStr = ref
+          .watch(currentUserProvider.select((u) => u.valueOrNull?.createdAt));
       if (createdAtStr != null && createdAtStr.isNotEmpty) {
         final createdAt = DateTime.tryParse(createdAtStr);
         if (createdAt != null) {

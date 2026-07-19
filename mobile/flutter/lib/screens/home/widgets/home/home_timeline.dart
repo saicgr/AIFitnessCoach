@@ -153,10 +153,15 @@ class HomeTimeline extends ConsumerWidget {
           ));
         } else {
           for (int i = 0; i < events.length; i++) {
-            children.add(_TimelineRow(
-              event: events[i],
-              isLast: i == events.length - 1,
-              c: c,
+            // A5: isolate each row's raster so a sibling row (or the shimmer
+            // sweep / a provider tick) doesn't force the whole feed to
+            // re-rasterise. Covers the now-marker row too (it's a _TimelineRow).
+            children.add(RepaintBoundary(
+              child: _TimelineRow(
+                event: events[i],
+                isLast: i == events.length - 1,
+                c: c,
+              ),
             ));
           }
         }
@@ -1066,12 +1071,12 @@ class _TimelineRow extends StatelessWidget {
   }
 }
 
-/// Compact 12-hour time for the gutter: "8:05a" / "12:30p".
+/// Compact 12-hour time for the gutter: "8:05am" / "12:30pm".
 String _fmtTimeShort(DateTime t) {
   final h24 = t.hour;
   final h12 = h24 % 12 == 0 ? 12 : h24 % 12;
   final m = t.minute.toString().padLeft(2, '0');
-  final ap = h24 < 12 ? 'a' : 'p';
+  final ap = h24 < 12 ? 'am' : 'pm';
   return '$h12:$m$ap';
 }
 

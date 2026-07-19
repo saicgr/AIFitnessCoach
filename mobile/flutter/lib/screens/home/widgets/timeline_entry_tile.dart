@@ -169,6 +169,11 @@ class TimelineEntryTile extends StatelessWidget {
                     entry.attachments.first['url'] as String,
                     width: 44,
                     height: 44,
+                    // Decode to ~2x the 44px render box instead of full source
+                    // resolution — a full-res food/progress JPEG decoded to a
+                    // 44px thumb wastes decode time + image cache memory.
+                    cacheWidth: 88,
+                    cacheHeight: 88,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) =>
                         const SizedBox(width: 44, height: 44),

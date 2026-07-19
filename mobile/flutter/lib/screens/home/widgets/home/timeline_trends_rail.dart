@@ -379,31 +379,35 @@ class _Sparkline extends StatelessWidget {
       minY -= pad;
       maxY += pad;
     }
-    return LineChart(
-      LineChartData(
-        minX: spots.first.x,
-        maxX: spots.last.x,
-        minY: minY,
-        maxY: maxY,
-        gridData: const FlGridData(show: false),
-        titlesData: const FlTitlesData(show: false),
-        borderData: FlBorderData(show: false),
-        lineTouchData: const LineTouchData(enabled: false),
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            curveSmoothness: 0.3,
-            color: color,
-            barWidth: 2,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              color: color.withValues(alpha: 0.10),
+    // Isolate the fl_chart raster into its own layer (mirrors MiniSparkline) so
+    // the sparkline doesn't re-rasterise with the surrounding trend rail.
+    return RepaintBoundary(
+      child: LineChart(
+        LineChartData(
+          minX: spots.first.x,
+          maxX: spots.last.x,
+          minY: minY,
+          maxY: maxY,
+          gridData: const FlGridData(show: false),
+          titlesData: const FlTitlesData(show: false),
+          borderData: FlBorderData(show: false),
+          lineTouchData: const LineTouchData(enabled: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              curveSmoothness: 0.3,
+              color: color,
+              barWidth: 2,
+              isStrokeCapRound: true,
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: color.withValues(alpha: 0.10),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

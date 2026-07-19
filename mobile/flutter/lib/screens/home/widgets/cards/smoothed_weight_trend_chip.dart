@@ -23,10 +23,13 @@ import '../../../../data/providers/nutrition_preferences_provider.dart';
 final smoothedWeightTrendSignalProvider =
     Provider.autoDispose<({double? currentEma, double? priorEma, String unit})>(
         (ref) {
-  final prefs = ref.watch(nutritionPreferencesProvider);
+  // weightHistory is the ONLY nutrition-pref field this signal reads, so
+  // select it — unrelated pref mutations (calorie/protein targets, other-metric
+  // units) no longer recompute the EMA. weightHistory is newest-first
+  // (cf. nutrition_preferences_provider.dart:547).
+  final history =
+      ref.watch(nutritionPreferencesProvider.select((p) => p.weightHistory));
   final unit = ref.watch(weightUnitProvider); // 'lbs' | 'kg'
-  // weightHistory is newest-first (cf. nutrition_preferences_provider.dart:547)
-  final history = prefs.weightHistory;
   if (history.length < 2) {
     return (currentEma: null, priorEma: null, unit: unit);
   }

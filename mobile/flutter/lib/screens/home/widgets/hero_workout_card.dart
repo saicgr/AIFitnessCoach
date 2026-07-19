@@ -1029,9 +1029,18 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(22),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                    child: DecoratedBox(
+                  // A5/perf: blur a COPY of the hero background instead of a
+                  // BackdropFilter (which saveLayer()s the whole scene behind
+                  // the card every frame it's visible). Mirrors the completed
+                  // overlay + the unified_home_widgets completed-hero bg.
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ImageFiltered(
+                        imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        child: _buildBackground(isDark),
+                      ),
+                      DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
@@ -1165,10 +1174,11 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                           ),
                         ],
                       ),
+                      ),
+                      ],
                     ),
                   ),
                 ),
-              ),
             // Program attribution — drawn on TOP of every card state (base
             // start card, missed overlay, completed overlay) so the carousel
             // ALWAYS names the workout's program (AI vs HYROX vs custom).

@@ -21,9 +21,20 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-        child: DecoratedBox(
+      // A5/perf: blur a COPY of the hero background (one image, GPU-cached by
+      // URL via CachedNetworkImage) instead of a BackdropFilter, which
+      // saveLayer()s the entire scene behind the card every frame it's on
+      // screen — a steady-state scroll cost since a completed today-workout
+      // hero shows this overlay on Home. Mirrors the completed-hero background
+      // in unified_home_widgets (`_buildCompletedBackground`).
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: _buildBackground(isDark),
+          ),
+          DecoratedBox(
           // Dark-accent legibility scrim (was a flat 20-25% tint that left the
           // headline + name unreadable over light blurred art). White text now
           // clears contrast in both themes, so the labels below are forced
@@ -121,8 +132,9 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
               ),
             ],
           ),
+          ),
+          ],
         ),
-      ),
     );
   }
 

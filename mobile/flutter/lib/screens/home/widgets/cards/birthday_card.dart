@@ -19,7 +19,7 @@ class BirthdayCard extends ConsumerWidget {
     String? firstName;
     DateTime? dob;
     try {
-      final user = ref.watch(authStateProvider).user;
+      final user = ref.watch(authStateProvider.select((s) => s.user));
       final fullName = (user?.name ?? '').trim();
       if (fullName.isNotEmpty) {
         firstName = fullName.split(RegExp(r'\s+')).first;

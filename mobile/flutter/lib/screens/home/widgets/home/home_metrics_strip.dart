@@ -42,7 +42,9 @@ class HomeMetricsStrip extends ConsumerWidget {
     final steps = ref.watch(metricValueProvider(RingKind.move));
     final sleep = ref.watch(metricValueProvider(RingKind.sleep));
     final ready = ref.watch(metricValueProvider(RingKind.recovery));
-    final score = ref.watch(todayScoreProvider);
+    // Only the numeric score is rendered — select it so a rebuild fires only
+    // when the number changes, not on every other TodayScore field mutating.
+    final scoreValue = ref.watch(todayScoreProvider.select((s) => s.score));
 
     // Per-cell "first load" signal — true only while the cell's underlying
     // source is still fetching AND has produced no value yet. This shows a
@@ -51,20 +53,27 @@ class HomeMetricsStrip extends ConsumerWidget {
     // "no data", isLoading flips false and the cell falls back to a dash. The
     // `&& isEmpty` guard means an already-populated cell never shimmers on a
     // background refresh.
-    final activity = ref.watch(dailyActivityProvider);
-    final sleepAsync = ref.watch(sleepScoreProvider);
-    final recoveryAsync = ref.watch(recoveryProvider);
-    final workoutAsync = ref.watch(todayWorkoutProvider);
+    //
+    // Each async source is watched via `.select` on JUST the loading/has-value
+    // flags it contributes — the strip never reads the sources' actual payloads
+    // (steps/sleep/recovery numbers come from the metricValueProviders above),
+    // so a data refresh that leaves the flags unchanged no longer rebuilds it.
+    final activityLoading =
+        ref.watch(dailyActivityProvider.select((a) => a.isLoading));
+    final (sleepIsLoading, sleepHasValue) = ref
+        .watch(sleepScoreProvider.select((s) => (s.isLoading, s.hasValue)));
+    final (recoveryIsLoading, recoveryHasValue) = ref
+        .watch(recoveryProvider.select((s) => (s.isLoading, s.hasValue)));
+    final (workoutIsLoading, workoutHasValue) = ref
+        .watch(todayWorkoutProvider.select((s) => (s.isLoading, s.hasValue)));
 
-    final stepsLoading = steps.isEmpty && activity.isLoading;
-    final sleepLoading =
-        sleep.isEmpty && sleepAsync.isLoading && !sleepAsync.hasValue;
-    final readyLoading =
-        ready.isEmpty && recoveryAsync.isLoading && !recoveryAsync.hasValue;
+    final stepsLoading = steps.isEmpty && activityLoading;
+    final sleepLoading = sleep.isEmpty && sleepIsLoading && !sleepHasValue;
+    final readyLoading = ready.isEmpty && recoveryIsLoading && !recoveryHasValue;
     // The Today Score always computes (never empty), but its dominant input is
     // the workout plan — shimmer the cell until that first resolves so a fresh
     // sign-in doesn't flash a transient "0" before the real score lands.
-    final scoreLoading = workoutAsync.isLoading && !workoutAsync.hasValue;
+    final scoreLoading = workoutIsLoading && !workoutHasValue;
 
     // Health never connected AND every health cell resolved to "no data":
     // four dead "—" cells at the top of Home read as "the app is broken".
@@ -73,8 +82,9 @@ class HomeMetricsStrip extends ConsumerWidget {
     // keep the CTA from flashing during the brief pre-resolve window on a
     // connected account's cold start; any single populated cell (e.g. a
     // manually-logged sleep) restores the normal 4-cell strip.
-    final sync = ref.watch(healthSyncProvider);
-    final showConnectCta = !sync.isConnected &&
+    final syncConnected =
+        ref.watch(healthSyncProvider.select((s) => s.isConnected));
+    final showConnectCta = !syncConnected &&
         steps.isEmpty &&
         sleep.isEmpty &&
         ready.isEmpty &&
@@ -160,7 +170,7 @@ class HomeMetricsStrip extends ConsumerWidget {
               _divider(c),
               _cell(
                 context, c,
-                value: '${score.score}',
+                value: '$scoreValue',
                 label: 'Score',
                 route: '/health/combined',
                 loading: scoreLoading,
