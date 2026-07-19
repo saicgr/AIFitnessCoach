@@ -509,7 +509,9 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       final key = entry.key;
       final result = entry.value;
       final weightG = (result.servingWeightG ?? result.weightPerUnitG ?? 100.0).round();
-      _logFood('${result.name}, ${weightG}g', key);
+      // Grams lead the description as a portion prefix — a trailing ", 150g"
+      // clause was split into a phantom second item by the backend meal parser.
+      _logFood('${weightG}g ${result.name}', key);
     }
     setState(() {
       _selectedSearchKeys.clear();

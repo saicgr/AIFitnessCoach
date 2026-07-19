@@ -264,8 +264,10 @@ class _NLItemSectionState extends State<_NLItemSection> {
       }
     }
     final modStr = modParts.isNotEmpty ? ' (${modParts.join(", ")})' : '';
-    if (_qty > 1) return '$_qty x $name$modStr, ${_weightG.round()}g';
-    return '$name$modStr, ${_weightG.round()}g';
+    // Lead with the grams (not a trailing ", NNNg") so the backend parser reads
+    // the weight as this food's PORTION, never a second phantom "Food" item.
+    if (_qty > 1) return '$_qty x ${_weightG.round()}g $name$modStr';
+    return '${_weightG.round()}g $name$modStr';
   }
 
   Future<void> _fetchAlternatives(String query) async {

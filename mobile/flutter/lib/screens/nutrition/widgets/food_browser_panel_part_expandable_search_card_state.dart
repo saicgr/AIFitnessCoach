@@ -134,8 +134,11 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
     }
     final modStr = modParts.isNotEmpty ? ' (${modParts.join(", ")})' : '';
     if (widget.isWeightEditable) {
-      if (_qty > 1) return '$_qty x ${widget.result.name}$modStr, ${_weightG.round()}g';
-      return '${widget.result.name}$modStr, ${_weightG.round()}g';
+      // Lead with the grams as a portion prefix (NOT a trailing ", 150g" token)
+      // — the backend meal parser split the trailing comma clause into a phantom
+      // second food item. A leading "150g <name>" reads as one portioned food.
+      if (_qty > 1) return '$_qty x ${_weightG.round()}g ${widget.result.name}$modStr';
+      return '${_weightG.round()}g ${widget.result.name}$modStr';
     }
     if (_qty > 1) return '$_qty x ${widget.result.name}$modStr';
     return '${widget.result.name}$modStr';

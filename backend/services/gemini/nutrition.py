@@ -49,6 +49,53 @@ def compute_meal_inflammation(food_items: List[Dict]) -> tuple[Optional[int], Op
     return (meal_score, meal_upf)
 
 
+# Generic/placeholder names a degraded parse invents for a phantom second item.
+_GENERIC_ITEM_NAMES = {"food", "generic food", "", "item", "meal", "snack"}
+# A bare quantity/portion token ("91g", "400 g", "2 slices", "1 cup") — never a food.
+_PORTION_TOKEN_RE = re.compile(
+    r"^\s*[\d.]+\s*(?:g|kg|oz|ml|serving|cup|slice)s?\s*$", re.IGNORECASE
+)
+
+
+def _is_phantom_item_name(name: Optional[str]) -> bool:
+    """True when `name` is a generic placeholder or a bare portion token —
+    i.e. not a real food, only the debris of a split single-food+portion string."""
+    n = (name or "").strip().lower()
+    return n in _GENERIC_ITEM_NAMES or bool(_PORTION_TOKEN_RE.match(n))
+
+
+def collapse_phantom_food_items(items: List[Dict]) -> List[Dict]:
+    """Drop phantom "Generic Food"/"Food"/pure-portion items that a degraded
+    parse invents when the input is ONE food + its portion string
+    (e.g. "Almond Joy King Size, 91g" → real item + phantom "91g"/"Food").
+
+    Only collapses when there is >1 item AND at least one real (non-phantom)
+    item remains, so a legitimately multi-food log is never touched. The
+    phantom's macros are DROPPED, never folded into the real item: those macros
+    are hallucinated (the model invents ~1-1.5 cal/g for the split-off portion
+    token), so folding them corrupts genuinely-zero-calorie foods — e.g. a
+    "Diet Coke" (0 cal) + phantom "Generic Food" (533 cal) must stay 0 cal, not
+    become 533. At log time the USDA `_enhance_food_items_with_nutrition_db`
+    pass re-derives the real item's macros from the DB anyway. Returns the
+    cleaned list (unchanged object when a no-op).
+    """
+    if not items or len(items) <= 1:
+        return items
+    real = [it for it in items if not _is_phantom_item_name(it.get("name"))]
+    phantoms = [it for it in items if _is_phantom_item_name(it.get("name"))]
+    if not phantoms or not real:
+        # Nothing to collapse, or every item looks generic — leave as-is.
+        return items
+
+    logger.info(
+        "[Gemini] Collapsed %d phantom food item(s) %r; kept real items %r",
+        len(phantoms),
+        [p.get("name") for p in phantoms],
+        [r.get("name") for r in real],
+    )
+    return real
+
+
 class NutritionMixin:
     """Mixin providing nutrition analysis methods for GeminiService."""
 
@@ -694,6 +741,25 @@ FOOD NAMING RULES (CRITICAL — lookup accuracy depends on this):
 - NEVER canonicalize to a shorter or more generic name. The DB has distinct rows
   for specific variants with very different macros — stripping a qualifier yields
   the wrong row.
+- NEVER output a placeholder name like "Generic Food", "Unknown", "Food", "Food Item",
+  or "Meal". If you cannot pin down the exact dish, name it using the user's OWN WORDS
+  verbatim (e.g. user wrote "355g leftover stew" → name it "Leftover Stew"), plus any
+  identifiable qualifier. A specific-but-uncertain name is ALWAYS better than a generic
+  placeholder — the placeholder matches nothing in the food DB and shows the user a
+  useless label.
+
+ONE FOOD + ITS PORTION (CRITICAL — do NOT invent a phantom item):
+- The input usually describes ONE food together with its portion, e.g.
+  "Almond Joy King Size, 91g" or "400 g chicken breast" or "oatmeal, 1 cup".
+- A leading OR trailing quantity token — a number followed by a unit
+  ("91g", "400 g", "250ml", "2 slices", "1 cup", "3 oz", "1 serving") — is the
+  PORTION for that single food. Fold it into that food's weight_g / count.
+  It MUST NOT become its own food_items entry.
+- NEVER emit a second item that is a bare quantity ("91g") or a placeholder name
+  ("Food", "Generic Food") — that phantom matches nothing and shows the user a
+  bogus "2 ITEMS" split.
+- Emit MULTIPLE food_items ONLY when the text clearly lists DISTINCT foods
+  ("burger and fries", "chicken, rice and beans"), never for one food + its portion.
 
 INSTRUCTION FOLLOWING (when the input contains a correction or instruction):
 - The input may be a plain food description OR carry an explicit instruction/correction
@@ -738,7 +804,12 @@ ITEM NAME LANGUAGE (CRITICAL):
   distinct products (Spicy McChicken ≠ McChicken, Sweet Potato ≠ Potato, Plain Yogurt ≠ Yogurt).
 - COMMA IS AN UNBREAKABLE ITEM BOUNDARY: "X, Y" is ALWAYS two separate items, even
   when "X Y" (or "Y X") happens to spell a popular dish. Never fuse adjacent
-  comma-separated words into a compound dish name. Examples of what NOT to do:
+  comma-separated words into a compound dish name.
+  EXCEPTION: when one comma-separated part is a bare quantity/portion token (a
+  number + unit like "91g", "400 g", "2 slices", "1 cup"), it is the PORTION of
+  the OTHER part, NOT a separate item — "Almond Joy King Size, 91g" is ONE item
+  (Almond Joy King Size, weight_g=91), never a second "91g"/"Food" item.
+  Examples of what NOT to do:
   - "chicken fry, rice" is two items (Chicken Fry + Rice), NOT "Chicken Fried Rice"
   - "egg, fried rice" is two items (Egg + Fried Rice), NOT "Egg Fried Rice"
   - "sweet, sour pork" is two items, NOT "Sweet and Sour Pork"
@@ -1035,6 +1106,10 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
             if result and result.get('food_items'):
                 logger.info(f"[Gemini] Parsed {len(result.get('food_items', []))} food items")
 
+                # Drop phantom "Generic Food"/portion-token items a degraded parse
+                # invents from a single food+portion string ("Almond Joy, 91g").
+                result['food_items'] = collapse_phantom_food_items(result['food_items'])
+
                 # Enhance food items with USDA per-100g data for accurate scaling
                 try:
                     enhanced_items = await self._enhance_food_items_with_nutrition_db(
@@ -1104,6 +1179,7 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
                 result = self._extract_json_robust(fallback_response.text)
                 if result and result.get('food_items'):
                     logger.info(f"[Gemini] Unstructured fallback succeeded with {len(result['food_items'])} items")
+                    result['food_items'] = collapse_phantom_food_items(result['food_items'])
 
                     # Enhance with USDA data
                     try:
