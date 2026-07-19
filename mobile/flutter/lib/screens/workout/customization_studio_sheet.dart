@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,7 +10,9 @@ import '../../core/providers/environment_equipment_provider.dart'
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/workout_studio_models.dart';
 import '../../data/providers/workout_studio_providers.dart';
+import '../../data/services/api_client.dart' show apiClientProvider;
 import '../../data/services/haptic_service.dart';
+import '../../data/services/image_url_cache.dart';
 import '../home/widgets/components/equipment_selector.dart'
     show showEquipmentPickerSheet;
 import 'widgets/body_map_selector.dart';
@@ -154,6 +157,10 @@ class _CustomizationStudioSheetState
         _lastPreview = result;
         _previewLoading = false;
       });
+      // Resolve demo thumbnails for the preview rows the same way the real
+      // workout-detail exercise cards do (batch /exercise-images by name),
+      // then repaint so the rows swap their placeholder icon for the image.
+      _prefetchPreviewImages(result);
     } catch (e) {
       if (!mounted) return;
       if (token != _reqToken) return;
@@ -163,6 +170,61 @@ class _CustomizationStudioSheetState
         _previewError = 'Couldn\'t update preview. Tap Apply to retry.';
       });
     }
+  }
+
+  /// Batch-resolve illustration URLs for the preview's exercises whose maps
+  /// don't already carry a direct image URL, then repaint. Mirrors the
+  /// workout-detail `_prefetchExerciseImages` idiom (one POST /exercise-images/
+  /// batch, results written to the shared persisted [ImageUrlCache]) so a demo
+  /// thumbnail shows next to each preview row instead of a generic icon.
+  void _prefetchPreviewImages(BuiltWorkout w) {
+    final names = <String>{};
+    for (final e in w.exercises) {
+      // Skip if the map already carries a direct image URL — those paint
+      // without hitting /exercise-images at all.
+      if (_directImageUrl(e) != null) continue;
+      final name = (e['name'] ?? '').toString();
+      if (name.isEmpty || name == 'Exercise') continue;
+      if (ImageUrlCache.get(name) != null) continue; // already resolved
+      names.add(name);
+    }
+    if (names.isEmpty) return;
+    unawaited(() async {
+      try {
+        await ImageUrlCache.initialize();
+        await ImageUrlCache.batchPreFetch(
+            names.toList(growable: false), ref.read(apiClientProvider));
+        if (!mounted) return;
+        // Repaint so rows pick up the freshly-cached URLs via ImageUrlCache.get.
+        setState(() {});
+      } catch (e) {
+        debugPrint('⚠️ [Studio] preview image prefetch failed: $e');
+      }
+    }());
+  }
+
+  /// A direct, non-empty image URL attached to a preview exercise map, or null.
+  /// Backend attaches `image_url`/`gif_url` (a `video_url` is a clip, not a
+  /// thumbnail, so it's intentionally not used here).
+  String? _directImageUrl(Map<String, dynamic> e) {
+    for (final key in const ['image_url', 'gif_url']) {
+      final v = e[key];
+      if (v is String && v.isNotEmpty) return v;
+    }
+    return null;
+  }
+
+  /// Whether the last preview actually built supersets. The backend tags paired
+  /// exercises with a `superset_group` (see `create_superset_pairs`), so any
+  /// exercise carrying a non-null `superset_group` means supersets are on. Used
+  /// to drive the Supersets toggle's displayed state while the param is "auto".
+  bool _previewHasSupersets() {
+    final exercises = _lastPreview?.exercises;
+    if (exercises == null) return false;
+    for (final e in exercises) {
+      if (e['superset_group'] != null) return true;
+    }
+    return false;
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────
@@ -444,7 +506,12 @@ class _CustomizationStudioSheetState
                     _buildSwitch(
                       title: 'Supersets',
                       subtitle: 'Pair exercises back-to-back',
-                      value: _params.supersets ?? false,
+                      // `supersets == null` means "auto" — the backend decides.
+                      // Reflect the effective decision by reading whether the
+                      // last preview actually paired exercises, so the toggle
+                      // doesn't read OFF while supersets are in fact enabled.
+                      // An explicit user toggle sets a non-null value that wins.
+                      value: _params.supersets ?? _previewHasSupersets(),
                       accent: accent,
                       isDark: isDark,
                       onChanged: (v) =>
@@ -728,12 +795,9 @@ class _CustomizationStudioSheetState
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Icon(Icons.fitness_center, size: 13, color: secondary),
-          ),
+          _previewThumbnail(e, name, secondary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -751,6 +815,49 @@ class _CustomizationStudioSheetState
             style: TextStyle(fontSize: 12.5, color: secondary),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Small rounded demo thumbnail for a preview row. Resolves the URL the same
+  /// way the real detail cards do — a direct `image_url`/`gif_url` on the map
+  /// first, else the name-keyed [ImageUrlCache] (populated by
+  /// [_prefetchPreviewImages]). Falls back to the generic dumbbell icon only
+  /// when nothing resolves.
+  Widget _previewThumbnail(
+      Map<String, dynamic> e, String name, Color secondary) {
+    const double size = 26;
+    final url = _directImageUrl(e) ??
+        ((name.isNotEmpty && name != 'Exercise')
+            ? ImageUrlCache.get(name)
+            : null);
+
+    Widget placeholder() => Icon(Icons.fitness_center, size: 13, color: secondary);
+
+    if (url == null || url.isEmpty) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: Center(child: placeholder()),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: CachedNetworkImage(
+        imageUrl: url,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => SizedBox(
+          width: size,
+          height: size,
+          child: Center(child: placeholder()),
+        ),
+        errorWidget: (_, __, ___) => SizedBox(
+          width: size,
+          height: size,
+          child: Center(child: placeholder()),
+        ),
       ),
     );
   }

@@ -506,7 +506,19 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
     final raw = workout.generationMetadata?['studio_params'];
     if (raw is Map) {
       try {
-        final stored = WorkoutBuildParams.fromJson(Map<String, dynamic>.from(raw));
+        var stored = WorkoutBuildParams.fromJson(Map<String, dynamic>.from(raw));
+        // Reconcile duration: the stored studio_params.duration_minutes can be
+        // stale (an old 20 or 45 from a prior generation) while the workout's
+        // actual duration has since changed. Prefer the workout's CURRENT
+        // duration so the slider opens at what the user currently sees, not a
+        // stale seed that makes "Apply changes" look like it rebuilds shorter.
+        final actualDuration =
+            workout.durationMinutes ?? workout.estimatedDurationMinutes;
+        if (actualDuration != null &&
+            actualDuration > 0 &&
+            actualDuration != stored.durationMinutes) {
+          stored = stored.copyWith(durationMinutes: actualDuration);
+        }
         // Prefer the stored params, but seed equipment from the live workout
         // when the stored params didn't carry an explicit override.
         if ((stored.equipment == null || stored.equipment!.isEmpty) &&
@@ -521,10 +533,39 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
     // No studio metadata (older / regenerated workouts). Derive the focus from
     // the workout's actual type/muscles so the Adjust sheet pre-selects the
     // real focus instead of defaulting Target muscles to "Full body".
+    // ALSO seed duration + intensity from the real workout — otherwise these
+    // fall to WorkoutBuildParams defaults (20 min / moderate), which made the
+    // "Your current workout" card show "20 min" for a 60-min workout and made
+    // "Apply changes" rebuild toward 20 min (looked like it did nothing).
+    final realDuration =
+        workout.durationMinutes ?? workout.estimatedDurationMinutes;
     return WorkoutBuildParams(
       focusAreas: _deriveFocusAreas(workout),
       equipment: seededEquipment.isEmpty ? null : seededEquipment,
+      durationMinutes: realDuration ?? const WorkoutBuildParams().durationMinutes,
+      intensity: _intensityFromDifficulty(workout.difficulty),
     );
+  }
+
+  /// Map a workout's `difficulty` onto the studio's intensity vocabulary
+  /// (light | moderate | intense). Unknown/absent → moderate.
+  String _intensityFromDifficulty(String? difficulty) {
+    switch (difficulty?.toLowerCase().trim()) {
+      case 'beginner':
+      case 'easy':
+      case 'light':
+        return 'light';
+      case 'advanced':
+      case 'expert':
+      case 'hard':
+      case 'intense':
+        return 'intense';
+      case 'intermediate':
+      case 'medium':
+      case 'moderate':
+      default:
+        return 'moderate';
+    }
   }
 
   /// Map the workout's current equipment (`workout.equipmentNeeded`, which are

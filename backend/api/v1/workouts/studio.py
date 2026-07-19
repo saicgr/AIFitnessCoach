@@ -114,6 +114,13 @@ async def adapt_workout(
         else:
             built = await build_adapted_workout(base, user)
 
+        # Reconcile duration: the persisted row's `duration_minutes` and the stored
+        # `studio_params` (reseeded by the NEXT adapt) MUST agree. The user's live
+        # slider — carried by request.params (base) or a client-sent prebuilt — is
+        # the effective duration; fold it back into base so a stale stored 20 can't
+        # desync the next reseed from what was actually built.
+        base.duration_minutes = max(5, min(120, built.duration_minutes))
+
         # Never mutate a completed/logged workout in place.
         is_completed = bool(existing.get("is_completed"))
         do_in_place = request.replace_in_place and not is_completed

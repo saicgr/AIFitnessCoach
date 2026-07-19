@@ -23,6 +23,7 @@ active-recovery/mobility session rather than erroring (no 422, no empty screen).
 """
 
 import logging
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from models.workout_studio import WorkoutBuildParams, BuiltWorkout
@@ -187,6 +188,8 @@ def _exercise_count(params: WorkoutBuildParams) -> int:
         return max(1, min(params.exercise_count, 12))
     # main time = total - warmup - cooldown, ~ one exercise per 4 min of main work
     main_min = max(5, params.duration_minutes - params.warmup_minutes - params.cooldown_minutes)
+    # ~one main exercise per 5-7 min of working time, scaled granularly so a
+    # 45-min and a 60-min session no longer collapse to the same count.
     if main_min <= 8:
         return 3
     if main_min <= 14:
@@ -195,7 +198,63 @@ def _exercise_count(params: WorkoutBuildParams) -> int:
         return 5
     if main_min <= 30:
         return 6
-    return 7
+    if main_min <= 42:
+        return 7
+    if main_min <= 54:
+        return 8
+    return 9
+
+
+# Qualifier tokens stripped to collapse a verbose exercise name to its BASE
+# movement for diversity bucketing — mirrors the program backfill's
+# `_base_movement` (backend/scripts/backfill_thin_program_sessions.py) so both
+# use one taxonomy. Movement-defining words (press, row, curl, squat, …) are KEPT.
+_MOVEMENT_QUALIFIER_TOKENS = {
+    "barbell", "dumbbell", "dumbbells", "cable", "machine", "smith", "resistance",
+    "band", "bands", "kettlebell", "kettlebells", "ez", "ezbar", "ez-bar", "plate",
+    "seated", "standing", "lying", "incline", "decline", "flat", "single", "arm",
+    "single-arm", "alternate", "alternating", "wide", "close", "close-grip",
+    "grip", "normal", "neutral", "reverse", "behind", "neck", "assisted",
+    "weighted", "bodyweight", "two", "one", "left", "right", "front", "high",
+    "low", "rope", "straight", "preacher", "concentration", "with", "and",
+    "the", "a", "to", "of", "on", "in", "v", "bar",
+}
+
+
+def _movement_bucket_key(ex: Dict[str, Any]) -> str:
+    """Collapse an exercise to a movement bucket for diversity dedupe so a session
+    spans push/pull/press/fly/isolation rather than 7 incline-press variants. Base
+    movement (qualifier-stripped name), scoped by the muscle it trains so distinct
+    presses (bench vs leg vs shoulder) stay in separate buckets."""
+    name = ex.get("name") or ""
+    words = re.findall(r"[a-z0-9-]+", name.lower())
+    base = " ".join(w for w in words if w not in _MOVEMENT_QUALIFIER_TOKENS).strip()
+    muscle = (ex.get("target_muscle") or ex.get("body_part") or "").strip().lower()
+    if base:
+        return f"{muscle}|{base}"
+    return muscle or name.lower()
+
+
+def _diversify_by_movement(candidates: List[Dict[str, Any]], count: int) -> List[Dict[str, Any]]:
+    """Reorder ranked candidates round-robin across movement buckets so the first
+    `count` slots span DISTINCT movements (an upper-body day gets press + fly +
+    lateral raise + row, not 7 near-identical incline presses). Deterministic;
+    preserves RAG rank within a bucket. Never drops below the input size — pure
+    reordering + truncate, so if buckets are exhausted the leftover ranked
+    candidates still fill the requested count."""
+    if len(candidates) <= 1:
+        return candidates[:count]
+    buckets: Dict[str, List[Dict[str, Any]]] = {}
+    for ex in candidates:  # dict preserves first-seen bucket order (py3.7+)
+        buckets.setdefault(_movement_bucket_key(ex), []).append(ex)
+    ordered: List[Dict[str, Any]] = []
+    # Round-robin: one exercise from each bucket per pass, in rank order, until
+    # every candidate is placed. Front-loads variety before the truncation.
+    while any(buckets.values()):
+        for lst in buckets.values():
+            if lst:
+                ordered.append(lst.pop(0))
+    return ordered[:count]
 
 
 def _is_high_impact(name: str) -> bool:
@@ -424,7 +483,9 @@ async def build_adapted_workout(params: WorkoutBuildParams, user: Optional[dict]
         if k and k not in _seen:
             _seen.add(k)
             deduped.append(e)
-    rag_exercises = deduped[:count]
+    # Diversity pass BEFORE truncation: round-robin across movement buckets so the
+    # kept `count` span distinct movements instead of e.g. 7 incline-press variants.
+    rag_exercises = _diversify_by_movement(deduped, count)
 
     # Honor explicit equipment: if the user picked equipment the focus/category
     # gate left unused (e.g. a cardio machine on a strength day), append ONE

@@ -113,9 +113,10 @@ class AdaptiveWorkoutServicePart2:
 
         # Use supersets when:
         # 1. We have enough exercises to pair (at least 4)
-        # 2. Duration is moderate (15-45 min) where time efficiency matters
+        # 2. Duration is moderate (15-60 min) where time efficiency matters —
+        #    ~60-min sessions have the exercise volume to pair and benefit most.
         # 3. Focus allows for it
-        return exercise_count >= 4 and 15 <= duration_minutes <= 45
+        return exercise_count >= 4 and 15 <= duration_minutes <= 60
 
     def should_include_amrap(
         self,
