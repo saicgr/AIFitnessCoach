@@ -419,6 +419,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         m.role != 'system');
     if (activeSession != null || hasRealMessageEarly) return;
 
+    // Don't hold the visible state on a COLD-cache Gemini round-trip. If the
+    // open-insight is already cached (warm open), the await below resolves
+    // instantly and we keep the current gated flow (no empty-state flash). If
+    // it's NOT cached yet, paint the resolved open state NOW (Living Greeting /
+    // empty landing) and let the briefing stream in and seed itself when it
+    // arrives — instead of showing only a "…" typing bubble for several seconds
+    // while the server generates the insight.
+    final cachedInsight = ref.read(chatOpenInsightProvider);
+    if (!cachedInsight.hasValue && mounted && !_openLadderResolved) {
+      setState(() => _openLadderResolved = true);
+    }
+
     final DailyCoachInsight insight;
     try {
       insight = await ref.read(chatOpenInsightProvider.future);

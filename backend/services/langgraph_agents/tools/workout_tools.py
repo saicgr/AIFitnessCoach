@@ -648,6 +648,15 @@ def generate_quick_workout(
     workout_type = (workout_type or "full_body").strip() or "full_body"
     intensity = (intensity or "moderate").strip() or "moderate"
 
+    # workout_id hardening (2026-07-18) — the LLM frequently fills the OPTIONAL
+    # workout_id with a placeholder ("0", 0, "", "none", "null") when it means
+    # "no existing workout, create a new one". Those values reach get_workout()
+    # and 500 the uuid column (Postgres 22P02: invalid input syntax for type
+    # uuid: "0"), so the whole tool returned success=False and no workout was
+    # created. Coerce anything that isn't a real UUID to None → create-new path.
+    if workout_id is not None and not _UUID_PATTERN.match(str(workout_id).strip()):
+        workout_id = None
+
     logger.info(f"Tool: Generating quick {duration_minutes}min {workout_type} workout for user {user_id}")
 
     # ── DURABLE AUTO-CAPTURE (D) ──────────────────────────────────────────────

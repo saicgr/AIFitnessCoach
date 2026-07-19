@@ -47,11 +47,16 @@ class SkeletonShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
-    return Shimmer.fromColors(
-      baseColor: c.cardBorder,
-      highlightColor: c.glassSurface,
-      period: period,
-      child: child,
+    // RepaintBoundary: the shimmer sweep repaints every frame while visible;
+    // isolating it keeps that per-frame invalidation from bubbling out to
+    // sibling cards during scroll / cold load.
+    return RepaintBoundary(
+      child: Shimmer.fromColors(
+        baseColor: c.cardBorder,
+        highlightColor: c.glassSurface,
+        period: period,
+        child: child,
+      ),
     );
   }
 }

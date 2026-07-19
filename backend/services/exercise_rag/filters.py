@@ -706,6 +706,13 @@ def filter_by_equipment(
         "full_gym" in eq or "full gym" in eq for eq in equipment_lower
     )
     if has_full_gym:
+        # A full gym has every standard implement, so the goal-aware gates
+        # below only need to know the user has *weighted* equipment — the
+        # 46-item constant satisfies that. The actual equipment-availability
+        # match is short-circuited to always pass further down (see the
+        # `if has_full_gym: return True` guard), so we do NOT enumerate a
+        # cardio/accessory list here. Selecting "full_gym" == "I own the
+        # whole exercise-library equipment universe".
         equipment_lower = list(FULL_GYM_EQUIPMENT)
     else:
         # Step 3: bodyweight-only — strict, no expansion.
@@ -764,6 +771,15 @@ def filter_by_equipment(
         # this matches without any extra work. Equipped users without
         # explicit bodyweight still get the no-equipment exercise — most
         # workouts include planks etc.
+        return True
+
+    # Full-gym short-circuit (2026-07-18): once past the goal-aware gates
+    # above, an exercise that requires real equipment is ALWAYS available to
+    # a full-gym user — a commercial gym stocks the whole equipment universe.
+    # This replaces the old behavior of matching against a hand-maintained
+    # FULL_GYM_EQUIPMENT list, which drifted and false-dropped legit gear
+    # (cardio machines, balance board, assault bike) as "incompatible".
+    if has_full_gym:
         return True
 
     # Multi-equipment exercise tags — split on common separators. ALL listed

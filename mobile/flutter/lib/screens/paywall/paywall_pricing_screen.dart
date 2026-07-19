@@ -1506,89 +1506,82 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   // the decision moment.
   Widget _buildIntroPageValue(ThemeColors colors) {
     final l10n = AppLocalizations.of(context);
-    return LayoutBuilder(
-      builder: (context, viewport) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 26),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.topCenter,
-            child: SizedBox(
-              width: viewport.maxWidth - 52,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    // Full-height Column (mirrors the reminder page) so the value reel absorbs
+    // the leftover space via Expanded instead of a fixed 300px block pinned to
+    // the top — the previous scaleDown FittedBox never scaled UP, so on tall
+    // phones the content sat in the top half with a dead gap above the button.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 14),
+          Text(
+            l10n.paywallValueReelKicker,
+            style: const TextStyle(
+              fontFamily: 'Barlow Condensed',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 2.5,
+              color: _paywallAccent,
+            ),
+          ).animate().fadeIn(),
+          const SizedBox(height: 8),
+          Text(
+            l10n.paywallValueHeadline,
+            style: TextStyle(
+              fontFamily: 'Anton',
+              fontSize: 28,
+              height: 1.08,
+              color: colors.textPrimary,
+            ),
+          ).animate().fadeIn(delay: 80.ms).slideY(begin: 0.06),
+          const SizedBox(height: 22),
+          // Vertical auto-scrolling value reel — replaces the old
+          // static 2×2 grid (4 features only). Same seamless-loop
+          // Ticker technique as the horizontal marquee on
+          // paywall_features_screen.dart, rotated to vertical with
+          // full-width cards so it reads as "everything unlocks",
+          // not just the headline four. Expanded lets it grow to fill the
+          // page on tall phones and shrink (no overflow) on short ones.
+          Expanded(
+            child: _VerticalValueMarquee(
+              features: _valueMarqueeFeatures(l10n),
+              pixelsPerSecond: 16,
+              accent: _paywallAccent,
+              colors: colors,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: GestureDetector(
+              onTap: () => _open(AppLinks.features),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 14),
                   Text(
-                    l10n.paywallValueReelKicker,
-                    style: const TextStyle(
-                      fontFamily: 'Barlow Condensed',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2.5,
-                      color: _paywallAccent,
-                    ),
-                  ).animate().fadeIn(),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.paywallValueHeadline,
+                    l10n.paywallValueSeeAllFeatures,
                     style: TextStyle(
-                      fontFamily: 'Anton',
-                      fontSize: 28,
-                      height: 1.08,
-                      color: colors.textPrimary,
-                    ),
-                  ).animate().fadeIn(delay: 80.ms).slideY(begin: 0.06),
-                  const SizedBox(height: 22),
-                  // Vertical auto-scrolling value reel — replaces the old
-                  // static 2×2 grid (4 features only). Same seamless-loop
-                  // Ticker technique as the horizontal marquee on
-                  // paywall_features_screen.dart, rotated to vertical with
-                  // full-width cards so it reads as "everything unlocks",
-                  // not just the headline four.
-                  SizedBox(
-                    height: 300,
-                    child: _VerticalValueMarquee(
-                      features: _valueMarqueeFeatures(l10n),
-                      pixelsPerSecond: 16,
-                      accent: _paywallAccent,
-                      colors: colors,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textSecondary,
+                      decoration: TextDecoration.underline,
+                      decorationColor: colors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: GestureDetector(
-                      onTap: () => _open(AppLinks.features),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            l10n.paywallValueSeeAllFeatures,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textSecondary,
-                              decoration: TextDecoration.underline,
-                              decorationColor: colors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 14,
-                            color: colors.textSecondary,
-                          ),
-                        ],
-                      ),
-                    ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: colors.textSecondary,
                   ),
-                  const SizedBox(height: 12),
                 ],
               ),
             ),
           ),
-        );
-      },
+          const SizedBox(height: 12),
+        ],
+      ),
     );
   }
 
@@ -1712,8 +1705,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                           filled: false,
                           isLast: true,
                           title: 'Day 7 — first charge',
-                          monoTag:
-                              '${_trialEndDateString().toUpperCase()} · CANCEL ANYTIME BEFORE',
+                          // Date stays on the tag line (short, never clips);
+                          // the cancel reassurance moves to the wrapping detail
+                          // line so it always renders in full (previously the
+                          // combined tag ellipsized to "…CANCEL ANYTIM…").
+                          monoTag: _trialEndDateString().toUpperCase(),
+                          detail:
+                              'Cancel anytime before then — you won\'t be charged.',
                           colors: colors,
                           accent: _paywallAccent,
                         ),

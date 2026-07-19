@@ -1365,7 +1365,11 @@ class ExerciseRAGService:
         elif is_broad_focus:
             candidate_count = min(count * 15, 120)
         elif has_dumbbells_no_bench:
-            candidate_count = min(count * 12, 80)
+            # Dumbbell-only focuses (e.g. chest+dumbbells) have sparse media
+            # coverage — a 2026-07-18 customize showed 80 raw → only 13
+            # media-rich survivors (below the 2× variety target). Widen the
+            # pool so more media-carrying dumbbell variants clear the filter.
+            candidate_count = min(count * 15, 120)
         else:
             candidate_count = min(count * 10, 60)
 

@@ -578,6 +578,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     final heroContent = Column(
       children: [
         headerRow,
+        // Breathing room so the progress pill doesn't crowd the logo.
+        const SizedBox(height: 14),
         // Pulsing app icon
         AnimatedBuilder(
           animation: _pulseController,
@@ -678,7 +680,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         Stack(
           clipBehavior: Clip.hardEdge,
           children: [
-            Positioned.fill(child: _HeroSceneBackground(t: t)),
+            // Inset the animated texture below the progress-pill + logo band.
+            // The scenes anchor from top:0 of their own box, so filling the
+            // whole zone painted the calendar-grid tiles right behind the
+            // semi-transparent logo (they showed THROUGH it). Starting the
+            // background lower keeps the pill and logo on clean background.
+            // Its top scrim stop is transparent, so there's no hard edge.
+            Positioned(
+              top: 150,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _HeroSceneBackground(t: t),
+            ),
             heroContent,
           ],
         ),

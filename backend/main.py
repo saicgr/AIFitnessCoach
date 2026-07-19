@@ -328,7 +328,7 @@ class LoggingMiddleware:
         r"\.bak\b|\.old\b|\.swp\b|\.orig\b|\.save\b|"  # editor/backup leftovers
         r"\.ya?ml\b|\.ini\b|\.conf\b|\.config\b|\.json\b|\.js\b|\.sql\b|"  # config/source probes
         r"/config/|/app/config/|composer|appsettings|docker-compose|parameters|"  # framework configs
-        r"phpinfo|wp-config|wp-admin|wp-login|xmlrpc|"  # WordPress/PHP
+        r"phpinfo|wp-config|wp-admin|wp-login|wp-includes|wp-content|wp-json|wlwmanifest|xmlrpc|"  # WordPress/PHP
         r"/server-status|/server-info"        # Apache mod_status
         r")",
         re.IGNORECASE,

@@ -1274,24 +1274,9 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                   );
                 }),
 
-                // Reassurance strip — answers the three silent objections
-                // before the user commits to a coach.
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _assureItem(Icons.swap_horiz_rounded, 'Switch anytime',
-                          textSecondary),
-                      _assureDot(textSecondary),
-                      _assureItem(
-                          Icons.schedule_rounded, '24/7', textSecondary),
-                      _assureDot(textSecondary),
-                      _assureItem(Icons.auto_awesome, 'Create your own',
-                          textSecondary),
-                    ],
-                  ),
-                ).animate().fadeIn(delay: 250.ms),
+                // Reassurance strip moved down to sit just above the CTA
+                // (see _buildContinueButton) so the coach cards get more room
+                // and the three objections are answered right at commit time.
 
                 // PageView for swipeable coach cards
                 Expanded(

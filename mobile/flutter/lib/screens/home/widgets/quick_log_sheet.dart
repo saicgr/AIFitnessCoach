@@ -127,7 +127,7 @@ final List<_QuickAction> _actions = [
   // Generate a fresh workout (AI generator), then launch it.
   _QuickAction(
     registryId: 'quick_workout',
-    label: 'Generate workout',
+    label: 'Generate quick workout',
     onTap: (c, ref) => _closeThen(c, () => _generateWorkout(c, ref)),
   ),
   // Fridge scan — snap your fridge/pantry, AI suggests recipes. Replaced

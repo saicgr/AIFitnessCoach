@@ -596,6 +596,8 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
   Widget _buildContinueButton(bool isDark, bool canContinue) {
     final isEnabled = canContinue && !_isLoading;
     final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     // After the preview chat's final live turn (the coach's close pointed
     // here), a gentle pulse carries the momentum onto the CTA.
@@ -619,7 +621,27 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
       ),
       child: SafeArea(
         top: false,
-        child: pulsed(GestureDetector(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Reassurance strip — answers the three silent objections right at
+            // commit time (moved here from above the coach cards).
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _assureItem(Icons.swap_horiz_rounded, 'Switch anytime',
+                      textSecondary),
+                  _assureDot(textSecondary),
+                  _assureItem(Icons.schedule_rounded, '24/7', textSecondary),
+                  _assureDot(textSecondary),
+                  _assureItem(Icons.auto_awesome, 'Create your own',
+                      textSecondary),
+                ],
+              ),
+            ).animate().fadeIn(delay: 250.ms),
+            pulsed(GestureDetector(
           onTap: isEnabled ? _continue : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
@@ -683,6 +705,8 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
             ),
           ),
         ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1)),
+          ],
+        ),
       ),
     );
   }

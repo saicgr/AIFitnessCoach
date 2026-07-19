@@ -110,6 +110,10 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
   final Ref _ref;
   bool _disposed = false;
   bool _hasAutoRetried = false;
+  // Guard so the "no gyms → create a default from onboarding equipment" seed
+  // runs at most once per notifier lifetime, and never on a fetch ERROR — this
+  // prevents duplicate-gym races if the server briefly returns empty.
+  bool _didAutoSeedDefault = false;
 
   @override
   void dispose() {
@@ -284,6 +288,16 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
       // Save to cache for next app open
       await _saveToCache(response.profiles);
 
+      // First-run self-heal: onboarding saves the user's equipment to their
+      // preferences but never creates a gym_profiles row, so a fresh account
+      // lands on "+ Add gym". If the server genuinely has zero gyms, seed a
+      // default from the equipment/environment onboarding already collected so
+      // the Workout tab shows the user's gym immediately. Guarded, fire-and-
+      // forget (must not run on the error path).
+      if (response.profiles.isEmpty) {
+        unawaited(_maybeAutoSeedDefaultProfile());
+      }
+
       debugPrint('✅ [GymProfileProvider] Loaded ${response.profiles.length} profiles');
       if (response.activeProfileId != null) {
         final active = response.profiles.firstWhere(
@@ -375,6 +389,45 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     } catch (e) {
       debugPrint('❌ [GymProfileProvider] Error creating profile: $e');
       rethrow;
+    }
+  }
+
+  /// Seed a default gym profile when the authenticated user has none — the
+  /// self-heal for the "Add gym after onboarding" gap (onboarding stores
+  /// equipment on the user's preferences but no gym_profiles row). Runs at most
+  /// once per notifier lifetime, only after a SUCCESSFUL empty API fetch (never
+  /// on error), so it can't create duplicates or fight a transient empty state.
+  Future<void> _maybeAutoSeedDefaultProfile() async {
+    if (_didAutoSeedDefault || _disposed || _userId == null) return;
+    // Re-check: only when the server genuinely reported zero gyms.
+    if ((state.valueOrNull ?? const <GymProfile>[]).isNotEmpty) return;
+
+    // The user object carries the equipment/environment onboarding saved. If
+    // it isn't hydrated yet (id known from cache but full profile still
+    // loading), skip WITHOUT setting the guard so a later fetch — the 5s
+    // stuck-state watchdog, a refresh, or a re-fetch — retries once we can
+    // seed the gym from the user's real setup rather than an empty placeholder.
+    final user = _ref.read(authStateProvider).user;
+    if (user == null) return;
+
+    _didAutoSeedDefault = true;
+
+    // Seed from what onboarding already saved on the user so the first gym
+    // reflects the real setup instead of an empty placeholder.
+    final equipment = user.equipmentList;
+    final environment = user.workoutEnvironment ?? 'commercial_gym';
+
+    try {
+      await createProfile(GymProfileCreate(
+        name: 'My Gym',
+        workoutEnvironment: environment,
+        equipment: equipment,
+      ));
+      debugPrint(
+          '🌱 [GymProfileProvider] Auto-created default gym from onboarding equipment (${equipment.length} items, env=$environment)');
+    } catch (e) {
+      // Leave the guard set — a manual refresh / next app launch retries.
+      debugPrint('⚠️ [GymProfileProvider] Auto-seed default gym failed: $e');
     }
   }
 

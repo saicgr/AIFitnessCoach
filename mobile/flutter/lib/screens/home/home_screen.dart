@@ -190,13 +190,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void _triggerNavTour() {
     final l10n = AppLocalizations.of(context)!;
     final steps = [
-      AppTourStep(
-        id: 'nav_step_topbar',
-        targetKey: AppTourKeys.topBarKey,
-        title: l10n.homeScreenTourTopbarTitle,
-        description: l10n.homeScreenTourTopbarDesc,
-        position: TooltipPosition.below,
-      ),
+      // NOTE: the former 'nav_step_topbar' ("Your Profile") step was removed —
+      // it ringed the whole masthead, which no longer holds a profile element
+      // (the avatar moved to the You tab, covered by 'nav_step_profile' below).
+      // It read as a wrong/mis-targeted tooltip, so the tour now starts on the
+      // workout carousel. Step count is derived from this list → cards show N/5.
       AppTourStep(
         id: 'nav_step_carousel',
         targetKey: AppTourKeys.heroCarouselKey,
@@ -210,6 +208,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         title: l10n.homeScreenTourQuicklogTitle,
         description: l10n.homeScreenTourQuicklogDesc,
         position: TooltipPosition.above,
+        // Animated glow ring (instead of the flat solid ring) so the small "+"
+        // FAB clearly reads as the highlighted target. Warm hues match the
+        // FAB's orange accent border.
+        highlightColors: const [
+          AppColors.orange,
+          AppColors.orangeLight,
+          AppColors.yellow,
+        ],
       ),
       AppTourStep(
         id: 'nav_step_workout',
@@ -1189,11 +1195,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               const SliverToBoxAdapter(child: StackedBannerPanel()),
               const SliverToBoxAdapter(child: RatingPromptBanner()),
 
-              // First-7-days calibration banner. Sets expectations so users
-              // don't churn at Day 3 thinking the AI is dumb — it's
-              // learning. Self-collapses past the 7-day window or after
-              // user dismisses.
-              const SliverToBoxAdapter(child: CalibrationBanner()),
+              // Calibration banner (first 30 days). Sets expectations so users
+              // don't churn at Day 3 thinking the AI is dumb — it's learning.
+              // Starts collapsed (slim pill w/ progress ring); self-collapses
+              // to zero height past the 30-day window or after user dismisses.
+              const SliverToBoxAdapter(
+                child: RepaintBoundary(child: CalibrationBanner()),
+              ),
 
               // Get Started Challenge (new-user onboarding checklist) is no
               // longer mounted here — it is spliced in directly BELOW the Next
@@ -1211,12 +1219,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // masthead: STEPS · SLEEP · READY · SCORE, tappable, so the
               // day's key numbers are seen without scrolling. The full metric
               // deck (ring + tiles + trends) stays below the fold.
-              const SliverToBoxAdapter(child: HomeMetricsStrip()),
+              const SliverToBoxAdapter(
+                child: RepaintBoundary(child: HomeMetricsStrip()),
+              ),
               const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)),
 
-              // User-customizable sections, rendered in the order and
-              // visibility chosen via "My Space" (homeSectionsProvider).
-              ..._homeSectionSlivers(ref.watch(homeSectionsProvider)),
+              // Fixed coach-first composition. Only the timeline-visibility flag
+              // is read here (the section list itself is a fixed v2 order), so
+              // narrow the watch to that bool — a change elsewhere in
+              // homeSectionsProvider no longer rebuilds the whole home sliver list.
+              ..._homeSectionSlivers(
+                ref.watch(
+                  homeSectionsProvider.select(
+                    (s) => s.isVisible(HomeSection.timeline),
+                  ),
+                ),
+              ),
 
               // Bottom padding for the floating nav. Derived from the
               // actual safe-area inset + the nav-bar intrinsic height
@@ -1257,16 +1275,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// with a [SliverChildBuilderDelegate] so it only builds when the user
   /// scrolls it into the viewport. Section order and content are unchanged;
   /// each below-the-fold section still gets its trailing [kHomeGap].
-  List<Widget> _homeSectionSlivers(HomeSectionsState sections) {
-    // Drop sections that render to zero — strainCoach was folded into the
-    // workout hero (returns SizedBox.shrink) but stays in persisted orderings
-    // for migration safety. If we kept it in `visible`, the eager loop would
-    // emit a wrapper sliver + a trailing kHomeGap for it, producing an empty
-    // ~28px void between the cards that surround it.
+  List<Widget> _homeSectionSlivers(bool timelineVisible) {
     // Timeline is pulled OUT of the normal section flow — the user wants it to
     // always be the very last card on Home, so it is appended after the
     // contextual card stack regardless of where it sits in the saved order.
-    final timelineVisible = sections.isVisible(HomeSection.timeline);
+    // (Only its visibility flag is needed here; passed in as a narrowed watch.)
 
     // Drop sections that are GUARANTEED to render nothing today so they don't
     // leave a phantom kHomeGap (issue 6):
@@ -1318,7 +1331,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ? visible.length
         : _eagerSectionCount;
     for (var i = 0; i < eagerCount; i++) {
-      slivers.add(SliverToBoxAdapter(child: _widgetForSection(visible[i])));
+      // RepaintBoundary isolates each heavy card's raster so an animation or
+      // state change in one (coach hero, workout carousel, fuel card) doesn't
+      // repaint its neighbours while the list is scrolling.
+      slivers.add(SliverToBoxAdapter(
+          child: RepaintBoundary(child: _widgetForSection(visible[i]))));
       // Quick actions hugs the card below it (the coach card) — a tighter gap
       // so the coach action items sit closer to first glance.
       final gap = visible[i] == HomeSection.quickActions ? 6.0 : kHomeGap;
@@ -1362,7 +1379,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // InheritedElement.debugDeactivated's `_dependents.isEmpty`.
               return KeyedSubtree(
                 key: ValueKey('home_section_${section.name}'),
-                child: Column(
+                child: RepaintBoundary(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _widgetForSection(section),
@@ -1376,6 +1394,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ],
                     SizedBox(height: gap),
                   ],
+                ),
                 ),
               );
             },

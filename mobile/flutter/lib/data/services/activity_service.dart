@@ -23,7 +23,6 @@ class ActivityService {
   // Cleared by Settings → Privacy when the user toggles consent back on.
   static const _kConsentDeniedKey = 'activity_health_consent_denied';
   bool _consentDenied = false;
-  bool _consentLoaded = false;
 
   // Serializes the FIRST sync attempt after cold start so syncActivity +
   // syncActivityBatch don't both fire 403s before the consent gate has had
@@ -42,8 +41,6 @@ class ActivityService {
       _consentDenied = prefs.getBool(_kConsentDeniedKey) ?? false;
     } catch (_) {
       _consentDenied = false;
-    } finally {
-      _consentLoaded = true;
     }
   }
 
@@ -69,9 +66,11 @@ class ActivityService {
     required String userId,
     required DailyActivity activity,
   }) async {
-    if (!_consentLoaded) {
-      await _loadConsentFlag();
-    }
+    // Always re-read the persisted gate (a single cheap bool read): AISettings
+    // seeds it proactively from the server's health_data_consent AFTER this
+    // service is constructed, so a one-time in-memory cache would miss the seed
+    // and fire a stray first-launch 403.
+    await _loadConsentFlag();
     // If another sync is the first-out-of-the-gate, wait for it to come
     // back before deciding — saves a paired 403 on cold start.
     if (_firstAttemptInFlight != null) {
@@ -297,9 +296,11 @@ class ActivityService {
     required String userId,
     required List<DailyActivity> activities,
   }) async {
-    if (!_consentLoaded) {
-      await _loadConsentFlag();
-    }
+    // Always re-read the persisted gate (a single cheap bool read): AISettings
+    // seeds it proactively from the server's health_data_consent AFTER this
+    // service is constructed, so a one-time in-memory cache would miss the seed
+    // and fire a stray first-launch 403.
+    await _loadConsentFlag();
     if (_firstAttemptInFlight != null) {
       try { await _firstAttemptInFlight; } catch (_) {}
     }

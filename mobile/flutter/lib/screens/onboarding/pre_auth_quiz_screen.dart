@@ -708,23 +708,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   String? _getAcknowledgment(int step) {
     switch (step) {
       case 0: // Goals (multi-select)
-        final g = _selectedGoals;
-        if (g.contains('lose_weight') && g.contains('build_muscle')) {
-          return 'Lose fat and build muscle at once. The plan periodizes '
-              'for exactly that recomposition.';
-        }
-        if (g.contains('lose_weight')) {
-          return 'Fat loss noted. The plan keeps the lifting that protects '
-              'muscle while you cut.';
-        }
-        if (g.contains('build_muscle')) {
-          return 'Muscle it is. Progressive overload starts from week one.';
-        }
-        if (g.contains('increase_strength')) {
-          return 'Strength goal locked in. Expect real load, programmed '
-              'week to week.';
-        }
-        return 'Goals saved. Every session gets built around them.';
+        return _goalAcknowledgment(_selectedGoals);
       case 1: // Fitness level
         switch (_selectedLevel) {
           case 'beginner':
@@ -786,6 +770,54 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       default:
         return null;
     }
+  }
+
+  /// Goals acknowledgment (step 0) — reflects EVERY selected goal, not just the
+  /// first match. Composes a single natural line from the selected goals in the
+  /// on-screen order so multi-select combinations read honestly (e.g. Get
+  /// Stronger + Athletic Performance → "Strength + athletic performance locked
+  /// in."). One special-cased line for the fat-loss + muscle recomposition pair
+  /// because it reads better than a generic join.
+  String _goalAcknowledgment(Set<String> g) {
+    // Recomposition reads better as a dedicated line than "fat loss + muscle".
+    if (g.length == 2 &&
+        g.contains('lose_weight') &&
+        g.contains('build_muscle')) {
+      return 'Lose fat and build muscle at once. The plan periodizes for '
+          'exactly that recomposition.';
+    }
+
+    // Short phrase per goal, in the same order the options are listed.
+    const phrases = <String, String>{
+      'build_muscle': 'muscle',
+      'lose_weight': 'fat loss',
+      'increase_strength': 'strength',
+      'improve_endurance': 'endurance',
+      'stay_active': 'staying active',
+      'athletic_performance': 'athletic performance',
+    };
+    final selected = phrases.keys.where(g.contains).map((k) => phrases[k]!).toList();
+
+    if (selected.isEmpty) {
+      return 'Goals saved. Every session gets built around them.';
+    }
+
+    String joined;
+    String closer;
+    if (selected.length == 1) {
+      joined = selected.first;
+      closer = 'Every session gets built around it.';
+    } else if (selected.length == 2) {
+      joined = '${selected[0]} + ${selected[1]}';
+      closer = 'Every session is built to move both.';
+    } else {
+      joined = '${selected.sublist(0, selected.length - 1).join(', ')} + '
+          '${selected.last}';
+      closer = 'Every session is built to move all of it.';
+    }
+
+    final capitalized = joined[0].toUpperCase() + joined.substring(1);
+    return '$capitalized locked in. $closer';
   }
 
   @override

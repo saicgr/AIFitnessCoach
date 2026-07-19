@@ -465,6 +465,11 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
         state = AISettings.fromJson(data).copyWith(isHydrated: true);
         _isLoaded = true;
         unawaited(_persistCache());
+        // Proactively seed the shared activity-sync consent gate from the
+        // server truth. Without this the FIRST /activity/sync of every fresh
+        // install fired a (slow, ~5s) 403 before the reactive gate tripped.
+        // Now the gate reflects real consent before any sync runs → zero 403s.
+        unawaited(_syncActivityConsentGate(state.healthDataConsent));
         // Apply the saved voice to the TTS engine so the next workout
         // announcement uses it. Safe to call even on 'default'.
         unawaited(TTSService().applyVoice(state.coachVoiceId));
@@ -684,15 +689,32 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
   /// dedicated opt-in flow, not bundled with general ToS acceptance.
   Future<void> updateHealthDataConsent(bool value) async {
     state = state.copyWith(healthDataConsent: value);
-    if (value) {
-      // Re-enabling consent should clear the persisted "consent denied" gate
-      // in ActivityService so the next sync attempt actually hits the wire.
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove('activity_health_consent_denied');
-      } catch (_) {}
-    }
+    // Keep the shared activity-sync consent gate in lock-step with the toggle:
+    // enabling clears it (next sync hits the wire), disabling sets it (no more
+    // 403s). Both ActivityService and background_sync read the same key.
+    await _syncActivityConsentGate(value);
     _saveSettings();
+  }
+
+  /// Shared SharedPreferences key that gates /activity/sync + /activity/sync-batch
+  /// (mirrored in ActivityService and background_sync_service). `true` = do not
+  /// call the endpoint (no health-data consent).
+  static const String _kActivityConsentDeniedKey =
+      'activity_health_consent_denied';
+
+  /// Reconcile the persisted activity-sync gate with the authoritative consent
+  /// value. consent=true → remove the gate; consent=false → set it. This makes
+  /// the gate PROACTIVE (seeded from server truth) instead of only tripping
+  /// reactively after a first 403.
+  Future<void> _syncActivityConsentGate(bool consent) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (consent) {
+        await prefs.remove(_kActivityConsentDeniedKey);
+      } else {
+        await prefs.setBool(_kActivityConsentDeniedKey, true);
+      }
+    } catch (_) {}
   }
 
   /// Set a predefined coach persona
